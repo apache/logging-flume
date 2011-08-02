@@ -1,0 +1,28 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <relativePath>../../pom.xml</relativePath>
+    <artifactId>flume</artifactId>
+    <groupId>com.cloudera</groupId>
+    <version>0.9.4-SNAPSHOT</version>
+  </parent>
+
+  <groupId>com.cloudera.flume.plugin</groupId>
+  <artifactId>flume-plugin-helloworld</artifactId>
+  <version>0.9.4-SNAPSHOT</version>
+  <name>Flume Hello World Plugin</name>
+  <description>An example hello world plugin for Flume</description>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>com.cloudera</groupId>
+      <artifactId>flume-core</artifactId>
+      <version>0.9.4-SNAPSHOT</version>
+    </dependency>
+
+  </dependencies>
+
+</project>
