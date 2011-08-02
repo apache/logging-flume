@@ -323,7 +323,8 @@ public class ConfigManager implements ConfigurationManager {
    * table and the phys-logical mapping
    */
   @Override
-  synchronized public void removeLogicalNode(String logicNode) throws IOException {
+  synchronized public void removeLogicalNode(String logicNode)
+      throws IOException {
     cfgStore.removeLogicalNode(logicNode);
     String physical = getPhysicalNode(logicNode);
     if (physical != null) {
@@ -339,6 +340,7 @@ public class ConfigManager implements ConfigurationManager {
     try {
       try {
         cfgStore.init();
+        reloadLogicalToPhysical();
       } catch (InterruptedException e) {
         // InterruptedException can be ignored in certain cases
         LOG.warn("ConfigStore was interrupted on startup, this may be ok", e);
@@ -387,5 +389,16 @@ public class ConfigManager implements ConfigurationManager {
     ListMultimap<String, String> map = ArrayListMultimap
         .<String, String> create(cfgStore.getLogicalNodeMap());
     return map;
+  }
+
+  synchronized void reloadLogicalToPhysical() {
+    Multimap<String, String> p2n = getLogicalNodeMap();
+    logicalToPhysical.clear();
+    for (Entry<String, String> e : p2n.entries()) {
+      if (logicalToPhysical.containsKey(e.getValue())) {
+        LOG.warn("logical node mapped to two physical nodes!");
+      }
+      logicalToPhysical.put(e.getValue(), e.getKey());
+    }
   }
 }
