@@ -24,6 +24,7 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import org.apache.avro.generic.GenericArray;
 import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.ipc.HttpServer;
 import org.apache.avro.specific.SpecificResponder;
@@ -61,6 +62,12 @@ public class TestAvroAdminServer extends TestCase {
       return new HashMap<Utf8, FlumeNodeStatusAvro>();
     }
     
+    @Override
+    public Map<Utf8, GenericArray<Utf8>> getMappings(Utf8 physicalNode)
+        throws AvroRemoteException {
+      return new HashMap<Utf8, GenericArray<Utf8>>();
+    }
+
     @Override
     public boolean isFailure(long cmdid) throws AvroRemoteException {
       return true;

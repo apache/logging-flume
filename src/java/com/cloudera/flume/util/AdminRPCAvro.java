@@ -20,8 +20,12 @@ package com.cloudera.flume.util;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
+import org.apache.avro.generic.GenericArray;
 import org.apache.avro.ipc.HttpTransceiver;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.specific.SpecificRequestor;
@@ -80,6 +84,29 @@ public class AdminRPCAvro implements AdminRPC {
           MasterAdminServerAvro.statusFromAvro(results.get(key)));
     }
     return out;
+  }
+
+  @Override
+  public Map<String, List<String>> getMappings(String physicalNode)
+      throws IOException {
+    Map<String, List<String>> mappings;
+
+    mappings = new HashMap<String, List<String>>();
+
+    for (Entry<Utf8, GenericArray<Utf8>> entry : masterClient.getMappings(
+        new Utf8(physicalNode)).entrySet()) {
+      List<String> values;
+
+      values = new LinkedList<String>();
+
+      for (Utf8 utf8Value : entry.getValue()) {
+        values.add(utf8Value.toString());
+      }
+
+      mappings.put(entry.getKey().toString(), values);
+    }
+
+    return mappings;
   }
 
   @Override

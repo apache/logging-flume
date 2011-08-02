@@ -99,6 +99,19 @@
         "values" : "AvroFlumeConfigData"
       }
     },
+    "getMappings" : {
+      "request" : [ {
+        "name" : "physicalNode",
+        "type" : "string"
+      } ],
+      "response" : {
+        "type" : "map",
+        "values" : {
+          "type" : "array",
+          "items" : "string"
+        }
+      }
+    },
     "hasCmdId" : {
       "request" : [ {
         "name" : "cmdid",

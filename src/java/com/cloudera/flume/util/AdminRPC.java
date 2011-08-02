@@ -18,6 +18,7 @@
 package com.cloudera.flume.util;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import com.cloudera.flume.conf.FlumeConfigData;
@@ -40,6 +41,18 @@ public interface AdminRPC {
     throws IOException;
 
   public Map<String, FlumeConfigData> getConfigs() throws IOException;
+
+  /**
+   * Fetch the current physical / logical node mappings. The keys are physical
+   * node names and the values a list of logical nodes currently mapped thereto.
+   * 
+   * @param physicalNode
+   *          The name of the physical node or null to get mappings for all
+   *          nodes.
+   * @return
+   * @throws IOException
+   */
+  public Map<String, List<String>> getMappings(String physicalNode) throws IOException;
 
   public boolean hasCmdId(long cmdid) throws IOException;
 }

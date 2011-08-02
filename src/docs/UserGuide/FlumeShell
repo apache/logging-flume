@@ -99,6 +99,9 @@ LOST if it has not been seen by the master for a "long time".
 +getconfigs+ :: This gets and dumps the configuration specifications of all 
 the logical nodes the master knows about.
 
++getmappings [_physical node_]+ :: Display all logical nodes mapped to
+_physical node_ or all mappings if _physical node_ is omitted.
+
 +exec+ :: Synchronously execute a command on the master.  This command will 
 block until it is completed.
 

@@ -57,5 +57,7 @@ protocol FlumeMasterAdminServerAvro {
   
   map<AvroFlumeConfigData> getConfigs();
   
+  map<array<string>> getMappings(string physicalNode);
+  
   boolean hasCmdId(long cmdid);
 }

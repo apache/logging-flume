@@ -39,6 +39,8 @@ public class FlumeMasterAdminServer {
 
     public boolean hasCmdId(long cmdid) throws TException;
 
+    public Map<String,List<String>> getMappings(String physicalNode) throws TException;
+
   }
 
   public static class Client implements Iface {
@@ -264,6 +266,39 @@ public class FlumeMasterAdminServer {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "hasCmdId failed: unknown result");
     }
 
+    public Map<String,List<String>> getMappings(String physicalNode) throws TException
+    {
+      send_getMappings(physicalNode);
+      return recv_getMappings();
+    }
+
+    public void send_getMappings(String physicalNode) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("getMappings", TMessageType.CALL, seqid_));
+      getMappings_args args = new getMappings_args();
+      args.physicalNode = physicalNode;
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public Map<String,List<String>> recv_getMappings() throws TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      getMappings_result result = new getMappings_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      throw new TApplicationException(TApplicationException.MISSING_RESULT, "getMappings failed: unknown result");
+    }
+
   }
   public static class Processor implements TProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class.getName());
@@ -276,6 +311,7 @@ public class FlumeMasterAdminServer {
       processMap_.put("getNodeStatuses", new getNodeStatuses());
       processMap_.put("getConfigs", new getConfigs());
       processMap_.put("hasCmdId", new hasCmdId());
+      processMap_.put("getMappings", new getMappings());
     }
 
     protected static interface ProcessFunction {
@@ -396,6 +432,22 @@ public class FlumeMasterAdminServer {
         result.success = iface_.hasCmdId(args.cmdid);
         result.setSuccessIsSet(true);
         oprot.writeMessageBegin(new TMessage("hasCmdId", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class getMappings implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        getMappings_args args = new getMappings_args();
+        args.read(iprot);
+        iprot.readMessageEnd();
+        getMappings_result result = new getMappings_result();
+        result.success = iface_.getMappings(args.physicalNode);
+        oprot.writeMessageBegin(new TMessage("getMappings", TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -3646,6 +3698,618 @@ public class FlumeMasterAdminServer {
 
       sb.append("success:");
       sb.append(this.success);
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class getMappings_args implements TBase<getMappings_args._Fields>, java.io.Serializable, Cloneable, Comparable<getMappings_args>   {
+    private static final TStruct STRUCT_DESC = new TStruct("getMappings_args");
+
+    private static final TField PHYSICAL_NODE_FIELD_DESC = new TField("physicalNode", TType.STRING, (short)1);
+
+    public String physicalNode;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      PHYSICAL_NODE((short)1, "physicalNode");
+
+      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byId.put((int)field._thriftId, field);
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        return byId.get(fieldId);
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+      put(_Fields.PHYSICAL_NODE, new FieldMetaData("physicalNode", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(getMappings_args.class, metaDataMap);
+    }
+
+    public getMappings_args() {
+    }
+
+    public getMappings_args(
+      String physicalNode)
+    {
+      this();
+      this.physicalNode = physicalNode;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getMappings_args(getMappings_args other) {
+      if (other.isSetPhysicalNode()) {
+        this.physicalNode = other.physicalNode;
+      }
+    }
+
+    public getMappings_args deepCopy() {
+      return new getMappings_args(this);
+    }
+
+    @Deprecated
+    public getMappings_args clone() {
+      return new getMappings_args(this);
+    }
+
+    public String getPhysicalNode() {
+      return this.physicalNode;
+    }
+
+    public getMappings_args setPhysicalNode(String physicalNode) {
+      this.physicalNode = physicalNode;
+      return this;
+    }
+
+    public void unsetPhysicalNode() {
+      this.physicalNode = null;
+    }
+
+    /** Returns true if field physicalNode is set (has been asigned a value) and false otherwise */
+    public boolean isSetPhysicalNode() {
+      return this.physicalNode != null;
+    }
+
+    public void setPhysicalNodeIsSet(boolean value) {
+      if (!value) {
+        this.physicalNode = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case PHYSICAL_NODE:
+        if (value == null) {
+          unsetPhysicalNode();
+        } else {
+          setPhysicalNode((String)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case PHYSICAL_NODE:
+        return getPhysicalNode();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case PHYSICAL_NODE:
+        return isSetPhysicalNode();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getMappings_args)
+        return this.equals((getMappings_args)that);
+      return false;
+    }
+
+    public boolean equals(getMappings_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_physicalNode = true && this.isSetPhysicalNode();
+      boolean that_present_physicalNode = true && that.isSetPhysicalNode();
+      if (this_present_physicalNode || that_present_physicalNode) {
+        if (!(this_present_physicalNode && that_present_physicalNode))
+          return false;
+        if (!this.physicalNode.equals(that.physicalNode))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(getMappings_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getMappings_args typedOther = (getMappings_args)other;
+
+      lastComparison = Boolean.valueOf(isSetPhysicalNode()).compareTo(isSetPhysicalNode());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(physicalNode, typedOther.physicalNode);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        _Fields fieldId = _Fields.findByThriftId(field.id);
+        if (fieldId == null) {
+          TProtocolUtil.skip(iprot, field.type);
+        } else {
+          switch (fieldId) {
+            case PHYSICAL_NODE:
+              if (field.type == TType.STRING) {
+                this.physicalNode = iprot.readString();
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+          }
+          iprot.readFieldEnd();
+        }
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      if (this.physicalNode != null) {
+        oprot.writeFieldBegin(PHYSICAL_NODE_FIELD_DESC);
+        oprot.writeString(this.physicalNode);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getMappings_args(");
+      boolean first = true;
+
+      sb.append("physicalNode:");
+      if (this.physicalNode == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.physicalNode);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class getMappings_result implements TBase<getMappings_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("getMappings_result");
+
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.MAP, (short)0);
+
+    public Map<String,List<String>> success;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      SUCCESS((short)0, "success");
+
+      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byId.put((int)field._thriftId, field);
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        return byId.get(fieldId);
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new MapMetaData(TType.MAP, 
+              new FieldValueMetaData(TType.STRING), 
+              new ListMetaData(TType.LIST, 
+                  new FieldValueMetaData(TType.STRING)))));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(getMappings_result.class, metaDataMap);
+    }
+
+    public getMappings_result() {
+    }
+
+    public getMappings_result(
+      Map<String,List<String>> success)
+    {
+      this();
+      this.success = success;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getMappings_result(getMappings_result other) {
+      if (other.isSetSuccess()) {
+        Map<String,List<String>> __this__success = new HashMap<String,List<String>>();
+        for (Map.Entry<String, List<String>> other_element : other.success.entrySet()) {
+
+          String other_element_key = other_element.getKey();
+          List<String> other_element_value = other_element.getValue();
+
+          String __this__success_copy_key = other_element_key;
+
+          List<String> __this__success_copy_value = new ArrayList<String>();
+          for (String other_element_value_element : other_element_value) {
+            __this__success_copy_value.add(other_element_value_element);
+          }
+
+          __this__success.put(__this__success_copy_key, __this__success_copy_value);
+        }
+        this.success = __this__success;
+      }
+    }
+
+    public getMappings_result deepCopy() {
+      return new getMappings_result(this);
+    }
+
+    @Deprecated
+    public getMappings_result clone() {
+      return new getMappings_result(this);
+    }
+
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
+    }
+
+    public void putToSuccess(String key, List<String> val) {
+      if (this.success == null) {
+        this.success = new HashMap<String,List<String>>();
+      }
+      this.success.put(key, val);
+    }
+
+    public Map<String,List<String>> getSuccess() {
+      return this.success;
+    }
+
+    public getMappings_result setSuccess(Map<String,List<String>> success) {
+      this.success = success;
+      return this;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((Map<String,List<String>>)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getMappings_result)
+        return this.equals((getMappings_result)that);
+      return false;
+    }
+
+    public boolean equals(getMappings_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        _Fields fieldId = _Fields.findByThriftId(field.id);
+        if (fieldId == null) {
+          TProtocolUtil.skip(iprot, field.type);
+        } else {
+          switch (fieldId) {
+            case SUCCESS:
+              if (field.type == TType.MAP) {
+                {
+                  TMap _map14 = iprot.readMapBegin();
+                  this.success = new HashMap<String,List<String>>(2*_map14.size);
+                  for (int _i15 = 0; _i15 < _map14.size; ++_i15)
+                  {
+                    String _key16;
+                    List<String> _val17;
+                    _key16 = iprot.readString();
+                    {
+                      TList _list18 = iprot.readListBegin();
+                      _val17 = new ArrayList<String>(_list18.size);
+                      for (int _i19 = 0; _i19 < _list18.size; ++_i19)
+                      {
+                        String _elem20;
+                        _elem20 = iprot.readString();
+                        _val17.add(_elem20);
+                      }
+                      iprot.readListEnd();
+                    }
+                    this.success.put(_key16, _val17);
+                  }
+                  iprot.readMapEnd();
+                }
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+          }
+          iprot.readFieldEnd();
+        }
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        {
+          oprot.writeMapBegin(new TMap(TType.STRING, TType.LIST, this.success.size()));
+          for (Map.Entry<String, List<String>> _iter21 : this.success.entrySet())
+          {
+            oprot.writeString(_iter21.getKey());
+            {
+              oprot.writeListBegin(new TList(TType.STRING, _iter21.getValue().size()));
+              for (String _iter22 : _iter21.getValue())
+              {
+                oprot.writeString(_iter22);
+              }
+              oprot.writeListEnd();
+            }
+          }
+          oprot.writeMapEnd();
+        }
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getMappings_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
       first = false;
       sb.append(")");
       return sb.toString();

@@ -110,6 +110,7 @@ public class FlumeShell {
     commandMap.put("getnodestatus", new CommandDescription("", true, 0));
     commandMap.put("quit", new CommandDescription("", false, 0));
     commandMap.put("getconfigs", new CommandDescription("", true, 0));
+    commandMap.put("getmappings", new CommandDescription("[physical node]", true, 0));
     commandMap.put("source", new CommandDescription(
         "load a file and execute flume shell commands in it", false, 1));
 
@@ -552,6 +553,44 @@ public class FlumeShell {
         System.out.println("\t" + e.getKey() + " --> "
             + e.getValue().toString());
       }
+      return 0;
+    }
+
+    if (cmd.getCommand().equals("getmappings")) {
+      Map<String, List<String>> mappings;
+      String physicalNode = null;
+      String forPhysicalMessage = "";
+
+      if (cmd.args.size() > 0) {
+        physicalNode = cmd.args.get(0);
+        forPhysicalMessage = " for physical node " + physicalNode;
+      }
+
+      try {
+        mappings = client.getMappings(physicalNode);
+      } catch (IOException e) {
+        LOG.debug("Disconnected!", e);
+        disconnect();
+        return -1;
+      }
+
+      String header = String.format("%s\n\n%-30s --> %s\n",
+          "Master has the following mappings" + forPhysicalMessage,
+          "Physical Node",
+          "Logical Node(s)"
+      );
+
+      if (mappings.size() > 0) {
+        System.out.println(header);
+
+        for (Entry<String, List<String>> entry : mappings.entrySet()) {
+          System.out.println(String.format("%-30s --> %s", entry.getKey(),
+              entry.getValue()));
+        }
+      } else {
+        System.out.println("No physical / logic node mappings" + forPhysicalMessage + ". Use spawn to map a logical node to a physical node.");
+      }
+
       return 0;
     }
 

@@ -19,11 +19,13 @@ package com.cloudera.flume.master;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Type;
+import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.ipc.HttpServer;
@@ -143,6 +145,31 @@ public class MasterAdminServerAvro
       ret.put(new Utf8(e.getKey()), statusToAvro(e.getValue()));
     }
     return ret;
+  }
+
+  @Override
+  public Map<Utf8, GenericArray<Utf8>> getMappings(Utf8 physicalNode)
+      throws AvroRemoteException {
+    Map<String, List<String>> nativeMappings;
+    Map<Utf8, GenericArray<Utf8>> mappings;
+
+    nativeMappings = delegate.getMappings(physicalNode.toString());
+    mappings = new HashMap<Utf8, GenericArray<Utf8>>();
+
+    for (Entry<String, List<String>> entry : nativeMappings.entrySet()) {
+      GenericArray<Utf8> values;
+
+      values = new GenericData.Array<Utf8>(entry.getValue().size(),
+          Schema.createArray(Schema.create(Schema.Type.STRING)));
+
+      for (String value : entry.getValue()) {
+        values.add(new Utf8(value));
+      }
+
+      mappings.put(new Utf8(entry.getKey()), values);
+    }
+
+    return mappings;
   }
 
   @Override

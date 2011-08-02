@@ -19,6 +19,7 @@ package com.cloudera.flume.util;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -88,6 +89,16 @@ public class AdminRPCThrift implements AdminRPC {
       out.put(s, MasterAdminServerThrift.statusFromThrift(results.get(s)));
     }
     return out;
+  }
+
+  @Override
+  public Map<String, List<String>> getMappings(String physicalNode)
+      throws IOException {
+    try {
+      return masterClient.getMappings(physicalNode);
+    } catch (TException e) {
+      throw new IOException(e);
+    }
   }
 
   @Override

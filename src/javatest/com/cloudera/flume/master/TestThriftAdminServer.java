@@ -20,6 +20,7 @@ package com.cloudera.flume.master;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.TestCase;
@@ -79,6 +80,11 @@ public class TestThriftAdminServer extends TestCase {
     public boolean hasCmdId(long cmdid) throws TException {
       return true;
     }
+
+    @Override
+    public Map<String, List<String>> getMappings(String physicalNode) throws TException {
+      return new HashMap<String, List<String>>();
+    }
   }
 
   public void testMasterAdminServer() throws IOException, TTransportException {
@@ -100,6 +106,9 @@ public class TestThriftAdminServer extends TestCase {
 
     Map<String, FlumeConfigData> cfgs = client.getConfigs();
     assertEquals("Expected response was 0, got " + cfgs.size(), cfgs.size(), 0);
+
+    Map<String, List<String>> mappings = client.getMappings(null);
+    assertEquals("Expected response was 0 got " + mappings.size(), mappings.size(), 0);
 
     server.stop();
   }

@@ -20,14 +20,17 @@ package com.cloudera.flume.master;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
-import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfiguration;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Multimap;
 
 /**
  * Implementation of the admin RPC interface. Since the 
@@ -90,6 +93,47 @@ public class MasterAdminServer {
     return master.getSpecMan().getAllConfigs();
   }
 
+  /**
+   * Fetch the list of logical to physical mappings and return it as {@link Map}
+   * &lt;{@link String}, {@link List}&lt;String&gt;&gt; where the key is the
+   * physical node name and the value is a list of logical nodes mapped to it.
+   * 
+   * @param physicalNode
+   *          The physical node for which to fetch mappings or null to fetch
+   *          all.
+   * @return the node map
+   */
+  public Map<String, List<String>> getMappings(String physicalNode) {
+    Map<String, List<String>> resultMap = new HashMap<String, List<String>>();
+
+    if (physicalNode != null) {
+      List<String> logicalNodes = master.getSpecMan().getLogicalNode(
+          physicalNode);
+
+      if (logicalNodes != null && logicalNodes.size() > 0) {
+        resultMap.put(physicalNode,
+            master.getSpecMan().getLogicalNode(physicalNode));
+      }
+    } else {
+      Multimap<String, String> m = master.getSpecMan().getLogicalNodeMap();
+
+      // Transform the multimap into a map of string => list<string>.
+      for (Entry<String, String> entry : m.entries()) {
+        if (!resultMap.containsKey(entry.getKey())) {
+          resultMap.put(entry.getKey(), new LinkedList<String>());
+        }
+
+        resultMap.get(entry.getKey()).add(entry.getValue());
+      }
+    }
+
+    return resultMap;
+  }
+
+  /*
+   * Returns true if there is a command in the command manager with the
+   * specified id.
+   */
   public boolean hasCmdId(long cmdid) {
     return master.getCmdMan().getStatus(cmdid) != null;
   }

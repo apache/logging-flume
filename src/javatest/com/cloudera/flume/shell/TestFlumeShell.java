@@ -83,6 +83,55 @@ public class TestFlumeShell extends SetupMasterTestEnv {
   }
 
   /**
+   * Create a master, connect via shell, create some logical nodes, spawn them,
+   * and see if the output looks as expected.
+   *
+   * @throws InterruptedException
+   */
+  @Test
+  public void testGetMappings() throws InterruptedException {
+    FlumeShell sh = new FlumeShell();
+    long retval;
+
+    retval = sh
+        .executeLine("connect localhost:"
+            + FlumeConfiguration.DEFAULT_ADMIN_PORT);
+    assertEquals(0, retval);
+
+    retval = sh.executeLine("getmappings");
+    assertEquals(0, retval);
+
+    assertEquals(0, flumeMaster.getSpecMan().getLogicalNodeMap().size());
+
+    Clock.sleep(1000);
+
+    retval = sh.executeLine("exec config foo 'tail(\"/var/log/messages\")' 'console(\"avrojson\")'");
+    assertEquals(0, retval);
+    retval = sh.executeLine("exec config bar 'tail(\"/var/log/messages2\")' 'console(\"avrojson\")'");
+    assertEquals(0, retval);
+
+    retval = sh.executeLine("exec spawn localhost foo");
+    assertEquals(0, retval);
+    assertEquals(1, flumeMaster.getSpecMan().getLogicalNodeMap().size());
+
+    retval = sh.executeLine("getmappings");
+    assertEquals(0, retval);
+
+    retval = sh.executeLine("exec spawn localhost bar");
+    assertEquals(0, retval);
+    assertEquals(2, flumeMaster.getSpecMan().getLogicalNodeMap().size());
+
+    retval = sh.executeLine("getmappings");
+    assertEquals(0, retval);
+
+    retval = sh.executeLine("getmappings idonotexist");
+    assertEquals(0, retval);
+
+    retval = sh.executeLine("getmappings localhost");
+    assertEquals(0, retval);
+  }
+
+  /**
    * Create a master, then connect via shell, and then issue a long noop
    */
   @Test

@@ -429,7 +429,15 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
 
   @Override
   public synchronized List<String> getLogicalNodes(String physNode) {
-    return Collections.unmodifiableList(nodeMap.get(physNode));
+    List<String> values;
+
+    values = nodeMap.get(physNode);
+
+    if (values == null) {
+      return Collections.emptyList();
+    }
+
+    return Collections.unmodifiableList(values);
   }
 
   @Override

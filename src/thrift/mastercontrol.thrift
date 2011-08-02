@@ -44,6 +44,7 @@ service FlumeMasterAdminServer {
   map<string, FlumeNodeStatusThrift> getNodeStatuses(),
   map<string, flumeconfig.ThriftFlumeConfigData> getConfigs(),
   bool hasCmdId(1: i64 cmdid)
+  map<string, list<string>> getMappings(1: string physicalNode)
   // TODO (jon) augment with getstate
 }
 
