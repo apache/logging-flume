@@ -78,7 +78,7 @@ public class TestMultiGrep implements ExampleData {
   @Test
   public void testMultiGrepBuilder() throws IOException, InterruptedException {
     Collection<MultiGrepReporterSink<String>> c = new MultiGrepReporterBuilder(
-        HADOOP_GREP).load();
+        getClass().getClassLoader().getResource(HADOOP_GREP).getFile()).load();
     Assert.assertEquals(1, c.size());
 
     MultiGrepReporterSink<String> snk = c.iterator().next();

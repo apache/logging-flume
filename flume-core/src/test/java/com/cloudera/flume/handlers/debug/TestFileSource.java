@@ -33,7 +33,8 @@ public class TestFileSource implements ExampleData {
 
   @Test
   public void testFileSource() throws IOException, InterruptedException {
-    EventSource src = new TextFileSource(TEST);
+    EventSource src = new TextFileSource(getClass().getClassLoader()
+        .getResource(TEST).getFile());
     src.open();
     int count = 0;
     while (true) {
