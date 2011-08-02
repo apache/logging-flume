@@ -22,11 +22,15 @@ import static org.junit.Assert.fail;
 
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.CommonTree;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.junit.Test;
 
 import com.cloudera.flume.ExampleData;
+import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
+import com.cloudera.flume.conf.SinkFactory.SinkDecoBuilder;
+import com.cloudera.flume.core.EventSink;
+import com.cloudera.flume.core.EventSinkDecorator;
 
 /**
  * This tests a swath of the language features for the flume configuration
@@ -76,11 +80,118 @@ public class TestParser implements ExampleData {
     CommonTree o2x = FlumeBuilder.parseLiteral(s2x);
     LOG.info(toTree(o2x));
     // assertEquals("\"string\"", FlumeBuilder.buildArg(o2x));
-    assertEquals("\"string\"", FlumeBuilder.buildArg(o2x));
+    assertEquals("\"string\"", FlumeBuilder.buildSimpleArg(o2x));
   }
 
   String toTree(Object o) {
     return ((CommonTree) o).toStringTree();
+  }
+
+  @Test
+  public void testKeywordArgParser() throws RecognitionException {
+    LOG.info("== kw args ==");
+
+    // kwargs only
+    String s = "text(bogus=\"bogusdata\",foo=\"bar\")";
+    Object o = FlumeBuilder.parseSink(s);
+    LOG.info(s);
+    LOG.info(toTree(o));
+    assertEquals(
+        "(SINK text (KWARG bogus (STRING \"bogusdata\")) (KWARG foo (STRING \"bar\")))",
+        toTree(o));
+
+    // normal arg then kwargs
+    String s2 = "text(\"bogusdata\",foo=\"bar\")";
+    Object o2 = FlumeBuilder.parseSink(s2);
+    LOG.info(s2);
+    LOG.info(toTree(o2));
+    assertEquals(
+        "(SINK text (STRING \"bogusdata\") (KWARG foo (STRING \"bar\")))",
+        toTree(o2));
+
+    // normal arg then kwargs
+    s2 = "text(\"bogusdata\",foo=\"bar\", boo=1.5)";
+    o2 = FlumeBuilder.parseSink(s2);
+    LOG.info(s2);
+    LOG.info(toTree(o2));
+    assertEquals(
+        "(SINK text (STRING \"bogusdata\") (KWARG foo (STRING \"bar\")) (KWARG boo (FLOAT 1.5)))",
+        toTree(o2));
+
+  }
+
+  /**
+   * Reject kw arg before normal args. Our parser converts all exceptions into
+   * RuntimeRecoginitionExceptions.
+   */
+  @Test(expected = RuntimeRecognitionException.class)
+  public void testBadKWArgOrder() throws RecognitionException {
+    // kwargs then normal arg not cool
+    String s2 = "text(foo=\"bar\",\"bogusdata\")";
+    FlumeBuilder.parseSink(s2);
+  }
+
+  @Test
+  public void testKWArgContextSink() throws RecognitionException,
+      FlumeSpecException {
+    class ContextSink extends EventSink.Base {
+      public Context ctx;
+      public String[] argv;
+
+      ContextSink(Context c, String[] argv) {
+        this.ctx = c;
+        this.argv = argv;
+      }
+    }
+
+    SinkFactoryImpl sf = new SinkFactoryImpl();
+    sf.setSink("context", new SinkBuilder() {
+      @Override
+      public EventSink build(Context context, String... argv) {
+        return new ContextSink(context, argv);
+      }
+    });
+    FlumeBuilder.setSinkFactory(sf);
+
+    String spec = "context(123, test=\"foo\", try=456)";
+    ContextSink ctxSnk = (ContextSink) FlumeBuilder.buildSink(new Context(),
+        spec);
+    assertEquals("123", ctxSnk.argv[0]);
+    assertEquals("foo", ctxSnk.ctx.getValue("test"));
+    assertEquals("456", ctxSnk.ctx.getValue("try"));
+  }
+
+  @Test
+  public void testKWArgContextDeco() throws RecognitionException,
+      FlumeSpecException {
+    class ContextDeco extends EventSinkDecorator<EventSink> {
+      public Context ctx;
+      public String[] argv;
+
+      ContextDeco(EventSink s, Context c, String[] argv) {
+        super(s);
+        this.ctx = c;
+        this.argv = argv;
+      }
+    }
+
+    SinkFactoryImpl sf = new SinkFactoryImpl();
+    sf.setDeco("context", new SinkDecoBuilder() {
+      @Override
+      public EventSinkDecorator<EventSink> build(Context context,
+          String... argv) {
+        return new ContextDeco(null, context, argv);
+      }
+    });
+    FlumeBuilder.setSinkFactory(sf);
+
+    String spec = "{ context(123, test=\"foo\", try=456) => null }";
+    ContextDeco ctxSnk = (ContextDeco) FlumeBuilder.buildSink(new Context(),
+        spec);
+    assertEquals("123", ctxSnk.argv[0]);
+    assertEquals("foo", ctxSnk.ctx.getValue("test"));
+    assertEquals("456", ctxSnk.ctx.getValue("try"));
+
   }
 
   @Test

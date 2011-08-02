@@ -233,7 +233,7 @@ public class TestPatternMatch {
     CommonTree fix = m.get("logical");
     LOG.info(fix.toStringTree());
 
-    String lname = FlumeBuilder.buildArg(m.get("LogicalNodeName"));
+    String lname = FlumeBuilder.buildSimpleArg(m.get("LogicalNodeName"));
     LOG.info("LogicalName " + lname);
 
     CommonTree replace = FlumeBuilder.parseSink("rpcSink(\"foo\",12345)");
@@ -258,7 +258,7 @@ public class TestPatternMatch {
     Map<String, CommonTree> m = pp.match(sink);
     assertNotNull(m);
     CommonTree lnCt = (CommonTree) m.get("ln").getParent();
-    assertEquals("collector1", FlumeBuilder.buildArg((CommonTree) lnCt
+    assertEquals("collector1", FlumeBuilder.buildSimpleArg((CommonTree) lnCt
         .getChild(1)));
     dumpMatches(m);
     LOG.info(m);
@@ -286,7 +286,7 @@ public class TestPatternMatch {
     m = pp.match(sink);
     assertNotNull(m);
     lnCt = (CommonTree) m.get("ln").getChild(1);
-    assertEquals("collector1", FlumeBuilder.buildArg(lnCt));
+    assertEquals("collector1", FlumeBuilder.buildSimpleArg(lnCt));
     dumpMatches(m);
     LOG.info(m);
 

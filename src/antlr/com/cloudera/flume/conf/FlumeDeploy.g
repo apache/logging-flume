@@ -39,6 +39,7 @@ tokens {
   STRING;
   BOOL;
   FLOAT;
+  KWARG;
 }
 @header {
 /**
@@ -136,12 +137,19 @@ rollSink        :  'roll' args '{' simpleSink '}'
 failoverChain   :  'failchain' args '{' simpleSink '}'
                                   -> ^(FAILCHAIN simpleSink args);
 
+args    : '(' ( arglist (',' kwarglist)?  ) ')' -> arglist kwarglist?
+        | '(' kwarglist ')' -> kwarglist? 
+        | '(' ')' -> 
+        ;
+
 arglist	:	literal (',' literal)* -> literal+ ;
-args 	:	'(' arglist? ')' -> arglist?
-	;
+
+kwarglist : kwarg (',' kwarg)* -> kwarg+;
+
+kwarg   :   Identifier '=' literal -> ^(KWARG Identifier literal)  ;
 
 // Basic Java-style literals  (taken from Java grammar)
-literal 
+literal
     :   integerLiteral
     |   StringLiteral		-> ^(STRING StringLiteral)
     |   booleanLiteral

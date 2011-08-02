@@ -83,7 +83,7 @@ public class LogicalConfigurationManager extends
     final String orig = StringEscapeUtils.escapeJava(FlumeSpecGen
         .genEventSink(lsnk));
 
-    String tgtLn = FlumeBuilder.buildArg((CommonTree) lsnk.getChild(1));
+    String tgtLn = FlumeBuilder.buildSimpleArg((CommonTree) lsnk.getChild(1));
 
     PhysicalNodeInfo pni = nameMan.getPhysicalNodeInfo(tgtLn);
 
