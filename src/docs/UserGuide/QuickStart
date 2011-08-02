@@ -156,6 +156,39 @@ $ echo Hello world test1! >> test1
 $ echo Hello world test2! >> test2 
 ----
 
+The tail source by default assumes `\n` as a delimiter, and excludes
+the delimiter from events.  There are optional line delimiter
+arguments that allow you to specify arbitrary regular expressions as
+delimiters and to specify if the delimiter should be part of the
+`prev` ious event, `next` event, or `exclude` d.
+
+Here are some examples and scenarios to illustrate:
+
+The following example tails a file that requires two or more
+consecutive new lines to be considered a delimiter. The newlines are
+excluded from the events.
+
+----
+tail("file", delim="\n\n+", delimMode="exclude")
+----
+
+This example tails a file and uses `</a>` as a delimiter, and appends
+the delimiter to the previous event.  This could serve as a
+quick-and-dirty xml record splitter.
+
+----
+tail("file", delim="</a>", delimMode="prev")
+----
+
+Finally, this example tails a file and uses the regex "\n\d\d\d\d" as
+a delimiter and appends the delimiter to the next event.  This could
+be used to gather lines from a stack dump in a log file that starts
+with four digits (like a year from a date stamp).
+
+----
+tail("file", delim="\\n\\d\\d\\d\\d", delimMode="next")
+----
+
 ==== Synthetic sources, `synth`
 
 Here's one more example where you use the `synth` sources to generate events:
