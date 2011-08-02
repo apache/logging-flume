@@ -21,6 +21,14 @@ limitations under the License.
 
 === history
 
+v0.9.2 11/15/10:: Support for all hadoop supported compression codecs.
+Avro RPC support.  Flexible throughput thottling.  Useful error
+messsages in shell. Upgrades to Thrift RPC support.  Performance and
+robustness improvements in tail and exec.
+
+v0.9.1u1 10/12/10:: Added write support for Kerberized HDFS. Flume
+cookbook.
+
 v0.9.1 8/9/10:: Improved error messages and visibility of property
 configuration values.  First external contributions.  Fixed
 reconfiguration hangs.  Improved implementing plugins documentation.

@@ -221,8 +221,8 @@ will for an Thread.interrupt() call.  The source should be able to
 handle InterruptedExceptions and percolate interrupted status up the
 returning call stack.
 
-NOTE: In v0.9.1, interruptions when caught should be handled by
-re-flagging the Thread's interrupted flag (a call to
+NOTE: In v0.9.1 and v0.9.2, interruptions when caught should be
+handled by re-flagging the Thread's interrupted flag (a call to
 +Thread.currentThread().interrupt()+) and then throwing an
 IOException.  The API for extensions will likely change in the future
 to throw either an IOException or an InterruptedException.
