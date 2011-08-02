@@ -196,8 +196,11 @@ public class RollSink extends EventSink.Base {
       } else if (cause instanceof RuntimeException) {
         throw (RuntimeException) cause;
       } else {
-        // we have a throwable that is not an exception.
-        LOG.error("Got a throwable that is not an exception!", e1);
+        // we have a throwable that is not an exception. (such as a
+        // NoClassDefFoundError)
+        LOG.error("Got a throwable that is not an exception! Bailing out!",
+            e1.getCause());
+        throw new RuntimeException(e1.getCause());
       }
     } catch (CancellationException ce) {
       Thread.currentThread().interrupt();
@@ -248,7 +251,7 @@ public class RollSink extends EventSink.Base {
       curSink.close();
     } catch (IOException ioe) {
       // Eat this exception and just move to reopening
-      LOG.warn("IOException when closing subsink",ioe);
+      LOG.warn("IOException when closing subsink", ioe);
 
       // other exceptions propagate out of here.
     }
@@ -346,7 +349,7 @@ public class RollSink extends EventSink.Base {
       trigger.getTagger().newTag();
       triggerThread = new TriggerThread();
       triggerThread.doStart();
-    
+
       try {
         curSink = newSink(ctx);
         curSink.open();

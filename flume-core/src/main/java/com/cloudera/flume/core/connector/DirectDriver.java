@@ -112,7 +112,7 @@ public class DirectDriver extends Driver {
         }
       } catch (Exception e1) {
         // Catches all exceptions or throwables. This is a separate thread
-        LOG.error("Closing down due to exception during append calls");
+        LOG.error("Closing down due to exception during append calls", e1);
         errorCleanup(PumperThread.this.getName(), e1);
         return;
       }

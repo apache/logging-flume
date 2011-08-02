@@ -857,4 +857,36 @@ public class TestCollectorSink {
     coll.close();
   }
 
+  /**
+   * This test verifies that an error (OutOfMemoryError, NoClassDefinedError)
+   * gets converted into a runtime exception and does not hang a
+   * collector/logical node
+   *
+   * @throws IOException
+   * @throws InterruptedException
+   * @throws FlumeSpecException
+   */
+  @Test(expected = RuntimeException.class)
+  public void testCloseErrorSink() throws IOException, InterruptedException,
+      FlumeSpecException {
+    final EventSink snk = mock(EventSink.class);
+    doThrow(new RuntimeException("Force unexpected append error")).when(snk)
+        .append((Event) anyObject());
+    SinkBuilder sb = new SinkBuilder() {
+      @Override
+      public EventSink build(Context context, String... argv) {
+        return snk;
+      }
+    };
+    SinkFactoryImpl sf = new SinkFactoryImpl();
+    sf.setSink("appendError", sb);
+    FlumeBuilder.setSinkFactory(sf);
+
+    final EventSink coll = FlumeBuilder.buildSink(
+        LogicalNodeContext.testingContext(), "collector(5000) { appendError}");
+    coll.open();
+    coll.append(new EventImpl("foo".getBytes()));
+    coll.close();
+  }
+
 }
