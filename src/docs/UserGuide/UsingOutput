@@ -192,12 +192,13 @@ default :: a debugging format.
 
 === Small Files Compared to High Latency
 
-For all versions Hadoop's file system that are {lt}= 0.20.x, HDFS has write-once 
-read-many semantics. Thus, the only way to reliably flush an HDFS file is 
-to close the file.  Moreover, once a file is closed, no new data can be 
-appended to the file.  This presents a tension between getting data written 
-quickly to HDFS and potentially having many small files (which is a potential 
-scalability bottleneck of HDFS).
+For all versions Hadoop's file system that are earlier than 0.20.x,
+HDFS has write-once read-many semantics. Thus, the only way to
+reliably flush an HDFS file is to close the file.  Moreover, once a
+file is closed, no new data can be appended to the file.  This
+presents a tension between getting data written quickly to HDFS and
+potentially having many small files (which is a potential scalability
+bottleneck of HDFS).
 
 On one side, to minimize the load and data stored throughput the system, 
 ideally one would flush data to HDFS as soon as it arrives. Flushing 

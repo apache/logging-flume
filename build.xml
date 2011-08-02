@@ -160,6 +160,8 @@ to call at top-level: ant deploy-contrib compile-core-test
     <mkdir dir="${basedir}/libtest"/>
     <mkdir dir="${build.docs}"/>
     <mkdir dir="${build.docs}/DeveloperGuide"/>
+    <mkdir dir="${build.docs}/UserGuide"/>
+    <mkdir dir="${build.docs}/Cookbook"/>
     <mkdir dir="${ivy.tools.lib}"/>
 
     <condition property="ivy.jar.exists">
@@ -182,7 +184,7 @@ to call at top-level: ant deploy-contrib compile-core-test
         <exclude name="**/*.jsp" />
       </fileset>
     </copy>
-
+    <tstamp/>
 
   </target>
 
@@ -726,49 +728,112 @@ to call at top-level: ant deploy-contrib compile-core-test
   </target>  
 
   <!-- ================================================================== -->
-  <!-- Make Docs (UserGuide, cookbook, DeveloperGuide)       -->
+  <!-- Make Docs (UserGuide, Cookbook, DeveloperGuide)                    -->
+  <!--  converts to docbook and then to html to avoid GPL code insertion  -->
   <!--  in ubuntu requires pkgs: asciidoc,source-highlight,graphviz       -->
   <!-- ================================================================== -->
-  <target name="docs" depends="userguide,cookbook,developerguide" description="Build documentation"/>
+  <target name="docs" depends="userguide,cookbook,developerguide,docindex" description="Build documentation"/>
 
   <uptodate property="userguide.uptodate"
-	    targetfile="${build.docs}/UserGuide.html">
+	    targetfile="${build.docs}/UserGuide/index.html">
     <srcfiles dir="${docs.src.dir}/UserGuide" includes="*"/>
+    <srcfiles dir="${docs.src.dir}/web" includes="*"/>
   </uptodate>
   <uptodate property="cookbook.uptodate"
-	    targetfile="${build.docs}/Cookbook.html" >
+	    targetfile="${build.docs}/Cookbook/index.html" >
     <srcfiles dir="${docs.src.dir}/cookbook" includes="*"/>
+    <srcfiles dir="${docs.src.dir}/web" includes="*"/>
   </uptodate>
+  <uptodate property="developerguide.uptodate"
+	    targetfile="${build.docs}/DeveloperGuide/index.html" >
+    <srcfiles dir="${docs.src.dir}/DeveloperGuide" includes="*"/>
+    <srcfiles dir="${docs.src.dir}/web" includes="*"/>
+  </uptodate>
+  <uptodate property="docindex.uptodate"
+	    targetfile="${build.docs}/index.html" >
+    <srcfiles dir="${docs.src.dir}/web" includes="*"/>
+  </uptodate>
+
   
   <target name="userguide" depends="init" description="Build UserGuide" unless="userguide.uptodate" >
     <exec executable="asciidoc" dir="${basedir}" failonerror="true">
-      <arg line="-a toc -o ${build.docs}/UserGuide.html ${docs.src.dir}/UserGuide/FullGuide"/>
+      <arg line="-a revnumber=${version} -a revdate='${TODAY}' -b docbook -o ${build.docs}/UserGuide/index.xml ${docs.src.dir}/UserGuide/FullGuide"/>
     </exec>
 
-    <copy todir="${docs.dir}">
+    <exec executable="xmlto" dir="${basedir}" failonerror="true">
+      <arg line="--skip-validation -o ${build.docs}/UserGuide -m src/docs/web/html.xsl html-nochunks ${build.docs}/UserGuide/index.xml "/>
+    </exec>
+
+    <delete file="${build.docs}/UserGuide/index.xml" />
+
+    <copy todir="${docs.dir}/UserGuide">
+      <fileset dir="${docs.src.dir}/web" includes="**"/>
+    </copy>
+
+    <copy todir="${docs.dir}/UserGuide">
       <fileset dir="${docs.src.dir}/UserGuide" includes="**/*.png"/>
     </copy>
   </target>
 
   <target name="cookbook" depends="init" description="Build documentation" unless="cookbook.uptodate">
     <exec executable="asciidoc" dir="${basedir}" failonerror="true">
-      <arg line="-a toc -o ${build.docs}/Cookbook.html ${docs.src.dir}/cookbook/Cookbook"/>
+      <arg line="-a revnumber=${version}  -a revdate='${TODAY}'  -b docbook -o ${build.docs}/Cookbook/index.xml ${docs.src.dir}/cookbook/Cookbook"/>
     </exec>
 
-    <copy todir="${docs.dir}">
+    <exec executable="xmlto" dir="${basedir}" failonerror="true">
+      <arg line="--skip-validation -o ${build.docs}/Cookbook -m src/docs/web/html.xsl html-nochunks ${build.docs}/Cookbook/index.xml "/>
+    </exec>
+
+    <delete file="${build.docs}/cookbook/index.xml" />
+
+    <copy todir="${docs.dir}/Cookbook">
+      <fileset dir="${docs.src.dir}/web" includes="**"/>
+    </copy>
+
+    <copy todir="${docs.dir}/Cookbook">
       <fileset dir="${docs.src.dir}/cookbook" includes="**/*.png"/>
     </copy>
   </target>
 
-  <target name="developerguide" depends="init" description="Build DeveloperGuide">
+  <target name="developerguide" depends="init" description="Build DeveloperGuide" unless="developerguide.uptodate">
     <exec executable="asciidoc" dir="${basedir}" failonerror="true">
-      <arg line="-a toc -o ${build.docs}/DeveloperGuide/index.html ${docs.src.dir}/DeveloperGuide/FullGuide"/>
+      <arg line="-a revnumber=${version} -a revdate='${TODAY}' -b docbook -o ${build.docs}/DeveloperGuide/index.xml ${docs.src.dir}/DeveloperGuide/FullGuide"/>
     </exec>
+
+    <exec executable="xmlto" dir="${basedir}" failonerror="true">
+      <arg line="--skip-validation -o ${build.docs}/DeveloperGuide -m src/docs/web/html.xsl html-nochunks ${build.docs}/DeveloperGuide/index.xml "/>
+    </exec>
+
+    <delete file="${build.docs}/DeveloperGuide/index.xml" />
+
+    <copy todir="${docs.dir}/DeveloperGuide">
+      <fileset dir="${docs.src.dir}/web" includes="**"/>
+    </copy>
 
     <copy todir="${docs.dir}/DeveloperGuide">
       <fileset dir="${docs.src.dir}/DeveloperGuide" includes="**/*.png"/>
     </copy>
   </target>
+
+
+  <target name="docindex" depends="init" description="Build Index Page for docs" unless="docindex.uptodate">
+    <exec executable="asciidoc" dir="${basedir}" failonerror="true">
+      <arg line="-a revnumber=${version} -a revdate='${TODAY}' -b docbook -o ${build.docs}/index.xml ${docs.src.dir}/web/index.txt"/>
+    </exec>
+
+    <exec executable="xmlto" dir="${basedir}" failonerror="true">
+      <arg line="--skip-validation -o ${build.docs} -m src/docs/web/html.xsl html-nochunks ${build.docs}/index.xml "/>
+    </exec>
+
+    <delete file="${build.docs}/index.xml" />
+
+    <!-- there are 4 copies of this.  super inefficient -->
+    <copy todir="${docs.dir}">
+      <fileset dir="${docs.src.dir}/web" includes="**"/>
+    </copy>
+
+  </target>
+
 
  
   <!-- ================================================================== -->

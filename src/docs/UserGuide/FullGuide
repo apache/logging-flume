@@ -1,7 +1,8 @@
 Flume User Guide 
 =================
 flume-dev@cloudera.org
-v0.9.3-SNAPSHOT, December 2010
+
+// version number comes from command line.
 
 ////////////////////
 Licensed to Cloudera, Inc. under one

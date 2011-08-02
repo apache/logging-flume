@@ -4,7 +4,7 @@ Flume 0.9.3 (Unreleased)
 Flume 0.9.2
 ===========
 
-Mulitple masters does not work in conjunction with automatic failover
+Multiple masters does not work in conjunction with automatic failover
 chains configurations.
 
 This version significantly reduces the chances of data duplication
