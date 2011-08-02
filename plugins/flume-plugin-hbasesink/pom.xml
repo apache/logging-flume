@@ -11,15 +11,14 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.cloudera.flume.plugin</groupId>
   <artifactId>flume-plugin-hbasesink</artifactId>
-  <version>0.9.4-SNAPSHOT</version>
   <name>Flume HBase Plugin</name>
 
   <dependencies>
 
     <dependency>
-      <groupId>com.cloudera</groupId>
+      <groupId>${project.parent.groupId}</groupId>
       <artifactId>flume-core</artifactId>
-      <version>0.9.4-SNAPSHOT</version>
+      <version>${project.parent.version}</version>
     </dependency>
 
     <dependency>

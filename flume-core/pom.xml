@@ -10,9 +10,7 @@
   </parent>
 
   <name>Flume Core</name>
-  <groupId>com.cloudera</groupId>
   <artifactId>flume-core</artifactId>
-  <version>0.9.4-SNAPSHOT</version>
 
   <build>
     <plugins>

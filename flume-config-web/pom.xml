@@ -9,9 +9,7 @@
     <version>0.9.4-SNAPSHOT</version>
   </parent>
 
-  <groupId>com.cloudera</groupId>
   <artifactId>flume-config-web</artifactId>
-  <version>0.9.4-SNAPSHOT</version>
   <name>Flume Master Config Web Application</name>
   <packaging>war</packaging>
 
@@ -66,7 +64,7 @@
     <dependency>
       <groupId>com.cloudera</groupId>
       <artifactId>flume-core</artifactId>
-      <version>0.9.4-SNAPSHOT</version>
+      <version>${project.parent.version}</version>
       <scope>provided</scope>
     </dependency>
 

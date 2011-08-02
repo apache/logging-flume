@@ -10,9 +10,7 @@
   </parent>
 
   <name>Flume Node Web</name>
-  <groupId>com.cloudera</groupId>
   <artifactId>flume-node-web</artifactId>
-  <version>0.9.4-SNAPSHOT</version>
   <packaging>war</packaging>
 
   <build>
@@ -54,9 +52,9 @@
   <dependencies>
 
     <dependency>
-      <groupId>com.cloudera</groupId>
+      <groupId>${project.parent.groupId}</groupId>
       <artifactId>flume-core</artifactId>
-      <version>0.9.4-SNAPSHOT</version>
+      <version>${project.parent.version}</version>
       <scope>provided</scope>
     </dependency>
 

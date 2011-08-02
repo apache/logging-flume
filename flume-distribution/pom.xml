@@ -9,9 +9,7 @@
     <version>0.9.4-SNAPSHOT</version>
   </parent>
 
-  <groupId>com.cloudera</groupId>
   <artifactId>flume-distribution</artifactId>
-  <version>0.9.4-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Flume Distribution Project</name>
   <description>A module to handle all distribution packaging and assembly.</description>
@@ -46,29 +44,29 @@
   <dependencies>
 
     <dependency>
-      <groupId>com.cloudera</groupId>
+      <groupId>${project.parent.groupId}</groupId>
       <artifactId>flume-core</artifactId>
-      <version>0.9.4-SNAPSHOT</version>
+      <version>${project.parent.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>com.cloudera</groupId>
+      <groupId>${project.parent.groupId}</groupId>
       <artifactId>flume-config-web</artifactId>
       <type>war</type>
-      <version>0.9.4-SNAPSHOT</version>
+      <version>${project.parent.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>com.cloudera</groupId>
+      <groupId>${project.parent.groupId}</groupId>
       <artifactId>flume-node-web</artifactId>
       <type>war</type>
-      <version>0.9.4-SNAPSHOT</version>
+      <version>${project.parent.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>com.cloudera</groupId>
+      <groupId>${project.parent.groupId}</groupId>
       <artifactId>flume-docs</artifactId>
-      <version>0.9.4-SNAPSHOT</version>
+      <version>${project.parent.version}</version>
     </dependency>
 
   </dependencies>

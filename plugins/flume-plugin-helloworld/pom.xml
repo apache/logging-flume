@@ -11,16 +11,15 @@
 
   <groupId>com.cloudera.flume.plugin</groupId>
   <artifactId>flume-plugin-helloworld</artifactId>
-  <version>0.9.4-SNAPSHOT</version>
   <name>Flume Hello World Plugin</name>
   <description>An example hello world plugin for Flume</description>
 
   <dependencies>
 
     <dependency>
-      <groupId>com.cloudera</groupId>
+      <groupId>${project.parent.groupId}</groupId>
       <artifactId>flume-core</artifactId>
-      <version>0.9.4-SNAPSHOT</version>
+      <version>${project.parent.version}</version>
     </dependency>
 
   </dependencies>

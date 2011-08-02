@@ -25,17 +25,15 @@
     <version>0.9.4-SNAPSHOT</version>
   </parent>
 
-  <groupId>com.cloudera</groupId>
   <artifactId>flume-log4j-appender</artifactId>
-  <version>0.9.4-SNAPSHOT</version>
   <name>A log4j appender for Flume</name>
 
   <dependencies>
 
     <dependency>
-      <groupId>com.cloudera</groupId>
+      <groupId>${project.parent.groupId}</groupId>
       <artifactId>flume-core</artifactId>
-      <version>0.9.4-SNAPSHOT</version>
+      <version>${project.parent.version}</version>
     </dependency>
 
     <dependency>
