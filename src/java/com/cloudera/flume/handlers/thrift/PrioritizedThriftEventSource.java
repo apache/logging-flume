@@ -163,24 +163,6 @@ public class PrioritizedThriftEventSource extends EventSource.Base {
     }
   }
 
-  public static void main(String[] argv) {
-    FlumeConfiguration conf = FlumeConfiguration.get();
-    PrioritizedThriftEventSource src = new PrioritizedThriftEventSource(conf
-        .getCollectorPort());
-
-    try {
-      src.open();
-      Event e;
-      e = src.next();
-      while (e != null) {
-        System.out.println(e);
-        e = src.next();
-      }
-    } catch (IOException e1) {
-      e1.printStackTrace();
-    }
-  }
-
   public static SourceBuilder builder() {
     return new SourceBuilder() {
 

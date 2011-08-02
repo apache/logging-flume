@@ -210,43 +210,4 @@ public class IrcSource extends EventSource.Base {
       }
     };
   }
-
-  /**
-   * A simple irc client using the source irc source interface.
-   */
-  public static void main(String[] argv) throws IOException {
-
-    if (argv.length != 4) {
-      System.err.println("Usage: IrcSource server port nick #channel");
-      System.exit(-1);
-    }
-
-    String server = argv[0];
-    int port = 0;
-    try {
-      port = Integer.parseInt(argv[1]);
-    } catch (Exception e) {
-      System.err.println("Problem parsing port number: " + argv[1]);
-      System.exit(-1);
-    }
-
-    String nick = argv[2];
-    String chan = argv[3];
-
-    final IrcSource src = new IrcSource(server, port, nick, chan);
-
-    new Thread() {
-      public void run() {
-        try {
-          while (true) {
-            System.out.println(src.next());
-          }
-        } catch (IOException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        }
-      }
-    }.start();
-    src.open();
-  }
 }

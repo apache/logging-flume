@@ -92,22 +92,6 @@ public class SeqfileEventSource extends EventSource.Base {
     return "SeqfileEventSource name=" + fname;
   }
 
-  public static void main(String[] argv) throws IOException {
-    if (argv.length < 1) {
-      System.err.println("need to specify source file");
-      System.exit(-1);
-    }
-
-    SeqfileEventSource src = SeqfileEventSource.openLocal(argv[0]);
-    do {
-      Event e = src.next();
-      if (e == null)
-        break;
-
-      System.out.println(e);
-    } while (true);
-  }
-
   public static SourceBuilder builder() {
     return new SourceBuilder() {
 

@@ -85,24 +85,4 @@ public class ThriftRawEventSink extends ThriftEventSink {
       }
     };
   }
-
-  public static void main(String argv[]) {
-    FlumeConfiguration conf = FlumeConfiguration.get();
-    ThriftRawEventSink sink =
-        new ThriftRawEventSink("localhost", conf.getCollectorPort());
-    try {
-      sink.open();
-
-      for (int i = 0; i < 100; i++) {
-        Event e = new EventImpl(("This is a test " + i).getBytes());
-        sink.append(e);
-        Thread.sleep(200);
-      }
-    } catch (IOException e) {
-      e.printStackTrace();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-
-  }
 }
