@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -257,6 +259,7 @@ public class LogicalNode implements Reportable {
       LOG.error("Load Config interrupted", e);
     }
   }
+
 
   /**
    * Takes a FlumeConfigData and attempts load/config the node.

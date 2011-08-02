@@ -27,13 +27,15 @@ import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
-import com.cloudera.flume.conf.SinkFactoryImpl;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
+import com.cloudera.flume.conf.SinkFactoryImpl;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.master.FlumeMaster;
 import com.cloudera.util.NetUtils;
@@ -42,7 +44,8 @@ import com.cloudera.util.NetUtils;
  * Test cases for the LivenessManager module.
  */
 public class TestLivenessManager {
-
+  public static final Logger LOG = LoggerFactory
+      .getLogger(TestLivenessManager.class);
   FlumeMaster master = null;
 
   FlumeConfiguration cfg;
@@ -66,7 +69,7 @@ public class TestLivenessManager {
   /**
    * This test check to make sure that long waiting closes do not hang the
    * heartbeating rpc calls from nodes. We test this by having another thread do
-   * a series of reconfigurations that would block for >15s due to mulitple
+   * a series of reconfigurations that would block for >15s due to multiple
    * closes of the 'hang' sink, and bailing out on the test if it takes >2s.
    */
   @Test
@@ -80,12 +83,8 @@ public class TestLivenessManager {
       public EventSink build(Context context, String... argv) {
         return new EventSink.Base() {
           @Override
-          public void close() {
-            try {
-              Thread.sleep(5000);
-            } catch (InterruptedException e) {
-              e.printStackTrace();
-            }
+          public void close() throws InterruptedException {
+            Thread.sleep(5000);
           }
 
         };
@@ -101,24 +100,28 @@ public class TestLivenessManager {
     // should have nothing.
     assertEquals(0, node.getLogicalNodeManager().getNodes().size());
 
+    final LivenessManager liveMan = node.getLivenessManager();
     final CountDownLatch done = new CountDownLatch(1);
     new Thread() {
       public void run() {
-        LivenessManager liveMan = node.getLivenessManager();
+        liveMan.start();
         try {
           // update config node to something that will be interrupted.
+          LOG.info("Config 1 heartbeat");
           master.getSpecMan().setConfig(NetUtils.localhost(), "flow",
               "asciisynth(0)", "hang");
           liveMan.heartbeatChecks();
           Thread.sleep(250);
 
           // update config node to something that will be interrupted.
+          LOG.info("Config 2 heartbeat");
           master.getSpecMan().setConfig(NetUtils.localhost(), "flow",
               "asciisynth(0)", "hang");
           liveMan.heartbeatChecks();
           Thread.sleep(250);
 
           // update config node to something that will be interrupted.
+          LOG.info("Config 3 heartbeat");
           master.getSpecMan().setConfig(NetUtils.localhost(), "flow",
               "asciisynth(0)", "hang");
           liveMan.heartbeatChecks();
@@ -135,8 +138,13 @@ public class TestLivenessManager {
     }.start();
 
     // false means timeout
-    assertTrue("close call hung the heartbeat", done.await(2000,
-        TimeUnit.MILLISECONDS));
+    assertTrue("close call hung the heartbeat",
+        done.await(2000, TimeUnit.MILLISECONDS));
+
+    // wait for heartbeat processing to finish.
+    int sz = liveMan.getCheckConfigPending();
+    LOG.info("config checks still pending: {}.  should be >0", sz);
+    assertTrue("There should be some pending configs to process", sz > 0);
 
   }
 }

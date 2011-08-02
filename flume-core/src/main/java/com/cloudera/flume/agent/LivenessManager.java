@@ -21,7 +21,9 @@ package com.cloudera.flume.agent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,9 +32,9 @@ import com.cloudera.flume.agent.durability.WALCompletionNotifier;
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
-import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.handlers.endtoend.AckListener.Empty;
 import com.cloudera.util.Clock;
+import com.cloudera.util.Pair;
 import com.google.common.base.Preconditions;
 
 /**
@@ -43,13 +45,35 @@ import com.google.common.base.Preconditions;
  */
 public class LivenessManager {
   static final Logger LOG = LoggerFactory.getLogger(LivenessManager.class);
-  final long BACKOFF_MILLIS;
+  private final long BACKOFF_MILLIS;
 
-  MasterRPC master;
-  LogicalNodeManager nodesman;
-  HeartbeatThread t;
-  final WALAckManager ackcheck;
-  final WALCompletionNotifier walman;
+  private MasterRPC master;
+  private LogicalNodeManager nodesman;
+  private HeartbeatThread t;
+  private CheckConfigThread cct;
+
+  private final WALAckManager ackcheck;
+  private final WALCompletionNotifier walman;
+
+  final private BlockingQueue<Pair<LogicalNode, FlumeConfigData>> fcdQ = new LinkedBlockingQueue<Pair<LogicalNode, FlumeConfigData>>();
+
+  public void enqueueCheckConfig(LogicalNode ln, FlumeConfigData data) {
+    int sz = fcdQ.size();
+    if (sz > 0) {
+      LOG.warn("Heartbeats are backing up, currently behind by {} heartbeats",
+          sz);
+    }
+    fcdQ.add(new Pair<LogicalNode, FlumeConfigData>(ln, data));
+  }
+
+  public void dequeueCheckConfig() throws InterruptedException {
+    Pair<LogicalNode, FlumeConfigData> pair = fcdQ.take();
+    LogicalNode ln = pair.getLeft();
+    FlumeConfigData fcd = pair.getRight();
+    LOG.debug("Taking another heartbeat");
+    ln.checkConfig(fcd); // if heartbeats responses queue up, subsequent
+                         // changes will essentially be noops
+  }
 
   class RetryAckListener extends Empty {
     @Override
@@ -79,6 +103,7 @@ public class LivenessManager {
     this.nodesman = nodesman;
     this.master = master;
     this.t = new HeartbeatThread();
+    this.cct = new CheckConfigThread();
     this.ackcheck = new WALAckManager(master, new RetryAckListener(),
         FlumeConfiguration.get().getAgentAckedRetransmit());
   }
@@ -142,12 +167,7 @@ public class LivenessManager {
               + "' not configured on master");
         }
         final LogicalNode node = nd;
-        // TODO This is quite gross, but prevents heartbeat from blocking
-        new Thread("SpawningLogicalNode " + nd.getName()) {
-          public void run() {
-            node.checkConfig(data);
-          }
-        }.start();
+        enqueueCheckConfig(nd, data);
       }
     }
   }
@@ -169,6 +189,26 @@ public class LivenessManager {
     ackcheck.checkRetry();
 
   }
+
+  /**
+   * This thread takes checkConfig commands form the q and processes them. We
+   * purposely want to decouple the heartbeat from this thread.
+   */
+  class CheckConfigThread extends Thread {
+    CheckConfigThread() {
+      super("Check config");
+    }
+
+    public void run() {
+      try {
+        while (!interrupted()) {
+          dequeueCheckConfig();
+        }
+      } catch (InterruptedException ie) {
+        LOG.info("Closing");
+      }
+    }
+  };
 
   /**
    * This thread periodically contacts the master with a heartbeat.
@@ -223,10 +263,12 @@ public class LivenessManager {
    * Starts the heartbeat thread and then returns.
    */
   public void start() {
+    cct.start();
     t.start();
   }
 
   public void stop() {
+    cct.interrupt();
     CountDownLatch stopped = t.stopped;
     t.done = true;
     try {
@@ -238,5 +280,9 @@ public class LivenessManager {
 
   public WALAckManager getAckChecker() {
     return ackcheck;
+  }
+
+  public int getCheckConfigPending() {
+    return fcdQ.size();
   }
 }
