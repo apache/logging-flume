@@ -22,7 +22,6 @@ import java.util.Map.Entry;
 
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.cloudera.flume.core.Event;
@@ -66,7 +65,6 @@ public class TestThriftEventAdaptor {
         .assertNull(new ThriftEventAdaptor(thriftEvent).get("i do not exist"));
   }
 
-  @Ignore
   @Test
   public void testNullBody() {
     ThriftFlumeEvent tEvt = new ThriftFlumeEvent(); // null body
