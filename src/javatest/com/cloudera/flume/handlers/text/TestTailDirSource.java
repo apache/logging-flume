@@ -20,7 +20,7 @@ package com.cloudera.flume.handlers.text;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -76,6 +76,7 @@ public class TestTailDirSource {
     FlumeBuilder.buildSource(src + ")"); // without startFromEnd param
     FlumeBuilder.buildSource(src + ", true)"); // with startFromEnd = true
     FlumeBuilder.buildSource(src + ", false)"); // with startFromEnd = false
+    FlumeBuilder.buildSource(src + ", true, 2)"); // recursively with max-depth 2
     FileUtil.rmr(tmpdir);
   }
 
@@ -311,10 +312,104 @@ public class TestTailDirSource {
 
   }
 
-  private void addLinesToExistingFiles(File tmpdir, int lines) throws FileNotFoundException {
+  /**
+  * This is a tailDir source that tails files in subdirs with max-depth 2.
+  */
+  @Test
+  public void testTailDirsRecursively() throws IOException,
+      FlumeSpecException, InterruptedException {
+    File tmpdir = FileUtil.mktempdir();
+    // generating files: emulating their existence prior to sink opening
+    genFiles(tmpdir, "2tail-old", 10, 100);
+
+    // creating subdirs with data, i.e. structure is:
+    // root
+    // `-- subdir-level1
+    //    `-- subdir-level2
+    //        `-- subdir-level3
+    // NOTE: the deepest subdir-level3 shouldn't be watched as recurse-depth is 2.
+    File subDirL1 = new File(tmpdir, "subdir-level1");
+    subDirL1.mkdirs();
+    genFiles(subDirL1, "2tail-old1", 10, 10);
+    File subDirL2 = new File(subDirL1, "subdir-level2");
+    subDirL2.mkdirs();
+    genFiles(subDirL2, "2tail-old2", 10, 20);
+    File subDirL3 = new File(subDirL2, "subdir-level3");
+    subDirL3.mkdirs();
+    genFiles(subDirL3, "2tail-old3", 10, 30);
+
+    TailDirSource src = new TailDirSource(tmpdir, ".(2tail)?.*", true, 2);
+    AccumulatorSink cnt = new AccumulatorSink("tailcount");
+    src.open();
+    cnt.open();
+    DirectDriver drv = new DirectDriver(src, cnt);
+
+    drv.start();
+    Clock.sleep(1000);
+    assertEquals(0, cnt.getCount());
+
+    // adding lines to existing files
+    addLinesToExistingFiles(tmpdir, 10);
+    addLinesToExistingFiles(subDirL1, 20);
+    addLinesToExistingFiles(subDirL2, 30);
+    addLinesToExistingFiles(subDirL3, 40);
+
+    Clock.sleep(1000);
+    int expEventsCount = 10 * 10 + 10 * 20 + 10 * 30;
+    assertEquals(expEventsCount, cnt.getCount());
+
+    // generating new files
+    genFiles(tmpdir, "2tail-new", 10, 40);
+    genFiles(subDirL1, "2tail-new1", 10, 30);
+    genFiles(subDirL2, "2tail-new2", 10, 20);
+    genFiles(subDirL3, "2tail-new3", 10, 10);
+
+    Clock.sleep(1000);
+    expEventsCount += 10 * 40 + 10 * 30 + 10 * 20;
+    assertEquals(expEventsCount, cnt.getCount());
+
+    // creating new subdir on level 2
+    File newSubDirL2 = new File(subDirL1, "subdir-level2-new");
+    newSubDirL2.mkdirs();
+    genFiles(newSubDirL2, "2tail-new2-new", 10, 100);
+
+    Clock.sleep(1000);
+    expEventsCount += 10 * 100;
+    assertEquals(expEventsCount, cnt.getCount());
+
+    // deleting some dirs
+    FileUtil.rmr(subDirL3);
+    FileUtil.rmr(subDirL2);
+
+    Clock.sleep(1000);
+    assertEquals(expEventsCount, cnt.getCount());
+
+    // adding back deleted dir, checking that it is caught up
+    subDirL2.mkdirs();
+    genFiles(subDirL2, "2tail-new2", 10, 100);
+    Clock.sleep(1000);
+    expEventsCount += 10 * 100;
+    assertEquals(expEventsCount, cnt.getCount());
+
+    drv.stop();
+    src.close();
+    cnt.close();
+    FileUtil.rmr(tmpdir);
+
+    ReportEvent report = src.getReport();
+    assertEquals(Long.valueOf(80), report.getLongMetric(TailDirSource.A_FILESADDED));
+    assertEquals(Long.valueOf(20), report.getLongMetric(TailDirSource.A_FILESDELETED));
+    assertEquals(Long.valueOf(4), report.getLongMetric(TailDirSource.A_SUBDIRSADDED));
+    assertEquals(Long.valueOf(1), report.getLongMetric(TailDirSource.A_SUBDIRSDELETED));
+  }
+
+  private void addLinesToExistingFiles(File tmpdir, int lines) throws IOException {
     int fileIndex = 0;
     for (File tmpfile : tmpdir.listFiles()) {
-      PrintWriter pw = new PrintWriter(tmpfile);
+      if (tmpfile.isDirectory()) {
+        continue;
+      }
+      PrintWriter pw = new PrintWriter(new FileWriter(tmpfile, true));
       for (int j = 0; j < lines; j++) {
         pw.println("this is file " + (++fileIndex) + " line " + j);
       }

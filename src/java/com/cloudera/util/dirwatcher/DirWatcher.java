@@ -127,8 +127,16 @@ public class DirWatcher {
    */
   public void check() {
     File[] files = dir.listFiles();
-    if (files == null) {
-      LOG.warn("dir " + dir.getAbsolutePath() + " does not exist?!");
+    if (files == null) { // directory is no longer present
+      LOG.info("dir " + dir.getAbsolutePath() + " does not exist!");
+      // notifying about files deletion in case there were any
+      Set<File> removedFiles = new HashSet<File>(previous);
+      for (File f : removedFiles) {
+        // filter is not applied to dirs
+        if (f.isDirectory() || filter.isSelected(f)) {
+          fireDeletedFile(f);
+        }
+      }
       return;
     }
     Set<File> newfiles = new HashSet<File>(Arrays.asList(files));
@@ -137,8 +145,11 @@ public class DirWatcher {
     Set<File> addedFiles = new HashSet<File>(newfiles);
     addedFiles.removeAll(previous);
     for (File f : addedFiles) {
-      if (filter.isSelected(f)) {
+      // filter is not applied to dirs
+      if (f.isDirectory() || filter.isSelected(f)) {
         fireCreatedFile(f);
+      } else {
+        newfiles.remove(f); // don't keep filtered out files
       }
     }
 
@@ -146,9 +157,11 @@ public class DirWatcher {
     Set<File> removedFiles = new HashSet<File>(previous);
     removedFiles.removeAll(newfiles);
     for (File f : removedFiles) {
-      if (filter.isSelected(f)) {
-        fireDeletedFile(f);
-      }
+      // firing event on every deleted File: filter can NOT be applied
+      // since we don't want to filter out directories and f.isDirectory() is
+      // always false for removed dir. Anyways, as long as "previous" contains only
+      // filtered files (or dirs) no need to apply filter here.
+      fireDeletedFile(f);
     }
 
     previous = newfiles;

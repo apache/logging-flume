@@ -1,4 +1,4 @@
-﻿////////////////////
+////////////////////
 Licensed to Cloudera, Inc. under one
 or more contributor license agreements.  See the NOTICE file
 distributed with this work for additional information
@@ -83,15 +83,20 @@ last line of a file does not end with a newline character ('\n'), the
 +multitail("_filename_"[, _file2_ [,_file3_ ... ] ])+ :: Like +tail+ but can 
 follow multiple files concurrently.
 
-+tailDir("_dirname_"[, fileregex=".*"[, startFromEnd=false]])+ :: Tails all files in a
-directory +dirname+ that match the specified +fileregex+.  Be careful
-and make sure because the regex argument requires java style escaping
++tailDir("_dirname_"[, fileregex=".*"[, startFromEnd=false[, recurseDepth=0]]])+ ::
+Tails all files in a directory +dirname+ that match the specified +fileregex+.
+Be careful and make sure because the regex argument requires java style escaping
 of '\' and '\"'.  For example '\w+' would have to be written as
 "\\w+".  If a new file appears, it is added to the list of files to
 tail.  If pointed at a new directory, it will attempt to read all
 files that match! If the +startFromEnd+ parameter is
 false, tail will re-read from the beginning of each file. If it is
 true, it will only start reading from the current end of each file.
+If the +recurseDepth+ parameter is > 0 then tailDir will recurse into
+sub-directories. The value defines max level of a directory below
+the +dirname+ to tail files in. Zero means do not recurse into sub-directories.
+Note: fileregex is applied to file names only (not including dirs), all directories
+(which fit +recurseDepth+ parameter) are recursed into.
 
 +seqfile("_filename_")+ :: Read from a Hadoop sequence file formatted file, 
 with +com.cloudera.flume.handlers.hdfs.WriteableEventKey+ and 
