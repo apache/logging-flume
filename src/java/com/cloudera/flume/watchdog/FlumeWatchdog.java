@@ -36,7 +36,7 @@ import com.cloudera.flume.conf.FlumeConfiguration;
  */
 public class FlumeWatchdog {
 
-  static Logger LOG = Logger.getLogger(Watchdog.class.getName());
+  static Logger LOG = Logger.getLogger(FlumeWatchdog.class.getName());
 
   public static void main(String[] argv) {
     if (argv.length == 0) {

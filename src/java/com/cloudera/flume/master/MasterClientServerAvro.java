@@ -46,7 +46,7 @@ import com.google.common.base.Preconditions;
  * delegates to a MasterClientServer.
  */
 public class MasterClientServerAvro implements AvroFlumeClientServer, RPCServer {
-  Logger LOG = Logger.getLogger(MasterClientServer.class);
+  Logger LOG = Logger.getLogger(MasterClientServerAvro.class);
   final protected int port;
   protected MasterClientServer delegate;
   protected Server server;

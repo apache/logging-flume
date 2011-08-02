@@ -44,7 +44,7 @@ import com.cloudera.util.ByteBufferInputStream;
  * 
  */
 public class SyslogUdpSource extends EventSource.Base {
-  final static Logger LOG = Logger.getLogger(EventSource.class.getName());
+  final static Logger LOG = Logger.getLogger(SyslogUdpSource.class.getName());
   final public static int SYSLOG_UDP_PORT = 514;
   int port = SYSLOG_UDP_PORT; // default udp syslog port
   int maxsize = 1 << 16; // 64k is max allowable in RFC 5426

@@ -46,7 +46,7 @@ import com.google.common.base.Preconditions;
  */
 public class MasterClientServerThrift extends ThriftServer implements
     ThriftFlumeClientServer.Iface, RPCServer {
-  Logger LOG = Logger.getLogger(MasterClientServer.class);
+  Logger LOG = Logger.getLogger(MasterClientServerThrift.class);
   final protected int port;
   protected MasterClientServer delegate;
 

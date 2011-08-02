@@ -57,7 +57,7 @@ import com.cloudera.flume.util.ThriftServer;
  * basic stub client/server interaction.
  */
 public class TestRPCMechanisms {
-  Logger LOG = Logger.getLogger(TestThriftMultiMasterRPC.class);
+  Logger LOG = Logger.getLogger(TestRPCMechanisms.class);
 
   /**
    * Mock AvroServer.

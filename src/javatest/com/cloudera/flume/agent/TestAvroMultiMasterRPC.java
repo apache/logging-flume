@@ -41,7 +41,7 @@ import com.cloudera.flume.conf.avro.FlumeNodeState;
 import com.cloudera.flume.master.MasterClientServerAvro;
 
 public class TestAvroMultiMasterRPC {
-  Logger LOG = Logger.getLogger(TestThriftMultiMasterRPC.class);
+  Logger LOG = Logger.getLogger(TestAvroMultiMasterRPC.class);
 
   /**
    * Mock AvroServer.

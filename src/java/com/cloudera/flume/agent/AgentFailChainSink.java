@@ -43,7 +43,7 @@ import com.google.common.base.Preconditions;
  * different reliability levels
  */
 public class AgentFailChainSink extends EventSink.Base {
-  final static Logger LOG = Logger.getLogger(CompositeSink.class.getName());
+  final static Logger LOG = Logger.getLogger(AgentFailChainSink.class.getName());
   final EventSink snk;
 
   public enum RELIABILITY {

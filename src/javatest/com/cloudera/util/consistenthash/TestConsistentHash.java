@@ -29,13 +29,11 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-import com.cloudera.flume.agent.AgentSink;
-
 /**
  * This is a test harness for the consistent hash implementation.
  */
 public class TestConsistentHash {
-  final static Logger LOG = Logger.getLogger(AgentSink.class.getName());
+  final static Logger LOG = Logger.getLogger(TestConsistentHash.class);
 
   // These are the bins values can go into
   List<String> machines = Arrays.asList("machine A", "machine B", "machine C",

@@ -46,7 +46,7 @@ import com.cloudera.util.FileUtil;
 public class TestDiskFailoverManager {
 
   static Logger LOG = Logger
-      .getLogger(NaiveFileFailoverManager.class.getName());
+      .getLogger(TestDiskFailoverManager.class.getName());
   // has 5 good entries.
   final static String WAL_OK = "src/data/hadoop_logs_5.hdfs";
 
