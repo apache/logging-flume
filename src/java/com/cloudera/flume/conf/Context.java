@@ -51,7 +51,7 @@ public class Context {
    * Get the parent context
    */
   public Context getParent() {
-    return null;
+    return this.parent;
   }
 
   /**
