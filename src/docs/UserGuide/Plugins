@@ -2,32 +2,85 @@
 === Extending via Sink/Source/Decorator Plugins
 
 An experimental plugin mechanism is provided that allows you to add new custom 
-sources, sinks, and decorators to the system.  Two steps are required to use 
-this feature.
+sources, sinks, and decorators to the system.  
 
-First, add jars with the new classes to the Java CLASSPATH.  If it requires 
-dlls/so's make sure these are in the LD_LIBRARY_PATH (unix .so) or PATH 
-(windows .dll) 
+.Two steps are required to use this feature.
+. First, add the jar with the new plugin classes to flume's classpath.
+  If the plugin requires dlls/so's make sure these are in the
+  LD_LIBRARY_PATH (unix .so) or PATH (windows .dll)
+. Second, in +flume-site.xml+, add the class names of the new sources,
+  sinks, and/or decorators to the +flume.plugin.classes+ property.
+  Multiple classes can be specified by comma separating the list. Java
+  reflection is used to find some special static methods that add new
+  components to the system and data flow language's library.
 
-Second, in +flume-site.xml+, add the class names of the new source or sinks.  
-Many classes can be specified by comma separating the list. Java reflection is 
-used to find some special static methods that add new components to the system 
-and data flow language's library.
+An example component has been "pluginified" -- the "HelloWorld"
+source, sink, and decorator. This plugin does something very simple;
+the source generates the text "hello world!" every three seconds, the
+sink writes events to a "helloworld.txt" text file, and the decorator
+prepends "hello world!" to any event it encounters.
 
-Two components have been "pluginified" -- the RabbitMQ based ampq sources and 
-sinks, and the pcap based pcap sources.  Let's add the RabbitMQ plugin as an 
-example.
+. cd into the +plugins/helloworld+ directory and type +ant+, a +helloworld_plugin.jar+ file will be generated
+. Add the following to flume-site.xml (create it if it doesn't already
+  exist)
+  "helloworld.HelloWorldSink,helloworld.HelloWorldSource,helloworld.HelloWorldDecorator"
+  to the +flume.plugin.classes+ property in +flume-site.xml+.
++
+IMPORTANT: if you use the provided +flume-site.xml.template+ file to
+create your +flume-site.xml+ be sure to comment out or remove any
+example properties contained in the sample template.
++
+.Example flume-site.xml contents
+[source,xml]
+----
+<configuration>
+  <property>
+    <name>flume.plugin.classes</name>
+    <value>helloworld.HelloWorldSink,helloworld.HelloWorldSource,helloworld.HelloWorldDecorator</value>
+    <description>Comma separated list of plugins</description>
+  </property>
+</configuration>
+----
+. Start the Flume master and at least one logical node in separate terminals
+.. in each terminal cd into the toplevel flume directory, should be just above +plugins+
+.. Add +helloworld_plugin.jar+ to the FLUME_CLASSPATH in *both* terminals
++
+----
+export FLUME_CLASSPATH=`pwd`/plugins/helloworld/helloworld_plugin.jar
+----
+.. in terminal 1 run +bin/flume master+
+.. in terminal 2 run +bin/flume node -n hello1+
+. At this point the master and hello1 nodes should be started and will have loaded the plugin
++
+.You should see log output similar to the following in both master and hello1:
+----
+10/07/29 17:35:28 INFO conf.SourceFactoryImpl: Found source builder helloWorldSource in helloworld.HelloWorldSource
+10/07/29 17:35:28 INFO conf.SinkFactoryImpl: Found sink builder helloWorldSink in helloworld.HelloWorldSink
+10/07/29 17:35:28 INFO conf.SinkFactoryImpl: Found sink decorator helloWorldDecorator in helloworld.HelloWorldDecorator
+----
++
+TIP: Another way to verify that your plugin is loaded is to check if it is displayed on this page http://localhost:35871/masterext.jsp
++
+. Configure hello1
++
+TIP: The easiest way to do this is open the configuration page of the master in a browser, typically this link http://localhost:35871/flumeconfig.jsp
++
+.. load the helloworld source/sink into our +hello1+ node (the bottom text box, then submit button if you are using the master's web interface"
++
+----
+hello1: helloWorldSource() | helloWorldSink();
+----
+.. you could also try the hello world decorator
++
+----
+hello1: helloWorldSource() | { helloWorldDecorator() => helloWorldSink() };
+----
++
+In either case +hello1+ will output a +helloworld.txt+ file into it's current working directory. Every 3 seconds a new "hello world!" line will be output to the file.
 
-* Add +flume-rabbitMQ.jar+ to the CLASSPATH 
-* Add the following data
-"com.cloudera.flume.handlers.amqp.AmqpPollingSource,
-com.cloudera.flume.handlers.amqp.AmqpSink,
-com.cloudera.flume.handlers.amqp.AmqpSubscrpitionSource" to the
-+flume.plugin.classes+ property.
 
-// Hiding this until we know what the external dev list. 
 // NOTE: If you want more information about writing your own plugins, 
-// please contact dev-flume@cloudera.com.
+// please contact flume-dev@cloudera.org.
 
 ////////
 HIDDEN FOR NOW, THIS IS HALF BAKED
