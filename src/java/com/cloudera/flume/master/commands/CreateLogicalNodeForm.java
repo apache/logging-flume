@@ -70,8 +70,9 @@ public class CreateLogicalNodeForm {
 
         if (!FlumeMaster.getInstance().getSpecMan()
             .addLogicalNode(physical, logical)) {
-          throw new IllegalStateException("Unable to map logical node "
-              + logical + " to physical node " + physical);
+          Exception ex = new IllegalStateException("Unable to map logical node '"
+              + logical + "' to physical node '" + physical + "'");
+          throw new MasterExecException(ex.getMessage(),ex);
         }
       }
     };
