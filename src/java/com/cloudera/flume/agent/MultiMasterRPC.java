@@ -35,6 +35,7 @@ import com.cloudera.util.Pair;
 import com.cloudera.util.ResultRetryable;
 import com.cloudera.util.RetryHarness;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.google.common.base.Preconditions;
 
 /**
  * This wraps a SingleMasterRPC and provides failover from one master to
@@ -190,12 +191,11 @@ public class MultiMasterRPC implements MasterRPC {
            * try block.
            */
           try {
-            LOG.info("Connection to master lost due to " + e.getMessage()
-                + ", looking for another...");
+            LOG.info(e.getMessage());
             LOG.debug(e.getMessage(), e);
             findServer();
           } catch (IOException e1) {
-            LOG.error("Unable to find a master server", e1);
+            LOG.warn(e1.getMessage());
           }
         }
         return false;
@@ -244,6 +244,8 @@ public class MultiMasterRPC implements MasterRPC {
       throws IOException {
     RPCRetryable<List<String>> retry = new RPCRetryable<List<String>>() {
       public List<String> doRPC() throws IOException {
+        Preconditions.checkState(masterRPC != null,
+            "No active master RPC connection");
         return masterRPC.getLogicalNodes(physicalNode);
       }
     };
@@ -321,6 +323,8 @@ public class MultiMasterRPC implements MasterRPC {
       throws IOException {
     RPCRetryable<Void> retry = new RPCRetryable<Void>() {
       public Void doRPC() throws IOException {
+        Preconditions.checkState(masterRPC != null,
+            "No active master RPC connection");
         masterRPC.putReports(reports);
         return result;
       }
