@@ -33,10 +33,10 @@ import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.PatternMatch;
-import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.master.ConfigManager;
 import com.cloudera.flume.master.ConfigurationManager;
 import com.cloudera.flume.master.StatusManager;
@@ -167,6 +167,32 @@ public class TestLogicalConfigManager {
     FlumeConfigData origData2 = parent.getConfig("foo");
     assertEquals("logicalSource", origData2.getSourceConfig());
     assertEquals("null", origData2.getSinkConfig());
+  }
+
+  /**
+   * Test the core of the LogicalConfigManager when it fails
+   */
+  @Test
+  public void testLogicalTransFailSource() throws IOException,
+      FlumeSpecException {
+    ConfigurationManager parent = new ConfigManager();
+    ConfigurationManager self = new ConfigManager();
+    StatusManager statman = new StatusManager();
+    ConfigurationManager trans = new LogicalConfigurationManager(parent, self,
+        statman);
+
+    // now set configs
+    trans.setConfig("foo", DEFAULTFLOW, "logicalSource", "null");
+    trans.setConfig("bar", DEFAULTFLOW, "null", "logicalSink(\"foo\")");
+
+    FlumeConfigData transData = trans.getConfig("bar");
+    assertEquals("null", transData.getSourceConfig());
+    assertTrue(transData.getSinkConfig().contains("fail"));
+
+    FlumeConfigData transData2 = trans.getConfig("foo");
+    assertTrue(transData2.getSourceConfig().contains("fail"));
+    assertEquals("null", transData2.getSinkConfig());
+
   }
 
   /**

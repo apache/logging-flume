@@ -144,7 +144,13 @@ public class LogicalConfigurationManager extends
       pni = nameMan.getPhysicalNodeInfo(ln);
       if (pni == null) {
         // return failure.
-        return null;
+        LOG.warn("Logical node '" + ln
+            + "' has not been assigned to a physical node yet");
+        String src = "fail( \"logical node not mapped to physical node yet\" )";
+        CommonTree psrcTree = FlumeBuilder.parseSource(src);
+        PatternMatch.replaceChildren(lsrcTree, psrcTree);
+
+        return lsrcTree;
       }
     }
 
