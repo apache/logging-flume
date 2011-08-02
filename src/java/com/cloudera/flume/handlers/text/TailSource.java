@@ -21,6 +21,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -44,9 +46,10 @@ import com.google.common.base.Preconditions;
  * It assumes that each line is a separate event.
  * 
  * This is for legacy log files where the file system is the only mechanism
- * flume has to get events. Currently, examples include apachelogs and syslog.
- * It assumes that there is one entry per line (per \n) and that these lines are
- * written atomically from the view point of this code.
+ * flume has to get events. It assumes that there is one entry per line (per
+ * \n). If a file currently does not end with \n, it will remain buffered
+ * waiting for more data until either a different file with the same name has
+ * appeared, or the tail source is closed.
  * 
  * It also has logic to deal with file rotations -- if a file is renamed and
  * then a new file is created, it will shift over to the new file. The current
@@ -56,10 +59,10 @@ import com.google.common.base.Preconditions;
  * 
  * TODO (jon) This is not perfect.
  * 
- * This assumes ASCII encoded files -- if \n's appear in a UTF8 encoding entries
- * will not be correct.
+ * This reads bytes and does not assume any particular character encoding other
+ * than that entry are separated by new lines ('\n').
  * 
- * There is a possibility for inconsistent conditions when are logs rotated.
+ * There is a possibility for inconsistent conditions when logs are rotated.
  * 
  * 1) If rotation periods are faster than periodic checks, a file may be missed.
  * (this mimics gnu-tail semantics here)
@@ -69,10 +72,11 @@ import com.google.common.base.Preconditions;
  * is no way to differentiate between a new file or a truncated file!
  * 
  * 3) If a file is being read, is moved, and replaced with another file of
- * exactly the same size in a particular window, the data in the new file may be
- * lost. If the original file has been completely read and then replaced with a
- * file of the same length this problem will not occur. (See
- * TestTailSource.readRotatePrexistingFailure vs
+ * exactly the same size in a particular window and the last mod time of the two
+ * are identical (this is often at the second granularity in FS's), the data in
+ * the new file may be lost. If the original file has been completely read and
+ * then replaced with a file of the same length this problem will not occur.
+ * (See TestTailSource.readRotatePrexistingFailure vs
  * TestTailSource.readRotatePrexistingSameSizeWithNewModetime)
  * 
  * Ideally this would use the inode number of file handle number but didn't find
@@ -81,15 +85,15 @@ import com.google.common.base.Preconditions;
 public class TailSource extends EventSource.Base {
   private static final Logger LOG = LoggerFactory.getLogger(TailSource.class);
 
-  private static int thd_count = 0;
+  private static int thdCount = 0;
   private volatile boolean done = false;
 
   private final long sleepTime; // millis
   final List<Cursor> cursors = new ArrayList<Cursor>();
   private final List<Cursor> newCursors = new ArrayList<Cursor>();
   private final List<Cursor> rmCursors = new ArrayList<Cursor>();
-  // We "queue" only allowing a single Event.
 
+  // We "queue" only allowing a single Event.
   final SynchronousQueue<Event> sync = new SynchronousQueue<Event>();
   private TailThread thd = null;
 
@@ -117,7 +121,7 @@ public class TailSource extends EventSource.Base {
     long readOffset = startFromEnd ? fileLen : offset;
     long modTime = f.lastModified();
     Cursor c = new Cursor(sync, f, readOffset, fileLen, modTime);
-    cursors.add(c);
+    addCursor(c);
   }
 
   /**
@@ -130,14 +134,30 @@ public class TailSource extends EventSource.Base {
 
   /**
    * To support multiple tail readers, we have a Cursor for each file name
+   * 
+   * It takes a File and optionally a starting offset in the file. From there it
+   * attempts to open the file as a RandomAccessFile, and reads data using the
+   * RAF's FileChannel into a ByteBuffer. As \n's are found in the buffer, new
+   * event bodies are created and new Events are create and put into the sync
+   * queue.
+   * 
+   * If a file rotate is detected, the previous RAF is closed, and the File with
+   * the specified name is opened.
    */
   static class Cursor {
     final BlockingQueue<Event> sync;
+    // For following a file name
     final File file;
+    // For buffering reads
+    final ByteBuffer buf = ByteBuffer.allocateDirect(Short.MAX_VALUE);
+    // For closing file handles and getting FileChannels
     RandomAccessFile raf = null;
-    long lastMod;
-    long lastReadOffset;
-    long lastFileLen;
+    // For reading data
+    FileChannel in = null;
+
+    long lastFileMod;
+    long lastChannelPos;
+    long lastChannelSize;
     int readFailures;
 
     Cursor(BlockingQueue<Event> sync, File f) {
@@ -148,16 +168,21 @@ public class TailSource extends EventSource.Base {
         long lastFileLen, long lastMod) {
       this.sync = sync;
       this.file = f;
-      this.lastReadOffset = lastReadOffset;
-      this.lastFileLen = lastFileLen;
-      this.lastMod = lastMod;
+      this.lastChannelPos = lastReadOffset;
+      this.lastChannelSize = lastFileLen;
+      this.lastFileMod = lastMod;
       this.readFailures = 0;
     }
 
-    void initCursorPos() {
+    /**
+     * Setup the initial cursor position.
+     */
+    void initCursorPos() throws InterruptedException {
       try {
+        LOG.debug("initCursorPos " + file);
         raf = new RandomAccessFile(file, "r");
-        raf.seek(lastReadOffset);
+        raf.seek(lastChannelPos);
+        in = raf.getChannel();
       } catch (FileNotFoundException e) {
         resetRAF();
       } catch (IOException e) {
@@ -166,12 +191,52 @@ public class TailSource extends EventSource.Base {
     }
 
     /**
-     * Restart random accessfile cursor
+     * Flush any buffering the cursor has done. If the buffer does not end with
+     * '\n', the remainder will get turned into a new event.
+     * 
+     * This assumes that any remainders in buf are a single event -- this
+     * corresponds to the last lines of files that do not end with '\n'
      */
-    void resetRAF() {
-      raf = null;
-      lastReadOffset = 0;
-      lastMod = 0;
+    void flush() throws InterruptedException {
+      if (raf != null) {
+        try {
+          raf.close(); // release handles
+        } catch (IOException e) {
+          LOG.error("problem closing file " + e.getMessage(), e);
+        }
+      }
+
+      buf.flip(); // buffer consume mode
+      int remaining = buf.remaining();
+      if (remaining > 0) {
+        byte[] body = new byte[remaining];
+        buf.get(body, 0, remaining); // read all data
+
+        Event e = new EventImpl(body);
+        try {
+          sync.put(e);
+        } catch (InterruptedException e1) {
+          LOG.error("interruptedException! " + e1.getMessage(), e1);
+          throw e1;
+        }
+      }
+      in = null;
+      buf.clear();
+    }
+
+    /**
+     * Restart random accessfile cursor
+     * 
+     * This assumes that the buf is in write mode, and that any remainders in
+     * buf are last bytes of files that do not end with \n
+     * 
+     * @throws InterruptedException
+     */
+    void resetRAF() throws InterruptedException {
+      LOG.debug("reseting cursor");
+      flush();
+      lastChannelPos = 0;
+      lastFileMod = 0;
       readFailures = 0;
     }
 
@@ -186,9 +251,7 @@ public class TailSource extends EventSource.Base {
      */
     boolean checkForUpdates() throws IOException {
       LOG.debug("tail " + file + " : recheck");
-      if (file.isDirectory()) {
-        // exists but not a file
-
+      if (file.isDirectory()) { // exists but not a file
         IOException ioe = new IOException("Tail expects a file '" + file
             + "', but it is a dir!");
         LOG.error(ioe.getMessage());
@@ -206,20 +269,24 @@ public class TailSource extends EventSource.Base {
 
       // oh! f exists and is a file
       try {
-        if (raf != null) {
-          if (lastMod == file.lastModified() && lastReadOffset == file.length()) {
+        if (in != null) {
+          if (lastFileMod == file.lastModified()
+              && lastChannelPos == file.length()) {
             LOG.debug("Tail '" + file + "': recheck still the same");
             return false;
           }
         }
 
+        // let's open the file
         raf = new RandomAccessFile(file, "r");
-        lastMod = file.lastModified();
-        lastReadOffset = raf.getFilePointer();
-        lastFileLen = raf.length();
-        LOG.debug("Tail '" + file + "': opened last mod=" + lastMod
-            + " lastReadOffset=" + lastReadOffset + " lastFileLen="
-            + lastFileLen);
+        lastFileMod = file.lastModified();
+        in = raf.getChannel();
+        lastChannelPos = in.position();
+        lastChannelSize = in.size();
+
+        LOG.debug("Tail '" + file + "': opened last mod=" + lastFileMod
+            + " lastChannelPos=" + lastChannelPos + " lastChannelSize="
+            + lastChannelSize);
         return true;
       } catch (FileNotFoundException fnfe) {
         // possible because of file system race, we can recover from this.
@@ -229,30 +296,64 @@ public class TailSource extends EventSource.Base {
       }
     }
 
+    boolean extractLines(ByteBuffer buf, long fmod) throws IOException,
+        InterruptedException {
+      boolean madeProgress = false;
+      int start = buf.position();
+      buf.mark();
+      while (buf.hasRemaining()) {
+        byte b = buf.get();
+        // TODO windows: ('\r\n') line separators
+        if (b == '\n') {
+          int end = buf.position();
+          int sz = end - start;
+          byte[] body = new byte[sz-1];
+          buf.reset(); // go back to mark
+          buf.get(body, 0, sz - 1); // read data
+          buf.get(); // read '\n'
+          buf.mark(); // new mark.
+          start = buf.position();
+
+          // this may be racy.
+          lastChannelPos = in.position();
+          lastFileMod = fmod;
+
+          Event e = new EventImpl(body);
+          sync.put(e);
+          madeProgress = true;
+        }
+      }
+
+      // rewind for any left overs
+      buf.reset();
+      buf.compact(); // shift leftovers to front.
+      return madeProgress;
+    }
+
     /**
      * Attempt to get new data.
      * 
-     * Returns true if cursor's state has changed.
+     * Returns true if cursor's state has changed (progress was made)
      */
     boolean tailBody() throws InterruptedException {
       try {
         // no file named f currently, needs to be opened.
-        if (raf == null) {
+        if (in == null) {
           LOG.debug("tail " + file + " : cur file is null");
           return checkForUpdates();
         }
 
         // get stats from raf and from f.
         long flen = file.length(); // length of filename
-        long raflen = raf.length(); // length of file.
+        long chlen = in.size(); // length of file.
         long fmod = file.lastModified(); // ideally this has raf's last
         // modified.
 
-        lastFileLen = raflen;
+        lastChannelSize = chlen;
 
         // cases:
-        if (raflen == flen && lastReadOffset == flen) {
-          if (lastMod == fmod) {
+        if (chlen == flen && lastChannelPos == flen) {
+          if (lastFileMod == fmod) {
             // // 3) raf len == file len, last read == file len, lastMod same ->
             // no change
             LOG.debug("tail " + file + " : no change");
@@ -270,15 +371,14 @@ public class TailSource extends EventSource.Base {
 
         // file has changed
         LOG.debug("tail " + file + " : file changed");
-        LOG.debug("tail " + file + " : old size, mod time " + lastReadOffset
-            + "," + lastMod);
-        LOG
-            .debug("tail " + file + " : new size, mod time " + flen + ","
-                + fmod);
+        LOG.debug("tail " + file + " : old size, mod time " + lastChannelPos
+            + "," + lastFileMod);
+        LOG.debug("tail " + file + " : new size, " + "mod time " + flen + ","
+            + fmod);
 
         // // 1) truncated file? -> restart file
         // file truncated?
-        if (lastReadOffset > flen) {
+        if (lastChannelPos > flen) {
           LOG.debug("tail " + file + " : file truncated!?");
 
           // normally we would check the inode, but since we cannot, we restart
@@ -289,31 +389,55 @@ public class TailSource extends EventSource.Base {
 
         // I make this a rendezvous because this source is being pulled
         // copy data from current file pointer to EOF to dest.
-        int len = 0;
-        String str;
-        while ((str = raf.readLine()) != null) {
-          byte[] data = str.getBytes();
+        boolean madeProgress = false;
 
-          Event e = new EventImpl(data);
-          sync.put(e);
-          len += data.length;
+        int rd;
+        while ((rd = in.read(buf)) > 0) {
+          // need char encoder to find line breaks in buf.
+          lastChannelPos += (rd < 0 ? 0 : rd); // rd == -1 if at end of
+          // stream.
 
-          lastReadOffset = raf.getFilePointer();
-          lastMod = file.lastModified();
+          int lastRd = 0;
+          int loops = 0;
+          boolean progress = false;
+          do {
+
+            if (lastRd == -1 && rd == -1) {
+              return madeProgress;
+            }
+
+            buf.flip();
+
+            // extract lines
+            progress = extractLines(buf, fmod);
+            if (progress) {
+              madeProgress = true;
+            }
+
+            lastRd = rd;
+            loops++;
+          } while (progress); // / potential race
+
+          // if the amount read catches up to the size of the file, we can fall
+          // out and let another fileChannel be read. If the last buffer isn't
+          // read, then it remain in the byte buffer.
+
         }
 
-        if (len == 0) {
-          // didn't read anyhting? raflen != filelen? restart file.
+        if (rd == -1 && flen != lastChannelSize) {
+          // we've rotated with a longer file.
           LOG.debug("tail " + file
               + " : no progress but raflen != filelen, resetting");
           resetRAF();
           return true;
+
         }
 
-        LOG.debug("tail " + file + ": read " + len + " bytes");
+        // LOG.debug("tail " + file + ": read " + len + " bytes");
+        LOG.debug("tail " + file + ": read " + lastChannelPos + " bytes");
       } catch (IOException e) {
         LOG.debug(e.getMessage(), e);
-        raf = null;
+        in = null;
         readFailures++;
 
         /*
@@ -323,7 +447,8 @@ public class TailSource extends EventSource.Base {
          * we're sleeping.
          */
         if (readFailures > 3) {
-          LOG.warn("Encountered " + readFailures + " failures on " + file.getAbsolutePath() + " - sleeping");
+          LOG.warn("Encountered " + readFailures + " failures on "
+              + file.getAbsolutePath() + " - sleeping");
           return false;
         }
       }
@@ -338,7 +463,7 @@ public class TailSource extends EventSource.Base {
   class TailThread extends Thread {
 
     TailThread() {
-      super("TailThread-" + thd_count++);
+      super("TailThread-" + thdCount++);
     }
 
     @Override
@@ -357,11 +482,15 @@ public class TailSource extends EventSource.Base {
 
           synchronized (rmCursors) {
             cursors.removeAll(rmCursors);
+            for (Cursor c : rmCursors) {
+              c.flush();
+            }
             rmCursors.clear();
           }
 
           boolean madeProgress = false;
           for (Cursor c : cursors) {
+            LOG.debug("Progress loop: " + c.file);
             if (c.tailBody()) {
               madeProgress = true;
             }
@@ -371,10 +500,11 @@ public class TailSource extends EventSource.Base {
             Clock.sleep(sleepTime);
           }
         }
+        LOG.debug("Tail got done flag");
       } catch (InterruptedException e) {
         LOG.error("tail unexpected interrupted: " + e.getMessage(), e);
       } finally {
-        LOG.info("Tail has exited");
+        LOG.info("TailThread has exited");
       }
 
     }
@@ -388,10 +518,14 @@ public class TailSource extends EventSource.Base {
 
     if (thd == null) {
       cursors.add(cursor);
+      LOG.debug("Unstarted Tail has added cursor: " + cursor.file.getName());
+
     } else {
       synchronized (newCursors) {
         newCursors.add(cursor);
       }
+      LOG.debug("Tail added new cursor to new cursor list: "
+          + cursor.file.getName());
     }
 
   }
@@ -438,6 +572,7 @@ public class TailSource extends EventSource.Base {
       return null; // closed
     } catch (InterruptedException e1) {
       LOG.warn("next unexpectedly interrupted :" + e1.getMessage(), e1);
+      Thread.currentThread().interrupt();
       throw new IOException(e1.getMessage());
     }
   }

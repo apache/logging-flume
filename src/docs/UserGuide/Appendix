@@ -75,7 +75,10 @@ file "foo" and then "foo" is moved to "bar" and a new file appears
 named "foo", it will finish reading the new "bar" file and then start
 from the beginning of "foo"). If the +startFromEnd+ parameter is
 false, tail will re-read from the beginning of the file.  If it is
-true, it will only start reading from the current end of file.
+true, it will only start reading from the current end of file.  If the
+last line of a file does not end with a newline character ('\n'), the
++tail+ source will only send an event with this last line when the
++tail+ is closed.
 
 +multitail("_filename_"[, _file2_ [,_file3_ ... ] ])+ :: Like +tail+ but can 
 follow multiple files concurrently.

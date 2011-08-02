@@ -1,6 +1,13 @@
 Flume 0.9.2 (Unreleased)
 ========================
 
+This version significantly reduces the chances of data duplication
+encountered due to the FLUME-252 (races in tail) bug.  However, it
+does not completely fix the problem.  A workaround is to use
+'exec("tail -F <file>")' instead of the tail source Linux/Unix
+systems.  A new issue has been filed as FLUME-320 to continue tracking
+this problem.
+
 Flume 0.9.2 is *not backwards compatible* with <0.9.2 installations
 due to FLUME-216 - this release changes how configurations and node
 maps are persisted to ZooKeeper and 0.9.2 masters cannot read

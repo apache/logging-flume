@@ -39,6 +39,7 @@ import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mortbay.log.Log;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.handlers.text.TailSource.Cursor;
@@ -114,8 +115,9 @@ public class TestTailSourceCursor {
     f.renameTo(f2); // move the file (should be no problem).
 
     assertTrue(c.tailBody()); // finish reading the file
+    assertEquals(5, q.size()); // should be 5 in queue.
 
-    assertTrue(c.tailBody()); // attempt to open file again.
+    assertFalse(c.tailBody()); // No more to read
     assertEquals(5, q.size()); // should be 5 in queue.
 
     assertFalse(c.tailBody()); // attempt to open file again.
@@ -166,7 +168,7 @@ public class TestTailSourceCursor {
   }
 
   /**
-   * rotate with a new file that is longer. This works
+   * rotate with a new file that is longer than the original.
    **/
   @Test
   public void testCursorRotatePrexistingNewLonger() throws IOException,
@@ -186,14 +188,14 @@ public class TestTailSourceCursor {
 
     // wait a second to force a new last modified time.
     Clock.sleep(1000);
-    appendData(f, 5, 6);
+    appendData(f, 5, 6); // should be a new file.
 
     assertTrue(c.tailBody()); // finish reading the first file
     assertEquals(5, q.size()); // should be 5 in queue.
 
     assertTrue(c.tailBody()); // notice raflen!= filelen, reset
-    assertTrue(c.tailBody()); // attempt to open file again.
     assertTrue(c.tailBody()); // read
+    assertFalse(c.tailBody()); // no more to read
     assertEquals(11, q.size()); // should be 5 in queue.
 
     assertFalse(c.tailBody()); // no change this time
@@ -228,7 +230,7 @@ public class TestTailSourceCursor {
 
     assertTrue(c.tailBody()); // notice raflen!= filelen, reset
     assertTrue(c.tailBody()); // attempt to open file again.
-    assertTrue(c.tailBody()); // read
+    assertFalse(c.tailBody()); // no more to read
 
     // This should be 10, but actually results in 5.
     assertEquals(9, q.size()); // should be 5 in queue.
@@ -257,7 +259,8 @@ public class TestTailSourceCursor {
     assertTrue(c.tailBody()); // finish reading the first file
     assertEquals(5, q.size()); // should be 5 in queue.
 
-    assertTrue(c.tailBody()); // attempt to file again. (not there)
+    assertFalse(c.tailBody()); // attempt to file again. (not there, no
+    // progress)
 
     // wait a second to force a new last modified time.
     Clock.sleep(1000);
@@ -343,17 +346,17 @@ public class TestTailSourceCursor {
 
     assertFalse(c.tailBody()); // attempt to open, nothing there.
     assertFalse(c.tailBody()); // attempt to open, nothing there.
-    assertEquals(0, c.lastFileLen);
-    assertEquals(null, c.raf);
+    assertEquals(0, c.lastChannelSize);
+    assertEquals(null, c.in);
 
     appendData(f, 0, 5);
     assertTrue(c.tailBody()); // finish reading the file
-    assertEquals(0, c.lastReadOffset);
-    assertTrue(null != c.raf);
+    assertEquals(0, c.lastChannelPos);
+    assertTrue(null != c.in);
 
     assertTrue(c.tailBody()); // finish reading the file
-    assertTrue(0 != c.lastFileLen);
-    assertTrue(null != c.raf);
+    assertTrue(0 != c.lastChannelSize);
+    assertTrue(null != c.in);
 
     assertFalse(c.tailBody()); // attempt to open file again.
     assertEquals(5, q.size()); // should be 5 in queue.
@@ -374,38 +377,38 @@ public class TestTailSourceCursor {
 
     assertFalse(c.tailBody()); // attempt to open, nothing there.
     assertFalse(c.tailBody()); // attempt to open, nothing there.
-    assertEquals(0, c.lastFileLen);
-    assertEquals(null, c.raf);
+    assertEquals(0, c.lastChannelSize);
+    assertEquals(null, c.in);
 
     FileWriter fw = new FileWriter(f);
     fw.append("No new line");
     fw.close();
 
-    assertTrue(c.tailBody()); // finish reading the file
-    assertEquals(0, c.lastReadOffset);
-    assertTrue(null != c.raf);
+    assertTrue(c.tailBody()); // find and load file
+    assertEquals(0, c.lastChannelPos);
+    assertTrue(null != c.in);
 
-    assertTrue(c.tailBody()); // finish reading the file
-    assertTrue(0 != c.lastFileLen);
-    assertTrue(null != c.raf);
+    assertTrue(c.tailBody()); // read but since of EOL, buffer (no progress)
+    assertTrue(0 != c.lastChannelSize);
+    assertTrue(null != c.in);
 
-    assertFalse(c.tailBody()); // no progress
+    assertFalse(c.tailBody()); // try to read, but in buffer, no progress
+
+    c.flush();
     assertEquals(1, q.size());
 
-    // TODO (jon): Minor problem -- if cursor reaches an EOF not ending in a
-    // '\n' and then later append more data, will get multiple tail entries
-    // where we really expect only one. This requires a buffering update to make
-    // this completely correct. Punting for now.
     boolean append = true;
     FileWriter fw2 = new FileWriter(f, append);
     fw2.append("more no new line");
     fw2.close();
 
-    assertTrue(c.tailBody()); // read more stuff
-    assertTrue(0 != c.lastFileLen);
-    assertTrue(null != c.raf);
+    assertTrue(c.tailBody()); // open file
+    assertTrue(0 != c.lastChannelSize);
+    assertTrue(null != c.in);
 
-    assertFalse(c.tailBody()); // attempt to open file again.
+    assertTrue(c.tailBody()); // read file.
+    assertEquals(1, q.size());
+    c.flush();
     assertEquals(2, q.size());
 
   }
@@ -422,17 +425,18 @@ public class TestTailSourceCursor {
     Cursor c = new Cursor(q, f);
 
     assertTrue(c.tailBody()); // open file the file
-    assertEquals(0, c.lastReadOffset);
-    assertTrue(null != c.raf);
+    assertEquals(0, c.lastChannelPos);
+    assertTrue(null != c.in);
 
     assertTrue(c.tailBody()); // finish reading the file
-    assertTrue(0 != c.lastFileLen);
-    assertTrue(null != c.raf);
+    assertTrue(0 != c.lastChannelSize);
+    assertTrue(null != c.in);
 
     assertFalse(c.tailBody()); // attempt to open file again.
     assertEquals(5, q.size()); // should be 5 in queue.
 
-    // truncate the file
+    // truncate the file -- there will be 1 full event and one unproperly closed
+    // event.
     RandomAccessFile raf = new RandomAccessFile(f, "rw");
     raf.setLength(10);
     raf.close();
@@ -445,18 +449,22 @@ public class TestTailSourceCursor {
     // differs from the semantics of gnu-tail.
 
     assertTrue(c.tailBody()); // reset changed file
-    assertEquals(0, c.lastReadOffset);
-    assertEquals(null, c.raf);
+    assertEquals(0, c.lastChannelPos);
+    assertEquals(null, c.in);
 
     assertTrue(c.tailBody()); // re-opens length changed file
-    assertTrue(0 != c.lastFileLen);
-    assertTrue(null != c.raf);
+    assertTrue(0 != c.lastChannelSize);
+    assertTrue(null != c.in);
 
     assertTrue(c.tailBody()); // finish reading the file
-    assertTrue(0 != c.lastFileLen);
-    assertTrue(null != c.raf);
+    assertTrue(0 != c.lastChannelSize);
+    assertTrue(null != c.in);
 
     assertFalse(c.tailBody()); // attempt to open file again.
+    assertEquals(6, q.size()); // should be 5 in queue.
+
+    c.flush();
+    assertTrue(c.tailBody()); // attempt to open file again.
     assertEquals(7, q.size()); // should be 5 in queue.
 
   }
@@ -628,8 +636,8 @@ public class TestTailSourceCursor {
   }
 
   /**
-   * This shows that file descriptors fromt he same RAF are the same, however,
-   * two RAFs have differnt fileDescriptors. This is unfortunate because it
+   * This shows that file descriptors from the same RAF are the same, however,
+   * two RAFs have different fileDescriptors. This is unfortunate because it
    * means we cannot use FileDescriptors to differentiate by inode, and limits
    * our tail implemenetation
    */
@@ -686,4 +694,38 @@ public class TestTailSourceCursor {
     assertEquals(4, f.length());
   }
 
+  /**
+   * Test tail file handle exhaustion. If there is a leak, this should fail.
+   * 
+   * @throws IOException
+   * @throws InterruptedException
+   */
+  @Test
+  public void testHandleExhaust() throws IOException, InterruptedException {
+    File f = File.createTempFile("tailexhaust", ".txt");
+    f.deleteOnExit();
+    File f2 = File.createTempFile("tailexhaust", ".txt");
+    f2.deleteOnExit();
+    BlockingQueue<Event> q = new ArrayBlockingQueue<Event>(100);
+    Cursor c = new Cursor(q, f);
+
+    for (int i = 0; i < 3000; i++) {
+      f2.delete();
+
+      appendData(f, i * 5, 5);
+
+      assertTrue(c.tailBody()); // open the file
+
+      f.renameTo(f2); // move the file (should be no problem).
+
+      assertTrue(c.tailBody()); // finish reading the file
+      assertEquals(5, q.size()); // should be 5 in queue.
+
+      assertFalse(c.tailBody()); // No more to read
+      assertEquals(5, q.size()); // should be 5 in queue.
+
+      q.clear();
+    }
+    Log.info("file handles didn't leak!");
+  }
 }
