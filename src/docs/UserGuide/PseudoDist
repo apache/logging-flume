@@ -101,10 +101,14 @@ daemon.  For these examples, you disable the watchdog feature by starting with
 the +node_nowatch+ option.  This option enables you to interact with a node 
 via the console. The other options disable +stdin+.
 
-To check whether a Flume node is up, point your browser to the 'Flume Node 
-status page' at http://localhost:35862/.  Each node displays its own data on a 
-single table that includes diagnostics and metrics data about the node, its 
-data flows, and the system metrics about the machine it is running on.
+To check whether a Flume node is up, point your browser to the 'Flume
+Node status page' at http://localhost:35862/.  Each node displays its
+own data on a single table that includes diagnostics and metrics data
+about the node, its data flows, and the system metrics about the
+machine it is running on.  If you have multiple instances of the flume
+node program running on a machine, it will automatically increment the
+port number and attempt to bind to the next port (35863, 35864, etc)
+and log the eventually selected port.
 
 If the node is up, you should also refresh the Master's status page (http://
 localhost:35871) to make sure that the node has contacted the Master. You 

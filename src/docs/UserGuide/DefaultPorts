@@ -35,4 +35,14 @@ TCP ports are used in all situations.
 | zk -> zk election port   | +flume.master.zk.server.election.port+ |  3183
 |===========================================================================
 
+When using auto chains for collectors, each collector source will
+automatically search for a free port by incrementing starting from
+port +flume.collector.port+ and incrementing the port number.   
+
+When there is more than one physical node on a machine, the node
+status web server will attempt to bind to port +flume.node.http.port+.
+If the bind fails, the port number will be incremented and the bind
+retried until a free port is found.  The port that is eventually bound
+to is logged.
+
 
