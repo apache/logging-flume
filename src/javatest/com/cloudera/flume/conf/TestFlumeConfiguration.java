@@ -17,6 +17,7 @@
  */
 package com.cloudera.flume.conf;
 
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
@@ -163,5 +164,17 @@ public class TestFlumeConfiguration {
     assertEquals(false, cfg.getMasterIsDistributed());
     cfg.set(FlumeConfiguration.MASTER_SERVERS, "hostA,hostB");
     assertEquals(true, cfg.getMasterIsDistributed());
+  }
+
+  /**
+   * Master servers with ':'s should be fixed up to use default ports instead of
+   */
+  @Test
+  public void testInvalidMasterServersFixup() {
+    FlumeConfiguration cfg = new TestableConfiguration();
+    cfg.set(FlumeConfiguration.MASTER_SERVERS, "foo:12345,bar:1345");
+    String zksvrs = cfg.getMasterZKServers();
+    assertNotSame("foo:12345:2181:3181,bar:1345:2181:3181", zksvrs);
+    assertEquals("foo:2181:3181,bar:2181:3181", zksvrs);
   }
 }

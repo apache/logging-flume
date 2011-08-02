@@ -504,7 +504,27 @@ public class FlumeConfiguration extends Configuration {
    * This is the list of masters that agent nodes will connect to
    */
   public String getMasterServers() {
-    return get(MASTER_SERVERS, "localhost");
+    String svrs = get(MASTER_SERVERS, "localhost");
+
+    // check for illegal ':'s in the servers; truncate stuff after the ':'
+    String[] hosts = svrs.split(",");
+    StringBuilder builder = new StringBuilder();
+    for (int i = 0; i < hosts.length; ++i) {
+      hosts[i] = hosts[i].trim();
+
+      String[] parts = hosts[i].split(":");
+      builder.append(parts[0]);
+      if (parts.length > 1) {
+        LOG.warn("Master Server's should not have list ports but host '"
+            + hosts[i] + " 'specified ports! ");
+      }
+
+      if (i < hosts.length - 1) {
+        builder.append(",");
+      }
+    }
+
+    return builder.toString();
   }
 
   /**
