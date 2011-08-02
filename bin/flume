@@ -44,7 +44,7 @@ function usage {
 
 CMDPATH=`dirname $0`
 # name of path
-CMDPATH=`dirname $CMDPATH` 
+CMDPATH=`dirname $CMDPATH`
 
 FLUME=$CMDPATH/bin/flume
 
@@ -53,7 +53,7 @@ MASTERPID=${FLUME_PID_DIR:="/tmp"}/flumemaster.pid
 CMD="$1"
 if [ -z "$CMD" ]; then
     usage
-fi 
+fi
 
 cygwin=false
 pathsep=":"
@@ -79,7 +79,7 @@ function append_jars_onto_classpath() {
 # name of script
 BINPATH=`dirname $0`
 # name of path
-CMDPATH=`dirname $BINPATH` 
+CMDPATH=`dirname $BINPATH`
 
 if [ -f "${BINPATH}/flume-env.sh" ]; then
     source "$BINPATH/flume-env.sh"
@@ -95,11 +95,11 @@ JOPTS+="-Dflume.root.logger=${FLUME_ROOT_LOGGER:-INFO,console} "
 JOPTS+="-Dzookeeper.root.logger=${ZOOKEEPER_ROOT_LOGGER:-ERROR,console} "
 JOPTS+="-Dwatchdog.root.logger=${WATCHDOG_ROOT_LOGGER:-INFO,console} "
 
-if [ "$cygwin" == false ] ; then 
+if [ "$cygwin" == false ] ; then
   # unix and "unix-like" setup
   # pick user override, or check for dev env, or check for install
   if [ -n "$FLUME_CONF_DIR" ]; then
-      echo -n "" #nada
+      true
   elif [ -e "./conf/flume-conf.xml" ]; then
       export FLUME_CONF_DIR="./conf"
   elif [ -e "/etc/flume/conf/flume-conf.xml" ]; then
@@ -115,14 +115,33 @@ if [ "$cygwin" == false ] ; then
       CLASSPATH+=":${FLUME_CLASSPATH}"
   fi
 
-  if [ -n "$HADOOP_HOME" ]; then
-      CLASSPATH+=":${HADOOP_HOME}/hadoop-*-core.jar:${HADOOP_HOME}/lib/hadoop-*-core.jar"
-  elif [ -f "/usr/lib/hadoop/hadoop-*core.jar" ]; then
-	export CDH_CLASSPATH="/usr/lib/hadoop"
- 	CLASSPATH+=":${CDH_CLASSPATH}/*"
-  else
-    echo "HADOOP_HOME is unset and /usr/lib/hadoop missing core jars therefore hadoop jars not explicitly added to classpath"
-  fi
+  # try to load the hadoop core jars
+  HADOOP_CORE_FOUND=false
+  while true; do
+      if [ -n "$HADOOP_HOME" ]; then
+          HADOOP_CORE_FOUND=true
+          CLASSPATH+=":${HADOOP_HOME}/hadoop-*-core.jar:${HADOOP_HOME}/lib/hadoop-*-core.jar"
+          break
+      fi
+
+      HADCOREJARS=`find /usr/lib/hadoop/hadoop-*core.jar 2> /dev/null || true`
+      if [ -n "$HADCOREJARS" ]; then
+          HADOOP_CORE_FOUND=true
+          export CDH_CLASSPATH="/usr/lib/hadoop"
+          CLASSPATH+=":${CDH_CLASSPATH}/*"
+          break
+      fi
+
+      HADCOREJARS=`find ./lib/hadoop-*core.jar 2> /dev/null || true`
+      if [ -n "$HADCOREJARS" ]; then
+          # if this is the dev environment then hadoop jar will
+          # get added as part of ./lib (below)
+          break
+      fi
+
+      # core jars may be missing, we'll check for this below
+      break
+  done
 
   JOPTS+="-Djava.library.path=$CMDPATH/lib "
 
@@ -131,7 +150,7 @@ if [ "$cygwin" == false ] ; then
 
   CLASSPATH+=":$JAVA_HOME/lib/tools.jar"
 
-  if [ "$FLUME_DEVMODE" == true ] ; then 
+  if [ "$FLUME_DEVMODE" == true ] ; then
     # allow Jetty to compile servlets in dev mode
       append_jars_onto_classpath "$CMDPATH/libbuild"
   fi
@@ -146,7 +165,7 @@ if [ "$cygwin" == false ] ; then
   append_jars_onto_classpath "$CMDPATH/build"
   append_jars_onto_classpath "${FLUME_HOME}"
 
-else 
+else
   # windows with cygwin
   JOPTS+="-Djava.library.path=`cygpath -d $CMDPATH/lib` "
 
@@ -160,9 +179,22 @@ else
     append_jars_onto_classpath "$CMDPATH/libbuild"
   fi
 
-fi 
+fi
 
 export CLASSPATH
+
+# if we found hadoop core already then no need to test
+# however if we're not certain then check the classpath
+if [ $HADOOP_CORE_FOUND == false ]; then
+    LENCP=${#CLASSPATH}
+    # replace hadoop-*core.jar with 0 len string
+    HADTEST=${CLASSPATH/hadoop-*core.jar/}
+    HADTESTLEN=${#HADTEST}
+    # lengths should be different if jars are in classpath
+    if [ $LENCP -eq $HADTESTLEN ]; then
+        echo "HADOOP_HOME is unset, hadoop jars may not be added to classpath"
+    fi
+fi
 
 if [ -f "${HADOOP_CONF_DIR}/hadoop-env.sh" ]; then
   . "${HADOOP_CONF_DIR}/hadoop-env.sh"
@@ -175,7 +207,7 @@ shift
 # mastercase, we actually only drop the pid of the watchdog.  The
 # watchdog kills the watched child process if killed cleanly.
 WATCHDOG_OPTS="-Dpid=$$ -Dpidfile="
-WATCHDOG_CLASS=com.cloudera.flume.watchdog.FlumeWatchdog 
+WATCHDOG_CLASS=com.cloudera.flume.watchdog.FlumeWatchdog
 
 MASTER_WATCHDOG="java ${JOPTS} -Dpid=$$ -Dpidfile=$MASTERPID $WATCHDOG_CLASS"
 MASTERI_WATCHDOG="java ${JOPTS} -Dpid=$$ -Dpidfile=$MASTERPID  $WATCHDOG_CLASS"
@@ -191,7 +223,7 @@ if [ -n "$FLUME_VERBOSE" ]; then
     set -x
 fi
 
-if [ "$CMD" = "-h" ] ; then 
+if [ "$CMD" = "-h" ] ; then
   usage
 elif [ "$CMD" = "node" ] ; then
   # there can be multiple nodes.
@@ -201,7 +233,7 @@ elif [ "$CMD" = "nodei" ] ; then
   exec $NODEI_WATCHDOG java $JOPTS $UOPTS com.cloudera.flume.agent.FlumeNode "$@"
 elif [ "$CMD" = "master" ] ; then
   # only allow one master
-  if [ -f $MASTERPID ] ; then 
+  if [ -f $MASTERPID ] ; then
     PID=`cat $MASTERPID`
     echo "Master already running, pid=$PID"
     exit -1
@@ -228,10 +260,10 @@ elif [ "$CMD" = "shell" ] ; then
 elif [ "$CMD" = "killmaster" ] ; then
   if [ -f $MASTERPID ] ; then
     PID=`cat $MASTERPID`
-    echo "Killing FlumeMaster (pid=$PID)" 
+    echo "Killing FlumeMaster (pid=$PID)"
     if kill $PID ; then
       echo "FlumeMaster stopped"
-    else 
+    else
      echo "FlumeMaster (pid=$PID) could not be stopped"
     fi
     rm -f $MASTERPID
