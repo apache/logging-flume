@@ -268,7 +268,7 @@ public class ZKInProcessServer {
     properties.setProperty("tickTime", "2000");
     properties.setProperty("initLimit", "10");
     properties.setProperty("syncLimit", "5");
-    properties.setProperty("electionAlg", "3");
+    properties.setProperty("electionAlg", "3"); // fast leader election
     properties.setProperty("maxClientCnxns", "0");
     createDirs(logdir + "/server-0", logdir + "/logs-0", 0);
     try {

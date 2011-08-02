@@ -28,7 +28,8 @@ TCP ports are used in all situations.
 | master status web server | +flume.master.http.port+               | 35871
 | master heartbeat port    | +flume.master.heartbeat.port+          | 35872
 | master admin/shell port  | +flume.master.admin.port+              | 35873
-| master gossip port       | +flume.master.gossip.port+             | 35890  
+| master gossip port       | +flume.master.gossip.port+             | 57890  
+| master report port       | +flume.report.server.port+             | 45678
 | master -> zk port        | +flume.master.zk.client.port+          |  3181
 | zk -> zk quorum port     | +flume.master.zk.server.quorum.port+   |  3182
 | zk -> zk election port   | +flume.master.zk.server.election.port+ |  3183
