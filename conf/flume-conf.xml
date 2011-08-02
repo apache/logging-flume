@@ -81,7 +81,7 @@ configuration values placed in flume-site.xml.  -->
 
   <property>
     <name>flume.agent.logdir</name>
-    <value>/tmp/flume/agent</value>
+    <value>/tmp/flume-${user.name}/agent</value>
     <description> This is the directory that write-ahead logging data
       or disk-failover data is collected from applications gets
       written to. The agent watches this directory.
@@ -146,7 +146,7 @@ configuration values placed in flume-site.xml.  -->
 
   <property>
     <name>flume.collector.dfs.dir</name>
-    <value>file:///tmp/flume/collected</value>
+    <value>file:///tmp/flume-${user.name}/collected</value>
     <description>This is a dfs directory that is the the final resting
     place for logs to be stored in.  This defaults to a local dir in
     /tmp but can be hadoop URI path that such as hdfs://namenode/path/
@@ -257,7 +257,7 @@ configuration values placed in flume-site.xml.  -->
   
   <property>
     <name>flume.master.zk.logdir</name>
-    <value>/tmp/flume-zk</value>
+    <value>/tmp/flume-${user.name}-zk</value>
     <description>The base directory in which the ZBCS stores data.</description>
   </property>
   
