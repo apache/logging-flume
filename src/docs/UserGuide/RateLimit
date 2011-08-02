@@ -1,0 +1,76 @@
+////////////////////
+Licensed to Cloudera, Inc. under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  Cloudera, Inc. licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+////////////////////
+
+=== Limiting Data Transfer Rate between Source-Sink pairs
+WARNING: This feature is only available when using the memory-backed store and not the zookeeper-backed store.
+
+Flume has the ability to limit the rate of transfer of data between source-sink pairs.  
+This is useful to divide the network bandwidth non-uniformly among different 
+source-sink pairs based on the kind of logs they are transferring.  
+For example, you can ship some types of logs at a faster rate than others, or you can transfer logs at different rates at different times of the day. 
+
+
+Another example of when it is beneficial to limit the rate of data transfer is when the network (or a collector) recovers after a failure.  
+In this case, the agents might have a lot of data backed up to ship; if there is no limit on the transfer rate, 
+the agents can exhaust all of the resources of the collector and possibly cause it to crash.  
+
+
+In Flume, you can use a special sink-decorator called the +choke+ decorator to limit the rate of transfer of data between source-sink pairs.
+Each +choke+ decorator (called a +choke+) has to be assigned to a +choke-id+.  
+Here is an example of using a +choke+ between a source and sink of a node; the +choke-id+ of this +choke+ is "Cid".
+----
+node: source | { choke("Cid") => sink };
+----
+
+The +choke-ids+ are specific to a physical node. Before using a +choke+ on +node+, 
+you must register the +choke-id+ on the physical node containing the +node+.  
+You can register a +choke-id+ on a physical node using the +setChokeLimit+ command.  
+When registering a +choke-id+, you must also assign a rate limit (in KB/sec) to it.  
+Here is an example of registering a +choke-id+ "Cid" on a physical node +host+ and assigning a limit 1000 KB/sec.
+----
+exec setChokeLimit host Cid 1000
+----
+
+NOTE: You can also use setChokeLimit at the run-time to change the limit assigned to a +choke-id+. 
+
+The limit on the +choke-id+ specifies an upper bound on the rate at which the +chokes+ using that +choke-id+ can collectively transfer data.  
+In the preceding example, there is only one source-sink pair on the physical node +host+ that uses a +choke+ with +choke-id+ "Cid". Consequently, the rate of data transfer between that source-sink pair is limited to 1000 KB/sec. 
+
+NOTE: For the purpose of rate limiting, only the size of the event body is taken into account. 
+
+The +choke+ decorator works as follows: when +append()+ is called on the sink to which the +choke+ 
+is attached, the +append()+ call works normally if the amount of data transferred 
+(during a small duration of time) is within the limit assigned to the +choke-id+ corresponding to the +choke+.
+If the limit has been exceeded, then +append()+ is blocked for a small duration of time.
+
+Suppose there are multiple source-sink pairs using +chokes+ between them, and they are using 
+the same +choke-id+.  Suppose further that both +node1+ and +node2+ are logical nodes on the same physical node +host+, 
+and a +choke-id+ "Cid" with limit 1000KB/sec is registered on +host+.
+
+----
+node1: source1 | { choke("Cid") => sink1 };
+node2: source2 | { choke("Cid") => sink2 };
+----
+In this example, because both +source1-sink1+ and +source2-sink2+ pairs are using +chokes+ with the same +choke-id+ "Cid", the total data going across these source-sink pairs collectively is limited to 1000KB/sec. 
+Flume does not control how this limit will be divided between the source-sink pairs, 
+but it does guarantee that neither source-sink pair will starve.
+
+NOTE: If multiple source-sink pairs on the same physical node use chokes that have the same choke-id, 
+then there is no guarantee how the rate limit will be divided between these source-sink pairs.
+
+

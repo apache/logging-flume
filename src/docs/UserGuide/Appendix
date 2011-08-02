@@ -116,6 +116,10 @@ milliseconds. +execStream("foo")+ is equivalent to +exec("foo", false, false,
 +_msgCount_+ random messages of size +_msgSize_+.  This will generate non 
 printable characters.
 
++synthrndsize(_msgCount_,_minSize_,_maxSize_)+ :: A source that synthetically 
+generates +_msgCount_+ random messages of size between randomly _minSize_ and _maxSize_.
+This will generate non printable characters.
+
 +nonlsynth(_msgCount_,_msgSize_)+:: A source that synthetically generates 
 +_msgCount_+ random messages of size +_msgSize_+.  This converts all `'\n'` 
 chars into `' '` chars.  This will generate non-printable characters but since 
@@ -399,6 +403,11 @@ probability of being selected.  NOTE: This will reorder the events being sent.
 the pipeline.  This blocks and prevents other events from entering the 
 pipeline.  This is useful for workload simulation in conjunction with 
 +asciisynth+ sources.
+
++choke[(_choke-id_)]+ :: Limits the transfer rate of data going into the sink.  
+The +choke-id+ should have been registered on the physical node where this decorator is being created using the +setChokeLimit+ command.  
+Refer to *Limiting Data Transfer Rate between Source-Sink pairs* section for more details.
+
 
 include::Environment[]
 
