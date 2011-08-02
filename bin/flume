@@ -46,9 +46,9 @@ CMDPATH=`dirname $0`
 
 # This is to make CMDPATH correct if you go to the bin directory
 # and run ./flume <command>.
-pushd $CMDPATH 
+pushd $CMDPATH >/dev/null
 CMDPATH=`pwd`
-popd
+popd >/dev/null
 
 # name of path
 CMDPATH=`dirname $CMDPATH`
