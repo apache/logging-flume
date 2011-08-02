@@ -123,7 +123,7 @@ spawn host3 dataConsumer
 and after the Master learns the host names (the host1, host2, and host3 
 machine’s heartbeat against the Master), the Master has enough information to 
 translate configurations with physical hostnames and ports.  A possible 
-translation would use replace the logicalSource with a rpcSources and the 
+translation would replace the logicalSource with a rpcSources and the 
 logicalSink with an rpcSinks:
 
 ----
@@ -151,15 +151,16 @@ all of the syslog data from the cluster in one directory tree, and all of the
 httpd logs from the cluster in another.
 
 One approach is to tag all the data with source information and then push all 
-the data down the same pipe.  This could be then followed by some post-
+the data down the same pipe.  This could then be followed by some post-
 processing that demultiplexes (demuxes) the data into different buckets.  
 Another approach is to keep the two sets of data logically isolated from each 
-other the entire time and avoids post processing.
+other the entire time and avoid post processing.
 
-Flume can do both approaches but enables the latter lower-latency approach, by 
-introducing the concept of a node groups or *flows*. Since there are logical 
-nodes that allow for multiple nodes on a single JVM, you can have a node for 
-each different kinds of produced data.
+Flume can do both approaches but enables the latter lower-latency
+approach, by introducing the concept of grouping nodes into
+*flows*. Since there are logical nodes that allow for multiple nodes
+on a single JVM, you can have a node for each different kinds of
+produced data.
 
 The following example shows how flows can be used. Start by having six logical 
 nodes in the system.
@@ -222,7 +223,7 @@ digraph single_flow {
 This setup essentially instantiates the first approach.  It mixes foo and bar 
 data together since the translation of autoBEChain would see two 
 collectorSources that the Master considers to be equivalent.  Foo data will 
-likely get send to the barConsumer and bar data will likely get sent to 
+likely be sent to the barConsumer and bar data will likely be sent to 
 fooConsumer.
 
 You really wanted to separate sources of information into logically isolated 
@@ -230,7 +231,7 @@ streams of data.  Flume provides a grouping abstraction called a *flow*.  A
 flow groups particular logical nodes together so that the different logical 
 data types remain isolated.
 
-More concretely, it allows for a different failover chains for each kind of 
+More concretely, it allows for a different failover chain for each kind of 
 data in the Flume cluster.  The auto*Chain based agents would only send data 
 to collectors in the same flow group.  This isolates data so that it only 
 flows to nodes within the group.
@@ -299,7 +300,7 @@ manageability problems.
 * Being machine specific, having to know all physical host names and ports.
 
 The translation mechanism can be quite powerful.  When coupled with
-metrics information could be used to perform automated dynamic changes
-of configurations.  A possible example would be to automatically
+metrics information, this could be used to perform automated dynamic
+configuration changes.  A possible example would be to automatically
 commission or decommission new collectors to match diurnal traffic and
 load patterns.

@@ -3,7 +3,7 @@
 == Advanced Flume Usage
 
 This section describes in further detail, how to automate the 
-control of a Flume nodes via the FlumeShell, a deep dive into Flume's dataflow 
+control of Flume nodes via the FlumeShell, a deep dive into Flume's dataflow 
 specification language, internals of the reliability mechanisms, how to do 
 metadata manipulations, and how to install source and sink plugins.
 
@@ -53,7 +53,7 @@ Three special sinks are FanOutSinks, FailoverSinks, and RollSinks.
 
 Fanout sinks send any incoming events to all of the sinks specified to be its 
 children.  These can be used for data replication or for processing data off 
-of the main reliable data flow path.  Fanout is similar to the unix +tee+ 
+of the main reliable data flow path.  Fanout is similar to the Unix +tee+ 
 command or logically acts like an AND operator where the event is sent to each 
 subsink.
 
@@ -86,7 +86,7 @@ agent1 : source | < logicalSink("collector1") ? logicalSink("collector2")
 ----
 
 Roll sink opens and closes a new instance of its subsink every
-_millis_ milliseconds.  A roll is an atomic transition that closes a
+_millis_ milliseconds.  A roll is an atomic transition that closes
 the current instance of the sub-sink, and then opens a new instance of
 it for appending data.  A special +%{rolltag}+ attribute is available
 as an escape sequence to differentiate data in different roll periods.
@@ -124,8 +124,8 @@ that pass through them.  For example, you can use them to increase reliability
 via write ahead logging, increase network throughput via batching/compression, 
 sampling, benchmarking, and even lightweight analytics.
 
-The following simple sampling example uses a intervalSampler which is 
-configures to send every 10th element from source "source" to the sink "sink":
+The following simple sampling example uses an intervalSampler which is 
+configured to send every 10th element from source "source" to the sink "sink":
 
 ----
 flumenode: source | { intervalSampler(10) => sink };
@@ -138,7 +138,7 @@ flumenode: source | { batch(100) => sink };
 ----
 
 Like fanout and failover, decorators are also composable. Here is an example 
-that creates batches of 100 events and then compresses them before shipping 
+that creates batches of 100 events and then compresses them before moving 
 them off to the sink:
 
 ----
@@ -175,9 +175,11 @@ node2 : tail("foo") | let primary := { lazyOpen -> {stubbornAppend => logicalSin
 node3 : tail("foo") | { lazyOpen => { stubbornAppend =>  logicalSink("bar")  } };
 ----
 
-+ackedWriteAhead+ is actually a complicated decorator that internally uses 
-rolls and some other special decorators.  This decorator interface allows us 
-to manually specify wire batching and compression options.  For example, you could write to compress every 100 messages using gzip compression:
++ackedWriteAhead+ is actually a complicated decorator that internally
+uses rolls and some other special decorators.  This decorator
+interface allows us to manually specify wire batching and compression
+options.  For example, you could compress every 100 messages using
+gzip compression:
 
 ----
 node1 : tail("foo") | { ackedWriteAhead => { batch(100) => { gzip => { 
@@ -200,7 +202,7 @@ node1 : tail("foo") | { .... => logicalSink("node2") };
 node2 : logicalSource | collectorSink("...");
 ----
 
-The translation mechanisms converts logicalSources a logicalSinks into lower 
+The translation mechanisms converts logicalSources and logicalSinks into lower 
 level physical rpcSources and rpcSinks.  Lets assume that node1 is on machine 
 host1 and node2 is on machine host2.  After the translation you end up with the 
 following configurations:
@@ -245,15 +247,16 @@ Extraction operations are also available to extract values from logs that
 have known structure.  
 
 One example is the +regex+ decorator.  This takes three arguments: a regular 
-expression, an index, and an attribute name; which allows the user to use a 
+expression, an index, and an attribute name which allows the user to use a 
 extract a particular regex group out of the body of the event and write it as 
 the value of the specified attribute.
 
-Similarly the +split+ decorator also takes three arguments: a regular 
-expression, an index, and an attribute name.  This splits the body based on 
-the regular expression, extracts the text group after the instance of the 
-separator, and writes the value to the specified attribute.  One can think of 
-this as a much simplified version of the awk unix utility.
+Similarly the +split+ decorator also takes three arguments: a regular
+expression, an index, and an attribute name.  This splits the body
+based on the regular expression, extracts the text group after the
+instance of the separator, and writes the value to the specified
+attribute.  One can think of this as a much simplified version of the
++awk+ Unix utility.
 
 ==== Meta Data Filtering and Transformations
 
@@ -262,7 +265,7 @@ that has already been written upstream.  This simplifies debugging of
 dataflows, and improves the visibility of data when debugging.
 
 If many stages are used, however, frequently a lot of extra metadata ends up 
-being shipped around.  To deal with this, a few extra operations are available.
+being moved around.  To deal with this, a few extra operations are available.
 
 A +select+ operation is available.  This operation is like SQL select, which 
 provides a relational calculus's set projection operation that modifies an 
@@ -283,14 +286,14 @@ summary information out to an IRC channel periodically.
 ==== Role Defaults
 
 To simplify things for users, you can assign a particular role to a logical 
-nodes -- think of these as an "automatic" specifications that have good 
+node -- think of these as an "automatic" specification that have  
 default settings.  Two roles currently provided are the agent role and the 
 collector role.  Since there are many nodes with the same role, each of 
 these are called a tier.  So, for example, the agent tier consists of all the nodes 
 that are in the agent role.  Nodes that have the collector role are in the 
 collector tier.
 
-Agents and collectors roles have defaults baked into the `conf/flume-site.xml` 
+Agents and collectors roles have defaults specified in the `conf/flume-site.xml` 
 file.  Look at the `conf/flume-conf.xml` file for properties prefixed with 
 `flume.agent.*` and `flume.collector.*` for descriptions of the configuration 
 options.
@@ -302,7 +305,7 @@ logical node will attempt to instantiate the data flow and have it work
 concurrently with other data flows.
 
 This means that each machine essentially only lives in one tier.  In a more 
-complicated setup, it is possible to have a machine that contain many logical 
+complicated setup, it is possible to have a machine that contains many logical 
 nodes, and because each of these nodes can take on different roles, the 
 machine lives in multiple tiers.
 

@@ -66,7 +66,7 @@ logical nodes to their physical nodes.
 
 The Master's 'Command history' table contains the state of commands. In 
 general, *commands* modify the Master's global state.  Commands are processed 
-serially on a Master and are assigned a unique command id number. Each command 
+serially on a Master and are assigned a unique command ID number. Each command 
 has a state (for example, SUCCEEDED, FAILED, or PENDING), a command line, and 
 a message which often contains information about its execution attempt.
 

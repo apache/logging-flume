@@ -62,7 +62,7 @@ hostname [INFO Thu Nov 19 08:37:13 PST 2009] This is a test
 
 To exit the program, press ^C.
 
-NOTE: Some sources do not automatically exit and require a manual ^C o
+NOTE: Some sources do not automatically exit and require a manual ^C to
 exit.
 
 // TODO there are actually too many irrelevant events right now. 

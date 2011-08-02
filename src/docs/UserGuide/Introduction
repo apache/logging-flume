@@ -19,7 +19,7 @@ applications.
 
 Flume is a distributed, reliable, and available service for
 efficiently moving large amounts of data soon after the data is
-produced.  This release provides a scalable conduit to shipping data
+produced.  This release provides a scalable conduit to move data
 around a cluster as well as reliable logging.
 
 The primary use case for Flume is as a logging system that gathers a

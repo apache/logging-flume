@@ -116,7 +116,12 @@ agentF : src | agentSink("collector",35853);
 collector : collectorSource(35853) | collectorSink("hdfs://namenode/flume/","srcdata"); 
 ----
 
-NOTE: When specifying destinations for agentSinks, use the _hostname and port of the target machine_.  The default name for a node is its hostname.  However, if there are multiple logical nodes, you must use the machine's host name, _not the name of the logical node_. In the preceding examples, agent[A-F] and collector are the _physical host names_ of the machines where these configurations are running. 
+NOTE: When specifying destinations for agentSinks, use the _hostname
+and port of the target machine_.  The default name for a node is its
+hostname.  However, if there are multiple logical nodes, you must use
+the machine's host name, _not the name of the logical node_. In the
+preceding examples, agent[A-F] and collector are the _physical host
+names_ of the machines where these configurations are running.
 
 You can rely on the default ports set in the configuration files:
 
@@ -162,12 +167,20 @@ The previous examples use the +agentSink+.  This is an alias for the +agentE2ESi
 
 === Multiple Collectors
 
-Having multiple collectors can increase the log collection throughput and can improve the timeliness of event delivery by increasing collector availability.  Data collection is parallelizable; thus, load from many agents can be shared across many several collectors.  
+Having multiple collectors can increase the log collection throughput
+and can improve the timeliness of event delivery by increasing
+collector availability.  Data collection is parallelizable; thus, load
+from many agents can be shared across many several collectors.
 
 
 ==== Partitioning Agents across Multiple Collectors
 
-The preceding graph and dataflow spec shows a typical topology for Flume nodes.  For reliable delivery, in the event that the collector were to go down or become separated from the agents, the agents would need to store their events to their respective disks locally.  The agents would then periodically attempt to recontact a collector.  Because the collector is down, any analysis or processing downstream is blocked.
+The preceding graph and dataflow spec shows a typical topology for
+Flume nodes.  For reliable delivery, in the event that the collector
+stops operating or disconnects from the agents, the agents would need
+to store their events to their respective disks locally.  The agents
+would then periodically attempt to recontact a collector.  Because the
+collector is down, any analysis or processing downstream is blocked.
 
 ["graphviz", "multiCollector.png"] 
 --------------------------------------------------------------------- 
@@ -194,9 +207,17 @@ collector:C -> HDFS;
 } 
 ---------------------------------------------------------------------
 
-When you have multiple collectors as in the preceding graph and dataflow spec, downstream progress is still made even in the face of a collector's failure.  If collector B goes down, agent A, agent B, agent E, and agent F continue to deliver events via collector A and collector C respectively.  Agent C and agent D may have to queue their logs until collector B (or its replacement) comes back online.
+When you have multiple collectors as in the preceding graph and
+dataflow spec, downstream progress is still made even in the face of a
+collector's failure.  If collector B goes down, agent A, agent B,
+agent E, and agent F continue to deliver events via collector A and
+collector C respectively.  Agent C and agent D may have to queue their
+logs until collector B (or its replacement) comes back online.
 
-The following configuration partitions the work from the set of agents across many collectors.  In this example, each of the collectors specify the same DFS output directory and file prefixes, aggregating all of the logs into the same directory.
+The following configuration partitions the work from the set of agents
+across many collectors.  In this example, each of the collectors
+specify the same DFS output directory and file prefixes, aggregating
+all of the logs into the same directory.
 
 ---- 
 agentA : src | agentE2ESink("collectorA",35853); 
@@ -237,11 +258,25 @@ collector:C -> HDFS;
 } 
 ---------------------------------------------------------------------
 
-When you have multiple collectors writing to the same storage location, instead of having agent C and agent D queue indefinitely, you can instead have them failover to other collectors.  In this scenario, you could have agent C and agent D fail over to collector A and collector C respectively, while periodically checking to see if collector B has returned.
+When you have multiple collectors writing to the same storage
+location, instead of having agent C and agent D queue indefinitely,
+you can instead have them fail over to other collectors.  In this
+scenario, you could have agent C and agent D fail over to collector A
+and collector C respectively, while periodically checking to see if
+collector B has returned.
 
-To specify these setups, use agents with *failover chains*. Similarly to single collector agents, there are three levels of reliability for the failover chain agents: +agentE2EChain+, +agentDFOChain+, and +agentBEChain+.  
+To specify these setups, use agents with *failover chains*. Similarly
+to single collector agents, there are three levels of reliability for
+the failover chain agents: +agentE2EChain+, +agentDFOChain+, and
++agentBEChain+.
 
-In the following example, you manually specify the failover chain using +agentE2EChain+, an agent with end-to-end reliability with multiple failover collectors.  +agentA+ in this situation will initially attempt to send to +collectorA+ on port +35853+.  The second argument in +agentA+ 's sink specifies the collector to fall back onto if the first fails.  You can specify an arbitrary number of collectors, but you must specify at least one.
+In the following example, you manually specify the failover chain
+using +agentE2EChain+, an agent with end-to-end reliability with
+multiple failover collectors.  +agentA+ in this situation will
+initially attempt to send to +collectorA+ on port +35853+.  The second
+argument in +agentA+ 's sink specifies the collector to fall back onto
+if the first fails.  You can specify an arbitrary number of
+collectors, but you must specify at least one.
 
 ---- 
 agentA : src | agentE2EChain("collectorA:35853","collectorB:35853"); 
@@ -413,9 +448,15 @@ The final property to set is *not* the same on every machine - every node in the
 --------------------------------------
 
 
-The value for +flume.master.serverid+ for each node is the index of that node's hostname in the list in +flume.master.ensemble+, starting at 0. For example +masterB+ has index 1 in that list. The purpose of this property is to allow each node to uniquely identify itself to the other nodes in the Flume Master.
+The value for +flume.master.serverid+ for each node is the index of
+that node's hostname in the list in +flume.master.ensemble+, starting
+at 0. For example +masterB+ has index 1 in that list. The purpose of
+this property is to allow each node to uniquely identify itself to the
+other nodes in the Flume Master.
 
-This is all the configuration required to start a three-node distributed Flume Master. To test this out, we can start the Master process on all three machines:
+This is all the configuration required to start a three-node
+distributed Flume Master. To test this out, we can start the Master
+process on all three machines:
 
 -------------------------------- 
 [flume@masterA] flume master
@@ -425,7 +466,10 @@ This is all the configuration required to start a three-node distributed Flume M
 [flume@masterC] flume master 
 --------------------------------
 
-Each Master process will initially try and contact all other nodes in the ensemble. Until more than half (in this case, 2) nodes are alive and contactable, the configuration store will be unable to start, and the Flume Master will not be able to read or write configuration data.
+Each Master process will initially try and contact all other nodes in
+the ensemble. Until more than half (in this case, two) nodes are alive
+and contactable, the configuration store will be unable to start, and
+the Flume Master will not be able to read or write configuration data.
 
 You can check the current state of the ensemble by inspecting the web page for any of the Flume Master machines which by default will be found at, for example, +http://masterA:35871+.
 
@@ -622,13 +666,21 @@ In some cases you may want a ZBCS that relies on an externally managed ZooKeeper
 
 === Section Summary 
 
-This section described installing, deploying, and configuring a set of Flume nodes in a fully distributed setting. You should now be able to collect streams of logs with Flume.
+This section described installing, deploying, and configuring a set of
+Flume nodes in a fully distributed setting. You should now be able to
+collect streams of logs with Flume.
 
-You also used some roles for sources and sinks to connect nodes together.  You now have an understanding of the basics of setting up a set of Flume nodes.  Here's the new sources and sinks introduced in this subsection.
+You also used some roles for sources and sinks to connect nodes
+together.  You now have an understanding of the basics of setting up a
+set of Flume nodes.  Here's the new sources and sinks introduced in
+this subsection.
 
 // These tables are kinda gross, had to use asciidoc v8.2.7 style. 
 .Flume's Tiered Event Sources
 
-+collectorSource[(_port_)]+ :: Collector source. Listens for data from agentSinks forwarding to port +_port_+.  If port is not specified, the node default collector tcp port, 35853.
++collectorSource[(_port_)]+ :: Collector source. Listens for data from
+agentSinks forwarding to port +_port_+.  If port is not specified, the
+node default collector TCP port, 35853.
+
 
 

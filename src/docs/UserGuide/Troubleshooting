@@ -75,7 +75,7 @@ On Ubuntu, need to add a line to +/etc/security/limits.conf+
 <user> hard nofile 10000
 ----
 
-The user should also have the following line to a `~/.bash_profile` to raise 
+The user should also add the following line to a `~/.bash_profile` to raise 
 the limit to the hard limit.
 
 ----
@@ -84,7 +84,7 @@ ulimit -n 10000
 
 ==== Failures due when using Disk Failover or Write Ahead Log
 
-Flume currently relies on the file system for our logging mechanisms. You must 
+Flume currently relies on the file system for logging mechanisms. You must 
 make sure that the user running Flume has permissions to write to the 
 specified logging directory.
 
@@ -107,5 +107,5 @@ Here is a set that Cloudera has tested (other versions will likely work as well)
 file sizes.  Files written with this method are compatible with other programs 
 like +s3cmd+.
 
-+s3+ writes using an overlay file system the must go through Hadoop for file 
++s3+ writes using an overlay file system must go through Hadoop for file 
 system interaction.

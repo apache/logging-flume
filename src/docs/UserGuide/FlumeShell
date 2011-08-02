@@ -7,9 +7,10 @@ primitive) web interface to a Master server.
 Flume also provides a shell, which allows the user to type commands into a 
 terminal and have them executed on a Flume deployment.
 
-All of the commands available in the web form are available in the Flume 
-Shell.  The Flume Shell, however, actually has extra controls for command 
-submission control, state checking, that aid scriptability.
+All of the commands available in the web form are available in the
+Flume Shell.  The Flume Shell, however, actually has extra controls
+for command submission control and state checking that aid
+scriptability.
 
 ==== Using the Flume Command Shell
 
@@ -89,7 +90,7 @@ specified commands.
 
 +submit+ :: Asynchronously execute a command on the master.  This command will 
 return immediately and allows the submission of other commands.  The command 
-id of the last command submitted is recorded.
+ID of the last command submitted is recorded.
 
 +wait _ms_ [_cmdid_]+ :: This commands blocks for up to +ms+ milliseconds 
 until +cmdid+ has entered the SUCCEEDED or FAILED state. If +ms+ is 0 the 
@@ -130,8 +131,8 @@ the ' character.
 asynchronously sent to the master in order to be executed.  +wait+ are 
 essentially joins for recently +submit+ ted commands.
 
-+noop+ :: This command contacts the master and issue a noop (no operation) 
-command.
++noop+ :: This command contacts the master and issues a noop (no
+operation) command.
 
 +config _logicalnode_ 'source' 'sink'+ :: This command configures a node.  
 This is nearly identical to the 'config' command.

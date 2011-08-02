@@ -6,7 +6,7 @@
 This section is incomplete.
 ********************
 
-Flume's source interface is designed to be simple yet power and enable logging 
+Flume's source interface is designed to be simple yet powerful and enable logging 
 of all kinds of data -- from unstructured blobs of byte, semi-structured blobs 
 with structured metadata, to completed structured data.
 

@@ -36,8 +36,8 @@ A Flume event has these six main fields:
 * Body
 * Metadata table with an arbitrary number of attribute value pairs.
 
-All events are guaranteed to have the first have all of these elements.  
-However, the body may have zero length, and the metadata table can be empty.
+All events are guaranteed to have all of these elements.  However, the
+body may have zero length, and the metadata table can be empty.
 
 The Unix timestamp is measured in milliseconds and is Unix time stamp from the 
 source machine.  The nanosecond timestamp is machine specific nanosecond 
@@ -76,7 +76,7 @@ collectorSink("hdfs://namenode/flume/webdata/%H00/", "%{host}-")
 // TODO describe the actual tags values when they are solidified
 
 The first argument is the directory where data is to be written.  The second 
-is a filename prefix where vents are written.  Suppose you get an event from a 
+is a filename prefix where events are written.  Suppose you get an event from a 
 machine called server1 generated at time 18:58.  The events would get written 
 to HDFS with namenode namenode, in a directory called /flume/webdata/1800/, 
 with files named server1-xxx where xxx is some extra data for unique file 
@@ -96,7 +96,7 @@ was during the 18:00 hour, the event would be written into that directory.
 %\{priority\} :: priority string
 %\{body\} :: body
 %% :: a '%' character.
-%t :: unix time in millis
+%t :: Unix time in millis
 
 Because bucketing by date is a frequently-requested feature, there are escape 
 sequences for finer control of date values that allow you to bucket data based 
@@ -177,14 +177,14 @@ scalability bottleneck of HDFS).
 
 On one side, to minimize the load and data stored throughput the system, 
 ideally one would flush data to HDFS as soon as it arrives. Flushing 
-frequently is in conflict wiht efficiently storing data to HDFS becuase this 
+frequently is in conflict with efficiently storing data to HDFS because this 
 could result in many small files, which eventually will stress an HDFS 
 namenode.  A compromise is to pick a reasonable trigger that has a collector 
 close "reasonably-sized" files (ideally larger than a single HDFS block, 64MB 
 by default).  
 
 When Flume is deployed at a scale where data collection volumes are small, it 
-may take a long time to reach the an ideal minimum file size (a block size, 
+may take a long time to reach the ideal minimum file size (a block size, 
 typically 64MB).  For example, if a single web server produces 10k of logs a 
 second (approx. 100 hit logs/s at 100B per log), it will take about 2 hours 
 (6400 seconds) before an ideal file size can reached.  
