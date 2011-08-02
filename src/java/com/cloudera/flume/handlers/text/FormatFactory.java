@@ -179,17 +179,14 @@ public class FormatFactory {
   }
 
   /**
-<<<<<<< HEAD
    * Returns a copy of the registered formats at the time of invocation.
-=======
-   * Returns a read-only view of the registered formats.
->>>>>>> FLUME-195: Allow custom Flume OutputFormats via a plugin interface
    * 
    * @return
    */
   public Collection<OutputFormatBuilder> getRegisteredFormats() {
     synchronized (registeredFormats) {
-      return new ArrayList<FormatFactory.OutputFormatBuilder>(registeredFormats.values());
+      return new ArrayList<FormatFactory.OutputFormatBuilder>(
+          registeredFormats.values());
     }
   }
 

@@ -46,7 +46,7 @@ public class AvroDataFileOutputFormat extends AbstractOutputFormat {
   final static ReflectData reflectData = ReflectData.get();
   final static Schema schema = reflectData.getSchema(EventImpl.class);
 
-  private static final String NAME = "avrodatafile";
+  private static final String NAME = "avrodata";
 
   DatumWriter<EventImpl> writer = new ReflectDatumWriter<EventImpl>(schema);
 
