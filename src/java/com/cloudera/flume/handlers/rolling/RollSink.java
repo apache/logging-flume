@@ -57,13 +57,14 @@ public class RollSink extends EventSink.Base {
   public final static String A_ROLLFAILS = "rollfails";
   public final String A_ROLLSPEC = "rollspec";
   public final String A_ROLL_TAG; // TODO (jon) parameterize this.
+  public final static String DEFAULT_ROLL_TAG = "rolltag";
 
   final AtomicLong rolls = new AtomicLong();
   final AtomicLong rollfails = new AtomicLong();
 
   public RollSink(Context ctx, String spec, long maxAge, long checkMs) {
     this.ctx = ctx;
-    A_ROLL_TAG = "rolltag";
+    A_ROLL_TAG = DEFAULT_ROLL_TAG;
     this.fspec = spec;
     this.trigger = new TimeTrigger(new ProcessTagger(), maxAge);
     this.checkLatencyMs = checkMs;
@@ -73,7 +74,7 @@ public class RollSink extends EventSink.Base {
 
   public RollSink(Context ctx, String spec, RollTrigger trigger, long checkMs) {
     this.ctx = ctx;
-    A_ROLL_TAG = "rolltag";
+    A_ROLL_TAG = DEFAULT_ROLL_TAG;
     this.fspec = spec;
     this.trigger = trigger;
     this.checkLatencyMs = checkMs;

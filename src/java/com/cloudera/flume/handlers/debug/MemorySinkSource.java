@@ -70,7 +70,7 @@ public class MemorySinkSource extends EventSink.Base implements EventSource {
 
     Event e = evts.get(idx);
     idx++;
-    //TODO missing source reports
+    // TODO missing source reports
     return e;
   }
 
@@ -87,6 +87,11 @@ public class MemorySinkSource extends EventSink.Base implements EventSource {
     }
 
     return mss;
+  }
+
+  public void reset() {
+    evts.clear();
+    idx = 0;
   }
 
   /**

@@ -32,6 +32,7 @@ import org.apache.log4j.Logger;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.core.Event;
+import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSinkDecorator;
 import com.cloudera.flume.core.EventSource;
@@ -455,6 +456,9 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
         Event e = src.next();
         if (e != null) {
           readEvtCount.incrementAndGet();
+          // TODO make the roll tag a parameter so that we don't have to remove
+          // it here.
+          e = EventImpl.unselect(e, RollSink.DEFAULT_ROLL_TAG);
         }
         updateEventProcessingStats(e);
         return e;

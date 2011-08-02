@@ -502,7 +502,7 @@ public class NaiveFileWALManager implements WALManager {
         // rolltag attribute. This tag is not relevant downstream and may cause
         // a problem if a downstream roller tries to add its own rolltag. This
         // prevents that from being a problem.
-        Event e2 = EventImpl.unselect(e1, "rolltag");
+        Event e2 = EventImpl.unselect(e1, RollSink.DEFAULT_ROLL_TAG);
         updateEventProcessingStats(e2);
         return e2;
       } catch (IOException ioe) {
