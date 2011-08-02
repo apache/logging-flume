@@ -24,6 +24,10 @@ body {
   font-size : smaller;
 }
 
+th {
+  text-align: left;
+}
+
 div#dfsnodetable tr#row1, div#dfstable td#col1 {
 	font-weight : bolder;
 }

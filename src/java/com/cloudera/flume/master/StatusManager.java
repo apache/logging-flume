@@ -47,7 +47,8 @@ public class StatusManager implements Reportable {
     public String host;
     public String physicalNode;
 
-    public NodeStatus(NodeState state, long version, long lastseen, String host, String physicalNode) {
+    public NodeStatus(NodeState state, long version, long lastseen,
+        String host, String physicalNode) {
       this.state = state;
       this.version = version;
       this.lastseen = lastseen;
@@ -130,8 +131,10 @@ public class StatusManager implements Reportable {
   public ReportEvent getReport() {
     StringBuilder status = new StringBuilder();
     status.append("<div class=\"StatusManager\">");
-    status
-        .append("<h2>Node status</h2>\n<table border=\"1\"><tr><th>node</th><th>status</th><th>version</th><th>last seen delta (s)</th><th>last seen</th></tr>");
+    status.append("<h2>Node status</h2>\n<table border=\"1\">"
+        + "<tr><th>logical node</th><th>physical node</th><th>host name</th>"
+        + "<th>status</th><th>version</th><th>last seen delta (s)</th>"
+        + "<th>last seen</th></tr>");
 
     long now = Clock.unixTime();
     for (Entry<String, NodeStatus> e : getNodeStatuses().entrySet()) {
@@ -140,6 +143,9 @@ public class StatusManager implements Reportable {
       String version = (v.version == 0) ? "none" : new Date(v.version)
           .toString();
       status.append("<td>" + e.getKey() + "</td>");
+      status.append("<td>" + v.physicalNode + "</td>");
+      status.append("<td>" + v.host + "</td>");
+
       status.append("<td>" + v.state + "</td>");
       status.append("<td>" + version + "</td>");
       status.append("<td>" + ((now - v.lastseen) / 1000));
