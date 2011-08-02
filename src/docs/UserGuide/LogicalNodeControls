@@ -21,7 +21,7 @@ limitations under the License.
 
 So far, we have talked about a simple setup where one data flow
 corresponds to on JVM instance and one machine.  We may want to have
-multple data flow nodes in a single JVM, each with a different data
+multiple data flow nodes in a single JVM, each with a different data
 flow specification.  For example, we may want a separate logical node
 that sends aggregate reporting information about the node to a
 separate analytics node. Enabling this requires a little bit of new
@@ -62,7 +62,7 @@ The master now must maintain a new table that tracks each mapping from
 a physical node to a set of logical nodes.  We call this the *virtual
 node table* This information must be persistent -- if a physical node
 goes down we want it to come back up, retrieve its logical nodes list
-and restore their configuraitons.  Below is a representation of the
+and restore their configurations.  Below is a representation of the
 mapping from the graph above:
 
 [grid="all"]
@@ -77,7 +77,7 @@ Physical Node Logical Nodes
 Users can control the mappings to this table by issuing commands to
 the master.  By using the +map+ command (found the raw command
 form), a new logical node is associated with a physical node.  Map
-takes two arguments: a phyiscal node name and a new logical node name;
+takes two arguments: a physical node name and a new logical node name;
 and updates the master physical node mapping table.  When a node
 heartbeats, it finds out the list of nodes it is expected to have
 instantiated.  If a logical node is not present on the physical node,
@@ -115,7 +115,7 @@ digraph multiple_logical_node {
 
 Great! We now have new logical nodes instantiated on the physical
 nodes.  But wait, all the nodes are in IDLE mode!  Just adding a new
-physical-logical node mapping does not guarentee that the logical node
+physical-logical node mapping does not guarantee that the logical node
 a configuration.  A user still must assign a data flow to the logical
 node name.
 
@@ -188,7 +188,7 @@ the logical node is not present for that particular physical node, the
 original physical node will decommission the logical node.  This can
 be used to "move" a logical node from one machine to another by
 subsequently using the +map+ command with a different physical node
-arguement.
+argument.
 
 ----
 unmap nodeA foo
@@ -226,9 +226,9 @@ and the same configuration that used to be on +nodeA+ will be
 instantiated on +nodeB+.
 
 
-Curently the primary use case for logical nodes is to add extra
-metrics reporting data flows.  We are currently working on makign the
-WAL and DFO sharable by all of the logical nodes on a physcal
+Currently the primary use case for logical nodes is to add extra
+metrics reporting data flows.  We are currently working on making the
+WAL and DFO sharable by all of the logical nodes on a physical
 node. 
 
 

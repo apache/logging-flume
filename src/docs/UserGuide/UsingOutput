@@ -75,7 +75,7 @@ The body is the raw log entry body.  The default is to truncate the body to a
 maximum of 32KB per event.  This is a configurable value and can be changed by 
 modifying the 'flume.event.max.size.bytes' property.
 
-Finally there is the metatdata table which is a map from a string attribute 
+Finally there is the metadata table which is a map from a string attribute 
 name to an arbitrary array of bytes.  This allows for custom bucketing 
 attributes and will be described in more depth in the Advanced Usage section 
 of this guide.
@@ -177,7 +177,7 @@ default :: a debugging format.
     syslog - outputs events in a syslog-like format
     log4j - outputs events in a pattern similar to Hadoop's log4j pattern
     avrojson - this outputs data as json encoded by avro
-    avrodata - this outputs data as a avro binary encoded data
+    avrodata - this outputs data as an avro binary encoded data
     default - this is a format for debugging
   </description>
 </property>  
@@ -241,7 +241,7 @@ BZip2Codec is selected, ".bz2" is appended.
   <property>
     <name>flume.collector.dfs.compress.codec</name>
     <value>None</value>
-    <description>Writes formated data compressed in specified codec to
+    <description>Writes formatted data compressed in specified codec to
     dfs. Value is None, GZipCodec, DefaultCodec (deflate), BZip2Codec,
     or any other Codec hadoop is aware of </description>
   </property>

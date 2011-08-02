@@ -59,7 +59,7 @@ misconfiguration (35872 is the default heartbeat port), or fire walling
 problems.
 
 Another possible error is to have a permissions problems with the local 
-machine's writeahead log directory.  On an out-of-the-box setup, this is in 
+machine's write-ahead log directory.  On an out-of-the-box setup, this is in 
 the +/tmp/flume/agent+ directory).  If a Flume Node is ever run as a user 
 other than +flume+, (especially if it was run as +root+), the directory needs 
 to be either deleted or its contents must have its permissions modified to 

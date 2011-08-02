@@ -21,13 +21,13 @@ limitations under the License.
 == Flume Agents for Syslog data
 
 +syslog+ is the standard unix single machine logging service.  Events
-are generally emited as lines with a time stamp, "facility" type,
+are generally emitted as lines with a time stamp, "facility" type,
 priority, and message.  Syslog can be configured to send data to
 remote destinations.  The default syslog remote delivery was
 originally designed to provide best effort delivery service.  Today,
 there are several more advanced syslog services that deliver messages
 with improved reliability (TCP connections with memory buffering on
-failure).  The reliability guarentees however are one hop and weaker
+failure).  The reliability guarantees however are one hop and weaker
 than Flume's more reliable delivery mechanism.
 
 This section describes collecting syslog data using two methods.  The
@@ -62,7 +62,7 @@ issues when accessing these files from the Flume node process.
 
 NOTE: Red Hat/CentOS systems default to writing log files owned by
 root, in group root, and with 0600 (-rw-------) permissions. Flume
-could be run as root, but this is not advised becuase Flume can be
+could be run as root, but this is not advised because Flume can be
 remotely configured to execute arbitrary programs.
 
 NOTE: Ubuntu systems default to writing logs files owned by syslog, in
@@ -79,7 +79,7 @@ The original syslog listens to the +/dev/log+ named pipe, and can be
 configured to listen on UDP port
 514. (http://tools.ietf.org/search/rfc5424). More advanced versions
 (rsyslog, syslog-ng) can send and recieve over TCP and may do
-in-memory queing/buffering. For example, syslog-ng and rsyslog can
+in-memory queuing/buffering. For example, syslog-ng and rsyslog can
 optionally use the default UDP port 514 or use TCP port 514 for better
 recovery options.
 
@@ -142,7 +142,7 @@ The +/etc/syslog.conf+ file essentially contains lists of facilities
 and "actions".  These "actions" are destinations such as regular
 files, but can also be named pipes, consoles, or remote machines.  One
 can specify a remote machine by prefixing an '@' symbol in front the
-desitination host machine.  If no port is specified, events are sent
+destination host machine.  If no port is specified, events are sent
 via UDP port 514.
 
 The example below specifies delivery to machine localhost on port
@@ -176,7 +176,7 @@ listening on UDP port 514 (standard syslog port).
 
 Moreover, +rsyslog+ also allows you to use the more reliable TCP
 protocol to send data to a remote host listening on TCP port 514.  In
-+rsyslog+ configurations, an '@@' prefix ditcates the use of TCP.
++rsyslog+ configurations, an '@@' prefix dictates the use of TCP.
 
 ----
 *.*  @@remotehost

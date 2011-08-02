@@ -82,7 +82,7 @@ Suppose you no longer needed agent1 and wanted to "turn it off".  You can do
 so by entering the following command:
 
 ----
-decomission agent1
+decommission agent1
 ----
 
 This terminates the thread and removes the configuration associated with a 
@@ -96,12 +96,12 @@ this scenario, you change the collector1 from being on host2 to host3.
 unmap host2 collector1
 ----
 
-At this point, the logical node mapping is removed, and colletor1 is not 
+At this point, the logical node mapping is removed, and collector1 is not 
 active anywhere. You can then map collector1 onto host3 by using the map
 command:
 
 ----
-map host3 colletor1
+map host3 collector1
 ----
 
 NOTE: There are some limitations that need to be further described in this 
@@ -153,7 +153,7 @@ dataConsumer : rpcSource(56789) | console ;
 In fact, auto agents and collectors, are another example of *translated 
 sources and sinks*.  These translate auto*Chain sinks and collectorSource into 
 a configuration that uses logicalSinks and logicalSources which in turn are 
-translated into phsyical rpcSource and rpcSinks instances.
+translated into physical rpcSource and rpcSinks instances.
 
 TIP: Translations are powerful and can be fairly smart; if new collectors are 
 added, they will become new failover options.  If collectors are removed, then 

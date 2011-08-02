@@ -61,7 +61,7 @@ example properties contained in the sample template.
 </configuration>
 ----
 . Start the Flume master and at least one logical node in separate terminals
-.. in each terminal cd into the toplevel flume directory, should be just above +plugins+
+.. in each terminal cd into the top-level flume directory, should be just above +plugins+
 .. Add +helloworld_plugin.jar+ to the FLUME_CLASSPATH in *both* terminals
 +
 ----

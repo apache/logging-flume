@@ -25,7 +25,7 @@ This section is incomplete.
 
 Flume's source interface is designed to be simple yet powerful and enable logging 
 of all kinds of data -- from unstructured blobs of byte, semi-structured blobs 
-with structured metadata, to completed structured data.
+with structured metadata, to completely structured data.
 
 ////
 Issues: language neutrality, reliability, push vs pull, one shot vs 

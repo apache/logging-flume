@@ -21,7 +21,7 @@ limitations under the License.
 
 === history
 
-v0.9.1 8/9/10:: Improved error messages and visiblity of property
+v0.9.1 8/9/10:: Improved error messages and visibility of property
 configuration values.  First external contributions.  Fixed
 reconfiguration hangs.  Improved implementing plugins documentation.
 Updated scribe and syslog support.  Compression on output files.
@@ -37,7 +37,7 @@ v0.2 1/21/09 :: Different reliability modes: WAL 2.0, DFO, Best
 effort. Output file escaping/bucketing.  Proliferation of many sink
 and decorators.
 
-v0.1 11/23/09 :: First installation depoyment, users tests.
+v0.1 11/23/09 :: First installation deployment, users tests.
 
 v0.0 9/21/09 :: First cut with current architecture (centralized
 master, configuration language, web interface.)  First version of WAL.

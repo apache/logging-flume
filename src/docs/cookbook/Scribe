@@ -32,8 +32,8 @@ specified "category".  Scribe by default uses TCP port 1463.
 You can configure a Flume node to listen for incoming Scribe traffic
 by creating a logical node that uses the +scribe+ source.  We can then
 assign an arbitrary sink to the node.  In the example below, the
-Scribe nodes recives events, send its events to both the console and
-an automically-assigned end-to-end agent which delivers the events
+Scribe nodes receives events, send its events to both the console and
+an automatically-assigned end-to-end agent which delivers the events
 downstream to its collector pools.
 
 ----
