@@ -183,4 +183,21 @@ public class TestFlumeConfiguration {
     assertNotSame("foo:12345:2181:3181,bar:1345:2181:3181", zksvrs);
     assertEquals("foo:3181:3182:3183,bar:3181:3182:3183", zksvrs);
   }
+
+  @Test
+  public void testNewFlumeConfDir() {
+    String curConfDirProp = System.getProperty("flume.conf.dir");
+    try {
+      System.setProperty("flume.conf.dir", "/a/path/that/cannot/exist");
+      FlumeConfiguration cfg = FlumeConfiguration.get();
+      assertNull(cfg.get(FlumeConfiguration.NODE_STATUS_PORT));
+    } finally {
+      // Undo this on the way out.
+      if (null == curConfDirProp) {
+        System.clearProperty("flume.conf.dir");
+      } else {
+        System.setProperty("flume.conf.dir", curConfDirProp);
+      }
+    }
+  }
 }

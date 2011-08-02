@@ -211,7 +211,7 @@ public class FlumeNode implements Reportable {
     File f = new File(webPath);
     // absolute paths win, but if is not absolute, prefix with flume home
     if (!f.isAbsolute()) {
-      String basepath = System.getenv("FLUME_HOME");
+      String basepath = FlumeConfiguration.getFlumeHome();
       if (basepath == null) {
         LOG.warn("FLUME_HOME not set, potential for odd behavior!");
       }

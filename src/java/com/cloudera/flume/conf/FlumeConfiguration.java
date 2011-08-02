@@ -17,6 +17,7 @@
  */
 package com.cloudera.flume.conf;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -48,6 +49,50 @@ public class FlumeConfiguration extends Configuration {
       .getLogger(FlumeConfiguration.class);
   private static FlumeConfiguration singleton;
 
+  /**
+   * Returns the 'FLUME_HOME' location. Taken in order of precedence:
+   * - Java system property 'flume.home'
+   * - $FLUME_HOME in the environment.
+   * - null if neither of these are set.
+   */
+  public static String getFlumeHome() {
+    String flumeHome = System.getProperty("flume.home");
+    if (null == flumeHome) {
+      flumeHome = System.getenv("FLUME_HOME");
+    }
+
+    if (null == flumeHome) {
+      LOG.warn("-Dflume.home and $FLUME_HOME both unset");
+    }
+
+    return flumeHome;
+  }
+
+  /**
+   * Returns the 'FLUME_CONF_DIR' location. Taken in order of precedence:
+   * - Java system property 'flume.conf.dir'
+   * - $FLUME_CONF_DIR in the environment
+   * - getFlumeHome()/conf
+   * - ./conf
+   */
+  public static String getFlumeConfDir() {
+    String flumeConfDir = System.getProperty("flume.conf.dir");
+    if (null == flumeConfDir) {
+      flumeConfDir = System.getenv("FLUME_CONF_DIR");
+    }
+
+    if (null == flumeConfDir) {
+      String flumeHome = getFlumeHome();
+      if (null != flumeHome) {
+        flumeConfDir = new File(flumeHome, "conf").toString();
+      } else {
+        flumeConfDir = "./conf";
+      }
+    }
+
+    return flumeConfDir;
+  }
+
   public synchronized static FlumeConfiguration get() {
     if (singleton == null)
       singleton = new FlumeConfiguration();
@@ -71,19 +116,13 @@ public class FlumeConfiguration extends Configuration {
     super();
     if (loadDefaults) {
       Path home = null;
-      String flumeHome = System.getenv("FLUME_HOME");
+      String flumeHome = getFlumeHome();
       if (flumeHome == null) {
         home = new Path(".");
       } else {
         home = new Path(flumeHome);
       }
-      Path conf = null;
-      String flumeConf = System.getenv("FLUME_CONF_DIR");
-      if (flumeConf == null) {
-        conf = new Path(home, "conf");
-      } else {
-        conf = new Path(flumeConf);
-      }
+      Path conf = new Path(getFlumeConfDir());
       LOG.info("Loading configurations from " + conf);
       super.addResource(new Path(conf, "flume-conf.xml"));
       super.addResource(new Path(conf, "flume-site.xml"));
