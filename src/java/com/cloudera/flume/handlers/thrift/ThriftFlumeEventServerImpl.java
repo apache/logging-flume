@@ -64,7 +64,7 @@ class ThriftFlumeEventServerImpl implements Iface {
   @Override
   public void rawAppend(RawEvent evt) throws TException {
     try {
-      WriteableEvent e = WriteableEvent.create(evt.getRaw().array());
+      WriteableEvent e = WriteableEvent.create(evt.getRaw());
       sink.append(e);
     } catch (Exception e) {
       // TODO figure out how to deal with different exns

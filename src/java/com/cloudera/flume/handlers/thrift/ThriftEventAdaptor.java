@@ -51,12 +51,12 @@ class ThriftEventAdaptor extends Event {
 
   @Override
   public byte[] getBody() {
-    ByteBuffer buf = evt.getBody();
+    byte[] buf = evt.getBody();
     if (buf == null) {
       LOG.warn("Thrift Event had null body! " + evt);
       return new byte[0];
     }
-    return evt.getBody().array();
+    return buf;
   }
 
   @Override
