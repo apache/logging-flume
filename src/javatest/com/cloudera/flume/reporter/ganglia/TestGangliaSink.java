@@ -42,6 +42,8 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.junit.Ignore;
@@ -107,17 +109,16 @@ public class TestGangliaSink {
 
   @Test
   public void testBuilder() throws IOException {
-    EventSink snk =
-        GangliaSink.builder().build(new Context(), "localhost", "foo", "int");
+    EventSink snk = GangliaSink.builder().build(new Context(), "localhost",
+        "foo", "int");
     for (int i = 0; i < 10; i++) {
       snk.open();
       snk.append(new EventImpl("".getBytes()));
       snk.close();
     }
 
-    EventSink snk4 =
-        GangliaSink.builder().build(new Context(), "localhost", "foo", "int",
-            FlumeConfiguration.get().getGangliaServers());
+    EventSink snk4 = GangliaSink.builder().build(new Context(), "localhost",
+        "foo", "int", FlumeConfiguration.get().getGangliaServers());
     for (int i = 0; i < 10; i++) {
       snk4.open();
       snk4.append(new EventImpl("".getBytes()));
@@ -136,9 +137,8 @@ public class TestGangliaSink {
 
   @Test
   public void testFactoryBuild() throws FlumeSpecException, IOException {
-    EventSink snk =
-        new CompositeSink(new Context(),
-            "ganglia(\"localhost\", \"foo\", \"int\")");
+    EventSink snk = new CompositeSink(new Context(),
+        "ganglia(\"localhost\", \"foo\", \"int\")");
     for (int i = 0; i < 10; i++) {
       snk.open();
       snk.append(new EventImpl("".getBytes()));
@@ -160,6 +160,9 @@ public class TestGangliaSink {
     private boolean hasData = false;
     private byte[] byteData;
     private int port;
+    public CountDownLatch listening = new CountDownLatch(1);
+    public CountDownLatch received = new CountDownLatch(1);
+    public CountDownLatch done = new CountDownLatch(1);
 
     public void run() {
       DatagramSocket s;
@@ -169,25 +172,23 @@ public class TestGangliaSink {
         setConfigured(true);
       } catch (IOException e) {
         LOG.warn(e);
-        synchronized (this) {
-          this.notify();
-        }
+
+        // release all the latches
+        listening.countDown();
+        received.countDown();
+        done.countDown();
         return;
       }
+      listening.countDown();
 
       byte[] b = new byte[8192];
       DatagramPacket info = new DatagramPacket(b, b.length);
 
-      synchronized (this) {
-        this.notify();
-      }
       try {
         s.receive(info);
+        received.countDown();
       } catch (IOException e) {
         LOG.warn(e);
-        synchronized (this) {
-          this.notify();
-        }
         return;
       }
       LOG.info("Got a new packet, length " + info.getLength());
@@ -197,9 +198,7 @@ public class TestGangliaSink {
 
       byteData = new byte[info.getLength()];
       System.arraycopy(info.getData(), 0, byteData, 0, bytesRead);
-      synchronized (this) {
-        this.notify();
-      }
+      done.countDown();
     }
 
     public void setConfigured(boolean isConfigured) {
@@ -233,53 +232,47 @@ public class TestGangliaSink {
   }
 
   /**
-   * This test is stolen and hacked from hadoop's TestGangliaContext31
+   * This test was originally stolen and hacked from hadoop's
+   * TestGangliaContext31. It has been modified to use latches as
+   * synchronization mechanism -- the previous implementation's synchronization
+   * mechanisms were unreliable.
    */
   @Test
-  public void testGanglia31Metrics() throws IOException {
+  public void testGanglia31Metrics() throws IOException, InterruptedException {
 
     String hostName = NetUtils.localhost();
     GangliaSocketListener listener = new GangliaSocketListener();
     Thread listenerThread = new Thread(listener);
     listenerThread.start();
-    try {
-      synchronized (listener) {
-        listener.wait();
-      }
-    } catch (InterruptedException e) {
-      LOG.warn(e);
-    }
 
-    assertTrue("Could not configure the socket listener for Ganglia", listener
-        .getConfigured());
-
+    assertTrue("Took too long to bind to a port", listener.listening.await(5,
+        TimeUnit.SECONDS));
     LOG.info("Listening to port " + listener.getPort());
 
     // setup and send some ganglia data.
-    EventSink ganglia =
-        new GangliaSink(hostName + ":" + listener.getPort(), "foo", "bars",
-            Type.INT);
+    EventSink ganglia = new GangliaSink(hostName + ":" + listener.getPort(),
+        "foo", "bars", Type.INT);
     ganglia.open();
     Event e = new EventImpl("baz".getBytes());
     Attributes.setInt(e, "foo", 1337);
     ganglia.append(e);
     ganglia.close();
 
-    try {
-      if (!listener.getHasData())
-        synchronized (listener) {
-          listener.wait(5 * 1000); // Wait at most 5 seconds for Ganglia data
-        }
-    } catch (InterruptedException ex) {
-      LOG.warn(ex);
-    }
+    // did the other thread get the data?
+    assertTrue("Took too long to recieve a packet", listener.received.await(5,
+        TimeUnit.SECONDS));
+
+    // and then parsed it?
+    assertTrue("Did not receive proper packet", listener.done.await(5,
+        TimeUnit.SECONDS));
+
     assertTrue("Did not recieve Ganglia data", listener.getHasData());
 
     byte[] hostNameBytes = hostName.getBytes();
 
     byte[] xdrBytes = listener.getBytes();
 
-    // Try to make sure that the received bytes from Ganglia has the correct
+    // Make sure that the received bytes from Ganglia has the correct
     // hostname for this host
     boolean hasHostname = false;
     LOG.info("Checking to make sure that the Ganglia data contains host "
@@ -297,7 +290,5 @@ public class TestGangliaSink {
     }
     assertTrue("Did not correctly resolve hostname in Ganglia", hasHostname);
   }
-  // end of rip
-  // //////////////////////////////////////////////////////////////////
 
 }
