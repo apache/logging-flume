@@ -50,8 +50,7 @@ import com.google.common.base.Preconditions;
 public class Log4jOutputFormat implements OutputFormat {
   private String format(Event e) {
     Date d = new Date(e.getTimestamp());
-    // log4j is not what we want.
-    String data = String.format("%s %s %s: %s\n", DateUtils.asISO8601(d),// DateUtils.asLog4jISO8601(d),
+    String data = String.format("%s %s %s: %s\n", DateUtils.asISO8601(d),
         e.getPriority(), "log4j", StringEscapeUtils.escapeJava(new String(e
             .getBody())));
     return data;

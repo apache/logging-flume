@@ -22,8 +22,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import org.apache.log4j.helpers.ISO8601DateFormat;
-
 /**
  * A factory for some standard date formats.
  * 
@@ -45,15 +43,6 @@ public class DateUtils {
     return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss:Z");
   }
 
-  /***
-   * This is the log4j ISO8601 format/class
-   */
-  static public DateFormat getLog4jISO8601() {
-    // This is the spec, but log4j doesn't use 'T' to separate date and time.
-
-    return new ISO8601DateFormat();
-  }
-
   /**
    * See RFC822 section 5. http://tools.ietf.org/html/rfc822#section-5
    */
@@ -70,16 +59,6 @@ public class DateUtils {
   static public DateFormat getRFC2822() {
     return new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss' 'Z",
         Locale.US);
-  }
-
-  /**
-   * Log4j's ISO8601 does not follow ISO8601 spec.
-   */
-  static public String asLog4jISO8601(Date date) {
-    // TODO(jon) WARNING: This sometimes returns strings padded with '\x0'
-    // characters. WTF!
-    DateFormat ISO8601 = getLog4jISO8601();
-    return ISO8601.format(date);
   }
 
   /**
