@@ -1,0 +1,85 @@
+#!/usr/bin/env /bin/bash
+# Licensed to Cloudera, Inc. under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  Cloudera, Inc. licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+####
+# This test runs an agent in end-to-end mode and verifies that a
+# specific number of events were delivered.  It expects that a node
+# and master are running on the localhost
+
+DIR=`dirname $0`
+FLUME="$DIR/../bin/flume"
+MASTER=localhost
+NODE1=`hostname`
+NODE2=`hostname`
+TMPDIR=/tmp/test-e2e
+
+# remove stale write-ahead or failover logs
+rm -rf /tmp/flume/agent  || { echo "Unable to delete $TMPDIR" ; exit 1 ; }
+rm -rf $TMPDIR  || { echo "Unable to delete $TMPDIR" ; exit 1 ; }
+
+$FLUME shell <<EOF
+connect $MASTER
+
+# prespawn nodes on specified machines. If NODE1 and NODE2 are up,
+# this avoids getting fails on logical nodes due to a node not having
+# shown up 
+
+exec spawn $NODE1 collector 
+exec spawn $NODE2 node
+
+# enough for two heartbeats, to get ips to master
+exec noop 10000
+
+
+## Setup an agent collector topology using autoBEChains.
+exec config collector  autoCollectorSource 'collectorSink("file://$TMPDIR","data")'
+exec config node 'asciisynth(500)' '{delay(200)=>autoE2EChain}'
+
+## Wait for the node to become active, and then done.
+waitForNodesActive 10000 node
+waitForNodesDone 200000 node
+
+# Wait for WAL to flush
+exec noop 60000
+
+## Yea! done.
+exec decommission node
+exec decommission collector
+
+# waitForNodesDecommissioned
+exec noop 5000
+
+quit
+EOF
+
+if [ "$?" -ne 0 ] ; then 
+  echo "flume shell script failed"; exit 1; 
+fi
+
+sleep 5s
+
+COUNT=`wc -l $TMPDIR/* | tail -1 | awk '{print $1}'`
+echo count messages $COUNT
+if [ "$COUNT" != 500 ] ; then
+    echo "FAIL"
+    exit -1
+fi
+
+echo "SUCCESS"
+rm -rf $TMPDIR
+
+
