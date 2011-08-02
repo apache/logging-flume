@@ -33,6 +33,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.KeeperException.Code;
+import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.ACL;
@@ -56,7 +57,7 @@ public class ZKClient implements Watcher {
   final String hosts;
   final static Logger LOG = Logger.getLogger(ZKClient.class);
 
-  static class ZKRetryHarness {
+  class ZKRetryHarness {
     final protected RetryHarness harness;
 
     public ZKRetryHarness(Retryable retry, BackoffPolicy policy) {
@@ -86,6 +87,9 @@ public class ZKClient implements Watcher {
         IOException {
       try {
         return harness.attempt();
+      } catch (SessionExpiredException s) {        
+        ZKClient.this.zk = null;
+        ZKClient.this.init(ZKClient.this.initCallBack);
       } catch (Exception e) {
         massageException(e);
       }
@@ -131,6 +135,8 @@ public class ZKClient implements Watcher {
     return init(null);
   }
 
+  InitCallback initCallBack;
+  
   /**
    * Establishes a connection with a cluster of ZooKeeper servers. Throws an
    * IOException on failure.
@@ -138,6 +144,7 @@ public class ZKClient implements Watcher {
   public synchronized boolean init(final InitCallback initCallback)
       throws IOException {
     Preconditions.checkState(this.zk == null, "zk not null in ZKClient.init");
+    initCallBack = initCallback;
     final Retryable retry = new Retryable() {
       public boolean doTry() throws Exception {
         // Wait on this latch for a connection to complete
@@ -157,7 +164,7 @@ public class ZKClient implements Watcher {
         if (!latch.await(5, TimeUnit.SECONDS)) {
           throw new IOException("Could not connect to ZooKeeper!");
         }
-        if (initCallback != null) {
+        if (initCallback != null) {          
           initCallback.success(ZKClient.this);
         }
         return true;

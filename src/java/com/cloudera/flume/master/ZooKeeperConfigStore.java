@@ -104,6 +104,16 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
       client.getZK().close();
     }
     InitCallback cb = new InitCallback() {
+      /*
+       * Synchronization notes: from this method, the callback comes from the
+       * same thread. That's not guaranteed afterwards, because this gets called
+       * again on SessionExpiredException.
+       * 
+       * It tries to take the ZKCS.this lock (in loadConfigs). Therefore BE
+       * AWARE of potential deadlocks between threads. The vast majority of the
+       * invocations to ZKClient in this class will be under the ZKCS.this lock
+       * and therefore thread-safe.
+       */
       @Override
       public void success(ZKClient client) throws IOException {
         client.getZK().register(ZooKeeperConfigStore.this);

@@ -35,6 +35,9 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.junit.Test;
@@ -42,6 +45,7 @@ import org.junit.Test;
 import com.cloudera.flume.agent.LogicalNode;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.util.Clock;
 import com.cloudera.util.FileUtil;
 
 public class TestZKBackedConfigStore {
@@ -443,11 +447,68 @@ public class TestZKBackedConfigStore {
     client.close();
     zk.shutdown();
     FileUtil.rmr(tmp);
-    
+
     assertEquals("default-flow", cfgData.flowID);
     assertEquals("null", cfgData.sourceConfig);
     assertEquals("null", cfgData.sinkConfig);
     assertEquals(1, cfgData.getSinkVersion());
-    assertEquals(1, cfgData.getSourceVersion());    
+    assertEquals(1, cfgData.getSourceVersion());
+  }
+
+  /**
+   * This test creates a zkcs and then hijacks its session through another
+   * client. Then we try to use the zkcs to make sure that it's reconnected
+   * correctly.
+   */
+  @Test
+  public void testLostSessionOK() throws IOException, InterruptedException,
+      KeeperException {
+    File tmp = FileUtil.mktempdir();
+    FlumeConfiguration cfg = FlumeConfiguration.createTestableConfiguration();
+    cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
+    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181");
+    cfg.setInt(FlumeConfiguration.MASTER_SERVER_ID, 0);
+
+    ZooKeeperService zk = new ZooKeeperService();
+    zk.init(cfg);
+
+    ZooKeeperConfigStore store = new ZooKeeperConfigStore(zk);
+    store.init();
+    String defaultFlowName = cfg.getDefaultFlowName();
+    store.setConfig("foo", defaultFlowName, "bar", "baz");
+    long sessionid = store.client.zk.getSessionId();
+    byte[] sessionpass = store.client.zk.getSessionPasswd();
+
+    // Force session expiration
+    Watcher watcher = new Watcher() {
+
+      @Override
+      public void process(WatchedEvent event) {
+      }
+
+    };
+    ZooKeeper zkClient = new ZooKeeper("localhost:2181", 1000, watcher,
+        sessionid, sessionpass);
+    zkClient.close();
+
+    ZKClient updatingClient = new ZKClient("localhost:2181");
+    updatingClient.init();
+    Stat stat = new Stat();
+
+    store.client.getChildren("/flume-cfgs", false);
+
+    byte[] bytes = updatingClient.getData("/flume-cfgs/cfg-0000000000", false,
+        stat);
+
+    String badCfg = new String(bytes)
+        + "\n1,1,default-flow@@bur : null | null;";
+
+    // Force a cfg into ZK to be reloaded by the (hopefully functioning) store
+    updatingClient.create("/flume-cfgs/cfg-", badCfg.getBytes(),
+        Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+    
+    assertTrue(store.client.zk.getSessionId() != sessionid);
+
+    assertEquals("null", store.getConfig("bur").getSinkConfig());
   }
 }
