@@ -355,12 +355,13 @@ public class TestEscapedCustomOutputDfs {
    * @throws InterruptedException
    */
 
-  @Test(expected = IOException.class)
+  @Test
   public void testDefaultCodec() throws IOException, InterruptedException {
     // set the output format.
     FlumeConfiguration conf = FlumeConfiguration.get();
     conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, "syslog");
     conf.set(FlumeConfiguration.COLLECTOR_DFS_COMPRESS_CODEC, "DefaultCodec");
+    conf.set(FlumeConfiguration.COLLECTOR_DFS_COMPRESS_GZIP, "false");
 
     // build a sink that outputs to that format.
     File f = FileUtil.mktempdir();
@@ -382,6 +383,7 @@ public class TestEscapedCustomOutputDfs {
     // check the output to make sure it is what we expected.
     // read the gzip file and verify the contents
     DefaultCodec defaultCodec = new DefaultCodec();
+    defaultCodec.setConf(conf);
     InputStream defaultIn = defaultCodec.createInputStream(new FileInputStream(
         f.getPath() + "/sub-foo.deflate"));
     byte[] buf = new byte[1];
