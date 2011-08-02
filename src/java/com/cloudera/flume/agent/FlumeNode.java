@@ -34,7 +34,6 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import com.cloudera.flume.VersionInfo;
@@ -298,16 +297,16 @@ public class FlumeNode implements Reportable {
     return collectorAck;
   }
 
-  public static void logVersion(Logger log, Level level) {
-    log.log(level, "Flume " + VersionInfo.getVersion());
-    log.log(level, " rev " + VersionInfo.getRevision());
-    log.log(level, "Compiled  on " + VersionInfo.getDate());
+  public static void logVersion(Logger log) {
+    log.info("Flume " + VersionInfo.getVersion());
+    log.info(" rev " + VersionInfo.getRevision());
+    log.info("Compiled  on " + VersionInfo.getDate());
   }
 
-  public static void logEnvironment(Logger log, Level level) {
+  public static void logEnvironment(Logger log) {
     Properties props = System.getProperties();
     for (Entry<Object, Object> p : props.entrySet()) {
-      log.log(level, "System property " + p.getKey() + "=" + p.getValue());
+      log.info("System property " + p.getKey() + "=" + p.getValue());
     }
   }
 
@@ -364,8 +363,8 @@ public class FlumeNode implements Reportable {
   }
 
   public static void setup(String[] argv) throws IOException {
-    logVersion(LOG, Level.INFO);
-    logEnvironment(LOG, Level.INFO);
+    logVersion(LOG);
+    logEnvironment(LOG);
     // Make sure the Java version is not older than 1.6
     if (!CheckJavaVersion.isVersionOk()) {
       LOG

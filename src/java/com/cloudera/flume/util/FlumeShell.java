@@ -38,7 +38,6 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -48,7 +47,6 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 import com.cloudera.flume.VersionInfo;
-import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.master.Command;
@@ -903,8 +901,6 @@ public class FlumeShell {
    */
   public static void main(String[] args) throws IOException,
       TTransportException {
-    FlumeNode.logVersion(LOG, Level.DEBUG);
-    FlumeNode.logEnvironment(LOG, Level.DEBUG);
     // Make sure the Java version is not older than 1.6
     if (!CheckJavaVersion.isVersionOk()) {
       LOG

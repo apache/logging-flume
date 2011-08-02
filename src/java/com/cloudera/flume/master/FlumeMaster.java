@@ -31,7 +31,6 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.thrift.transport.TTransportException;
 
@@ -407,8 +406,8 @@ public class FlumeMaster implements Reportable {
    * This is the method that gets run when bin/flume master is executed.
    */
   public static void main(String[] argv) {
-    FlumeNode.logVersion(LOG, Level.INFO);
-    FlumeNode.logEnvironment(LOG, Level.INFO);
+    FlumeNode.logVersion(LOG);
+    FlumeNode.logEnvironment(LOG);
     // Make sure the Java version is not older than 1.6
     if (!CheckJavaVersion.isVersionOk()) {
       LOG
