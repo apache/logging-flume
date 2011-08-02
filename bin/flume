@@ -43,6 +43,13 @@ function usage {
 }
 
 CMDPATH=`dirname $0`
+
+# This is to make CMDPATH correct if you go to the bin directory
+# and run ./flume <command>.
+pushd $CMDPATH 
+CMDPATH=`pwd`
+popd
+
 # name of path
 CMDPATH=`dirname $CMDPATH`
 
@@ -78,8 +85,6 @@ function append_jars_onto_classpath() {
 
 # name of script
 BINPATH=`dirname $0`
-# name of path
-CMDPATH=`dirname $BINPATH`
 
 if [ -f "${BINPATH}/flume-env.sh" ]; then
     source "$BINPATH/flume-env.sh"
