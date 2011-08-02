@@ -34,7 +34,7 @@ Node: <%= cmd.getNode() %> <br>
 Source: <%= cmd.getSource() %> <br>
 Sink: <%= cmd.getSink() %> <br>
 <p>Please wait for a few seconds, and we'll redirect you back to
-<a href="http://<%=FlumeConfiguration.get().getMasterServers().split(",")[FlumeConfiguration.get().getMasterServerId()] %>:<%=FlumeConfiguration.get().getMasterHttpPort()%>">the Master overview</a>.
+<a href="flumemaster.jsp">the Master overview</a>.
 </body>
 </html>
 <%
