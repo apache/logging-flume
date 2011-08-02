@@ -105,6 +105,24 @@ public class TestOutputFormatFactory {
     snk.close();
   }
 
+  /**
+   * Visual inspection
+   *
+   * @throws InterruptedException
+   */
+  @Test
+  public void testJsonConsole() throws FlumeSpecException, IOException,
+      InterruptedException {
+
+    EventSink snk = FlumeBuilder.buildSink(new Context(), "console(\"json\")");
+    snk.open();
+    for (int i = 0; i < count; i++) {
+      Event e = new EventImpl(("simple test " + i).getBytes());
+      snk.append(e);
+    }
+    snk.close();
+  }
+
   boolean checkFile(File f) throws IOException {
     BufferedReader fr = new BufferedReader(new FileReader(f));
     @SuppressWarnings("unused")
@@ -188,6 +206,29 @@ public class TestOutputFormatFactory {
 
   /**
    * Write out to file and check to make sure there are 5 lines.
+   *
+   * @throws InterruptedException
+   */
+  @Test
+  public void testJsonText() throws FlumeSpecException, IOException,
+      InterruptedException {
+
+    File tmp = File.createTempFile("jsonText", ".txt");
+    tmp.deleteOnExit();
+
+    EventSink snk = FlumeBuilder.buildSink(new Context(), "text(\""
+        + escapeJava(tmp.getAbsolutePath()) + "\",\"json\")");
+    snk.open();
+    for (int i = 0; i < count; i++) {
+      Event e = new EventImpl(("simple test " + i).getBytes());
+      snk.append(e);
+    }
+    snk.close();
+    assert (checkFile(tmp));
+  }
+
+  /**
+   * Write out to file and check to make sure there are 5 lines.
    * 
    * @throws InterruptedException
    */
@@ -249,6 +290,30 @@ public class TestOutputFormatFactory {
     EventSink snk = FlumeBuilder.buildSink(new Context(),
         "customdfs(\"file:///" + escapeJava(tmp.getAbsolutePath())
             + "\",\"log4j\")");
+    snk.open();
+    for (int i = 0; i < count; i++) {
+      Event e = new EventImpl(("simple test " + i).getBytes());
+      snk.append(e);
+    }
+    snk.close();
+    assert (checkFile(tmp));
+  }
+
+  /**
+   * Write out to file and check to make sure there are 5 lines.
+   *
+   * @throws InterruptedException
+   */
+  @Test
+  public void testJsonDfs() throws FlumeSpecException, IOException,
+      InterruptedException {
+
+    File tmp = File.createTempFile("jsonDfs", ".txt");
+    tmp.deleteOnExit();
+
+    EventSink snk = FlumeBuilder.buildSink(new Context(),
+        "customdfs(\"file:///" + escapeJava(tmp.getAbsolutePath())
+            + "\",\"json\")");
     snk.open();
     for (int i = 0; i < count; i++) {
       Event e = new EventImpl(("simple test " + i).getBytes());

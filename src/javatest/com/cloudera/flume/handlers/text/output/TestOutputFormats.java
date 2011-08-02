@@ -24,6 +24,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.TimeZone;
 
 import org.apache.avro.Schema;
@@ -121,6 +123,21 @@ public class TestOutputFormats {
     assertEquals(e.getNanos(), er.getNanos());
     assertEquals(e.getPriority(), er.getPriority());
     assertTrue(Arrays.equals(e.getBody(), er.getBody()));
+  }
 
+  @Test
+  public void testJson() throws IOException {
+    Map<String, byte[]> fields = new HashMap<String, byte[]>();
+    byte[] data = { 'd', 'a', 't', 'a' };
+    fields.put("test", data);
+    Event e = new EventImpl("test".getBytes(), 0, Priority.INFO, 0, "hostname", fields);
+    OutputFormat format = new JsonOutputFormat();
+    ByteArrayOutputStream sos = new ByteArrayOutputStream();
+    format.format(sos, e);
+    String s = new String(sos.toByteArray());
+    System.out.print(s);
+    Assert.assertEquals(s, "{\"body\":\"test\",\"timestamp\":0,"
+        + "\"pri\":\"INFO\",\"nanos\":0,\"host\":\"hostname\","
+        + "\"fields\":{\"test\":\"data\"}}\n");
   }
 }

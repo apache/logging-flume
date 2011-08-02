@@ -32,6 +32,7 @@ import com.cloudera.flume.handlers.avro.AvroDataFileOutputFormat;
 import com.cloudera.flume.handlers.avro.AvroJsonOutputFormat;
 import com.cloudera.flume.handlers.avro.AvroNativeFileOutputFormat;
 import com.cloudera.flume.handlers.text.output.DebugOutputFormat;
+import com.cloudera.flume.handlers.text.output.JsonOutputFormat;
 import com.cloudera.flume.handlers.text.output.Log4jOutputFormat;
 import com.cloudera.flume.handlers.text.output.OutputFormat;
 import com.cloudera.flume.handlers.text.output.RawOutputFormat;
@@ -74,6 +75,7 @@ public class FormatFactory {
     {
       add(DEFAULT);
       add(DebugOutputFormat.builder());
+      add(JsonOutputFormat.builder());
       add(RawOutputFormat.builder());
       add(SyslogEntryFormat.builder());
       add(Log4jOutputFormat.builder());
