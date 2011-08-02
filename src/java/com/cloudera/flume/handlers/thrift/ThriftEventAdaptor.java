@@ -59,7 +59,7 @@ class ThriftEventAdaptor extends Event {
   }
 
   public static Priority convert(com.cloudera.flume.handlers.thrift.Priority p) {
-    Preconditions.checkNotNull(p, "Argument must not be null.");
+    Preconditions.checkNotNull(p, "Prioirity argument must be valid.");
 
     switch (p) {
     case FATAL:

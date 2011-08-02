@@ -42,8 +42,14 @@ abstract public class Driver {
 
   abstract public void setSink(EventSink snk);
 
+  /**
+   * Signals driver to start. This blocks until the driver has started
+   */
   abstract public void start() throws IOException;
 
+  /**
+   * Signals driver to stop.  this does not block.
+   */
   abstract public void stop() throws IOException;
 
   abstract public void join() throws InterruptedException;

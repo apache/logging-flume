@@ -64,7 +64,7 @@ public class TestRollSink {
       }
     };
     final File f = FileUtil.mktempdir();
-    RollSink snk = new RollSink(new Context(), null, new TimeTrigger(tagger,
+    RollSink snk = new RollSink(new Context(), "test", new TimeTrigger(tagger,
         10000), 250) {
       @Override
       protected EventSink newSink(Context ctx) throws IOException {

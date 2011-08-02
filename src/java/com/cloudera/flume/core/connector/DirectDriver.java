@@ -55,8 +55,8 @@ public class DirectDriver extends Driver {
 
   public DirectDriver(String threadName, EventSource src, EventSink snk) {
 
-    Preconditions.checkNotNull(src);
-    Preconditions.checkNotNull(snk);
+    Preconditions.checkNotNull(src, "Driver Source was invalid");
+    Preconditions.checkNotNull(snk, "Driver Sink was invalid");
     thd = new PumperThread(threadName);
     this.source = src;
     this.sink = snk;

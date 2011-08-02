@@ -62,13 +62,26 @@ public class FlumeNodeWALNotifier implements WALCompletionNotifier {
   @Override
   public void toAcked(String tag) throws IOException {
     Map<String, WALManager> mp = node;
+    int success = 0;
+
     for (WALManager wm : mp.values()) {
       try {
         wm.toAcked(tag);
+        success++;
       } catch (IOException ioe) {
-        // TODO (jon) this is fails most of the time, and is truly disgusting
-        LOG.info("Wrong wal manager" + wm + " for tag " + tag);
+        // eat it.
       }
+    }
+
+    if (success == 0) {
+      // this is an odd situation
+      LOG.warn("No wal managers contained tag " + tag);
+    }
+
+    if (success > 1) {
+      // this is weird too
+      LOG.warn("Expected exactly one wal manager to contain tag " + tag
+          + " but " + success + "did!");
     }
   }
 }

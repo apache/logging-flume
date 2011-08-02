@@ -76,7 +76,7 @@ public class DiskFailoverDeco<S extends EventSink> extends
    */
   @Override
   public synchronized void append(Event e) throws IOException {
-    Preconditions.checkNotNull(sink);
+    Preconditions.checkNotNull(sink, "DiskFailoverDeco sink was invalid");
     Preconditions.checkArgument(isOpen.get(),
         "DiskFailoverDeco not open for append");
 
@@ -89,7 +89,8 @@ public class DiskFailoverDeco<S extends EventSink> extends
 
   @Override
   public synchronized void close() throws IOException {
-    Preconditions.checkNotNull(sink);
+    Preconditions.checkNotNull(sink,
+        "Attempted to close a null DiskFailoverDeco subsink");
     LOG.debug("Closing DiskFailoverDeco");
 
     input.close(); // prevent new data from entering.
@@ -125,7 +126,8 @@ public class DiskFailoverDeco<S extends EventSink> extends
   @Override
   synchronized public void open() throws IOException {
 
-    Preconditions.checkNotNull(sink);
+    Preconditions.checkNotNull(sink,
+        "Attepted to open a null DiskFailoverDeco subsink");
     LOG.debug("Opening DiskFailoverDeco");
     input = dfoMan.getEventSink(trigger);
     output = dfoMan.getEventSource();
@@ -157,7 +159,7 @@ public class DiskFailoverDeco<S extends EventSink> extends
       public void fireError(Driver c, Exception ex) {
         LOG.error("unexpected error with DiskFailoverDeco", ex);
         lastExn = (ex instanceof IOException) ? (IOException) ex
-            : new IOException(ex);
+            : new IOException(ex.getMessage());
         try {
           conn.getSource().close();
           conn.getSink().close();

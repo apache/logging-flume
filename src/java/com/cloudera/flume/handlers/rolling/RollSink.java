@@ -151,7 +151,7 @@ public class RollSink extends EventSink.Base {
           return;
         }
       }
-      LOG.warn("TriggerThread shutdown");
+      LOG.info("TriggerThread shutdown");
       timeoutThreadDone = true;
       doneLatch.countDown();
     }

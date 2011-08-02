@@ -126,7 +126,7 @@ public class LivenessManager {
       if (needsCfg) {
         FlumeConfigData data = master.getConfig(nd);
         if (data == null) {
-          LOG.info("Logical Node '" + nd.getName()
+          LOG.debug("Logical Node '" + nd.getName()
               + "' not configured on master");
         }
         nd.checkConfig(data);

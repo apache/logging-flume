@@ -103,7 +103,7 @@ public class DiskFailoverSource extends EventSource.Base {
         return null; // no more sources;
       try {
         curSource.open();
-      } catch (IOException ex) {
+      } catch (Exception ex) {
         LOG.warn("Exception opening", ex);
         continue;
       }

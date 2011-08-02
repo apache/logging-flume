@@ -205,6 +205,7 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
         throw new IOException("Unable to recover - couldn't rename " + old
             + " to " + loggedDir + f);
       }
+      LOG.debug("Recover moved " + f + " from WRITING to LOGGED");
     }
 
     // move all sending into the logged dir
@@ -214,26 +215,21 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
         throw new IOException("Unable to recover - couldn't rename " + old
             + " to " + loggedDir + f);
       }
+      LOG.debug("Recover moved " + f + " from SENDING to LOGGED");
     }
 
     // add all logged to loggedQ and table
     for (String f : loggedDir.list()) {
+
       // File log = new File(loggedDir, f);
       DFOData data = DFOData.recovered(f);
       table.put(f, data);
       loggedQ.add(f);
       recoverCount.incrementAndGet();
+      LOG.debug("Recover loaded " + f);
     }
 
     // carry on now on your merry way.
-  }
-
-  /**
-   * Move a tag from the writing state to the logged state
-   */
-  synchronized public void toLogged(String tag) throws IOException {
-    changeState(tag, State.WRITING, State.LOGGED);
-    loggedCount.incrementAndGet();
   }
 
   /**
@@ -268,6 +264,9 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
     };
   }
 
+  /**
+   * This instantiates a roller where all input is sent to.
+   */
   @Override
   public RollSink getEventSink(final RollTrigger t) throws IOException {
     // NaiveFileFailover is just a place holder
@@ -282,8 +281,12 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
     };
   }
 
+  /**
+   * This is private and not thread safe.
+   */
   private LinkedBlockingQueue<String> getQueue(State state) {
-    Preconditions.checkNotNull(state);
+    Preconditions.checkNotNull(state,
+        "Attempted to get queue for invalid null state");
     switch (state) {
     case WRITING:
       return writingQ;
@@ -297,8 +300,12 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
     }
   }
 
+  /**
+   * This is private and not thread safe.
+   */
   private File getDir(State state) {
-    Preconditions.checkNotNull(state);
+    Preconditions.checkNotNull(state,
+        "Attempted to get dir for invalid null state");
     switch (state) {
     case IMPORT:
       return importDir;
@@ -315,10 +322,13 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
     }
   }
 
+  /**
+   * This is private and not thread safe
+   */
   private File getFile(String tag) {
-    Preconditions.checkNotNull(tag);
+    Preconditions.checkNotNull(tag, "Attempted to get file for empty tag");
     DFOData data = table.get(tag);
-    Preconditions.checkNotNull(data);
+    Preconditions.checkNotNull(data, "Data for tag " + tag + " was empty");
 
     File dir = getDir(data.s);
     return new File(dir, tag);
@@ -339,8 +349,9 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
   synchronized void changeState(String tag, State oldState, State newState)
       throws IOException {
     DFOData data = table.get(tag);
-    Preconditions.checkArgument(data != null);
-    Preconditions.checkArgument(tag.equals(data.tag));
+    Preconditions.checkArgument(data != null, "Tag " + tag + " has no data");
+    Preconditions.checkArgument(tag.equals(data.tag),
+        "Data associated with tag didn't match tag " + tag);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("Change " + data.s + "/" + oldState + " to " + newState + " : "
@@ -495,7 +506,7 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
       throw new IOException(e);
     }
 
-    LOG.info("opening new file of file " + sendingTag);
+    LOG.info("opening new file for " + sendingTag);
     changeState(sendingTag, State.LOGGED, State.SENDING);
     sendingCount.incrementAndGet();
     File curFile = getFile(sendingTag);

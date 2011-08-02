@@ -50,7 +50,8 @@ public class AccumulatorSink extends EventSink.Base {
 
   @Override
   public void append(Event e) throws IOException {
-    Preconditions.checkState(isOpen);
+    Preconditions.checkState(isOpen,
+        "Attempting to append to an accumulator that is not open!");
     cnt.incrementAndGet();
     super.append(e);
   }

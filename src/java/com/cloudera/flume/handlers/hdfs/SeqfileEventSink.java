@@ -68,9 +68,8 @@ public class SeqfileEventSink extends EventSink.Base {
 
     Configuration conf = FlumeConfiguration.get();
     try {
-      writer =
-          FlushingSequenceFileWriter.createWriter(conf, f,
-              WriteableEventKey.class, WriteableEvent.class);
+      writer = FlushingSequenceFileWriter.createWriter(conf, f,
+          WriteableEventKey.class, WriteableEvent.class);
     } catch (FileNotFoundException fnfe) {
       LOG.error("Possible permissions problem when creating " + f, fnfe);
       throw fnfe;
@@ -82,14 +81,14 @@ public class SeqfileEventSink extends EventSink.Base {
    * 
    */
   public void close() throws IOException {
-    LOG.debug("closing");
+    LOG.debug("closing " + f);
     if (writer == null) {
       // allow closing twice.
       return;
     }
     writer.close();
     writer = null;
-    LOG.info("closed");
+    LOG.info("closed " + f);
   }
 
   public void append(Event e) throws IOException {

@@ -69,8 +69,8 @@ public class CollectorSink extends EventSink.Base {
 
   CollectorSink(final String logdir, final String filename, final long millis,
       final Tagger tagger, long checkmillis) {
-    EventSink s = new RollSink(new Context(), null, new TimeTrigger(tagger,
-        millis), checkmillis) {
+    EventSink s = new RollSink(new Context(), "collectorSink", new TimeTrigger(
+        tagger, millis), checkmillis) {
       @Override
       public EventSink newSink(Context ctx) throws IOException {
         String tag = tagger.newTag();

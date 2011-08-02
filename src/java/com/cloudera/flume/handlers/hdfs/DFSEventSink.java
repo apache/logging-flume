@@ -33,6 +33,7 @@ import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
+import com.google.common.base.Preconditions;
 
 /**
  * Writes events the a file give a hadoop uri path. If no uri is specified It
@@ -65,9 +66,8 @@ public class DFSEventSink extends EventSink.Base {
     Path dstPath = new Path(p);
     FileSystem hdfs = dstPath.getFileSystem(conf);
 
-    Writer w =
-        SequenceFile.createWriter(hdfs, conf, dstPath, WriteableEventKey.class,
-            WriteableEvent.class);
+    Writer w = SequenceFile.createWriter(hdfs, conf, dstPath,
+        WriteableEventKey.class, WriteableEvent.class);
 
     return w;
   }
@@ -79,6 +79,7 @@ public class DFSEventSink extends EventSink.Base {
   @Override
   public void append(Event e) throws IOException {
     Writer w = writer;
+
     if (shouldSub) {
       String realPath = e.escapeString(path);
       w = sfWriters.get(realPath);
@@ -87,6 +88,9 @@ public class DFSEventSink extends EventSink.Base {
         sfWriters.put(realPath, w);
       }
     }
+
+    Preconditions.checkState(w != null,
+        "Attempted to append to a null dfs writer!");
     w.append(new WriteableEventKey(e), new WriteableEvent(e));
     super.append(e);
   }
@@ -99,8 +103,14 @@ public class DFSEventSink extends EventSink.Base {
         e.getValue().close();
       }
     } else {
+
+      if (writer == null) {
+        LOG.warn("DFS Sink double closed? " + path);
+        return;
+      }
       LOG.info("Closing " + path);
       writer.close();
+
       writer = null;
     }
   }

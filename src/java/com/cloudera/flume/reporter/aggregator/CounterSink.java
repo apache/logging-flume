@@ -18,7 +18,6 @@
 package com.cloudera.flume.reporter.aggregator;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
@@ -50,7 +49,8 @@ public class CounterSink extends EventSink.Base {
 
   @Override
   public void append(Event e) throws IOException {
-    Preconditions.checkState(isOpen);
+    Preconditions.checkState(isOpen,
+        "Attempting to append to a Counter that is not open!");
     cnt.incrementAndGet();
     super.append(e);
   }
@@ -96,11 +96,11 @@ public class CounterSink extends EventSink.Base {
         }
 
         EventSink snk = new CounterSink(argv[0]);
-        
+
         if (context.getValue(ReportTestingContext.TESTING_REPORTS) != null) {
           ReportManager.get().add(snk);
         }
-        
+
         return snk;
       }
 

@@ -131,6 +131,12 @@ public class EscapedCustomDfsSink extends EventSink.Base {
       }
     } else {
       LOG.info("Closing " + absolutePath);
+      if (writer == null) {
+        LOG.warn("EscapedCustomDfsSink's Writer for '" + absolutePath
+            + "' was already closed!");
+        return;
+      }
+
       writer.close();
       writer = null;
     }

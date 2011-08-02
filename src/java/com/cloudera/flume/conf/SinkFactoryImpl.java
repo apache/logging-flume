@@ -109,14 +109,16 @@ public class SinkFactoryImpl extends SinkFactory {
 
       // autoE2EChain, autoDFOChain and autoBEChains are essentially node
       // specific "macros", and use let expresion shadowing
-      { "autoBEChain", EventSink.StubSink.builder() },
-      { "autoDFOChain", EventSink.StubSink.builder() },
-      { "autoE2EChain", EventSink.StubSink.builder() },
-      { "logicalSink", EventSink.StubSink.builder() },
+      { "autoBEChain", EventSink.StubSink.builder("autoBEChain") },
+      { "autoDFOChain", EventSink.StubSink.builder("autoDFOChain") },
+      { "autoE2EChain", EventSink.StubSink.builder("autoE2EChain") },
+      { "logicalSink", EventSink.StubSink.builder("logicalSink") },
 
       // low level sinks
       { "null", NullSink.builder() },
-      { "fail", EventSink.StubSink.builder() }, // all calls throw exception
+      // all calls throw exception
+      { "fail", EventSink.StubSink.builder("fail") },
+
       { "console", ConsoleEventSink.builder() },
       { "text", TextFileSink.builder() },
       { "seqfile", SeqfileEventSink.builder() },

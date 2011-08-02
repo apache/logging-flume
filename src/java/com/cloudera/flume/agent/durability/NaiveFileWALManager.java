@@ -113,27 +113,29 @@ public class NaiveFileWALManager implements WALManager {
   File importDir, writingDir, loggedDir, sendingDir, sentDir, doneDir,
       errorDir;
 
-  public NaiveFileWALManager(File baseDir) {
-    this(new File(baseDir, IMPORTDIR), new File(baseDir, WRITINGDIR), new File(
-        baseDir, LOGGEDDIR), new File(baseDir, SENDINGDIR), new File(baseDir,
-        SENTDIR), new File(baseDir, DONEDIR), new File(baseDir, ERRORDIR));
-  }
+  File baseDir;
 
-  NaiveFileWALManager(File importDir, File writingDir, File loggedDir,
-      File xmitableDir, File ackedDir, File doneDir, File errDir) {
+  public NaiveFileWALManager(File baseDir) {
+    File writingDir = new File(baseDir, WRITINGDIR);
+    File loggedDir = new File(baseDir, LOGGEDDIR);
+    File xmitableDir = new File(baseDir, SENDINGDIR);
+    File ackedDir = new File(baseDir, SENTDIR);
+    File doneDir = new File(baseDir, DONEDIR);
+    File errDir = new File(baseDir, ERRORDIR);
     Preconditions.checkNotNull(writingDir);
     Preconditions.checkNotNull(loggedDir);
     Preconditions.checkNotNull(xmitableDir);
     Preconditions.checkNotNull(ackedDir);
     Preconditions.checkNotNull(errDir);
     Preconditions.checkNotNull(doneDir);
-    this.importDir = importDir;
+    this.importDir = new File(baseDir, IMPORTDIR);
     this.writingDir = writingDir;
     this.loggedDir = loggedDir;
     this.sendingDir = xmitableDir;
     this.sentDir = ackedDir;
     this.doneDir = doneDir;
     this.errorDir = errDir;
+    this.baseDir = baseDir;
   }
 
   synchronized public void open() throws IOException {
@@ -205,7 +207,7 @@ public class NaiveFileWALManager implements WALManager {
         throw new IOException("Unable to recover - couldn't rename " + old
             + " to " + loggedDir + f);
       }
-      recoverCount.incrementAndGet();
+      LOG.debug("Recover moved " + f + " from WRITING to LOGGED");
     }
 
     // move all sending into the logged dir
@@ -215,6 +217,8 @@ public class NaiveFileWALManager implements WALManager {
         throw new IOException("Unable to recover - couldn't rename " + old
             + " to " + loggedDir + f);
       }
+      LOG.debug("Recover moved " + f + " from SENDING to LOGGED");
+
     }
 
     // move all sent into the logged dir.
@@ -224,6 +228,8 @@ public class NaiveFileWALManager implements WALManager {
         throw new IOException("Unable to recover - couldn't rename " + old
             + " to " + loggedDir + f);
       }
+      LOG.debug("Recover moved " + f + " from SENT to LOGGED");
+
     }
 
     // add all logged to loggedQ and table
@@ -233,6 +239,7 @@ public class NaiveFileWALManager implements WALManager {
       table.put(f, data);
       loggedQ.add(f);
       recoverCount.incrementAndGet();
+      LOG.debug("Recover loaded " + f);
     }
 
     // carry on now on your merry way.
@@ -311,7 +318,7 @@ public class NaiveFileWALManager implements WALManager {
       final AckListener ackQueue, long checkMs) throws IOException {
     // TODO (jon) make this expressible using the DSL instead of only in
     // javacode
-    return new RollSink(ctx, null, t, checkMs) {
+    return new RollSink(ctx, "ackingWal", t, checkMs) {
       @Override
       public EventSink newSink(Context ctx) throws IOException {
         return newAckWritingSink(t.getTagger(), ackQueue);
@@ -380,12 +387,13 @@ public class NaiveFileWALManager implements WALManager {
       throws IOException {
     WALData data = table.get(tag);
     if (data == null) {
-      LOG.error("WAL file associated with tag " + tag
+      LOG.warn("WAL file associated with tag " + tag
           + " not present.  Maybe it got renamed? ");
       throw new IOException("Lost WAL file " + tag);
     }
 
-    Preconditions.checkArgument(tag.equals(data.tag));
+    Preconditions.checkArgument(tag.equals(data.tag),
+        "Data associated with tag didn't match tag " + tag);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("Change " + data.s + "/" + oldState + " to " + newState + " : "
@@ -511,6 +519,11 @@ public class NaiveFileWALManager implements WALManager {
     public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
       super.getReports(namePrefix, reports);
       src.getReports(namePrefix + getName() + ".", reports);
+    }
+
+    @Override
+    public String toString() {
+      return "NaiveFileWALManager (dir=" + baseDir.getAbsolutePath() + " )";
     }
   }
 

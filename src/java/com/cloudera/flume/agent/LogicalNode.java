@@ -56,15 +56,12 @@ import com.cloudera.util.NetUtils;
  * a sink and instantiates is extracted. Fast fail by throwing exceptions any
  * parse or instantiation failures.
  * 
- * Open the source and sinks. Fast fail by throwing exception here as well.
- * 
- * Save the configuration as the lastGoodCfg. From this point on, if there are
- * failures in the source, or if there are unhandled sink exceptions. this is
- * the lastGoodConfig is instantiated again.
+ * Lazily open the source and sinks. This defers real open errors into the main
+ * driver thread.
  * 
  * Instantiate a Connector that pulls events out of the sources and into the
- * sink. Run this until an unhandled exception occurs or the source is
- * completely drained.
+ * sink. Run this until an unhandled exception occurs or the source exits with
+ * null signaling that it has been completely drained.
  */
 public class LogicalNode implements Reportable {
   final static Logger LOG = Logger.getLogger(LogicalNode.class.getName());

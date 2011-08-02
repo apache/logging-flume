@@ -63,8 +63,8 @@ public interface EventSink extends Reportable {
   public void close() throws IOException;
 
   /**
-   * Generates one or more reports in some sort of readable format using
-   * the supplied naming prefix.
+   * Generates one or more reports in some sort of readable format using the
+   * supplied naming prefix.
    */
   public void getReports(String namePrefix, Map<String, ReportEvent> reports);
 
@@ -88,7 +88,7 @@ public interface EventSink extends Reportable {
     synchronized public void append(Event e) throws IOException {
       updateAppendStats(e);
     }
-    
+
     synchronized protected void updateAppendStats(Event e) {
       if (e == null)
         return;
@@ -125,7 +125,7 @@ public interface EventSink extends Reportable {
       reports.put(namePrefix + getName(), getReport());
     }
   }
-  
+
   /**
    * This is an invalid sink that will instantiate but will always fail on use.
    * This can be used as a stub for sinks that get assigned later using let
@@ -135,6 +135,17 @@ public interface EventSink extends Reportable {
    * autoE2EChain.
    */
   public static class StubSink extends Base {
+    String name;
+
+    public StubSink(String name) {
+      this.name = name;
+    }
+
+    @Override
+    public String getName() {
+      return name;
+    }
+
     @Override
     public void append(Event e) throws IOException {
       throw new IOException("Attemping to append to a Stub Sink!");
@@ -147,17 +158,18 @@ public interface EventSink extends Reportable {
 
     @Override
     public void open() throws IOException {
-      throw new IOException("Attemping to open a Stub Sink!");
+      throw new IOException("Attempting to open a stub sink '" + getName()
+          + "'!");
     }
 
     /**
      * @return
      */
-    public static SinkBuilder builder() {
+    public static SinkBuilder builder(final String name) {
       return new SinkBuilder() {
         @Override
         public EventSink build(Context context, String... argv) {
-          return new StubSink();
+          return new StubSink(name);
         }
       };
     }
