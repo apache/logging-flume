@@ -46,6 +46,8 @@ import java.net.SocketException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.flume.handlers.thrift.TBufferedSocket;
+
 /**
  * Wrapper around ServerSocket for Thrift.
  * 
@@ -130,7 +132,7 @@ public class TSaneServerSocket extends TServerTransport {
     }
     try {
       Socket result = serverSocket_.accept();
-      TSocket result2 = new TSocket(result);
+      TSocket result2 = new TBufferedSocket(result);
       result2.setTimeout(clientTimeout_);
       return result2;
     } catch (IOException iox) {

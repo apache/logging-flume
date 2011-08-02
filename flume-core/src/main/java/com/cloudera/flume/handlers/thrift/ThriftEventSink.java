@@ -34,7 +34,6 @@ import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.core.Event;
-import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.handlers.thrift.ThriftFlumeEventServer.Client;
 import com.cloudera.flume.reporter.ReportEvent;
@@ -101,7 +100,7 @@ public class ThriftEventSink extends EventSink.Base {
         stats = new TStatsTransport(transport);
         transport = new TFramedTransport(stats);
       } else {
-        transport = new TSocket(host, port, timeout);
+        transport = new TBufferedSocket(host, port, timeout);
         stats = new TStatsTransport(transport);
         transport = stats;
       }
