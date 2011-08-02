@@ -66,7 +66,8 @@ public class TestFlumeBuilderFunctional implements ExampleData {
   }
 
   @Test
-  public void testBuildTextSource() throws IOException, FlumeSpecException {
+  public void testBuildTextSource() throws IOException, FlumeSpecException,
+      InterruptedException {
     LOG.info("Working Dir path: " + new File(".").getAbsolutePath());
     EventSource src = FlumeBuilder.buildSource(SOURCE);
     src.open();

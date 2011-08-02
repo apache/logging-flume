@@ -210,8 +210,9 @@ public class RollSink extends EventSink.Base {
         triggerThread.interrupt();
         triggerThread.doneLatch.await();
       } catch (InterruptedException e) {
-        LOG
-            .warn("Interrupted while waiting for batch timeout thread to finish");
+        LOG.warn("Interrupted while waiting for batch timeout thread to finish");
+        // TODO check finally
+        throw e;
       }
     }
 

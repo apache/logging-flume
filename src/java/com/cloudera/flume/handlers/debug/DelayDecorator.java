@@ -40,13 +40,12 @@ public class DelayDecorator<S extends EventSink> extends EventSinkDecorator<S> {
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     try {
       Thread.sleep(millis);
       super.append(e);
     } catch (InterruptedException e1) {
-      Thread.currentThread().interrupt();
-      throw new IOException(e1.getMessage(), e1);
+      throw e1;
     }
 
   }

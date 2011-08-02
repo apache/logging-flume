@@ -89,7 +89,7 @@ public class TestChokeDecos {
      * initialized. In this method we just eliminate that call.
      */
     @Override
-    public void append(Event e) throws IOException {
+    public void append(Event e) throws IOException, InterruptedException {
       testChokeMan.spendTokens(chokeId, e.getBody().length);
       updateAppendStats(e);
     }

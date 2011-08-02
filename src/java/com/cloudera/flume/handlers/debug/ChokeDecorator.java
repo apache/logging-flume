@@ -51,14 +51,9 @@ public class ChokeDecorator<S extends EventSink> extends EventSinkDecorator<S> {
    * accross this Choke has reached its limit. But it does not block forever.
    */
   @Override
-  public void append(Event e) throws IOException {
-
-    try {
-      chokeMan.spendTokens(chokeId, e.getBody().length);
-      super.append(e);
-    } catch (Exception e1) {
-      throw new IOException(e1.getMessage(), e1);
-    }
+  public void append(Event e) throws IOException, InterruptedException {
+    chokeMan.spendTokens(chokeId, e.getBody().length);
+    super.append(e);
   }
 
   /**

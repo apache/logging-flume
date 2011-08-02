@@ -55,19 +55,19 @@ public class CollectorSource extends EventSource.Base {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     LOG.info("closed");
     src.close();
   }
 
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     LOG.info("opened");
     src.open();
   }
 
   @Override
-  public Event next() throws IOException {
+  public Event next() throws IOException, InterruptedException {
     Event e = src.next();
     updateEventProcessingStats(e);
     return e;

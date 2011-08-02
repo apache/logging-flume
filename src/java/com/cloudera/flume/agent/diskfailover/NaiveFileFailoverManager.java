@@ -428,7 +428,7 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
     }
 
     @Override
-    public void open() throws IOException {
+    public void open() throws IOException, InterruptedException {
       try {
         src.open();
       } catch (IOException ioe) {
@@ -441,7 +441,7 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() throws IOException, InterruptedException {
       try {
         src.close();
         changeState(tag, State.SENDING, State.SENT);
@@ -454,7 +454,7 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
     }
 
     @Override
-    public Event next() throws IOException {
+    public Event next() throws IOException, InterruptedException {
       try {
         Event e = src.next();
         if (e != null) {

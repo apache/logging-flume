@@ -153,7 +153,7 @@ public class ThriftEventSource extends EventSource.Base {
   }
 
   @Override
-  synchronized public void close() throws IOException {
+  synchronized public void close() throws IOException, InterruptedException {
     if (server == null) {
       LOG.info(String.format("Server on port %d was already closed!", port));
       return;
@@ -173,9 +173,8 @@ public class ThriftEventSource extends EventSource.Base {
       if (Clock.unixTime() - start > maxSleep) {
         if (sz == q.size()) {
           // no progress made, timeout and close it.
-          LOG
-              .warn("Close timed out due to no progress.  Closing despite having "
-                  + q.size() + " values still enqued");
+          LOG.warn("Close timed out due to no progress.  Closing despite having "
+              + q.size() + " values still enqued");
           return;
         }
         // there was some progress, go another cycle.
@@ -186,9 +185,8 @@ public class ThriftEventSource extends EventSource.Base {
         Thread.sleep(100);
       } catch (InterruptedException e) {
         LOG.error("Unexpected interrupt of close " + e.getMessage(), e);
-        Thread.currentThread().interrupt();
         closed = true;
-        throw new IOException(e);
+        throw e;
       }
     }
 

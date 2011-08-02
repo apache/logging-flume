@@ -118,7 +118,7 @@ public class TestNaiveFileWALSource {
 
           // this should block and never make progress.
           src.next();
-        } catch (IOException e) {
+        } catch (Exception e) {
           e.printStackTrace();
         } finally {
           // this should never execute.
@@ -184,7 +184,7 @@ public class TestNaiveFileWALSource {
             src.next();
             count.getAndIncrement();
           }
-        } catch (IOException e) {
+        } catch (Exception e) {
           System.out.println("about to fail because of " + e);
           e.printStackTrace();
           okstate.set(false);
@@ -261,7 +261,7 @@ public class TestNaiveFileWALSource {
             src.next();
             count.getAndIncrement();
           }
-        } catch (IOException e) {
+        } catch (Exception e) {
           e.printStackTrace();
           okstate.set(false);
         }
@@ -285,7 +285,7 @@ public class TestNaiveFileWALSource {
   }
 
   /**
-   *In this stuation we intially open a file that starts of ok. However, at
+   * In this stuation we intially open a file that starts of ok. However, at
    * some point in runs into an unexpected end of file (due to a program /
    * machine/ write failure).
    * 
@@ -327,7 +327,7 @@ public class TestNaiveFileWALSource {
             src.next();
             count.getAndIncrement();
           }
-        } catch (IOException e) {
+        } catch (Exception e) {
           e.printStackTrace();
           okstate.set(false);
         }

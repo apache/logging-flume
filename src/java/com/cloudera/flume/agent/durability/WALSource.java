@@ -78,7 +78,7 @@ class WALSource extends EventSource.Base {
   }
 
   @Override
-  public Event next() throws IOException {
+  public Event next() throws IOException, InterruptedException {
     curSource = getValidSource();
     if (curSource == null)
       return null;

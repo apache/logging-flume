@@ -29,16 +29,17 @@ import com.cloudera.flume.handlers.StandardSourceSinkHarnesses;
 import com.cloudera.flume.handlers.debug.StdinSource;
 
 public class TestStdinSource {
-  public static final Logger LOG = LoggerFactory.getLogger(TestStdinSource.class);
+  public static final Logger LOG = LoggerFactory
+      .getLogger(TestStdinSource.class);
 
   @Test
-  public void testCloseClose() throws IOException {
+  public void testCloseClose() throws IOException, InterruptedException {
     EventSource src = new StdinSource();
     StandardSourceSinkHarnesses.testCloseClose(LOG, src);
   }
 
   @Test
-  public void testOpenOpen() throws IOException {
+  public void testOpenOpen() throws IOException, InterruptedException {
     EventSource src = new StdinSource();
     StandardSourceSinkHarnesses.testOpenOpen(LOG, src);
   }

@@ -193,16 +193,18 @@ public class TestExecNioSource {
    * 
    * @throws FlumeSpecException
    * @throws IOException
+   * @throws InterruptedException
    */
   @Test
-  public void testLineModeLargeEvents() throws IOException, FlumeSpecException {
+  public void testLineModeLargeEvents() throws IOException, FlumeSpecException,
+      InterruptedException {
     testLineModeLargeEventOverflow(0);
     testLineModeLargeEventOverflow(1);
     testLineModeLargeEventOverflow(5);
   }
 
   public void testLineModeLargeEventOverflow(int overflow) throws IOException,
-      FlumeSpecException {
+      FlumeSpecException, InterruptedException {
     int max = (int) FlumeConfiguration.get().getEventMaxSizeBytes();
     File tmpdir = FileUtil.mktempdir();
     File tmp = new File(tmpdir, "flume-tmp");
@@ -232,10 +234,11 @@ public class TestExecNioSource {
    * 
    * @throws FlumeSpecException
    * @throws IOException
+   * @throws InterruptedException
    */
   @Test
   public void testAggModeLargeEventOverflow() throws IOException,
-      FlumeSpecException {
+      FlumeSpecException, InterruptedException {
     int overflow = 5;
     int max = (int) FlumeConfiguration.get().getEventMaxSizeBytes();
     File tmpdir = FileUtil.mktempdir();
@@ -249,8 +252,8 @@ public class TestExecNioSource {
     FileOutputStream f = new FileOutputStream(tmp);
     f.write(tooLarge.toString().getBytes());
     f.close();
-    EventSource source = new ExecNioSource.Builder().build("cat "
-        + tmp.getCanonicalPath(), "true");
+    EventSource source = new ExecNioSource.Builder().build(
+        "cat " + tmp.getCanonicalPath(), "true");
     source.open();
     Event e = source.next();
     assertNotNull(e);
@@ -266,9 +269,11 @@ public class TestExecNioSource {
    * 
    * @throws FlumeSpecException
    * @throws IOException
+   * @throws InterruptedException
    */
   @Test
-  public void testAggModeMultiWrite() throws IOException, FlumeSpecException {
+  public void testAggModeMultiWrite() throws IOException, FlumeSpecException,
+      InterruptedException {
 
     File temp = File.createTempFile("slowwrite", ".sh");
     temp.deleteOnExit();
@@ -311,9 +316,11 @@ public class TestExecNioSource {
 
   /**
    * Test that an empty command throws an exception
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testEmptyCommand() throws IOException {
+  public void testEmptyCommand() throws IOException, InterruptedException {
     Exception e = null;
     try {
       EventSource source = new ExecNioSource.Builder().build("");
@@ -327,9 +334,11 @@ public class TestExecNioSource {
 
   /**
    * Test that we get some output from stderr
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testReadStdErr() throws IOException {
+  public void testReadStdErr() throws IOException, InterruptedException {
     File temp = File.createTempFile("flmtst", null);
     temp.deleteOnExit();
 
@@ -384,8 +393,8 @@ public class TestExecNioSource {
     started.await(1000, TimeUnit.MILLISECONDS);
     Clock.sleep(100); // give next a chance to start.
     source.close();
-    assertTrue("source.next did not exit after close within 5 seconds", latch
-        .await(5000, TimeUnit.MILLISECONDS));
+    assertTrue("source.next did not exit after close within 5 seconds",
+        latch.await(5000, TimeUnit.MILLISECONDS));
   }
 
   @Ignore
@@ -424,8 +433,8 @@ public class TestExecNioSource {
     ch.close();
     System.in.close();
 
-    assertTrue("Timeout becuase channel read blocked", done.await(5000,
-        TimeUnit.MILLISECONDS));
+    assertTrue("Timeout becuase channel read blocked",
+        done.await(5000, TimeUnit.MILLISECONDS));
   }
 
   @Test
@@ -529,7 +538,7 @@ public class TestExecNioSource {
   }
 
   @Test
-  public void testNoRandomPrepend() throws IOException {
+  public void testNoRandomPrepend() throws IOException, InterruptedException {
     File f = File.createTempFile("prepend", "bar");
     f.deleteOnExit();
     FileWriter fw = new FileWriter(f);
@@ -557,7 +566,7 @@ public class TestExecNioSource {
   }
 
   @Test
-  public void testTruncateLine() throws IOException {
+  public void testTruncateLine() throws IOException, InterruptedException {
     File f = File.createTempFile("truncate", ".bar");
     f.deleteOnExit();
     FileWriter fw = new FileWriter(f);

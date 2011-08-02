@@ -135,8 +135,7 @@ public class BatchingDecorator<S extends EventSink> extends
           LOG.warn("Batch timeout thread did not exit in a timely fashion");
         }
       } catch (InterruptedException e) {
-        LOG
-            .warn("Interrupted while waiting for batch timeout thread to finish");
+        LOG.warn("Interrupted while waiting for batch timeout thread to finish");
       }
     }
 
@@ -190,6 +189,7 @@ public class BatchingDecorator<S extends EventSink> extends
 
   @Override
   public void open() throws IOException, InterruptedException {
+    // TODO handle interruptions
     super.open();
     if (maxLatency > 0) {
       timeoutThread = new TimeoutThread();
@@ -206,6 +206,7 @@ public class BatchingDecorator<S extends EventSink> extends
       InterruptedException {
     events.add(e);
     if (events.size() >= maxSize) {
+      // TODO handle interruptions
       endBatch();
       filledCount.incrementAndGet();
     }
@@ -213,6 +214,8 @@ public class BatchingDecorator<S extends EventSink> extends
 
   @Override
   public void close() throws IOException, InterruptedException {
+    // TODO handle interruptions
+
     // flush any left over events in queue.
     endBatch();
     if (timeoutThread != null) {

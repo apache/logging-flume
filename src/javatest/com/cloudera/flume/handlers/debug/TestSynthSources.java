@@ -69,9 +69,12 @@ public class TestSynthSources {
   /**
    * This makes sure that the synth source is reopened, it will essentially
    * generate the same output. (time stamp and machine may differ)
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testMultipleVaryMessageBytes() throws IOException {
+  public void testMultipleVaryMessageBytes() throws IOException,
+      InterruptedException {
     Event e1, e2;
     for (EventSource src : BenchmarkHarness.varyMsgBytes.values()) {
       src.open();
@@ -118,9 +121,12 @@ public class TestSynthSources {
   /**
    * This makes sure that the synth source is reopened, it will essentially
    * generate the same output. (time stamp and machine may differ)
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testAttrsMultipleVaryMessageBytes() throws IOException {
+  public void testAttrsMultipleVaryMessageBytes() throws IOException,
+      InterruptedException {
     Event e1, e2;
     for (EventSource src : BenchmarkHarness.varyNumAttrs.values()) {
       src.open();

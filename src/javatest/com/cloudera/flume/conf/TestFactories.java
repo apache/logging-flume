@@ -56,7 +56,7 @@ public class TestFactories implements ExampleData {
   }
 
   @Test
-  public void testBuildTextSource() throws IOException, FlumeSpecException {
+  public void testBuildTextSource() throws IOException, FlumeSpecException, InterruptedException {
     // 25 lines of 100 bytes of ascii
     EventSource src = srcfact.getSource("asciisynth", "25", "100");
     src.open();

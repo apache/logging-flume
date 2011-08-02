@@ -36,7 +36,7 @@ import com.cloudera.util.Clock;
 public class StandardSourceSinkHarnesses {
 
   static public void testOpenOpen(final Logger LOG, final EventSource src)
-      throws IOException {
+      throws IOException, InterruptedException {
     src.open();
     try {
       src.open();
@@ -49,7 +49,7 @@ public class StandardSourceSinkHarnesses {
   }
 
   static public void testCloseClose(final Logger LOG, final EventSource src)
-      throws IOException {
+      throws IOException, InterruptedException {
     // close should be ok
     src.close();
 
@@ -80,7 +80,7 @@ public class StandardSourceSinkHarnesses {
           started.countDown();
           src.next();
           done.countDown();
-        } catch (IOException e) {
+        } catch (Exception e) {
           LOG.error(e.getMessage(), e);
         }
       }
@@ -96,9 +96,10 @@ public class StandardSourceSinkHarnesses {
   /**
    * This test starts and stops a source over and over to verify that the close
    * cleanly
+   * @throws InterruptedException 
    */
   static public void testSourceOpenClose(Logger LOG, EventSource src)
-      throws IOException {
+      throws IOException, InterruptedException {
     for (int i = 0; i < 50; i++) {
       LOG.info("ThirftEventSource open close attempt " + i);
       src.open();

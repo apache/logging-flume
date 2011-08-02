@@ -38,11 +38,11 @@ public interface EventSource extends Reportable {
    * @return event or null if source is done/empty
    * @throws IOException
    */
-  Event next() throws IOException;
+  Event next() throws IOException, InterruptedException;
 
-  public void open() throws IOException;
+  public void open() throws IOException, InterruptedException;
 
-  public void close() throws IOException;
+  public void close() throws IOException, InterruptedException;
 
   /**
    * Generates one or more reports in some sort of readable format using the
@@ -129,11 +129,11 @@ public interface EventSource extends Reportable {
     private long numBytes = 0;
 
     @Override
-    public void close() throws IOException {
+    public void close() throws IOException, InterruptedException {
     }
 
     @Override
-    public Event next() throws IOException {
+    public Event next() throws IOException, InterruptedException {
       return null;
     }
 
@@ -149,7 +149,7 @@ public interface EventSource extends Reportable {
     }
 
     @Override
-    public void open() throws IOException {
+    public void open() throws IOException, InterruptedException {
     }
 
     @Override

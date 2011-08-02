@@ -195,6 +195,9 @@ public class LogicalNode implements Reportable {
           conn.getSource().close();
         } catch (IOException e) {
           LOG.error("Error closing " + nodeName + " source: " + e.getMessage());
+        } catch (InterruptedException e) {
+          // TODO reconsider this.
+          LOG.error("fire error interrupted", e);
         }
 
         try {
@@ -229,6 +232,9 @@ public class LogicalNode implements Reportable {
         } catch (IOException e) {
           LOG.error(nodeName + ": error closing: " + e.getMessage());
           next = NodeState.ERROR;
+        } catch (InterruptedException e) {
+          // TODO reconsider this.
+          LOG.error("fire error interrupted", e);
         }
 
         try {
@@ -295,9 +301,7 @@ public class LogicalNode implements Reportable {
       }
 
     } catch (RuntimeException e) {
-      LOG
-          .error("Runtime ex: " + new File(".").getAbsolutePath() + " " + cfg,
-              e);
+      LOG.error("Runtime ex: " + new File(".").getAbsolutePath() + " " + cfg, e);
       state.state = NodeState.ERROR;
       throw e;
     } catch (FlumeSpecException e) {

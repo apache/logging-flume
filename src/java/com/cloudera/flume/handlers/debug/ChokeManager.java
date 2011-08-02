@@ -176,8 +176,11 @@ public class ChokeManager extends Thread {
    * This method blocks at most for 2 time quanta. So if many driver threads are
    * using the same choke and the message size is huge, accuracy can be thrown
    * off, i.e., more bytes than the maximum limit can be shipped.
+   * 
+   * @throws InterruptedException
    */
-  public void spendTokens(String id, int numBytes) throws IOException {
+  public void spendTokens(String id, int numBytes) throws IOException,
+      InterruptedException {
     // TODO(Vibhor): Change this when we implement physical-node-level
     // throttling policy.
     rwlChokeInfoMap.readLock().lock();
@@ -193,8 +196,10 @@ public class ChokeManager extends Thread {
             try {
               myTinfoData.wait(ChokeManager.timeQuanta);
             } catch (InterruptedException e) {
-              Thread.currentThread().interrupt();
-              throw new IOException(e);
+              // TODO handle interruptions
+              throw e;
+              // Thread.currentThread().interrupt();
+              // throw new IOException(e);
             }
             if (loopCount++ >= 2) // just wait twice to avoid starvation
               break;

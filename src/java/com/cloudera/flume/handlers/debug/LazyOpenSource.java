@@ -43,7 +43,7 @@ public class LazyOpenSource<S extends EventSource> extends EventSource.Base {
   }
 
   @Override
-  public Event next() throws IOException {
+  public Event next() throws IOException, InterruptedException {
     synchronized (this) {
       if (logicallyOpen && !actuallyOpen) {
         src.open();
@@ -54,7 +54,7 @@ public class LazyOpenSource<S extends EventSource> extends EventSource.Base {
   }
 
   @Override
-  synchronized public void close() throws IOException {
+  synchronized public void close() throws IOException, InterruptedException {
     actuallyOpen = false;
     logicallyOpen = false;
     src.close();

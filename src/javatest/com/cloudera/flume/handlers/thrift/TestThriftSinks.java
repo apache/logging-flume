@@ -100,8 +100,8 @@ public class TestThriftSinks implements ExampleData {
     t.start(); // drain the sink.
 
     // mem -> ThriftEventSink
-    ThriftEventSink snk = new ThriftEventSink("0.0.0.0", conf
-        .getCollectorPort() + 1);
+    ThriftEventSink snk = new ThriftEventSink("0.0.0.0",
+        conf.getCollectorPort() + 1);
     snk.open();
     EventUtil.dumpAll(mem, snk);
     mem.close();
@@ -166,8 +166,8 @@ public class TestThriftSinks implements ExampleData {
     t.start(); // drain the sink.
 
     // mem -> thriftRawEventSink
-    ThriftRawEventSink snk = new ThriftRawEventSink("0.0.0.0", conf
-        .getCollectorPort());
+    ThriftRawEventSink snk = new ThriftRawEventSink("0.0.0.0",
+        conf.getCollectorPort());
     snk.open();
     EventUtil.dumpAll(mem, snk);
     mem.close();
@@ -185,7 +185,7 @@ public class TestThriftSinks implements ExampleData {
   }
 
   @Test
-  public void testOpenClose() throws IOException {
+  public void testOpenClose() throws IOException, InterruptedException {
     int port = FlumeConfiguration.get().getCollectorPort();
     final ThriftEventSource tes = new ThriftEventSource(port + 10);
     for (int i = 0; i < 50; i++) {
@@ -247,8 +247,8 @@ public class TestThriftSinks implements ExampleData {
             txt.close();
 
             // mem -> ThriftEventSink
-            ThriftEventSink snk = new ThriftEventSink("0.0.0.0", conf
-                .getCollectorPort() + 1);
+            ThriftEventSink snk = new ThriftEventSink("0.0.0.0",
+                conf.getCollectorPort() + 1);
             snk.open();
 
             sendStarted.countDown();
@@ -297,9 +297,12 @@ public class TestThriftSinks implements ExampleData {
 
   /**
    * Checks to verify that a thrift server doesn't hang forever on closing
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testThriftEventServerCloseTimeout() throws IOException {
+  public void testThriftEventServerCloseTimeout() throws IOException,
+      InterruptedException {
     final FlumeConfiguration conf = FlumeConfiguration.get();
     // this is a slight tweak to avoid port conflicts
     final ThriftEventSource tes = new ThriftEventSource(

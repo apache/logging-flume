@@ -32,7 +32,7 @@ import com.cloudera.flume.core.EventSource;
 public class TestFileSource implements ExampleData {
 
   @Test
-  public void testFileSource() throws IOException {
+  public void testFileSource() throws IOException, InterruptedException {
     EventSource src = new TextFileSource(TEST);
     src.open();
     int count = 0;
