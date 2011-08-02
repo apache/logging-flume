@@ -33,7 +33,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.data.Stat;
 import org.junit.Test;
 
 import com.cloudera.flume.agent.LogicalNode;
@@ -398,5 +401,53 @@ public class TestZKBackedConfigStore {
     client.close();
     zk.shutdown();
     FileUtil.rmr(tmp);
+  }
+
+  /**
+   * Test that a bad configuration is correctly ignored. Bad configurations
+   * shouldn't necessarily happen, but if ZK dies in the middle of a write for
+   * some reason it's worth being defensive about this.
+   */
+  @Test
+  public void testBadConfigurationIgnored() throws IOException,
+      InterruptedException, KeeperException {
+    File tmp = FileUtil.mktempdir();
+    FlumeConfiguration cfg = FlumeConfiguration.createTestableConfiguration();
+    cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
+    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181");
+    cfg.setInt(FlumeConfiguration.MASTER_SERVER_ID, 0);
+
+    ZooKeeperService zk = new ZooKeeperService();
+    zk.init(cfg);
+
+    ZooKeeperConfigStore store = new ZooKeeperConfigStore(zk);
+    store.init();
+    String defaultFlowName = cfg.getDefaultFlowName();
+    store.setConfig("foo", defaultFlowName, "bar", "baz");
+
+    ZKClient client = new ZKClient("localhost:2181");
+    client.init();
+    Stat stat = new Stat();
+
+    byte[] bytes = client.getData("/flume-cfgs/cfg-0000000000", false, stat);
+
+    String badCfg = new String(bytes)
+        + "\nunparseable-config\n1,1,default-flow@@bar : null | null;";
+
+    // This will trigger a reload with a couple of bad configs, both of which
+    // should be ignored and the last (good) line should still be parsed in
+    client.create("/flume-cfgs/cfg-", badCfg.getBytes(), Ids.OPEN_ACL_UNSAFE,
+        CreateMode.PERSISTENT_SEQUENTIAL);
+
+    FlumeConfigData cfgData = store.getConfig("bar");
+    client.close();
+    zk.shutdown();
+    FileUtil.rmr(tmp);
+    
+    assertEquals("default-flow", cfgData.flowID);
+    assertEquals("null", cfgData.sourceConfig);
+    assertEquals("null", cfgData.sinkConfig);
+    assertEquals(1, cfgData.getSinkVersion());
+    assertEquals(1, cfgData.getSourceVersion());    
   }
 }

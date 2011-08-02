@@ -39,6 +39,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 
 import com.cloudera.flume.conf.FlumeBuilder;
+import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.FlumeSpecGen;
 import com.cloudera.flume.conf.thrift.FlumeConfigData;
 import com.cloudera.flume.master.ZKClient.InitCallback;
@@ -201,16 +202,29 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
         // Nodes are serialised in the form
         // srcVersion,snkVersion,flowid@@cfgString
         String[] parts = data.split("@@");
-        Preconditions.checkState(parts.length == 2,
-            "Malformed node configuration: " + data);
+        if (parts.length != 2) {
+          LOG.warn("Malformed node configuration: " + parts[0] + " - from "
+              + data);
+          continue;
+        }
         String[] versions = parts[0].split(",");
-        Preconditions.checkState(versions.length == 3,
-            "Malformed version numbers: " + parts[0]);
+        if (versions.length != 3) {
+          LOG.warn("Malformed version numbers in configuration: " + parts[0]
+              + " - from " + data);
+          continue;
+        }
         long srcVersion = Long.parseLong(versions[0]);
         long snkVersion = Long.parseLong(versions[1]);
         String flowid = versions[2];
-        List<FlumeNodeSpec> confs = FlumeSpecGen.generate(parts[1]);
-
+        List<FlumeNodeSpec> confs = Collections.emptyList();
+        try {
+          confs = FlumeSpecGen.generate(parts[1]);
+        } catch (FlumeSpecException e) {
+          // Bad / malformed configurations should be ignored so they don't
+          // persist
+          LOG.warn("Could not parse FlumeSpec from cfg: " + parts[1], e);
+          continue;
+        }
         for (FlumeNodeSpec spec : confs) {
           cfgs.put(spec.node, new FlumeConfigData(Clock.unixTime(), spec.src,
               spec.sink, srcVersion, snkVersion, flowid));
