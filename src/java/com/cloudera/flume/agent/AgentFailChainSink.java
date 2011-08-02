@@ -117,23 +117,21 @@ public class AgentFailChainSink extends EventSink.Base {
     String body = "{ lazyOpen => { stubbornAppend => %s } }  ";
 
     // what happens when there are no collectors?
-    String spec = FailoverChainManager.genAvailableSinkSpec(body,
-        Arrays.asList(chain));
+    String spec = FailoverChainManager.genAvailableSinkSpec(body, Arrays
+        .asList(chain));
     LOG.info("Setting best effort failover chain to  " + spec);
     return spec;
   }
 
   /**
    * Generates a e2e acking chain. Writes to WAL then tries to send to failovers
-   * 
-   * TODO (jon) this needs to be live tested.
    */
   public static String genE2EChain(String... chain) {
     String body = " %s ";
 
     // what happens when there are no collectors?
-    String spec = FailoverChainManager.genAvailableSinkSpec(body,
-        Arrays.asList(chain));
+    String spec = FailoverChainManager.genAvailableSinkSpec(body, Arrays
+        .asList(chain));
     spec = "{ ackedWriteAhead => { stubbornAppend => { insistentOpen => "
         + spec + " } } }";
     LOG.info("Setting e2e failover chain to  " + spec);
@@ -143,20 +141,14 @@ public class AgentFailChainSink extends EventSink.Base {
   /**
    * Generates a dfo chain. Tries best effort and then writes to dfo log if
    * failed. Tries to resend best effort.
-   * 
-   * TODO (jon) this needs to be live tested.
    */
   public static String genDfoChain(String... chain) {
-    StringBuilder sb = new StringBuilder();
     String primaries = genBestEffortChain(chain);
-    sb.append("let primary := " + primaries);
-    String body = "< primary ? {diskFailover => { insistentOpen =>  primary} } >";
+    String body = "< " + primaries + " ? {diskFailover => { insistentOpen =>  "
+        + primaries + " } } >";
 
     LOG.info("Setting dfo failover chain to  " + body);
-    sb.append(" in ");
-    sb.append(body);
-
-    return sb.toString();
+    return body;
   }
 
   /**
