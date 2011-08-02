@@ -17,12 +17,27 @@
  */
 package com.cloudera.flume.master;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.UriInfo;
+
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
+import org.mortbay.log.Log;
+
+import com.cloudera.flume.reporter.ReportUtil;
 
 @Path("/master")
 public class FlumeMasterResource {
+
+  @Context
+  UriInfo uriInfo;
+
   private final FlumeMaster master;
 
   public FlumeMasterResource(FlumeMaster master) {
@@ -36,13 +51,36 @@ public class FlumeMasterResource {
     this.master = FlumeMaster.getInstance();
   }
 
-  // The Java method will process HTTP GET requests
+  public static Set<Class<?>> getResources() {
+    Set<Class<?>> res = new HashSet<Class<?>>();
+    res.add(FlumeMasterResource.class);
+    res.add(StatusManagerResource.class);
+    res.add(ConfigManagerResource.class);
+    res.add(CommandManagerResource.class);
+    res.add(MasterAckManagerResource.class);
+    return res;
+  }
+
   @GET
-  // The Java method will produce content identified by the MIME Media
-  // type "text/plain"
-  @Produces("text/html")
-  public String getClichedMessage() {
-    // Return some cliched textual content
-    return master.reportHtml();
+  @Produces("application/json")
+  public JSONObject getMaster() {
+    try {
+      JSONObject o = ReportUtil.toJSONObject(master.getReport());
+      o.put("sysInfo", ReportUtil.toJSONObject(master.getSystemInfo()
+          .getReport()));
+      o.put("vmInfo", ReportUtil.toJSONObject(master.getVMInfo().getReport()));
+      o.put("statusLink", uriInfo.getAbsolutePathBuilder().path("../status")
+          .build().toASCIIString());
+      o.put("configLink", uriInfo.getAbsolutePathBuilder().path("../configs")
+          .build().toASCIIString());
+      o.put("commandLink", uriInfo.getAbsolutePathBuilder().path("../commands")
+          .build().toASCIIString());
+      o.put("acksLink", uriInfo.getAbsolutePathBuilder().path("../acks")
+          .build().toASCIIString());
+      return o;
+    } catch (JSONException e) {
+      Log.warn("Problem generating json ", e);
+      return new JSONObject();
+    }
   }
 }

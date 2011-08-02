@@ -91,6 +91,9 @@ public class FlumeMaster implements Reportable {
   final StatusManager statman;
   final MasterAckManager ackman;
 
+  final SystemInfo sysInfo = new SystemInfo(this.uniqueMasterName + ".");
+  final FlumeVMInfo vmInfo = new FlumeVMInfo(this.uniqueMasterName + ".");
+
   final String uniqueMasterName;
 
   Thread reaper;
@@ -227,9 +230,8 @@ public class FlumeMaster implements Reportable {
   }
 
   ServletContainer jerseyMasterServlet() {
-    Application app = new DefaultResourceConfig(FlumeMasterResource.class,
-        StatusManagerResource.class, ConfigManagerResource.class,
-        CommandManagerResource.class, MasterAckManagerResource.class);
+    Application app = new DefaultResourceConfig(FlumeMasterResource
+        .getResources());
     ServletContainer sc = new ServletContainer(app);
 
     return sc;
@@ -243,8 +245,8 @@ public class FlumeMaster implements Reportable {
         throw new IOException("Unexpected interrupt when starting ZooKeeper", e);
       }
     }
-    ReportManager.get().add(new FlumeVMInfo(this.uniqueMasterName + "."));
-    ReportManager.get().add(new SystemInfo(this.uniqueMasterName + "."));
+    ReportManager.get().add(vmInfo);
+    ReportManager.get().add(sysInfo);
 
     if (doHttp) {
       String webPath = FlumeNode.getWebPath(cfg);
@@ -503,5 +505,13 @@ public class FlumeMaster implements Reportable {
       LOG.error("IO problem: " + e.getMessage());
       LOG.debug("IOException", e);
     }
+  }
+
+  public FlumeVMInfo getVMInfo() {
+    return vmInfo;
+  }
+
+  public SystemInfo getSystemInfo() {
+    return sysInfo;
   }
 }

@@ -18,18 +18,29 @@
 package com.cloudera.flume.master;
 
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.xml.bind.annotation.XmlRootElement;
+
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfigData;
 
 @Path("/configs")
 public class ConfigManagerResource {
+  final public static Logger LOG = LoggerFactory
+      .getLogger(ConfigManagerResource.class);
   private final ConfigurationManager configs;
+
+  public ConfigManagerResource(ConfigurationManager cfgs) {
+    this.configs = cfgs;
+  }
 
   /**
    * Must be public for jersey to instantiate and process.
@@ -38,31 +49,51 @@ public class ConfigManagerResource {
     this.configs = FlumeMaster.getInstance().getSpecMan();
   }
 
-  /**
-   * Wrapper class to provide XmlRootElement.
-   */
-  @XmlRootElement
-  public static class Configs {
-    public Map<String, FlumeConfigData> configs;
-
-    public Configs() {
-
-    }
-
-    public Configs(Map<String, FlumeConfigData> cfgs) {
-      this.configs = cfgs;
-    }
+  public static JSONObject toJSONObject(FlumeConfigData fcd)
+      throws JSONException {
+    JSONObject o = new JSONObject();
+    o.put("flowID", fcd.flowID);
+    o.put("sinkVersion", fcd.sinkVersion);
+    o.put("sourceVersion", fcd.sourceVersion);
+    o.put("timestamp", fcd.timestamp);
+    o.put("sinkConfig", fcd.sinkConfig);
+    o.put("sourceConfig", fcd.sourceConfig);
+    return o;
   }
 
-  // The Java method will process HTTP GET requests
+  /**
+   * return a JSONObject that presents the configs and translated configs from
+   * the master's configuration manager.
+   */
   @GET
   @Produces("application/json")
-  public Configs configs() {
-    return new Configs(configs.getAllConfigs());
+  public JSONObject configman() {
+    JSONObject o = new JSONObject();
+    try {
+      o.put("configs", toJSONObject(configs.getAllConfigs()));
+      o.put("translatedConfigs", toJSONObject(configs.getTranslatedConfigs()));
+    } catch (JSONException e) {
+      LOG.warn("Problem encoding JSON", e);
+      return new JSONObject();
+    }
+    return o;
+  }
+
+  public JSONObject toJSONObject(Map<String, FlumeConfigData> cfgs) {
+    JSONObject o = new JSONObject();
+    try {
+      for (Entry<String, FlumeConfigData> e : cfgs.entrySet()) {
+        o.put(e.getKey(), toJSONObject(e.getValue()));
+      }
+    } catch (JSONException e1) {
+      LOG.warn("Problem encoding JSON", e1);
+      return new JSONObject();
+    }
+    return o;
   }
 
   /**
-   * Sub path for only getting data specific for a partricular node.
+   * Sub path for only getting data specific for a particular node.
    * 
    * @param node
    * @return

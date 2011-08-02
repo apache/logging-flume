@@ -18,7 +18,7 @@
 package com.cloudera.flume.master;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -26,6 +26,8 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,21 +71,21 @@ public class TestMasterJersey extends SetupMasterTestEnv {
 
   @Test
   public void testMaster() throws IOException, InterruptedException,
-      FlumeSpecException {
+      FlumeSpecException, JSONException {
     String content = curl("http://localhost:35871/master");
     LOG.info("content: " + content);
 
     content = curl("http://localhost:35871/master/status");
     LOG.info("content: " + content);
-    assertEquals("{\"status\":null}\n", content);
+    assertEquals("{}\n", content);
 
     content = curl("http://localhost:35871/master/commands");
     LOG.info("content: " + content);
-    assertEquals("{\"commands\":null}\n", content);
+    assertEquals("{}\n", content);
 
     content = curl("http://localhost:35871/master/configs");
     LOG.info("content: " + content);
-    assertEquals("{\"configs\":null}\n", content);
+    assertEquals("{\"configs\":{},\"translatedConfigs\":{}}\n", content);
 
     content = curl("http://localhost:35871/master/configs/foo");
     LOG.info("content: " + content);
@@ -95,21 +97,27 @@ public class TestMasterJersey extends SetupMasterTestEnv {
     // excludes timestamp related json encoded stuff
     content = curl("http://localhost:35871/master/configs");
     LOG.info("content: " + content);
-    assertTrue(content
-        .contains("{\"configs\":{\"entry\":{\"key\":\"foo\","
-            + "\"value\":{\"flowID\":\"foo\",\"sinkConfig\":\"null\",\"sinkVersion\""));
-    assertTrue(content.contains("\"sourceConfig\":\"null\",\"sourceVersion\""));
+    JSONObject o = new JSONObject(content);
+    JSONObject cfgs = o.getJSONObject("configs");
+    assertNotNull(cfgs);
+    assertNotNull(cfgs.get("foo"));
+    assertEquals(cfgs.getJSONObject("foo").get("sinkConfig"), "null");
+    JSONObject xcfgs = o.getJSONObject("translatedConfigs");
+    assertNotNull(xcfgs);
+    assertNotNull(xcfgs.get("foo"));
+    assertEquals(xcfgs.getJSONObject("foo").get("sinkConfig"), "null");
 
     // excludes timestamp related json encoded stuff
     content = curl("http://localhost:35871/master/configs/foo");
     LOG.info("content: " + content);
-    assertTrue(content
-        .contains("{\"flowID\":\"foo\",\"sinkConfig\":\"null\",\"sinkVersion\""));
-    assertTrue(content.contains("\"sourceConfig\":\"null\",\"sourceVersion\""));
+    JSONObject n = new JSONObject(content);
+    assertEquals("foo", n.get("flowID"));
+    assertEquals("null", n.get("sinkConfig"));
+
   }
 
   /**
-   * Test json interface for getting ack informaiton.
+   * Test json interface for getting ack information.
    * 
    * @throws IOException
    * @throws InterruptedException

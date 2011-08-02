@@ -17,19 +17,29 @@
  */
 package com.cloudera.flume.master;
 
-import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.xml.bind.annotation.XmlRootElement;
+
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.master.StatusManager.NodeStatus;
 
 @Path("/status")
 public class StatusManagerResource {
+  final public static Logger LOG = LoggerFactory
+      .getLogger(StatusManagerResource.class);
   private final StatusManager stats;
+
+  public StatusManagerResource(StatusManager statMan) {
+    this.stats = statMan;
+  }
 
   /**
    * Must be public for jersey to instantiate and process.
@@ -38,29 +48,15 @@ public class StatusManagerResource {
     this.stats = FlumeMaster.getInstance().getStatMan();
   }
 
-  /**
-   * Get the old style generated html report
-   */
-  @GET
-  @Path("report")
-  @Produces("text/html")
-  public String getOldReport() {
-    return stats.getReport().toHtml();
-  }
-
-  /**
-   * Wrapper class to provide XmlRootElement.
-   */
-  @XmlRootElement
-  public static class Statuses {
-    public Map<String, NodeStatus> status;
-
-    public Statuses() {
-    }
-
-    public Statuses(Map<String, NodeStatus> cfgs) {
-      this.status = cfgs;
-    }
+  public static JSONObject translateNodeStatus(NodeStatus ns)
+      throws JSONException {
+    JSONObject o = new JSONObject();
+    o.put("host", ns.host);
+    o.put("lastseen", ns.lastseen);
+    o.put("version", ns.version);
+    o.put("physicalNode", ns.physicalNode);
+    o.put("state", ns.state);
+    return o;
   }
 
   /**
@@ -68,8 +64,16 @@ public class StatusManagerResource {
    */
   @GET
   @Produces("application/json")
-  public Statuses statuses() {
-    return new Statuses(stats.statuses);
+  public JSONObject statuses() {
+    JSONObject o = new JSONObject();
+    try {
+      for (Entry<String, NodeStatus> e : stats.getNodeStatuses().entrySet()) {
+        o.put(e.getKey(), translateNodeStatus(e.getValue()));
+      }
+    } catch (JSONException e) {
+      LOG.warn("Problem encoding JSON", e);
+    }
+    return o;
   }
 
   /**
@@ -78,7 +82,12 @@ public class StatusManagerResource {
   @GET
   @Path("{node}")
   @Produces("application/json")
-  public NodeStatus getConfig(@PathParam("node") String node) {
-    return stats.getStatus(node);
+  public JSONObject getConfig(@PathParam("node") String node) {
+    try {
+      return translateNodeStatus(stats.getStatus(node));
+    } catch (JSONException e) {
+      LOG.warn("Problem encoding JSON", e);
+      return new JSONObject();
+    }
   }
 }
