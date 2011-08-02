@@ -146,6 +146,12 @@ class ThriftEventAdaptor extends Event {
 
   @Override
   public byte[] get(String attr) {
+    Preconditions.checkNotNull(evt.fields, "Event contains no attributes");
+
+    if (evt.fields.get(attr) == null) {
+      return null;
+    }
+
     return evt.fields.get(attr).array();
   }
 
