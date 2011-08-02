@@ -731,7 +731,16 @@ to call at top-level: ant deploy-contrib compile-core-test
   <!-- ================================================================== -->
   <target name="docs" depends="userguide,cookbook,developerguide" description="Build documentation"/>
 
-  <target name="userguide" depends="init" description="Build UserGuide">
+  <uptodate property="userguide.uptodate"
+	    targetfile="${build.docs}/UserGuide.html">
+    <srcfiles dir="${docs.src.dir}/UserGuide" includes="*"/>
+  </uptodate>
+  <uptodate property="cookbook.uptodate"
+	    targetfile="${build.docs}/Cookbook.html" >
+    <srcfiles dir="${docs.src.dir}/cookbook" includes="*"/>
+  </uptodate>
+  
+  <target name="userguide" depends="init" description="Build UserGuide" unless="userguide.uptodate" >
     <exec executable="asciidoc" dir="${basedir}" failonerror="true">
       <arg line="-a toc -o ${build.docs}/UserGuide.html ${docs.src.dir}/UserGuide/FullGuide"/>
     </exec>
@@ -741,7 +750,7 @@ to call at top-level: ant deploy-contrib compile-core-test
     </copy>
   </target>
 
-  <target name="cookbook" depends="init" description="Build documentation">
+  <target name="cookbook" depends="init" description="Build documentation" unless="cookbook.uptodate">
     <exec executable="asciidoc" dir="${basedir}" failonerror="true">
       <arg line="-a toc -o ${build.docs}/Cookbook.html ${docs.src.dir}/cookbook/Cookbook"/>
     </exec>
