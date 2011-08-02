@@ -23,10 +23,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.junit.Assume;
 import org.junit.Test;
 
 import com.cloudera.flume.ExampleData;
 import com.cloudera.flume.conf.FlumeConfiguration;
+import com.cloudera.util.OSUtils;
 
 /*
  * This checks a few command line executions to make sure they terminate reasonably.
@@ -37,9 +39,8 @@ public class TestFlumeNodeMain {
 
   @Test
   public void testOneshot() throws InterruptedException {
-    final String[] simple =
-        { "-1", "-n", "test", "-c",
-            "test: text(\"" + ExampleData.APACHE_REGEXES + "\") | null;" };
+    final String[] simple = { "-1", "-n", "test", "-c",
+        "test: text(\"" + ExampleData.APACHE_REGEXES + "\") | null;" };
     final AtomicReference<Exception> ref = new AtomicReference<Exception>();
     Thread t = new Thread() {
 
@@ -68,22 +69,25 @@ public class TestFlumeNodeMain {
     f.deleteOnExit();
     f.createNewFile(); // create as new empty file.
 
-    final String[] simple =
-        { "-1", "-n", "test", "-c",
-            "test: text(\"" + ExampleData.APACHE_REGEXES + "\") | null;" };
+    final String[] simple = { "-1", "-n", "test", "-c",
+        "test: text(\"" + ExampleData.APACHE_REGEXES + "\") | null;" };
     FlumeNode.setup(simple);
   }
 
-  @Test(expected = IOException.class)
+  @Test
   public void testBadPerms() throws IOException, InterruptedException {
-    // set log dir to a place where permissions should fail.
-    FlumeConfiguration.get().set(FlumeConfiguration.AGENT_LOG_DIR_NEW,
-        "/baddirfoobarama");
+    Assume.assumeTrue(!OSUtils.isWindowsOS());
+    try {
+      // set log dir to a place where permissions should fail.
+      FlumeConfiguration.get().set(FlumeConfiguration.AGENT_LOG_DIR_NEW,
+          "/baddirfoobarama");
 
-    final String[] simple =
-        { "-1", "-n", "test", "-c",
-            "test: text(\"" + ExampleData.APACHE_REGEXES + "\") | null;" };
-    FlumeNode.setup(simple);
+      final String[] simple = { "-1", "-n", "test", "-c",
+          "test: text(\"" + ExampleData.APACHE_REGEXES + "\") | null;" };
+      FlumeNode.setup(simple);
+    } catch (IOException e) {
+      return;
+    }
+    fail("expected IOException");
   }
-
 }

@@ -19,6 +19,8 @@ package com.cloudera.flume.handlers.hdfs;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -39,6 +41,7 @@ import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
+import com.cloudera.util.OSUtils;
 
 /**
  * This tests writing to a distributed hdfs. It assumes the namenode is
@@ -246,12 +249,20 @@ public class TestDFSWrite {
   }
 
   /**
-   * Failure occurs when opened.
+   * Failure occurs when opened due to permissions.
    */
-  @Test(expected = IOException.class)
+  @Test
   public void testBadArgsOpenFail() throws IOException {
+    assumeTrue(!OSUtils.isWindowsOS());
+
     SinkBuilder sb = DFSEventSink.builder();
     EventSink snk = sb.build(new Context(), "/foo/msgs");
-    snk.open();
+    try {
+      snk.open();
+    } catch (IOException e) {
+      return;
+    }
+    fail("expected exception due to perms");
+
   }
 }
