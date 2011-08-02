@@ -236,6 +236,7 @@ public class FlumeConfiguration extends Configuration {
   // where necessary
   public static final String MASTER_GOSSIP_SERVERS = "flume.master.gossip.servers";
   public static final String MASTER_GOSSIP_PERIOD_MS = "flume.master.gossip.period";
+  public static final String MASTER_GOSSIP_MAXAGE_MS = "flume.master.gossip.maxage";
   public static final String MASTER_GOSSIP_PORT = "flume.master.gossip.port";
 
   // ZooKeeper bits and pieces
@@ -777,6 +778,13 @@ public class FlumeConfiguration extends Configuration {
     return getInt(MASTER_GOSSIP_PERIOD_MS, 1000);
   }
 
+  /**
+   * Max age for gossiped acks to stick around.
+   */
+  public long getMasterGossipMaxAgeMs() {
+    return getLong(MASTER_GOSSIP_MAXAGE_MS, 300 * 1000);
+  }
+
   public int getMasterGossipPort() {
     String port = get(MASTER_GOSSIP_PORT, null);
     if (port != null) {
@@ -1040,4 +1048,5 @@ public class FlumeConfiguration extends Configuration {
   public long getNodeCloseTimeout() {
     return getLong(NODE_CLOSE_TIMEOUT, 30000);
   }
+
 }

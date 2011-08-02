@@ -56,22 +56,29 @@ import com.google.common.base.Preconditions;
  */
 public class GossipMulticast implements Multicast<GossipMulticast.GossipMessage> {
   static final Logger LOG = LoggerFactory.getLogger(GossipMulticast.class);
-  
-  public GossipMulticast(Group group, TCPNodeId me) {
+
+  public GossipMulticast(Group group, TCPNodeId me, long maxAge) {
     this.group = group;
     this.node = me;
+    this.maxAgeMillis = maxAge;
+  }
+
+  public GossipMulticast(Group group, TCPNodeId me) {
+    this(group, me, MAX_AGE_MS_DEFAULT);
   }
   
   final Group group;
   final TCPNodeId node;
   GossipThread gossipThread = null;
   GossipServer gossipServer = null;
-  final long MAX_AGE_MS = 60 * 1000; // Messages a minute old get aged off the queue
-  volatile IOException lastException = null; // Set by threads to pass error conditions
-  
-  final Map<String,GossipMessage> digestMap = 
-    new ConcurrentHashMap<String,GossipMessage>();
-  
+  static final long MAX_AGE_MS_DEFAULT = 60 * 1000; // Messages a minute old get
+  // aged off the queue
+  final long maxAgeMillis;
+  volatile IOException lastException = null; // Set by threads to pass error
+  // conditions
+
+  final Map<String, GossipMessage> digestMap = new ConcurrentHashMap<String, GossipMessage>();
+
   // This is really used for managing aged messages
   final ConcurrentLinkedQueue<GossipMessage> msgQueue = 
     new ConcurrentLinkedQueue<GossipMessage>();
@@ -413,7 +420,7 @@ public class GossipMulticast implements Multicast<GossipMulticast.GossipMessage>
       // - as soon as someone else can take from this queue, we must
       // become worried.
       long delta = time - msg.timestamp;
-      if (delta > MAX_AGE_MS) {
+      if (delta > maxAgeMillis) {
         LOG.info("Aging message " + new String(msg.getContents()));
         msgQueue.remove();
         synchronized (digestMap) {

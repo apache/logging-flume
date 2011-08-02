@@ -32,52 +32,55 @@ import com.cloudera.util.Clock;
 import com.cloudera.util.Pair;
 
 public class TestGossipedAckManager {
-  static final Logger LOG = LoggerFactory.getLogger(TestGossipedAckManager.class);
-  
+  static final Logger LOG = LoggerFactory
+      .getLogger(TestGossipedAckManager.class);
+
   @Test
   public void testGAM() throws InterruptedException, IOException {
-    List<Pair<String,Integer>> peers = new ArrayList<Pair<String,Integer>>();    
+    List<Pair<String, Integer>> peers = new ArrayList<Pair<String, Integer>>();
     int count = 10;
-    ArrayList<GossipedMasterAckManager> managers = new ArrayList<GossipedMasterAckManager>(count);
-    for (int i=0;i<count;++i) {
-      peers.add(new Pair<String, Integer>("localhost", 57890+i));      
+    ArrayList<GossipedMasterAckManager> managers = new ArrayList<GossipedMasterAckManager>(
+        count);
+    for (int i = 0; i < count; ++i) {
+      peers.add(new Pair<String, Integer>("localhost", 57890 + i));
     }
-    for (int i=0;i<count;++i) {
-      managers.add(new GossipedMasterAckManager(peers, 57890+i));
+    for (int i = 0; i < count; ++i) {
+      managers.add(new GossipedMasterAckManager(peers, 57890 + i, 60 * 1000));
       managers.get(i).start();
     }
-    
+
     Random random = new Random();
     int msgcount = 50;
-    for (int i=0;i<msgcount;++i) {
+    for (int i = 0; i < msgcount; ++i) {
       managers.get(random.nextInt(count)).acknowledge("hello world " + i);
     }
-    Clock.sleep(30000);    
-    
+    Clock.sleep(30000);
+
     for (GossipedMasterAckManager a : managers) {
       LOG.info(" got " + a.getPending().size() + " acks");
       assertEquals(a.getPending().size(), msgcount);
       a.stop();
-    }      
+    }
   }
-  
+
   /**
    * Test that start and stop repeatedly works ok
    */
   @Test
   public void testGAMStartStop() throws InterruptedException, IOException {
-      List<Pair<String,Integer>> peers = new ArrayList<Pair<String,Integer>>();    
-      int count = 10; 
-      for (int i=0;i<count;++i) {
-        peers.add(new Pair<String, Integer>("localhost", 57890+i));      
-      }
-      GossipedMasterAckManager ackman = new GossipedMasterAckManager(peers, 57890);
-      for (int i=0;i<5;++i) {
-        LOG.info("Start " + i);
-        ackman.start();                
-        LOG.info("Stop");
-        ackman.stop();
-        LOG.info("Stopped");
-      }       
+    List<Pair<String, Integer>> peers = new ArrayList<Pair<String, Integer>>();
+    int count = 10;
+    for (int i = 0; i < count; ++i) {
+      peers.add(new Pair<String, Integer>("localhost", 57890 + i));
     }
+    GossipedMasterAckManager ackman = new GossipedMasterAckManager(peers,
+        57890, 60 * 1000);
+    for (int i = 0; i < 5; ++i) {
+      LOG.info("Start " + i);
+      ackman.start();
+      LOG.info("Stop");
+      ackman.stop();
+      LOG.info("Stopped");
+    }
+  }
 }

@@ -35,36 +35,39 @@ import com.cloudera.util.Pair;
  * An implementation of an AckManager that uses Gossip to send acknowledgements
  * to other servers.
  */
-public class GossipedMasterAckManager extends MasterAckManager 
-implements MessageReceiver<GossipMulticast.GossipMessage> {
-  static final Logger LOG = LoggerFactory.getLogger(GossipedMasterAckManager.class);
+public class GossipedMasterAckManager extends MasterAckManager implements
+    MessageReceiver<GossipMulticast.GossipMessage> {
+  static final Logger LOG = LoggerFactory
+      .getLogger(GossipedMasterAckManager.class);
   GossipMulticast gossip;
   final Group group;
   final int port;
-  
-  GossipedMasterAckManager(FlumeConfiguration conf) {    
-    this(conf.getConfigMasterGossipHostsList(),    
-        conf.getMasterGossipPort());    
+
+  GossipedMasterAckManager(FlumeConfiguration conf) {
+    this(conf.getConfigMasterGossipHostsList(), conf.getMasterGossipPort(),
+        conf.getMasterGossipMaxAgeMs());
   }
-  
-  GossipedMasterAckManager(List<Pair<String,Integer>> peers, int port) {
+
+  GossipedMasterAckManager(List<Pair<String, Integer>> peers, int port,
+      long maxAgeMs) {
     group = new Group();
-    for (Pair<String,Integer> p : peers) {
-      group.addNode(new TCPNodeId(p.getLeft(),p.getRight()));
+    for (Pair<String, Integer> p : peers) {
+      group.addNode(new TCPNodeId(p.getLeft(), p.getRight()));
     }
     this.port = port;
     // TODO(henry) choose the interface from config
-    gossip = new GossipMulticast(group, new TCPNodeId("0.0.0.0", port));
+    gossip = new GossipMulticast(group, new TCPNodeId("0.0.0.0", port),
+        maxAgeMs);
   }
-  
+
   /**
    * Start the underlying gossip server (and throw an exception if it fails)
    */
   synchronized public void start() throws IOException {
     gossip.registerReceiver(this);
-    gossip.start();    
+    gossip.start();
   }
-  
+
   /**
    * Stop the underlying gossip server
    */
@@ -75,10 +78,10 @@ implements MessageReceiver<GossipMulticast.GossipMessage> {
       LOG.warn("Gossip interrupted while stopping in GossipedAckManager", e);
     }
   }
-  
+
   synchronized public void acknowledge(String ackid) {
     super.acknowledge(ackid);
-    gossip.sendToGroup(group, ackid.getBytes());    
+    gossip.sendToGroup(group, ackid.getBytes());
   }
 
   @Override
@@ -86,5 +89,5 @@ implements MessageReceiver<GossipMulticast.GossipMessage> {
     String ackid = new String(msg.getContents());
     LOG.info("Received ACK at " + port + " from gossip " + ackid);
     super.acknowledge(new String(msg.getContents()));
-  }  
+  }
 }
