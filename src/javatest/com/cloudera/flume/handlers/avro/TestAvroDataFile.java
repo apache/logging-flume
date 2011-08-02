@@ -17,7 +17,9 @@
  */
 package com.cloudera.flume.handlers.avro;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -38,6 +40,8 @@ import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventUtil;
 import com.cloudera.flume.handlers.debug.MemorySinkSource;
+import com.cloudera.flume.handlers.text.FormatFactory;
+import com.cloudera.flume.handlers.text.output.OutputFormat;
 
 /**
  * This test takes a small canned batch of events, writes them to a avro data
@@ -78,6 +82,71 @@ public class TestAvroDataFile {
       Event expected = mem.next();
       Assert.assertTrue(Arrays.equals(eout.getBody(), expected.getBody()));
     }
+  }
 
+  /**
+   * This is a helper method that is a lot like the above, except that it
+   * directly creates the output format so that we can configure it, since
+   * this isn't possible via the configuration language currently.
+   */
+  public void avroDataFileWriteReadHelper(String... args) throws IOException,
+      FlumeSpecException, InterruptedException {
+
+    MemorySinkSource mem = MemorySinkSource.cannedData("test ", 5);
+
+    // setup sink.
+    File f = File.createTempFile("avrodata", ".avro");
+    f.deleteOnExit();
+    FileOutputStream fos = new FileOutputStream(f);
+    LOG.info("filename before escaping: " + f.getAbsolutePath());
+    OutputFormat out = FormatFactory.get().getOutputFormat("avrodata", args);
+    mem.open();
+    Event e = mem.next();
+    while (e != null) {
+      out.format(fos, e);
+      e = mem.next();
+    }
+
+    mem.open();
+    DatumReader<EventImpl> dtm = new ReflectDatumReader<EventImpl>(
+        EventImpl.class);
+    DataFileReader<EventImpl> dr = new DataFileReader<EventImpl>(f, dtm);
+
+    EventImpl eout = null;
+    for (Object o : dr) {
+      eout = (EventImpl) o; // TODO (jon) fix AVRO -- this is gross
+      Event expected = mem.next();
+      Assert.assertTrue(Arrays.equals(eout.getBody(), expected.getBody()));
+    }
+  }
+
+  @Test
+  public void testAvroDataFileFormatDefault() throws IOException,
+      FlumeSpecException, InterruptedException {
+    avroDataFileWriteReadHelper();
+  }
+
+  @Test
+  public void testAvroDataFileFormatNullCodec() throws IOException,
+      FlumeSpecException, InterruptedException {
+    avroDataFileWriteReadHelper("null");
+  }
+
+  @Test
+  public void testAvroDataFileFormatDeflateCodec() throws IOException,
+      FlumeSpecException, InterruptedException {
+    avroDataFileWriteReadHelper("deflate");
+  }
+
+  @Test
+  public void testAvroDataFileFormatDeflateConfiguredCodec() throws IOException,
+      FlumeSpecException, InterruptedException {
+    avroDataFileWriteReadHelper("deflate", "9");
+  }
+
+  @Test(expected=IllegalArgumentException.class)
+  public void testAvroDataFileFormatInvalidCodec() throws IOException,
+      FlumeSpecException, InterruptedException {
+    avroDataFileWriteReadHelper("invalid");
   }
 }

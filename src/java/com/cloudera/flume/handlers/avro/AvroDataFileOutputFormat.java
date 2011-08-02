@@ -20,7 +20,9 @@ package com.cloudera.flume.handlers.avro;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.Schema;
+import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.reflect.ReflectData;
@@ -52,8 +54,14 @@ public class AvroDataFileOutputFormat extends AbstractOutputFormat {
 
   DataFileWriter<EventImpl> sink = null;
   OutputStream cachedOut = null;
+  CodecFactory codecFactory = null;
 
   public AvroDataFileOutputFormat() {
+    this(null);
+  }
+
+  public AvroDataFileOutputFormat(CodecFactory codecFactory) {
+    this.codecFactory = codecFactory;
   }
 
   @Override
@@ -62,6 +70,15 @@ public class AvroDataFileOutputFormat extends AbstractOutputFormat {
       // first time, no current OutputStream or sink.
       cachedOut = o;
       sink = new DataFileWriter<EventImpl>(writer);
+      if (codecFactory != null) {
+        try {
+          sink.setCodec(codecFactory);
+        } catch (AvroRuntimeException ex) {
+          sink = null;
+          cachedOut = null;
+          throw new IOException("Error setting Avro datafile codec", ex);
+        }
+      }
       sink.create(schema, o); // this opens
     }
 
@@ -87,9 +104,29 @@ public class AvroDataFileOutputFormat extends AbstractOutputFormat {
 
       @Override
       public OutputFormat build(String... args) {
-        Preconditions.checkArgument(args.length == 0, "usage: avrodata");
+        Preconditions.checkArgument(args.length <= 2, "usage: avrodata([codec, [compressionLevel]])");
 
-        OutputFormat format = new AvroDataFileOutputFormat();
+        String codecName = null;
+        int compressionLevel = -1;
+        if (args.length > 0) {
+          codecName = args[0];
+          if (args.length > 1) {
+            compressionLevel = Integer.parseInt(args[1]);
+          }
+        }
+
+        CodecFactory codecFactory = null;
+        try {
+          if ((codecName != null) && codecName.equals("deflate") && (compressionLevel != -1)) {
+            codecFactory = CodecFactory.deflateCodec(compressionLevel);
+          } else if (codecName != null) {
+            codecFactory = CodecFactory.fromString(codecName);
+          }
+        } catch (AvroRuntimeException ex) {
+          throw new IllegalArgumentException("Invalid Avro data file codec", ex);
+        }
+
+        OutputFormat format = new AvroDataFileOutputFormat(codecFactory);
         format.setBuilder(this);
 
         return format;
