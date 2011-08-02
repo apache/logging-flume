@@ -28,7 +28,7 @@ to call at top-level: ant deploy-contrib compile-core-test
     </classpath>
   </taskdef>
   <property name="name" value="flume"/>
-  <property name="version" value="0.9.0"/>
+  <property name="version" value="0.9.1-dev"/>
   <property name="final.name" value="${name}-${version}"/>
 
   <property name="build.dir" value="${basedir}/build"/>
