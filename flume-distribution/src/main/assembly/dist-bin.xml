@@ -12,6 +12,8 @@
     <format>tar.gz</format>
     <format>zip</format>
   </formats>
+  <includeBaseDirectory>true</includeBaseDirectory>
+  <baseDirectory>flume-${project.version}</baseDirectory>
 
   <moduleSets>
 
