@@ -17,12 +17,17 @@
  */
 package com.cloudera.flume.collector;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -38,7 +43,9 @@ import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
+import com.cloudera.flume.core.EventSinkDecorator;
 import com.cloudera.flume.core.EventSource;
+import com.cloudera.flume.handlers.debug.LazyOpenDecorator;
 import com.cloudera.flume.handlers.debug.MemorySinkSource;
 import com.cloudera.flume.handlers.endtoend.AckChecksumChecker;
 import com.cloudera.flume.handlers.endtoend.AckChecksumInjector;
@@ -50,7 +57,13 @@ import com.cloudera.util.FileUtil;
 import com.cloudera.util.Pair;
 
 /**
- * This tests the builder
+ * This tests the builder and makes sure we can close a collector properly when
+ * interrupted.
+ * 
+ * TODO This should, but does not, test situations where the collectorSink
+ * actually connects to an HDFS namenode, and then recovers from when an actual
+ * HDFS goes down and comes back up. Instead this contains tests that shows when
+ * a HDFS connection is fails, the retry metchanisms are forced to exit.
  */
 public class TestCollectorSink {
   final static Logger LOG = Logger.getLogger(TestCollectorSink.class);
@@ -179,7 +192,18 @@ public class TestCollectorSink {
         snkspec);
     AckChecksumChecker<EventSink> chk = (AckChecksumChecker<EventSink>) coll
         .getSink();
-    RollSink roll = (RollSink) chk.getSink();
+    // insistent append
+    EventSinkDecorator deco = (EventSinkDecorator<EventSink>) chk.getSink();
+    // -> stubborn append
+    deco = (EventSinkDecorator<EventSink>) deco.getSink();
+
+    // stubborn append -> insistent
+    deco = (EventSinkDecorator<EventSink>) deco.getSink();
+
+    // insistent append -> mask
+    deco = (EventSinkDecorator<EventSink>) deco.getSink();
+
+    RollSink roll = (RollSink) deco.getSink();
 
     // normally inside wal
     NaiveFileWALDeco.AckChecksumRegisterer<EventSink> snk = new NaiveFileWALDeco.AckChecksumRegisterer(
@@ -375,5 +399,114 @@ public class TestCollectorSink {
 
     FileUtil.rmr(tmpdir);
     BenchmarkHarness.cleanupLocalWriteDir();
+  }
+
+  /**
+   * This tests close() and interrupt on a collectorSink in such a way that
+   * close can happen before open has completed.
+   */
+  @Test
+  public void testHdfsDownInterruptBeforeOpen() throws FlumeSpecException,
+      IOException, InterruptedException {
+    final EventSink snk = FlumeBuilder.buildSink(new Context(),
+        "collectorSink(\"hdfs://nonexistant/user/foo\", \"foo\")");
+
+    final CountDownLatch done = new CountDownLatch(1);
+
+    Thread t = new Thread("append thread") {
+      public void run() {
+        Event e = new EventImpl("foo".getBytes());
+        try {
+          snk.open();
+
+          snk.append(e);
+        } catch (IOException e1) {
+          // could be exception but we don't care
+          LOG.info("don't care about this exception: ", e1);
+        }
+        done.countDown();
+      }
+    };
+    t.start();
+    snk.close();
+    t.interrupt();
+    boolean completed = done.await(60, TimeUnit.SECONDS);
+    assertTrue("Timed out when attempting to shutdown", completed);
+  }
+
+  /**
+   * This tests close() and interrupt on a collectorSink in such a way that
+   * close always happens after open has completed.
+   */
+  @Test
+  public void testHdfsDownInterruptAfterOpen() throws FlumeSpecException,
+      IOException, InterruptedException {
+    final EventSink snk = FlumeBuilder.buildSink(new Context(),
+        "collectorSink(\"hdfs://nonexistant/user/foo\", \"foo\")");
+
+    final CountDownLatch started = new CountDownLatch(1);
+    final CountDownLatch done = new CountDownLatch(1);
+
+    Thread t = new Thread("append thread") {
+      public void run() {
+        Event e = new EventImpl("foo".getBytes());
+        try {
+          snk.open();
+          started.countDown();
+          snk.append(e);
+        } catch (IOException e1) {
+          // could be an exception but we don't care.
+          LOG.info("don't care about this exception: ", e1);
+        }
+        done.countDown();
+      }
+    };
+    t.start();
+    boolean begun = started.await(60, TimeUnit.SECONDS);
+    assertTrue("took too long to start", begun);
+    snk.close();
+    LOG.info("Interrupting appending thread");
+    t.interrupt();
+    boolean completed = done.await(60, TimeUnit.SECONDS);
+    assertTrue("Timed out when attempting to shutdown", completed);
+  }
+
+  /**
+   * This tests close() and interrupt on a collectorSink in such a way that
+   * close always happens after open started retrying.
+   */
+  @Test
+  public void testHdfsDownInterruptAfterOpeningRetry()
+      throws FlumeSpecException, IOException, InterruptedException {
+    final EventSink snk = new LazyOpenDecorator(FlumeBuilder.buildSink(
+        new Context(),
+        "collectorSink(\"hdfs://nonexistant/user/foo\", \"foo\")"));
+
+    final CountDownLatch started = new CountDownLatch(1);
+    final CountDownLatch done = new CountDownLatch(1);
+
+    Thread t = new Thread("append thread") {
+      public void run() {
+        Event e = new EventImpl("foo".getBytes());
+        try {
+          snk.open();
+          started.countDown();
+          snk.append(e);
+        } catch (IOException e1) {
+          // could throw exception but we don't care
+          LOG.info("don't care about this exception: ", e1);
+        }
+        done.countDown();
+      }
+    };
+    t.start();
+    boolean begun = started.await(60, TimeUnit.SECONDS);
+    Clock.sleep(10);
+    assertTrue("took too long to start", begun);
+    snk.close();
+    LOG.info("Interrupting appending thread");
+    t.interrupt();
+    boolean completed = done.await(60, TimeUnit.SECONDS);
+    assertTrue("Timed out when attempting to shutdown", completed);
   }
 }

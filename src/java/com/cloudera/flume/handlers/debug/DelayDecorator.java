@@ -45,6 +45,7 @@ public class DelayDecorator<S extends EventSink> extends EventSinkDecorator<S> {
       Thread.sleep(millis);
       super.append(e);
     } catch (InterruptedException e1) {
+      Thread.currentThread().interrupt();
       throw new IOException(e1.getMessage(), e1);
     }
 

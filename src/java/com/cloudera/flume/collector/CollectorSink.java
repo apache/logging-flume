@@ -32,6 +32,10 @@ import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSinkDecorator;
+import com.cloudera.flume.core.MaskDecorator;
+import com.cloudera.flume.handlers.debug.InsistentAppendDecorator;
+import com.cloudera.flume.handlers.debug.InsistentOpenDecorator;
+import com.cloudera.flume.handlers.debug.StubbornAppendSink;
 import com.cloudera.flume.handlers.endtoend.AckChecksumChecker;
 import com.cloudera.flume.handlers.endtoend.AckListener;
 import com.cloudera.flume.handlers.hdfs.EscapedCustomDfsSink;
@@ -40,6 +44,8 @@ import com.cloudera.flume.handlers.rolling.RollSink;
 import com.cloudera.flume.handlers.rolling.Tagger;
 import com.cloudera.flume.handlers.rolling.TimeTrigger;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.util.BackoffPolicy;
+import com.cloudera.util.CumulativeCappedExponentialBackoff;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -79,7 +85,28 @@ public class CollectorSink extends EventSink.Base {
         return new RollDetectDeco(dfs, tag);
       }
     };
-    snk = new AckChecksumChecker<EventSink>(s, accum);
+
+    long initMs = FlumeConfiguration.get().getInsistentOpenInitBackoff();
+    long cumulativeMaxMs = FlumeConfiguration.get()
+        .getFailoverMaxCumulativeBackoff();
+    long maxMs = FlumeConfiguration.get().getFailoverMaxSingleBackoff();
+    BackoffPolicy backoff1 = new CumulativeCappedExponentialBackoff(initMs,
+        maxMs, cumulativeMaxMs);
+    BackoffPolicy backoff2 = new CumulativeCappedExponentialBackoff(initMs,
+        maxMs, cumulativeMaxMs);
+
+    // the collector snk has ack checking logic, retry and reopen logic, and
+    // needs an extra mask before rolling, writing to disk and forwarding acks
+    // (roll detect).
+
+    // { ackChecksumChecker => insistentAppend => stubbornAppend =>
+    // insistentOpen => mask("rolltag") => roll(xx) { rollDetect =>
+    // escapedCusomtDfs } }
+    EventSink tmp = new MaskDecorator(s, "rolltag");
+    tmp = new InsistentOpenDecorator<EventSink>(tmp, backoff1);
+    tmp = new StubbornAppendSink<EventSink>(tmp);
+    tmp = new InsistentAppendDecorator<EventSink>(tmp, backoff2);
+    snk = new AckChecksumChecker<EventSink>(tmp, accum);
   }
 
   String curRollTag;

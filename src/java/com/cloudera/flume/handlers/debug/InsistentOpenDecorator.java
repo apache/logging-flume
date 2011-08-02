@@ -150,7 +150,11 @@ public class InsistentOpenDecorator<S extends EventSink> extends
     opening = false;
 
     // failed to start
-    throw MultipleIOException.createIOException(exns);
+    IOException ioe = MultipleIOException.createIOException(exns);
+    if (ioe == null) {
+      return;
+    }
+    throw ioe;
   }
 
   @Override
