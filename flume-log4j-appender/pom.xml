@@ -22,7 +22,7 @@
   <parent>
     <artifactId>flume</artifactId>
     <groupId>com.cloudera</groupId>
-    <version>0.9.4-SNAPSHOT</version>
+    <version>0.9.5-SNAPSHOT</version>
   </parent>
 
   <artifactId>flume-log4j-appender</artifactId>
