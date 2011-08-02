@@ -115,18 +115,15 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
   File importDir, writingDir, loggedDir, sendingDir, errorDir;
 
   public NaiveFileFailoverManager(File baseDir) {
-    this(new File(baseDir, IMPORTDIR), new File(baseDir, WRITINGDIR), new File(
-        baseDir, LOGGEDDIR), new File(baseDir, SENDINGDIR), new File(baseDir,
-        ERRORDIR));
-  }
-
-  public NaiveFileFailoverManager(File importDir, File writingDir,
-      File loggedDir, File xmitableDir, File errDir) {
+    File writingDir = new File(baseDir, WRITINGDIR);
+    File loggedDir = new File(baseDir, LOGGEDDIR);
+    File xmitableDir = new File(baseDir, SENDINGDIR);
+    File errDir = new File(baseDir, ERRORDIR);
     Preconditions.checkNotNull(writingDir);
     Preconditions.checkNotNull(loggedDir);
     Preconditions.checkNotNull(xmitableDir);
     Preconditions.checkNotNull(errDir);
-    this.importDir = importDir;
+    this.importDir = new File(baseDir, IMPORTDIR);
     this.writingDir = writingDir;
     this.loggedDir = loggedDir;
     this.sendingDir = xmitableDir;
@@ -257,7 +254,6 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
 
       @Override
       synchronized public void close() throws IOException {
-        // NaiveFileFailoverManager.this.close();
         synchronized (NaiveFileFailoverManager.this) {
           super.close();
           if (!writingQ.contains(tag)) {

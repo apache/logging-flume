@@ -274,6 +274,12 @@ public class NaiveFileWALManager implements WALManager {
       public void close() throws IOException {
         super.close();
         synchronized (NaiveFileWALManager.this) {
+          if (!writingQ.contains(tag)) {
+            LOG.warn("Already changed tag " + tag + " out of WRITING state");
+            return;
+          }
+          LOG.info("File lives in " + getFile(tag));
+
           changeState(tag, State.WRITING, State.LOGGED);
           loggedCount.incrementAndGet();
         }
@@ -367,9 +373,9 @@ public class NaiveFileWALManager implements WALManager {
   }
 
   private File getFile(String tag) {
-    Preconditions.checkNotNull(tag);
+    Preconditions.checkNotNull(tag, "Attempted to get file for empty tag");
     WALData data = table.get(tag);
-    Preconditions.checkNotNull(data);
+    Preconditions.checkNotNull(data, "Data for tag " + tag + " was empty.");
 
     File dir = getDir(data.s);
     return new File(dir, tag);
@@ -386,12 +392,7 @@ public class NaiveFileWALManager implements WALManager {
   synchronized void changeState(String tag, State oldState, State newState)
       throws IOException {
     WALData data = table.get(tag);
-    if (data == null) {
-      LOG.warn("WAL file associated with tag " + tag
-          + " not present.  Maybe it got renamed? ");
-      throw new IOException("Lost WAL file " + tag);
-    }
-
+    Preconditions.checkArgument(data != null, "Tag " + tag + " has no data");
     Preconditions.checkArgument(tag.equals(data.tag),
         "Data associated with tag didn't match tag " + tag);
 
@@ -481,11 +482,8 @@ public class NaiveFileWALManager implements WALManager {
     public void close() throws IOException {
       try {
         src.close();
-        synchronized (NaiveFileWALManager.this) {
-          changeState(tag, null, State.SENT);
-          sentCount.incrementAndGet();
-        }
-
+        changeState(tag, State.SENDING, State.SENT);
+        sentCount.incrementAndGet();
       } catch (IOException ioe) {
         LOG.warn("close had a problem " + src, ioe);
         changeState(tag, null, State.ERROR);
@@ -541,9 +539,13 @@ public class NaiveFileWALManager implements WALManager {
       while (sendingTag == null) {
         sendingTag = loggedQ.poll(200, TimeUnit.MILLISECONDS);
         // exit condition is when closed is flagged and the queue is empty.
-        if (sendingTag == null && closed && loggedQ.isEmpty()
-            && sendingQ.isEmpty())
-          return null;
+
+        if (sendingTag == null) {
+          synchronized (this) {
+            if (closed && loggedQ.isEmpty() && sendingQ.isEmpty())
+              return null;
+          }
+        }
       }
     } catch (InterruptedException e) {
       LOG.error("interrupted", e);

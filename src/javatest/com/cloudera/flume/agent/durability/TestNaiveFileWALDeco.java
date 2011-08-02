@@ -312,7 +312,7 @@ public class TestNaiveFileWALDeco {
       EventSinkDecorator<EventSink> deco = new NaiveFileWALDeco<EventSink>(
           new Context(), snk, node.getWalManager(), new TimeTrigger(
               new ProcessTagger(), 1000), node.getAckChecker()
-              .getAgentAckQueuer(), 1000000);
+              .getAgentAckQueuer(), 1000);
 
       deco.open();
       deco.append(e);

@@ -39,8 +39,6 @@ import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.agent.LogicalNode;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeSpecException;
-import com.cloudera.flume.conf.LogicalNodeContext;
-import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.core.EventUtil;
@@ -69,6 +67,11 @@ public class TestConcurrentWALMan {
   }
 
   @Test
+  public void test1thread() throws IOException, InterruptedException {
+    doTestConcurrentWALMans(1, 10000, 60000);
+  }
+
+  @Test
   public void test10thread() throws IOException, InterruptedException {
     doTestConcurrentWALMans(10, 10000, 60000);
   }
@@ -78,7 +81,7 @@ public class TestConcurrentWALMan {
     doTestConcurrentWALMans(100, 1000, 60000);
   }
 
-  @Ignore("This test times out becuase of inefficient ack retrial/actions")
+  @Ignore("This test times out because of inefficient ack retrial/actions")
   @Test
   public void test1000thread() throws IOException, InterruptedException {
     doTestConcurrentWALMans(1000, 100, 120000);
@@ -133,8 +136,7 @@ public class TestConcurrentWALMan {
                 cnt1);
             NaiveFileWALManager wman1 = new NaiveFileWALManager(f1);
             EventSink snk = new NaiveFileWALDeco<EventSink>(new Context(), chk,
-                wman1, new TimeTrigger(1000000), new AckListener.Empty(),
-                1000000);
+                wman1, new TimeTrigger(1000000), new AckListener.Empty(), 100);
 
             ReportManager.get().add(cnt1);
             // make each parallel instance send a slightly different number of
@@ -161,6 +163,7 @@ public class TestConcurrentWALMan {
 
     }
 
+    started.await();
     boolean ok = done.await(timeout, TimeUnit.MILLISECONDS);
     assertTrue("Test timed out", ok);
 
@@ -206,7 +209,7 @@ public class TestConcurrentWALMan {
     }
 
     // wait for WALs to flush.
-    waitForEmptyWALs(node, timeout);
+    waitForEmptyWALs(master, node, timeout);
 
     // check to make sure everyone got the right number of events
     boolean success = true;
@@ -224,7 +227,7 @@ public class TestConcurrentWALMan {
   /**
    * Wait until the flume node's WALs are empty.
    */
-  private void waitForEmptyWALs(FlumeNode node, int timeout)
+  private void waitForEmptyWALs(FlumeMaster master, FlumeNode node, int timeout)
       throws InterruptedException {
     boolean done = false;
     long start = System.currentTimeMillis();
@@ -236,6 +239,8 @@ public class TestConcurrentWALMan {
       if (!done) {
         Clock.sleep(2500);
       }
+      LOG.info("Pending acks at the " + "master: "
+          + master.getAckMan().getPending());
       node.getAckChecker().checkAcks();
     }
   }
@@ -267,6 +272,8 @@ public class TestConcurrentWALMan {
 
       if (!wal.isEmpty()) {
         LOG.warn(n.getName() + ": wal not empty");
+        LOG.warn("pending acks from node point of view:"
+            + node.getAckChecker().getPendingAckTags());
         return false;
       }
     }

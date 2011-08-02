@@ -175,4 +175,113 @@ public class TestDiskFailoverAgent {
 
   }
 
+  /**
+   * This test starts a E2E agent that attempts to go to a port that shouldn't
+   * be open. This triggers the error recovery mechanism. We then wait for 10s
+   * and then simulate the node doing a heartbeat to a master which tells that
+   * that node is decommissioned. As part of decommissioning, the act of closing
+   * the E2E agent should not hang the node.
+   */
+  @Test
+  public void testActiveE2EClose() throws InterruptedException {
+    final FlumeMaster master = new FlumeMaster(cfg);
+    MasterRPC rpc = new DirectMasterRPC(master);
+
+    final FlumeNode node = new FlumeNode(rpc, false, false);
+    // should have nothing.
+    assertEquals(0, node.getLogicalNodeManager().getNodes().size());
+
+    final CountDownLatch done = new CountDownLatch(1);
+    new Thread("TestDiskFailoverAgent") {
+      public void run() {
+        LivenessManager liveMan = node.getLivenessManager();
+        try {
+          // update config node to something that will be interrupted.
+          LOG.info("setting to invalid dfo host");
+          master.getSpecMan().setConfig("node1", "flow", "asciisynth(0)",
+              "agentE2ESink(\"localhost\", 12345)");
+          master.getSpecMan().addLogicalNode(NetUtils.localhost(), "node1");
+          liveMan.heartbeatChecks();
+          Thread.sleep(10000);
+
+          // update config node to something that will be interrupted.
+          LOG.info("!!! decommissioning node on master");
+          master.getSpecMan().removeLogicalNode("node1");
+          liveMan.heartbeatChecks();
+          LOG.info("!!! node should be decommissioning on node");
+
+        } catch (Exception e) {
+          LOG.error("closed caused an error out: " + e.getMessage(), e);
+          // Right now it takes about 10 seconds for the dfo deco to error out.
+          done.countDown();
+          return; // fail
+        }
+
+        LOG.info("Did not expect clean close!?");
+
+      }
+    }.start();
+
+    // false means timeout, takes about 10 seconds to shutdown.
+    assertTrue("close call hung the heartbeat", done
+        .await(60, TimeUnit.SECONDS));
+
+  }
+
+  /**
+   * This test starts a E2E agent that attempts to go to a port that shouldn't
+   * be open. This triggers the error recovery mechanism. We then wait for 10s
+   * and then simulate the node doing a heartbeat to a master which tells that
+   * that node is decommissioned. As part of decommissioning, the act of closing
+   * the E2E agent should not hang the node.
+   * 
+   * This test differs from the previous by having an bad dns name/request that
+   * will eventually fail (ubuntu/java1.6 takes about 10s)
+   */
+  @Test
+  public void testActiveE2ECloseBadDNS() throws InterruptedException {
+    final FlumeMaster master = new FlumeMaster(cfg);
+    MasterRPC rpc = new DirectMasterRPC(master);
+
+    final FlumeNode node = new FlumeNode(rpc, false, false);
+    // should have nothing.
+    assertEquals(0, node.getLogicalNodeManager().getNodes().size());
+
+    final CountDownLatch done = new CountDownLatch(1);
+    new Thread() {
+      public void run() {
+        LivenessManager liveMan = node.getLivenessManager();
+        try {
+          // update config node to something that will be interrupted.
+          LOG.info("setting to invalid dfo host");
+          master.getSpecMan().setConfig("node1", "flow", "asciisynth(0)",
+              "agentE2ESink(\"localhost\", 12345)");
+          master.getSpecMan().addLogicalNode(NetUtils.localhost(), "node1");
+          liveMan.heartbeatChecks();
+          Thread.sleep(15000); // Takes 10s for dns to fail
+
+          // update config node to something that will be interrupted.
+          LOG.info("!!! decommissioning node on master");
+          master.getSpecMan().removeLogicalNode("node1");
+          liveMan.heartbeatChecks();
+          LOG.info("!!! node should be decommissioning on node");
+
+        } catch (Exception e) {
+          LOG.error("closed caused an error out: " + e.getMessage(), e);
+          // Right now it takes about 10 seconds for the dfo deco to error out.
+          done.countDown();
+          return; // fail
+        }
+
+        LOG.info("Did not expect clean close? ");
+
+      }
+    }.start();
+
+    // false means timeout, takes about 10 seconds to shutdown.
+    assertTrue("close call hung the heartbeat", done
+        .await(60, TimeUnit.SECONDS));
+
+  }
+
 }

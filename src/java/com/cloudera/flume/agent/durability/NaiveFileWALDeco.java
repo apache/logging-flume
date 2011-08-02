@@ -28,13 +28,14 @@ import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.conf.SinkFactory.SinkDecoBuilder;
-import com.cloudera.flume.core.DriverListener;
 import com.cloudera.flume.core.Driver;
+import com.cloudera.flume.core.DriverListener;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSinkDecorator;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.core.connector.DirectDriver;
+import com.cloudera.flume.handlers.debug.LazyOpenDecorator;
 import com.cloudera.flume.handlers.endtoend.AckChecksumInjector;
 import com.cloudera.flume.handlers.endtoend.AckListener;
 import com.cloudera.flume.handlers.rolling.RollSink;
@@ -63,6 +64,8 @@ public class NaiveFileWALDeco<S extends EventSink> extends
   Driver conn;
   Context ctx;
 
+  final AckListener al;
+  CountDownLatch completed = null; // block close until subthread is completes
   CountDownLatch started = null; // blocks open until subthread is started
   volatile IOException lastExn = null;
 
@@ -73,11 +76,12 @@ public class NaiveFileWALDeco<S extends EventSink> extends
     this.walman = walman;
     this.trigger = t;
     this.queuer = new AckListener.Empty();
-    this.drainSink = new AckChecksumRegisterer<S>(s, al);
+    this.al = al;
+    // TODO get rid of this cast.
+    this.drainSink = (EventSinkDecorator<S>) new EventSinkDecorator(
+        new LazyOpenDecorator(new AckChecksumRegisterer<S>(s, al)));
     this.checkMs = checkMs;
   }
-
-  CountDownLatch completed = null; // block close until subthread is completes
 
   public static class AckChecksumRegisterer<S extends EventSink> extends
       EventSinkDecorator<S> {
@@ -122,7 +126,7 @@ public class NaiveFileWALDeco<S extends EventSink> extends
    */
   @Override
   public synchronized void append(Event e) throws IOException {
-    Preconditions.checkNotNull(sink);
+    Preconditions.checkNotNull(sink, "NaiveFileWALDeco was invalid!");
     Preconditions.checkState(isOpen.get(),
         "NaiveFileWALDeco not open for append");
     if (lastExn != null) {
@@ -133,18 +137,49 @@ public class NaiveFileWALDeco<S extends EventSink> extends
 
   @Override
   public synchronized void close() throws IOException {
-    Preconditions.checkNotNull(sink);
+    Preconditions.checkNotNull(sink,
+        "Attmpted to close a null NaiveFileWALDeco");
+    LOG.debug("Closing NaiveFileWALDeco");
 
     input.close(); // prevent new data from entering.
     walman.stopDrains();
     try {
       LOG.debug("Waiting for subthread to complete .. ");
-      if (conn == null) {
-        LOG.warn("Driver was null, shutting down");
-      } else {
-        // conn.stop();
-        conn.join(Long.MAX_VALUE);
-        LOG.debug(".. subthread completed");
+      int maxNoProgressTime = 10;
+
+      ReportEvent rpt = sink.getReport();
+
+      Long levts = rpt.getLongMetric(EventSink.Base.R_NUM_EVENTS);
+      long evts = (levts == null) ? 0 : levts;
+      int count = 0;
+      while (true) {
+        if (conn.join(500)) {
+          // driver successfully completed
+          LOG.debug(".. subthread to completed");
+          break;
+        }
+
+        // driver still running, did we make progress?
+        ReportEvent rpt2 = sink.getReport();
+        Long levts2 = rpt2.getLongMetric(EventSink.Base.R_NUM_EVENTS);
+        long evts2 = (levts2 == null) ? 0 : levts;
+        if (evts2 > evts) {
+          // progress is being made, reset counts
+          count = 0;
+          evts = evts2;
+          LOG.info("Closing disk failover log, subsink still making progress");
+          continue;
+        }
+
+        // no progress.
+        count++;
+        LOG.info("Attempt " + count
+            + " with no progress being made on disk failover subsink");
+        if (count >= maxNoProgressTime) {
+          LOG.warn("DFO drain thread was not making progress, forcing close");
+          conn.cancel();
+          break;
+        }
       }
 
     } catch (InterruptedException e) {
@@ -173,7 +208,9 @@ public class NaiveFileWALDeco<S extends EventSink> extends
 
   @Override
   synchronized public void open() throws IOException {
-    Preconditions.checkNotNull(sink);
+    Preconditions.checkNotNull(sink,
+        "Attempted to open a null NaiveFileWALDeco subsink");
+    LOG.debug("Opening NaiveFileWALDeco");
     input = walman.getAckingSink(ctx, trigger, queuer, checkMs);
 
     drainSource = walman.getEventSource();
@@ -182,10 +219,11 @@ public class NaiveFileWALDeco<S extends EventSink> extends
 
     // When this is open the sink is open from the callers point of view and we
     // can return.
+    drainSource.open();
 
     drainSink.open();
     input.open();
-    drainSource.open();
+
     started = new CountDownLatch(1);
     completed = new CountDownLatch(1);
 
@@ -230,16 +268,17 @@ public class NaiveFileWALDeco<S extends EventSink> extends
     LOG.debug("Opened NaiveFileWALDeco");
     Preconditions.checkNotNull(sink);
     Preconditions.checkState(!isOpen.get());
-    // sink.open();
     isOpen.set(true);
   }
 
   public void setSink(S sink) {
     this.sink = sink;
-    this.drainSink.setSink(sink);
+    // TODO get rid of this cast.
+    this.drainSink.setSink((S) new LazyOpenDecorator<EventSink>(
+        new AckChecksumRegisterer<S>(sink, al)));
   }
 
-  public boolean rotate() {
+  public synchronized boolean rotate() {
     return input.rotate();
   }
 

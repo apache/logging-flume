@@ -68,8 +68,13 @@ public class FlumeNodeWALNotifier implements WALCompletionNotifier {
       try {
         wm.toAcked(tag);
         success++;
-      } catch (IOException ioe) {
+      } catch (Exception ioe) {
+        // We are being lax here -- we will fail on each logical node except for
+        // the proper one. Thus this must catch IOExceptions and
+        // IllegalState/IllegalArgument Exceptions
+
         // eat it.
+        LOG.debug(ioe.getMessage(), ioe);
       }
     }
 

@@ -122,7 +122,7 @@ public class TestEndToEndAckFailureRecovery {
     // Excessively large timeout because I am manually triggering it.
     NaiveFileWALDeco<EventSink> wal = new NaiveFileWALDeco<EventSink>(ctx, es,
         node.getWalManager(), new TimeTrigger(new ProcessTagger(), 100000),
-        node.getAckChecker().getAgentAckQueuer(), 100000);
+        node.getAckChecker().getAgentAckQueuer(), 1000);
 
     // open and send data.
     wal.open();
@@ -187,7 +187,7 @@ public class TestEndToEndAckFailureRecovery {
 
     NaiveFileWALDeco<EventSink> wal = new NaiveFileWALDeco<EventSink>(ctx, es,
         node.getWalManager(), new TimeTrigger(new ProcessTagger(), 100000),
-        node.getAckChecker().getAgentAckQueuer(), 100000);
+        node.getAckChecker().getAgentAckQueuer(), 1000);
     wal.open();
 
     // // Phase I - (20 events arrive, 3 groups make it)
@@ -298,7 +298,7 @@ public class TestEndToEndAckFailureRecovery {
 
     NaiveFileWALDeco<EventSink> wal = new NaiveFileWALDeco<EventSink>(ctx, es,
         node.getWalManager(), new TimeTrigger(new ProcessTagger(), 100000),
-        node.getAckChecker().getAgentAckQueuer(), 1000000);
+        node.getAckChecker().getAgentAckQueuer(), 1000);
     wal.open();
 
     // // Phase I - (19 events arrive, 3 groups make it)
@@ -384,7 +384,7 @@ public class TestEndToEndAckFailureRecovery {
     // Big delay values so that test has to force different actions.
     NaiveFileWALDeco<EventSink> wal = new NaiveFileWALDeco<EventSink>(ctx, es,
         node.getWalManager(), new TimeTrigger(new ProcessTagger(), 100000),
-        node.getAckChecker().getAgentAckQueuer(), 100000);
+        node.getAckChecker().getAgentAckQueuer(), 1000);
     wal.open();
 
     // Phase I (20 message sent, 3 groups good, 1 group bad)
@@ -451,7 +451,7 @@ public class TestEndToEndAckFailureRecovery {
     EventSink es = FlumeBuilder.buildSink(ctx, snk);
     NaiveFileWALDeco<EventSink> wal = new NaiveFileWALDeco<EventSink>(ctx, es,
         node.getWalManager(), new TimeTrigger(new ProcessTagger(), 100), node
-            .getAckChecker().getAgentAckQueuer(), 100000);
+            .getAckChecker().getAgentAckQueuer(), 10000);
 
     // open and send data.
     wal.open();

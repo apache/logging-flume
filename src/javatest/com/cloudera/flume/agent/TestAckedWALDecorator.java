@@ -126,8 +126,8 @@ public class TestAckedWALDecorator {
     String rpt = "foo";
     // in a real situation, there would be a agent sink after the
     // ackedWriteAhead and a collectorSource before the ackChecker block.
-    String snk = " { ackedWriteAhead(1000) => { ackChecker => [console,  counter(\""
-        + rpt + "\") ] } }  ";
+    String snk = " { ackedWriteAhead(1000) => { ackChecker => counter(\"" + rpt
+        + "\") } }  ";
 
     EventSink es = FlumeBuilder.buildSink(new ReportTestingContext(), snk);
     es.open();
