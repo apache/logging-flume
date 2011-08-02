@@ -362,7 +362,8 @@ public class FlumeBuilder {
     ASTNODE type = ASTNODE.valueOf(t.getText()); // convert to enum
     switch (type) {
     case SOURCE: {
-      List<CommonTree> children = (List<CommonTree>) t.getChildren();
+      List<CommonTree> children = new ArrayList<CommonTree>(
+          (List<CommonTree>) t.getChildren());
       CommonTree source = children.remove(0);
       String sourceType = source.getText();
       List<String> args = new ArrayList<String>();

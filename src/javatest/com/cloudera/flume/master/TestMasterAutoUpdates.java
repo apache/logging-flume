@@ -158,9 +158,9 @@ public class TestMasterAutoUpdates {
     Map<String, FlumeConfigData> xcfgs = flumeMaster.getSpecMan()
         .getTranslatedConfigs();
     FlumeConfigData agentFcd = xcfgs.get("agent");
-    String ans1 = "< { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node4\\\" )\" ) } } ?"
-        + " < { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node2\\\" )\" ) } } ?"
-        + " { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node1\\\" )\" ) } } > >";
+    String ans1 = "< { lazyOpen => fail( \"logicalSink( \\\"node4\\\" )\" ) } ?"
+        + " < { lazyOpen => fail( \"logicalSink( \\\"node2\\\" )\" ) } ?"
+        + " < { lazyOpen => fail( \"logicalSink( \\\"node1\\\" )\" ) } ? null > > >";
     assertEquals(agentFcd.sinkConfig, ans1);
   }
 
@@ -181,9 +181,9 @@ public class TestMasterAutoUpdates {
     Map<String, FlumeConfigData> xcfgs2 = flumeMaster.getSpecMan()
         .getTranslatedConfigs();
     FlumeConfigData agentFcd2 = xcfgs2.get("agent");
-    String ans2 = "< { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node4\\\" )\" ) } } ?"
-        + " < { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node1\\\" )\" ) } } ?"
-        + " { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node3\\\" )\" ) } } > >";
+    String ans2 = "< { lazyOpen => fail( \"logicalSink( \\\"node4\\\" )\" ) } ?"
+        + " < { lazyOpen => fail( \"logicalSink( \\\"node1\\\" )\" ) } ?"
+        + " < { lazyOpen => fail( \"logicalSink( \\\"node3\\\" )\" ) } ? null > > >";
     assertEquals(agentFcd2.sinkConfig, ans2);
   }
 
@@ -204,9 +204,9 @@ public class TestMasterAutoUpdates {
         .getTranslatedConfigs();
     FlumeConfigData agentFcd2 = xcfgs2.get("agent");
     // This is wrong -- there should be a different logicalSink replacing node2
-    String ans2 = "< { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node4\\\" )\" ) } } ?"
-        + " < { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node1\\\" )\" ) } } ?"
-        + " { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node3\\\" )\" ) } } > >";
+    String ans2 = "< { lazyOpen => fail( \"logicalSink( \\\"node4\\\" )\" ) } ?"
+        + " < { lazyOpen => fail( \"logicalSink( \\\"node1\\\" )\" ) } ?"
+        + " < { lazyOpen => fail( \"logicalSink( \\\"node3\\\" )\" ) } ? null > > >";
     assertEquals(agentFcd2.sinkConfig, ans2);
   }
 
@@ -228,9 +228,9 @@ public class TestMasterAutoUpdates {
     Map<String, FlumeConfigData> xcfgs2 = flumeMaster.getSpecMan()
         .getTranslatedConfigs();
     FlumeConfigData agentFcd2 = xcfgs2.get("agent");
-    String ans2 = "< { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"nodeNew\\\" )\" ) } } ?"
-        + " < { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node4\\\" )\" ) } } ?"
-        + " { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node2\\\" )\" ) } } > >";
+    String ans2 = "< { lazyOpen => fail( \"logicalSink( \\\"nodeNew\\\" )\" ) } ?"
+        + " < { lazyOpen => fail( \"logicalSink( \\\"node4\\\" )\" ) } ?"
+        + " < { lazyOpen => fail( \"logicalSink( \\\"node2\\\" )\" ) } ? null > > >";
     assertEquals(agentFcd2.sinkConfig, ans2);
 
   }
@@ -274,12 +274,9 @@ public class TestMasterAutoUpdates {
         .getTranslatedConfigs();
     FlumeConfigData agentFcd2 = xcfgs2.get("agent");
     // This is wrong -- there should be a different logicalSink replacing node2
-    String ans2 = "< { lazyOpen => { stubbornAppend => rpcSink( \"" + host
-        + "\", 35856 ) } } ?"
-        + " < { lazyOpen => { stubbornAppend => rpcSink( \"" + host
-        + "\", 35854 ) } } ?"
-        + " { lazyOpen => { stubbornAppend => rpcSink( \"" + host
-        + "\", 35853 ) } } > >";
+    String ans2 = "< { lazyOpen => rpcSink( \"" + host + "\", 35856 ) } ?"
+        + " < { lazyOpen => rpcSink( \"" + host + "\", 35854 ) } ?"
+        + " < { lazyOpen => rpcSink( \"" + host + "\", 35853 ) } ? null > > >";
     assertEquals(ans2, agentFcd2.sinkConfig);
   }
 
@@ -322,9 +319,9 @@ public class TestMasterAutoUpdates {
     Map<String, FlumeConfigData> xcfgs2 = flumeMaster.getSpecMan()
         .getTranslatedConfigs();
     FlumeConfigData agentFcd2 = xcfgs2.get("agent");
-    String ans2 = "< { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node4\\\" )\" ) } } ?"
-        + " < { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node2\\\" )\" ) } } ?"
-        + " { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node1\\\" )\" ) } } > >";
+    String ans2 = "< { lazyOpen => fail( \"logicalSink( \\\"node4\\\" )\" ) } ?"
+        + " < { lazyOpen => fail( \"logicalSink( \\\"node2\\\" )\" ) } ?"
+        + " < { lazyOpen => fail( \"logicalSink( \\\"node1\\\" )\" ) } ? null > > >";
     assertEquals(ans2, agentFcd2.sinkConfig);
 
   }

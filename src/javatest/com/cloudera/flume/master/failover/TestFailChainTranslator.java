@@ -80,14 +80,14 @@ public class TestFailChainTranslator {
         "autoBEChain", collectors);
     String failChainSink = FlumeSpecGen.genEventSink(failchain);
     LOG.info(failChainSink);
-    assertEquals(209, failChainSink.length()); // output is 209 chars long
+    assertEquals(154, failChainSink.length()); // output is 154 chars long
 
     // many autoBEChain substitutions.
     CommonTree failchain2 = FailoverConfigurationManager.substBEChains(
         "[ autoBEChain, { lazyOpen => autoBEChain } ]", collectors);
     String failChainSink2 = FlumeSpecGen.genEventSink(failchain2);
     LOG.info(failChainSink2);
-    assertEquals(440, failChainSink2.length()); // output is 440 chars long
+    assertEquals(330, failChainSink2.length()); // output is 330 chars long
 
     // no change
     CommonTree nothing = FailoverConfigurationManager.substBEChains("null",
@@ -108,18 +108,47 @@ public class TestFailChainTranslator {
         "autoDFOChain", collectors);
     String failChainSink = FlumeSpecGen.genEventSink(failchain);
     LOG.info(failChainSink);
-    assertEquals(290, failChainSink.length()); // output is 209 chars long
+    assertEquals(290, failChainSink.length()); // output is 290 chars long
 
     // many autoDFOChain substitutions.
     CommonTree failchain2 = FailoverConfigurationManager.substDFOChains(
         "[ autoDFOChain, { lazyOpen => autoDFOChain } ]", collectors);
     String failChainSink2 = FlumeSpecGen.genEventSink(failchain2);
     LOG.info(failChainSink2);
-    assertEquals(602, failChainSink2.length()); // output is 440 chars long
+    assertEquals(602, failChainSink2.length()); // output is 602 chars long
 
     // no change
     CommonTree nothing = FailoverConfigurationManager.substDFOChains("null",
         collectors);
+    String nothingSink = FlumeSpecGen.genEventSink(nothing);
+    assertEquals("null", nothingSink);
+  }
+
+  @Test
+  public void testSubstDFONoLet() throws FlumeSpecException,
+      RecognitionException {
+    List<String> collectors = new ArrayList<String>();
+    collectors.add("collector1");
+    collectors.add("collector2");
+    collectors.add("collector3");
+
+    // autoDFOChain substituted
+    CommonTree failchain = FailoverConfigurationManager.substDFOChainsNoLet(
+        "autoDFOChain", collectors);
+    String failChainSink = FlumeSpecGen.genEventSink(failchain);
+    LOG.info(failChainSink);
+    assertEquals(379, failChainSink.length()); // output is 379 chars long
+
+    // many autoDFOChain substitutions.
+    CommonTree failchain2 = FailoverConfigurationManager.substDFOChainsNoLet(
+        "[ autoDFOChain, { lazyOpen => autoDFOChain } ]", collectors);
+    String failChainSink2 = FlumeSpecGen.genEventSink(failchain2);
+    LOG.info(failChainSink2);
+    assertEquals(780, failChainSink2.length()); // output is 780 chars long
+
+    // no change
+    CommonTree nothing = FailoverConfigurationManager.substDFOChainsNoLet(
+        "null", collectors);
     String nothingSink = FlumeSpecGen.genEventSink(nothing);
     assertEquals("null", nothingSink);
   }
@@ -136,14 +165,14 @@ public class TestFailChainTranslator {
         "autoE2EChain", collectors);
     String failChainSink = FlumeSpecGen.genEventSink(failchain);
     LOG.info(failChainSink);
-    assertEquals(232, failChainSink.length()); // output is 209 chars long
+    assertEquals(232, failChainSink.length()); // output is 232 chars long
 
     // many autoBEChain substitutions.
     CommonTree failchain2 = FailoverConfigurationManager.substE2EChains(
         "[ autoE2EChain, { lazyOpen => autoE2EChain } ]", collectors);
     String failChainSink2 = FlumeSpecGen.genEventSink(failchain2);
     LOG.info(failChainSink2);
-    assertEquals(463, failChainSink2.length()); // output is 440 chars long
+    assertEquals(463, failChainSink2.length()); // output is 463 chars long
 
     // no change
     CommonTree nothing = FailoverConfigurationManager.substE2EChains("null",

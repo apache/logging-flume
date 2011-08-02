@@ -194,19 +194,15 @@ public class TestLogicalFailoverFlowConfigManager {
 
     String host = NetUtils.localhost();
     LOG.info(agent1);
-    assertEquals("< { lazyOpen => { stubbornAppend => rpcSink( \"" + host
-        + "\", 35856 ) } } ? "
-        + "< { lazyOpen => { stubbornAppend => rpcSink( \"" + host
-        + "\", 35853 ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => rpcSink( \"" + host
-        + "\", 35855 ) } } > >", agent1.sinkConfig);
+    assertEquals("< { lazyOpen => rpcSink( \"" + host + "\", 35856 ) } ? "
+        + "< { lazyOpen => rpcSink( \"" + host + "\", 35853 ) } ? "
+        + "< { lazyOpen => rpcSink( \"" + host + "\", 35855 ) } ? null > > >",
+        agent1.sinkConfig);
     LOG.info(agent2);
-    assertEquals("< { lazyOpen => { stubbornAppend => rpcSink( \"" + host
-        + "\", 35859 ) } } ? "
-        + "< { lazyOpen => { stubbornAppend => rpcSink( \"" + host
-        + "\", 35858 ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => rpcSink( \"" + host
-        + "\", 35857 ) } } > >", agent2.sinkConfig);
+    assertEquals("< { lazyOpen => rpcSink( \"" + host + "\", 35859 ) } ? "
+        + "< { lazyOpen => rpcSink( \"" + host + "\", 35858 ) } ? "
+        + "< { lazyOpen => rpcSink( \"" + host + "\", 35857 ) } ? null > > >",
+        agent2.sinkConfig);
 
     // change the flow group of one of the relevent logicalSinks.
     logical.setConfig("coll14", "flow2", "autoCollectorSource", "null");
@@ -215,19 +211,15 @@ public class TestLogicalFailoverFlowConfigManager {
 
     // look, the coll14 was removed from agent1 and into agent2
     LOG.info(nextAgent1);
-    assertEquals("< { lazyOpen => { stubbornAppend => rpcSink( \"" + host
-        + "\", 35853 ) } } ? "
-        + "< { lazyOpen => { stubbornAppend => rpcSink( \"" + host
-        + "\", 35855 ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => rpcSink( \"" + host
-        + "\", 35854 ) } } > >", nextAgent1.sinkConfig);
+    assertEquals("< { lazyOpen => rpcSink( \"" + host + "\", 35853 ) } ? "
+        + "< { lazyOpen => rpcSink( \"" + host + "\", 35855 ) } ? "
+        + "< { lazyOpen => rpcSink( \"" + host + "\", 35854 ) } ? null > > >",
+        nextAgent1.sinkConfig);
     LOG.info(nextAgent2);
-    assertEquals("< { lazyOpen => { stubbornAppend => rpcSink( \"" + host
-        + "\", 35859 ) } } ? "
-        + "< { lazyOpen => { stubbornAppend => rpcSink( \"" + host
-        + "\", 35858 ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => rpcSink( \"" + host
-        + "\", 35856 ) } } > >", nextAgent2.sinkConfig);
+    assertEquals("< { lazyOpen => rpcSink( \"" + host + "\", 35859 ) } ? "
+        + "< { lazyOpen => rpcSink( \"" + host + "\", 35858 ) } ? "
+        + "< { lazyOpen => rpcSink( \"" + host + "\", 35856 ) } ? null > > >",
+        nextAgent2.sinkConfig);
   }
 
 }

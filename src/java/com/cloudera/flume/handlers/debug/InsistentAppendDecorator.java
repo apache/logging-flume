@@ -72,7 +72,6 @@ public class InsistentAppendDecorator<S extends EventSink> extends
     super(s);
     this.backoff = new CumulativeCappedExponentialBackoff(initial, sleepCap,
         cumulativeCap);
-
     this.appendSuccesses = 0;
     this.appendRetries = 0;
 
@@ -95,7 +94,7 @@ public class InsistentAppendDecorator<S extends EventSink> extends
     List<IOException> exns = new ArrayList<IOException>();
     int attemptRetries = 0;
     appendRequests++;
-    while (!backoff.isFailed()) {
+    while (!backoff.isFailed() && isOpen.get()) {
       try {
         appendAttempts++;
         super.append(evt);

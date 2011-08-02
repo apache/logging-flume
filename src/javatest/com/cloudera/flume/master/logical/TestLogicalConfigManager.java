@@ -186,12 +186,9 @@ public class TestLogicalConfigManager {
     FlumeConfigData transData = trans.getConfig("bar");
     assertEquals("null", transData.getSourceConfig());
     String lh = NetUtils.localhost();
-    String translated = "< { lazyOpen => { stubbornAppend => rpcSink( \"" + lh
-        + "\", 35853 ) } } ? "
-        + "< { lazyOpen => { stubbornAppend => rpcSink( \"" + lh
-        + "\", 35855 ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => rpcSink( \"" + lh
-        + "\", 35854 ) } } > >";
+    String translated = "< { lazyOpen => rpcSink( \"" + lh + "\", 35853 ) } ? "
+        + "< { lazyOpen => rpcSink( \"" + lh + "\", 35855 ) } ? "
+        + "< { lazyOpen => rpcSink( \"" + lh + "\", 35854 ) } ? null > > >";
     assertEquals(translated, transData.getSinkConfig());
 
     FlumeConfigData transCollData = trans.getConfig("foo");
@@ -201,9 +198,9 @@ public class TestLogicalConfigManager {
     // intermediate data
     FlumeConfigData failData = failover.getConfig("bar");
     assertEquals("null", failData.getSourceConfig());
-    String failTranslated = "< { lazyOpen => { stubbornAppend => logicalSink( \"foo\" ) } } ? "
-        + "< { lazyOpen => { stubbornAppend => logicalSink( \"foo3\" ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => logicalSink( \"foo2\" ) } } > >";
+    String failTranslated = "< { lazyOpen => logicalSink( \"foo\" ) } ? "
+        + "< { lazyOpen => logicalSink( \"foo3\" ) } ? "
+        + "< { lazyOpen => logicalSink( \"foo2\" ) } ? null > > >";
     assertEquals(failTranslated, failData.getSinkConfig());
 
   }
@@ -394,12 +391,9 @@ public class TestLogicalConfigManager {
     FlumeConfigData transData0 = trans.getConfig("bar");
     assertEquals("null", transData0.getSourceConfig());
     String lh = NetUtils.localhost();
-    String translated = "< { lazyOpen => { stubbornAppend => rpcSink( \"" + lh
-        + "\", 35853 ) } } ? "
-        + "< { lazyOpen => { stubbornAppend => rpcSink( \"" + lh
-        + "\", 35855 ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => rpcSink( \"" + lh
-        + "\", 35854 ) } } > >";
+    String translated = "< { lazyOpen => rpcSink( \"" + lh + "\", 35853 ) } ? "
+        + "< { lazyOpen => rpcSink( \"" + lh + "\", 35855 ) } ? "
+        + "< { lazyOpen => rpcSink( \"" + lh + "\", 35854 ) } ? null > > >";
     assertEquals(translated, transData0.getSinkConfig());
 
     trans.updateAll();
@@ -439,9 +433,9 @@ public class TestLogicalConfigManager {
     // intermediate data
     FlumeConfigData failData = failover.getConfig("bar");
     assertEquals("null", failData.getSourceConfig());
-    String failTranslated = "< { lazyOpen => { stubbornAppend => logicalSink( \"foo\" ) } } ? "
-        + "< { lazyOpen => { stubbornAppend => logicalSink( \"foo3\" ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => logicalSink( \"foo2\" ) } } > >";
+    String failTranslated = "< { lazyOpen => logicalSink( \"foo\" ) } ? "
+        + "< { lazyOpen => logicalSink( \"foo3\" ) } ? "
+        + "< { lazyOpen => logicalSink( \"foo2\" ) } ? null > > >";
     assertEquals(failTranslated, failData.getSinkConfig());
   }
 
@@ -465,12 +459,9 @@ public class TestLogicalConfigManager {
     FlumeConfigData transData0 = trans.getConfig("bar");
     assertEquals("null", transData0.getSourceConfig());
     String lh = NetUtils.localhost();
-    String translated = "< { lazyOpen => { stubbornAppend => rpcSink( \"" + lh
-        + "\", 35853 ) } } ? "
-        + "< { lazyOpen => { stubbornAppend => rpcSink( \"" + lh
-        + "\", 35855 ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => rpcSink( \"" + lh
-        + "\", 35854 ) } } > >";
+    String translated = "< { lazyOpen => rpcSink( \"" + lh + "\", 35853 ) } ? "
+        + "< { lazyOpen => rpcSink( \"" + lh + "\", 35855 ) } ? "
+        + "< { lazyOpen => rpcSink( \"" + lh + "\", 35854 ) } ? null > > >";
     assertEquals(translated, transData0.getSinkConfig());
 
     trans.updateAll();
@@ -516,9 +507,9 @@ public class TestLogicalConfigManager {
     // intermediate data
     FlumeConfigData failData = failover.getConfig("bar");
     assertEquals("null", failData.getSourceConfig());
-    String failTranslated = "< { lazyOpen => { stubbornAppend => logicalSink( \"foo\" ) } } ? "
-        + "< { lazyOpen => { stubbornAppend => logicalSink( \"foo3\" ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => logicalSink( \"foo2\" ) } } > >";
+    String failTranslated = "< { lazyOpen => logicalSink( \"foo\" ) } ? "
+        + "< { lazyOpen => logicalSink( \"foo3\" ) } ? "
+        + "< { lazyOpen => logicalSink( \"foo2\" ) } ? null > > >";
     assertEquals(failTranslated, failData.getSinkConfig());
   }
 
@@ -550,10 +541,8 @@ public class TestLogicalConfigManager {
     FlumeConfigData transData = trans.getConfig("bar");
     assertEquals("null", transData.getSourceConfig());
     String lh = NetUtils.localhost();
-    String translated = "< { lazyOpen => { stubbornAppend => rpcSink( \"" + lh
-        + "\", 35853 ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => rpcSink( \"" + lh
-        + "\", 35854 ) } } >";
+    String translated = "< { lazyOpen => rpcSink( \"" + lh + "\", 35853 ) } ? "
+        + "< { lazyOpen => rpcSink( \"" + lh + "\", 35854 ) } ? null > >";
     assertEquals(translated, transData.getSinkConfig());
 
     FlumeConfigData transCollData = trans.getConfig("foo");
@@ -570,8 +559,8 @@ public class TestLogicalConfigManager {
     // intermediate data
     FlumeConfigData failData = failover.getConfig("bar");
     assertEquals("null", failData.getSourceConfig());
-    String failTranslated = "< { lazyOpen => { stubbornAppend => logicalSink( \"foo\" ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => logicalSink( \"foo2\" ) } } >";
+    String failTranslated = "< { lazyOpen => logicalSink( \"foo\" ) } ? "
+        + "< { lazyOpen => logicalSink( \"foo2\" ) } ? null > >";
     assertEquals(failTranslated, failData.getSinkConfig());
 
     assertEquals(fooVer, trans.getConfig("foo").getTimestamp());
@@ -603,20 +592,20 @@ public class TestLogicalConfigManager {
     FlumeConfigData transData0 = trans.getConfig("bar");
     assertEquals("null", transData0.getSourceConfig());
     String lh = NetUtils.localhost();
-    String first = "< { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"foo\\\" )\" ) } } ? "
-        + "< { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"foo3\\\" )\" ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"foo2\\\" )\" ) } } > >";
+    String first = "< { lazyOpen => fail( \"logicalSink( \\\"foo\\\" )\" ) } ? "
+        + "< { lazyOpen => fail( \"logicalSink( \\\"foo3\\\" )\" ) } ? "
+        + "< { lazyOpen => fail( \"logicalSink( \\\"foo2\\\" )\" ) } ? null > > >";
     assertEquals(first, transData0.getSinkConfig());
 
     // update one at a time and check config
     statman.updateHeartbeatStatus(NetUtils.localhost(), "physnode", "foo",
         NodeState.HELLO, Clock.unixTime());
     trans.updateAll(); // TODO remove
-    String second = "< { lazyOpen => { stubbornAppend => rpcSink( \""
+    String second = "< { lazyOpen => rpcSink( \""
         + lh
-        + "\", 35853 ) } } ? "
-        + "< { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"foo3\\\" )\" ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"foo2\\\" )\" ) } } > >";
+        + "\", 35853 ) } ? "
+        + "< { lazyOpen => fail( \"logicalSink( \\\"foo3\\\" )\" ) } ? "
+        + "< { lazyOpen => fail( \"logicalSink( \\\"foo2\\\" )\" ) } ? null > > >";
     FlumeConfigData transData = trans.getConfig("bar");
     assertEquals("null", transData.getSourceConfig());
     assertEquals(second, transData.getSinkConfig());
@@ -629,22 +618,16 @@ public class TestLogicalConfigManager {
     statman.updateHeartbeatStatus(NetUtils.localhost(), "physnode", "foo2",
         NodeState.HELLO, Clock.unixTime());
     trans.updateAll();
-    String third = "< { lazyOpen => { stubbornAppend => rpcSink( \""
-        + lh
-        + "\", 35853 ) } } ? "
-        + "< { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"foo3\\\" )\" ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => rpcSink( \"" + lh
-        + "\", 35854 ) } } > >";
+    String third = "< { lazyOpen => rpcSink( \"" + lh + "\", 35853 ) } ? "
+        + "< { lazyOpen => fail( \"logicalSink( \\\"foo3\\\" )\" ) } ? "
+        + "< { lazyOpen => rpcSink( \"" + lh + "\", 35854 ) } ? null > > >";
     transData = trans.getConfig("bar");
     assertEquals("null", transData.getSourceConfig());
     assertEquals(third, transData.getSinkConfig());
 
-    String translated = "< { lazyOpen => { stubbornAppend => rpcSink( \"" + lh
-        + "\", 35853 ) } } ? "
-        + "< { lazyOpen => { stubbornAppend => rpcSink( \"" + lh
-        + "\", 35855 ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => rpcSink( \"" + lh
-        + "\", 35854 ) } } > >";
+    String translated = "< { lazyOpen => rpcSink( \"" + lh + "\", 35853 ) } ? "
+        + "< { lazyOpen => rpcSink( \"" + lh + "\", 35855 ) } ? "
+        + "< { lazyOpen => rpcSink( \"" + lh + "\", 35854 ) } ? null > > >";
 
     transCollData = trans.getConfig("foo");
     assertEquals("rpcSource( 35853 )", transCollData.getSourceConfig());
@@ -669,9 +652,9 @@ public class TestLogicalConfigManager {
     // intermediate data
     FlumeConfigData failData = failover.getConfig("bar");
     assertEquals("null", failData.getSourceConfig());
-    String failTranslated = "< { lazyOpen => { stubbornAppend => logicalSink( \"foo\" ) } } ? "
-        + "< { lazyOpen => { stubbornAppend => logicalSink( \"foo3\" ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => logicalSink( \"foo2\" ) } } > >";
+    String failTranslated = "< { lazyOpen => logicalSink( \"foo\" ) } ? "
+        + "< { lazyOpen => logicalSink( \"foo3\" ) } ? "
+        + "< { lazyOpen => logicalSink( \"foo2\" ) } ? null > > >";
     assertEquals(failTranslated, failData.getSinkConfig());
   }
 
@@ -692,20 +675,20 @@ public class TestLogicalConfigManager {
     FlumeConfigData transData0 = trans.getConfig("bar");
     assertEquals("null", transData0.getSourceConfig());
     String lh = NetUtils.localhost();
-    String first = "< { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"foo\\\" )\" ) } } ? "
-        + "< { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"foo3\\\" )\" ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"foo2\\\" )\" ) } } > >";
+    String first = "< { lazyOpen => fail( \"logicalSink( \\\"foo\\\" )\" ) } ? "
+        + "< { lazyOpen => fail( \"logicalSink( \\\"foo3\\\" )\" ) } ? "
+        + "< { lazyOpen => fail( \"logicalSink( \\\"foo2\\\" )\" ) } ? null > > >";
     assertEquals(first, transData0.getSinkConfig());
 
     // update one at a time and check config
     statman.updateHeartbeatStatus(NetUtils.localhost(), "physnode", "foo",
         NodeState.HELLO, Clock.unixTime());
     trans.updateAll(); // TODO remove
-    String second = "< { lazyOpen => { stubbornAppend => rpcSink( \""
+    String second = "< { lazyOpen => rpcSink( \""
         + lh
-        + "\", 35853 ) } } ? "
-        + "< { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"foo3\\\" )\" ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"foo2\\\" )\" ) } } > >";
+        + "\", 35853 ) } ? "
+        + "< { lazyOpen => fail( \"logicalSink( \\\"foo3\\\" )\" ) } ? "
+        + "< { lazyOpen => fail( \"logicalSink( \\\"foo2\\\" )\" ) } ? null > > >";
     FlumeConfigData transData = trans.getConfig("bar");
     assertEquals("null", transData.getSourceConfig());
     assertEquals(second, transData.getSinkConfig());
@@ -718,11 +701,11 @@ public class TestLogicalConfigManager {
     statman.updateHeartbeatStatus(NetUtils.localhost(), "physnode", "foo",
         NodeState.LOST, Clock.unixTime());
     trans.updateAll(); // TODO remove
-    String third = "< { lazyOpen => { stubbornAppend => rpcSink( \""
+    String third = "< { lazyOpen => rpcSink( \""
         + lh
-        + "\", 35853 ) } } ? "
-        + "< { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"foo3\\\" )\" ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"foo2\\\" )\" ) } } > >";
+        + "\", 35853 ) } ? "
+        + "< { lazyOpen => fail( \"logicalSink( \\\"foo3\\\" )\" ) } ? "
+        + "< { lazyOpen => fail( \"logicalSink( \\\"foo2\\\" )\" ) } ? null > > >";
     transData = trans.getConfig("bar");
     assertEquals("null", transData.getSourceConfig());
     assertEquals(third, transData.getSinkConfig());
@@ -747,12 +730,9 @@ public class TestLogicalConfigManager {
     // update the configurations
     trans.updateAll();
     String lh = NetUtils.localhost();
-    String translated = "< { lazyOpen => { stubbornAppend => rpcSink( \"" + lh
-        + "\", 35853 ) } } ? "
-        + "< { lazyOpen => { stubbornAppend => rpcSink( \"" + lh
-        + "\", 35855 ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => rpcSink( \"" + lh
-        + "\", 35854 ) } } > >";
+    String translated = "< { lazyOpen => rpcSink( \"" + lh + "\", 35853 ) } ? "
+        + "< { lazyOpen => rpcSink( \"" + lh + "\", 35855 ) } ? "
+        + "< { lazyOpen => rpcSink( \"" + lh + "\", 35854 ) } ? null > > >";
 
     FlumeConfigData transCollData = trans.getConfig("foo");
     assertEquals("rpcSource( 35853 )", transCollData.getSourceConfig());
@@ -782,9 +762,9 @@ public class TestLogicalConfigManager {
     // This should go back to the failed state
     FlumeConfigData transData0 = trans.getConfig("bar");
     assertEquals("null", transData0.getSourceConfig());
-    String first = "< { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"foo\\\" )\" ) } } ? "
-        + "< { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"foo3\\\" )\" ) } } ? "
-        + "{ lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"foo2\\\" )\" ) } } > >";
+    String first = "< { lazyOpen => fail( \"logicalSink( \\\"foo\\\" )\" ) } ? "
+        + "< { lazyOpen => fail( \"logicalSink( \\\"foo3\\\" )\" ) } ? "
+        + "< { lazyOpen => fail( \"logicalSink( \\\"foo2\\\" )\" ) } ? null > > >";
     assertEquals(first, transData0.getSinkConfig());
 
   }

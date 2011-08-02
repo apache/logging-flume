@@ -74,7 +74,8 @@ public class FlumeSpecGen {
     ASTNODE type = ASTNODE.valueOf(t.getText()); // convert to enum
     switch (type) {
     case SOURCE:
-      List<CommonTree> children = (List<CommonTree>) t.getChildren();
+      List<CommonTree> children = new ArrayList<CommonTree>(
+          (List<CommonTree>) t.getChildren());
       String sourceType = children.remove(0).getText();
       List<String> args = new ArrayList<String>();
       for (CommonTree tr : children) {
@@ -199,7 +200,8 @@ public class FlumeSpecGen {
 
   @SuppressWarnings("unchecked")
   static String genEventSinkDecorator(CommonTree t) throws FlumeSpecException {
-    List<CommonTree> children = (List<CommonTree>) t.getChildren();
+    List<CommonTree> children = new ArrayList<CommonTree>((List<CommonTree>) t
+        .getChildren());
     String sinkType = children.remove(0).getText();
     List<String> args = new ArrayList<String>();
     for (CommonTree tr : children) {

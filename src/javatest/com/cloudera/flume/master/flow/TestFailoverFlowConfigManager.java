@@ -150,16 +150,14 @@ public class TestFailoverFlowConfigManager {
     FlumeConfigData agent2 = flowed.getConfig("agent2");
 
     LOG.info(agent1);
-    assertEquals(
-        "< { lazyOpen => { stubbornAppend => logicalSink( \"coll14\" ) } } ? "
-            + "< { lazyOpen => { stubbornAppend => logicalSink( \"coll11\" ) } } ? "
-            + "{ lazyOpen => { stubbornAppend => logicalSink( \"coll13\" ) } } > >",
+    assertEquals("< { lazyOpen => logicalSink( \"coll14\" ) } ? "
+        + "< { lazyOpen => logicalSink( \"coll11\" ) } ? "
+        + "< { lazyOpen => logicalSink( \"coll13\" ) } ? null > > >",
         agent1.sinkConfig);
     LOG.info(agent2);
-    assertEquals(
-        "< { lazyOpen => { stubbornAppend => logicalSink( \"coll23\" ) } } ? "
-            + "< { lazyOpen => { stubbornAppend => logicalSink( \"coll22\" ) } } ? "
-            + "{ lazyOpen => { stubbornAppend => logicalSink( \"coll21\" ) } } > >",
+    assertEquals("< { lazyOpen => logicalSink( \"coll23\" ) } ? "
+        + "< { lazyOpen => logicalSink( \"coll22\" ) } ? "
+        + "< { lazyOpen => logicalSink( \"coll21\" ) } ? null > > >",
         agent2.sinkConfig);
 
     // change the flow group of one of the relevent logicalSinks.
@@ -169,16 +167,14 @@ public class TestFailoverFlowConfigManager {
 
     // look, the coll14 was removed from agent1 and into agent2
     LOG.info(nextAgent1);
-    assertEquals(
-        "< { lazyOpen => { stubbornAppend => logicalSink( \"coll11\" ) } } ? "
-            + "< { lazyOpen => { stubbornAppend => logicalSink( \"coll13\" ) } } ? "
-            + "{ lazyOpen => { stubbornAppend => logicalSink( \"coll12\" ) } } > >",
+    assertEquals("< { lazyOpen => logicalSink( \"coll11\" ) } ? "
+        + "< { lazyOpen => logicalSink( \"coll13\" ) } ? "
+        + "< { lazyOpen => logicalSink( \"coll12\" ) } ? null > > >",
         nextAgent1.sinkConfig);
     LOG.info(nextAgent2);
-    assertEquals(
-        "< { lazyOpen => { stubbornAppend => logicalSink( \"coll23\" ) } } ? "
-            + "< { lazyOpen => { stubbornAppend => logicalSink( \"coll22\" ) } } ? "
-            + "{ lazyOpen => { stubbornAppend => logicalSink( \"coll14\" ) } } > >",
+    assertEquals("< { lazyOpen => logicalSink( \"coll23\" ) } ? "
+        + "< { lazyOpen => logicalSink( \"coll22\" ) } ? "
+        + "< { lazyOpen => logicalSink( \"coll14\" ) } ? null > > >",
         nextAgent2.sinkConfig);
   }
 
