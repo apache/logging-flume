@@ -505,6 +505,8 @@ public class FlumeMaster implements Reportable {
       fmt.printHelp("FlumeNode", options, true);
       System.exit(1);
     }
+    
+    FlumeNode.loadOutputFormatPlugins();
 
     String nodeconfig = FlumeConfiguration.get().getMasterSavefile();
 
