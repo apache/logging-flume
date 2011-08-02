@@ -82,6 +82,12 @@ public class TailDirSource extends EventSource.Base {
         @Override
         public void fileCreated(File f) {
           // Add a new file to the multi tail.
+          if (f.isDirectory()) {
+            LOG.debug("Tail dir will not read or recurse "
+                + "into subdirectory " + f);
+            return;
+          }
+
           LOG.info("added file " + f);
           Cursor c = new Cursor(tail.sync, f);
           curmap.put(f.getName(), c);

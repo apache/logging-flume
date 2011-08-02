@@ -167,7 +167,37 @@ public class TestTailDirSource {
     src.close();
     cnt.close();
     FileUtil.rmr(tmpdir);
+  }
 
+  /**
+   * Same as existing files test but has a directory included (that should be
+   * ignored)
+   */
+  @Test
+  public void testExistingDir() throws IOException, InterruptedException {
+    File tmpdir = FileUtil.mktempdir();
+    File subDir = new File(tmpdir, "subdir");
+    subDir.mkdirs();
+    TailDirSource src = new TailDirSource(tmpdir, ".*");
+    AccumulatorSink cnt = new AccumulatorSink("tailcount");
+    src.open();
+    cnt.open();
+    DirectDriver drv = new DirectDriver(src, cnt);
+
+    genFiles(tmpdir, "foo", 10, 100);
+
+    drv.start();
+    Clock.sleep(1000);
+    assertEquals(1000, cnt.getCount());
+
+    drv.stop();
+    src.close();
+    cnt.close();
+    FileUtil.rmr(tmpdir);
+
+    // only did 10 files, ignored the dir.
+    assertEquals(Long.valueOf(10), src.getReport().getLongMetric(
+        TailDirSource.A_FILESADDED));
   }
 
   /**
