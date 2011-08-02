@@ -33,10 +33,11 @@ import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.LogicalNode;
 import com.cloudera.flume.conf.Context;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.conf.ReportTestingContext;
-import com.cloudera.flume.conf.FlumeConfigData;
+import com.cloudera.flume.core.Driver.DriverState;
 import com.cloudera.flume.master.StatusManager.NodeState;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
@@ -140,7 +141,8 @@ public class TestDiskFailoverBehavior {
         "count2");
     loopUntilCount(count, coll, coll2);
 
-    assertEquals(NodeState.IDLE, agent.getStatus().state);
+    assertTrue("Getting to IDLE state took to long", agent.getDriver()
+        .waitForState(DriverState.IDLE, 5000));
 
     // close off the collector
     coll.close();

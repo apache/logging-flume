@@ -180,8 +180,8 @@ public class TestCollectorSink {
     sink.close();
     File f = new File("/tmp/flume-test-correct-filename/actual-file-tag");
     f.deleteOnExit();
-    assertTrue("Expected filename does not exists " + f.getAbsolutePath(), f
-        .exists());
+    assertTrue("Expected filename does not exists " + f.getAbsolutePath(),
+        f.exists());
   }
 
   /**
@@ -219,7 +219,6 @@ public class TestCollectorSink {
    * @throws IOException
    * @throws FlumeSpecException
    */
-  @SuppressWarnings("unchecked")
   public Pair<RollSink, EventSink> setupSink(FlumeNode node, File tmpdir)
       throws IOException, FlumeSpecException {
 
@@ -232,7 +231,7 @@ public class TestCollectorSink {
     RollSink roll = coll.roller;
 
     // normally inside wal
-    NaiveFileWALDeco.AckChecksumRegisterer<EventSink> snk = new NaiveFileWALDeco.AckChecksumRegisterer(
+    NaiveFileWALDeco.AckChecksumRegisterer<EventSink> snk = new NaiveFileWALDeco.AckChecksumRegisterer<EventSink>(
         coll, node.getAckChecker().getAgentAckQueuer());
     return new Pair<RollSink, EventSink>(roll, snk);
   }
@@ -510,9 +509,9 @@ public class TestCollectorSink {
   @Test
   public void testHdfsDownInterruptAfterOpeningRetry()
       throws FlumeSpecException, IOException, InterruptedException {
-    final EventSink snk = new LazyOpenDecorator(FlumeBuilder.buildSink(
-        new Context(),
-        "collectorSink(\"hdfs://nonexistant/user/foo\", \"foo\")"));
+    final EventSink snk = new LazyOpenDecorator<EventSink>(
+        FlumeBuilder.buildSink(new Context(),
+            "collectorSink(\"hdfs://nonexistant/user/foo\", \"foo\")"));
 
     final CountDownLatch started = new CountDownLatch(1);
     final CountDownLatch done = new CountDownLatch(1);
@@ -523,12 +522,15 @@ public class TestCollectorSink {
         try {
           snk.open();
           started.countDown();
-          snk.append(e);
+          snk.append(e); // this blocks until interrupted.
+
         } catch (IOException e1) {
           // could throw exception but we don't care
-          LOG.info("don't care about this exception: ", e1);
+          LOG.info(
+              "don't care about this IO exception (will eventually be interrupted exception): ",
+              e1);
         } catch (InterruptedException e1) {
-          // TODO Auto-generated catch block
+          LOG.info("don't care about this exception: ", e1);
           e1.printStackTrace();
         }
         done.countDown();
@@ -536,10 +538,18 @@ public class TestCollectorSink {
     };
     t.start();
     boolean begun = started.await(60, TimeUnit.SECONDS);
-    Clock.sleep(10);
     assertTrue("took too long to start", begun);
+    Clock.sleep(1000);
+
+    // If this close happens before the append, test hangs.
+    // problem - append needs to be happening before next
+    // close happens, need to sleep
+
     snk.close();
+
+    // if this finishes all the way (all threads, the we are ok).
     LOG.info("Interrupting appending thread");
+    // Clock.sleep(5000);
     t.interrupt();
     boolean completed = done.await(60, TimeUnit.SECONDS);
     assertTrue("Timed out when attempting to shutdown", completed);

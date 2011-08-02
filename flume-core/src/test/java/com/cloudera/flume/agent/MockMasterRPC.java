@@ -66,7 +66,7 @@ public class MockMasterRPC implements MasterRPC {
   }
 
   @Override
-  public FlumeConfigData getConfig(LogicalNode n) throws IOException {
+  public FlumeConfigData getConfig(String n) throws IOException {
     return null;
   }
 

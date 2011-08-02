@@ -29,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.diskfailover.DiskFailoverDeco;
-import com.cloudera.flume.agent.diskfailover.DiskFailoverManager;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeArgException;
 import com.cloudera.flume.conf.FlumeBuilder;
@@ -167,7 +166,7 @@ public class TestAgentFailChainSink {
     // Everything is on and we send some messages
     snk.append(e1);
     Clock.sleep(100);
-    LOG.info(c1Src.getMetrics().toString());
+    LOG.info("BE with all open metrics: {}", c1Src.getMetrics().toString());
     assertEquals(1,
         (long) c1Src.getMetrics().getLongMetric(ThriftEventSource.A_ENQUEUED));
     c1Src.next();
@@ -185,9 +184,11 @@ public class TestAgentFailChainSink {
     snk.append(e4);
     Clock.sleep(20);
 
-    LOG.info(c2Src.getMetrics().toString());
-    assertTrue(2 <= (long) c2Src.getMetrics().getLongMetric(
-        ThriftEventSource.A_ENQUEUED));
+    LOG.info("BE after kill primary, show 2ndary metrics: {}", c2Src
+        .getMetrics().toString());
+    long c2Enq = (long) c2Src.getMetrics().getLongMetric(
+        ThriftEventSource.A_ENQUEUED);
+    assertTrue("Expected at least 2 c2Enq events but got " + c2Enq, 2 <= c2Enq);
     // 2 lost in network buffer, but two received in backup. yay.
     c2Src.next();
     c2Src.next();
@@ -203,7 +204,7 @@ public class TestAgentFailChainSink {
     snk.append(e4); // lost
     Clock.sleep(20);
 
-    // re-open desination 1.
+    // re-open destination 1.
     c1Src.open();
     snk.append(e1);
     Clock.sleep(20);
@@ -211,11 +212,13 @@ public class TestAgentFailChainSink {
     Clock.sleep(20);
     c1Src.next();
     c1Src.close();
-    LOG.info(c1Src.getMetrics().toString());
-    // 2 events from prevoius + 1 from new open
+    LOG.info("BE primary reopend metrics: {}", c1Src.getMetrics().toString());
+    // 2 events from previous + 1 from new open
     // first one fails on reopen but next succeeds
-    assertTrue(2 + 1 <= (long) c2Src.getMetrics().getLongMetric(
-        ThriftEventSource.A_ENQUEUED));
+    long c2src = (long) c2Src.getMetrics().getLongMetric(
+        ThriftEventSource.A_ENQUEUED);
+    assertTrue("Expected at least 2+1 c2Src eents but got " + c2src,
+        2 + 1 <= c2src);
     snk.close();
   }
 
@@ -232,7 +235,8 @@ public class TestAgentFailChainSink {
     EventSink snk = FlumeBuilder.buildSink(new LogicalNodeContext(node, node),
         spec);
     ReportEvent rpt = ReportUtil.getFlattenedReport(snk);
-    LOG.info(ReportUtil.toJSONObject(rpt).toString());
+    LOG.info("testDFOFailchain report {}", ReportUtil.toJSONObject(rpt)
+        .toString());
 
     // just check a sample of the values:
     assertEquals(
@@ -275,7 +279,7 @@ public class TestAgentFailChainSink {
   }
 
   /**
-   * have two destinations, send some messsage to primary, kill primary, send
+   * have two destinations, send some message to primary, kill primary, send
    * some to secondary, kill secondary, send some messages to dfo log, restore
    * secondary send some messages to secondary.
    * 
@@ -285,21 +289,21 @@ public class TestAgentFailChainSink {
   public void testConfirmDFOChain() throws FlumeSpecException, IOException,
       InterruptedException {
     // create sources
-    String c1 = "rpcSource(1234)";
+    String c1 = "rpcSource(1236)";
     ThriftEventSource c1Src = (ThriftEventSource) FlumeBuilder.buildSource(
         LogicalNodeContext.testingContext()
 
         , c1);
     c1Src.open();
 
-    String c2 = "rpcSource(1235)";
+    String c2 = "rpcSource(1237)";
     ThriftEventSource c2Src = (ThriftEventSource) FlumeBuilder.buildSource(
         LogicalNodeContext.testingContext(), c2);
     c2Src.open();
 
     // create agentDFOChain sink
     File tmpDir = FileUtil.mktempdir();
-    String spec = "agentDFOChain(\"localhost:1234\", \"localhost:1235\")";
+    String spec = "agentDFOChain(\"localhost:1236\", \"localhost:1237\")";
     CompositeSink snk = new CompositeSink(new LogicalNodeContext(
         tmpDir.getName(), tmpDir.getName()), spec);
     snk.open();
@@ -312,7 +316,7 @@ public class TestAgentFailChainSink {
     // Everything is on and we send some messages.
     snk.append(e1);
     Clock.sleep(100);
-    LOG.info(c1Src.getMetrics().toString());
+    LOG.info("DFO failchain all on metrics {}", c1Src.getMetrics().toString());
     assertEquals(1,
         (long) c1Src.getMetrics().getLongMetric(ThriftEventSource.A_ENQUEUED));
     // it got through, yay.
@@ -331,9 +335,13 @@ public class TestAgentFailChainSink {
     snk.append(e4);
     Clock.sleep(20);
 
-    LOG.info(c2Src.getMetrics().toString());
-    assertTrue(2 <= (long) c2Src.getMetrics().getLongMetric(
-        ThriftEventSource.A_ENQUEUED));
+    LOG.info("DFO failchain kill primary, show 2ndary metrics {}", c2Src
+        .getMetrics().toString());
+    long enqueued = (long) c2Src.getMetrics().getLongMetric(
+        ThriftEventSource.A_ENQUEUED);
+    assertTrue(
+        "Expected at least 2 events still enqueueed but got " + enqueued,
+        2 <= enqueued);
     // 2 lost in network buffer, but two received in backup. yay.
     c2Src.next();
     c2Src.next();
@@ -353,9 +361,11 @@ public class TestAgentFailChainSink {
     Clock.sleep(20);
     snk.append(e4); // written
     Clock.sleep(20);
-    LOG.info(snk.getMetrics().toText());
-    assertTrue(2 <= (long) ReportUtil.getFlattenedReport(snk).getLongMetric(
-        "backup.DiskFailover.NaiveDiskFailover.writingEvts"));
+    LOG.info("DFO Primary returns metrics: {}", snk.getMetrics().toText());
+    long writingEvts = (long) ReportUtil.getFlattenedReport(snk).getLongMetric(
+        "backup.DiskFailover.NaiveDiskFailover.writingEvts");
+    assertTrue("Expected at least 2 writing evetns but had " + writingEvts,
+        2 <= writingEvts);
 
     e1 = new EventImpl("test 1 c".getBytes());
     e2 = new EventImpl("test 2 c".getBytes());
@@ -375,7 +385,6 @@ public class TestAgentFailChainSink {
     BackOffFailOverSink bofos = (BackOffFailOverSink) ((CompositeSink) afcs.snk)
         .getSink();
     DiskFailoverDeco dfo = (DiskFailoverDeco) bofos.getBackup();
-    DiskFailoverManager dfm = dfo.getFailoverManager();
     RollSink dfoWriter = dfo.getDFOWriter();
     dfoWriter.rotate(); // allow dfo retry thread to go.
 
@@ -387,25 +396,33 @@ public class TestAgentFailChainSink {
     c1Src.next();
     c1Src.close();
     ReportEvent rpt = ReportUtil.getFlattenedReport(snk);
-    LOG.info(rpt.toString());
+    LOG.info("DFO Failchain final report {}", rpt.toString());
 
     String written = "backup.DiskFailover.NaiveDiskFailover.writingEvts";
-    assertTrue(4 <= (long) rpt.getLongMetric(written));
+    long writtenEvents = (long) rpt.getLongMetric(written);
+    assertTrue("Exepected at least 4 written events but had " + writtenEvents,
+        4 <= writtenEvents);
     // yay. all four events written to dfo log
 
     String primary = "backup.DiskFailover."
         + "LazyOpenDecorator.InsistentAppend.StubbornAppend."
         + "InsistentOpen.FailoverChainSink.sentPrimary";
-    assertTrue(4 <= (long) rpt.getLongMetric(primary));
+    long primaryEvts = (long) rpt.getLongMetric(primary);
+    assertTrue("Expected at least 4 primary events but had " + primaryEvts,
+        4 <= primaryEvts);
     // yay all four go through to the path we wanted. (the primary after the
     // disk failover)
 
     // data from DFO log was sent.
-    assertTrue(2 + 4 <= (long) c1Src.getMetrics().getLongMetric(
-        ThriftEventSource.A_ENQUEUED));
+    long c1Enq = (long) c1Src.getMetrics().getLongMetric(
+        ThriftEventSource.A_ENQUEUED);
+    assertTrue("Expected at least 2+4 c1 equeued but had " + c1Enq,
+        2 + 4 <= c1Enq);
     // first one fails on reopen but next succeeds
-    assertTrue(2 + 1 <= (long) c2Src.getMetrics().getLongMetric(
-        ThriftEventSource.A_ENQUEUED));
+    long c2Enq = (long) c2Src.getMetrics().getLongMetric(
+        ThriftEventSource.A_ENQUEUED);
+    assertTrue("Expected at least 2+1 c2 equeued but had " + c2Enq,
+        2 + 1 <= c2Enq);
 
   }
 }

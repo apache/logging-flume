@@ -75,8 +75,7 @@ public class TestRPCMechanisms {
     }
 
     public void serve(int port) throws IOException {
-      LOG
-      .info(String
+      LOG.info(String
           .format(
               "Starting blocking thread pool server for control server on port %d...",
               port));
@@ -142,18 +141,18 @@ public class TestRPCMechanisms {
       Map<CharSequence, Long> longMetrics = report.longMetrics;
       assertEquals(2, longMetrics.size());
 
-      assertEquals(Long.MIN_VALUE, ((Long) longMetrics.get("long1"))
-          .longValue());
-      assertEquals(Long.MAX_VALUE, ((Long) longMetrics.get("long2"))
-          .longValue());
+      assertEquals(Long.MIN_VALUE,
+          ((Long) longMetrics.get("long1")).longValue());
+      assertEquals(Long.MAX_VALUE,
+          ((Long) longMetrics.get("long2")).longValue());
 
       Map<CharSequence, Double> doubleMetrics = report.doubleMetrics;
       assertEquals(2, doubleMetrics.size());
 
-      assertEquals(Double.MIN_VALUE, ((Double) doubleMetrics.get("double1"))
-          .doubleValue(), 0.0001);
-      assertEquals(Double.MAX_VALUE, ((Double) doubleMetrics.get("double2"))
-          .doubleValue(), 0.0001);
+      assertEquals(Double.MIN_VALUE,
+          ((Double) doubleMetrics.get("double1")).doubleValue(), 0.0001);
+      assertEquals(Double.MAX_VALUE,
+          ((Double) doubleMetrics.get("double2")).doubleValue(), 0.0001);
       Map<CharSequence, CharSequence> stringMetrics = report.stringMetrics;
 
       assertEquals(2, stringMetrics.size());
@@ -164,7 +163,7 @@ public class TestRPCMechanisms {
 
     @Override
     public Map<CharSequence, Integer> getChokeMap(CharSequence physNode)
-    throws AvroRemoteException {
+        throws AvroRemoteException {
       return null;
     }
   }
@@ -173,7 +172,7 @@ public class TestRPCMechanisms {
    * Mock ThriftServer.
    */
   public class MockThriftServer extends ThriftServer implements
-  ThriftFlumeClientServer.Iface {
+      ThriftFlumeClientServer.Iface {
 
     @Override
     public void acknowledge(String ackid) throws TException {
@@ -218,7 +217,8 @@ public class TestRPCMechanisms {
     }
 
     @Override
-    public void putReports(Map<String, ThriftFlumeReport> reports) throws TException {
+    public void putReports(Map<String, ThriftFlumeReport> reports)
+        throws TException {
       Log.info("putReports called at server on " + this.port);
       assertEquals(1, reports.size());
       ThriftFlumeReport report = reports.get("reportKey");
@@ -227,18 +227,18 @@ public class TestRPCMechanisms {
       Map<String, Long> longMetrics = report.longMetrics;
       assertEquals(2, longMetrics.size());
 
-      assertEquals(Long.MIN_VALUE, ((Long) longMetrics.get("long1"))
-          .longValue());
-      assertEquals(Long.MAX_VALUE, ((Long) longMetrics.get("long2"))
-          .longValue());
+      assertEquals(Long.MIN_VALUE,
+          ((Long) longMetrics.get("long1")).longValue());
+      assertEquals(Long.MAX_VALUE,
+          ((Long) longMetrics.get("long2")).longValue());
 
       Map<String, Double> doubleMetrics = report.doubleMetrics;
       assertEquals(2, doubleMetrics.size());
 
-      assertEquals(Double.MIN_VALUE, ((Double) doubleMetrics.get("double1"))
-          .doubleValue(), .0001);
-      assertEquals(Double.MAX_VALUE, ((Double) doubleMetrics.get("double2"))
-          .doubleValue(), .0001);
+      assertEquals(Double.MIN_VALUE,
+          ((Double) doubleMetrics.get("double1")).doubleValue(), .0001);
+      assertEquals(Double.MAX_VALUE,
+          ((Double) doubleMetrics.get("double2")).doubleValue(), .0001);
 
       Map<String, String> stringMetrics = report.stringMetrics;
       assertEquals(2, stringMetrics.size());
@@ -251,14 +251,13 @@ public class TestRPCMechanisms {
     }
 
     public void serve() throws IOException {
-      LOG
-      .info(String
+      LOG.info(String
           .format(
               "Starting blocking thread pool server for control server on port %d...",
               port));
       try {
         this.start(new ThriftFlumeClientServer.Processor((Iface) this), port,
-        "MasterClientServer");
+            "MasterClientServer");
       } catch (TTransportException e) {
         throw new IOException(e.getMessage());
       }
@@ -305,7 +304,7 @@ public class TestRPCMechanisms {
     assertEquals("three", logicalNodes.get(2));
     assertEquals("four", logicalNodes.get(3));
 
-    FlumeConfigData data = masterRPC.getConfig(new LogicalNode(null, ""));
+    FlumeConfigData data = masterRPC.getConfig("");
     assertEquals("flowID", data.flowID);
     assertEquals("sinkConfig", data.sinkConfig);
     assertEquals(112233, data.sinkVersion);
@@ -336,18 +335,26 @@ public class TestRPCMechanisms {
   @Test
   public void testTypeConversions() {
     // THRIFT NODE STATE
-    assertEquals(StatusManager.NodeState.HELLO, MasterClientServerThrift
-        .stateFromThrift(com.cloudera.flume.conf.thrift.FlumeNodeState.HELLO));
-    assertEquals(StatusManager.NodeState.ACTIVE, MasterClientServerThrift
-        .stateFromThrift(com.cloudera.flume.conf.thrift.FlumeNodeState.ACTIVE));
-    assertEquals(StatusManager.NodeState.ERROR, MasterClientServerThrift
-        .stateFromThrift(com.cloudera.flume.conf.thrift.FlumeNodeState.ERROR));
-    assertEquals(StatusManager.NodeState.IDLE, MasterClientServerThrift
-        .stateFromThrift(com.cloudera.flume.conf.thrift.FlumeNodeState.IDLE));
+    assertEquals(
+        StatusManager.NodeState.HELLO,
+        MasterClientServerThrift
+            .stateFromThrift(com.cloudera.flume.conf.thrift.FlumeNodeState.HELLO));
+    assertEquals(
+        StatusManager.NodeState.ACTIVE,
+        MasterClientServerThrift
+            .stateFromThrift(com.cloudera.flume.conf.thrift.FlumeNodeState.ACTIVE));
+    assertEquals(
+        StatusManager.NodeState.ERROR,
+        MasterClientServerThrift
+            .stateFromThrift(com.cloudera.flume.conf.thrift.FlumeNodeState.ERROR));
+    assertEquals(
+        StatusManager.NodeState.IDLE,
+        MasterClientServerThrift
+            .stateFromThrift(com.cloudera.flume.conf.thrift.FlumeNodeState.IDLE));
     assertEquals(
         StatusManager.NodeState.CONFIGURING,
         MasterClientServerThrift
-        .stateFromThrift(com.cloudera.flume.conf.thrift.FlumeNodeState.CONFIGURING));
+            .stateFromThrift(com.cloudera.flume.conf.thrift.FlumeNodeState.CONFIGURING));
 
     assertEquals(com.cloudera.flume.conf.thrift.FlumeNodeState.HELLO,
         MasterClientServerThrift.stateToThrift(StatusManager.NodeState.HELLO));
@@ -359,29 +366,29 @@ public class TestRPCMechanisms {
         MasterClientServerThrift.stateToThrift(StatusManager.NodeState.IDLE));
     assertEquals(com.cloudera.flume.conf.thrift.FlumeNodeState.CONFIGURING,
         MasterClientServerThrift
-        .stateToThrift(StatusManager.NodeState.CONFIGURING));
+            .stateToThrift(StatusManager.NodeState.CONFIGURING));
 
     // AVRO NODE STATE
-    assertEquals(StatusManager.NodeState.HELLO, MasterClientServerAvro
-        .stateFromAvro(FlumeNodeState.HELLO));
-    assertEquals(StatusManager.NodeState.ACTIVE, MasterClientServerAvro
-        .stateFromAvro(FlumeNodeState.ACTIVE));
-    assertEquals(StatusManager.NodeState.ERROR, MasterClientServerAvro
-        .stateFromAvro(FlumeNodeState.ERROR));
-    assertEquals(StatusManager.NodeState.IDLE, MasterClientServerAvro
-        .stateFromAvro(FlumeNodeState.IDLE));
-    assertEquals(StatusManager.NodeState.CONFIGURING, MasterClientServerAvro
-        .stateFromAvro(FlumeNodeState.CONFIGURING));
+    assertEquals(StatusManager.NodeState.HELLO,
+        MasterClientServerAvro.stateFromAvro(FlumeNodeState.HELLO));
+    assertEquals(StatusManager.NodeState.ACTIVE,
+        MasterClientServerAvro.stateFromAvro(FlumeNodeState.ACTIVE));
+    assertEquals(StatusManager.NodeState.ERROR,
+        MasterClientServerAvro.stateFromAvro(FlumeNodeState.ERROR));
+    assertEquals(StatusManager.NodeState.IDLE,
+        MasterClientServerAvro.stateFromAvro(FlumeNodeState.IDLE));
+    assertEquals(StatusManager.NodeState.CONFIGURING,
+        MasterClientServerAvro.stateFromAvro(FlumeNodeState.CONFIGURING));
 
-    assertEquals(FlumeNodeState.HELLO, MasterClientServerAvro
-        .stateToAvro(StatusManager.NodeState.HELLO));
-    assertEquals(FlumeNodeState.ACTIVE, MasterClientServerAvro
-        .stateToAvro(StatusManager.NodeState.ACTIVE));
-    assertEquals(FlumeNodeState.ERROR, MasterClientServerAvro
-        .stateToAvro(StatusManager.NodeState.ERROR));
-    assertEquals(FlumeNodeState.IDLE, MasterClientServerAvro
-        .stateToAvro(StatusManager.NodeState.IDLE));
-    assertEquals(FlumeNodeState.CONFIGURING, MasterClientServerAvro
-        .stateToAvro(StatusManager.NodeState.CONFIGURING));
+    assertEquals(FlumeNodeState.HELLO,
+        MasterClientServerAvro.stateToAvro(StatusManager.NodeState.HELLO));
+    assertEquals(FlumeNodeState.ACTIVE,
+        MasterClientServerAvro.stateToAvro(StatusManager.NodeState.ACTIVE));
+    assertEquals(FlumeNodeState.ERROR,
+        MasterClientServerAvro.stateToAvro(StatusManager.NodeState.ERROR));
+    assertEquals(FlumeNodeState.IDLE,
+        MasterClientServerAvro.stateToAvro(StatusManager.NodeState.IDLE));
+    assertEquals(FlumeNodeState.CONFIGURING,
+        MasterClientServerAvro.stateToAvro(StatusManager.NodeState.CONFIGURING));
   }
 }

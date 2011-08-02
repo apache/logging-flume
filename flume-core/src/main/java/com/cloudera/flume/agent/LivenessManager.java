@@ -27,9 +27,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.durability.WALCompletionNotifier;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
-import com.cloudera.flume.conf.FlumeConfigData;
+import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.handlers.endtoend.AckListener.Empty;
 import com.cloudera.util.Clock;
 import com.google.common.base.Preconditions;
@@ -105,7 +106,13 @@ public class LivenessManager {
       // a logical node is not present? spawn it.
       if (nodesman.get(ln) == null) {
         try {
-          nodesman.spawn(ln, "null", "null");
+          final FlumeConfigData data = master.getConfig(ln);
+          if (data == null) {
+            LOG.debug("Logical Node '" + ln + "' not configured on master");
+            nodesman.spawn(ln, "null", "null");
+          } else {
+            nodesman.spawn(ln, data.getSourceConfig(), data.getSinkConfig());
+          }
         } catch (FlumeSpecException e) {
           LOG.error("This should never happen", e);
         }
@@ -113,8 +120,8 @@ public class LivenessManager {
     }
     // Update the Chokeinformation for the ChokeManager
 
-    FlumeNode.getInstance().getChokeManager().updateChokeLimitMap(
-        master.getChokeMap(physNode));
+    FlumeNode.getInstance().getChokeManager()
+        .updateChokeLimitMap(master.getChokeMap(physNode));
 
     nodesman.decommissionAllBut(lns);
   }
@@ -129,7 +136,7 @@ public class LivenessManager {
     for (LogicalNode nd : nodesman.getNodes()) {
       boolean needsCfg = master.heartbeat(nd);
       if (needsCfg) {
-        final FlumeConfigData data = master.getConfig(nd);
+        final FlumeConfigData data = master.getConfig(nd.getName());
         if (data == null) {
           LOG.debug("Logical Node '" + nd.getName()
               + "' not configured on master");

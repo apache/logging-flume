@@ -81,8 +81,8 @@ public class DirectMasterRPC implements MasterRPC {
   }
 
   @Override
-  public FlumeConfigData getConfig(LogicalNode n) throws IOException {
-    return master.getSpecMan().getConfig(n.getName());
+  public FlumeConfigData getConfig(String n) throws IOException {
+    return master.getSpecMan().getConfig(n);
   }
 
   @Override

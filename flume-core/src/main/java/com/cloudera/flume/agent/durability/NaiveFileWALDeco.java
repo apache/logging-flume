@@ -71,6 +71,7 @@ public class NaiveFileWALDeco extends EventSinkDecorator<EventSink> {
   CountDownLatch completed = null; // block close until subthread is completes
   CountDownLatch started = null; // blocks open until subthread is started
   volatile IOException lastExn = null;
+  volatile InterruptedException lastIntr = null;
 
   public NaiveFileWALDeco(Context ctx, EventSink s, final WALManager walman,
       RollTrigger t, AckListener al, long checkMs) {
@@ -247,11 +248,13 @@ public class NaiveFileWALDeco extends EventSinkDecorator<EventSink> {
 
       @Override
       public void fireError(Driver c, Exception ex) {
-        LOG.error("unexpected error with NaiveFileWALDeco", ex);
+        LOG.error("unexpected error with NaiveFileWALDeco", ex, ex);
         lastExn = (ex instanceof IOException) ? (IOException) ex
             : new IOException(ex);
         try {
+          LOG.warn("fireError source close");
           conn.getSource().close();
+          LOG.warn("fireError sink close");
           conn.getSink().close();
         } catch (IOException e) {
           LOG.error("Error closing", e);

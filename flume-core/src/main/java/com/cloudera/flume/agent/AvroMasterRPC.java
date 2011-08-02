@@ -128,13 +128,12 @@ public class AvroMasterRPC implements MasterRPC {
       throw new IOException(e.getMessage());
     }
   }
- 
-  public synchronized HashMap<String, Integer> getChokeMap (String physNode)
-  throws IOException {
+
+  public synchronized HashMap<String, Integer> getChokeMap(String physNode)
+      throws IOException {
     try {
       ensureInitialized();
-      Map<CharSequence, Integer> chokeMap = masterClient
-          .getChokeMap(physNode);
+      Map<CharSequence, Integer> chokeMap = masterClient.getChokeMap(physNode);
       HashMap<String, Integer> newMap = new HashMap<String, Integer>();
       for (CharSequence s : chokeMap.keySet()) {
         newMap.put(s.toString(), chokeMap.get(s));
@@ -146,11 +145,11 @@ public class AvroMasterRPC implements MasterRPC {
     }
 
   }
-  public synchronized FlumeConfigData getConfig(LogicalNode n)
-      throws IOException {
+
+  public synchronized FlumeConfigData getConfig(String n) throws IOException {
     try {
       ensureInitialized();
-      AvroFlumeConfigData config = masterClient.getConfig(n.getName());
+      AvroFlumeConfigData config = masterClient.getConfig(n);
       if (config == null) {
         // master has not config for node
         LOG.debug("Master does not have config data for me.");
@@ -180,8 +179,8 @@ public class AvroMasterRPC implements MasterRPC {
       ensureInitialized();
       NodeStatus status = n.getStatus();
       return masterClient.heartbeat(n.getName(), status.physicalNode,
-          status.host, MasterClientServerAvro.stateToAvro(status.state), n
-              .getConfigVersion());
+          status.host, MasterClientServerAvro.stateToAvro(status.state),
+          n.getConfigVersion());
     } catch (AvroRemoteException e) {
       LOG.debug("Avro error on " + toString(), e);
       throw new IOException(e.getMessage());
@@ -211,7 +210,8 @@ public class AvroMasterRPC implements MasterRPC {
       ensureInitialized();
       Map<CharSequence, AvroFlumeReport> flumeReports = new HashMap<CharSequence, AvroFlumeReport>();
       for (Entry<String, ReportEvent> e : reports.entrySet()) {
-        flumeReports.put(e.getKey(), AvroReportServer.reportToAvro(e.getValue()));
+        flumeReports.put(e.getKey(),
+            AvroReportServer.reportToAvro(e.getValue()));
 
       }
       masterClient.putReports(flumeReports);

@@ -27,14 +27,14 @@ import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.handlers.endtoend.AckListener;
+import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.util.FixedPeriodBackoff;
 import com.cloudera.util.Pair;
 import com.cloudera.util.ResultRetryable;
 import com.cloudera.util.RetryHarness;
-import com.cloudera.flume.reporter.ReportEvent;
 import com.google.common.base.Preconditions;
 
 /**
@@ -66,8 +66,6 @@ public class MultiMasterRPC implements MasterRPC {
     if (randomize) {
       Collections.shuffle(masterAddresses);
     }
-    Pair<String, Integer> masterAddr = conf.getMasterHeartbeatServersList()
-        .get(0);
     this.MAX_RETRIES = maxRetries;
     this.RETRY_PAUSE_MS = retryPauseMS;
     this.rpcProtocol = conf.getMasterHeartbeatRPC();
@@ -203,7 +201,7 @@ public class MultiMasterRPC implements MasterRPC {
     }
   }
 
-  public FlumeConfigData getConfig(final LogicalNode n) throws IOException {
+  public FlumeConfigData getConfig(final String n) throws IOException {
     RPCRetryable<FlumeConfigData> retry = new RPCRetryable<FlumeConfigData>() {
       public FlumeConfigData doRPC() throws IOException {
         return masterRPC.getConfig(n);

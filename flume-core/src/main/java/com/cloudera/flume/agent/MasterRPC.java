@@ -45,8 +45,7 @@ public interface MasterRPC {
    */
   public AckListener createAckListener();
 
-  // TODO (jon) FlumeConfigData is a thrift class and shouldn't be here
-  public FlumeConfigData getConfig(LogicalNode n) throws IOException;
+  public FlumeConfigData getConfig(String n) throws IOException;
 
   /**
    * This checks for an ack with a given ackid at the master

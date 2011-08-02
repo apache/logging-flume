@@ -131,7 +131,7 @@ public class RollSink extends EventSink.Base {
           try {
             Clock.sleep(checkLatencyMs);
           } catch (InterruptedException e) {
-            LOG.warn("TriggerThread interrupted");
+            LOG.debug("TriggerThread interrupted");
             doneLatch.countDown();
             return;
           }
@@ -139,7 +139,7 @@ public class RollSink extends EventSink.Base {
       } catch (InterruptedException e) {
         LOG.error("RollSink interrupted", e);
       }
-      LOG.info("TriggerThread shutdown");
+      LOG.debug("TriggerThread shutdown");
       doneLatch.countDown();
     }
   };

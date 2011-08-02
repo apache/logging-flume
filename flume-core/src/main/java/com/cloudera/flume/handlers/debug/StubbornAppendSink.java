@@ -73,7 +73,7 @@ public class StubbornAppendSink<S extends EventSink> extends
       appendSuccesses.incrementAndGet();
       return; // success case
     } catch (Exception ex) {
-      LOG.info(ex.getMessage());
+      LOG.info("append failed on event '{}' with error: {}", e, ex.getMessage());
       appendFails.incrementAndGet();
       super.close(); // close
 

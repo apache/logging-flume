@@ -118,6 +118,8 @@ public class WALAckManager implements Reportable {
         // TODO (jon) there is a potential inconsistency here if master comms
         // fail (but this is recovered when retry happens).
         LOG.error("Master connection exception", e);
+      } catch (RuntimeException re) {
+        LOG.warn("check ack was in a illegal state", re);
       }
     }
 
@@ -128,6 +130,8 @@ public class WALAckManager implements Reportable {
         LOG.debug("removed ack tag from agent's ack queue: " + k);
       } catch (IOException e) {
         LOG.error("problem notifying agent pending ack queue", e);
+      } catch (RuntimeException re) {
+        LOG.warn("check ack: runtime exception", re);
       }
     }
 

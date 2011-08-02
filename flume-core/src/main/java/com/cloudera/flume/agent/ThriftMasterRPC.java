@@ -133,12 +133,12 @@ public class ThriftMasterRPC implements MasterRPC {
     }
   }
   
-  public synchronized FlumeConfigData getConfig(LogicalNode n)
+  public synchronized FlumeConfigData getConfig(String n)
       throws IOException {
     try {
       ensureConnected();
       return MasterClientServerThrift.configFromThrift(
-          masterClient.getConfig(n.getName()));
+          masterClient.getConfig(n));
     } catch (TApplicationException e) {
       LOG.debug(e.getMessage()); // master has not config for node
       return null;

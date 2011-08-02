@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.log4j.Level;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,8 +34,12 @@ import org.slf4j.LoggerFactory;
 import com.cloudera.flume.agent.DirectMasterRPC;
 import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.agent.LivenessManager;
+import com.cloudera.flume.agent.LogicalNode;
 import com.cloudera.flume.agent.MasterRPC;
+import com.cloudera.flume.agent.durability.NaiveFileWALDeco;
 import com.cloudera.flume.conf.FlumeConfiguration;
+import com.cloudera.flume.core.Driver;
+import com.cloudera.flume.core.Driver.DriverState;
 import com.cloudera.flume.master.FlumeMaster;
 import com.cloudera.util.NetUtils;
 
@@ -52,6 +57,8 @@ public class TestDiskFailoverAgent {
     cfg = FlumeConfiguration.createTestableConfiguration();
     cfg.set(FlumeConfiguration.MASTER_STORE, "memory");
     cfg.set(FlumeConfiguration.WEBAPPS_PATH, "build/webapps");
+    org.apache.log4j.Logger.getLogger(NaiveFileWALDeco.class).setLevel(
+        Level.DEBUG);
   }
 
   @After
@@ -112,8 +119,8 @@ public class TestDiskFailoverAgent {
     }.start();
 
     // false means timeout, takes about 10 seconds to shutdown.
-    assertTrue("close call hung the heartbeat", done
-        .await(45, TimeUnit.SECONDS));
+    assertTrue("close call hung the heartbeat",
+        done.await(45, TimeUnit.SECONDS));
     assertEquals(1, node.getLogicalNodeManager().getNodes().size());
 
   }
@@ -145,7 +152,7 @@ public class TestDiskFailoverAgent {
           // update config node to something that will be interrupted.
           LOG.info("setting to invalid dfo host");
           master.getSpecMan().setConfig("node1", "flow", "asciisynth(0)",
-              "agentDFOSink(\"invalid\", 12345)");
+              "agentDFOSink(\"invalid\", 12346)");
           master.getSpecMan().addLogicalNode(NetUtils.localhost(), "node1");
           liveMan.heartbeatChecks();
           Thread.sleep(20000); // Takes 10s for dns to fail
@@ -170,8 +177,8 @@ public class TestDiskFailoverAgent {
     }.start();
 
     // false means timeout, takes about 10 seconds to shutdown.
-    assertTrue("close call hung the heartbeat", done
-        .await(45, TimeUnit.SECONDS));
+    assertTrue("close call hung the heartbeat",
+        done.await(45, TimeUnit.SECONDS));
     assertEquals(1, node.getLogicalNodeManager().getNodes().size());
 
   }
@@ -200,32 +207,32 @@ public class TestDiskFailoverAgent {
           // update config node to something that will be interrupted.
           LOG.info("setting to invalid dfo host");
           master.getSpecMan().setConfig("node1", "flow", "asciisynth(0)",
-              "agentE2ESink(\"localhost\", 12345)");
+              "agentE2ESink(\"localhost\", 12347)");
           master.getSpecMan().addLogicalNode(NetUtils.localhost(), "node1");
           liveMan.heartbeatChecks();
-          Thread.sleep(10000);
+          Thread.sleep(10000); // TODO replace with check that driver is running
 
           // update config node to something that will be interrupted.
           LOG.info("!!! decommissioning node on master");
           master.getSpecMan().removeLogicalNode("node1");
           liveMan.heartbeatChecks();
-          LOG.info("!!! node should be decommissioning on node");
 
         } catch (Exception e) {
-          LOG.error("closed caused an error out: " + e.getMessage(), e);
-          // Right now it takes about 10 seconds for the dfo deco to error out.
-          done.countDown();
+          LOG.error("Unexecpted closed caused an error out: {}",
+              e.getMessage(), e);
           return; // fail
         }
 
-        LOG.info("Did not expect clean close!?");
+        done.countDown();
+
+        LOG.info("Expected clean close.");
 
       }
     }.start();
 
     // false means timeout, takes about 10 seconds to shutdown.
-    assertTrue("close call hung the heartbeat", done
-        .await(60, TimeUnit.SECONDS));
+    assertTrue("close call hung the heartbeat",
+        done.await(60, TimeUnit.SECONDS));
 
   }
 
@@ -256,32 +263,39 @@ public class TestDiskFailoverAgent {
           // update config node to something that will be interrupted.
           LOG.info("setting to invalid dfo host");
           master.getSpecMan().setConfig("node1", "flow", "asciisynth(0)",
-              "agentE2ESink(\"localhost\", 12345)");
+              "agentE2ESink(\"localhost\", 12348)");
           master.getSpecMan().addLogicalNode(NetUtils.localhost(), "node1");
           liveMan.heartbeatChecks();
-          Thread.sleep(15000); // Takes 10s for dns to fail
+
+          LogicalNode n = node.getLogicalNodeManager().get("node1");
+          Driver d = n.getDriver();
+          assertTrue("Attempting to start driver timed out",
+              d.waitForState(DriverState.ACTIVE, 15000));
+
+          // Thread.sleep(15000); // Takes 10s for dns to fail
 
           // update config node to something that will be interrupted.
           LOG.info("!!! decommissioning node on master");
           master.getSpecMan().removeLogicalNode("node1");
           liveMan.heartbeatChecks();
-          LOG.info("!!! node should be decommissioning on node");
+          assertTrue("Attempting to start driver timed out",
+              d.waitForState(DriverState.IDLE, 15000));
 
         } catch (Exception e) {
           LOG.error("closed caused an error out: " + e.getMessage(), e);
           // Right now it takes about 10 seconds for the dfo deco to error out.
-          done.countDown();
           return; // fail
         }
 
-        LOG.info("Did not expect clean close? ");
+        done.countDown();
+        LOG.info("Expect clean close.");
 
       }
     }.start();
 
     // false means timeout, takes about 10 seconds to shutdown.
-    assertTrue("close call hung the heartbeat", done.await(120,
-        TimeUnit.SECONDS));
+    assertTrue("close call hung the heartbeat",
+        done.await(120, TimeUnit.SECONDS));
 
   }
 
