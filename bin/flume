@@ -270,8 +270,13 @@ elif [ "$CMD" = "unit4" ] ; then
   exec $FLUME org.junit.runner.JUnitCore "$@"
 elif [ "$CMD" = "dump" ] ; then
   # this has no error checking.  be careful!
+  if [ -z "$2" ] ; then
+    CONSOLE="console"
+  else
+    CONSOLE="console(\"$2\")"
+  fi
   exec java $JOPTS $UOPTS com.cloudera.flume.agent.FlumeNode \
-      -1 -s -r -n dump -c "dump: $1 | console; "
+      -1 -s -r -n dump -c "dump: $1 | $CONSOLE; "
 elif [ "$CMD" = "dumplog" ] ; then
   # this has no error checking.  be careful!
   exec java $JOPTS $UOPTS com.cloudera.flume.agent.FlumeNode \

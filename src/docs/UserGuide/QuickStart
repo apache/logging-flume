@@ -49,8 +49,9 @@ you installed from the tarball package, the command can be found in
 should already be in your path.
 
 TIP: The example above uses the `dump` command and `console` is the argument.  
-The command’s syntax is `flume dump <source>`. It prints data from +<source>+ 
-to the console.
+The command’s syntax is `flume dump <source> [<outputformat>]`. It prints data
+from +<source>+ to the console.  Optionally, an output format can be specified,
+otherwise the default text format is used.
 
 NOTE: Some flume configurations by default write to local disk.
 Initially the default is '/tmp/flume'.  This is good for initial
