@@ -38,6 +38,7 @@
 !include "StrFunc.nsh"
 !include "LogicLib.nsh"
 !include "FileFunc.nsh"
+!include "x64.nsh"
 ${StrRep}
 
 Var JavaHome
@@ -546,6 +547,15 @@ Function findJavaHome
   ReadRegStr $3 HKLM "SOFTWARE\JavaSoft\Java Runtime Environment\$2" "RuntimeLib"
 
   IfErrors 0 NoErrors
+  
+  ${If} ${RunningX64}
+    ReadRegStr $2 HKLM "SOFTWARE\Wow6432Node\JavaSoft\Java Runtime Environment" "CurrentVersion"
+    ReadRegStr $1 HKLM "SOFTWARE\Wow6432Node\JavaSoft\Java Runtime Environment\$2" "JavaHome"
+    ReadRegStr $3 HKLM "SOFTWARE\Wow6432Node\JavaSoft\Java Runtime Environment\$2" "RuntimeLib"
+  ${EndIf}
+  
+  IfErrors 0 NoErrors
+
   StrCpy $1 ""
 
 NoErrors:
