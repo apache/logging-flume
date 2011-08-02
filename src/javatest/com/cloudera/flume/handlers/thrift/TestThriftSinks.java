@@ -32,7 +32,6 @@ import org.junit.Test;
 
 import com.cloudera.flume.ExampleData;
 import com.cloudera.flume.conf.FlumeConfiguration;
-import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.core.EventUtil;
@@ -113,15 +112,15 @@ public class TestThriftSinks implements ExampleData {
     tes.close();
     assertEquals(25, cnt.getCount());
     ReportEvent rpt = tes.getReport();
-    assertEquals(4474, Attributes.readLong(rpt, ThriftEventSource.A_BYTES_IN)
+    assertEquals(4474, rpt.getLongMetric(ThriftEventSource.A_BYTES_IN)
         .longValue());
-    assertEquals(25, Attributes.readLong(rpt, ThriftEventSource.A_DEQUEUED)
+    assertEquals(25, rpt.getLongMetric(ThriftEventSource.A_DEQUEUED)
         .longValue());
-    assertEquals(25, Attributes.readLong(rpt, ThriftEventSource.A_ENQUEUED)
+    assertEquals(25, rpt.getLongMetric(ThriftEventSource.A_ENQUEUED)
         .longValue());
-    assertEquals(0, Attributes.readInt(rpt, ThriftEventSource.A_QUEUE_CAPACITY)
+    assertEquals(0, rpt.getLongMetric(ThriftEventSource.A_QUEUE_CAPACITY)
         .intValue());
-    assertEquals(1000, Attributes.readInt(rpt, ThriftEventSource.A_QUEUE_FREE)
+    assertEquals(1000, rpt.getLongMetric(ThriftEventSource.A_QUEUE_FREE)
         .intValue());
 
   }
@@ -277,16 +276,16 @@ public class TestThriftSinks implements ExampleData {
     assertEquals(25 * threads, cnt.getCount());
     ReportEvent rpt = tes.getReport();
     assertEquals(4475 * threads, sendByteSum.get());
-    assertEquals(4474 * threads, Attributes.readLong(rpt,
+    assertEquals(4474 * threads, rpt.getLongMetric(
         ThriftEventSource.A_BYTES_IN).longValue());
-    assertEquals(25 * threads, Attributes.readLong(rpt,
+    assertEquals(25 * threads, rpt.getLongMetric(
         ThriftEventSource.A_DEQUEUED).longValue());
-    assertEquals(25 * threads, Attributes.readLong(rpt,
+    assertEquals(25 * threads, rpt.getLongMetric(
         ThriftEventSource.A_ENQUEUED).longValue());
-    assertEquals(0, Attributes.readInt(rpt, ThriftEventSource.A_QUEUE_CAPACITY)
-        .intValue());
-    assertEquals(1000, Attributes.readInt(rpt, ThriftEventSource.A_QUEUE_FREE)
-        .intValue());
+    assertEquals(0, rpt.getLongMetric(ThriftEventSource.A_QUEUE_CAPACITY)
+        .longValue());
+    assertEquals(1000, rpt.getLongMetric(ThriftEventSource.A_QUEUE_FREE)
+        .longValue());
 
   }
 

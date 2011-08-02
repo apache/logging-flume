@@ -19,6 +19,8 @@
 package com.cloudera.flume.agent;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.TestCase;
@@ -42,6 +44,7 @@ import com.cloudera.flume.master.ConfigStore;
 import com.cloudera.flume.master.FlumeMaster;
 import com.cloudera.flume.master.MasterAckManager;
 import com.cloudera.flume.master.StatusManager;
+import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.util.Clock;
 
 /**
@@ -123,6 +126,10 @@ public class TestFlumeNode extends TestCase {
     FlumeConfigData cfg = new FlumeConfigData(0, "null", "null", 0, 0,
         "my-test-flow");
     node.loadConfig(cfg); // this will load the NextExnSource and a NullSink
+
+    Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();
+    node.getReports(reports);
+    assertEquals(2, reports.size()); // source + sink reports
 
     // sleep so that we open-append-fail-close, open-append-fail-close
     // multiple times.

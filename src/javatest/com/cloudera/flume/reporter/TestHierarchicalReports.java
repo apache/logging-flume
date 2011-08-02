@@ -17,6 +17,10 @@
  */
 package com.cloudera.flume.reporter;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import junit.framework.TestCase;
 
 import com.cloudera.flume.conf.Context;
@@ -34,21 +38,29 @@ public class TestHierarchicalReports extends TestCase {
     String s = "console";
     EventSink sink = FlumeBuilder.buildSink(new Context(), s);
 
-    ReportEvent rpt = sink.getReport();
-    String r = rpt.toText();
+    Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();
+    sink.getReports("X.", reports);
+    String r = "";
+    for (Entry<String, ReportEvent> e : reports.entrySet()) {
+      r += e.getKey() + " = " + e.getValue().toText();
+    }
     System.out.println(r);
 
-    assertTrue(r.contains(sink.getName()));
+    assertTrue(r.contains("X." + sink.getName()));
   }
 
   public void testOneDeco() throws FlumeSpecException {
     String s = "{ stubbornAppend => console}";
     EventSink sink = FlumeBuilder.buildSink(new Context(), s);
 
-    ReportEvent rpt = sink.getReport();
-    String r = rpt.toText();
+    Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();
+    sink.getReports("X.", reports);
+    String r = "";
+    for (Entry<String, ReportEvent> e : reports.entrySet()) {
+      r += e.getKey() + " = " + e.getValue().toText();
+    }
     System.out.println(r);
-    assertTrue(r.contains(sink.getName() + ".sink"));
+    assertTrue(r.contains("X." + sink.getName()));
   }
 
   public void testHierarchy() throws FlumeSpecException {
@@ -56,60 +68,82 @@ public class TestHierarchicalReports extends TestCase {
         "{ intervalSampler(5) => { stubbornAppend => { insistentOpen => console } } }";
     EventSink sink = FlumeBuilder.buildSink(new Context(), s);
 
-    ReportEvent rpt = sink.getReport();
-    String r = rpt.toText();
+    Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();
+    sink.getReports("X.", reports);
+    String r = "";
+    for (Entry<String, ReportEvent> e : reports.entrySet()) {
+      r += e.getKey() + " = " + e.getValue().toText();
+    }
     System.out.println(r);
-    assertTrue(r.contains(sink.getName() + ".sink"));
-    assertTrue(r.contains("IntervalSampler.StubbornAppend.InsistentOpen.sink"));
+    assertTrue(r.contains("X." + sink.getName()));
+    assertTrue(r.contains("X.IntervalSampler.StubbornAppend.InsistentOpen"));
   }
 
   public void testWalDeco() throws FlumeSpecException {
     String s =
         "{ ackedWriteAhead => { stubbornAppend => { insistentOpen => console } } }";
     EventSink sink = FlumeBuilder.buildSink(new Context(), s);
-    ReportEvent rpt = sink.getReport();
-    String r = rpt.toText();
+
+    Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();
+    sink.getReports("X.", reports);
+    String r = "";
+    for (Entry<String, ReportEvent> e : reports.entrySet()) {
+      r += e.getKey() + " = " + e.getValue().toText();
+    }
     System.out.println(r);
-    assertTrue(r.contains(sink.getName() + ".sink"));
-    assertTrue(r.contains("NaiveFileWAL.StubbornAppend.InsistentOpen.sink"));
+    assertTrue(r.contains("X." + sink.getName()));
+    assertTrue(r.contains("X.NaiveFileWAL.StubbornAppend.InsistentOpen"));
   }
 
   public void testWrappedWal() throws FlumeSpecException {
     String s =
         "{ insistentOpen => { ackedWriteAhead => { stubbornAppend => { insistentOpen => console } } } }";
     EventSink sink = FlumeBuilder.buildSink(new Context(), s);
-    ReportEvent rpt = sink.getReport();
-    String r = rpt.toText();
+
+    Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();
+    sink.getReports("X.", reports);
+    String r = "";
+    for (Entry<String, ReportEvent> e : reports.entrySet()) {
+      r += e.getKey() + " = " + e.getValue().toText();
+    }
     System.out.println(r);
-    assertTrue(r.contains(sink.getName() + ".sink"));
+    assertTrue(r.contains("X." + sink.getName()));
     assertTrue(r
-        .contains("InsistentOpen.NaiveFileWAL.StubbornAppend.InsistentOpen.sink"));
+        .contains("X.InsistentOpen.NaiveFileWAL.StubbornAppend.InsistentOpen"));
   }
 
   public void testFailover() throws FlumeSpecException {
     String s = " { ackedWriteAhead => < thrift ? console > } ";
     EventSink sink = FlumeBuilder.buildSink(new Context(), s);
 
-    ReportEvent rpt = sink.getReport();
-    String r = rpt.toText();
+    Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();
+    sink.getReports("X.", reports);
+    String r = "";
+    for (Entry<String, ReportEvent> e : reports.entrySet()) {
+      r += e.getKey() + " = " + e.getValue().toText();
+    }
     System.out.println(r);
-    assertTrue(r.contains(sink.getName() + ".sink"));
+    assertTrue(r.contains("X." + sink.getName()));
     assertTrue(r
-        .contains("NaiveFileWAL.BackoffFailover[primary].sink : ThriftEventSink"));
+        .contains("X.NaiveFileWAL.BackoffFailover.primary.ThriftEventSink"));
 
     assertTrue(r
-        .contains("NaiveFileWAL.BackoffFailover[backup].sink : ConsoleEventSink"));
+        .contains("X.NaiveFileWAL.BackoffFailover.backup.ConsoleEventSink"));
   }
 
   public void testMultiple() throws FlumeSpecException {
     String s = " { ackedWriteAhead => [ thrift , console ] } ";
     EventSink sink = FlumeBuilder.buildSink(new Context(), s);
 
-    ReportEvent rpt = sink.getReport();
-    String r = rpt.toText();
+    Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();
+    sink.getReports("X.", reports);
+    String r = "";
+    for (Entry<String, ReportEvent> e : reports.entrySet()) {
+      r += e.getKey() + " = " + e.getValue().toText();
+    }
     System.out.println(r);
-    assertTrue(r.contains(sink.getName() + ".sink"));
-    assertTrue(r.contains("NaiveFileWAL.Fanout[0].ThriftEventSink.sink"));
-    assertTrue(r.contains("NaiveFileWAL.Fanout[1].ConsoleEventSink.sink"));
+    assertTrue(r.contains("X." + sink.getName()));
+    assertTrue(r.contains("X.NaiveFileWAL.Fanout.0.ThriftEventSink"));
+    assertTrue(r.contains("X.NaiveFileWAL.Fanout.1.ConsoleEventSink"));
   }
 }

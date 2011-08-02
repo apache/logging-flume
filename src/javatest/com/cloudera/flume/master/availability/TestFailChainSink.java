@@ -33,7 +33,6 @@ import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
-import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.CompositeSink;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
@@ -82,7 +81,7 @@ public class TestFailChainSink {
     int[] ans = { 16, 8, 4, 2, 1 };
     for (int i = 0; i < ans.length; i++) {
       Reportable rptable = ReportManager.get().getReportable(names.get(i));
-      long val = Attributes.readLong(rptable.getReport(), names.get(i));
+      long val = rptable.getReport().getLongMetric(names.get(i));
       assertEquals(ans[i], val);
     }
 
@@ -128,7 +127,7 @@ public class TestFailChainSink {
     int[] ans = { 16, 8, 4, 2, 1 };
     for (int i = 0; i < ans.length; i++) {
       Reportable rptable = ReportManager.get().getReportable(names.get(i));
-      long val = Attributes.readLong(rptable.getReport(), names.get(i));
+      long val = rptable.getReport().getLongMetric(names.get(i));
       System.out.println("report " + names.get(i) + " : " + val);
       System.out.flush();
       assertEquals(ans[i], val);

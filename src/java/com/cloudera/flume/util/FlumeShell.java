@@ -104,8 +104,10 @@ public class FlumeShell {
   }
 
   static {
-    commandMap.put("connect", new CommandDescription("host[:port="
-        + FlumeConfiguration.get().getConfigAdminPort() + "]", false, 1));
+    commandMap.put("connect", new CommandDescription("host[:adminport="
+        + FlumeConfiguration.get().getConfigAdminPort()
+        + "[:reportport=" + FlumeConfiguration.get().getConfigReportPort()
+        + "]]", false, 1));
     commandMap.put("getnodestatus", new CommandDescription("", true, 0));
     commandMap.put("quit", new CommandDescription("", false, 0));
     commandMap.put("getconfigs", new CommandDescription("", true, 0));
@@ -207,7 +209,8 @@ public class FlumeShell {
 
   protected boolean connected = false;
   protected String curhost = "";
-  protected int curport = 0;
+  protected int curAPort = 0;
+  protected int curRPort = 0;
 
   protected void disconnect() {
     System.out.println("Disconnected!");
@@ -223,8 +226,9 @@ public class FlumeShell {
     System.out.println("only work when you are connected to a master node)");
     System.out.println("");
     System.out.println("You may connect to a master node by typing: ");
-    System.out.println("    connect host[:port="
-        + FlumeConfiguration.get().getConfigAdminPort() + "]");
+    System.out.println("    connect host[:adminport="
+        + FlumeConfiguration.get().getConfigAdminPort() + "[:reportport="
+        + FlumeConfiguration.get().getConfigReportPort() + "]]");
     System.out.println("");
   }
 
@@ -433,6 +437,50 @@ public class FlumeShell {
     }
   }
 
+  private static int parsePort(String inp, int defaultPort) {
+    int port = -1;
+    try {
+      port = Integer.parseInt(inp);
+    } catch (NumberFormatException nfe) {
+      System.out.println("Cannot parse port number '" + inp
+          + "', defaulting to " + defaultPort);
+      return defaultPort;
+    }
+
+    if (port < 0 || port > (0xffff)) {
+      System.out.println("Port number out of range: " + port
+          + ", defaulting to " + defaultPort);
+      return defaultPort;
+    }
+    return port;
+  }
+
+  private static int parseAdminPort(String arg) {
+    // determine the admin port
+    int aPortDefault = FlumeConfiguration.get().getConfigAdminPort();
+    int aPort;
+    if (arg != null) {
+      aPort = parsePort(arg, aPortDefault);
+    } else {
+      aPort = aPortDefault;
+      System.out.println("Using default admin port: " + aPort);
+    }
+    return aPort;
+  }
+  
+  private static int parseReportPort(String arg) {
+    // determine the report server port
+    int rPortDefault = FlumeConfiguration.get().getConfigReportPort();
+    int rPort;
+    if (arg != null) {
+      rPort = parsePort(arg, rPortDefault);
+    } else {
+      rPort = rPortDefault;
+      System.out.println("Using default report port: " + rPort);
+    }
+    return rPort;
+  }
+  
   /**
    * This either returns 0 for success, a value <0 for failure, and any return
    * >0 is a command id received from the master.
@@ -549,23 +597,11 @@ public class FlumeShell {
       for (String s : servers) {
         String[] parts = s.split(":");
         try {
-          int port = FlumeConfiguration.get().getConfigAdminPort();
-          if (parts.length > 1) {
-            try {
-              port = Integer.parseInt(parts[1]);
-            } catch (NumberFormatException nfe) {
-              System.out.println("Cannot parse port number '" + parts[1]
-                  + "', defaulting to " + port);
-            }
-
-            if (port < 0 || port > (0xffff)) {
-              System.out.println("Port number out of range: " + port
-                  + ", defaulting to " + port);
-            }
-          } else {
-            System.out.println("Using default port: " + port);
-          }
-          connect(parts[0], port);
+          // determine the admin port
+          int aPort = parseAdminPort(parts.length >= 2 ? parts[1] : null);
+          // determine the report server port
+          int rPort = parseReportPort(parts.length >= 3 ? parts[2] : null);
+          connect(parts[0], aPort, rPort);
           return 0;
         } catch (TTransportException t) {
           System.out.println("Connection to " + s + " failed");
@@ -752,7 +788,8 @@ public class FlumeShell {
     }
 
     return "[flume "
-        + (connected ? (curhost + ":" + curport) : "(disconnected)") + "] ";
+        + (connected ? (curhost + ":" + curAPort + ":" + curRPort)
+            : "(disconnected)") + "] ";
   }
 
   private Client connectClient(String host, int port) throws TTransportException {
@@ -770,18 +807,19 @@ public class FlumeShell {
     return new FlumeReportServer.Client(protocol);
   }
 
-  protected void connect(String host, int port) throws TTransportException {
+  protected void connect(String host, int aPort, int rPort)
+    throws TTransportException {
     connected = false;
-    System.out.println("Connecting to Flume master " + host + ":" + port
-        + "...");
+    System.out.println("Connecting to Flume master " + host + ":" + aPort
+        + ":" + rPort + "...");
 
-    client = connectClient(host, port);
+    client = connectClient(host, aPort);
     // use default for now
-    reportClient = connectReportClient(host,
-        FlumeConfiguration.DEFAULT_REPORT_SERVER_PORT);
+    reportClient = connectReportClient(host, rPort);
     
     curhost = host;
-    curport = port;
+    curAPort = aPort;
+    curRPort = rPort;
     connected = true;
   }
 
@@ -808,7 +846,7 @@ public class FlumeShell {
     CommandLine cmd = null;
     Options options = new Options();
     options.addOption("?", false, "Command line usage");
-    options.addOption("c", true, "Connect to master:port");
+    options.addOption("c", true, "Connect to master:adminport:reportport");
     options.addOption("e", true, "Run a single command");
     options.addOption("s", true, "Run a FlumeShell script");
     options.addOption("q", false,
@@ -839,21 +877,12 @@ public class FlumeShell {
     if (cmd.hasOption("c")) {
       String[] addr = cmd.getOptionValue("c").split(":");
 
-      int port = FlumeConfiguration.get().getConfigAdminPort();
-      if (addr.length > 1) {
-        try {
-          port = Integer.parseInt(addr[1]);
-        } catch (NumberFormatException nfe) {
-          System.err.println("Cannot parse port number '" + addr[1]
-              + "', defaulting to " + port);
-        }
+      // determine the admin port
+      int aPort = parseAdminPort(addr.length >= 2 ? addr[1] : null);
+      // determine the report server port
+      int rPort = parseReportPort(addr.length >= 3 ? addr[2] : null);
 
-        if (port < 0 || port > (0xffff)) {
-          System.err.println("Port number out of range: " + port
-              + ", defaulting to " + port);
-        }
-      }
-      shell.connect(addr[0], port);
+      shell.connect(addr[0], aPort, rPort);
     }
 
     if (cmd.hasOption("e")) {

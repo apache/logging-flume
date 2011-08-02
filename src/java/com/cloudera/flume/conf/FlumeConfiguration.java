@@ -677,6 +677,10 @@ public class FlumeConfiguration extends Configuration {
     return getInt(CONFIG_ADMIN_PORT, DEFAULT_ADMIN_PORT);
   }
 
+  public int getConfigReportPort() {
+    return getInt(REPORT_SERVER_PORT, DEFAULT_REPORT_SERVER_PORT);
+  }
+
   public String getMasterSavefile() {
     return get(MASTER_SAVEFILE, "conf/current.flume");
   }
