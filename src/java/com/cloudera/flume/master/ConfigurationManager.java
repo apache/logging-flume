@@ -85,8 +85,10 @@ public interface ConfigurationManager extends Reportable {
   /**
    * Associates a new logical node to the specified physical node. If no
    * physical node exists, it is created as well.
+   *
+   * @return true upon success, false otherwise.
    */
-  public void addLogicalNode(String physNode, String logicNode);
+  public boolean addLogicalNode(String physNode, String logicNode);
 
   /**
    * This removes the logical node data flow configuration from both the flow
