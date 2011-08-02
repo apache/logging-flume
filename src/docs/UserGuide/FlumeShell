@@ -197,4 +197,12 @@ to another physical node using the +map+ command.
 physical nodes.  A logical node can be reassigned to another physical node 
 using the +map+ command.
 
++purge+ _logicalnode_ :: This command removes an entry from the
+logical node status table.  It is useful for removing DECOMMISSIONED
+or LOST nodes.
+
++purgeAll+ :: This command removes *all* entries from the logical node
+status table.  It is useful for removing DECOMMISSIONED or LOST nodes.
+Note that even nodes that are in ACTIVE/IDLE/ERROR states will be
+removed but added again after their next heartbeat.
 

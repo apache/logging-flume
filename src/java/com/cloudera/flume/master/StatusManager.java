@@ -196,4 +196,24 @@ public class StatusManager implements Reportable {
       return statuses.get(node);
     }
   }
+
+  /**
+   * Purge a status entry for the specified logical node
+   */
+  public boolean purge(String node) {
+    NodeStatus val;
+    synchronized (statuses) {
+      val = statuses.remove(node);
+    }
+    return val != null;
+  }
+
+  /**
+   * Purge all status entries from the logical node status table.
+   */
+  public void purgeAll() {
+    synchronized (statuses) {
+      statuses.clear();
+    }
+  }
 }

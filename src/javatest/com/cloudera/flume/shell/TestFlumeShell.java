@@ -19,6 +19,7 @@
 package com.cloudera.flume.shell;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -57,7 +58,8 @@ import com.cloudera.util.Clock;
  */
 public class TestFlumeShell extends SetupMasterTestEnv {
 
-  public static final Logger LOG = LoggerFactory.getLogger(TestFlumeShell.class);
+  public static final Logger LOG = LoggerFactory
+      .getLogger(TestFlumeShell.class);
 
   /**
    * Start a master, connect to it via the shell, and then issue a
@@ -466,4 +468,49 @@ public class TestFlumeShell extends SetupMasterTestEnv {
 
   }
 
+  /**
+   * Start a master, connect to it via the shell, fake a heartbeat, purge the
+   * heartbeat, fake a few more heartbeats, purge all the heartbeats
+   */
+  @Test
+  public void testPurge() throws InterruptedException, TTransportException,
+      IOException {
+    assertEquals(0, flumeMaster.getSpecMan().getAllConfigs().size());
+
+    FlumeShell sh = new FlumeShell();
+    sh
+        .executeLine("connect localhost:"
+            + FlumeConfiguration.DEFAULT_ADMIN_PORT);
+
+    flumeMaster.getStatMan().updateHeartbeatStatus("foo", "foo", "foo",
+        NodeState.HELLO, 1);
+    assertNotNull(flumeMaster.getStatMan().getStatus("foo"));
+
+    // no exception when called with node that doesn't exist.
+    sh.executeLine("exec purge wackadoodle");
+
+    // successful case
+    sh.executeLine("exec purge foo");
+    Clock.sleep(250);
+
+    NodeStatus stat = flumeMaster.getStatMan().getStatus("foo");
+    assertNull(stat);
+
+    flumeMaster.getStatMan().updateHeartbeatStatus("foo", "foo", "foo",
+        NodeState.HELLO, 1);
+    flumeMaster.getStatMan().updateHeartbeatStatus("bar", "bar", "bar",
+        NodeState.HELLO, 1);
+    flumeMaster.getStatMan().updateHeartbeatStatus("baz", "baz", "baz",
+        NodeState.HELLO, 1);
+
+    assertNotNull(flumeMaster.getStatMan().getStatus("foo"));
+    assertNotNull(flumeMaster.getStatMan().getStatus("bar"));
+    assertNotNull(flumeMaster.getStatMan().getStatus("baz"));
+    sh.executeLine("exec purgeAll");
+    Clock.sleep(250);
+
+    assertNull(flumeMaster.getStatMan().getStatus("foo"));
+    assertNull(flumeMaster.getStatMan().getStatus("foo"));
+    assertNull(flumeMaster.getStatMan().getStatus("foo"));
+  }
 }

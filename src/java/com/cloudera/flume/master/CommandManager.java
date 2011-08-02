@@ -35,6 +35,8 @@ import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.master.commands.CreateLogicalNodeForm;
 import com.cloudera.flume.master.commands.DecommissionLogicalNodeForm;
+import com.cloudera.flume.master.commands.PurgeAllCommand;
+import com.cloudera.flume.master.commands.PurgeCommand;
 import com.cloudera.flume.master.commands.RefreshAllCommand;
 import com.cloudera.flume.master.commands.RefreshCommand;
 import com.cloudera.flume.master.commands.SetChokeLimitForm;
@@ -97,6 +99,8 @@ public class CommandManager implements Reportable {
       { "unconfig", UnconfigCommand.buildExecable() },
       { "refresh", RefreshCommand.buildExecable() },
       { "refreshAll", RefreshAllCommand.buildExecable() },
+      { "purge", PurgeCommand.buildExecable() },
+      { "purgeAll", PurgeAllCommand.buildExecable() },
       { "updateAll", UpdateAllCommand.buildExecable() },
       { "save", SaveConfigCommand.buildExecable() },
       { "load", LoadConfigCommand.buildExecable() },
@@ -106,7 +110,7 @@ public class CommandManager implements Reportable {
       { "unmap", UnmapLogicalNodeForm.buildExecable() },
       { "unmapAll", UnmapLogicalNodeForm.buildUnmapAllExecable() },
       { "setChokeLimit", SetChokeLimitForm.buildExecable() }
-  
+
   };
 
   public CommandManager() {
