@@ -127,7 +127,7 @@ public class TestChokeDecos {
     for (int i = 0; i < numChokes; i++) {
       // different chokes are created with their ids coming from the range "0",
       // "1", "2", "3"..."numChokes"
-      tchokeArray[i] = new TestChoke<EventSink>(null, Integer.toString(i));
+      tchokeArray[i] = new TestChoke<EventSink>(new NullSink(), Integer.toString(i));
     }
 
     // one driver for each choke
@@ -209,7 +209,7 @@ public class TestChokeDecos {
       // different chokes are created with their ids coming from the range
       // "0",
       // "1", "2", "3"..."numFakeDrivers"
-      tchokeArray[i] = new TestChoke<EventSink>(null, Integer.toString(i));
+      tchokeArray[i] = new TestChoke<EventSink>(new NullSink(), Integer.toString(i));
     }
 
     // As we are assigning the chokes to drivers at random, there is a chance

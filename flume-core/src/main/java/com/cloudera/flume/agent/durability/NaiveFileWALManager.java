@@ -64,6 +64,9 @@ import com.google.common.base.Preconditions;
  * 
  * When there are error conditions, IllegalStateExceptions,
  * IllegalArgumentExceptions and NullPointerExceptions can be thrown.
+ * 
+ * Limitation: this WAL cannot be shared between logical nodes -- each logical
+ * node currently needs to have its own WAL!
  */
 public class NaiveFileWALManager implements WALManager {
   static final Logger LOG = LoggerFactory.getLogger(NaiveFileWALManager.class);

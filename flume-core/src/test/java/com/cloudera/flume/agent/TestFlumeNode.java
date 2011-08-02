@@ -24,9 +24,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -42,6 +40,7 @@ import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SourceFactory;
+import com.cloudera.flume.core.Driver.DriverState;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSource;
@@ -96,8 +95,8 @@ public class TestFlumeNode {
     }
     ;
 
-    node.openLoadNode(new CloseExnSource(), new NullSink());
-    node.openLoadNode(new CloseExnSource(), new NullSink());
+    node.loadNodeDriver(new CloseExnSource(), new NullSink());
+    node.loadNodeDriver(new CloseExnSource(), new NullSink());
   }
 
   @Test
@@ -148,13 +147,11 @@ public class TestFlumeNode {
         "my-test-flow");
     node.loadConfig(cfg); // this will load the NextExnSource and a NullSink
 
-    Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();
-    node.getReports(reports);
-    assertEquals(3, reports.size()); // source + sink reports
-
-    // sleep so that we open-append-fail-close, open-append-fail-close
-    // multiple times.
-    Clock.sleep(1000); // TODO (jon) replace with countdownlatch
+    ReportEvent rpt = node.getMetrics();
+    LOG.info(rpt.toString());
+    // This node should exit in error state since next eventually will only
+    // error out with exceptions.
+    assertTrue(node.getDriver().waitForState(DriverState.ERROR, 1000));
 
     System.out.printf("next called %d times", count.get());
     System.out.flush();
@@ -185,7 +182,7 @@ public class TestFlumeNode {
 
     // there should be no exception thrown in this thread. (errors are thrown by
     // logical node and handled at that level)
-    node.openLoadNode(new OpenExnSource(), new NullSink());
+    node.loadNodeDriver(new OpenExnSource(), new NullSink());
   }
 
   /**
@@ -221,14 +218,11 @@ public class TestFlumeNode {
 
     LogicalNode node = new LogicalNode(new Context(), "test");
     IsOpenSource prev = new IsOpenSource();
-    node.openLoadNode(prev, new NullSink());
-    node.getSource().next(); // force lazy source to open
+    node.startNodeDriver(prev, new NullSink(), 2000); // timeout after 2s
     for (int i = 0; i < 10; i++) {
-
       assertTrue(prev.isOpen);
       IsOpenSource cur = new IsOpenSource();
-      node.openLoadNode(cur, new NullSink());
-      node.getSource().next(); // force lazy source to open.
+      node.startNodeDriver(cur, new NullSink(), 2000);// timeout after 2s
       assertFalse(prev.isOpen);
       assertTrue(cur.isOpen);
       prev = cur;
@@ -247,10 +241,10 @@ public class TestFlumeNode {
       InterruptedException {
     LogicalNode node = new LogicalNode(new Context(), "test");
     EventSource prev = new SyslogTcpSourceThreads(6789);
-    node.openLoadNode(prev, new NullSink());
+    node.loadNodeDriver(prev, new NullSink());
     for (int i = 0; i < 20; i++) {
       EventSource cur = new SyslogTcpSourceThreads(6789);
-      node.openLoadNode(cur, new NullSink());
+      node.loadNodeDriver(cur, new NullSink());
       prev = cur;
 
     }
@@ -328,8 +322,8 @@ public class TestFlumeNode {
     node.getAddDFOManager("foo").open();
     node.getAddWALManager("foo").open();
 
-    File defaultDir = new File(new File(cfg.getAgentLogsDir()), node
-        .getPhysicalNodeName());
+    File defaultDir = new File(new File(cfg.getAgentLogsDir()),
+        node.getPhysicalNodeName());
     File walDir = new File(defaultDir, NaiveFileWALManager.WRITINGDIR);
     assertTrue(walDir.isDirectory());
 
@@ -337,4 +331,5 @@ public class TestFlumeNode {
     assertTrue(dfoDir.isDirectory());
     FileUtil.rmr(tmpdir);
   }
+
 }

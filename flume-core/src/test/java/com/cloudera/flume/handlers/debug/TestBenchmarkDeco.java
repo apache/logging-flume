@@ -17,6 +17,8 @@
  */
 package com.cloudera.flume.handlers.debug;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 
@@ -28,6 +30,7 @@ import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.ReportTestingContext;
+import com.cloudera.flume.core.Driver.DriverState;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
@@ -51,12 +54,8 @@ public class TestBenchmarkDeco implements ExampleData {
     EventSink snk4 = new InMemoryDecorator<EventSink>(snk3);
 
     DirectDriver connect = new DirectDriver(src, snk4);
-    src.open();
-    snk4.open();
     connect.start();
-    connect.join(Long.MAX_VALUE);
-    src.close();
-    snk4.close();
+    assertTrue(connect.join(5000));
     snk2.getMetrics().toText(new OutputStreamWriter(System.err));
   }
 
@@ -68,12 +67,8 @@ public class TestBenchmarkDeco implements ExampleData {
     EventSink snk3 = new BenchmarkInjectDecorator<EventSink>(snk2);
 
     DirectDriver connect = new DirectDriver(src, snk3);
-    src.open();
-    snk3.open();
     connect.start();
-    connect.join(Long.MAX_VALUE);
-    src.close();
-    snk3.close();
+    assertTrue(connect.join(5000));
     snk2.getMetrics().toText(new OutputStreamWriter(System.err));
   }
 
@@ -107,7 +102,8 @@ public class TestBenchmarkDeco implements ExampleData {
    * @throws InterruptedException
    */
   @Test
-  public void testReportSink() throws FlumeSpecException, IOException, InterruptedException {
+  public void testReportSink() throws FlumeSpecException, IOException,
+      InterruptedException {
     String spec = "{benchinject(\"foo\") => {benchreport(\"report\", \"[ console , counter(\\\"test\\\") ]\")  => null } }";
     EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), spec);
     snk.open();

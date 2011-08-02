@@ -124,9 +124,7 @@ public class ThriftEventSource extends EventSource.Base {
 
   @Override
   synchronized public void open() throws IOException {
-
     try {
-
       ThriftFlumeEventServer.Processor processor = new ThriftFlumeEventServer.Processor(
           new ThriftFlumeEventServerImpl(new EventSink.Base() {
             @Override
@@ -148,6 +146,7 @@ public class ThriftEventSource extends EventSource.Base {
       this.closed = false;
 
     } catch (TTransportException e) {
+      server = null;
       throw new IOException("Failed to create event server " + e.getMessage(),
           e);
     }
@@ -174,9 +173,8 @@ public class ThriftEventSource extends EventSource.Base {
       if (Clock.unixTime() - start > maxSleep) {
         if (sz == q.size()) {
           // no progress made, timeout and close it.
-          LOG
-              .warn("Close timed out due to no progress.  Closing despite having "
-                  + q.size() + " values still enqueued");
+          LOG.warn("Close timed out due to no progress.  Closing despite having "
+              + q.size() + " values still enqueued");
           return;
         }
         // there was some progress, go another cycle.
@@ -203,14 +201,10 @@ public class ThriftEventSource extends EventSource.Base {
       Event e = null;
       // block until an event shows up
       while ((e = q.poll(100, TimeUnit.MILLISECONDS)) == null) {
-
-        synchronized (this) {
-          // or bail out if closed
-          if (closed) {
-            return null;
-          }
+        // or bail out if closed
+        if (closed) {
+          return null;
         }
-
       }
       // return the event
       synchronized (this) {

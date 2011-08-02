@@ -19,12 +19,16 @@ package com.cloudera.flume.conf;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
+
 import org.junit.Test;
-import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import com.cloudera.flume.ExampleData;
+import com.cloudera.flume.core.Driver.DriverState;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
@@ -37,6 +41,7 @@ import com.cloudera.flume.handlers.avro.AvroEventSource;
 import com.cloudera.flume.handlers.thrift.ThriftEventSink;
 import com.cloudera.flume.handlers.thrift.ThriftEventSource;
 import com.cloudera.flume.reporter.aggregator.CounterSink;
+import com.cloudera.util.Clock;
 
 /**
  * This test sink and source generating factories.
@@ -161,41 +166,39 @@ public class TestFactories implements ExampleData {
    * This seems to fail about 1 out of 10 times. There is a timing issues due to
    * the multi-threading.
    */
-
   private void testRpc(String rpcType) throws IOException,
       InterruptedException, FlumeSpecException {
     FlumeConfiguration.get().set(FlumeConfiguration.EVENT_RPC_TYPE, rpcType);
-    Log.info("Testing a more complicated pipeline with a " + rpcType
+    LOG.info("Testing a more complicated pipeline with a " + rpcType
         + " network connection in the middle");
     Context ctx = LogicalNodeContext.testingContext();
     EventSource rpcSrc = srcfact.getSource(ctx, "rpcSource", "31337");
     EventSink rpcSink = fact.getSink(ctx, "rpcSink", "0.0.0.0", "31337");
-    // Rpcsrc needs to be started before the Rpcsink can connect to it.
-    rpcSrc.open();
-    rpcSink.open();
-
-    Thread.sleep(100); // need some time to open the connector.
 
     EventSink counter = fact.getSink(ctx, "counter", "count");
     EventSource txtsrc = srcfact.getSource(ctx, "asciisynth", "25", "100");
-    counter.open();
-    txtsrc.open();
 
     DirectDriver svrconn = new DirectDriver(rpcSrc, counter);
     svrconn.start();
+    assertTrue("rpc server took too long to start",
+        svrconn.waitForAtLeastState(DriverState.ACTIVE, 1000));
 
+    // start and send the data
     DirectDriver cliconn = new DirectDriver(txtsrc, rpcSink);
     cliconn.start();
-
-    cliconn.join(Long.MAX_VALUE);
-    Thread.sleep(250);
+    // the avro version sometimes takes a while to start jetty
+    assertTrue("rpc client took too long to connect",
+        cliconn.waitForAtLeastState(DriverState.ACTIVE, 10000));
+    assertTrue("rpc client took too long to close cleanly",
+        cliconn.waitForAtLeastState(DriverState.IDLE, 2500));
+    Clock.sleep(2000); // data could be stuck in tcp buffer
 
     svrconn.stop();
-    rpcSink.close();
-    rpcSrc.close();
+    rpcSrc.close(); // force rpc close to make sure next test does not port
+                    // conflict.
 
-    counter.close();
-    txtsrc.close();
+    assertTrue("rpc server took too long to close cleanly",
+        svrconn.waitForAtLeastState(DriverState.IDLE, 2000));
 
     LOG.info("read " + ((CounterSink) counter).getCount() + " lines");
     assertEquals(LINES, ((CounterSink) counter).getCount());

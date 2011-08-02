@@ -109,7 +109,7 @@ public class LogicalNodeManager implements Reportable {
     }
 
     try {
-      nd.openLoadNode(src, snk);
+      nd.loadNodeDriver(src, snk);
     } catch (InterruptedException e) {
       // TODO verify this is reasonable behavior
       LOG.error("spawn was interrupted", e);

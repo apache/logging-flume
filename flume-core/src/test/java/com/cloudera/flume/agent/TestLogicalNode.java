@@ -30,16 +30,16 @@ import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
-import com.cloudera.flume.conf.FlumeSpecException;
-import com.cloudera.flume.conf.SinkFactoryImpl;
-import com.cloudera.flume.conf.SourceFactoryImpl;
-import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
-import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.conf.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
+import com.cloudera.flume.conf.SinkFactoryImpl;
+import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
+import com.cloudera.flume.conf.SourceFactoryImpl;
+import com.cloudera.flume.core.Driver.DriverState;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
-import com.cloudera.flume.master.StatusManager.NodeState;
 import com.cloudera.util.Clock;
 
 public class TestLogicalNode {
@@ -107,7 +107,7 @@ public class TestLogicalNode {
     LogicalNode node = drive("fail(\"null\")", "null");
 
     // Check that state is failed.
-    assertEquals(NodeState.ERROR, node.getStatus().state);
+    assertEquals(DriverState.ERROR, node.getDriver().getState());
   }
 
   /**
@@ -132,7 +132,7 @@ public class TestLogicalNode {
 
     FlumeBuilder.setSourceFactory(srcfact);
     LogicalNode node = drive("failOpen", "null"); // Check that state is failed.
-    assertEquals(NodeState.ERROR, node.getStatus().state);
+    assertEquals(DriverState.ERROR, node.getDriver().getState());
 
   }
 
@@ -157,7 +157,7 @@ public class TestLogicalNode {
 
     LogicalNode node = drive("failNext", "null");
     // Check that state is failed.
-    assertEquals(NodeState.ERROR, node.getStatus().state);
+    assertEquals(DriverState.ERROR, node.getDriver().getState());
 
   }
 
@@ -182,7 +182,7 @@ public class TestLogicalNode {
 
     LogicalNode node = drive("failClose", "null");
     // Check don't care if close throws exn
-    assertEquals(NodeState.ERROR, node.getStatus().state);
+    assertEquals(DriverState.ERROR, node.getDriver().getState());
 
   }
 
@@ -206,7 +206,7 @@ public class TestLogicalNode {
 
     LogicalNode node = drive("asciisynth(10)", "failOpen");
     // Check that state is failed.
-    assertEquals(NodeState.ERROR, node.getStatus().state);
+    assertEquals(DriverState.ERROR, node.getDriver().getState());
   }
 
   @Test
@@ -230,7 +230,7 @@ public class TestLogicalNode {
     LogicalNode node = drive("asciisynth(10)", "failAppend");
 
     // Check that state is failed.
-    assertEquals(NodeState.ERROR, node.getStatus().state);
+    assertEquals(DriverState.ERROR, node.getDriver().getState());
   }
 
   @Test
@@ -253,7 +253,7 @@ public class TestLogicalNode {
 
     LogicalNode node = drive("asciisynth(10)", "failClose");
     // Check that state is failed.
-    assertEquals(NodeState.ERROR, node.getStatus().state);
+    assertEquals(DriverState.ERROR, node.getDriver().getState());
 
   }
 }

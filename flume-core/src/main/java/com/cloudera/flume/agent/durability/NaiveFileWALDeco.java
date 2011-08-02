@@ -218,15 +218,12 @@ public class NaiveFileWALDeco extends EventSinkDecorator<EventSink> {
     LOG.debug("Opening NaiveFileWALDeco");
     input = walman.getAckingSink(ctx, trigger, queuer, checkMs);
 
+    walman.open();
+    walman.recover();
+
     drainSource = walman.getEventSource();
 
     // TODO (jon) catch exceptions here and close them before rethrowing
-
-    // When this is open the sink is open from the callers point of view and we
-    // can return.
-    drainSource.open();
-
-    drainSink.open();
     input.open();
 
     started = new CountDownLatch(1);

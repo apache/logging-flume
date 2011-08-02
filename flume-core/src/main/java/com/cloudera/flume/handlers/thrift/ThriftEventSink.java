@@ -109,10 +109,10 @@ public class ThriftEventSink extends EventSink.Base {
       TProtocol protocol = new TBinaryProtocol(transport);
       transport.open();
       client = new Client(protocol);
-      LOG.info("ThriftEventSink open on port " + port + " opened");
+      LOG.info("ThriftEventSink to {}:{} opened", host, port);
 
     } catch (TTransportException e) {
-      throw new IOException("Failed to open thrift event sink at " + host + ":"
+      throw new IOException("Failed to open thrift event sink to " + host + ":"
           + port + " : " + e.getMessage());
     }
   }

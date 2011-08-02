@@ -29,25 +29,25 @@ import com.cloudera.flume.core.DriverListener;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
-import com.cloudera.flume.master.StatusManager.NodeState;
+import com.cloudera.util.Clock;
 import com.google.common.base.Preconditions;
 
 /**
  * This connector hooks a source to a sink and allow this connection to be
  * stopped and started.
  * 
- * This assumes that sources and sinks are opened before the start() method is
- * called
+ * This assumes that sources and sinks are closed and need to be opened.
  */
 public class DirectDriver extends Driver {
 
   static final Logger LOG = LoggerFactory.getLogger(DirectDriver.class);
 
-  EventSink sink;
-  EventSource source;
+  EventSink sink;// Guarded by object lock
+  EventSource source; // Guarded by object lock
   PumperThread thd;
   Exception error = null;
-  NodeState state = NodeState.HELLO;
+  DriverState state = DriverState.HELLO; // Guarded by stateSignal
+  Object stateSignal = new Object(); // object do lock/notify on.
   final List<DriverListener> listeners = new ArrayList<DriverListener>();
 
   public DirectDriver(EventSource src, EventSink snk) {
@@ -79,34 +79,69 @@ public class DirectDriver extends Driver {
         source = DirectDriver.this.source;
       }
       try {
-        stopped = false;
-        error = null;
-        state = NodeState.ACTIVE;
-        LOG.debug("Starting driver " + DirectDriver.this);
-        fireStart();
+        try {
+          synchronized (stateSignal) {
+            state = DriverState.OPENING;
+            stateSignal.notifyAll();
+          }
+          source.open();
+          sink.open();
 
-        while (!stopped) {
-          Event e = source.next();
-          if (e == null)
-            break;
+          synchronized (stateSignal) {
+            stopped = false;
+            error = null;
+            state = DriverState.ACTIVE;
+            stateSignal.notifyAll();
+          }
 
-          sink.append(e);
+          LOG.debug("Starting driver " + DirectDriver.this);
+          fireStart();
+
+          while (!stopped) {
+            Event e = source.next();
+            if (e == null)
+              break;
+
+            sink.append(e);
+          }
+
+          synchronized (stateSignal) {
+            state = DriverState.CLOSING;
+            stateSignal.notifyAll();
+          }
+          source.close();
+          sink.close();
+        } catch (InterruptedException ie) {
+          // Catches interrupted exceptions. This indicates that the driver was
+          // shutdown (not an error condition).
+          synchronized (stateSignal) {
+            stopped = true;
+            state = DriverState.CLOSING;
+            stateSignal.notifyAll();
+          }
+          source.close();
+          sink.close();
         }
       } catch (Exception e1) {
         // Catches all exceptions or throwables. This is a separate thread
-        error = e1;
-        stopped = true;
-
-        LOG.error("Driving src/sink failed! " + DirectDriver.this + " because "
-            + e1.getMessage(), e1);
         fireError(e1);
-        state = NodeState.ERROR;
+        synchronized (stateSignal) {
+          error = e1;
+          stopped = true;
+          LOG.error("Driving src/sink failed! " + DirectDriver.this
+              + " because " + e1.getMessage(), e1);
+          state = DriverState.ERROR;
+          stateSignal.notifyAll();
+        }
         return;
       }
-
-      LOG.debug("Driver completed: " + DirectDriver.this);
       fireStop();
-      state = NodeState.IDLE;
+
+      synchronized (stateSignal) {
+        LOG.debug("Driver completed: " + DirectDriver.this);
+        stopped = true;
+        state = DriverState.IDLE;
+      }
     }
   }
 
@@ -169,7 +204,7 @@ public class DirectDriver extends Driver {
   }
 
   @Override
-  public NodeState getState() {
+  public DriverState getState() {
     return state;
   }
 
@@ -222,4 +257,71 @@ public class DirectDriver extends Driver {
   public String toString() {
     return source.getClass().getSimpleName() + " | " + sink.getName();
   }
+
+  /**
+   * Wait up to millis ms for driver state to reach specified state. return true
+   * if reached, return false if not.
+   */
+  @Override
+  public boolean waitForState(DriverState state, long millis)
+      throws InterruptedException {
+    long now = Clock.unixTime();
+    long deadline = now + millis;
+    synchronized (stateSignal) {
+
+      //
+      while (deadline > now) {
+        if (this.state.equals(state)) {
+          return true;
+        }
+        // still wrong state? wait more.
+        now = Clock.unixTime();
+        long waitMs = Math.max(0, deadline - now); // guarentee non neg
+        if (waitMs == 0) {
+          return false;
+        }
+        stateSignal.wait(waitMs);
+      }
+      // give up and return false
+      return false;
+    }
+  }
+
+  /**
+   * Wait up to millis ms for driver state to reach at least the specified state
+   * where HELLO < OPENING < ACTIVE < CLOSING < IDLE < ERROR
+   * 
+   * return true if reached, return false if not.
+   */
+  @Override
+  public boolean waitForAtLeastState(DriverState state, long millis)
+      throws InterruptedException {
+    long now = Clock.unixTime();
+    long deadline = now + millis;
+    synchronized (stateSignal) {
+      DriverState curState = this.state;
+      while (deadline > now) {
+        curState = this.state;
+        if (state.ordinal() == curState.ordinal()) {
+          return true;
+        }
+        if (state.ordinal() <= curState.ordinal()) {
+          LOG.warn("Expected " + state + " but already in state " + curState);
+          return true;
+        }
+
+        // still wrong state? wait more.
+        now = Clock.unixTime();
+        long waitMs = Math.max(0, deadline - now); // guarentee non neg
+        if (waitMs == 0) {
+          continue;
+        }
+        stateSignal.wait(waitMs);
+      }
+      // give up and return false
+      LOG.error("Expected " + state + " but timed out in state " + curState);
+      return false;
+    }
+  }
+
 }

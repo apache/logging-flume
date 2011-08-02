@@ -136,7 +136,6 @@ class WALSource extends EventSource.Base {
   @Override
   public void open() throws IOException {
     walMan.open(); // create dirs
-    walMan.recover();
   }
 
 }

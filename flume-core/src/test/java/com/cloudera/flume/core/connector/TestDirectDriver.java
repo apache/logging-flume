@@ -72,12 +72,10 @@ public class TestDirectDriver {
     final InsistentOpenDecorator<EventSink> insistent = new InsistentOpenDecorator<EventSink>(
         fail4eva, bop);
     final EventSink sink = new LazyOpenDecorator<EventSink>(insistent);
-    sink.open();
 
     // create an endless stream of data
     final EventSource source = new LazyOpenSource<EventSource>(
         new NoNlASCIISynthSource(0, 100));
-    source.open();
 
     DirectDriver driver = new DirectDriver(source, sink);
     driver.start();
@@ -116,7 +114,6 @@ public class TestDirectDriver {
     final EventSink insistent = new InsistentAppendDecorator<EventSink>(
         fail4eva, bop);
     final EventSink sink = new LazyOpenDecorator<EventSink>(insistent);
-    sink.open();
 
     // create an endless stream of data
     final EventSource source = new EventSource.Base() {
@@ -164,7 +161,6 @@ public class TestDirectDriver {
         return sink;
       }
     };
-    roll.open();
 
     // create an endless stream of data
     final EventSource source = new EventSource.Base() {
@@ -185,7 +181,6 @@ public class TestDirectDriver {
 
     driver.cancel();
     assertTrue(driver.join(1000)); // closed this time.
-
   }
 
   /**
@@ -214,12 +209,10 @@ public class TestDirectDriver {
     final InsistentAppendDecorator<EventSink> append = new InsistentAppendDecorator<EventSink>(
         stubborn, new CappedExponentialBackoff(100, 100000));
     final EventSink sink = new LazyOpenDecorator<EventSink>(append);
-    sink.open();
 
     // create an endless stream of data
     final EventSource source = new LazyOpenSource<EventSource>(
         new NoNlASCIISynthSource(0, 100));
-    source.open();
 
     DirectDriver driver = new DirectDriver(source, sink);
     driver.start();

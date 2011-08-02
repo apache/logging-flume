@@ -134,6 +134,5 @@ public class DiskFailoverSource extends EventSource.Base {
   @Override
   public void open() throws IOException {
     dfMan.open(); // create dirs
-    dfMan.recover();
   }
 }

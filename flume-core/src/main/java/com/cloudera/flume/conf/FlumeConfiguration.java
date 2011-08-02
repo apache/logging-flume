@@ -614,8 +614,8 @@ public class FlumeConfiguration extends Configuration {
       }
     }
     // defaulting to Thrift with a polite warning
-    LOG.warn("event.rpc.type incorrectly defined, should be either"
-        + " \"THRIFT\" or \"AVRO\".  Defaulting to \"THRIFT\"");
+    LOG.warn("flume.event.rpc = '{}' incorrectly defined, should be either"
+        + " \"THRIFT\" or \"AVRO\".  Defaulting to \"THRIFT\"", entered);
     return RPC_TYPE_THRIFT;
   }
 

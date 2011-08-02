@@ -179,14 +179,16 @@ public class DiskFailoverDeco extends EventSinkDecorator<EventSink> {
 
     Preconditions.checkNotNull(sink,
         "Attepted to open a null DiskFailoverDeco subsink");
+    Preconditions.checkState(!isOpen.get(), "EventSink Decorator was not open");
+
     LOG.debug("Opening DiskFailoverDeco");
     input = dfoMan.getEventSink(ctx, trigger);
     drainSource = dfoMan.getEventSource();
 
-    // TODO (jon) catch exceptions here and close them before rethrowing
-    drainSource.open(); // before anything can be recovered
+    dfoMan.open();
+    dfoMan.recover();
 
-    super.open();
+    // TODO (jon) catch exceptions here and close them before rethrowing
     input.open();
 
     drainStarted = new CountDownLatch(1);
@@ -231,6 +233,8 @@ public class DiskFailoverDeco extends EventSinkDecorator<EventSink> {
       throw new IOException(e);
     }
     LOG.debug("Opened DiskFailoverDeco");
+    isOpen.set(true);
+
   }
 
   public static SinkDecoBuilder builder() {
