@@ -202,7 +202,7 @@ public class TestFactories implements ExampleData {
 
     LOG.info("read " + ((CounterSink) counter).getCount() + " lines");
     assertEquals(LINES, ((CounterSink) counter).getCount());
-    assertNull(cliconn.getError());
-    assertNull(svrconn.getError());
+    assertNull(cliconn.getException());
+    assertNull(svrconn.getException());
   }
 }

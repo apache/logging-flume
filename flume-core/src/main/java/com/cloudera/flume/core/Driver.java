@@ -108,8 +108,4 @@ abstract public class Driver {
    */
   abstract public DriverState getState();
 
-  abstract public void registerListener(DriverListener listener);
-
-  abstract public void deregisterListener(DriverListener listener);
-
 }

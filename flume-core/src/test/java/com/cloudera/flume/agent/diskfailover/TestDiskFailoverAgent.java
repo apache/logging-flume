@@ -18,11 +18,11 @@
 package com.cloudera.flume.agent.diskfailover;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Level;
 import org.junit.After;
@@ -38,35 +38,44 @@ import com.cloudera.flume.agent.LogicalNode;
 import com.cloudera.flume.agent.MasterRPC;
 import com.cloudera.flume.agent.durability.NaiveFileWALDeco;
 import com.cloudera.flume.conf.FlumeConfiguration;
+import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.core.Driver;
 import com.cloudera.flume.core.Driver.DriverState;
 import com.cloudera.flume.master.FlumeMaster;
+import com.cloudera.util.FileUtil;
 import com.cloudera.util.NetUtils;
 
+// TODO on failures, these tests leak data to the flume-${user} dir.
 public class TestDiskFailoverAgent {
   public static final Logger LOG = LoggerFactory
       .getLogger(TestDiskFailoverAgent.class);
 
   FlumeMaster master = null;
-
   FlumeConfiguration cfg;
+  File tmpDir;
 
   @Before
   public void setCfg() throws IOException {
+    LOG.info("============================================================");
+
+    tmpDir = FileUtil.mktempdir();
+
     // Isolate tests by only using simple cfg store
     cfg = FlumeConfiguration.createTestableConfiguration();
     cfg.set(FlumeConfiguration.MASTER_STORE, "memory");
     cfg.set(FlumeConfiguration.WEBAPPS_PATH, "build/webapps");
+    cfg.set(FlumeConfiguration.AGENT_LOG_DIR_NEW, tmpDir.getAbsolutePath());
     org.apache.log4j.Logger.getLogger(NaiveFileWALDeco.class).setLevel(
         Level.DEBUG);
   }
 
   @After
-  public void shutdownMaster() {
+  public void shutdownMaster() throws IOException {
     if (master != null) {
       master.shutdown();
       master = null;
     }
+    FileUtil.rmr(tmpDir);
   }
 
   /**
@@ -75,54 +84,46 @@ public class TestDiskFailoverAgent {
    * and then simulate the node doing a heartbeat to a master which tells that
    * that node is decomissioned. As part of decomissioning, the act of closing
    * the dfo agent should not hang the node.
+   * 
+   * @throws IOException
+   * @throws FlumeSpecException
    */
   @Test
-  public void testActiveDFOClose() throws InterruptedException {
+  public void testActiveDFOClose() throws InterruptedException, IOException,
+      FlumeSpecException {
+    final String lnode = "DFOSimple";
     final FlumeMaster master = new FlumeMaster(cfg);
     MasterRPC rpc = new DirectMasterRPC(master);
 
     final FlumeNode node = new FlumeNode(rpc, false, false);
     // should have nothing.
     assertEquals(0, node.getLogicalNodeManager().getNodes().size());
+    LivenessManager liveMan = node.getLivenessManager();
+    // update config node to something that will be interrupted.
+    LOG.info("setting to invalid dfo host");
+    master.getSpecMan().setConfig(lnode, "flow", "asciisynth(0)",
+        "agentDFOSink(\"localhost\", 12345)");
+    master.getSpecMan().addLogicalNode(NetUtils.localhost(), lnode);
+    liveMan.heartbeatChecks();
 
-    final CountDownLatch done = new CountDownLatch(1);
-    new Thread("ActiveDFOClose") {
-      public void run() {
-        LivenessManager liveMan = node.getLivenessManager();
-        try {
-          // update config node to something that will be interrupted.
-          LOG.info("setting to invalid dfo host");
-          master.getSpecMan().setConfig("node1", "flow", "asciisynth(0)",
-              "agentDFOSink(\"localhost\", 12345)");
-          master.getSpecMan().addLogicalNode(NetUtils.localhost(), "node1");
-          liveMan.heartbeatChecks();
-          Thread.sleep(10000);
+    LogicalNode n = node.getLogicalNodeManager().get(lnode);
+    Driver d = n.getDriver();
+    assertTrue("Attempting to start driver timed out",
+        d.waitForAtLeastState(DriverState.ACTIVE, 10000));
 
-          // update config node to something that will be interrupted.
-          LOG.info("!!! decommissioning node on master");
-          master.getSpecMan().removeLogicalNode("node1");
+    // update config node to something that will be interrupted.
+    LOG.info("!!! decommissioning node on master");
+    master.getSpecMan().removeLogicalNode(lnode);
 
-          // as node do heartbeat and update due to decommission
-          liveMan.heartbeatChecks();
-          LOG.info("!!! node should be decommissioning on node");
+    // as node do heartbeat and update due to decommission
+    liveMan.heartbeatChecks();
+    LOG.info("!!! node should be decommissioning on node");
+    assertTrue("Attempting to decommission driver timed out",
+        d.waitForAtLeastState(DriverState.IDLE, 10000));
 
-        } catch (Exception e) {
-          LOG.info("closed caused an error out: " + e.getMessage(), e);
-          // Right now it takes about 10 seconds for the dfo deco to error out.
-          done.countDown();
-          return; // expected fail on purpose.
-        }
-
-        LOG.info("Clean close.");
-        done.countDown();
-      }
-    }.start();
-
-    // false means timeout, takes about 10 seconds to shutdown.
-    assertTrue("close call hung the heartbeat",
-        done.await(45, TimeUnit.SECONDS));
-    assertEquals(1, node.getLogicalNodeManager().getNodes().size());
-
+    assertEquals("Only expected default logical node", 1, node
+        .getLogicalNodeManager().getNodes().size());
+    assertNull(node.getLogicalNodeManager().get(lnode));
   }
 
   /**
@@ -134,53 +135,50 @@ public class TestDiskFailoverAgent {
    * 
    * This test differs from the previous by having an bad dns name/request that
    * will eventually fail (ubuntu/java1.6 takes about 10s)
+   * 
+   * @throws IOException
+   * @throws FlumeSpecException
    */
   @Test
-  public void testActiveDFOCloseBadDNS() throws InterruptedException {
+  public void testActiveDFOCloseBadDNS() throws InterruptedException,
+      IOException, FlumeSpecException {
+    final String lnode = "DFOBadDNS";
     final FlumeMaster master = new FlumeMaster(cfg);
     MasterRPC rpc = new DirectMasterRPC(master);
 
     final FlumeNode node = new FlumeNode(rpc, false, false);
     // should have nothing.
     assertEquals(0, node.getLogicalNodeManager().getNodes().size());
+    LivenessManager liveMan = node.getLivenessManager();
+    // update config node to something that will be interrupted.
+    LOG.info("setting to invalid dfo host");
+    master.getSpecMan().setConfig("node2", "flow", "asciisynth(0)",
+        "agentDFOSink(\"invalid\", 12346)");
+    master.getSpecMan().addLogicalNode(NetUtils.localhost(), lnode);
+    liveMan.heartbeatChecks();
 
-    final CountDownLatch done = new CountDownLatch(1);
-    new Thread() {
-      public void run() {
-        LivenessManager liveMan = node.getLivenessManager();
-        try {
-          // update config node to something that will be interrupted.
-          LOG.info("setting to invalid dfo host");
-          master.getSpecMan().setConfig("node1", "flow", "asciisynth(0)",
-              "agentDFOSink(\"invalid\", 12346)");
-          master.getSpecMan().addLogicalNode(NetUtils.localhost(), "node1");
-          liveMan.heartbeatChecks();
-          Thread.sleep(20000); // Takes 10s for dns to fail
+    LogicalNode n = node.getLogicalNodeManager().get(lnode);
+    Driver d = n.getDriver();
+    assertTrue("Attempting to start driver timed out",
+        d.waitForAtLeastState(DriverState.ACTIVE, 20000));
 
-          // update config node to something that will be interrupted.
-          LOG.info("!!! decommissioning node on master");
-          master.getSpecMan().removeLogicalNode("node1");
-          liveMan.heartbeatChecks();
-          LOG.info("!!! logical node should be decommissioning on node");
+    // update config node to something that will be interrupted.
+    LOG.info("!!! decommissioning node on master");
+    master.getSpecMan().removeLogicalNode(lnode);
 
-        } catch (Exception e) {
-          LOG.error("closed caused an error out: " + e.getMessage(), e);
-          // Right now it takes about 10 seconds for the dfo deco to error out.
-          done.countDown();
-          return; // fail
-        }
-
-        LOG.info("Clean close.");
-        done.countDown();
-
-      }
-    }.start();
+    liveMan.heartbeatChecks();
+    LOG.info("!!! logical node should be decommissioning on node");
+    assertTrue("Attempting to start driver timed out",
+        d.waitForAtLeastState(DriverState.IDLE, 20000));
+    LOG.info("Clean close.");
 
     // false means timeout, takes about 10 seconds to shutdown.
-    assertTrue("close call hung the heartbeat",
-        done.await(45, TimeUnit.SECONDS));
-    assertEquals(1, node.getLogicalNodeManager().getNodes().size());
+    assertTrue("Attempting to decommission driver timed out",
+        d.waitForAtLeastState(DriverState.IDLE, 10000));
 
+    assertEquals("Only expected default logical node", 1, node
+        .getLogicalNodeManager().getNodes().size());
+    assertNull(node.getLogicalNodeManager().get(lnode));
   }
 
   /**
@@ -191,7 +189,9 @@ public class TestDiskFailoverAgent {
    * the E2E agent should not hang the node.
    */
   @Test
-  public void testActiveE2EClose() throws InterruptedException {
+  public void testActiveE2ECloseSimple() throws InterruptedException,
+      IOException, FlumeSpecException {
+    final String lnode = "e2eSimple";
     final FlumeMaster master = new FlumeMaster(cfg);
     MasterRPC rpc = new DirectMasterRPC(master);
 
@@ -199,41 +199,26 @@ public class TestDiskFailoverAgent {
     // should have nothing.
     assertEquals(0, node.getLogicalNodeManager().getNodes().size());
 
-    final CountDownLatch done = new CountDownLatch(1);
-    new Thread("TestDiskFailoverAgent") {
-      public void run() {
-        LivenessManager liveMan = node.getLivenessManager();
-        try {
-          // update config node to something that will be interrupted.
-          LOG.info("setting to invalid dfo host");
-          master.getSpecMan().setConfig("node1", "flow", "asciisynth(0)",
-              "agentE2ESink(\"localhost\", 12347)");
-          master.getSpecMan().addLogicalNode(NetUtils.localhost(), "node1");
-          liveMan.heartbeatChecks();
-          Thread.sleep(10000); // TODO replace with check that driver is running
+    LivenessManager liveMan = node.getLivenessManager();
+    // update config node to something that will be interrupted.
+    LOG.info("setting to invalid e2e host");
+    master.getSpecMan().setConfig(lnode, "flow", "asciisynth(0)",
+        "agentE2ESink(\"localhost\", 12347)");
+    master.getSpecMan().addLogicalNode(NetUtils.localhost(), lnode);
+    liveMan.heartbeatChecks();
 
-          // update config node to something that will be interrupted.
-          LOG.info("!!! decommissioning node on master");
-          master.getSpecMan().removeLogicalNode("node1");
-          liveMan.heartbeatChecks();
+    // TODO It we only wait for opening state, this test can hang
+    LogicalNode n = node.getLogicalNodeManager().get(lnode);
+    Driver d = n.getDriver();
+    assertTrue("Attempting to start driver timed out",
+        d.waitForAtLeastState(DriverState.ACTIVE, 10000));
 
-        } catch (Exception e) {
-          LOG.error("Unexecpted closed caused an error out: {}",
-              e.getMessage(), e);
-          return; // fail
-        }
-
-        done.countDown();
-
-        LOG.info("Expected clean close.");
-
-      }
-    }.start();
-
-    // false means timeout, takes about 10 seconds to shutdown.
-    assertTrue("close call hung the heartbeat",
-        done.await(60, TimeUnit.SECONDS));
-
+    // update config node to something that will be interrupted.
+    LOG.info("!!! decommissioning node on master");
+    master.getSpecMan().removeLogicalNode(lnode);
+    liveMan.heartbeatChecks();
+    assertTrue("Attempting to stop driver timed out",
+        d.waitForAtLeastState(DriverState.ERROR, 15000));
   }
 
   /**
@@ -245,9 +230,14 @@ public class TestDiskFailoverAgent {
    * 
    * This test differs from the previous by having an bad dns name/request that
    * will eventually fail (ubuntu/java1.6 takes about 10s)
+   * 
+   * @throws IOException
+   * @throws FlumeSpecException
    */
   @Test
-  public void testActiveE2ECloseBadDNS() throws InterruptedException {
+  public void testActiveE2ECloseBadDNS() throws InterruptedException,
+      IOException, FlumeSpecException {
+    final String lnode = "e2eBadDNS";
     final FlumeMaster master = new FlumeMaster(cfg);
     MasterRPC rpc = new DirectMasterRPC(master);
 
@@ -255,48 +245,26 @@ public class TestDiskFailoverAgent {
     // should have nothing.
     assertEquals(0, node.getLogicalNodeManager().getNodes().size());
 
-    final CountDownLatch done = new CountDownLatch(1);
-    new Thread() {
-      public void run() {
-        LivenessManager liveMan = node.getLivenessManager();
-        try {
-          // update config node to something that will be interrupted.
-          LOG.info("setting to invalid dfo host");
-          master.getSpecMan().setConfig("node1", "flow", "asciisynth(0)",
-              "agentE2ESink(\"localhost\", 12348)");
-          master.getSpecMan().addLogicalNode(NetUtils.localhost(), "node1");
-          liveMan.heartbeatChecks();
+    LivenessManager liveMan = node.getLivenessManager();
+    // update config node to something that will be interrupted.
+    LOG.info("setting to invalid e2e host");
+    master.getSpecMan().setConfig(lnode, "flow", "asciisynth(0)",
+        "agentE2ESink(\"localhost\", 12348)");
+    master.getSpecMan().addLogicalNode(NetUtils.localhost(), lnode);
+    liveMan.heartbeatChecks();
 
-          LogicalNode n = node.getLogicalNodeManager().get("node1");
-          Driver d = n.getDriver();
-          assertTrue("Attempting to start driver timed out",
-              d.waitForState(DriverState.ACTIVE, 15000));
+    // TODO It we only wait for opening state, this test can hang
+    LogicalNode n = node.getLogicalNodeManager().get(lnode);
+    Driver d = n.getDriver();
+    assertTrue("Attempting to start driver timed out",
+        d.waitForAtLeastState(DriverState.ACTIVE, 15000));
 
-          // Thread.sleep(15000); // Takes 10s for dns to fail
-
-          // update config node to something that will be interrupted.
-          LOG.info("!!! decommissioning node on master");
-          master.getSpecMan().removeLogicalNode("node1");
-          liveMan.heartbeatChecks();
-          assertTrue("Attempting to start driver timed out",
-              d.waitForState(DriverState.IDLE, 15000));
-
-        } catch (Exception e) {
-          LOG.error("closed caused an error out: " + e.getMessage(), e);
-          // Right now it takes about 10 seconds for the dfo deco to error out.
-          return; // fail
-        }
-
-        done.countDown();
-        LOG.info("Expect clean close.");
-
-      }
-    }.start();
-
-    // false means timeout, takes about 10 seconds to shutdown.
-    assertTrue("close call hung the heartbeat",
-        done.await(120, TimeUnit.SECONDS));
-
+    // update config node to something that will be interrupted.
+    LOG.info("!!! decommissioning node on master");
+    master.getSpecMan().removeLogicalNode(lnode);
+    liveMan.heartbeatChecks();
+    assertTrue("Attempting to stop driver timed out",
+        d.waitForAtLeastState(DriverState.ERROR, 15000));
   }
 
 }

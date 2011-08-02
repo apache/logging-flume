@@ -35,7 +35,6 @@ import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.core.Driver;
 import com.cloudera.flume.core.Driver.DriverState;
-import com.cloudera.flume.core.DriverListener;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.core.connector.DirectDriver;
@@ -78,7 +77,7 @@ import com.cloudera.util.NetUtils;
 public class LogicalNode implements Reportable {
   static final Logger LOG = LoggerFactory.getLogger(LogicalNode.class);
 
-  private FlumeConfigData lastGoodCfg;
+  private FlumeConfigData lastGoodCfg = null;
   private Driver driver; // the connector that pumps data from src to snk
   private EventSink snk; // current sink and source instances.
   private EventSource src;
@@ -122,28 +121,10 @@ public class LogicalNode implements Reportable {
   private void ensureClosedSourceSink(EventSource newSrc, EventSink newSnk)
       throws IOException, InterruptedException {
     if (newSnk != null) {
-      if (snk != null) {
-        try {
-          snk.close();
-        } catch (Exception e) {
-          nodeMsg = "old sink close failed (this smells funny) "
-              + e.getMessage();
-          LOG.warn("old sink close failed (this smells funny)" + e, e);
-        }
-      }
       snk = newSnk;
     }
 
     if (newSrc != null) {
-      if (src != null) {
-        try {
-          src.close();
-        } catch (Exception e) {
-          nodeMsg = "old src close failed (but I don't care if it does) "
-              + e.getMessage();
-          LOG.warn(nodeMsg, e);
-        }
-      }
       src = newSrc;
     }
   }
@@ -201,74 +182,6 @@ public class LogicalNode implements Reportable {
     // this will be replaceable with multi-threaded queueing versions or other
     // mechanisms
     driver = new DirectDriver("logicalNode " + nodeName, src, snk);
-    driver.registerListener(new DriverListener() {
-      @Override
-      public void fireError(Driver conn, Exception ex) {
-        LOG.info("Connector " + nodeName + " exited with error "
-            + ex.getMessage());
-        try {
-          conn.getSource().close();
-        } catch (IOException e) {
-          LOG.error("Error closing " + nodeName + " source: " + e.getMessage());
-        } catch (InterruptedException e) {
-          // TODO reconsider this.
-          LOG.error("fire error interrupted", e);
-        }
-
-        try {
-          conn.getSink().close();
-        } catch (IOException e) {
-          LOG.error("Error closing " + nodeName + " sink: " + e.getMessage());
-        } catch (InterruptedException e) {
-          // TODO reconsider this.
-          LOG.error("fire error interrupted", e);
-        }
-
-        nodeMsg = "Error: Connector on " + nodeName + " closed " + conn;
-        LOG.error("Driver on " + nodeName + " closed " + conn + " because of "
-            + ex.getMessage(), ex);
-
-        state.state = NodeState.ERROR;
-      }
-
-      @Override
-      public void fireStarted(Driver c) {
-        LOG.info("Connector started: " + c);
-        nodeMsg = "Connector started: " + c;
-      }
-
-      @Override
-      public void fireStopped(Driver c) {
-
-        NodeState next = NodeState.IDLE;
-
-        try {
-          c.getSource().close();
-        } catch (IOException e) {
-          LOG.error(nodeName + ": error closing: " + e.getMessage());
-          next = NodeState.ERROR;
-        } catch (InterruptedException e) {
-          // TODO reconsider this.
-          LOG.error("fire error interrupted", e);
-        }
-
-        try {
-          c.getSink().close();
-        } catch (IOException e) {
-          LOG.error(nodeName + ": error closing: " + e.getMessage(), e);
-          next = NodeState.ERROR;
-        } catch (InterruptedException e) {
-          // TODO reconsider this.
-          LOG.error("stopping was interrupted", e);
-          next = NodeState.ERROR;
-        }
-
-        LOG.info(nodeName + ": Connector stopped: " + c);
-        nodeMsg = nodeName + ": Connector stopped: " + c;
-        state.state = next;
-      }
-
-    });
     this.state.state = NodeState.ACTIVE;
     driver.start();
     reconfigures.incrementAndGet();
@@ -350,24 +263,26 @@ public class LogicalNode implements Reportable {
    * 
    * True if successful, false if failed
    */
-  public boolean checkConfig(FlumeConfigData data) {
+  synchronized public boolean checkConfig(FlumeConfigData data) {
 
     if (data == null) {
       return false;
     }
 
     // check if config is too old or the same as current
-    if (data.getSourceVersion() <= lastGoodCfg.getSourceVersion()) {
-      if (data.getSourceVersion() < lastGoodCfg.getSourceVersion()) {
-        // retrieved configuration is older!?
-        LOG.warn("reject because config older than the current. ");
+    if (lastGoodCfg != null) {
+      if (data.getSourceVersion() <= lastGoodCfg.getSourceVersion()) {
+        if (data.getSourceVersion() < lastGoodCfg.getSourceVersion()) {
+          // retrieved configuration is older!?
+          LOG.warn("reject because config older than the current. ");
+          return false;
+        }
+
+        LOG.debug("do nothing: retrieved config ("
+            + new Date(data.getSourceVersion()) + ") same as current ("
+            + new Date(lastGoodCfg.getSourceVersion()) + "). ");
         return false;
       }
-
-      LOG.debug("do nothing: retrieved config ("
-          + new Date(data.getSourceVersion()) + ") same as current ("
-          + new Date(lastGoodCfg.getSourceVersion()) + "). ");
-      return false;
     }
 
     try {
@@ -475,14 +390,14 @@ public class LogicalNode implements Reportable {
       nodeMsg = nodeName + "closing";
       driver.stop();
       // wait for driver thread to end.
-
-      src.close();
-      snk.close();
-      try {
-        driver.cancel(); // signal driver to finish
-        driver.join();
-      } catch (InterruptedException e) {
-        LOG.error("Unexpected interruption when closing logical node");
+      boolean success = driver.waitForAtLeastState(DriverState.IDLE, 30000);
+      if (!success) {
+        try {
+          driver.cancel(); // signal driver to finish
+          driver.join();
+        } catch (InterruptedException e) {
+          LOG.error("Unexpected interruption when closing logical node");
+        }
       }
     }
 

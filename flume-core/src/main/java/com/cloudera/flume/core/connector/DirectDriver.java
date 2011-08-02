@@ -18,14 +18,11 @@
 package com.cloudera.flume.core.connector;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.core.Driver;
-import com.cloudera.flume.core.DriverListener;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
@@ -42,13 +39,17 @@ public class DirectDriver extends Driver {
 
   static final Logger LOG = LoggerFactory.getLogger(DirectDriver.class);
 
+  final PumperThread thd;
   EventSink sink;// Guarded by object lock
   EventSource source; // Guarded by object lock
-  PumperThread thd;
-  Exception error = null;
+
+  Exception lastExn = null; // Guarded by statSignal
   DriverState state = DriverState.HELLO; // Guarded by stateSignal
   Object stateSignal = new Object(); // object do lock/notify on.
-  final List<DriverListener> listeners = new ArrayList<DriverListener>();
+
+  // metrics
+  public long nextCount = 0;
+  public long appendCount = 0;
 
   public DirectDriver(EventSource src, EventSink snk) {
     this("pumper", src, snk);
@@ -79,68 +80,94 @@ public class DirectDriver extends Driver {
         source = DirectDriver.this.source;
       }
       try {
-        try {
-          synchronized (stateSignal) {
-            state = DriverState.OPENING;
-            stateSignal.notifyAll();
-          }
-          source.open();
-          sink.open();
+        synchronized (stateSignal) {
+          state = DriverState.OPENING;
+          stateSignal.notifyAll();
+        }
+        source.open();
+        sink.open();
+      } catch (Exception e) {
+        // if open is interrupted or has an exception there was a problem.
+        LOG.error("Closing down due to exception on open calls");
+        errorCleanup(PumperThread.this.getName(), e);
+        return;
+      }
 
-          synchronized (stateSignal) {
-            stopped = false;
-            error = null;
-            state = DriverState.ACTIVE;
-            stateSignal.notifyAll();
-          }
+      synchronized (stateSignal) {
+        lastExn = null;
+        state = DriverState.ACTIVE;
+        stateSignal.notifyAll();
+      }
 
-          LOG.debug("Starting driver " + DirectDriver.this);
-          fireStart();
+      LOG.debug("Starting driver " + DirectDriver.this);
+      try {
+        while (!stopped) {
+          Event e = source.next();
+          if (e == null)
+            break;
+          nextCount++;
 
-          while (!stopped) {
-            Event e = source.next();
-            if (e == null)
-              break;
-
-            sink.append(e);
-          }
-
-          synchronized (stateSignal) {
-            state = DriverState.CLOSING;
-            stateSignal.notifyAll();
-          }
-          source.close();
-          sink.close();
-        } catch (InterruptedException ie) {
-          // Catches interrupted exceptions. This indicates that the driver was
-          // shutdown (not an error condition).
-          synchronized (stateSignal) {
-            stopped = true;
-            state = DriverState.CLOSING;
-            stateSignal.notifyAll();
-          }
-          source.close();
-          sink.close();
+          sink.append(e);
+          appendCount++;
         }
       } catch (Exception e1) {
         // Catches all exceptions or throwables. This is a separate thread
-        fireError(e1);
-        synchronized (stateSignal) {
-          error = e1;
-          stopped = true;
-          LOG.error("Driving src/sink failed! " + DirectDriver.this
-              + " because " + e1.getMessage(), e1);
-          state = DriverState.ERROR;
-          stateSignal.notifyAll();
-        }
+        LOG.error("Closing down due to exception during append calls");
+        errorCleanup(PumperThread.this.getName(), e1);
         return;
       }
-      fireStop();
+
+      try {
+        synchronized (stateSignal) {
+          state = DriverState.CLOSING;
+          stateSignal.notifyAll();
+        }
+        source.close();
+        sink.close();
+      } catch (Exception e) {
+        LOG.error("Closing down due to exception during close calls");
+        errorCleanup(PumperThread.this.getName(), e);
+        return;
+      }
 
       synchronized (stateSignal) {
         LOG.debug("Driver completed: " + DirectDriver.this);
         stopped = true;
         state = DriverState.IDLE;
+      }
+    }
+
+    void ensureClosed(String nodeName) {
+      try {
+        getSource().close();
+      } catch (IOException e) {
+        LOG.error("Error closing " + nodeName + " source: " + e.getMessage());
+      } catch (InterruptedException e) {
+        // TODO reconsider this.
+        LOG.error("Driver interrupted attempting to close source", e);
+      }
+
+      try {
+        getSink().close();
+      } catch (IOException e) {
+        LOG.error("Error closing " + nodeName + " sink: " + e.getMessage());
+      } catch (InterruptedException e) {
+        // TODO reconsider this.
+        LOG.error("Driver Interrupted attempting to close sink", e);
+      }
+    }
+
+    void errorCleanup(String nodeName, Exception ex) {
+      LOG.info("Connector " + nodeName + " exited with error: "
+          + ex.getMessage());
+      ensureClosed(nodeName);
+      synchronized (stateSignal) {
+        lastExn = ex;
+        stopped = true;
+        LOG.error("Exiting driver " + nodeName + " in error state "
+            + DirectDriver.this + " because " + ex.getMessage());
+        state = DriverState.ERROR;
+        stateSignal.notifyAll();
       }
     }
   }
@@ -167,6 +194,7 @@ public class DirectDriver extends Driver {
   public synchronized void start() throws IOException {
     // don't allow thread to be "started twice"
     if (thd.stopped) {
+      thd.stopped = false;
       thd.start();
     }
   }
@@ -199,58 +227,16 @@ public class DirectDriver extends Driver {
     return !t.isAlive();
   }
 
-  public Exception getError() {
-    return error;
+  /**
+   * return the last exception that caused driver to exit
+   */
+  public Exception getException() {
+    return lastExn;
   }
 
   @Override
   public DriverState getState() {
     return state;
-  }
-
-  /**
-   * Callbacks cannot add or remove ConnectorListeners -- they can cause
-   * deadlocks on the listeners lock if that happens.
-   * 
-   * Here we only lock on the 'listeners' object lock. Previously this locked on
-   * the directconnector which could cause deadlocks with the callback.
-   */
-  @Override
-  public void registerListener(DriverListener listener) {
-    synchronized (listeners) {
-      listeners.add(listener);
-    }
-  }
-
-  @Override
-  public void deregisterListener(DriverListener listener) {
-    synchronized (listeners) {
-      listeners.remove(listener);
-    }
-  }
-
-  void fireStart() {
-    synchronized (listeners) {
-      for (DriverListener l : listeners) {
-        l.fireStarted(this);
-      }
-    }
-  }
-
-  void fireStop() {
-    synchronized (listeners) {
-      for (DriverListener l : listeners) {
-        l.fireStopped(this);
-      }
-    }
-  }
-
-  void fireError(Exception e) {
-    synchronized (listeners) {
-      for (DriverListener l : listeners) {
-        l.fireError(this, e);
-      }
-    }
   }
 
   @Override
@@ -268,21 +254,24 @@ public class DirectDriver extends Driver {
     long now = Clock.unixTime();
     long deadline = now + millis;
     synchronized (stateSignal) {
-
+      DriverState curState = this.state;
       //
       while (deadline > now) {
-        if (this.state.equals(state)) {
+        curState = this.state;
+        if (curState.equals(state)) {
           return true;
         }
         // still wrong state? wait more.
         now = Clock.unixTime();
         long waitMs = Math.max(0, deadline - now); // guarentee non neg
         if (waitMs == 0) {
+          LOG.warn("Expected " + state + " but timed out in state " + curState);
           return false;
         }
         stateSignal.wait(waitMs);
       }
       // give up and return false
+      LOG.warn("Expected " + state + " but timed out in state " + curState);
       return false;
     }
   }

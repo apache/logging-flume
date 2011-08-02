@@ -37,8 +37,8 @@ import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.conf.ReportTestingContext;
+import com.cloudera.flume.core.Driver;
 import com.cloudera.flume.core.Driver.DriverState;
-import com.cloudera.flume.master.StatusManager.NodeState;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.aggregator.AccumulatorSink;
@@ -145,6 +145,8 @@ public class TestDiskFailoverBehavior {
         .waitForState(DriverState.IDLE, 5000));
 
     // close off the collector
+    Driver c1driver = coll.getDriver();
+    Driver c2driver = coll2.getDriver();
     coll.close();
     coll2.close();
     agent.close();
@@ -155,15 +157,20 @@ public class TestDiskFailoverBehavior {
     assertEquals(count, ctr.getCount() + ctr2.getCount());
 
     // the collector can be in ERROR or IDLE state because of the randomness.
-    NodeState stateColl = coll.getStatus().state;
-    LOG.info("coll exited in state: " + stateColl);
-    assertTrue(stateColl.equals(NodeState.IDLE)
-        || stateColl.equals(NodeState.ERROR));
+    assertTrue("c1 failed to get to in IDLE state",
+        c1driver.waitForAtLeastState(DriverState.IDLE, 1000));
+    assertTrue("c2 failed to get to in IDLE state",
+        c2driver.waitForAtLeastState(DriverState.IDLE, 1000));
 
-    NodeState stateColl2 = coll2.getStatus().state;
-    LOG.info("coll2 exited in state: " + stateColl2);
-    assertTrue(stateColl2.equals(NodeState.IDLE)
-        || stateColl2.equals(NodeState.ERROR));
+    // NodeState stateColl = coll.getStatus().state;
+    // LOG.info("coll exited in state: " + stateColl);
+    // assertTrue(stateColl.equals(NodeState.IDLE)
+    // || stateColl.equals(NodeState.ERROR));
+
+    // NodeState stateColl2 = coll2.getStatus().state;
+    // LOG.info("coll2 exited in state: " + stateColl2);
+    // assertTrue(stateColl2.equals(NodeState.IDLE)
+    // || stateColl2.equals(NodeState.ERROR));
   }
 
   /**
@@ -251,6 +258,8 @@ public class TestDiskFailoverBehavior {
     loopUntilCount(count, coll, coll2);
 
     // close off the collector
+    Driver c1driver = coll.getDriver();
+    Driver c2driver = coll2.getDriver();
     coll.close();
     coll2.close();
 
@@ -265,15 +274,21 @@ public class TestDiskFailoverBehavior {
     assertEquals(count, ctr.getCount() + ctr2.getCount());
 
     // the collector can be in ERROR or IDLE state because of the randomness.
-    NodeState stateColl = coll.getStatus().state;
-    LOG.info("coll exited in state: " + stateColl);
-    assertTrue(stateColl.equals(NodeState.IDLE)
-        || stateColl.equals(NodeState.ERROR));
+    assertTrue("c1 failed to get to in IDLE state",
+        c1driver.waitForAtLeastState(DriverState.IDLE, 1000));
+    assertTrue("c2 failed to get to in IDLE state",
+        c2driver.waitForAtLeastState(DriverState.IDLE, 1000));
 
-    NodeState stateColl2 = coll2.getStatus().state;
-    LOG.info("coll2 exited in state: " + stateColl2);
-    assertTrue(stateColl2.equals(NodeState.IDLE)
-        || stateColl2.equals(NodeState.ERROR));
+    //
+    // NodeState stateColl = coll.getStatus().state;
+    // LOG.info("coll exited in state: " + stateColl);
+    // assertTrue(stateColl.equals(NodeState.IDLE)
+    // || stateColl.equals(NodeState.ERROR));
+    //
+    // NodeState stateColl2 = coll2.getStatus().state;
+    // LOG.info("coll2 exited in state: " + stateColl2);
+    // assertTrue(stateColl2.equals(NodeState.IDLE)
+    // || stateColl2.equals(NodeState.ERROR));
   }
 
   /**
@@ -305,6 +320,8 @@ public class TestDiskFailoverBehavior {
     loopUntilCount(count, coll, coll2);
 
     // close off the collector
+    Driver c1driver = coll.getDriver();
+    Driver c2driver = coll2.getDriver();
     coll.close();
     coll2.close();
 
@@ -321,15 +338,21 @@ public class TestDiskFailoverBehavior {
     assertTrue(ctr2.getCount() > 0);
 
     // the collector can be in ERROR or IDLE state because of the randomness.
-    NodeState stateColl = coll.getStatus().state;
-    LOG.info("coll exited in state: " + stateColl);
-    assertTrue(stateColl.equals(NodeState.IDLE)
-        || stateColl.equals(NodeState.ERROR));
+    assertTrue("c1 failed to get to in IDLE state",
+        c1driver.waitForAtLeastState(DriverState.IDLE, 1000));
+    assertTrue("c2 failed to get to in IDLE state",
+        c2driver.waitForAtLeastState(DriverState.IDLE, 1000));
 
-    NodeState stateColl2 = coll2.getStatus().state;
-    LOG.info("coll2 exited in state: " + stateColl2);
-    assertTrue(stateColl2.equals(NodeState.IDLE)
-        || stateColl2.equals(NodeState.ERROR));
+    //
+    // NodeState stateColl = coll.getStatus().state;
+    // LOG.info("coll exited in state: " + stateColl);
+    // assertTrue(stateColl.equals(NodeState.IDLE)
+    // || stateColl.equals(NodeState.ERROR));
+    //
+    // NodeState stateColl2 = coll2.getStatus().state;
+    // LOG.info("coll2 exited in state: " + stateColl2);
+    // assertTrue(stateColl2.equals(NodeState.IDLE)
+    // || stateColl2.equals(NodeState.ERROR));
   }
 
   /**
@@ -358,6 +381,7 @@ public class TestDiskFailoverBehavior {
     loopUntilCount(count, null, coll2);
 
     // close off the collector
+    Driver c2driver = coll2.getDriver();
     coll2.close();
 
     // dump info for debugging
@@ -371,9 +395,12 @@ public class TestDiskFailoverBehavior {
     assertEquals(count, ctr2.getCount());
 
     // the collector can be in ERROR or IDLE state because of the randomness.f
-    NodeState stateColl2 = coll2.getStatus().state;
-    LOG.info("coll2 exited in state: " + stateColl2);
-    assertTrue(stateColl2.equals(NodeState.IDLE)
-        || stateColl2.equals(NodeState.ERROR));
+    assertTrue("c2 failed to get to in IDLE state",
+        c2driver.waitForAtLeastState(DriverState.IDLE, 1000));
+
+    // NodeState stateColl2 = coll2.getStatus().state;
+    // LOG.info("coll2 exited in state: " + stateColl2);
+    // assertTrue(stateColl2.equals(NodeState.IDLE)
+    // || stateColl2.equals(NodeState.ERROR));
   }
 }

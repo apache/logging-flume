@@ -99,7 +99,7 @@ public class TestFlumeBuilderFunctional implements ExampleData {
 
     snk.close();
     src.close();
-    assertNull(conn.getError());
+    assertNull(conn.getException());
   }
 
   @Test
