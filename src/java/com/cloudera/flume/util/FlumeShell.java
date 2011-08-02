@@ -290,6 +290,7 @@ public class FlumeShell {
     case IDLE:
     case ERROR:
     case LOST:
+    case DECOMMISSIONED:
       // if at version 0, do not return true for isDone. (nothing has happened!)
       return status.version != 0;
     case ACTIVE:

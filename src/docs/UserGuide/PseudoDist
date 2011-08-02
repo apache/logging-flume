@@ -142,6 +142,16 @@ Refresh the Master page and notice that the version stamp changed to a current
 time, and that the src and sink fields of the configs updated.  After the 
 status changes to "ACTIVE", it is ready to receive console traffic.
 
+On the master, a node can be in one of several states:
+
+* HELLO : A new node instance initally contacted the master.
+* IDLE : A node has completed its configuration or has no configuration.
+* CONFIGURING: A node has received a configuration and is activating the configuration.
+* ACTIVE: A node is actively pulling data from the source and pushing data into the sink.
+* LOST: A node has not contacted the master for an extended period of time (default is after 10x the expected heartbeat period -- 50s by default)
+* DECOMMISSIONED: A node has been purposely decommissioned from a master.
+* ERROR: A node has stopped in an error state.
+
 On the terminal where your Flume node is running, you should be able to type a 
 few lines and then get output back showing your new log message.
 
