@@ -74,9 +74,7 @@ import com.cloudera.flume.handlers.hdfs.SeqfileEventSink;
 import com.cloudera.flume.handlers.irc.IrcSink;
 import com.cloudera.flume.handlers.rpc.RpcSink;
 import com.cloudera.flume.handlers.syslog.SyslogTcpSink;
-import com.cloudera.flume.handlers.thrift.ThriftAckedEventSink;
 import com.cloudera.flume.handlers.thrift.ThriftEventSink;
-import com.cloudera.flume.handlers.thrift.ThriftRawEventSink;
 import com.cloudera.flume.master.availability.FailoverChainSink;
 import com.cloudera.flume.reporter.aggregator.AccumulatorSink;
 import com.cloudera.flume.reporter.aggregator.CounterSink;
@@ -150,10 +148,7 @@ public class SinkFactoryImpl extends SinkFactory {
       { "regexhisto", RegexGroupHistogramSink.builderSimple() },
       { "regexhistospec", RegexGroupHistogramSink.builder() },
 
-      // deprecated
-      { "tsink", ThriftEventSink.builder() },
-      { "tacksink", ThriftAckedEventSink.builder() },
-      { "trawsink", ThriftRawEventSink.builder() }, };
+  };
 
   // The actual types are <String, SinkDecoBuilder>
   static Object[][] decoList = {

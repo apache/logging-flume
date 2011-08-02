@@ -136,61 +136,6 @@ public class TestThriftSinks implements ExampleData {
 
   }
 
-  /**
-   * This version uses the ThriftRawEventSink instead of the ThriftEventSink *
-   * The pipeline is:
-   * 
-   * text file -> mem
-   * 
-   * mem -> thriftRawEventSink -> thriftEventSource -> counter
-   * 
-   * @throws InterruptedException
-   * 
-   */
-  @Test
-  public void testThriftRawSend() throws IOException, InterruptedException {
-    EventSource txt = new NoNlASCIISynthSource(25, 100);
-    txt.open();
-    MemorySinkSource mem = new MemorySinkSource();
-    mem.open();
-    EventUtil.dumpAll(txt, mem);
-    txt.close();
-
-    FlumeConfiguration conf = FlumeConfiguration.get();
-    final ThriftEventSource tes = new ThriftEventSource(conf.getCollectorPort());
-    tes.open();
-
-    final CounterSink cnt = new CounterSink("count");
-    cnt.open();
-    Thread t = new Thread("drain") {
-      public void run() {
-        try {
-          EventUtil.dumpAll(tes, cnt);
-        } catch (Exception e) {
-        }
-      }
-    };
-    t.start(); // drain the sink.
-
-    // mem -> thriftRawEventSink
-    ThriftRawEventSink snk = new ThriftRawEventSink("0.0.0.0", conf
-        .getCollectorPort());
-    snk.open();
-    EventUtil.dumpAll(mem, snk);
-    mem.close();
-    snk.close();
-
-    // a little delay to drain events at ThriftEventSource queue
-    try {
-      Thread.sleep(5000);
-      t.interrupt();
-    } catch (InterruptedException e) {
-    }
-    tes.close();
-    assertEquals(25, cnt.getCount());
-
-  }
-
   @Test
   public void testOpenClose() throws IOException, InterruptedException {
     int port = FlumeConfiguration.get().getCollectorPort();

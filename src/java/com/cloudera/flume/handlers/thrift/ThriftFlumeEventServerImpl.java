@@ -60,31 +60,4 @@ class ThriftFlumeEventServerImpl implements Iface {
       throw new TException("Caught exception " + e, e);
     }
   }
-
-  @Override
-  public void rawAppend(RawEvent evt) throws TException {
-    try {
-      WriteableEvent e = WriteableEvent.create(evt.getRaw());
-      sink.append(e);
-    } catch (Exception e) {
-      // TODO figure out how to deal with different exns
-      throw new TException("Caught exception " + e, e);
-    }
-
-  }
-
-  @Override
-  public EventStatus ackedAppend(ThriftFlumeEvent evt) throws TException {
-    Preconditions.checkState(sink != null);
-    Preconditions.checkNotNull(evt);
-    try {
-      sink.append(new ThriftEventAdaptor(evt));
-      return EventStatus.ACK;
-    } catch (Exception e) {
-      // TODO figure out how to deal with different exns
-      LOG.error(e.getMessage(), e);
-      return EventStatus.ERR;
-    }
-  }
-
 }

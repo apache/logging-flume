@@ -79,7 +79,7 @@ public class TestFlumeSpecGen {
     String out = FlumeSpecGen.genEventSink(tree);
     assertEquals(orig, out);
 
-    orig = "tsink( 1234 )";
+    orig = "thriftSink( 1234 )";
     tree = FlumeBuilder.parseSink(orig);
     out = FlumeSpecGen.genEventSink(tree);
     assertEquals(orig, out);
@@ -101,7 +101,7 @@ public class TestFlumeSpecGen {
     String out = FlumeSpecGen.genEventSink(tree);
     assertEquals(orig, out);
 
-    orig = "{ intervalSampler( 20 ) => tsink( 1234 ) }";
+    orig = "{ intervalSampler( 20 ) => thriftSink( 1234 ) }";
     tree = FlumeBuilder.parseSink(orig);
     out = FlumeSpecGen.genEventSink(tree);
     assertEquals(orig, out);

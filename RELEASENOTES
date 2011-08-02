@@ -1,3 +1,11 @@
+Flume 0.9.4
+===========
+
+Old Thrift sinks have been removed and are no longer available.
+These are 'tacksink' and 'trawsink'. Additionally, the old aliases
+'tsink' and 'tsource' are no longer present. Use the full names
+'thriftSink' and 'thriftSource' instead.
+
 Flume 0.9.3
 ===========
 

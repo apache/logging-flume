@@ -172,7 +172,7 @@ public class AgentFailChainSink extends EventSink.Base {
     ArrayList<String> thriftified = new ArrayList<String>();
 
     if (list == null || list.size() == 0) {
-      String sink = String.format("tsink(\"%s\",%d)", FlumeConfiguration.get()
+      String sink = String.format("thriftSink(\"%s\",%d)", FlumeConfiguration.get()
           .getCollectorHost(), FlumeConfiguration.get().getCollectorPort());
       thriftified.add(sink);
       return thriftified;
@@ -184,7 +184,7 @@ public class AgentFailChainSink extends EventSink.Base {
       String collector = sock.getLeft();
       int port = sock.getRight();
       // This needs to be a physical address/node, not a logical node.
-      String sink = String.format("tsink(\"%s\",%d)", collector, port);
+      String sink = String.format("thriftSink(\"%s\",%d)", collector, port);
       thriftified.add(sink);
     }
     return thriftified;

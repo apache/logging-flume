@@ -593,19 +593,15 @@ mechanisms (similar to the output format mechanism).
 prioritized by priority (higher priority first) and then age (older 
 messages first)
 
-+tsource(_port_)+ :: Same as RPC but specifically thrift RPC
++thriftSource(_port_)+ :: Same as RPC but specifically thrift RPC
 
 .Flume's Deprecated Sinks
 
 Many of these sinks are left over from earlier iterations.
 
 [horizontal]
-+tsink+ :: 
 
-+tacksink(...)+ :: thrift acked sink
-
-+trawsink(...)+ :: thrift using writable serialization instead of thrift 
-serialization
+*None listed here for now*
 
  END OF HIDDEN FOR NOW HALF BAKED 
 ///////////////// 

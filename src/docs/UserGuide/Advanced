@@ -357,8 +357,8 @@ machine lives in multiple tiers.
 
 ==== Arbitrary Data Flows and Custom Architectures
 
-With tsinks and tsource, data can be sent through multiple nodes.  If ack 
-injection and ack checking decorators are properly inserted, you can achieve 
+With thriftSink and thriftSource, data can be sent through multiple nodes.  If
+ack injection and ack checking decorators are properly inserted, you can achieve
 reliability. 
 
 
