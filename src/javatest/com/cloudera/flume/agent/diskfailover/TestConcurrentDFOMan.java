@@ -155,9 +155,8 @@ public class TestConcurrentDFOMan {
             dfos[idx] = dfoMan; // save for checking.
 
             // short trigger causes lots of rolls
-            EventSink snk = new DiskFailoverDeco<EventSink>(cnt1,
-                LogicalNodeContext.testingContext(), dfoMan, new TimeTrigger(
-                    100), 50);
+            EventSink snk = new DiskFailoverDeco(cnt1, LogicalNodeContext
+                .testingContext(), dfoMan, new TimeTrigger(100), 50);
 
             ReportManager.get().add(cnt1);
             // make each parallel instance send a slightly different number of
@@ -193,7 +192,9 @@ public class TestConcurrentDFOMan {
           .getReportable("count." + i);
       // check for the slightly different counts based on thread.
       int exp = events + i;
-      LOG.info("count." + i + " expected " + exp + " and got " + cnt.getCount());
+      LOG
+          .info("count." + i + " expected " + exp + " and got "
+              + cnt.getCount());
       assertEquals(exp, (int) cnt.getCount());
 
       // check dfo reports to see if they are sane.

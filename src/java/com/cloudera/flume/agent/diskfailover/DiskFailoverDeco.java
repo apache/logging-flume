@@ -48,8 +48,7 @@ import com.google.common.base.Preconditions;
  * It has a subordinate thread that drains the events that have been written to
  * disk. Latches are used to maintain open and close semantics.
  */
-public class DiskFailoverDeco<S extends EventSink> extends
-    EventSinkDecorator<S> {
+public class DiskFailoverDeco extends EventSinkDecorator<EventSink> {
   static final Logger LOG = LoggerFactory.getLogger(DiskFailoverDeco.class);
 
   final DiskFailoverManager dfoMan;
@@ -67,17 +66,17 @@ public class DiskFailoverDeco<S extends EventSink> extends
   final long checkmillis;
   final Context ctx;
 
-  public DiskFailoverDeco(S s, Context ctx, final DiskFailoverManager dfoman,
-      RollTrigger t, long checkmillis) {
-    super((S) new LazyOpenDecorator(s));
+  public DiskFailoverDeco(EventSink s, Context ctx,
+      final DiskFailoverManager dfoman, RollTrigger t, long checkmillis) {
+    super(new LazyOpenDecorator<EventSink>(s));
     this.ctx = ctx;
     this.dfoMan = dfoman;
     this.trigger = t;
     this.checkmillis = checkmillis;
   }
 
-  public void setSink(S sink) {
-    this.sink = (S) new LazyOpenDecorator(sink);
+  public void setSink(EventSink sink) {
+    this.sink = new LazyOpenDecorator<EventSink>(sink);
   }
 
   /**
@@ -256,8 +255,8 @@ public class DiskFailoverDeco<S extends EventSink> extends
             "Context does not have a logical node name");
         DiskFailoverManager dfoman = node.getAddDFOManager(dfonode);
 
-        return new DiskFailoverDeco<EventSink>(null, context, dfoman,
-            new TimeTrigger(new ProcessTagger(), delayMillis), checkmillis);
+        return new DiskFailoverDeco(null, context, dfoman, new TimeTrigger(
+            new ProcessTagger(), delayMillis), checkmillis);
       }
     };
   }

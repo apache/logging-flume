@@ -74,7 +74,7 @@ public class TestNaiveFileWALManagerConcurrently {
     Context ctx = new ReportTestingContext();
     EventSink cntsnk = new CompositeSink(ctx, "counter(\"total\")");
     // use the same wal, but different counter.
-    final EventSink snk = new NaiveFileWALDeco<EventSink>(ctx, cntsnk, wal,
+    final EventSink snk = new NaiveFileWALDeco(ctx, cntsnk, wal,
         new TimeTrigger(new ProcessTagger(), 1000000), new AckListener.Empty(),
         1000000);
     snk.open();
@@ -138,9 +138,8 @@ public class TestNaiveFileWALManagerConcurrently {
             EventSink snk = new CompositeSink(ctx, "counter(\"total." + idx
                 + "\")");
             // use the same wal, but different counter.
-            snk = new NaiveFileWALDeco<EventSink>(ctx, snk, wal,
-                new TimeTrigger(new ProcessTagger(), 1000000),
-                new AckListener.Empty(), 1000000);
+            snk = new NaiveFileWALDeco(ctx, snk, wal, new TimeTrigger(
+                new ProcessTagger(), 1000000), new AckListener.Empty(), 1000000);
             src.open();
             snk.open();
 
@@ -207,9 +206,8 @@ public class TestNaiveFileWALManagerConcurrently {
                 + "\")");
             // use the same wal, but different counter.
 
-            snk = new NaiveFileWALDeco<EventSink>(ctx, snk, wal,
-                new TimeTrigger(new ProcessTagger(), 1000000),
-                new AckListener.Empty(), 1000000);
+            snk = new NaiveFileWALDeco(ctx, snk, wal, new TimeTrigger(
+                new ProcessTagger(), 1000000), new AckListener.Empty(), 1000000);
 
             start.await();
 

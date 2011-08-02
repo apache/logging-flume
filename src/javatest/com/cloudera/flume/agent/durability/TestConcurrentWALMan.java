@@ -135,8 +135,8 @@ public class TestConcurrentWALMan {
             AckChecksumChecker<EventSink> chk = new AckChecksumChecker<EventSink>(
                 cnt1);
             NaiveFileWALManager wman1 = new NaiveFileWALManager(f1);
-            EventSink snk = new NaiveFileWALDeco<EventSink>(new Context(), chk,
-                wman1, new TimeTrigger(1000000), new AckListener.Empty(), 100);
+            EventSink snk = new NaiveFileWALDeco(new Context(), chk, wman1,
+                new TimeTrigger(1000000), new AckListener.Empty(), 100);
 
             ReportManager.get().add(cnt1);
             // make each parallel instance send a slightly different number of

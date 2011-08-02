@@ -50,14 +50,13 @@ import com.google.common.base.Preconditions;
  * has a subordinate thread that drains the events that have been written to
  * disk. Latches are used to maintain open and close semantics.
  */
-public class NaiveFileWALDeco<S extends EventSink> extends
-    EventSinkDecorator<S> {
+public class NaiveFileWALDeco extends EventSinkDecorator<EventSink> {
   static final Logger LOG = LoggerFactory.getLogger(NaiveFileWALDeco.class);
 
   final WALManager walman;
   final RollTrigger trigger;
   final AckListener queuer;
-  final EventSinkDecorator<S> drainSink;
+  final EventSinkDecorator<EventSink> drainSink;
   final long checkMs;
 
   RollSink input;
@@ -70,7 +69,7 @@ public class NaiveFileWALDeco<S extends EventSink> extends
   CountDownLatch started = null; // blocks open until subthread is started
   volatile IOException lastExn = null;
 
-  public NaiveFileWALDeco(Context ctx, S s, final WALManager walman,
+  public NaiveFileWALDeco(Context ctx, EventSink s, final WALManager walman,
       RollTrigger t, AckListener al, long checkMs) {
     super(s);
     this.ctx = ctx;
@@ -78,9 +77,8 @@ public class NaiveFileWALDeco<S extends EventSink> extends
     this.trigger = t;
     this.queuer = new AckListener.Empty();
     this.al = al;
-    // TODO get rid of this cast.
-    this.drainSink = (EventSinkDecorator<S>) new EventSinkDecorator(
-        new LazyOpenDecorator(new AckChecksumRegisterer<S>(s, al)));
+    this.drainSink = new LazyOpenDecorator<EventSink>(
+        new AckChecksumRegisterer<EventSink>(s, al));
     this.checkMs = checkMs;
   }
 
@@ -276,11 +274,11 @@ public class NaiveFileWALDeco<S extends EventSink> extends
     isOpen.set(true);
   }
 
-  public void setSink(S sink) {
+  public void setSink(EventSink sink) {
     this.sink = sink;
     // TODO get rid of this cast.
-    this.drainSink.setSink((S) new LazyOpenDecorator<EventSink>(
-        new AckChecksumRegisterer<S>(sink, al)));
+    this.drainSink.setSink(new LazyOpenDecorator<EventSink>(
+        new AckChecksumRegisterer<EventSink>(sink, al)));
   }
 
   public synchronized boolean rotate() throws InterruptedException {
@@ -325,9 +323,8 @@ public class NaiveFileWALDeco<S extends EventSink> extends
         // TODO (jon) this is going to be unsafe because it creates before open.
         // This needs to be pushed into the logic of the decorator
         WALManager walman = node.getAddWALManager(walnode);
-        return new NaiveFileWALDeco<EventSink>(context, null, walman,
-            new TimeTrigger(delayMillis), node.getAckChecker()
-                .getAgentAckQueuer(), checkMs);
+        return new NaiveFileWALDeco(context, null, walman, new TimeTrigger(
+            delayMillis), node.getAckChecker().getAgentAckQueuer(), checkMs);
       }
     };
   }

@@ -78,13 +78,12 @@ public class TestDiskFailoverDeco {
     doNothing().when(msrc).open();
     doNothing().when(msrc).close();
 
-    when(msrc.next()).thenReturn(e1).thenReturn(e2).thenReturn(e3)
-        .thenReturn(null);
+    when(msrc.next()).thenReturn(e1).thenReturn(e2).thenReturn(e3).thenReturn(
+        null);
 
-    DiskFailoverDeco<EventSink> snk = new DiskFailoverDeco<EventSink>(msnk,
-        LogicalNodeContext.testingContext(), FlumeNode.getInstance()
-            .getDFOManager(), new TimeTrigger(new ProcessTagger(), 60000),
-        300000);
+    DiskFailoverDeco snk = new DiskFailoverDeco(msnk, LogicalNodeContext
+        .testingContext(), FlumeNode.getInstance().getDFOManager(),
+        new TimeTrigger(new ProcessTagger(), 60000), 300000);
     snk.open();
     try {
       EventUtil.dumpAll(msrc, snk);
