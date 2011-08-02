@@ -164,6 +164,10 @@ public class FlumeConfiguration extends Configuration {
   // reporter parameters
   public static final String REPORTER_POLLER_PERIOD = "flume.reporter.poller.period";
 
+  // security parameters
+  public static final String SECURITY_KERBEROS_PRINCIPAL = "flume.security.kerberos.principal";
+  public static final String SECURITY_KERBEROS_KEYTAB = "flume.security.kerberos.keytab";
+
   public static final String FLURKER_ENCODING = "flume.irc.encoding";
 
   public static final String TWITTER_STREAM_URL = "flume.twitter.url";
@@ -801,6 +805,17 @@ public class FlumeConfiguration extends Configuration {
 
   public boolean getMasterSavefileAutoload() {
     return getBoolean(MASTER_SAVEFILE_AUTOLOAD, false);
+  }
+
+  public String getKerberosPrincipal() {
+    // flume is the default kerberos principal for hdfs writes
+    // _HOST is expanded by the hadoop security util to be the local host name.
+    return get(SECURITY_KERBEROS_PRINCIPAL, "");
+  }
+
+  public String getKerberosKeytab() {
+    // mit kerb v5 default keytab path
+    return get(SECURITY_KERBEROS_KEYTAB, "/etc/flume/conf/krb5.keytab");
   }
 
   public long getReporterPollPeriod() {

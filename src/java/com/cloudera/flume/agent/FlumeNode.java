@@ -20,10 +20,11 @@ package com.cloudera.flume.agent;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Map.Entry;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -31,6 +32,8 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.apache.hadoop.security.SecurityUtil;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -466,7 +469,44 @@ public class FlumeNode implements Reportable {
       MemoryMonitor.setupHardExitMemMonitor(FlumeConfiguration.get()
           .getAgentMemoryThreshold());
     }
+
+    try {
+      tryKerberosLogin();
+    } catch (IOException ioe) {
+      LOG.error("Failed to kerberos login.", ioe);
+    }
+
     // hangout, waiting for other agent thread to exit.
+  }
+
+  /**
+   * This should attempts to kerberos login via a keytab if security is enabled
+   * in hadoop.
+   * 
+   * This should be able to support multiple hadoop clusters as long as the
+   * particular principal is allowed on multiple clusters.
+   */
+  static void tryKerberosLogin() throws IOException {
+    boolean useSec = UserGroupInformation.isSecurityEnabled();
+    LOG.info("Hadoop Security enabled: " + useSec);
+    if (!useSec) {
+      return;
+    }
+
+    // attempt to load kerberos information for authenticated hdfs comms.
+    String principle = FlumeConfiguration.get().getKerberosPrincipal();
+    String keytab = FlumeConfiguration.get().getKerberosKeytab();
+    LOG.info("Kerberos login as " + principle + " from " + keytab);
+
+    // Keytab login does not need to auto refresh
+    SecurityUtil.login(FlumeConfiguration.get(),
+        FlumeConfiguration.SECURITY_KERBEROS_KEYTAB,
+        FlumeConfiguration.SECURITY_KERBEROS_PRINCIPAL);
+
+    UserGroupInformation ugi = UserGroupInformation.getLoginUser();
+    LOG.info("Auth method: " + ugi.getAuthenticationMethod());
+    LOG.info(" User name: " + ugi.getUserName());
+    LOG.info(" Using keytab: " + UserGroupInformation.isLoginKeytabBased());
   }
 
   public static void main(String[] argv) {

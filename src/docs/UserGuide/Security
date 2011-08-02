@@ -1,0 +1,260 @@
+ 
+== Flume and HDFS Security Integration
+
+NOTE: This section is only required if you are using a Kerberized HDFS
+cluster.  If you are running CDH3b2 or a Hadoop version 0.21.x or
+earlier, you can safely skip this section.
+
+Flume's datapath needs to be able to interact with "secured" Hadoop
+and HDFS.  The Hadoop and HDFS designers have chosen to use the
+Kerberos V5 system and protocols to authenticate communications
+between clients and services.  Hadoop clients include users, MR jobs
+on behalf of users, and services include HDFS, MapReduce.
+
+In this section we will describe how setup up a flume node to be a
+client as user 'flume' to a kerberized HDFS service.  This section
+will *not* talk about securing the communications between flume nodes
+and flume masters, or the communications between flume nodes in a
+flume flow.  The current implementation does not support writing
+individual isolated flows as different users.
+
+NOTE: This has only been tested with the security enhanced betas of
+CDH (CDH3b3+), and the MIT kerberos 5 implementation.
+
+=== Basics
+
+Flume will act as a particular kerberos principal (user) and needs
+credentials.  The kerberos credentials are needed in order to interact
+with the kerberized service.
+
+There are two ways you can get credentials. The first is used by
+interactive users because it requires an interactive logon.  The
+second is generally used by services (like a flume daemon) and uses a
+specially protected key table file called a 'keytab'.
+
+Interactively using the +kinit+ program to contact the kerberos KDC
+(key distribution center) is one way is to prove your identity. This
+approach requires a user to enter a password.  To do this you need a
+two part principal setup in the KDC, which is generally of the form
++user@REALM.COM+.  Logging in via +kinit+ will grant a ticket granting
+ticket (TGT) which can be used to authenticate with other services.
+
+NOTE: this user needs to have an account on the namenode machine as
+well -- Hadoop uses this user and group information from that machine
+when authorizing access.
+
+Authenticating a user or a service can alternately be done using a
+specially protected 'keytab' file.  This file contains a ticket
+generating ticket (TGT) which is used to mutually authenticate the
+client and the service via the kerberos KDC.
+
+NOTE: The keytab approach is similar to an "password-less" ssh
+connections.  In this case instead of an id_rsa private key file, the
+service has a keytab entry with its private key.
+
+Because a flume node daemon is usually started unattended (via service
+script), it needs to login using the keytab approach.  When using a
+keytab, the Hadoop services requires a three part principal.  This has
+the form +user/host.com@REALM.COM+.  We recommend using +flume+ as the
+user and the hostname of the machine as the service.  Assuming that
+kerberos and kerberized Hadoop has been properly setup, you just need
+to a few parameters to the flume node's property file
+(flume-site.xml).
+
+----
+<property>
+<name>flume.kerberos.user</name>
+<value>flume/host1.com@REALM.COM </value>
+<description></description>
+</property>
+
+<property>
+<name>flume.kerberos.keytab</name>
+<value>/etc/flume/conf/keytab.krb5 </value>
+<description></description>
+</property>
+----
+
+In this case, flume is the user, host1.com is the service, and
+REALM.COM is the kerberos realm.  The +/etc/keytab.krb5+ file contains
+the keys necessary for +flume/host1.com@REALM.COM+ to authenticate
+with other services.
+
+Flume and Hadoop provides a simple keyword (_HOST) that gets expanded
+to be the host name of the machine the service is running on.  This
+allows you to have one flume-site.xml file with the same
+flume.kerberos.user property on all of your machines.
+
+----
+<property>
+<name>flume.kerberos.user</name>
+<value>flume/_HOST@REALM.COM </value>
+<description></description>
+</property>
+----
+
+You can test to see if your flume node is properly setup by running
+the following command.
+
+----
+flume node_nowatch -1 -n dump -c 'dump: console |  collectorSink("hdfs://kerb-nn/user/flume/%Y%m%D-%H/","testkerb");'
+----
+
+This should write data entered at the console to a kerberized HDFS
+with a namenode named kerb-nn, into a +/user/flume/YYmmDD-HH/+
+directory.
+
+If this fails, you many need to check to see if flume's hadoop
+settings (in core-site.xml and hdfs-site.xml) are using hadoop's
+settings correctly.
+
+=== Setting up Flume users on Kerberos
+
+NOTE: These instructions are for MIT Kerb5.
+
+There are several requirements to have a "properly setup" kerberos +
+hdfs + flume.
+
+* Need to have a prinicipal for the flume user on each machine.
+* Need to have a keytab that has keys for each principal on each machine.
+
+Much of this setup can be done by using the +kadmin+ program, and
+verified using the +kinit+, +kdestroy+, and +klist+ programs.
+
+==== Administering kerberos principals
+
+First you need to have permissions to use the +kadmin+ program and the
+ability to add to principals to the KDCs.
+
+----
+$ kadmin -p <adminuser> -w <password>
+----
+
+If you entered this correctly, it will drop you do the kadmin prompt
+----
+kadmin:
+----
+
+Here you can add a flume principal to the KDC
+
+----
+kadmin: addprinc flume
+WARNING: no policy specified for flume@REALM.COM; defaulting to no policy
+Enter password for principal "flume@REALM.COM": 
+Re-enter password for principal "flume@REALM.COM": 
+Principal "flume@REALM.COM" created.
+kadmin: 
+----
+
+You also need to add principals with hosts for each flume node that
+will directly write to hdfs.  Since you will be exporting the key to a
+keytab file, you can use the -randkey option to generate a random key.
+
+----
+kadmin: addprinc -randkey flume/host.com
+WARNING: no policy specified for flume/host.com@REALM.COM; defaulting to no policy
+Principal "flume/host.com@REALM.COM" created.
+kadmin: 
+----
+
+NOTE: Hadoop's kerberos implementation requires a three part principal
+name -- user/host@REALM.COM.  As a user you usually only need the user
+name, user@REALM.COM.  
+
+You can verify that the user has been added by using the +kinit+
+program, and entering the password you selected.  Next you can verify
+that you have your Ticket Granting Ticket (TGT) loaded.
+
+----
+$ kinit flume/host.com
+Password for flume/host.com@REALM.COM: 
+$ klist
+Ticket cache: FILE:/tmp/krb5cc_1016
+Default principal: flume/host.com@REALM
+
+Valid starting     Expires            Service principal
+09/02/10 18:59:38  09/03/10 18:59:38  krbtgt/REALM.COM@REALM.COM
+
+
+Kerberos 4 ticket cache: /tmp/tkt1016
+klist: You have no tickets cached
+$
+----
+
+You can ignore the Kerberos 4 info.  To "logout" you can use the
++kdestroy+ command, and then verify that credentials are gone by
+running +klist+.
+
+----
+$ kdestroy
+$ klist
+klist: No credentials cache found (ticket cache FILE:/tmp/krb5cc_1016)
+
+
+Kerberos 4 ticket cache: /tmp/tkt1016
+klist: You have no tickets cached
+$
+----
+
+Next to enable automatic logins, we can create a keytab file so that
+does not require manually entering a password.
+
+WARNING: This keytab file containts secret credentials that should be
+protected so that only the proper user can read the file.  After
+created, it should be in 0400 mode (-r--------) and owned by the user
+running the flume process.
+
+Then you can generate a keytab file (int this example called
++flume.keytab+) and add a user +flume/host.com+ to it.
+
+----
+kadmin: ktadd -k flume.keytab flume/host.com
+----
+
+NOTE: This will invalidate the ability for flume/host.com to manually
+login of the account.  You could however have a flume user does not
+use a keytab and that could log in.
+
+WARNING: +ktadd+ can add keytab entries for mulitple principals into a
+single file and allow for a single keytab file with many keys.  This
+however weakens the security stance and may make revoking credentials
+from misbehaving machines difficult.  Please consult with your
+security adminstrator when assessing this risk.
+
+You can verify the names and the version (KVNO) of the keys by running
+the following command.
+
+----
+$ klist -Kk flume.keytab
+Keytab name: FILE:flume.keytab
+KVNO Principal
+---- --------------------------------------------------------------------------
+   5 flume/host.com@REALM.COM (0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
+   5 flume/host.com@REALM.COM (0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)
+   5 flume/host.com@REALM.COM (0xcccccccccccccccc)
+   5 flume/host.com@REALM.COM (0xdddddddddddddddd)
+----
+
+You should see a few entries and your corresponding keys in hex after
+your principal names.
+
+Finally, you can use +kinit+ with the +flume@REALM.COM+ principal to
+interactively do a kerberos login and use the hadoop commands to browse hdfs.
+
+----
+$ kinit flume
+Password for flume@REALM.COM:  <-- enter password
+$ hadoop dfs -ls /user/flume/
+----
+
+
+////
+
+Windows instructions.
+
+----
+ktpass // windows generate keytab file
+----
+
+
+////
