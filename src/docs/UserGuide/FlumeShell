@@ -67,8 +67,16 @@ _port_.
 _logicalnode_ with source _source_ and sink _sink_.  _source_ and _sink_ will 
 likely need quotes to support some of the Flume configuration syntax.
 
-+nodestatus+ :: Output the status of the nodes the master knows about. Nodes 
-are in either HELLO, CONFIGURING, ACTIVE, IDLE, or ERROR states.
++getnodestatus+ :: Output the status of the nodes the master knows
+about. Nodes are in either HELLO, CONFIGURING, ACTIVE, IDLE, ERROR,
+DECOMMISSIONED, or LOST states.  When a node shows up initially it is
+HELLO state.  When a node is being configured, it is in CONFIGURING
+state.  Once events are being pumped from source to sink, the node is
+in ACTIVE state.  If a node has drained its source (and the source is
+not "endless") it will enter IDLE state.  If a node encountered an
+unrecoverable error or exited without flushing, it will be in ERROR
+state.  A node is DECOMMISSIONED if it is removed on the master, and
+LOST if it has not been seen by the master for a "long time".
 
 +getconfigs+ :: This gets and dumps the configuration specifications of all 
 the logical nodes the master knows about.
