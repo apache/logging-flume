@@ -96,6 +96,7 @@ to call at top-level: ant deploy-contrib compile-core-test
   <!-- for now ivy.lib and ivy.test.lib stay at legacy location -->
   <property name="ivy.lib" value="${lib.dir}"/>
   <property name="ivy.test.lib" value="${test.lib.dir}"/>
+  <property name="ivy.tools.lib" value="${build.dir}/libtools"/>
 
   <!-- eclipse property set -->
   <property name="build.dir.eclipse" value=".eclipse"/>
@@ -135,6 +136,13 @@ to call at top-level: ant deploy-contrib compile-core-test
     <path refid="classpath"/>
   </path>
 
+  <!-- the tools classpath -->
+  <path id="tools.classpath">
+    <fileset dir="${ivy.tools.lib}">
+      <include name="**/*.jar" />
+    </fileset>
+  </path>
+
 
   <target name="init">
     <mkdir dir="${build.dir}"/>
@@ -145,6 +153,7 @@ to call at top-level: ant deploy-contrib compile-core-test
     <mkdir dir="${test.build.classes}"/>
     <mkdir dir="${thrift.gen.dir}"/>
     <mkdir dir="${basedir}/libtest"/>
+    <mkdir dir="${ivy.tools.lib}"/>
 
     <condition property="ivy.jar.exists">
       <available file="${lib.dir}/ivy-${ivy.version}.jar"/>
@@ -198,17 +207,17 @@ to call at top-level: ant deploy-contrib compile-core-test
 
   <target name="ivy-retrieve-findbugs" depends="init,ivy-init">
     <ivy:retrieve type="jar" conf="findbugs"
-                  pattern="${ivy.test.lib}/[artifact]-[revision].[ext]"/>
+                  pattern="${ivy.tools.lib}/[artifact]-[revision].[ext]"/>
   </target>
 
   <target name="ivy-retrieve-coverage" depends="init,ivy-init">
     <ivy:retrieve type="jar" conf="coverage"
-                  pattern="${ivy.test.lib}/[artifact]-[revision].[ext]"/>
+                  pattern="${ivy.tools.lib}/[artifact]-[revision].[ext]"/>
   </target>
 
   <target name="ivy-retrieve-releaseaudit" depends="init,ivy-init">
     <ivy:retrieve type="jar" conf="releaseaudit"
-                  pattern="${ivy.test.lib}/[artifact]-[revision].[ext]"/>
+                  pattern="${ivy.tools.lib}/[artifact]-[revision].[ext]"/>
     <ivy:cachepath pathid="releaseaudit-classpath" conf="releaseaudit"/>
   </target>
 
@@ -428,18 +437,14 @@ to call at top-level: ant deploy-contrib compile-core-test
 
   <target name="findbugs" depends="ivy-retrieve-findbugs, jar">
     <taskdef name="findbugs" classname="edu.umd.cs.findbugs.anttask.FindBugsTask"
-             classpath="libtest/findbugs-ant-1.3.9.jar" />
+             classpath="${ivy.tools.lib}/findbugs-ant-1.3.9.jar" />
 
     <property name="findbugs.exclude.file" value="findbugsExclude.xml" />
     <findbugs output="xml"
               outputFile="flume-findbugs.xml"
               jvmargs="-Xmx1024m"
               excludeFilter="${findbugs.exclude.file}">
-      <classpath>
-        <fileset dir="libtest/">
-          <include name="**/*.jar"/>
-        </fileset>
-      </classpath>
+      <classpath refid="tools.classpath"/>
       <pluginList/>
       <auxClasspath refid="classpath"/>
       <sourcePath path="${basedir}/src/java" />
@@ -448,8 +453,11 @@ to call at top-level: ant deploy-contrib compile-core-test
   </target>
 
   <target name="instrument" depends="compile-core, compile-core-test,ivy-retrieve-coverage">
-    <taskdef classpath="libtest/cobertura.jar" resource="tasks.properties">
+    <taskdef classpath="${ivy.tools.lib}/cobertura-1.9.4.1.jar" resource="tasks.properties">
       <classpath>
+        <fileset dir="${ivy.tools.lib}/">
+          <include name="**/*.jar"/>
+        </fileset>
         <fileset dir="libtest/">
           <include name="**/*.jar"/>
         </fileset>
@@ -485,7 +493,7 @@ to call at top-level: ant deploy-contrib compile-core-test
         errorProperty="tests.failed" failureProperty="tests.failed"
         timeout="${test.timeout}"
         dir="${test.build.dir}">
-      <classpath location="libtest/cobertura.jar"/>
+      <classpath location="${ivy.tools.lib}/cobertura.jar"/>
       <classpath location="build/instrumented-classes"/>
       
       <!-- uncomment this if you want to attach a debugger -->
