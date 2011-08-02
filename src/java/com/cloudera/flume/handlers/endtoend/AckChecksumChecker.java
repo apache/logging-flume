@@ -110,7 +110,7 @@ public class AckChecksumChecker<S extends EventSink> extends
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException  {
     byte[] btyp = e.get(AckChecksumInjector.ATTR_ACK_TYPE);
 
     if (btyp == null) {

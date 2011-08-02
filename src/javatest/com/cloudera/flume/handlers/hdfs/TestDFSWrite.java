@@ -110,7 +110,7 @@ public class TestDFSWrite {
   }
 
   @Test
-  public void testHDFSEventSink() throws IOException {
+  public void testHDFSEventSink() throws IOException, InterruptedException {
     FlumeConfiguration conf = FlumeConfiguration.get();
     String str = "file:///tmp/testfile";
     Path path = new Path(str);
@@ -142,9 +142,11 @@ public class TestDFSWrite {
 
   /**
    * Test that pathnames are being correctly substituted.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testTaggedWrites() throws IOException {
+  public void testTaggedWrites() throws IOException, InterruptedException {
     FlumeConfiguration conf = FlumeConfiguration.get();
     String template = "file:///tmp/testfile-%{mytag}";
     String real1 = "file:///tmp/testfile-one";
@@ -250,9 +252,11 @@ public class TestDFSWrite {
 
   /**
    * Failure occurs when opened due to permissions.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testBadArgsOpenFail() throws IOException {
+  public void testBadArgsOpenFail() throws IOException, InterruptedException {
     assumeTrue(!OSUtils.isWindowsOS());
 
     SinkBuilder sb = DFSEventSink.builder();

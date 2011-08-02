@@ -106,18 +106,18 @@ public class AgentSink extends EventSink.Base {
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     sink.append(e);
     super.append(e);
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     sink.close();
   }
 
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     sink.open();
   }
 

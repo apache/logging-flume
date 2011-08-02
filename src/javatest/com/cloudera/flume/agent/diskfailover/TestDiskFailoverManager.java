@@ -88,7 +88,7 @@ public class TestDiskFailoverManager {
   }
 
   @Test
-  public void testTransitions() throws IOException {
+  public void testTransitions() throws IOException, InterruptedException {
     File dir = FileUtil.mktempdir();
     // putting in large ridiculous constant
     NaiveFileFailoverManager wal = new NaiveFileFailoverManager(dir);

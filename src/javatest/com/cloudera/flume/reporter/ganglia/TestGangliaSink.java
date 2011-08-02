@@ -108,7 +108,7 @@ public class TestGangliaSink {
   }
 
   @Test
-  public void testBuilder() throws IOException {
+  public void testBuilder() throws IOException, InterruptedException {
     EventSink snk = GangliaSink.builder().build(new Context(), "localhost",
         "foo", "int");
     for (int i = 0; i < 10; i++) {
@@ -136,7 +136,8 @@ public class TestGangliaSink {
   }
 
   @Test
-  public void testFactoryBuild() throws FlumeSpecException, IOException {
+  public void testFactoryBuild() throws FlumeSpecException, IOException,
+      InterruptedException {
     EventSink snk = new CompositeSink(new Context(),
         "ganglia(\"localhost\", \"foo\", \"int\")");
     for (int i = 0; i < 10; i++) {

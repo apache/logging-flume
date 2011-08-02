@@ -68,7 +68,7 @@ public class CustomDfsSink extends EventSink.Base {
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException  {
     if (writer == null) {
       throw new IOException("Append failed, did you open the writer?");
     }

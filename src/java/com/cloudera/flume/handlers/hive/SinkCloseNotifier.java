@@ -45,7 +45,7 @@ abstract public class SinkCloseNotifier<S extends EventSink, E> extends
   public abstract void notify(E e);
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     super.close();
     notify(getNotificationEvent());
   }

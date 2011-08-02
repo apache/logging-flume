@@ -70,9 +70,12 @@ public class TestLogicalNodeMapping {
    * logical node, which is named the same name as the physical node name.
    * 
    * This may go away when we "bulkify" the node-master comms into one rpc call.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testMasterLogicalNodeCheckAutoLogicalNode() throws IOException {
+  public void testMasterLogicalNodeCheckAutoLogicalNode() throws IOException,
+      InterruptedException {
     FlumeMaster master = new FlumeMaster(cfg);
     master.getSpecMan().addLogicalNode(NetUtils.localhost(), "bar");
     master.getSpecMan().addLogicalNode(NetUtils.localhost(), "baz");
@@ -93,9 +96,12 @@ public class TestLogicalNodeMapping {
   /**
    * Checks to make sure that nodes specified at the master get spawned at the
    * node.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testMasterLogicalNodeSpawnedAtNode() throws IOException {
+  public void testMasterLogicalNodeSpawnedAtNode() throws IOException,
+      InterruptedException {
     FlumeMaster master = new FlumeMaster(cfg);
     MasterRPC rpc = new DirectMasterRPC(master);
 
@@ -153,9 +159,11 @@ public class TestLogicalNodeMapping {
   /**
    * Checks to make sure that nodes specified at the master get spawned at the
    * node.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testMasterDecomission() throws IOException {
+  public void testMasterDecomission() throws IOException, InterruptedException {
     FlumeMaster master = new FlumeMaster(cfg);
     MasterRPC rpc = new DirectMasterRPC(master);
     FlumeNode node = new FlumeNode(rpc, false, false);
@@ -174,7 +182,7 @@ public class TestLogicalNodeMapping {
   }
 
   @Test
-  public void testUnmapLogicalNode() throws IOException {
+  public void testUnmapLogicalNode() throws IOException, InterruptedException {
     // use the simple command manger, non-gossip ackmanager
     FlumeMaster master = new FlumeMaster(new CommandManager(),
         new ConfigManager(), new StatusManager(), new MasterAckManager(), cfg);
@@ -228,7 +236,7 @@ public class TestLogicalNodeMapping {
   }
 
   @Test
-  public void testDuplicateSpawn() throws IOException {
+  public void testDuplicateSpawn() throws IOException, InterruptedException {
     // use the simple command manger, non-gossip ackmanager
     FlumeMaster master = new FlumeMaster(new CommandManager(),
         new ConfigManager(), new StatusManager(), new MasterAckManager(), cfg);
@@ -258,7 +266,8 @@ public class TestLogicalNodeMapping {
   }
 
   @Test
-  public void testRemoveLogicalNode() throws IOException, FlumeSpecException {
+  public void testRemoveLogicalNode() throws IOException, FlumeSpecException,
+      InterruptedException {
     // use the simple command manger, non-gossip ackmanager
     FlumeMaster master = new FlumeMaster(new CommandManager(),
         new ConfigManager(), new StatusManager(), new MasterAckManager(), cfg);
@@ -322,9 +331,12 @@ public class TestLogicalNodeMapping {
   /**
    * Checks to make sure that nodes specified at the master get spawned at the
    * node.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testZKMasterDecomission() throws IOException, TTransportException {
+  public void testZKMasterDecomission() throws IOException,
+      TTransportException, InterruptedException {
     // use the simple command manger, non-gossip ackmanager
     cfg.set(FlumeConfiguration.MASTER_STORE, "zookeeper");
     master = new FlumeMaster(new CommandManager(), new ConfigManager(),
@@ -347,7 +359,8 @@ public class TestLogicalNodeMapping {
   }
 
   @Test
-  public void testZKUnmapLogicalNode() throws IOException, TTransportException {
+  public void testZKUnmapLogicalNode() throws IOException, TTransportException,
+      InterruptedException {
     // use the simple command manger, non-gossip ackmanager
     cfg.set(FlumeConfiguration.MASTER_STORE, "zookeeper");
 
@@ -406,7 +419,7 @@ public class TestLogicalNodeMapping {
 
   @Test
   public void testZKRemoveLogicalNode() throws IOException, FlumeSpecException,
-      TTransportException {
+      TTransportException, InterruptedException {
     // use the simple command manger, non-gossip ackmanager
     cfg.set(FlumeConfiguration.MASTER_STORE, "zookeeper");
 

@@ -37,7 +37,7 @@ public class SelectDecorator<S extends EventSink> extends EventSinkDecorator<S> 
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     Event e2 = EventImpl.select(e, attrs);
     super.append(e2);
   }

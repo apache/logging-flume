@@ -41,7 +41,7 @@ import com.cloudera.util.Benchmark;
 public class PerfReportSinks implements ExamplePerfData {
 
   @Test
-  public void testNullSink() throws IOException {
+  public void testNullSink() throws IOException, InterruptedException {
     Benchmark b = new Benchmark("nullsink");
     b.mark("begin");
     TextFileSource txt = new TextFileSource(HADOOP_DATA[0]);
@@ -60,7 +60,7 @@ public class PerfReportSinks implements ExamplePerfData {
   }
 
   @Test
-  public void testCountSink() throws IOException {
+  public void testCountSink() throws IOException, InterruptedException {
     Benchmark b = new Benchmark("nullsink");
     b.mark("begin");
     TextFileSource txt = new TextFileSource(HADOOP_DATA[0]);
@@ -79,7 +79,7 @@ public class PerfReportSinks implements ExamplePerfData {
   }
 
   @Test
-  public void testHadoopRegexes() throws IOException {
+  public void testHadoopRegexes() throws IOException, InterruptedException {
     Benchmark b = new Benchmark("hadoop_regexes");
     b.mark("begin");
     TextFileSource txt = new TextFileSource(HADOOP_DATA[0]);
@@ -105,7 +105,7 @@ public class PerfReportSinks implements ExamplePerfData {
   }
 
   @Test
-  public void testHadoopRegexes11() throws IOException {
+  public void testHadoopRegexes11() throws IOException, InterruptedException {
     Benchmark b = new Benchmark("hadoop_regexes");
     b.mark("begin");
     TextFileSource txt = new TextFileSource(HADOOP_DATA[0]);

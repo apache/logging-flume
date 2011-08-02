@@ -26,6 +26,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.handlers.rolling.Tagger;
@@ -47,7 +50,8 @@ import com.google.common.base.Preconditions;
  */
 abstract public class ScheduledHistoryReporter<S extends EventSink> extends
     EventSink.Base {
-
+  public static final Logger LOG = LoggerFactory
+      .getLogger(ScheduledHistoryReporter.class);
   // History is a list of timestamp and the old reports. New entries are
   // appended at the end, old entries are aged off of the head
   LinkedList<Pair<Long, S>> history;
@@ -66,7 +70,7 @@ abstract public class ScheduledHistoryReporter<S extends EventSink> extends
    * This is synchronized because the sink change must not be visible to
    * anything calling the sink interface.
    */
-  synchronized private void rotate() {
+  synchronized private void rotate() throws InterruptedException {
     if (sink == null) {
       return;
     }
@@ -91,7 +95,7 @@ abstract public class ScheduledHistoryReporter<S extends EventSink> extends
    * redefined to be used with a global scheduler to reduce the number of
    * threads in the system.
    */
-  public void forcedRotate() {
+  public void forcedRotate() throws InterruptedException {
     rotate();
   }
 
@@ -105,19 +109,23 @@ abstract public class ScheduledHistoryReporter<S extends EventSink> extends
 
     Runnable rotater = new Runnable() {
       public void run() {
-        rotate();
+        try {
+          rotate();
+        } catch (InterruptedException e) {
+          LOG.error("scheduled history interrupted", e);
+        }
       }
     };
 
     // Make initial delay the same as period -- this makes testing consistent.
-    schedule
-        .scheduleAtFixedRate(rotater, maxAge, maxAgeMillis, TimeUnit.MILLISECONDS);
+    schedule.scheduleAtFixedRate(rotater, maxAge, maxAgeMillis,
+        TimeUnit.MILLISECONDS);
   }
 
   abstract public S newSink(Tagger format) throws IOException;
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     synchronized (this) {
       Preconditions.checkNotNull(sink);
       sink.append(e);
@@ -126,13 +134,13 @@ abstract public class ScheduledHistoryReporter<S extends EventSink> extends
   }
 
   @Override
-  synchronized public void close() throws IOException {
+  synchronized public void close() throws IOException, InterruptedException {
     sink.close();
     sink = null;
   }
 
   @Override
-  synchronized public void open() throws IOException {
+  synchronized public void open() throws IOException, InterruptedException {
     if (sink == null) {
       sink = newSink(tagger);
       sink.open();

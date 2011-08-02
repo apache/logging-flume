@@ -185,9 +185,11 @@ public class TestNaiveFileWALDeco {
    * 
    * @throws IOException
    * @throws FlumeSpecException
+   * @throws InterruptedException
    */
   @Test
-  public void testRecoveredMovesToErr() throws IOException, FlumeSpecException {
+  public void testRecoveredMovesToErr() throws IOException, FlumeSpecException,
+      InterruptedException {
     BenchmarkHarness.setupLocalWriteDir();
     File tmp = BenchmarkHarness.tmpdir;
 
@@ -262,6 +264,9 @@ public class TestNaiveFileWALDeco {
         } catch (IllegalStateException e) {
           // Expected illegal state exception due to not being open
           cdl1.countDown();
+        } catch (InterruptedException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
         }
       }
     }.start();
@@ -291,6 +296,9 @@ public class TestNaiveFileWALDeco {
         } catch (IllegalStateException e) {
           // Expected illegal state exception due to not being open
           cdl1.countDown();
+        } catch (InterruptedException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
         }
       }
     }.start();
@@ -298,7 +306,8 @@ public class TestNaiveFileWALDeco {
   }
 
   @Test(expected = IOException.class)
-  public void testExceptionThreadHandoff() throws IOException {
+  public void testExceptionThreadHandoff() throws IOException,
+      InterruptedException {
     try {
       BenchmarkHarness.setupLocalWriteDir();
       Event e = new EventImpl(new byte[0]);

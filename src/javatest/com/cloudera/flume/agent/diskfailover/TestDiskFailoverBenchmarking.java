@@ -40,7 +40,8 @@ import com.cloudera.util.BenchmarkHarness;
 public class TestDiskFailoverBenchmarking {
 
   @Test
-  public void benchmarkBeforeFailover() throws FlumeSpecException, IOException {
+  public void benchmarkBeforeFailover() throws FlumeSpecException, IOException,
+      InterruptedException {
     BenchmarkHarness.setupLocalWriteDir();
     // String spec =
     // "{ benchinject => { benchreport(\"pre\") =>  { diskFailover => [console, counter(\"beforecount\")] } } }";
@@ -62,7 +63,8 @@ public class TestDiskFailoverBenchmarking {
   }
 
   @Test
-  public void benchmarkAfterFailover() throws FlumeSpecException, IOException {
+  public void benchmarkAfterFailover() throws FlumeSpecException, IOException,
+      InterruptedException {
     BenchmarkHarness.setupLocalWriteDir();
     String spec = "{ benchinject => { diskFailover => { benchreport(\"post\") =>  counter(\"beforecount\") } } }";
     EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), spec);
@@ -82,7 +84,7 @@ public class TestDiskFailoverBenchmarking {
 
   @Test
   public void benchmarkBeforeWriteahead() throws FlumeSpecException,
-      IOException {
+      IOException, InterruptedException {
     BenchmarkHarness.setupLocalWriteDir();
     String spec = "{ benchinject => { benchreport(\"pre\") =>  { diskFailover => counter(\"beforecount\") } } }";
     EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), spec);
@@ -101,7 +103,8 @@ public class TestDiskFailoverBenchmarking {
   }
 
   @Test
-  public void benchmarkAfterWriteahead() throws FlumeSpecException, IOException {
+  public void benchmarkAfterWriteahead() throws FlumeSpecException,
+      IOException, InterruptedException {
     BenchmarkHarness.setupLocalWriteDir();
 
     String spec = "{ benchinject => { ackedWriteAhead => { benchreport(\"post\") =>  counter(\"beforecount\") } } }";

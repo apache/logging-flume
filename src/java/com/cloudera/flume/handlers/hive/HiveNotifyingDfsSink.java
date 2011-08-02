@@ -52,8 +52,7 @@ import com.google.common.base.Preconditions;
  * TODO (jon) refactor this to be sane. Not happening now.
  */
 public class HiveNotifyingDfsSink extends EventSink.Base {
-  static final Logger LOG =
-      LoggerFactory.getLogger(HiveNotifyingDfsSink.class);
+  static final Logger LOG = LoggerFactory.getLogger(HiveNotifyingDfsSink.class);
   final String dirpath;
   final OutputFormat format;
   final String hivetable;
@@ -136,7 +135,8 @@ public class HiveNotifyingDfsSink extends EventSink.Base {
     }
   }
 
-  protected EventSink getWriter(Event e) throws IOException {
+  protected EventSink getWriter(Event e) throws IOException,
+      InterruptedException {
     final Event evt = e;
     String realpath = e.escapeString(absolutePath);
     EventSink w = sfWriters.get(realpath);
@@ -149,22 +149,21 @@ public class HiveNotifyingDfsSink extends EventSink.Base {
     LOG.info("Opening " + realpath);
 
     w = new CustomDfsSink(realpath, format);
-    SinkCloseNotifier<EventSink, HiveDirCreatedNotification> notif =
-        new SinkCloseNotifier<EventSink, HiveDirCreatedNotification>(w) {
-          @Override
-          public HiveDirCreatedNotification getNotificationEvent() {
-            // take the dir part of the path
-            String escdirpath = evt.escapeString(dirpath);
-            Map<String, String> partitions = evt.getEscapeMapping(dirpath);
-            return new HiveDirCreatedNotification(hivetable, escdirpath,
-                partitions);
-          }
+    SinkCloseNotifier<EventSink, HiveDirCreatedNotification> notif = new SinkCloseNotifier<EventSink, HiveDirCreatedNotification>(
+        w) {
+      @Override
+      public HiveDirCreatedNotification getNotificationEvent() {
+        // take the dir part of the path
+        String escdirpath = evt.escapeString(dirpath);
+        Map<String, String> partitions = evt.getEscapeMapping(dirpath);
+        return new HiveDirCreatedNotification(hivetable, escdirpath, partitions);
+      }
 
-          @Override
-          public void notify(HiveDirCreatedNotification e) {
-            handler.handleNotification(e);
-          }
-        };
+      @Override
+      public void notify(HiveDirCreatedNotification e) {
+        handler.handleNotification(e);
+      }
+    };
     notif.open();
     sfWriters.put(realpath, notif);
     return notif;
@@ -175,14 +174,14 @@ public class HiveNotifyingDfsSink extends EventSink.Base {
    * drawn from the supplied event
    */
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     EventSink w = getWriter(e);
     w.append(e);
     super.append(e);
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     for (Entry<String, EventSink> e : sfWriters.entrySet()) {
       LOG.info("Closing " + e.getKey());
       e.getValue().close();

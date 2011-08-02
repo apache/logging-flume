@@ -52,7 +52,8 @@ import com.cloudera.util.FileUtil;
  * Tests WriteAheadLogDeco's builder, multiple open close, and actual behavior.
  */
 public class TestAckedWALDecorator {
-  static final Logger LOG = LoggerFactory.getLogger(TestAckedWALDecorator.class);
+  static final Logger LOG = LoggerFactory
+      .getLogger(TestAckedWALDecorator.class);
 
   File tmpdir = null;
   FlumeNode node;
@@ -102,7 +103,8 @@ public class TestAckedWALDecorator {
   }
 
   @Test
-  public void testOpenClose() throws IOException, FlumeSpecException {
+  public void testOpenClose() throws IOException, FlumeSpecException,
+      InterruptedException {
     String rpt = "foo";
     String snk = " { ackedWriteAhead(100) => [console,  counter(\"" + rpt
         + "\") ] } ";
@@ -157,10 +159,13 @@ public class TestAckedWALDecorator {
 
   /**
    * This test case does something to force a retransmit attempt
+   * 
+   * @throws InterruptedException
    */
   @SuppressWarnings("unchecked")
   @Test
-  public void testForceRetransmit() throws FlumeSpecException, IOException {
+  public void testForceRetransmit() throws FlumeSpecException, IOException,
+      InterruptedException {
     // This will register the FlumeNode with a MockMasterRPC so it doesn't go
     // across the network
     MockMasterRPC mock = new MockMasterRPC();

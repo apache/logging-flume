@@ -106,14 +106,20 @@ public class LogicalNodeManager implements Reportable {
       threads.put(nd.getName(), nd);
     }
 
-    nd.openLoadNode(src, snk);
+    try {
+      nd.openLoadNode(src, snk);
+    } catch (InterruptedException e) {
+      // TODO verify this is reasonable behavior
+      LOG.error("spawn was interrupted", e);
+    }
 
   }
 
   /**
    * Turn a logical node off on a node
    */
-  synchronized public void decommission(String name) throws IOException {
+  synchronized public void decommission(String name) throws IOException,
+      InterruptedException {
     LogicalNode nd = threads.remove(name);
     if (nd == null) {
       throw new IOException("Attempting to decommission node '" + name
@@ -158,7 +164,7 @@ public class LogicalNodeManager implements Reportable {
    * Decommission all logical nodes except for those found in the excludes list.
    */
   synchronized public void decommissionAllBut(List<String> excludes)
-      throws IOException {
+      throws IOException, InterruptedException {
     Set<String> decoms = new HashSet<String>(threads.keySet()); // copy keyset
     decoms.removeAll(excludes);
 

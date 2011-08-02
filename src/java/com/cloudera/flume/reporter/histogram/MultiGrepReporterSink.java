@@ -104,7 +104,7 @@ public class MultiGrepReporterSink<T> extends EventSink.Base {
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     Collection<T> ts = extract(e);
     // if failed to extract, skip
     for (T t : ts) {
@@ -114,7 +114,7 @@ public class MultiGrepReporterSink<T> extends EventSink.Base {
   }
 
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     aho.prepare();
   }
 
@@ -142,8 +142,8 @@ public class MultiGrepReporterSink<T> extends EventSink.Base {
 
         String name = argv[0];
         String fname = argv[1];
-        MultiGrepReporterBuilder mgrb =
-            new MultiGrepReporterBuilder(name, fname);
+        MultiGrepReporterBuilder mgrb = new MultiGrepReporterBuilder(name,
+            fname);
         Collection<MultiGrepReporterSink<String>> sinks;
         try {
           sinks = mgrb.load();

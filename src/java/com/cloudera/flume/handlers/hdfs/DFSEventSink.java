@@ -78,7 +78,7 @@ public class DFSEventSink extends EventSink.Base {
    * drawn from the supplied event
    */
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException  {
     Writer w = writer;
 
     if (shouldSub) {

@@ -222,7 +222,7 @@ public class TestFailChainTranslator {
 
   @Test
   public void testConsistentHashAvailMan() throws FlumeSpecException,
-      IOException {
+      IOException, InterruptedException {
     FailoverChainManager am = new ConsistentHashFailoverChainManager(3);
 
     for (String c : collectors) {

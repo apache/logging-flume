@@ -93,9 +93,10 @@ public class TestHistoryReporter {
   /**
    * This version uses a mock clock to test roll over from one epoch to the
    * next. We can check mock clock time as well to make sure it works.
+   * @throws InterruptedException 
    */
   @Test
-  public void testTestCountHistoryClocked() throws IOException {
+  public void testTestCountHistoryClocked() throws IOException, InterruptedException {
     MockClock m = new MockClock(0);
     Clock.setClock(m);
 

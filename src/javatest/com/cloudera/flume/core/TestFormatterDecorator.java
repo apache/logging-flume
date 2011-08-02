@@ -28,9 +28,10 @@ public class TestFormatterDecorator {
   /**
    * Test that an event's body is correctly formatted, and that attributes
    * are correctly passed through.   
+   * @throws InterruptedException 
    */
   @Test
-  public void testFormat() throws IOException{
+  public void testFormat() throws IOException, InterruptedException{
     MemorySinkSource mem = new MemorySinkSource();
     // %b will be replaced with event body
     EventSink format = new FormatterDecorator<EventSink>(mem, "test %{body}");

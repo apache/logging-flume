@@ -46,7 +46,7 @@ public class SyslogTcpSink extends EventSink.Base {
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     byte[] data = SyslogWireExtractor.formatEventToBytes(e);
     sock.getOutputStream().write(data);
     super.append(e);

@@ -45,7 +45,7 @@ abstract public class HistogramSink extends EventSink.Base {
   abstract public String extract(Event e);
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     String t = extract(e);
     // if failed to extract, skip
     if (t != null) {

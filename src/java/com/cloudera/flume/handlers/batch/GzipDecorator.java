@@ -39,7 +39,7 @@ public class GzipDecorator<S extends EventSink> extends EventSinkDecorator<S> {
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     WriteableEvent we = new WriteableEvent(e);
     byte[] bs = we.toBytes();
 

@@ -45,7 +45,8 @@ import com.google.common.base.Preconditions;
  */
 public class InsistentOpenDecorator<S extends EventSink> extends
     EventSinkDecorator<S> implements Reportable {
-  static final Logger LOG = LoggerFactory.getLogger(InsistentOpenDecorator.class);
+  static final Logger LOG = LoggerFactory
+      .getLogger(InsistentOpenDecorator.class);
   final BackoffPolicy backoff;
 
   // attribute names
@@ -159,12 +160,13 @@ public class InsistentOpenDecorator<S extends EventSink> extends
   }
 
   @Override
-  synchronized public void append(Event e) throws IOException {
+  synchronized public void append(Event e) throws IOException,
+      InterruptedException {
     super.append(e);
   }
 
   @Override
-  synchronized public void close() throws IOException {
+  synchronized public void close() throws IOException, InterruptedException {
     opening = false;
     super.close();
   }

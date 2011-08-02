@@ -43,7 +43,7 @@ import com.cloudera.flume.reporter.ReportEvent;
 public class TestStubbornAppendSink {
 
   @Test
-  public void testStubborn() throws IOException {
+  public void testStubborn() throws IOException, InterruptedException {
     // just using as an int reference
     final AtomicInteger ok = new AtomicInteger();
 
@@ -90,20 +90,22 @@ public class TestStubbornAppendSink {
     // 100 good messages. every 4th message fails -- 3 good 1 bad.
     // 00 01 02 xx 03 04 05 xx 06 07 08 xx ...
     // so 100 good msgs, 133 total messages, 33 bad msgs
-    Assert.assertEquals(new Long(100),
-        rpt.getLongMetric(StubbornAppendSink.A_SUCCESSES));
-    Assert.assertEquals(new Long(33),
-        rpt.getLongMetric(StubbornAppendSink.A_FAILS));
-    Assert.assertEquals(new Long(33),
-        rpt.getLongMetric(StubbornAppendSink.A_RECOVERS));
+    Assert.assertEquals(new Long(100), rpt
+        .getLongMetric(StubbornAppendSink.A_SUCCESSES));
+    Assert.assertEquals(new Long(33), rpt
+        .getLongMetric(StubbornAppendSink.A_FAILS));
+    Assert.assertEquals(new Long(33), rpt
+        .getLongMetric(StubbornAppendSink.A_RECOVERS));
   }
 
   /**
    * This test is similar to the previous but uses mockito. (and make much fewer
    * calls)
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testStubbornNew() throws IOException {
+  public void testStubbornNew() throws IOException, InterruptedException {
     EventSink failAppend = mock(EventSink.class);
     Event e = new EventImpl("test".getBytes());
 
@@ -125,12 +127,15 @@ public class TestStubbornAppendSink {
     }
 
     ReportEvent rpt = sink.getReport();
-    Assert.assertEquals(new Long(1), rpt.getLongMetric(StubbornAppendSink.A_FAILS));
-    Assert.assertEquals(new Long(1), rpt.getLongMetric(StubbornAppendSink.A_RECOVERS));
+    Assert.assertEquals(new Long(1), rpt
+        .getLongMetric(StubbornAppendSink.A_FAILS));
+    Assert.assertEquals(new Long(1), rpt
+        .getLongMetric(StubbornAppendSink.A_RECOVERS));
   }
 
   @Test
-  public void testStubbornIntervalFlakey() throws IOException {
+  public void testStubbornIntervalFlakey() throws IOException,
+      InterruptedException {
 
     // count resets on open and close, this one does not.
     final AtomicInteger ok = new AtomicInteger();
@@ -156,15 +161,16 @@ public class TestStubbornAppendSink {
 
     ReportEvent rpt = sink.getReport();
     // why isn't this 25?
-    Assert.assertEquals(new Long(24),
-        rpt.getLongMetric(StubbornAppendSink.A_FAILS));
-    Assert.assertEquals(new Long(24),
-        rpt.getLongMetric(StubbornAppendSink.A_RECOVERS));
+    Assert.assertEquals(new Long(24), rpt
+        .getLongMetric(StubbornAppendSink.A_FAILS));
+    Assert.assertEquals(new Long(24), rpt
+        .getLongMetric(StubbornAppendSink.A_RECOVERS));
 
   }
 
   @Test
-  public void testExceptionFallthrough() throws IOException {
+  public void testExceptionFallthrough() throws IOException,
+      InterruptedException {
     EventSink mock = mock(EventSink.class);
     // two ok, and then two exception throwing cases
     doNothing().doNothing().doThrow(new IOException()).doThrow(
@@ -182,8 +188,8 @@ public class TestStubbornAppendSink {
       ReportEvent rpt = sink.getReport();
       Assert.assertEquals(new Long(2), rpt
           .getLongMetric(StubbornAppendSink.A_SUCCESSES));
-      Assert.assertEquals(new Long(1),
-          rpt.getLongMetric(StubbornAppendSink.A_FAILS));
+      Assert.assertEquals(new Long(1), rpt
+          .getLongMetric(StubbornAppendSink.A_FAILS));
       Assert.assertEquals(new Long(0), rpt
           .getLongMetric(StubbornAppendSink.A_RECOVERS));
       return;

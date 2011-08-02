@@ -111,26 +111,31 @@ public class RollSink extends EventSink.Base {
 
     public void run() {
       startedLatch.countDown();
-      while (!isInterrupted()) {
-        // TODO there should probably be a lcok on Roll sink but until we handle
-        // interruptions throughout the code, we cannot because this causes a
-        // deadlock
-        if (trigger.isTriggered()) {
-          trigger.reset();
+      try {
+        while (!isInterrupted()) {
+          // TODO there should probably be a lcok on Roll sink but until we
+          // handle
+          // interruptions throughout the code, we cannot because this causes a
+          // deadlock
+          if (trigger.isTriggered()) {
+            trigger.reset();
 
-          LOG.debug("Rotate started by triggerthread... ");
-          rotate();
-          LOG.debug("Rotate stopped by triggerthread... ");
-          continue;
-        }
+            LOG.debug("Rotate started by triggerthread... ");
+            rotate();
+            LOG.debug("Rotate stopped by triggerthread... ");
+            continue;
+          }
 
-        try {
-          Clock.sleep(checkLatencyMs);
-        } catch (InterruptedException e) {
-          LOG.warn("TriggerThread interrupted");
-          doneLatch.countDown();
-          return;
+          try {
+            Clock.sleep(checkLatencyMs);
+          } catch (InterruptedException e) {
+            LOG.warn("TriggerThread interrupted");
+            doneLatch.countDown();
+            return;
+          }
         }
+      } catch (InterruptedException e) {
+        LOG.error("RollSink interrupted", e);
       }
       LOG.info("TriggerThread shutdown");
       doneLatch.countDown();
@@ -150,7 +155,7 @@ public class RollSink extends EventSink.Base {
 
   // This is a large synchronized section. Won't fix until it becomes a problem.
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     Preconditions.checkState(curSink != null,
         "Attempted to append when rollsink not open");
 
@@ -170,7 +175,7 @@ public class RollSink extends EventSink.Base {
     }
   }
 
-  synchronized public boolean rotate() {
+  synchronized public boolean rotate() throws InterruptedException {
     try {
       rolls.incrementAndGet();
       if (curSink == null) {
@@ -195,7 +200,7 @@ public class RollSink extends EventSink.Base {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     LOG.info("closing RollSink '" + fspec + "'");
 
     // TODO triggerThread can race with an open call, but we really need to
@@ -221,7 +226,7 @@ public class RollSink extends EventSink.Base {
   }
 
   @Override
-  synchronized public void open() throws IOException {
+  synchronized public void open() throws IOException, InterruptedException {
     Preconditions.checkState(curSink == null,
         "Attempting to open already open RollSink '" + fspec + "'");
     LOG.info("opening RollSink  '" + fspec + "'");

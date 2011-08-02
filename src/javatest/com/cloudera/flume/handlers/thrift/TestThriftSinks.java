@@ -66,9 +66,11 @@ public class TestThriftSinks implements ExampleData {
    * text file -> mem
    * 
    * mem -> thriftEventSink -> thriftEventSource -> counter
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testThriftSend() throws IOException {
+  public void testThriftSend() throws IOException, InterruptedException {
     EventSource txt = new NoNlASCIISynthSource(25, 100);
     txt.open();
     MemorySinkSource mem = new MemorySinkSource();
@@ -89,6 +91,9 @@ public class TestThriftSinks implements ExampleData {
         try {
           EventUtil.dumpAll(tes, cnt);
         } catch (IOException e) {
+        } catch (InterruptedException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
         }
       }
     };
@@ -132,9 +137,11 @@ public class TestThriftSinks implements ExampleData {
    * 
    * mem -> thriftRawEventSink -> thriftEventSource -> counter
    * 
+   * @throws InterruptedException
+   * 
    */
   @Test
-  public void testThriftRawSend() throws IOException {
+  public void testThriftRawSend() throws IOException, InterruptedException {
     EventSource txt = new NoNlASCIISynthSource(25, 100);
     txt.open();
     MemorySinkSource mem = new MemorySinkSource();
@@ -152,7 +159,7 @@ public class TestThriftSinks implements ExampleData {
       public void run() {
         try {
           EventUtil.dumpAll(tes, cnt);
-        } catch (IOException e) {
+        } catch (Exception e) {
         }
       }
     };
@@ -214,7 +221,7 @@ public class TestThriftSinks implements ExampleData {
       public void run() {
         try {
           EventUtil.dumpAll(tes, cnt);
-        } catch (IOException e) {
+        } catch (Exception e) {
         }
       }
     };

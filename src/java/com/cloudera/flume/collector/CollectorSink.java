@@ -126,14 +126,14 @@ public class CollectorSink extends EventSink.Base {
       this.tag = tag;
     }
 
-    public void open() throws IOException {
+    public void open() throws IOException, InterruptedException {
       // set the collector's current tag to curRollTAg.
       curRollTag = tag;
       super.open();
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() throws IOException, InterruptedException {
       super.close();
 
       AckListener master = FlumeNode.getInstance().getCollectorAckListener();
@@ -175,18 +175,18 @@ public class CollectorSink extends EventSink.Base {
   };
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     snk.append(e);
     super.append(e);
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     snk.close();
   }
 
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     snk.open();
   }
 

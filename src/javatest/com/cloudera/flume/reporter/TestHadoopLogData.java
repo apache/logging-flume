@@ -40,7 +40,7 @@ import com.cloudera.flume.reporter.histogram.RegexGroupHistogramSink;
 public class TestHadoopLogData implements ExampleData {
 
   @Test
-  public void testLineCount() throws IOException {
+  public void testLineCount() throws IOException, InterruptedException {
     EventSource src = new NoNlASCIISynthSource(25, 100, 1);
     src.open();
 

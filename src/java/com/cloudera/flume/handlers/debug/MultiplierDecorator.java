@@ -40,7 +40,7 @@ public class MultiplierDecorator<S extends EventSink> extends
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     // TODO (jon) make excludes generic.
     if (e.get(BenchmarkInjectDecorator.ATTR_BENCHMARK) != null) {
       super.append(e);

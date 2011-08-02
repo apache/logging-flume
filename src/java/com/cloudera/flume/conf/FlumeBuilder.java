@@ -504,7 +504,7 @@ public class FlumeBuilder {
           boolean open = false;
 
           @Override
-          public void open() throws IOException {
+          public void open() throws IOException, InterruptedException {
             if (open) {
               return; // Do nothing because already open
             }
@@ -513,13 +513,13 @@ public class FlumeBuilder {
           }
 
           @Override
-          public void append(Event e) throws IOException {
+          public void append(Event e) throws IOException, InterruptedException {
             Preconditions.checkState(open);
             sink.append(e);
           }
 
           @Override
-          public void close() throws IOException {
+          public void close() throws IOException, InterruptedException {
             open = false;
             sink.close();
           }

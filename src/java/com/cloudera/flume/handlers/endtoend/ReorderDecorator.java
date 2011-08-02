@@ -59,7 +59,7 @@ public class ReorderDecorator<S extends EventSink> extends
     this.rand = new Random(seed);
   }
 
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     if (rand.nextDouble() < yank) {
       store.add(e);
     } else {
@@ -79,7 +79,7 @@ public class ReorderDecorator<S extends EventSink> extends
     }
   }
 
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     if (!store.isEmpty()) {
       for (Event e : store) {
         super.append(e);

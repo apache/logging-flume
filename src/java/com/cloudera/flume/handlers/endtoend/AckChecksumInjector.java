@@ -111,7 +111,7 @@ public class AckChecksumInjector<S extends EventSink> extends
   /**
    * Send open event after open
    */
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     super.open();
     super.append(openEvent()); // purposely using old append
     listener.start(new String(tag));
@@ -120,7 +120,7 @@ public class AckChecksumInjector<S extends EventSink> extends
   /**
    * Send close event before close
    */
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     super.append(closeEvent()); // purposely using old append
     super.close();
     listener.end(new String(tag));
@@ -130,7 +130,7 @@ public class AckChecksumInjector<S extends EventSink> extends
    * Calculate the crc based on the body of the message and xor it into the
    * checksum.
    */
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     chk.reset();
     chk.update(e.getBody());
     long curchk = chk.getValue();

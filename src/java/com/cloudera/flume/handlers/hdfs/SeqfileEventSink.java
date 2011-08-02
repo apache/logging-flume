@@ -92,7 +92,7 @@ public class SeqfileEventSink extends EventSink.Base {
     LOG.info("closed " + f);
   }
 
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException  {
     Preconditions.checkNotNull(writer,
         "Attempt to append to a sink that is closed!");
 

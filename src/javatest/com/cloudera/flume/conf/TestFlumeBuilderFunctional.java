@@ -56,7 +56,8 @@ public class TestFlumeBuilderFunctional implements ExampleData {
   final static int LINES = 25;
 
   @Test
-  public void testBuildConsole() throws IOException, FlumeSpecException {
+  public void testBuildConsole() throws IOException, FlumeSpecException,
+      InterruptedException {
 
     EventSink snk = FlumeBuilder.buildSink(new Context(), "console");
     snk.open();
@@ -99,7 +100,8 @@ public class TestFlumeBuilderFunctional implements ExampleData {
   }
 
   @Test
-  public void testMultiSink() throws IOException, FlumeSpecException {
+  public void testMultiSink() throws IOException, FlumeSpecException,
+      InterruptedException {
     LOG.info("== multi test start");
     String multi = "[ console , accumulator(\"count\") ]";
     EventSource src = FlumeBuilder.buildSource(SOURCE);
@@ -116,7 +118,8 @@ public class TestFlumeBuilderFunctional implements ExampleData {
   }
 
   @Test
-  public void testDecorated() throws IOException, FlumeSpecException {
+  public void testDecorated() throws IOException, FlumeSpecException,
+      InterruptedException {
     LOG.info("== Decorated start");
     String decorated = "{ intervalSampler(5) =>  accumulator(\"count\")}";
     // String decorated = "{ intervalSampler(5) =>  console }";
@@ -136,7 +139,8 @@ public class TestFlumeBuilderFunctional implements ExampleData {
   }
 
   @Test
-  public void testFailover() throws IOException, FlumeSpecException {
+  public void testFailover() throws IOException, FlumeSpecException,
+      InterruptedException {
     LOG.info("== failover start");
     // the primary is 90% flakey
     String multi = "< { flakeyAppend(.9,1337) => console } ? accumulator(\"count\") >";
@@ -173,9 +177,12 @@ public class TestFlumeBuilderFunctional implements ExampleData {
    * timing of the failover gets set to 0 (no backoff) by another test and these
    * tests end up reopening the primary and resetting which restarts the counter
    * at 0. An accumulator just keeps counting.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testLet() throws IOException, FlumeSpecException {
+  public void testLet() throws IOException, FlumeSpecException,
+      InterruptedException {
     LOG.info("== let and failover start");
     // the primary is 50% flakey but the accumulator should get all the
     // messages.
@@ -196,9 +203,12 @@ public class TestFlumeBuilderFunctional implements ExampleData {
 
   /**
    * Lets allow for shadowing, sane semantics dictate the inner scope wins
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testLetShadow() throws IOException, FlumeSpecException {
+  public void testLetShadow() throws IOException, FlumeSpecException,
+      InterruptedException {
     LOG.info("== let shadowing start");
     String let = "let foo := accumulator(\"foo\") in let foo := accumulator(\"bar\") in foo";
     EventSource src = MemorySinkSource.cannedData("canned data ", 100);
@@ -219,7 +229,8 @@ public class TestFlumeBuilderFunctional implements ExampleData {
   }
 
   @Test
-  public void testNode() throws IOException, FlumeSpecException {
+  public void testNode() throws IOException, FlumeSpecException,
+      InterruptedException {
     LOG.info("== node start");
     String multi = "localhost : "
         + SOURCE

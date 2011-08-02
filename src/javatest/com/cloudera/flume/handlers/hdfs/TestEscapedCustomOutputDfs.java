@@ -57,7 +57,7 @@ public class TestEscapedCustomOutputDfs {
       .getLogger(TestEscapedCustomOutputDfs.class);
 
   @Test
-  public void testAvroOutputFormat() throws IOException {
+  public void testAvroOutputFormat() throws IOException, InterruptedException {
     // set the output format.
     FlumeConfiguration conf = FlumeConfiguration.get();
     conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, "avrojson");
@@ -89,7 +89,7 @@ public class TestEscapedCustomOutputDfs {
   }
 
   @Test
-  public void testSyslogOutputFormat() throws IOException {
+  public void testSyslogOutputFormat() throws IOException, InterruptedException {
     // set the output format.
     FlumeConfiguration conf = FlumeConfiguration.get();
     conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, "syslog");
@@ -121,7 +121,7 @@ public class TestEscapedCustomOutputDfs {
   }
 
   @Test
-  public void testLog4jOutputFormat() throws IOException {
+  public void testLog4jOutputFormat() throws IOException, InterruptedException {
     // set the output format.
     FlumeConfiguration conf = FlumeConfiguration.get();
     conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, "log4j");
@@ -156,9 +156,10 @@ public class TestEscapedCustomOutputDfs {
    * the compressed file and verify the written lines.
    * 
    * @throws IOException
+   * @throws InterruptedException
    */
   @Test
-  public void testGZipCodec() throws IOException {
+  public void testGZipCodec() throws IOException, InterruptedException {
     // set the output format.
     FlumeConfiguration conf = FlumeConfiguration.get();
     conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, "syslog");
@@ -204,9 +205,10 @@ public class TestEscapedCustomOutputDfs {
    * the compressed file and verify the written lines.
    * 
    * @throws IOException
+   * @throws InterruptedException
    */
   @Test
-  public void testBZip2Codec() throws IOException {
+  public void testBZip2Codec() throws IOException, InterruptedException {
     // set the output format.
     FlumeConfiguration conf = FlumeConfiguration.get();
     conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, "syslog");
@@ -251,9 +253,10 @@ public class TestEscapedCustomOutputDfs {
    * the compressed file and verify the written lines.
    * 
    * @throws IOException
+   * @throws InterruptedException
    */
   @Test
-  public void testGzipOutputFormat() throws IOException {
+  public void testGzipOutputFormat() throws IOException, InterruptedException {
     // set the output format.
     FlumeConfiguration conf = FlumeConfiguration.get();
     conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, "syslog");
@@ -296,10 +299,12 @@ public class TestEscapedCustomOutputDfs {
   /**
    * Test to write few log lines, compress using default, write to disk, read
    * back the compressed file and verify the written lines.
+   * 
+   * @throws InterruptedException
    */
 
   @Test(expected = IOException.class)
-  public void testDefaultCodec() throws IOException {
+  public void testDefaultCodec() throws IOException, InterruptedException {
     // set the output format.
     FlumeConfiguration conf = FlumeConfiguration.get();
     conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, "syslog");

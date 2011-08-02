@@ -29,9 +29,12 @@ public class TestFanOutSink {
 
   /**
    * Verify that events are independent down each fanout path
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testIndependentEvents() throws FlumeSpecException, IOException {
+  public void testIndependentEvents() throws FlumeSpecException, IOException,
+      InterruptedException {
 
     String spec = "[ { value(\"foo\",\"bar\") => null}, { value(\"foo\",\"bar\" ) => null } ] ";
     EventSink snk = FlumeBuilder.buildSink(new Context(), spec);

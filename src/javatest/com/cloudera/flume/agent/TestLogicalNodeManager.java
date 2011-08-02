@@ -34,7 +34,8 @@ import com.google.common.collect.Lists;
 public class TestLogicalNodeManager {
 
   @Test
-  public void testSpawnDecomission() throws IOException, FlumeSpecException {
+  public void testSpawnDecomission() throws IOException, FlumeSpecException,
+      InterruptedException {
     LogicalNodeManager lnm = new LogicalNodeManager("local");
     lnm.spawn("foo1", "null", "null");
     lnm.spawn("foo2", "null", "null");
@@ -49,14 +50,14 @@ public class TestLogicalNodeManager {
   }
 
   @Test(expected = IOException.class)
-  public void tesIllegalDecommission() throws IOException {
+  public void tesIllegalDecommission() throws IOException, InterruptedException {
     LogicalNodeManager lnm = new LogicalNodeManager("local");
     lnm.decommission("nonexist");
   }
 
   @Test
   public void testSpawnDecomissionAllBut() throws IOException,
-      FlumeSpecException {
+      FlumeSpecException, InterruptedException {
     LogicalNodeManager lnm = new LogicalNodeManager("local");
     lnm.spawn("foo1", "null", "null");
     lnm.spawn("foo2", "null", "null");

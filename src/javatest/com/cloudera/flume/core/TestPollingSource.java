@@ -47,9 +47,11 @@ public class TestPollingSource {
 
   /**
    * This setups and executes a poller on the FlumeNode's reporter.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testReportPoller() throws FlumeSpecException, IOException {
+  public void testReportPoller() throws FlumeSpecException, IOException, InterruptedException {
     SourceBuilder bld = PollingSource.reporterPollBuilder();
     EventSource src = bld.build("50");
     EventSink snk =

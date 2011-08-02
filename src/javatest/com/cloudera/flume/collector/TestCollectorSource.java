@@ -54,9 +54,11 @@ public class TestCollectorSource {
   /**
    * This test makes sure the port specified is opened and can be written This
    * will fail if any piece failes to open, append, next, or close
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testCollectorSource() throws FlumeSpecException, IOException {
+  public void testCollectorSource() throws FlumeSpecException, IOException, InterruptedException {
     EventSource src = FlumeBuilder.buildSource("collectorSource(34568)");
     EventSink snk = FlumeBuilder.buildSink(new Context(),
         "rpcSink(\"localhost\", 34568)");

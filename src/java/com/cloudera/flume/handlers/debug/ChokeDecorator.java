@@ -65,7 +65,7 @@ public class ChokeDecorator<S extends EventSink> extends EventSinkDecorator<S> {
    * {@inheritDoc}
    */
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     this.chokeMan = FlumeNode.getInstance().getChokeManager();
     super.open();
   }
@@ -88,7 +88,7 @@ public class ChokeDecorator<S extends EventSink> extends EventSinkDecorator<S> {
       @Override
       public EventSinkDecorator<EventSink> build(Context context,
           String... argv) {
-        Preconditions.checkArgument(argv.length ==1,
+        Preconditions.checkArgument(argv.length == 1,
             "usage: choke(\"chokeId\")");
         String chokeID = argv[0];
         return new ChokeDecorator<EventSink>(null, chokeID);

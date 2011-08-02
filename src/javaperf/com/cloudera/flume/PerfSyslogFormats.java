@@ -38,7 +38,8 @@ import com.cloudera.util.Benchmark;
 public class PerfSyslogFormats implements ExamplePerfData {
 
   @Test
-  public void testSyslogFormat() throws IOException, EventExtractException {
+  public void testSyslogFormat() throws IOException, EventExtractException,
+      InterruptedException {
     Benchmark b = new Benchmark("Syslog format + nullsink");
     b.mark("begin");
     TextFileSource txt = new TextFileSource(SYSLOG_LOG); // 23244 entires

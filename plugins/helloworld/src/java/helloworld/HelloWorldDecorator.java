@@ -39,7 +39,7 @@ public class HelloWorldDecorator<S extends EventSink> extends EventSinkDecorator
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     String helloWorldBody = "Hello World! -- " + new String(e.getBody());
 
     // make a copy of the event, but with the new body string.

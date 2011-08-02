@@ -37,7 +37,7 @@ import com.cloudera.flume.handlers.debug.MemorySinkSource;
 public class TestReorderDecorator {
   // first version for me to see the order
   @Test
-  public void testReorderDecorator() throws IOException {
+  public void testReorderDecorator() throws IOException, InterruptedException {
     ReorderDecorator<EventSink> reorder =
         new ReorderDecorator<EventSink>(new ConsoleEventSink(), .5, .5, 0);
     reorder.open();
@@ -52,7 +52,8 @@ public class TestReorderDecorator {
 
   // this version checks to make sure it remains the same.
   @Test
-  public void testReorderDecoratorCheck() throws IOException {
+  public void testReorderDecoratorCheck() throws IOException,
+      InterruptedException {
     MemorySinkSource mss = new MemorySinkSource();
     ReorderDecorator<EventSink> reorder =
         new ReorderDecorator<EventSink>(mss, .5, .5, 0);

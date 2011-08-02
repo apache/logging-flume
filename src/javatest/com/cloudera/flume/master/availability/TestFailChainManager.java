@@ -36,21 +36,20 @@ public class TestFailChainManager {
 
   static final Logger LOG = LoggerFactory.getLogger(TestFailChainManager.class);
 
-  String[] collectors =
-      { "collector 1", "collector 2", "collector 3", "collector 4",
-          "collector 5" };
+  String[] collectors = { "collector 1", "collector 2", "collector 3",
+      "collector 4", "collector 5" };
 
   @Test
   public void testConsistentHashAvailMan() throws FlumeSpecException,
-      IOException {
+      IOException, InterruptedException {
     FailoverChainManager am = new ConsistentHashFailoverChainManager(3);
 
     for (String c : collectors) {
       am.addCollector(c);
     }
 
-    String agent1 =
-        am.getFailChainSinkSpec("agent1", "{lazyOpen => counter(\"%s\")}");
+    String agent1 = am.getFailChainSinkSpec("agent1",
+        "{lazyOpen => counter(\"%s\")}");
     LOG.info(agent1);
     assertEquals(
         "failChain(\"{lazyOpen => counter(\\\"%s\\\")}\",\"collector 2\",\"collector 3\",\"collector 1\")",
@@ -59,8 +58,8 @@ public class TestFailChainManager {
     snk1.open();
     snk1.close();
 
-    String agent2 =
-        am.getFailChainSinkSpec("agent2", "{lazyOpen => counter(\"%s\")}");
+    String agent2 = am.getFailChainSinkSpec("agent2",
+        "{lazyOpen => counter(\"%s\")}");
     LOG.info(agent2);
     assertEquals(
         "failChain(\"{lazyOpen => counter(\\\"%s\\\")}\",\"collector 1\",\"collector 4\",\"collector 5\")",
@@ -69,8 +68,8 @@ public class TestFailChainManager {
     snk2.open();
     snk2.close();
 
-    String agent3 =
-        am.getFailChainSinkSpec("agent3", "{lazyOpen => counter(\"%s\")}");
+    String agent3 = am.getFailChainSinkSpec("agent3",
+        "{lazyOpen => counter(\"%s\")}");
     LOG.info(agent3);
     assertEquals(
         "failChain(\"{lazyOpen => counter(\\\"%s\\\")}\",\"collector 1\",\"collector 2\",\"collector 5\")",
@@ -84,17 +83,20 @@ public class TestFailChainManager {
   /**
    * The specs generated will be deterministic because it the seeds are based
    * off a hash of the agent name.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testRandomAvailMan() throws FlumeSpecException, IOException {
+  public void testRandomAvailMan() throws FlumeSpecException, IOException,
+      InterruptedException {
     FailoverChainManager am = new RandomFailoverChainManager(3);
 
     for (String c : collectors) {
       am.addCollector(c);
     }
 
-    String agent1 =
-        am.getFailChainSinkSpec("agent1", "{lazyOpen => counter(\"%s\")}");
+    String agent1 = am.getFailChainSinkSpec("agent1",
+        "{lazyOpen => counter(\"%s\")}");
     LOG.info(agent1);
     assertEquals(
         "failChain(\"{lazyOpen => counter(\\\"%s\\\")}\",\"collector 5\",\"collector 1\",\"collector 3\")",
@@ -103,8 +105,8 @@ public class TestFailChainManager {
     snk1.open();
     snk1.close();
 
-    String agent2 =
-        am.getFailChainSinkSpec("agent2", "{lazyOpen => counter(\"%s\")}");
+    String agent2 = am.getFailChainSinkSpec("agent2",
+        "{lazyOpen => counter(\"%s\")}");
     LOG.info(agent2);
     assertEquals(
         "failChain(\"{lazyOpen => counter(\\\"%s\\\")}\",\"collector 2\",\"collector 1\",\"collector 3\")",
@@ -113,8 +115,8 @@ public class TestFailChainManager {
     snk2.open();
     snk2.close();
 
-    String agent3 =
-        am.getFailChainSinkSpec("agent3", "{lazyOpen => counter(\"%s\")}");
+    String agent3 = am.getFailChainSinkSpec("agent3",
+        "{lazyOpen => counter(\"%s\")}");
     LOG.info(agent3);
     assertEquals(
         "failChain(\"{lazyOpen => counter(\\\"%s\\\")}\",\"collector 5\",\"collector 1\",\"collector 2\")",

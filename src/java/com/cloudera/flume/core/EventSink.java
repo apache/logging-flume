@@ -38,7 +38,7 @@ public interface EventSink extends Reportable {
    * exceptions IOExceptions and RuntimeExceptions (failed preconditions,
    * illegal state, etc)).
    */
-  public void append(Event e) throws IOException;
+  public void append(Event e) throws IOException, InterruptedException;
 
   /**
    * This initializes a sink so that events can be appended. Events should only
@@ -47,7 +47,7 @@ public interface EventSink extends Reportable {
    * 
    * Open is assumed to block until the sink is ready for append calls.
    */
-  public void open() throws IOException;
+  public void open() throws IOException, InterruptedException;
 
   /**
    * This gracefully shuts down a sink. close will flush remaining events in the
@@ -56,11 +56,11 @@ public interface EventSink extends Reportable {
    * If the data durable, close is allowed to exit if it will be recovered when
    * opened again.
    * 
-   * Close will block until 1) all events appended to this sink have been flushed
-   * and until 2) a subsequent open call should succeed (shared resource
+   * Close will block until 1) all events appended to this sink have been
+   * flushed and until 2) a subsequent open call should succeed (shared resource
    * situation).
    */
-  public void close() throws IOException;
+  public void close() throws IOException, InterruptedException;
 
   /**
    * Generates one or more reports in some sort of readable format using the
@@ -85,7 +85,8 @@ public interface EventSink extends Reportable {
     private long numBytes = 0;
 
     @Override
-    synchronized public void append(Event e) throws IOException {
+    synchronized public void append(Event e) throws IOException,
+        InterruptedException {
       updateAppendStats(e);
     }
 
@@ -97,11 +98,11 @@ public interface EventSink extends Reportable {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() throws IOException, InterruptedException {
     }
 
     @Override
-    public void open() throws IOException {
+    public void open() throws IOException, InterruptedException {
     }
 
     @Override
@@ -147,17 +148,17 @@ public interface EventSink extends Reportable {
     }
 
     @Override
-    public void append(Event e) throws IOException {
+    public void append(Event e) throws IOException, InterruptedException {
       throw new IOException("Attemping to append to a Stub Sink!");
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() throws IOException, InterruptedException {
       // this does not throw exception because close always succeeds.
     }
 
     @Override
-    public void open() throws IOException {
+    public void open() throws IOException, InterruptedException {
       throw new IOException("Attempting to open a stub sink '" + getName()
           + "'!");
     }

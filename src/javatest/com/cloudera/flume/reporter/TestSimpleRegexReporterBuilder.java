@@ -32,8 +32,7 @@ import com.cloudera.flume.reporter.histogram.RegexGroupHistogramSink;
  * This test the file loader on a known good file to make sure it doesn't
  * explode on us.
  */
-public class TestSimpleRegexReporterBuilder implements
-    ExampleData {
+public class TestSimpleRegexReporterBuilder implements ExampleData {
 
   public static final String sample = "123.45.67.89 - - [27/Oct/2000:09:27:09 -0400] "
       + "\"GET /java/javaResources.html HTTP/1.0\" 200 10450 \"-\""
@@ -41,9 +40,11 @@ public class TestSimpleRegexReporterBuilder implements
 
   /**
    * This is just to make sure it doesn't explode.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testLoad() throws IOException {
+  public void testLoad() throws IOException, InterruptedException {
     SimpleRegexReporterBuilder b = new SimpleRegexReporterBuilder(
         APACHE_REGEXES);
 

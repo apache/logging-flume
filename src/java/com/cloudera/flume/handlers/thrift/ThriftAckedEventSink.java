@@ -64,7 +64,7 @@ public class ThriftAckedEventSink extends EventSink.Base {
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     ThriftFlumeEvent tfe = ThriftEventAdaptor.convert(e);
 
     try {
@@ -117,8 +117,8 @@ public class ThriftAckedEventSink extends EventSink.Base {
 
   public static void main(String argv[]) {
     FlumeConfiguration conf = FlumeConfiguration.get();
-    ThriftAckedEventSink sink =
-        new ThriftAckedEventSink("localhost", conf.getCollectorPort());
+    ThriftAckedEventSink sink = new ThriftAckedEventSink("localhost", conf
+        .getCollectorPort());
     try {
       sink.open();
 

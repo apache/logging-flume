@@ -37,7 +37,8 @@ import com.google.common.base.Preconditions;
  */
 public class LazyOpenDecorator<S extends EventSink> extends
     EventSinkDecorator<S> {
-  public static final Logger LOG = LoggerFactory.getLogger(LazyOpenDecorator.class);
+  public static final Logger LOG = LoggerFactory
+      .getLogger(LazyOpenDecorator.class);
 
   /**
    * open has been called on this sink
@@ -61,7 +62,7 @@ public class LazyOpenDecorator<S extends EventSink> extends
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     if (logicallyOpen && !actuallyOpen) {
       super.open();
       actuallyOpen = true;
@@ -71,7 +72,7 @@ public class LazyOpenDecorator<S extends EventSink> extends
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     if (actuallyOpen) {
       super.close();
     }

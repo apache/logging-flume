@@ -53,7 +53,8 @@ import com.google.common.base.Preconditions;
 public class PrioritizedThriftEventSource extends EventSource.Base {
   static int DEFAULT_QUEUE_SIZE = 1000;
 
-  static final Logger LOG = LoggerFactory.getLogger(PrioritizedThriftEventSource.class);
+  static final Logger LOG = LoggerFactory
+      .getLogger(PrioritizedThriftEventSource.class);
   int port;
   ThriftFlumeEventServer svr;
   TSaneThreadPoolServer server;
@@ -72,8 +73,8 @@ public class PrioritizedThriftEventSource extends EventSource.Base {
         public int compare(Event o1, Event o2) {
           // higher priority entries are more important, and then older entries
           // are more important.
-          int priorityDiff =
-              o1.getPriority().ordinal() - o2.getPriority().ordinal();
+          int priorityDiff = o1.getPriority().ordinal()
+              - o2.getPriority().ordinal();
           if (priorityDiff != 0)
             return priorityDiff;
 
@@ -113,20 +114,20 @@ public class PrioritizedThriftEventSource extends EventSource.Base {
   public void open() throws IOException {
 
     try {
-      ThriftFlumeEventServer.Processor processor =
-          new ThriftFlumeEventServer.Processor(new ThriftFlumeEventServerImpl(
-              new EventSink.Base() {
-                @Override
-                public void append(Event e) throws IOException {
-                  q.add(e);
-                  super.append(e);
-                }
-              }));
+      ThriftFlumeEventServer.Processor processor = new ThriftFlumeEventServer.Processor(
+          new ThriftFlumeEventServerImpl(new EventSink.Base() {
+            @Override
+            public void append(Event e) throws IOException,
+                InterruptedException {
+              q.add(e);
+              super.append(e);
+            }
+          }));
       Factory protFactory = new TBinaryProtocol.Factory(true, true);
 
       TSaneServerSocket serverTransport = new TSaneServerSocket(port);
-      server =
-          new TSaneThreadPoolServer(processor, serverTransport, protFactory);
+      server = new TSaneThreadPoolServer(processor, serverTransport,
+          protFactory);
       LOG.info(String.format(
           "Starting blocking thread pool server on port %d...", port));
 
@@ -163,8 +164,8 @@ public class PrioritizedThriftEventSource extends EventSource.Base {
 
   public static void main(String[] argv) {
     FlumeConfiguration conf = FlumeConfiguration.get();
-    PrioritizedThriftEventSource src =
-        new PrioritizedThriftEventSource(conf.getCollectorPort());
+    PrioritizedThriftEventSource src = new PrioritizedThriftEventSource(conf
+        .getCollectorPort());
 
     try {
       src.open();

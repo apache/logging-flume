@@ -70,7 +70,7 @@ public class ThriftEventSink extends EventSink.Base {
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     ThriftFlumeEvent tfe = ThriftEventAdaptor.convert(e);
     try {
       client.append(tfe);

@@ -37,7 +37,7 @@ import com.cloudera.util.Benchmark;
 public class PerfDiskIO implements ExamplePerfData {
 
   @Test
-  public void testWrite() throws IOException {
+  public void testWrite() throws IOException, InterruptedException {
     Benchmark b = new Benchmark("seqfile write");
     b.mark("begin");
 
@@ -78,7 +78,7 @@ public class PerfDiskIO implements ExamplePerfData {
   }
 
   @Test
-  public void testReadFormat() throws IOException {
+  public void testReadFormat() throws IOException, InterruptedException {
     Benchmark b = new Benchmark("log4j format read");
     b.mark("begin");
 

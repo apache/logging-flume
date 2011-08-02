@@ -46,9 +46,11 @@ public class TestInsistentOpen {
   /**
    * Test that IOD retries the correct number of times when opening a sink that
    * fails twice and then succeeds.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testInsistent() throws IOException {
+  public void testInsistent() throws IOException, InterruptedException {
     // TODO(henry): this test relies on real clocks, and shouldn't. See below.
     EventSink fail2x = mock(EventSink.Base.class);
     // two exceptions then some success

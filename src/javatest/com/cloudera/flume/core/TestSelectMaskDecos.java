@@ -33,7 +33,7 @@ import com.cloudera.flume.handlers.debug.MemorySinkSource;
 public class TestSelectMaskDecos {
 
   @Test
-  public void testSelect() throws IOException {
+  public void testSelect() throws IOException, InterruptedException {
     MemorySinkSource mem = new MemorySinkSource();
     EventSink sel = new SelectDecorator<EventSink>(mem, "foo", "bar", "bork");
 
@@ -56,9 +56,11 @@ public class TestSelectMaskDecos {
 
   /**
    * Successful if no exceptions thrown.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testSelectBuilder() throws IOException, FlumeSpecException {
+  public void testSelectBuilder() throws IOException, FlumeSpecException, InterruptedException {
     EventSink snk =
         new CompositeSink(new Context(),
             "{ select(\"foo\", \"bar\",\"bork\") => counter(\"count\") }");
@@ -72,7 +74,7 @@ public class TestSelectMaskDecos {
   }
 
   @Test
-  public void testMask() throws IOException {
+  public void testMask() throws IOException, InterruptedException {
     MemorySinkSource mem = new MemorySinkSource();
     EventSink mask = new MaskDecorator<EventSink>(mem, "foo", "bar", "bork");
 
@@ -95,9 +97,11 @@ public class TestSelectMaskDecos {
 
   /**
    * Successful if no exceptions thrown.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testMaskBuilder() throws IOException, FlumeSpecException {
+  public void testMaskBuilder() throws IOException, FlumeSpecException, InterruptedException {
     EventSink snk =
         new CompositeSink(new Context(),
             "{ mask(\"foo\", \"bar\",\"bork\") => counter(\"count\") }");

@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-
 import com.cloudera.flume.handlers.debug.NullSink;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.util.MultipleIOException;
@@ -51,7 +50,7 @@ public class DemuxSink<S extends EventSink> extends EventSink.Base {
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     byte[] val = e.get(field);
     S handler = split.get(val);
 
@@ -64,14 +63,15 @@ public class DemuxSink<S extends EventSink> extends EventSink.Base {
     super.append(e);
   }
 
-  public void fallThrough(byte[] val, Event e) throws IOException {
+  public void fallThrough(byte[] val, Event e) throws IOException,
+      InterruptedException {
     // default is pass to fallthrough sink
     fallthrough.append(e);
     super.append(e);
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     List<IOException> exs = new ArrayList<IOException>();
 
     for (S snk : split.values()) {
@@ -88,7 +88,7 @@ public class DemuxSink<S extends EventSink> extends EventSink.Base {
   }
 
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     List<IOException> exs = new ArrayList<IOException>();
 
     for (S snk : split.values()) {

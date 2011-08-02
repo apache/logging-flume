@@ -67,7 +67,7 @@ public class AvroEventSink extends EventSink.Base {
    * {@inheritDoc}
    */
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     // convert the flumeEvent to AvroEevent
     AvroFlumeEvent afe = AvroEventAdaptor.convert(e);
     // Make sure client side is initialized.

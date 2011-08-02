@@ -44,7 +44,8 @@ import com.cloudera.util.FileUtil;
  * Tests WriteAheadLogDeco's builder, multiple open close, and actual behavior.
  */
 public class TestWriteAheadLogDecorator {
-  static final Logger LOG = LoggerFactory.getLogger(TestWriteAheadLogDecorator.class);
+  static final Logger LOG = LoggerFactory
+      .getLogger(TestWriteAheadLogDecorator.class);
   File tmpdir = null;
 
   @Before
@@ -96,7 +97,8 @@ public class TestWriteAheadLogDecorator {
   }
 
   @Test
-  public void testOpenClose() throws IOException, FlumeSpecException {
+  public void testOpenClose() throws IOException, FlumeSpecException,
+      InterruptedException {
     String rpt = "foo";
     String snk = " { ackedWriteAhead(100) => [console,  counter(\"" + rpt
         + "\") ] } ";
@@ -106,8 +108,8 @@ public class TestWriteAheadLogDecorator {
       es.close();
     }
 
-  }  
-  
+  }
+
   /**
    * This is a trickier test case. We create a console/counter sink that has a
    * ackedWriteAhead in front of it (aiming for 100 ms per batch). All events
@@ -120,8 +122,8 @@ public class TestWriteAheadLogDecorator {
     int count = 10;
     String rpt = "foo";
     String snk = " { ackedWriteAhead(500) => { ackChecker => [console,  counter(\""
-        + rpt + "\") ] } } ";            
-    
+        + rpt + "\") ] } } ";
+
     EventSink es = FlumeBuilder.buildSink(new ReportTestingContext(), snk);
     es.open();
     for (int i = 0; i < count; i++) {

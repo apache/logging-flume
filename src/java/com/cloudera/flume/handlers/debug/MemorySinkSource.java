@@ -47,7 +47,7 @@ public class MemorySinkSource extends EventSink.Base implements EventSource {
   int idx = 0;
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     evts.add(e);
     super.append(e);
   }
@@ -80,7 +80,7 @@ public class MemorySinkSource extends EventSink.Base implements EventSource {
    * appended as its body.
    */
   public static MemorySinkSource cannedData(String s, int count)
-      throws IOException {
+      throws IOException, InterruptedException {
     MemorySinkSource mss = new MemorySinkSource();
     for (int i = 0; i < count; i++) {
       Event e = new EventImpl((s + " " + count).getBytes());
@@ -100,7 +100,8 @@ public class MemorySinkSource extends EventSink.Base implements EventSource {
    * source that is ready to be read from. This method assumes that the source
    * is finite, and will fit into memory.
    */
-  public static MemorySinkSource bufferize(EventSource src) throws IOException {
+  public static MemorySinkSource bufferize(EventSource src) throws IOException,
+      InterruptedException {
     MemorySinkSource mem = new MemorySinkSource();
     src.open();
     Event e;

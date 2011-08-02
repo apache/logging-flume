@@ -37,7 +37,8 @@ public class BenchmarkBasicDecos {
   // };
 
   @Test
-  public void basicDecorator() throws FlumeSpecException, IOException {
+  public void basicDecorator() throws FlumeSpecException, IOException,
+      InterruptedException {
     for (String d : decos) {
       BenchmarkHarness.doDecoBenchmark(d, BenchmarkHarness.varyMsgBytes);
       BenchmarkHarness.doDecoBenchmark(d, BenchmarkHarness.varyNumAttrs);

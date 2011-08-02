@@ -41,7 +41,8 @@ public class EventUtil {
   /**
    * Dump from source to sink until source fails.
    */
-  public static void dumpAll(EventSource src, EventSink snk) throws IOException {
+  public static void dumpAll(EventSource src, EventSink snk)
+      throws IOException, InterruptedException {
     while (true) {
       Event e = src.next();
       if (e == null) {
@@ -52,7 +53,7 @@ public class EventUtil {
   }
 
   public static void dumpN(long n, EventSource src, EventSink snk, boolean debug)
-      throws IOException {
+      throws IOException, InterruptedException {
     for (long i = 0; i < n; i++) {
       Event e = src.next();
       if (e == null) {
@@ -72,7 +73,7 @@ public class EventUtil {
    */
 
   public static void dumpN(long n, EventSource src, EventSink snk)
-      throws IOException {
+      throws IOException, InterruptedException {
     dumpN(n, src, snk, false);
   }
 

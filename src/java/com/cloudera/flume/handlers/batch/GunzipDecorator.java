@@ -45,7 +45,7 @@ public class GunzipDecorator<S extends EventSink> extends EventSinkDecorator<S> 
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
 
     byte[] bs = e.get(GZDOC);
     if (bs == null) {

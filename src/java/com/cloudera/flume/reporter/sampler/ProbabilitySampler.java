@@ -50,7 +50,7 @@ public class ProbabilitySampler<S extends EventSink> extends
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     if (rand.nextDouble() < prob) {
       getSink().append(e);
     }

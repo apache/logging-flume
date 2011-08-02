@@ -43,7 +43,7 @@ public class TestMultiGrep implements ExampleData {
       "mapred.TaskTracker: Resending" };
 
   @Test
-  public void testMultiGrep() throws IOException {
+  public void testMultiGrep() throws IOException, InterruptedException {
     // build the aho from the file.
     AhoCorasick<String> aho = new AhoCorasick<String>();
     for (String s : searches) {
@@ -76,7 +76,7 @@ public class TestMultiGrep implements ExampleData {
   }
 
   @Test
-  public void testMultiGrepBuilder() throws IOException {
+  public void testMultiGrepBuilder() throws IOException, InterruptedException {
     Collection<MultiGrepReporterSink<String>> c = new MultiGrepReporterBuilder(
         HADOOP_GREP).load();
     Assert.assertEquals(1, c.size());

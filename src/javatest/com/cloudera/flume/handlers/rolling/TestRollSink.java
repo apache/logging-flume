@@ -49,9 +49,10 @@ public class TestRollSink {
 
   /**
    * Tests that the rolling event sink correctly tags the output filename.
+   * @throws InterruptedException 
    */
   @Test
-  public void testEscapedFilenameCloseFlushes() throws IOException {
+  public void testEscapedFilenameCloseFlushes() throws IOException, InterruptedException {
     Tagger tagger = new ProcessTagger() {
       @Override
       public String getTag() {
@@ -85,9 +86,11 @@ public class TestRollSink {
 
   /**
    * Tests that the rolling event sink correctly tags the output filename.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testEscapedFilename() throws IOException {
+  public void testEscapedFilename() throws IOException, InterruptedException {
     Tagger tagger = new ProcessTagger() {
       @Override
       public String getTag() {

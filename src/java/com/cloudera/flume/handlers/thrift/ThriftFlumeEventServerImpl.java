@@ -20,6 +20,8 @@ package com.cloudera.flume.handlers.thrift;
 import java.io.IOException;
 
 import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.handlers.hdfs.WriteableEvent;
@@ -27,7 +29,8 @@ import com.cloudera.flume.handlers.thrift.ThriftFlumeEventServer.Iface;
 import com.google.common.base.Preconditions;
 
 class ThriftFlumeEventServerImpl implements Iface {
-
+  private static final Logger LOG = LoggerFactory
+      .getLogger(ThriftFlumeEventServerImpl.class);
   EventSink sink;
 
   ThriftFlumeEventServerImpl(EventSink sink) {
@@ -43,6 +46,8 @@ class ThriftFlumeEventServerImpl implements Iface {
     } catch (IOException e) {
       e.printStackTrace();
       throw new TException("Caught IO exception " + e);
+    } catch (InterruptedException e) {
+
     }
   }
 
@@ -50,9 +55,9 @@ class ThriftFlumeEventServerImpl implements Iface {
   public void close() throws TException {
     try {
       sink.close();
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw new TException("Caught IO exception " + e);
+    } catch (Exception e) {
+      // TODO figure out how to deal with different exns
+      throw new TException("Caught exception " + e, e);
     }
   }
 
@@ -61,9 +66,9 @@ class ThriftFlumeEventServerImpl implements Iface {
     try {
       WriteableEvent e = WriteableEvent.create(evt.getRaw().array());
       sink.append(e);
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw new TException("Caught IO exception " + e);
+    } catch (Exception e) {
+      // TODO figure out how to deal with different exns
+      throw new TException("Caught exception " + e, e);
     }
 
   }
@@ -75,8 +80,9 @@ class ThriftFlumeEventServerImpl implements Iface {
     try {
       sink.append(new ThriftEventAdaptor(evt));
       return EventStatus.ACK;
-    } catch (IOException e) {
-      e.printStackTrace();
+    } catch (Exception e) {
+      // TODO figure out how to deal with different exns
+      LOG.error(e.getMessage(), e);
       return EventStatus.ERR;
     }
   }

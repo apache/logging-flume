@@ -47,7 +47,7 @@ public class SplitExtractor extends EventSinkDecorator<EventSink> {
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     String vals[] = new String(e.getBody()).split(splitRegex);
     String val = (idx < vals.length) ? vals[idx] : "";
     Attributes.setString(e, attr, val);

@@ -113,7 +113,7 @@ public class LogicalNode implements Reportable {
   }
 
   private void openSourceSink(EventSource newSrc, EventSink newSnk)
-      throws IOException {
+      throws IOException, InterruptedException {
     if (newSnk != null) {
       if (snk != null) {
         try {
@@ -149,7 +149,7 @@ public class LogicalNode implements Reportable {
    * source values into the sink.
    */
   synchronized void openLoadNode(EventSource newSrc, EventSink newSnk)
-      throws IOException {
+      throws IOException, InterruptedException {
     // TODO HACK! This is to prevent heartbeat from hanging if one fo the
     // configs is unable to start due to open exception. It has the effect of
     // defering any exceptions open would have triggered into the Driver thread.
@@ -166,8 +166,7 @@ public class LogicalNode implements Reportable {
    * This stops any existing connection (source=>sink pumper), and then creates
    * a new one with the specified *already opened* source and sink arguments.
    */
-  private void loadNode()
-      throws IOException {
+  private void loadNode() throws IOException {
 
     if (driver != null) {
       // stop the existing connector.
@@ -202,6 +201,9 @@ public class LogicalNode implements Reportable {
           conn.getSink().close();
         } catch (IOException e) {
           LOG.error("Error closing " + nodeName + " sink: " + e.getMessage());
+        } catch (InterruptedException e) {
+          // TODO reconsider this.
+          LOG.error("fire error interrupted", e);
         }
 
         nodeMsg = "Error: Connector on " + nodeName + " closed " + conn;
@@ -232,7 +234,11 @@ public class LogicalNode implements Reportable {
         try {
           c.getSink().close();
         } catch (IOException e) {
-          LOG.error(nodeName + ": error closing: " + e.getMessage());
+          LOG.error(nodeName + ": error closing: " + e.getMessage(), e);
+          next = NodeState.ERROR;
+        } catch (InterruptedException e) {
+          // TODO reconsider this.
+          LOG.error("stopping was interrupted", e);
           next = NodeState.ERROR;
         }
 
@@ -252,8 +258,8 @@ public class LogicalNode implements Reportable {
 
     // got a newer configuration
     LOG.debug("Attempt to load config " + cfg);
-    EventSink newSnk;
-    EventSource newSrc;
+    EventSink newSnk = null;
+    EventSource newSrc = null;
     try {
       String errMsg = null;
       if (cfg.sinkConfig == null || cfg.sinkConfig.length() == 0) {
@@ -299,19 +305,27 @@ public class LogicalNode implements Reportable {
           "FlumeSpecExn : " + new File(".").getAbsolutePath() + " " + cfg, e);
       state.state = NodeState.ERROR;
       throw e;
+    } catch (InterruptedException e) {
+      // TODO figure out what to do on interruption
+      LOG.error("Load Config interrupted", e);
     }
 
-    openLoadNode(newSrc, newSnk);
+    try {
+      openLoadNode(newSrc, newSnk);
 
-    // Since sources/sinks are lazy, we don't know if the config is good until
-    // the first append succeeds.
+      // Since sources/sinks are lazy, we don't know if the config is good until
+      // the first append succeeds.
 
-    // We have successfully opened the source and sinks for the config. We can
-    // mark this as the last good / successful config. It does not mean that
-    // this configuration will open without errors!
-    this.lastGoodCfg = cfg;
+      // We have successfully opened the source and sinks for the config. We can
+      // mark this as the last good / successful config. It does not mean that
+      // this configuration will open without errors!
+      this.lastGoodCfg = cfg;
 
-    LOG.info("Node config sucessfully set to " + cfg);
+      LOG.info("Node config sucessfully set to " + cfg);
+    } catch (InterruptedException e) {
+      // TODO figure out what to do on interruption
+      LOG.error("Load Config interrupted", e);
+    }
   }
 
   /**
@@ -399,7 +413,7 @@ public class LogicalNode implements Reportable {
   /**
    * This is a synchronous close operation for the logical node.
    */
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     if (driver != null) {
       // stop the existing connector.
       nodeMsg = nodeName + "closing";

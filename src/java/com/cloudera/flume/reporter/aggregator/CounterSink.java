@@ -49,7 +49,7 @@ public class CounterSink extends EventSink.Base {
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     Preconditions.checkState(isOpen,
         "Attempting to append to a Counter that is not open!");
     cnt.incrementAndGet();
@@ -57,14 +57,14 @@ public class CounterSink extends EventSink.Base {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     isOpen = false;
     LOG.info(name + " closed, counted " + cnt + " events");
     LOG.info("report: " + getReport().toText());
   }
 
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     Preconditions.checkState(!isOpen);
     isOpen = true;
     cnt = new AtomicLong();

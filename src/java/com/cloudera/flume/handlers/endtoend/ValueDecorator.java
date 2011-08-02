@@ -40,7 +40,7 @@ public class ValueDecorator<S extends EventSink> extends EventSinkDecorator<S> {
     this.value = value.clone();
   }
 
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     e.set(attr, value);
     super.append(e);
   }

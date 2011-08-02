@@ -55,7 +55,7 @@ public class InMemoryDecorator<S extends EventSink> extends
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     for (Event e : evts) {
       getSink().append(e);
     }

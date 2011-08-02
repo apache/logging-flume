@@ -51,7 +51,8 @@ import com.google.common.base.Preconditions;
  * 
  */
 public class BloomGeneratorDeco extends EventSinkDecorator<EventSink> {
-  public static final Logger LOG = LoggerFactory.getLogger(BloomGeneratorDeco.class);
+  public static final Logger LOG = LoggerFactory
+      .getLogger(BloomGeneratorDeco.class);
   protected BloomSet bloom;
   final int size; // size of bloom bit array in bits
   final int hashes; // number of hashes per insertion/membership test
@@ -81,14 +82,14 @@ public class BloomGeneratorDeco extends EventSinkDecorator<EventSink> {
 
   /** {@inheritDoc} */
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     bloom = new BloomSet(size, hashes);
     super.open();
   }
 
   /** {@inheritDoc} */
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     // take a hash of the bytes contents and add them to bloom filter.
     includeEvent(bloom, e);
 
@@ -98,7 +99,7 @@ public class BloomGeneratorDeco extends EventSinkDecorator<EventSink> {
 
   /** {@inheritDoc} */
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     EventImpl e = new EventImpl(new byte[0]);
     addBloom(bloom, e);
     super.append(e);

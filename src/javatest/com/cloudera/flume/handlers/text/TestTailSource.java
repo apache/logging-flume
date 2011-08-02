@@ -310,6 +310,9 @@ public class TestTailSource {
           done.countDown();
         } catch (IOException e) {
           e.printStackTrace();
+        } catch (InterruptedException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
         }
       }
     };
@@ -466,6 +469,9 @@ public class TestTailSource {
           LOG.error("Error while reading from / write "
               + "to flume source / sink. Exception follows.", e);
           workerFailed.set(true);
+        } catch (InterruptedException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
         }
       }
     };

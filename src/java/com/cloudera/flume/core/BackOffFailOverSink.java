@@ -92,7 +92,7 @@ public class BackOffFailOverSink extends EventSink.Base {
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
 
     // we know primary has already failed, and it is time to retry it.
     if (!primaryOk) {
@@ -148,7 +148,7 @@ public class BackOffFailOverSink extends EventSink.Base {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     List<IOException> exs = new ArrayList<IOException>(2);
     try {
       if (primaryOk)
@@ -169,7 +169,7 @@ public class BackOffFailOverSink extends EventSink.Base {
     }
   }
 
-  IOException tryOpenPrimary() {
+  IOException tryOpenPrimary() throws InterruptedException {
     IOException priEx = null;
 
     try {
@@ -192,7 +192,7 @@ public class BackOffFailOverSink extends EventSink.Base {
   }
 
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     IOException priEx = tryOpenPrimary();
 
     if (Thread.currentThread().isInterrupted()) {

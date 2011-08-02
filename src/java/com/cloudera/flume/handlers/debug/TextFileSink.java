@@ -60,7 +60,8 @@ public class TextFileSink extends EventSink.Base {
   }
 
   @Override
-  synchronized public void append(Event e) throws IOException {
+  synchronized public void append(Event e) throws IOException,
+      InterruptedException {
     fmt.format(out, e);
     out.flush();
     count++;

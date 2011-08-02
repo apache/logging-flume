@@ -39,7 +39,7 @@ import com.cloudera.util.Benchmark;
 public class PerfHdfsIO implements ExamplePerfData {
 
   @Test
-  public void testCopy() throws IOException {
+  public void testCopy() throws IOException, InterruptedException {
 
     Benchmark b = new Benchmark("hdfs seqfile copy");
     b.mark("begin");
@@ -78,7 +78,7 @@ public class PerfHdfsIO implements ExamplePerfData {
   }
 
   @Test
-  public void testDirectWrite() throws IOException {
+  public void testDirectWrite() throws IOException, InterruptedException {
 
     Benchmark b = new Benchmark("hdfs seqfile write");
     b.mark("begin");

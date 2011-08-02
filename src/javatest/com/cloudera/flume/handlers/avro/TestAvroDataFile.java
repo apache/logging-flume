@@ -49,7 +49,7 @@ public class TestAvroDataFile {
 
   @Test
   public void testAvroDataFileWriteRead() throws IOException,
-      FlumeSpecException {
+      FlumeSpecException, InterruptedException {
 
     MemorySinkSource mem = MemorySinkSource.cannedData("test ", 5);
 

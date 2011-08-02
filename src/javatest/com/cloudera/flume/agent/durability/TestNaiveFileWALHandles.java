@@ -44,7 +44,7 @@ public class TestNaiveFileWALHandles {
    * cause problems.
    */
   @Test
-  public void testSeqfileEventSinkHandleExhaust() throws IOException {
+  public void testSeqfileEventSinkHandleExhaust() throws IOException, InterruptedException {
     BenchmarkHarness.setupLocalWriteDir();
     File tmp = BenchmarkHarness.tmpdir;
 

@@ -39,7 +39,7 @@ public class ExceptionTwiddleDecorator<S extends EventSink> extends
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     if (!appendOk) {
       throw new IOException("fail");
     }
@@ -47,14 +47,14 @@ public class ExceptionTwiddleDecorator<S extends EventSink> extends
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     if (!closeOk)
       throw new IOException("fail");
     super.close();
   }
 
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     if (!openOk)
       throw new IOException("fail");
     super.open();

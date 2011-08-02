@@ -41,7 +41,8 @@ import com.google.common.base.Preconditions;
  */
 public class StubbornAppendSink<S extends EventSink> extends
     EventSinkDecorator<S> implements Reportable {
-  public static final Logger LOG = LoggerFactory.getLogger(StubbornAppendSink.class);
+  public static final Logger LOG = LoggerFactory
+      .getLogger(StubbornAppendSink.class);
   // attribute names
   final public static String A_SUCCESSES = "appendSuccess";
   final public static String A_FAILS = "appendFails";
@@ -56,7 +57,7 @@ public class StubbornAppendSink<S extends EventSink> extends
   }
 
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     Preconditions.checkNotNull(sink);
     LOG.info("Opening Stubborn Append Sink " + this);
     isOpen.set(true); // slightly different than default semantics -- open
@@ -66,7 +67,7 @@ public class StubbornAppendSink<S extends EventSink> extends
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     try {
       super.append(e);
       appendSuccesses.incrementAndGet();

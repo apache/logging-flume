@@ -34,7 +34,7 @@ import com.cloudera.flume.core.EventImpl;
 public class TestReadLogEvents {
 
   @Test
-  public void testReadLogEvents() throws IOException {
+  public void testReadLogEvents() throws IOException, InterruptedException {
     File tmp = File.createTempFile("test", "tmp");
     tmp.deleteOnExit();
     SeqfileEventSink sink = new SeqfileEventSink(tmp);

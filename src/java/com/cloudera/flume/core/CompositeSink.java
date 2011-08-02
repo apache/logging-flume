@@ -51,17 +51,17 @@ public class CompositeSink extends EventSink.Base {
   }
 
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     snk.open();
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     snk.close();
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     snk.append(e);
     super.append(e);
   }

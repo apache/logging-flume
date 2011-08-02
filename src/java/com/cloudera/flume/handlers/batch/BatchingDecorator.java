@@ -52,7 +52,8 @@ import com.google.common.base.Preconditions;
  */
 public class BatchingDecorator<S extends EventSink> extends
     EventSinkDecorator<S> {
-  protected static final Logger LOG = LoggerFactory.getLogger(BatchingDecorator.class);
+  protected static final Logger LOG = LoggerFactory
+      .getLogger(BatchingDecorator.class);
 
   public static final String BATCH_SIZE = "batchSize";
   public static final String BATCH_DATA = "batchData";
@@ -101,7 +102,8 @@ public class BatchingDecorator<S extends EventSink> extends
     return e.get(BATCH_SIZE) != null && e.get(BATCH_DATA) != null;
   }
 
-  protected synchronized void endBatch() throws IOException {
+  protected synchronized void endBatch() throws IOException,
+      InterruptedException {
     if (events.size() > 0) {
       Event be = batchevent(events);
       super.append(be);
@@ -174,6 +176,10 @@ public class BatchingDecorator<S extends EventSink> extends
         } catch (IOException e) {
           LOG.error("IOException when ending batch!", e);
           timeoutThreadDone = true;
+        } catch (InterruptedException e) {
+          // TODO verify this is correct
+          LOG.error("Interrupted exceptoin when ending batch", e);
+          timeoutThreadDone = true;
         }
       }
       doneLatch.countDown();
@@ -183,7 +189,7 @@ public class BatchingDecorator<S extends EventSink> extends
   protected TimeoutThread timeoutThread = null;
 
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     super.open();
     if (maxLatency > 0) {
       timeoutThread = new TimeoutThread();
@@ -196,7 +202,8 @@ public class BatchingDecorator<S extends EventSink> extends
    * calling endBatch.
    */
   @Override
-  public synchronized void append(Event e) throws IOException {
+  public synchronized void append(Event e) throws IOException,
+      InterruptedException {
     events.add(e);
     if (events.size() >= maxSize) {
       endBatch();
@@ -205,7 +212,7 @@ public class BatchingDecorator<S extends EventSink> extends
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     // flush any left over events in queue.
     endBatch();
     if (timeoutThread != null) {

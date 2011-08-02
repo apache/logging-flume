@@ -38,7 +38,7 @@ import com.cloudera.util.Benchmark;
 public class PerfSamplers implements ExamplePerfData {
 
   @Test
-  public void testReservoirSampler() throws IOException {
+  public void testReservoirSampler() throws IOException, InterruptedException {
     Benchmark b = new Benchmark("Reservoir sampler + nullsink");
     b.mark("begin");
     TextFileSource txt = new TextFileSource(HADOOP_DATA[0]);
@@ -79,7 +79,7 @@ public class PerfSamplers implements ExamplePerfData {
   }
 
   @Test
-  public void testIntervalSampler() throws IOException {
+  public void testIntervalSampler() throws IOException, InterruptedException {
     Benchmark b = new Benchmark("Interval sampler + nullsink");
     b.mark("begin");
     TextFileSource txt = new TextFileSource(HADOOP_DATA[0]);
@@ -120,7 +120,7 @@ public class PerfSamplers implements ExamplePerfData {
   }
 
   @Test
-  public void testProbabilitySampler() throws IOException {
+  public void testProbabilitySampler() throws IOException, InterruptedException {
     Benchmark b = new Benchmark("Reservoir sampler + nullsink");
     b.mark("begin");
     TextFileSource txt = new TextFileSource(HADOOP_DATA[0]);

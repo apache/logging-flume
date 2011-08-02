@@ -57,14 +57,14 @@ public class TestSamplers {
     System.out.println("Reservoir sampler");
 
     // rotations.
-    long historyLen= 300;
+    long historyLen = 300;
     ScheduledHistoryReporter<CounterSink> hist = new ScheduledHistoryReporter<CounterSink>(
-        "test", longwait,historyLen, new DumbTagger()) {
+        "test", longwait, historyLen, new DumbTagger()) {
 
       @Override
       public CounterSink newSink(Tagger format) throws IOException {
         CounterSink count = new CounterSink("count") {
-          public void append(Event e) throws IOException {
+          public void append(Event e) throws IOException, InterruptedException {
             super.append(e);
             System.out.println(e); // just add a printf to the counts.
           }
@@ -118,7 +118,8 @@ public class TestSamplers {
   }
 
   @Test
-  public void testSimpleIntervalSamplerSink() throws IOException {
+  public void testSimpleIntervalSamplerSink() throws IOException,
+      InterruptedException {
     System.out.println("Simple interval sampler sink");
     CounterSink count = new CounterSink("count");
     IntervalSampler<CounterSink> sink = new IntervalSampler<CounterSink>(count,
@@ -155,7 +156,7 @@ public class TestSamplers {
       @Override
       public CounterSink newSink(Tagger format) throws IOException {
         CounterSink count = new CounterSink("count") {
-          public void append(Event e) throws IOException {
+          public void append(Event e) throws IOException, InterruptedException {
             super.append(e);
 
             // just add a printf to the counts.
@@ -169,7 +170,7 @@ public class TestSamplers {
       public ReportEvent getReport() {
         return null;
       }
-      
+
       @Override
       public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
         reports.put(namePrefix + getName(), getReport());
@@ -220,7 +221,7 @@ public class TestSamplers {
       @Override
       public CounterSink newSink(Tagger format) throws IOException {
         CounterSink count = new CounterSink("count") {
-          public void append(Event e) throws IOException {
+          public void append(Event e) throws IOException, InterruptedException {
             super.append(e);
             System.out.println(e); // just add a printf to the counts.
           }

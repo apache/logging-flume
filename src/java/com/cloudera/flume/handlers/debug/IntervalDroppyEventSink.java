@@ -36,7 +36,8 @@ import com.google.common.base.Preconditions;
  */
 public class IntervalDroppyEventSink<S extends EventSink> extends
     EventSinkDecorator<S> {
-  static final Logger LOG = LoggerFactory.getLogger(IntervalDroppyEventSink.class);
+  static final Logger LOG = LoggerFactory
+      .getLogger(IntervalDroppyEventSink.class);
 
   int interval;
   int count = 0;
@@ -48,7 +49,7 @@ public class IntervalDroppyEventSink<S extends EventSink> extends
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     count++;
     if (count % interval == 0) {
       count = 0;

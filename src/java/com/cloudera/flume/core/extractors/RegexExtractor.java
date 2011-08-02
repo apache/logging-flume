@@ -75,7 +75,7 @@ public class RegexExtractor extends EventSinkDecorator<EventSink> {
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     String s = new String(e.getBody());
     Matcher m = pat.matcher(s);
     String val = ""; // default

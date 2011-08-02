@@ -34,7 +34,7 @@ import com.cloudera.flume.handlers.debug.MemorySinkSource;
 public class TestExtractors {
 
   @Test
-  public void testRegexExtractor() throws IOException {
+  public void testRegexExtractor() throws IOException, InterruptedException {
     MemorySinkSource mem = new MemorySinkSource();
     mem.open();
     RegexExtractor re1 = new RegexExtractor(mem, "(\\d:\\d)", 1, "colon");
@@ -58,7 +58,7 @@ public class TestExtractors {
   }
 
   @Test
-  public void testSplitExtractor() throws IOException {
+  public void testSplitExtractor() throws IOException, InterruptedException {
     MemorySinkSource mem = new MemorySinkSource();
     SplitExtractor re1 = new SplitExtractor(mem, "\\.", 1, "dot");
     SplitExtractor re2 = new SplitExtractor(re1, ":", 1, "colon");

@@ -103,7 +103,8 @@ public class TestCollectorSink {
   }
 
   @Test
-  public void testOpenClose() throws FlumeSpecException, IOException {
+  public void testOpenClose() throws FlumeSpecException, IOException,
+      InterruptedException {
     String src2 = "collectorSink(\"file:///tmp/test\",\"testfilename\")";
 
     for (int i = 0; i < 100; i++) {
@@ -115,9 +116,11 @@ public class TestCollectorSink {
 
   /**
    * Test that file paths are correctly constructed from dir + path + tag
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testCorrectFilename() throws IOException {
+  public void testCorrectFilename() throws IOException, InterruptedException {
     CollectorSink sink = new CollectorSink(
         "file:///tmp/flume-test-correct-filename", "actual-file-", 10000,
         new Tagger() {
@@ -150,8 +153,10 @@ public class TestCollectorSink {
   /**
    * Setup a data set with acks in the stream. This simulates data coming from
    * an agent expecting end-to-end acks.
+   * 
+   * @throws InterruptedException
    */
-  MemorySinkSource setupAckRoll() throws IOException {
+  MemorySinkSource setupAckRoll() throws IOException, InterruptedException {
 
     // we can roll now.
     MemorySinkSource ackedmem = new MemorySinkSource();
@@ -423,6 +428,9 @@ public class TestCollectorSink {
         } catch (IOException e1) {
           // could be exception but we don't care
           LOG.info("don't care about this exception: ", e1);
+        } catch (InterruptedException e1) {
+          // TODO Auto-generated catch block
+          e1.printStackTrace();
         }
         done.countDown();
       }
@@ -457,6 +465,9 @@ public class TestCollectorSink {
         } catch (IOException e1) {
           // could be an exception but we don't care.
           LOG.info("don't care about this exception: ", e1);
+        } catch (InterruptedException e1) {
+          // TODO Auto-generated catch block
+          e1.printStackTrace();
         }
         done.countDown();
       }
@@ -495,6 +506,9 @@ public class TestCollectorSink {
         } catch (IOException e1) {
           // could throw exception but we don't care
           LOG.info("don't care about this exception: ", e1);
+        } catch (InterruptedException e1) {
+          // TODO Auto-generated catch block
+          e1.printStackTrace();
         }
         done.countDown();
       }

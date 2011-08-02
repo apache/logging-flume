@@ -267,12 +267,12 @@ public class NaiveFileWALManager implements WALManager {
 
     return new EventSinkDecorator<EventSink>(curSink) {
       @Override
-      public void append(Event e) throws IOException {
+      public void append(Event e) throws IOException, InterruptedException {
         getSink().append(e);
       }
 
       @Override
-      public void close() throws IOException {
+      public void close() throws IOException, InterruptedException {
         super.close();
         synchronized (NaiveFileWALManager.this) {
           if (!writingQ.contains(tag)) {
@@ -303,14 +303,14 @@ public class NaiveFileWALManager implements WALManager {
 
     return new EventSinkDecorator<EventSink>(curSink) {
       @Override
-      public void append(Event e) throws IOException {
+      public void append(Event e) throws IOException, InterruptedException {
         LOG.debug("Appending event: {}", e); // performance sensitive
         getSink().append(e);
 
       }
 
       @Override
-      public void close() throws IOException {
+      public void close() throws IOException, InterruptedException {
         super.close();
         changeState(tag, State.WRITING, State.LOGGED);
 

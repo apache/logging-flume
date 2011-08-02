@@ -43,7 +43,7 @@ public class IntervalSampler<S extends EventSink> extends EventSinkDecorator<S> 
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
 
     if (count % interval == 0) {
       // forward

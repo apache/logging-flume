@@ -50,7 +50,7 @@ public class AccumulatorSink extends EventSink.Base {
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     Preconditions.checkState(isOpen,
         "Attempting to append to an accumulator that is not open!");
     cnt.incrementAndGet();
@@ -58,14 +58,14 @@ public class AccumulatorSink extends EventSink.Base {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     isOpen = false;
     LOG.info(name + " closed, accumulated " + cnt + " events");
     LOG.info("report: " + getReport().toText());
   }
 
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     Preconditions.checkState(!isOpen);
     isOpen = true;
     // Do no reset counter.

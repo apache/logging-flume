@@ -34,7 +34,7 @@ import com.cloudera.flume.reporter.aggregator.CounterSink;
 public class TestFailOverSink {
 
   @Test
-  public void testFailOverSink() throws IOException {
+  public void testFailOverSink() throws IOException, InterruptedException {
     CounterSink primary = new CounterSink("primary");
     CounterSink secondary = new CounterSink("backup");
 
@@ -55,9 +55,11 @@ public class TestFailOverSink {
 
   /**
    * This does multiple levels of failover.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testMultiFailOverSink() throws IOException {
+  public void testMultiFailOverSink() throws IOException, InterruptedException {
     CounterSink primary = new CounterSink("primary");
     CounterSink secondary = new CounterSink("backup");
     CounterSink tertiary = new CounterSink("tertiary");

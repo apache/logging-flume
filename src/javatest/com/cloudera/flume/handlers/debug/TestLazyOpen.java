@@ -62,7 +62,7 @@ public class TestLazyOpen {
   }
 
   @Test
-  public void testLazyOpen() throws IOException {
+  public void testLazyOpen() throws IOException, InterruptedException {
     OpenInstanceCountingSink snk = new OpenInstanceCountingSink();
 
     LazyOpenDecorator<EventSink> lazy = new LazyOpenDecorator<EventSink>(snk);
@@ -78,7 +78,7 @@ public class TestLazyOpen {
   }
 
   @Test
-  public void testLazyClosed() throws IOException {
+  public void testLazyClosed() throws IOException, InterruptedException {
     OpenInstanceCountingSink snk = new OpenInstanceCountingSink();
 
     LazyOpenDecorator<EventSink> lazy = new LazyOpenDecorator<EventSink>(snk);
@@ -98,9 +98,12 @@ public class TestLazyOpen {
 
   /**
    * Tests the lazy open through another mechanism, and tests the builder
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testLazyOpenBuild() throws IOException, FlumeSpecException {
+  public void testLazyOpenBuild() throws IOException, FlumeSpecException,
+      InterruptedException {
     EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(),
         "{ lazyOpen => counter(\"count\") } ");
     CounterSink cnt = (CounterSink) ReportManager.get().getReportable("count");

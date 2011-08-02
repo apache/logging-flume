@@ -63,9 +63,11 @@ public class TestAvroSinks implements ExampleData {
    * text file -> mem
    * 
    * mem -> AvroEventSink -> AvroEventSource -> counter
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testAvroSend() throws IOException {
+  public void testAvroSend() throws IOException, InterruptedException {
     EventSource txt = new NoNlASCIISynthSource(25, 100);
     txt.open();
     MemorySinkSource mem = new MemorySinkSource();
@@ -83,7 +85,7 @@ public class TestAvroSinks implements ExampleData {
       public void run() {
         try {
           EventUtil.dumpAll(tes, cnt);
-        } catch (IOException e) {
+        } catch (Exception e) {
         }
       }
     };
@@ -146,7 +148,7 @@ public class TestAvroSinks implements ExampleData {
       public void run() {
         try {
           EventUtil.dumpAll(tes, cnt);
-        } catch (IOException e) {
+        } catch (Exception e) {
         }
       }
     };

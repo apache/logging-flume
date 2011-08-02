@@ -103,9 +103,11 @@ public class TestBenchmarkDeco implements ExampleData {
 
   /**
    * Tests to make sure the report sink receives data.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testReportSink() throws FlumeSpecException, IOException {
+  public void testReportSink() throws FlumeSpecException, IOException, InterruptedException {
     String spec = "{benchinject(\"foo\") => {benchreport(\"report\", \"[ console , counter(\\\"test\\\") ]\")  => null } }";
     EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), spec);
     snk.open();

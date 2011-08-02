@@ -40,7 +40,7 @@ import com.cloudera.util.Histogram;
 public class PerfGrepReportSinks implements ExamplePerfData {
 
   @Test
-  public void testHadoopGrep() throws IOException {
+  public void testHadoopGrep() throws IOException, InterruptedException {
     Benchmark b = new Benchmark("hadoop_greps");
     b.mark("begin");
 

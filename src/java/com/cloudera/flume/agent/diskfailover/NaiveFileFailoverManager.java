@@ -55,7 +55,8 @@ import com.google.common.base.Preconditions;
  */
 public class NaiveFileFailoverManager implements DiskFailoverManager,
     Reportable {
-  static final Logger LOG = LoggerFactory.getLogger(NaiveFileFailoverManager.class);
+  static final Logger LOG = LoggerFactory
+      .getLogger(NaiveFileFailoverManager.class);
 
   // This is the state of the node.
   final private ConcurrentHashMap<String, DFOData> table = new ConcurrentHashMap<String, DFOData>();
@@ -247,7 +248,8 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
 
     return new EventSinkDecorator<EventSink>(curSink) {
       @Override
-      synchronized public void append(Event e) throws IOException {
+      synchronized public void append(Event e) throws IOException,
+          InterruptedException {
         synchronized (NaiveFileFailoverManager.this) {
           getSink().append(e);
           writingEvtCount.incrementAndGet();
@@ -255,7 +257,7 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
       }
 
       @Override
-      synchronized public void close() throws IOException {
+      synchronized public void close() throws IOException, InterruptedException {
         synchronized (NaiveFileFailoverManager.this) {
           super.close();
           if (!writingQ.contains(tag)) {

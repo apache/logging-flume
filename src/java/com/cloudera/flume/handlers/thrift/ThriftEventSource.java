@@ -129,7 +129,8 @@ public class ThriftEventSource extends EventSource.Base {
       ThriftFlumeEventServer.Processor processor = new ThriftFlumeEventServer.Processor(
           new ThriftFlumeEventServerImpl(new EventSink.Base() {
             @Override
-            public void append(Event e) throws IOException {
+            public void append(Event e) throws IOException,
+                InterruptedException {
               enqueue(e);
               super.append(e);
             }

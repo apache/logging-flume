@@ -61,16 +61,16 @@ public class TestAgentSink {
 
   public void testBuilder() throws FlumeSpecException {
     String snk = " agentSink";
-    FlumeBuilder.buildSink(new Context(),snk);
+    FlumeBuilder.buildSink(new Context(), snk);
 
     String snk2 = "agentSink(\"localhost\")";
-    FlumeBuilder.buildSink(new Context(),snk2);
+    FlumeBuilder.buildSink(new Context(), snk2);
 
     String snk3 = "agentSink(\"localhost\", 12345)";
-    FlumeBuilder.buildSink(new Context(),snk3);
+    FlumeBuilder.buildSink(new Context(), snk3);
     try {
       String snk4 = "agentSink(\"localhost\", 12345, \"fail\")";
-      FlumeBuilder.buildSink(new Context(),snk4);
+      FlumeBuilder.buildSink(new Context(), snk4);
     } catch (Exception e) {
       return;
     }
@@ -79,16 +79,16 @@ public class TestAgentSink {
 
   public void testDiskFailoverBuilder() throws FlumeSpecException {
     String snk = " agentFailoverSink";
-    FlumeBuilder.buildSink(new Context(),snk);
+    FlumeBuilder.buildSink(new Context(), snk);
 
     String snk2 = "agentFailoverSink(\"localhost\")";
-    FlumeBuilder.buildSink(new Context(),snk2);
+    FlumeBuilder.buildSink(new Context(), snk2);
 
     String snk3 = "agentFailoverSink(\"localhost\", 12345)";
-    FlumeBuilder.buildSink(new Context(),snk3);
+    FlumeBuilder.buildSink(new Context(), snk3);
     try {
       String snk4 = "agentFailoverSink(\"localhost\", 12345, \"fail\")";
-      FlumeBuilder.buildSink(new Context(),snk4);
+      FlumeBuilder.buildSink(new Context(), snk4);
     } catch (Exception e) {
       return;
     }
@@ -97,16 +97,16 @@ public class TestAgentSink {
 
   public void testBestEffortBuilder() throws FlumeSpecException {
     String snk = " agentBestEffortSink";
-    FlumeBuilder.buildSink(new Context(),snk);
+    FlumeBuilder.buildSink(new Context(), snk);
 
     String snk2 = "agentBestEffortSink(\"localhost\")";
-    FlumeBuilder.buildSink(new Context(),snk2);
+    FlumeBuilder.buildSink(new Context(), snk2);
 
     String snk3 = "agentBestEffortSink(\"localhost\", 12345)";
-    FlumeBuilder.buildSink(new Context(),snk3);
+    FlumeBuilder.buildSink(new Context(), snk3);
     try {
       String snk4 = "agentBestEffortSink(\"localhost\", 12345, \"fail\")";
-      FlumeBuilder.buildSink(new Context(),snk4);
+      FlumeBuilder.buildSink(new Context(), snk4);
     } catch (Exception e) {
       return;
     }
@@ -116,15 +116,18 @@ public class TestAgentSink {
   /**
    * This test makes sure that opening and closing in rapid succession does not
    * cause an exception due to resource contention (ports) or race conditions.
+   * 
+   * @throws InterruptedException
    */
-  public void testAgentSink() throws FlumeSpecException, IOException {
+  public void testAgentSink() throws FlumeSpecException, IOException,
+      InterruptedException {
     String snkcfg = "agentSink(\"localhost\", 12345)";
 
     EventSource src = FlumeBuilder.buildSource("collectorSource(12345)");
     src.open();
 
     for (int i = 0; i < 100; i++) {
-      EventSink snk = FlumeBuilder.buildSink(new Context(),snkcfg);
+      EventSink snk = FlumeBuilder.buildSink(new Context(), snkcfg);
       snk.open();
       snk.close();
     }

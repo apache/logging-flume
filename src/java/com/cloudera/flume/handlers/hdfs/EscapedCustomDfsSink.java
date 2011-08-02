@@ -108,7 +108,7 @@ public class EscapedCustomDfsSink extends EventSink.Base {
    * drawn from the supplied event
    */
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException  {
     CustomDfsSink w = writer;
     if (shouldSub) {
       String realPath = e.escapeString(absolutePath);

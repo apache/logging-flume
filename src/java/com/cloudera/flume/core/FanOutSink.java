@@ -73,7 +73,7 @@ public class FanOutSink<S extends EventSink> extends EventSink.Base {
    * Close all children
    */
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     List<IOException> exs = new ArrayList<IOException>();
 
     for (S snk : sinks) {
@@ -94,7 +94,7 @@ public class FanOutSink<S extends EventSink> extends EventSink.Base {
    * Open all children.
    */
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     List<IOException> exs = new ArrayList<IOException>();
 
     for (S snk : sinks) {
@@ -112,7 +112,8 @@ public class FanOutSink<S extends EventSink> extends EventSink.Base {
   }
 
   @Override
-  synchronized public void append(Event e) throws IOException {
+  synchronized public void append(Event e) throws IOException,
+      InterruptedException {
     List<IOException> exs = new ArrayList<IOException>();
 
     for (S snk : sinks) {

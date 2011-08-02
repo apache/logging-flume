@@ -34,7 +34,8 @@ import com.cloudera.util.Pair;
  * 
  * TODO (jon) unify this RollSink
  */
-abstract public class HistoryReporter<S extends EventSink> extends EventSink.Base {
+abstract public class HistoryReporter<S extends EventSink> extends
+    EventSink.Base {
 
   // timestamp and the old report.
   LinkedList<Pair<Long, S>> history;
@@ -54,7 +55,7 @@ abstract public class HistoryReporter<S extends EventSink> extends EventSink.Bas
   abstract public S newSink(Tagger format) throws IOException;
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     if (sink == null) {
       try {
         sink = newSink(tagger);
@@ -85,13 +86,13 @@ abstract public class HistoryReporter<S extends EventSink> extends EventSink.Bas
   }
 
   @Override
-  synchronized public void close() throws IOException {
+  synchronized public void close() throws IOException, InterruptedException {
     sink.close();
     sink = null;
   }
 
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     if (sink == null) {
       try {
         sink = newSink(tagger);

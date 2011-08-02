@@ -44,7 +44,7 @@ public class IntervalFlakeyEventSink<S extends EventSink> extends
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     count++;
     if (count % interval == 0) {
       count = 0;

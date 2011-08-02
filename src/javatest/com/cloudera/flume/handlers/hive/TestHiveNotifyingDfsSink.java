@@ -45,9 +45,11 @@ public class TestHiveNotifyingDfsSink {
 
   /**
    * This just prints data out about the notifications that have been triggered.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testDefault() throws IOException {
+  public void testDefault() throws IOException, InterruptedException {
     File f = FileUtil.mktempdir();
 
     EventSink snk = new HiveNotifyingDfsSink("file://" + f + "/%Y-%m-%d/",
@@ -72,9 +74,11 @@ public class TestHiveNotifyingDfsSink {
   /**
    * This installs a custom handler that records the notfications that have been
    * trigered, and checks values to make sure the notification is sane.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testHandler() throws IOException {
+  public void testHandler() throws IOException, InterruptedException {
     File f = FileUtil.mktempdir();
 
     // HiveFileReadyHandler hfrh = mock(HiveFileReadyHandler.class);
@@ -122,9 +126,11 @@ public class TestHiveNotifyingDfsSink {
    * This tests the deduplication handler to verify that notifications are only
    * sent when new directories are created -- new files in the same dir are not
    * renotified.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testDedupHandler() throws IOException {
+  public void testDedupHandler() throws IOException, InterruptedException {
     File f = FileUtil.mktempdir();
 
     final List<HiveDirCreatedNotification> saves = new ArrayList<HiveDirCreatedNotification>();

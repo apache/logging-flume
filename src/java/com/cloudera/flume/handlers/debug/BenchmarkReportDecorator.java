@@ -53,7 +53,8 @@ import com.google.common.base.Preconditions;
  */
 public class BenchmarkReportDecorator<S extends EventSink> extends
     EventSinkDecorator<S> {
-  static final Logger LOG = LoggerFactory.getLogger(BenchmarkReportDecorator.class);
+  static final Logger LOG = LoggerFactory
+      .getLogger(BenchmarkReportDecorator.class);
 
   public final static String A_BENCHMARK_RPT = "benchmarkReport";
   public final static String A_BENCHMARK_CSV = "benchmarkCsv";
@@ -83,7 +84,7 @@ public class BenchmarkReportDecorator<S extends EventSink> extends
    * benchmark. These are consumed by this decorator.
    */
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     byte[] bench = e.get(BenchmarkInjectDecorator.ATTR_BENCHMARK);
     if (bench == null) {
       // This is the normal case -- a regular message
@@ -132,13 +133,13 @@ public class BenchmarkReportDecorator<S extends EventSink> extends
   }
 
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     super.open();
     reportSink.open();
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     super.close();
     reportSink.close();
     LOG.info(new String(getReport().getBody()));

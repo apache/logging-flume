@@ -38,21 +38,21 @@ public class BenchmarkAgentDecos {
   }
 
   @Test
-  public void tiny() throws FlumeSpecException, IOException {
+  public void tiny() throws FlumeSpecException, IOException, InterruptedException {
     BenchmarkHarness.doDecoBenchmark("nullDeco", BenchmarkHarness.tiny);
     BenchmarkHarness.doDecoBenchmark("diskFailover", BenchmarkHarness.tiny);
     BenchmarkHarness.doDecoBenchmark("ackedWriteAhead", BenchmarkHarness.tiny);
   }
 
   @Test
-  public void nullDecorator() throws FlumeSpecException, IOException {
+  public void nullDecorator() throws FlumeSpecException, IOException, InterruptedException {
     BenchmarkHarness.doDecoBenchmark("nullDeco", BenchmarkHarness.varyMsgBytes);
     BenchmarkHarness.doDecoBenchmark("nullDeco", BenchmarkHarness.varyNumAttrs);
     BenchmarkHarness.doDecoBenchmark("nullDeco", BenchmarkHarness.varyValSize);
   }
 
   @Test
-  public void dfoDecorator2() throws FlumeSpecException, IOException {
+  public void dfoDecorator2() throws FlumeSpecException, IOException, InterruptedException {
     BenchmarkHarness.doDecoBenchmark("diskFailover",
         BenchmarkHarness.varyMsgBytes);
     BenchmarkHarness.doDecoBenchmark("diskFailover",
@@ -62,7 +62,7 @@ public class BenchmarkAgentDecos {
   }
 
   @Test
-  public void e2eDecorator() throws FlumeSpecException, IOException {
+  public void e2eDecorator() throws FlumeSpecException, IOException, InterruptedException {
     BenchmarkHarness.doDecoBenchmark("ackedWriteAhead",
         BenchmarkHarness.varyMsgBytes);
     BenchmarkHarness.doDecoBenchmark("ackedWriteAhead",

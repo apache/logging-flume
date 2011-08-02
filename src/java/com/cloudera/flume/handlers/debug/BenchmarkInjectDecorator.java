@@ -45,7 +45,8 @@ import com.google.common.base.Preconditions;
  */
 public class BenchmarkInjectDecorator<S extends EventSink> extends
     EventSinkDecorator<S> {
-  static final Logger LOG = LoggerFactory.getLogger(BenchmarkInjectDecorator.class);
+  static final Logger LOG = LoggerFactory
+      .getLogger(BenchmarkInjectDecorator.class);
   final static AtomicInteger count = new AtomicInteger();
 
   public final static String ATTR_BENCHMARK = "BenchmarkInject";
@@ -81,20 +82,20 @@ public class BenchmarkInjectDecorator<S extends EventSink> extends
   }
 
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     super.open();
     super.append(tagBench(new EventImpl(new byte[0]), BENCH_START));
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     super.append(tagBench(getReport(), BENCH_STOP));
     super.close();
 
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     if (first.getAndSet(false)) {
       super.append(tagBench(new EventImpl(new byte[0]), BENCH_FIRST));
     }

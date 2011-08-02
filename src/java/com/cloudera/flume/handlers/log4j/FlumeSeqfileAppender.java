@@ -63,6 +63,8 @@ public class FlumeSeqfileAppender extends AppenderSkeleton {
       appender.append(new Log4JEventAdaptor(e));
     } catch (IOException e1) {
       e1.printStackTrace();
+    } catch (InterruptedException e1) {
+      e1.printStackTrace();
     }
   }
 
@@ -72,6 +74,8 @@ public class FlumeSeqfileAppender extends AppenderSkeleton {
       appender.close();
     } catch (IOException e) {
       e.printStackTrace();
+    } catch (InterruptedException e1) {
+      e1.printStackTrace();
     }
   }
 

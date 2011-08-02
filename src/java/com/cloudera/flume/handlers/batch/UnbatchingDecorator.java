@@ -47,7 +47,7 @@ public class UnbatchingDecorator<S extends EventSink> extends
    * through the events.
    */
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     if (!BatchingDecorator.isBatch(e)) {
       super.append(e);
       return;

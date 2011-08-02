@@ -57,9 +57,11 @@ public class TestDiskFailoverDeco {
   /**
    * Semantically, if an exception is thrown by an internal thread, the
    * exception should get percolated up to the appender.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testHandleExns() throws IOException {
+  public void testHandleExns() throws IOException, InterruptedException {
     EventSink msnk = mock(EventSink.class);
     doNothing().when(msnk).open();
     doNothing().when(msnk).close();

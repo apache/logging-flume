@@ -51,7 +51,7 @@ public class EventSinkDecorator<S extends EventSink> extends EventSink.Base {
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     Preconditions.checkNotNull(sink);
     Preconditions.checkState(isOpen.get(), "EventSink " + this.getName()
         + " not open");
@@ -60,14 +60,14 @@ public class EventSinkDecorator<S extends EventSink> extends EventSink.Base {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     Preconditions.checkNotNull(sink);
     sink.close();
     isOpen.set(false);
   }
 
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     Preconditions.checkNotNull(sink);
     Preconditions.checkState(!isOpen.get(), "EventSink Decorator was not open");
     sink.open();

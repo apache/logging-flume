@@ -56,7 +56,7 @@ public class LatchedDecorator<S extends EventSink> extends
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     if (precount.get() > 0) {
 
       precount.decrementAndGet();

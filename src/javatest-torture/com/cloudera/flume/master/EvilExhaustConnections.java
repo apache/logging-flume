@@ -38,9 +38,10 @@ public class EvilExhaustConnections {
    * many open files
    * 
    * @throws FlumeSpecException
+   * @throws InterruptedException 
    */
   @Test
-  public void testTooManyOpens() throws IOException, FlumeSpecException {
+  public void testTooManyOpens() throws IOException, FlumeSpecException, InterruptedException {
     Benchmark b = new Benchmark("connection exhaust");
 
     EventSource src = FlumeBuilder.buildSource("thrift(31337)");
@@ -66,7 +67,8 @@ public class EvilExhaustConnections {
   }
 
   @Test
-  public void testSurviveManyOpens() throws IOException, FlumeSpecException {
+  public void testSurviveManyOpens() throws IOException, FlumeSpecException,
+      InterruptedException {
     Benchmark b = new Benchmark("connection exhaust");
 
     EventSource src = FlumeBuilder.buildSource("thrift(31337)");

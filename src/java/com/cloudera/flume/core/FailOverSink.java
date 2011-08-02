@@ -75,7 +75,7 @@ public class FailOverSink extends EventSink.Base {
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     if (primaryOpen) {
       try {
         primary.append(e);
@@ -92,7 +92,7 @@ public class FailOverSink extends EventSink.Base {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     List<IOException> exs = new ArrayList<IOException>(2);
     try {
       if (primaryOpen)
@@ -114,7 +114,7 @@ public class FailOverSink extends EventSink.Base {
   }
 
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     IOException priEx = null;
     try {
       primary.open();

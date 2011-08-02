@@ -58,7 +58,9 @@ public class Log4JAppenderEventSink extends AppenderSkeleton {
     try {
       sink.append(new Log4JEventAdaptor(event));
     } catch (IOException e) {
-      throw new RuntimeException("TODO, log event IO exception");
+      throw new RuntimeException("TODO, log event IO exception", e);
+    } catch (InterruptedException e) {
+      throw new RuntimeException("TODO, log event interrupted exception", e);
     }
   }
 
@@ -66,7 +68,9 @@ public class Log4JAppenderEventSink extends AppenderSkeleton {
     try {
       sink.close();
     } catch (IOException e) {
-      e.printStackTrace();
+      throw new RuntimeException("TODO, log event IO exception", e);
+    } catch (InterruptedException e) {
+      throw new RuntimeException("TODO, log event interrupted exception", e);
     }
   }
 

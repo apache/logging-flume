@@ -189,10 +189,11 @@ public class TestBloomSetDecos {
 
   /**
    * Instantiate decos, run them and check their reports.
+   * @throws InterruptedException 
    */
   @SuppressWarnings("unchecked")
   @Test
-  public void testBloomDecos() throws FlumeSpecException, IOException {
+  public void testBloomDecos() throws FlumeSpecException, IOException, InterruptedException {
     String spec = "{ bloomGen(10000,2) => { bloomCheck(10000,2) => counter(\"test\")} } ";
     EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), spec);
     EventSource src = FlumeBuilder.buildSource("asciisynth(10000)");
@@ -219,9 +220,10 @@ public class TestBloomSetDecos {
 
   /**
    * Tests to make sure the report sink receives data.
+   * @throws InterruptedException 
    */
   @Test
-  public void testBloomReportSink() throws FlumeSpecException, IOException {
+  public void testBloomReportSink() throws FlumeSpecException, IOException, InterruptedException {
     String spec = "{bloomGen(100,2) => {bloomCheck(100,2,\"counter(\\\"test\\\") \")  => counter(\"total\") } } }";
     EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), spec);
     snk.open();

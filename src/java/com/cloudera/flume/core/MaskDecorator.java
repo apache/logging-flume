@@ -38,7 +38,7 @@ public class MaskDecorator<S extends EventSink> extends EventSinkDecorator<S> {
   }
 
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     Event e2 = EventImpl.unselect(e, attrs);
     super.append(e2);
   }

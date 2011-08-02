@@ -38,13 +38,13 @@ import com.cloudera.flume.reporter.aggregator.CounterSink;
 public class TestMultiplierDeco {
 
   @Test
-  public void testMultiplier() throws IOException {
+  public void testMultiplier() throws IOException, InterruptedException {
     final int repeat = 9;
     final int msgs = 10;
     CounterSink cnt = new CounterSink("count");
     // send to counter 10x.
-    EventSinkDecorator<CounterSink> s =
-        new MultiplierDecorator<CounterSink>(cnt, repeat);
+    EventSinkDecorator<CounterSink> s = new MultiplierDecorator<CounterSink>(
+        cnt, repeat);
     s.open();
     for (int i = 0; i < msgs; i++) {
       Event e = new EventImpl(("" + i).getBytes());
@@ -56,9 +56,12 @@ public class TestMultiplierDeco {
 
   /**
    * Test the builder interface.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testMultiplierBuilder() throws IOException, FlumeSpecException {
+  public void testMultiplierBuilder() throws IOException, FlumeSpecException,
+      InterruptedException {
     final int repeat = 7;
     final int msgs = 10;
 
@@ -78,16 +81,17 @@ public class TestMultiplierDeco {
   /**
    * Test the builder interface. Makes sure the multiplier doesn't multiply the
    * benchmark messages.
+   * 
+   * @throws InterruptedException
    */
   @Test
   public void testBenchmarkMultiplierBuilder() throws IOException,
-      FlumeSpecException {
+      FlumeSpecException, InterruptedException {
     final int repeat = 3;
     final int msgs = 4;
 
-    String cfg =
-        "{ benchinject => { mult(" + repeat
-            + ") => [console, counter(\"count\")] }}";
+    String cfg = "{ benchinject => { mult(" + repeat
+        + ") => [console, counter(\"count\")] }}";
     EventSink s = FlumeBuilder.buildSink(new ReportTestingContext(), cfg);
     s.open();
 

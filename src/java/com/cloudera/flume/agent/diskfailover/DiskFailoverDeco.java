@@ -82,7 +82,8 @@ public class DiskFailoverDeco<S extends EventSink> extends
    * TODO(jon): double check that the synchronization is appropriate here
    */
   @Override
-  public synchronized void append(Event e) throws IOException {
+  public synchronized void append(Event e) throws IOException,
+      InterruptedException {
     Preconditions.checkNotNull(sink, "DiskFailoverDeco sink was invalid");
     Preconditions.checkArgument(isOpen.get(),
         "DiskFailoverDeco not open for append");
@@ -95,7 +96,7 @@ public class DiskFailoverDeco<S extends EventSink> extends
   }
 
   @Override
-  public synchronized void close() throws IOException {
+  public synchronized void close() throws IOException, InterruptedException {
     Preconditions.checkNotNull(sink,
         "Attempted to close a null DiskFailoverDeco subsink");
     LOG.debug("Closing DiskFailoverDeco");
@@ -167,7 +168,7 @@ public class DiskFailoverDeco<S extends EventSink> extends
   }
 
   @Override
-  synchronized public void open() throws IOException {
+  synchronized public void open() throws IOException, InterruptedException {
 
     Preconditions.checkNotNull(sink,
         "Attepted to open a null DiskFailoverDeco subsink");

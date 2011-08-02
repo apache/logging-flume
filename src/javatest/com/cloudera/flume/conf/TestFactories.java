@@ -48,7 +48,7 @@ public class TestFactories implements ExampleData {
   final static int LINES = 25;
 
   @Test
-  public void testBuildConsole() throws IOException, FlumeSpecException {
+  public void testBuildConsole() throws IOException, FlumeSpecException, InterruptedException {
     EventSink snk = fact.getSink(new Context(), "console");
     snk.open();
     snk.append(new EventImpl("test".getBytes()));
@@ -89,7 +89,7 @@ public class TestFactories implements ExampleData {
   }
 
   @Test
-  public void testDecorator() throws IOException, FlumeSpecException {
+  public void testDecorator() throws IOException, FlumeSpecException, InterruptedException {
     EventSource src = srcfact.getSource("asciisynth", "25", "100");
     src.open();
 

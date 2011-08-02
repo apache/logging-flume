@@ -55,12 +55,12 @@ public class ReservoirSamplerDeco<R extends EventSink> extends
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     flush();
     super.close();
   }
 
-  public void flush() throws IOException {
+  public void flush() throws IOException, InterruptedException {
     Preconditions.checkNotNull(sampler);
     List<Event> es = sampler.sample();
     for (Event e : es) {

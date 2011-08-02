@@ -82,17 +82,16 @@ public class GangliaSink extends EventSink.Base {
   private static final Logger LOG = LoggerFactory.getLogger(GangliaSink.class);
   private final String servers;
 
-  private static final Map<Type, String> typeTable =
-      new HashMap<Type, String>() {
-        private static final long serialVersionUID = 1L;
-        {
-          put(Type.STRING, "string");
-          put(Type.INT, "int32");
-          put(Type.LONG, "float"); // Conversion happens here, originally from
-          // hadoop source
-          put(Type.DOUBLE, "double");
-        }
-      };
+  private static final Map<Type, String> typeTable = new HashMap<Type, String>() {
+    private static final long serialVersionUID = 1L;
+    {
+      put(Type.STRING, "string");
+      put(Type.INT, "int32");
+      put(Type.LONG, "float"); // Conversion happens here, originally from
+      // hadoop source
+      put(Type.DOUBLE, "double");
+    }
+  };
 
   private byte[] buffer = new byte[BUFFER_SIZE];
   private int offset;
@@ -119,7 +118,7 @@ public class GangliaSink extends EventSink.Base {
    * This may become moot if typing information is provided by flume's data.
    */
   @Override
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     String value;
     switch (type) {
     case LONG: {
@@ -166,7 +165,7 @@ public class GangliaSink extends EventSink.Base {
   }
 
   @Override
-  public void open() throws IOException {
+  public void open() throws IOException, InterruptedException {
     // TODO (jon) need to worry about SecurityException and other
     // RuntimeExceptions.
 
@@ -186,7 +185,7 @@ public class GangliaSink extends EventSink.Base {
    * Not thread safe
    */
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     if (datagramSocket == null) {
       LOG.warn("Double close");
       return;

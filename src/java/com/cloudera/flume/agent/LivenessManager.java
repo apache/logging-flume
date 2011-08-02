@@ -89,7 +89,7 @@ public class LivenessManager {
    * Invariant: There is always at least logical per physical node. When there
    * is one, it has the same name as the physical node.
    */
-  public void checkLogicalNodes() throws IOException {
+  public void checkLogicalNodes() throws IOException, InterruptedException {
     // TODO (jon) Make this a single batched rpc call instead of
     // multiple calls
 
@@ -149,7 +149,7 @@ public class LivenessManager {
    * All the core functionality of a heartbeat accessible without having to be
    * in the heartbeat thread.
    */
-  public void heartbeatChecks() throws IOException {
+  public void heartbeatChecks() throws IOException, InterruptedException {
     // these will call ensure open on the master
     checkLogicalNodes();
 

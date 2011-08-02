@@ -45,7 +45,7 @@ public class FormatterDecorator<S extends EventSink> extends
    * Replaces e with an event whose body is formatString substituted with e's
    * body
    */
-  public void append(Event e) throws IOException {
+  public void append(Event e) throws IOException, InterruptedException {
     Preconditions.checkNotNull(e);
     String body = e.escapeString(formatString);
     Event e2 = new EventImpl(body.getBytes(), e.getTimestamp(),

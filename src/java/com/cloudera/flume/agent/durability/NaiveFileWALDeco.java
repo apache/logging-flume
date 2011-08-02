@@ -94,7 +94,7 @@ public class NaiveFileWALDeco<S extends EventSink> extends
     }
 
     @Override
-    public void append(Event e) throws IOException {
+    public void append(Event e) throws IOException, InterruptedException {
 
       super.append(e);
 
@@ -126,7 +126,8 @@ public class NaiveFileWALDeco<S extends EventSink> extends
    * TODO(jon): double check that the synchronization is appropriate here
    */
   @Override
-  public synchronized void append(Event e) throws IOException {
+  public synchronized void append(Event e) throws IOException,
+      InterruptedException {
     Preconditions.checkNotNull(sink, "NaiveFileWALDeco was invalid!");
     Preconditions.checkState(isOpen.get(),
         "NaiveFileWALDeco not open for append");
@@ -137,7 +138,7 @@ public class NaiveFileWALDeco<S extends EventSink> extends
   }
 
   @Override
-  public synchronized void close() throws IOException {
+  public synchronized void close() throws IOException, InterruptedException {
     Preconditions.checkNotNull(sink,
         "Attmpted to close a null NaiveFileWALDeco");
     LOG.debug("Closing NaiveFileWALDeco");
@@ -208,7 +209,7 @@ public class NaiveFileWALDeco<S extends EventSink> extends
   }
 
   @Override
-  synchronized public void open() throws IOException {
+  synchronized public void open() throws IOException, InterruptedException {
     Preconditions.checkNotNull(sink,
         "Attempted to open a null NaiveFileWALDeco subsink");
     LOG.debug("Opening NaiveFileWALDeco");
@@ -254,6 +255,9 @@ public class NaiveFileWALDeco<S extends EventSink> extends
           conn.getSink().close();
         } catch (IOException e) {
           LOG.error("Error closing", e);
+        } catch (InterruptedException e) {
+          // TODO reconsider this
+          LOG.error("fireError interrupted", e);
         }
         completed.countDown();
         LOG.info("Error'ed Connector closed " + conn);
@@ -279,7 +283,7 @@ public class NaiveFileWALDeco<S extends EventSink> extends
         new AckChecksumRegisterer<S>(sink, al)));
   }
 
-  public synchronized boolean rotate() {
+  public synchronized boolean rotate() throws InterruptedException {
     return input.rotate();
   }
 

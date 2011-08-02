@@ -46,7 +46,7 @@ public class TestBatching {
   public static final Logger LOG = Logger.getLogger(TestBatching.class);
 
   @Test
-  public void testBatch() throws IOException {
+  public void testBatch() throws IOException, InterruptedException {
     final int total = 104;
     // create a batch
     CounterSink cnt = new CounterSink("count");
@@ -124,7 +124,8 @@ public class TestBatching {
   }
 
   @Test
-  public void testGzip() throws FlumeSpecException, IOException {
+  public void testGzip() throws FlumeSpecException, IOException,
+      InterruptedException {
 
     MemorySinkSource mem = new MemorySinkSource();
     BatchingDecorator<EventSink> b = new BatchingDecorator<EventSink>(mem, 100,

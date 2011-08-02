@@ -44,17 +44,18 @@ import com.cloudera.flume.reporter.aggregator.CounterSink;
  */
 public class TestAckChecksumDecos {
 
-  public static final Logger LOG = LoggerFactory.getLogger(TestAckChecksumDecos.class);
+  public static final Logger LOG = LoggerFactory
+      .getLogger(TestAckChecksumDecos.class);
 
   // Just a test to see the output.
   @Test
-  public void testCheckCheckerConsole() throws IOException {
+  public void testCheckCheckerConsole() throws IOException,
+      InterruptedException {
 
     int msgs = 5;
     CounterSink cnt = new CounterSink("count");
-    AckChecksumInjector<EventSink> aci =
-        new AckChecksumInjector<EventSink>(new FanOutSink<EventSink>(cnt,
-            new ConsoleEventSink()));
+    AckChecksumInjector<EventSink> aci = new AckChecksumInjector<EventSink>(
+        new FanOutSink<EventSink>(cnt, new ConsoleEventSink()));
 
     aci.open();
     for (int i = 0; i < msgs; i++) {
@@ -68,14 +69,15 @@ public class TestAckChecksumDecos {
 
   /**
    * Send messages in order and make sure they check out
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testCheckChecker() throws IOException {
+  public void testCheckChecker() throws IOException, InterruptedException {
     int msgs = 100;
     MemorySinkSource mss = new MemorySinkSource();
     AckChecksumChecker<EventSink> acc = new AckChecksumChecker<EventSink>(mss);
-    AckChecksumInjector<EventSink> aci =
-        new AckChecksumInjector<EventSink>(acc);
+    AckChecksumInjector<EventSink> aci = new AckChecksumInjector<EventSink>(acc);
 
     aci.open();
     for (int i = 0; i < msgs; i++) {
@@ -96,13 +98,15 @@ public class TestAckChecksumDecos {
 
   /**
    * Send messages when some message are reordered and make sure they check out
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testReorderedChecker() throws IOException {
+  public void testReorderedChecker() throws IOException, InterruptedException {
     MemorySinkSource mss = new MemorySinkSource();
     AckChecksumChecker<EventSink> cc = new AckChecksumChecker<EventSink>(mss);
-    ReorderDecorator<EventSink> ro =
-        new ReorderDecorator<EventSink>(cc, .5, .5, 0);
+    ReorderDecorator<EventSink> ro = new ReorderDecorator<EventSink>(cc, .5,
+        .5, 0);
     AckChecksumInjector<EventSink> cp = new AckChecksumInjector<EventSink>(ro);
 
     cp.open();
@@ -120,27 +124,29 @@ public class TestAckChecksumDecos {
 
   /**
    * error case: no start message
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testNoStart() throws IOException {
+  public void testNoStart() throws IOException, InterruptedException {
     final int msgs = 100;
     MemorySinkSource mss = new MemorySinkSource();
     AckChecksumChecker<EventSink> cc = new AckChecksumChecker<EventSink>(mss);
-    EventSinkDecorator<EventSink> dropFirst =
-        new EventSinkDecorator<EventSink>(cc) {
-          int count = 0;
+    EventSinkDecorator<EventSink> dropFirst = new EventSinkDecorator<EventSink>(
+        cc) {
+      int count = 0;
 
-          public void append(Event e) throws IOException {
-            if (count == 0) {
-              count++;
-              return;
-            }
-            count++;
-            getSink().append(e);
-          }
-        };
-    AckChecksumInjector<EventSink> cp =
-        new AckChecksumInjector<EventSink>(dropFirst);
+      public void append(Event e) throws IOException, InterruptedException {
+        if (count == 0) {
+          count++;
+          return;
+        }
+        count++;
+        getSink().append(e);
+      }
+    };
+    AckChecksumInjector<EventSink> cp = new AckChecksumInjector<EventSink>(
+        dropFirst);
 
     try {
 
@@ -164,28 +170,30 @@ public class TestAckChecksumDecos {
    * tag fails and is never cleaned up. (e.g. if we fail over to another
    * collector, this may stick around). A flush or ageoff is probably needed in
    * the long term.
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testNoStop() throws IOException {
+  public void testNoStop() throws IOException, InterruptedException {
     final int msgs = 100;
     MemorySinkSource mss = new MemorySinkSource();
     AckChecksumChecker<EventSink> cc = new AckChecksumChecker<EventSink>(mss);
-    EventSinkDecorator<EventSink> dropStop =
-        new EventSinkDecorator<EventSink>(cc) {
-          int drop = msgs + 1; // intial + messages, the drop the last
-          int count = 0;
+    EventSinkDecorator<EventSink> dropStop = new EventSinkDecorator<EventSink>(
+        cc) {
+      int drop = msgs + 1; // intial + messages, the drop the last
+      int count = 0;
 
-          public void append(Event e) throws IOException {
-            if (count == drop) {
-              count++;
-              return;
-            }
-            count++;
-            getSink().append(e);
-          }
-        };
-    AckChecksumInjector<EventSink> cp =
-        new AckChecksumInjector<EventSink>(dropStop);
+      public void append(Event e) throws IOException, InterruptedException {
+        if (count == drop) {
+          count++;
+          return;
+        }
+        count++;
+        getSink().append(e);
+      }
+    };
+    AckChecksumInjector<EventSink> cp = new AckChecksumInjector<EventSink>(
+        dropStop);
 
     cp.open();
     for (int i = 0; i < msgs; i++) {
@@ -200,33 +208,35 @@ public class TestAckChecksumDecos {
 
   /**
    * error case: duplicate/dropped message (bad checksum)
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testDupe() throws IOException {
+  public void testDupe() throws IOException, InterruptedException {
     final int msgs = 100;
     MemorySinkSource mss = new MemorySinkSource();
-    AckChecksumChecker<EventSink> cc =
-        new AckChecksumChecker<EventSink>(mss, new AckListener.Empty() {
+    AckChecksumChecker<EventSink> cc = new AckChecksumChecker<EventSink>(mss,
+        new AckListener.Empty() {
           @Override
           public void err(String group) throws IOException {
             throw new IOException("Fail");
           }
         });
-    EventSinkDecorator<EventSink> dupeMsg =
-        new EventSinkDecorator<EventSink>(cc) {
-          int drop = msgs / 2;
-          int count = 0;
+    EventSinkDecorator<EventSink> dupeMsg = new EventSinkDecorator<EventSink>(
+        cc) {
+      int drop = msgs / 2;
+      int count = 0;
 
-          public void append(Event e) throws IOException {
-            if (count == drop) {
-              getSink().append(e); // extra message send.
-            }
-            count++;
-            getSink().append(e);
-          }
-        };
-    AckChecksumInjector<EventSink> cp =
-        new AckChecksumInjector<EventSink>(dupeMsg);
+      public void append(Event e) throws IOException, InterruptedException {
+        if (count == drop) {
+          getSink().append(e); // extra message send.
+        }
+        count++;
+        getSink().append(e);
+      }
+    };
+    AckChecksumInjector<EventSink> cp = new AckChecksumInjector<EventSink>(
+        dupeMsg);
 
     try {
       cp.open();

@@ -41,9 +41,11 @@ public class PerfThriftSinks implements ExamplePerfData {
    * text -> mem
    * 
    * mem -> ThriftEventSink -> ThriftEventSource -> NullSink
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testThriftSend() throws IOException {
+  public void testThriftSend() throws IOException, InterruptedException {
 
     Benchmark b = new Benchmark("nullsink");
 
@@ -65,7 +67,7 @@ public class PerfThriftSinks implements ExamplePerfData {
       public void run() {
         try {
           EventUtil.dumpAll(tes, new NullSink());
-        } catch (IOException e) {
+        } catch (Exception e) {
           // TODO Auto-generated catch block
           e.printStackTrace();
         }
@@ -120,7 +122,7 @@ public class PerfThriftSinks implements ExamplePerfData {
       public void run() {
         try {
           EventUtil.dumpAll(tes, new NullSink());
-        } catch (IOException e) {
+        } catch (Exception e) {
           // TODO Auto-generated catch block
           e.printStackTrace();
         }
@@ -164,9 +166,11 @@ public class PerfThriftSinks implements ExamplePerfData {
    * text -> mem
    * 
    * mem -> ThriftRawEventSink -> ThriftEventSource -> NullSink
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testThriftRawSend() throws IOException {
+  public void testThriftRawSend() throws IOException, InterruptedException {
 
     Benchmark b = new Benchmark("nullsink");
 
@@ -188,7 +192,7 @@ public class PerfThriftSinks implements ExamplePerfData {
       public void run() {
         try {
           EventUtil.dumpAll(tes, new NullSink());
-        } catch (IOException e) {
+        } catch (Exception e) {
           // TODO Auto-generated catch block
           e.printStackTrace();
         }
