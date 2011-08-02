@@ -138,6 +138,7 @@ public class TailSource extends EventSource.Base {
     long lastMod;
     long lastReadOffset;
     long lastFileLen;
+    int readFailures;
 
     Cursor(BlockingQueue<Event> sync, File f) {
       this(sync, f, 0, 0, 0);
@@ -150,6 +151,7 @@ public class TailSource extends EventSource.Base {
       this.lastReadOffset = lastReadOffset;
       this.lastFileLen = lastFileLen;
       this.lastMod = lastMod;
+      this.readFailures = 0;
     }
 
     void initCursorPos() {
@@ -170,6 +172,7 @@ public class TailSource extends EventSource.Base {
       raf = null;
       lastReadOffset = 0;
       lastMod = 0;
+      readFailures = 0;
     }
 
     /**
@@ -195,6 +198,10 @@ public class TailSource extends EventSource.Base {
       if (!file.exists()) {
         LOG.debug("Tail '" + file + "': nothing to do, waiting for a file");
         return false; // do nothing
+      }
+
+      if (!file.canRead()) {
+        throw new IOException("Permission denied on " + file);
       }
 
       // oh! f exists and is a file
@@ -307,6 +314,18 @@ public class TailSource extends EventSource.Base {
       } catch (IOException e) {
         LOG.debug(e.getMessage(), e);
         raf = null;
+        readFailures++;
+
+        /*
+         * Back off on retries after 3 failures so we don't burn cycles. Note
+         * that this can exacerbate the race condition illustrated above where a
+         * file is truncated, created, written to, and truncated / removed while
+         * we're sleeping.
+         */
+        if (readFailures > 3) {
+          LOG.warn("Encountered " + readFailures + " failures on " + file.getAbsolutePath() + " - sleeping");
+          return false;
+        }
       }
       return true;
     }

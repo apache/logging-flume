@@ -19,11 +19,13 @@
 package com.cloudera.flume.handlers.text;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -50,6 +52,78 @@ public class TestTailSource {
   public void setDebug() {
     Logger.getLogger(TestTailSource.class).setLevel(Level.DEBUG);
     Logger.getLogger(TailSource.class).setLevel(Level.DEBUG);
+  }
+
+  @Test
+  public void testTailPermissionDenied() throws IOException, FlumeSpecException, InterruptedException {
+    File f;
+    final EventSource eventSource;
+    final CompositeSink eventSink;
+    final AtomicBoolean workerFailed;
+    Thread workerThread;
+    FileWriter writer;
+    long sleepTime;
+    long eventCount;
+
+    f = File.createTempFile("temp", ".tmp");
+    f.setReadable(false, false);
+
+    f.deleteOnExit();
+
+    eventSource = TailSource.builder().build(f.getAbsolutePath());
+    eventSink = new CompositeSink(
+      new ReportTestingContext(),
+      "{ delay(50) => counter(\"count\") }"
+    );
+    workerFailed = new AtomicBoolean(false);
+    workerThread = new Thread() {
+
+      @Override
+      public void run() {
+        try {
+          eventSource.open();
+          eventSink.open();
+
+          EventUtil.dumpN(10, eventSource, eventSink);
+
+          eventSource.close();
+          eventSink.close();
+        } catch (IOException e) {
+          workerFailed.set(true);
+          LOG.error("Test thread raised IOException during testing. Exception follows.", e);
+        }
+      }
+
+    };
+
+    workerThread.start();
+
+    writer = new FileWriter(f);
+
+    for (int i = 0; i < 10; i++) {
+      writer.append("Line " + i + "\n");
+      writer.flush();
+    }
+
+    writer.close();
+
+    sleepTime = Math.round(Math.random() * 1000);
+
+    eventCount = ((CounterSink)ReportManager.get().getReportable("count")).getCount();
+    assertEquals(0, eventCount);
+
+    LOG.debug("About to sleep for " + sleepTime + " before fixing permissions");
+    Thread.sleep(sleepTime);
+
+    f.setReadable(true, false);
+
+    LOG.debug("Permissions fixed. Waiting for eventSource to figure it out");
+    workerThread.join();
+
+    assertFalse("Worker thread failed", workerFailed.get());
+
+    eventCount = ((CounterSink)ReportManager.get().getReportable("count")).getCount();
+    assertEquals(10, eventCount);
   }
 
   /**
