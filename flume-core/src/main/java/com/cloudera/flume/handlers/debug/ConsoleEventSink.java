@@ -23,6 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
+import com.cloudera.flume.conf.FlumeBuilder;
+import com.cloudera.flume.conf.FlumeBuilder.FunctionSpec;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.core.Event;
@@ -69,14 +71,21 @@ public class ConsoleEventSink extends EventSink.Base {
     return new SinkBuilder() {
 
       @Override
+      @Deprecated
       public EventSink build(Context context, String... argv) {
+        // updated interface calls build(Context,Object...) instead
+        throw new RuntimeException(
+            "Old sink builder for Console sink should not be exercised");
+      }
+
+      @Override
+      public EventSink create(Context context, Object... argv) {
         Preconditions.checkArgument(argv.length <= 1,
             "usage: console[(format)]");
-        OutputFormat fmt = DebugOutputFormat.builder().build();
+        OutputFormat fmt = DebugOutputFormat.builder().create();
         if (argv.length >= 1) {
-          // TODO (jon) handle formats with arguments. Requires language update.
           try {
-            fmt = FormatFactory.get().getOutputFormat(argv[0]);
+            fmt = FlumeBuilder.createFormat(FormatFactory.get(), argv[0]);
           } catch (FlumeSpecException e) {
             LOG.error("Bad output format name " + argv[0], e);
             throw new IllegalArgumentException("Bad output format name "

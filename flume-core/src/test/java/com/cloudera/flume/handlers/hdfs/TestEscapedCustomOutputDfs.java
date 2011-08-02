@@ -30,13 +30,17 @@ import java.io.InputStream;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.hadoop.io.compress.BZip2Codec;
+import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.io.compress.DefaultCodec;
+import org.apache.hadoop.io.compress.GzipCodec;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import com.cloudera.flume.conf.Context;
+import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
+import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.Event;
@@ -45,6 +49,7 @@ import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.handlers.avro.AvroJsonOutputFormat;
 import com.cloudera.flume.handlers.text.SyslogEntryFormat;
 import com.cloudera.flume.handlers.text.output.Log4jOutputFormat;
+import com.cloudera.flume.handlers.text.output.OutputFormat;
 import com.cloudera.util.FileUtil;
 
 /**
@@ -56,48 +61,22 @@ public class TestEscapedCustomOutputDfs {
   final public static Logger LOG = Logger
       .getLogger(TestEscapedCustomOutputDfs.class);
 
-  @Test
-  public void testAvroOutputFormat() throws IOException, InterruptedException {
-    // set the output format.
-    FlumeConfiguration conf = FlumeConfiguration.get();
-    conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, "avrojson");
-
-    // build a sink that outputs to that format.
-    File f = FileUtil.mktempdir();
-    SinkBuilder builder = EscapedCustomDfsSink.builder();
-    EventSink snk = builder.build(new Context(), "file:///" + f.getPath()
-        + "/sub-%{service}");
-    Event e = new EventImpl("this is a test message".getBytes());
-    Attributes.setString(e, "service", "foo");
-    snk.open();
-    snk.append(e);
-    snk.close();
-
-    ByteArrayOutputStream exWriter = new ByteArrayOutputStream();
-    AvroJsonOutputFormat ajof = new AvroJsonOutputFormat();
-    ajof.format(exWriter, e);
-    exWriter.close();
-    String expected = new String(exWriter.toByteArray());
-
-    // check the output to make sure it is what we expected.
-    File fo = new File(f.getPath() + "/sub-foo");
-
-    FileReader fr = new FileReader(fo);
-    BufferedReader br = new BufferedReader(fr);
-    String read = br.readLine() + "\n";
-    assertEquals(expected, read);
+  void checkOutputFormat(String format, OutputFormat of) throws IOException,
+      InterruptedException {
+    checkOutputFormat(format, of, "None", null);
   }
 
-  @Test
-  public void testSyslogOutputFormat() throws IOException, InterruptedException {
+  void checkOutputFormat(String format, OutputFormat of, String codecName,
+      CompressionCodec codec) throws IOException, InterruptedException {
     // set the output format.
     FlumeConfiguration conf = FlumeConfiguration.get();
-    conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, "syslog");
+    conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, format);
+    conf.set(FlumeConfiguration.COLLECTOR_DFS_COMPRESS_CODEC, codecName);
 
     // build a sink that outputs to that format.
     File f = FileUtil.mktempdir();
     SinkBuilder builder = EscapedCustomDfsSink.builder();
-    EventSink snk = builder.build(new Context(), "file:///" + f.getPath()
+    EventSink snk = builder.create(new Context(), "file:///" + f.getPath()
         + "/sub-%{service}");
     Event e = new EventImpl("this is a test message".getBytes());
     Attributes.setString(e, "service", "foo");
@@ -106,148 +85,75 @@ public class TestEscapedCustomOutputDfs {
     snk.close();
 
     ByteArrayOutputStream exWriter = new ByteArrayOutputStream();
-    SyslogEntryFormat fmt = new SyslogEntryFormat();
-    fmt.format(exWriter, e);
+    of.format(exWriter, e);
     exWriter.close();
     String expected = new String(exWriter.toByteArray());
 
     // check the output to make sure it is what we expected.
-    File fo = new File(f.getPath() + "/sub-foo");
 
-    FileReader fr = new FileReader(fo);
-    BufferedReader br = new BufferedReader(fr);
-    String read = br.readLine() + "\n";
-    assertEquals(expected, read);
-  }
-
-  @Test
-  public void testLog4jOutputFormat() throws IOException, InterruptedException {
-    // set the output format.
-    FlumeConfiguration conf = FlumeConfiguration.get();
-    conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, "log4j");
-
-    // build a sink that outputs to that format.
-    File f = FileUtil.mktempdir();
-    SinkBuilder builder = EscapedCustomDfsSink.builder();
-    EventSink snk = builder.build(new Context(), "file:///" + f.getPath()
-        + "/sub-%{service}");
-    Event e = new EventImpl("this is a test message".getBytes());
-    Attributes.setString(e, "service", "foo");
-    snk.open();
-    snk.append(e);
-    snk.close();
-
-    ByteArrayOutputStream exWriter = new ByteArrayOutputStream();
-    Log4jOutputFormat fmt = new Log4jOutputFormat();
-    fmt.format(exWriter, e);
-    exWriter.close();
-    String expected = new String(exWriter.toByteArray());
-
-    // check the output to make sure it is what we expected.
-    File fo = new File(f.getPath() + "/sub-foo");
-    FileReader fr = new FileReader(fo);
-    BufferedReader br = new BufferedReader(fr);
-    String read = br.readLine() + "\n";
-    assertEquals(expected, read);
-  }
-
-  /**
-   * Test to write few log lines, compress using gzip, write to disk, read back
-   * the compressed file and verify the written lines. This test alone doesn't
-   * test GZipCodec with its Native Libs. java.library.path must contain the path to the
-   * hadoop native libs for this to happen.
-   * 
-   * @throws IOException
-   * @throws InterruptedException
-   */
-  @Test
-  public void testGZipCodec() throws IOException, InterruptedException {
-    // set the output format.
-    FlumeConfiguration conf = FlumeConfiguration.get();
-    conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, "syslog");
-    conf.set(FlumeConfiguration.COLLECTOR_DFS_COMPRESS_CODEC, "GzipCodec");
-
-    // build a sink that outputs to that format.
-    File f = FileUtil.mktempdir();
-    SinkBuilder builder = EscapedCustomDfsSink.builder();
-    EventSink snk = builder.build(new Context(), "file:///" + f.getPath()
-        + "/sub-%{service}");
-    Event e = new EventImpl("this is a test message".getBytes());
-    Attributes.setString(e, "service", "foo");
-    snk.open();
-    snk.append(e);
-    snk.close();
-
-    ByteArrayOutputStream exWriter = new ByteArrayOutputStream();
-    SyslogEntryFormat fmt = new SyslogEntryFormat();
-    fmt.format(exWriter, e);
-    exWriter.close();
-    String expected = new String(exWriter.toByteArray());
-
-    // check the output to make sure it is what we expected.
-    // read the gzip file and verify the contents
-
-    GZIPInputStream gzin = new GZIPInputStream(new FileInputStream(f.getPath()
-        + "/sub-foo.gz"));
+    // handle compression codec / extensions when checking.
+    String ext = ""; // file extension
+    if (codec != null) {
+      ext = codec.getDefaultExtension();
+    }
+    InputStream in = new FileInputStream(f.getPath() + "/sub-foo" + ext);
+    if (codec != null) {
+      in = codec.createInputStream(in);
+    }
     byte[] buf = new byte[1];
     StringBuilder output = new StringBuilder();
-
-    while ((gzin.read(buf)) > 0) {
+    // read the file
+    while ((in.read(buf)) > 0) {
       output.append(new String(buf));
     }
-    gzin.close(); // Must close for windows to delete
+    in.close(); // Must close for windows to delete
     assertEquals(expected, output.toString());
 
     // This doesn't get deleted in windows but the core test succeeds
     assertTrue("temp folder successfully deleted", FileUtil.rmr(f));
   }
 
+  @Test
+  public void testAvroOutputFormat() throws IOException, InterruptedException {
+    checkOutputFormat("avrojson", new AvroJsonOutputFormat());
+  }
+
+  @Test
+  public void testSyslogOutputFormat() throws IOException, InterruptedException {
+    checkOutputFormat("syslog", new SyslogEntryFormat());
+  }
+
+  @Test
+  public void testLog4jOutputFormat() throws IOException, InterruptedException {
+    checkOutputFormat("log4j", new Log4jOutputFormat());
+  }
+
+  /**
+   * Test to write few log lines, compress using gzip, write to disk, read back
+   * the compressed file and verify the written lines. This test alone doesn't
+   * test GZipCodec with its Native Libs. java.library.path must contain the
+   * path to the hadoop native libs for this to happen.
+   *
+   * @throws IOException
+   * @throws InterruptedException
+   */
+  @Test
+  public void testGZipCodec() throws IOException, InterruptedException {
+    checkOutputFormat("syslog", new SyslogEntryFormat(), "GzipCodec",
+        new GzipCodec());
+  }
+
   /**
    * Test to write few log lines, compress using bzip2, write to disk, read back
    * the compressed file and verify the written lines.
-   * 
+   *
    * @throws IOException
    * @throws InterruptedException
    */
   @Test
   public void testBZip2Codec() throws IOException, InterruptedException {
-    // set the output format.
-    FlumeConfiguration conf = FlumeConfiguration.get();
-    conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, "syslog");
-    conf.set(FlumeConfiguration.COLLECTOR_DFS_COMPRESS_CODEC, "BZip2Codec");
-
-    // build a sink that outputs to that format.
-    File f = FileUtil.mktempdir();
-    SinkBuilder builder = EscapedCustomDfsSink.builder();
-    EventSink snk = builder.build(new Context(), "file:///" + f.getPath()
-        + "/sub-%{service}");
-    Event e = new EventImpl("this is a test message".getBytes());
-    Attributes.setString(e, "service", "foo");
-    snk.open();
-    snk.append(e);
-    snk.close();
-
-    ByteArrayOutputStream exWriter = new ByteArrayOutputStream();
-    SyslogEntryFormat fmt = new SyslogEntryFormat();
-    fmt.format(exWriter, e);
-    exWriter.close();
-    String expected = new String(exWriter.toByteArray());
-
-    // check the output to make sure it is what we expected.
-    // read the bzip2 file and verify the contents
-    BZip2Codec bz2Codec = new BZip2Codec();
-    InputStream bz2in = bz2Codec.createInputStream(new FileInputStream(f
-        .getPath() + "/sub-foo.bz2"));
-    byte[] buf = new byte[1];
-    StringBuilder output = new StringBuilder();
-
-    while ((bz2in.read(buf)) > 0) {
-      output.append(new String(buf));
-    }
-    bz2in.close(); // Must close for windows to delete
-    assertEquals(expected, output.toString());
-
-    assertTrue("temp folder successfully deleted", FileUtil.rmr(f));
+    checkOutputFormat("syslog", new SyslogEntryFormat(), "BZip2Codec",
+        new BZip2Codec());
   }
 
   /**
@@ -260,97 +166,42 @@ public class TestEscapedCustomOutputDfs {
    * @throws InterruptedException
    */
   @Test
-  public void testBZip2CodecWrongCase() throws IOException, InterruptedException {
-    // set the output format.
-    FlumeConfiguration conf = FlumeConfiguration.get();
-    conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, "syslog");
-    conf.set(FlumeConfiguration.COLLECTOR_DFS_COMPRESS_CODEC, "bzip2Codec");
-
-    // build a sink that outputs to that format.
-    File f = FileUtil.mktempdir();
-    SinkBuilder builder = EscapedCustomDfsSink.builder();
-    EventSink snk = builder.build(new Context(), "file:///" + f.getPath()
-        + "/sub-%{service}");
-    Event e = new EventImpl("this is a test message".getBytes());
-    Attributes.setString(e, "service", "foo");
-    snk.open();
-    snk.append(e);
-    snk.close();
-
-    ByteArrayOutputStream exWriter = new ByteArrayOutputStream();
-    SyslogEntryFormat fmt = new SyslogEntryFormat();
-    fmt.format(exWriter, e);
-    exWriter.close();
-    String expected = new String(exWriter.toByteArray());
-
-    // check the output to make sure it is what we expected.
-    // read the bzip2 file and verify the contents
-    BZip2Codec bz2Codec = new BZip2Codec();
-    InputStream bz2in = bz2Codec.createInputStream(new FileInputStream(f
-        .getPath() + "/sub-foo.bz2"));
-    byte[] buf = new byte[1];
-    StringBuilder output = new StringBuilder();
-
-    while ((bz2in.read(buf)) > 0) {
-      output.append(new String(buf));
-    }
-    bz2in.close(); // Must close for windows to delete
-    assertEquals(expected, output.toString());
-
-    assertTrue("temp folder successfully deleted", FileUtil.rmr(f));
+  public void testBZip2CodecWrongCase() throws IOException,
+      InterruptedException {
+    checkOutputFormat("syslog", new SyslogEntryFormat(), "bzip2Codec",
+        new BZip2Codec());
   }
 
   /**
    * Test to write few log lines, compress using default, write to disk, read
    * back the compressed file and verify the written lines.
-   * 
+   *
    * @throws InterruptedException
    */
-
   @Test
   public void testDefaultCodec() throws IOException, InterruptedException {
-    // set the output format.
-    FlumeConfiguration conf = FlumeConfiguration.get();
-    conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, "syslog");
-    conf.set(FlumeConfiguration.COLLECTOR_DFS_COMPRESS_CODEC, "DefaultCodec");
-
-    // build a sink that outputs to that format.
-    File f = FileUtil.mktempdir();
-    SinkBuilder builder = EscapedCustomDfsSink.builder();
-    EventSink snk = builder.build(new Context(), "file:///" + f.getPath()
-        + "/sub-%{service}");
-    Event e = new EventImpl("this is a test message".getBytes());
-    Attributes.setString(e, "service", "foo");
-    snk.open();
-    snk.append(e);
-    snk.close();
-
-    ByteArrayOutputStream exWriter = new ByteArrayOutputStream();
-    SyslogEntryFormat fmt = new SyslogEntryFormat();
-    fmt.format(exWriter, e);
-    exWriter.close();
-    String expected = new String(exWriter.toByteArray());
-
-    // check the output to make sure it is what we expected.
-    // read the file and verify the contents
-    DefaultCodec defaultCodec = new DefaultCodec();
-    defaultCodec.setConf(conf);
-    InputStream defaultIn = defaultCodec.createInputStream(new FileInputStream(
-        f.getPath() + "/sub-foo.deflate"));
-    byte[] buf = new byte[1];
-    StringBuilder output = new StringBuilder();
-
-    while ((defaultIn.read(buf)) > 0) {
-      output.append(new String(buf));
-    }
-    assertEquals(expected, output.toString());
-
-    assertTrue("temp folder successfully deleted", FileUtil.rmr(f));
+    DefaultCodec codec = new DefaultCodec();
+    codec.setConf(FlumeConfiguration.get()); // default needs conf
+    checkOutputFormat("syslog", new SyslogEntryFormat(), "DefaultCodec", codec);
   }
 
   public void testCodecs() {
     LOG.info(CompressionCodecFactory.getCodecClasses(FlumeConfiguration.get()));
+  }
 
+  @Test
+  public void testOutputFormats() throws FlumeSpecException {
+    // format
+    String src = "escapedFormatDfs(\"file:///tmp/test/testfilename\",\"\", avro)";
+    FlumeBuilder.buildSink(new Context(), src);
+
+    // format
+    src = "escapedFormatDfs(\"file:///tmp/test/testfilename\",\"\", seqfile)";
+    FlumeBuilder.buildSink(new Context(), src);
+
+    // format
+    src = "escapedFormatDfs(\"file:///tmp/test/testfilename\",\"\", seqfile(\"bzip2\"))";
+    FlumeBuilder.buildSink(new Context(), src);
   }
 
 }

@@ -111,12 +111,25 @@ public class TestCollectorSink {
     // millis
     String src3 = "collectorSink(\"file:///tmp/test\", \"testfilename\", 1000)";
     FlumeBuilder.buildSink(new Context(), src3);
+
+    // format
+    String src4 = "collectorSink(\"file:///tmp/test\", \"testfilename\", 1000, avro)";
+    FlumeBuilder.buildSink(new Context(), src4);
+
+    // format
+    src4 = "collectorSink(\"file:///tmp/test\", \"testfilename\", 1000, seqfile)";
+    FlumeBuilder.buildSink(new Context(), src4);
+
+    // format
+    src4 = "collectorSink(\"file:///tmp/test\", \"testfilename\", 1000, seqfile(\"bzip2\"))";
+    FlumeBuilder.buildSink(new Context(), src4);
+
   }
 
   @Test(expected = FlumeArgException.class)
   public void testBuilderFail() throws FlumeSpecException {
     // too many arguments
-    String src4 = "collectorSink(\"file:///tmp/test\", \"bkjlasdf\", 1000, 1000)";
+    String src4 = "collectorSink(\"file:///tmp/test\", \"bkjlasdf\", 1000, avro, 1231)";
     FlumeBuilder.buildSink(new Context(), src4);
   }
 

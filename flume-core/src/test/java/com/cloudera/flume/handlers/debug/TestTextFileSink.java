@@ -35,6 +35,7 @@ import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.handlers.avro.AvroDataFileOutputFormat;
 import com.cloudera.flume.handlers.avro.AvroJsonOutputFormat;
+import com.cloudera.flume.handlers.seqfile.SequenceFileOutputFormat;
 import com.cloudera.flume.handlers.text.output.RawOutputFormat;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportUtil;
@@ -45,7 +46,7 @@ public class TestTextFileSink {
       .getLogger(TestTextFileSink.class);
 
   @Test
-  public void testTextKWArg() throws RecognitionException, FlumeSpecException {
+  public void testTextKWArgDeprecated() throws RecognitionException, FlumeSpecException {
     String s = "text(\"filename\", format=\"raw\")";
     TextFileSink snk = (TextFileSink) FlumeBuilder.buildSink(new Context(), s);
     assertTrue(snk.getFormat() instanceof RawOutputFormat);
@@ -57,6 +58,53 @@ public class TestTextFileSink {
     s = "text(\"filename\", format=\"avrojson\")";
     snk = (TextFileSink) FlumeBuilder.buildSink(new Context(), s);
     assertTrue(snk.getFormat() instanceof AvroJsonOutputFormat);
+
+    s = "text(\"filename\", format=\"seqfile\")";
+    snk = (TextFileSink) FlumeBuilder.buildSink(new Context(), s);
+    assertTrue(snk.getFormat() instanceof SequenceFileOutputFormat);
+  }
+
+  @Test
+  public void testTextKWArg() throws RecognitionException, FlumeSpecException {
+    String s = "text(\"filename\", format=raw)";
+    TextFileSink snk = (TextFileSink) FlumeBuilder.buildSink(new Context(), s);
+    assertTrue(snk.getFormat() instanceof RawOutputFormat);
+
+    s = "text(\"filename\", format=avrodata)";
+    snk = (TextFileSink) FlumeBuilder.buildSink(new Context(), s);
+    assertTrue(snk.getFormat() instanceof AvroDataFileOutputFormat);
+
+    s = "text(\"filename\", format=avrojson)";
+    snk = (TextFileSink) FlumeBuilder.buildSink(new Context(), s);
+    assertTrue(snk.getFormat() instanceof AvroJsonOutputFormat);
+
+    s = "text(\"filename\", format=seqfile)";
+    snk = (TextFileSink) FlumeBuilder.buildSink(new Context(), s);
+    assertTrue(snk.getFormat() instanceof SequenceFileOutputFormat);
+
+    // this syntax is unsupported in deprecated outptu format args
+    s = "text(\"filename\", format=seqfile(\"bzip2\"))";
+    snk = (TextFileSink) FlumeBuilder.buildSink(new Context(), s);
+    assertTrue(snk.getFormat() instanceof SequenceFileOutputFormat);
+  }
+
+  @Test
+  public void testTextFormatArg() throws RecognitionException, FlumeSpecException {
+    String s = "text(\"filename\", raw)";
+    TextFileSink snk = (TextFileSink) FlumeBuilder.buildSink(new Context(), s);
+    assertTrue(snk.getFormat() instanceof RawOutputFormat);
+
+    s = "text(\"filename\", avrodata)";
+    snk = (TextFileSink) FlumeBuilder.buildSink(new Context(), s);
+    assertTrue(snk.getFormat() instanceof AvroDataFileOutputFormat);
+
+    s = "text(\"filename\", avrojson)";
+    snk = (TextFileSink) FlumeBuilder.buildSink(new Context(), s);
+    assertTrue(snk.getFormat() instanceof AvroJsonOutputFormat);
+
+    s = "text(\"filename\", seqfile)";
+    snk = (TextFileSink) FlumeBuilder.buildSink(new Context(), s);
+    assertTrue(snk.getFormat() instanceof SequenceFileOutputFormat);
   }
 
   /**

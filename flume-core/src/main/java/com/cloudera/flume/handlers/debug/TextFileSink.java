@@ -26,7 +26,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
+import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.FlumeBuilder.FunctionSpec;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
@@ -100,28 +102,43 @@ public class TextFileSink extends EventSink.Base {
 
   public static SinkBuilder builder() {
     return new SinkBuilder() {
+
+      @Deprecated
       @Override
       public EventSink build(Context context, String... args) {
+        // updated interface calls build(Context,Object...) instead
+        throw new RuntimeException(
+            "Old sink builder for Text File sink should not be exercised");
+
+      }
+
+      @Override
+      public EventSink create(Context context, Object... args) {
         Preconditions.checkArgument(args.length >= 1 && args.length <= 2,
             "usage: text(filename[,format])");
         OutputFormat fmt = DebugOutputFormat.builder().build();
-        String val = null;
+        Object val = null;
         if (args.length >= 2) {
           val = args[1];
         } else {
-          val = context.getValue("format");
+          try {
+            val = context.getObj("format", FunctionSpec.class);
+          } catch (ClassCastException cce) {
+            val = context.getObj("format", String.class);
+          }
         }
 
         if (val != null) {
           try {
-            fmt = FormatFactory.get().getOutputFormat(val);
+            fmt = FlumeBuilder.createFormat(FormatFactory.get(), val);
           } catch (FlumeSpecException e) {
             LOG.error("Illegal output format " + args[1], e);
             throw new IllegalArgumentException("Illegal output format" + val);
           }
         }
-        return new TextFileSink(args[0], fmt);
+        return new TextFileSink(args[0].toString(), fmt);
       }
+
     };
   }
 

@@ -17,6 +17,7 @@
  */
 package com.cloudera.flume.conf;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -278,6 +279,12 @@ public class TestFlumeBuilder implements ExampleData {
     snk = FlumeBuilder.buildSink(LogicalNodeContext.testingContext(),
         "collector(3) { customDfsSink(\"file:///tmp/foo\",\"foo\") }");
     assertTrue(snk instanceof CollectorSink);
+  }
 
+  @Test
+  public void testConsoleFuncArg() throws FlumeSpecException {
+    EventSink snk = FlumeBuilder.buildSink(LogicalNodeContext.testingContext(),
+        "console(seqfile(\"BZip2Codec\"))");
+    assertNotNull(snk);
   }
 }

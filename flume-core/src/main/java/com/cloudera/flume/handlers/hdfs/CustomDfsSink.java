@@ -30,11 +30,12 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.io.compress.Compressor;
-import org.apache.hadoop.io.compress.GzipCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
+import com.cloudera.flume.conf.FlumeBuilder.FunctionSpec;
+import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
@@ -90,13 +91,13 @@ public class CustomDfsSink extends EventSink.Base {
   }
 
   /**
-   * Hadoop Compression Codecs that use Native libs require
-   * an instance of a Configuration Object. They require this
-   * due to some check against knowing weather or not the native libs 
-   * have been loaded. GzipCodec, LzoCodec, LzopCodec are all codecs that
-   * require Native libs. GZipCodec has a slight exception that if native libs
-   * are not accessible it will use Pure Java. This results in no errors just
-   * notices. BZip2Codec is an example codec that doesn't use native libs.
+   * Hadoop Compression Codecs that use Native libs require an instance of a
+   * Configuration Object. They require this due to some check against knowing
+   * weather or not the native libs have been loaded. GzipCodec, LzoCodec,
+   * LzopCodec are all codecs that require Native libs. GZipCodec has a slight
+   * exception that if native libs are not accessible it will use Pure Java.
+   * This results in no errors just notices. BZip2Codec is an example codec that
+   * doesn't use native libs.
    */
   @Override
   public void open() throws IOException {
@@ -140,7 +141,8 @@ public class CustomDfsSink extends EventSink.Base {
       return true;
     }
     if (simpleName.endsWith("Codec")) {
-      String prefix = simpleName.substring(0, simpleName.length() - "Codec".length());
+      String prefix = simpleName.substring(0,
+          simpleName.length() - "Codec".length());
       if (prefix.equalsIgnoreCase(codecName)) {
         return true;
       }
@@ -151,7 +153,8 @@ public class CustomDfsSink extends EventSink.Base {
   public static CompressionCodec getCodec(Configuration conf, String codecName) {
     List<Class<? extends CompressionCodec>> codecs = CompressionCodecFactory
         .getCodecClasses(FlumeConfiguration.get());
-    //Wish we could base this on DefaultCodec but appears not all codec's extend DefaultCodec(Lzo)
+    // Wish we could base this on DefaultCodec but appears not all codec's
+    // extend DefaultCodec(Lzo)
     CompressionCodec codec = null;
     ArrayList<String> codecStrs = new ArrayList<String>();
     codecStrs.add("None");
@@ -174,10 +177,11 @@ public class CustomDfsSink extends EventSink.Base {
         throw new IllegalArgumentException("Unsupported compression codec "
             + codecName + ".  Please choose from: " + codecStrs);
       }
-    } else if(codec instanceof Configurable) {
-      //Must check instanceof codec as BZip2Codec doesn't inherit Configurable
-      //Must set the configuration for Configurable objects that may or do use native libs
-      ((Configurable)codec).setConf(conf);
+    } else if (codec instanceof Configurable) {
+      // Must check instanceof codec as BZip2Codec doesn't inherit Configurable
+      // Must set the configuration for Configurable objects that may or do use
+      // native libs
+      ((Configurable) codec).setConf(conf);
     }
     return codec;
   }
@@ -185,22 +189,30 @@ public class CustomDfsSink extends EventSink.Base {
   public static SinkBuilder builder() {
     return new SinkBuilder() {
       @Override
-      public EventSink build(Context context, String... args) {
+      public EventSink create(Context context, Object... args) {
         if (args.length != 2 && args.length != 1) {
           // TODO (jon) make this message easier.
           throw new IllegalArgumentException(
-              "usage: customdfs(\"[(hdfs|file|s3n|...)://namenode[:port]]/path\", \"format\")");
+              "usage: customdfs(\"[(hdfs|file|s3n|...)://namenode[:port]]/path\", format)");
         }
 
-        String format = (args.length == 1) ? null : args[1];
+        Object format = (args.length == 1) ? null : args[1];
         OutputFormat fmt;
         try {
-          fmt = FormatFactory.get().getOutputFormat(format);
+          fmt = FlumeBuilder.createFormat(FormatFactory.get(), format);
         } catch (FlumeSpecException e) {
           LOG.error("failed to load format " + format, e);
           throw new IllegalArgumentException("failed to load format " + format);
         }
-        return new CustomDfsSink(args[0], fmt);
+        return new CustomDfsSink(args[0].toString(), fmt);
+      }
+
+      @Deprecated
+      @Override
+      public EventSink build(Context context, String... args) {
+        // updated interface calls build(Context,Object...) instead
+        throw new RuntimeException(
+            "Old sink builder for CustomDfsSink should not be exercised");
       }
     };
   }

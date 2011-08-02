@@ -20,6 +20,7 @@ package com.cloudera.flume.conf;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,8 @@ import com.cloudera.flume.core.EventSinkDecorator;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.core.FanOutSink;
 import com.cloudera.flume.handlers.rolling.RollSink;
+import com.cloudera.flume.handlers.text.FormatFactory;
+import com.cloudera.flume.handlers.text.output.OutputFormat;
 import com.cloudera.flume.master.availability.FailoverChainSink;
 import com.cloudera.util.Pair;
 import com.google.common.base.Preconditions;
@@ -399,7 +402,28 @@ public class FlumeBuilder {
     public Object[] getArgs() {
       return args;
     }
+
+    public String toString() {
+      return name + " " + Arrays.toString(args);
+    }
   }
+
+  public static OutputFormat createFormat(FormatFactory ff, Object o ) throws FlumeSpecException {
+    if (o == null) {
+      // return the default.
+      return ff.createOutputFormat(null);
+    }
+    if (o instanceof FunctionSpec) {
+      FunctionSpec fs = (FunctionSpec)o;
+      return ff.createOutputFormat(fs.getName(), fs.getArgs());
+    }
+
+    LOG.warn("Deprecated syntax: Expected a format spec but instead "
+        + "had a (" + o.getClass().getSimpleName() + ") "
+        + o.toString());
+    return ff.getOutputFormat(o.toString());
+  }
+
 
   public static Pair<String, CommonTree> buildKWArg(CommonTree t) {
     ASTNODE type = ASTNODE.valueOf(t.getText()); // convert to enum

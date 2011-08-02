@@ -27,6 +27,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
+import com.cloudera.flume.conf.FlumeBuilder.FunctionSpec;
+import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
@@ -108,7 +110,7 @@ public class EscapedCustomDfsSink extends EventSink.Base {
    * drawn from the supplied event
    */
   @Override
-  public void append(Event e) throws IOException, InterruptedException  {
+  public void append(Event e) throws IOException, InterruptedException {
     CustomDfsSink w = writer;
     if (shouldSub) {
       String realPath = e.escapeString(absolutePath);
@@ -152,24 +154,24 @@ public class EscapedCustomDfsSink extends EventSink.Base {
   public static SinkBuilder builder() {
     return new SinkBuilder() {
       @Override
-      public EventSink build(Context context, String... args) {
+      public EventSink create(Context context, Object... args) {
         Preconditions.checkArgument(args.length >= 1 && args.length <= 3,
             "usage: escapedCustomDfs(\"[(hdfs|file|s3n|...)://namenode[:port]]/path\""
                 + "[, file [,outputformat ]])");
 
         String filename = "";
         if (args.length >= 2) {
-          filename = args[1];
+          filename = args[1].toString();
         }
 
-        String format = FlumeConfiguration.get().getDefaultOutputFormat();
+        Object format = FlumeConfiguration.get().getDefaultOutputFormat();
         if (args.length >= 3) {
           format = args[2];
         }
 
         OutputFormat o;
         try {
-          o = FormatFactory.get().getOutputFormat(format);
+          o = FlumeBuilder.createFormat(FormatFactory.get(), format);
         } catch (FlumeSpecException e) {
           LOG.warn("Illegal format type " + format + ".", e);
           o = null;
@@ -177,8 +179,17 @@ public class EscapedCustomDfsSink extends EventSink.Base {
         Preconditions.checkArgument(o != null, "Illegal format type " + format
             + ".");
 
-        return new EscapedCustomDfsSink(args[0], filename, o);
+        return new EscapedCustomDfsSink(args[0].toString(), filename, o);
       }
+
+      @Deprecated
+      @Override
+      public EventSink build(Context context, String... args) {
+        // updated interface calls build(Context,Object...) instead
+        throw new RuntimeException(
+            "Old sink builder for EscapedCustomDfsSink should not be exercised");
+      }
+
     };
   }
 }

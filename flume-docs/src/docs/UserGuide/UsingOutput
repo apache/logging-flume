@@ -155,10 +155,15 @@ hour with filenames prefixed "web-".
 
 === Output Format
 
-Now that you have control of where files go, this section describes how you can 
-control the output format of data.  Currently, this is set via the 
-'flume.collector.output.format' property set in the flume-site.xml file.  The output 
-formats are:
+Now that you have control of where files go, this section describes
+how you can control the output format of data.  There are two ways to
+this.  The first is to set the default value in flume-site.xml and the other is by specifying output format in particular sinks.  
+
+==== Configuring the default output format.
+
+You can set the default output format by etting the
+'flume.collector.output.format' property set in the +flume-site.xml+
+file.  The output formats are:
 
 .Output formats
 [horizontal]
@@ -171,7 +176,9 @@ log4j :: a log4j pattern similar to that used by CDH output pattern.
 raw :: Event body only.  This is most similar to copying a file but
 does not preserve any uniqifying metadata like host/timestamp/nanos.
 syslog :: a syslog like text output format.
+seqfile :: the binary hadoop Sequence file format with WritableEventKeys keys, and WritableEvent as values.
 
+Here is an example of a property added to the +flume-site.xml+ file:
 ----
 <property>
   <name>flume.collector.output.format</name>
@@ -186,11 +193,47 @@ syslog :: a syslog like text output format.
     log4j - outputs events in a pattern similar to Hadoop's log4j pattern
     raw - Event body only.  This is most similar to copying a file but
       does not preserve any uniqifying metadata like host/timestamp/nanos.
+    seqfile - this is the hadoop sequence file format with
+       WritableEventKeys and WritableEvent objects. 
     syslog - outputs events in a syslog-like format
   </description>
 </property>  
 ----
 
+==== Setting output format in specific sinks.
+
+Some sinks have an optional output format argument.  These include the
++console+, +text+, +customdfs+/+formatDfs+,
++escapedCustomDfs+/+escapedFormatDfs+, and +collectorSink+. 
+
+In these cases, we will be focusing on the optional format argument.
+----
+collectorSink( "dfsdir","prefix"[, rollmillis[, format]])  
+text("file"[,format])
+formatDfs("hdfs://nn/file" [, format])
+escapedFormatDfs("hdfs://nn/file" [, format])
+----
+
+This mechanism is more flexible because it allows for output formats
+with arguments.  Currently, the +seqfile+ output format supports
+arugments for specifying an sequence file internal compression codec.
+Codecs available for use are the same as those available to hadoop --
+generally these include +gzip+, +bzip2+, and can include others that
+have been plugged in such +lzo+ or +snappy+.
+
+The compression codec is specified by adding an argument to output
+format.  For example, the +seqfile+ output format accepts a
+compression codec argument. So, to specify an output format that is a
+sequence file using the bzip2 codec, the output format would be
++seqfile("bzip2")+.  To write bzip2 compressed sequence files, using a
+formatDfs sink, we would specify +formatDfs("hdfs://nn/dir/file",
+seqfile("bzip2"))+
+
+NOTE: The old syntax requires specifying a Flume String (ex:
++console("avrojson")+, +console("seqfile")+ has been deprecated but
+will be supported for a few more versions.  The preferred arugment is
+now a "function". (ex: +console(avrojson)+,
++console(seqfile("bzip2"))+).
 
 === Small Files Compared to High Latency
 

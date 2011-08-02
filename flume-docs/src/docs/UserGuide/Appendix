@@ -65,7 +65,7 @@ configured to listen on TCP port +_port_+. Supports both Apache-Thrift and
 Apache-Avro RPC framework.  The type of RPC framework is specified by +event.rpc.type+ 
 property (THRIFT or AVRO), the default is THRIFT.  Note that same RPC framework is used for rpcSink.
 
-+text("_filename_")+ :: One-time text file source.  One event per +\n+ 
++text("_filename_"[, _format_])+ :: One-time text file source.  One event per +\n+ 
 delimited line.
 
 +tail("_filename_"[, _startFromEnd_=false]{,delim="_regex_",
@@ -188,7 +188,7 @@ uninterpreted arrays of bytes.
 
 [horizontal] 
 
-+collectorSink("_fsdir_","_fsfileprefix_", _rollmillis_)+ :: Collector sink.  
++collectorSink("_fsdir_","_fsfileprefix_"[, _rollmillis_[, _format_]])+ :: Collector sink.  
 +_fsdir_+ is a fs directory URI such as +hdfs://namenode/path+ or +file:///
 path+.  +_fsfileprefix_+ is a file name prefix for outputted files. Both of 
 these can use escape sequences documented to bucket data as documented in the 
@@ -269,10 +269,10 @@ is maintained and automatically selected by the master.
 [horizontal]
 +null+ :: Null sink. Events are dropped
 
-+console[("_formatter_")]+ :: Console sink.  Display events to process's 
++console[(_format_)]+ :: Console sink.  Display events to process's 
 stdout using the optionally specified output formatter.
 
-+text("_txtfile_"[,"_formatter_"])+ :: Textfile sink.  Write to text file 
++text("_txtfile_"[,_format_])+ :: Textfile sink.  Write to text file 
 txtfile, using an optionally specified +_formatter_+.  If a file already 
 exists, this sink will attempt to overwrite it.
 
@@ -286,16 +286,30 @@ in Flume- specific Hadoop seqfile record format. The +_hdfspath_+ can
 use escape sequences to bucket data as documented in the *Output
 Bucketing* section.
 
-+customdfs("_hdfspath_"[, "_format_"])+ :: Hadoop dfs formatted file
++formatDfs("_hdfspath_"[, _format_])+ :: Hadoop dfs formatted file
 sink.  The _hdfspath_ string is *not* escaped. The output format of
 writes to a dfs path in using specified output _format_.
 
-+escapedCustomDfs("_hdfspath_", "_file_", "_format_") :: Hadoop dfs formatted 
++escapedFormatDfs("_hdfspath_", "_file_"[, _format_]) :: Hadoop dfs formatted 
 file sink.  The _hdfspath_ string is escaped and events will get written to 
 particular directories and filenames based on this string. The output format 
 of writes to a dfs path in using specified output _format_. The +_hdfspath_+ 
 can use escape sequences documented to bucket data as documented in the 
 *Output Bucketing* section.
+
++customdfs("_hdfspath_"[, _format_])+ :: Hadoop dfs formatted file
+sink.  The _hdfspath_ string is *not* escaped. The output format of
+writes to a dfs path in using specified output _format_.  This sink is
+being deprecated by +formatDfs+.
+
++escapedCustomDfs("_hdfspath_", "_file_"[, _format_]) :: Hadoop dfs
+formatted file sink.  The _hdfspath_ string is escaped and events will
+get written to particular directories and filenames based on this
+string. The output format of writes to a dfs path in using specified
+output _format_. The +_hdfspath_+ can use escape sequences documented
+to bucket data as documented in the *Output Bucketing* section.  This
+sink is being deprecatd by +escapedFormatDfs+.
+
 
 +rpcSink("_host_"[, _port_])+ :: A remote procedure call (RPC) sink that is 
 configured to send to machine +_host_+ on TCP port +_port_+. Default port is 35861 

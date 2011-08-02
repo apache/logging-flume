@@ -19,7 +19,10 @@ package com.cloudera.flume.handlers.hdfs;
 
 import static org.junit.Assert.assertEquals;
 
+import com.cloudera.flume.conf.Context;
+import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
+import com.cloudera.flume.conf.FlumeSpecException;
 
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.GzipCodec;
@@ -42,6 +45,21 @@ public class TestCustomDfsSink {
     checkCodec(GzipCodec.class, "gzipcodec");
     checkCodec(GzipCodec.class, "GzipCodec");
     checkCodec(GzipCodec.class, "org.apache.hadoop.io.compress.GzipCodec");
+  }
+
+  @Test
+  public void testOutputFormats() throws FlumeSpecException {
+    // format
+    String src = "formatDfs(\"file:///tmp/test/testfilename\", avro)";
+    FlumeBuilder.buildSink(new Context(), src);
+
+    // format
+    src = "formatDfs(\"file:///tmp/test/testfilename\", seqfile)";
+    FlumeBuilder.buildSink(new Context(), src);
+
+    // format
+    src = "formatDfs(\"file:///tmp/test/testfilename\", seqfile(\"bzip2\"))";
+    FlumeBuilder.buildSink(new Context(), src);
   }
 
 }

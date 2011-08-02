@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.conf.Context;
+import com.cloudera.flume.conf.FlumeBuilder.FunctionSpec;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
@@ -289,21 +290,40 @@ public class CollectorSink extends EventSink.Base {
   public static SinkBuilder hdfsBuilder() {
     return new SinkBuilder() {
       @Override
-      public EventSink build(Context context, String... argv) {
-        Preconditions.checkArgument(argv.length <= 3 && argv.length >= 2,
-            "usage: collectorSink[(dfsdir,path[,rollmillis])]");
+      public EventSink create(Context context, Object... argv) {
+        Preconditions.checkArgument(argv.length <= 4 && argv.length >= 2,
+            "usage: collectorSink[(dfsdir,path[,rollmillis], format)]");
         String logdir = FlumeConfiguration.get().getCollectorDfsDir(); // default
         long millis = FlumeConfiguration.get().getCollectorRollMillis();
         String prefix = "";
+        Object format = null;
         if (argv.length >= 1) {
-          logdir = argv[0]; // override
+          logdir = argv[0].toString();
         }
         if (argv.length >= 2) {
-          prefix = argv[1];
+          prefix = argv[1].toString();
         }
         if (argv.length >= 3) {
-          millis = Long.parseLong(argv[2]);
+          // TODO eventually Long instead of String
+          millis = Long.parseLong(argv[2].toString());
         }
+        if (argv.length >= 4) {
+          // shove format in to context to pass down.
+          format = argv[3];
+          class FormatContext extends Context {
+            FormatContext(Context ctx, Object format) {
+              super(ctx);
+              this.putObj("format", format);
+            }
+          }
+          if (!(format instanceof FunctionSpec)) {
+            LOG.warn("Deprecated syntax: Expected a format spec but instead "
+                + "had a (" + format.getClass().getSimpleName() + ") "
+                + format.toString());
+          }
+          context = new FormatContext(context, format);
+        }
+
         try {
           EventSink snk = new CollectorSink(context, logdir, prefix, millis,
               new ProcessTagger(), 250, FlumeNode.getInstance()
@@ -315,6 +335,16 @@ public class CollectorSink extends EventSink.Base {
               "usage: collectorSink[(dfsdir,path[,rollmillis])]" + e);
         }
       }
+
+      @Deprecated
+      @Override
+      public EventSink build(Context context, String... args) {
+        // updated interface calls build(Context,Object...) instead
+        throw new RuntimeException(
+            "Old sink builder for CustomDfsSink should not be exercised");
+
+      }
+
     };
   }
 }

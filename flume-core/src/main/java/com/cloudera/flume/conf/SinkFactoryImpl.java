@@ -128,8 +128,11 @@ public class SinkFactoryImpl extends SinkFactory {
       { "text", TextFileSink.builder() },
       { "seqfile", SeqfileEventSink.builder() },
       { "dfs", DFSEventSink.builder() }, // escapes
-      { "customdfs", CustomDfsSink.builder() }, // does not escape
-      { "escapedCustomDfs", EscapedCustomDfsSink.builder() }, // escapes
+      { "formatDfs", CustomDfsSink.builder() }, // does not escape
+      { "escapedFormatDfs", EscapedCustomDfsSink.builder() }, // escapes
+      { "customdfs", CustomDfsSink.builder() }, // TODO deprecate
+      { "escapedCustomDfs", EscapedCustomDfsSink.builder() }, // TODO deprecate
+
       { "rpcSink", RpcSink.builder() }, // creates AvroEventSink or
       // ThriftEventSink
       { "syslogTcp", SyslogTcpSink.builder() },
