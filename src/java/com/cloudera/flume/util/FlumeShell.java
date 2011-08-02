@@ -57,7 +57,6 @@ import com.cloudera.flume.master.StatusManager;
 import com.cloudera.flume.reporter.server.FlumeReport;
 import com.cloudera.flume.reporter.server.FlumeReportServer;
 import com.cloudera.flume.shell.CommandBuilder;
-import com.cloudera.util.CheckJavaVersion;
 
 /**
  * The FlumeShell is a command-line-interface for a Flume master.
@@ -665,7 +664,7 @@ public class FlumeShell {
         if (cmd.getArgs().size() > 1) {
           args = cmd.getArgs().subList(1, cmd.getArgs().size());
         }
-        long cmdid = client.submit(new Command(cmd.getArgs().get(0),
+        long cmdid = client.submit(new Command(cmd.getArgs().get(0), 
             (String[]) args.toArray(new String[args.size()])));
         lastCmdId = cmdid;
         // Do not change this, other programs will likely depend on this.
@@ -735,7 +734,7 @@ public class FlumeShell {
         if (cmd.getArgs().size() > 1) {
           args = cmd.getArgs().subList(1, cmd.getArgs().size());
         }
-        long cmdid = client.submit(new Command(cmd.getArgs().get(0),
+        long cmdid = client.submit(new Command(cmd.getArgs().get(0), 
             (String[]) args.toArray(new String[args.size()])));
         System.out.println("[id: " + cmdid + "] Execing command : "
             + cmd.getArgs().get(0));
@@ -847,12 +846,12 @@ public class FlumeShell {
     return new FlumeReportServer.Client(protocol);
   }
 
-  protected void connect(String host, int aPort, int rPort) throws IOException,
-      TTransportException {
+  protected void connect(String host, int aPort, int rPort)
+      throws IOException, TTransportException {
     connected = false;
     System.out.println("Connecting to Flume master " + host + ":" + aPort + ":"
         + rPort + "...");
-
+    
     String rpcType = FlumeConfiguration.get().getMasterHeartbeatRPC();
     if (FlumeConfiguration.RPC_TYPE_AVRO.equals(rpcType)) {
       client = new AdminRPCAvro(host, aPort);
@@ -860,8 +859,8 @@ public class FlumeShell {
       client = new AdminRPCThrift(host, aPort);
     } else {
       throw new IOException("No valid RPC framework specified in config");
-    }
-
+    } 
+    
     // use default for now
     reportClient = connectReportClient(host, rPort);
 
@@ -893,12 +892,7 @@ public class FlumeShell {
       TTransportException {
     FlumeNode.logVersion(LOG, Level.DEBUG);
     FlumeNode.logEnvironment(LOG, Level.DEBUG);
-    // Make sure the Java version is not older than 1.6
-    if (CheckJavaVersion.checkVersion()) {
-      LOG
-          .error("Exitting because of an old Java version or Java version in bad format");
-      System.exit(-1);
-    }
+
     CommandLine cmd = null;
     Options options = new Options();
     options.addOption("?", false, "Command line usage");

@@ -45,7 +45,6 @@ import com.cloudera.flume.reporter.Reportable;
 import com.cloudera.flume.reporter.server.ReportServer;
 import com.cloudera.flume.util.FlumeVMInfo;
 import com.cloudera.flume.util.SystemInfo;
-import com.cloudera.util.CheckJavaVersion;
 import com.cloudera.util.NetUtils;
 import com.cloudera.util.StatusHttpServer;
 
@@ -80,7 +79,7 @@ public class FlumeMaster implements Reportable {
   final ConfigurationManager specman;
   final StatusManager statman;
   final MasterAckManager ackman;
-
+  
   final String uniqueMasterName;
 
   Thread reaper;
@@ -118,9 +117,9 @@ public class FlumeMaster implements Reportable {
   public FlumeMaster(FlumeConfiguration cfg, boolean doHttp) {
     this.cfg = cfg;
     instance = this;
-
+    
     this.uniqueMasterName = "flume-master-" + cfg.getMasterServerId();
-
+    
     this.doHttp = doHttp;
     this.cmdman = new CommandManager();
     ConfigStore cfgStore = createConfigStore(FlumeConfiguration.get());
@@ -295,7 +294,7 @@ public class FlumeMaster implements Reportable {
       if (cfg.getMasterStore().equals(ZK_CFG_STORE)) {
         ZooKeeperService.get().shutdown();
       }
-
+      
     } catch (IOException e) {
       LOG.error("Exception when shutting down master! " + e.getMessage());
       LOG.debug(e, e);
@@ -381,12 +380,7 @@ public class FlumeMaster implements Reportable {
   public static void main(String[] argv) {
     FlumeNode.logVersion(LOG, Level.INFO);
     FlumeNode.logEnvironment(LOG, Level.INFO);
-    // Make sure the Java version is not older than 1.6
-    if (CheckJavaVersion.checkVersion()) {
-      LOG
-          .error("Exitting because of an old Java version or Java version in bad format");
-      System.exit(-1);
-    }
+
     FlumeConfiguration.hardExitLoadConfig(); // if config file is bad hardexit.
 
     CommandLine cmd = null;

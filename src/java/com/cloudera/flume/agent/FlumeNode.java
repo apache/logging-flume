@@ -52,7 +52,6 @@ import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.Reportable;
 import com.cloudera.flume.util.FlumeVMInfo;
 import com.cloudera.flume.util.SystemInfo;
-import com.cloudera.util.CheckJavaVersion;
 import com.cloudera.util.FileUtil;
 import com.cloudera.util.NetUtils;
 import com.cloudera.util.Pair;
@@ -175,7 +174,8 @@ public class FlumeNode implements Reportable {
   public FlumeNode(String nodename, FlumeConfiguration conf, boolean startHttp,
       boolean oneshot) {
     // Use a failover-enabled master RPC, which randomizes the failover order
-    this(conf, nodename, new MultiMasterRPC(conf, true), startHttp, oneshot);
+    this(conf, nodename, new MultiMasterRPC(conf, true), startHttp,
+        oneshot);
   }
 
   public FlumeNode(FlumeConfiguration conf) {
@@ -281,7 +281,7 @@ public class FlumeNode implements Reportable {
 
   public static void logEnvironment(Logger log, Level level) {
     Properties props = System.getProperties();
-    for (Entry<Object, Object> p : props.entrySet()) {
+    for (Entry<Object,Object> p : props.entrySet()) {
       log.log(level, "System property " + p.getKey() + "=" + p.getValue());
     }
   }
@@ -341,12 +341,7 @@ public class FlumeNode implements Reportable {
   public static void setup(String[] argv) throws IOException {
     logVersion(LOG, Level.INFO);
     logEnvironment(LOG, Level.INFO);
-    // Make sure the Java version is not older than 1.6
-    if (CheckJavaVersion.checkVersion()) {
-      LOG
-          .error("Exitting because of an old Java version or Java version in bad format");
-      System.exit(-1);
-    }
+
     LOG.info("Starting flume agent on: " + NetUtils.localhost());
     LOG.info(" Working directory is: " + new File(".").getAbsolutePath());
 
@@ -384,6 +379,7 @@ public class FlumeNode implements Reportable {
       fmt.printHelp("FlumeNode", options, true);
       return;
     }
+
     // Check FlumeConfiguration file for settings that may cause node to fail.
     nodeConfigChecksOk();
 
