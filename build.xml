@@ -80,6 +80,7 @@ to call at top-level: ant deploy-contrib compile-core-test
   <property name="test.log.dir" value="${test.build.dir}/logs"/>
   <property name="test.build.classes" value="${test.build.dir}/classes"/>
   <property name="test.include" value="Test*"/>
+  <property name="test.exclude.file" value="${test.src.dir}/empty-file"/>
   <property name="test.classpath.id" value="test.classpath"/>
   <property name="test.output" value="no"/>
   <property name="test.timeout" value="900000"/>
@@ -598,7 +599,8 @@ to call at top-level: ant deploy-contrib compile-core-test
       </classpath>
       <batchtest todir="${build.test}" unless="testcase">
         <fileset dir="${test.src.dir}"
-                 includes="**/Test*.java" excludes="**/${test.exclude}.java" />
+                 includes="**/Test*.java" excludes="**/${test.exclude}.java"
+		 excludesfile="${test.exclude.file}"/>
       </batchtest>
       <batchtest todir="${build.test}" if="testcase">
         <fileset dir="${test.src.dir}" includes="**/${testcase}.java"/>
@@ -999,7 +1001,8 @@ to call at top-level: ant deploy-contrib compile-core-test
       <formatter type="${test.junit.output.format}" />
       <batchtest todir="${build.test}" unless="testcase">
         <fileset dir="${test.src.dir}"
-                 includes="**/Test*.java" excludes="**/${test.exclude}.java" />
+                 includes="**/Test*.java" excludes="**/${test.exclude}.java" 
+		 excludesfile="${test.exclude.file}"/>
       </batchtest>
       <batchtest todir="${build.test}" if="testcase">
         <fileset dir="${test.src.dir}" includes="**/${testcase}.java"/>
