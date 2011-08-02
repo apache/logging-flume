@@ -33,15 +33,19 @@ import java.util.Map.Entry;
 
 import org.apache.hadoop.io.Writable;
 
+import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventBaseImpl;
 import com.cloudera.flume.core.EventImpl;
+
+import com.google.common.base.Preconditions;
 
 /**
  * A wrapper to make my events hadoop/hdfs writables.
  * 
  */
 public class WriteableEvent extends EventBaseImpl implements Writable {
+  final static long MAX_BODY_SIZE = FlumeConfiguration.get().getEventMaxSizeBytes();
 
   private Event e;
 
@@ -106,11 +110,7 @@ public class WriteableEvent extends EventBaseImpl implements Writable {
     // String s = in.readUTF();
     int len = in.readInt();
 
-    assert (len > 0);
-    if (len > (int) Short.MAX_VALUE) {
-      throw new RuntimeException("Size " + len + "is too long (> "
-          + Short.MAX_VALUE + ")");
-    }
+    Preconditions.checkArgument((len >= 0) && (len <= MAX_BODY_SIZE), "byte length is %s which is not <= %s and >= 0", len, MAX_BODY_SIZE);
 
     // TODO (jon) Compare to java.nio implementation
     byte[] body = new byte[len];
