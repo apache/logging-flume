@@ -124,9 +124,7 @@ public class TestParserErrorMessages {
     } catch (FlumeSpecException e) {
       LOG.info(e.getMessage());
       // this is a friendlier exception
-      assertEquals(
-          "Lexer error at char '1' at line 1 char 24",
-          e.getMessage());
+      assertEquals("Lexer error at char '0' at line 1 char 24", e.getMessage());
     }
 
   }

@@ -27,7 +27,6 @@ tokens {
   BLANK;
   SINK;
   BACKUP;
-  LET;
   ROLL;
   DECO;
   SOURCE;
@@ -120,7 +119,6 @@ simpleSink	:	'[' multiSink ']'  	-> ^(MULTI multiSink)
         |   singleSink simpleSink?  -> ^(DECO singleSink simpleSink?) 
 		|	'{' decoratedSink '}'	-> ^(DECO decoratedSink)
 		|	'<' failoverSink '>'	-> ^(BACKUP failoverSink)
-		|   letSink                 -> letSink
         |   rollSink                -> rollSink
 		; 
  			
@@ -128,8 +126,6 @@ simpleSink	:	'[' multiSink ']'  	-> ^(MULTI multiSink)
 decoratedSink   :  singleSink '=>' sink	 		-> singleSink sink;
 multiSink       :  simpleSink (',' simpleSink)* 	-> simpleSink* ;
 failoverSink    :  simpleSink ('?' simpleSink)+	-> simpleSink+;	
-letSink         :  'let' Identifier ':=' simpleSink 'in' simpleSink 
-                                  -> ^(LET Identifier simpleSink+);
 rollSink        :  'roll' args '{' simpleSink '}'
                                   -> ^(ROLL simpleSink args);
 

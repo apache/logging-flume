@@ -104,35 +104,6 @@ public class TestFailChainTranslator {
     collectors.add("collector3");
 
     // autoDFOChain substituted
-    CommonTree failchain = FailoverConfigurationManager.substDFOChains(
-        "autoDFOChain", collectors);
-    String failChainSink = FlumeSpecGen.genEventSink(failchain);
-    LOG.info(failChainSink);
-    assertEquals(290, failChainSink.length()); // output is 290 chars long
-
-    // many autoDFOChain substitutions.
-    CommonTree failchain2 = FailoverConfigurationManager.substDFOChains(
-        "[ autoDFOChain, { lazyOpen => autoDFOChain } ]", collectors);
-    String failChainSink2 = FlumeSpecGen.genEventSink(failchain2);
-    LOG.info(failChainSink2);
-    assertEquals(602, failChainSink2.length()); // output is 602 chars long
-
-    // no change
-    CommonTree nothing = FailoverConfigurationManager.substDFOChains("null",
-        collectors);
-    String nothingSink = FlumeSpecGen.genEventSink(nothing);
-    assertEquals("null", nothingSink);
-  }
-
-  @Test
-  public void testSubstDFONoLet() throws FlumeSpecException,
-      RecognitionException {
-    List<String> collectors = new ArrayList<String>();
-    collectors.add("collector1");
-    collectors.add("collector2");
-    collectors.add("collector3");
-
-    // autoDFOChain substituted
     CommonTree failchain = FailoverConfigurationManager.substDFOChainsNoLet(
         "autoDFOChain", collectors);
     String failChainSink = FlumeSpecGen.genEventSink(failchain);

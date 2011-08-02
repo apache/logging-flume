@@ -326,49 +326,6 @@ public class TestParser implements ExampleData {
     assertEquals("(ROLL (DECO (SINK null)) (DEC 100))", toTree(o));
   }
 
-  /**
-   * These parse to make sure it works as a root, complex sub sinks work and
-   * that it works as a subsink, and can compose other lets (in the arg and body
-   * slots).
-   */
-  @Test
-  public void testLet() throws RecognitionException {
-    LOG.info("== Let ==");
-
-    String s = "let foo := console in foo ";
-    Object o = FlumeBuilder.parseSink(s);
-    LOG.info(toTree(o));
-    assertEquals("(LET foo (DECO (SINK console)) (DECO (SINK foo)))", toTree(o));
-
-    String s2 = "let foo := console in < foo ? [ console, foo] >";
-    Object o2 = FlumeBuilder.parseSink(s2);
-    LOG.info(toTree(o2));
-    assertEquals(
-        "(LET foo (DECO (SINK console)) (BACKUP (DECO (SINK foo)) (MULTI (DECO (SINK console)) (DECO (SINK foo)))))",
-        toTree(o2));
-
-    String s3 = "[ let foo := console in foo, let bar := console in bar ]";
-    Object o3 = FlumeBuilder.parseSink(s3);
-    LOG.info(toTree(o3));
-    assertEquals(
-        "(MULTI (LET foo (DECO (SINK console)) (DECO (SINK foo))) (LET bar (DECO (SINK console)) (DECO (SINK bar))))",
-        toTree(o3));
-
-    String s4 = "let foo := console in let bar := console in [ foo, bar ]";
-    Object o4 = FlumeBuilder.parseSink(s4);
-    LOG.info(toTree(o4));
-    assertEquals(
-        "(LET foo (DECO (SINK console)) (LET bar (DECO (SINK console)) (MULTI (DECO (SINK foo)) (DECO (SINK bar)))))",
-        toTree(o4));
-
-    String s5 = "let foo := let bar := console in bar in foo";
-    Object o5 = FlumeBuilder.parseSink(s5);
-    LOG.info(toTree(o5));
-    assertEquals(
-        "(LET foo (LET bar (DECO (SINK console)) (DECO (SINK bar))) (DECO (SINK foo)))",
-        toTree(o5));
-
-  }
 
   @Test
   public void testCombo() throws RecognitionException {

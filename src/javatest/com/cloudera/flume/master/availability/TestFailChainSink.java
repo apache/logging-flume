@@ -153,29 +153,10 @@ public class TestFailChainSink {
     FlumeBuilder.buildSink(new Context(), "autoBEChain").open();
   }
 
-  /**
-   * no exception here -- it got shadowed.
-   * 
-   * @throws InterruptedException
-   */
-  @Test
-  public void testAutoBEChainLet() throws FlumeSpecException, IOException,
-      InterruptedException {
-    FlumeBuilder.buildSink(new Context(),
-        "let autoBEChain := null in autoBEChain").open();
-  }
-
   @Test(expected = IOException.class)
   public void testAutoDFOChain() throws FlumeSpecException, IOException,
       InterruptedException {
     FlumeBuilder.buildSink(new Context(), "autoDFOChain").open();
-  }
-
-  @Test
-  public void testAutoDFOChainLet() throws FlumeSpecException, IOException,
-      InterruptedException {
-    FlumeBuilder.buildSink(new Context(),
-        "let autoDFOChain := null in autoDFOChain").open();
   }
 
   @Test(expected = IOException.class)
@@ -184,10 +165,4 @@ public class TestFailChainSink {
     FlumeBuilder.buildSink(new Context(), "autoE2EChain").open();
   }
 
-  @Test
-  public void testAutoE2EChainLet() throws FlumeSpecException, IOException,
-      InterruptedException {
-    FlumeBuilder.buildSink(new Context(),
-        "let autoE2EChain := null in autoE2EChain").open();
-  }
 }

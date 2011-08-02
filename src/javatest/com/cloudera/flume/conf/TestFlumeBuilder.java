@@ -218,57 +218,6 @@ public class TestFlumeBuilder implements ExampleData {
 
   }
 
-  /**
-   * Testing a successful parse (would throw exn on parser failure)
-   */
-  @Test
-  public void testLet() throws FlumeSpecException {
-    String let = "let foo := console in let bar := console in [ foo, bar ]";
-    FlumeBuilder.buildSink(new Context(), let);
-  }
-
-  /**
-   * Tests a parsing a case where lets vars are shadowed in a sub let expression
-   * (let names foo, and a sub let names a foo).
-   */
-  @Test
-  public void testLetShadow() throws IOException, FlumeSpecException {
-    String let = "let foo := console in let foo := null in foo";
-    FlumeBuilder.buildSink(new Context(), let);
-
-  }
-
-  /**
-   * Tests a parse that fails due to an undeclared var.
-   */
-  @Test
-  public void testLetBad() throws FlumeSpecException {
-    try {
-      String let2 = "let foo := console in let bar := console in [ foo, barf ]";
-      FlumeBuilder.buildSink(new Context(), let2);
-    } catch (FlumeSpecException e) {
-      System.out.println(e);
-      return;
-    }
-    fail("should have barfed");
-  }
-
-  /**
-   * Test a parse that fails due to a a variable used that is out of scope.
-   */
-  @Test
-  public void testLetBadContext() throws FlumeSpecException {
-    // bad variable names
-    try {
-      String let2 = "[ let foo := console in foo, let bar := console in [ foo, bar ] ]";
-      FlumeBuilder.buildSink(new Context(), let2);
-    } catch (FlumeSpecException e) {
-      System.out.println(e);
-      return;
-    }
-    fail("should have failed because foo is out of context");
-  }
-
   @Test
   public void testRollSinkParse() throws FlumeSpecException,
       RecognitionException {
