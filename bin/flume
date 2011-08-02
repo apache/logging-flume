@@ -29,6 +29,7 @@ function usage {
   echo "usage: flume command [args...]"
   echo "commands include: "
   echo "  dump            Takes a specified source and dumps to console"
+  echo "  source          Takes a specified source and dumps to console"
   echo "  node            Start a Flume node/agent (with watchdog)"
   echo "  master          Start a Flume Master server (with watchdog)"
   echo "  version         Dump flume build version information "
@@ -40,6 +41,7 @@ function usage {
   echo "  shell           Start the flume shell"
   echo "  killmaster      Kill a running master"
   echo "  dumplog         Takes a specified WAL/DFO log file and dumps to console"
+  echo "  sink            Start a one-shot flume node with console source and specified sink"
   exit -1
 }
 
@@ -263,7 +265,7 @@ elif [ "$CMD" = "unit" ] ; then
   exec $FLUME junit.textui.TestRunner "$@"
 elif [ "$CMD" = "unit4" ] ; then
   exec $FLUME org.junit.runner.JUnitCore "$@"
-elif [ "$CMD" = "dump" ] ; then
+elif [ "$CMD" = "dump" -o "$CMD" = "source" ] ; then
   # this has no error checking.  be careful!
   if [ -z "$2" ] ; then
     CONSOLE="console"
@@ -271,11 +273,14 @@ elif [ "$CMD" = "dump" ] ; then
     CONSOLE="console(\"$2\")"
   fi
   exec java $JOPTS $UOPTS com.cloudera.flume.agent.FlumeNode \
-      -1 -s -r -n dump -c "dump: $1 | $CONSOLE; "
+      -1 -s -n dump -c "dump: $1 | $CONSOLE; "
 elif [ "$CMD" = "dumplog" ] ; then
   # this has no error checking.  be careful!
   exec java $JOPTS $UOPTS com.cloudera.flume.agent.FlumeNode \
-      -1 -s -r -n dump -c "dump: seqfile(\"$1\") | console(\"avrojson\"); "
+      -1 -s -n dump -c "dump: seqfile(\"$1\") | console(\"avrojson\"); "
+elif [ "$CMD" = "sink" ];  then
+  exec java $JOPTS $UOPTS com.cloudera.flume.agent.FlumeNode \
+      -1 -s -n dump -c "dump: console | $1; "
 elif [ "$CMD" = "shell" ] ; then
   exec java $JOPTS $UOPTS com.cloudera.flume.util.FlumeShell "$@"
 elif [ "$CMD" = "killmaster" ] ; then
