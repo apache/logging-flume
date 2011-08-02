@@ -105,8 +105,7 @@ host: Identifier | IPLiteral ;
 connection
 	:	 source '|' sink -> ^(NODE BLANK source sink);
 
-source 		:	singleSource		-> singleSource
-		|	 '[' multiSource ']'	-> ^(MULTI multiSource) ;	
+source 		:	singleSource		-> singleSource ;
 sourceEof	: 	source EOF 		-> source;
 singleSource	:	Identifier args?	-> ^(SOURCE Identifier args?);
 multiSource	:	singleSource (',' singleSource)* -> singleSource+ ;
