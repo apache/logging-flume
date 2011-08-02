@@ -16,6 +16,7 @@
  limitations under the License.
 -->
 <!-- Retro web 1.0 flume -->
+<title>Flume Master: Multi config submission</title>
 <%@ page
   contentType="text/html; charset=UTF-8"
   import="com.cloudera.flume.master.FlumeMaster"

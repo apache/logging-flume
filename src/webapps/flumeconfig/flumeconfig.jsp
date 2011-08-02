@@ -20,6 +20,8 @@
 <head>
 <!--(c) Copyright (2009) Cloudera, Inc.    -->
 <!-- Retro web 1.0 flume reporter display -->
+<title>Flume Master: Configure Nodes</title>
+
 <%@ page
 	contentType="text/html; charset=UTF-8"
 	import="javax.servlet.*"
@@ -34,7 +36,7 @@
 <body>
 <jsp:include page="menu.jsp" />
 
-<h1> Flume Config </h1>
+<h1> Flume Master: Configure Nodes </h1>
 
 <h2>Configure a single node</h2>
 <form method=post action="command.jsp">

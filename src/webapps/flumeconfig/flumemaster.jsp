@@ -20,6 +20,8 @@
 <head>
 <!--(c) Copyright (2009) Cloudera, Inc.  All rights reserved. -->
 <!-- Retro web 1.0 flume configuration master display -->
+<title>Flume Master</title>
+
 <%@ page
 	contentType="text/html; charset=UTF-8"
 	import="javax.servlet.*"

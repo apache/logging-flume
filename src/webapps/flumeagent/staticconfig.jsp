@@ -18,6 +18,7 @@
 <html><head>
 <!-- Copyright (c) 2010 Cloudera, Inc.  All rights reserved. -->
 <!-- Retro web 1.0 flume Agent configuration display -->
+<title>Flume Node: Static Configuration</title>
 <%@ page
 	contentType="text/html; charset=UTF-8"
 	import="javax.servlet.*"

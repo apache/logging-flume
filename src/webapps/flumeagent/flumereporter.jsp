@@ -20,6 +20,7 @@
 <head>
 <!--(c) Copyright (2009) Cloudera, Inc.    -->
 <!-- Retro web 1.0 flume reporter display -->
+<title>Flume Node Metrics Report (JSON)</title>
 <%@ page
 	contentType="text/html; charset=UTF-8"
 	import="javax.servlet.*"
@@ -38,7 +39,7 @@
 
 <jsp:include page="menu_agent.jsp" />
 
-<h1> Flume Agent Metrics Report (JSON) </h1>
+<h1> Flume Node Metrics Report (JSON) </h1>
 
 <%-- <b>Started:</b> <%= new Date(tracker.getStartTime())%><br> --%>
 <b>Version:</b> <%= VersionInfo.getVersion()%>,

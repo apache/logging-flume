@@ -19,6 +19,7 @@
 <link rel="stylesheet" type="text/css" href="/flume.css">
 <head>
 <!-- Retro web 1.0 flume reporter display -->
+<title>Flume Master: Direct Command</title>
 <%@ page
 	contentType="text/html; charset=UTF-8"
 	import="javax.servlet.*"
