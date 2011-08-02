@@ -32,6 +32,7 @@
       <include name="**/google-collect*.jar" />
       <include name="**/guava*.jar" />
       <include name="**/log4j-*.jar" />
+      <include name="**/slf4j-*.jar" />
     </fileset>
     <!-- in case we are running in release env -->
     <fileset dir="${flume.base}">
