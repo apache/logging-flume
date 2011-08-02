@@ -17,8 +17,12 @@
  */
 package com.cloudera.flume.handlers.batch;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 
+import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -31,12 +35,15 @@ import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.FanOutSink;
 import com.cloudera.flume.handlers.debug.MemorySinkSource;
 import com.cloudera.flume.handlers.hdfs.WriteableEvent;
+import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.aggregator.CounterSink;
+import com.cloudera.util.Clock;
 
 /**
  * This tests batching/unbatching and gzip/gunzip compression
  */
 public class TestBatching {
+  public static final Logger LOG = Logger.getLogger(TestBatching.class);
 
   @Test
   public void testBatch() throws IOException {
@@ -45,8 +52,7 @@ public class TestBatching {
     CounterSink cnt = new CounterSink("count");
     MemorySinkSource mem = new MemorySinkSource();
     FanOutSink<EventSink> fo = new FanOutSink<EventSink>(cnt, mem);
-    BatchingDecorator<EventSink> b =
-        new BatchingDecorator<EventSink>(fo, 10, 0);
+    BatchingDecorator<EventSink> b = new BatchingDecorator<EventSink>(fo, 10, 0);
     b.open();
     for (int i = 0; i < total; i++) {
       Event e = new EventImpl(("message " + i).getBytes());
@@ -57,8 +63,7 @@ public class TestBatching {
 
     // unbatch the batch.
     CounterSink cnt2 = new CounterSink("unbatch");
-    UnbatchingDecorator<EventSink> ub =
-        new UnbatchingDecorator<EventSink>(cnt2);
+    UnbatchingDecorator<EventSink> ub = new UnbatchingDecorator<EventSink>(cnt2);
     Event ue = null;
     ub.open();
     while ((ue = mem.next()) != null) {
@@ -77,8 +82,8 @@ public class TestBatching {
     CounterSink cnt = new CounterSink("count");
     MemorySinkSource mem = new MemorySinkSource();
     FanOutSink<EventSink> fo = new FanOutSink<EventSink>(cnt, mem);
-    BatchingDecorator<EventSink> b =
-        new BatchingDecorator<EventSink>(fo, 1024, 3000);
+    BatchingDecorator<EventSink> b = new BatchingDecorator<EventSink>(fo, 1024,
+        3000);
     b.open();
     for (int i = 0; i < total; i++) {
       Event e = new EventImpl(("message " + i).getBytes());
@@ -100,8 +105,8 @@ public class TestBatching {
     CounterSink cnt = new CounterSink("count");
     MemorySinkSource mem = new MemorySinkSource();
     FanOutSink<EventSink> fo = new FanOutSink<EventSink>(cnt, mem);
-    BatchingDecorator<EventSink> b =
-        new BatchingDecorator<EventSink>(fo, 10, 3000);
+    BatchingDecorator<EventSink> b = new BatchingDecorator<EventSink>(fo, 10,
+        3000);
     b.open();
     for (int i = 0; i < total; i++) {
       Event e = new EventImpl(("message " + i).getBytes());
@@ -122,8 +127,8 @@ public class TestBatching {
   public void testGzip() throws FlumeSpecException, IOException {
 
     MemorySinkSource mem = new MemorySinkSource();
-    BatchingDecorator<EventSink> b =
-        new BatchingDecorator<EventSink>(mem, 100, 0);
+    BatchingDecorator<EventSink> b = new BatchingDecorator<EventSink>(mem, 100,
+        0);
     b.open();
     for (int i = 0; i < 100; i++) {
       Event e = new EventImpl(("canned data " + i).getBytes());
@@ -147,11 +152,12 @@ public class TestBatching {
     int gzipsz = new WriteableEvent(gzbe).toBytes().length;
     int ungzsz = new WriteableEvent(gunze).toBytes().length;
 
-    System.out.printf("before: %d  gzip: %d  gunzip: %d\n", origsz, gzipsz,
-        ungzsz);
+    LOG.info(String.format("before: %d  gzip: %d  gunzip: %d", origsz, gzipsz,
+        ungzsz));
 
     Assert.assertTrue(origsz > gzipsz); // got some benefit for compressing?
-    Assert.assertEquals(origsz, ungzsz); // uncompress is same size as precompressed?
+    Assert.assertEquals(origsz, ungzsz); // uncompress is same size as
+    // precompressed?
 
   }
 
@@ -161,5 +167,29 @@ public class TestBatching {
     @SuppressWarnings("unused")
     EventSink sink = FlumeBuilder.buildSink(new Context(), cfg);
 
+  }
+
+  @Test
+  public void testEmptyBatches() throws FlumeSpecException, IOException,
+      InterruptedException {
+    EventSink snk = FlumeBuilder.buildSink(new Context(),
+        "{ batch(2,100) => console }");
+    snk.open();
+
+    for (int i = 0; i < 10; i++) {
+      Clock.sleep(1000);
+      snk.append(new EventImpl(("test " + i).getBytes()));
+    }
+    snk.close();
+
+    ReportEvent rpt = snk.getReport();
+    LOG.info(rpt.toString());
+    assertEquals(Long.valueOf(0), rpt.getLongMetric(BatchingDecorator.R_FILLED));
+    assertEquals(Long.valueOf(10), rpt.getLongMetric(BatchingDecorator.R_EMPTY));
+    // this is timing based and there is a little play with these numbers.
+    assertTrue(rpt.getLongMetric(BatchingDecorator.R_TRIGGERS) > 97);
+    assertTrue(rpt.getLongMetric(BatchingDecorator.R_TRIGGERS) < 102);
+    assertTrue(rpt.getLongMetric(BatchingDecorator.R_TIMEOUTS) > 97);
+    assertTrue(rpt.getLongMetric(BatchingDecorator.R_TIMEOUTS) < 102);
   }
 }

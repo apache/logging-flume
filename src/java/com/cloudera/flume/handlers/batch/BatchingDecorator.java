@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
 
@@ -36,6 +37,8 @@ import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSinkDecorator;
 import com.cloudera.flume.handlers.hdfs.WriteableEvent;
+import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.util.Clock;
 import com.google.common.base.Preconditions;
 
 /**
@@ -52,6 +55,17 @@ public class BatchingDecorator<S extends EventSink> extends
 
   public static final String BATCH_SIZE = "batchSize";
   public static final String BATCH_DATA = "batchData";
+
+  // timeoutBatches + filledBatches + (emptyBatches) = triggeredBatches
+  public static final String R_TIMEOUTS = "timeoutBatches";
+  public static final String R_FILLED = "filledBatches";
+  public static final String R_TRIGGERS = "triggeredBatches";
+  public static final String R_EMPTY = "emptyBatches";
+
+  AtomicLong timeoutCount = new AtomicLong(0);
+  AtomicLong filledCount = new AtomicLong(0);
+  AtomicLong totalCount = new AtomicLong(0);
+  AtomicLong emptyCount = new AtomicLong(0);
 
   final int maxSize;
   final int maxLatency;
@@ -91,8 +105,10 @@ public class BatchingDecorator<S extends EventSink> extends
       Event be = batchevent(events);
       super.append(be);
       events.clear();
-      lastBatchTime = System.currentTimeMillis();
+      emptyCount.incrementAndGet();
     }
+    lastBatchTime = Clock.unixTime();
+    totalCount.incrementAndGet();
   }
 
   /**
@@ -135,32 +151,31 @@ public class BatchingDecorator<S extends EventSink> extends
 
     public void run() {
       startedLatch.countDown();
-      lastBatchTime = System.currentTimeMillis();
+      lastBatchTime = Clock.unixTime();
       while (!timeoutThreadDone) {
-        long now = System.currentTimeMillis();
-        if (now < lastBatchTime + maxLatency) {
+        long now = Clock.unixTime();
+        long msUntilTimeout = 0;
+        synchronized (this) {
+          msUntilTimeout = lastBatchTime + maxLatency - now;
+        }
+        if (msUntilTimeout > 0) {
           try {
-            Thread.sleep(lastBatchTime + maxLatency - now);
+            LOG.debug("Batching timeout sleeping for " + msUntilTimeout + "ms");
+            Clock.sleep(msUntilTimeout);
           } catch (InterruptedException e) {
             LOG.warn("TimeoutThread interrupted", e);
           }
-        } else {
-          try {
-            synchronized (this) {
-              // We don't know if something got committed between
-              // looking at the time and getting here so we have to
-              // make sure no-one changes lastBatchTime underneath our feet
-              if (now >= lastBatchTime + maxLatency) {
-                endBatch();
-              }
-            }
-          } catch (IOException e) {
-            LOG.error("IOException when ending batch!", e);
-            timeoutThreadDone = true;
-          }
+          continue;
         }
-        doneLatch.countDown();
+        try {
+          endBatch();
+          timeoutCount.incrementAndGet();
+        } catch (IOException e) {
+          LOG.error("IOException when ending batch!", e);
+          timeoutThreadDone = true;
+        }
       }
+      doneLatch.countDown();
     }
   }
 
@@ -184,6 +199,7 @@ public class BatchingDecorator<S extends EventSink> extends
     events.add(e);
     if (events.size() >= maxSize) {
       endBatch();
+      filledCount.incrementAndGet();
     }
   }
 
@@ -195,6 +211,16 @@ public class BatchingDecorator<S extends EventSink> extends
       timeoutThread.doShutdown();
     }
     super.close();
+  }
+
+  @Override
+  public ReportEvent getReport() {
+    ReportEvent rpt = super.getReport();
+    rpt.setLongMetric(R_TIMEOUTS, timeoutCount.get());
+    rpt.setLongMetric(R_FILLED, filledCount.get());
+    rpt.setLongMetric(R_TRIGGERS, totalCount.get());
+    rpt.setLongMetric(R_EMPTY, emptyCount.get());
+    return rpt;
   }
 
   public static SinkDecoBuilder builder() {
