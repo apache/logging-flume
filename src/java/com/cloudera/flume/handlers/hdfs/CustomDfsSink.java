@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.compress.CompressionCodec;
@@ -87,6 +88,15 @@ public class CustomDfsSink extends EventSink.Base {
     writer = null;
   }
 
+  /**
+   * Hadoop Compression Codecs that use Native libs require
+   * an instance of a Configuration Object. They require this
+   * due to some check against knowing weather or not the native libs 
+   * have been loaded. GzipCodec, LzoCodec, LzopCodec are all codecs that
+   * require Native libs. GZipCodec has a slight exception that if native libs
+   * are not accessible it will use Pure Java. This results in no errors just
+   * notices. BZip2Codec is an example codec that doesn't use native libs.
+   */
   @Override
   public void open() throws IOException {
     FlumeConfiguration conf = FlumeConfiguration.get();
@@ -100,6 +110,11 @@ public class CustomDfsSink extends EventSink.Base {
           + FlumeConfiguration.COLLECTOR_DFS_COMPRESS_CODEC
           + " set to GzipCodec instead");
       CompressionCodec gzipC = new GzipCodec();
+      
+      //See Below for comments on this
+      if(gzipC instanceof Configurable){
+        ((Configurable)gzipC).setConf(conf);
+      }
       Compressor gzCmp = gzipC.createCompressor();
       dstPath = new Path(path + gzipC.getDefaultExtension());
       hdfs = dstPath.getFileSystem(conf);
@@ -112,6 +127,7 @@ public class CustomDfsSink extends EventSink.Base {
     String codecName = conf.getCollectorDfsCompressCodec();
     List<Class<? extends CompressionCodec>> codecs = CompressionCodecFactory
         .getCodecClasses(FlumeConfiguration.get());
+    //Wish we could base this on DefaultCodec but appears not all codec's extend DefaultCodec(Lzo)
     CompressionCodec codec = null;
     ArrayList<String> codecStrs = new ArrayList<String>();
     codecStrs.add("None");
@@ -140,7 +156,11 @@ public class CustomDfsSink extends EventSink.Base {
       LOG.info("Creating HDFS file: " + dstPath.toString());
       return;
     }
-
+    //Must check instanceof codec as BZip2Codec doesn't inherit Configurable
+    if(codec instanceof Configurable){
+      //Must set the configuration for Configurable objects that may or do use native libs
+      ((Configurable)codec).setConf(conf);
+    }
     Compressor cmp = codec.createCompressor();
     dstPath = new Path(path + codec.getDefaultExtension());
     hdfs = dstPath.getFileSystem(conf);

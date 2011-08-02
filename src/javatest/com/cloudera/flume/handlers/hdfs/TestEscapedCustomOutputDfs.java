@@ -153,7 +153,9 @@ public class TestEscapedCustomOutputDfs {
 
   /**
    * Test to write few log lines, compress using gzip, write to disk, read back
-   * the compressed file and verify the written lines.
+   * the compressed file and verify the written lines. This test alone doesn't
+   * test GZipCodec with its Native Libs. java.library.path must contain the path to the
+   * hadoop native libs for this to happen.
    * 
    * @throws IOException
    * @throws InterruptedException
