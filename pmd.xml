@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<ruleset name="Custom ruleset"
+    xmlns="http://pmd.sf.net/ruleset/1.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pmd.sf.net/ruleset/1.0.0 http://pmd.sf.net/ruleset_xml_schema.xsd"
+    xsi:noNamespaceSchemaLocation="http://pmd.sf.net/ruleset_xml_schema.xsd">
+  <description>
+  This ruleset provides some standard checks for Flume.
+  </description>
+  <rule ref="rulesets/basic.xml">
+    <exclude name="AvoidUsingHardCodedIP"/>
+  </rule>
+  <rule ref="rulesets/imports.xml">
+    <exclude name="TooManyStaticImports"/>
+  </rule>
+  <rule ref="rulesets/junit.xml">
+    <exclude name="JUnitAssertionsShouldIncludeMessage"/>
+    <exclude name="JUnitTestsShouldIncludeAssert"/>
+  </rule>
+  <rule ref="rulesets/logging-java.xml"/>
+  <rule ref="rulesets/strings.xml">
+    <exclude name="AvoidDuplicateLiterals"/>
+  </rule>
+  <rule ref="rulesets/unusedcode.xml"/>
+</ruleset>

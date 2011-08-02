@@ -29,6 +29,7 @@
     <conf name="default"/>
     <conf name="test"/>
     <conf name="findbugs" visibility="private"/>
+    <conf name="pmd" visibility="private"/>
     <conf name="coverage" visibility="private"/>
     <conf name="releaseaudit" visibility="private" description="Artifacts required for releaseaudit target"/>
   </configurations>
@@ -46,6 +47,7 @@
                 rev="1.3.9" conf="findbugs->default" />
     <dependency org="com.google.code.findbugs" name="findbugs-ant"
                 rev="1.3.9" conf="findbugs->default" />
+    <dependency org="pmd" name="pmd" rev="4.2.5" conf="pmd->default"/>
 
     <dependency org="net.sourceforge.cobertura" name="cobertura"
                 rev="1.9.4.1" conf="coverage->default" transitive="false"/>

@@ -217,6 +217,11 @@ to call at top-level: ant deploy-contrib compile-core-test
                   pattern="${ivy.tools.lib}/[artifact]-[revision].[ext]"/>
   </target>
 
+  <target name="ivy-retrieve-pmd" depends="init,ivy-init">
+    <ivy:retrieve type="jar" conf="pmd"
+                  pattern="${ivy.tools.lib}/[artifact]-[revision].[ext]"/>
+  </target>
+
   <target name="ivy-retrieve-coverage" depends="init,ivy-init">
     <ivy:retrieve type="jar" conf="coverage"
                   pattern="${ivy.tools.lib}/[artifact]-[revision].[ext]"/>
@@ -229,7 +234,7 @@ to call at top-level: ant deploy-contrib compile-core-test
   </target>
 
   <target name="ivy-retrieve-all"
-          depends="ivy-retrieve,ivy-retrieve-test,ivy-retrieve-findbugs,ivy-retrieve-coverage,ivy-retrieve-releaseaudit" />
+          depends="ivy-retrieve,ivy-retrieve-test,ivy-retrieve-findbugs,ivy-retrieve-pmd,ivy-retrieve-coverage,ivy-retrieve-releaseaudit" />
 
   <target name="compile-aho" depends="init,ivy-retrieve-test">
     <javac 
@@ -490,6 +495,20 @@ to call at top-level: ant deploy-contrib compile-core-test
       <sourcePath path="${basedir}/src/java" />
       <class location="${build.dir}/${final.name}-core.jar"/>
     </findbugs>
+  </target>
+
+  <target name="pmd" depends="ivy-retrieve-pmd, jar, jar-test">
+    <taskdef name="pmd" classname="net.sourceforge.pmd.ant.PMDTask" classpathref="tools.classpath"/>
+    <pmd shortFilenames="true">
+        <ruleset>pmd.xml</ruleset>
+        <formatter type="html" toFile="pmd_report.html"/>
+        <fileset dir="${basedir}/src/java">
+            <include name="**/*.java"/>
+        </fileset>
+        <fileset dir="${basedir}/src/javatest">
+            <include name="**/*.java"/>
+        </fileset>
+    </pmd>
   </target>
 
   <target name="instrument" depends="compile-core, compile-core-test,ivy-retrieve-coverage">
