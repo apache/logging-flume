@@ -1,0 +1,28 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Flume Developer Guide</title><link rel="stylesheet" href="docbook.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"></head><body><div style="clear:both; margin-bottom: 4px"></div><div align="center"><a href="index.html"><img src="images/home.png" alt="Documentation Home"></a></div><span class="breadcrumbs"><div class="breadcrumbs"><span class="breadcrumb-node">Flume Developer Guide</span></div></span><div lang="en" class="article" title="Flume Developer Guide"><div class="titlepage"><div><div><h2 class="title"><a name="id538023"></a>Flume Developer Guide</h2></div><div><div class="author"><h3 class="author"><span class="firstname">flume-dev@cloudera.org</span></h3></div></div><div><div class="revhistory"><table border="1" width="100%" summary="Revision history"><tr><th align="left" valign="top" colspan="3"><b>Revision History</b></th></tr><tr><td align="left">Revision 0.9.3-SNAPSHOT</td><td align="left">November 16 2010</td><td align="left">F</td></tr></table></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#_logging">1. Logging</a></span></dt><dd><dl><dt><span class="section"><a href="#_setting_up_logging">1.1. Setting Up Logging</a></span></dt><dt><span class="section"><a href="#_logging_exceptions">1.2. Logging Exceptions</a></span></dt><dt><span class="section"><a href="#_logging_formatting_and_performance_notes">1.3. Logging Formatting and Performance Notes</a></span></dt></dl></dd><dt><span class="section"><a href="#_writing_documentation">2. Writing Documentation</a></span></dt></dl></div><div class="section" title="1. Logging"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="_logging"></a>1. Logging</h2></div></div></div><div class="toc"><dl><dt><span class="section"><a href="#_setting_up_logging">1.1. Setting Up Logging</a></span></dt><dt><span class="section"><a href="#_logging_exceptions">1.2. Logging Exceptions</a></span></dt><dt><span class="section"><a href="#_logging_formatting_and_performance_notes">1.3. Logging Formatting and Performance Notes</a></span></dt></dl></div><p>Logging is implemented using the <a class="ulink" href="http://www.slf4j.org/" target="_top">SLF4J API</a>.</p><p>Be sure to read the <a class="ulink" href="http://www.slf4j.org/docs.html" target="_top">SLF4J documentation</a>.</p><div class="section" title="1.1. Setting Up Logging"><div class="titlepage"><div><div><h3 class="title"><a name="_setting_up_logging"></a>1.1. Setting Up Logging</h3></div></div></div><p>Typically each class has its own logger. We declare these as follows:</p><pre class="programlisting">private static final Logger LOG = LoggerFactory.getLogger(MyClass.class);</pre><p>Things to note here:</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem">
+We make all loggers <code class="literal">private static final</code> (and in that order).
+</li><li class="listitem">
+We name all of our loggers <code class="literal">LOG</code>.
+</li><li class="listitem">
+We just pass the class, we don&#8217;t call <code class="literal">.getName()</code> on the class.
+</li></ul></div></div><div class="section" title="1.2. Logging Exceptions"><div class="titlepage"><div><div><h3 class="title"><a name="_logging_exceptions"></a>1.2. Logging Exceptions</h3></div></div></div><p>We are using the 1.6 version of SLF4J, so we get to take advantage of
+the <a class="ulink" href="http://www.slf4j.org/faq.html#paramException" target="_top">improved support</a> for
+logging exceptions.</p></div><div class="section" title="1.3. Logging Formatting and Performance Notes"><div class="titlepage"><div><div><h3 class="title"><a name="_logging_formatting_and_performance_notes"></a>1.3. Logging Formatting and Performance Notes</h3></div></div></div><p>For a good discussion of this, see the
+<a class="ulink" href="http://www.slf4j.org/faq.html#logging_performance" target="_top">relevant section</a>
+in the SLF4J FAQ.</p></div></div><div class="section" title="2. Writing Documentation"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="_writing_documentation"></a>2. Writing Documentation</h2></div></div></div><p>Documentation is written using <a class="ulink" href="http://www.methods.co.nz/asciidoc/" target="_top">AsciiDoc</a>.</p><pre class="literallayout">     ______
+    / ___//_  ______  ____
+   / /_/ / / / /    \/ __/
+  / __/ / /_/ / / / / __/
+ / / /_/\____/_/_/_/\__/
+/_/ Distributed Log Collection.</pre></div></div><script type="text/javascript">
+     var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+     document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+  </script><script type="text/javascript">
+     try{
+        var pageTracker = _gat._getTracker("UA-2275969-4");
+        pageTracker._setDomainName(".cloudera.com");
+        pageTracker._trackPageview();
+     } catch(err) {}
+  </script><div class="footer-text"><span align="center"><a href="index.html"><img src="images/home.png" alt="Documentation Home"></a></span><br>
+  This document was built from Flume source available at
+  <a href="http://github.com/cloudera/flume">http://github.com/cloudera/flume</a>.
+  </div></body></html>

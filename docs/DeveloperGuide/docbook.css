@@ -1,0 +1,269 @@
+/*
+ * Licensed to Cloudera, Inc. under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  Cloudera, Inc. licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ *
+ *
+ * This file was provided to this project under these terms:
+ *
+ * Copyright (c) 2001, 2003 The FreeBSD Documentation Project
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * $FreeBSD: doc/share/misc/docbook.css,v 1.14 2008/11/21 07:28:34 keramida Exp $
+ */
+
+BODY ADDRESS {
+	line-height: 1.3;
+	margin: .6em 0;
+}
+
+BODY BLOCKQUOTE {
+	margin-top: .75em;
+	line-height: 1.5;
+	margin-bottom: .75em;
+}
+
+HTML BODY {
+	margin: 1em 4% 1em 4%;
+	line-height: 1.2;
+	font-family: verdana;
+}
+
+a {
+    text-decoration: none;
+    color: #1c84bf;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+a:visited {
+    color: #597e93;
+}
+
+div.titlepage .title {
+	font-size: 26px;
+}
+
+.LEGALNOTICE {
+	font-size: small;
+	font-variant: small-caps;
+}
+
+BODY DIV {
+	margin: 0;
+}
+
+DL {
+	margin: .8em 0;
+	line-height: 1.2;
+}
+
+BODY FORM {
+	margin: .6em 0;
+}
+
+H1, H2, H3, H4, H5, H6,
+DIV.EXAMPLE P B,
+.QUESTION,
+DIV.TABLE P B,
+DIV.PROCEDURE P B {
+	color: #148BCF;
+}
+
+BODY H1, BODY H2, BODY H3, BODY H4, BODY H5, BODY H6 {
+	line-height: 1.3;
+	margin-left: 0;
+}
+
+BODY H1, H2, H3, H4, H5, H6 {
+	margin: 6px 0 0 0;
+}
+
+BODY HR {
+	border-width: 0 0 1px 0;
+	border-style: solid;
+	border-color: #0068BB;
+}
+
+BODY IMG.NAVHEADER {
+	margin: 0 0 0 -4%;
+}
+
+OL {
+	margin: 0 0 0 5%;
+	line-height: 1.2;
+}
+
+BODY PRE {
+	margin: .75em 0;
+	line-height: 1.0;
+	font-family: monospace;
+}
+
+BODY TD, BODY TH {
+	line-height: 1.2;
+}
+
+UL, BODY DIR, BODY MENU {
+	margin: 0 0 0 5%;
+	line-height: 1.2;
+}
+
+HTML {
+	margin: 0; 
+	padding: 0;
+}
+
+BODY P B.APPLICATION {
+	color: #000000;
+}
+
+.navfooter td, .literal, .FILENAME {
+	color: #007a00;
+	font-family: monospace;
+}
+
+
+.GUIMENU, .GUIMENUITEM, .GUISUBMENU,
+.GUILABEL, .INTERFACE,
+.SHORTCUT, .SHORTCUT .KEYCAP {
+	font-weight: bold;
+}
+
+.GUIBUTTON {
+	background-color: #CFCFCF;
+	padding: 2px;
+}
+
+.ACCEL {
+	background-color: #F0F0F0;
+	text-decoration: underline;
+} 
+
+.PROGRAMLISTING {
+	padding: 1ex;
+	background-color: #eee;
+	border: 1px solid #ccc;
+}
+
+@media screen {  /* hide from IE3 */:/
+	a[href]:hover { background: #ffa }
+}
+
+.NOTE, .SCREEN {
+	color: #222;
+	background: #fff;
+	border: 1px solid #ccc;
+	padding: 0.4em 0.4em;
+}
+
+.SCREEN {
+        background: #eee;
+}
+
+.TIP {
+	color: #004F00;
+	background: #fff;
+	border: 1px solid green;
+	padding: 0.4em 0.4em;
+}
+
+table.CDH {
+	padding:0px 0px 8px
+}
+
+table.CDH th {
+	background: #EDF2F9;
+	border-right: 0.5pt solid #adb6cd;
+	border-bottom: 0.5pt solid #adb6cd;
+        padding:2px 8px 1px;
+}
+
+table.CDH td {
+	font-size: 12px;
+}
+
+div.breadcrumbs {
+	border-top: 2px solid #0068BB;
+        background: #EDF2F9;
+	font-style: bold;
+	font-size: small;
+	padding: 0.6em 0.6em;
+}
+
+span.breadcrumb-node {
+	font-style: italic;
+}
+
+/* Match the the breadcrumbs at the top */
+div.footer-text {
+	border-bottom: 2px solid #0068BB;
+        background: #EDF2F9;
+        font-size: small;
+        padding: 0.2em 0.2em;
+	text-align: center;
+}
+
+.IMPORTANT, .caution {
+	font-style:italic;
+	border: 1px solid #a00;
+	border-left: 12px solid #c00;
+	padding: 0.1em 1em;
+}
+
+.WARNING {
+	color: #9F1313;
+	background: #fff;
+	border: 1px solid #e59595;
+	padding: 0.4em 0.4em;
+	width: 85%;
+}
+
+.EXAMPLE {
+	width: 100%;
+}
+
+.tip, .note, .caution {
+	margin:4px 0 4px;
+}
+
+img {
+	border: 0;
+}
