@@ -20,6 +20,7 @@ package com.cloudera.flume.master;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -134,5 +135,34 @@ public class TestFlumeConfigMaster {
 
       fm.shutdown();
     }
+  }
+
+  /**
+   * Test bad config parse, and verifies that no partial data is in the
+   * ConfigManager's ConfigStore
+   */
+  @Test
+  public void testBadConfigParseRecover() throws IOException,
+      MasterExecException {
+
+    FlumeMaster fm = new FlumeMaster(cfg, false);
+    fm.serve();
+
+    Execable cfg = ConfigCommand.buildExecable();
+
+    try {
+      // node, src, sink
+      String[] args = { "node", "text(\"bla", "null" };
+      // cause exception
+      cfg.exec(args);
+
+      fail("should have thrown exception");
+    } catch (Exception e) {
+      LOG.error(e.getMessage(), e);
+    }
+    assertEquals(0, fm.getSpecMan().getAllConfigs().size());
+    assertEquals(0, fm.getSpecMan().getTranslatedConfigs().size());
+
+    fm.shutdown();
   }
 }

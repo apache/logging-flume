@@ -105,4 +105,8 @@ public class CommandStatus {
     return message;
   }
 
+  public String toString() {
+    return "cmdid:" + cmdId + " " + getCommand().toString();
+  }
+
 }

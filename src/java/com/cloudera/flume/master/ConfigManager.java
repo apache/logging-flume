@@ -32,6 +32,7 @@ import java.util.Map.Entry;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
+import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
@@ -71,8 +72,22 @@ public class ConfigManager implements ConfigurationManager {
     return "configuration manager";
   }
 
+  /**
+   * This sets a specified configuration. Only valid source and sinks are
+   * allowed.
+   */
   synchronized public void setConfig(String logicalNode, String flowid,
       String source, String sink) throws IOException {
+
+    try {
+      // make sure the sink specified is parsable and instantiable.
+      FlumeBuilder.buildSink(new Context(), sink);
+      FlumeBuilder.buildSource(source);
+    } catch (Exception e) {
+      throw new IOException("Attempted to write an invalid sink/source: "
+          + e.getMessage(), e);
+    }
+
     cfgStore.setConfig(logicalNode, flowid, source, sink);
   }
 

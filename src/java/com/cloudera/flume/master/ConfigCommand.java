@@ -93,7 +93,9 @@ public class ConfigCommand {
           }
 
         } catch (FlumeSpecException e) {
-          throw new IOException(e);
+          throw new IOException("problem instantiating spec " + e, e);
+        } catch (IOException e) {
+          throw e;
         }
       }
     };

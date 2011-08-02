@@ -36,18 +36,18 @@ public class TestMemoryBackedConfigStore extends TestCase {
     tmp.deleteOnExit();
     MemoryBackedConfigStore store = new MemoryBackedConfigStore();
     ConfigManager manager = new ConfigManager(store);
-    manager.setConfig("foo", "my-test-flow", "bar", "baz");
+    manager.setConfig("foo", "my-test-flow", "null", "console");
     FlumeConfigData data = manager.getConfig("foo");
-    assertEquals(data.getSinkConfig(), "baz");
-    assertEquals(data.getSourceConfig(), "bar");
+    assertEquals(data.getSinkConfig(), "console");
+    assertEquals(data.getSourceConfig(), "null");
 
     manager.saveConfigFile(tmp.getAbsolutePath());
 
     manager = new ConfigManager(new MemoryBackedConfigStore());
     manager.loadConfigFile(tmp.getAbsolutePath());
     data = manager.getConfig("foo");
-    assertEquals(data.getSinkConfig(), "baz");
-    assertEquals(data.getSourceConfig(), "bar");
+    assertEquals(data.getSinkConfig(), "console");
+    assertEquals(data.getSourceConfig(), "null");
   }
 
   /**

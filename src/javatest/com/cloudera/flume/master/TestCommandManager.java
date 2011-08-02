@@ -219,7 +219,7 @@ public class TestCommandManager {
     cmdman.exec(new Command("exe"));
   }
 
-  @Test(expected = MasterExecException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testExecIAE() throws MasterExecException {
     Execable ex = new Execable() {
       @Override

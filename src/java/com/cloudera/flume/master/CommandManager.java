@@ -18,6 +18,7 @@
 
 package com.cloudera.flume.master;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -180,6 +181,9 @@ public class CommandManager implements Reportable {
     return stat != null && stat.isFailure();
   }
 
+  /**
+   * This layer should eat all exceptions, including runtime exceptions.
+   */
   void handleCommand(CommandStatus cmd) {
     try {
       if (cmd == null) {
@@ -189,11 +193,16 @@ public class CommandManager implements Reportable {
       cmd.toExecing("");
       exec(cmd.cmd); // if no exception, assumed to be successful
       cmd.toSucceeded("");
+    } catch (MasterExecException e) {
+      // Log and leave info about expected exceptions
+      LOG.warn("During " + cmd + " : " + e.getMessage());
+      cmd.toFailed(e.getMessage());
     } catch (Exception e) {
-      // catches validation / illegal / preconditions.
-      // catches errors during execution.
-      LOG.error("Error or unexpected exception during " + cmd, e);
-      cmd.toFailed(e.toString());
+      // catches runtime and unexpected validation / illegal / preconditions
+      // exceptions.
+      LOG.error("Unexpected exception during " + cmd + " : " + e.getMessage(),
+          e);
+      cmd.toFailed(e.getMessage());
     }
 
   }
@@ -211,6 +220,7 @@ public class CommandManager implements Reportable {
     public void run() {
       try {
         while (!done) {
+          // only have to worry about interrupted exns here.
           CommandStatus cmd = queue.poll(1000, TimeUnit.MILLISECONDS);
           handleCommand(cmd);
         }
@@ -243,10 +253,12 @@ public class CommandManager implements Reportable {
     LOG.info("Executing command: " + cmd);
     try {
       ex.exec(cmd.getArgs());
-    } catch (Exception e) {
-      LOG.error("Error executing command: " + cmd, e);
-      throw new MasterExecException(e.toString(), e);
+    } catch (MasterExecException e) {
+      throw e; // just rethrow
+    } catch (IOException e) {
+      throw new MasterExecException(e.getMessage(), e);
     }
+    // other exceptions get handled at next layer.
     return;
   }
 

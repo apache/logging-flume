@@ -60,9 +60,11 @@ public class RuntimeRecognitionException extends RuntimeException {
 
     if (re instanceof MismatchedTokenException) {
       MismatchedTokenException mte = (MismatchedTokenException) re;
-      return "Parser error: unexpected '" + mte.token.getText()
-          + "' at position " + mte.charPositionInLine + " in line '"
-          + mte.input + "'";
+      String token = (mte.token == null) ? "\"\"" : mte.token.getText();
+
+      return "Parser error: unexpected '" + token + "' at position "
+          + mte.charPositionInLine + " line " + mte.line + ": '" + mte.input
+          + "'";
     }
 
     return "Unknown RecognitionException: " + re.getMessage();

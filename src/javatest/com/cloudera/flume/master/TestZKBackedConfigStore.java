@@ -62,18 +62,18 @@ public class TestZKBackedConfigStore {
       ZooKeeperConfigStore store = new ZooKeeperConfigStore();
       store.init();
       ConfigManager manager = new ConfigManager(store);
-      manager.setConfig("foo", "my-test-flow", "bar", "baz");
+      manager.setConfig("foo", "my-test-flow", "null", "console");
       FlumeConfigData data = manager.getConfig("foo");
-      assertEquals(data.getSinkConfig(), "baz");
-      assertEquals(data.getSourceConfig(), "bar");
+      assertEquals(data.getSinkConfig(), "console");
+      assertEquals(data.getSourceConfig(), "null");
       store.shutdown();
 
       store = new ZooKeeperConfigStore();
       store.init();
       manager = new ConfigManager(store);
       data = manager.getConfig("foo");
-      assertEquals(data.getSinkConfig(), "baz");
-      assertEquals(data.getSourceConfig(), "bar");
+      assertEquals(data.getSinkConfig(), "console");
+      assertEquals(data.getSourceConfig(), "null");
 
       Map<String, FlumeConfigData> cfgs = new HashMap<String, FlumeConfigData>();
       String defaultFlowName = cfg.getDefaultFlowName();
@@ -296,7 +296,7 @@ public class TestZKBackedConfigStore {
     store.init();
 
     String defaultFlowName = FlumeConfiguration.get().getDefaultFlowName();
-    store.setConfig("foo", defaultFlowName, "bar", "baz");
+    store.setConfig("foo", defaultFlowName, "null", "baz");
 
     zk1.shutdown();
 
@@ -375,9 +375,9 @@ public class TestZKBackedConfigStore {
     ZooKeeperConfigStore store = new ZooKeeperConfigStore(zk);
     store.init();
     String defaultFlowName = cfg.getDefaultFlowName();
-    store.setConfig("foo", defaultFlowName, "bar", "baz");
-    store.setConfig("foo2", defaultFlowName, "bar", "baz");
-    store.setConfig("foo3", defaultFlowName, "bar", "baz");
+    store.setConfig("foo", defaultFlowName, "null", "baz");
+    store.setConfig("foo2", defaultFlowName, "null", "baz");
+    store.setConfig("foo3", defaultFlowName, "null", "baz");
 
     ZKClient client = zk.createClient();
     client.init();

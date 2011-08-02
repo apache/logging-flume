@@ -34,7 +34,6 @@ import com.cloudera.flume.conf.FlumeSpecGen;
 import com.cloudera.flume.conf.thrift.FlumeConfigData;
 import com.google.common.base.Preconditions;
 
-
 /**
  * This is for setting multiple configurations at one time, from a text field.
  * It has the java bean interface for the jsp, and toCommand mechanism for the

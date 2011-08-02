@@ -124,7 +124,7 @@ public class TestParserErrorMessages {
       LOG.info(e.getMessage());
       // this is a friendlier exception
       assertEquals(
-          "Parser error: unexpected '=>' at position 24 in line '{ nullDeco =>  nullDeco =>  null }'",
+          "Parser error: unexpected '=>' at position 24 line 1: '{ nullDeco =>  nullDeco =>  null }'",
           e.getMessage());
     }
 
