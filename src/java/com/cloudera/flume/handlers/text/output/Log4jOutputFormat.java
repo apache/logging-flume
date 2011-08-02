@@ -47,7 +47,8 @@ import com.google.common.base.Preconditions;
  * TODO (jon) support log4j's escape patterns
  */
 
-public class Log4jOutputFormat implements OutputFormat {
+public class Log4jOutputFormat extends AbstractOutputFormat {
+
   private static final String NAME = "log4j";
 
   private String format(Event e) {
@@ -63,23 +64,24 @@ public class Log4jOutputFormat implements OutputFormat {
     o.write(format(e).getBytes());
   }
 
-  @Override
-  public String getFormatName() {
-    return "hadooplog4j";
-  }
-
   public static OutputFormatBuilder builder() {
     return new OutputFormatBuilder() {
+
       @Override
       public OutputFormat build(String... args) {
         Preconditions.checkArgument(args.length <= 0, "usage: hadooplog4j");
-        return new Log4jOutputFormat();
+
+        OutputFormat format = new Log4jOutputFormat();
+        format.setBuilder(this);
+
+        return format;
       }
 
       @Override
       public String getName() {
         return NAME;
       }
+
     };
   }
 

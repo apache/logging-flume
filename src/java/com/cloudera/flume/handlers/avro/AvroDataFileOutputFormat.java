@@ -29,6 +29,7 @@ import org.apache.avro.reflect.ReflectDatumWriter;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.handlers.text.FormatFactory.OutputFormatBuilder;
+import com.cloudera.flume.handlers.text.output.AbstractOutputFormat;
 import com.cloudera.flume.handlers.text.output.OutputFormat;
 import com.google.common.base.Preconditions;
 
@@ -40,9 +41,11 @@ import com.google.common.base.Preconditions;
  * 
  * This is not thread safe.
  */
-public class AvroDataFileOutputFormat implements OutputFormat {
+public class AvroDataFileOutputFormat extends AbstractOutputFormat {
+
   final static ReflectData reflectData = ReflectData.get();
   final static Schema schema = reflectData.getSchema(EventImpl.class);
+
   private static final String NAME = "avrodatafile";
 
   DatumWriter<EventImpl> writer = new ReflectDatumWriter<EventImpl>(schema);
@@ -79,23 +82,24 @@ public class AvroDataFileOutputFormat implements OutputFormat {
     sink.flush();
   }
 
-  @Override
-  public String getFormatName() {
-    return NAME;
-  }
-
   public static OutputFormatBuilder builder() {
     return new OutputFormatBuilder() {
+
       @Override
       public OutputFormat build(String... args) {
         Preconditions.checkArgument(args.length == 0, "usage: avrodata");
-        return new AvroDataFileOutputFormat();
+
+        OutputFormat format = new AvroDataFileOutputFormat();
+        format.setBuilder(this);
+
+        return format;
       }
 
       @Override
       public String getName() {
         return NAME;
       }
+
     };
   }
 

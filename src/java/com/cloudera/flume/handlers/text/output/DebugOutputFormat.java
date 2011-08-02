@@ -29,14 +29,9 @@ import com.google.common.base.Preconditions;
  * output format is specified in some output sinks, this is the default
  * formatter used.
  */
-public class DebugOutputFormat implements OutputFormat {
+public class DebugOutputFormat extends AbstractOutputFormat {
 
   private static final String NAME = "debug";
-
-  @Override
-  public String getFormatName() {
-    return NAME;
-  }
 
   @Override
   public void format(OutputStream o, Event e) throws IOException {
@@ -45,16 +40,22 @@ public class DebugOutputFormat implements OutputFormat {
 
   public static OutputFormatBuilder builder() {
     return new OutputFormatBuilder() {
+
       @Override
       public OutputFormat build(String... args) {
         Preconditions.checkArgument(args.length == 0, "usage: debug");
-        return new DebugOutputFormat();
+
+        OutputFormat format = new DebugOutputFormat();
+        format.setBuilder(this);
+
+        return format;
       }
 
       @Override
       public String getName() {
         return NAME;
       }
+
     };
   }
 

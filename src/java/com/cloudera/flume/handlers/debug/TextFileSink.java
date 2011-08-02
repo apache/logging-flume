@@ -95,7 +95,7 @@ public class TextFileSink extends EventSink.Base {
       public EventSink build(Context context, String... args) {
         Preconditions.checkArgument(args.length >= 1 && args.length <= 2,
             "usage: text(filename[,format])");
-        OutputFormat fmt = new DebugOutputFormat();
+        OutputFormat fmt = DebugOutputFormat.builder().build();
         if (args.length >= 2) {
           try {
             fmt = FormatFactory.get().getOutputFormat(args[1]);

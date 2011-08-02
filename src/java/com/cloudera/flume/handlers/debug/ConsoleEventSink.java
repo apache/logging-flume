@@ -46,7 +46,7 @@ public class ConsoleEventSink extends EventSink.Base {
   }
 
   public ConsoleEventSink(OutputFormat fmt) {
-    this.fmt = (fmt == null) ? new DebugOutputFormat() : fmt;
+    this.fmt = (fmt == null) ? DebugOutputFormat.builder().build() : fmt;
   }
 
   @Override
@@ -57,14 +57,12 @@ public class ConsoleEventSink extends EventSink.Base {
 
   @Override
   public void close() throws IOException {
-    System.out
-        .println("ConsoleEventSink( " + fmt.getFormatName() + " ) closed");
+    LOG.info("ConsoleEventSink( " + fmt.getBuilder().getName() + " ) closed");
   }
 
   @Override
   public void open() throws IOException {
-    System.out
-        .println("ConsoleEventSink( " + fmt.getFormatName() + " ) opened");
+    LOG.info("ConsoleEventSink( " + fmt.getBuilder().getName() + " ) opened");
   }
 
   public static SinkBuilder builder() {
@@ -74,7 +72,7 @@ public class ConsoleEventSink extends EventSink.Base {
       public EventSink build(Context context, String... argv) {
         Preconditions.checkArgument(argv.length <= 1,
             "usage: console[(format)]");
-        OutputFormat fmt = new DebugOutputFormat();
+        OutputFormat fmt = DebugOutputFormat.builder().build();
         if (argv.length >= 1) {
           // TODO (jon) handle formats with arguments. Requires language update.
           try {

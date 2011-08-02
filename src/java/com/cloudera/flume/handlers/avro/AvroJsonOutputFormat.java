@@ -28,6 +28,7 @@ import org.apache.avro.reflect.ReflectDatumWriter;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.handlers.text.FormatFactory.OutputFormatBuilder;
+import com.cloudera.flume.handlers.text.output.AbstractOutputFormat;
 import com.cloudera.flume.handlers.text.output.OutputFormat;
 import com.google.common.base.Preconditions;
 
@@ -38,9 +39,11 @@ import com.google.common.base.Preconditions;
  * 
  * This is not thread safe.
  */
-public class AvroJsonOutputFormat implements OutputFormat {
+public class AvroJsonOutputFormat extends AbstractOutputFormat {
+
   final static ReflectData reflectData = ReflectData.get();
   final static Schema schema = reflectData.getSchema(EventImpl.class);
+
   private static final String NAME = "avrojson";
 
   ReflectDatumWriter<EventImpl> writer = new ReflectDatumWriter<EventImpl>(
@@ -78,23 +81,24 @@ public class AvroJsonOutputFormat implements OutputFormat {
     o.write('\n');
   }
 
-  @Override
-  public String getFormatName() {
-    return NAME;
-  }
-
   public static OutputFormatBuilder builder() {
     return new OutputFormatBuilder() {
+
       @Override
       public OutputFormat build(String... args) {
         Preconditions.checkArgument(args.length == 0, "usage: avrojson");
-        return new AvroJsonOutputFormat();
+
+        OutputFormat format = new AvroJsonOutputFormat();
+        format.setBuilder(this);
+
+        return format;
       }
 
       @Override
       public String getName() {
         return NAME;
       }
+
     };
   }
 

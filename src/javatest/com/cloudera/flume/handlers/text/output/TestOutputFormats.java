@@ -40,7 +40,6 @@ import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.Event.Priority;
 import com.cloudera.flume.handlers.avro.AvroJsonOutputFormat;
 import com.cloudera.flume.handlers.avro.AvroNativeFileOutputFormat;
-import com.cloudera.flume.handlers.syslog.SyslogWireOutputFormat;
 import com.cloudera.flume.handlers.text.SyslogEntryFormat;
 
 /**
@@ -59,7 +58,7 @@ public class TestOutputFormats {
 
   @Test
   public void testOutput() throws IOException {
-    OutputFormat format = new DebugOutputFormat();
+    OutputFormat format = DebugOutputFormat.builder().build();
     ByteArrayOutputStream sos = new ByteArrayOutputStream();
     format.format(sos, e);
     String s = new String(sos.toByteArray());
@@ -77,16 +76,6 @@ public class TestOutputFormats {
     String s = new String(data);
     System.out.print(s);
     Assert.assertTrue(s.endsWith("INFO log4j: test\n"));
-  }
-
-  @Test
-  public void testSyslogWire() throws IOException {
-    OutputFormat format = new SyslogWireOutputFormat();
-    ByteArrayOutputStream sos = new ByteArrayOutputStream();
-    format.format(sos, e);
-    String s = new String(sos.toByteArray());
-    System.out.print(s);
-    Assert.assertEquals(s, "<13>test\n");
   }
 
   @Test

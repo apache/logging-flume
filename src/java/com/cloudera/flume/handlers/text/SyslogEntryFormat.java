@@ -33,6 +33,7 @@ import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.Event.Priority;
 import com.cloudera.flume.handlers.text.FormatFactory.OutputFormatBuilder;
+import com.cloudera.flume.handlers.text.output.AbstractOutputFormat;
 import com.cloudera.flume.handlers.text.output.OutputFormat;
 import com.cloudera.util.Clock;
 import com.google.common.base.Preconditions;
@@ -42,7 +43,9 @@ import com.google.common.base.Preconditions;
  * needs to have a year specified because the syslog format does not specify a
  * year!
  */
-public class SyslogEntryFormat implements InputFormat, OutputFormat {
+public class SyslogEntryFormat extends AbstractOutputFormat implements
+    InputFormat {
+
   final static Pattern SYSLOG_PAT = Pattern
       .compile("(\\S{3} \\d{1,2} \\d{2}:\\d{2}:\\d{2}) (\\S+) ([^:]*?)(:(.*))?");
   private static final String NAME = "syslog";
@@ -86,7 +89,7 @@ public class SyslogEntryFormat implements InputFormat, OutputFormat {
     String body = m.group(5); // TODO (jon) make this another field
     String service = m.group(3);
     if (body == null || body.length() == 0) {
-//      body = service;
+      // body = service;
       service = null;
     }
 
@@ -94,8 +97,8 @@ public class SyslogEntryFormat implements InputFormat, OutputFormat {
     if (service != null)
       fields.put("service", service.getBytes());
     // Event e = new EventImpl(body.getBytes(), d.getTime(), Priority.INFO,
-    Event e = new EventImpl(s.getBytes(), d.getTime(), Priority.INFO, Clock
-        .nanos(), host, fields);
+    Event e = new EventImpl(s.getBytes(), d.getTime(), Priority.INFO,
+        Clock.nanos(), host, fields);
     return e;
 
   }
@@ -139,13 +142,9 @@ public class SyslogEntryFormat implements InputFormat, OutputFormat {
     o.write(format(e).getBytes());
   }
 
-  @Override
-  public String getFormatName() {
-    return NAME;
-  }
-
   public static OutputFormatBuilder builder() {
     return new OutputFormatBuilder() {
+
       @Override
       public OutputFormat build(String... args) {
         Preconditions.checkArgument(args.length <= 1,
@@ -155,13 +154,17 @@ public class SyslogEntryFormat implements InputFormat, OutputFormat {
           year = Integer.parseInt(args[0]);
         }
 
-        return new SyslogEntryFormat(year);
+        OutputFormat format = new SyslogEntryFormat(year);
+        format.setBuilder(this);
+
+        return format;
       }
 
       @Override
       public String getName() {
         return NAME;
       }
+
     };
   }
 

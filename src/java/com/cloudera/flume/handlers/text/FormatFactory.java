@@ -20,6 +20,8 @@ package com.cloudera.flume.handlers.text;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -45,32 +47,39 @@ import com.cloudera.flume.handlers.text.output.RawOutputFormat;
 public class FormatFactory {
 
   public abstract static class OutputFormatBuilder {
+    public abstract OutputFormat build(String... args);
+
     public abstract String getName();
 
-    public abstract OutputFormat build(String... args);
   };
 
   final static OutputFormatBuilder DEFAULT = new OutputFormatBuilder() {
+
+    @Override
     public OutputFormat build(String... args) {
-      return new RawOutputFormat();
+      OutputFormat format = new RawOutputFormat();
+      format.setBuilder(this);
+
+      return format;
     }
 
     @Override
     public String getName() {
       return "default";
     }
+
   };
 
-  final static Map<String, OutputFormatBuilder> CORE_FORMATS = new HashMap<String, OutputFormatBuilder>() {
+  final static List<OutputFormatBuilder> CORE_FORMATS = new LinkedList<OutputFormatBuilder>() {
     {
-      put(DEFAULT.getName(), DEFAULT);
-      put(DebugOutputFormat.builder().getName(), DebugOutputFormat.builder());
-      put(RawOutputFormat.builder().getName(), RawOutputFormat.builder());
-      put(SyslogEntryFormat.builder().getName(), SyslogEntryFormat.builder());
-      put(Log4jOutputFormat.builder().getName(), Log4jOutputFormat.builder());
-      put(AvroJsonOutputFormat.builder().getName(), AvroJsonOutputFormat.builder());
-      put(AvroDataFileOutputFormat.builder().getName(), AvroDataFileOutputFormat.builder());
-      put(AvroNativeFileOutputFormat.builder().getName(), AvroNativeFileOutputFormat.builder());
+      add(DEFAULT);
+      add(DebugOutputFormat.builder());
+      add(RawOutputFormat.builder());
+      add(SyslogEntryFormat.builder());
+      add(Log4jOutputFormat.builder());
+      add(AvroJsonOutputFormat.builder());
+      add(AvroDataFileOutputFormat.builder());
+      add(AvroNativeFileOutputFormat.builder());
     }
   };
 
@@ -82,8 +91,12 @@ public class FormatFactory {
 
   Map<String, OutputFormatBuilder> registeredFormats;
 
-  FormatFactory(Map<String, OutputFormatBuilder> formats) {
-    this.registeredFormats = formats;
+  FormatFactory(List<OutputFormatBuilder> builders) {
+    registeredFormats = new HashMap<String, FormatFactory.OutputFormatBuilder>();
+
+    for (OutputFormatBuilder builder : builders) {
+      registeredFormats.put(builder.getName(), builder);
+    }
   }
 
   public FormatFactory() {
@@ -128,10 +141,13 @@ public class FormatFactory {
    * @throws FlumeSpecException
    *           If a {@code builder} is already registered for {@code name}.
    */
-  public FormatFactory registerFormat(String name, OutputFormatBuilder builder) throws FlumeSpecException {
+  public FormatFactory registerFormat(String name, OutputFormatBuilder builder)
+      throws FlumeSpecException {
     synchronized (registeredFormats) {
       if (registeredFormats.containsKey(name)) {
-        throw new FlumeSpecException("Redefining registered output formats is not permitted. Attempted to redefine " + name);
+        throw new FlumeSpecException(
+            "Redefining registered output formats is not permitted. Attempted to redefine "
+                + name);
       }
 
       registeredFormats.put(name, builder);
@@ -149,7 +165,8 @@ public class FormatFactory {
    * @throws FlumeSpecException
    *           If the {@code builder} is already registered.
    */
-  public FormatFactory registerFormat(OutputFormatBuilder builder) throws FlumeSpecException {
+  public FormatFactory registerFormat(OutputFormatBuilder builder)
+      throws FlumeSpecException {
     synchronized (registeredFormats) {
       String name;
 
@@ -162,7 +179,11 @@ public class FormatFactory {
   }
 
   /**
+<<<<<<< HEAD
    * Returns a copy of the registered formats at the time of invocation.
+=======
+   * Returns a read-only view of the registered formats.
+>>>>>>> FLUME-195: Allow custom Flume OutputFormats via a plugin interface
    * 
    * @return
    */
@@ -177,7 +198,8 @@ public class FormatFactory {
    * this does not attempt to unload the class even if it was dynamically
    * loaded.
    * 
-   * @param formatName The format name to unregister
+   * @param formatName
+   *          The format name to unregister
    */
   public boolean unregisterFormat(String formatName) {
     synchronized (registeredFormats) {

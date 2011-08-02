@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import com.cloudera.flume.core.Event;
+import com.cloudera.flume.handlers.text.FormatFactory.OutputFormatBuilder;
 
 /**
  * Output formats take an Event and a OutputStream and then formats the event
@@ -43,9 +44,8 @@ public interface OutputFormat {
    */
   public void format(OutputStream o, Event e) throws IOException;
 
-  /**
-   * A constant name for this particular outputFormat
-   */
-  public String getFormatName();
+  public void setBuilder(OutputFormatBuilder builder);
+
+  public OutputFormatBuilder getBuilder();
 
 }

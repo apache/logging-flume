@@ -28,6 +28,7 @@ import org.apache.avro.reflect.ReflectDatumWriter;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.handlers.text.FormatFactory.OutputFormatBuilder;
+import com.cloudera.flume.handlers.text.output.AbstractOutputFormat;
 import com.cloudera.flume.handlers.text.output.OutputFormat;
 import com.google.common.base.Preconditions;
 
@@ -37,7 +38,7 @@ import com.google.common.base.Preconditions;
  * Note: There is a separate avro container that does encoding currently from
  * the AvroEventSource/Sinks. A separate patch will consolidate the two.
  */
-public class AvroNativeFileOutputFormat implements OutputFormat {
+public class AvroNativeFileOutputFormat extends AbstractOutputFormat {
 
   private static final String formatName = "avro";
 
@@ -80,17 +81,16 @@ public class AvroNativeFileOutputFormat implements OutputFormat {
     enc.close();
   }
 
-  @Override
-  public String getFormatName() {
-    return formatName;
-  }
-
   public static OutputFormatBuilder builder() {
     return new OutputFormatBuilder() {
       @Override
       public OutputFormat build(String... args) {
         Preconditions.checkArgument(args.length == 0, "usage: avro");
-        return new AvroNativeFileOutputFormat();
+
+        OutputFormat format = new AvroNativeFileOutputFormat();
+        format.setBuilder(this);
+
+        return format;
       }
 
       @Override

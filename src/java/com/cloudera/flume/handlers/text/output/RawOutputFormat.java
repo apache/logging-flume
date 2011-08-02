@@ -28,14 +28,9 @@ import com.google.common.base.Preconditions;
 /**
  * This simple format just outputs the body of a event.
  */
-public class RawOutputFormat implements OutputFormat {
+public class RawOutputFormat extends AbstractOutputFormat {
 
   private static final String NAME = "raw";
-
-  @Override
-  public String getFormatName() {
-    return NAME;
-  }
 
   @Override
   public void format(OutputStream o, Event e) throws IOException {
@@ -45,16 +40,22 @@ public class RawOutputFormat implements OutputFormat {
 
   public static OutputFormatBuilder builder() {
     return new OutputFormatBuilder() {
+
       @Override
       public OutputFormat build(String... args) {
         Preconditions.checkArgument(args.length == 0, "usage: raw");
-        return new RawOutputFormat();
+
+        OutputFormat format = new RawOutputFormat();
+        format.setBuilder(this);
+
+        return format;
       }
 
       @Override
       public String getName() {
         return NAME;
       }
+
     };
   }
 }

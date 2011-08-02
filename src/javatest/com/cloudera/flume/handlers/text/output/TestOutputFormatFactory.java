@@ -43,7 +43,8 @@ import com.cloudera.flume.handlers.text.FormatFactory.OutputFormatBuilder;
  */
 public class TestOutputFormatFactory {
 
-  private static final Logger LOG = Logger.getLogger(TestOutputFormatFactory.class);
+  private static final Logger LOG = Logger
+      .getLogger(TestOutputFormatFactory.class);
   final int count = 5;
 
   /**
@@ -52,8 +53,8 @@ public class TestOutputFormatFactory {
   @Test
   public void testSyslogConsole() throws FlumeSpecException, IOException {
 
-    EventSink snk =
-        FlumeBuilder.buildSink(new Context(), "console(\"syslog\")");
+    EventSink snk = FlumeBuilder
+        .buildSink(new Context(), "console(\"syslog\")");
     snk.open();
     for (int i = 0; i < count; i++) {
       Event e = new EventImpl(("simple test " + i).getBytes());
@@ -68,8 +69,8 @@ public class TestOutputFormatFactory {
   @Test
   public void testDefaultConsole() throws FlumeSpecException, IOException {
 
-    EventSink snk =
-        FlumeBuilder.buildSink(new Context(), "console(\"default\")");
+    EventSink snk = FlumeBuilder.buildSink(new Context(),
+        "console(\"default\")");
     snk.open();
     for (int i = 0; i < count; i++) {
       Event e = new EventImpl(("simple test " + i).getBytes());
@@ -113,9 +114,8 @@ public class TestOutputFormatFactory {
     File tmp = File.createTempFile("syslogText", ".txt");
     tmp.deleteOnExit();
 
-    EventSink snk =
-        FlumeBuilder.buildSink(new Context(), "text(\"" + tmp.getAbsolutePath()
-            + "\",\"syslog\")");
+    EventSink snk = FlumeBuilder.buildSink(new Context(),
+        "text(\"" + tmp.getAbsolutePath() + "\",\"syslog\")");
     snk.open();
     for (int i = 0; i < count; i++) {
       Event e = new EventImpl(("simple test " + i).getBytes());
@@ -134,9 +134,8 @@ public class TestOutputFormatFactory {
     File tmp = File.createTempFile("defaultText", ".txt");
     tmp.deleteOnExit();
 
-    EventSink snk =
-        FlumeBuilder.buildSink(new Context(), "text(\"" + tmp.getAbsolutePath()
-            + "\")");
+    EventSink snk = FlumeBuilder.buildSink(new Context(),
+        "text(\"" + tmp.getAbsolutePath() + "\")");
     snk.open();
     for (int i = 0; i < count; i++) {
       Event e = new EventImpl(("simple test " + i).getBytes());
@@ -156,9 +155,8 @@ public class TestOutputFormatFactory {
     File tmp = File.createTempFile("log4jText", ".txt");
     tmp.deleteOnExit();
 
-    EventSink snk =
-        FlumeBuilder.buildSink(new Context(), "text(\"" + tmp.getAbsolutePath()
-            + "\",\"log4j\")");
+    EventSink snk = FlumeBuilder.buildSink(new Context(),
+        "text(\"" + tmp.getAbsolutePath() + "\",\"log4j\")");
     snk.open();
     for (int i = 0; i < count; i++) {
       Event e = new EventImpl(("simple test " + i).getBytes());
@@ -177,9 +175,8 @@ public class TestOutputFormatFactory {
     File tmp = File.createTempFile("syslogDfs", ".txt");
     tmp.deleteOnExit();
 
-    EventSink snk =
-        FlumeBuilder.buildSink(new Context(), "customdfs(\"file:///"
-            + tmp.getAbsolutePath() + "\",\"syslog\")");
+    EventSink snk = FlumeBuilder.buildSink(new Context(),
+        "customdfs(\"file:///" + tmp.getAbsolutePath() + "\",\"syslog\")");
     snk.open();
     for (int i = 0; i < count; i++) {
       Event e = new EventImpl(("simple test " + i).getBytes());
@@ -198,9 +195,8 @@ public class TestOutputFormatFactory {
     File tmp = File.createTempFile("defaultDfs", ".txt");
     tmp.deleteOnExit();
 
-    EventSink snk =
-        FlumeBuilder.buildSink(new Context(), "customdfs(\"file:///"
-            + tmp.getAbsolutePath() + "\")");
+    EventSink snk = FlumeBuilder.buildSink(new Context(),
+        "customdfs(\"file:///" + tmp.getAbsolutePath() + "\")");
     snk.open();
     for (int i = 0; i < count; i++) {
       Event e = new EventImpl(("simple test " + i).getBytes());
@@ -220,9 +216,8 @@ public class TestOutputFormatFactory {
     File tmp = File.createTempFile("log4jDfs", ".txt");
     tmp.deleteOnExit();
 
-    EventSink snk =
-        FlumeBuilder.buildSink(new Context(), "customdfs(\"file:///"
-            + tmp.getAbsolutePath() + "\",\"log4j\")");
+    EventSink snk = FlumeBuilder.buildSink(new Context(),
+        "customdfs(\"file:///" + tmp.getAbsolutePath() + "\",\"log4j\")");
     snk.open();
     for (int i = 0; i < count; i++) {
       Event e = new EventImpl(("simple test " + i).getBytes());
@@ -257,18 +252,20 @@ public class TestOutputFormatFactory {
 
       @Override
       public OutputFormat build(String... args) {
-        return new OutputFormat() {
+        OutputFormat format;
+
+        format = new AbstractOutputFormat() {
 
           @Override
           public void format(OutputStream o, Event e) throws IOException {
             o.write(("WACKADOODLE: " + new String(e.getBody())).getBytes());
           }
 
-          @Override
-          public String getFormatName() {
-            return "wackadoodle";
-          }
         };
+
+        format.setBuilder(this);
+
+        return format;
       }
 
     });
@@ -280,7 +277,9 @@ public class TestOutputFormatFactory {
           "[ counter(\"count\"), text(\"" + tmpFile.getAbsolutePath()
               + "\", \"wackadoodle\") ]");
     } catch (FlumeSpecException e) {
-      LOG.error("Caught an exception while building a test sink. Exception follows.", e);
+      LOG.error(
+          "Caught an exception while building a test sink. Exception follows.",
+          e);
       Assert
           .fail("Unable to create sink. Possible lack of output format plugin? Cause:"
               + e.getMessage());

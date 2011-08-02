@@ -15,31 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudera.flume.handlers.syslog;
+package com.cloudera.flume.handlers.text.output;
 
 import java.io.IOException;
 import java.io.OutputStream;
 
 import com.cloudera.flume.core.Event;
-import com.cloudera.flume.handlers.text.output.OutputFormat;
+import com.cloudera.flume.handlers.text.FormatFactory.OutputFormatBuilder;
 
-/**
- * This takes a event and outputs returns strings that correspond to record that
- * can be sent over the wire to an awaiting syslog daemon file.
- * 
- * This uses flume's priority and category info and converts it to a syslog
- * priority prefix.
- */
-public class SyslogWireOutputFormat implements OutputFormat {
+public abstract class AbstractOutputFormat implements OutputFormat {
+
+  public OutputFormatBuilder builder;
 
   @Override
-  public String getFormatName() {
-    return "syslogfile";
+  public abstract void format(OutputStream o, Event e) throws IOException;
+
+  @Override
+  public void setBuilder(OutputFormatBuilder builder) {
+    this.builder = builder;
   }
 
   @Override
-  public void format(OutputStream o, Event e) throws IOException {
-    o.write(SyslogWireExtractor.formatEventToBytes(e));
+  public OutputFormatBuilder getBuilder() {
+    return builder;
   }
 
 }

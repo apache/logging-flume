@@ -191,7 +191,7 @@ public class CustomDfsSink extends EventSink.Base {
   @Override
   public ReportEvent getReport() {
     ReportEvent rpt = super.getReport();
-    rpt.setStringMetric(A_OUTPUTFORMAT, format.getFormatName());
+    rpt.setStringMetric(A_OUTPUTFORMAT, format.getBuilder().getName());
     rpt.setLongMetric(ReportEvent.A_COUNT, count.get());
     return rpt;
   }
