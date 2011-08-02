@@ -18,27 +18,26 @@
 package com.cloudera.flume.reporter;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.MockMasterRPC;
 import com.cloudera.flume.conf.FlumeConfiguration;
-import com.cloudera.flume.util.MockClock;
-import com.cloudera.util.Clock;
 
 /**
  * Test cases for the MasterReportPusher, which deposits ReportEvents on the
  * master.
  */
 public class TestMasterReportPusher {
-
-  final protected CountDownLatch latch = new CountDownLatch(1);
+  static final Logger LOG = LoggerFactory
+      .getLogger(TestMasterReportPusher.class);
+  protected final CountDownLatch latch = new CountDownLatch(1);
 
   /**
    * Specialise MockMasterRPC to allow us to tell when putReports has been
@@ -57,19 +56,19 @@ public class TestMasterReportPusher {
 
   /**
    * Test full pusher lifecycle - make sure that reports get sent to the master.
+   * 
+   * @throws IOException
    */
   @Test
-  public void testPusherThread() throws InterruptedException {
+  public void testPusherThread() throws InterruptedException, IOException {
     ReportManager rptMan = ReportManager.get();
     rptMan.clear();
 
     PusherMockMaster master = new PusherMockMaster();
 
-    MasterReportPusher reportPusher = new MasterReportPusher(FlumeConfiguration
-        .createTestableConfiguration(), ReportManager.get(), master);
-
-    MockClock mockClock = new MockClock(0);
-    Clock.setClock(mockClock);
+    MasterReportPusher reportPusher = new MasterReportPusher(
+        FlumeConfiguration.createTestableConfiguration(), ReportManager.get(),
+        master);
 
     Reportable reportable = new Reportable() {
 
@@ -93,21 +92,13 @@ public class TestMasterReportPusher {
 
     rptMan.add(reportable);
 
-    reportPusher.start();
-
-    // Trigger the report pusher
-    mockClock.forward(FlumeConfiguration.get().getReporterPollPeriod() * 2);
-
-    // Wait for 'real' 5s delay for report pusher to a) get on a CPU and b) do
-    // the push
-    assertTrue("putReports not called within 5 seconds", latch.await(5,
-        TimeUnit.SECONDS));
-
-    reportPusher.stop();
+    // do what the pusher thread normally does
+    reportPusher.pusherThread.sendReports();
 
     assertEquals("Not enough reports received", 1, master.reports.size());
+    LOG.info(master.reports.toString());
     assertEquals("Report metrics not correctly sent", "bar", master.reports
-        .get("prefix.test-reportable").getStringMetric("foo"));
+        .get("test-reportable").getStringMetric("foo"));
 
   }
 }

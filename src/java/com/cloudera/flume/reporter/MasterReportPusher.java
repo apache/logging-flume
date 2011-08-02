@@ -103,16 +103,20 @@ public class MasterReportPusher {
       }
     }
 
+    void sendReports() throws IOException {
+      Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();
+
+      queryReportMan(reports);
+      querySrcSinkReports(reports);
+
+      masterRPC.putReports(reports);
+    }
+
     public void run() {
       try {
         while (!shutdown) {
           Clock.sleep(cfg.getReporterPollPeriod());
-          Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();
-
-          queryReportMan(reports);
-          querySrcSinkReports(reports);
-
-          masterRPC.putReports(reports);
+          sendReports();
         }
       } catch (InterruptedException e) {
         LOG.warn("MasterReportPusher.PusherThread was interrupted", e);
