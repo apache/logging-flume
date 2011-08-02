@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.HashMap;
 import org.apache.thrift.TEnum;
 
-public enum Priority implements TEnum {
+public enum Priority implements org.apache.thrift.TEnum {
   FATAL(0),
   ERROR(1),
   WARN(2),

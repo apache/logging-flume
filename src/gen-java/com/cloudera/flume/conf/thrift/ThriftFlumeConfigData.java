@@ -20,21 +20,15 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.thrift.*;
-import org.apache.thrift.async.*;
-import org.apache.thrift.meta_data.*;
-import org.apache.thrift.transport.*;
-import org.apache.thrift.protocol.*;
+public class ThriftFlumeConfigData implements org.apache.thrift.TBase<ThriftFlumeConfigData, ThriftFlumeConfigData._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ThriftFlumeConfigData");
 
-public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, ThriftFlumeConfigData._Fields>, java.io.Serializable, Cloneable {
-  private static final TStruct STRUCT_DESC = new TStruct("ThriftFlumeConfigData");
-
-  private static final TField TIMESTAMP_FIELD_DESC = new TField("timestamp", TType.I64, (short)1);
-  private static final TField SOURCE_CONFIG_FIELD_DESC = new TField("sourceConfig", TType.STRING, (short)2);
-  private static final TField SINK_CONFIG_FIELD_DESC = new TField("sinkConfig", TType.STRING, (short)3);
-  private static final TField SOURCE_VERSION_FIELD_DESC = new TField("sourceVersion", TType.I64, (short)4);
-  private static final TField SINK_VERSION_FIELD_DESC = new TField("sinkVersion", TType.I64, (short)5);
-  private static final TField FLOW_ID_FIELD_DESC = new TField("flowID", TType.STRING, (short)6);
+  private static final org.apache.thrift.protocol.TField TIMESTAMP_FIELD_DESC = new org.apache.thrift.protocol.TField("timestamp", org.apache.thrift.protocol.TType.I64, (short)1);
+  private static final org.apache.thrift.protocol.TField SOURCE_CONFIG_FIELD_DESC = new org.apache.thrift.protocol.TField("sourceConfig", org.apache.thrift.protocol.TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField SINK_CONFIG_FIELD_DESC = new org.apache.thrift.protocol.TField("sinkConfig", org.apache.thrift.protocol.TType.STRING, (short)3);
+  private static final org.apache.thrift.protocol.TField SOURCE_VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("sourceVersion", org.apache.thrift.protocol.TType.I64, (short)4);
+  private static final org.apache.thrift.protocol.TField SINK_VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("sinkVersion", org.apache.thrift.protocol.TType.I64, (short)5);
+  private static final org.apache.thrift.protocol.TField FLOW_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("flowID", org.apache.thrift.protocol.TType.STRING, (short)6);
 
   public long timestamp;
   public String sourceConfig;
@@ -44,7 +38,7 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
   public String flowID;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-  public enum _Fields implements TFieldIdEnum {
+  public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     TIMESTAMP((short)1, "timestamp"),
     SOURCE_CONFIG((short)2, "sourceConfig"),
     SINK_CONFIG((short)3, "sinkConfig"),
@@ -122,23 +116,23 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
   private static final int __SINKVERSION_ISSET_ID = 2;
   private BitSet __isset_bit_vector = new BitSet(3);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
-    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.TIMESTAMP, new FieldMetaData("timestamp", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.I64        , "Timestamp")));
-    tmpMap.put(_Fields.SOURCE_CONFIG, new FieldMetaData("sourceConfig", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-    tmpMap.put(_Fields.SINK_CONFIG, new FieldMetaData("sinkConfig", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-    tmpMap.put(_Fields.SOURCE_VERSION, new FieldMetaData("sourceVersion", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.I64)));
-    tmpMap.put(_Fields.SINK_VERSION, new FieldMetaData("sinkVersion", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.I64)));
-    tmpMap.put(_Fields.FLOW_ID, new FieldMetaData("flowID", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
+    Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.TIMESTAMP, new org.apache.thrift.meta_data.FieldMetaData("timestamp", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64        , "Timestamp")));
+    tmpMap.put(_Fields.SOURCE_CONFIG, new org.apache.thrift.meta_data.FieldMetaData("sourceConfig", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.SINK_CONFIG, new org.apache.thrift.meta_data.FieldMetaData("sinkConfig", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.SOURCE_VERSION, new org.apache.thrift.meta_data.FieldMetaData("sourceVersion", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.SINK_VERSION, new org.apache.thrift.meta_data.FieldMetaData("sinkVersion", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.FLOW_ID, new org.apache.thrift.meta_data.FieldMetaData("flowID", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    FieldMetaData.addStructMetaDataMap(ThriftFlumeConfigData.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ThriftFlumeConfigData.class, metaDataMap);
   }
 
   public ThriftFlumeConfigData() {
@@ -215,7 +209,7 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
     __isset_bit_vector.clear(__TIMESTAMP_ISSET_ID);
   }
 
-  /** Returns true if field timestamp is set (has been asigned a value) and false otherwise */
+  /** Returns true if field timestamp is set (has been assigned a value) and false otherwise */
   public boolean isSetTimestamp() {
     return __isset_bit_vector.get(__TIMESTAMP_ISSET_ID);
   }
@@ -237,7 +231,7 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
     this.sourceConfig = null;
   }
 
-  /** Returns true if field sourceConfig is set (has been asigned a value) and false otherwise */
+  /** Returns true if field sourceConfig is set (has been assigned a value) and false otherwise */
   public boolean isSetSourceConfig() {
     return this.sourceConfig != null;
   }
@@ -261,7 +255,7 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
     this.sinkConfig = null;
   }
 
-  /** Returns true if field sinkConfig is set (has been asigned a value) and false otherwise */
+  /** Returns true if field sinkConfig is set (has been assigned a value) and false otherwise */
   public boolean isSetSinkConfig() {
     return this.sinkConfig != null;
   }
@@ -286,7 +280,7 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
     __isset_bit_vector.clear(__SOURCEVERSION_ISSET_ID);
   }
 
-  /** Returns true if field sourceVersion is set (has been asigned a value) and false otherwise */
+  /** Returns true if field sourceVersion is set (has been assigned a value) and false otherwise */
   public boolean isSetSourceVersion() {
     return __isset_bit_vector.get(__SOURCEVERSION_ISSET_ID);
   }
@@ -309,7 +303,7 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
     __isset_bit_vector.clear(__SINKVERSION_ISSET_ID);
   }
 
-  /** Returns true if field sinkVersion is set (has been asigned a value) and false otherwise */
+  /** Returns true if field sinkVersion is set (has been assigned a value) and false otherwise */
   public boolean isSetSinkVersion() {
     return __isset_bit_vector.get(__SINKVERSION_ISSET_ID);
   }
@@ -331,7 +325,7 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
     this.flowID = null;
   }
 
-  /** Returns true if field flowID is set (has been asigned a value) and false otherwise */
+  /** Returns true if field flowID is set (has been assigned a value) and false otherwise */
   public boolean isSetFlowID() {
     return this.flowID != null;
   }
@@ -419,7 +413,7 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
     throw new IllegalStateException();
   }
 
-  /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
@@ -530,7 +524,7 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
       return lastComparison;
     }
     if (isSetTimestamp()) {
-      lastComparison = TBaseHelper.compareTo(this.timestamp, typedOther.timestamp);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.timestamp, typedOther.timestamp);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -540,7 +534,7 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
       return lastComparison;
     }
     if (isSetSourceConfig()) {
-      lastComparison = TBaseHelper.compareTo(this.sourceConfig, typedOther.sourceConfig);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.sourceConfig, typedOther.sourceConfig);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -550,7 +544,7 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
       return lastComparison;
     }
     if (isSetSinkConfig()) {
-      lastComparison = TBaseHelper.compareTo(this.sinkConfig, typedOther.sinkConfig);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.sinkConfig, typedOther.sinkConfig);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -560,7 +554,7 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
       return lastComparison;
     }
     if (isSetSourceVersion()) {
-      lastComparison = TBaseHelper.compareTo(this.sourceVersion, typedOther.sourceVersion);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.sourceVersion, typedOther.sourceVersion);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -570,7 +564,7 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
       return lastComparison;
     }
     if (isSetSinkVersion()) {
-      lastComparison = TBaseHelper.compareTo(this.sinkVersion, typedOther.sinkVersion);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.sinkVersion, typedOther.sinkVersion);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -580,7 +574,7 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
       return lastComparison;
     }
     if (isSetFlowID()) {
-      lastComparison = TBaseHelper.compareTo(this.flowID, typedOther.flowID);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.flowID, typedOther.flowID);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -592,63 +586,63 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
     return _Fields.findByThriftId(fieldId);
   }
 
-  public void read(TProtocol iprot) throws TException {
-    TField field;
+  public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+    org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
     while (true)
     {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
         break;
       }
       switch (field.id) {
         case 1: // TIMESTAMP
-          if (field.type == TType.I64) {
+          if (field.type == org.apache.thrift.protocol.TType.I64) {
             this.timestamp = iprot.readI64();
             setTimestampIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 2: // SOURCE_CONFIG
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.sourceConfig = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 3: // SINK_CONFIG
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.sinkConfig = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 4: // SOURCE_VERSION
-          if (field.type == TType.I64) {
+          if (field.type == org.apache.thrift.protocol.TType.I64) {
             this.sourceVersion = iprot.readI64();
             setSourceVersionIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 5: // SINK_VERSION
-          if (field.type == TType.I64) {
+          if (field.type == org.apache.thrift.protocol.TType.I64) {
             this.sinkVersion = iprot.readI64();
             setSinkVersionIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 6: // FLOW_ID
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.flowID = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         default:
-          TProtocolUtil.skip(iprot, field.type);
+          org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
       iprot.readFieldEnd();
     }
@@ -658,7 +652,7 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
     validate();
   }
 
-  public void write(TProtocol oprot) throws TException {
+  public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
@@ -734,8 +728,26 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
     return sb.toString();
   }
 
-  public void validate() throws TException {
+  public void validate() throws org.apache.thrift.TException {
     // check for required fields
+  }
+
+  private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+    try {
+      write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
+  }
+
+  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+    try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
+      read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
   }
 
 }

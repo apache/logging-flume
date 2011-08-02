@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.HashMap;
 import org.apache.thrift.TEnum;
 
-public enum FlumeNodeState implements TEnum {
+public enum FlumeNodeState implements org.apache.thrift.TEnum {
   HELLO(0),
   IDLE(1),
   CONFIGURING(2),

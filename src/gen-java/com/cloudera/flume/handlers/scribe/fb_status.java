@@ -13,7 +13,7 @@ import org.apache.thrift.TEnum;
 /**
  * Common status reporting mechanism across all services
  */
-public enum fb_status implements TEnum {
+public enum fb_status implements org.apache.thrift.TEnum {
   DEAD(0),
   STARTING(1),
   ALIVE(2),

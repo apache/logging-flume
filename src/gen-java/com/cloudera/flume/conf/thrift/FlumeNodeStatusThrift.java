@@ -20,21 +20,15 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.thrift.*;
-import org.apache.thrift.async.*;
-import org.apache.thrift.meta_data.*;
-import org.apache.thrift.transport.*;
-import org.apache.thrift.protocol.*;
+public class FlumeNodeStatusThrift implements org.apache.thrift.TBase<FlumeNodeStatusThrift, FlumeNodeStatusThrift._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("FlumeNodeStatusThrift");
 
-public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, FlumeNodeStatusThrift._Fields>, java.io.Serializable, Cloneable {
-  private static final TStruct STRUCT_DESC = new TStruct("FlumeNodeStatusThrift");
-
-  private static final TField STATE_FIELD_DESC = new TField("state", TType.I32, (short)1);
-  private static final TField VERSION_FIELD_DESC = new TField("version", TType.I64, (short)2);
-  private static final TField LASTSEEN_FIELD_DESC = new TField("lastseen", TType.I64, (short)3);
-  private static final TField LAST_SEEN_DELTA_MILLIS_FIELD_DESC = new TField("lastSeenDeltaMillis", TType.I64, (short)6);
-  private static final TField HOST_FIELD_DESC = new TField("host", TType.STRING, (short)4);
-  private static final TField PHYSICAL_NODE_FIELD_DESC = new TField("physicalNode", TType.STRING, (short)5);
+  private static final org.apache.thrift.protocol.TField STATE_FIELD_DESC = new org.apache.thrift.protocol.TField("state", org.apache.thrift.protocol.TType.I32, (short)1);
+  private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.I64, (short)2);
+  private static final org.apache.thrift.protocol.TField LASTSEEN_FIELD_DESC = new org.apache.thrift.protocol.TField("lastseen", org.apache.thrift.protocol.TType.I64, (short)3);
+  private static final org.apache.thrift.protocol.TField LAST_SEEN_DELTA_MILLIS_FIELD_DESC = new org.apache.thrift.protocol.TField("lastSeenDeltaMillis", org.apache.thrift.protocol.TType.I64, (short)6);
+  private static final org.apache.thrift.protocol.TField HOST_FIELD_DESC = new org.apache.thrift.protocol.TField("host", org.apache.thrift.protocol.TType.STRING, (short)4);
+  private static final org.apache.thrift.protocol.TField PHYSICAL_NODE_FIELD_DESC = new org.apache.thrift.protocol.TField("physicalNode", org.apache.thrift.protocol.TType.STRING, (short)5);
 
   /**
    * 
@@ -48,7 +42,7 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
   public String physicalNode;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-  public enum _Fields implements TFieldIdEnum {
+  public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     /**
      * 
      * @see com.cloudera.flume.conf.thrift.FlumeNodeState
@@ -130,23 +124,23 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
   private static final int __LASTSEENDELTAMILLIS_ISSET_ID = 2;
   private BitSet __isset_bit_vector = new BitSet(3);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
-    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.STATE, new FieldMetaData("state", TFieldRequirementType.DEFAULT, 
-        new EnumMetaData(TType.ENUM, com.cloudera.flume.conf.thrift.FlumeNodeState.class)));
-    tmpMap.put(_Fields.VERSION, new FieldMetaData("version", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.I64)));
-    tmpMap.put(_Fields.LASTSEEN, new FieldMetaData("lastseen", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.I64)));
-    tmpMap.put(_Fields.LAST_SEEN_DELTA_MILLIS, new FieldMetaData("lastSeenDeltaMillis", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.I64)));
-    tmpMap.put(_Fields.HOST, new FieldMetaData("host", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-    tmpMap.put(_Fields.PHYSICAL_NODE, new FieldMetaData("physicalNode", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
+    Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.STATE, new org.apache.thrift.meta_data.FieldMetaData("state", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, com.cloudera.flume.conf.thrift.FlumeNodeState.class)));
+    tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.LASTSEEN, new org.apache.thrift.meta_data.FieldMetaData("lastseen", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.LAST_SEEN_DELTA_MILLIS, new org.apache.thrift.meta_data.FieldMetaData("lastSeenDeltaMillis", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.HOST, new org.apache.thrift.meta_data.FieldMetaData("host", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.PHYSICAL_NODE, new org.apache.thrift.meta_data.FieldMetaData("physicalNode", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    FieldMetaData.addStructMetaDataMap(FlumeNodeStatusThrift.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(FlumeNodeStatusThrift.class, metaDataMap);
   }
 
   public FlumeNodeStatusThrift() {
@@ -230,7 +224,7 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
     this.state = null;
   }
 
-  /** Returns true if field state is set (has been asigned a value) and false otherwise */
+  /** Returns true if field state is set (has been assigned a value) and false otherwise */
   public boolean isSetState() {
     return this.state != null;
   }
@@ -255,7 +249,7 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
     __isset_bit_vector.clear(__VERSION_ISSET_ID);
   }
 
-  /** Returns true if field version is set (has been asigned a value) and false otherwise */
+  /** Returns true if field version is set (has been assigned a value) and false otherwise */
   public boolean isSetVersion() {
     return __isset_bit_vector.get(__VERSION_ISSET_ID);
   }
@@ -278,7 +272,7 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
     __isset_bit_vector.clear(__LASTSEEN_ISSET_ID);
   }
 
-  /** Returns true if field lastseen is set (has been asigned a value) and false otherwise */
+  /** Returns true if field lastseen is set (has been assigned a value) and false otherwise */
   public boolean isSetLastseen() {
     return __isset_bit_vector.get(__LASTSEEN_ISSET_ID);
   }
@@ -301,7 +295,7 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
     __isset_bit_vector.clear(__LASTSEENDELTAMILLIS_ISSET_ID);
   }
 
-  /** Returns true if field lastSeenDeltaMillis is set (has been asigned a value) and false otherwise */
+  /** Returns true if field lastSeenDeltaMillis is set (has been assigned a value) and false otherwise */
   public boolean isSetLastSeenDeltaMillis() {
     return __isset_bit_vector.get(__LASTSEENDELTAMILLIS_ISSET_ID);
   }
@@ -323,7 +317,7 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
     this.host = null;
   }
 
-  /** Returns true if field host is set (has been asigned a value) and false otherwise */
+  /** Returns true if field host is set (has been assigned a value) and false otherwise */
   public boolean isSetHost() {
     return this.host != null;
   }
@@ -347,7 +341,7 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
     this.physicalNode = null;
   }
 
-  /** Returns true if field physicalNode is set (has been asigned a value) and false otherwise */
+  /** Returns true if field physicalNode is set (has been assigned a value) and false otherwise */
   public boolean isSetPhysicalNode() {
     return this.physicalNode != null;
   }
@@ -435,7 +429,7 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
     throw new IllegalStateException();
   }
 
-  /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
@@ -546,7 +540,7 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
       return lastComparison;
     }
     if (isSetState()) {
-      lastComparison = TBaseHelper.compareTo(this.state, typedOther.state);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.state, typedOther.state);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -556,7 +550,7 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
       return lastComparison;
     }
     if (isSetVersion()) {
-      lastComparison = TBaseHelper.compareTo(this.version, typedOther.version);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.version, typedOther.version);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -566,7 +560,7 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
       return lastComparison;
     }
     if (isSetLastseen()) {
-      lastComparison = TBaseHelper.compareTo(this.lastseen, typedOther.lastseen);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.lastseen, typedOther.lastseen);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -576,7 +570,7 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
       return lastComparison;
     }
     if (isSetLastSeenDeltaMillis()) {
-      lastComparison = TBaseHelper.compareTo(this.lastSeenDeltaMillis, typedOther.lastSeenDeltaMillis);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.lastSeenDeltaMillis, typedOther.lastSeenDeltaMillis);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -586,7 +580,7 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
       return lastComparison;
     }
     if (isSetHost()) {
-      lastComparison = TBaseHelper.compareTo(this.host, typedOther.host);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.host, typedOther.host);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -596,7 +590,7 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
       return lastComparison;
     }
     if (isSetPhysicalNode()) {
-      lastComparison = TBaseHelper.compareTo(this.physicalNode, typedOther.physicalNode);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.physicalNode, typedOther.physicalNode);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -608,63 +602,63 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
     return _Fields.findByThriftId(fieldId);
   }
 
-  public void read(TProtocol iprot) throws TException {
-    TField field;
+  public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+    org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
     while (true)
     {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
         break;
       }
       switch (field.id) {
         case 1: // STATE
-          if (field.type == TType.I32) {
+          if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.state = com.cloudera.flume.conf.thrift.FlumeNodeState.findByValue(iprot.readI32());
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 2: // VERSION
-          if (field.type == TType.I64) {
+          if (field.type == org.apache.thrift.protocol.TType.I64) {
             this.version = iprot.readI64();
             setVersionIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 3: // LASTSEEN
-          if (field.type == TType.I64) {
+          if (field.type == org.apache.thrift.protocol.TType.I64) {
             this.lastseen = iprot.readI64();
             setLastseenIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 6: // LAST_SEEN_DELTA_MILLIS
-          if (field.type == TType.I64) {
+          if (field.type == org.apache.thrift.protocol.TType.I64) {
             this.lastSeenDeltaMillis = iprot.readI64();
             setLastSeenDeltaMillisIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 4: // HOST
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.host = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 5: // PHYSICAL_NODE
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.physicalNode = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         default:
-          TProtocolUtil.skip(iprot, field.type);
+          org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
       iprot.readFieldEnd();
     }
@@ -674,7 +668,7 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
     validate();
   }
 
-  public void write(TProtocol oprot) throws TException {
+  public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
@@ -750,8 +744,26 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
     return sb.toString();
   }
 
-  public void validate() throws TException {
+  public void validate() throws org.apache.thrift.TException {
     // check for required fields
+  }
+
+  private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+    try {
+      write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
+  }
+
+  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+    try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
+      read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
   }
 
 }

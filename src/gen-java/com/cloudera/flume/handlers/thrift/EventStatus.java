@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.HashMap;
 import org.apache.thrift.TEnum;
 
-public enum EventStatus implements TEnum {
+public enum EventStatus implements org.apache.thrift.TEnum {
   ACK(0),
   COMMITED(1),
   ERR(2);

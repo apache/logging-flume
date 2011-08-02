@@ -20,23 +20,17 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.thrift.*;
-import org.apache.thrift.async.*;
-import org.apache.thrift.meta_data.*;
-import org.apache.thrift.transport.*;
-import org.apache.thrift.protocol.*;
+public class FlumeMasterCommandThrift implements org.apache.thrift.TBase<FlumeMasterCommandThrift, FlumeMasterCommandThrift._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("FlumeMasterCommandThrift");
 
-public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift, FlumeMasterCommandThrift._Fields>, java.io.Serializable, Cloneable {
-  private static final TStruct STRUCT_DESC = new TStruct("FlumeMasterCommandThrift");
-
-  private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)1);
-  private static final TField ARGUMENTS_FIELD_DESC = new TField("arguments", TType.LIST, (short)2);
+  private static final org.apache.thrift.protocol.TField COMMAND_FIELD_DESC = new org.apache.thrift.protocol.TField("command", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField ARGUMENTS_FIELD_DESC = new org.apache.thrift.protocol.TField("arguments", org.apache.thrift.protocol.TType.LIST, (short)2);
 
   public String command;
   public List<String> arguments;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-  public enum _Fields implements TFieldIdEnum {
+  public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     COMMAND((short)1, "command"),
     ARGUMENTS((short)2, "arguments");
 
@@ -98,16 +92,16 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift,
 
   // isset id assignments
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
-    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-    tmpMap.put(_Fields.ARGUMENTS, new FieldMetaData("arguments", TFieldRequirementType.DEFAULT, 
-        new ListMetaData(TType.LIST, 
-            new FieldValueMetaData(TType.STRING))));
+    Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.COMMAND, new org.apache.thrift.meta_data.FieldMetaData("command", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.ARGUMENTS, new org.apache.thrift.meta_data.FieldMetaData("arguments", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    FieldMetaData.addStructMetaDataMap(FlumeMasterCommandThrift.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(FlumeMasterCommandThrift.class, metaDataMap);
   }
 
   public FlumeMasterCommandThrift() {
@@ -161,7 +155,7 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift,
     this.command = null;
   }
 
-  /** Returns true if field command is set (has been asigned a value) and false otherwise */
+  /** Returns true if field command is set (has been assigned a value) and false otherwise */
   public boolean isSetCommand() {
     return this.command != null;
   }
@@ -200,7 +194,7 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift,
     this.arguments = null;
   }
 
-  /** Returns true if field arguments is set (has been asigned a value) and false otherwise */
+  /** Returns true if field arguments is set (has been assigned a value) and false otherwise */
   public boolean isSetArguments() {
     return this.arguments != null;
   }
@@ -244,7 +238,7 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift,
     throw new IllegalStateException();
   }
 
-  /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
@@ -311,7 +305,7 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift,
       return lastComparison;
     }
     if (isSetCommand()) {
-      lastComparison = TBaseHelper.compareTo(this.command, typedOther.command);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.command, typedOther.command);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -321,7 +315,7 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift,
       return lastComparison;
     }
     if (isSetArguments()) {
-      lastComparison = TBaseHelper.compareTo(this.arguments, typedOther.arguments);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.arguments, typedOther.arguments);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -333,27 +327,27 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift,
     return _Fields.findByThriftId(fieldId);
   }
 
-  public void read(TProtocol iprot) throws TException {
-    TField field;
+  public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+    org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
     while (true)
     {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
         break;
       }
       switch (field.id) {
         case 1: // COMMAND
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.command = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 2: // ARGUMENTS
-          if (field.type == TType.LIST) {
+          if (field.type == org.apache.thrift.protocol.TType.LIST) {
             {
-              TList _list0 = iprot.readListBegin();
+              org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
               this.arguments = new ArrayList<String>(_list0.size);
               for (int _i1 = 0; _i1 < _list0.size; ++_i1)
               {
@@ -364,11 +358,11 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift,
               iprot.readListEnd();
             }
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         default:
-          TProtocolUtil.skip(iprot, field.type);
+          org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
       iprot.readFieldEnd();
     }
@@ -378,7 +372,7 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift,
     validate();
   }
 
-  public void write(TProtocol oprot) throws TException {
+  public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
@@ -390,7 +384,7 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift,
     if (this.arguments != null) {
       oprot.writeFieldBegin(ARGUMENTS_FIELD_DESC);
       {
-        oprot.writeListBegin(new TList(TType.STRING, this.arguments.size()));
+        oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, this.arguments.size()));
         for (String _iter3 : this.arguments)
         {
           oprot.writeString(_iter3);
@@ -427,8 +421,24 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift,
     return sb.toString();
   }
 
-  public void validate() throws TException {
+  public void validate() throws org.apache.thrift.TException {
     // check for required fields
+  }
+
+  private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+    try {
+      write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
+  }
+
+  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+    try {
+      read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
   }
 
 }

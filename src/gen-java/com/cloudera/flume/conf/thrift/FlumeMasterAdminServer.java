@@ -20,100 +20,94 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.thrift.*;
-import org.apache.thrift.async.*;
-import org.apache.thrift.meta_data.*;
-import org.apache.thrift.transport.*;
-import org.apache.thrift.protocol.*;
-
 public class FlumeMasterAdminServer {
 
   public interface Iface {
 
-    public long submit(FlumeMasterCommandThrift command) throws TException;
+    public long submit(FlumeMasterCommandThrift command) throws org.apache.thrift.TException;
 
-    public boolean isSuccess(long cmdid) throws TException;
+    public boolean isSuccess(long cmdid) throws org.apache.thrift.TException;
 
-    public boolean isFailure(long cmdid) throws TException;
+    public boolean isFailure(long cmdid) throws org.apache.thrift.TException;
 
-    public Map<String,FlumeNodeStatusThrift> getNodeStatuses() throws TException;
+    public Map<String,FlumeNodeStatusThrift> getNodeStatuses() throws org.apache.thrift.TException;
 
-    public Map<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> getConfigs() throws TException;
+    public Map<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> getConfigs() throws org.apache.thrift.TException;
 
-    public boolean hasCmdId(long cmdid) throws TException;
+    public boolean hasCmdId(long cmdid) throws org.apache.thrift.TException;
 
-    public CommandStatusThrift getCmdStatus(long cmdid) throws TException;
+    public CommandStatusThrift getCmdStatus(long cmdid) throws org.apache.thrift.TException;
 
-    public Map<String,List<String>> getMappings(String physicalNode) throws TException;
+    public Map<String,List<String>> getMappings(String physicalNode) throws org.apache.thrift.TException;
 
   }
 
   public interface AsyncIface {
 
-    public void submit(FlumeMasterCommandThrift command, AsyncMethodCallback<AsyncClient.submit_call> resultHandler) throws TException;
+    public void submit(FlumeMasterCommandThrift command, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.submit_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void isSuccess(long cmdid, AsyncMethodCallback<AsyncClient.isSuccess_call> resultHandler) throws TException;
+    public void isSuccess(long cmdid, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.isSuccess_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void isFailure(long cmdid, AsyncMethodCallback<AsyncClient.isFailure_call> resultHandler) throws TException;
+    public void isFailure(long cmdid, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.isFailure_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void getNodeStatuses(AsyncMethodCallback<AsyncClient.getNodeStatuses_call> resultHandler) throws TException;
+    public void getNodeStatuses(org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getNodeStatuses_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void getConfigs(AsyncMethodCallback<AsyncClient.getConfigs_call> resultHandler) throws TException;
+    public void getConfigs(org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getConfigs_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void hasCmdId(long cmdid, AsyncMethodCallback<AsyncClient.hasCmdId_call> resultHandler) throws TException;
+    public void hasCmdId(long cmdid, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.hasCmdId_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void getCmdStatus(long cmdid, AsyncMethodCallback<AsyncClient.getCmdStatus_call> resultHandler) throws TException;
+    public void getCmdStatus(long cmdid, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getCmdStatus_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void getMappings(String physicalNode, AsyncMethodCallback<AsyncClient.getMappings_call> resultHandler) throws TException;
+    public void getMappings(String physicalNode, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getMappings_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
-  public static class Client implements TServiceClient, Iface {
-    public static class Factory implements TServiceClientFactory<Client> {
+  public static class Client implements org.apache.thrift.TServiceClient, Iface {
+    public static class Factory implements org.apache.thrift.TServiceClientFactory<Client> {
       public Factory() {}
-      public Client getClient(TProtocol prot) {
+      public Client getClient(org.apache.thrift.protocol.TProtocol prot) {
         return new Client(prot);
       }
-      public Client getClient(TProtocol iprot, TProtocol oprot) {
+      public Client getClient(org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot) {
         return new Client(iprot, oprot);
       }
     }
 
-    public Client(TProtocol prot)
+    public Client(org.apache.thrift.protocol.TProtocol prot)
     {
       this(prot, prot);
     }
 
-    public Client(TProtocol iprot, TProtocol oprot)
+    public Client(org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot)
     {
       iprot_ = iprot;
       oprot_ = oprot;
     }
 
-    protected TProtocol iprot_;
-    protected TProtocol oprot_;
+    protected org.apache.thrift.protocol.TProtocol iprot_;
+    protected org.apache.thrift.protocol.TProtocol oprot_;
 
     protected int seqid_;
 
-    public TProtocol getInputProtocol()
+    public org.apache.thrift.protocol.TProtocol getInputProtocol()
     {
       return this.iprot_;
     }
 
-    public TProtocol getOutputProtocol()
+    public org.apache.thrift.protocol.TProtocol getOutputProtocol()
     {
       return this.oprot_;
     }
 
-    public long submit(FlumeMasterCommandThrift command) throws TException
+    public long submit(FlumeMasterCommandThrift command) throws org.apache.thrift.TException
     {
       send_submit(command);
       return recv_submit();
     }
 
-    public void send_submit(FlumeMasterCommandThrift command) throws TException
+    public void send_submit(FlumeMasterCommandThrift command) throws org.apache.thrift.TException
     {
-      oprot_.writeMessageBegin(new TMessage("submit", TMessageType.CALL, ++seqid_));
+      oprot_.writeMessageBegin(new org.apache.thrift.protocol.TMessage("submit", org.apache.thrift.protocol.TMessageType.CALL, ++seqid_));
       submit_args args = new submit_args();
       args.setCommand(command);
       args.write(oprot_);
@@ -121,16 +115,16 @@ public class FlumeMasterAdminServer {
       oprot_.getTransport().flush();
     }
 
-    public long recv_submit() throws TException
+    public long recv_submit() throws org.apache.thrift.TException
     {
-      TMessage msg = iprot_.readMessageBegin();
-      if (msg.type == TMessageType.EXCEPTION) {
-        TApplicationException x = TApplicationException.read(iprot_);
+      org.apache.thrift.protocol.TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == org.apache.thrift.protocol.TMessageType.EXCEPTION) {
+        org.apache.thrift.TApplicationException x = org.apache.thrift.TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
       }
       if (msg.seqid != seqid_) {
-        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "submit failed: out of sequence response");
+        throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID, "submit failed: out of sequence response");
       }
       submit_result result = new submit_result();
       result.read(iprot_);
@@ -138,18 +132,18 @@ public class FlumeMasterAdminServer {
       if (result.isSetSuccess()) {
         return result.success;
       }
-      throw new TApplicationException(TApplicationException.MISSING_RESULT, "submit failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "submit failed: unknown result");
     }
 
-    public boolean isSuccess(long cmdid) throws TException
+    public boolean isSuccess(long cmdid) throws org.apache.thrift.TException
     {
       send_isSuccess(cmdid);
       return recv_isSuccess();
     }
 
-    public void send_isSuccess(long cmdid) throws TException
+    public void send_isSuccess(long cmdid) throws org.apache.thrift.TException
     {
-      oprot_.writeMessageBegin(new TMessage("isSuccess", TMessageType.CALL, ++seqid_));
+      oprot_.writeMessageBegin(new org.apache.thrift.protocol.TMessage("isSuccess", org.apache.thrift.protocol.TMessageType.CALL, ++seqid_));
       isSuccess_args args = new isSuccess_args();
       args.setCmdid(cmdid);
       args.write(oprot_);
@@ -157,16 +151,16 @@ public class FlumeMasterAdminServer {
       oprot_.getTransport().flush();
     }
 
-    public boolean recv_isSuccess() throws TException
+    public boolean recv_isSuccess() throws org.apache.thrift.TException
     {
-      TMessage msg = iprot_.readMessageBegin();
-      if (msg.type == TMessageType.EXCEPTION) {
-        TApplicationException x = TApplicationException.read(iprot_);
+      org.apache.thrift.protocol.TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == org.apache.thrift.protocol.TMessageType.EXCEPTION) {
+        org.apache.thrift.TApplicationException x = org.apache.thrift.TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
       }
       if (msg.seqid != seqid_) {
-        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "isSuccess failed: out of sequence response");
+        throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID, "isSuccess failed: out of sequence response");
       }
       isSuccess_result result = new isSuccess_result();
       result.read(iprot_);
@@ -174,18 +168,18 @@ public class FlumeMasterAdminServer {
       if (result.isSetSuccess()) {
         return result.success;
       }
-      throw new TApplicationException(TApplicationException.MISSING_RESULT, "isSuccess failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "isSuccess failed: unknown result");
     }
 
-    public boolean isFailure(long cmdid) throws TException
+    public boolean isFailure(long cmdid) throws org.apache.thrift.TException
     {
       send_isFailure(cmdid);
       return recv_isFailure();
     }
 
-    public void send_isFailure(long cmdid) throws TException
+    public void send_isFailure(long cmdid) throws org.apache.thrift.TException
     {
-      oprot_.writeMessageBegin(new TMessage("isFailure", TMessageType.CALL, ++seqid_));
+      oprot_.writeMessageBegin(new org.apache.thrift.protocol.TMessage("isFailure", org.apache.thrift.protocol.TMessageType.CALL, ++seqid_));
       isFailure_args args = new isFailure_args();
       args.setCmdid(cmdid);
       args.write(oprot_);
@@ -193,16 +187,16 @@ public class FlumeMasterAdminServer {
       oprot_.getTransport().flush();
     }
 
-    public boolean recv_isFailure() throws TException
+    public boolean recv_isFailure() throws org.apache.thrift.TException
     {
-      TMessage msg = iprot_.readMessageBegin();
-      if (msg.type == TMessageType.EXCEPTION) {
-        TApplicationException x = TApplicationException.read(iprot_);
+      org.apache.thrift.protocol.TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == org.apache.thrift.protocol.TMessageType.EXCEPTION) {
+        org.apache.thrift.TApplicationException x = org.apache.thrift.TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
       }
       if (msg.seqid != seqid_) {
-        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "isFailure failed: out of sequence response");
+        throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID, "isFailure failed: out of sequence response");
       }
       isFailure_result result = new isFailure_result();
       result.read(iprot_);
@@ -210,34 +204,34 @@ public class FlumeMasterAdminServer {
       if (result.isSetSuccess()) {
         return result.success;
       }
-      throw new TApplicationException(TApplicationException.MISSING_RESULT, "isFailure failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "isFailure failed: unknown result");
     }
 
-    public Map<String,FlumeNodeStatusThrift> getNodeStatuses() throws TException
+    public Map<String,FlumeNodeStatusThrift> getNodeStatuses() throws org.apache.thrift.TException
     {
       send_getNodeStatuses();
       return recv_getNodeStatuses();
     }
 
-    public void send_getNodeStatuses() throws TException
+    public void send_getNodeStatuses() throws org.apache.thrift.TException
     {
-      oprot_.writeMessageBegin(new TMessage("getNodeStatuses", TMessageType.CALL, ++seqid_));
+      oprot_.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getNodeStatuses", org.apache.thrift.protocol.TMessageType.CALL, ++seqid_));
       getNodeStatuses_args args = new getNodeStatuses_args();
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
     }
 
-    public Map<String,FlumeNodeStatusThrift> recv_getNodeStatuses() throws TException
+    public Map<String,FlumeNodeStatusThrift> recv_getNodeStatuses() throws org.apache.thrift.TException
     {
-      TMessage msg = iprot_.readMessageBegin();
-      if (msg.type == TMessageType.EXCEPTION) {
-        TApplicationException x = TApplicationException.read(iprot_);
+      org.apache.thrift.protocol.TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == org.apache.thrift.protocol.TMessageType.EXCEPTION) {
+        org.apache.thrift.TApplicationException x = org.apache.thrift.TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
       }
       if (msg.seqid != seqid_) {
-        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "getNodeStatuses failed: out of sequence response");
+        throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID, "getNodeStatuses failed: out of sequence response");
       }
       getNodeStatuses_result result = new getNodeStatuses_result();
       result.read(iprot_);
@@ -245,34 +239,34 @@ public class FlumeMasterAdminServer {
       if (result.isSetSuccess()) {
         return result.success;
       }
-      throw new TApplicationException(TApplicationException.MISSING_RESULT, "getNodeStatuses failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getNodeStatuses failed: unknown result");
     }
 
-    public Map<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> getConfigs() throws TException
+    public Map<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> getConfigs() throws org.apache.thrift.TException
     {
       send_getConfigs();
       return recv_getConfigs();
     }
 
-    public void send_getConfigs() throws TException
+    public void send_getConfigs() throws org.apache.thrift.TException
     {
-      oprot_.writeMessageBegin(new TMessage("getConfigs", TMessageType.CALL, ++seqid_));
+      oprot_.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getConfigs", org.apache.thrift.protocol.TMessageType.CALL, ++seqid_));
       getConfigs_args args = new getConfigs_args();
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
     }
 
-    public Map<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> recv_getConfigs() throws TException
+    public Map<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> recv_getConfigs() throws org.apache.thrift.TException
     {
-      TMessage msg = iprot_.readMessageBegin();
-      if (msg.type == TMessageType.EXCEPTION) {
-        TApplicationException x = TApplicationException.read(iprot_);
+      org.apache.thrift.protocol.TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == org.apache.thrift.protocol.TMessageType.EXCEPTION) {
+        org.apache.thrift.TApplicationException x = org.apache.thrift.TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
       }
       if (msg.seqid != seqid_) {
-        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "getConfigs failed: out of sequence response");
+        throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID, "getConfigs failed: out of sequence response");
       }
       getConfigs_result result = new getConfigs_result();
       result.read(iprot_);
@@ -280,18 +274,18 @@ public class FlumeMasterAdminServer {
       if (result.isSetSuccess()) {
         return result.success;
       }
-      throw new TApplicationException(TApplicationException.MISSING_RESULT, "getConfigs failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getConfigs failed: unknown result");
     }
 
-    public boolean hasCmdId(long cmdid) throws TException
+    public boolean hasCmdId(long cmdid) throws org.apache.thrift.TException
     {
       send_hasCmdId(cmdid);
       return recv_hasCmdId();
     }
 
-    public void send_hasCmdId(long cmdid) throws TException
+    public void send_hasCmdId(long cmdid) throws org.apache.thrift.TException
     {
-      oprot_.writeMessageBegin(new TMessage("hasCmdId", TMessageType.CALL, ++seqid_));
+      oprot_.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hasCmdId", org.apache.thrift.protocol.TMessageType.CALL, ++seqid_));
       hasCmdId_args args = new hasCmdId_args();
       args.setCmdid(cmdid);
       args.write(oprot_);
@@ -299,16 +293,16 @@ public class FlumeMasterAdminServer {
       oprot_.getTransport().flush();
     }
 
-    public boolean recv_hasCmdId() throws TException
+    public boolean recv_hasCmdId() throws org.apache.thrift.TException
     {
-      TMessage msg = iprot_.readMessageBegin();
-      if (msg.type == TMessageType.EXCEPTION) {
-        TApplicationException x = TApplicationException.read(iprot_);
+      org.apache.thrift.protocol.TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == org.apache.thrift.protocol.TMessageType.EXCEPTION) {
+        org.apache.thrift.TApplicationException x = org.apache.thrift.TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
       }
       if (msg.seqid != seqid_) {
-        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "hasCmdId failed: out of sequence response");
+        throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID, "hasCmdId failed: out of sequence response");
       }
       hasCmdId_result result = new hasCmdId_result();
       result.read(iprot_);
@@ -316,18 +310,18 @@ public class FlumeMasterAdminServer {
       if (result.isSetSuccess()) {
         return result.success;
       }
-      throw new TApplicationException(TApplicationException.MISSING_RESULT, "hasCmdId failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "hasCmdId failed: unknown result");
     }
 
-    public CommandStatusThrift getCmdStatus(long cmdid) throws TException
+    public CommandStatusThrift getCmdStatus(long cmdid) throws org.apache.thrift.TException
     {
       send_getCmdStatus(cmdid);
       return recv_getCmdStatus();
     }
 
-    public void send_getCmdStatus(long cmdid) throws TException
+    public void send_getCmdStatus(long cmdid) throws org.apache.thrift.TException
     {
-      oprot_.writeMessageBegin(new TMessage("getCmdStatus", TMessageType.CALL, ++seqid_));
+      oprot_.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getCmdStatus", org.apache.thrift.protocol.TMessageType.CALL, ++seqid_));
       getCmdStatus_args args = new getCmdStatus_args();
       args.setCmdid(cmdid);
       args.write(oprot_);
@@ -335,16 +329,16 @@ public class FlumeMasterAdminServer {
       oprot_.getTransport().flush();
     }
 
-    public CommandStatusThrift recv_getCmdStatus() throws TException
+    public CommandStatusThrift recv_getCmdStatus() throws org.apache.thrift.TException
     {
-      TMessage msg = iprot_.readMessageBegin();
-      if (msg.type == TMessageType.EXCEPTION) {
-        TApplicationException x = TApplicationException.read(iprot_);
+      org.apache.thrift.protocol.TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == org.apache.thrift.protocol.TMessageType.EXCEPTION) {
+        org.apache.thrift.TApplicationException x = org.apache.thrift.TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
       }
       if (msg.seqid != seqid_) {
-        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "getCmdStatus failed: out of sequence response");
+        throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID, "getCmdStatus failed: out of sequence response");
       }
       getCmdStatus_result result = new getCmdStatus_result();
       result.read(iprot_);
@@ -352,18 +346,18 @@ public class FlumeMasterAdminServer {
       if (result.isSetSuccess()) {
         return result.success;
       }
-      throw new TApplicationException(TApplicationException.MISSING_RESULT, "getCmdStatus failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getCmdStatus failed: unknown result");
     }
 
-    public Map<String,List<String>> getMappings(String physicalNode) throws TException
+    public Map<String,List<String>> getMappings(String physicalNode) throws org.apache.thrift.TException
     {
       send_getMappings(physicalNode);
       return recv_getMappings();
     }
 
-    public void send_getMappings(String physicalNode) throws TException
+    public void send_getMappings(String physicalNode) throws org.apache.thrift.TException
     {
-      oprot_.writeMessageBegin(new TMessage("getMappings", TMessageType.CALL, ++seqid_));
+      oprot_.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getMappings", org.apache.thrift.protocol.TMessageType.CALL, ++seqid_));
       getMappings_args args = new getMappings_args();
       args.setPhysicalNode(physicalNode);
       args.write(oprot_);
@@ -371,16 +365,16 @@ public class FlumeMasterAdminServer {
       oprot_.getTransport().flush();
     }
 
-    public Map<String,List<String>> recv_getMappings() throws TException
+    public Map<String,List<String>> recv_getMappings() throws org.apache.thrift.TException
     {
-      TMessage msg = iprot_.readMessageBegin();
-      if (msg.type == TMessageType.EXCEPTION) {
-        TApplicationException x = TApplicationException.read(iprot_);
+      org.apache.thrift.protocol.TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == org.apache.thrift.protocol.TMessageType.EXCEPTION) {
+        org.apache.thrift.TApplicationException x = org.apache.thrift.TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
       }
       if (msg.seqid != seqid_) {
-        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "getMappings failed: out of sequence response");
+        throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID, "getMappings failed: out of sequence response");
       }
       getMappings_result result = new getMappings_result();
       result.read(iprot_);
@@ -388,272 +382,280 @@ public class FlumeMasterAdminServer {
       if (result.isSetSuccess()) {
         return result.success;
       }
-      throw new TApplicationException(TApplicationException.MISSING_RESULT, "getMappings failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getMappings failed: unknown result");
     }
 
   }
-  public static class AsyncClient extends TAsyncClient implements AsyncIface {
-    public static class Factory implements TAsyncClientFactory<AsyncClient> {
-      private TAsyncClientManager clientManager;
-      private TProtocolFactory protocolFactory;
-      public Factory(TAsyncClientManager clientManager, TProtocolFactory protocolFactory) {
+  public static class AsyncClient extends org.apache.thrift.async.TAsyncClient implements AsyncIface {
+    public static class Factory implements org.apache.thrift.async.TAsyncClientFactory<AsyncClient> {
+      private org.apache.thrift.async.TAsyncClientManager clientManager;
+      private org.apache.thrift.protocol.TProtocolFactory protocolFactory;
+      public Factory(org.apache.thrift.async.TAsyncClientManager clientManager, org.apache.thrift.protocol.TProtocolFactory protocolFactory) {
         this.clientManager = clientManager;
         this.protocolFactory = protocolFactory;
       }
-      public AsyncClient getAsyncClient(TNonblockingTransport transport) {
+      public AsyncClient getAsyncClient(org.apache.thrift.transport.TNonblockingTransport transport) {
         return new AsyncClient(protocolFactory, clientManager, transport);
       }
     }
 
-    public AsyncClient(TProtocolFactory protocolFactory, TAsyncClientManager clientManager, TNonblockingTransport transport) {
+    public AsyncClient(org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.async.TAsyncClientManager clientManager, org.apache.thrift.transport.TNonblockingTransport transport) {
       super(protocolFactory, clientManager, transport);
     }
 
-    public void submit(FlumeMasterCommandThrift command, AsyncMethodCallback<submit_call> resultHandler) throws TException {
+    public void submit(FlumeMasterCommandThrift command, org.apache.thrift.async.AsyncMethodCallback<submit_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       submit_call method_call = new submit_call(command, resultHandler, this, protocolFactory, transport);
+      this.currentMethod = method_call;
       manager.call(method_call);
     }
 
-    public static class submit_call extends TAsyncMethodCall {
+    public static class submit_call extends org.apache.thrift.async.TAsyncMethodCall {
       private FlumeMasterCommandThrift command;
-      public submit_call(FlumeMasterCommandThrift command, AsyncMethodCallback<submit_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+      public submit_call(FlumeMasterCommandThrift command, org.apache.thrift.async.AsyncMethodCallback<submit_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.command = command;
       }
 
-      public void write_args(TProtocol prot) throws TException {
-        prot.writeMessageBegin(new TMessage("submit", TMessageType.CALL, 0));
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("submit", org.apache.thrift.protocol.TMessageType.CALL, 0));
         submit_args args = new submit_args();
         args.setCommand(command);
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public long getResult() throws TException {
-        if (getState() != State.RESPONSE_READ) {
+      public long getResult() throws org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
-        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
-        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         return (new Client(prot)).recv_submit();
       }
     }
 
-    public void isSuccess(long cmdid, AsyncMethodCallback<isSuccess_call> resultHandler) throws TException {
+    public void isSuccess(long cmdid, org.apache.thrift.async.AsyncMethodCallback<isSuccess_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       isSuccess_call method_call = new isSuccess_call(cmdid, resultHandler, this, protocolFactory, transport);
+      this.currentMethod = method_call;
       manager.call(method_call);
     }
 
-    public static class isSuccess_call extends TAsyncMethodCall {
+    public static class isSuccess_call extends org.apache.thrift.async.TAsyncMethodCall {
       private long cmdid;
-      public isSuccess_call(long cmdid, AsyncMethodCallback<isSuccess_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+      public isSuccess_call(long cmdid, org.apache.thrift.async.AsyncMethodCallback<isSuccess_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.cmdid = cmdid;
       }
 
-      public void write_args(TProtocol prot) throws TException {
-        prot.writeMessageBegin(new TMessage("isSuccess", TMessageType.CALL, 0));
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("isSuccess", org.apache.thrift.protocol.TMessageType.CALL, 0));
         isSuccess_args args = new isSuccess_args();
         args.setCmdid(cmdid);
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public boolean getResult() throws TException {
-        if (getState() != State.RESPONSE_READ) {
+      public boolean getResult() throws org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
-        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
-        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         return (new Client(prot)).recv_isSuccess();
       }
     }
 
-    public void isFailure(long cmdid, AsyncMethodCallback<isFailure_call> resultHandler) throws TException {
+    public void isFailure(long cmdid, org.apache.thrift.async.AsyncMethodCallback<isFailure_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       isFailure_call method_call = new isFailure_call(cmdid, resultHandler, this, protocolFactory, transport);
+      this.currentMethod = method_call;
       manager.call(method_call);
     }
 
-    public static class isFailure_call extends TAsyncMethodCall {
+    public static class isFailure_call extends org.apache.thrift.async.TAsyncMethodCall {
       private long cmdid;
-      public isFailure_call(long cmdid, AsyncMethodCallback<isFailure_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+      public isFailure_call(long cmdid, org.apache.thrift.async.AsyncMethodCallback<isFailure_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.cmdid = cmdid;
       }
 
-      public void write_args(TProtocol prot) throws TException {
-        prot.writeMessageBegin(new TMessage("isFailure", TMessageType.CALL, 0));
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("isFailure", org.apache.thrift.protocol.TMessageType.CALL, 0));
         isFailure_args args = new isFailure_args();
         args.setCmdid(cmdid);
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public boolean getResult() throws TException {
-        if (getState() != State.RESPONSE_READ) {
+      public boolean getResult() throws org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
-        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
-        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         return (new Client(prot)).recv_isFailure();
       }
     }
 
-    public void getNodeStatuses(AsyncMethodCallback<getNodeStatuses_call> resultHandler) throws TException {
+    public void getNodeStatuses(org.apache.thrift.async.AsyncMethodCallback<getNodeStatuses_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       getNodeStatuses_call method_call = new getNodeStatuses_call(resultHandler, this, protocolFactory, transport);
+      this.currentMethod = method_call;
       manager.call(method_call);
     }
 
-    public static class getNodeStatuses_call extends TAsyncMethodCall {
-      public getNodeStatuses_call(AsyncMethodCallback<getNodeStatuses_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+    public static class getNodeStatuses_call extends org.apache.thrift.async.TAsyncMethodCall {
+      public getNodeStatuses_call(org.apache.thrift.async.AsyncMethodCallback<getNodeStatuses_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
       }
 
-      public void write_args(TProtocol prot) throws TException {
-        prot.writeMessageBegin(new TMessage("getNodeStatuses", TMessageType.CALL, 0));
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getNodeStatuses", org.apache.thrift.protocol.TMessageType.CALL, 0));
         getNodeStatuses_args args = new getNodeStatuses_args();
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public Map<String,FlumeNodeStatusThrift> getResult() throws TException {
-        if (getState() != State.RESPONSE_READ) {
+      public Map<String,FlumeNodeStatusThrift> getResult() throws org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
-        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
-        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         return (new Client(prot)).recv_getNodeStatuses();
       }
     }
 
-    public void getConfigs(AsyncMethodCallback<getConfigs_call> resultHandler) throws TException {
+    public void getConfigs(org.apache.thrift.async.AsyncMethodCallback<getConfigs_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       getConfigs_call method_call = new getConfigs_call(resultHandler, this, protocolFactory, transport);
+      this.currentMethod = method_call;
       manager.call(method_call);
     }
 
-    public static class getConfigs_call extends TAsyncMethodCall {
-      public getConfigs_call(AsyncMethodCallback<getConfigs_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+    public static class getConfigs_call extends org.apache.thrift.async.TAsyncMethodCall {
+      public getConfigs_call(org.apache.thrift.async.AsyncMethodCallback<getConfigs_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
       }
 
-      public void write_args(TProtocol prot) throws TException {
-        prot.writeMessageBegin(new TMessage("getConfigs", TMessageType.CALL, 0));
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getConfigs", org.apache.thrift.protocol.TMessageType.CALL, 0));
         getConfigs_args args = new getConfigs_args();
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public Map<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> getResult() throws TException {
-        if (getState() != State.RESPONSE_READ) {
+      public Map<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> getResult() throws org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
-        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
-        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         return (new Client(prot)).recv_getConfigs();
       }
     }
 
-    public void hasCmdId(long cmdid, AsyncMethodCallback<hasCmdId_call> resultHandler) throws TException {
+    public void hasCmdId(long cmdid, org.apache.thrift.async.AsyncMethodCallback<hasCmdId_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       hasCmdId_call method_call = new hasCmdId_call(cmdid, resultHandler, this, protocolFactory, transport);
+      this.currentMethod = method_call;
       manager.call(method_call);
     }
 
-    public static class hasCmdId_call extends TAsyncMethodCall {
+    public static class hasCmdId_call extends org.apache.thrift.async.TAsyncMethodCall {
       private long cmdid;
-      public hasCmdId_call(long cmdid, AsyncMethodCallback<hasCmdId_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+      public hasCmdId_call(long cmdid, org.apache.thrift.async.AsyncMethodCallback<hasCmdId_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.cmdid = cmdid;
       }
 
-      public void write_args(TProtocol prot) throws TException {
-        prot.writeMessageBegin(new TMessage("hasCmdId", TMessageType.CALL, 0));
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hasCmdId", org.apache.thrift.protocol.TMessageType.CALL, 0));
         hasCmdId_args args = new hasCmdId_args();
         args.setCmdid(cmdid);
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public boolean getResult() throws TException {
-        if (getState() != State.RESPONSE_READ) {
+      public boolean getResult() throws org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
-        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
-        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         return (new Client(prot)).recv_hasCmdId();
       }
     }
 
-    public void getCmdStatus(long cmdid, AsyncMethodCallback<getCmdStatus_call> resultHandler) throws TException {
+    public void getCmdStatus(long cmdid, org.apache.thrift.async.AsyncMethodCallback<getCmdStatus_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       getCmdStatus_call method_call = new getCmdStatus_call(cmdid, resultHandler, this, protocolFactory, transport);
+      this.currentMethod = method_call;
       manager.call(method_call);
     }
 
-    public static class getCmdStatus_call extends TAsyncMethodCall {
+    public static class getCmdStatus_call extends org.apache.thrift.async.TAsyncMethodCall {
       private long cmdid;
-      public getCmdStatus_call(long cmdid, AsyncMethodCallback<getCmdStatus_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+      public getCmdStatus_call(long cmdid, org.apache.thrift.async.AsyncMethodCallback<getCmdStatus_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.cmdid = cmdid;
       }
 
-      public void write_args(TProtocol prot) throws TException {
-        prot.writeMessageBegin(new TMessage("getCmdStatus", TMessageType.CALL, 0));
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getCmdStatus", org.apache.thrift.protocol.TMessageType.CALL, 0));
         getCmdStatus_args args = new getCmdStatus_args();
         args.setCmdid(cmdid);
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public CommandStatusThrift getResult() throws TException {
-        if (getState() != State.RESPONSE_READ) {
+      public CommandStatusThrift getResult() throws org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
-        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
-        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         return (new Client(prot)).recv_getCmdStatus();
       }
     }
 
-    public void getMappings(String physicalNode, AsyncMethodCallback<getMappings_call> resultHandler) throws TException {
+    public void getMappings(String physicalNode, org.apache.thrift.async.AsyncMethodCallback<getMappings_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       getMappings_call method_call = new getMappings_call(physicalNode, resultHandler, this, protocolFactory, transport);
+      this.currentMethod = method_call;
       manager.call(method_call);
     }
 
-    public static class getMappings_call extends TAsyncMethodCall {
+    public static class getMappings_call extends org.apache.thrift.async.TAsyncMethodCall {
       private String physicalNode;
-      public getMappings_call(String physicalNode, AsyncMethodCallback<getMappings_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+      public getMappings_call(String physicalNode, org.apache.thrift.async.AsyncMethodCallback<getMappings_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.physicalNode = physicalNode;
       }
 
-      public void write_args(TProtocol prot) throws TException {
-        prot.writeMessageBegin(new TMessage("getMappings", TMessageType.CALL, 0));
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getMappings", org.apache.thrift.protocol.TMessageType.CALL, 0));
         getMappings_args args = new getMappings_args();
         args.setPhysicalNode(physicalNode);
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public Map<String,List<String>> getResult() throws TException {
-        if (getState() != State.RESPONSE_READ) {
+      public Map<String,List<String>> getResult() throws org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
-        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
-        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         return (new Client(prot)).recv_getMappings();
       }
     }
 
   }
 
-  public static class Processor implements TProcessor {
+  public static class Processor implements org.apache.thrift.TProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class.getName());
     public Processor(Iface iface)
     {
@@ -669,21 +671,21 @@ public class FlumeMasterAdminServer {
     }
 
     protected static interface ProcessFunction {
-      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException;
+      public void process(int seqid, org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException;
     }
 
     private Iface iface_;
     protected final HashMap<String,ProcessFunction> processMap_ = new HashMap<String,ProcessFunction>();
 
-    public boolean process(TProtocol iprot, TProtocol oprot) throws TException
+    public boolean process(org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException
     {
-      TMessage msg = iprot.readMessageBegin();
+      org.apache.thrift.protocol.TMessage msg = iprot.readMessageBegin();
       ProcessFunction fn = processMap_.get(msg.name);
       if (fn == null) {
-        TProtocolUtil.skip(iprot, TType.STRUCT);
+        org.apache.thrift.protocol.TProtocolUtil.skip(iprot, org.apache.thrift.protocol.TType.STRUCT);
         iprot.readMessageEnd();
-        TApplicationException x = new TApplicationException(TApplicationException.UNKNOWN_METHOD, "Invalid method name: '"+msg.name+"'");
-        oprot.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));
+        org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.UNKNOWN_METHOD, "Invalid method name: '"+msg.name+"'");
+        oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage(msg.name, org.apache.thrift.protocol.TMessageType.EXCEPTION, msg.seqid));
         x.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -694,15 +696,15 @@ public class FlumeMasterAdminServer {
     }
 
     private class submit implements ProcessFunction {
-      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      public void process(int seqid, org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException
       {
         submit_args args = new submit_args();
         try {
           args.read(iprot);
-        } catch (TProtocolException e) {
+        } catch (org.apache.thrift.protocol.TProtocolException e) {
           iprot.readMessageEnd();
-          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
-          oprot.writeMessageBegin(new TMessage("submit", TMessageType.EXCEPTION, seqid));
+          org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("submit", org.apache.thrift.protocol.TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
@@ -712,7 +714,7 @@ public class FlumeMasterAdminServer {
         submit_result result = new submit_result();
         result.success = iface_.submit(args.command);
         result.setSuccessIsSet(true);
-        oprot.writeMessageBegin(new TMessage("submit", TMessageType.REPLY, seqid));
+        oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("submit", org.apache.thrift.protocol.TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -721,15 +723,15 @@ public class FlumeMasterAdminServer {
     }
 
     private class isSuccess implements ProcessFunction {
-      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      public void process(int seqid, org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException
       {
         isSuccess_args args = new isSuccess_args();
         try {
           args.read(iprot);
-        } catch (TProtocolException e) {
+        } catch (org.apache.thrift.protocol.TProtocolException e) {
           iprot.readMessageEnd();
-          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
-          oprot.writeMessageBegin(new TMessage("isSuccess", TMessageType.EXCEPTION, seqid));
+          org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("isSuccess", org.apache.thrift.protocol.TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
@@ -739,7 +741,7 @@ public class FlumeMasterAdminServer {
         isSuccess_result result = new isSuccess_result();
         result.success = iface_.isSuccess(args.cmdid);
         result.setSuccessIsSet(true);
-        oprot.writeMessageBegin(new TMessage("isSuccess", TMessageType.REPLY, seqid));
+        oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("isSuccess", org.apache.thrift.protocol.TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -748,15 +750,15 @@ public class FlumeMasterAdminServer {
     }
 
     private class isFailure implements ProcessFunction {
-      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      public void process(int seqid, org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException
       {
         isFailure_args args = new isFailure_args();
         try {
           args.read(iprot);
-        } catch (TProtocolException e) {
+        } catch (org.apache.thrift.protocol.TProtocolException e) {
           iprot.readMessageEnd();
-          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
-          oprot.writeMessageBegin(new TMessage("isFailure", TMessageType.EXCEPTION, seqid));
+          org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("isFailure", org.apache.thrift.protocol.TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
@@ -766,7 +768,7 @@ public class FlumeMasterAdminServer {
         isFailure_result result = new isFailure_result();
         result.success = iface_.isFailure(args.cmdid);
         result.setSuccessIsSet(true);
-        oprot.writeMessageBegin(new TMessage("isFailure", TMessageType.REPLY, seqid));
+        oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("isFailure", org.apache.thrift.protocol.TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -775,15 +777,15 @@ public class FlumeMasterAdminServer {
     }
 
     private class getNodeStatuses implements ProcessFunction {
-      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      public void process(int seqid, org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException
       {
         getNodeStatuses_args args = new getNodeStatuses_args();
         try {
           args.read(iprot);
-        } catch (TProtocolException e) {
+        } catch (org.apache.thrift.protocol.TProtocolException e) {
           iprot.readMessageEnd();
-          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
-          oprot.writeMessageBegin(new TMessage("getNodeStatuses", TMessageType.EXCEPTION, seqid));
+          org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getNodeStatuses", org.apache.thrift.protocol.TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
@@ -792,7 +794,7 @@ public class FlumeMasterAdminServer {
         iprot.readMessageEnd();
         getNodeStatuses_result result = new getNodeStatuses_result();
         result.success = iface_.getNodeStatuses();
-        oprot.writeMessageBegin(new TMessage("getNodeStatuses", TMessageType.REPLY, seqid));
+        oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getNodeStatuses", org.apache.thrift.protocol.TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -801,15 +803,15 @@ public class FlumeMasterAdminServer {
     }
 
     private class getConfigs implements ProcessFunction {
-      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      public void process(int seqid, org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException
       {
         getConfigs_args args = new getConfigs_args();
         try {
           args.read(iprot);
-        } catch (TProtocolException e) {
+        } catch (org.apache.thrift.protocol.TProtocolException e) {
           iprot.readMessageEnd();
-          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
-          oprot.writeMessageBegin(new TMessage("getConfigs", TMessageType.EXCEPTION, seqid));
+          org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getConfigs", org.apache.thrift.protocol.TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
@@ -818,7 +820,7 @@ public class FlumeMasterAdminServer {
         iprot.readMessageEnd();
         getConfigs_result result = new getConfigs_result();
         result.success = iface_.getConfigs();
-        oprot.writeMessageBegin(new TMessage("getConfigs", TMessageType.REPLY, seqid));
+        oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getConfigs", org.apache.thrift.protocol.TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -827,15 +829,15 @@ public class FlumeMasterAdminServer {
     }
 
     private class hasCmdId implements ProcessFunction {
-      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      public void process(int seqid, org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException
       {
         hasCmdId_args args = new hasCmdId_args();
         try {
           args.read(iprot);
-        } catch (TProtocolException e) {
+        } catch (org.apache.thrift.protocol.TProtocolException e) {
           iprot.readMessageEnd();
-          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
-          oprot.writeMessageBegin(new TMessage("hasCmdId", TMessageType.EXCEPTION, seqid));
+          org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hasCmdId", org.apache.thrift.protocol.TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
@@ -845,7 +847,7 @@ public class FlumeMasterAdminServer {
         hasCmdId_result result = new hasCmdId_result();
         result.success = iface_.hasCmdId(args.cmdid);
         result.setSuccessIsSet(true);
-        oprot.writeMessageBegin(new TMessage("hasCmdId", TMessageType.REPLY, seqid));
+        oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hasCmdId", org.apache.thrift.protocol.TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -854,15 +856,15 @@ public class FlumeMasterAdminServer {
     }
 
     private class getCmdStatus implements ProcessFunction {
-      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      public void process(int seqid, org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException
       {
         getCmdStatus_args args = new getCmdStatus_args();
         try {
           args.read(iprot);
-        } catch (TProtocolException e) {
+        } catch (org.apache.thrift.protocol.TProtocolException e) {
           iprot.readMessageEnd();
-          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
-          oprot.writeMessageBegin(new TMessage("getCmdStatus", TMessageType.EXCEPTION, seqid));
+          org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getCmdStatus", org.apache.thrift.protocol.TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
@@ -871,7 +873,7 @@ public class FlumeMasterAdminServer {
         iprot.readMessageEnd();
         getCmdStatus_result result = new getCmdStatus_result();
         result.success = iface_.getCmdStatus(args.cmdid);
-        oprot.writeMessageBegin(new TMessage("getCmdStatus", TMessageType.REPLY, seqid));
+        oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getCmdStatus", org.apache.thrift.protocol.TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -880,15 +882,15 @@ public class FlumeMasterAdminServer {
     }
 
     private class getMappings implements ProcessFunction {
-      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      public void process(int seqid, org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException
       {
         getMappings_args args = new getMappings_args();
         try {
           args.read(iprot);
-        } catch (TProtocolException e) {
+        } catch (org.apache.thrift.protocol.TProtocolException e) {
           iprot.readMessageEnd();
-          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
-          oprot.writeMessageBegin(new TMessage("getMappings", TMessageType.EXCEPTION, seqid));
+          org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getMappings", org.apache.thrift.protocol.TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
@@ -897,7 +899,7 @@ public class FlumeMasterAdminServer {
         iprot.readMessageEnd();
         getMappings_result result = new getMappings_result();
         result.success = iface_.getMappings(args.physicalNode);
-        oprot.writeMessageBegin(new TMessage("getMappings", TMessageType.REPLY, seqid));
+        oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getMappings", org.apache.thrift.protocol.TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -907,15 +909,15 @@ public class FlumeMasterAdminServer {
 
   }
 
-  public static class submit_args implements TBase<submit_args, submit_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("submit_args");
+  public static class submit_args implements org.apache.thrift.TBase<submit_args, submit_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("submit_args");
 
-    private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField COMMAND_FIELD_DESC = new org.apache.thrift.protocol.TField("command", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     public FlumeMasterCommandThrift command;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       COMMAND((short)1, "command");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -974,13 +976,13 @@ public class FlumeMasterAdminServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, FlumeMasterCommandThrift.class)));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.COMMAND, new org.apache.thrift.meta_data.FieldMetaData("command", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlumeMasterCommandThrift.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(submit_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(submit_args.class, metaDataMap);
     }
 
     public submit_args() {
@@ -1024,7 +1026,7 @@ public class FlumeMasterAdminServer {
       this.command = null;
     }
 
-    /** Returns true if field command is set (has been asigned a value) and false otherwise */
+    /** Returns true if field command is set (has been assigned a value) and false otherwise */
     public boolean isSetCommand() {
       return this.command != null;
     }
@@ -1057,7 +1059,7 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -1113,7 +1115,7 @@ public class FlumeMasterAdminServer {
         return lastComparison;
       }
       if (isSetCommand()) {
-        lastComparison = TBaseHelper.compareTo(this.command, typedOther.command);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.command, typedOther.command);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1125,26 +1127,26 @@ public class FlumeMasterAdminServer {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 1: // COMMAND
-            if (field.type == TType.STRUCT) {
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
               this.command = new FlumeMasterCommandThrift();
               this.command.read(iprot);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -1154,7 +1156,7 @@ public class FlumeMasterAdminServer {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -1183,21 +1185,37 @@ public class FlumeMasterAdminServer {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class submit_result implements TBase<submit_result, submit_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("submit_result");
+  public static class submit_result implements org.apache.thrift.TBase<submit_result, submit_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("submit_result");
 
-    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.I64, (short)0);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.I64, (short)0);
 
     public long success;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       SUCCESS((short)0, "success");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -1258,13 +1276,13 @@ public class FlumeMasterAdminServer {
     private static final int __SUCCESS_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(submit_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(submit_result.class, metaDataMap);
     }
 
     public submit_result() {
@@ -1311,7 +1329,7 @@ public class FlumeMasterAdminServer {
       __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
     }
 
-    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
     public boolean isSetSuccess() {
       return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
     }
@@ -1342,7 +1360,7 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -1398,7 +1416,7 @@ public class FlumeMasterAdminServer {
         return lastComparison;
       }
       if (isSetSuccess()) {
-        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1410,26 +1428,26 @@ public class FlumeMasterAdminServer {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 0: // SUCCESS
-            if (field.type == TType.I64) {
+            if (field.type == org.apache.thrift.protocol.TType.I64) {
               this.success = iprot.readI64();
               setSuccessIsSet(true);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -1439,7 +1457,7 @@ public class FlumeMasterAdminServer {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       oprot.writeStructBegin(STRUCT_DESC);
 
       if (this.isSetSuccess()) {
@@ -1463,21 +1481,37 @@ public class FlumeMasterAdminServer {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class isSuccess_args implements TBase<isSuccess_args, isSuccess_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("isSuccess_args");
+  public static class isSuccess_args implements org.apache.thrift.TBase<isSuccess_args, isSuccess_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("isSuccess_args");
 
-    private static final TField CMDID_FIELD_DESC = new TField("cmdid", TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField CMDID_FIELD_DESC = new org.apache.thrift.protocol.TField("cmdid", org.apache.thrift.protocol.TType.I64, (short)1);
 
     public long cmdid;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       CMDID((short)1, "cmdid");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -1538,13 +1572,13 @@ public class FlumeMasterAdminServer {
     private static final int __CMDID_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.CMDID, new FieldMetaData("cmdid", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.CMDID, new org.apache.thrift.meta_data.FieldMetaData("cmdid", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(isSuccess_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(isSuccess_args.class, metaDataMap);
     }
 
     public isSuccess_args() {
@@ -1591,7 +1625,7 @@ public class FlumeMasterAdminServer {
       __isset_bit_vector.clear(__CMDID_ISSET_ID);
     }
 
-    /** Returns true if field cmdid is set (has been asigned a value) and false otherwise */
+    /** Returns true if field cmdid is set (has been assigned a value) and false otherwise */
     public boolean isSetCmdid() {
       return __isset_bit_vector.get(__CMDID_ISSET_ID);
     }
@@ -1622,7 +1656,7 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -1678,7 +1712,7 @@ public class FlumeMasterAdminServer {
         return lastComparison;
       }
       if (isSetCmdid()) {
-        lastComparison = TBaseHelper.compareTo(this.cmdid, typedOther.cmdid);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.cmdid, typedOther.cmdid);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1690,26 +1724,26 @@ public class FlumeMasterAdminServer {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 1: // CMDID
-            if (field.type == TType.I64) {
+            if (field.type == org.apache.thrift.protocol.TType.I64) {
               this.cmdid = iprot.readI64();
               setCmdidIsSet(true);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -1719,7 +1753,7 @@ public class FlumeMasterAdminServer {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -1742,21 +1776,39 @@ public class FlumeMasterAdminServer {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class isSuccess_result implements TBase<isSuccess_result, isSuccess_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("isSuccess_result");
+  public static class isSuccess_result implements org.apache.thrift.TBase<isSuccess_result, isSuccess_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("isSuccess_result");
 
-    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.BOOL, (short)0);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
 
     public boolean success;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       SUCCESS((short)0, "success");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -1817,13 +1869,13 @@ public class FlumeMasterAdminServer {
     private static final int __SUCCESS_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.BOOL)));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(isSuccess_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(isSuccess_result.class, metaDataMap);
     }
 
     public isSuccess_result() {
@@ -1870,7 +1922,7 @@ public class FlumeMasterAdminServer {
       __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
     }
 
-    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
     public boolean isSetSuccess() {
       return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
     }
@@ -1901,7 +1953,7 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -1957,7 +2009,7 @@ public class FlumeMasterAdminServer {
         return lastComparison;
       }
       if (isSetSuccess()) {
-        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1969,26 +2021,26 @@ public class FlumeMasterAdminServer {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 0: // SUCCESS
-            if (field.type == TType.BOOL) {
+            if (field.type == org.apache.thrift.protocol.TType.BOOL) {
               this.success = iprot.readBool();
               setSuccessIsSet(true);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -1998,7 +2050,7 @@ public class FlumeMasterAdminServer {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       oprot.writeStructBegin(STRUCT_DESC);
 
       if (this.isSetSuccess()) {
@@ -2022,21 +2074,37 @@ public class FlumeMasterAdminServer {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class isFailure_args implements TBase<isFailure_args, isFailure_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("isFailure_args");
+  public static class isFailure_args implements org.apache.thrift.TBase<isFailure_args, isFailure_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("isFailure_args");
 
-    private static final TField CMDID_FIELD_DESC = new TField("cmdid", TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField CMDID_FIELD_DESC = new org.apache.thrift.protocol.TField("cmdid", org.apache.thrift.protocol.TType.I64, (short)1);
 
     public long cmdid;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       CMDID((short)1, "cmdid");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -2097,13 +2165,13 @@ public class FlumeMasterAdminServer {
     private static final int __CMDID_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.CMDID, new FieldMetaData("cmdid", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.CMDID, new org.apache.thrift.meta_data.FieldMetaData("cmdid", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(isFailure_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(isFailure_args.class, metaDataMap);
     }
 
     public isFailure_args() {
@@ -2150,7 +2218,7 @@ public class FlumeMasterAdminServer {
       __isset_bit_vector.clear(__CMDID_ISSET_ID);
     }
 
-    /** Returns true if field cmdid is set (has been asigned a value) and false otherwise */
+    /** Returns true if field cmdid is set (has been assigned a value) and false otherwise */
     public boolean isSetCmdid() {
       return __isset_bit_vector.get(__CMDID_ISSET_ID);
     }
@@ -2181,7 +2249,7 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -2237,7 +2305,7 @@ public class FlumeMasterAdminServer {
         return lastComparison;
       }
       if (isSetCmdid()) {
-        lastComparison = TBaseHelper.compareTo(this.cmdid, typedOther.cmdid);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.cmdid, typedOther.cmdid);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -2249,26 +2317,26 @@ public class FlumeMasterAdminServer {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 1: // CMDID
-            if (field.type == TType.I64) {
+            if (field.type == org.apache.thrift.protocol.TType.I64) {
               this.cmdid = iprot.readI64();
               setCmdidIsSet(true);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -2278,7 +2346,7 @@ public class FlumeMasterAdminServer {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -2301,21 +2369,39 @@ public class FlumeMasterAdminServer {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class isFailure_result implements TBase<isFailure_result, isFailure_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("isFailure_result");
+  public static class isFailure_result implements org.apache.thrift.TBase<isFailure_result, isFailure_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("isFailure_result");
 
-    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.BOOL, (short)0);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
 
     public boolean success;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       SUCCESS((short)0, "success");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -2376,13 +2462,13 @@ public class FlumeMasterAdminServer {
     private static final int __SUCCESS_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.BOOL)));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(isFailure_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(isFailure_result.class, metaDataMap);
     }
 
     public isFailure_result() {
@@ -2429,7 +2515,7 @@ public class FlumeMasterAdminServer {
       __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
     }
 
-    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
     public boolean isSetSuccess() {
       return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
     }
@@ -2460,7 +2546,7 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -2516,7 +2602,7 @@ public class FlumeMasterAdminServer {
         return lastComparison;
       }
       if (isSetSuccess()) {
-        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -2528,26 +2614,26 @@ public class FlumeMasterAdminServer {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 0: // SUCCESS
-            if (field.type == TType.BOOL) {
+            if (field.type == org.apache.thrift.protocol.TType.BOOL) {
               this.success = iprot.readBool();
               setSuccessIsSet(true);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -2557,7 +2643,7 @@ public class FlumeMasterAdminServer {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       oprot.writeStructBegin(STRUCT_DESC);
 
       if (this.isSetSuccess()) {
@@ -2581,19 +2667,35 @@ public class FlumeMasterAdminServer {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class getNodeStatuses_args implements TBase<getNodeStatuses_args, getNodeStatuses_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("getNodeStatuses_args");
+  public static class getNodeStatuses_args implements org.apache.thrift.TBase<getNodeStatuses_args, getNodeStatuses_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getNodeStatuses_args");
 
 
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
 ;
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -2647,11 +2749,11 @@ public class FlumeMasterAdminServer {
         return _fieldName;
       }
     }
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(getNodeStatuses_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getNodeStatuses_args.class, metaDataMap);
     }
 
     public getNodeStatuses_args() {
@@ -2682,7 +2784,7 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -2729,18 +2831,18 @@ public class FlumeMasterAdminServer {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -2750,7 +2852,7 @@ public class FlumeMasterAdminServer {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -2767,21 +2869,37 @@ public class FlumeMasterAdminServer {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class getNodeStatuses_result implements TBase<getNodeStatuses_result, getNodeStatuses_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("getNodeStatuses_result");
+  public static class getNodeStatuses_result implements org.apache.thrift.TBase<getNodeStatuses_result, getNodeStatuses_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getNodeStatuses_result");
 
-    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.MAP, (short)0);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.MAP, (short)0);
 
     public Map<String,FlumeNodeStatusThrift> success;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       SUCCESS((short)0, "success");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -2840,15 +2958,15 @@ public class FlumeMasterAdminServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new MapMetaData(TType.MAP, 
-              new FieldValueMetaData(TType.STRING), 
-              new StructMetaData(TType.STRUCT, FlumeNodeStatusThrift.class))));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
+              new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlumeNodeStatusThrift.class))));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(getNodeStatuses_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getNodeStatuses_result.class, metaDataMap);
     }
 
     public getNodeStatuses_result() {
@@ -2915,7 +3033,7 @@ public class FlumeMasterAdminServer {
       this.success = null;
     }
 
-    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
     public boolean isSetSuccess() {
       return this.success != null;
     }
@@ -2948,7 +3066,7 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -3004,7 +3122,7 @@ public class FlumeMasterAdminServer {
         return lastComparison;
       }
       if (isSetSuccess()) {
-        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -3016,20 +3134,20 @@ public class FlumeMasterAdminServer {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 0: // SUCCESS
-            if (field.type == TType.MAP) {
+            if (field.type == org.apache.thrift.protocol.TType.MAP) {
               {
-                TMap _map4 = iprot.readMapBegin();
+                org.apache.thrift.protocol.TMap _map4 = iprot.readMapBegin();
                 this.success = new HashMap<String,FlumeNodeStatusThrift>(2*_map4.size);
                 for (int _i5 = 0; _i5 < _map4.size; ++_i5)
                 {
@@ -3043,11 +3161,11 @@ public class FlumeMasterAdminServer {
                 iprot.readMapEnd();
               }
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -3057,13 +3175,13 @@ public class FlumeMasterAdminServer {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       oprot.writeStructBegin(STRUCT_DESC);
 
       if (this.isSetSuccess()) {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
-          oprot.writeMapBegin(new TMap(TType.STRING, TType.STRUCT, this.success.size()));
+          oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, this.success.size()));
           for (Map.Entry<String, FlumeNodeStatusThrift> _iter8 : this.success.entrySet())
           {
             oprot.writeString(_iter8.getKey());
@@ -3093,19 +3211,35 @@ public class FlumeMasterAdminServer {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class getConfigs_args implements TBase<getConfigs_args, getConfigs_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("getConfigs_args");
+  public static class getConfigs_args implements org.apache.thrift.TBase<getConfigs_args, getConfigs_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getConfigs_args");
 
 
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
 ;
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -3159,11 +3293,11 @@ public class FlumeMasterAdminServer {
         return _fieldName;
       }
     }
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(getConfigs_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getConfigs_args.class, metaDataMap);
     }
 
     public getConfigs_args() {
@@ -3194,7 +3328,7 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -3241,18 +3375,18 @@ public class FlumeMasterAdminServer {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -3262,7 +3396,7 @@ public class FlumeMasterAdminServer {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -3279,21 +3413,37 @@ public class FlumeMasterAdminServer {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class getConfigs_result implements TBase<getConfigs_result, getConfigs_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("getConfigs_result");
+  public static class getConfigs_result implements org.apache.thrift.TBase<getConfigs_result, getConfigs_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getConfigs_result");
 
-    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.MAP, (short)0);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.MAP, (short)0);
 
     public Map<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> success;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       SUCCESS((short)0, "success");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -3352,15 +3502,15 @@ public class FlumeMasterAdminServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new MapMetaData(TType.MAP, 
-              new FieldValueMetaData(TType.STRING), 
-              new StructMetaData(TType.STRUCT, com.cloudera.flume.conf.thrift.ThriftFlumeConfigData.class))));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
+              new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, com.cloudera.flume.conf.thrift.ThriftFlumeConfigData.class))));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(getConfigs_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getConfigs_result.class, metaDataMap);
     }
 
     public getConfigs_result() {
@@ -3427,7 +3577,7 @@ public class FlumeMasterAdminServer {
       this.success = null;
     }
 
-    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
     public boolean isSetSuccess() {
       return this.success != null;
     }
@@ -3460,7 +3610,7 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -3516,7 +3666,7 @@ public class FlumeMasterAdminServer {
         return lastComparison;
       }
       if (isSetSuccess()) {
-        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -3528,20 +3678,20 @@ public class FlumeMasterAdminServer {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 0: // SUCCESS
-            if (field.type == TType.MAP) {
+            if (field.type == org.apache.thrift.protocol.TType.MAP) {
               {
-                TMap _map9 = iprot.readMapBegin();
+                org.apache.thrift.protocol.TMap _map9 = iprot.readMapBegin();
                 this.success = new HashMap<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData>(2*_map9.size);
                 for (int _i10 = 0; _i10 < _map9.size; ++_i10)
                 {
@@ -3555,11 +3705,11 @@ public class FlumeMasterAdminServer {
                 iprot.readMapEnd();
               }
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -3569,13 +3719,13 @@ public class FlumeMasterAdminServer {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       oprot.writeStructBegin(STRUCT_DESC);
 
       if (this.isSetSuccess()) {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
-          oprot.writeMapBegin(new TMap(TType.STRING, TType.STRUCT, this.success.size()));
+          oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, this.success.size()));
           for (Map.Entry<String, com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> _iter13 : this.success.entrySet())
           {
             oprot.writeString(_iter13.getKey());
@@ -3605,21 +3755,37 @@ public class FlumeMasterAdminServer {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class hasCmdId_args implements TBase<hasCmdId_args, hasCmdId_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("hasCmdId_args");
+  public static class hasCmdId_args implements org.apache.thrift.TBase<hasCmdId_args, hasCmdId_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("hasCmdId_args");
 
-    private static final TField CMDID_FIELD_DESC = new TField("cmdid", TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField CMDID_FIELD_DESC = new org.apache.thrift.protocol.TField("cmdid", org.apache.thrift.protocol.TType.I64, (short)1);
 
     public long cmdid;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       CMDID((short)1, "cmdid");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -3680,13 +3846,13 @@ public class FlumeMasterAdminServer {
     private static final int __CMDID_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.CMDID, new FieldMetaData("cmdid", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.CMDID, new org.apache.thrift.meta_data.FieldMetaData("cmdid", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(hasCmdId_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(hasCmdId_args.class, metaDataMap);
     }
 
     public hasCmdId_args() {
@@ -3733,7 +3899,7 @@ public class FlumeMasterAdminServer {
       __isset_bit_vector.clear(__CMDID_ISSET_ID);
     }
 
-    /** Returns true if field cmdid is set (has been asigned a value) and false otherwise */
+    /** Returns true if field cmdid is set (has been assigned a value) and false otherwise */
     public boolean isSetCmdid() {
       return __isset_bit_vector.get(__CMDID_ISSET_ID);
     }
@@ -3764,7 +3930,7 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -3820,7 +3986,7 @@ public class FlumeMasterAdminServer {
         return lastComparison;
       }
       if (isSetCmdid()) {
-        lastComparison = TBaseHelper.compareTo(this.cmdid, typedOther.cmdid);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.cmdid, typedOther.cmdid);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -3832,26 +3998,26 @@ public class FlumeMasterAdminServer {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 1: // CMDID
-            if (field.type == TType.I64) {
+            if (field.type == org.apache.thrift.protocol.TType.I64) {
               this.cmdid = iprot.readI64();
               setCmdidIsSet(true);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -3861,7 +4027,7 @@ public class FlumeMasterAdminServer {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -3884,21 +4050,39 @@ public class FlumeMasterAdminServer {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class hasCmdId_result implements TBase<hasCmdId_result, hasCmdId_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("hasCmdId_result");
+  public static class hasCmdId_result implements org.apache.thrift.TBase<hasCmdId_result, hasCmdId_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("hasCmdId_result");
 
-    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.BOOL, (short)0);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
 
     public boolean success;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       SUCCESS((short)0, "success");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -3959,13 +4143,13 @@ public class FlumeMasterAdminServer {
     private static final int __SUCCESS_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.BOOL)));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(hasCmdId_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(hasCmdId_result.class, metaDataMap);
     }
 
     public hasCmdId_result() {
@@ -4012,7 +4196,7 @@ public class FlumeMasterAdminServer {
       __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
     }
 
-    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
     public boolean isSetSuccess() {
       return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
     }
@@ -4043,7 +4227,7 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -4099,7 +4283,7 @@ public class FlumeMasterAdminServer {
         return lastComparison;
       }
       if (isSetSuccess()) {
-        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -4111,26 +4295,26 @@ public class FlumeMasterAdminServer {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 0: // SUCCESS
-            if (field.type == TType.BOOL) {
+            if (field.type == org.apache.thrift.protocol.TType.BOOL) {
               this.success = iprot.readBool();
               setSuccessIsSet(true);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -4140,7 +4324,7 @@ public class FlumeMasterAdminServer {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       oprot.writeStructBegin(STRUCT_DESC);
 
       if (this.isSetSuccess()) {
@@ -4164,21 +4348,37 @@ public class FlumeMasterAdminServer {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class getCmdStatus_args implements TBase<getCmdStatus_args, getCmdStatus_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("getCmdStatus_args");
+  public static class getCmdStatus_args implements org.apache.thrift.TBase<getCmdStatus_args, getCmdStatus_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getCmdStatus_args");
 
-    private static final TField CMDID_FIELD_DESC = new TField("cmdid", TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField CMDID_FIELD_DESC = new org.apache.thrift.protocol.TField("cmdid", org.apache.thrift.protocol.TType.I64, (short)1);
 
     public long cmdid;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       CMDID((short)1, "cmdid");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -4239,13 +4439,13 @@ public class FlumeMasterAdminServer {
     private static final int __CMDID_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.CMDID, new FieldMetaData("cmdid", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.CMDID, new org.apache.thrift.meta_data.FieldMetaData("cmdid", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(getCmdStatus_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getCmdStatus_args.class, metaDataMap);
     }
 
     public getCmdStatus_args() {
@@ -4292,7 +4492,7 @@ public class FlumeMasterAdminServer {
       __isset_bit_vector.clear(__CMDID_ISSET_ID);
     }
 
-    /** Returns true if field cmdid is set (has been asigned a value) and false otherwise */
+    /** Returns true if field cmdid is set (has been assigned a value) and false otherwise */
     public boolean isSetCmdid() {
       return __isset_bit_vector.get(__CMDID_ISSET_ID);
     }
@@ -4323,7 +4523,7 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -4379,7 +4579,7 @@ public class FlumeMasterAdminServer {
         return lastComparison;
       }
       if (isSetCmdid()) {
-        lastComparison = TBaseHelper.compareTo(this.cmdid, typedOther.cmdid);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.cmdid, typedOther.cmdid);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -4391,26 +4591,26 @@ public class FlumeMasterAdminServer {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 1: // CMDID
-            if (field.type == TType.I64) {
+            if (field.type == org.apache.thrift.protocol.TType.I64) {
               this.cmdid = iprot.readI64();
               setCmdidIsSet(true);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -4420,7 +4620,7 @@ public class FlumeMasterAdminServer {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -4443,21 +4643,39 @@ public class FlumeMasterAdminServer {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class getCmdStatus_result implements TBase<getCmdStatus_result, getCmdStatus_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("getCmdStatus_result");
+  public static class getCmdStatus_result implements org.apache.thrift.TBase<getCmdStatus_result, getCmdStatus_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getCmdStatus_result");
 
-    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
 
     public CommandStatusThrift success;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       SUCCESS((short)0, "success");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -4516,13 +4734,13 @@ public class FlumeMasterAdminServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, CommandStatusThrift.class)));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, CommandStatusThrift.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(getCmdStatus_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getCmdStatus_result.class, metaDataMap);
     }
 
     public getCmdStatus_result() {
@@ -4566,7 +4784,7 @@ public class FlumeMasterAdminServer {
       this.success = null;
     }
 
-    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
     public boolean isSetSuccess() {
       return this.success != null;
     }
@@ -4599,7 +4817,7 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -4655,7 +4873,7 @@ public class FlumeMasterAdminServer {
         return lastComparison;
       }
       if (isSetSuccess()) {
-        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -4667,26 +4885,26 @@ public class FlumeMasterAdminServer {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 0: // SUCCESS
-            if (field.type == TType.STRUCT) {
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
               this.success = new CommandStatusThrift();
               this.success.read(iprot);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -4696,7 +4914,7 @@ public class FlumeMasterAdminServer {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       oprot.writeStructBegin(STRUCT_DESC);
 
       if (this.isSetSuccess()) {
@@ -4724,21 +4942,37 @@ public class FlumeMasterAdminServer {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class getMappings_args implements TBase<getMappings_args, getMappings_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("getMappings_args");
+  public static class getMappings_args implements org.apache.thrift.TBase<getMappings_args, getMappings_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getMappings_args");
 
-    private static final TField PHYSICAL_NODE_FIELD_DESC = new TField("physicalNode", TType.STRING, (short)1);
+    private static final org.apache.thrift.protocol.TField PHYSICAL_NODE_FIELD_DESC = new org.apache.thrift.protocol.TField("physicalNode", org.apache.thrift.protocol.TType.STRING, (short)1);
 
     public String physicalNode;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       PHYSICAL_NODE((short)1, "physicalNode");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -4797,13 +5031,13 @@ public class FlumeMasterAdminServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.PHYSICAL_NODE, new FieldMetaData("physicalNode", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.PHYSICAL_NODE, new org.apache.thrift.meta_data.FieldMetaData("physicalNode", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(getMappings_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getMappings_args.class, metaDataMap);
     }
 
     public getMappings_args() {
@@ -4847,7 +5081,7 @@ public class FlumeMasterAdminServer {
       this.physicalNode = null;
     }
 
-    /** Returns true if field physicalNode is set (has been asigned a value) and false otherwise */
+    /** Returns true if field physicalNode is set (has been assigned a value) and false otherwise */
     public boolean isSetPhysicalNode() {
       return this.physicalNode != null;
     }
@@ -4880,7 +5114,7 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -4936,7 +5170,7 @@ public class FlumeMasterAdminServer {
         return lastComparison;
       }
       if (isSetPhysicalNode()) {
-        lastComparison = TBaseHelper.compareTo(this.physicalNode, typedOther.physicalNode);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.physicalNode, typedOther.physicalNode);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -4948,25 +5182,25 @@ public class FlumeMasterAdminServer {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 1: // PHYSICAL_NODE
-            if (field.type == TType.STRING) {
+            if (field.type == org.apache.thrift.protocol.TType.STRING) {
               this.physicalNode = iprot.readString();
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -4976,7 +5210,7 @@ public class FlumeMasterAdminServer {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -5005,21 +5239,37 @@ public class FlumeMasterAdminServer {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class getMappings_result implements TBase<getMappings_result, getMappings_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("getMappings_result");
+  public static class getMappings_result implements org.apache.thrift.TBase<getMappings_result, getMappings_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getMappings_result");
 
-    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.MAP, (short)0);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.MAP, (short)0);
 
     public Map<String,List<String>> success;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       SUCCESS((short)0, "success");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -5078,16 +5328,16 @@ public class FlumeMasterAdminServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new MapMetaData(TType.MAP, 
-              new FieldValueMetaData(TType.STRING), 
-              new ListMetaData(TType.LIST, 
-                  new FieldValueMetaData(TType.STRING)))));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
+              new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
+              new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+                  new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)))));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(getMappings_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getMappings_result.class, metaDataMap);
     }
 
     public getMappings_result() {
@@ -5157,7 +5407,7 @@ public class FlumeMasterAdminServer {
       this.success = null;
     }
 
-    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
     public boolean isSetSuccess() {
       return this.success != null;
     }
@@ -5190,7 +5440,7 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -5246,7 +5496,7 @@ public class FlumeMasterAdminServer {
         return lastComparison;
       }
       if (isSetSuccess()) {
-        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -5258,20 +5508,20 @@ public class FlumeMasterAdminServer {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 0: // SUCCESS
-            if (field.type == TType.MAP) {
+            if (field.type == org.apache.thrift.protocol.TType.MAP) {
               {
-                TMap _map14 = iprot.readMapBegin();
+                org.apache.thrift.protocol.TMap _map14 = iprot.readMapBegin();
                 this.success = new HashMap<String,List<String>>(2*_map14.size);
                 for (int _i15 = 0; _i15 < _map14.size; ++_i15)
                 {
@@ -5279,7 +5529,7 @@ public class FlumeMasterAdminServer {
                   List<String> _val17;
                   _key16 = iprot.readString();
                   {
-                    TList _list18 = iprot.readListBegin();
+                    org.apache.thrift.protocol.TList _list18 = iprot.readListBegin();
                     _val17 = new ArrayList<String>(_list18.size);
                     for (int _i19 = 0; _i19 < _list18.size; ++_i19)
                     {
@@ -5294,11 +5544,11 @@ public class FlumeMasterAdminServer {
                 iprot.readMapEnd();
               }
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -5308,18 +5558,18 @@ public class FlumeMasterAdminServer {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       oprot.writeStructBegin(STRUCT_DESC);
 
       if (this.isSetSuccess()) {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
-          oprot.writeMapBegin(new TMap(TType.STRING, TType.LIST, this.success.size()));
+          oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.LIST, this.success.size()));
           for (Map.Entry<String, List<String>> _iter21 : this.success.entrySet())
           {
             oprot.writeString(_iter21.getKey());
             {
-              oprot.writeListBegin(new TList(TType.STRING, _iter21.getValue().size()));
+              oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter21.getValue().size()));
               for (String _iter22 : _iter21.getValue())
               {
                 oprot.writeString(_iter22);
@@ -5351,8 +5601,24 @@ public class FlumeMasterAdminServer {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
