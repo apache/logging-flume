@@ -308,9 +308,13 @@ public class GossipMulticast implements Multicast<GossipMulticast.GossipMessage>
                 doClientGossip(in, out);
                 sock.close();
               } catch (IOException e) {
-                // This error just gets logged so that failed peers don't break us
-                LOG.error("IOException when gossiping with " + node.toString(), e);
-              } 
+                // This error just gets logged so that failed peers don't break
+                // us
+                LOG.warn("IOException when gossiping with " + node.toString()
+                    + ": " + e.getMessage());
+                LOG.debug("IOException when gossiping with " + node.toString(),
+                    e);
+              }
             }
           }
           // While we're here, age off some of the queue
