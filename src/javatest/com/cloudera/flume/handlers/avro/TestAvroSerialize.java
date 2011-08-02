@@ -26,6 +26,7 @@ import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.Encoder;
+import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.io.JsonDecoder;
 import org.apache.avro.io.JsonEncoder;
 import org.apache.avro.reflect.ReflectData;
@@ -119,8 +120,9 @@ public class TestAvroSerialize {
 
     ReflectDatumWriter<A> writer = new ReflectDatumWriter<A>(schm);
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    Encoder json = new BinaryEncoder(out);
-    writer.write(anA, json);
+    Encoder encoder = EncoderFactory.get().binaryEncoder(out, null);
+    writer.write(anA, encoder);
+    encoder.flush();
 
     byte[] bs = out.toByteArray();
     dump(bs);
@@ -144,7 +146,7 @@ public class TestAvroSerialize {
 
     ReflectDatumWriter<A> writer = new ReflectDatumWriter<A>(schm);
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    JsonEncoder json = new JsonEncoder(schm, out);
+    JsonEncoder json = EncoderFactory.get().jsonEncoder(schm, out);
     writer.write(anA, json);
 
     byte[] bs = out.toByteArray();
@@ -159,7 +161,7 @@ public class TestAvroSerialize {
 
     ByteArrayInputStream bais = new ByteArrayInputStream(bs);
     ReflectDatumReader<A> reader = new ReflectDatumReader<A>(schm);
-    Object decoded = reader.read(null, new JsonDecoder(schm, bais));
+    Object decoded = reader.read(null, DecoderFactory.get().jsonDecoder(schm, bais));
     LOG.info(decoded);
   }
 
@@ -186,7 +188,7 @@ public class TestAvroSerialize {
     ReflectDatumWriter<EventImpl> writer = new ReflectDatumWriter<EventImpl>(
         schm);
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    JsonEncoder json = new JsonEncoder(schm, out);
+    JsonEncoder json = EncoderFactory.get().jsonEncoder(schm, out);
     writer.write(e, json);
     json.flush();
     byte[] bs = out.toByteArray();
@@ -196,7 +198,7 @@ public class TestAvroSerialize {
     ByteArrayInputStream bais = new ByteArrayInputStream(bs);
     ReflectDatumReader<EventImpl> reader = new ReflectDatumReader<EventImpl>(
         schm);
-    EventImpl decoded = reader.read(null, new JsonDecoder(schm, bais));
+    EventImpl decoded = reader.read(null, DecoderFactory.get().jsonDecoder(schm, bais));
     LOG.info(decoded);
   }
 
@@ -212,7 +214,9 @@ public class TestAvroSerialize {
     ReflectDatumWriter<EventImpl> writer = new ReflectDatumWriter<EventImpl>(
         schm);
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    writer.write(e, new BinaryEncoder(out));
+    Encoder enc = EncoderFactory.get().binaryEncoder(out, null);
+    writer.write(e, enc);
+    enc.flush();
 
     byte[] bs = out.toByteArray();
     dump(bs);

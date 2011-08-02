@@ -28,7 +28,7 @@ import java.util.Map.Entry;
 
 import org.apache.avro.ipc.HttpTransceiver;
 import org.apache.avro.ipc.Transceiver;
-import org.apache.avro.specific.SpecificRequestor;
+import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -138,6 +138,7 @@ to call at top-level: ant deploy-contrib compile-core-test
     <fileset dir="${build.lib.dir}">
       <include name="**/*.jar" />
       <exclude name="**/excluded/" />
+      <exclude name="**/avro-tools*.jar" />
     </fileset>
   </path>
 
@@ -337,6 +338,10 @@ to call at top-level: ant deploy-contrib compile-core-test
     <path id="avro.classpath">
       <fileset dir="${lib.dir}">
         <include name="**/*.jar"/>
+        <exclude name="**/slf4j*.jar"/>
+      </fileset>
+      <fileset dir="${build.lib.dir}">
+        <include name="**/*.jar"/>
       </fileset>
     </path>
     <echo message="Compiling avro file: ${avrofile}.avpr"/>
@@ -346,7 +351,7 @@ to call at top-level: ant deploy-contrib compile-core-test
       <arg value="${avrofile}" />
       <arg value="${avrofile}.avpr" />
     </java>
-    <java classname="org.apache.avro.specific.SpecificCompiler">
+    <java classname="org.apache.avro.compiler.specific.SpecificCompiler">
       <classpath refid="avro.classpath" />
       <arg value="${avrofile}.avpr" />
       <arg value="${avro.gen.dir}" />

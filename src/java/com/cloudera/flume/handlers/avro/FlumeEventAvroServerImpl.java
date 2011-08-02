@@ -19,9 +19,9 @@ package com.cloudera.flume.handlers.avro;
 
 import java.io.IOException;
 
-import org.apache.avro.ipc.AvroRemoteException;
+import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.HttpServer;
-import org.apache.avro.specific.SpecificResponder;
+import org.apache.avro.ipc.specific.SpecificResponder;
 /**
  * This implements the AvroEventServer.
  */

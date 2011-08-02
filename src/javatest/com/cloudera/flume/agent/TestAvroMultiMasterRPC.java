@@ -23,10 +23,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.avro.ipc.AvroRemoteException;
+import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.HttpServer;
 import org.apache.avro.ipc.Server;
-import org.apache.avro.specific.SpecificResponder;
+import org.apache.avro.ipc.specific.SpecificResponder;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.Test;
 import org.mortbay.log.Log;

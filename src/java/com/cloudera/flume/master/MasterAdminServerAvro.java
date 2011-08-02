@@ -24,9 +24,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.avro.ipc.AvroRemoteException;
+import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.HttpServer;
-import org.apache.avro.specific.SpecificResponder;
+import org.apache.avro.ipc.specific.SpecificResponder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -26,7 +26,7 @@ import java.net.URL;
 import java.util.Map;
 
 import org.apache.avro.ipc.HttpTransceiver;
-import org.apache.avro.specific.SpecificRequestor;
+import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.apache.avro.util.Utf8;
 import org.junit.After;
 import org.junit.Before;

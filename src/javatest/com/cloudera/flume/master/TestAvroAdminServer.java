@@ -24,10 +24,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.avro.AvroRemoteException;
 import org.apache.avro.AvroRuntimeException;
-import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.ipc.HttpServer;
-import org.apache.avro.specific.SpecificResponder;
+import org.apache.avro.ipc.specific.SpecificResponder;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;

@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import org.apache.avro.Schema;
+import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.io.JsonEncoder;
 import org.apache.avro.reflect.ReflectData;
 import org.apache.avro.reflect.ReflectDatumWriter;
@@ -58,13 +59,14 @@ public class AvroJsonOutputFormat extends AbstractOutputFormat {
   public void format(OutputStream o, Event e) throws IOException {
     if (json == null) {
       // first time, no current OutputStream
-      json = new JsonEncoder(schema, o);
+      json = EncoderFactory.get().jsonEncoder(schema, o);
       cachedOut = o;
     }
 
     if (cachedOut != o) {
       // different output than last time?
-      json.init(o);
+      json.flush();
+      json = EncoderFactory.get().jsonEncoder(schema, o);
       cachedOut = o;
     }
 
