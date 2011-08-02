@@ -24,6 +24,7 @@
     <module>flume-distribution</module>
     <module>flume-log4j-appender</module>
     <module>plugins/flume-plugin-helloworld</module>
+    <module>plugins/flume-plugin-hbasesink</module>
   </modules>
 
   <inceptionYear>2009</inceptionYear>

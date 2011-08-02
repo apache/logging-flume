@@ -17,7 +17,7 @@ import com.cloudera.util.FileUtil;
 
 public class HBaseTestEnv extends HBaseClusterTestCase {
   private File hbaseTestDir;
-  
+
   @Override
   public String getName() {
     // TODO replace with actual test name
@@ -29,6 +29,7 @@ public class HBaseTestEnv extends HBaseClusterTestCase {
 
     super.setUp();
   }
+
   public void tearDown() throws Exception {
     super.tearDown();
     FileUtil.rmr(hbaseTestDir);
