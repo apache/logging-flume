@@ -19,18 +19,13 @@
 package com.cloudera.flume.master;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import org.apache.avro.Schema;
 import org.apache.avro.specific.SpecificResponder;
-import org.apache.avro.util.Utf8;
 import org.apache.log4j.Logger;
-import org.apache.avro.Schema.Type;
-import org.apache.avro.generic.GenericArray;
-import org.apache.avro.generic.GenericData;
 import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.ipc.HttpServer;
 import org.apache.avro.ipc.Server;
@@ -47,11 +42,10 @@ import com.cloudera.flume.reporter.ReportEvent;
 import com.google.common.base.Preconditions;
 
 /**
- * Avro implementation of a Master server. Performs type conversion and 
+ * Avro implementation of a Master server. Performs type conversion and
  * delegates to a MasterClientServer.
  */
-public class MasterClientServerAvro implements
-  FlumeReportAvroServer, RPCServer {
+public class MasterClientServerAvro implements FlumeReportAvroServer, RPCServer {
   Logger LOG = Logger.getLogger(MasterClientServer.class);
   final protected int port;
   protected MasterClientServer delegate;
@@ -64,17 +58,18 @@ public class MasterClientServerAvro implements
     this.port = FlumeConfiguration.get().getMasterHeartbeatPort();
   }
 
-  public GenericArray<Utf8> getLogicalNodes(Utf8 physNode) throws AvroRemoteException {
+  public List<CharSequence> getLogicalNodes(CharSequence physNode)
+      throws AvroRemoteException {
     List<String> str = delegate.getLogicalNodes(physNode.toString());
-    GenericArray<Utf8> out = new GenericData.Array<Utf8>(
-        str.size(), Schema.createArray(Schema.create(Type.STRING)));
-    for (String s: str) {
-      out.add(new Utf8(s));
+    List<CharSequence> out = new ArrayList<CharSequence>();
+    for (String s : str) {
+      out.add(s);
     }
     return out;
   }
 
-  public AvroFlumeConfigData getConfig(Utf8 host) throws AvroRemoteException {
+  public AvroFlumeConfigData getConfig(CharSequence host)
+      throws AvroRemoteException {
     FlumeConfigData data = delegate.getConfig(host.toString());
     if (data != null) {
       return configToAvro(data);
@@ -86,67 +81,68 @@ public class MasterClientServerAvro implements
    * Returns true if needs to do a update configuration Here host is the logical
    * node name. Version is the node's current configuration version.
    */
-  public boolean heartbeat(Utf8 logicalNode, Utf8 physicalNode,
-      Utf8 clienthost, FlumeNodeState s, long version) throws AvroRemoteException {
+  public boolean heartbeat(CharSequence logicalNode, CharSequence physicalNode,
+      CharSequence clienthost, FlumeNodeState s, long version)
+      throws AvroRemoteException {
 
-    return delegate.heartbeat(logicalNode.toString(), physicalNode.toString(), 
+    return delegate.heartbeat(logicalNode.toString(), physicalNode.toString(),
         clienthost.toString(), stateFromAvro(s), version);
   }
 
-  public java.lang.Void acknowledge(Utf8 ackid) throws AvroRemoteException {
+  public java.lang.Void acknowledge(CharSequence ackid)
+      throws AvroRemoteException {
     delegate.acknowledge(ackid.toString());
     return null;
   }
 
-  public boolean checkAck(Utf8 ackid) throws AvroRemoteException {
+  public boolean checkAck(CharSequence ackid) throws AvroRemoteException {
     return delegate.checkAck(ackid.toString());
   }
 
-  public java.lang.Void putReports(Map<Utf8, FlumeReportAvro> reports) throws AvroRemoteException {
+  public java.lang.Void putReports(Map<CharSequence, FlumeReportAvro> reports)
+      throws AvroRemoteException {
     Preconditions.checkNotNull(reports,
         "putReports called with null report map");
     Map<String, ReportEvent> reportsMap = new HashMap<String, ReportEvent>();
-    for (Entry<Utf8, FlumeReportAvro> r: reports.entrySet()) {
+    for (Entry<CharSequence, FlumeReportAvro> r : reports.entrySet()) {
       Map<String, Long> longMetrics = new HashMap<String, Long>();
       Map<String, Double> doubleMetrics = new HashMap<String, Double>();
       Map<String, String> stringMetrics = new HashMap<String, String>();
-      for (Utf8 key: r.getValue().longMetrics.keySet()) {
+      for (CharSequence key : r.getValue().longMetrics.keySet()) {
         longMetrics.put(key.toString(), r.getValue().longMetrics.get(key));
       }
-      for (Utf8 key: r.getValue().stringMetrics.keySet()) {
-        stringMetrics.put(
-            key.toString(), r.getValue().stringMetrics.get(key).toString());
+      for (CharSequence key : r.getValue().stringMetrics.keySet()) {
+        stringMetrics.put(key.toString(), r.getValue().stringMetrics.get(key)
+            .toString());
       }
-      for (Utf8 key: r.getValue().doubleMetrics.keySet()) {
+      for (CharSequence key : r.getValue().doubleMetrics.keySet()) {
         doubleMetrics.put(key.toString(), r.getValue().doubleMetrics.get(key));
       }
-      reportsMap.put(r.getKey().toString(), new ReportEvent(
-          longMetrics, stringMetrics, doubleMetrics));
+      reportsMap.put(r.getKey().toString(), new ReportEvent(longMetrics,
+          stringMetrics, doubleMetrics));
     }
     delegate.putReports(reportsMap);
     return null;
   }
-  
+
   // CONTROL
   public void serve() throws IOException {
-    LOG.info(String
-      .format(
-      "Starting blocking thread pool server for control server on port %d...",
-      port));
-    SpecificResponder res = new SpecificResponder(
-        FlumeReportAvroServer.class, this);
+    LOG
+        .info(String
+            .format(
+                "Starting blocking thread pool server for control server on port %d...",
+                port));
+    SpecificResponder res = new SpecificResponder(FlumeReportAvroServer.class,
+        this);
     this.server = new HttpServer(res, port);
+    this.server.start();
   }
-  
+
   public void stop() {
-    LOG.info(String
-        .format(
-        "Stopping control server on port %d...",
-        port));
+    LOG.info(String.format("Stopping control server on port %d...", port));
     this.server.close();
   }
 
-  
   // TYPE CONVERSION
   /**
    * Converts a Avro generated NodeStatus enum value to a flume master
@@ -201,19 +197,23 @@ public class MasterClientServerAvro implements
   }
 
   public static AvroFlumeConfigData configToAvro(FlumeConfigData in) {
-    if (in == null) { return null; }
+    if (in == null) {
+      return null;
+    }
     AvroFlumeConfigData out = new AvroFlumeConfigData();
     out.timestamp = in.timestamp;
-    out.sourceConfig = new Utf8(in.sourceConfig);
-    out.sinkConfig = new Utf8(in.sinkConfig);
+    out.sourceConfig = in.sourceConfig;
+    out.sinkConfig = in.sinkConfig;
     out.sourceVersion = in.sourceVersion;
     out.sinkVersion = in.sinkVersion;
-    out.flowID = new Utf8(in.flowID);
+    out.flowID = in.flowID;
     return out;
   }
-  
+
   public static FlumeConfigData configFromAvro(AvroFlumeConfigData in) {
-    if (in == null) { return null; }
+    if (in == null) {
+      return null;
+    }
     FlumeConfigData out = new FlumeConfigData();
     out.timestamp = in.timestamp;
     out.sourceConfig = in.sourceConfig.toString();

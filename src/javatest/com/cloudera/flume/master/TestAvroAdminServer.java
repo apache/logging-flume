@@ -20,15 +20,14 @@ package com.cloudera.flume.master;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.TestCase;
 
-import org.apache.avro.generic.GenericArray;
 import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.ipc.HttpServer;
 import org.apache.avro.specific.SpecificResponder;
-import org.apache.avro.util.Utf8;
 import org.apache.log4j.Logger;
 
 import com.cloudera.flume.conf.FlumeConfigData;
@@ -44,28 +43,29 @@ public class TestAvroAdminServer extends TestCase {
 
   public class MyAvroServer implements FlumeMasterAdminServerAvro {
     private HttpServer server;
-    
+
     public void serve() throws IOException {
       LOG.info("Starting dummy server");
       SpecificResponder res = new SpecificResponder(
           FlumeMasterAdminServerAvro.class, this);
       this.server = new HttpServer(res, 56789);
+      this.server.start();
     }
-    
+
     public void stop() {
       this.server.close();
     }
-    
+
     @Override
-    public Map<Utf8, FlumeNodeStatusAvro> getNodeStatuses()
+    public Map<CharSequence, FlumeNodeStatusAvro> getNodeStatuses()
         throws AvroRemoteException {
-      return new HashMap<Utf8, FlumeNodeStatusAvro>();
+      return new HashMap<CharSequence, FlumeNodeStatusAvro>();
     }
-    
+
     @Override
-    public Map<Utf8, GenericArray<Utf8>> getMappings(Utf8 physicalNode)
-        throws AvroRemoteException {
-      return new HashMap<Utf8, GenericArray<Utf8>>();
+    public Map<CharSequence, List<CharSequence>> getMappings(
+        CharSequence physicalNode) throws AvroRemoteException {
+      return new HashMap<CharSequence, List<CharSequence>>();
     }
 
     @Override
@@ -79,13 +79,15 @@ public class TestAvroAdminServer extends TestCase {
     }
 
     @Override
-    public long submit(FlumeMasterCommandAvro command) throws AvroRemoteException {
+    public long submit(FlumeMasterCommandAvro command)
+        throws AvroRemoteException {
       return 42;
     }
 
     @Override
-    public Map<Utf8, AvroFlumeConfigData> getConfigs() throws AvroRemoteException {
-      return new HashMap<Utf8, AvroFlumeConfigData>();
+    public Map<CharSequence, AvroFlumeConfigData> getConfigs()
+        throws AvroRemoteException {
+      return new HashMap<CharSequence, AvroFlumeConfigData>();
     }
 
     @Override
@@ -100,8 +102,7 @@ public class TestAvroAdminServer extends TestCase {
 
     AdminRPC client = new AdminRPCAvro("localhost", 56789);
     LOG.info("Connected to test master");
-    
-    
+
     long submit = client.submit(new Command(""));
     assertEquals("Expected response was 42, got " + submit, submit, 42);
 

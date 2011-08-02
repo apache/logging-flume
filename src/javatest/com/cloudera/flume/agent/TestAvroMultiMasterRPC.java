@@ -20,16 +20,15 @@ package com.cloudera.flume.agent;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
-import org.apache.avro.generic.GenericArray;
 import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.ipc.HttpServer;
 import org.apache.avro.ipc.Server;
 import org.apache.avro.specific.SpecificResponder;
 import org.apache.log4j.Logger;
 import org.apache.thrift.transport.TTransportException;
-import org.apache.avro.util.Utf8;
 import org.junit.Test;
 import org.mortbay.log.Log;
 
@@ -54,28 +53,31 @@ public class TestAvroMultiMasterRPC {
     public void stop() {
       this.server.close();
     }
-    
+
     public MockAvroServer() {
-      
+
     }
-    
+
     public void serve(int port) throws IOException {
-      LOG.info(String
-        .format(
-        "Starting blocking thread pool server for control server on port %d...",
-        port));
+      LOG
+          .info(String
+              .format(
+                  "Starting blocking thread pool server for control server on port %d...",
+                  port));
       SpecificResponder res = new SpecificResponder(
           FlumeReportAvroServer.class, this);
       this.server = new HttpServer(res, port);
+      this.server.start();
     }
 
     @Override
-    public java.lang.Void acknowledge(Utf8 ackid) throws AvroRemoteException {
+    public java.lang.Void acknowledge(CharSequence ackid)
+        throws AvroRemoteException {
       return null;
     }
 
     @Override
-    public boolean checkAck(Utf8 ackid) throws AvroRemoteException {
+    public boolean checkAck(CharSequence ackid) throws AvroRemoteException {
       Log.info("Check-ack called at server on " + this.server.getPort());
       if (first) {
         first = false;
@@ -86,30 +88,31 @@ public class TestAvroMultiMasterRPC {
     }
 
     @Override
-    public AvroFlumeConfigData getConfig(Utf8 sourceId) 
-      throws AvroRemoteException {
+    public AvroFlumeConfigData getConfig(CharSequence sourceId)
+        throws AvroRemoteException {
       return MasterClientServerAvro.configToAvro(new FlumeConfigData());
     }
 
     @Override
-    public GenericArray<Utf8> getLogicalNodes(Utf8 physNode) 
-      throws AvroRemoteException {
+    public List<CharSequence> getLogicalNodes(CharSequence physNode)
+        throws AvroRemoteException {
       return null;
     }
 
     @Override
-    public boolean heartbeat(Utf8 logicalNode, Utf8 physicalNode,
-        Utf8 clienthost, FlumeNodeState s, long timestamp)
-      throws AvroRemoteException {
+    public boolean heartbeat(CharSequence logicalNode,
+        CharSequence physicalNode, CharSequence clienthost, FlumeNodeState s,
+        long timestamp) throws AvroRemoteException {
       return true;
     }
 
     @Override
-    public Void putReports(Map<Utf8, FlumeReportAvro> reports)
+    public Void putReports(Map<CharSequence, FlumeReportAvro> reports)
         throws AvroRemoteException {
       return null;
     }
   }
+
   /**
    * Tries to connect to several servers in turn and compensate as masters fail.
    */
@@ -127,12 +130,12 @@ public class TestAvroMultiMasterRPC {
     server2.serve(56790);
 
     assertEquals(true, masterRPC.checkAck("UNKNOWNACK")); // Server should roll
-                                                          // over to 56789
+    // over to 56789
     assertEquals("Port should have been 56789, got " + masterRPC.getCurPort(),
         56789, masterRPC.getCurPort());
 
-    masterRPC.checkAck("UNKNOWNACK"); // should cause exception, fail 
-                                      // over to 56790
+    masterRPC.checkAck("UNKNOWNACK"); // should cause exception, fail
+    // over to 56790
     assertEquals("Port should have been 56790, got " + masterRPC.getCurPort(),
         56790, masterRPC.getCurPort());
     masterRPC.close();
@@ -140,5 +143,3 @@ public class TestAvroMultiMasterRPC {
     server2.stop();
   }
 }
-
-

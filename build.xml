@@ -330,7 +330,7 @@ to call at top-level: ant deploy-contrib compile-core-test
     <echo message="Compiling avro file: ${avrofile}.avpr"/>
     <java classname="org.apache.avro.tool.Main">
       <classpath refid="avro.classpath" />
-      <arg value="genavro" />
+      <arg value="idl" />
       <arg value="${avrofile}" />
       <arg value="${avrofile}.avpr" />
     </java>

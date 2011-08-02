@@ -25,11 +25,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.avro.generic.GenericArray;
 import org.apache.avro.ipc.HttpTransceiver;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.specific.SpecificRequestor;
-import org.apache.avro.util.Utf8;
+
 import org.apache.log4j.Logger;
 
 import com.cloudera.flume.conf.FlumeConfigData;
@@ -42,46 +41,47 @@ import com.cloudera.flume.master.MasterClientServerAvro;
 import com.cloudera.flume.master.StatusManager.NodeStatus;
 
 /**
- * Avro implementation of the Flume admin control RPC. This
- * class manages the connection to a master and provides type conversion.
+ * Avro implementation of the Flume admin control RPC. This class manages the
+ * connection to a master and provides type conversion.
  */
 public class AdminRPCAvro implements AdminRPC {
   final static Logger LOG = Logger.getLogger(AdminRPCAvro.class);
-  
+
   private String masterHostname;
   private int masterPort;
   private Transceiver trans;
   protected FlumeMasterAdminServerAvro masterClient;
-  
+
   public AdminRPCAvro(String masterHost, int masterPort) throws IOException {
     this.masterHostname = masterHost;
     this.masterPort = masterPort;
     URL url = new URL("http", masterHostname, this.masterPort, "/");
     trans = new HttpTransceiver(url);
-    this.masterClient = (FlumeMasterAdminServerAvro) 
-      SpecificRequestor.getClient(FlumeMasterAdminServerAvro.class, trans);
+    this.masterClient = (FlumeMasterAdminServerAvro) SpecificRequestor
+        .getClient(FlumeMasterAdminServerAvro.class, trans);
     LOG.info("Connected to master at " + masterHostname + ":" + masterPort);
   }
-  
+
   @Override
   public Map<String, FlumeConfigData> getConfigs() throws IOException {
-    Map<Utf8, AvroFlumeConfigData> results = this.masterClient.getConfigs();
+    Map<CharSequence, AvroFlumeConfigData> results = this.masterClient
+        .getConfigs();
     Map<String, FlumeConfigData> out = new HashMap<String, FlumeConfigData>();
-    for (Utf8 key: results.keySet()) {
-      out.put(key.toString(), 
-          MasterClientServerAvro.configFromAvro(results.get(key)));
+    for (CharSequence key : results.keySet()) {
+      out.put(key.toString(), MasterClientServerAvro.configFromAvro(results
+          .get(key)));
     }
     return out;
   }
 
   @Override
   public Map<String, NodeStatus> getNodeStatuses() throws IOException {
-    Map<Utf8, FlumeNodeStatusAvro> results = 
-      this.masterClient.getNodeStatuses();
+    Map<CharSequence, FlumeNodeStatusAvro> results = this.masterClient
+        .getNodeStatuses();
     Map<String, NodeStatus> out = new HashMap<String, NodeStatus>();
-    for (Utf8 key: results.keySet()) {
-      out.put(key.toString(), 
-          MasterAdminServerAvro.statusFromAvro(results.get(key)));
+    for (CharSequence key : results.keySet()) {
+      out.put(key.toString(), MasterAdminServerAvro.statusFromAvro(results
+          .get(key)));
     }
     return out;
   }
@@ -93,14 +93,14 @@ public class AdminRPCAvro implements AdminRPC {
 
     mappings = new HashMap<String, List<String>>();
 
-    for (Entry<Utf8, GenericArray<Utf8>> entry : masterClient.getMappings(
-        new Utf8(physicalNode)).entrySet()) {
+    for (Entry<CharSequence, List<CharSequence>> entry : masterClient
+        .getMappings(physicalNode).entrySet()) {
       List<String> values;
 
       values = new LinkedList<String>();
 
-      for (Utf8 utf8Value : entry.getValue()) {
-        values.add(utf8Value.toString());
+      for (CharSequence cs : entry.getValue()) {
+        values.add(cs.toString());
       }
 
       mappings.put(entry.getKey().toString(), values);
@@ -126,7 +126,7 @@ public class AdminRPCAvro implements AdminRPC {
 
   @Override
   public long submit(Command command) throws IOException {
-    return this.masterClient.submit(
-        MasterAdminServerAvro.commandToAvro(command));
+    return this.masterClient.submit(MasterAdminServerAvro
+        .commandToAvro(command));
   }
 }

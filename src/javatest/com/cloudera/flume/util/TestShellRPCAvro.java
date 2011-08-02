@@ -23,7 +23,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 
-import org.apache.avro.util.Utf8;
 import org.junit.Test;
 
 import com.cloudera.flume.conf.avro.FlumeMasterCommandAvro;
@@ -35,29 +34,28 @@ import com.cloudera.flume.master.StatusManager.NodeState;
 import com.cloudera.flume.master.StatusManager.NodeStatus;
 
 /**
- * Tests to ensure the RPC types are converted properly for the shell
- * client.
- *
+ * Tests to ensure the RPC types are converted properly for the shell client.
+ * 
  */
 public class TestShellRPCAvro {
-  
+
   @Test
   public void testAvroStatusConversion() {
     FlumeNodeStatusAvro start = new FlumeNodeStatusAvro();
-    start.host = new Utf8("HOST");
+    start.host = "HOST";
     long time = System.currentTimeMillis();
     start.lastseen = time;
     start.lastSeenDeltaMillis = time;
-    start.physicalNode = new Utf8("PHYSICAL_NODE");
+    start.physicalNode = "PHYSICAL_NODE";
     start.state = FlumeNodeState.ACTIVE;
-    
+
     NodeStatus middle = MasterAdminServerAvro.statusFromAvro(start);
-    
+
     assertEquals("HOST", middle.host);
     assertEquals(start.lastseen, middle.lastseen);
     assertEquals("PHYSICAL_NODE", middle.physicalNode);
     assertEquals(NodeState.ACTIVE, middle.state);
-    
+
     FlumeNodeStatusAvro end = MasterAdminServerAvro.statusToAvro(middle);
     assertEquals(end.host, start.host);
     assertEquals(end.lastseen, start.lastseen);
@@ -72,9 +70,9 @@ public class TestShellRPCAvro {
     assertEquals("here", middle.command.toString());
     assertEquals(3, middle.arguments.size());
     int index = 0;
-    for (Utf8 u: middle.arguments) {
-      switch(index) {
-      case 0: 
+    for (CharSequence u : middle.arguments) {
+      switch (index) {
+      case 0:
         assertEquals("is", u.toString());
         break;
       case 1:
@@ -91,7 +89,7 @@ public class TestShellRPCAvro {
     assertEquals(3, end.getArgs().length);
     assertTrue(Arrays.equals(start.getArgs(), end.getArgs()));
   }
-  
+
   @Test
   public void testEmptyArgsCommandAvro() {
     Command start = new Command("ls");
