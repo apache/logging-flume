@@ -28,11 +28,12 @@ import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.DirectMasterRPC;
 import com.cloudera.flume.agent.FlumeNode;
@@ -59,12 +60,7 @@ import com.cloudera.util.FileUtil;
  * the best solution but workable.
  */
 public class TestConcurrentWALMan {
-  public static Logger LOG = Logger.getLogger(TestConcurrentWALMan.class);
-
-  @Before
-  public void setDebug() {
-    Logger.getRootLogger().setLevel(Level.DEBUG);
-  }
+  public static Logger LOG = LoggerFactory.getLogger(TestConcurrentWALMan.class);
 
   @Test
   public void test1thread() throws IOException, InterruptedException {
@@ -153,7 +149,7 @@ public class TestConcurrentWALMan {
             snk.close();
             FileUtil.rmr(f1);
           } catch (Exception e) {
-            LOG.error(e, e);
+            LOG.error(e.toString(), e);
           } finally {
             done.countDown();
           }

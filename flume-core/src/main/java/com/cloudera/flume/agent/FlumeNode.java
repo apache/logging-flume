@@ -295,7 +295,7 @@ public class FlumeNode implements Reportable {
       try {
         http.stop();
       } catch (Exception e) {
-        LOG.error("Exception stopping FlumeNode", e);
+        LOG.error("Stopping http server failed: " + e);
       }
     }
 

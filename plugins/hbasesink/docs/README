@@ -1,0 +1,56 @@
+Running Flume on HBase
+----------------------
+
+1) Compile top-level flume
+   $ ant
+
+2) Copy your version of hbase-*.jar into the plugins/hbasesink/lib
+   I tested against hbase-0.89.20100621+17.jar
+
+3) Compile hbase-sink from this directory
+   ../plugins/hbasesink$ ant
+
+4) Successful compilation will produce "hbase_sink.jar" in ../plugins/hbasesink/
+
+5) Add the plugin classes in flume/conf/flume-site.xml
+<configuration>
+  <property>
+    <name>flume.plugin.classes</name>
+    <value>com.cloudera.flume.hbase.Attr2HBaseEventSink</value>
+    <description>Comma separated list of plugin classes</description>
+  </property>
+</configuration>
+
+
+6) Include the jars in the "FLUME_CLASSPATH"
+From the terminal where you would start the Flume nodes:
+  $ export FLUME_CLASSPATH=/your_path/flume/plugins/hbasesink/hbase_sink.jar:/your_path/hbase-*/conf/
+  Include all the jars that your plugin refers to
+
+Here's how I've run flume against hbase in dev mode:
+
+7) From your hbase-*, "bin/start-hbase.sh"
+
+Note that starting hbase will also start ZooKeeper
+
+8) using the hbase shell create a table for the flume sink to write events
+
+$ bin/hbase shell
+> create 't1', 'f1', 'f2'
+
+9) Undertand the attr2hbase sink usage and configure the source:
+   "usage: attr2hbase(\"table\" [,\"sysFamily\"[, \"writeBody\"[,\"attrPrefix\"[,\"writeBufferSize\"[,\"writeToWal\"]]]]])
+   Refer parameter_mapping.html in /docs for more details.
+
+10) start flume, I started a node with a rssatomSource and attr2hbase("t1","f1","f2:event","attr-prefix","10","false")'
+
+> scan 't1'
+(This is output of my rowkey and data)
+
+hbase(main):002:0> scan 't1'
+ROW                          COLUMN+CELL
+ \x00\x00\xF6_\x0Fk\xF4\x80  column=f2:event, timestamp=1274227444388, value=hello
+ \x00\x00\xF6_\x0Fk\xF4\x80  column=f1:host, timestamp=1274227444388, value=valhalla
+ \x00\x00\xF6_\x0Fk\xF4\x80  column=f1:timestamp, timestamp=1274227444388, value=\x00\x00\x01\x28\xAD\xDF\xCA\
+                             x7C
+1 row(s) in 0.0550 seconds

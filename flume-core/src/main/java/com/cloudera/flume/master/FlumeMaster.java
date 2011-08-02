@@ -364,10 +364,9 @@ public class FlumeMaster implements Reportable {
         ZooKeeperService.get().shutdown();
       }
 
-    } catch (IOException e) {
-      LOG.error("Exception when shutting down master!", e);
     } catch (Exception e) {
-      LOG.error("Exception when shutting down master!", e);
+      LOG.error("Exception when shutting down master! " + e.getMessage());
+      LOG.debug(e.getMessage(), e);
     }
 
   }

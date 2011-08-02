@@ -38,7 +38,7 @@ public class TestStatusHttpServer {
       .getLogger(TestStatusHttpServer.class);
 
   @Test
-  public void testOpenClose() throws IOException, Exception {
+  public void testOpenClose() throws Exception {
     // Set directory of webapps to build-specific dir
     FlumeConfiguration.get().set(FlumeConfiguration.WEBAPPS_PATH,
         "build/webapps");

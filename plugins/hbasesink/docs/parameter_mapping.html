@@ -1,0 +1,72 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+
+</head><body><center>
+<h1> This table shows the parameter mapping of Flume event to HBase sink </h1>
+</center>
+<p>
+  Sink has the next parameters: attr2hbase("table" [,"family"[,
+"writeBody"[,"attrPrefix"[,"writeBufferSize"[,"writeToWal"]]]]]). <br>
+  "table"           - HBase table name to perform output into. <br>
+  "sysFamily"       - Column family's name which is used to store "system" data (event's timestamp, host, priority). <br>
+                      In case this param is absent or ="" the sink doesn't write "system" data.<br>
+  "writeBody"       - Indicates whether event's body should be written among other "system" data.<br>
+                      Default is "false" which means it should NOT be written.<br>
+                      In case this param is absent or ="" the sink doesn't write "body" data.<br>
+                      In case this param has format
+"column-family:qualifier" the sink writes the body to the specified
+column-family:qualifier <br>
+  "attrPrefix"      - Attributes with this prefix in key will be placed into HBase table. Default value: "2hb_".<br>
+                      Attribute key should be in the following format:
+"&lt;attrPrefix&gt;&lt;columnFamily&gt;:&lt;qualifier&gt;",<br>
+                      e.g. "2hb_user:name" means that its value will be placed into "user" column family with "name" qualifier.<br>
+                      Attribute with key "&lt;attrPrefix&gt;" SHOULD contain row key for Put,<br>
+                      otherwise (if no row can be extracted) the event is skipped and no records are written to the HBase table.<br>
+                      Next table shows what gets written into HBase
+table depending on the attribute name and other settings (in format
+columnFamily:qualifier-&gt;value, "-" means nothing is written).
+ </p>
+ <blockquote><table border="1">
+    <tbody><tr>
+      <th>Event's attr ("name"-&gt;"value") and Event's body -&gt; (body -&gt; "Val") </th>
+      <th>attrPrefix="2hb_", sysFamily=null, writeBody="bodyfam:bodycol"</th>
+      <th>attrPrefix="2hb_", sysFamily="sysfam", writeBody="bodyfam:bodycol"</th>
+     <th>attrPrefix="2hb_", sysFamily="sysfam", writeBody=""</th>
+      <th>attrPrefix="2hb_", sysFamily=null, writeBody=null</th>
+    </tr>
+    <tr>
+      <td>"any"-&gt;"foo", body-&gt;"EventVal"</td>
+      <td>bodyfam:bodycol-&gt; EventVal</td>
+      <td>bodyfam:bodycol-&gt; EventVal</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>"colfam:col"-&gt;"foo", body-&gt;""</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>"2hb_any"-&gt;"foo" body-&gt;"EventVal"</td>
+      <td>bodyfam:bodycol-&gt; EventVal</td>
+      <td>sysfam:any-&gt;foo, bodyfam:bodycol-&gt; EventVal</td>
+      <td>sysfam:any-&gt;foo</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>"2hb_colfam:col"-&gt;"foo", body-&gt;""</td>
+      <td>colfam:col-&gt;foo</td>
+      <td>colfam:col-&gt;foo</td>
+      <td>colfam:col-&gt;foo</td>
+      <td>colfam:col-&gt;foo</td>
+    </tr>
+  </tbody></table></blockquote>
+
+Note: <br> 1) The attr2hbase sink with attribute-prefix  parameter as
+"empty/null", will use the hard-coded default attribute-prefix:"2hb_"
+<br>
+2) The Events without values for the configured attribute-prefix or default "2hb_" will NOT be written to the HBase.
+</body></html>
