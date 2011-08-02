@@ -19,6 +19,7 @@
 CC = g++
 SRCS = src/cpp/ThriftThinFlumeRPC.cpp
 THRIFT_SRCS = gen-cpp/ThriftFlumeEventServer.cpp gen-cpp/flume_constants.cpp gen-cpp/flume_types.cpp src/cpp/ThriftThinFlumeRPC.cpp
+FLUME_THRIFT_IDL = ../../flume-core/src/main/thrift/flume.thrift
 OBJS = gen-cpp/ThriftFlume.o gen-cpp/ThriftFlumeConstants.o gen-cpp/ThriftFlumeTypes.o
 
 .PHONY: all
@@ -34,8 +35,8 @@ flogger: ${OBJS}
 
 ${OBJS}: ${THRIFT_SRCS}
 
-${THRIFT_SRCS}: ../../src/thrift/flume.thrift
-	thrift --gen cpp ../../src/thrift/flume.thrift
+${THRIFT_SRCS}: ${FLUME_THRIFT_IDL}
+	thrift --gen cpp ${FLUME_THRIFT_IDL}
 
 .PHONY: clean
 clean:

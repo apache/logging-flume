@@ -40,7 +40,7 @@ using namespace apache::thrift::transport;
 /*
  * The main function takes -h localhost:port-number and -t tag_key:value as arguments.
  * It forms a flume event structure with time-stamp taken from the system clock and hostname.
- * It sends the request to the flume node listening on the host-port specified 
+ * It sends the request to the flume node listening on the host-port specified
  * Returns 0 on success, returns 1 on failure, error codes not yet defined
 */
 
@@ -52,9 +52,9 @@ int main(int argc, char **argv) {
   switch(argc)
   {
     case 3:
-       if(0 == strcmp(argv[1], HOST_ARG)) { 
+       if(0 == strcmp(argv[1], HOST_ARG)) {
           host_port = argv[2];
-       } else { 
+       } else {
           cout << "\tUsage: [-h <hostname>:<port>] is mandatory" << endl;
           exit(1);
        }
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
    cerr << "\n\tError: Cannot get hostname" << endl;
    exit(1);
   }
- 
+
   map <string,string> tag;
   if(argc == 5)
   {
@@ -143,14 +143,15 @@ int main(int argc, char **argv) {
 	*/
 
 	ThriftFlumeEvent evt;
-	evt.priority = INFO;
+	Priority evt_priority;
+	evt.priority = evt_priority.INFO;
 	struct timespec t_nanos;
 	if(0 == clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t_nanos)) {
 	 evt.nanos = t_nanos.tv_sec * 1000000000LL + t_nanos.tv_nsec;
 	} else {
 	 cerr << "\n\tCannot read process cputime clock, quitting";
 	 exit(1);
-	}  
+	}
 
 	struct timespec t_stamp;
 	if(0 == clock_gettime(CLOCK_REALTIME, &t_stamp)) {
