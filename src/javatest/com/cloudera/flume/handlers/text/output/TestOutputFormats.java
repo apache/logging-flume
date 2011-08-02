@@ -17,17 +17,28 @@
  */
 package com.cloudera.flume.handlers.text.output;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.TimeZone;
 
+import org.apache.avro.Schema;
+import org.apache.avro.file.DataFileStream;
+import org.apache.avro.reflect.ReflectData;
+import org.apache.avro.reflect.ReflectDatumReader;
+import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.cloudera.flume.core.Event;
-import com.cloudera.flume.core.Event.Priority;
 import com.cloudera.flume.core.EventImpl;
+import com.cloudera.flume.core.Event.Priority;
 import com.cloudera.flume.handlers.avro.AvroJsonOutputFormat;
+import com.cloudera.flume.handlers.avro.AvroNativeFileOutputFormat;
 import com.cloudera.flume.handlers.syslog.SyslogWireOutputFormat;
 import com.cloudera.flume.handlers.text.SyslogEntryFormat;
 
@@ -40,6 +51,7 @@ import com.cloudera.flume.handlers.text.SyslogEntryFormat;
  * timezones. Effort to force a timezone punted on.
  */
 public class TestOutputFormats {
+  final public static Logger LOG = Logger.getLogger(TestOutputFormats.class);
 
   Event e = new EventImpl("test".getBytes(), 0, Priority.INFO, 0, "hostname");
   TimeZone tz = TimeZone.getTimeZone("GMT");
@@ -95,8 +107,30 @@ public class TestOutputFormats {
     System.out.print(s);
     // TODO (jon) not sure if this will pass on every machine the same (how does
     // avro order fields?)
-    Assert.assertEquals(
-        s,
-        "{\"body\":\"test\",\"timestamp\":0,\"pri\":\"INFO\",\"nanos\":0,\"host\":\"hostname\",\"fields\":{}}\n");
+    Assert.assertEquals(s, "{\"body\":\"test\",\"timestamp\":0,"
+        + "\"pri\":\"INFO\",\"nanos\":0,\"host\":\"hostname\","
+        + "\"fields\":{}}\n");
+  }
+
+  @Test
+  public void testAvroNativeJson() throws IOException {
+    AvroNativeFileOutputFormat format = new AvroNativeFileOutputFormat();
+    ByteArrayOutputStream sos = new ByteArrayOutputStream();
+    format.format(sos, e);
+    format.close();
+    byte[] bytes = sos.toByteArray();
+
+    ReflectData reflectData = ReflectData.get();
+    Schema schema = reflectData.getSchema(EventImpl.class);
+    ReflectDatumReader<EventImpl> dr = new ReflectDatumReader<EventImpl>(schema);
+    ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+    DataFileStream<EventImpl> dec = new DataFileStream<EventImpl>(bais, dr);
+
+    Event er = dec.next();
+    assertEquals(e.getHost(), er.getHost());
+    assertEquals(e.getNanos(), er.getNanos());
+    assertEquals(e.getPriority(), er.getPriority());
+    assertTrue(Arrays.equals(e.getBody(), er.getBody()));
+
   }
 }

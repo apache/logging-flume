@@ -178,10 +178,12 @@ configuration values placed in flume-site.xml.  -->
     collector node.  There are several formats available:
       syslog - outputs events in a syslog-like format
       log4j - outputs events in a pattern similar to Hadoop's log4j pattern 
+      raw - Event body only.  This is most similar to copying a file but
+        does not preserve any uniqifying metadata like host/timestamp/nanos.
+      avro - Avro Native file format.  Default currently is uncompressed.
       avrojson - this outputs data as json encoded by avro
       avrodata - this outputs data as a avro binary encoded data
       debug - used only for debugging
-      raw - output only the event body, no metadata
     </description>
   </property>  
 

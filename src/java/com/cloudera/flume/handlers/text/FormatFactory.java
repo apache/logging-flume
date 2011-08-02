@@ -23,6 +23,7 @@ import java.util.Map;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.handlers.avro.AvroDataFileOutputFormat;
 import com.cloudera.flume.handlers.avro.AvroJsonOutputFormat;
+import com.cloudera.flume.handlers.avro.AvroNativeFileOutputFormat;
 import com.cloudera.flume.handlers.text.output.DebugOutputFormat;
 import com.cloudera.flume.handlers.text.output.Log4jOutputFormat;
 import com.cloudera.flume.handlers.text.output.OutputFormat;
@@ -57,7 +58,7 @@ public class FormatFactory {
       put("log4j", Log4jOutputFormat.builder());
       put("avrojson", AvroJsonOutputFormat.builder());
       put("avrodata", AvroDataFileOutputFormat.builder());
-      // TODO (jon) put( "apache", ApacheOutputFormat.builder() );
+      put("avro", AvroNativeFileOutputFormat.builder());
     }
   };
 
