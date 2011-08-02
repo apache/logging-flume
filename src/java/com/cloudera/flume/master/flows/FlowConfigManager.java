@@ -235,7 +235,10 @@ abstract public class FlowConfigManager implements ConfigurationManager {
   synchronized public void removeLogicalNode(String logicNode) throws IOException {
     String oldflow = getFlowId(logicNode);
     parent.removeLogicalNode(logicNode);
-    flows.get(oldflow).removeLogicalNode(logicNode);
+    ConfigurationManager flowCfg = flows.get(oldflow);
+    if (flowCfg != null) {
+      flowCfg.removeLogicalNode(logicNode);
+    }
   }
 
   /**
