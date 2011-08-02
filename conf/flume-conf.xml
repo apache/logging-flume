@@ -252,6 +252,26 @@ configuration values placed in flume-site.xml.  -->
   </property>
 
   <property>
+    <name>flume.master.heartbeat.rpc</name>
+    <value>THRIFT</value>
+    <description> This specifies the RPC(THRIFT/AVRO) framework to be
+	used between nodes and the master and the shell and the
+	master. The default is THRIFT.
+    </description>
+  </property>
+
+
+  <property>
+    <name>flume.event.rpc</name>
+    <value>THRIFT</value>
+    <description> This specifies the default RPC(THRIFT/AVRO)
+	framework to be used for node-to-node event transmission when
+	using rpcSink / rpcSource and autoCollectorSource / agent*Sink
+	/ agent*Chain / auto*Chains. The default is THRIFT.
+    </description>
+  </property>
+
+  <property>
     <name>flume.report.server.rpc.type</name>
     <value>THRIFT</value>
     <description> 
