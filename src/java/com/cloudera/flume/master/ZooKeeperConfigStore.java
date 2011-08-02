@@ -18,9 +18,10 @@
 
 package com.cloudera.flume.master;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,7 +29,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.avro.Schema;
+import org.apache.avro.Schema.Type;
+import org.apache.avro.file.DataFileStream;
+import org.apache.avro.file.DataFileWriter;
+import org.apache.avro.generic.GenericArray;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.avro.util.Utf8;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -38,10 +49,10 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 
-import com.cloudera.flume.conf.FlumeBuilder;
-import com.cloudera.flume.conf.FlumeSpecException;
-import com.cloudera.flume.conf.FlumeSpecGen;
 import com.cloudera.flume.conf.FlumeConfigData;
+import com.cloudera.flume.conf.avro.AvroFlumeConfigData;
+import com.cloudera.flume.conf.avro.AvroFlumeConfigDataMap;
+import com.cloudera.flume.conf.avro.AvroFlumeNodeMap;
 import com.cloudera.flume.master.ZKClient.InitCallback;
 import com.cloudera.util.Clock;
 import com.cloudera.util.Pair;
@@ -87,6 +98,7 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
    * Reads the standard configuration and initialises client and optionally
    * server accordingly.
    */
+  @Override
   public void init() throws IOException, InterruptedException {
     Preconditions.checkArgument(this.zkService != null,
         "ZooKeeperService is null in init");
@@ -108,7 +120,7 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
        * Synchronization notes: from this method, the callback comes from the
        * same thread. That's not guaranteed afterwards, because this gets called
        * again on SessionExpiredException.
-       * 
+       *
        * It tries to take the ZKCS.this lock (in loadConfigs). Therefore BE
        * AWARE of potential deadlocks between threads. The vast majority of the
        * invocations to ZKClient in this class will be under the ZKCS.this lock
@@ -135,25 +147,63 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
     }
   }
 
+  /**
+   * Convert a configuration map into an Avro-serialized byte array
+   */
+  static protected byte[] serializeConfigs(Map<String, FlumeConfigData> cfgs)
+      throws IOException {
+    Map<CharSequence, AvroFlumeConfigData> map = new HashMap<CharSequence, AvroFlumeConfigData>();
+    for (Entry<String, FlumeConfigData> e : cfgs.entrySet()) {
+      AvroFlumeConfigData avroConfig = MasterClientServerAvro.configToAvro(e
+          .getValue());
+
+      map.put(new Utf8(e.getKey()), avroConfig);
+    }
+
+    AvroFlumeConfigDataMap avromap = new AvroFlumeConfigDataMap();
+    avromap.configs = map;
+
+    DatumWriter<AvroFlumeConfigDataMap> datumWriter = new SpecificDatumWriter<AvroFlumeConfigDataMap>();
+    datumWriter.setSchema(avromap.getSchema());
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    DataFileWriter<AvroFlumeConfigDataMap> fileWriter = new DataFileWriter<AvroFlumeConfigDataMap>(
+        datumWriter);
+    fileWriter.create(avromap.getSchema(), baos);
+    fileWriter.append(avromap);
+    fileWriter.close();
+    return baos.toByteArray();
+  }
+
+  /**
+   * Convert an Avro-serialized byte array into a configuration map
+   */
+  static protected Map<String, FlumeConfigData> deserializeConfigs(byte[] cfg)
+      throws IOException {
+    DatumReader<AvroFlumeConfigDataMap> reader = new SpecificDatumReader<AvroFlumeConfigDataMap>();
+    reader.setSchema(AvroFlumeConfigDataMap.SCHEMA$);
+    DataFileStream<AvroFlumeConfigDataMap> fileStream = new DataFileStream<AvroFlumeConfigDataMap>(
+        new ByteArrayInputStream(cfg), reader);
+    AvroFlumeConfigDataMap cfgmap = fileStream.next();
+    fileStream.close();
+    Map<String, FlumeConfigData> ret = new HashMap<String, FlumeConfigData>();
+    for (Entry<CharSequence, AvroFlumeConfigData> e : cfgmap.configs.entrySet()) {
+      ret.put(e.getKey().toString(), MasterClientServerAvro.configFromAvro(e
+          .getValue()));
+    }
+
+    return ret;
+  }
+
+  /**
+   * Writes an Avro-serialized form of all known node configs to ZK
+   */
   protected synchronized void saveConfigs(String prefix) {
     Preconditions.checkNotNull(this.client, "Client is null in saveConfigs");
-    StringBuilder sb = new StringBuilder();
+
     try {
-      for (Entry<String, FlumeConfigData> e : cfgs.entrySet()) {
-        String name = e.getKey();
-        FlumeConfigData f = e.getValue();
-        String snk = f.getSinkConfig();
-        String src = f.getSourceConfig();
-        sb.append(f.getSourceVersion() + "," + f.getSinkVersion() + ","
-            + f.getFlowID() + "@@");
-        sb.append(FlumeBuilder.toLine(name, src, snk));
-        sb.append("\n");
-      }
-
       String cfgPath = String.format(prefix + "/cfg-%010d", currentVersion);
-
       // Create a new
-      String znode = client.create(cfgPath, sb.toString().getBytes(),
+      String znode = client.create(cfgPath, serializeConfigs(cfgs),
           Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
       LOG.info("Created new config at " + znode);
@@ -168,12 +218,11 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
 
   /**
    * This internal method is called at connection time to populate the cache.
-   * 
+   *
    * May be called from either the main Master thread or a ZK-initiated callback
    * so is synchronized to prevent racing.
    */
   synchronized protected void loadConfigs(String prefix) throws IOException {
-    // Finds the most recent prefix
     try {
       client.ensureExists(prefix, new byte[0]);
 
@@ -201,45 +250,13 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
 
       Stat stat = new Stat();
       LOG.info("Loading config from: " + path);
-      String cfg = new String(client.getData(path, false, stat));
-
-      if (cfg.equals("")) {
-        LOG.debug("Empty configuration");
+      byte[] cfg = client.getData(path, false, stat);
+      if (cfg.length == 0) {
+        LOG.info("Config was empty!");
         return;
       }
 
-      for (String data : cfg.split("\n")) {
-        // Nodes are serialised in the form
-        // srcVersion,snkVersion,flowid@@cfgString
-        String[] parts = data.split("@@");
-        if (parts.length != 2) {
-          LOG.warn("Malformed node configuration: " + parts[0] + " - from "
-              + data);
-          continue;
-        }
-        String[] versions = parts[0].split(",");
-        if (versions.length != 3) {
-          LOG.warn("Malformed version numbers in configuration: " + parts[0]
-              + " - from " + data);
-          continue;
-        }
-        long srcVersion = Long.parseLong(versions[0]);
-        long snkVersion = Long.parseLong(versions[1]);
-        String flowid = versions[2];
-        List<FlumeNodeSpec> confs = Collections.emptyList();
-        try {
-          confs = FlumeSpecGen.generate(parts[1]);
-        } catch (FlumeSpecException e) {
-          // Bad / malformed configurations should be ignored so they don't
-          // persist
-          LOG.warn("Could not parse FlumeSpec from cfg: " + parts[1], e);
-          continue;
-        }
-        for (FlumeNodeSpec spec : confs) {
-          cfgs.put(spec.node, new FlumeConfigData(Clock.unixTime(), spec.src,
-              spec.sink, srcVersion, snkVersion, flowid));
-        }
-      }
+      cfgs.putAll(deserializeConfigs(cfg));
     } catch (Exception e) {
       throw new IOException("Unexpected exception in loadConfigs", e);
     }
@@ -248,6 +265,7 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
   /**
    * Updates the in-memory cache, and then writes all configs out to ZK
    */
+  @Override
   public synchronized void setConfig(String host, String flowid, String source,
       String sink) throws IOException {
     Preconditions.checkArgument(client != null && client.getZK() != null,
@@ -281,6 +299,7 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
    * Saves a list of configuration updates with as one new configuration -
    * avoids multiple watches getting fired.
    */
+  @Override
   public synchronized void bulkSetConfig(Map<String, FlumeConfigData> configs)
       throws IOException {
     Preconditions.checkArgument(client != null && client.getZK() != null);
@@ -308,6 +327,7 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
   /**
    * Checks the in-memory cache, but does not go to ZooKeeper to check.
    */
+  @Override
   public synchronized FlumeConfigData getConfig(String host) {
     Preconditions.checkArgument(client != null);
     if (cfgs.containsKey(host)) {
@@ -322,64 +342,73 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
     return Collections.unmodifiableMap(cfgs);
   }
 
-  // TODO (jon) use more robust mechanism to serialize list (split will drop
-  // last "")
-
   /**
-   * Utility commands to (de)serialize nodemaps as strings
+   * Converts a nodemap into an Avro-serialized byte array
    */
-  protected String nodeMapAsString(String physNode,
-      Collection<String> logicalNodes) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(physNode);
-    sb.append(',');
-    sb.append(StringUtils.join(logicalNodes, ','));
-    return sb.toString();
-  }
+  static protected byte[] serializeNodeMap(ListMultimap<String, String> nodeMap)
+      throws IOException {
+    DatumWriter<AvroFlumeNodeMap> datumWriter = new SpecificDatumWriter<AvroFlumeNodeMap>();
+    AvroFlumeNodeMap avromap = new AvroFlumeNodeMap();
 
-  /**
-   * Needs synchronized for iterating over nodeMap
-   */
-  synchronized protected byte[] serializeNodeMap() {
-    StringBuilder sb = new StringBuilder();
+    Map<CharSequence, List<CharSequence>> map = new HashMap<CharSequence, List<CharSequence>>();
     for (Entry<String, Collection<String>> e : nodeMap.asMap().entrySet()) {
       String name = e.getKey();
-      Collection<String> logicalNodes = e.getValue();
-      sb.append(nodeMapAsString(name, logicalNodes));
-      sb.append("\n");
+      GenericArray<CharSequence> out = new GenericData.Array<CharSequence>(e.getValue().size(),
+          Schema.createArray(Schema.create(Type.STRING)));
+
+      for (String s : e.getValue()) {
+        out.add(new String(s));
+      }
+
+      map.put(new String(name), out);
     }
-    return sb.toString().getBytes();
+
+    avromap.nodemap = map;
+
+    datumWriter.setSchema(avromap.getSchema());
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    DataFileWriter<AvroFlumeNodeMap> fileWriter = new DataFileWriter<AvroFlumeNodeMap>(
+        datumWriter);
+    fileWriter.create(avromap.getSchema(), baos);
+    fileWriter.append(avromap);
+    fileWriter.close();
+
+    return baos.toByteArray();
   }
 
   /**
-   * Deserialization utility
+   * Converts an Avro-serialized byte array into a nodemap
    */
-  protected Pair<String, List<String>> nodeMapFromString(String line) {
-    String[] parsed = line.split(",");
+  static protected List<Pair<String, List<String>>> deserializeNodeMap(
+      byte[] data) throws IOException {
+    DatumReader<AvroFlumeNodeMap> reader = new SpecificDatumReader<AvroFlumeNodeMap>();
+    DataFileStream<AvroFlumeNodeMap> fileStream = new DataFileStream<AvroFlumeNodeMap>(
+        new ByteArrayInputStream(data), reader);
+    AvroFlumeNodeMap cfgmap = fileStream.next();
+    fileStream.close();
 
-    List<String> lns = new ArrayList<String>();
-    lns.addAll(Arrays.asList(parsed)); // asList alone returns unmutable list.
-    lns.remove(0);
-    return new Pair<String, List<String>>(parsed[0], lns);
-  }
-
-  protected List<Pair<String, List<String>>> deserializeNodeMap(byte[] data) {
-    String str = new String(data);
     List<Pair<String, List<String>>> ret = new ArrayList<Pair<String, List<String>>>();
-    for (String s : str.split("\n")) {
-      ret.add(nodeMapFromString(s));
+
+    for (Entry<CharSequence, List<CharSequence>> e : cfgmap.nodemap.entrySet()) {
+      List<String> list = new ArrayList<String>();
+      for (CharSequence c : e.getValue()) {
+        list.add(c.toString());
+      }
+      ret.add(new Pair<String, List<String>>(e.getKey().toString(), list));
     }
     return ret;
   }
 
   /**
-   * Saves the physical->logical node mappings to ZK
+   * Saves the physical->logical node mappings to ZK. Synchronized so that
+   * nodeMap does not have to be copied - it is iterated over by
+   * serializeNodeMap
    */
   protected synchronized void saveNodeMaps(String prefix) {
     Preconditions.checkNotNull(this.client, "Client is null in saveNodeMaps");
     try {
-      client.create(prefix + "/nodes", serializeNodeMap(), Ids.OPEN_ACL_UNSAFE,
-          CreateMode.PERSISTENT_SEQUENTIAL);
+      client.create(prefix + "/nodes", serializeNodeMap(this.nodeMap),
+          Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
     } catch (KeeperException e) {
       LOG.error("ZooKeeper exception: ", e);
     } catch (InterruptedException e) {
@@ -444,7 +473,7 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
   /**
    * This is called whenever an event is seen on the ZK ensemble that we
    * have registered for. We care particularly about changes to the list of
-   * configurations, made by some other peer.  
+   * configurations, made by some other peer.
    */
   public synchronized void process(WatchedEvent event) {
     if (client == null) {

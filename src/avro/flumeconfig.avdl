@@ -26,6 +26,7 @@
 
 @namespace("com.cloudera.flume.conf.avro")
 
+
 protocol FlumeReportAvroServer{
   enum FlumeNodeState { HELLO, IDLE, CONFIGURING,
     ACTIVE, ERROR, LOST, DECOMMISSIONED }
@@ -42,6 +43,15 @@ protocol FlumeReportAvroServer{
     map<string> stringMetrics;
     map<long> longMetrics;
     map<double> doubleMetrics;
+  }
+
+
+  record AvroFlumeConfigDataMap {
+    map<AvroFlumeConfigData> configs;
+  }
+
+  record AvroFlumeNodeMap {
+    map<array<string>> nodemap;
   }
 
   // returns true if the sourceId's configuration has changed

@@ -1,11 +1,22 @@
+Flume 0.9.2 (Unreleased)
+========================
+
+Flume 0.9.2 is *not backwards compatible* with <0.9.2 installations
+due to FLUME-216 - this release changes how configurations and node
+maps are persisted to ZooKeeper and 0.9.2 masters cannot read
+configurations or node maps written by masters from <0.9.2
+installations. There is no upgrade path yet to preserve both node maps
+and configurations, but one is planned for the 0.9.2 release.
+
+
 Flume 0.9.1 Release Notes
 =========================   
 
-This release of Flume has implements the core framework and has
+This release of Flume implements the core framework and has
 implementations of most of the major features of the Flume system
-describes in the Flume User Guide.  Some sections are stable, while
-others are have code under active development.  We also list several
-known bugs and instabilities.
+described in the Flume User Guide. Some sections are stable, while
+others are under active development. We also list several known bugs
+and instabilities.
 
 Supported platforms: Linux, requires Java 1.6, not tested on windows
 
