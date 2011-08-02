@@ -131,6 +131,7 @@ public class ConfigManager implements ConfigurationManager {
     html.append("<td>" + name + "</td>");
     FlumeConfigData cfg = fcd;
     html.append("<td>" + new Date(cfg.timestamp) + "</td>");
+    html.append("<td>" + cfg.flowID + "</td>");
     html.append("<td>" + cfg.sourceConfig + "</td>");
     html.append("<td>" + cfg.sinkConfig + "</td>");
     html.append("</tr>\n");
@@ -157,7 +158,8 @@ public class ConfigManager implements ConfigurationManager {
   synchronized public ReportEvent getReport() {
     StringBuilder html = new StringBuilder();
     html.append("<h2>Node configuration</h2>\n<table border=\"1\"><tr>"
-        + "<th>Node</th><th>Version</th><th>Source</th><th>Sink</th></tr>");
+        + "<th>Node</th><th>Version</th><th>Flow ID</th><th>Source</th>"
+        + "<th>Sink</th></tr>");
     Map<String, FlumeConfigData> cfgs = new TreeMap<String, FlumeConfigData>(
         cfgStore.getConfigs());
     synchronized (cfgs) {
