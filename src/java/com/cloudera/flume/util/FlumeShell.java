@@ -107,9 +107,8 @@ public class FlumeShell {
 
   static {
     commandMap.put("connect", new CommandDescription("host[:adminport="
-        + FlumeConfiguration.get().getConfigAdminPort()
-        + "[:reportport=" + FlumeConfiguration.get().getConfigReportPort()
-        + "]]", false, 1));
+        + FlumeConfiguration.get().getConfigAdminPort() + "[:reportport="
+        + FlumeConfiguration.get().getConfigReportPort() + "]]", false, 1));
     commandMap.put("getnodestatus", new CommandDescription("", true, 0));
     commandMap.put("quit", new CommandDescription("", false, 0));
     commandMap.put("getconfigs", new CommandDescription("", true, 0));
@@ -162,8 +161,7 @@ public class FlumeShell {
     commandMap.put("submit unmap", new CommandDescription(
         "physicalnode logicalnode", true, 3));
     commandMap.put("submit unmapAll", new CommandDescription("", true, 1));
-    commandMap.put("getreports", new CommandDescription(
-        "", true, 0));
+    commandMap.put("getreports", new CommandDescription("", true, 0));
 
   }
 
@@ -275,7 +273,7 @@ public class FlumeShell {
     return -1;
 
   }
-  
+
   boolean isDone(FlumeNodeStatus status) {
     FlumeNodeState state = status.getState();
     switch (state) {
@@ -469,7 +467,7 @@ public class FlumeShell {
     }
     return aPort;
   }
-  
+
   private static int parseReportPort(String arg) {
     // determine the report server port
     int rPortDefault = FlumeConfiguration.get().getConfigReportPort();
@@ -482,7 +480,7 @@ public class FlumeShell {
     }
     return rPort;
   }
-  
+
   /**
    * This either returns 0 for success, a value <0 for failure, and any return
    * >0 is a command id received from the master.
@@ -769,7 +767,13 @@ public class FlumeShell {
    */
   public long executeLine(String line) {
     // do nothing if no line, empty line or comment
-    if (line == null || line.equals("") || line.startsWith("#")) {
+    if (line == null) {
+      return 0;
+    }
+
+    // trim white space and and then check
+    line = line.trim();
+    if (line.equals("") || line.startsWith("#")) {
       return 0;
     }
 
@@ -794,7 +798,8 @@ public class FlumeShell {
             : "(disconnected)") + "] ";
   }
 
-  private Client connectClient(String host, int port) throws TTransportException {
+  private Client connectClient(String host, int port)
+      throws TTransportException {
     TTransport masterTransport = new TSocket(host, port);
     TProtocol protocol = new TBinaryProtocol(masterTransport);
     masterTransport.open();
@@ -802,7 +807,7 @@ public class FlumeShell {
   }
 
   private FlumeReportServer.Client connectReportClient(String host, int port)
-    throws TTransportException {
+      throws TTransportException {
     TTransport masterTransport = new TSocket(host, port);
     TProtocol protocol = new TBinaryProtocol(masterTransport);
     masterTransport.open();
@@ -810,15 +815,15 @@ public class FlumeShell {
   }
 
   protected void connect(String host, int aPort, int rPort)
-    throws TTransportException {
+      throws TTransportException {
     connected = false;
-    System.out.println("Connecting to Flume master " + host + ":" + aPort
-        + ":" + rPort + "...");
+    System.out.println("Connecting to Flume master " + host + ":" + aPort + ":"
+        + rPort + "...");
 
     client = connectClient(host, aPort);
     // use default for now
     reportClient = connectReportClient(host, rPort);
-    
+
     curhost = host;
     curAPort = aPort;
     curRPort = rPort;
