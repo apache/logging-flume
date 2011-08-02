@@ -53,6 +53,14 @@ public class TestFlumeSpecGen {
     assertEquals(orig, out);
   }
 
+  @Test
+  public void testFunc() throws RecognitionException, FlumeSpecException {
+    String orig = "foo(\"bar\", 42)";
+    CommonTree tree = FlumeBuilder.parseArg(orig);
+    String out = FlumeSpecGen.genArg(tree);
+    assertEquals(orig, out);
+  }
+
   /**
    * Spaces are important for the next test cases.
    */
@@ -181,7 +189,27 @@ public class TestFlumeSpecGen {
     o2 = FlumeBuilder.parseSink(s2);
     out = FlumeSpecGen.genEventSink(o2);
     assertEquals(s2, out);
+  }
 
+  @Test
+  public void testFuncs() throws RecognitionException, FlumeSpecException {
+    // func arg
+    String s = "text( baz(42), foo=\"bar\" )";
+    CommonTree o = FlumeBuilder.parseSink(s);
+    String out = FlumeSpecGen.genEventSink(o);
+    assertEquals(s, out);
+
+    // func with func arg
+    String s2 = "text( baz(bog(\"boo\")), foo=\"bar\" )";
+    CommonTree o2 = FlumeBuilder.parseSink(s2);
+    out = FlumeSpecGen.genEventSink(o2);
+    assertEquals(s2, out);
+
+    // func as kwarg
+    String s3 = "text( bogus=baz(42), foo=\"bar\" )";
+    CommonTree o3 = FlumeBuilder.parseSink(s3);
+    out = FlumeSpecGen.genEventSink(o3);
+    assertEquals(s3, out);
   }
 
 }
