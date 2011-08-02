@@ -27,6 +27,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.handlers.avro.AvroDataFileOutputFormat;
 import com.cloudera.flume.handlers.avro.AvroJsonOutputFormat;
@@ -46,6 +47,9 @@ import com.cloudera.flume.handlers.text.output.RawOutputFormat;
  */
 @SuppressWarnings("serial")
 public class FormatFactory {
+
+  private static final Logger LOG = LoggerFactory
+      .getLogger(FormatFactory.class);
 
   public abstract static class OutputFormatBuilder {
     public abstract OutputFormat build(String... args);
@@ -212,4 +216,42 @@ public class FormatFactory {
     return false;
   }
 
+  /**
+   * Load output format plugins specified by
+   * {@link FlumeConfiguration#OUTPUT_FORMAT_PLUGIN_CLASSES}. Invalid plugins
+   * are discarded from the list with errors logged.
+   */
+  public static void loadOutputFormatPlugins() {
+    String outputFormatPluginClasses = FlumeConfiguration.get().get(
+        FlumeConfiguration.OUTPUT_FORMAT_PLUGIN_CLASSES, "");
+    String[] classes = outputFormatPluginClasses.split(",\\s*");
+
+    for (String className : classes) {
+      try {
+        Class<?> cls = Class.forName(className);
+        if (OutputFormatBuilder.class.isAssignableFrom(cls)) {
+          OutputFormatBuilder builder = (OutputFormatBuilder) cls.newInstance();
+
+          FormatFactory.get().registerFormat(builder.getName(), builder);
+
+          LOG.info("Registered output format plugin " + className);
+        } else {
+          LOG.warn("Ignoring output format plugin class " + className
+              + " - Does not subclass OutputFormatBuilder");
+        }
+      } catch (ClassNotFoundException e) {
+        LOG.warn("Unable to load output format plugin class " + className
+            + " - Class not found");
+      } catch (FlumeSpecException e) {
+        LOG.warn("Unable to load output format plugin class " + className
+            + " - Flume spec exception follows.", e);
+      } catch (InstantiationException e) {
+        LOG.warn("Unable to load output format plugin class " + className
+            + " - Unable to instantiate class.", e);
+      } catch (IllegalAccessException e) {
+        LOG.warn("Unable to load output format plugin class " + className
+            + " - Access violation.", e);
+      }
+    }
+  }
 }
