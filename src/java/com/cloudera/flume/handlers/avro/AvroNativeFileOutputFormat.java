@@ -39,6 +39,8 @@ import com.google.common.base.Preconditions;
  */
 public class AvroNativeFileOutputFormat implements OutputFormat {
 
+  private static final String formatName = "avro";
+
   final static ReflectData reflectData = ReflectData.get();
   final static Schema schema = reflectData.getSchema(EventImpl.class);
 
@@ -80,7 +82,7 @@ public class AvroNativeFileOutputFormat implements OutputFormat {
 
   @Override
   public String getFormatName() {
-    return "avro";
+    return formatName;
   }
 
   public static OutputFormatBuilder builder() {
@@ -89,6 +91,11 @@ public class AvroNativeFileOutputFormat implements OutputFormat {
       public OutputFormat build(String... args) {
         Preconditions.checkArgument(args.length == 0, "usage: avro");
         return new AvroNativeFileOutputFormat();
+      }
+
+      @Override
+      public String getName() {
+        return formatName;
       }
 
     };

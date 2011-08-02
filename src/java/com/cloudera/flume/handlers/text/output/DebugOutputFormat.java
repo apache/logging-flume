@@ -31,9 +31,11 @@ import com.google.common.base.Preconditions;
  */
 public class DebugOutputFormat implements OutputFormat {
 
+  private static final String NAME = "debug";
+
   @Override
   public String getFormatName() {
-    return "debug";
+    return NAME;
   }
 
   @Override
@@ -47,6 +49,11 @@ public class DebugOutputFormat implements OutputFormat {
       public OutputFormat build(String... args) {
         Preconditions.checkArgument(args.length == 0, "usage: debug");
         return new DebugOutputFormat();
+      }
+
+      @Override
+      public String getName() {
+        return NAME;
       }
     };
   }

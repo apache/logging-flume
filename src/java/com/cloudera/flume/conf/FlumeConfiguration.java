@@ -262,6 +262,7 @@ public class FlumeConfiguration extends Configuration {
   public static final String HIVE_PW = "flume.hive.userpw";
 
   public static final String PLUGIN_CLASSES = "flume.plugin.classes";
+  public static final String OUTPUT_FORMAT_PLUGIN_CLASSES = "flume.plugin.outputformat.classes";
 
   // Options for RPC type
   public static final String RPC_TYPE_THRIFT = "THRIFT";

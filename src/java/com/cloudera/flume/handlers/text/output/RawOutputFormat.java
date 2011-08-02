@@ -30,9 +30,11 @@ import com.google.common.base.Preconditions;
  */
 public class RawOutputFormat implements OutputFormat {
 
+  private static final String NAME = "raw";
+
   @Override
   public String getFormatName() {
-    return "raw";
+    return NAME;
   }
 
   @Override
@@ -47,6 +49,11 @@ public class RawOutputFormat implements OutputFormat {
       public OutputFormat build(String... args) {
         Preconditions.checkArgument(args.length == 0, "usage: raw");
         return new RawOutputFormat();
+      }
+
+      @Override
+      public String getName() {
+        return NAME;
       }
     };
   }

@@ -43,6 +43,7 @@ import com.google.common.base.Preconditions;
 public class AvroDataFileOutputFormat implements OutputFormat {
   final static ReflectData reflectData = ReflectData.get();
   final static Schema schema = reflectData.getSchema(EventImpl.class);
+  private static final String NAME = "avrodatafile";
 
   DatumWriter<EventImpl> writer = new ReflectDatumWriter<EventImpl>(schema);
 
@@ -80,7 +81,7 @@ public class AvroDataFileOutputFormat implements OutputFormat {
 
   @Override
   public String getFormatName() {
-    return "avrodatafile";
+    return NAME;
   }
 
   public static OutputFormatBuilder builder() {
@@ -91,6 +92,10 @@ public class AvroDataFileOutputFormat implements OutputFormat {
         return new AvroDataFileOutputFormat();
       }
 
+      @Override
+      public String getName() {
+        return NAME;
+      }
     };
   }
 

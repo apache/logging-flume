@@ -47,4 +47,5 @@ public interface OutputFormat {
    * A constant name for this particular outputFormat
    */
   public String getFormatName();
+
 }

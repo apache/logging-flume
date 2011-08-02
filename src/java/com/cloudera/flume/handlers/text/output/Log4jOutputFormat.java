@@ -48,6 +48,8 @@ import com.google.common.base.Preconditions;
  */
 
 public class Log4jOutputFormat implements OutputFormat {
+  private static final String NAME = "log4j";
+
   private String format(Event e) {
     Date d = new Date(e.getTimestamp());
     String data = String.format("%s %s %s: %s\n", DateUtils.asISO8601(d),
@@ -72,6 +74,11 @@ public class Log4jOutputFormat implements OutputFormat {
       public OutputFormat build(String... args) {
         Preconditions.checkArgument(args.length <= 0, "usage: hadooplog4j");
         return new Log4jOutputFormat();
+      }
+
+      @Override
+      public String getName() {
+        return NAME;
       }
     };
   }

@@ -45,7 +45,8 @@ import com.google.common.base.Preconditions;
 public class SyslogEntryFormat implements InputFormat, OutputFormat {
   final static Pattern SYSLOG_PAT = Pattern
       .compile("(\\S{3} \\d{1,2} \\d{2}:\\d{2}:\\d{2}) (\\S+) ([^:]*?)(:(.*))?");
-  
+  private static final String NAME = "syslog";
+
   // Not static because of concurrency bug in JDK on static DateFormats
   // see: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6231579
   final DateFormat SYSLOG_DF = new SimpleDateFormat("MMM dd HH:mm:ss");
@@ -140,7 +141,7 @@ public class SyslogEntryFormat implements InputFormat, OutputFormat {
 
   @Override
   public String getFormatName() {
-    return "syslogEntry";
+    return NAME;
   }
 
   public static OutputFormatBuilder builder() {
@@ -157,6 +158,10 @@ public class SyslogEntryFormat implements InputFormat, OutputFormat {
         return new SyslogEntryFormat(year);
       }
 
+      @Override
+      public String getName() {
+        return NAME;
+      }
     };
   }
 

@@ -17,8 +17,13 @@
  */
 package com.cloudera.flume.handlers.text;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.handlers.avro.AvroDataFileOutputFormat;
@@ -40,6 +45,8 @@ import com.cloudera.flume.handlers.text.output.RawOutputFormat;
 public class FormatFactory {
 
   public abstract static class OutputFormatBuilder {
+    public abstract String getName();
+
     public abstract OutputFormat build(String... args);
   };
 
@@ -47,36 +54,45 @@ public class FormatFactory {
     public OutputFormat build(String... args) {
       return new RawOutputFormat();
     }
-  };
 
-  final static Map<String, OutputFormatBuilder> FORMATS = new HashMap<String, OutputFormatBuilder>() {
-    {
-      put("default", DEFAULT);
-      put("debug", DebugOutputFormat.builder());
-      put("raw", RawOutputFormat.builder());
-      put("syslog", SyslogEntryFormat.builder());
-      put("log4j", Log4jOutputFormat.builder());
-      put("avrojson", AvroJsonOutputFormat.builder());
-      put("avrodata", AvroDataFileOutputFormat.builder());
-      put("avro", AvroNativeFileOutputFormat.builder());
+    @Override
+    public String getName() {
+      return "default";
     }
   };
+
+  final static Map<String, OutputFormatBuilder> CORE_FORMATS = new HashMap<String, OutputFormatBuilder>() {
+    {
+      put(DEFAULT.getName(), DEFAULT);
+      put(DebugOutputFormat.builder().getName(), DebugOutputFormat.builder());
+      put(RawOutputFormat.builder().getName(), RawOutputFormat.builder());
+      put(SyslogEntryFormat.builder().getName(), SyslogEntryFormat.builder());
+      put(Log4jOutputFormat.builder().getName(), Log4jOutputFormat.builder());
+      put(AvroJsonOutputFormat.builder().getName(), AvroJsonOutputFormat.builder());
+      put(AvroDataFileOutputFormat.builder().getName(), AvroDataFileOutputFormat.builder());
+      put(AvroNativeFileOutputFormat.builder().getName(), AvroNativeFileOutputFormat.builder());
+    }
+  };
+
+  private static final Logger logger = LoggerFactory
+      .getLogger(FormatFactory.class);
 
   // order matters here. This has to be after FORMATS
   final static FormatFactory defaultfactory = new FormatFactory();
 
-  Map<String, OutputFormatBuilder> outputs;
+  Map<String, OutputFormatBuilder> registeredFormats;
 
   FormatFactory(Map<String, OutputFormatBuilder> formats) {
-    this.outputs = formats;
+    this.registeredFormats = formats;
   }
 
   public FormatFactory() {
-    this(FORMATS);
+    this(CORE_FORMATS);
   }
 
   public OutputFormat getOutputFormat(String name, String... args)
       throws FlumeSpecException {
+    OutputFormatBuilder builder;
 
     // purposely said no format? return default.
     if (name == null) {
@@ -84,7 +100,10 @@ public class FormatFactory {
     }
 
     // specified a format but it was invalid? This is a problem.
-    OutputFormatBuilder builder = outputs.get(name);
+    synchronized (registeredFormats) {
+      builder = registeredFormats.get(name);
+    }
+
     if (builder == null) {
       throw new FlumeSpecException("Invalid output format: " + name);
     }
@@ -94,6 +113,82 @@ public class FormatFactory {
 
   public static FormatFactory get() {
     return defaultfactory;
+  }
+
+  /**
+   * Register {@link OutputFormatBuilder} with the name {@code name}. This is
+   * use internally by {@link #registerFormat(OutputFormatBuilder)} and when one
+   * would like to create alias names for an {@link OutputFormatBuilder}.
+   * 
+   * @param name
+   *          The name for the output format plugin.
+   * @param builder
+   *          The builder to register.
+   * @return {@code this} to permit method chaining.
+   * @throws FlumeSpecException
+   *           If a {@code builder} is already registered for {@code name}.
+   */
+  public FormatFactory registerFormat(String name, OutputFormatBuilder builder) throws FlumeSpecException {
+    synchronized (registeredFormats) {
+      if (registeredFormats.containsKey(name)) {
+        throw new FlumeSpecException("Redefining registered output formats is not permitted. Attempted to redefine " + name);
+      }
+
+      registeredFormats.put(name, builder);
+    }
+
+    return this;
+  }
+
+  /**
+   * Register an {@link OutputFormatBuilder} with the {@link FormatFactory}.
+   * 
+   * @param builder
+   *          The builder to register.
+   * @return {@code this} to permit method chaining.
+   * @throws FlumeSpecException
+   *           If the {@code builder} is already registered.
+   */
+  public FormatFactory registerFormat(OutputFormatBuilder builder) throws FlumeSpecException {
+    synchronized (registeredFormats) {
+      String name;
+
+      name = builder.getName();
+
+      registerFormat(name, builder);
+    }
+
+    return this;
+  }
+
+  /**
+   * Returns a copy of the registered formats at the time of invocation.
+   * 
+   * @return
+   */
+  public Collection<OutputFormatBuilder> getRegisteredFormats() {
+    synchronized (registeredFormats) {
+      return new ArrayList<FormatFactory.OutputFormatBuilder>(registeredFormats.values());
+    }
+  }
+
+  /**
+   * Remove {@code formatName} from the registry of output formats. Note that
+   * this does not attempt to unload the class even if it was dynamically
+   * loaded.
+   * 
+   * @param formatName The format name to unregister
+   */
+  public boolean unregisterFormat(String formatName) {
+    synchronized (registeredFormats) {
+      if (registeredFormats.containsKey(formatName)) {
+        return registeredFormats.remove(formatName) != null;
+      } else {
+        logger.warn("Attempt to unregister an unknown format " + formatName);
+      }
+    }
+
+    return false;
   }
 
 }

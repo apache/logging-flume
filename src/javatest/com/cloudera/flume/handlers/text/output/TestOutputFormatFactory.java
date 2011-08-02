@@ -21,7 +21,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStream;
 
+import org.apache.log4j.Logger;
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.cloudera.flume.conf.Context;
@@ -30,6 +33,8 @@ import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
+import com.cloudera.flume.handlers.text.FormatFactory;
+import com.cloudera.flume.handlers.text.FormatFactory.OutputFormatBuilder;
 
 /**
  * This tests building of outputformats via the FormatFactory mechanism. These
@@ -38,6 +43,7 @@ import com.cloudera.flume.core.EventSink;
  */
 public class TestOutputFormatFactory {
 
+  private static final Logger LOG = Logger.getLogger(TestOutputFormatFactory.class);
   final int count = 5;
 
   /**
@@ -224,6 +230,99 @@ public class TestOutputFormatFactory {
     }
     snk.close();
     assert (checkFile(tmp));
+  }
+
+  /**
+   * Write out to file and check to make sure there are 5 lines prefixed by
+   * "WACKADOODLE:".
+   * 
+   * @throws IOException
+   */
+  @Test
+  public void testWackaDoodle() throws FlumeSpecException, IOException {
+    EventSink sink;
+    File tmpFile;
+    BufferedReader reader;
+    int matchedLines;
+
+    tmpFile = File.createTempFile("wackadoodleOutputFormatTest", ".tmp");
+    tmpFile.deleteOnExit();
+
+    FormatFactory.get().registerFormat(new OutputFormatBuilder() {
+
+      @Override
+      public String getName() {
+        return "wackadoodle";
+      }
+
+      @Override
+      public OutputFormat build(String... args) {
+        return new OutputFormat() {
+
+          @Override
+          public void format(OutputStream o, Event e) throws IOException {
+            o.write(("WACKADOODLE: " + new String(e.getBody())).getBytes());
+          }
+
+          @Override
+          public String getFormatName() {
+            return "wackadoodle";
+          }
+        };
+      }
+
+    });
+
+    sink = null;
+
+    try {
+      sink = FlumeBuilder.buildSink(new Context(),
+          "[ counter(\"count\"), text(\"" + tmpFile.getAbsolutePath()
+              + "\", \"wackadoodle\") ]");
+    } catch (FlumeSpecException e) {
+      LOG.error("Caught an exception while building a test sink. Exception follows.", e);
+      Assert
+          .fail("Unable to create sink. Possible lack of output format plugin? Cause:"
+              + e.getMessage());
+    }
+
+    Assert.assertNotNull(sink);
+
+    sink.open();
+
+    for (int i = 0; i < count; i++) {
+      Event e;
+
+      e = new EventImpl(("test line " + i + "\n").getBytes());
+
+      sink.append(e);
+    }
+
+    sink.close();
+
+    matchedLines = 0;
+    reader = null;
+
+    try {
+      String line;
+
+      reader = new BufferedReader(new FileReader(tmpFile));
+      line = reader.readLine();
+
+      while (line != null) {
+        if (line.startsWith("WACKADOODLE:")) {
+          matchedLines++;
+        }
+
+        line = reader.readLine();
+      }
+    } finally {
+      if (reader != null) {
+        reader.close();
+      }
+    }
+
+    Assert.assertEquals(count, matchedLines);
   }
 
 }

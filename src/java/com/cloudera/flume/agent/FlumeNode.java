@@ -50,6 +50,8 @@ import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.handlers.debug.ChokeManager;
 import com.cloudera.flume.handlers.endtoend.AckListener;
 import com.cloudera.flume.handlers.endtoend.CollectorAckListener;
+import com.cloudera.flume.handlers.text.FormatFactory;
+import com.cloudera.flume.handlers.text.FormatFactory.OutputFormatBuilder;
 import com.cloudera.flume.reporter.MasterReportPusher;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
@@ -282,6 +284,39 @@ public class FlumeNode implements Reportable {
   }
 
   /**
+   * Load output format plugins specified by
+   * {@link FlumeConfiguration#OUTPUT_FORMAT_PLUGIN_CLASSES}. Invalid plugins
+   * are discarded from the list with errors logged.
+   */
+  public static void loadOutputFormatPlugins() {
+    String outputFormatPluginClasses = FlumeConfiguration.get().get(FlumeConfiguration.OUTPUT_FORMAT_PLUGIN_CLASSES, "");
+    String[] classes = outputFormatPluginClasses.split(",\\s*");
+
+    for (String className : classes) {
+      try {
+        Class<?> cls = Class.forName(className);
+        if (OutputFormatBuilder.class.isAssignableFrom(cls)) {
+          OutputFormatBuilder builder = (OutputFormatBuilder) cls.newInstance();
+
+          FormatFactory.get().registerFormat(builder.getName(), builder);
+
+          LOG.info("Registered output format plugin " + className);
+        } else {
+          LOG.warn("Ignoring output format plugin class " + className + " - Does not subclass OutputFormatBuilder");
+        }
+      } catch (ClassNotFoundException e) {
+        LOG.warn("Unable to load output format plugin class " + className + " - Class not found");
+      } catch (FlumeSpecException e) {
+        LOG.warn("Unable to load output format plugin class " + className + " - Flume spec exception follows.", e);
+      } catch (InstantiationException e) {
+        LOG.warn("Unable to load output format plugin class " + className + " - Unable to instantiate class.", e);
+      } catch (IllegalAccessException e) {
+        LOG.warn("Unable to load output format plugin class " + className + " - Access violation.", e);
+      }
+    }
+  }
+
+  /**
    * This method is currently called by the JSP to display node information.
    */
   public String report() {
@@ -430,8 +465,11 @@ public class FlumeNode implements Reportable {
       oneshot = true;
     }
 
+    loadOutputFormatPlugins();
+
     // Instantiate the flume node.
     FlumeConfiguration conf = FlumeConfiguration.get();
+
     FlumeNode flume = new FlumeNode(nodename, conf, startHttp, oneshot);
 
     flume.start();

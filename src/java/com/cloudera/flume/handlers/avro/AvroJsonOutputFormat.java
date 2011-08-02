@@ -41,6 +41,7 @@ import com.google.common.base.Preconditions;
 public class AvroJsonOutputFormat implements OutputFormat {
   final static ReflectData reflectData = ReflectData.get();
   final static Schema schema = reflectData.getSchema(EventImpl.class);
+  private static final String NAME = "avrojson";
 
   ReflectDatumWriter<EventImpl> writer = new ReflectDatumWriter<EventImpl>(
       schema);
@@ -79,7 +80,7 @@ public class AvroJsonOutputFormat implements OutputFormat {
 
   @Override
   public String getFormatName() {
-    return "avrojson";
+    return NAME;
   }
 
   public static OutputFormatBuilder builder() {
@@ -90,6 +91,10 @@ public class AvroJsonOutputFormat implements OutputFormat {
         return new AvroJsonOutputFormat();
       }
 
+      @Override
+      public String getName() {
+        return NAME;
+      }
     };
   }
 
