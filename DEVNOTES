@@ -138,9 +138,24 @@ debugging process.
 Here are some tips for getting the web apps for Flume Master or Flume
 Node running from inside eclipse.
 
-* Make sure `tools.jar` is in your java classpath.  This allows the compiler to be present.
-* Ant is used to compile jsps.  Make sure some version of ant-launcher.jar and ant-1.x.x.jar is in your build path. (if you are in eclipse for example)
-* The default is to point to a the web app at a precompiled version of of the servlets.  There is a hook in flume-site.xml to point the jetty at a directory full of jsps.  It assumes that hte flume directory is the base for relative paths or can use a fully qualified path 
+* Make sure `tools.jar` is in your java classpath.  If JAVA_HOME is
+  set to a JDK JVM path (as opposed to a JRE) this jar should be
+  included.  This jar includes the java compiler which is required to
+  enable the compilation of jsp's so they can be served on the fly.
+* Ant is used to compile jsps.  Make sure some version of
+  ant-launcher.jar and ant-1.x.x.jar is in your build path. (if you
+  are in eclipse for example).  These files live in ./libbuild
+* The default is to point to a the web app at a precompiled version of
+  of the servlets.  There is a hook in flume-site.xml to point the
+  jetty at a directory full of jsps.  It assumes that hte flume
+  directory is the base for relative paths or can use a fully
+  qualified path
+
+Environment variables can be set in the +bin/flume-env.sh+ script.
+----
+# bin/flume-env.sh for Ubuntu installs
+export JAVA_HOME=/usr/lib/jvm/java-6-sun
+----
 
 Alternately, instead of using symlnks, one can set the following
 property in the system's flume-site.conf file, like below.

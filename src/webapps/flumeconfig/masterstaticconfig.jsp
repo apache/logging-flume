@@ -34,7 +34,10 @@
 <body>
 <jsp:include page="menu.jsp" />
 
-<h1> Static Configuration </h1>
+<h1> Flume Master: Static Configuration </h1>
+
+<jsp:include page="version.jsp" />
+<hr>
 
 <%= FlumeConfiguration.get().toHtml() %>
 

@@ -18,7 +18,6 @@
 <html><head>
 <!-- Copyright (c) 2010 Cloudera, Inc.  All rights reserved. -->
 <!-- Retro web 1.0 flume Agent configuration display -->
-<title>Flume Node</title>
 <%@ page
 	contentType="text/html; charset=UTF-8"
 	import="javax.servlet.*"
@@ -26,28 +25,19 @@
 	import="java.io.*"
 	import="java.util.*"
 	import="java.text.DecimalFormat"
-	import="com.cloudera.flume.VersionInfo"
 	import="com.cloudera.flume.agent.FlumeNode"
 %>
+<title>Flume Node: <%= FlumeNode.getInstance().getPhysicalNodeName()%></title>
 <link rel="stylesheet" type="text/css" href="/flume.css" />
 
 </head>
 <body>
 <jsp:include page="menu_agent.jsp" />
 
-<h1> Flume Agent </h1>
+<h1> Flume Node: <%= FlumeNode.getInstance().getPhysicalNodeName()%></h1>
 
-<%--
-<b>Started:</b> <%= new Date(tracker.getStartTime())%><br>
---%>
-<b>Version:</b> <%= VersionInfo.getVersion()%>,
-								r<%= VersionInfo.getRevision()%><br>
-<b>Compiled:</b> <%= VersionInfo.getDate()%> by
-								 <%= VersionInfo.getUser()%><br>
-<%--
-<b>Identifier:</b> <%= tracker.getTrackerIdentifier()%><br>
---%>
-
+<jsp:include page="version.jsp" />
+<hr>
 
 
 <%= FlumeNode.getInstance().report() %>

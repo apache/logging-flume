@@ -37,6 +37,7 @@
 <body>
 <jsp:include page="menu.jsp" />
 <h1>Flume Master</h1>
+<jsp:include page="version.jsp" />
 
 <h3>ServerID: <%= FlumeConfiguration.get().getMasterServerId()%></h3>
 <h3>Servers <% for (String s :
@@ -45,13 +46,7 @@ FlumeConfiguration.get().getMasterServers().split(",")) { %>
 <% } %>
 </h3>
 
-<%-- <b>Started:</b> <%= new Date(tracker.getStartTime())%><br>
-<b>Version:</b> <%= VersionInfo.getVersion()%>,
-								r<%= VersionInfo.getRevision()%><br>
-<b>Compiled:</b> <%= VersionInfo.getDate()%> by
-								 <%= VersionInfo.getUser()%><br>
-<b>Identifier:</b> <%= tracker.getTrackerIdentifier()%><br>
---%>
+<hr>
 
 <% FlumeMaster.getInstance().reportHtml(out); %>
 

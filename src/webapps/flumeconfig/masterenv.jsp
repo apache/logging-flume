@@ -34,8 +34,9 @@
 <body>
 <jsp:include page="menu.jsp" />
 
-<h1>Environment</h1>
-
+<h1>Flume Master : Environment</h1>
+<jsp:include page="version.jsp" />
+<hr>
 <table>
 
 <%

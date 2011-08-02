@@ -18,7 +18,6 @@
 <html><head>
 <!-- Copyright (c) 2010 Cloudera, Inc.  All rights reserved. -->
 <!-- Retro web 1.0 flume Agent configuration display -->
-<title>Flume Node: Static Configuration</title>
 <%@ page
 	contentType="text/html; charset=UTF-8"
 	import="javax.servlet.*"
@@ -27,14 +26,24 @@
 	import="java.util.*"
 	import="java.text.DecimalFormat"
 	import="com.cloudera.flume.conf.FlumeConfiguration"
+        import="com.cloudera.flume.agent.FlumeNode"
 %>
+<title>
+Flume Node: <%= FlumeNode.getInstance().getPhysicalNodeName()%>
+ :: Static Configuration
+</title>
+
 <link rel="stylesheet" type="text/css" href="/flume.css" />
 
 </head>
 <body>
 <jsp:include page="menu_agent.jsp" />
 
-<h1> Static Configuration </h1>
+<h1> Flume Node: <%= FlumeNode.getInstance().getPhysicalNodeName()%> ::  Static Configuration</h1>
+
+<jsp:include page="version.jsp" />
+<hr>
+
 
 <%= FlumeConfiguration.get().toHtml() %>
 

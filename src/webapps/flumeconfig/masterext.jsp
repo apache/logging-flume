@@ -34,7 +34,9 @@
 <body>
 <jsp:include page="menu.jsp" />
 
-<h1>Extensions - Sink/Source/Decorator</h1>
+<h1>Flume Master : Extensions - Sink/Source/Decorator</h1>
+<jsp:include page="version.jsp" />
+<hr>
 
 <div id="sinks">
 <h2>Sinks</h2>

@@ -1,3 +1,4 @@
+
 <!--
  Licensed to Cloudera, Inc. under one
  or more contributor license agreements.  See the NOTICE file
@@ -15,9 +16,14 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 -->
-<a href="flumeagent.jsp">node</a> | 
-<a href="staticconfig.jsp">static config</a> | 
-<a href="environment.jsp">env</a> | 
-<a href="extension.jsp">ext</a> | 
-<a href="flumereporter.jsp">report metrics</a>
-<br>
+<%@ page
+    contentType="text/html; charset=UTF-8"
+    import="com.cloudera.flume.VersionInfo"
+%>
+
+<b>Version:</b> <%= VersionInfo.getVersion()%>,
+r<%= VersionInfo.getRevision()%><br>
+<b>Compiled:</b> <%= VersionInfo.getDate()%> by
+<%= VersionInfo.getUser()%><br>
+
+

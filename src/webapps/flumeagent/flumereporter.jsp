@@ -18,7 +18,7 @@
 <html>
 <link rel="stylesheet" type="text/css" href="/flume.css">
 <head>
-<!--(c) Copyright (2009) Cloudera, Inc.    -->
+<!--(c) Copyright (2010) Cloudera, Inc.    -->
 <!-- Retro web 1.0 flume reporter display -->
 <title>Flume Node Metrics Report (JSON)</title>
 <%@ page
@@ -28,8 +28,8 @@
 	import="java.io.*"
 	import="java.util.*"
 	import="java.text.DecimalFormat"
-	import="com.cloudera.flume.VersionInfo"
 	import="com.cloudera.flume.reporter.ReportManager"
+        import="com.cloudera.flume.agent.FlumeNode"
 %>
 
 <meta HTTP-EQUIV="REFRESH" content="5;url=flumereporter.jsp"/>
@@ -39,17 +39,12 @@
 
 <jsp:include page="menu_agent.jsp" />
 
-<h1> Flume Node Metrics Report (JSON) </h1>
+<h1> Flume Node: <%=FlumeNode.getInstance().getPhysicalNodeName()%>
+ ::  Metrics Report (JSON) </h1>
 
-<%-- <b>Started:</b> <%= new Date(tracker.getStartTime())%><br> --%>
-<b>Version:</b> <%= VersionInfo.getVersion()%>,
-								r<%= VersionInfo.getRevision()%><br>
-<b>Compiled:</b> <%= VersionInfo.getDate()%> by
-								 <%= VersionInfo.getUser()%><br>
-<%--
-<b>Identifier:</b> <%= tracker.getTrackerIdentifier()%><br>
---%>
-
+<jsp:include page="version.jsp" />
+<hr>
+ 
 <%= ReportManager.get().getReport().toJson() %>
 
 </body></html>
