@@ -36,7 +36,8 @@
 
 <h1>Extensions - Sink/Source/Decorator</h1>
 
-<h2>Available Sinks</h2>
+<div id="sinks">
+<h2>Sinks</h2>
 <table>
 
 <%
@@ -49,8 +50,10 @@
 %>
 
 </table>
+</div>
 
-<h2>Available Sources</h2>
+<div id="sources">
+<h2>Sources</h2>
 <table>
 
 <%
@@ -63,8 +66,10 @@
 %>
 
 </table>
+</div>
 
-<h2>Available Decorators</h2>
+<div id="decos">
+<h2>Decorators</h2>
 <table>
 
 <%
@@ -77,5 +82,6 @@
 %>
 
 </table>
+</div>
 
 </body></html>

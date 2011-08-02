@@ -80,6 +80,19 @@ div#dfsnodetable .rowAlt, .headerASC, .headerDSC {
 	background-color : lightyellow;
 }
 
+div#sinks {
+  float:left; 
+}
+
+div#sources {
+  float:left; 
+  padding:0 2% 0 2%;
+}
+
+div#decos {
+  float:left; 
+}
+
 .warning {
         font-weight : bolder;
         color : red;	
