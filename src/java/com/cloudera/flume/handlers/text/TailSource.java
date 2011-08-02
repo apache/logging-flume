@@ -299,7 +299,7 @@ public class TailSource extends EventSource.Base {
           len += data.length;
 
           lastReadOffset = raf.getFilePointer();
-          lastMod = fmod;
+          lastMod = file.lastModified();
         }
 
         if (len == 0) {

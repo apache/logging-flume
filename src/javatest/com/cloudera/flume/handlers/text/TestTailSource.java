@@ -22,19 +22,24 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.CompositeSink;
+import com.cloudera.flume.core.Event;
+import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.core.EventUtil;
 import com.cloudera.flume.handlers.text.TailSource.Cursor;
@@ -346,4 +351,115 @@ public class TestTailSource {
     Cursor cursor = src.cursors.get(0);
     assertEquals(cursor.lastFileLen, cursor.lastReadOffset);
   }
+
+  /**
+   * Regression test for FLUME-218: Ensure cursor is not reset to the beginning
+   * of a file if the event rate exceeds a certain level or delays are
+   * introduced.
+   * 
+   * @throws IOException
+   * @throws FlumeSpecException
+   */
+  @Test
+  public void testResetRaceCondition() throws IOException {
+    File tmpFile;
+    final EventSource source;
+    final EventSink sink;
+    final AtomicBoolean workerFailed;
+    FileOutputStream os;
+    Thread thread;
+
+    tmpFile = File.createTempFile("tmp-", ".tmp");
+    tmpFile.deleteOnExit();
+
+    source = TailSource.builder().build(tmpFile.getAbsolutePath(), "true");
+    sink = CounterSink.builder().build(new ReportTestingContext(), "count");
+    workerFailed = new AtomicBoolean(false);
+    os = null;
+
+    /*
+     * A worker thread that blindly moves events until we send a poison pill
+     * message containing "EOF".
+     */
+    thread = new Thread() {
+
+      @Override
+      public void run() {
+        try {
+          Event e;
+
+          source.open();
+          sink.open();
+
+          e = null;
+
+          do {
+            e = source.next();
+            sink.append(e);
+          } while (e != null && !Arrays.equals(e.getBody(), "EOF".getBytes()));
+
+          source.close();
+          sink.close();
+        } catch (IOException e) {
+          LOG.error("Error while reading from / write to flume source / sink. Exception follows.", e);
+          workerFailed.set(true);
+        }
+      }
+    };
+
+    thread.start();
+
+    /*
+     * Throw 1000 filler events into our tmp file (purposefully unbuffered) and
+     * ensure we get fewer than 50 duplicates.
+     */
+    try {
+      os = new FileOutputStream(tmpFile);
+
+      for (int i = 0; i < 1000; i++) {
+
+        if (i % 100 == 0) {
+          os.flush();
+          os.close();
+          os = new FileOutputStream(tmpFile);
+        }
+
+        os.write((i + " 12345678901234567890123456789012345678901234567890123456789012334567890\n").getBytes());
+        Clock.sleep(20);
+      }
+
+      os.write("EOF".getBytes());
+      os.flush();
+    } catch (IOException e) {
+      LOG.error("Error while writing to tmp tail source file. Exception follows.", e);
+      Assert.fail();
+    } catch (InterruptedException e) {
+      LOG.error("Error while writing to tmp tail source file. Interrupted during a sleep. Exception follows.", e);
+      Assert.fail();
+    } finally {
+      if (os != null) {
+        os.close();
+      }
+    }
+
+    try {
+      thread.join();
+    } catch (InterruptedException e) {
+      Assert.fail("Failed to wait for worker thread to complete - interrupted");
+    }
+
+    Assert.assertFalse("Worker thread failed. Check logs for errors.", workerFailed.get());
+
+    /*
+     * FIXME - These tests should be uncommented when TailSource no longer
+     * sleep()s. Currently, this causes a race condition where a file being
+     * written to and truncated during a sleep causes a loss of data.
+     * 
+     * Assert.assertTrue("Saw fewer than 1000 events.", ((CounterSink)
+     * sink).getCount() > 1000);
+     * Assert.assertTrue("Saw more than 50 dupes for 1000 events",
+     * (((CounterSink) sink).getCount() - 1000) < 50);
+     */
+  }
+
 }
