@@ -24,6 +24,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
@@ -66,7 +67,7 @@ public class HelloWorldSource extends EventSource.Base {
     // construct a new parameterized source
     return new SourceBuilder() {
       @Override
-      public EventSource build(String... argv) {
+      public EventSource build(Context ctx,String... argv) {
         Preconditions.checkArgument(argv.length == 0,
             "usage: helloWorldSource");
 

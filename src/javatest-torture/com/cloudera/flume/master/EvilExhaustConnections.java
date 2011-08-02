@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.util.Benchmark;
@@ -44,7 +45,7 @@ public class EvilExhaustConnections {
   public void testTooManyOpens() throws IOException, FlumeSpecException, InterruptedException {
     Benchmark b = new Benchmark("connection exhaust");
 
-    EventSource src = FlumeBuilder.buildSource("thrift(31337)");
+    EventSource src = FlumeBuilder.buildSource(LogicalNodeContext.testingContext(),"thrift(31337)");
 
     EventSink snk = FlumeBuilder.buildSink("thrift(\"0.0.0.0\",31337)");
 
@@ -71,14 +72,15 @@ public class EvilExhaustConnections {
       InterruptedException {
     Benchmark b = new Benchmark("connection exhaust");
 
-    EventSource src = FlumeBuilder.buildSource("thrift(31337)");
+    EventSource src = FlumeBuilder.buildSource(LogicalNodeContext.testingContext(), "thrift(31337)");
     src.open();
 
     // iterate until an exception is thrown
     for (int i = 0; i < 10000; i++) { // previous fails at 1000, make sure ok at
       // an order of magnitude bigger.
 
-      EventSink snk = FlumeBuilder.buildSink("thrift(\"0.0.0.0\",31337)");
+      EventSink snk = FlumeBuilder.buildSink(LogicalNodeContext.testingContext(),
+          "thrift(\"0.0.0.0\",31337)");
       snk.open();
       System.out.println(i + " connections...");
       snk.close();
