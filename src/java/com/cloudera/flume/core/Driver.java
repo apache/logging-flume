@@ -50,7 +50,7 @@ abstract public class Driver {
 
   abstract public NodeState getState();
 
-  abstract public void registerListener(ConnectorListener listener);
+  abstract public void registerListener(DriverListener listener);
 
-  abstract public void deregisterListener(ConnectorListener listener);
+  abstract public void deregisterListener(DriverListener listener);
 }

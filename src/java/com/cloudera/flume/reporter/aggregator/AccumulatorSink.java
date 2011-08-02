@@ -18,7 +18,6 @@
 package com.cloudera.flume.reporter.aggregator;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
@@ -26,7 +25,6 @@ import org.apache.log4j.Logger;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
-import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.reporter.ReportEvent;
@@ -97,11 +95,11 @@ public class AccumulatorSink extends EventSink.Base {
           throw new IllegalArgumentException("need only a name argument");
         }
         EventSink snk = new AccumulatorSink(argv[0]);
-        
+
         if (context.getValue(ReportTestingContext.TESTING_REPORTS) != null) {
           ReportManager.get().add(snk);
         }
-        
+
         return snk;
       }
 

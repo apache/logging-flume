@@ -24,7 +24,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import com.cloudera.flume.core.Driver;
-import com.cloudera.flume.core.ConnectorListener;
+import com.cloudera.flume.core.DriverListener;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
@@ -47,7 +47,7 @@ public class DirectDriver extends Driver {
   PumperThread thd;
   Exception error = null;
   NodeState state = NodeState.HELLO;
-  final List<ConnectorListener> listeners = new ArrayList<ConnectorListener>();
+  final List<DriverListener> listeners = new ArrayList<DriverListener>();
 
   public DirectDriver(EventSource src, EventSink snk) {
     this("pumper", src, snk);
@@ -96,12 +96,13 @@ public class DirectDriver extends Driver {
         error = e1;
         stopped = true;
         state = NodeState.ERROR;
-        LOG.error("Driver exited with error! " + DirectDriver.this);
+        LOG.error("Driving src/sink failed! " + DirectDriver.this + " because "
+            + e1.getMessage());
         fireError(e1);
         return;
       }
       state = NodeState.IDLE;
-      LOG.debug("Drive completed: " + DirectDriver.this);
+      LOG.debug("Driver completed: " + DirectDriver.this);
       fireStop();
     }
   }
@@ -145,7 +146,12 @@ public class DirectDriver extends Driver {
   public void join() throws InterruptedException {
     final PumperThread t = thd;
     if (t.isAlive()) {
-      t.join();
+      t.join(30000);
+      if (t.isAlive()) {
+        // Timed out and didn't finish yet?
+        throw new InterruptedException(
+            "Bailing out becuase it took too long to join with thread");
+      }
     }
   }
 
@@ -166,14 +172,14 @@ public class DirectDriver extends Driver {
    * the directconnector which could cause deadlocks with the callback.
    */
   @Override
-  public void registerListener(ConnectorListener listener) {
+  public void registerListener(DriverListener listener) {
     synchronized (listeners) {
       listeners.add(listener);
     }
   }
 
   @Override
-  public void deregisterListener(ConnectorListener listener) {
+  public void deregisterListener(DriverListener listener) {
     synchronized (listeners) {
       listeners.remove(listener);
     }
@@ -181,7 +187,7 @@ public class DirectDriver extends Driver {
 
   void fireStart() {
     synchronized (listeners) {
-      for (ConnectorListener l : listeners) {
+      for (DriverListener l : listeners) {
         l.fireStarted(this);
       }
     }
@@ -189,7 +195,7 @@ public class DirectDriver extends Driver {
 
   void fireStop() {
     synchronized (listeners) {
-      for (ConnectorListener l : listeners) {
+      for (DriverListener l : listeners) {
         l.fireStopped(this);
       }
     }
@@ -197,7 +203,7 @@ public class DirectDriver extends Driver {
 
   void fireError(Exception e) {
     synchronized (listeners) {
-      for (ConnectorListener l : listeners) {
+      for (DriverListener l : listeners) {
         l.fireError(this, e);
       }
     }

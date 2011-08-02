@@ -31,7 +31,7 @@ import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.thrift.FlumeConfigData;
-import com.cloudera.flume.core.ConnectorListener;
+import com.cloudera.flume.core.DriverListener;
 import com.cloudera.flume.core.Driver;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
@@ -70,7 +70,7 @@ public class LogicalNode implements Reportable {
   final static Logger LOG = Logger.getLogger(LogicalNode.class.getName());
 
   private FlumeConfigData lastGoodCfg;
-  private Driver connector; // the connector that pumps data from src to snk
+  private Driver driver; // the connector that pumps data from src to snk
   private EventSink snk; // current sink and source instances.
   private EventSource src;
   private NodeStatus state;
@@ -160,18 +160,18 @@ public class LogicalNode implements Reportable {
   private void loadNode(EventSource newSrc, EventSink newSnk)
       throws IOException {
 
-    if (connector != null) {
+    if (driver != null) {
       // stop the existing connector.
-      connector.stop();
+      driver.stop();
     }
 
     // this will be replaceable with multi-threaded queueing versions or other
     // mechanisms
-    connector = new DirectDriver("logicalNode " + nodeName, src, snk);
-    connector.registerListener(new ConnectorListener() {
+    driver = new DirectDriver("logicalNode " + nodeName, src, snk);
+    driver.registerListener(new DriverListener() {
       @Override
       public void fireError(Driver conn, Exception ex) {
-        LOG.info("Connector " + nodeName + "exited with error "
+        LOG.info("Connector " + nodeName + " exited with error "
             + ex.getMessage());
         try {
           conn.getSource().close();
@@ -223,7 +223,7 @@ public class LogicalNode implements Reportable {
 
     });
     this.state.state = NodeState.ACTIVE;
-    connector.start();
+    driver.start();
     reconfigures.incrementAndGet();
   }
 
@@ -376,11 +376,23 @@ public class LogicalNode implements Reportable {
     return state;
   }
 
+  /**
+   * This is a synchronous close operation for the logical node.
+   */
   public void close() throws IOException {
-    if (connector != null) {
+    if (driver != null) {
       // stop the existing connector.
       nodeMsg = nodeName + "closing";
-      connector.stop();
+      driver.stop();
+      // wait for driver thread to end.
+
+      src.close();
+      snk.close();
+      try {
+        driver.join();
+      } catch (InterruptedException e) {
+        LOG.error("Unexpected interruption when closing logical node");
+      }
     }
 
   }

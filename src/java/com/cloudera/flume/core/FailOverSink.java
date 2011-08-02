@@ -30,7 +30,6 @@ import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.reporter.ReportEvent;
-import com.cloudera.flume.reporter.Reportable;
 import com.cloudera.util.MultipleIOException;
 import com.google.common.base.Preconditions;
 
@@ -82,6 +81,7 @@ public class FailOverSink extends EventSink.Base {
         super.append(e);
         return;
       } catch (IOException ex) {
+        LOG.info("attempt to use primary failed: " + ex.getMessage());
         fails++;
       }
     }
@@ -131,8 +131,8 @@ public class FailOverSink extends EventSink.Base {
       backupOpen = false;
       if (priEx != null) {
         // both failed, throw multi exception
-        IOException mioe =
-            MultipleIOException.createIOException(Arrays.asList(priEx, ex));
+        IOException mioe = MultipleIOException.createIOException(Arrays.asList(
+            priEx, ex));
         throw mioe;
       }
       // if the primary was ok, just continue. (if primary fails, will attempt

@@ -570,7 +570,7 @@ public class FlumeBuilder {
       String body = FlumeSpecGen.genEventSink(ctbody);
       FlumeConfiguration conf = FlumeConfiguration.get();
       FailoverChainSink failchain = new FailoverChainSink(context, body, rargs,
-          conf.getFailoverInitialBackoff(), conf.getFailoverMaxBackoff());
+          conf.getFailoverInitialBackoff(), conf.getFailoverMaxSingleBackoff());
       return failchain;
     }
       // TODO (jon) new feature: handle pattern match splitter

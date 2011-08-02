@@ -32,7 +32,6 @@ import org.apache.thrift.transport.TTransportException;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
-import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
@@ -77,8 +76,7 @@ public class ThriftEventSink extends EventSink.Base {
       sentBytes.set(stats.getBytesWritten());
       super.append(e);
     } catch (TException e1) {
-      e1.printStackTrace();
-      throw new IOException("Append failed " + e);
+      throw new IOException("Append failed " + e1.getMessage(), e1);
     }
   }
 
@@ -112,9 +110,8 @@ public class ThriftEventSink extends EventSink.Base {
       LOG.info("ThriftEventSink open on port " + port + " opened");
 
     } catch (TTransportException e) {
-      e.printStackTrace();
       throw new IOException("Failed to open thrift event sink at " + host + ":"
-          + port + " : " + e);
+          + port + " : " + e.getMessage());
     }
   }
 
@@ -129,8 +126,8 @@ public class ThriftEventSink extends EventSink.Base {
 
   public static void main(String argv[]) {
     FlumeConfiguration conf = FlumeConfiguration.get();
-    ThriftEventSink sink =
-        new ThriftEventSink("localhost", conf.getCollectorPort());
+    ThriftEventSink sink = new ThriftEventSink("localhost", conf
+        .getCollectorPort());
     try {
       sink.open();
 

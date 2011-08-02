@@ -69,7 +69,7 @@ public class AgentSink extends EventSink.Base {
     case ENDTOEND: {
       String snk = String.format(
           "{ ackedWriteAhead => { stubbornAppend =>  { insistentOpen => "
-              + "tsink(\"%s\", %d)} } }", dsthost, port);
+              + "rpcSink(\"%s\", %d)} } }", dsthost, port);
       sink = FlumeBuilder.buildSink(new Context(), snk);
       break;
     }
@@ -78,12 +78,12 @@ public class AgentSink extends EventSink.Base {
 
       // Move these options to the builder.
       FlumeConfiguration conf = FlumeConfiguration.get();
-      long maxSingleBo = conf.getFailoverMaxBackoff();
+      long maxSingleBo = conf.getFailoverMaxSingleBackoff();
       long initialBo = conf.getFailoverInitialBackoff();
-      long maxCumulativeBo = conf.getFailoverCumulativeMaxBackoff();
+      long maxCumulativeBo = conf.getFailoverMaxCumulativeBackoff();
       String snk = String
           .format(
-              "let shared := tsink(\"%s\", %d) in < shared ? "
+              "let shared := rpcSink(\"%s\", %d) in < shared ? "
                   + " { diskFailover => { stubbornAppend => { insistentOpen(%d,%d,%d) => shared } } } >",
               dsthost, port, maxSingleBo, initialBo, maxCumulativeBo);
       sink = FlumeBuilder.buildSink(new Context(), snk);
@@ -94,7 +94,7 @@ public class AgentSink extends EventSink.Base {
     case BEST_EFFORT: {
       String snk = String
           .format(
-              "< { insistentOpen => { stubbornAppend => tsink(\"%s\", %d) } }  ? null>",
+              "< { insistentOpen => { stubbornAppend => rpcSink(\"%s\", %d) } }  ? null>",
               dsthost, port);
       sink = FlumeBuilder.buildSink(new Context(), snk);
       break;
@@ -190,7 +190,7 @@ public class AgentSink extends EventSink.Base {
         try {
           return new AgentSink(collector, port, ReliabilityMode.DISK_FAILOVER);
         } catch (FlumeSpecException e) {
-          LOG.error("AgentSink sepc error " + e, e);
+          LOG.error("AgentSink spec error " + e, e);
           throw new IllegalArgumentException(e);
         }
       }

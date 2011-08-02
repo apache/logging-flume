@@ -17,7 +17,6 @@
  */
 package com.cloudera.util;
 
-import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.reporter.ReportEvent;
 
 /**
@@ -25,6 +24,8 @@ import com.cloudera.flume.reporter.ReportEvent;
  * this only does calculations and tracks the backoff state but doesn't actually
  * do backoffs (e.g. do blocking sleeps)! Later this could be pluggable with
  * other backoff policies (maybe adaptive?)
+ * 
+ * This policy has a max backoff per attempt but *never* fails!
  */
 public class CappedExponentialBackoff implements BackoffPolicy {
   final long initialSleep;
@@ -94,20 +95,20 @@ public class CappedExponentialBackoff implements BackoffPolicy {
   @Override
   public ReportEvent getReport() {
     ReportEvent rpt = new ReportEvent(getName());
-    Attributes.setLong(rpt, A_SLEEPCAP, sleepCap);
-    Attributes.setLong(rpt, A_INITIAL, initialSleep);
-    Attributes.setLong(rpt, A_COUNT, backoffCount);
-    Attributes.setLong(rpt, A_CURRENTBACKOFF, sleepIncrement);
-    Attributes.setLong(rpt, A_RETRYTIME, retryTime);
+    rpt.setLongMetric(A_SLEEPCAP, sleepCap);
+    rpt.setLongMetric(A_INITIAL, initialSleep);
+    rpt.setLongMetric(A_COUNT, backoffCount);
+    rpt.setLongMetric(A_CURRENTBACKOFF, sleepIncrement);
+    rpt.setLongMetric(A_RETRYTIME, retryTime);
     return rpt;
   }
 
   /**
-   * Sleep until we reach retryTime. Call isRetryOk after this returns if 
-   * you are concerned about backoff() being called while this thread sleeps.
+   * Sleep until we reach retryTime. Call isRetryOk after this returns if you
+   * are concerned about backoff() being called while this thread sleeps.
    */
   @Override
   public void waitUntilRetryOk() throws InterruptedException {
-    Thread.sleep(retryTime - Clock.unixTime());    
+    Thread.sleep(retryTime - Clock.unixTime());
   }
 }

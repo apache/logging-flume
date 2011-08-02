@@ -20,9 +20,10 @@ package com.cloudera.flume.handlers.debug;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.log4j.Logger;
+
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SinkFactory.SinkDecoBuilder;
-import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSinkDecorator;
@@ -39,7 +40,7 @@ import com.google.common.base.Preconditions;
  */
 public class StubbornAppendSink<S extends EventSink> extends
     EventSinkDecorator<S> implements Reportable {
-
+  final public static Logger LOG = Logger.getLogger(StubbornAppendSink.class);
   // attribute names
   final public static String A_SUCCESSES = "appendSuccess";
   final public static String A_FAILS = "appendFails";
@@ -54,15 +55,25 @@ public class StubbornAppendSink<S extends EventSink> extends
   }
 
   @Override
+  public void open() throws IOException {
+    Preconditions.checkNotNull(sink);
+    LOG.info("Opening Stubborn Append Sink " + this);
+    isOpen.set(true); // slightly different than default semantics -- open
+    // always keeps it in open state.
+    sink.open();
+    LOG.info("Opening Stubborn Append Sink " + this);
+  }
+
+  @Override
   public void append(Event e) throws IOException {
     try {
       super.append(e);
       appendSuccesses.incrementAndGet();
       return; // success case
-    } catch (IOException ex) {
+    } catch (Exception ex) {
       appendFails.incrementAndGet();
       super.close(); // close
-      super.open(); // attempt to reopen
+      open(); // attempt to reopen
       super.append(e); // resend
       appendSuccesses.incrementAndGet();
       // another exception may have been thrown at close/open/append
@@ -91,9 +102,9 @@ public class StubbornAppendSink<S extends EventSink> extends
   @Override
   public ReportEvent getReport() {
     ReportEvent e = super.getReport();
-    Attributes.setLong(e, A_SUCCESSES, appendSuccesses.get());
-    Attributes.setLong(e, A_FAILS, appendFails.get());
-    Attributes.setLong(e, A_RECOVERS, appendRecovers.get());
+    e.setLongMetric(A_SUCCESSES, appendSuccesses.get());
+    e.setLongMetric(A_FAILS, appendFails.get());
+    e.setLongMetric(A_RECOVERS, appendRecovers.get());
     return e;
   }
 }

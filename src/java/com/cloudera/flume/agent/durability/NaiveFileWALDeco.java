@@ -28,7 +28,7 @@ import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.conf.SinkFactory.SinkDecoBuilder;
-import com.cloudera.flume.core.ConnectorListener;
+import com.cloudera.flume.core.DriverListener;
 import com.cloudera.flume.core.Driver;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
@@ -193,7 +193,7 @@ public class NaiveFileWALDeco<S extends EventSink> extends
      * Do not take the lock on NaiveFileWALDeco.this in the connector listener,
      * as it's possible to deadlock within e.g. close()
      */
-    conn.registerListener(new ConnectorListener.Base() {
+    conn.registerListener(new DriverListener.Base() {
       @Override
       public void fireStarted(Driver c) {
         started.countDown();

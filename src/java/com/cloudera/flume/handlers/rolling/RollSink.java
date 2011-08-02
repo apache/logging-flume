@@ -68,8 +68,8 @@ public class RollSink extends EventSink.Base {
     this.fspec = spec;
     this.trigger = new TimeTrigger(new ProcessTagger(), maxAge);
     this.checkLatencyMs = checkMs;
-    LOG.info("Created RollSink: maxAge=" + maxAge + "ms trigger=" + trigger
-        + " checkPeriodMs = " + checkLatencyMs);
+    LOG.info("Created RollSink: maxAge=" + maxAge + "ms trigger=[" + trigger
+        + "] checkPeriodMs = " + checkLatencyMs + " spec='" + fspec + "'");
   }
 
   public RollSink(Context ctx, String spec, RollTrigger trigger, long checkMs) {
@@ -78,8 +78,8 @@ public class RollSink extends EventSink.Base {
     this.fspec = spec;
     this.trigger = trigger;
     this.checkLatencyMs = checkMs;
-    LOG.info("Created RollSink: trigger=" + trigger + " checkPeriodMs = "
-        + checkLatencyMs);
+    LOG.info("Created RollSink: trigger=[" + trigger + "] checkPeriodMs = "
+        + checkLatencyMs + " spec='" + fspec + "'");
   }
 
   private static synchronized int nextThreadNum() {
@@ -209,7 +209,8 @@ public class RollSink extends EventSink.Base {
     } catch (IOException e1) {
       // TODO This is an error condition that needs to be handled -- could be
       // due to resource exhaustion.
-      LOG.error("Failure when attempting to rotate and open new sink", e1);
+      LOG.error("Failure when attempting to rotate and open new sink: "
+          + e1.getMessage());
       rollfails.incrementAndGet();
       return false;
     }

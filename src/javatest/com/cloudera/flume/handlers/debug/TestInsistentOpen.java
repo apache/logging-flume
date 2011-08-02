@@ -27,11 +27,12 @@ import java.io.IOException;
 
 import org.junit.Test;
 
-import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.util.MockClock;
+import com.cloudera.util.BackoffPolicy;
+import com.cloudera.util.CappedExponentialBackoff;
 import com.cloudera.util.Clock;
 
 /**
@@ -48,8 +49,8 @@ public class TestInsistentOpen {
     // TODO(henry): this test relies on real clocks, and shouldn't. See below.
     EventSink fail2x = mock(EventSink.Base.class);
     // two exceptions then some success
-    doThrow(new IOException()).doThrow(new IOException()).doNothing().when(
-        fail2x).open();
+    doThrow(new IOException("mock2")).doThrow(new IOException("mock"))
+        .doNothing().when(fail2x).open();
     doReturn(new ReportEvent("stub")).when(fail2x).getReport();
 
     // max 5s, backoff initially at 10ms
@@ -58,22 +59,23 @@ public class TestInsistentOpen {
     // up three times in a 5s period. Seems plausible! But if you are looking at
     // this comment, it's probably because the test is failing on a loaded
     // machine...
+    BackoffPolicy bop = new CappedExponentialBackoff(10, 5000);
     InsistentOpenDecorator<EventSink> sink = new InsistentOpenDecorator<EventSink>(
-        fail2x, 5000, 10);
+        fail2x, bop);
     sink.open();
     sink.append(new EventImpl("test".getBytes()));
     sink.close();
     fail2x.getReport();
 
     ReportEvent rpt = sink.getReport();
-    assertEquals(new Long(1), Attributes.readLong(rpt,
-        InsistentOpenDecorator.A_REQUESTS));
-    assertEquals(new Long(3), Attributes.readLong(rpt,
-        InsistentOpenDecorator.A_ATTEMPTS));
-    assertEquals(new Long(1), Attributes.readLong(rpt,
-        InsistentOpenDecorator.A_SUCCESSES));
-    assertEquals(new Long(2), Attributes.readLong(rpt,
-        InsistentOpenDecorator.A_RETRIES));
+    assertEquals(new Long(1), rpt
+        .getLongMetric(InsistentOpenDecorator.A_REQUESTS));
+    assertEquals(new Long(3), rpt
+        .getLongMetric(InsistentOpenDecorator.A_ATTEMPTS));
+    assertEquals(new Long(1), rpt
+        .getLongMetric(InsistentOpenDecorator.A_SUCCESSES));
+    assertEquals(new Long(2), rpt
+        .getLongMetric(InsistentOpenDecorator.A_RETRIES));
     System.out.println(rpt.toText());
   }
 
@@ -94,32 +96,33 @@ public class TestInsistentOpen {
       public void open() throws IOException {
         // Forward by 100ms, should cause IOD to try eleven times then give up
         m.forward(100);
-        throw new IOException();
+        throw new IOException("fail open");
       }
     };
 
     Clock.setClock(m);
-    // max 1s, backoff initially at 10ms
+    // max 1s, backoff initially at 10ms, with a maxSingleSleep 1000ms and a
+    // cumulative cap of 1000ms
     InsistentOpenDecorator<EventSink> sink = new InsistentOpenDecorator<EventSink>(
-        failWhale, 1000, 10);
+        failWhale, 1000, 10, 1000);
 
     try {
       sink.open();
     } catch (IOException e1) {
 
       ReportEvent rpt = sink.getReport();
-      assertEquals(new Long(1), Attributes.readLong(rpt,
-          InsistentOpenDecorator.A_REQUESTS));
-      assertEquals(new Long(0), Attributes.readLong(rpt,
-          InsistentOpenDecorator.A_SUCCESSES));
+      assertEquals(new Long(1), rpt
+          .getLongMetric(InsistentOpenDecorator.A_REQUESTS));
+      assertEquals(new Long(0), rpt
+          .getLongMetric(InsistentOpenDecorator.A_SUCCESSES));
 
       // 11 attempts - one each at 100 * x for x in [0,1,2,3,4,5,6,7,8,9,10]
       // Retry trigger in IOD only fails when time > max, but passes when time =
       // max.
-      assertEquals(new Long(11), Attributes.readLong(rpt,
-          InsistentOpenDecorator.A_ATTEMPTS));
-      assertEquals(new Long(11), Attributes.readLong(rpt,
-          InsistentOpenDecorator.A_RETRIES));
+      assertEquals(new Long(11), rpt
+          .getLongMetric(InsistentOpenDecorator.A_ATTEMPTS));
+      assertEquals(new Long(11), rpt
+          .getLongMetric(InsistentOpenDecorator.A_RETRIES));
       Clock.resetDefault();
       return; // success
     }

@@ -429,11 +429,11 @@ public class FlumeConfiguration extends Configuration {
     return getLong(AGENT_FAILOVER_INITIAL_BACKOFF, 1000);
   }
 
-  public long getFailoverMaxBackoff() {
+  public long getFailoverMaxSingleBackoff() {
     return getLong(AGENT_FAILOVER_MAX_BACKOFF, 60000);
   }
 
-  public long getFailoverCumulativeMaxBackoff() {
+  public long getFailoverMaxCumulativeBackoff() {
     return getLong(AGENT_FAILOVER_MAX_CUMULATIVE_BACKOFF, Integer.MAX_VALUE);
   }
 

@@ -52,8 +52,8 @@ import com.google.common.base.Preconditions;
  * with a lazyOpen decorator
  */
 public class BackOffFailOverSink extends EventSink.Base {
-  final static Logger LOG =
-      Logger.getLogger(BackOffFailOverSink.class.getName());
+  final static Logger LOG = Logger.getLogger(BackOffFailOverSink.class
+      .getName());
 
   final String A_PRIMARY = "sentPrimary";
   final String A_FAILS = "failsPrimary";
@@ -71,8 +71,10 @@ public class BackOffFailOverSink extends EventSink.Base {
 
   public BackOffFailOverSink(EventSink primary, EventSink backup,
       BackoffPolicy backoff) {
-    Preconditions.checkNotNull(primary, "BackOffFailOverSink called with null primary");
-    Preconditions.checkNotNull(backup, "BackOffFailOverSink called with null backup");
+    Preconditions.checkNotNull(primary,
+        "BackOffFailOverSink called with null primary");
+    Preconditions.checkNotNull(backup,
+        "BackOffFailOverSink called with null backup");
     this.primary = primary;
     this.backup = backup;
     this.backoffPolicy = backoff;
@@ -80,7 +82,7 @@ public class BackOffFailOverSink extends EventSink.Base {
 
   public BackOffFailOverSink(EventSink primary, EventSink backup) {
     this(primary, backup, FlumeConfiguration.get().getFailoverInitialBackoff(),
-        FlumeConfiguration.get().getFailoverMaxBackoff());
+        FlumeConfiguration.get().getFailoverMaxSingleBackoff());
   }
 
   public BackOffFailOverSink(EventSink primary, EventSink backup,
@@ -100,7 +102,7 @@ public class BackOffFailOverSink extends EventSink.Base {
         IOException ioe = tryOpenPrimary();
         if (ioe != null) {
           // reopen attempt failed, add to backoff, and fall back to backup. if
-          // backup failes, give up
+          // backup fails, give up
           backoffPolicy.backoff();
           try {
             // fall back onto secondary after primary retry failure.
@@ -202,8 +204,8 @@ public class BackOffFailOverSink extends EventSink.Base {
       backupOpen = false;
       if (priEx != null) {
         // both failed, throw multi exception
-        IOException mioe =
-            MultipleIOException.createIOException(Arrays.asList(priEx, ex));
+        IOException mioe = MultipleIOException.createIOException(Arrays.asList(
+            priEx, ex));
         throw mioe;
       }
       // if the primary was ok, just continue. (if primary fails, will attempt

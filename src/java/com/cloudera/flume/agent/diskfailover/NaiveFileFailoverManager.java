@@ -270,10 +270,12 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
 
   @Override
   public RollSink getEventSink(final RollTrigger t) throws IOException {
-    return new RollSink(new Context(), null, t, 250) {
+    // NaiveFileFailover is just a place holder
+    return new RollSink(new Context(), "NaiveFileFailover", t, 250) {
+
       @Override
       public EventSink newSink(Context ctx) throws IOException {
-        // TODO (jon) clean this up
+        // TODO (jon) clean this up -- want to deprecate Tagger
         return newWritingSink(t.getTagger());
       }
 
@@ -447,7 +449,7 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
         throw ioe;
       }
     }
-    
+
     @Override
     public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
       super.getReports(namePrefix, reports);

@@ -17,7 +17,6 @@
  */
 package com.cloudera.util;
 
-import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.reporter.ReportEvent;
 
 /**
@@ -25,6 +24,9 @@ import com.cloudera.flume.reporter.ReportEvent;
  * this only does calculations and tracks the backoff state but doesn't actually
  * do backoffs (e.g. do blocking sleeps)! Later this could be pluggable with
  * other backoff policies (maybe adaptive?)
+ * 
+ * This policy has a max backoff per attempt and also a cumulative maximum
+ * failure time. After the cumulative time has expired isfailed will return true
  */
 public class CumulativeCappedExponentialBackoff extends
     CappedExponentialBackoff {
@@ -67,7 +69,7 @@ public class CumulativeCappedExponentialBackoff extends
   @Override
   public ReportEvent getReport() {
     ReportEvent rpt = super.getReport();
-    Attributes.setLong(rpt, A_CUMULATIVECAP, cumulativeCap);
+    rpt.setLongMetric(A_CUMULATIVECAP, cumulativeCap);
     return rpt;
   }
 }

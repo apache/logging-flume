@@ -31,7 +31,6 @@ import junit.framework.TestCase;
 
 import org.mockito.Mockito;
 
-import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
@@ -90,12 +89,10 @@ public class TestStubbornAppendSink extends TestCase {
     // 100 good messages. every 4th message fails -- 3 good 1 bad.
     // 00 01 02 xx 03 04 05 xx 06 07 08 xx ...
     // so 100 good msgs, 133 total messages, 33 bad msgs
-    assertEquals(new Long(100), Attributes.readLong(rpt,
-        StubbornAppendSink.A_SUCCESSES));
-    assertEquals(new Long(33), Attributes.readLong(rpt,
-        StubbornAppendSink.A_FAILS));
-    assertEquals(new Long(33), Attributes.readLong(rpt,
-        StubbornAppendSink.A_RECOVERS));
+    assertEquals(new Long(100), rpt
+        .getLongMetric(StubbornAppendSink.A_SUCCESSES));
+    assertEquals(new Long(33), rpt.getLongMetric(StubbornAppendSink.A_FAILS));
+    assertEquals(new Long(33), rpt.getLongMetric(StubbornAppendSink.A_RECOVERS));
   }
 
   /**
@@ -124,10 +121,8 @@ public class TestStubbornAppendSink extends TestCase {
     }
 
     ReportEvent rpt = sink.getReport();
-    assertEquals(new Long(1), Attributes.readLong(rpt,
-        StubbornAppendSink.A_FAILS));
-    assertEquals(new Long(1), Attributes.readLong(rpt,
-        StubbornAppendSink.A_RECOVERS));
+    assertEquals(new Long(1), rpt.getLongMetric(StubbornAppendSink.A_FAILS));
+    assertEquals(new Long(1), rpt.getLongMetric(StubbornAppendSink.A_RECOVERS));
   }
 
   public void testStubbornIntervalFlakey() throws IOException {
@@ -156,10 +151,8 @@ public class TestStubbornAppendSink extends TestCase {
 
     ReportEvent rpt = sink.getReport();
     // why isn't this 25?
-    assertEquals(new Long(24), Attributes.readLong(rpt,
-        StubbornAppendSink.A_FAILS));
-    assertEquals(new Long(24), Attributes.readLong(rpt,
-        StubbornAppendSink.A_RECOVERS));
+    assertEquals(new Long(24), rpt.getLongMetric(StubbornAppendSink.A_FAILS));
+    assertEquals(new Long(24), rpt.getLongMetric(StubbornAppendSink.A_RECOVERS));
 
   }
 
@@ -179,12 +172,11 @@ public class TestStubbornAppendSink extends TestCase {
       sink.append(e);
     } catch (Exception exn) {
       ReportEvent rpt = sink.getReport();
-      assertEquals(new Long(2), Attributes.readLong(rpt,
-          StubbornAppendSink.A_SUCCESSES));
-      assertEquals(new Long(1), Attributes.readLong(rpt,
-          StubbornAppendSink.A_FAILS));
-      assertEquals(new Long(0), Attributes.readLong(rpt,
-          StubbornAppendSink.A_RECOVERS));
+      assertEquals(new Long(2), rpt
+          .getLongMetric(StubbornAppendSink.A_SUCCESSES));
+      assertEquals(new Long(1), rpt.getLongMetric(StubbornAppendSink.A_FAILS));
+      assertEquals(new Long(0), rpt
+          .getLongMetric(StubbornAppendSink.A_RECOVERS));
       return;
     }
     fail("should have thrown exception");

@@ -21,14 +21,14 @@ package com.cloudera.flume.core;
  * This listener allows other objects to react when a connector starts, stops or
  * bails on an error.
  */
-public interface ConnectorListener {
+public interface DriverListener {
   public void fireStarted(Driver c);
 
   public void fireStopped(Driver c);
 
   public void fireError(Driver c, Exception e);
 
-  public static class Base implements ConnectorListener {
+  public static class Base implements DriverListener {
     @Override
     public void fireError(Driver c, Exception e) {
     }

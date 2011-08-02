@@ -21,6 +21,7 @@ package com.cloudera.flume.handlers.thrift;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
@@ -32,7 +33,6 @@ import org.apache.thrift.transport.TTransportException;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
-import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
@@ -57,14 +57,16 @@ public class ThriftEventSource extends EventSource.Base {
   public static final String A_DEQUEUED = "dequeued";
   public static final String A_BYTES_IN = "bytesIn";
 
-  int port;
-  ThriftFlumeEventServer svr;
+  final int port;
+  final ThriftFlumeEventServer svr;
   TSaneThreadPoolServer server;
 
-  BlockingQueue<Event> q;
-  AtomicLong enqueued = new AtomicLong();
-  AtomicLong dequeued = new AtomicLong();
-  AtomicLong bytesIn = new AtomicLong();
+  final BlockingQueue<Event> q;
+  final AtomicLong enqueued = new AtomicLong();
+  final AtomicLong dequeued = new AtomicLong();
+  final AtomicLong bytesIn = new AtomicLong();
+
+  boolean closed = true;
 
   /**
    * Create a thrift event source listening on port with a qsize buffer.
@@ -118,7 +120,7 @@ public class ThriftEventSource extends EventSource.Base {
   }
 
   @Override
-  public void open() throws IOException {
+  synchronized public void open() throws IOException {
 
     try {
 
@@ -139,15 +141,16 @@ public class ThriftEventSource extends EventSource.Base {
           "Starting blocking thread pool server on port %d...", port));
 
       server.start();
+      this.closed = false;
 
     } catch (TTransportException e) {
-      e.printStackTrace();
-      throw new IOException("Failed to create event server " + e);
+      throw new IOException("Failed to create event server " + e.getMessage(),
+          e);
     }
   }
 
   @Override
-  public void close() throws IOException {
+  synchronized public void close() throws IOException {
     if (server == null) {
       LOG.info(String.format("Server on port %d was already closed!", port));
       return;
@@ -183,6 +186,7 @@ public class ThriftEventSource extends EventSource.Base {
       }
     }
 
+    closed = true;
     return;
   }
 
@@ -190,12 +194,28 @@ public class ThriftEventSource extends EventSource.Base {
   public Event next() throws IOException {
 
     try {
-      Event e = q.take();
-      dequeued.getAndIncrement();
-      updateEventProcessingStats(e);
-      return e;
+
+      Event e = null;
+      // block until an event shows up
+      while ((e = q.poll(100, TimeUnit.MILLISECONDS)) == null) {
+
+        synchronized (this) {
+          // or bail out if closed
+          if (closed) {
+            return null;
+          }
+        }
+
+      }
+      // return the event
+      synchronized (this) {
+        dequeued.getAndIncrement();
+        updateEventProcessingStats(e);
+        return e;
+      }
     } catch (InterruptedException e) {
-      throw new IOException("Waiting for queue element was interupted! " + e);
+      throw new IOException("Waiting for queue element was interupted! "
+          + e.getMessage(), e);
     }
   }
 

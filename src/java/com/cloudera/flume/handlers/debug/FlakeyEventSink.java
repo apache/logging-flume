@@ -60,7 +60,7 @@ public class FlakeyEventSink<S extends EventSink> extends EventSinkDecorator<S> 
           String... argv) {
         if (argv.length == 0) {
           throw new IllegalArgumentException(
-              "usage: flakey(probability,[seed])");
+              "usage: flakey(failprobability,[seed])");
         }
         double d = Double.parseDouble(argv[0]);
         long seed = 0;

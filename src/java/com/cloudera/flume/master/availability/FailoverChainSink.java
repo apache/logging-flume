@@ -119,7 +119,7 @@ public class FailoverChainSink extends EventSink.Base {
 
         try {
           return new FailoverChainSink(context, format, list, conf
-              .getFailoverInitialBackoff(), conf.getFailoverMaxBackoff());
+              .getFailoverInitialBackoff(), conf.getFailoverMaxSingleBackoff());
         } catch (FlumeSpecException e) {
           LOG.error("Bad spec or format", e);
           throw new IllegalArgumentException(e);

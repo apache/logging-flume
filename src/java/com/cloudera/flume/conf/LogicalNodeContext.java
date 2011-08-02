@@ -35,4 +35,10 @@ public class LogicalNodeContext extends Context {
     putValue(C_LOGICAL, logicalName);
   }
 
+  public LogicalNodeContext(Context parent, String physName, String logicalName) {
+    super(parent);
+    putValue(C_PHYSICAL, physName);
+    putValue(C_LOGICAL, logicalName);
+  }
+
 }

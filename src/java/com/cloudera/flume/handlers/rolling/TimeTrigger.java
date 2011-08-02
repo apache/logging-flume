@@ -75,4 +75,9 @@ public class TimeTrigger implements RollTrigger {
     tagger.newTag(); // this updates the timestamp in the tagger
   }
 
+  @Override
+  public String toString() {
+    return "TimeTrigger: maxAge=" + maxAge + " tagger=" + tagger;
+  }
+
 }

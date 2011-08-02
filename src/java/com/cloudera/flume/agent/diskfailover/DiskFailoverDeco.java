@@ -28,7 +28,7 @@ import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.conf.SinkFactory.SinkDecoBuilder;
 import com.cloudera.flume.core.Driver;
-import com.cloudera.flume.core.ConnectorListener;
+import com.cloudera.flume.core.DriverListener;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSinkDecorator;
@@ -142,7 +142,7 @@ public class DiskFailoverDeco<S extends EventSink> extends
      * Don't synchronize on DiskFailoverDeco.this in the ConnectorListener
      * otherwise you might get a deadlock.
      */
-    conn.registerListener(new ConnectorListener.Base() {
+    conn.registerListener(new DriverListener.Base() {
       @Override
       public void fireStarted(Driver c) {
         started.countDown();
