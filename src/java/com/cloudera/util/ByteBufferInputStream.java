@@ -17,8 +17,10 @@
  */
 package com.cloudera.util;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
 /**
@@ -26,7 +28,7 @@ import java.nio.ByteBuffer;
  */
 public class ByteBufferInputStream extends InputStream {
 
-  final ByteBuffer buf;
+  private final ByteBuffer buf;
 
   public ByteBufferInputStream(ByteBuffer buf) {
     this.buf = buf.asReadOnlyBuffer();
@@ -34,14 +36,22 @@ public class ByteBufferInputStream extends InputStream {
 
   @Override
   public int read() throws IOException {
-    return buf.get();
+    try {
+      return buf.get();
+    } catch (BufferUnderflowException e) {
+      throw new EOFException();
+    }
   }
 
   @Override
   public int read(byte[] bytes, int off, int len) throws IOException {
     // Read only what's left
     len = Math.min(len, buf.remaining());
-    buf.get(bytes, off, len);
+    try {
+      buf.get(bytes, off, len);
+    } catch (BufferUnderflowException e) {
+      throw new EOFException();
+    }
     return len;
   }
 

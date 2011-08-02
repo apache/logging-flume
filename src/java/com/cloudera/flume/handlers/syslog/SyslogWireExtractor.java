@@ -194,9 +194,8 @@ public class SyslogWireExtractor implements Extractor, SyslogConsts {
         return null;
       }
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-      throw new EventExtractException("Failed to extract syslog wire entry");
+      throw new EventExtractException("Failed to extract syslog wire entry: "
+              + e.getMessage());
     }
   }
 

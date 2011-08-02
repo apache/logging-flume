@@ -95,6 +95,26 @@ public class TestSyslogWireExtractor extends TestCase {
 
   }
 
+  /**
+   * RFC5426 does not require syslog messages to be newline terminated
+   */
+  public void testNewFormatMissingNewlineTerminator() throws EventExtractException {
+    // this is an example from beast.
+    String msg = "Oct 15 01:04:15 Hostd: [2009-10-15 01:04:15.484 17FA5B90 verbose 'vm:/vmfs/volumes/4acaa2a2-a85a3928-97b1-003048c93e5f/Centos 386 Build01/Centos 386 Build01.vmx'] Updating current heartbeatStatus: greenellow2e09476e6b0]5285369c-0d52-ca5a-594e-f1de890";
+    String entry = "<166>" + msg;
+
+    DataInputStream in = new DataInputStream(new ByteArrayInputStream(entry
+        .getBytes()));
+
+    SyslogWireExtractor fmt = new SyslogWireExtractor();
+    Event e = fmt.extract(in);
+    
+    // verify that the newline is added when formatting the entry using fmt
+    assertTrue(Arrays.equals(new String(entry + "\n").getBytes(),
+        fmt.toBytes(e)));
+
+  }
+
   public void testNewFail() {
     String msg = "this will fail";
     Event e = null;
