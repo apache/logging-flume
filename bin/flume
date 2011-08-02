@@ -136,20 +136,15 @@ if [ "$cygwin" == false ] ; then
   HADOOP_CORE_FOUND=false
   while true; do
       if [ -n "$HADOOP_HOME" ]; then
-          HADOOP_CORE_FOUND=true
-          CLASSPATH="$CLASSPATH:${HADOOP_HOME}/hadoop-*-core.jar:${HADOOP_HOME}/lib/hadoop-*-core.jar"
-          break
-      fi
+	  HADCOREJARS=`find ${HADOOP_HOME}/hadoop-core*.jar || find ${HADOOP_HOME}/lib/hadoop-core*.jar ||  true`
+	  if [ -n "$HADCOREJARS" ]; then
+              HADOOP_CORE_FOUND=true
+              CLASSPATH="$CLASSPATH:${HADCOREJARS}"
+	      break;
+	  fi
+      fi   
 
-      HADCOREJARS=`find /usr/lib/hadoop/hadoop-*core.jar 2> /dev/null || true`
-      if [ -n "$HADCOREJARS" ]; then
-          HADOOP_CORE_FOUND=true
-          export CDH_CLASSPATH="/usr/lib/hadoop"
-          CLASSPATH="$CLASSPATH:${CDH_CLASSPATH}/*"
-          break
-      fi
-
-      HADCOREJARS=`find ./lib/hadoop-*core.jar 2> /dev/null || true`
+      HADCOREJARS=`find ./lib/hadoop-core*.jar 2> /dev/null || true`
       if [ -n "$HADCOREJARS" ]; then
           # if this is the dev environment then hadoop jar will
           # get added as part of ./lib (below)
@@ -204,8 +199,8 @@ export CLASSPATH
 # however if we're not certain then check the classpath
 if [ $HADOOP_CORE_FOUND == false ]; then
     LENCP=${#CLASSPATH}
-    # replace hadoop-*core.jar with 0 len string
-    HADTEST=${CLASSPATH/hadoop-*core.jar/}
+    # replace hadoop-core*.jar with 0 len string
+    HADTEST=${CLASSPATH/hadoop-core*.jar/}
     HADTESTLEN=${#HADTEST}
     # lengths should be different if jars are in classpath
     if [ $LENCP -eq $HADTESTLEN ]; then
