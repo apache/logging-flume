@@ -39,7 +39,6 @@ import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSinkDecorator;
 import com.cloudera.flume.core.EventSource;
-import com.cloudera.flume.core.FanInSource;
 import com.cloudera.flume.core.FanOutSink;
 import com.cloudera.flume.handlers.rolling.RollSink;
 import com.cloudera.flume.master.availability.FailoverChainSink;
@@ -405,7 +404,6 @@ public class FlumeBuilder {
     ASTNODE type = ASTNODE.valueOf(t.getText()); // convert to enum
     switch (type) {
     case SOURCE: {
-
       // TODO thread context through sources
       // Context ctx = new Context(context);
       Context ctx = new Context();
@@ -421,21 +419,6 @@ public class FlumeBuilder {
       }
       return src;
     }
-    case MULTI:
-      List<CommonTree> elems = (List<CommonTree>) t.getChildren();
-      List<EventSource> srcs = new ArrayList<EventSource>();
-      try {
-        for (CommonTree tr : elems) {
-
-          EventSource src = buildEventSource(tr);
-          srcs.add(src); // no need for null check here cause recursively called
-        }
-        FanInSource<EventSource> src = new FanInSource<EventSource>(srcs);
-        return src;
-      } catch (FlumeSpecException ife) {
-        // TODO (jon) but we need to clean up if we failed with some created.
-        throw ife;
-      }
     default:
       throw new FlumeSpecException("bad parse tree! Expected source but got "
           + t.toStringTree());
