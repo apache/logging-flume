@@ -279,8 +279,8 @@ public class TestDiskFailoverAgent {
     }.start();
 
     // false means timeout, takes about 10 seconds to shutdown.
-    assertTrue("close call hung the heartbeat", done
-        .await(60, TimeUnit.SECONDS));
+    assertTrue("close call hung the heartbeat", done.await(120,
+        TimeUnit.SECONDS));
 
   }
 
