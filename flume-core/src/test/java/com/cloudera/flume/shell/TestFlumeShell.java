@@ -52,6 +52,7 @@ import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.aggregator.AccumulatorSink;
 import com.cloudera.flume.util.FlumeShell;
 import com.cloudera.util.Clock;
+import com.cloudera.util.FileUtil;
 
 /**
  * Test a few basic commands on the flume shell.
@@ -134,7 +135,7 @@ public class TestFlumeShell extends SetupMasterTestEnv {
     retval = sh.executeLine("exec config foo 'null' 'console'");
     assertEquals(0, retval);
 
-    File saveFile = File.createTempFile("test-flume", "");
+    File saveFile = FileUtil.createTempFile("test-flume", "");
     saveFile.delete();
     saveFile.deleteOnExit();
 
@@ -160,7 +161,7 @@ public class TestFlumeShell extends SetupMasterTestEnv {
         + FlumeConfiguration.DEFAULT_ADMIN_PORT);
     assertEquals(0, retval);
 
-    File saveFile = File.createTempFile("test-flume", "");
+    File saveFile = FileUtil.createTempFile("test-flume", "");
     saveFile.deleteOnExit();
     BufferedWriter out = new BufferedWriter(new FileWriter(saveFile));
     out.write("foo : null | console;\n");

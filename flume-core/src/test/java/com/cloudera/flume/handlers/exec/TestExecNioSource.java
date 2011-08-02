@@ -275,7 +275,7 @@ public class TestExecNioSource {
   public void testAggModeMultiWrite() throws IOException, FlumeSpecException,
       InterruptedException {
 
-    File temp = File.createTempFile("slowwrite", ".sh");
+    File temp = FileUtil.createTempFile("slowwrite", ".sh");
     temp.deleteOnExit();
     BufferedWriter out = new BufferedWriter(new FileWriter(temp));
     // echo, sleep 1s, echo
@@ -339,7 +339,7 @@ public class TestExecNioSource {
    */
   @Test
   public void testReadStdErr() throws IOException, InterruptedException {
-    File temp = File.createTempFile("flmtst", null);
+    File temp = FileUtil.createTempFile("flmtst", null);
     temp.deleteOnExit();
 
     BufferedWriter out = new BufferedWriter(new FileWriter(temp));
@@ -364,7 +364,7 @@ public class TestExecNioSource {
    */
   @Test
   public void testClose() throws IOException, InterruptedException {
-    File temp = File.createTempFile("flmtst", null);
+    File temp = FileUtil.createTempFile("flmtst", null);
     temp.deleteOnExit();
 
     BufferedWriter out = new BufferedWriter(new FileWriter(temp));
@@ -466,7 +466,7 @@ public class TestExecNioSource {
    */
   @Test
   public void testAggregate() throws IOException, InterruptedException {
-    File temp = File.createTempFile("flmtst", null);
+    File temp = FileUtil.createTempFile("flmtst", null);
     temp.deleteOnExit();
 
     BufferedWriter out = new BufferedWriter(new FileWriter(temp));
@@ -492,7 +492,7 @@ public class TestExecNioSource {
    */
   @Test
   public void testRestart() throws IOException, InterruptedException {
-    File temp = File.createTempFile("flmtst", null);
+    File temp = FileUtil.createTempFile("flmtst", null);
     temp.deleteOnExit();
 
     BufferedWriter out = new BufferedWriter(new FileWriter(temp));
@@ -539,7 +539,7 @@ public class TestExecNioSource {
 
   @Test
   public void testNoRandomPrepend() throws IOException, InterruptedException {
-    File f = File.createTempFile("prepend", "bar");
+    File f = FileUtil.createTempFile("prepend", "bar");
     f.deleteOnExit();
     FileWriter fw = new FileWriter(f);
 
@@ -567,7 +567,7 @@ public class TestExecNioSource {
 
   @Test
   public void testTruncateLine() throws IOException, InterruptedException {
-    File f = File.createTempFile("truncate", ".bar");
+    File f = FileUtil.createTempFile("truncate", ".bar");
     f.deleteOnExit();
     FileWriter fw = new FileWriter(f);
 

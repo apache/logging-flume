@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudera.util.Clock;
+import com.cloudera.util.FileUtil;
 
 /**
  * This tests on NIO semantics for file io in order to find out if is sufficient
@@ -74,10 +75,10 @@ public class TestFileNIO {
 
   @Test
   public void testRenameSemantics() throws IOException {
-    File f1 = File.createTempFile("moved", "");
+    File f1 = FileUtil.createTempFile("moved", "");
     f1.delete();
     f1.deleteOnExit();
-    File f2 = File.createTempFile("orig", "");
+    File f2 = FileUtil.createTempFile("orig", "");
     f2.deleteOnExit();
 
     f2.renameTo(f1);
@@ -126,7 +127,7 @@ public class TestFileNIO {
 
   @Test
   public void testFileChannel() throws IOException, InterruptedException {
-    File f = File.createTempFile("test", ".test");
+    File f = FileUtil.createTempFile("test", ".test");
     f.deleteOnExit();
 
     CountDownLatch done = slowWrite(f, 20);
@@ -160,7 +161,7 @@ public class TestFileNIO {
   @Test
   public void testFileChannelBlockRead() throws IOException,
       InterruptedException {
-    File f = File.createTempFile("test", ".test");
+    File f = FileUtil.createTempFile("test", ".test");
     f.deleteOnExit();
 
     CountDownLatch done = slowWrite(f, 0);
@@ -191,7 +192,7 @@ public class TestFileNIO {
 
   @Test
   public void testFileChannelByLine() throws IOException, InterruptedException {
-    File f = File.createTempFile("test", ".test");
+    File f = FileUtil.createTempFile("test", ".test");
     f.deleteOnExit();
 
     CountDownLatch done = slowWrite(f, 0);
@@ -244,7 +245,7 @@ public class TestFileNIO {
   @Test
   public void testFileChannelByLineWithBreaks() throws IOException,
       InterruptedException {
-    File f = File.createTempFile("test", ".test");
+    File f = FileUtil.createTempFile("test", ".test");
     f.deleteOnExit();
 
     CountDownLatch done = slowWrite(f, 0);
@@ -293,7 +294,7 @@ public class TestFileNIO {
   @Test
   public void testFileChannelByLineWithBreaksWhileWriting() throws IOException,
       InterruptedException {
-    File f = File.createTempFile("test", ".test");
+    File f = FileUtil.createTempFile("test", ".test");
     f.deleteOnExit();
 
     CountDownLatch done = slowWrite(f, 100);
@@ -341,7 +342,7 @@ public class TestFileNIO {
   @Test
   public void testInterruptFileChannelRead() throws IOException,
       InterruptedException {
-    File f = File.createTempFile("test", ".test");
+    File f = FileUtil.createTempFile("test", ".test");
     f.deleteOnExit();
 
     final CountDownLatch writeDone = slowWrite(f, 0);

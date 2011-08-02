@@ -42,6 +42,7 @@ import com.cloudera.flume.core.EventUtil;
 import com.cloudera.flume.handlers.debug.MemorySinkSource;
 import com.cloudera.flume.handlers.text.FormatFactory;
 import com.cloudera.flume.handlers.text.output.OutputFormat;
+import com.cloudera.util.FileUtil;
 
 /**
  * This test takes a small canned batch of events, writes them to a avro data
@@ -58,7 +59,7 @@ public class TestAvroDataFile {
     MemorySinkSource mem = MemorySinkSource.cannedData("test ", 5);
 
     // setup sink.
-    File f = File.createTempFile("avrodata", ".avro");
+    File f = FileUtil.createTempFile("avrodata", ".avro");
     f.deleteOnExit();
     LOG.info("filename before escaping: " + f.getAbsolutePath());
     String custom = "text(\""
@@ -95,7 +96,7 @@ public class TestAvroDataFile {
     MemorySinkSource mem = MemorySinkSource.cannedData("test ", 5);
 
     // setup sink.
-    File f = File.createTempFile("avrodata", ".avro");
+    File f = FileUtil.createTempFile("avrodata", ".avro");
     f.deleteOnExit();
     FileOutputStream fos = new FileOutputStream(f);
     LOG.info("filename before escaping: " + f.getAbsolutePath());

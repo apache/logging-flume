@@ -21,6 +21,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import com.google.common.base.Preconditions;
 
@@ -29,13 +31,48 @@ import com.google.common.base.Preconditions;
  */
 public class FileUtil {
 
+  static File baseDir;
+  static {
+    setupTempDir();
+  }
+
   /**
-   * Makes a unique temporary directory. It is the responsibility of the caller
-   * to remove this directory.
+   * package visible for testability
    */
-  public static File mktempdir() throws IOException {
+  static void setupTempDir() {
+    String baseDirStr = System.getenv("FLUME_TMP_DIR");
+    if (baseDirStr == null || baseDirStr.equals("")) {
+      // if not in environment, default to a date based dir name.
+      String dateFmt = "yyyyMMdd-HHmmssSSSZ";
+      SimpleDateFormat sdf = new SimpleDateFormat(dateFmt);
+      baseDirStr = "flume-" + sdf.format(new Date(Clock.unixTime()));
+    }
+    File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+    baseDir = new File(tmpDir, baseDirStr);
+    makeDirs(baseDir);
+  }
+  
+  static File getBaseDir() {
+    return baseDir;
+  }
+
+  /**
+   * This wraps the standard create temp file and forces everything into the
+   * same baseDir. This makes clean up after testing really trivial.
+   * 
+   * @param filePrefix
+   * @param fileSuffix
+   * @return
+   * @throws IOException
+   */
+  public static File createTempFile(String filePrefix, String fileSuffix)
+      throws IOException {
+    return File.createTempFile(filePrefix, fileSuffix, baseDir);
+  }
+
+  public static File mktempdir(String filePrefix) throws IOException {
     // setup a directory with a bad entry
-    File tmpdir = File.createTempFile("dir", ".tmp");
+    File tmpdir = File.createTempFile(filePrefix, ".tmp", baseDir);
     boolean status = tmpdir.delete();
     if (!status) {
       throw new IOException("failed to delete tmp file");
@@ -45,6 +82,14 @@ public class FileUtil {
       throw new IOException("failed to made tmp dir " + tmpdir);
     }
     return tmpdir;
+  }
+
+  /**
+   * Makes a unique temporary directory. It is the responsibility of the caller
+   * to remove this directory.
+   */
+  public static File mktempdir() throws IOException {
+    return mktempdir("dir");
   }
 
   /**
@@ -80,11 +125,10 @@ public class FileUtil {
     in.close();
     out.close();
   }
-  
+
   /**
    * Make a directory and its parents, returning true if and only if the dir
-   * exists.
-   * Does not guarantee that we can write to that directory!
+   * exists. Does not guarantee that we can write to that directory!
    */
   public static boolean makeDirs(File f) {
     if (f.exists()) {

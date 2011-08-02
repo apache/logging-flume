@@ -44,6 +44,7 @@ import org.mortbay.log.Log;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.util.Clock;
+import com.cloudera.util.FileUtil;
 import com.cloudera.util.OSUtils;
 
 /**
@@ -59,7 +60,7 @@ public class TestTailSourceCursor {
   }
 
   File createDataFile(int count) throws IOException {
-    File f = File.createTempFile("tail", ".tmp");
+    File f = FileUtil.createTempFile("tail", ".tmp");
     f.deleteOnExit();
     FileWriter fw = new FileWriter(f);
     for (int i = 0; i < count; i++) {
@@ -104,7 +105,7 @@ public class TestTailSourceCursor {
       InterruptedException {
     // normal implementation uses synchronous queue, but we use array blocking
     // queue for single threaded testing
-    File f2 = File.createTempFile("move", ".tmp");
+    File f2 = FileUtil.createTempFile("move", ".tmp");
     f2.delete();
     f2.deleteOnExit();
     BlockingQueue<Event> q = new ArrayBlockingQueue<Event>(100);
@@ -141,7 +142,7 @@ public class TestTailSourceCursor {
       InterruptedException {
     // normal implementation uses synchronous queue, but we use array blocking
     // queue for single threaded testing
-    File f2 = File.createTempFile("move", ".tmp");
+    File f2 = FileUtil.createTempFile("move", ".tmp");
     f2.delete();
     f2.deleteOnExit();
     BlockingQueue<Event> q = new ArrayBlockingQueue<Event>(100);
@@ -180,7 +181,7 @@ public class TestTailSourceCursor {
 
     // normal implementation uses synchronous queue, but we use array blocking
     // queue for single threaded testing
-    File f2 = File.createTempFile("move", ".tmp");
+    File f2 = FileUtil.createTempFile("move", ".tmp");
     f2.delete();
     f2.deleteOnExit();
     BlockingQueue<Event> q = new ArrayBlockingQueue<Event>(100);
@@ -220,7 +221,7 @@ public class TestTailSourceCursor {
 
     // normal implementation uses synchronous queue, but we use array blocking
     // queue for single threaded testing
-    File f2 = File.createTempFile("move", ".tmp");
+    File f2 = FileUtil.createTempFile("move", ".tmp");
     f2.delete();
     f2.deleteOnExit();
     BlockingQueue<Event> q = new ArrayBlockingQueue<Event>(100);
@@ -259,7 +260,7 @@ public class TestTailSourceCursor {
 
     // normal implementation uses synchronous queue, but we use array blocking
     // queue for single threaded testing
-    File f2 = File.createTempFile("move", ".tmp");
+    File f2 = FileUtil.createTempFile("move", ".tmp");
     f2.delete();
     f2.deleteOnExit();
     BlockingQueue<Event> q = new ArrayBlockingQueue<Event>(100);
@@ -300,7 +301,7 @@ public class TestTailSourceCursor {
 
     // normal implementation uses synchronous queue, but we use array blocking
     // queue for single threaded testing
-    File f2 = File.createTempFile("move", ".tmp");
+    File f2 = FileUtil.createTempFile("move", ".tmp");
     f2.delete();
     f2.deleteOnExit();
     BlockingQueue<Event> q = new ArrayBlockingQueue<Event>(100);
@@ -357,7 +358,7 @@ public class TestTailSourceCursor {
     // normal implementation uses synchronous queue, but we use array blocking
     // queue for single threaded testing
     BlockingQueue<Event> q = new ArrayBlockingQueue<Event>(10);
-    File f = File.createTempFile("appear", ".tmp");
+    File f = FileUtil.createTempFile("appear", ".tmp");
     f.delete();
     f.deleteOnExit();
     Cursor c = new Cursor(q, f);
@@ -388,7 +389,7 @@ public class TestTailSourceCursor {
     // normal implementation uses synchronous queue, but we use array blocking
     // queue for single threaded testing
     BlockingQueue<Event> q = new ArrayBlockingQueue<Event>(10);
-    File f = File.createTempFile("appear", ".tmp");
+    File f = FileUtil.createTempFile("appear", ".tmp");
     f.delete();
     f.deleteOnExit();
     Cursor c = new Cursor(q, f);
@@ -525,9 +526,9 @@ public class TestTailSourceCursor {
    */
   @Test
   public void testFileDescriptor() throws IOException {
-    File f = File.createTempFile("fdes", ".tmp");
+    File f = FileUtil.createTempFile("fdes", ".tmp");
     f.deleteOnExit();
-    File f2 = File.createTempFile("fdes", ".tmp");
+    File f2 = FileUtil.createTempFile("fdes", ".tmp");
     f2.delete();
     f2.deleteOnExit();
 
@@ -553,9 +554,9 @@ public class TestTailSourceCursor {
    */
   @Test
   public void testFISFollowsFD() throws IOException {
-    File f = File.createTempFile("fdes", ".tmp");
+    File f = FileUtil.createTempFile("fdes", ".tmp");
     f.deleteOnExit();
-    File f2 = File.createTempFile("fdes", ".tmp");
+    File f2 = FileUtil.createTempFile("fdes", ".tmp");
     f2.delete();
     f2.deleteOnExit();
 
@@ -615,9 +616,9 @@ public class TestTailSourceCursor {
    */
   @Test
   public void testChannelFollowsHandle() throws IOException {
-    File f = File.createTempFile("first", ".tmp");
+    File f = FileUtil.createTempFile("first", ".tmp");
     f.deleteOnExit();
-    File f2 = File.createTempFile("second", ".tmp");
+    File f2 = FileUtil.createTempFile("second", ".tmp");
     f2.delete();
     f2.deleteOnExit();
 
@@ -651,9 +652,9 @@ public class TestTailSourceCursor {
    */
   @Test
   public void testFileDescriptorEquals() throws IOException {
-    File f = File.createTempFile("first", ".tmp");
+    File f = FileUtil.createTempFile("first", ".tmp");
     f.deleteOnExit();
-    File f2 = File.createTempFile("second", ".tmp");
+    File f2 = FileUtil.createTempFile("second", ".tmp");
     f2.delete();
     f2.deleteOnExit();
 
@@ -674,7 +675,7 @@ public class TestTailSourceCursor {
    */
   @Test
   public void testTruncate() throws IOException {
-    File f = File.createTempFile("first", ".tmp");
+    File f = FileUtil.createTempFile("first", ".tmp");
     f.deleteOnExit();
 
     FileWriter fw = new FileWriter(f);
@@ -714,9 +715,9 @@ public class TestTailSourceCursor {
     // Windows rename semantics different than unix
     Assume.assumeTrue(!OSUtils.isWindowsOS());
 
-    File f = File.createTempFile("tailexhaust", ".txt");
+    File f = FileUtil.createTempFile("tailexhaust", ".txt");
     f.deleteOnExit();
-    File f2 = File.createTempFile("tailexhaust", ".txt");
+    File f2 = FileUtil.createTempFile("tailexhaust", ".txt");
     f2.deleteOnExit();
     BlockingQueue<Event> q = new ArrayBlockingQueue<Event>(100);
     Cursor c = new Cursor(q, f);

@@ -20,22 +20,35 @@ package com.cloudera.util;
 import java.io.File;
 import java.io.IOException;
 
+import junit.framework.TestCase;
+
 import org.junit.Test;
 
 /**
- * Does delete on exit delete based on file or based on file name?
+ * Test the to make sure FileUtil generated temp dirs are all part of the given
+ * baseDir
  */
-public class TestDeleteOnExit {
+public class TestFileUtil extends TestCase {
+  
+  @Test
+  public void testCreateTempFile() throws IOException {
+    File f = FileUtil.createTempFile("foo", ".bar");
+    f.deleteOnExit();
+    String matchPat = FileUtil.getBaseDir() + ".*foo.*\\.bar";
+    assertTrue(f.getAbsolutePath().matches(matchPat));
+  }
 
   @Test
-  public void testDeleteOnExit() throws IOException {
-
-    File f = FileUtil.createTempFile("foo", ".tmp");
-    System.out.println(f.getAbsolutePath());
-    f.deleteOnExit();
-    f.renameTo(new File(f.getParentFile(), "pre" + f.getName()));
-    System.out.println(f.getAbsolutePath());
-
-    // Then check to see if file exists!
+  public void testCreateTempDir() throws IOException {
+    File d = null;
+    try {
+      d = FileUtil.mktempdir();
+      assertTrue(d.exists());
+      assertTrue(d.isDirectory());
+    } finally {
+      if (d != null) {
+        FileUtil.rmr(d);
+      }
+    }
   }
 }

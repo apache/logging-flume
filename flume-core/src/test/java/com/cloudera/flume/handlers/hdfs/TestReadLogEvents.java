@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
+import com.cloudera.util.FileUtil;
 
 /**
  * This tests a read of an existing logs.hdfs file.
@@ -35,7 +36,7 @@ public class TestReadLogEvents {
 
   @Test
   public void testReadLogEvents() throws IOException, InterruptedException {
-    File tmp = File.createTempFile("test", "tmp");
+    File tmp = FileUtil.createTempFile("test", "tmp");
     tmp.deleteOnExit();
     SeqfileEventSink sink = new SeqfileEventSink(tmp);
     sink.open();

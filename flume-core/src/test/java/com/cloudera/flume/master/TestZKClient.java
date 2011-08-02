@@ -36,6 +36,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.util.FileUtil;
+
 /**
  * A variety of tests both for ZKClient and the ZKServer
  * 
@@ -108,7 +110,7 @@ public class TestZKClient {
    */
   @Test
   public void testZKClient() throws Exception {
-    File temp = File.createTempFile("flume-zk-test", "");
+    File temp = FileUtil.createTempFile("flume-zk-test", "");
     temp.delete();
     temp.mkdir();
     temp.deleteOnExit();
@@ -140,7 +142,7 @@ public class TestZKClient {
       InterruptedException {
     ZKClient client = null;
     try {
-      File temp = File.createTempFile("flume-zk-test", "");
+      File temp = FileUtil.createTempFile("flume-zk-test", "");
       temp.delete();
       temp.mkdir();
       temp.deleteOnExit();
@@ -164,7 +166,7 @@ public class TestZKClient {
   @Test
   public void testZKSequentialChildren() throws InterruptedException,
       IOException, KeeperException {
-    File temp = File.createTempFile("flume-zk-test", "");
+    File temp = FileUtil.createTempFile("flume-zk-test", "");
     temp.delete();
     temp.mkdir();
     temp.deleteOnExit();

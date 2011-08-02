@@ -27,6 +27,7 @@ import java.util.List;
 
 import org.junit.Test;
 import com.cloudera.flume.conf.FlumeConfigData;
+import com.cloudera.util.FileUtil;
 
 public class TestMemoryBackedConfigStore {
   /**
@@ -35,7 +36,7 @@ public class TestMemoryBackedConfigStore {
    */
   @Test
   public void testGetSetSaveLoad() throws IOException {
-    File tmp = File.createTempFile("test-flume", "");
+    File tmp = FileUtil.createTempFile("test-flume", "");
     tmp.delete();
     tmp.deleteOnExit();
     MemoryBackedConfigStore store = new MemoryBackedConfigStore();
@@ -59,7 +60,7 @@ public class TestMemoryBackedConfigStore {
    */
   @Test
   public void testNodes() throws IOException {
-    File tmp = File.createTempFile("test-flume", "");
+    File tmp = FileUtil.createTempFile("test-flume", "");
     tmp.delete();
     tmp.deleteOnExit();
     MemoryBackedConfigStore store = new MemoryBackedConfigStore();
@@ -86,7 +87,7 @@ public class TestMemoryBackedConfigStore {
    */
   @Test
   public void testUnmapAllNodes() throws IOException {
-    File tmp = File.createTempFile("test-flume", "");
+    File tmp = FileUtil.createTempFile("test-flume", "");
     tmp.delete();
     tmp.deleteOnExit();
     MemoryBackedConfigStore store = new MemoryBackedConfigStore();

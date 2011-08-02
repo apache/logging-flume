@@ -82,7 +82,7 @@ public class TestFlumeConfigMaster {
     fcm.serve();
     ConfigurationManager cm = fcm.getSpecMan();
     cm.setConfig("test1", "test-flow", "console", "console");
-    File f = File.createTempFile("test", ".tmp");
+    File f = FileUtil.createTempFile("test", ".tmp");
     f.deleteOnExit();
     cm.saveConfigFile(f.getAbsolutePath());
     assertTrue(f.exists());

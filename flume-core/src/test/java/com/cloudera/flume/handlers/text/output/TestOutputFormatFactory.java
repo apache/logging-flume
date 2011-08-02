@@ -37,6 +37,7 @@ import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.handlers.text.FormatFactory;
 import com.cloudera.flume.handlers.text.FormatFactory.OutputFormatBuilder;
+import com.cloudera.util.FileUtil;
 
 /**
  * This tests building of outputformats via the FormatFactory mechanism. These
@@ -143,7 +144,7 @@ public class TestOutputFormatFactory {
   public void testSyslogText() throws FlumeSpecException, IOException,
       InterruptedException {
 
-    File tmp = File.createTempFile("syslogText", ".txt");
+    File tmp = FileUtil.createTempFile("syslogText", ".txt");
     tmp.deleteOnExit();
 
     EventSink snk = FlumeBuilder.buildSink(new Context(), "text(\""
@@ -166,7 +167,7 @@ public class TestOutputFormatFactory {
   public void testDefaultText() throws FlumeSpecException, IOException,
       InterruptedException {
 
-    File tmp = File.createTempFile("defaultText", ".txt");
+    File tmp = FileUtil.createTempFile("defaultText", ".txt");
     tmp.deleteOnExit();
 
     EventSink snk = FlumeBuilder.buildSink(new Context(), "text(\""
@@ -190,7 +191,7 @@ public class TestOutputFormatFactory {
   public void testLog4jText() throws FlumeSpecException, IOException,
       InterruptedException {
 
-    File tmp = File.createTempFile("log4jText", ".txt");
+    File tmp = FileUtil.createTempFile("log4jText", ".txt");
     tmp.deleteOnExit();
 
     EventSink snk = FlumeBuilder.buildSink(new Context(), "text(\""
@@ -213,7 +214,7 @@ public class TestOutputFormatFactory {
   public void testJsonText() throws FlumeSpecException, IOException,
       InterruptedException {
 
-    File tmp = File.createTempFile("jsonText", ".txt");
+    File tmp = FileUtil.createTempFile("jsonText", ".txt");
     tmp.deleteOnExit();
 
     EventSink snk = FlumeBuilder.buildSink(new Context(), "text(\""
@@ -236,7 +237,7 @@ public class TestOutputFormatFactory {
   public void testSyslogDfs() throws FlumeSpecException, IOException,
       InterruptedException {
 
-    File tmp = File.createTempFile("syslogDfs", ".txt");
+    File tmp = FileUtil.createTempFile("syslogDfs", ".txt");
     tmp.deleteOnExit();
 
     EventSink snk = FlumeBuilder.buildSink(new Context(),
@@ -260,7 +261,7 @@ public class TestOutputFormatFactory {
   public void testDefaultDfs() throws FlumeSpecException, IOException,
       InterruptedException {
 
-    File tmp = File.createTempFile("defaultDfs", ".txt");
+    File tmp = FileUtil.createTempFile("defaultDfs", ".txt");
     tmp.deleteOnExit();
 
     EventSink snk = FlumeBuilder.buildSink(new Context(),
@@ -284,7 +285,7 @@ public class TestOutputFormatFactory {
   public void testLog4jDfs() throws FlumeSpecException, IOException,
       InterruptedException {
 
-    File tmp = File.createTempFile("log4jDfs", ".txt");
+    File tmp = FileUtil.createTempFile("log4jDfs", ".txt");
     tmp.deleteOnExit();
 
     EventSink snk = FlumeBuilder.buildSink(new Context(),
@@ -308,7 +309,7 @@ public class TestOutputFormatFactory {
   public void testJsonDfs() throws FlumeSpecException, IOException,
       InterruptedException {
 
-    File tmp = File.createTempFile("jsonDfs", ".txt");
+    File tmp = FileUtil.createTempFile("jsonDfs", ".txt");
     tmp.deleteOnExit();
 
     EventSink snk = FlumeBuilder.buildSink(new Context(),
@@ -338,7 +339,7 @@ public class TestOutputFormatFactory {
     BufferedReader reader;
     int matchedLines;
 
-    tmpFile = File.createTempFile("wackadoodleOutputFormatTest", ".tmp");
+    tmpFile = FileUtil.createTempFile("wackadoodleOutputFormatTest", ".tmp");
     tmpFile.deleteOnExit();
 
     FormatFactory.get().registerFormat(new OutputFormatBuilder() {

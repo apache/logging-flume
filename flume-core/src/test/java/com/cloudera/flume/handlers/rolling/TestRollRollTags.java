@@ -37,6 +37,7 @@ import com.cloudera.flume.core.MaskDecorator;
 import com.cloudera.flume.handlers.debug.MemorySinkSource;
 import com.cloudera.flume.handlers.endtoend.ValueDecorator;
 import com.cloudera.util.BenchmarkHarness;
+import com.cloudera.util.FileUtil;
 
 /**
  * This test case demonstrates a usecase where a tag conflict occurs.
@@ -112,7 +113,7 @@ public class TestRollRollTags {
   @Test
   public void testAgentCollector() throws FlumeSpecException, IOException, InterruptedException {
     BenchmarkHarness.setupLocalWriteDir();
-    File path = File.createTempFile("collector", ".tmp");
+    File path = FileUtil.createTempFile("collector", ".tmp");
     path.deleteOnExit();
 
     EventSink snk = new CompositeSink(LogicalNodeContext.testingContext(),
@@ -129,7 +130,7 @@ public class TestRollRollTags {
   public void testAgentCollectorFixed() throws FlumeSpecException, IOException,
       InterruptedException {
     BenchmarkHarness.setupLocalWriteDir();
-    File path = File.createTempFile("collector", ".tmp");
+    File path = FileUtil.createTempFile("collector", ".tmp");
     path.deleteOnExit();
 
     EventSink snk = new CompositeSink(LogicalNodeContext.testingContext(),

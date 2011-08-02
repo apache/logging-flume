@@ -43,6 +43,7 @@ import com.cloudera.flume.core.Event;
 import com.cloudera.flume.handlers.text.CustomDelimCursor.ByteBufferAsCharSequence;
 import com.cloudera.flume.handlers.text.CustomDelimCursor.DelimMode;
 import com.cloudera.util.Clock;
+import com.cloudera.util.FileUtil;
 import com.cloudera.util.OSUtils;
 
 public class TestMultiLineCursor {
@@ -108,7 +109,7 @@ public class TestMultiLineCursor {
   }
 
   File createDataFile(int count) throws IOException {
-    File f = File.createTempFile("tail", ".tmp");
+    File f = FileUtil.createTempFile("tail", ".tmp");
     f.deleteOnExit();
     FileWriter fw = new FileWriter(f);
     for (int i = 0; i < count; i++) {
@@ -153,7 +154,7 @@ public class TestMultiLineCursor {
       InterruptedException {
     // normal implementation uses synchronous queue, but we use array blocking
     // queue for single threaded testing
-    File f2 = File.createTempFile("move", ".tmp");
+    File f2 = FileUtil.createTempFile("move", ".tmp");
     f2.delete();
     f2.deleteOnExit();
     BlockingQueue<Event> q = new ArrayBlockingQueue<Event>(100);
@@ -190,7 +191,7 @@ public class TestMultiLineCursor {
       InterruptedException {
     // normal implementation uses synchronous queue, but we use array blocking
     // queue for single threaded testing
-    File f2 = File.createTempFile("move", ".tmp");
+    File f2 = FileUtil.createTempFile("move", ".tmp");
     f2.delete();
     f2.deleteOnExit();
     BlockingQueue<Event> q = new ArrayBlockingQueue<Event>(100);
@@ -229,7 +230,7 @@ public class TestMultiLineCursor {
 
     // normal implementation uses synchronous queue, but we use array blocking
     // queue for single threaded testing
-    File f2 = File.createTempFile("move", ".tmp");
+    File f2 = FileUtil.createTempFile("move", ".tmp");
     f2.delete();
     f2.deleteOnExit();
     BlockingQueue<Event> q = new ArrayBlockingQueue<Event>(100);
@@ -269,7 +270,7 @@ public class TestMultiLineCursor {
 
     // normal implementation uses synchronous queue, but we use array blocking
     // queue for single threaded testing
-    File f2 = File.createTempFile("move", ".tmp");
+    File f2 = FileUtil.createTempFile("move", ".tmp");
     f2.delete();
     f2.deleteOnExit();
     BlockingQueue<Event> q = new ArrayBlockingQueue<Event>(100);
@@ -308,7 +309,7 @@ public class TestMultiLineCursor {
 
     // normal implementation uses synchronous queue, but we use array blocking
     // queue for single threaded testing
-    File f2 = File.createTempFile("move", ".tmp");
+    File f2 = FileUtil.createTempFile("move", ".tmp");
     f2.delete();
     f2.deleteOnExit();
     BlockingQueue<Event> q = new ArrayBlockingQueue<Event>(100);
@@ -349,7 +350,7 @@ public class TestMultiLineCursor {
 
     // normal implementation uses synchronous queue, but we use array blocking
     // queue for single threaded testing
-    File f2 = File.createTempFile("move", ".tmp");
+    File f2 = FileUtil.createTempFile("move", ".tmp");
     f2.delete();
     f2.deleteOnExit();
     BlockingQueue<Event> q = new ArrayBlockingQueue<Event>(100);
@@ -407,7 +408,7 @@ public class TestMultiLineCursor {
     // normal implementation uses synchronous queue, but we use array blocking
     // queue for single threaded testing
     BlockingQueue<Event> q = new ArrayBlockingQueue<Event>(10);
-    File f = File.createTempFile("appear", ".tmp");
+    File f = FileUtil.createTempFile("appear", ".tmp");
     f.delete();
     f.deleteOnExit();
     Cursor c = new CustomDelimCursor(q, f, "blah", DelimMode.EXCLUDE);
@@ -438,7 +439,7 @@ public class TestMultiLineCursor {
     // normal implementation uses synchronous queue, but we use array blocking
     // queue for single threaded testing
     BlockingQueue<Event> q = new ArrayBlockingQueue<Event>(10);
-    File f = File.createTempFile("appear", ".tmp");
+    File f = FileUtil.createTempFile("appear", ".tmp");
     f.delete();
     f.deleteOnExit();
     Cursor c = new CustomDelimCursor(q, f, "blah", DelimMode.EXCLUDE);
@@ -569,7 +570,7 @@ public class TestMultiLineCursor {
 
   @Test
   public void testDelimIncludeNext() throws IOException, InterruptedException {
-    File f = File.createTempFile("tail", ".tmp");
+    File f = FileUtil.createTempFile("tail", ".tmp");
     f.deleteOnExit();
     FileWriter fw = new FileWriter(f);
     fw.append("2011-03-07 00:26:53,918 [exec-thread] WARN commands.SetChokeLimitForm: PhysicalNode: physNode not present yet!\n"
@@ -615,7 +616,7 @@ public class TestMultiLineCursor {
 
   @Test
   public void testDelimIncludePrev() throws IOException, InterruptedException {
-    File f = File.createTempFile("tail", ".tmp");
+    File f = FileUtil.createTempFile("tail", ".tmp");
     f.deleteOnExit();
     FileWriter fw = new FileWriter(f);
     fw.append("<?xml version=\"1.0\"?><?xml-stylesheet type=\"text/xsl\"  href=\"logs.xsl\"?>"
@@ -647,7 +648,7 @@ public class TestMultiLineCursor {
 
   @Test
   public void testDelimExclude() throws IOException, InterruptedException {
-    File f = File.createTempFile("tail", ".tmp");
+    File f = FileUtil.createTempFile("tail", ".tmp");
     f.deleteOnExit();
     FileWriter fw = new FileWriter(f);
     fw.append("a\nb\n\n" + "c\nd\ne\n\n\n" + "f\ng\n\n\n\n" + "h");

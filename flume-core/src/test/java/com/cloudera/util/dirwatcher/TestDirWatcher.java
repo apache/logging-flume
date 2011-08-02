@@ -120,7 +120,7 @@ public class TestDirWatcher {
     List<File> temps = new ArrayList<File>();
     for (int i = 0; i < 20; i++) {
 
-      File temp = File.createTempFile("foo", "bar");
+      File temp = FileUtil.createTempFile("foo", "bar");
       BufferedWriter out = new BufferedWriter(new FileWriter(temp));
       out.write(temp.getName());
       out.close();

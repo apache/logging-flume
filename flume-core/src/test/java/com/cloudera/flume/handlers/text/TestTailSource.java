@@ -50,6 +50,7 @@ import com.cloudera.flume.handlers.debug.MemorySinkSource;
 import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.aggregator.CounterSink;
 import com.cloudera.util.Clock;
+import com.cloudera.util.FileUtil;
 
 /**
  * This tests the functionality of tail source using the EventSource api.
@@ -106,7 +107,7 @@ public class TestTailSource {
     long sleepTime;
     long eventCount;
 
-    f = File.createTempFile("temp", ".tmp");
+    f = FileUtil.createTempFile("temp", ".tmp");
     f.setReadable(false, false);
 
     f.deleteOnExit();
@@ -173,7 +174,7 @@ public class TestTailSource {
   @Test
   public void testTailSource() throws IOException, FlumeSpecException,
       InterruptedException {
-    File f = File.createTempFile("temp", ".tmp");
+    File f = FileUtil.createTempFile("temp", ".tmp");
     f.deleteOnExit();
     final CompositeSink snk = new CompositeSink(new ReportTestingContext(),
         "{ delay(50) => counter(\"count\") }");
@@ -201,9 +202,9 @@ public class TestTailSource {
   @Test
   public void testTailSourceMove() throws IOException, FlumeSpecException,
       InterruptedException {
-    File f = File.createTempFile("temp", ".tmp");
+    File f = FileUtil.createTempFile("temp", ".tmp");
     f.deleteOnExit();
-    File f2 = File.createTempFile("moved", ".tmp");
+    File f2 = FileUtil.createTempFile("moved", ".tmp");
     f2.delete();
     f2.deleteOnExit();
     final CompositeSink snk = new CompositeSink(new ReportTestingContext(),
@@ -249,9 +250,9 @@ public class TestTailSource {
   @Test
   public void testMultiTailSource() throws IOException, FlumeSpecException,
       InterruptedException {
-    File f = File.createTempFile("multitemp1", ".tmp");
+    File f = FileUtil.createTempFile("multitemp1", ".tmp");
     f.deleteOnExit();
-    File f2 = File.createTempFile("multitemp2", ".tmp");
+    File f2 = FileUtil.createTempFile("multitemp2", ".tmp");
     f2.deleteOnExit();
     final CompositeSink snk = new CompositeSink(new ReportTestingContext(),
         "{ delay(50) => counter(\"count\") }");
@@ -293,9 +294,9 @@ public class TestTailSource {
   @Test
   public void testMultiTailSourceFileName() throws IOException,
       FlumeSpecException, InterruptedException {
-    File f = File.createTempFile("multitemp1", ".tmp");
+    File f = FileUtil.createTempFile("multitemp1", ".tmp");
     f.deleteOnExit();
-    File f2 = File.createTempFile("multitemp2", ".tmp");
+    File f2 = FileUtil.createTempFile("multitemp2", ".tmp");
     f2.deleteOnExit();
     final MemorySinkSource snk = new MemorySinkSource();
     final EventSource src = TailSource.multiTailBuilder().build(
@@ -360,7 +361,7 @@ public class TestTailSource {
   @Test
   public void testTailSourceStartFromEnd() throws IOException,
       FlumeSpecException, InterruptedException {
-    File f = File.createTempFile("temp", ".tmp");
+    File f = FileUtil.createTempFile("temp", ".tmp");
     f.deleteOnExit();
 
     // pre-existing file
@@ -404,7 +405,7 @@ public class TestTailSource {
    */
   @Test
   public void testFileOutputStream() throws IOException {
-    File tmp = File.createTempFile("tmp-", ".tmp");
+    File tmp = FileUtil.createTempFile("tmp-", ".tmp");
     FileOutputStream f = new FileOutputStream(tmp);
     f.write("0123456789".getBytes());
     f.close();
@@ -439,7 +440,7 @@ public class TestTailSource {
     FileOutputStream os;
     Thread thread;
 
-    tmpFile = File.createTempFile("tmp-", ".tmp");
+    tmpFile = FileUtil.createTempFile("tmp-", ".tmp");
     tmpFile.deleteOnExit();
 
     source = TailSource.builder().build(LogicalNodeContext.testingContext(),
