@@ -45,6 +45,7 @@ import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.core.EventUtil;
+import com.cloudera.flume.handlers.debug.MemorySinkSource;
 import com.cloudera.flume.handlers.text.TailSource.Cursor;
 import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.aggregator.CounterSink;
@@ -279,6 +280,69 @@ public class TestTailSource {
     CounterSink ctr = (CounterSink) ReportManager.get().getReportable("count");
     LOG.info("events in file1: " + log1 + " events in file2: " + log2);
     assertEquals(count, ctr.getCount());
+
+  }
+
+  /**
+   * Create and tail multiple files and filename.
+   */
+  @Test
+  public void testMultiTailSourceFileName() throws IOException,
+      FlumeSpecException, InterruptedException {
+    File f = File.createTempFile("multitemp1", ".tmp");
+    f.deleteOnExit();
+    File f2 = File.createTempFile("multitemp2", ".tmp");
+    f2.deleteOnExit();
+    final MemorySinkSource snk = new MemorySinkSource();
+    final EventSource src = TailSource.multiTailBuilder().build(
+        f.getAbsolutePath(), f2.getAbsolutePath());
+    final CountDownLatch done = new CountDownLatch(1);
+    final int count = 60;
+    Thread t = new Thread() {
+      @Override
+      public void run() {
+        try {
+          src.open();
+          snk.open();
+          EventUtil.dumpN(count, src, snk);
+          src.close();
+          snk.close();
+          done.countDown();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+    };
+    t.start();
+
+    int log1 = 0, log2 = 0;
+    FileWriter fw = new FileWriter(f);
+    FileWriter fw2 = new FileWriter(f2);
+    for (int i = 0; i < count; i++) {
+      if (Math.random() > 0.5) {
+        fw.append("Line " + i + "\n");
+        fw.flush();
+        log1++;
+      } else {
+        fw2.append("Line " + i + "\n");
+        fw2.flush();
+        log2++;
+      }
+    }
+    fw.close();
+    fw2.close();
+
+    assertTrue(done.await(15, TimeUnit.SECONDS));
+
+    Event e = null;
+    while ((e = snk.next()) != null) {
+      byte[] fn = e.get(TailSource.A_TAILSRCFILE);
+      String sfn = new String(fn);
+      if (!sfn.equals(f.getName()) && !sfn.equals(f2.getName())) {
+        Assert.fail("didn't have tail src file metadata! " + sfn + " != "
+            + f.getName() + " or " + f2.getName());
+      }
+    }
 
   }
 

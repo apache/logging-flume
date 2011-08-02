@@ -84,6 +84,7 @@ import com.google.common.base.Preconditions;
  */
 public class TailSource extends EventSource.Base {
   private static final Logger LOG = LoggerFactory.getLogger(TailSource.class);
+  public static final String A_TAILSRCFILE = "tailSrcFile";
 
   private static int thdCount = 0;
   private volatile boolean done = false;
@@ -213,6 +214,7 @@ public class TailSource extends EventSource.Base {
         buf.get(body, 0, remaining); // read all data
 
         Event e = new EventImpl(body);
+        e.set(A_TAILSRCFILE, file.getName().getBytes());
         try {
           sync.put(e);
         } catch (InterruptedException e1) {
@@ -307,7 +309,7 @@ public class TailSource extends EventSource.Base {
         if (b == '\n') {
           int end = buf.position();
           int sz = end - start;
-          byte[] body = new byte[sz-1];
+          byte[] body = new byte[sz - 1];
           buf.reset(); // go back to mark
           buf.get(body, 0, sz - 1); // read data
           buf.get(); // read '\n'
@@ -319,6 +321,7 @@ public class TailSource extends EventSource.Base {
           lastFileMod = fmod;
 
           Event e = new EventImpl(body);
+          e.set(A_TAILSRCFILE, file.getName().getBytes());
           sync.put(e);
           madeProgress = true;
         }
