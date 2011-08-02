@@ -1,4 +1,4 @@
-#!/usr/bin/env /bin/bash
+#!/usr/bin/env /bin/sh
 # Licensed to Cloudera, Inc. under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -20,17 +20,18 @@
 # specific number of events were delivered.  It expects that a node
 # and master are running on the localhost
 
+DIR=`dirname $0`/..
+FLUME_HOME=${FLUME_HOME:-$DIR/flume-distribution/target/flume-*/flume*}
+FLUME=${FLUME_HOME}/bin/flume
 
-DIR=`dirname $0`
-FLUME="$DIR/../bin/flume"
 MASTER=localhost
 NODE1=`hostname`
 NODE2=`hostname`
-TMPDIR=/tmp/test-dfo
+FLUMELOGDIR=/tmp/test-dfo-`date +%Y%m%d-%H%M%S.%N`
 
 # remove stale write-ahead or failover logs
-rm -rf /tmp/flume/agent  || { echo "Unable to delete $TMPDIR" ; exit 1 ; }
-rm -rf $TMPDIR || { echo "Unable to delete $TMPDIR" ; exit 1 ; }
+rm -rf /tmp/flume/agent  || { echo "Unable to delete $FLUMELOGDIR" ; exit 1 ; }
+rm -rf $FLUMELOGDIR || { echo "Unable to delete $FLUMELOGDIR" ; exit 1 ; }
 
 $FLUME shell <<EOF
 connect $MASTER
@@ -47,7 +48,7 @@ exec noop 10000
 
 
 ## Setup an agent collector topology using autoBEChains.
-exec config collector  autoCollectorSource 'collectorSink("file://$TMPDIR","data")'
+exec config collector  autoCollectorSource 'collectorSink("file://$FLUMELOGDIR","data",5000)'
 exec config node 'asciisynth(500)' '{delay(200)=>autoDFOChain}'
 
 ## Wait for the node to become active, and then done.
@@ -59,7 +60,8 @@ exec decommission node
 exec decommission collector
 
 # waitForNodesDecommissioned
-wait 5000
+exec noop 5000
+exec noop 5000
 
 quit
 EOF
@@ -70,7 +72,7 @@ fi
 
 sleep 5s
 
-COUNT=`wc -l $TMPDIR/* | tail -1 | awk '{print $1}'`
+COUNT=`wc -l $FLUMELOGDIR/* | tail -1 | awk '{print $1}'`
 echo count messages $COUNT
 if [ "$COUNT" != 500 ] ; then
     echo "FAIL"
@@ -78,4 +80,4 @@ if [ "$COUNT" != 500 ] ; then
 fi
 
 echo "SUCCESS"
-rm -rf $TMPDIR || { echo "test succeeded but failed to rm $TMPDIR" ; exit 1; } 
+rm -rf $FLUMELOGDIR || { echo "test succeeded but failed to rm $FLUMELOGDIR" ; exit 1; } 

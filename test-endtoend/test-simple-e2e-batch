@@ -27,7 +27,7 @@ FLUME=${FLUME_HOME}/bin/flume
 MASTER=localhost
 NODE1=`hostname`
 NODE2=`hostname`
-FLUMELOGDIR=/tmp/test-e2e-`date +%Y%m%d-%H%M%S.%N`
+FLUMELOGDIR=/tmp/test-e2e-batch-`date +%Y%m%d-%H%M%S.%N`
 
 # remove stale write-ahead or failover logs
 rm -rf /tmp/flume/agent  || { echo "Unable to delete $FLUMELOGDIR" ; exit 1 ; }
@@ -49,7 +49,7 @@ exec noop 10000
 
 ## Setup an agent collector topology using autoBEChains.
 exec config collector  autoCollectorSource 'collectorSink("file://$FLUMELOGDIR","data",5000)'
-exec config node 'asciisynth(500)' '{delay(200)=>autoE2EChain}'
+exec config node 'asciisynth(500)' 'delay(200) agentE2EChain("$NODE1", batchCoun=10)'
 
 ## Wait for the node to become active, and then done.
 waitForNodesActive 10000 node

@@ -15,8 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 ####
-# This test runs an agent in end-to-end mode and verifies that a
+# This test runs an agent in best effort mode and verifies that a
 # specific number of events were delivered.  It expects that a node
 # and master are running on the localhost
 
@@ -27,11 +28,9 @@ FLUME=${FLUME_HOME}/bin/flume
 MASTER=localhost
 NODE1=`hostname`
 NODE2=`hostname`
-FLUMELOGDIR=/tmp/test-e2e-`date +%Y%m%d-%H%M%S.%N`
+FLUMELOGDIR=/tmp/test-be-batch-`date +%Y%m%d-%H%M%S.%N`
 
-# remove stale write-ahead or failover logs
-rm -rf /tmp/flume/agent  || { echo "Unable to delete $FLUMELOGDIR" ; exit 1 ; }
-rm -rf $FLUMELOGDIR  || { echo "Unable to delete $FLUMELOGDIR" ; exit 1 ; }
+rm -rf $FLUMELOGDIR || { echo "Unable to delete $FLUMELOGDIR" ; exit 1 ; }
 
 $FLUME shell <<EOF
 connect $MASTER
@@ -46,17 +45,13 @@ exec spawn $NODE2 node
 # enough for two heartbeats, to get ips to master
 exec noop 10000
 
-
 ## Setup an agent collector topology using autoBEChains.
 exec config collector  autoCollectorSource 'collectorSink("file://$FLUMELOGDIR","data",5000)'
-exec config node 'asciisynth(500)' '{delay(200)=>autoE2EChain}'
+exec config node 'asciisynth(500)' 'delay(200) agentBESink("$NODE1",batchCount=10)'
 
 ## Wait for the node to become active, and then done.
 waitForNodesActive 10000 node
 waitForNodesDone 200000 node
-
-# Wait for WAL to flush
-exec noop 60000
 
 ## Yea! done.
 exec decommission node
@@ -69,6 +64,7 @@ exec noop 5000
 quit
 EOF
 
+
 if [ "$?" -ne 0 ] ; then 
   echo "flume shell script failed"; exit 1; 
 fi
@@ -79,10 +75,8 @@ COUNT=`wc -l $FLUMELOGDIR/* | tail -1 | awk '{print $1}'`
 echo count messages $COUNT
 if [ "$COUNT" != 500 ] ; then
     echo "FAIL"
-    exit -1
+    exit 1
 fi
 
 echo "SUCCESS"
-rm -rf $FLUMELOGDIR
-
-
+rm -rf $FLUMELOGDIR || { echo "test succeeded but failed to rm $FLUMELOGDIR" ; exit 1; } 

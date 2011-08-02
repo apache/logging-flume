@@ -199,27 +199,55 @@ data outputted by collectors is specified by the
 
 .Flume's Agent Tier Event Sinks
 
-[horizontal] 
-+agentSink[("_machine_"[, _port_])]+  :: Defaults to +agentE2ESink+
+[horizontal] +agentSink[("_machine_"[, _port_]{, batchN=1}{,
+batchLatency=0}{,compression=false})]+ :: Defaults to +agentE2ESink+
 
-+agentE2ESink[("_machine_"[, _port_])]+ :: Agent sink with write ahead log and 
-end-to-end ack.  Optional arguments specify a +_machine_+, and the TCP 
-+_port_+ pointing to a +collectorSource+.  If none is specified, the values 
-specified by the +flume.collector.event.host+ and the +flume.collector.port+ 
-properties will be used.
++agentE2ESink[("_machine_"[, _port_]{,batchN=1}{,batchLatency=0}{,compression=false})]+ :: 
+Agent sink with write ahead log and end-to-end ack.  Optional
+arguments specify a +_machine_+, and the TCP +_port_+ pointing to a
++collectorSource+.  If none is specified, the values specified by the
++flume.collector.event.host+ and the +flume.collector.port+ properties
+will be used.  Batching and compression options can also be specfied
+at the agent.  By default neither batching nor compression is used.
+By specifying a +batchTimeout+ integer keyword argument, the agent
+will attempt to send at least every +batchMillis+ ms.  By adding the
++batchCount+ integer keyword argument, one can send events in groups
+of +batchCount+ events.  By specifying the +compression+ boolean
+argument, gzip compression (of batched events if batching enabled)
+will be enabled.
 
-+agentDFOSink[("_machine_"[, _port_])]+ :: DiskFailover Agent sink that stores 
-to local disk on detected failure. This sink periodically checks with the 
-+_machine:port_+ and resends events if becomes alive again. Optional arguments 
-specify a +_machine_+, and the TCP +_port_+ pointing to a +collectorSource+.  
-If none is specified, the values specified by the +flume.collector.event.host+ 
-and the +flume.collector.port+ properties will be used.
++agentDFOSink[("_machine_"[, _port_]{, batchN=1}{,batchLatency=0}{,compression=false})]+ :: 
+Disk Failover Agent sink that stores to local disk on detected
+failure. This sink periodically checks with the +_machine:port_+ and
+resends events if becomes alive again. Optional arguments specify a
++_machine_+, and the TCP +_port_+ pointing to a +collectorSource+.  If
+none is specified, the values specified by the
++flume.collector.event.host+ and the +flume.collector.port+ properties
+will be used.  Batching and compression options can also be specfied
+at the agent.  By default neither batching nor compression is used.
+By specifying a +batchTimeout+ integer keyword argument, the agent
+will attempt to send at least every +batchMillis+ ms.  By adding the
++batchCount+ integer keyword argument, one can send events in groups
+of +batchCount+ events.  By specifying the +compression+ boolean
+argument, gzip compression (of batched events if batching enabled)
+will be enabled.
 
-+agentBESink[("_machine_"[, _port_])]+ :: BestEffort Agent sink.  This drops 
-messages on failures and continues sending.  Optional arguments specify a 
-+_collector_+, and the TCP +_PORT_+ pointing to a +collectorSource+.  If none 
-is specified, the values specified by the +flume.collector.event.host+ and the 
-+flume.collector.port+ properties will be used.
++agentBESink[("_machine_"[, _port_]{, batchN=1}{,batchLatency=0}{,compression=false})]+ :: 
+Best Effort Agent sink.  This drops messages on failures and continues
+sending.  Optional arguments specify a +_collector_+, and the TCP
++_PORT_+ pointing to a +collectorSource+.  If none is specified, the
+values specified by the +flume.collector.event.host+ and the
++flume.collector.port+ properties will be used.  Batching and
+compression options can also be specfied at the agent.  By default
+neither batching nor compression is used.  By specifying a
++batchTimeout+ integer keyword argument, the agent will attempt to
+send at least every +batchMillis+ ms.  By adding the +batchCount+
+integer keyword argument, one can send events in groups of
++batchCount+ events.  By specifying the +compression+ boolean
+argument, gzip compression (of batched events if batching enabled)
+will be enabled.
+
+
 
 +agentE2EChain("_m1_[:_p1_]"[, "_m2_[:_p2_]"[,...]])+ :: Agent sink
 with write-ahead log and end-to-end ack and collector failover

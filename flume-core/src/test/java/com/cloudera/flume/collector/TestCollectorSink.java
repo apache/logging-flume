@@ -229,7 +229,7 @@ public class TestCollectorSink {
         + "\",\"\")";
     CollectorSink coll = (CollectorSink) FlumeBuilder.buildSink(new Context(),
         snkspec);
-    RollSink roll = coll.roller;
+    RollSink roll = coll.roller; // shortcut to roller exposed for testing
 
     // normally inside wal
     NaiveFileWALDeco.AckChecksumRegisterer<EventSink> snk = new NaiveFileWALDeco.AckChecksumRegisterer<EventSink>(

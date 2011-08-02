@@ -39,6 +39,8 @@ import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSinkDecorator;
 import com.cloudera.flume.core.MaskDecorator;
+import com.cloudera.flume.handlers.batch.GunzipDecorator;
+import com.cloudera.flume.handlers.batch.UnbatchingDecorator;
 import com.cloudera.flume.handlers.debug.InsistentAppendDecorator;
 import com.cloudera.flume.handlers.debug.InsistentOpenDecorator;
 import com.cloudera.flume.handlers.debug.StubbornAppendSink;
@@ -115,14 +117,16 @@ public class CollectorSink extends EventSink.Base {
     // needs an extra mask before rolling, writing to disk and forwarding acks
     // (roll detect).
 
-    // { ackChecksumChecker => insistentAppend => stubbornAppend =>
-    // insistentOpen => mask("rolltag") => roll(xx) { rollDetect =>
-    // subsink } }
+    // gunzip unbatch ackChecksumChecker insistentAppend stubbornAppend
+    // insistentOpen mask("rolltag") roll(xx) { rollDetect subsink }
+
     EventSink tmp = new MaskDecorator<EventSink>(roller, "rolltag");
     tmp = new InsistentOpenDecorator<EventSink>(tmp, backoff1);
     tmp = new StubbornAppendSink<EventSink>(tmp);
     tmp = new InsistentAppendDecorator<EventSink>(tmp, backoff2);
-    snk = new AckChecksumChecker<EventSink>(tmp, accum);
+    tmp = new AckChecksumChecker<EventSink>(tmp, accum);
+    tmp = new UnbatchingDecorator<EventSink>(tmp);
+    snk = new GunzipDecorator<EventSink>(tmp);
   }
 
   /**

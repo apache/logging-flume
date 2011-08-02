@@ -62,17 +62,42 @@ public class AgentSink extends EventSink.Base {
     BEST_EFFORT, // this is equivalent to syslog's best effort mechanism.
   };
 
+  public static final String BATCH_COUNT = "batchCount";
+  public static final String BATCH_MILLIS = "batchMillis";
+
   final EventSink sink;
 
   public AgentSink(Context ctx, String dsthost, int port, ReliabilityMode mode)
       throws FlumeSpecException {
     Preconditions.checkNotNull(dsthost);
 
+    // batching is overhead so if no settings specified, don't do it.
+    String batchGzDeco = "";
+    String batchN = ctx.getValue(BATCH_COUNT);
+    int n = 1;
+    if (batchN != null) {
+      n = Integer.parseInt(batchN);
+    }
+
+    String batchLatency = ctx.getValue(BATCH_MILLIS);
+    int ms = 0; // never time out due to time.
+    if (batchLatency != null) {
+      ms = Integer.parseInt(batchLatency);
+    }
+
+    if (n > 1) {
+      batchGzDeco += " batch(" + n + "," + ms + ") ";
+    }
+
+    if (ctx.getValue("compression") != null) {
+      // currently ignore all values, just use gzip
+      batchGzDeco += " gzip ";
+    }
+
     switch (mode) {
     case ENDTOEND: {
-      String snk = String.format(
-          "{ ackedWriteAhead => { stubbornAppend =>  { insistentOpen => "
-              + "rpcSink(\"%s\", %d)} } }", dsthost, port);
+      String snk = String.format("ackedWriteAhead " + batchGzDeco
+          + " stubbornAppend insistentOpen rpcSink(\"%s\", %d)", dsthost, port);
       sink = FlumeBuilder.buildSink(ctx, snk);
       break;
     }
@@ -86,17 +111,19 @@ public class AgentSink extends EventSink.Base {
       long maxCumulativeBo = conf.getFailoverMaxCumulativeBackoff();
       String rpc = String.format("rpcSink(\"%s\", %d)", dsthost, port);
 
-      String snk = String.format("< %s ? { diskFailover => { insistentAppend "
-          + "=> { stubbornAppend => { insistentOpen(%d,%d,%d) => %s} } } } >",
-          rpc, maxSingleBo, initialBo, maxCumulativeBo, rpc);
+      String snk = String.format(batchGzDeco
+          + " < %s ? diskFailover insistentAppend "
+          + " stubbornAppend insistentOpen(%d,%d,%d) %s >", rpc, maxSingleBo,
+          initialBo, maxCumulativeBo, rpc);
       sink = FlumeBuilder.buildSink(ctx, snk);
       break;
 
     }
 
     case BEST_EFFORT: {
-      String snk = String.format("< { insistentOpen => { stubbornAppend => "
-          + "rpcSink(\"%s\", %d) } }  ? null>", dsthost, port);
+      String snk = String.format("< " + batchGzDeco
+          + " insistentOpen stubbornAppend rpcSink(\"%s\", %d) ? null>",
+          dsthost, port);
       sink = FlumeBuilder.buildSink(ctx, snk);
       break;
     }
@@ -137,7 +164,9 @@ public class AgentSink extends EventSink.Base {
     return new SinkBuilder() {
       @Override
       public EventSink build(Context context, String... argv) {
-        Preconditions.checkArgument(argv.length <= 2);
+        Preconditions.checkArgument(argv.length <= 2,
+            "usage: agentE2ESink(collectorhost[, port]{, " + BATCH_COUNT
+                + "=1}{, " + BATCH_MILLIS + "=0}{,compression=false})");
         FlumeConfiguration conf = FlumeConfiguration.get();
         String collector = conf.getCollectorHost();
         int port = conf.getCollectorPort();
@@ -177,7 +206,9 @@ public class AgentSink extends EventSink.Base {
     return new SinkBuilder() {
       @Override
       public EventSink build(Context context, String... argv) {
-        Preconditions.checkArgument(argv.length <= 2);
+        Preconditions.checkArgument(argv.length <= 2,
+            "usage: agentDFOSink(collectorhost[, port]{, " + BATCH_COUNT
+                + "=1}{, " + BATCH_MILLIS + "=0}{,compression=false})");
         FlumeConfiguration conf = FlumeConfiguration.get();
         String collector = conf.getCollectorHost();
         int port = conf.getCollectorPort();
@@ -213,7 +244,9 @@ public class AgentSink extends EventSink.Base {
     return new SinkBuilder() {
       @Override
       public EventSink build(Context context, String... argv) {
-        Preconditions.checkArgument(argv.length <= 2);
+        Preconditions.checkArgument(argv.length <= 2,
+            "usage: agentBESink(collectorhost[, port]{, " + BATCH_COUNT
+                + "=1}{, " + BATCH_MILLIS + "=0}{,compression=false})");
         FlumeConfiguration conf = FlumeConfiguration.get();
         String collector = conf.getCollectorHost();
         int port = conf.getCollectorPort();
