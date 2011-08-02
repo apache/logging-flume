@@ -31,7 +31,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import com.cloudera.flume.agent.FlumeNode;
-import com.cloudera.flume.conf.Context;
+import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
@@ -65,8 +65,8 @@ public class TestDiskFailoverDeco {
     EventSink msnk = mock(EventSink.class);
     doNothing().when(msnk).open();
     doNothing().when(msnk).close();
-    doNothing().doThrow(new IOException("foo")).doNothing().when(msnk).append(
-        Mockito.<Event> anyObject());
+    doNothing().doThrow(new IOException("foo")).doNothing().when(msnk)
+        .append(Mockito.<Event> anyObject());
     doReturn(new ReportEvent("blah")).when(msnk).getReport();
 
     // cannot write to the same instance.
@@ -78,12 +78,13 @@ public class TestDiskFailoverDeco {
     doNothing().when(msrc).open();
     doNothing().when(msrc).close();
 
-    when(msrc.next()).thenReturn(e1).thenReturn(e2).thenReturn(e3).thenReturn(
-        null);
+    when(msrc.next()).thenReturn(e1).thenReturn(e2).thenReturn(e3)
+        .thenReturn(null);
 
     DiskFailoverDeco<EventSink> snk = new DiskFailoverDeco<EventSink>(msnk,
-        FlumeNode.getInstance().getDFOManager(), new TimeTrigger(
-            new ProcessTagger(), 60000), 300000);
+        LogicalNodeContext.testingContext(), FlumeNode.getInstance()
+            .getDFOManager(), new TimeTrigger(new ProcessTagger(), 60000),
+        300000);
     snk.open();
     try {
       EventUtil.dumpAll(msrc, snk);
@@ -105,8 +106,9 @@ public class TestDiskFailoverDeco {
    */
   @Test
   public void testBuilder() {
-    DiskFailoverDeco.builder().build(new Context());
-    DiskFailoverDeco.builder().build(new Context(), "1000");
+    DiskFailoverDeco.builder().build(LogicalNodeContext.testingContext());
+    DiskFailoverDeco.builder().build(LogicalNodeContext.testingContext(),
+        "1000");
   }
 
   /**
@@ -114,7 +116,8 @@ public class TestDiskFailoverDeco {
    */
   @Test(expected = IllegalArgumentException.class)
   public void testBuilderFail1() {
-    DiskFailoverDeco.builder().build(new Context(), "12341", "foo");
+    DiskFailoverDeco.builder().build(LogicalNodeContext.testingContext(),
+        "12341", "foo");
   }
 
   /**
@@ -122,7 +125,8 @@ public class TestDiskFailoverDeco {
    */
   @Test(expected = IllegalArgumentException.class)
   public void testBuilderFail2() {
-    DiskFailoverDeco.builder().build(new Context(), "foo");
+    DiskFailoverDeco.builder()
+        .build(LogicalNodeContext.testingContext(), "foo");
   }
 
 }

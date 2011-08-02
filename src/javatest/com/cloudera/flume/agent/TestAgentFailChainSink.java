@@ -22,14 +22,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
+import com.cloudera.flume.conf.FlumeArgException;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.core.CompositeSink;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.reporter.ReportManager;
+import com.cloudera.util.NetUtils;
 
 public class TestAgentFailChainSink {
-  static final Logger LOG = LoggerFactory.getLogger(TestAgentFailChainSink.class);
+  static final Logger LOG = LoggerFactory
+      .getLogger(TestAgentFailChainSink.class);
 
   /**
    * These should fail if there are any exceptions thrown.
@@ -37,18 +41,30 @@ public class TestAgentFailChainSink {
   @Test
   public void testWALFailchain() throws FlumeSpecException {
     ReportManager.get().clear();
-    String spec =
-        AgentFailChainSink.genE2EChain("counter(\"foo1\")",
-            "counter(\"foo2\")", "counter(\"foo3\")");
+    String spec = AgentFailChainSink.genE2EChain("counter(\"foo1\")",
+        "counter(\"foo2\")", "counter(\"foo3\")");
 
     LOG.info("waled failchain: " + spec);
-    EventSink snk = FlumeBuilder.buildSink(new Context(), spec);
+    String node = NetUtils.localhost();
+    EventSink snk = FlumeBuilder.buildSink(new LogicalNodeContext(node, node),
+        spec);
     LOG.info(snk.getReport().toJson());
     ReportManager.get().getReportable("foo1");
+
   }
 
   @Test
   public void testWALChain() throws FlumeSpecException {
+    ReportManager.get().clear();
+    String spec = "agentE2EChain(\"foo:123\",\"bar\",\"baz\")";
+
+    LOG.info("waled failchain: " + spec);
+    String node = NetUtils.localhost();
+    new CompositeSink(new LogicalNodeContext(node, node), spec);
+  }
+
+  @Test(expected = FlumeArgException.class)
+  public void testWALChainBadContext() throws FlumeSpecException {
     ReportManager.get().clear();
     String spec = "agentE2EChain(\"foo:123\",\"bar\",\"baz\")";
 
@@ -62,9 +78,8 @@ public class TestAgentFailChainSink {
   @Test
   public void testBEFailchain() throws FlumeSpecException {
     ReportManager.get().clear();
-    String spec =
-        AgentFailChainSink.genBestEffortChain("counter(\"foo1\")",
-            "counter(\"foo2\")", "counter(\"foo3\")");
+    String spec = AgentFailChainSink.genBestEffortChain("counter(\"foo1\")",
+        "counter(\"foo2\")", "counter(\"foo3\")");
     LOG.info("best effort failchain: " + spec);
     EventSink snk = FlumeBuilder.buildSink(new Context(), spec);
     LOG.info(snk.getReport().toJson());
@@ -87,17 +102,28 @@ public class TestAgentFailChainSink {
   @Test
   public void testDFOFailchain() throws FlumeSpecException {
     ReportManager.get().clear();
-    String spec =
-        AgentFailChainSink.genDfoChain("counter(\"foo1\")",
-            "counter(\"foo2\")", "counter(\"foo3\")");
+    String spec = AgentFailChainSink.genDfoChain("counter(\"foo1\")",
+        "counter(\"foo2\")", "counter(\"foo3\")");
     LOG.info("disk failover failchain: " + spec);
-    EventSink snk = FlumeBuilder.buildSink(new Context(), spec);
+    String node = NetUtils.localhost();
+    EventSink snk = FlumeBuilder.buildSink(new LogicalNodeContext(node, node),
+        spec);
     LOG.info(snk.getReport().toJson());
     ReportManager.get().getReportable("foo1");
   }
 
   @Test
   public void testDFOChain() throws FlumeSpecException {
+    ReportManager.get().clear();
+    String spec = "agentDFOChain(\"foo:123\",\"bar\",\"baz\")";
+
+    LOG.info("waled failchain: " + spec);
+    String node = NetUtils.localhost();
+    new CompositeSink(new LogicalNodeContext(node, node), spec);
+  }
+
+  @Test(expected = FlumeArgException.class)
+  public void testDFOChainBadContext() throws FlumeSpecException {
     ReportManager.get().clear();
     String spec = "agentDFOChain(\"foo:123\",\"bar\",\"baz\")";
 

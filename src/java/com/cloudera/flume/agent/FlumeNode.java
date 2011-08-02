@@ -430,7 +430,7 @@ public class FlumeNode implements Reportable {
   /**
    * Returns a Flume Node with settings from specified command line parameters.
    * (See usage for instructions)
-   *
+   * 
    * @param argv
    * @return
    * @throws IOException
@@ -516,6 +516,7 @@ public class FlumeNode implements Reportable {
       LOG.info("Loading spec from command line: '" + spec + "'");
 
       try {
+        // TODO the first one should be physical node name
         Context ctx = new LogicalNodeContext(nodename, nodename);
         Map<String, Pair<String, String>> cfgs = FlumeBuilder.parseConf(ctx,
             spec);

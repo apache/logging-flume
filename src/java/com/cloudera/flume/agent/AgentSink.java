@@ -62,7 +62,7 @@ public class AgentSink extends EventSink.Base {
 
   final EventSink sink;
 
-  public AgentSink(String dsthost, int port, ReliabilityMode mode)
+  public AgentSink(Context ctx, String dsthost, int port, ReliabilityMode mode)
       throws FlumeSpecException {
     Preconditions.checkNotNull(dsthost);
 
@@ -71,7 +71,7 @@ public class AgentSink extends EventSink.Base {
       String snk = String.format(
           "{ ackedWriteAhead => { stubbornAppend =>  { insistentOpen => "
               + "rpcSink(\"%s\", %d)} } }", dsthost, port);
-      sink = FlumeBuilder.buildSink(new Context(), snk);
+      sink = FlumeBuilder.buildSink(ctx, snk);
       break;
     }
 
@@ -87,7 +87,7 @@ public class AgentSink extends EventSink.Base {
       String snk = String.format("< %s ? { diskFailover => { insistentAppend "
           + "=> { stubbornAppend => { insistentOpen(%d,%d,%d) => %s} } } } >",
           rpc, maxSingleBo, initialBo, maxCumulativeBo, rpc);
-      sink = FlumeBuilder.buildSink(new Context(), snk);
+      sink = FlumeBuilder.buildSink(ctx, snk);
       break;
 
     }
@@ -95,7 +95,7 @@ public class AgentSink extends EventSink.Base {
     case BEST_EFFORT: {
       String snk = String.format("< { insistentOpen => { stubbornAppend => "
           + "rpcSink(\"%s\", %d) } }  ? null>", dsthost, port);
-      sink = FlumeBuilder.buildSink(new Context(), snk);
+      sink = FlumeBuilder.buildSink(ctx, snk);
       break;
     }
 
@@ -148,7 +148,8 @@ public class AgentSink extends EventSink.Base {
         }
 
         try {
-          return new AgentSink(collector, port, ReliabilityMode.ENDTOEND);
+          return new AgentSink(context, collector, port,
+              ReliabilityMode.ENDTOEND);
         } catch (FlumeSpecException e) {
           LOG.error("AgentSink spec error " + e, e);
           throw new IllegalArgumentException(e);
@@ -187,7 +188,8 @@ public class AgentSink extends EventSink.Base {
         }
 
         try {
-          return new AgentSink(collector, port, ReliabilityMode.DISK_FAILOVER);
+          return new AgentSink(context, collector, port,
+              ReliabilityMode.DISK_FAILOVER);
         } catch (FlumeSpecException e) {
           LOG.error("AgentSink spec error " + e, e);
           throw new IllegalArgumentException(e);
@@ -222,7 +224,8 @@ public class AgentSink extends EventSink.Base {
         }
 
         try {
-          return new AgentSink(collector, port, ReliabilityMode.BEST_EFFORT);
+          return new AgentSink(context, collector, port,
+              ReliabilityMode.BEST_EFFORT);
         } catch (FlumeSpecException e) {
           LOG.error("AgentSink spec error " + e, e);
           throw new IllegalArgumentException(e);

@@ -17,7 +17,7 @@
  */
 package com.cloudera.flume.collector;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
@@ -28,8 +28,9 @@ import org.junit.Test;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
-import com.cloudera.flume.conf.SinkFactoryImpl;
+import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
+import com.cloudera.flume.conf.SinkFactoryImpl;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
@@ -71,7 +72,8 @@ public class TestDiskFailoverThenRoll {
       InterruptedException {
     String agentCollector = "{diskFailover(1000) => roll (100000) { null } }";
     Event e = new EventImpl("foo".getBytes());
-    EventSink agent = FlumeBuilder.buildSink(new Context(), agentCollector);
+    EventSink agent = FlumeBuilder.buildSink(
+        LogicalNodeContext.testingContext(), agentCollector);
     agent.open();
     agent.append(e);
 

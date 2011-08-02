@@ -22,10 +22,12 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.io.IOException;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.junit.Test;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.CompositeSink;
 import com.cloudera.flume.core.Event;
@@ -51,11 +53,11 @@ public class TestRollRollTags {
   @Test
   public void testMaskNoConflict() throws IOException, InterruptedException {
     MemorySinkSource mem = new MemorySinkSource();
-    EventSink s1 = new ValueDecorator<EventSink>(mem, "duped", "second"
-        .getBytes());
+    EventSink s1 = new ValueDecorator<EventSink>(mem, "duped",
+        "second".getBytes());
     EventSink s2 = new MaskDecorator<EventSink>(s1, "duped");
-    EventSink snk = new ValueDecorator<EventSink>(s2, "duped", "first"
-        .getBytes());
+    EventSink snk = new ValueDecorator<EventSink>(s2, "duped",
+        "first".getBytes());
     snk.open();
 
     Event e = new EventImpl("foo".getBytes());
@@ -113,8 +115,9 @@ public class TestRollRollTags {
     File path = File.createTempFile("collector", ".tmp");
     path.deleteOnExit();
 
-    EventSink snk = new CompositeSink(new Context(),
-        "{ ackedWriteAhead => roll(1000) { dfs(\"file://" + path + "\") } }");
+    EventSink snk = new CompositeSink(LogicalNodeContext.testingContext(),
+        "{ ackedWriteAhead => roll(1000) { dfs(\"file:///"
+            + StringEscapeUtils.escapeJava(path.getAbsolutePath()) + "\") } }");
     Event e = new EventImpl("foo".getBytes());
     snk.open();
     snk.append(e); // should not bork.
@@ -129,9 +132,10 @@ public class TestRollRollTags {
     File path = File.createTempFile("collector", ".tmp");
     path.deleteOnExit();
 
-    EventSink snk = new CompositeSink(new Context(),
-        "{ ackedWriteAhead => { mask(\"rolltag\") => roll(1000) { dfs(\"file://"
-            + path + "\") } } }");
+    EventSink snk = new CompositeSink(LogicalNodeContext.testingContext(),
+        "{ ackedWriteAhead => { mask(\"rolltag\") => roll(1000) { dfs(\"file:///"
+            + StringEscapeUtils.escapeJava(path.getAbsolutePath())
+            + "\") } } }");
     Event e = new EventImpl("foo".getBytes());
     snk.open();
     snk.append(e); // should not bork.

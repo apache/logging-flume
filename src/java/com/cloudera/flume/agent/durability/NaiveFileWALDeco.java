@@ -314,10 +314,8 @@ public class NaiveFileWALDeco<S extends EventSink> extends
         if (argv.length >= 2) {
           walnode = argv[1];
         }
-        if (walnode == null) {
-          LOG.warn("Context does not have a logical node name "
-              + "-- this will likely be a problem if you have multiple WALs");
-        }
+        Preconditions.checkArgument(walnode != null,
+            "Context does not have a logical node name");
 
         long checkMs = 250; // TODO replace with config var;
         if (argv.length >= 3) {

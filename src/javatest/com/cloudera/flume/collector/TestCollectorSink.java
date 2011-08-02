@@ -43,6 +43,7 @@ import com.cloudera.flume.agent.durability.WALManager;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
@@ -136,7 +137,7 @@ public class TestCollectorSink {
    */
   @Test
   public void testCorrectFilename() throws IOException, InterruptedException {
-    CollectorSink sink = new CollectorSink(
+    CollectorSink sink = new CollectorSink(new Context(),
         "file:///tmp/flume-test-correct-filename", "actual-file-", 10000,
         new Tagger() {
           public String getTag() {
@@ -604,8 +605,8 @@ public class TestCollectorSink {
       TestAckListener fakeMasterRpc = new TestAckListener();
 
       // massive roll millis because the test will force fast and frequent rolls
-      CollectorSink cs = new CollectorSink("file:///" + dir.getAbsolutePath(),
-          "test", 1000000, fakeMasterRpc) {
+      CollectorSink cs = new CollectorSink(LogicalNodeContext.testingContext(),
+          "file:///" + dir.getAbsolutePath(), "test", 1000000, fakeMasterRpc) {
         @Override
         public void append(Event e) throws IOException, InterruptedException {
           LOG.info("Pre  append: "

@@ -45,11 +45,6 @@ public class CompositeSink extends EventSink.Base {
     }
   }
 
-  @Deprecated
-  public CompositeSink(String spec) throws FlumeSpecException {
-    this(new Context(), spec);
-  }
-
   @Override
   public void open() throws IOException, InterruptedException {
     snk.open();

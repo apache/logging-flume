@@ -19,6 +19,7 @@ package com.cloudera.flume.agent.diskfailover;
 
 import java.io.IOException;
 
+import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.handlers.rolling.RollSink;
@@ -104,7 +105,7 @@ public interface DiskFailoverManager extends Reportable {
    * met, the rolling sink closes the previous sink and calls newWritingSink to
    * roll to a new writer.
    */
-  public RollSink getEventSink(RollTrigger t) throws IOException;
+  public RollSink getEventSink(Context ctx, RollTrigger t) throws IOException;
 
   /**
    * Get a source that logically provides a single stream. This should call

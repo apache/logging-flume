@@ -239,8 +239,8 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
       throws IOException {
     File dir = getDir(State.WRITING);
     final String tag = tagger.newTag();
-    EventSink curSink = new SeqfileEventSink(new File(dir, tag)
-        .getAbsoluteFile());
+    EventSink curSink = new SeqfileEventSink(
+        new File(dir, tag).getAbsoluteFile());
     writingQ.add(tag);
     DFOData data = new DFOData(tag);
     table.put(tag, data);
@@ -277,9 +277,10 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
    * This instantiates a roller where all input is sent to.
    */
   @Override
-  public RollSink getEventSink(final RollTrigger t) throws IOException {
+  public RollSink getEventSink(Context ctx, final RollTrigger t)
+      throws IOException {
     // NaiveFileFailover is just a place holder
-    return new RollSink(new Context(), "NaiveFileFailover", t, 250) {
+    return new RollSink(ctx, "NaiveFileFailover", t, 250) {
 
       @Override
       public EventSink newSink(Context ctx) throws IOException {

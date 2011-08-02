@@ -43,6 +43,10 @@ public class Context {
     this.parent = parent;
   }
 
+  /**
+   * This should only be used rarely. You probably want
+   * LogicalNode.testingContext
+   */
   public Context() {
     this.parent = EMPTY;
   }

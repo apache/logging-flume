@@ -65,10 +65,12 @@ public class DiskFailoverDeco<S extends EventSink> extends
   volatile IOException lastExn = null;
 
   final long checkmillis;
+  final Context ctx;
 
-  public DiskFailoverDeco(S s, final DiskFailoverManager dfoman, RollTrigger t,
-      long checkmillis) {
+  public DiskFailoverDeco(S s, Context ctx, final DiskFailoverManager dfoman,
+      RollTrigger t, long checkmillis) {
     super((S) new LazyOpenDecorator(s));
+    this.ctx = ctx;
     this.dfoMan = dfoman;
     this.trigger = t;
     this.checkmillis = checkmillis;
@@ -173,7 +175,7 @@ public class DiskFailoverDeco<S extends EventSink> extends
     Preconditions.checkNotNull(sink,
         "Attepted to open a null DiskFailoverDeco subsink");
     LOG.debug("Opening DiskFailoverDeco");
-    input = dfoMan.getEventSink(trigger);
+    input = dfoMan.getEventSink(ctx, trigger);
     drainSource = dfoMan.getEventSource();
 
     // TODO (jon) catch exceptions here and close them before rethrowing
@@ -250,10 +252,12 @@ public class DiskFailoverDeco<S extends EventSink> extends
 
         // this makes the dfo present to the when reporting on the FlumeNode
         String dfonode = context.getValue(LogicalNodeContext.C_LOGICAL);
+        Preconditions.checkArgument(dfonode != null,
+            "Context does not have a logical node name");
         DiskFailoverManager dfoman = node.getAddDFOManager(dfonode);
 
-        return new DiskFailoverDeco<EventSink>(null, dfoman, new TimeTrigger(
-            new ProcessTagger(), delayMillis), checkmillis);
+        return new DiskFailoverDeco<EventSink>(null, context, dfoman,
+            new TimeTrigger(new ProcessTagger(), delayMillis), checkmillis);
       }
     };
   }

@@ -51,11 +51,6 @@ public class AgentFailChainSink extends EventSink.Base {
     E2E, DFO, BE
   };
 
-  public AgentFailChainSink(RELIABILITY rel, String... hosts)
-      throws FlumeSpecException {
-    this(new Context(), rel, hosts);
-  }
-
   public AgentFailChainSink(Context context, RELIABILITY rel, String... hosts)
       throws FlumeSpecException {
 
@@ -122,8 +117,8 @@ public class AgentFailChainSink extends EventSink.Base {
     String body = "{ lazyOpen => { stubbornAppend => %s } }  ";
 
     // what happens when there are no collectors?
-    String spec = FailoverChainManager.genAvailableSinkSpec(body, Arrays
-        .asList(chain));
+    String spec = FailoverChainManager.genAvailableSinkSpec(body,
+        Arrays.asList(chain));
     LOG.info("Setting best effort failover chain to  " + spec);
     return spec;
   }
@@ -137,8 +132,8 @@ public class AgentFailChainSink extends EventSink.Base {
     String body = " %s ";
 
     // what happens when there are no collectors?
-    String spec = FailoverChainManager.genAvailableSinkSpec(body, Arrays
-        .asList(chain));
+    String spec = FailoverChainManager.genAvailableSinkSpec(body,
+        Arrays.asList(chain));
     spec = "{ ackedWriteAhead => { stubbornAppend => { insistentOpen => "
         + spec + " } } }";
     LOG.info("Setting e2e failover chain to  " + spec);
@@ -206,7 +201,7 @@ public class AgentFailChainSink extends EventSink.Base {
             .checkArgument(argv.length >= 1,
                 "usage: agentE2EChain(\"machine1[:port]\" [, \"machine2[:port]\" [,...]])");
         try {
-          return new AgentFailChainSink(RELIABILITY.E2E, argv);
+          return new AgentFailChainSink(context, RELIABILITY.E2E, argv);
         } catch (FlumeSpecException e) {
           throw new IllegalArgumentException(e);
         }
@@ -234,7 +229,7 @@ public class AgentFailChainSink extends EventSink.Base {
             .checkArgument(argv.length >= 1,
                 "usage: agentDFOChain(\"machine1[:port]\" [, \"machine2[:port]\" [,...]])");
         try {
-          return new AgentFailChainSink(RELIABILITY.DFO, argv);
+          return new AgentFailChainSink(context, RELIABILITY.DFO, argv);
         } catch (FlumeSpecException e) {
           throw new IllegalArgumentException(e);
         }
@@ -258,7 +253,7 @@ public class AgentFailChainSink extends EventSink.Base {
             .checkArgument(argv.length >= 1,
                 "usage: agentBEChain(\"machine1[:port]\" [, \"machine2[:port]\" [,...]])");
         try {
-          return new AgentFailChainSink(RELIABILITY.BE, argv);
+          return new AgentFailChainSink(context, RELIABILITY.BE, argv);
         } catch (FlumeSpecException e) {
           throw new IllegalArgumentException(e);
         }

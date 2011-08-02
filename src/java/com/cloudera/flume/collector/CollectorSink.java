@@ -75,15 +75,15 @@ public class CollectorSink extends EventSink.Base {
   // References package exposed for testing
   final RollSink roller;
 
-  CollectorSink(String path, String filename, long millis, AckListener ackDest)
+  CollectorSink(Context ctx, String path, String filename, long millis, AckListener ackDest)
       throws FlumeSpecException {
-    this(path, filename, millis, new ProcessTagger(), 250, ackDest);
+    this(ctx, path, filename, millis, new ProcessTagger(), 250, ackDest);
   }
 
-  CollectorSink(final String logdir, final String filename, final long millis,
+  CollectorSink(Context ctx,final String logdir, final String filename, final long millis,
       final Tagger tagger, long checkmillis, AckListener ackDest) {
     this.ackDest = ackDest;
-    this.roller = new RollSink(new Context(), "collectorSink", new TimeTrigger(
+    this.roller = new RollSink(ctx, "collectorSink", new TimeTrigger(
         tagger, millis), checkmillis) {
       @Override
       public EventSink newSink(Context ctx) throws IOException {
@@ -244,7 +244,7 @@ public class CollectorSink extends EventSink.Base {
           millis = Long.parseLong(argv[2]);
         }
         try {
-          EventSink snk = new CollectorSink(logdir, prefix, millis, FlumeNode
+          EventSink snk = new CollectorSink(context, logdir, prefix, millis, FlumeNode
               .getInstance().getCollectorAckListener());
           return snk;
         } catch (FlumeSpecException e) {

@@ -27,6 +27,7 @@ import org.junit.Test;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.core.EventSink;
 
 /**
@@ -68,8 +69,7 @@ public class TestHierarchicalReports {
 
   @Test
   public void testHierarchy() throws FlumeSpecException {
-    String s =
-        "{ intervalSampler(5) => { stubbornAppend => { insistentOpen => console } } }";
+    String s = "{ intervalSampler(5) => { stubbornAppend => { insistentOpen => console } } }";
     EventSink sink = FlumeBuilder.buildSink(new Context(), s);
 
     Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();
@@ -80,14 +80,15 @@ public class TestHierarchicalReports {
     }
     System.out.println(r);
     Assert.assertTrue(r.contains("X." + sink.getName()));
-    Assert.assertTrue(r.contains("X.IntervalSampler.StubbornAppend.InsistentOpen"));
+    Assert.assertTrue(r
+        .contains("X.IntervalSampler.StubbornAppend.InsistentOpen"));
   }
 
   @Test
   public void testWalDeco() throws FlumeSpecException {
-    String s =
-        "{ ackedWriteAhead => { stubbornAppend => { insistentOpen => console } } }";
-    EventSink sink = FlumeBuilder.buildSink(new Context(), s);
+    String s = "{ ackedWriteAhead => { stubbornAppend => { insistentOpen => console } } }";
+    EventSink sink = FlumeBuilder.buildSink(
+        LogicalNodeContext.testingContext(), s);
 
     Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();
     sink.getReports("X.", reports);
@@ -97,14 +98,15 @@ public class TestHierarchicalReports {
     }
     System.out.println(r);
     Assert.assertTrue(r.contains("X." + sink.getName()));
-    Assert.assertTrue(r.contains("X.NaiveFileWAL.StubbornAppend.InsistentOpen"));
+    Assert
+        .assertTrue(r.contains("X.NaiveFileWAL.StubbornAppend.InsistentOpen"));
   }
 
   @Test
   public void testWrappedWal() throws FlumeSpecException {
-    String s =
-        "{ insistentOpen => { ackedWriteAhead => { stubbornAppend => { insistentOpen => console } } } }";
-    EventSink sink = FlumeBuilder.buildSink(new Context(), s);
+    String s = "{ insistentOpen => { ackedWriteAhead => { stubbornAppend => { insistentOpen => console } } } }";
+    EventSink sink = FlumeBuilder.buildSink(
+        LogicalNodeContext.testingContext(), s);
 
     Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();
     sink.getReports("X.", reports);
@@ -121,7 +123,8 @@ public class TestHierarchicalReports {
   @Test
   public void testFailover() throws FlumeSpecException {
     String s = " { ackedWriteAhead => < thriftSink ? console > } ";
-    EventSink sink = FlumeBuilder.buildSink(new Context(), s);
+    EventSink sink = FlumeBuilder.buildSink(
+        LogicalNodeContext.testingContext(), s);
 
     Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();
     sink.getReports("X.", reports);
@@ -141,7 +144,8 @@ public class TestHierarchicalReports {
   @Test
   public void testMultiple() throws FlumeSpecException {
     String s = " { ackedWriteAhead => [ thriftSink , console ] } ";
-    EventSink sink = FlumeBuilder.buildSink(new Context(), s);
+    EventSink sink = FlumeBuilder.buildSink(
+        LogicalNodeContext.testingContext(), s);
 
     Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();
     sink.getReports("X.", reports);

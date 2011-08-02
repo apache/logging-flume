@@ -34,12 +34,12 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.FlumeSpecGen;
-import com.cloudera.flume.conf.FlumeConfigData;
+import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
@@ -84,7 +84,10 @@ public class ConfigManager implements ConfigurationManager {
 
     try {
       // make sure the sink specified is parsable and instantiable.
-      FlumeBuilder.buildSink(new Context(), sink);
+
+      // TODO the first arg should be physical node name
+      FlumeBuilder.buildSink(new LogicalNodeContext(logicalNode, logicalNode),
+          sink);
       FlumeBuilder.buildSource(source);
     } catch (Exception e) {
       throw new IllegalArgumentException(
@@ -266,7 +269,7 @@ public class ConfigManager implements ConfigurationManager {
   }
 
   /**
-   *@inheritDoc
+   * @inheritDoc
    */
   @Override
   synchronized public Map<String, Integer> getChokeMap(String physNode) {
@@ -282,8 +285,8 @@ public class ConfigManager implements ConfigurationManager {
       return true;
     } else {
       LOG.warn("Logical node " + logicNode
-        + " is already assigned to physical node "
-        + logicalToPhysical.get(logicNode) + ". Unmap it first.");
+          + " is already assigned to physical node "
+          + logicalToPhysical.get(logicNode) + ". Unmap it first.");
       return false;
     }
   }
@@ -319,8 +322,8 @@ public class ConfigManager implements ConfigurationManager {
           + ".  It doesn't exist!");
     }
 
-    cfgStore.setConfig(logicalNode, fcd.getFlowID(), fcd.getSourceConfig(), fcd
-        .getSinkConfig());
+    cfgStore.setConfig(logicalNode, fcd.getFlowID(), fcd.getSourceConfig(),
+        fcd.getSinkConfig());
   }
 
   /**

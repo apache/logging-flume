@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
@@ -46,7 +47,8 @@ public class TestDiskFailoverBenchmarking {
     // String spec =
     // "{ benchinject => { benchreport(\"pre\") =>  { diskFailover => [console, counter(\"beforecount\")] } } }";
     String spec = "{ benchinject => { benchreport(\"pre\") =>  { diskFailover => counter(\"beforecount\") } } }";
-    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), spec);
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(
+        LogicalNodeContext.testingContext()), spec);
 
     EventSource src = MemorySinkSource.cannedData("test ", 5);
     snk.open();
@@ -67,7 +69,8 @@ public class TestDiskFailoverBenchmarking {
       InterruptedException {
     BenchmarkHarness.setupLocalWriteDir();
     String spec = "{ benchinject => { diskFailover => { benchreport(\"post\") =>  counter(\"beforecount\") } } }";
-    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), spec);
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(
+        LogicalNodeContext.testingContext()), spec);
 
     EventSource src = MemorySinkSource.cannedData("test ", 5);
     snk.open();
@@ -87,7 +90,8 @@ public class TestDiskFailoverBenchmarking {
       IOException, InterruptedException {
     BenchmarkHarness.setupLocalWriteDir();
     String spec = "{ benchinject => { benchreport(\"pre\") =>  { diskFailover => counter(\"beforecount\") } } }";
-    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), spec);
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(
+        LogicalNodeContext.testingContext()), spec);
 
     EventSource src = MemorySinkSource.cannedData("test ", 5);
     snk.open();
@@ -108,7 +112,8 @@ public class TestDiskFailoverBenchmarking {
     BenchmarkHarness.setupLocalWriteDir();
 
     String spec = "{ benchinject => { ackedWriteAhead => { benchreport(\"post\") =>  counter(\"beforecount\") } } }";
-    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), spec);
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(
+        LogicalNodeContext.testingContext()), spec);
 
     EventSource src = MemorySinkSource.cannedData("test ", 5);
     snk.open();

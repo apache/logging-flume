@@ -18,6 +18,8 @@
 
 package com.cloudera.flume.conf;
 
+import com.cloudera.util.NetUtils;
+
 /**
  * Information specific to a logical node context
  * 
@@ -39,6 +41,16 @@ public class LogicalNodeContext extends Context {
     super(parent);
     putValue(C_PHYSICAL, physName);
     putValue(C_LOGICAL, logicalName);
+  }
+
+  /**
+   * For testing.
+   * 
+   * @return a Context with localhost name as the logical and physical node name
+   */
+  public static LogicalNodeContext testingContext() {
+    String n = NetUtils.localhost();
+    return new LogicalNodeContext(n, n);
   }
 
 }
