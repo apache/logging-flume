@@ -70,8 +70,8 @@ public class SynthSourceRndSize extends EventSource.Base {
     if (count >= total && total != 0)
       return null;// end marker if gotten to count
 
-    int size = this.minBodySize
-        + this.rand.nextInt(this.maxBodySize - this.minBodySize);
+    int range = this.maxBodySize - this.minBodySize;
+    int size = this.minBodySize + (range > 0 ? this.rand.nextInt(range) : 0);
     count++;
     byte[] data = new byte[size];
     rand.nextBytes(data);

@@ -17,7 +17,7 @@
  */
 package com.cloudera.flume.handlers.debug;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
@@ -37,9 +37,9 @@ import com.cloudera.flume.core.connector.DirectDriver;
 import com.cloudera.flume.reporter.ReportEvent;
 
 /**
- * Demonstrates basic throttling works within some error-tolerance. There are
- * two different tests we perform here: IndividualChoke test and CollectiveChoke
- * test, their details are given with their respective test methods below.
+ * Demonstrates basic throttling works within some error-tolerance. Throttling
+ * rates are generated randomly and we check to see that the rate at which data
+ * is sent is lower than some max (allowing for 10% slop)
  */
 public class TestChokeDecos {
   public static final Logger LOG = LoggerFactory
@@ -55,22 +55,21 @@ public class TestChokeDecos {
   // number of drivers created for the testing
   final int numDrivers = 50;
 
-  // here we set the limits for the minimum and maximum throttle rates in KB/sec
-  int minTlimit = 500;
-  int maxTlimit = 20000;
-  // here we set the limits on size (in Bytes) of the messages passed
-  int minMsgSize = 50;
-  int maxMsgSize = 30000;
+  // throttle rates are randomly generated to be bounded by [rateFloor,
+  // rateCeil]
+  int rateFloor = 500; // 500 kb/s throttle rate range floor
+  int rateCeil = 20000; // 20000 KB/s throttle rate range ceiling
 
-  /*
-   * Error tolerance constants, these ratios are the max and min limits set on
-   * the following quantity: MaxBytes allowed/Bytes Actually shipped. Note that
-   * the error on the upperbound is much higher than the lower, this is because
-   * it is possible that the driver threads don't get scheduled often enough to
-   * ship bytes close to the maximum limits.
+  // events also have random size in bytes bounded by [minMsgSize,maxMsgSize]
+  int minMsgSize = 500;
+  int maxMsgSize = 500; // making them the same size all the time makes test
+                        // more deterministic
+
+  /**
+   * Maximum Actual / Max rate value. This number ideally should be 1.0 but we
+   * add a little slop
    */
-  double highErrorLimit = 5;
-  double lowErrorLimit = .5;
+  double maxSlopRatio = 1.4;
 
   @Before
   public void setup() {
@@ -91,6 +90,9 @@ public class TestChokeDecos {
      * We are overriding this because the method in ChokeManager calls
      * super.append() and we want to avoid this as the higher-level sink is not
      * initialized. In this method we just eliminate that call.
+     * 
+     * TODO if this calls even a append on null sink, something funny happens
+     * and test fails
      */
     @Override
     public void append(Event e) throws IOException, InterruptedException {
@@ -112,27 +114,24 @@ public class TestChokeDecos {
     // number of chokes is equal to the number of drivers
     int numChokes = numDrivers;
     LOG.info("Setting up Individual Test");
-    // create some chokeIDs with random limit in the range specified
     for (int i = 0; i < numChokes; i++) {
-      // different chokesIds are created with their ids coming from the range
-      // "1", "2", "3"...
-      // with a throttlelimit in the range [minTlimit, maxTlimit]
-      chokeMap.put(Integer.toString(i), minTlimit
-          + rand.nextInt(maxTlimit - minTlimit));
+      // specify chokesIds ("1", "2", "3"...) with in a throttle range
+      chokeMap.put(Integer.toString(i),
+          rateFloor + rand.nextInt(rateCeil - rateFloor));
     }
     // update the chokemap with these chokes
     testChokeMan.updateChokeLimitMap(chokeMap);
-    // now we create bunch of chokes
 
+    // now we create bunch of chokes
     TestChoke[] tchokeArray = new TestChoke[numChokes];
     for (int i = 0; i < numChokes; i++) {
       // different chokes are created with their ids coming from the range "0",
       // "1", "2", "3"..."numChokes"
       tchokeArray[i] = new TestChoke<EventSink>(null, Integer.toString(i));
     }
+
     // one driver for each choke
     DirectDriver[] directDriverArray = new DirectDriver[numDrivers];
-
     for (int i = 0; i < numDrivers; i++) {
       // Driver i is mapped to ith choke, simple 1 to 1 mapping.
       directDriverArray[i] = new DirectDriver("TestDriver" + i,
@@ -147,13 +146,13 @@ public class TestChokeDecos {
         fail("ChokeID " + Integer.toString(i) + "not present");
       }
     }
-    // Now we start the test.
+
     // Start the ChokeManager.
     testChokeMan.start();
     for (DirectDriver d : directDriverArray) {
       d.start();
     }
-    // stop for the allotted time period
+    // process for the allotted time period
     Thread.sleep(testTime);
 
     // Stop everything!
@@ -161,22 +160,22 @@ public class TestChokeDecos {
       d.stop();
     }
     testChokeMan.halt();
+
     // Now do the error evaluation, see how many bits were actually shipped.
-    double errorRatio = 1.0;
-
     for (TestChoke<EventSink> t : tchokeArray) {
-      // Now we compute the error ratio: Max/Actual.
-      // Where Max= Maximum bytes which should have been shipped based on the
-      // limit on this choke, and actual= bytes that were actually shipped.
-      errorRatio = ((double) (chokeMap.get(t.getChokeId()) * testTime))
-          / (double) (t.getReport().getLongMetric("number of bytes"));
-
-      LOG.info("ChokeID: " + t.getChokeId() + ", error-ratio: " + errorRatio);
+      // what is the max rate in KB/s
+      double maxRate = chokeMap.get(t.getChokeId());
+      // what is the actual rate in B/ms ~= KB/s
+      double actualRate = t.getReport().getLongMetric("number of bytes")
+          / testTime;
+      double errorRatio = actualRate / maxRate;
+      LOG.info("ChokeID: " + t.getChokeId() + ", maxRate=" + maxRate
+          + ", actualRate=" + actualRate + " error-ratio: " + errorRatio);
       ReportEvent r = t.getReport();
 
       LOG.info(" events :" + r.getLongMetric("number of events"));
-      // Test if the error ratio is in the limit we want.
-      assertFalse((errorRatio > this.highErrorLimit || errorRatio < this.lowErrorLimit));
+      assertTrue("Error ratio=" + errorRatio + " < " + maxSlopRatio,
+          errorRatio < maxSlopRatio);
     }
     LOG.info("Individual Test successful  !!!");
   }
@@ -195,18 +194,20 @@ public class TestChokeDecos {
     LOG.info("Setting up Collective Test");
     // create chokeIDs with random limit range
     for (int i = 0; i < numChokes; i++) {
-      // different chokesIds are created with their ids coming from the range
+      // different chokesIds are created with their ids coming from the
+      // range
       // "0", "1", "2", "3"...
       // with a throttlelimit in the range [minTlimit, maxTlimit]
-      chokeMap.put(Integer.toString(i), minTlimit
-          + rand.nextInt(maxTlimit - minTlimit));
+      chokeMap.put(Integer.toString(i),
+          rateFloor + rand.nextInt(rateCeil - rateFloor));
     }
     // update the chokemap with these chokes
     testChokeMan.updateChokeLimitMap(chokeMap);
     // Initialize the chokes appropriately.
     TestChoke[] tchokeArray = new TestChoke[numChokes];
     for (int i = 0; i < numChokes; i++) {
-      // different chokes are created with their ids coming from the range "0",
+      // different chokes are created with their ids coming from the range
+      // "0",
       // "1", "2", "3"..."numFakeDrivers"
       tchokeArray[i] = new TestChoke<EventSink>(null, Integer.toString(i));
     }
@@ -227,8 +228,6 @@ public class TestChokeDecos {
     int randChokeIndex = 0;
     for (int i = 0; i < numDrivers; i++) {
       randChokeIndex = rand.nextInt(numChokes);
-      // DirectDriverArray[i] = new DirectDriver(new SynthSourceRndSize(0,
-      // minMsgSize, maxMsgSize), tchokeArray[randChokeIndex]);
       directDriverArray[i] = new DirectDriver(new SynthSourceRndSize(0,
           minMsgSize, maxMsgSize), tchokeArray[randChokeIndex]);
 
@@ -244,32 +243,34 @@ public class TestChokeDecos {
       }
     }
 
-    // Now we start the test.
     // start the ChokeManager
     testChokeMan.start();
     for (DirectDriver f : directDriverArray) {
       f.start();
     }
-    // stop for the allotted time period
+    // process for the allotted time period
     Thread.sleep(testTime);
     // Stop everything!
     for (DirectDriver f : directDriverArray) {
       f.stop();
     }
     testChokeMan.halt();
+
     // now do the error evaluation
-    double errorRatio = 1.0;
-
     for (TestChoke<EventSink> t : chokesUsed) {
-      // Now we compute the error ratio: Max/Actual.
-      // Where Max= Maximum bytes which should have been shipped based on the
-      // limit on this choke, and actual= bytes that were actually shipped.
-      errorRatio = ((double) (chokeMap.get(t.getChokeId()) * testTime))
-          / (double) (t.getReport().getLongMetric("number of bytes"));
+      // what is the max rate in KB/s
+      double maxRate = chokeMap.get(t.getChokeId());
+      // what is the actual rate in B/ms ~= KB/S.
+      double actualRate = t.getReport().getLongMetric("number of bytes")
+          / testTime;
+      double errorRatio = actualRate / maxRate;
 
-      LOG.info("ChokeID: " + t.getChokeId() + ", error-ratio: " + errorRatio);
-      // Test if the error ratio is in the limit we want.
-      assertFalse((errorRatio > this.highErrorLimit || errorRatio < this.lowErrorLimit));
+      LOG.info("ChokeID: " + t.getChokeId() + ", maxRate=" + maxRate
+          + ", actualRate=" + actualRate + " error-ratio: " + errorRatio);
+
+      // is rate in acceptable range.
+      assertTrue("Error ratio=" + errorRatio + " < " + maxSlopRatio,
+          errorRatio < maxSlopRatio);
     }
     LOG.info("Collective test successful  !!!");
   }
