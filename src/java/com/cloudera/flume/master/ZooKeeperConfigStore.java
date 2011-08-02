@@ -50,6 +50,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 
 import com.cloudera.flume.conf.FlumeConfigData;
+import com.cloudera.flume.conf.avro.AvroFlumeChokeMap;
 import com.cloudera.flume.conf.avro.AvroFlumeConfigData;
 import com.cloudera.flume.conf.avro.AvroFlumeConfigDataMap;
 import com.cloudera.flume.conf.avro.AvroFlumeNodeMap;
@@ -69,9 +70,12 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
   final Map<String, FlumeConfigData> cfgs = new HashMap<String, FlumeConfigData>();
   ListMultimap<String, String> nodeMap = ArrayListMultimap
       .<String, String> create();
+  Map<String, Map<String, Integer>> chokeMap = new HashMap<String, Map<String, Integer>>();
+
   final static Logger LOG = Logger.getLogger(ZooKeeperConfigStore.class);
   final static String CFGS_PATH = "/flume-cfgs";
   final static String NODEMAPS_PATH = "/flume-nodes";
+  final static String CHOKEMAP_PATH = "/flume-chokemap";
 
   // Tracks the version number of each config
   ZooKeeperCounter zkCounter;
@@ -120,7 +124,7 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
        * Synchronization notes: from this method, the callback comes from the
        * same thread. That's not guaranteed afterwards, because this gets called
        * again on SessionExpiredException.
-       *
+       * 
        * It tries to take the ZKCS.this lock (in loadConfigs). Therefore BE
        * AWARE of potential deadlocks between threads. The vast majority of the
        * invocations to ZKClient in this class will be under the ZKCS.this lock
@@ -132,6 +136,7 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
 
         loadConfigs(CFGS_PATH);
         loadNodeMaps(NODEMAPS_PATH);
+        loadChokeMap(CHOKEMAP_PATH);
       }
     };
 
@@ -218,7 +223,7 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
 
   /**
    * This internal method is called at connection time to populate the cache.
-   *
+   * 
    * May be called from either the main Master thread or a ZK-initiated callback
    * so is synchronized to prevent racing.
    */
@@ -353,8 +358,8 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
     Map<CharSequence, List<CharSequence>> map = new HashMap<CharSequence, List<CharSequence>>();
     for (Entry<String, Collection<String>> e : nodeMap.asMap().entrySet()) {
       String name = e.getKey();
-      GenericArray<CharSequence> out = new GenericData.Array<CharSequence>(e.getValue().size(),
-          Schema.createArray(Schema.create(Type.STRING)));
+      GenericArray<CharSequence> out = new GenericData.Array<CharSequence>(e
+          .getValue().size(), Schema.createArray(Schema.create(Type.STRING)));
 
       for (String s : e.getValue()) {
         out.add(new String(s));
@@ -397,6 +402,110 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
       ret.add(new Pair<String, List<String>>(e.getKey().toString(), list));
     }
     return ret;
+  }
+
+  /**
+   * Converts a ChokeMap into an Avro-serialized byte array
+   */
+  static protected byte[] serializeChokeMap(
+      Map<String, Map<String, Integer>> chokeMap) throws IOException {
+    DatumWriter<AvroFlumeChokeMap> datumWriter = new SpecificDatumWriter<AvroFlumeChokeMap>();
+    AvroFlumeChokeMap avromap = new AvroFlumeChokeMap();
+
+    Map<CharSequence, Map<CharSequence, Integer>> map = new HashMap<CharSequence, Map<CharSequence, Integer>>();
+
+    for (Entry<String, Map<String, Integer>> e : chokeMap.entrySet()) {
+      String name = e.getKey();
+
+      HashMap<CharSequence, Integer> tempMap = new HashMap<CharSequence, Integer>();
+
+      for (Entry<String, Integer> mape : e.getValue().entrySet()) {
+        tempMap.put(new String(mape.getKey()), mape.getValue());
+      }
+
+      map.put(new String(name), tempMap);
+    }
+
+    avromap.chokemap = map;
+
+    datumWriter.setSchema(avromap.getSchema());
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    DataFileWriter<AvroFlumeChokeMap> fileWriter = new DataFileWriter<AvroFlumeChokeMap>(
+        datumWriter);
+    fileWriter.create(avromap.getSchema(), baos);
+    fileWriter.append(avromap);
+    fileWriter.close();
+
+    return baos.toByteArray();
+  }
+
+  /**
+   * Converts an Avro-serialized byte array into a chokemap
+   */
+  static protected Map<String, Map<String, Integer>> deserializeChokeMap(
+      byte[] data) throws IOException {
+    SpecificDatumReader<AvroFlumeChokeMap> reader = new SpecificDatumReader<AvroFlumeChokeMap>();
+    DataFileStream<AvroFlumeChokeMap> fileStream = new DataFileStream<AvroFlumeChokeMap>(
+        new ByteArrayInputStream(data), reader);
+    AvroFlumeChokeMap chkmap = fileStream.next();
+    fileStream.close();
+    Map<String, Map<String, Integer>> ret = new HashMap<String, Map<String, Integer>>();
+
+    for (Entry<CharSequence, Map<CharSequence, Integer>> e : chkmap.chokemap
+        .entrySet()) {
+      HashMap<String, Integer> tempMap = new HashMap<String, Integer>();
+      for (Entry<CharSequence, Integer> mape : e.getValue().entrySet()) {
+        tempMap.put(mape.getKey().toString(), mape.getValue());
+      }
+      ret.put(e.getKey().toString(), tempMap);
+    }
+    return ret;
+  }
+
+  /**
+   * This internal method is called at connection time to populate the cache.
+   * 
+   * May be called from either the main Master thread or a ZK-initiated callback
+   * so is synchronized to prevent racing.
+   */
+  synchronized protected void loadChokeMap(String prefix) throws IOException {
+    Preconditions.checkNotNull(this.client, "Client is null in loadChokeMap");
+    // Finds the most recent prefix
+    try {
+      client.ensureExists(prefix, new byte[0]);
+      String latest = client.getLastSequentialChild(prefix, "chokemap", true);
+      if (latest == null) {
+        LOG.info("No Chokemap found at " + prefix + "/chokemap*");
+        return;
+      }
+      chokeMap.clear(); // reset prior to reload
+      String path = prefix + "/" + latest;
+      LOG.info("Loading Chokemap from: " + path);
+      Stat stat = new Stat();
+      byte[] data = client.getData(path, false, stat);
+
+      chokeMap.putAll(deserializeChokeMap(data));
+    } catch (Exception e) {
+      LOG.error(e, e);
+      throw new IOException("Unexpected exception in loadChokeMap", e);
+    }
+  }
+
+  /**
+   * Saves the chokeid->chokelimit mappings to ZK.
+   */
+  protected synchronized void saveChokeMap(String prefix) {
+    Preconditions.checkNotNull(this.client, "Client is null in saveChokeMap");
+    try {
+      client.create(prefix + "/chokemap", serializeChokeMap(this.chokeMap),
+          Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+    } catch (KeeperException e) {
+      LOG.error("ZooKeeper exception: ", e);
+    } catch (InterruptedException e) {
+      LOG.error("Interrupted while saving chokemap", e);
+    } catch (IOException e) {
+      LOG.error("IOException when saving chokemap", e);
+    }
   }
 
   /**
@@ -498,6 +607,14 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
           LOG.error("IOException when reloading nodemaps", e);
         }
       }
+      if (event.getPath().equals(CHOKEMAP_PATH)) {
+        try {
+          LOG.info("chokemaps were updated - reloading");
+          loadChokeMap(CHOKEMAP_PATH);
+        } catch (IOException e) {
+          LOG.error("IOException when reloading ChokeMap", e);
+        }
+      }
     }
   }
 
@@ -583,15 +700,25 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
    */
   @Override
   public void addChokeLimit(String physNode, String chokeID, int limit) {
-    // TODO(Vibhor): Have to add this Zookeeper stuff
-    LOG.error("addChoke at ZooKeeper not supported yet");
-    throw new UnsupportedOperationException();
+    if (!chokeMap.containsKey(physNode)) {
+      // initialize it
+      chokeMap.put(physNode, new HashMap<String, Integer>());
+    }
+    // now add the entry for this choke
+
+    chokeMap.get(physNode).put(chokeID, limit);
+    saveChokeMap(CHOKEMAP_PATH);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Map<String, Integer> getChokeMap(String physNode) {
-    // TODO(Vibhor): Have to add this Zookeeper stuff
-    LOG.error("addChoke at ZooKeeper not supported yet");
-    throw new UnsupportedOperationException();
+    if (chokeMap.get(physNode) == null) {
+      // initialize it
+      chokeMap.put(physNode, new HashMap<String, Integer>());
+    }
+    return chokeMap.get(physNode);
   }
 }

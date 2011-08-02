@@ -87,11 +87,9 @@ public class MemoryBackedConfigStore extends ConfigStore {
    */
   public void addChokeLimit(String physNode, String chokeID, int limit) {
     if (!chokeMap.containsKey(physNode)) {
-      // initialize it to something
+      // initialize it
       chokeMap.put(physNode, new HashMap<String, Integer>());
-      // add the default entry for the PhysicalNode limit
-      chokeMap.get(physNode).put("", limit);
-    }
+      }
     // now add the entry for this choke
 
     chokeMap.get(physNode).put(chokeID, limit);
@@ -178,10 +176,9 @@ public class MemoryBackedConfigStore extends ConfigStore {
   @Override
   public Map<String, Integer> getChokeMap(String physNode) {
     if (chokeMap.get(physNode) == null) {
-      // Add the default value (MAX_INT)
-      // Also the key "" corresponds to the PhysicalNodeLimit
-      this.addChokeLimit(physNode, "", Integer.MAX_VALUE);
-    }
+      // initialize it
+      chokeMap.put(physNode, new HashMap<String, Integer>());
+      }
     return chokeMap.get(physNode);
   }
 }

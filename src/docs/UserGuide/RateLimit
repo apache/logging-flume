@@ -17,7 +17,6 @@ limitations under the License.
 ////////////////////
 
 === Limiting Data Transfer Rate between Source-Sink pairs
-WARNING: This feature is only available when using the memory-backed store and not the zookeeper-backed store.
 
 Flume has the ability to limit the rate of transfer of data between source-sink pairs.  
 This is useful to divide the network bandwidth non-uniformly among different 

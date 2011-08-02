@@ -126,7 +126,7 @@ public class TestZKBackedConfigStore {
   /**
    * Test that set and get work correctly, and that recovery after restart works
    * correctly.
-   *
+   * 
    * TODO add mechanism to close a ZooKeeperConfigStore to release resources.
    * (picking different ports right now to make test pass)
    */
@@ -202,6 +202,36 @@ public class TestZKBackedConfigStore {
     // Check that the watch has happened and that the new value
     // will be correctly read
     assertEquals("logical1", manager2.getLogicalNode("logical-watch").get(0));
+    store.shutdown();
+    store2.shutdown();
+    ZooKeeperService.get().shutdown();
+    FileUtil.rmr(tmp);
+  }
+
+  /**
+   * Test that watches are fired correctly for ChokeMap.
+   */
+  @Test
+  public void testZBCSChokeWatches() throws IOException, InterruptedException {
+    FlumeConfiguration cfg = FlumeConfiguration.createTestableConfiguration();
+    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181:4181");
+    File tmp = FileUtil.mktempdir();
+    cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
+    cfg.setBoolean(FlumeConfiguration.MASTER_ZK_USE_EXTERNAL, false);
+    ZooKeeperService.getAndInit(cfg);
+
+    ZooKeeperConfigStore store = new ZooKeeperConfigStore();
+    store.init();
+    ZooKeeperConfigStore store2 = new ZooKeeperConfigStore();
+    store2.init();
+
+    store.addChokeLimit("vb", "a", 1000);
+    // There is no convenient way to avoid this sleep
+    Thread.sleep(2000);
+
+    // Check that the watch has happened and that the new value
+    // will be correctly read
+    assertEquals(1000, (int) (store2.getChokeMap("vb").get("a")));
     store.shutdown();
     store2.shutdown();
     ZooKeeperService.get().shutdown();
@@ -515,5 +545,32 @@ public class TestZKBackedConfigStore {
         .deserializeConfigs(serialized);
 
     assertEquals(cfgmap, outmap);
+  }
+
+  /**
+   * Test that Avro-based serialization of chokemap works
+   */
+  @Test
+  public void testSerializeChokeMap() throws IOException {
+    Map<String, Map<String, Integer>> chokeMap = new HashMap<String, Map<String, Integer>>();
+
+    // add bunch of ChokeIds in the map, serialize and then de-serialize it and
+    // make sure the returned chokemap is the same.
+    Map<String, Integer> tempMapA = new HashMap<String, Integer>();
+    Map<String, Integer> tempMapB = new HashMap<String, Integer>();
+
+    tempMapA.put("A", 1000);
+    tempMapA.put("Z", 1000);
+
+    tempMapB.put("B", 1000);
+
+    chokeMap.put("foo1", tempMapA);
+    chokeMap.put("foo2", tempMapB);
+
+    byte[] serialized = ZooKeeperConfigStore.serializeChokeMap(chokeMap);
+    Map<String, Map<String, Integer>> ret = ZooKeeperConfigStore
+        .deserializeChokeMap(serialized);
+
+    assertEquals(chokeMap, ret);
   }
 }

@@ -57,8 +57,13 @@ import schema "avroflumereport.avsc";
   record AvroFlumeNodeMap {
     map<array<string>> nodemap;
   }
-  
-     // returns true if the sourceId's configuration has changed
+
+
+  record AvroFlumeChokeMap {
+    map<map<int>> chokemap;
+  }
+
+  // returns true if the sourceId's configuration has changed
   boolean heartbeat(string logicalNode, string physicalNode, string host,
     FlumeNodeState s, long timestamp);
     
