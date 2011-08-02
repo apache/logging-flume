@@ -61,6 +61,7 @@ public class SourceFactoryImpl extends SourceFactory {
       { "logicalSource", StubSource.builder() },
       { "autoCollectorSource", StubSource.builder(0, 0) },// no args allowed
       { "collectorSource", CollectorSource.builder() },
+      { "fail", StubSource.builder() },
 
       // low level Sources
       { "null", NullSource.builder() },
