@@ -30,6 +30,7 @@ import org.junit.Test;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.conf.SinkFactory.SinkDecoBuilder;
 import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.EventImpl;
@@ -193,7 +194,7 @@ public class TestBloomSetDecos {
   @Test
   public void testBloomDecos() throws FlumeSpecException, IOException {
     String spec = "{ bloomGen(10000,2) => { bloomCheck(10000,2) => counter(\"test\")} } ";
-    EventSink snk = FlumeBuilder.buildSink(new Context(), spec);
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), spec);
     EventSource src = FlumeBuilder.buildSource("asciisynth(10000)");
     snk.open();
     src.open();
@@ -222,7 +223,7 @@ public class TestBloomSetDecos {
   @Test
   public void testBloomReportSink() throws FlumeSpecException, IOException {
     String spec = "{bloomGen(100,2) => {bloomCheck(100,2,\"counter(\\\"test\\\") \")  => counter(\"total\") } } }";
-    EventSink snk = FlumeBuilder.buildSink(new Context(), spec);
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), spec);
     snk.open();
     snk.append(new EventImpl(new byte[0]));
     snk.append(new EventImpl(new byte[0]));

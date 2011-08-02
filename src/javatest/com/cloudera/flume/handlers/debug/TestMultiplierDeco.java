@@ -24,6 +24,7 @@ import junit.framework.TestCase;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
@@ -60,7 +61,7 @@ public class TestMultiplierDeco extends TestCase {
     final int msgs = 10;
 
     String cfg = "{ mult(" + repeat + ") => counter(\"count\") }";
-    EventSink s = FlumeBuilder.buildSink(new Context(), cfg);
+    EventSink s = FlumeBuilder.buildSink(new ReportTestingContext(), cfg);
     s.open();
 
     for (int i = 0; i < msgs; i++) {
@@ -84,7 +85,7 @@ public class TestMultiplierDeco extends TestCase {
     String cfg =
         "{ benchinject => { mult(" + repeat
             + ") => [console, counter(\"count\")] }}";
-    EventSink s = FlumeBuilder.buildSink(new Context(), cfg);
+    EventSink s = FlumeBuilder.buildSink(new ReportTestingContext(), cfg);
     s.open();
 
     for (int i = 0; i < msgs; i++) {

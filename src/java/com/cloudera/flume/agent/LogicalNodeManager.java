@@ -35,6 +35,7 @@ import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.LogicalNodeContext;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.conf.thrift.FlumeConfigData;
 import com.cloudera.flume.core.CompositeSink;
 import com.cloudera.flume.core.EventSink;
@@ -81,7 +82,9 @@ public class LogicalNodeManager implements Reportable {
       throws IOException, FlumeSpecException {
     LogicalNode nd = threads.get(name);
     if (nd == null) {
-      Context ctx = new LogicalNodeContext(physicalNode, name);
+      Context ctx = new ReportTestingContext(new LogicalNodeContext(
+          physicalNode, name));
+
       LOG.info("creating new logical node " + name);
       nd = new LogicalNode(ctx, name);
       threads.put(nd.getName(), nd);

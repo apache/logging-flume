@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.log4j.Logger;
 
 import com.cloudera.flume.conf.Context;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
@@ -95,6 +96,11 @@ public class CounterSink extends EventSink.Base {
         }
 
         EventSink snk = new CounterSink(argv[0]);
+        
+        if (context.getValue(ReportTestingContext.TESTING_REPORTS) != null) {
+          ReportManager.get().add(snk);
+        }
+        
         return snk;
       }
 

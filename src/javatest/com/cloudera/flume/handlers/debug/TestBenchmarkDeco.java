@@ -26,6 +26,7 @@ import com.cloudera.flume.ExampleData;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
@@ -98,7 +99,7 @@ public class TestBenchmarkDeco extends TestCase implements ExampleData {
    */
   public void testReportSink() throws FlumeSpecException, IOException {
     String spec = "{benchinject(\"foo\") => {benchreport(\"report\", \"[ console , counter(\\\"test\\\") ]\")  => null } }";
-    EventSink snk = FlumeBuilder.buildSink(new Context(), spec);
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), spec);
     snk.open();
     snk.append(new EventImpl(new byte[0]));
     snk.append(new EventImpl(new byte[0]));

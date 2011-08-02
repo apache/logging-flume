@@ -62,9 +62,8 @@ public class MasterReportPusherTest {
 
     PusherMockMaster master = new PusherMockMaster();
 
-    MasterReportPusher reportPusher = new MasterReportPusher("prefix.",
-        FlumeConfiguration.createTestableConfiguration(), ReportManager.get(),
-        master);
+    MasterReportPusher reportPusher = new MasterReportPusher(FlumeConfiguration
+        .createTestableConfiguration(), ReportManager.get(), master);
 
     MockClock mockClock = new MockClock(0);
     Clock.setClock(mockClock);
@@ -89,7 +88,7 @@ public class MasterReportPusherTest {
 
     reportPusher.start();
 
-    // Trigger the report pusher 
+    // Trigger the report pusher
     mockClock.forward(FlumeConfiguration.get().getReporterPollPeriod() * 2);
 
     // Wait for 'real' 5s delay for report pusher to a) get on a CPU and b) do

@@ -35,6 +35,7 @@ import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
@@ -116,7 +117,7 @@ public class TestEndToEndAckFailureRecovery {
     int count = 20;
     String rpt = "foo";
     String snk = "{ ackChecker => [ console, counter(\"" + rpt + "\") ] }";
-    Context ctx = new Context();
+    Context ctx = new ReportTestingContext();
     EventSink es = FlumeBuilder.buildSink(ctx, snk);
     // Excessively large timeout because I am manually triggering it.
     NaiveFileWALDeco<EventSink> wal = new NaiveFileWALDeco<EventSink>(ctx, es,
@@ -181,7 +182,7 @@ public class TestEndToEndAckFailureRecovery {
 
     String snk = "  { intervalDroppyAppend(15)  => { ackChecker => [ console, counter(\""
         + rpt + "\") ] } }  ";
-    Context ctx = new Context();
+    Context ctx = new ReportTestingContext();
     EventSink es = FlumeBuilder.buildSink(ctx, snk);
 
     NaiveFileWALDeco<EventSink> wal = new NaiveFileWALDeco<EventSink>(ctx, es,
@@ -292,7 +293,7 @@ public class TestEndToEndAckFailureRecovery {
 
     String snk = "  { intervalDroppyAppend(16)  => { ackChecker => [ console, counter(\""
         + rpt + "\") ] } }  ";
-    Context ctx = new Context();
+    Context ctx = new ReportTestingContext();
     EventSink es = FlumeBuilder.buildSink(ctx, snk);
 
     NaiveFileWALDeco<EventSink> wal = new NaiveFileWALDeco<EventSink>(ctx, es,
@@ -377,7 +378,7 @@ public class TestEndToEndAckFailureRecovery {
 
     String snk = "  { intervalDroppyAppend(21)  => { ackChecker => [ console, counter(\""
         + rpt + "\") ] } }  ";
-    Context ctx = new Context();
+    Context ctx = new ReportTestingContext();
     EventSink es = FlumeBuilder.buildSink(ctx, snk);
 
     // Big delay values so that test has to force different actions.
@@ -446,7 +447,7 @@ public class TestEndToEndAckFailureRecovery {
     int count = 20;
     String rpt = "foo";
     String snk = "{ ackChecker => [ console, counter(\"" + rpt + "\") ] }";
-    Context ctx = new Context();
+    Context ctx = new ReportTestingContext();
     EventSink es = FlumeBuilder.buildSink(ctx, snk);
     NaiveFileWALDeco<EventSink> wal = new NaiveFileWALDeco<EventSink>(ctx, es,
         node.getWalManager(), new TimeTrigger(new ProcessTagger(), 100), node

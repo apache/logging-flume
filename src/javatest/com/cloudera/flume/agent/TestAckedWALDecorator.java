@@ -33,6 +33,7 @@ import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
@@ -128,7 +129,7 @@ public class TestAckedWALDecorator {
     String snk = " { ackedWriteAhead(1000) => { ackChecker => [console,  counter(\""
         + rpt + "\") ] } }  ";
 
-    EventSink es = FlumeBuilder.buildSink(new Context(), snk);
+    EventSink es = FlumeBuilder.buildSink(new ReportTestingContext(), snk);
     es.open();
     for (int i = 0; i < count; i++) {
       Event e = new EventImpl(("test message " + i).getBytes());

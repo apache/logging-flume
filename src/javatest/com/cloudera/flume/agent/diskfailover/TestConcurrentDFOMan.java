@@ -37,6 +37,8 @@ import com.cloudera.flume.agent.DirectMasterRPC;
 import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.agent.LogicalNode;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.LogicalNodeContext;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.core.EventUtil;
@@ -214,7 +216,7 @@ public class TestConcurrentDFOMan {
       // + report
       // +
       // "\") in < { flakeyAppend(.50) => shared } ? { diskFailover => shared } >";
-      node.getLogicalNodeManager().spawn(name, src, snk);
+      node.getLogicalNodeManager().testingSpawn(name, src, snk);
 
       dfos[i] = node.getLogicalNodeManager().get(name);
     }

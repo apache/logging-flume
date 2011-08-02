@@ -102,7 +102,7 @@ public class TestFlumeBuilderFunctional implements ExampleData {
     LOG.info("== multi test start");
     String multi = "[ console , accumulator(\"count\") ]";
     EventSource src = FlumeBuilder.buildSource(SOURCE);
-    EventSink snk = FlumeBuilder.buildSink(new Context(), multi);
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), multi);
     src.open();
     snk.open();
     EventUtil.dumpAll(src, snk);
@@ -121,7 +121,7 @@ public class TestFlumeBuilderFunctional implements ExampleData {
     // String decorated = "{ intervalSampler(5) =>  console }";
 
     EventSource src = FlumeBuilder.buildSource(SOURCE);
-    EventSink snk = FlumeBuilder.buildSink(new Context(), decorated);
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), decorated);
     src.open();
     snk.open();
     EventUtil.dumpAll(src, snk);
@@ -139,7 +139,7 @@ public class TestFlumeBuilderFunctional implements ExampleData {
     // the primary is 90% flakey
     String multi = "< { flakeyAppend(.9,1337) => console } ? accumulator(\"count\") >";
     EventSource src = FlumeBuilder.buildSource(SOURCE);
-    EventSink snk = FlumeBuilder.buildSink(new Context(), multi);
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), multi);
     src.open();
     snk.open();
     EventUtil.dumpAll(src, snk);
@@ -179,7 +179,7 @@ public class TestFlumeBuilderFunctional implements ExampleData {
     // messages.
     String letcount = "let count := accumulator(\"count\") in < { flakeyAppend(.5,1337) => count} ? count >";
     EventSource src = MemorySinkSource.cannedData("canned data ", 100);
-    EventSink snk = FlumeBuilder.buildSink(new Context(), letcount);
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), letcount);
     src.open();
     snk.open();
     EventUtil.dumpAll(src, snk);
@@ -199,7 +199,7 @@ public class TestFlumeBuilderFunctional implements ExampleData {
     LOG.info("== let shadowing start");
     String let = "let foo := accumulator(\"foo\") in let foo := accumulator(\"bar\") in foo";
     EventSource src = MemorySinkSource.cannedData("canned data ", 100);
-    EventSink snk = FlumeBuilder.buildSink(new Context(), let);
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), let);
     src.open();
     snk.open();
     EventUtil.dumpAll(src, snk);
@@ -223,7 +223,7 @@ public class TestFlumeBuilderFunctional implements ExampleData {
         + " | < { flakeyAppend(.9,1337) => console } ? accumulator(\"count\") > ;";
 
     Map<String, Pair<EventSource, EventSink>> cfg = FlumeBuilder.build(
-        new Context(), multi);
+        new ReportTestingContext(), multi);
     for (Entry<String, Pair<EventSource, EventSink>> e : cfg.entrySet()) {
       // String name = e.getKey();
       EventSource src = e.getValue().getLeft();

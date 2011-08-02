@@ -24,6 +24,7 @@ import junit.framework.TestCase;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
@@ -73,7 +74,7 @@ public class TestLazyOpen extends TestCase {
    */
   public void testLazyOpenBuild() throws IOException, FlumeSpecException {
     EventSink snk =
-        FlumeBuilder.buildSink(new Context(),
+        FlumeBuilder.buildSink(new ReportTestingContext(),
             "{ lazyOpen => counter(\"count\") } ");
     CounterSink cnt = (CounterSink) ReportManager.get().getReportable("count");
 

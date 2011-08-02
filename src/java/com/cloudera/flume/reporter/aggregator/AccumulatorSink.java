@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.log4j.Logger;
 
 import com.cloudera.flume.conf.Context;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.Event;
@@ -96,6 +97,11 @@ public class AccumulatorSink extends EventSink.Base {
           throw new IllegalArgumentException("need only a name argument");
         }
         EventSink snk = new AccumulatorSink(argv[0]);
+        
+        if (context.getValue(ReportTestingContext.TESTING_REPORTS) != null) {
+          ReportManager.get().add(snk);
+        }
+        
         return snk;
       }
 

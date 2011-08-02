@@ -21,7 +21,7 @@ import java.io.IOException;
 
 import junit.framework.TestCase;
 
-import com.cloudera.flume.conf.Context;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.handlers.debug.ExceptionTwiddleDecorator;
 import com.cloudera.flume.reporter.ReportManager;
@@ -214,7 +214,7 @@ public class TestBackOffFailOverSink extends TestCase {
   public void testFailoverBuilder() throws IOException {
     SinkBuilder bld = FailOverSink.builder();
     EventSink snk =
-        bld.build(new Context(),
+        bld.build(new ReportTestingContext(),
             "{intervalFlakeyAppend(2) => counter(\"pri\") } ",
             "counter(\"sec\")");
     snk.open();
@@ -241,7 +241,7 @@ public class TestBackOffFailOverSink extends TestCase {
   public void testBackoffFailoverBuilder() throws IOException {
     SinkBuilder bld = BackOffFailOverSink.builder();
     EventSink snk =
-        bld.build(new Context(),
+        bld.build(new ReportTestingContext(),
             "{intervalFlakeyAppend(2) => counter(\"pri\") } ",
             "counter(\"sec\")");
     snk.open();

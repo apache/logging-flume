@@ -30,8 +30,8 @@ import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.CompositeSink;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.core.EventUtil;
@@ -60,7 +60,7 @@ public class TestTailSource {
       InterruptedException {
     File f = File.createTempFile("temp", ".tmp");
     f.deleteOnExit();
-    final CompositeSink snk = new CompositeSink(new Context(),
+    final CompositeSink snk = new CompositeSink(new ReportTestingContext(),
         "{ delay(50) => counter(\"count\") }");
     final EventSource src = TailSource.builder().build(f.getAbsolutePath());
     final CountDownLatch done = new CountDownLatch(1);
@@ -106,7 +106,7 @@ public class TestTailSource {
     File f2 = File.createTempFile("moved", ".tmp");
     f2.delete();
     f2.deleteOnExit();
-    final CompositeSink snk = new CompositeSink(new Context(),
+    final CompositeSink snk = new CompositeSink(new ReportTestingContext(),
         "{ delay(50) => counter(\"count\") }");
     final EventSource src = TailSource.builder().build(f.getAbsolutePath());
     final CountDownLatch done = new CountDownLatch(1);
@@ -167,7 +167,7 @@ public class TestTailSource {
     f.deleteOnExit();
     File f2 = File.createTempFile("temp", ".tmp");
     f2.deleteOnExit();
-    final CompositeSink snk = new CompositeSink(new Context(),
+    final CompositeSink snk = new CompositeSink(new ReportTestingContext(),
         "{ delay(50) => counter(\"count\") }");
     final EventSource src = TailSource.multiTailBuilder().build(
         f.getAbsolutePath(), f2.getAbsolutePath());
@@ -233,7 +233,7 @@ public class TestTailSource {
     }
     fw.close();
 
-    final CompositeSink snk = new CompositeSink(new Context(),
+    final CompositeSink snk = new CompositeSink(new ReportTestingContext(),
         "{ delay(50) => counter(\"count\") }");
     // Test start from end.
     final TailSource src = (TailSource) TailSource.builder().build(

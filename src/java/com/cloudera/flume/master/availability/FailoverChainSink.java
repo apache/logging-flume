@@ -46,9 +46,9 @@ public class FailoverChainSink extends EventSink.Base {
 
   final EventSink snk;
 
-  public FailoverChainSink(String specFormat, List<String> list,
+  public FailoverChainSink(Context context, String specFormat, List<String> list,
       BackoffPolicy backoff) throws FlumeSpecException {
-    snk = buildSpec(new Context(), specFormat, list, backoff);
+    snk = buildSpec(context, specFormat, list, backoff);
   }
 
   public FailoverChainSink(Context context, String specFormat,

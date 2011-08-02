@@ -34,6 +34,7 @@ import org.junit.Test;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.CompositeSink;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
@@ -70,7 +71,7 @@ public class TestNaiveFileWALManagerConcurrently {
     final NaiveFileWALManager wal = new NaiveFileWALManager(dir);
     wal.open();
 
-    Context ctx = new Context();
+    Context ctx = new ReportTestingContext();
     EventSink cntsnk = new CompositeSink(ctx, "counter(\"total\")");
     // use the same wal, but different counter.
     final EventSink snk = new NaiveFileWALDeco<EventSink>(ctx, cntsnk, wal,
@@ -133,7 +134,7 @@ public class TestNaiveFileWALManagerConcurrently {
           start.countDown();
           try {
             EventSource src = new NoNlASCIISynthSource(count, 100);
-            Context ctx = new Context();
+            Context ctx = new ReportTestingContext();
             EventSink snk = new CompositeSink(ctx, "counter(\"total." + idx
                 + "\")");
             // use the same wal, but different counter.
@@ -201,7 +202,7 @@ public class TestNaiveFileWALManagerConcurrently {
           start.countDown();
           try {
             EventSource src = new NoNlASCIISynthSource(count, 100);
-            Context ctx = new Context();
+            Context ctx = new ReportTestingContext();
             EventSink snk = new CompositeSink(ctx, "counter(\"total." + idx
                 + "\")");
             // use the same wal, but different counter.

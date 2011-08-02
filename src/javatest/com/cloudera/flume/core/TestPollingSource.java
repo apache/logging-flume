@@ -26,8 +26,8 @@ import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.aggregator.CounterSink;
@@ -53,7 +53,7 @@ public class TestPollingSource {
     SourceBuilder bld = PollingSource.reporterPollBuilder();
     EventSource src = bld.build("50");
     EventSink snk =
-        new CompositeSink(new Context(), "[ console , counter(\"count\") ]");
+        new CompositeSink(new ReportTestingContext(), "[ console , counter(\"count\") ]");
     src.open();
     snk.open();
     for (int i = 0; i < 10; i++) {

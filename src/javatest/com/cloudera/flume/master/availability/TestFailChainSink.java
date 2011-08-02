@@ -33,6 +33,7 @@ import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.CompositeSink;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
@@ -65,7 +66,7 @@ public class TestFailChainSink {
 
     List<String> names = Arrays.asList("first", "second", "third", "fourth",
         "fifth");
-    FailoverChainSink snk = new FailoverChainSink(
+    FailoverChainSink snk = new FailoverChainSink(new ReportTestingContext(),
         "{ lazyOpen => { intervalFlakeyAppend(2) => accumulator(\"%s\")}}",
         names, new AlwaysRetryPolicy());
 
@@ -115,7 +116,7 @@ public class TestFailChainSink {
     String body = "{ lazyOpen => { intervalFlakeyAppend(2) => accumulator(\"%s\")}}";
     String spec = FailoverChainManager.genAvailableSinkSpec(body, names);
     System.out.println(spec);
-    EventSink snk = new CompositeSink(new Context(), spec);
+    EventSink snk = new CompositeSink(new ReportTestingContext(), spec);
 
     LOG.info(snk.getReport().toText());
 

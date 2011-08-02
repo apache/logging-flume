@@ -34,6 +34,7 @@ import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.conf.SinkFactory.SinkDecoBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
@@ -90,7 +91,7 @@ public class TestNaiveFileWALDeco {
         "writeahead.00000000.20100204-015814F430-0800.seq"));
 
     // EventSource src = FlumeBuilder.buildSource("");
-    EventSink snk = FlumeBuilder.buildSink(new Context(),
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(),
         "{ ackedWriteAhead => { ackChecker => counter(\"count\") } }");
     EventSource src = MemorySinkSource.cannedData("foo foo foo ", 5);
     snk.open();
@@ -143,7 +144,7 @@ public class TestNaiveFileWALDeco {
     FileUtil.dumbfilecopy(acked, new File(writing, acked.getName()));
     // /////////////////////
 
-    EventSink snk = FlumeBuilder.buildSink(new Context(),
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(),
         "{ ackedWriteAhead => { ackChecker => counter(\"count\") } }");
     EventSource src = MemorySinkSource.cannedData("foo foo foo ", 5);
     snk.open();
@@ -195,7 +196,7 @@ public class TestNaiveFileWALDeco {
     writing.mkdirs();
     FileUtil.dumbfilecopy(truncated, new File(writing, truncated.getName()));
 
-    EventSink snk = FlumeBuilder.buildSink(new Context(),
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(),
         "{ ackedWriteAhead => { ackChecker => counter(\"count\") } }");
     EventSource src = MemorySinkSource.cannedData("foo foo foo ", 5);
     snk.open();

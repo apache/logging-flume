@@ -29,6 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.cloudera.flume.conf.Context;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
@@ -115,7 +116,8 @@ public class TestRollSink {
 
   @Test
   public void testAutoRoll() throws IOException, InterruptedException {
-    RollSink snk = new RollSink(new Context(), "counter(\"foo\")", 2000, 10000); // two
+    RollSink snk = new RollSink(new ReportTestingContext(), "counter(\"foo\")",
+        2000, 10000); // two
     // second sleeper, but check period is really long
 
     Event e = new EventImpl("this is a test message".getBytes());
@@ -135,7 +137,8 @@ public class TestRollSink {
    */
   @Test
   public void testMultiTimedRoll() throws IOException, InterruptedException {
-    RollSink snk = new RollSink(new Context(), "counter(\"foo\")", 200, 100);
+    RollSink snk = new RollSink(new ReportTestingContext(), "counter(\"foo\")",
+        200, 100);
     // 200 ms auto forced roll threshold.
 
     snk.open();
@@ -163,7 +166,7 @@ public class TestRollSink {
    */
   @Test
   public void testMultiCountRoll() throws IOException, InterruptedException {
-    RollSink snk = new RollSink(new Context(), "counter(\"foo\")",
+    RollSink snk = new RollSink(new ReportTestingContext(), "counter(\"foo\")",
         new SizeTrigger(10, new ProcessTagger()), 100);
     // every 10 body-bytes we should roll
 

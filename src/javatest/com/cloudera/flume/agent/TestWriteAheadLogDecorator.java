@@ -28,6 +28,7 @@ import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
@@ -100,8 +101,8 @@ public class TestWriteAheadLogDecorator extends TestCase {
       es.close();
     }
 
-  }
-
+  }  
+  
   /**
    * This is a trickier test case. We create a console/counter sink that has a
    * ackedWriteAhead in front of it (aiming for 100 ms per batch). All events
@@ -113,9 +114,9 @@ public class TestWriteAheadLogDecorator extends TestCase {
     int count = 10;
     String rpt = "foo";
     String snk = " { ackedWriteAhead(500) => { ackChecker => [console,  counter(\""
-        + rpt + "\") ] } } ";
-
-    EventSink es = FlumeBuilder.buildSink(new Context(), snk);
+        + rpt + "\") ] } } ";            
+    
+    EventSink es = FlumeBuilder.buildSink(new ReportTestingContext(), snk);
     es.open();
     for (int i = 0; i < count; i++) {
       Event e = new EventImpl(("test message " + i).getBytes());
