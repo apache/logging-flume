@@ -41,6 +41,17 @@ import com.cloudera.util.FileUtil;
 
 public class TestTailDirSource {
 
+  /**
+   * This test makes sure we can instantiate one of these without have the
+   * specified dir present. This is important because the master may frequently
+   * instantiate this, but never open it unless it is supposed to be local.
+   */
+  @Test
+  public void testRemoteDir() {
+    // This used to fail by throwing an exn on the master; it should not.
+    new TailDirSource(new File("/path/that/does/not/exist"), ".*");
+  }
+
   @Test
   public void testOpenClose() throws IOException {
     File tmpdir = FileUtil.mktempdir();

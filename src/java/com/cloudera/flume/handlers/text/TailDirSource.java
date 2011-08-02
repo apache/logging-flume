@@ -43,6 +43,8 @@ public class TailDirSource extends EventSource.Base {
   final public static Logger LOG = Logger.getLogger(TailDirSource.class);
   private DirWatcher watcher;
   private TailSource tail;
+  final private File dir;
+  final private String regex;
 
   final private AtomicLong filesAdded = new AtomicLong();
   final private AtomicLong filesDeleted = new AtomicLong();
@@ -55,32 +57,12 @@ public class TailDirSource extends EventSource.Base {
     Preconditions.checkArgument(f != null, "File should not be null!");
     Preconditions.checkArgument(regex != null,
         "Regex filter should not be null");
+
+    this.dir = f;
+    this.regex = regex;
+
     // 100 ms between checks
     this.tail = new TailSource(100);
-    // 250 ms between checks
-    this.watcher = new DirWatcher(f, new RegexFileFilter(regex), 250);
-    this.watcher.addHandler(new DirChangeHandler() {
-      Map<String, TailSource.Cursor> curmap = new HashMap<String, TailSource.Cursor>();
-
-      @Override
-      public void fileCreated(File f) {
-        // Add a new file to the multi tail.
-        LOG.info("added file " + f);
-        Cursor c = new Cursor(tail.sync, f);
-        curmap.put(f.getName(), c);
-        tail.addCursor(c);
-        filesAdded.incrementAndGet();
-      }
-
-      @Override
-      public void fileDeleted(File f) {
-        LOG.info("removed file " + f);
-        Cursor c = curmap.remove(f.getName());
-        tail.removeCursor(c);
-        filesDeleted.incrementAndGet();
-      }
-
-    });
   }
 
   /**
@@ -88,7 +70,35 @@ public class TailDirSource extends EventSource.Base {
    */
   @Override
   synchronized public void open() throws IOException {
+    Preconditions.checkState(watcher == null,
+        "Attempting to open an already open TailDirSource (" + dir + ", \""
+            + regex + "\")");
+    // 250 ms between checks
+    this.watcher = new DirWatcher(dir, new RegexFileFilter(regex), 250);
     synchronized (watcher) {
+      this.watcher.addHandler(new DirChangeHandler() {
+        Map<String, TailSource.Cursor> curmap = new HashMap<String, TailSource.Cursor>();
+
+        @Override
+        public void fileCreated(File f) {
+          // Add a new file to the multi tail.
+          LOG.info("added file " + f);
+          Cursor c = new Cursor(tail.sync, f);
+          curmap.put(f.getName(), c);
+          tail.addCursor(c);
+          filesAdded.incrementAndGet();
+        }
+
+        @Override
+        public void fileDeleted(File f) {
+          LOG.info("removed file " + f);
+          Cursor c = curmap.remove(f.getName());
+          tail.removeCursor(c);
+          filesDeleted.incrementAndGet();
+        }
+
+      });
+
       this.watcher.start();
     }
     tail.open();
@@ -97,9 +107,9 @@ public class TailDirSource extends EventSource.Base {
   @Override
   synchronized public void close() throws IOException {
     tail.close();
-    // must guard watcher.
     synchronized (watcher) {
       this.watcher.stop();
+      this.watcher = null;
     }
   }
 
