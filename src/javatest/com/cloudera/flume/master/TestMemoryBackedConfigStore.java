@@ -41,10 +41,10 @@ public class TestMemoryBackedConfigStore extends TestCase {
     assertEquals(data.getSinkConfig(), "baz");
     assertEquals(data.getSourceConfig(), "bar");
 
-    manager.saveConfig(tmp.getAbsolutePath());
+    manager.saveConfigFile(tmp.getAbsolutePath());
 
     manager = new ConfigManager(new MemoryBackedConfigStore());
-    manager.loadConfig(tmp.getAbsolutePath());
+    manager.loadConfigFile(tmp.getAbsolutePath());
     data = manager.getConfig("foo");
     assertEquals(data.getSinkConfig(), "baz");
     assertEquals(data.getSourceConfig(), "bar");

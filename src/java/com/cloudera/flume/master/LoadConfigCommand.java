@@ -42,7 +42,7 @@ public class LoadConfigCommand {
         FlumeMaster master = FlumeMaster.getInstance();
         String f = FlumeConfiguration.get().getMasterSavefile();
         try {
-          master.getSpecMan().loadConfig(f);
+          master.getSpecMan().loadConfigFile(f);
         } catch (IOException e) {
           LOG.warn("Save Config " + f + " failed", e);
         }

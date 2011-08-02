@@ -181,8 +181,8 @@ abstract public class TranslatingConfigurationManager implements
    * {@inheritDoc} This always just forwards to the parent.
    */
   @Override
-  synchronized public void loadConfig(String file) throws IOException {
-    parentMan.loadConfig(file);
+  synchronized public void loadConfigFile(String file) throws IOException {
+    parentMan.loadConfigFile(file);
     refreshAll();
   }
 
@@ -190,8 +190,8 @@ abstract public class TranslatingConfigurationManager implements
    * {@inheritDoc} This always just forwards to the parent.
    */
   @Override
-  synchronized public void saveConfig(String file) throws IOException {
-    parentMan.saveConfig(file);
+  synchronized public void saveConfigFile(String file) throws IOException {
+    parentMan.saveConfigFile(file);
   }
 
   /**
@@ -270,7 +270,7 @@ abstract public class TranslatingConfigurationManager implements
         throw new IOException("Internal Error: " + e.getMessage());
       }
     }
-    selfMan.bulkSaveConfig(updates);
+    selfMan.setBulkConfig(updates);
   }
 
   /**
@@ -310,14 +310,14 @@ abstract public class TranslatingConfigurationManager implements
 
     }
 
-    selfMan.bulkSaveConfig(updates);
+    selfMan.setBulkConfig(updates);
   }
 
   /**
    * Updates both the parent and self managers with the set of configurations.
    */
   @Override
-  synchronized public void bulkSaveConfig(Map<String, FlumeConfigData> configs)
+  synchronized public void setBulkConfig(Map<String, FlumeConfigData> configs)
       throws IOException {
 
     Map<String, FlumeConfigData> updates = new HashMap<String, FlumeConfigData>();
@@ -346,8 +346,8 @@ abstract public class TranslatingConfigurationManager implements
         throw new IOException("Internal Error: " + e.getMessage());
       }
     }
-    parentMan.bulkSaveConfig(updates);
-    selfMan.bulkSaveConfig(selfupdates);
+    parentMan.setBulkConfig(updates);
+    selfMan.setBulkConfig(selfupdates);
   }
 
   /**

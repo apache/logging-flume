@@ -83,7 +83,7 @@ public class TestFlumeConfigMaster {
     cm.setConfig("test1", "test-flow", "console", "console");
     File f = File.createTempFile("test", ".tmp");
     f.deleteOnExit();
-    cm.saveConfig(f.getAbsolutePath());
+    cm.saveConfigFile(f.getAbsolutePath());
     assertTrue(f.exists());
     assertTrue(f.length() > 0);
 
@@ -98,7 +98,7 @@ public class TestFlumeConfigMaster {
     assertEquals(data.sourceConfig, "null");
 
     // reload and make sure we had the first config.
-    cm.loadConfig(f.getAbsolutePath());
+    cm.loadConfigFile(f.getAbsolutePath());
     data = cm.getConfig("test1");
     assertEquals(data.sinkConfig, "console");
     assertEquals(data.sourceConfig, "console");

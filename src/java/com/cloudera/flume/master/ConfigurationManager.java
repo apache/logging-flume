@@ -50,19 +50,20 @@ public interface ConfigurationManager extends Reportable {
       throws IOException, FlumeSpecException;
 
   /**
-   * Load configurations from file 'from'.
+   * Load configurations from file 'from'. This does not clear prexisting
+   * configurations but may overwrite configurations for existing nodes.
    */
-  public void loadConfig(String from) throws IOException;
+  public void loadConfigFile(String from) throws IOException;
 
   /**
    * Save a configuration to file 'from'.
    */
-  public void saveConfig(String from) throws IOException;
+  public void saveConfigFile(String from) throws IOException;
 
   /**
    * Update many configurations in one operation
    */
-  public void bulkSaveConfig(Map<String, FlumeConfigData> configs)
+  public void setBulkConfig(Map<String, FlumeConfigData> configs)
       throws IOException;
 
   /**

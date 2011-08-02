@@ -79,7 +79,7 @@ public class ConfigManager implements ConfigurationManager {
   /**
    * Sets many configurations in one operation
    */
-  synchronized public void bulkSaveConfig(Map<String, FlumeConfigData> configs)
+  synchronized public void setBulkConfig(Map<String, FlumeConfigData> configs)
       throws IOException {
     cfgStore.bulkSetConfig(configs);
   }
@@ -161,7 +161,7 @@ public class ConfigManager implements ConfigurationManager {
    * Loads configuration from a file. Synchronized to prevent races on
    * file/buffer allocate that could happen if saveConfig run concurrently.
    */
-  synchronized public void loadConfig(String from) throws IOException {
+  synchronized public void loadConfigFile(String from) throws IOException {
     File f = new File(from);
     LOG.info("Loading configuration from: " + f.getAbsolutePath());
     FileInputStream r = null;
@@ -193,7 +193,7 @@ public class ConfigManager implements ConfigurationManager {
    * synchronized to prevent race if multiple saveConfigs run concurrently. Does
    * not protect potential race caused by external concurrent FS modifications.
    */
-  synchronized public void saveConfig(String s) throws IOException {
+  synchronized public void saveConfigFile(String s) throws IOException {
     File targ = new File(s); // final destination
     LOG.info("Saving configuration to: " + targ.getAbsolutePath());
 
@@ -298,7 +298,7 @@ public class ConfigManager implements ConfigurationManager {
       cfgs.put(ent.getKey(), ent.getValue());
 
     }
-    bulkSaveConfig(cfgs);
+    setBulkConfig(cfgs);
   }
 
   /**

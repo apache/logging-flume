@@ -94,7 +94,7 @@ public class MultiConfigCommand {
             }
           }
 
-          specman.bulkSaveConfig(configs);
+          specman.setBulkConfig(configs);
 
           if (needsRefresh) {
             specman.refreshAll();

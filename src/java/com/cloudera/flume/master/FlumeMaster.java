@@ -36,8 +36,7 @@ import org.apache.thrift.transport.TTransportException;
 
 import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.conf.FlumeConfiguration;
-import com.cloudera.flume.master.availability.ConsistentHashFailoverChainManager;
-import com.cloudera.flume.master.failover.FailoverConfigurationManager;
+import com.cloudera.flume.master.flows.FlowConfigManager;
 import com.cloudera.flume.master.logical.LogicalConfigurationManager;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
@@ -126,9 +125,9 @@ public class FlumeMaster implements Reportable {
     // thier configurations partitioned now, only the user entered root
     // configurations are saved.
     ConfigurationManager base = new ConfigManager(cfgStore);
-    ConfigurationManager failover = new FailoverConfigurationManager(base,
-        new ConfigManager(), new ConsistentHashFailoverChainManager(3));
-    this.specman = new LogicalConfigurationManager(failover,
+    ConfigurationManager flowedFailovers = new FlowConfigManager.FailoverFlowConfigManager(
+        base, statman);
+    this.specman = new LogicalConfigurationManager(flowedFailovers,
         new ConfigManager(), statman);
 
     if (FlumeConfiguration.get().getMasterIsDistributed()) {
@@ -417,7 +416,7 @@ public class FlumeMaster implements Reportable {
       try {
         if (autoload && (cmd == null || (cmd != null && !cmd.hasOption("f")))) {
           // autoload a config?
-          config.getSpecMan().loadConfig(nodeconfig);
+          config.getSpecMan().loadConfigFile(nodeconfig);
         }
       } catch (IOException e) {
         LOG.warn("Could not autoload config from " + nodeconfig + " because "
