@@ -17,6 +17,8 @@
  */
 package com.cloudera.flume.conf;
 
+import static com.cloudera.util.ArrayUtils.toStrings;
+
 import java.util.Set;
 
 import com.cloudera.flume.core.EventSink;
@@ -31,6 +33,20 @@ abstract public class SinkFactory {
 
   abstract public static class SinkBuilder {
 
+    /**
+     * The previous default was to build with string arguments. With function
+     * arguments, we take objects instead. Internally this method is called and
+     * to preserve backwards compatibility we translates objects into args.
+     */
+    public EventSink create(Context context, Object... args) {
+      return build(context, toStrings(args));
+    }
+
+    /**
+     * This is required for backwards compatibility and will eventually become
+     * deprecated
+     */
+    @Deprecated
     abstract public EventSink build(Context context, String... argv);
 
     /**
@@ -44,6 +60,20 @@ abstract public class SinkFactory {
   };
 
   abstract public static class SinkDecoBuilder {
+    /**
+     * The previous default was to build with string arguments. With function
+     * arguments, we take objects instead. Internally this method is called and
+     * to preserve backwards compatibility we translates objects into args.
+     */
+    public EventSinkDecorator<EventSink> create(Context context, Object... args) {
+      return build(context, toStrings(args));
+    }
+
+    /**
+     * This is required for backwards compatibility and will eventually become
+     * deprecated
+     */
+    @Deprecated
     abstract public EventSinkDecorator<EventSink> build(Context context,
         String... argv);
 
@@ -57,6 +87,15 @@ abstract public class SinkFactory {
     }
   }
 
+  /**
+   * Update to make object arguments instead of string arguments.
+   */
+  public EventSink createSink(Context context, String name, Object... args)
+      throws FlumeSpecException {
+    return getSink(context, name, toStrings(args));
+  }
+
+  @Deprecated
   abstract public EventSink getSink(Context context, String name,
       String... args) throws FlumeSpecException;
 
@@ -70,6 +109,15 @@ abstract public class SinkFactory {
     return getSink(new Context(), name, args);
   }
 
+  /**
+   * Update to make object arguments instead of string arguments.
+   */
+  public EventSinkDecorator<EventSink> createDecorator(Context context,
+      String name, Object... args) throws FlumeSpecException {
+    return getDecorator(context, name, toStrings(args));
+  }
+
+  @Deprecated
   abstract public EventSinkDecorator<EventSink> getDecorator(Context context,
       String name, String... args) throws FlumeSpecException;
 

@@ -210,8 +210,8 @@ public class FlumeBuilder {
         CommonTree tsrc = (CommonTree) t.getChild(1);
         CommonTree tsnk = (CommonTree) t.getChild(2);
 
-        Pair<String, String> p = new Pair<String, String>(FlumeSpecGen
-            .genEventSource(tsrc), FlumeSpecGen.genEventSink(tsnk));
+        Pair<String, String> p = new Pair<String, String>(
+            FlumeSpecGen.genEventSource(tsrc), FlumeSpecGen.genEventSink(tsnk));
         cfg.put(host, p);
       }
       return cfg;
@@ -330,7 +330,7 @@ public class FlumeBuilder {
    * TODO (jon) move to builders, or allow builders to take Integers/Booleans as
    * well as Strings
    */
-  public static String buildSimpleArg(CommonTree t) throws FlumeSpecException {
+  public static Object buildSimpleArg(CommonTree t) throws FlumeSpecException {
     ASTNODE type = ASTNODE.valueOf(t.getText()); // convert to enum
     switch (type) {
     case HEX:
@@ -384,22 +384,22 @@ public class FlumeBuilder {
    * @throws FlumeSpecException
    */
   @SuppressWarnings("unchecked")
-  static Pair<String, List<String>> handleArgs(CommonTree t, Context ctx)
+  static Pair<String, List<Object>> handleArgs(CommonTree t, Context ctx)
       throws FlumeSpecException {
-    List<CommonTree> children = (List<CommonTree>) new ArrayList<CommonTree>(t
-        .getChildren());
+    List<CommonTree> children = (List<CommonTree>) new ArrayList<CommonTree>(
+        t.getChildren());
     String sinkType = children.remove(0).getText();
-    List<String> args = new ArrayList<String>();
+    List<Object> args = new ArrayList<Object>();
     for (CommonTree tr : children) {
-      String arg = buildSimpleArg(tr);
+      Object arg = buildSimpleArg(tr);
       if (arg != null) {
         args.add(arg);
       } else {
         Pair<String, CommonTree> kwarg = buildKWArg(tr);
-        ctx.putValue(kwarg.getLeft(), buildSimpleArg(kwarg.getRight()));
+        ctx.putObj(kwarg.getLeft(), buildSimpleArg(kwarg.getRight()));
       }
     }
-    return new Pair<String, List<String>>(sinkType, args);
+    return new Pair<String, List<Object>>(sinkType, args);
   }
 
   static EventSource buildEventSource(Context context, CommonTree t)
@@ -408,12 +408,12 @@ public class FlumeBuilder {
     switch (type) {
     case SOURCE: {
       Context ctx = new Context(context);
-      Pair<String, List<String>> idArgs = handleArgs(t, ctx);
+      Pair<String, List<Object>> idArgs = handleArgs(t, ctx);
       String sourceType = idArgs.getLeft();
-      List<String> args = idArgs.getRight();
+      List<Object> args = idArgs.getRight();
 
-      EventSource src = srcFactory.getSource(ctx, sourceType, args
-          .toArray(new String[0]));
+      EventSource src = srcFactory
+          .createSource(ctx, sourceType, args.toArray());
       if (src == null) {
         throw new FlumeIdException("Invalid source: "
             + FlumeSpecGen.genEventSource(t));
@@ -434,12 +434,11 @@ public class FlumeBuilder {
     case SINK: {
 
       Context ctx = new Context(context);
-      Pair<String, List<String>> idargs = handleArgs(t, ctx);
+      Pair<String, List<Object>> idargs = handleArgs(t, ctx);
       String sinkType = idargs.getLeft();
-      List<String> args = idargs.getRight();
+      List<Object> args = idargs.getRight();
 
-      EventSink snk = sinkFactory.getSink(ctx, sinkType, args
-          .toArray(new String[0]));
+      EventSink snk = sinkFactory.createSink(ctx, sinkType, args.toArray());
 
       if (snk == null) {
         throw new FlumeIdException("Invalid sink: "
@@ -514,7 +513,9 @@ public class FlumeBuilder {
         Preconditions.checkArgument(rollArgs.size() == 2, "bad parse tree! "
             + t.toStringTree() + "roll only takes two arguments");
         CommonTree ctbody = rollArgs.get(0);
-        Long period = Long.parseLong(buildSimpleArg(rollArgs.get(1)));
+        // TODO change long args into Long instead of String
+        Long period = Long
+            .parseLong(buildSimpleArg(rollArgs.get(1)).toString());
         String body = FlumeSpecGen.genEventSink(ctbody);
         // TODO (jon) replace the hard coded 250 with a parameterizable value
         RollSink roller = new RollSink(context, body, period, 250);
@@ -538,16 +539,16 @@ public class FlumeBuilder {
         String body = FlumeSpecGen.genEventSink(ctbody);
 
         Context ctx = new Context(context);
-        Pair<String, List<String>> idArgs = handleArgs(t, ctx);
+        Pair<String, List<Object>> idArgs = handleArgs(t, ctx);
         String sourceType = idArgs.getLeft();
-        List<String> args = idArgs.getRight();
+        List<Object> args = idArgs.getRight();
         args.add(0, body);
 
         // TODO replace with Generator Sink lookup
         Preconditions.checkArgument("collector".equals(sourceType));
         SinkBuilder builder = CollectorSink.builder();
 
-        return builder.build(ctx, args.toArray(new String[0]));
+        return builder.create(ctx, args.toArray());
 
       } catch (IllegalArgumentException iae) {
         throw new FlumeSpecException(iae.getMessage());
@@ -569,7 +570,7 @@ public class FlumeBuilder {
           continue;
         }
         // assumes this is a STRING
-        rargs.add(buildSimpleArg(ct));
+        rargs.add(buildSimpleArg(ct).toString());
       }
       String body = FlumeSpecGen.genEventSink(ctbody);
       FlumeConfiguration conf = FlumeConfiguration.get();
@@ -586,15 +587,14 @@ public class FlumeBuilder {
     }
   }
 
-  @SuppressWarnings("unchecked")
   static EventSinkDecorator<EventSink> buildEventSinkDecorator(Context context,
       CommonTree t) throws FlumeSpecException {
     Context ctx = new Context(context);
-    Pair<String, List<String>> idArgs = handleArgs(t, ctx);
+    Pair<String, List<Object>> idArgs = handleArgs(t, ctx);
     String sinkType = idArgs.getLeft();
-    List<String> args = idArgs.getRight();
-    EventSinkDecorator deco = sinkFactory.getDecorator(ctx, sinkType, args
-        .toArray(new String[0]));
+    List<Object> args = idArgs.getRight();
+    EventSinkDecorator<EventSink> deco = sinkFactory.createDecorator(ctx,
+        sinkType, args.toArray());
     if (deco == null) {
       throw new FlumeIdException("Invalid sink decorator: "
           + FlumeSpecGen.genEventSinkDecorator(t));

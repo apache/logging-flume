@@ -236,7 +236,8 @@ public class TestPatternMatch {
     CommonTree fix = m.get("logical");
     LOG.info(fix.toStringTree());
 
-    String lname = FlumeBuilder.buildSimpleArg(m.get("LogicalNodeName"));
+    String lname = FlumeBuilder.buildSimpleArg(m.get("LogicalNodeName"))
+        .toString();
     LOG.info("LogicalName " + lname);
 
     CommonTree replace = FlumeBuilder.parseSink("rpcSink(\"foo\",12345)");

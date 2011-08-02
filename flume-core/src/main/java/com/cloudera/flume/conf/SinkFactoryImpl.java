@@ -306,6 +306,21 @@ public class SinkFactoryImpl extends SinkFactory {
   }
 
   @Override
+  public EventSink createSink(Context context, String name, Object... args)
+      throws FlumeSpecException {
+    try {
+      SinkBuilder builder = sinks.get(name);
+      if (builder == null)
+        return null;
+      return builder.create(context, args);
+    } catch (NumberFormatException nfe) {
+      throw new FlumeArgException("Illegal number format: " + nfe.getMessage());
+    } catch (IllegalArgumentException iae) {
+      throw new FlumeArgException(iae.getMessage());
+    }
+  }
+
+  @Override
   public EventSink getSink(Context context, String name, String... args)
       throws FlumeSpecException {
     try {

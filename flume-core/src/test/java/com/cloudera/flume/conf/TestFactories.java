@@ -55,7 +55,7 @@ public class TestFactories implements ExampleData {
   @Test
   public void testBuildConsole() throws IOException, FlumeSpecException,
       InterruptedException {
-    EventSink snk = fact.getSink(new Context(), "console");
+    EventSink snk = fact.createSink(new Context(), "console", new Object[0]);
     snk.open();
     snk.append(new EventImpl("test".getBytes()));
     snk.close();
@@ -67,7 +67,7 @@ public class TestFactories implements ExampleData {
     Context ctx = LogicalNodeContext.testingContext();
 
     // 25 lines of 100 bytes of ascii
-    EventSource src = srcfact.getSource(ctx, "asciisynth", "25", "100");
+    EventSource src = srcfact.createSource(ctx, "asciisynth", 25, 100);
     src.open();
     Event e = null;
     int cnt = 0;
@@ -84,10 +84,10 @@ public class TestFactories implements ExampleData {
       FlumeSpecException {
     Context ctx = LogicalNodeContext.testingContext();
 
-    EventSink snk = fact.getSink(ctx, "console");
+    EventSink snk = fact.createSink(ctx, "console", new Object[0]);
     snk.open();
 
-    EventSource src = srcfact.getSource(ctx, "asciisynth", "25", "100");
+    EventSource src = srcfact.createSource(ctx, "asciisynth", 25, 100);
     src.open();
 
     DirectDriver conn = new DirectDriver(src, snk);
@@ -103,13 +103,13 @@ public class TestFactories implements ExampleData {
   public void testDecorator() throws IOException, FlumeSpecException,
       InterruptedException {
     Context ctx = LogicalNodeContext.testingContext();
-    EventSource src = srcfact.getSource(ctx, "asciisynth", "25", "100");
+    EventSource src = srcfact.createSource(ctx, "asciisynth", 25, 100);
     src.open();
 
     EventSinkDecorator<EventSink> deco =
 
-    fact.getDecorator(new Context(), "intervalSampler", "5");
-    EventSink snk = fact.getSink(new Context(), "counter", "name");
+    fact.createDecorator(new Context(), "intervalSampler", 5);
+    EventSink snk = fact.createSink(new Context(), "counter", "name");
 
     snk.open();
 
@@ -127,25 +127,25 @@ public class TestFactories implements ExampleData {
     Context ctx = LogicalNodeContext.testingContext();
 
     // making sure default is Thrift
-    EventSource rpcSrc = srcfact.getSource(ctx, "rpcSource", "31337");
-    EventSink rpcSink = fact.getSink(new Context(), "rpcSink", "0.0.0.0",
-        "31337");
+    EventSource rpcSrc = srcfact.createSource(ctx, "rpcSource", 31337);
+    EventSink rpcSink = fact
+        .createSink(new Context(), "rpcSink", "0.0.0.0", 31337);
     assertEquals(ThriftEventSource.class, rpcSrc.getClass());
     assertEquals(ThriftEventSink.class, rpcSink.getClass());
 
     // make sure initializing to Thrift indeed gives us ThriftEvent sources and
     // sinks.
     FlumeConfiguration.get().set(FlumeConfiguration.EVENT_RPC_TYPE, "THRIFT");
-    rpcSrc = srcfact.getSource(ctx, "rpcSource", "31337");
-    rpcSink = fact.getSink(new Context(), "rpcSink", "0.0.0.0", "31337");
+    rpcSrc = srcfact.createSource(ctx, "rpcSource", 31337);
+    rpcSink = fact.createSink(new Context(), "rpcSink", "0.0.0.0", 31337);
     assertEquals(ThriftEventSource.class, rpcSrc.getClass());
     assertEquals(ThriftEventSink.class, rpcSink.getClass());
 
     // make sure initializing to Avro indeed gives us AvroEvent sources and
     // sinks.
     FlumeConfiguration.get().set(FlumeConfiguration.EVENT_RPC_TYPE, "AVRO");
-    rpcSrc = srcfact.getSource(ctx, "rpcSource", "31337");
-    rpcSink = fact.getSink(new Context(), "rpcSink", "0.0.0.0", "31337");
+    rpcSrc = srcfact.createSource(ctx, "rpcSource", 31337);
+    rpcSink = fact.createSink(new Context(), "rpcSink", "0.0.0.0", 31337);
     assertEquals(AvroEventSource.class, rpcSrc.getClass());
     assertEquals(AvroEventSink.class, rpcSink.getClass());
   }
@@ -172,11 +172,11 @@ public class TestFactories implements ExampleData {
     LOG.info("Testing a more complicated pipeline with a " + rpcType
         + " network connection in the middle");
     Context ctx = LogicalNodeContext.testingContext();
-    EventSource rpcSrc = srcfact.getSource(ctx, "rpcSource", "31337");
-    EventSink rpcSink = fact.getSink(ctx, "rpcSink", "0.0.0.0", "31337");
+    EventSource rpcSrc = srcfact.createSource(ctx, "rpcSource", 31337);
+    EventSink rpcSink = fact.createSink(ctx, "rpcSink", "0.0.0.0", 31337);
 
-    EventSink counter = fact.getSink(ctx, "counter", "count");
-    EventSource txtsrc = srcfact.getSource(ctx, "asciisynth", "25", "100");
+    EventSink counter = fact.createSink(ctx, "counter", (Object) "count");
+    EventSource txtsrc = srcfact.createSource(ctx, "asciisynth", 25, 100);
 
     DirectDriver svrconn = new DirectDriver(rpcSrc, counter);
     svrconn.start();

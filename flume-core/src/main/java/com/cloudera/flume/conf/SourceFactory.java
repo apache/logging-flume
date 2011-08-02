@@ -17,6 +17,8 @@
  */
 package com.cloudera.flume.conf;
 
+import static com.cloudera.util.ArrayUtils.toStrings;
+
 import java.util.Set;
 
 import com.cloudera.flume.core.EventSource;
@@ -33,10 +35,20 @@ abstract public class SourceFactory {
       return build(new Context(), argv);
     }
 
+    @Deprecated
     public abstract EventSource build(Context ctx, String... argv);
+
+    public EventSource create(Context ctx, Object... argv) {
+      return build(ctx, toStrings(argv));
+    }
   };
 
-  
+  public EventSource createSource(Context ctx, String name, Object... args)
+      throws FlumeSpecException {
+    return getSource(ctx, name, toStrings(args));
+  }
+
+  @Deprecated
   abstract public EventSource getSource(Context ctx, String name,
       String... args) throws FlumeSpecException;
 

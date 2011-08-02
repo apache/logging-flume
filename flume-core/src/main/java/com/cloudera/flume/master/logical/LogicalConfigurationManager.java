@@ -85,7 +85,7 @@ public class LogicalConfigurationManager extends
         .genEventSink(lsnk));
 
     String tgtLn = FlumeBuilder.buildSimpleArg((CommonTree) lsnk.getChild(0)
-        .getChild(1));
+        .getChild(1)).toString();
 
     PhysicalNodeInfo pni = nameMan.getPhysicalNodeInfo(tgtLn);
 
