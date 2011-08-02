@@ -139,11 +139,11 @@ public class FlumeNode implements Reportable {
     this.startHttp = startHttp;
     this.nodesMan = new LogicalNodeManager(nodeName);
 
-    WALManager walMan = new NaiveFileWALManager(
-        new File(conf.getAgentLogsDir()));
+    File defaultDir = new File(conf.getAgentLogsDir(), getPhysicalNodeName());
+    WALManager walMan = new NaiveFileWALManager(defaultDir);
     this.walMans.put(getPhysicalNodeName(), walMan);
     this.failoverMans.put(getPhysicalNodeName(), new NaiveFileFailoverManager(
-        new File(conf.getAgentLogsDir())));
+        defaultDir));
 
     // no need for liveness tracker if a one shot execution.
     this.collectorAck = new CollectorAckListener(rpcMan);
@@ -173,16 +173,6 @@ public class FlumeNode implements Reportable {
     // Use a failover-enabled master RPC, which randomizes the failover order
     this(conf, nodename, new ThriftMultiMasterRPC(conf, true), startHttp,
         oneshot);
-  }
-
-  public FlumeNode(FlumeConfiguration conf, boolean startHttp, boolean oneshot) {
-    // Use a failover-enabled master RPC, which randomizes the failover order
-    this(conf, NetUtils.localhost(), new ThriftMultiMasterRPC(conf, true),
-        startHttp, oneshot);
-  }
-
-  public FlumeNode(FlumeConfiguration conf, boolean startHttp) {
-    this(NetUtils.localhost(), conf, startHttp, false /* oneshot */);
   }
 
   public FlumeNode(FlumeConfiguration conf) {

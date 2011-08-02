@@ -20,22 +20,14 @@ package com.cloudera.flume.agent;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-
-import org.apache.commons.lang.NotImplementedException;
 
 import com.cloudera.flume.conf.thrift.FlumeConfigData;
 import com.cloudera.flume.handlers.endtoend.AckListener;
 import com.cloudera.flume.handlers.endtoend.CollectorAckListener;
 import com.cloudera.flume.master.FlumeMaster;
 import com.cloudera.flume.reporter.ReportEvent;
-import com.cloudera.flume.reporter.ReportManager;
-import com.cloudera.flume.reporter.Reportable;
-import com.cloudera.flume.reporter.server.FlumeReport;
-import com.cloudera.flume.reporter.server.ReportServer;
 import com.cloudera.util.NetUtils;
 
 /**

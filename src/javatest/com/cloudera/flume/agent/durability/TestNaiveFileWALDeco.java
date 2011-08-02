@@ -77,10 +77,10 @@ public class TestNaiveFileWALDeco {
     File tmp = BenchmarkHarness.tmpdir;
 
     // file with ack begin, data, and end messages
-    File acked = new File(
-        "src/data/acked.00000000.20100204-015814430-0800.seq");
+    File acked = new File("src/data/acked.00000000.20100204-015814430-0800.seq");
     // Assumes the NaiveFileWALManager!
-    File writing = new File(tmp, "writing");
+    File writing = new File(new File(tmp, BenchmarkHarness.node
+        .getPhysicalNodeName()), "writing");
     writing.mkdirs();
 
     // Must rename file because that name is in the meta data of the event
@@ -104,7 +104,7 @@ public class TestNaiveFileWALDeco {
     BenchmarkHarness.node.getAckChecker().checkAcks();
 
     CounterSink cnt = (CounterSink) ReportManager.get().getReportable("count");
-    // 1032 in file + 5 from silly driverx
+    // 1032 in file + 5 from silly driver
     assertEquals(1037, cnt.getCount());
 
     // check to make sure wal file is gone
@@ -133,10 +133,10 @@ public class TestNaiveFileWALDeco {
     File tmp = BenchmarkHarness.tmpdir;
 
     // file with ack begin, data, and end messages
-    File acked = new File(
-        "src/data/acked.00000000.20100204-015814430-0800.seq");
+    File acked = new File("src/data/acked.00000000.20100204-015814430-0800.seq");
     // Assumes the NaiveFileWALManager!
-    File writing = new File(tmp, "writing");
+    File writing = new File(new File(tmp, BenchmarkHarness.node
+        .getPhysicalNodeName()), "writing");
     writing.mkdirs();
 
     // /////////////////////
@@ -168,9 +168,11 @@ public class TestNaiveFileWALDeco {
     assertTrue(!new File(new File(tmp, "error"), acked.getName()).exists());
     assertTrue(!new File(new File(tmp, "done"), acked.getName()).exists());
 
-    // TODO (jon) is this the write behavior? I think assuming no name changes
-    // locallay is reasonable for now.
-    assertTrue(new File(new File(tmp, "sent"), acked.getName()).exists());
+    // TODO (jon) is this the right behavior? I think assuming no name changes
+    // locally is reasonable for now.
+
+    assertTrue(new File(new File(new File(tmp, BenchmarkHarness.node
+        .getPhysicalNodeName()), "sent"), acked.getName()).exists());
 
     BenchmarkHarness.cleanupLocalWriteDir();
   }
@@ -192,7 +194,9 @@ public class TestNaiveFileWALDeco {
     // file with ack begin, data and then truncated
     File truncated = new File(
         "src/data/truncated.00000000.20100204-015814430-0800.seq");
-    File writing = new File(tmp, "writing");
+    File writing = new File(new File(tmp, BenchmarkHarness.node
+        .getPhysicalNodeName()), "writing");
+
     writing.mkdirs();
     FileUtil.dumbfilecopy(truncated, new File(writing, truncated.getName()));
 
@@ -214,15 +218,22 @@ public class TestNaiveFileWALDeco {
     // BenchmarkHarness.mock.ackman.;
 
     // check to make sure wal file is gone
-    assertTrue(!new File(new File(tmp, "import"), truncated.getName()).exists());
-    assertTrue(!new File(new File(tmp, "writing"), truncated.getName())
+    File nodedir = new File(tmp, BenchmarkHarness.node.getPhysicalNodeName());
+
+    assertTrue(!new File(new File(nodedir, "import"), truncated.getName())
         .exists());
-    assertTrue(!new File(new File(tmp, "logged"), truncated.getName()).exists());
-    assertTrue(!new File(new File(tmp, "sending"), truncated.getName())
+    assertTrue(!new File(new File(nodedir, "writing"), truncated.getName())
         .exists());
-    assertTrue(!new File(new File(tmp, "sent"), truncated.getName()).exists());
-    assertTrue(new File(new File(tmp, "error"), truncated.getName()).exists());
-    assertTrue(!new File(new File(tmp, "done"), truncated.getName()).exists());
+    assertTrue(!new File(new File(nodedir, "logged"), truncated.getName())
+        .exists());
+    assertTrue(!new File(new File(nodedir, "sending"), truncated.getName())
+        .exists());
+    assertTrue(!new File(new File(nodedir, "sent"), truncated.getName())
+        .exists());
+    assertTrue(new File(new File(nodedir, "error"), truncated.getName())
+        .exists());
+    assertTrue(!new File(new File(nodedir, "done"), truncated.getName())
+        .exists());
 
     BenchmarkHarness.cleanupLocalWriteDir();
   }
