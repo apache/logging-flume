@@ -41,21 +41,34 @@ abstract public class Event {
     FATAL, ERROR, WARN, INFO, DEBUG, TRACE
   };
 
-  // the body - a blob of raw bytes that contains the raw entry. Values can be
-  // extracted from this body but will not change the body.
+  /**
+   * the body - a blob of raw bytes that contains the raw entry. Values can be
+   * extracted from this body but must not change the body. This should never
+   * return null. To change an even body, one should create a new event.
+   */
   abstract public byte[] getBody();
 
-  // the priority - user specified priority
+  /**
+   * the priority - user specified priority
+   */
   abstract public Priority getPriority();
 
-  // a time stamp - unix millis,
+  /**
+   * a time stamp - unix millis
+   */
   abstract public long getTimestamp();
 
-  // a nano time - for ordering if entries have the same millis
+  /**
+   * a nano time - for ordering if entries have the same millis
+   */
   abstract public long getNanos();
 
-  // TODO (jon) consider wrapping this. Chose string because it doesn't assume
-  // ipv4 or ipv6, etc. May cause canonalicalization problems.
+  /**
+   * Host name of the machine that generated this event.
+   * 
+   * TODO (jon) consider wrapping this. Chose string because it doesn't assume
+   * ipv4 or ipv6, etc. May cause canonalicalization problems.
+   */
   abstract public String getHost();
 
   /**

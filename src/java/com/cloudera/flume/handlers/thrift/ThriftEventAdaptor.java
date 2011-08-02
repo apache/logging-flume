@@ -17,6 +17,7 @@
  */
 package com.cloudera.flume.handlers.thrift;
 
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -24,7 +25,8 @@ import java.util.Map;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringEscapeUtils;
-import java.nio.ByteBuffer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.core.Event;
 import com.google.common.base.Preconditions;
@@ -37,16 +39,23 @@ import com.google.common.base.Preconditions;
  * are purposely package protected.
  */
 class ThriftEventAdaptor extends Event {
-
+  public static final Logger LOG = LoggerFactory
+      .getLogger(ThriftEventAdaptor.class);
   ThriftFlumeEvent evt;
 
   ThriftEventAdaptor(ThriftFlumeEvent evt) {
     super();
+    Preconditions.checkArgument(evt != null, "ThriftFlumeEvent is null!");
     this.evt = evt;
   }
 
   @Override
   public byte[] getBody() {
+    ByteBuffer buf = evt.getBody();
+    if (buf == null) {
+      LOG.warn("Thrift Event had null body! " + evt);
+      return new byte[0];
+    }
     return evt.getBody().array();
   }
 
