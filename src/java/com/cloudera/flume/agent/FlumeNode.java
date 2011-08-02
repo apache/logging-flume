@@ -23,8 +23,8 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Map.Entry;
+import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -223,6 +223,9 @@ public class FlumeNode implements Reportable {
     return webPath;
   }
 
+  /**
+   * This also implements the Apache Commons Daemon interface's start
+   */
   synchronized public void start() {
     FlumeConfiguration conf = FlumeConfiguration.get();
     ReportManager.get().add(vmInfo);
@@ -234,8 +237,8 @@ public class FlumeNode implements Reportable {
         String webPath = getWebPath(conf);
 
         boolean findport = FlumeConfiguration.get().getNodeAutofindHttpPort();
-        this.http = new StatusHttpServer("flumeagent", webPath, "0.0.0.0", conf
-            .getNodeStatusPort(), findport);
+        this.http = new StatusHttpServer("flumeagent", webPath, "0.0.0.0",
+            conf.getNodeStatusPort(), findport);
         http.start();
       } catch (IOException e) {
         LOG.error("Flume node failed: " + e.getMessage(), e);
@@ -260,6 +263,9 @@ public class FlumeNode implements Reportable {
 
   }
 
+  /**
+   * This also implements the Apache Commons Daemon interface's stop
+   */
   synchronized public void stop() {
     if (this.http != null) {
       try {
@@ -289,7 +295,8 @@ public class FlumeNode implements Reportable {
    * are discarded from the list with errors logged.
    */
   public static void loadOutputFormatPlugins() {
-    String outputFormatPluginClasses = FlumeConfiguration.get().get(FlumeConfiguration.OUTPUT_FORMAT_PLUGIN_CLASSES, "");
+    String outputFormatPluginClasses = FlumeConfiguration.get().get(
+        FlumeConfiguration.OUTPUT_FORMAT_PLUGIN_CLASSES, "");
     String[] classes = outputFormatPluginClasses.split(",\\s*");
 
     for (String className : classes) {
@@ -302,18 +309,41 @@ public class FlumeNode implements Reportable {
 
           LOG.info("Registered output format plugin " + className);
         } else {
-          LOG.warn("Ignoring output format plugin class " + className + " - Does not subclass OutputFormatBuilder");
+          LOG.warn("Ignoring output format plugin class " + className
+              + " - Does not subclass OutputFormatBuilder");
         }
       } catch (ClassNotFoundException e) {
-        LOG.warn("Unable to load output format plugin class " + className + " - Class not found");
+        LOG.warn("Unable to load output format plugin class " + className
+            + " - Class not found");
       } catch (FlumeSpecException e) {
-        LOG.warn("Unable to load output format plugin class " + className + " - Flume spec exception follows.", e);
+        LOG.warn("Unable to load output format plugin class " + className
+            + " - Flume spec exception follows.", e);
       } catch (InstantiationException e) {
-        LOG.warn("Unable to load output format plugin class " + className + " - Unable to instantiate class.", e);
+        LOG.warn("Unable to load output format plugin class " + className
+            + " - Unable to instantiate class.", e);
       } catch (IllegalAccessException e) {
-        LOG.warn("Unable to load output format plugin class " + className + " - Access violation.", e);
+        LOG.warn("Unable to load output format plugin class " + className
+            + " - Access violation.", e);
       }
     }
+  }
+
+  /**
+   * This also implements the Apache Commons Daemon interface's init
+   */
+  public void init(String[] args) {
+    try {
+      setup(args);
+    } catch (IOException ioe) {
+      LOG.error("Failed to init Flume Node", ioe);
+    }
+  }
+
+  /**
+   * This also implements the Apache Commons Daemon interface's destroy
+   */
+  public void destroy() {
+    stop(); // I think this is ok.
   }
 
   /**
@@ -390,21 +420,27 @@ public class FlumeNode implements Reportable {
     File cur = f;
     while (cur != null) {
       if (cur.equals(tmp)) {
-        LOG
-            .warn("Log directory is writing inside of /tmp.  This data may not survive reboot!");
+        LOG.warn("Log directory is writing inside of /tmp.  This data may not survive reboot!");
         break;
       }
       cur = cur.getParentFile();
     }
   }
 
-  public static void setup(String[] argv) throws IOException {
+  /**
+   * Returns a Flume Node with settings from specified command line parameters.
+   * (See usage for instructions)
+   *
+   * @param argv
+   * @return
+   * @throws IOException
+   */
+  public static FlumeNode setup(String[] argv) throws IOException {
     logVersion(LOG);
     logEnvironment(LOG);
     // Make sure the Java version is not older than 1.6
     if (!CheckJavaVersion.isVersionOk()) {
-      LOG
-          .error("Exiting because of an old Java version or Java version in bad format");
+      LOG.error("Exiting because of an old Java version or Java version in bad format");
       System.exit(-1);
     }
     LOG.info("Starting flume agent on: " + NetUtils.localhost());
@@ -430,19 +466,19 @@ public class FlumeNode implements Reportable {
     } catch (ParseException e) {
       HelpFormatter fmt = new HelpFormatter();
       fmt.printHelp("FlumeNode", options, true);
-      return;
+      return null;
     }
 
     // dump version info only
     if (cmd != null && cmd.hasOption("v")) {
-      return;
+      return null;
     }
 
     // dump help info.
     if (cmd != null && cmd.hasOption("h")) {
       HelpFormatter fmt = new HelpFormatter();
       fmt.printHelp("FlumeNode", options, true);
-      return;
+      return null;
     }
     // Check FlumeConfiguration file for settings that may cause node to fail.
     nodeConfigChecksOk();
@@ -518,6 +554,7 @@ public class FlumeNode implements Reportable {
     }
 
     // hangout, waiting for other agent thread to exit.
+    return flume;
   }
 
   /**
@@ -633,8 +670,8 @@ public class FlumeNode implements Reportable {
     try {
       setup(argv);
     } catch (Exception e) {
-      LOG.error("Aborting: Unexpected problem with environment."
-          + e.getMessage(), e);
+      LOG.error(
+          "Aborting: Unexpected problem with environment." + e.getMessage(), e);
       System.exit(-1);
     }
   }
@@ -658,8 +695,8 @@ public class FlumeNode implements Reportable {
   public WALManager addWalManager(String walnode) {
     Preconditions.checkArgument(walnode != null);
     FlumeConfiguration conf = FlumeConfiguration.get();
-    WALManager wm = new NaiveFileWALManager(new File(new File(conf
-        .getAgentLogsDir()), walnode));
+    WALManager wm = new NaiveFileWALManager(new File(new File(
+        conf.getAgentLogsDir()), walnode));
     synchronized (walMans) {
       walMans.put(walnode, wm);
       return wm;
