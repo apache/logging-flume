@@ -76,7 +76,7 @@ function append_jars_onto_classpath() {
     JARS=`find $1/*.jar 2> /dev/null || true`
     for i in $JARS; do
         if [ -n "$CLASSPATH" ]; then
-            CLASSPATH+=${pathsep}${i}
+            CLASSPATH=${CLASSPATH}${pathsep}${i}
         else
             CLASSPATH=${i}
         fi
@@ -95,10 +95,10 @@ if [ -z "$FLUME_HOME" ]; then
 fi
 
 JOPTS="-Dflume.log.dir=${FLUME_LOG_DIR:-${FLUME_HOME}/logs} "
-JOPTS+="-Dflume.log.file=${FLUME_LOGFILE:-flume.log} "
-JOPTS+="-Dflume.root.logger=${FLUME_ROOT_LOGGER:-INFO,console} "
-JOPTS+="-Dzookeeper.root.logger=${ZOOKEEPER_ROOT_LOGGER:-ERROR,console} "
-JOPTS+="-Dwatchdog.root.logger=${WATCHDOG_ROOT_LOGGER:-INFO,console} "
+JOPTS="$JOPTS -Dflume.log.file=${FLUME_LOGFILE:-flume.log} "
+JOPTS="$JOPTS -Dflume.root.logger=${FLUME_ROOT_LOGGER:-INFO,console} "
+JOPTS="$JOPTS -Dzookeeper.root.logger=${ZOOKEEPER_ROOT_LOGGER:-ERROR,console} "
+JOPTS="$JOPTS -Dwatchdog.root.logger=${WATCHDOG_ROOT_LOGGER:-INFO,console} "
 
 if [ "$cygwin" == false ] ; then
   # unix and "unix-like" setup
@@ -117,18 +117,18 @@ if [ "$cygwin" == false ] ; then
   CLASSPATH="$FLUME_CONF_DIR"
 
   if [ -n "$FLUME_CLASSPATH" ]; then
-      CLASSPATH+=":${FLUME_CLASSPATH}"
+      CLASSPATH="${CLASSPATH}:${FLUME_CLASSPATH}"
   fi
 
   # put hadoop conf dir in classpath to include Hadoop
   # core-site.xml/hdfs-site.xml
   if [ -n "${HADOOP_CONF_DIR}" ]; then
-      CLASSPATH+=":${HADOOP_CONF_DIR}" 
+      CLASSPATH="${CLASSPATH}:${HADOOP_CONF_DIR}" 
   elif [ -n "${HADOOP_HOME}" ] ; then
-      CLASSPATH+=":${HADOOP_HOME}/conf"
+      CLASSPATH="${CLASSPATH}:${HADOOP_HOME}/conf"
   elif [ -e "/usr/lib/hadoop/conf" ] ; then
       # if neither is present see if the CDH dir exists
-      CLASSPATH+=":/usr/lib/hadoop-0.20/conf";
+      CLASSPATH="${CLASSPATH}:/usr/lib/hadoop-0.20/conf";
   fi  # otherwise give up
 
   # try to load the hadoop core jars
@@ -136,7 +136,7 @@ if [ "$cygwin" == false ] ; then
   while true; do
       if [ -n "$HADOOP_HOME" ]; then
           HADOOP_CORE_FOUND=true
-          CLASSPATH+=":${HADOOP_HOME}/hadoop-*-core.jar:${HADOOP_HOME}/lib/hadoop-*-core.jar"
+          CLASSPATH="$CLASSPATH:${HADOOP_HOME}/hadoop-*-core.jar:${HADOOP_HOME}/lib/hadoop-*-core.jar"
           break
       fi
 
@@ -144,7 +144,7 @@ if [ "$cygwin" == false ] ; then
       if [ -n "$HADCOREJARS" ]; then
           HADOOP_CORE_FOUND=true
           export CDH_CLASSPATH="/usr/lib/hadoop"
-          CLASSPATH+=":${CDH_CLASSPATH}/*"
+          CLASSPATH="$CLASSPATH:${CDH_CLASSPATH}/*"
           break
       fi
 
@@ -159,12 +159,12 @@ if [ "$cygwin" == false ] ; then
       break
   done
 
-  JOPTS+="-Djava.library.path=$CMDPATH/lib "
+  JOPTS="$JOPTS -Djava.library.path=$CMDPATH/lib "
 
   append_jars_onto_classpath "$CMDPATH/lib"
   append_jars_onto_classpath "$CMDPATH/libtest"
 
-  CLASSPATH+=":$JAVA_HOME/lib/tools.jar"
+  CLASSPATH="${CLASSPATH}:$JAVA_HOME/lib/tools.jar"
 
   if [ "$FLUME_DEVMODE" == true ] ; then
     # allow Jetty to compile servlets in dev mode
@@ -177,13 +177,13 @@ if [ "$cygwin" == false ] ; then
 
   append_jars_onto_classpath "${ZOOKEEPER_HOME}"
 
-  CLASSPATH+=":$CMDPATH/build/classes"
+  CLASSPATH="$CLASSPATH:$CMDPATH/build/classes"
   append_jars_onto_classpath "$CMDPATH/build"
   append_jars_onto_classpath "${FLUME_HOME}"
 
 else
   # windows with cygwin
-  JOPTS+="-Djava.library.path=`cygpath -d $CMDPATH/lib` "
+  JOPTS="$JOPTS -Djava.library.path=`cygpath -d $CMDPATH/lib` "
 
   CLASSPATH="$JAVA_HOME/lib/tools.jar"
 
@@ -233,7 +233,7 @@ NODEI_WATCHDOG="java ${JOPTS} -Dfwdstdin=true -Dpid=$$ -Dpidfile=${FLUME_PID_DIR
 
 if [ -n "$FLUME_VERBOSE" ]; then
     if [ -n "$FLUME_VERBOSE_JAVA" ]; then
-        JOPTS+="-verbose "
+        JOPTS="$JOPTS -verbose "
     fi
     echo "$CLASSPATH"
     set -x
