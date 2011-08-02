@@ -900,23 +900,45 @@ to call at top-level: ant deploy-contrib compile-core-test
         <include name="src/**" />
         <include name="Makefile" />
         <include name="properties/**" />
-        <include name="src/**" />
-	<include name="docs/**" />
-	<exclude name="findbugsExclude.xml" />
-	<exclude name="libtest/findbugs-ant.jar" />
-	<exclude name="libtest/findbugs.jar" />
+        <include name="docs/**" />
+        <exclude name="findbugsExclude.xml" />
+        <exclude name="libtest/findbugs-ant.jar" />
+        <exclude name="libtest/findbugs.jar" />
       </tarfileset>
 
       <tarfileset dir="." mode="755" prefix="flume-${version}">
- 	<exclude name="bin/flume-env.sh" />
-	<exclude name="bin/flume_extra" />
-	<exclude name="bin/flume_test" />
-	<include name="bin/**"/>
+        <exclude name="bin/flume-env.sh" />
+        <include name="bin/**"/>
       </tarfileset>
 
     </tar>
   </target>
 
+  <target name="bin-tar" depends="jar" description="Make flume.tar">
+    <tar compression="gzip" destfile="${build.dir}/flume-${version}-bin.tar.gz">
+      <tarfileset dir="build" mode="644"  prefix="flume-${version}">
+        <include name="*.jar" />
+        <include name="webapps/**" />
+      </tarfileset>
+
+      <tarfileset dir="." mode="644" prefix="flume-${version}">
+        <include name="conf/**" />
+        <include name="CHANGELOG.html" />
+        <include name="RELEASENOTES" />
+        <include name="LICENSE" />
+        <include name="README" />
+        <include name="NOTICE" />
+        <include name="lib/**" />
+        <include name="properties/**" />
+      </tarfileset>
+
+      <tarfileset dir="." mode="755" prefix="flume-${version}">
+        <exclude name="bin/flume-env.sh" />
+        <include name="bin/**"/>
+      </tarfileset>
+
+    </tar>
+  </target>
   <!-- ================================================================== -->
   <!-- Compile test code                                                  --> 
   <!-- ================================================================== -->
