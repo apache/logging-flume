@@ -78,17 +78,20 @@ import com.google.common.base.Preconditions;
  * java api to get these, or Java 7's WatchSevice file watcher API.
  */
 public class TailSource extends EventSource.Base {
-  final static Logger LOG = Logger.getLogger(TailSource.class.getName());
+  private final static Logger LOG = Logger
+      .getLogger(TailSource.class.getName());
 
-  volatile boolean done = false;
+  private static int thd_count = 0;
+  private volatile boolean done = false;
 
-  final long sleepTime; // millis
+  private final long sleepTime; // millis
   final List<Cursor> cursors = new ArrayList<Cursor>();
+  private final List<Cursor> newCursors = new ArrayList<Cursor>();
+  private final List<Cursor> rmCursors = new ArrayList<Cursor>();
   // We "queue" only allowing a single Event.
-  final SynchronousQueue<Event> sync = new SynchronousQueue<Event>();
-  TailThread t = null;
 
-  // CountDownLatch doneLatch = null;
+  final SynchronousQueue<Event> sync = new SynchronousQueue<Event>();
+  private TailThread thd = null;
 
   /**
    * Constructor for backwards compatibility.
@@ -115,6 +118,14 @@ public class TailSource extends EventSource.Base {
     long modTime = f.lastModified();
     Cursor c = new Cursor(sync, f, readOffset, fileLen, modTime);
     cursors.add(c);
+  }
+
+  /**
+   * This creates an empty tail source. It expects something else to add cursors
+   * to it
+   */
+  public TailSource(long waitTime) {
+    this.sleepTime = waitTime;
   }
 
   /**
@@ -306,6 +317,11 @@ public class TailSource extends EventSource.Base {
    * checking for updates and sleeping if there are none.
    */
   class TailThread extends Thread {
+
+    TailThread() {
+      super("TailThread-" + thd_count++);
+    }
+
     @Override
     public void run() {
       try {
@@ -315,12 +331,23 @@ public class TailSource extends EventSource.Base {
         }
 
         while (!done) {
+          synchronized (newCursors) {
+            cursors.addAll(newCursors);
+            newCursors.clear();
+          }
+
+          synchronized (rmCursors) {
+            cursors.removeAll(rmCursors);
+            rmCursors.clear();
+          }
+
           boolean madeProgress = false;
           for (Cursor c : cursors) {
             if (c.tailBody()) {
               madeProgress = true;
             }
           }
+
           if (!madeProgress) {
             Clock.sleep(sleepTime);
           }
@@ -328,8 +355,9 @@ public class TailSource extends EventSource.Base {
       } catch (InterruptedException e) {
         LOG.error("tail unexpected interrupted: " + e.getMessage(), e);
       } finally {
-        // doneLatch.countDown();
+        LOG.info("Tail has exited");
       }
+
     }
   }
 
@@ -338,22 +366,39 @@ public class TailSource extends EventSource.Base {
    */
   synchronized void addCursor(Cursor cursor) {
     Preconditions.checkArgument(cursor != null);
-    Preconditions.checkState(t == null,
-        "Cannot add new cursors on a running tail source");
-    cursors.add(cursor);
+
+    if (thd == null) {
+      cursors.add(cursor);
+    } else {
+      synchronized (newCursors) {
+        newCursors.add(cursor);
+      }
+    }
+
+  }
+
+  /**
+   * Remove an existing cursor to tail.
+   */
+  synchronized public void removeCursor(Cursor cursor) {
+    Preconditions.checkArgument(cursor != null);
+    if (thd == null) {
+      cursors.remove(cursor);
+    } else {
+
+      synchronized (rmCursors) {
+        rmCursors.add(cursor);
+      }
+    }
+
   }
 
   @Override
   public void close() throws IOException {
     synchronized (this) {
       done = true;
+      thd = null;
     }
-    // try {
-    // // doneLatch.await();
-    // } catch (InterruptedException e) {
-    // LOG.error("close unexpected interrupted: " + e.getMessage(), e);
-    // }
-
   }
 
   /**
@@ -380,12 +425,11 @@ public class TailSource extends EventSource.Base {
 
   @Override
   synchronized public void open() throws IOException {
-    if (t != null) {
+    if (thd != null) {
       throw new IllegalStateException("Attempted to open tail source twice!");
     }
-    // doneLatch = new CountDownLatch(1);
-    t = new TailThread();
-    t.start();
+    thd = new TailThread();
+    thd.start();
   }
 
   public static SourceBuilder builder() {
@@ -428,4 +472,5 @@ public class TailSource extends EventSource.Base {
       }
     };
   }
+
 }

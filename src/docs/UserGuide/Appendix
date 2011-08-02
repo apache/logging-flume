@@ -42,6 +42,14 @@ finish reading the new "bar" file and then start from the beginning of "foo").
 +multitail("_filename_"[, _file2_ [,_file3_ ... ] ])+ :: Like +tail+ but can 
 follow multiple files concurrently.
 
++tailDir("_dirname_"[, fileregex=".*"])+ :: Tails all files in a
+directory +dirname+ that match the specified +fileregex+.  Be careful
+and make sure because the regex argument requires java style escaping
+of '\' and '\"'.  For example '\w+' would have to be written as
+"\\w+".  If a new file appears, it is added to the list of files to
+tail.  If pointed at a new directory, it will attempt to read all
+files that match!
+
 +seqfile("_filename_")+ :: Read from a Hadoop sequence file formatted file, 
 with +com.cloudera.flume.handlers.hdfs.WriteableEventKey+ and 
 +com.cloudera.flume.handlers.hdfs.WriteableEvent+ values. Conveniently, this 
