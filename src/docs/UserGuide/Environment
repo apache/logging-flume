@@ -36,7 +36,7 @@ default it is "INFO,console".
 This defaults to +./conf+ if a +./conf/flume-conf.xml+ file is found,
 or to +/etc/flume/conf/+ if it +flume-conf.xml+ is found there.
 
-+HADOOP_HOME+ :: The directory where hadoop jars are expected to be
++HADOOP_HOME+ :: The directory where Hadoop jars are expected to be
 found.  If not specified it will use jars found in +/usr/lib/hadoop+
 or +./lib/+.
 

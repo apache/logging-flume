@@ -249,7 +249,7 @@ BZip2Codec is selected, ".bz2" is appended.
     <value>None</value>
     <description>Writes formatted data compressed in specified codec to
     dfs. Value is None, GZipCodec, DefaultCodec (deflate), BZip2Codec,
-    or any other Codec hadoop is aware of </description>
+    or any other Codec Hadoop is aware of </description>
   </property>
 ----
 

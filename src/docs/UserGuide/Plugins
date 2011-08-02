@@ -443,7 +443,7 @@ with error.
 
 There are some ramifications of these semantics.  Care must be taken
 with locking open, close, and append operations.  If there are any
-sleeps or blocking +open()+ operations (ex: InisistentOpen,
+sleeps or blocking +open()+ operations (ex: InsistentOpen,
 FailoverSinks), ideally a close call will cause it to shutdown, it and
 the open call should get unblocked.  +append()+
 
