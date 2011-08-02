@@ -1,3 +1,10 @@
+Flume 0.9.5
+===========
+
+Files written by a collector now have a '.tmp' suffix that indicates
+that the file is still being written.  When the file is completed,
+this suffix is removed.
+
 Flume 0.9.4
 ===========
 

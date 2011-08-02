@@ -34,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
-import com.cloudera.flume.conf.FlumeBuilder.FunctionSpec;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
@@ -44,6 +43,7 @@ import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.handlers.text.FormatFactory;
 import com.cloudera.flume.handlers.text.output.OutputFormat;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.util.PathManager;
 import com.google.common.base.Preconditions;
 
 /**
@@ -61,6 +61,7 @@ public class CustomDfsSink extends EventSink.Base {
   AtomicLong count = new AtomicLong();
   String path;
   Path dstPath;
+  PathManager pathManager;
 
   public CustomDfsSink(String path, OutputFormat format) {
     Preconditions.checkArgument(path != null);
@@ -83,10 +84,11 @@ public class CustomDfsSink extends EventSink.Base {
 
   @Override
   public void close() throws IOException {
-    LOG.info("Closing HDFS file: " + dstPath);
+    LOG.info("Closing HDFS file: " + pathManager.getOpenPath());
     writer.flush();
     LOG.info("done writing raw file to hdfs");
     writer.close();
+    pathManager.close();
     writer = null;
   }
 
@@ -103,22 +105,23 @@ public class CustomDfsSink extends EventSink.Base {
   public void open() throws IOException {
     FlumeConfiguration conf = FlumeConfiguration.get();
     FileSystem hdfs;
-
     String codecName = conf.getCollectorDfsCompressCodec();
     CompressionCodec codec = getCodec(conf, codecName);
 
     if (codec == null) {
       dstPath = new Path(path);
       hdfs = dstPath.getFileSystem(conf);
-      writer = hdfs.create(dstPath);
-      LOG.info("Creating HDFS file: " + dstPath.toString());
+      pathManager = new PathManager(hdfs, dstPath.getParent(), dstPath.getName());
+      writer = pathManager.open();
+      LOG.info("Creating HDFS file: " + pathManager.getOpenPath());
       return;
     }
 
     Compressor cmp = codec.createCompressor();
     dstPath = new Path(path + codec.getDefaultExtension());
     hdfs = dstPath.getFileSystem(conf);
-    writer = hdfs.create(dstPath);
+    pathManager = new PathManager(hdfs, dstPath.getParent(), dstPath.getName());
+    writer = pathManager.open();
     try {
       writer = codec.createOutputStream(writer, cmp);
     } catch (NullPointerException npe) {
@@ -130,7 +133,7 @@ public class CustomDfsSink extends EventSink.Base {
       throw new IOException("Unable to load compression codec " + codec);
     }
     LOG.info("Creating " + codec + " compressed HDFS file: "
-        + dstPath.toString());
+        + pathManager.getOpenPath());
   }
 
   private static boolean codecMatches(Class<? extends CompressionCodec> cls,
