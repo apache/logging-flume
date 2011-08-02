@@ -18,11 +18,11 @@
 
 // This is an ANTLR grammar for a simple deployment specification language for flume.
 grammar FlumeDeploy;
-options { 
-output=AST; 
-k=2;
+options {
+output=AST;
+k=3;
 }
-tokens { 
+tokens {
   NODE;
   BLANK;
   SINK;
@@ -39,6 +39,7 @@ tokens {
   BOOL;
   FLOAT;
   KWARG;
+  FUNC;
 }
 @header {
 /**
@@ -133,17 +134,22 @@ rollSink        :  'roll' args '{' simpleSink '}'
 genCollectorSink       :  'collector' args '{' simpleSink '}'
                                   -> ^(GEN 'collector' simpleSink args?);
 
+function: Identifier args? -> ^(FUNC Identifier args?);
 
-args    : '(' ( arglist (',' kwarglist)?  ) ')' -> arglist kwarglist?
-        | '(' kwarglist ')' -> kwarglist? 
-        | '(' ')' -> 
+arg     : literal
+        | function
         ;
 
-arglist	:	literal (',' literal)* -> literal+ ;
+args    : '(' ( arglist (',' kwarglist)?  ) ')' -> arglist kwarglist?
+        | '(' kwarglist ')' -> kwarglist?
+        | '(' ')' ->
+        ;
+
+arglist	:	arg (',' arg)* -> arg+ ;
 
 kwarglist : kwarg (',' kwarg)* -> kwarg+;
 
-kwarg   :   Identifier '=' literal -> ^(KWARG Identifier literal)  ;
+kwarg   :   Identifier '=' arg -> ^(KWARG Identifier arg)  ;
 
 // Basic Java-style literals  (taken from Java grammar)
 literal

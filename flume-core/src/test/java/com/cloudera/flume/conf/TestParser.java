@@ -445,7 +445,16 @@ public class TestParser implements ExampleData {
     assertEquals(
         "(GEN collector (DECO (SINK customDfsSink (STRING \"file:///tmp/foo\") (STRING \"foo\"))))",
         toTree(o));
+  }
 
+  @Test
+  public void testFuncArgs() throws FlumeSpecException, RecognitionException {
+    String s = "console(avro(\"snappy\"))";
+    Object o = FlumeBuilder.parseSink(s);
+    LOG.info(toTree(o));
+    assertEquals(
+        "(DECO (SINK console (FUNC avro (STRING \"snappy\"))))",
+        toTree(o));
   }
 
 }
