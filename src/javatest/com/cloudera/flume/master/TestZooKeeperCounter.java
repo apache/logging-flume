@@ -38,8 +38,8 @@ import com.cloudera.util.FileUtil;
 /**
  * Unit tests for ZooKeeperCounter
  */
-public class ZooKeeperCounterTest {
-  static final Logger LOG = LoggerFactory.getLogger(ZooKeeperCounterTest.class);
+public class TestZooKeeperCounter {
+  static final Logger LOG = LoggerFactory.getLogger(TestZooKeeperCounter.class);
   static ZooKeeperService svc;
   static File tmp;
 
