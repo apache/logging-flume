@@ -229,15 +229,26 @@ public class ZKInProcessServer {
     // Create the id file
     File idfile = new File(dataDir + "/myid");
     if (idfile.exists()) {
-      LOG.info("Removing idfile");
+      LOG.info("Removing idfile " + idfile);
+
       if (!idfile.delete()) {
         throw new IOException("Couldn't delete idfile " + idfile);
       }
     }
-    if (!idfile.createNewFile()) {
+
+    // create does not list filename if operations fails due to permissions
+    boolean createSuccess = false;
+    try {
+      createSuccess = idfile.createNewFile();
+    } catch (IOException e) {
+      throw new IOException("Do not have permissions to create idfile "
+          + idfile);
+    }
+    if (!createSuccess) {
       throw new IOException("Couldn't create idfile " + idfile);
     }
-    LOG.warn("Creating " + idfile);
+
+    LOG.info("Creating " + idfile);
     FileWriter fw = new FileWriter(idfile);
     fw.write(Integer.valueOf(myid).toString() + "\n");
     fw.close();
