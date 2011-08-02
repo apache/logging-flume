@@ -85,8 +85,8 @@ public class ConfigManager implements ConfigurationManager {
       FlumeBuilder.buildSink(new Context(), sink);
       FlumeBuilder.buildSource(source);
     } catch (Exception e) {
-      throw new IOException("Attempted to write an invalid sink/source: "
-          + e.getMessage(), e);
+      throw new IllegalArgumentException(
+          "Attempted to write an invalid sink/source: " + e.getMessage(), e);
     }
 
     cfgStore.setConfig(logicalNode, flowid, source, sink);

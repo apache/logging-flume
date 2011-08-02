@@ -27,6 +27,7 @@ import java.util.Map.Entry;
 
 import com.cloudera.flume.conf.thrift.FlumeConfigData;
 import com.cloudera.util.Clock;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
@@ -52,6 +53,15 @@ public class MemoryBackedConfigStore extends ConfigStore {
   @Override
   public void setConfig(String host, String flowid, String source, String sink)
       throws IOException {
+    Preconditions.checkArgument(host != null,
+        "Attempted to set config but missing host name!");
+    Preconditions.checkArgument(flowid != null, "Attempted to set config "
+        + host + " but missing flowid!");
+    Preconditions.checkArgument(source != null, "Attempted to set config "
+        + host + " but missing source!");
+    Preconditions.checkArgument(sink != null, "Attempted to set config " + host
+        + " but missing sink");
+
     long time = Clock.unixTime();
     cfgs.put(host, new FlumeConfigData(time, source, sink, time, time, flowid));
   }

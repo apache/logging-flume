@@ -251,7 +251,15 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
   public synchronized void setConfig(String host, String flowid, String source,
       String sink) throws IOException {
     Preconditions.checkArgument(client != null && client.getZK() != null,
-        "client connection is null in setConfig");
+        "Attempted to set config but ZK client is not connected!");
+    Preconditions.checkArgument(host != null,
+        "Attempted to set config but missing hostname!");
+    Preconditions.checkArgument(flowid != null, "Attempted to set config "
+        + host + " but missing flowid!");
+    Preconditions.checkArgument(source != null, "Attempted to set config "
+        + host + " but missing source!");
+    Preconditions.checkArgument(sink != null, "Attempted to set config " + host
+        + " but missing sink!");
 
     if (client.getZK().getState() != ZooKeeper.States.CONNECTED) {
       throw new IOException("Not connected to ZooKeeper: "

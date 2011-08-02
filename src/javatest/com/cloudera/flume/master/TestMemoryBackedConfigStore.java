@@ -17,19 +17,24 @@
  */
 package com.cloudera.flume.master;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import org.junit.Test;
+
 import com.cloudera.flume.conf.thrift.FlumeConfigData;
 
-import junit.framework.TestCase;
-
-public class TestMemoryBackedConfigStore extends TestCase {
+public class TestMemoryBackedConfigStore {
   /**
    * Test that set and get work correctly, and that save and load work
    * correctly.
    */
+  @Test
   public void testGetSetSaveLoad() throws IOException {
     File tmp = File.createTempFile("test-flume", "");
     tmp.delete();
@@ -53,6 +58,7 @@ public class TestMemoryBackedConfigStore extends TestCase {
   /**
    * Test that set and get work correctly (do not do persistence here.)
    */
+  @Test
   public void testNodes() throws IOException {
     File tmp = File.createTempFile("test-flume", "");
     tmp.delete();
@@ -79,6 +85,7 @@ public class TestMemoryBackedConfigStore extends TestCase {
   /**
    * Test unmap all work correctly (do not do persistence here.)
    */
+  @Test
   public void testUnmapAllNodes() throws IOException {
     File tmp = File.createTempFile("test-flume", "");
     tmp.delete();
@@ -102,5 +109,33 @@ public class TestMemoryBackedConfigStore extends TestCase {
     assertFalse(manager.getLogicalNode("p2").contains("l2"));
     assertFalse(manager.getLogicalNode("p3").contains("l3"));
 
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNullHost() throws IOException {
+    MemoryBackedConfigStore store = new MemoryBackedConfigStore();
+    ConfigManager manager = new ConfigManager(store);
+    manager.setConfig(null, "my-test-flow", "null", "console");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNullFlow() throws IOException {
+    MemoryBackedConfigStore store = new MemoryBackedConfigStore();
+    ConfigManager manager = new ConfigManager(store);
+    manager.setConfig("host", null, "null", "console");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNullSource() throws IOException {
+    MemoryBackedConfigStore store = new MemoryBackedConfigStore();
+    ConfigManager manager = new ConfigManager(store);
+    manager.setConfig("host", "flow", null, "console");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNullSink() throws IOException {
+    MemoryBackedConfigStore store = new MemoryBackedConfigStore();
+    ConfigManager manager = new ConfigManager(store);
+    manager.setConfig("host", "flow", "null", null);
   }
 }
