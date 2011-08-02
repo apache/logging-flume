@@ -778,6 +778,10 @@ to call at top-level: ant deploy-contrib compile-core-test
         <include name="cloudera/**" />
         <include name="conf/**" />
         <include name="DEVNOTES" />
+        <include name="RELEASENOTES" />
+        <include name="LICENSE" />
+        <include name="README" />
+        <include name="NOTICE" />
         <include name="eclipse/**" />
         <include name="ivy.xml" />
         <include name="lib/**" />
