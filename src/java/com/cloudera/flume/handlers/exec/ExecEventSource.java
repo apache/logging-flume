@@ -38,6 +38,7 @@ import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSource;
+import com.cloudera.util.Clock;
 import com.cloudera.util.InputStreamPipe;
 import com.google.common.base.Preconditions;
 
@@ -74,8 +75,7 @@ public class ExecEventSource extends EventSource.Base {
   final AtomicBoolean errFinished = new AtomicBoolean(false);
   final AtomicBoolean outFinished = new AtomicBoolean(false);
 
-  final BlockingQueue<EventImpl> eventQueue =
-      new LinkedBlockingQueue<EventImpl>();
+  final BlockingQueue<EventImpl> eventQueue = new LinkedBlockingQueue<EventImpl>();
 
   static Logger LOG = Logger.getLogger(ExecEventSource.class.getName());
 
@@ -129,6 +129,11 @@ public class ExecEventSource extends EventSource.Base {
           in.clear();
           // If interrupted, this throws an IOException
           int read = input.read(in);
+          if (read == 0) {
+            // don't burn cpu if nothing is read.
+            Clock.sleep(100);
+            continue;
+          }
           if (read != -1) {
             if (!aggregate) {
               // Search for a '\n'
@@ -182,7 +187,7 @@ public class ExecEventSource extends EventSource.Base {
               + "unexpected InterruptedException", e);
         }
       } catch (BufferOverflowException b) {
-       // TODO: offer one full buffer?
+        // TODO: offer one full buffer?
         LOG.warn("Event was too large for buffer", b);
       } catch (IOException e) {
         if (!shutdown) {
