@@ -260,7 +260,6 @@ public class LogicalNode implements Reportable {
     }
   }
 
-
   /**
    * Takes a FlumeConfigData and attempts load/config the node.
    * 

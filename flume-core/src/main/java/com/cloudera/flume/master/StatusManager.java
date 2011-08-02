@@ -74,8 +74,13 @@ public class StatusManager implements Reportable {
     }
   }
 
+  /**
+   * This is the state that the master thinks the node is in. This is a super
+   * set of the DriverState, which is the state that the node's driver thinks it
+   * is in.
+   */
   public enum NodeState {
-    HELLO, IDLE, CONFIGURING, ACTIVE, ERROR, LOST, DECOMMISSIONED
+    HELLO, OPENING, ACTIVE, CLOSING, IDLE, ERROR, LOST, DECOMMISSIONED
   };
 
   // runtime state of the flume system

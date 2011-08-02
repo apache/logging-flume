@@ -122,7 +122,7 @@ public class MasterClientServerThrift extends ThriftServer implements
     case ACTIVE:
       return NodeState.ACTIVE;
     case CONFIGURING:
-      return NodeState.CONFIGURING;
+      return NodeState.OPENING;
     case ERROR:
       return NodeState.ERROR;
     case HELLO:
@@ -133,6 +133,8 @@ public class MasterClientServerThrift extends ThriftServer implements
       return NodeState.LOST;
     case DECOMMISSIONED:
       return NodeState.DECOMMISSIONED;
+    case CLOSING:
+      return NodeState.CLOSING;
     default:
       throw new IllegalStateException("Unknown value " + s);
     }
@@ -175,7 +177,7 @@ public class MasterClientServerThrift extends ThriftServer implements
     switch (s) {
     case ACTIVE:
       return FlumeNodeState.ACTIVE;
-    case CONFIGURING:
+    case OPENING:
       return FlumeNodeState.CONFIGURING;
     case ERROR:
       return FlumeNodeState.ERROR;
@@ -187,6 +189,8 @@ public class MasterClientServerThrift extends ThriftServer implements
       return FlumeNodeState.LOST;
     case DECOMMISSIONED:
       return FlumeNodeState.DECOMMISSIONED;
+    case CLOSING:
+      return FlumeNodeState.CLOSING;
     default:
       throw new IllegalStateException("Unknown value " + s);
     }

@@ -153,7 +153,7 @@ public class MasterClientServerAvro implements AvroFlumeClientServer, RPCServer 
     case ACTIVE:
       return NodeState.ACTIVE;
     case CONFIGURING:
-      return NodeState.CONFIGURING;
+      return NodeState.OPENING;
     case ERROR:
       return NodeState.ERROR;
     case HELLO:
@@ -164,6 +164,8 @@ public class MasterClientServerAvro implements AvroFlumeClientServer, RPCServer 
       return NodeState.LOST;
     case DECOMMISSIONED:
       return NodeState.DECOMMISSIONED;
+    case CLOSING:
+      return NodeState.CLOSING;
     default:
       throw new IllegalStateException("Unknown value " + s);
     }
@@ -178,7 +180,7 @@ public class MasterClientServerAvro implements AvroFlumeClientServer, RPCServer 
     switch (s) {
     case ACTIVE:
       return FlumeNodeState.ACTIVE;
-    case CONFIGURING:
+    case OPENING:
       return FlumeNodeState.CONFIGURING;
     case ERROR:
       return FlumeNodeState.ERROR;
@@ -190,6 +192,8 @@ public class MasterClientServerAvro implements AvroFlumeClientServer, RPCServer 
       return FlumeNodeState.LOST;
     case DECOMMISSIONED:
       return FlumeNodeState.DECOMMISSIONED;
+    case CLOSING:
+      return FlumeNodeState.CLOSING;
     default:
       throw new IllegalStateException("Unknown value " + s);
     }

@@ -39,7 +39,8 @@ enum FlumeNodeState {
   ACTIVE=3,
   ERROR =4,
   LOST=5,
-  DECOMMISSIONED=6
+  DECOMMISSIONED=6,
+  CLOSING=7
 }
 
 struct ThriftFlumeConfigData {

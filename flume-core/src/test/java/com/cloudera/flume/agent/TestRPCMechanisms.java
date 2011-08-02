@@ -352,7 +352,7 @@ public class TestRPCMechanisms {
         MasterClientServerThrift
             .stateFromThrift(com.cloudera.flume.conf.thrift.FlumeNodeState.IDLE));
     assertEquals(
-        StatusManager.NodeState.CONFIGURING,
+        StatusManager.NodeState.OPENING,
         MasterClientServerThrift
             .stateFromThrift(com.cloudera.flume.conf.thrift.FlumeNodeState.CONFIGURING));
 
@@ -364,9 +364,9 @@ public class TestRPCMechanisms {
         MasterClientServerThrift.stateToThrift(StatusManager.NodeState.ERROR));
     assertEquals(com.cloudera.flume.conf.thrift.FlumeNodeState.IDLE,
         MasterClientServerThrift.stateToThrift(StatusManager.NodeState.IDLE));
+    // TODO OPENING==CONFIGURING, to preserve Thrift compatibility
     assertEquals(com.cloudera.flume.conf.thrift.FlumeNodeState.CONFIGURING,
-        MasterClientServerThrift
-            .stateToThrift(StatusManager.NodeState.CONFIGURING));
+        MasterClientServerThrift.stateToThrift(StatusManager.NodeState.OPENING));
 
     // AVRO NODE STATE
     assertEquals(StatusManager.NodeState.HELLO,
@@ -377,7 +377,7 @@ public class TestRPCMechanisms {
         MasterClientServerAvro.stateFromAvro(FlumeNodeState.ERROR));
     assertEquals(StatusManager.NodeState.IDLE,
         MasterClientServerAvro.stateFromAvro(FlumeNodeState.IDLE));
-    assertEquals(StatusManager.NodeState.CONFIGURING,
+    assertEquals(StatusManager.NodeState.OPENING,
         MasterClientServerAvro.stateFromAvro(FlumeNodeState.CONFIGURING));
 
     assertEquals(FlumeNodeState.HELLO,
@@ -388,7 +388,8 @@ public class TestRPCMechanisms {
         MasterClientServerAvro.stateToAvro(StatusManager.NodeState.ERROR));
     assertEquals(FlumeNodeState.IDLE,
         MasterClientServerAvro.stateToAvro(StatusManager.NodeState.IDLE));
+    // TODO OPENING==CONFIGURING, to preserve Avro compatibility
     assertEquals(FlumeNodeState.CONFIGURING,
-        MasterClientServerAvro.stateToAvro(StatusManager.NodeState.CONFIGURING));
+        MasterClientServerAvro.stateToAvro(StatusManager.NodeState.OPENING));
   }
 }

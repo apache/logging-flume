@@ -294,7 +294,7 @@ public class FlumeShell {
       // if at version 0, do not return true for isDone. (nothing has happened!)
       return status.version != 0;
     case ACTIVE:
-    case CONFIGURING:
+    case OPENING:
     case HELLO:
     default:
       return false;
@@ -348,7 +348,7 @@ public class FlumeShell {
     StatusManager.NodeState state = status.state;
     switch (state) {
     case ACTIVE:
-    case CONFIGURING:
+    case OPENING:
       return status.version != 0;
     case IDLE:
     case ERROR:

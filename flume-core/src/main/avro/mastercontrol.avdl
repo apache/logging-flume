@@ -23,7 +23,7 @@
 protocol FlumeMasterAdminServerAvro {
   // These two definitions are duplicates (Avro IDL doesn't support includes)
   enum FlumeNodeState { HELLO, IDLE, CONFIGURING,
-    ACTIVE, ERROR, LOST, DECOMMISSIONED }
+    ACTIVE, ERROR, LOST, DECOMMISSIONED, CLOSING }
   record AvroFlumeConfigData {
     long timestamp;
     string sourceConfig;
