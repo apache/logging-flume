@@ -399,11 +399,6 @@ public class ThriftFlumeReportServer {
       return new getAllReports_args(this);
     }
 
-    @Deprecated
-    public getAllReports_args clone() {
-      return new getAllReports_args(this);
-    }
-
     @Override
     public void clear() {
     }
@@ -413,29 +408,21 @@ public class ThriftFlumeReportServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       }
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -468,6 +455,10 @@ public class ThriftFlumeReportServer {
       getAllReports_args typedOther = (getAllReports_args)other;
 
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -627,11 +618,6 @@ public class ThriftFlumeReportServer {
       return new getAllReports_result(this);
     }
 
-    @Deprecated
-    public getAllReports_result clone() {
-      return new getAllReports_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -685,10 +671,6 @@ public class ThriftFlumeReportServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -698,21 +680,17 @@ public class ThriftFlumeReportServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -757,12 +735,17 @@ public class ThriftFlumeReportServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -947,11 +930,6 @@ public class ThriftFlumeReportServer {
       return new getReportByName_args(this);
     }
 
-    @Deprecated
-    public getReportByName_args clone() {
-      return new getReportByName_args(this);
-    }
-
     @Override
     public void clear() {
       this.reportName = null;
@@ -994,10 +972,6 @@ public class ThriftFlumeReportServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case REPORT_NAME:
@@ -1007,21 +981,17 @@ public class ThriftFlumeReportServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case REPORT_NAME:
         return isSetReportName();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -1066,12 +1036,17 @@ public class ThriftFlumeReportServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetReportName()) {        lastComparison = TBaseHelper.compareTo(this.reportName, typedOther.reportName);
+      if (isSetReportName()) {
+        lastComparison = TBaseHelper.compareTo(this.reportName, typedOther.reportName);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -1236,11 +1211,6 @@ public class ThriftFlumeReportServer {
       return new getReportByName_result(this);
     }
 
-    @Deprecated
-    public getReportByName_result clone() {
-      return new getReportByName_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -1283,10 +1253,6 @@ public class ThriftFlumeReportServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -1296,21 +1262,17 @@ public class ThriftFlumeReportServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -1355,12 +1317,17 @@ public class ThriftFlumeReportServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {

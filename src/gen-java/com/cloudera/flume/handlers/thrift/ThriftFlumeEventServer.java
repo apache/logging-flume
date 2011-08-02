@@ -557,11 +557,6 @@ public class ThriftFlumeEventServer {
       return new append_args(this);
     }
 
-    @Deprecated
-    public append_args clone() {
-      return new append_args(this);
-    }
-
     @Override
     public void clear() {
       this.evt = null;
@@ -604,10 +599,6 @@ public class ThriftFlumeEventServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case EVT:
@@ -617,21 +608,17 @@ public class ThriftFlumeEventServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case EVT:
         return isSetEvt();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -676,12 +663,17 @@ public class ThriftFlumeEventServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetEvt()) {        lastComparison = TBaseHelper.compareTo(this.evt, typedOther.evt);
+      if (isSetEvt()) {
+        lastComparison = TBaseHelper.compareTo(this.evt, typedOther.evt);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -847,11 +839,6 @@ public class ThriftFlumeEventServer {
       return new rawAppend_args(this);
     }
 
-    @Deprecated
-    public rawAppend_args clone() {
-      return new rawAppend_args(this);
-    }
-
     @Override
     public void clear() {
       this.evt = null;
@@ -894,10 +881,6 @@ public class ThriftFlumeEventServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case EVT:
@@ -907,21 +890,17 @@ public class ThriftFlumeEventServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case EVT:
         return isSetEvt();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -966,12 +945,17 @@ public class ThriftFlumeEventServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetEvt()) {        lastComparison = TBaseHelper.compareTo(this.evt, typedOther.evt);
+      if (isSetEvt()) {
+        lastComparison = TBaseHelper.compareTo(this.evt, typedOther.evt);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -1137,11 +1121,6 @@ public class ThriftFlumeEventServer {
       return new ackedAppend_args(this);
     }
 
-    @Deprecated
-    public ackedAppend_args clone() {
-      return new ackedAppend_args(this);
-    }
-
     @Override
     public void clear() {
       this.evt = null;
@@ -1184,10 +1163,6 @@ public class ThriftFlumeEventServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case EVT:
@@ -1197,21 +1172,17 @@ public class ThriftFlumeEventServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case EVT:
         return isSetEvt();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -1256,12 +1227,17 @@ public class ThriftFlumeEventServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetEvt()) {        lastComparison = TBaseHelper.compareTo(this.evt, typedOther.evt);
+      if (isSetEvt()) {
+        lastComparison = TBaseHelper.compareTo(this.evt, typedOther.evt);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -1435,11 +1411,6 @@ public class ThriftFlumeEventServer {
       return new ackedAppend_result(this);
     }
 
-    @Deprecated
-    public ackedAppend_result clone() {
-      return new ackedAppend_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -1490,10 +1461,6 @@ public class ThriftFlumeEventServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -1503,21 +1470,17 @@ public class ThriftFlumeEventServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -1562,12 +1525,17 @@ public class ThriftFlumeEventServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -1712,11 +1680,6 @@ public class ThriftFlumeEventServer {
       return new close_args(this);
     }
 
-    @Deprecated
-    public close_args clone() {
-      return new close_args(this);
-    }
-
     @Override
     public void clear() {
     }
@@ -1726,29 +1689,21 @@ public class ThriftFlumeEventServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       }
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -1781,6 +1736,10 @@ public class ThriftFlumeEventServer {
       close_args typedOther = (close_args)other;
 
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -1907,11 +1866,6 @@ public class ThriftFlumeEventServer {
       return new close_result(this);
     }
 
-    @Deprecated
-    public close_result clone() {
-      return new close_result(this);
-    }
-
     @Override
     public void clear() {
     }
@@ -1921,29 +1875,21 @@ public class ThriftFlumeEventServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       }
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -1976,6 +1922,10 @@ public class ThriftFlumeEventServer {
       close_result typedOther = (close_result)other;
 
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {

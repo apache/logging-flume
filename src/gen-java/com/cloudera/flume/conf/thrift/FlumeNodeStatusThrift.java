@@ -196,11 +196,6 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
     return new FlumeNodeStatusThrift(this);
   }
 
-  @Deprecated
-  public FlumeNodeStatusThrift clone() {
-    return new FlumeNodeStatusThrift(this);
-  }
-
   @Override
   public void clear() {
     this.state = null;
@@ -416,10 +411,6 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case STATE:
@@ -444,12 +435,12 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case STATE:
       return isSetState();
@@ -465,10 +456,6 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
       return isSetPhysicalNode();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -558,7 +545,8 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetState()) {      lastComparison = TBaseHelper.compareTo(this.state, typedOther.state);
+    if (isSetState()) {
+      lastComparison = TBaseHelper.compareTo(this.state, typedOther.state);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -567,7 +555,8 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetVersion()) {      lastComparison = TBaseHelper.compareTo(this.version, typedOther.version);
+    if (isSetVersion()) {
+      lastComparison = TBaseHelper.compareTo(this.version, typedOther.version);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -576,7 +565,8 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetLastseen()) {      lastComparison = TBaseHelper.compareTo(this.lastseen, typedOther.lastseen);
+    if (isSetLastseen()) {
+      lastComparison = TBaseHelper.compareTo(this.lastseen, typedOther.lastseen);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -585,7 +575,8 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetLastSeenDeltaMillis()) {      lastComparison = TBaseHelper.compareTo(this.lastSeenDeltaMillis, typedOther.lastSeenDeltaMillis);
+    if (isSetLastSeenDeltaMillis()) {
+      lastComparison = TBaseHelper.compareTo(this.lastSeenDeltaMillis, typedOther.lastSeenDeltaMillis);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -594,7 +585,8 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetHost()) {      lastComparison = TBaseHelper.compareTo(this.host, typedOther.host);
+    if (isSetHost()) {
+      lastComparison = TBaseHelper.compareTo(this.host, typedOther.host);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -603,12 +595,17 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, Flume
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetPhysicalNode()) {      lastComparison = TBaseHelper.compareTo(this.physicalNode, typedOther.physicalNode);
+    if (isSetPhysicalNode()) {
+      lastComparison = TBaseHelper.compareTo(this.physicalNode, typedOther.physicalNode);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {

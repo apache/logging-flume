@@ -183,8 +183,8 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent, ThriftFlumeEven
       this.priority = other.priority;
     }
     if (other.isSetBody()) {
-      this.body = ByteBuffer.wrap(new byte[other.body.limit() - other.body.arrayOffset()]);
-      System.arraycopy(other.body.array(), other.body.arrayOffset(), body.array(), 0, other.body.limit() - other.body.arrayOffset());
+      this.body = TBaseHelper.copyBinary(other.body);
+;
     }
     this.nanos = other.nanos;
     if (other.isSetHost()) {
@@ -199,8 +199,8 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent, ThriftFlumeEven
 
         String __this__fields_copy_key = other_element_key;
 
-        ByteBuffer __this__fields_copy_value = ByteBuffer.wrap(new byte[other_element_value.limit() - other_element_value.arrayOffset()]);
-        System.arraycopy(other_element_value.array(), other_element_value.arrayOffset(), __this__fields_copy_value.array(), 0, other_element_value.limit() - other_element_value.arrayOffset());
+        ByteBuffer __this__fields_copy_value = TBaseHelper.copyBinary(other_element_value);
+;
 
         __this__fields.put(__this__fields_copy_key, __this__fields_copy_value);
       }
@@ -209,11 +209,6 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent, ThriftFlumeEven
   }
 
   public ThriftFlumeEvent deepCopy() {
-    return new ThriftFlumeEvent(this);
-  }
-
-  @Deprecated
-  public ThriftFlumeEvent clone() {
     return new ThriftFlumeEvent(this);
   }
 
@@ -284,8 +279,18 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent, ThriftFlumeEven
     }
   }
 
-  public ByteBuffer getBody() {
-    return this.body;
+  public byte[] getBody() {
+    setBody(TBaseHelper.rightSize(body));
+    return body.array();
+  }
+
+  public ByteBuffer BufferForBody() {
+    return body;
+  }
+
+  public ThriftFlumeEvent setBody(byte[] body) {
+    setBody(ByteBuffer.wrap(body));
+    return this;
   }
 
   public ThriftFlumeEvent setBody(ByteBuffer body) {
@@ -443,10 +448,6 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent, ThriftFlumeEven
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case TIMESTAMP:
@@ -471,12 +472,12 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent, ThriftFlumeEven
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case TIMESTAMP:
       return isSetTimestamp();
@@ -492,10 +493,6 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent, ThriftFlumeEven
       return isSetFields();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -585,7 +582,8 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent, ThriftFlumeEven
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetTimestamp()) {      lastComparison = TBaseHelper.compareTo(this.timestamp, typedOther.timestamp);
+    if (isSetTimestamp()) {
+      lastComparison = TBaseHelper.compareTo(this.timestamp, typedOther.timestamp);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -594,7 +592,8 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent, ThriftFlumeEven
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetPriority()) {      lastComparison = TBaseHelper.compareTo(this.priority, typedOther.priority);
+    if (isSetPriority()) {
+      lastComparison = TBaseHelper.compareTo(this.priority, typedOther.priority);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -603,7 +602,8 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent, ThriftFlumeEven
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetBody()) {      lastComparison = TBaseHelper.compareTo(this.body, typedOther.body);
+    if (isSetBody()) {
+      lastComparison = TBaseHelper.compareTo(this.body, typedOther.body);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -612,7 +612,8 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent, ThriftFlumeEven
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetNanos()) {      lastComparison = TBaseHelper.compareTo(this.nanos, typedOther.nanos);
+    if (isSetNanos()) {
+      lastComparison = TBaseHelper.compareTo(this.nanos, typedOther.nanos);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -621,7 +622,8 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent, ThriftFlumeEven
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetHost()) {      lastComparison = TBaseHelper.compareTo(this.host, typedOther.host);
+    if (isSetHost()) {
+      lastComparison = TBaseHelper.compareTo(this.host, typedOther.host);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -630,12 +632,17 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent, ThriftFlumeEven
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetFields()) {      lastComparison = TBaseHelper.compareTo(this.fields, typedOther.fields);
+    if (isSetFields()) {
+      lastComparison = TBaseHelper.compareTo(this.fields, typedOther.fields);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {

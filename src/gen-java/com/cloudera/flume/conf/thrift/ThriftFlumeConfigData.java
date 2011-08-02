@@ -188,11 +188,6 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
     return new ThriftFlumeConfigData(this);
   }
 
-  @Deprecated
-  public ThriftFlumeConfigData clone() {
-    return new ThriftFlumeConfigData(this);
-  }
-
   @Override
   public void clear() {
     setTimestampIsSet(false);
@@ -400,10 +395,6 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case TIMESTAMP:
@@ -428,12 +419,12 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case TIMESTAMP:
       return isSetTimestamp();
@@ -449,10 +440,6 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
       return isSetFlowID();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -542,7 +529,8 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetTimestamp()) {      lastComparison = TBaseHelper.compareTo(this.timestamp, typedOther.timestamp);
+    if (isSetTimestamp()) {
+      lastComparison = TBaseHelper.compareTo(this.timestamp, typedOther.timestamp);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -551,7 +539,8 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetSourceConfig()) {      lastComparison = TBaseHelper.compareTo(this.sourceConfig, typedOther.sourceConfig);
+    if (isSetSourceConfig()) {
+      lastComparison = TBaseHelper.compareTo(this.sourceConfig, typedOther.sourceConfig);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -560,7 +549,8 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetSinkConfig()) {      lastComparison = TBaseHelper.compareTo(this.sinkConfig, typedOther.sinkConfig);
+    if (isSetSinkConfig()) {
+      lastComparison = TBaseHelper.compareTo(this.sinkConfig, typedOther.sinkConfig);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -569,7 +559,8 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetSourceVersion()) {      lastComparison = TBaseHelper.compareTo(this.sourceVersion, typedOther.sourceVersion);
+    if (isSetSourceVersion()) {
+      lastComparison = TBaseHelper.compareTo(this.sourceVersion, typedOther.sourceVersion);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -578,7 +569,8 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetSinkVersion()) {      lastComparison = TBaseHelper.compareTo(this.sinkVersion, typedOther.sinkVersion);
+    if (isSetSinkVersion()) {
+      lastComparison = TBaseHelper.compareTo(this.sinkVersion, typedOther.sinkVersion);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -587,12 +579,17 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, Thrif
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetFlowID()) {      lastComparison = TBaseHelper.compareTo(this.flowID, typedOther.flowID);
+    if (isSetFlowID()) {
+      lastComparison = TBaseHelper.compareTo(this.flowID, typedOther.flowID);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {

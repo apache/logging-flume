@@ -1006,11 +1006,6 @@ public class FlumeMasterAdminServer {
       return new submit_args(this);
     }
 
-    @Deprecated
-    public submit_args clone() {
-      return new submit_args(this);
-    }
-
     @Override
     public void clear() {
       this.command = null;
@@ -1053,10 +1048,6 @@ public class FlumeMasterAdminServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case COMMAND:
@@ -1066,21 +1057,17 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case COMMAND:
         return isSetCommand();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -1125,12 +1112,17 @@ public class FlumeMasterAdminServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetCommand()) {        lastComparison = TBaseHelper.compareTo(this.command, typedOther.command);
+      if (isSetCommand()) {
+        lastComparison = TBaseHelper.compareTo(this.command, typedOther.command);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -1299,11 +1291,6 @@ public class FlumeMasterAdminServer {
       return new submit_result(this);
     }
 
-    @Deprecated
-    public submit_result clone() {
-      return new submit_result(this);
-    }
-
     @Override
     public void clear() {
       setSuccessIsSet(false);
@@ -1346,10 +1333,6 @@ public class FlumeMasterAdminServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -1359,21 +1342,17 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -1418,12 +1397,17 @@ public class FlumeMasterAdminServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -1587,11 +1571,6 @@ public class FlumeMasterAdminServer {
       return new isSuccess_args(this);
     }
 
-    @Deprecated
-    public isSuccess_args clone() {
-      return new isSuccess_args(this);
-    }
-
     @Override
     public void clear() {
       setCmdidIsSet(false);
@@ -1634,10 +1613,6 @@ public class FlumeMasterAdminServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case CMDID:
@@ -1647,21 +1622,17 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case CMDID:
         return isSetCmdid();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -1706,12 +1677,17 @@ public class FlumeMasterAdminServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetCmdid()) {        lastComparison = TBaseHelper.compareTo(this.cmdid, typedOther.cmdid);
+      if (isSetCmdid()) {
+        lastComparison = TBaseHelper.compareTo(this.cmdid, typedOther.cmdid);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -1874,11 +1850,6 @@ public class FlumeMasterAdminServer {
       return new isSuccess_result(this);
     }
 
-    @Deprecated
-    public isSuccess_result clone() {
-      return new isSuccess_result(this);
-    }
-
     @Override
     public void clear() {
       setSuccessIsSet(false);
@@ -1921,10 +1892,6 @@ public class FlumeMasterAdminServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -1934,21 +1901,17 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -1993,12 +1956,17 @@ public class FlumeMasterAdminServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -2162,11 +2130,6 @@ public class FlumeMasterAdminServer {
       return new isFailure_args(this);
     }
 
-    @Deprecated
-    public isFailure_args clone() {
-      return new isFailure_args(this);
-    }
-
     @Override
     public void clear() {
       setCmdidIsSet(false);
@@ -2209,10 +2172,6 @@ public class FlumeMasterAdminServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case CMDID:
@@ -2222,21 +2181,17 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case CMDID:
         return isSetCmdid();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -2281,12 +2236,17 @@ public class FlumeMasterAdminServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetCmdid()) {        lastComparison = TBaseHelper.compareTo(this.cmdid, typedOther.cmdid);
+      if (isSetCmdid()) {
+        lastComparison = TBaseHelper.compareTo(this.cmdid, typedOther.cmdid);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -2449,11 +2409,6 @@ public class FlumeMasterAdminServer {
       return new isFailure_result(this);
     }
 
-    @Deprecated
-    public isFailure_result clone() {
-      return new isFailure_result(this);
-    }
-
     @Override
     public void clear() {
       setSuccessIsSet(false);
@@ -2496,10 +2451,6 @@ public class FlumeMasterAdminServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -2509,21 +2460,17 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -2568,12 +2515,17 @@ public class FlumeMasterAdminServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -2715,11 +2667,6 @@ public class FlumeMasterAdminServer {
       return new getNodeStatuses_args(this);
     }
 
-    @Deprecated
-    public getNodeStatuses_args clone() {
-      return new getNodeStatuses_args(this);
-    }
-
     @Override
     public void clear() {
     }
@@ -2729,29 +2676,21 @@ public class FlumeMasterAdminServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       }
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -2784,6 +2723,10 @@ public class FlumeMasterAdminServer {
       getNodeStatuses_args typedOther = (getNodeStatuses_args)other;
 
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -2943,11 +2886,6 @@ public class FlumeMasterAdminServer {
       return new getNodeStatuses_result(this);
     }
 
-    @Deprecated
-    public getNodeStatuses_result clone() {
-      return new getNodeStatuses_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -3001,10 +2939,6 @@ public class FlumeMasterAdminServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -3014,21 +2948,17 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -3073,12 +3003,17 @@ public class FlumeMasterAdminServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -3244,11 +3179,6 @@ public class FlumeMasterAdminServer {
       return new getConfigs_args(this);
     }
 
-    @Deprecated
-    public getConfigs_args clone() {
-      return new getConfigs_args(this);
-    }
-
     @Override
     public void clear() {
     }
@@ -3258,29 +3188,21 @@ public class FlumeMasterAdminServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       }
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -3313,6 +3235,10 @@ public class FlumeMasterAdminServer {
       getConfigs_args typedOther = (getConfigs_args)other;
 
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -3472,11 +3398,6 @@ public class FlumeMasterAdminServer {
       return new getConfigs_result(this);
     }
 
-    @Deprecated
-    public getConfigs_result clone() {
-      return new getConfigs_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -3530,10 +3451,6 @@ public class FlumeMasterAdminServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -3543,21 +3460,17 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -3602,12 +3515,17 @@ public class FlumeMasterAdminServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -3795,11 +3713,6 @@ public class FlumeMasterAdminServer {
       return new hasCmdId_args(this);
     }
 
-    @Deprecated
-    public hasCmdId_args clone() {
-      return new hasCmdId_args(this);
-    }
-
     @Override
     public void clear() {
       setCmdidIsSet(false);
@@ -3842,10 +3755,6 @@ public class FlumeMasterAdminServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case CMDID:
@@ -3855,21 +3764,17 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case CMDID:
         return isSetCmdid();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -3914,12 +3819,17 @@ public class FlumeMasterAdminServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetCmdid()) {        lastComparison = TBaseHelper.compareTo(this.cmdid, typedOther.cmdid);
+      if (isSetCmdid()) {
+        lastComparison = TBaseHelper.compareTo(this.cmdid, typedOther.cmdid);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -4082,11 +3992,6 @@ public class FlumeMasterAdminServer {
       return new hasCmdId_result(this);
     }
 
-    @Deprecated
-    public hasCmdId_result clone() {
-      return new hasCmdId_result(this);
-    }
-
     @Override
     public void clear() {
       setSuccessIsSet(false);
@@ -4129,10 +4034,6 @@ public class FlumeMasterAdminServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -4142,21 +4043,17 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -4201,12 +4098,17 @@ public class FlumeMasterAdminServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -4370,11 +4272,6 @@ public class FlumeMasterAdminServer {
       return new getCmdStatus_args(this);
     }
 
-    @Deprecated
-    public getCmdStatus_args clone() {
-      return new getCmdStatus_args(this);
-    }
-
     @Override
     public void clear() {
       setCmdidIsSet(false);
@@ -4417,10 +4314,6 @@ public class FlumeMasterAdminServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case CMDID:
@@ -4430,21 +4323,17 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case CMDID:
         return isSetCmdid();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -4489,12 +4378,17 @@ public class FlumeMasterAdminServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetCmdid()) {        lastComparison = TBaseHelper.compareTo(this.cmdid, typedOther.cmdid);
+      if (isSetCmdid()) {
+        lastComparison = TBaseHelper.compareTo(this.cmdid, typedOther.cmdid);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -4654,11 +4548,6 @@ public class FlumeMasterAdminServer {
       return new getCmdStatus_result(this);
     }
 
-    @Deprecated
-    public getCmdStatus_result clone() {
-      return new getCmdStatus_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -4701,10 +4590,6 @@ public class FlumeMasterAdminServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -4714,21 +4599,17 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -4773,12 +4654,17 @@ public class FlumeMasterAdminServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -4943,11 +4829,6 @@ public class FlumeMasterAdminServer {
       return new getMappings_args(this);
     }
 
-    @Deprecated
-    public getMappings_args clone() {
-      return new getMappings_args(this);
-    }
-
     @Override
     public void clear() {
       this.physicalNode = null;
@@ -4990,10 +4871,6 @@ public class FlumeMasterAdminServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case PHYSICAL_NODE:
@@ -5003,21 +4880,17 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case PHYSICAL_NODE:
         return isSetPhysicalNode();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -5062,12 +4935,17 @@ public class FlumeMasterAdminServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetPhysicalNode()) {        lastComparison = TBaseHelper.compareTo(this.physicalNode, typedOther.physicalNode);
+      if (isSetPhysicalNode()) {
+        lastComparison = TBaseHelper.compareTo(this.physicalNode, typedOther.physicalNode);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -5250,11 +5128,6 @@ public class FlumeMasterAdminServer {
       return new getMappings_result(this);
     }
 
-    @Deprecated
-    public getMappings_result clone() {
-      return new getMappings_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -5308,10 +5181,6 @@ public class FlumeMasterAdminServer {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -5321,21 +5190,17 @@ public class FlumeMasterAdminServer {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -5380,12 +5245,17 @@ public class FlumeMasterAdminServer {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {

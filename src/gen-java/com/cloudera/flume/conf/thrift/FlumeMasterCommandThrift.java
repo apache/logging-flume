@@ -142,11 +142,6 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift,
     return new FlumeMasterCommandThrift(this);
   }
 
-  @Deprecated
-  public FlumeMasterCommandThrift clone() {
-    return new FlumeMasterCommandThrift(this);
-  }
-
   @Override
   public void clear() {
     this.command = null;
@@ -237,10 +232,6 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift,
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case COMMAND:
@@ -253,12 +244,12 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift,
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case COMMAND:
       return isSetCommand();
@@ -266,10 +257,6 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift,
       return isSetArguments();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -323,7 +310,8 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift,
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetCommand()) {      lastComparison = TBaseHelper.compareTo(this.command, typedOther.command);
+    if (isSetCommand()) {
+      lastComparison = TBaseHelper.compareTo(this.command, typedOther.command);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -332,12 +320,17 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift,
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetArguments()) {      lastComparison = TBaseHelper.compareTo(this.arguments, typedOther.arguments);
+    if (isSetArguments()) {
+      lastComparison = TBaseHelper.compareTo(this.arguments, typedOther.arguments);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {

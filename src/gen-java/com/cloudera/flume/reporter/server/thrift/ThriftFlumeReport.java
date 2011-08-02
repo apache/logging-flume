@@ -191,11 +191,6 @@ public class ThriftFlumeReport implements TBase<ThriftFlumeReport, ThriftFlumeRe
     return new ThriftFlumeReport(this);
   }
 
-  @Deprecated
-  public ThriftFlumeReport clone() {
-    return new ThriftFlumeReport(this);
-  }
-
   @Override
   public void clear() {
     this.stringMetrics = null;
@@ -337,10 +332,6 @@ public class ThriftFlumeReport implements TBase<ThriftFlumeReport, ThriftFlumeRe
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case STRING_METRICS:
@@ -356,12 +347,12 @@ public class ThriftFlumeReport implements TBase<ThriftFlumeReport, ThriftFlumeRe
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case STRING_METRICS:
       return isSetStringMetrics();
@@ -371,10 +362,6 @@ public class ThriftFlumeReport implements TBase<ThriftFlumeReport, ThriftFlumeRe
       return isSetDoubleMetrics();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -437,7 +424,8 @@ public class ThriftFlumeReport implements TBase<ThriftFlumeReport, ThriftFlumeRe
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetStringMetrics()) {      lastComparison = TBaseHelper.compareTo(this.stringMetrics, typedOther.stringMetrics);
+    if (isSetStringMetrics()) {
+      lastComparison = TBaseHelper.compareTo(this.stringMetrics, typedOther.stringMetrics);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -446,7 +434,8 @@ public class ThriftFlumeReport implements TBase<ThriftFlumeReport, ThriftFlumeRe
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetLongMetrics()) {      lastComparison = TBaseHelper.compareTo(this.longMetrics, typedOther.longMetrics);
+    if (isSetLongMetrics()) {
+      lastComparison = TBaseHelper.compareTo(this.longMetrics, typedOther.longMetrics);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -455,12 +444,17 @@ public class ThriftFlumeReport implements TBase<ThriftFlumeReport, ThriftFlumeRe
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetDoubleMetrics()) {      lastComparison = TBaseHelper.compareTo(this.doubleMetrics, typedOther.doubleMetrics);
+    if (isSetDoubleMetrics()) {
+      lastComparison = TBaseHelper.compareTo(this.doubleMetrics, typedOther.doubleMetrics);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {

@@ -117,17 +117,12 @@ public class RawEvent implements TBase<RawEvent, RawEvent._Fields>, java.io.Seri
    */
   public RawEvent(RawEvent other) {
     if (other.isSetRaw()) {
-      this.raw = ByteBuffer.wrap(new byte[other.raw.limit() - other.raw.arrayOffset()]);
-      System.arraycopy(other.raw.array(), other.raw.arrayOffset(), raw.array(), 0, other.raw.limit() - other.raw.arrayOffset());
+      this.raw = TBaseHelper.copyBinary(other.raw);
+;
     }
   }
 
   public RawEvent deepCopy() {
-    return new RawEvent(this);
-  }
-
-  @Deprecated
-  public RawEvent clone() {
     return new RawEvent(this);
   }
 
@@ -136,8 +131,18 @@ public class RawEvent implements TBase<RawEvent, RawEvent._Fields>, java.io.Seri
     this.raw = null;
   }
 
-  public ByteBuffer getRaw() {
-    return this.raw;
+  public byte[] getRaw() {
+    setRaw(TBaseHelper.rightSize(raw));
+    return raw.array();
+  }
+
+  public ByteBuffer BufferForRaw() {
+    return raw;
+  }
+
+  public RawEvent setRaw(byte[] raw) {
+    setRaw(ByteBuffer.wrap(raw));
+    return this;
   }
 
   public RawEvent setRaw(ByteBuffer raw) {
@@ -173,10 +178,6 @@ public class RawEvent implements TBase<RawEvent, RawEvent._Fields>, java.io.Seri
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case RAW:
@@ -186,21 +187,17 @@ public class RawEvent implements TBase<RawEvent, RawEvent._Fields>, java.io.Seri
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case RAW:
       return isSetRaw();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -245,12 +242,17 @@ public class RawEvent implements TBase<RawEvent, RawEvent._Fields>, java.io.Seri
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetRaw()) {      lastComparison = TBaseHelper.compareTo(this.raw, typedOther.raw);
+    if (isSetRaw()) {
+      lastComparison = TBaseHelper.compareTo(this.raw, typedOther.raw);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {

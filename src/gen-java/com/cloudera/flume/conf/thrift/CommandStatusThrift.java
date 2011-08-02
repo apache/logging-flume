@@ -164,11 +164,6 @@ public class CommandStatusThrift implements TBase<CommandStatusThrift, CommandSt
     return new CommandStatusThrift(this);
   }
 
-  @Deprecated
-  public CommandStatusThrift clone() {
-    return new CommandStatusThrift(this);
-  }
-
   @Override
   public void clear() {
     setCmdIdIsSet(false);
@@ -310,10 +305,6 @@ public class CommandStatusThrift implements TBase<CommandStatusThrift, CommandSt
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case CMD_ID:
@@ -332,12 +323,12 @@ public class CommandStatusThrift implements TBase<CommandStatusThrift, CommandSt
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case CMD_ID:
       return isSetCmdId();
@@ -349,10 +340,6 @@ public class CommandStatusThrift implements TBase<CommandStatusThrift, CommandSt
       return isSetCmd();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -424,7 +411,8 @@ public class CommandStatusThrift implements TBase<CommandStatusThrift, CommandSt
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetCmdId()) {      lastComparison = TBaseHelper.compareTo(this.cmdId, typedOther.cmdId);
+    if (isSetCmdId()) {
+      lastComparison = TBaseHelper.compareTo(this.cmdId, typedOther.cmdId);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -433,7 +421,8 @@ public class CommandStatusThrift implements TBase<CommandStatusThrift, CommandSt
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetState()) {      lastComparison = TBaseHelper.compareTo(this.state, typedOther.state);
+    if (isSetState()) {
+      lastComparison = TBaseHelper.compareTo(this.state, typedOther.state);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -442,7 +431,8 @@ public class CommandStatusThrift implements TBase<CommandStatusThrift, CommandSt
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetMessage()) {      lastComparison = TBaseHelper.compareTo(this.message, typedOther.message);
+    if (isSetMessage()) {
+      lastComparison = TBaseHelper.compareTo(this.message, typedOther.message);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -451,12 +441,17 @@ public class CommandStatusThrift implements TBase<CommandStatusThrift, CommandSt
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetCmd()) {      lastComparison = TBaseHelper.compareTo(this.cmd, typedOther.cmd);
+    if (isSetCmd()) {
+      lastComparison = TBaseHelper.compareTo(this.cmd, typedOther.cmd);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {
