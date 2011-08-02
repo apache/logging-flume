@@ -98,7 +98,7 @@ public class FlumeConfiguration extends Configuration {
   static public final int DEFAULT_REPORT_SERVER_PORT = 45678;
 
   public static final int DEFAULT_ZK_CLIENT_PORT = 3181;
-  public static final int DEFAULT_ZK_SERVER_QUORUM_PORT = 3182;  
+  public static final int DEFAULT_ZK_SERVER_QUORUM_PORT = 3182;
   public static final int DEFAULT_ZK_SERVER_ELECTION_PORT = 3183;
 
   // Default sink / source variables
@@ -151,6 +151,7 @@ public class FlumeConfiguration extends Configuration {
   public static final String MASTER_HEARTBEAT_MAX_MISSED = "flume.config.heartbeat.missed.max";
   public static final String NODE_HEARTBEAT_BACKOFF_LIMIT = "flume.node.heartbeat.backoff.ceiling";
   public static final String NODE_HTTP_AUTOFINDPORT = "flume.node.http.autofindport";
+  public static final String NODE_CLOSE_TIMEOUT = "flume.node.close.timeout";
   public static final String CONFIG_ADMIN_PORT = "flume.config.admin.port";
   public static final String REPORT_SERVER_PORT = "flume.report.server.port";
 
@@ -185,10 +186,8 @@ public class FlumeConfiguration extends Configuration {
   // ZooKeeper bits and pieces
   public static final String MASTER_ZK_LOGDIR = "flume.master.zk.logdir";
   public static final String MASTER_ZK_CLIENT_PORT = "flume.master.zk.client.port";
-  public static final String MASTER_ZK_SERVER_QUORUM_PORT =
-    "flume.master.zk.server.quorum.port";
-  public static final String MASTER_ZK_SERVER_ELECTION_PORT =
-    "flume.master.zk.server.election.port";
+  public static final String MASTER_ZK_SERVER_QUORUM_PORT = "flume.master.zk.server.quorum.port";
+  public static final String MASTER_ZK_SERVER_ELECTION_PORT = "flume.master.zk.server.election.port";
   public static final String MASTER_ZK_SERVERS = "flume.master.zk.servers";
   public static final String MASTER_ZK_USE_EXTERNAL = "flume.master.zk.use.external";
 
@@ -245,8 +244,8 @@ public class FlumeConfiguration extends Configuration {
     Iterator<String> iter = l.iterator();
     StringBuilder builder = new StringBuilder();
     while (iter.hasNext()) {
-      builder.append(iter.next() + ":" + clientport + ":" + quorumport
-          + ":" + electionport);
+      builder.append(iter.next() + ":" + clientport + ":" + quorumport + ":"
+          + electionport);
       if (iter.hasNext()) {
         builder.append(',');
       }
@@ -547,7 +546,7 @@ public class FlumeConfiguration extends Configuration {
 
   public boolean getCollectorDfsCompressGzipStatus() {
     return getBoolean(COLLECTOR_DFS_COMPRESS_GZIP, false);
-}
+  }
 
   public long getCollectorRollMillis() {
     return getLong(COLLECTOR_ROLL_MILLIS, 30000);
@@ -902,5 +901,14 @@ public class FlumeConfiguration extends Configuration {
     pw.flush();
 
     return sw.getBuffer().toString();
+  }
+
+  /**
+   * If a logical node does not cleanly close after the specified amount of
+   * time, it is is interrupted and should exit in error state. This can occur
+   * because of some blocking sources, sinks, or decorators.
+   */
+  public long getNodeCloseTimeout() {
+    return getLong(NODE_CLOSE_TIMEOUT, 30000);
   }
 }

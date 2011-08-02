@@ -105,7 +105,8 @@ public class InsistentOpenDecorator<S extends EventSink> extends
 
     opening = true;
     openRequests++;
-    while (!backoff.isFailed() && opening) {
+    while (!backoff.isFailed() && opening
+        && !Thread.currentThread().isInterrupted()) {
       try {
         openAttempts++;
         super.open();
@@ -136,6 +137,7 @@ public class InsistentOpenDecorator<S extends EventSink> extends
           backoff.waitUntilRetryOk();
         } catch (InterruptedException e1) {
           // got an interrupted signal, bail out!
+          Thread.currentThread().interrupt(); // re-interrupt thread.
           exns.add(new IOException(e1));
           throw MultipleIOException.createIOException(exns);
         }
@@ -203,7 +205,7 @@ public class InsistentOpenDecorator<S extends EventSink> extends
   }
 
   @Override
-  synchronized public ReportEvent getReport() {
+  public ReportEvent getReport() {
     ReportEvent rpt = super.getReport();
 
     // parameters

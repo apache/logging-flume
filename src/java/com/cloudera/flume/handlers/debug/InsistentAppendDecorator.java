@@ -98,7 +98,8 @@ public class InsistentAppendDecorator<S extends EventSink> extends
     List<IOException> exns = new ArrayList<IOException>();
     int attemptRetries = 0;
     appendRequests++;
-    while (!backoff.isFailed() && isOpen.get()) {
+    while (!backoff.isFailed() && isOpen.get()
+        && !Thread.currentThread().isInterrupted()) {
       try {
         appendAttempts++;
         super.append(evt);

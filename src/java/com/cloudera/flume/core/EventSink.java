@@ -110,7 +110,7 @@ public interface EventSink extends Reportable {
     }
 
     @Override
-    synchronized public ReportEvent getReport() {
+    public ReportEvent getReport() {
       ReportEvent rpt = new ReportEvent(getName());
 
       rpt.setStringMetric(R_TYPE, getName());

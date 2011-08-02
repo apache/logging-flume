@@ -196,6 +196,11 @@ public class BackOffFailOverSink extends EventSink.Base {
   public void open() throws IOException {
     IOException priEx = tryOpenPrimary();
 
+    if (Thread.currentThread().isInterrupted()) {
+      LOG.error("Backoff Failover sink exited because of interruption");
+      throw new IOException("Was interrupted, bailing out");
+    }
+
     try {
       // this could be opened lazily
       backup.open();

@@ -97,7 +97,7 @@ public class DirectDriver extends Driver {
         stopped = true;
 
         LOG.error("Driving src/sink failed! " + DirectDriver.this + " because "
-            + e1.getMessage());
+            + e1.getMessage(), e1);
         fireError(e1);
         state = NodeState.ERROR;
         return;

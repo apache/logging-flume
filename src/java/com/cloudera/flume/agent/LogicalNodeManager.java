@@ -124,9 +124,17 @@ public class LogicalNodeManager implements Reportable {
   }
 
   @Override
-  synchronized public ReportEvent getReport() {
+  public ReportEvent getReport() {
     ReportEvent rpt = new ReportEvent(getName());
-    for (LogicalNode t : threads.values()) {
+
+    Collection<LogicalNode> copy = null;
+    synchronized (this) {
+      // copy the logical node list in an sychronized way, and make sure when
+      // LogicalNode is locked we don't need the LogicalNodeManager lock.
+      copy = getNodes();
+    }
+
+    for (LogicalNode t : copy) {
       rpt.hierarchicalMerge(t.getName(), t.getReport());
     }
     return rpt;
