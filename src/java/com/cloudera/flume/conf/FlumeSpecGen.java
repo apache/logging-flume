@@ -100,6 +100,9 @@ public class FlumeSpecGen {
 
   @SuppressWarnings("unchecked")
   public static String genEventSink(CommonTree t) throws FlumeSpecException {
+    if (t == null) {
+      throw new FlumeSpecException("Tree is null");
+    }
     ASTNODE type = ASTNODE.valueOf(t.getText()); // convert to enum
     switch (type) {
     case SINK:

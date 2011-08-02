@@ -150,7 +150,7 @@ abstract public class TranslatingConfigurationManager implements
             + "<th>Node</th><th>Version</th><th>Source</th><th>Sink</th>"
             + "<th>Translated Version</th><th>Translated Source</th><th>Translated Sink</th>"
             + "</tr>");
-    
+
     Map<String, FlumeConfigData> cfgs = new TreeMap<String, FlumeConfigData>(
         parentMan.getAllConfigs());
     Map<String, FlumeConfigData> xcfgs = new TreeMap<String, FlumeConfigData>(
@@ -348,7 +348,7 @@ abstract public class TranslatingConfigurationManager implements
       }
     }
     parentMan.setBulkConfig(updates);
-    selfMan.setBulkConfig(selfupdates);
+    updateAll();
   }
 
   /**

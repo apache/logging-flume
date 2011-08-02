@@ -179,6 +179,12 @@ public class FailoverConfigurationManager extends
       CommonTree dfoFailChain = buildFailChainAST(
           "{ lazyOpen => { stubbornAppend => logicalSink(\"%s\") } }  ",
           collectors);
+
+      // Check if dfo is null
+      if (dfoFailChain == null) {
+        dfoFailChain = FlumeBuilder.parseSink("fail(\"no collectors\")");
+      }
+
       String dfo = "let primary := " + FlumeSpecGen.genEventSink(dfoFailChain)
           + " in "
           + "< primary ? {diskFailover => { insistentOpen =>  primary} } >";
@@ -192,7 +198,7 @@ public class FailoverConfigurationManager extends
       } else {
         parent.replaceChildren(idx, idx, newDfoTree);
       }
-      // patern match again.
+      // pattern match again.
       dfoMatches = dfoPat.match(sinkTree);
     }
     return sinkTree;
