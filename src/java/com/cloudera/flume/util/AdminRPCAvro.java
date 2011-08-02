@@ -19,6 +19,7 @@ package com.cloudera.flume.util;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -32,7 +33,9 @@ import org.apache.log4j.Logger;
 
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.avro.AvroFlumeConfigData;
+import com.cloudera.flume.conf.avro.CommandStatusAvro;
 import com.cloudera.flume.conf.avro.FlumeMasterAdminServerAvro;
+import com.cloudera.flume.conf.avro.FlumeMasterCommandAvro;
 import com.cloudera.flume.conf.avro.FlumeNodeStatusAvro;
 import com.cloudera.flume.master.Command;
 import com.cloudera.flume.master.CommandStatus;
@@ -116,8 +119,20 @@ public class AdminRPCAvro implements AdminRPC {
 
   @Override
   public CommandStatus getCommandStatus(long cmdid) throws IOException {
-    throw new UnsupportedOperationException(
-        "Avro not supported for this command yet");
+    CommandStatusAvro csa = masterClient.getCmdStatus(cmdid);
+    if (csa == null) {
+      throw new IOException("Invalid command id: " + cmdid);
+    }
+    FlumeMasterCommandAvro cmda = csa.cmd;
+    List<String> args = new ArrayList<String>();
+    for (CharSequence cs : cmda.arguments) {
+      args.add(cs.toString());
+    }
+    Command cmd = new Command(cmda.command.toString(), args
+        .toArray(new String[0]));
+    CommandStatus cs = new CommandStatus(csa.cmdId, cmd, CommandStatus.State
+        .valueOf(csa.state.toString()), csa.message.toString());
+    return cs;
   }
 
   @Override

@@ -32,6 +32,7 @@ import org.apache.log4j.Logger;
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.avro.AvroFlumeConfigData;
+import com.cloudera.flume.conf.avro.CommandStatusAvro;
 import com.cloudera.flume.conf.avro.FlumeMasterAdminServerAvro;
 import com.cloudera.flume.conf.avro.FlumeMasterCommandAvro;
 import com.cloudera.flume.conf.avro.FlumeNodeStatusAvro;
@@ -197,5 +198,24 @@ public class MasterAdminServerAvro implements FlumeMasterAdminServerAvro,
   public void stop() throws IOException {
     LOG.info(String.format("Stopping admin server on port %d...", port));
     this.server.close();
+  }
+
+  @Override
+  public CommandStatusAvro getCmdStatus(long cmdid) throws AvroRemoteException {
+    CommandStatus cmd = delegate.getCommandStatus(cmdid);
+    Command c = cmd.getCommand();
+    FlumeMasterCommandAvro fmca = new FlumeMasterCommandAvro();
+    fmca.command = c.getCommand();
+    List<CharSequence> l = new ArrayList<CharSequence>();
+    for (String s : c.getArgs()) {
+      l.add(s);
+    }
+    fmca.arguments = l;
+    CommandStatusAvro csa = new CommandStatusAvro();
+    csa.cmdId = cmd.getCmdID();
+    csa.cmd = fmca;
+    csa.message = cmd.getMessage();
+    csa.state = cmd.getState().toString();
+    return csa;
   }
 }

@@ -19,10 +19,12 @@
 package com.cloudera.flume.master;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.ipc.HttpServer;
 import org.apache.avro.specific.SpecificResponder;
@@ -32,6 +34,7 @@ import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.avro.AvroFlumeConfigData;
+import com.cloudera.flume.conf.avro.CommandStatusAvro;
 import com.cloudera.flume.conf.avro.FlumeMasterAdminServerAvro;
 import com.cloudera.flume.conf.avro.FlumeMasterCommandAvro;
 import com.cloudera.flume.conf.avro.FlumeNodeStatusAvro;
@@ -96,6 +99,25 @@ public class TestAvroAdminServer {
     public boolean hasCmdId(long cmdid) throws AvroRemoteException {
       return true;
     }
+
+    @Override
+    public CommandStatusAvro getCmdStatus(long cmdid)
+        throws AvroRemoteException {
+      if (cmdid == 1337) {
+        List<CharSequence> l = new ArrayList<CharSequence>();
+        l.add("arg1");
+        l.add("arg2");
+        CommandStatusAvro csa = new CommandStatusAvro();
+        csa.cmdId = cmdid;
+        csa.state = CommandStatus.State.SUCCEEDED.toString();
+        csa.message = "message";
+        csa.cmd = new FlumeMasterCommandAvro();
+        csa.cmd.command = "cmd";
+        csa.cmd.arguments = l;
+        return csa;
+      }
+      return null;
+    }
   }
 
   @Test
@@ -109,14 +131,43 @@ public class TestAvroAdminServer {
     Assert.assertEquals("Expected response was 42, got " + submit, submit, 42);
 
     boolean succ = client.isSuccess(42);
-    Assert.assertEquals("Expected response was false, got " + succ, succ, false);
+    Assert
+        .assertEquals("Expected response was false, got " + succ, succ, false);
 
     boolean fail = client.isFailure(42);
     Assert.assertEquals("Expected response was true, got " + fail, fail, true);
 
     Map<String, FlumeConfigData> cfgs = client.getConfigs();
-    Assert.assertEquals("Expected response was 0, got " + cfgs.size(), cfgs.size(), 0);
+    Assert.assertEquals("Expected response was 0, got " + cfgs.size(), cfgs
+        .size(), 0);
+
+    CommandStatus cs = client.getCommandStatus(1337);
+    Assert.assertEquals(1337, cs.getCmdID());
+    Assert.assertEquals("message", cs.getMessage());
+    Command cmd = cs.getCommand();
+    Assert.assertEquals("cmd", cmd.getCommand());
+    Assert.assertEquals("arg1", cmd.getArgs()[0]);
+    Assert.assertEquals("arg2", cmd.getArgs()[1]);
+
     server.stop();
+  }
+
+  public void testMasterAdminServerBad() throws IOException {
+    MyAvroServer server = new MyAvroServer();
+    server.serve();
+    AdminRPC client = new AdminRPCAvro("localhost", 56789);
+    LOG.info("Connected to test master");
+
+    try {
+      CommandStatus bad = client.getCommandStatus(1234);
+    } catch (AvroRuntimeException are) {
+      // success!
+      return;
+    } finally {
+      server.stop();
+    }
+
+    Assert.fail("should have thrown exception");
   }
 
   @Test

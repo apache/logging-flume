@@ -47,6 +47,14 @@ protocol FlumeMasterAdminServerAvro {
     string physicalNode;
   }
   
+  record CommandStatusAvro {
+    long cmdId;
+    string state;
+    string message;
+    FlumeMasterCommandAvro cmd;
+  }
+
+
   long submit(FlumeMasterCommandAvro command);
 
   boolean isSuccess(long cmdid);
@@ -60,4 +68,6 @@ protocol FlumeMasterAdminServerAvro {
   map<array<string>> getMappings(string physicalNode);
   
   boolean hasCmdId(long cmdid);
+
+  CommandStatusAvro getCmdStatus(long cmdid);
 }
