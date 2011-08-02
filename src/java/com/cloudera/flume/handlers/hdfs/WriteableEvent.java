@@ -115,15 +115,15 @@ public class WriteableEvent extends EventBaseImpl implements Writable {
     // TODO (jon) Compare to java.nio implementation
     byte[] body = new byte[len];
     in.readFully(body);
-
+    
     long time = in.readLong();
-
+    
     int prioidx = in.readInt();
     assert (Priority.values().length > prioidx);
     Priority prio = Priority.values()[prioidx];
 
     long nanos = in.readLong();
-
+    
     String host = in.readUTF();
 
     Map<String, byte[]> fields = unserializeMap(in);

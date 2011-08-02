@@ -102,12 +102,22 @@ public class BatchingDecorator<S extends EventSink> extends
     return e.get(BATCH_SIZE) != null && e.get(BATCH_DATA) != null;
   }
 
+  /**
+   * This is a method setup seems trivial but is used in testing.
+   */
+  protected void endBatchTimeout() throws IOException, InterruptedException {
+    endBatch();
+    timeoutCount.incrementAndGet();
+
+  }
+
   protected synchronized void endBatch() throws IOException,
       InterruptedException {
     if (events.size() > 0) {
       Event be = batchevent(events);
       super.append(be);
       events.clear();
+    } else {
       emptyCount.incrementAndGet();
     }
     lastBatchTime = Clock.unixTime();
@@ -170,8 +180,7 @@ public class BatchingDecorator<S extends EventSink> extends
           continue;
         }
         try {
-          endBatch();
-          timeoutCount.incrementAndGet();
+          endBatchTimeout();
         } catch (IOException e) {
           LOG.error("IOException when ending batch!", e);
           timeoutThreadDone = true;

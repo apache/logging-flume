@@ -32,12 +32,14 @@ import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
+import com.cloudera.flume.core.EventSource;
+import com.cloudera.flume.core.EventUtil;
 import com.cloudera.flume.core.FanOutSink;
+import com.cloudera.flume.handlers.debug.ConsoleEventSink;
 import com.cloudera.flume.handlers.debug.MemorySinkSource;
 import com.cloudera.flume.handlers.hdfs.WriteableEvent;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.aggregator.CounterSink;
-import com.cloudera.util.Clock;
 
 /**
  * This tests batching/unbatching and gzip/gunzip compression
@@ -128,7 +130,7 @@ public class TestBatching {
       InterruptedException {
 
     MemorySinkSource mem = new MemorySinkSource();
-    BatchingDecorator<EventSink> b = new BatchingDecorator<EventSink>(mem, 100,
+    BatchingDecorator<EventSink> b = new BatchingDecorator<EventSink>(mem, 10,
         0);
     b.open();
     for (int i = 0; i < 100; i++) {
@@ -156,8 +158,8 @@ public class TestBatching {
     LOG.info(String.format("before: %d  gzip: %d  gunzip: %d", origsz, gzipsz,
         ungzsz));
 
-    Assert.assertTrue(origsz > gzipsz); // got some benefit for compressing?
-    Assert.assertEquals(origsz, ungzsz); // uncompress is same size as
+    assertTrue(origsz > gzipsz); // got some benefit for compressing?
+    assertEquals(origsz, ungzsz); // uncompress is same size as
     // precompressed?
 
   }
@@ -173,24 +175,72 @@ public class TestBatching {
   @Test
   public void testEmptyBatches() throws FlumeSpecException, IOException,
       InterruptedException {
-    EventSink snk = FlumeBuilder.buildSink(new Context(),
-        "{ batch(2,100) => console }");
+    BatchingDecorator<EventSink> snk = new BatchingDecorator<EventSink>(
+        new ConsoleEventSink(), 2, 100000);
     snk.open();
 
     for (int i = 0; i < 10; i++) {
-      Clock.sleep(1000);
-      snk.append(new EventImpl(("test " + i).getBytes()));
+      if (i % 4 == 0) {
+        snk.append(new EventImpl(("test " + i).getBytes()));
+
+      }
+      snk.endBatchTimeout();
     }
     snk.close();
 
     ReportEvent rpt = snk.getMetrics();
     LOG.info(rpt.toString());
-    assertEquals(Long.valueOf(0), rpt.getLongMetric(BatchingDecorator.R_FILLED));
-    assertEquals(Long.valueOf(10), rpt.getLongMetric(BatchingDecorator.R_EMPTY));
-    // this is timing based and there is a little play with these numbers.
-    assertTrue(rpt.getLongMetric(BatchingDecorator.R_TRIGGERS) > 97);
-    assertTrue(rpt.getLongMetric(BatchingDecorator.R_TRIGGERS) < 102);
-    assertTrue(rpt.getLongMetric(BatchingDecorator.R_TIMEOUTS) > 97);
-    assertTrue(rpt.getLongMetric(BatchingDecorator.R_TIMEOUTS) < 102);
+    assertEquals(0, (long) rpt.getLongMetric(BatchingDecorator.R_FILLED));
+    assertEquals(8, (long) rpt.getLongMetric(BatchingDecorator.R_EMPTY));
+    // Extra trigger happens on close
+    assertEquals(11, (long) rpt.getLongMetric(BatchingDecorator.R_TRIGGERS));
   }
+
+  @Test
+  public void testBatchingMetrics() throws IOException, InterruptedException {
+    EventSource src = MemorySinkSource.cannedData("this is a data", 200);
+    MemorySinkSource mem = new MemorySinkSource();
+    UnbatchingDecorator<EventSink> unbatch = new UnbatchingDecorator<EventSink>(
+        mem);
+    GunzipDecorator<EventSink> gunzip = new GunzipDecorator<EventSink>(unbatch);
+
+    int evts = 5;
+    int latency = 0; // 0 never triggers on time
+    GzipDecorator<EventSink> gzip = new GzipDecorator<EventSink>(gunzip);
+    BatchingDecorator<EventSink> batch = new BatchingDecorator<EventSink>(gzip,
+        evts, latency);
+
+    src.open();
+    batch.open();
+    EventUtil.dumpAll(src, batch);
+    src.close();
+    batch.close();
+
+    // check metrics.
+    ReportEvent ubRpt = unbatch.getMetrics();
+    assertEquals(40, (long) ubRpt
+        .getLongMetric(UnbatchingDecorator.R_BATCHED_IN));
+    assertEquals(200, (long) ubRpt
+        .getLongMetric(UnbatchingDecorator.R_BATCHED_OUT));
+    assertEquals(0, (long) ubRpt
+        .getLongMetric(UnbatchingDecorator.R_PASSTHROUGH));
+
+    ReportEvent bRpt = batch.getMetrics();
+    assertEquals(1, (long) bRpt.getLongMetric(BatchingDecorator.R_EMPTY));
+    assertEquals(40, (long) bRpt.getLongMetric(BatchingDecorator.R_FILLED));
+    assertEquals(0, (long) bRpt.getLongMetric(BatchingDecorator.R_TIMEOUTS));
+    assertEquals(41, (long) bRpt.getLongMetric(BatchingDecorator.R_TRIGGERS));
+
+    ReportEvent gzr = gzip.getMetrics();
+    assertTrue(gzr.getLongMetric(GzipDecorator.R_GZIPSIZE) < gzr
+        .getLongMetric(GzipDecorator.R_EVENTSIZE));
+    assertEquals(40, (long) gzr.getLongMetric(GzipDecorator.R_EVENTCOUNT));
+
+    ReportEvent ugzr = gunzip.getMetrics();
+    assertTrue(ugzr.getLongMetric(GunzipDecorator.R_GZIPSIZE) < ugzr
+        .getLongMetric(GunzipDecorator.R_GUNZIPSIZE));
+    assertEquals(40, (long) ugzr.getLongMetric(GunzipDecorator.R_GZIPCOUNT));
+    assertEquals(0, (long) ugzr.getLongMetric(GunzipDecorator.R_PASSTHROUGH));
+  }
+
 }

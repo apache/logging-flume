@@ -19,6 +19,7 @@ package com.cloudera.flume.handlers.batch;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPOutputStream;
 
 import com.cloudera.flume.conf.Context;
@@ -28,12 +29,22 @@ import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSinkDecorator;
 import com.cloudera.flume.handlers.hdfs.WriteableEvent;
+import com.cloudera.flume.reporter.ReportEvent;
 import com.google.common.base.Preconditions;
 
 /**
  * This gzips each event as it passes through the decorator.
  */
 public class GzipDecorator<S extends EventSink> extends EventSinkDecorator<S> {
+
+  public static final String R_EVENTCOUNT = "eventsCount";
+  public static final String R_EVENTSIZE = "eventsSize";
+  public static final String R_GZIPSIZE = "gzippedSize";
+
+  AtomicLong eventCount = new AtomicLong(0);
+  AtomicLong eventSize = new AtomicLong(0);
+  AtomicLong gzipSize = new AtomicLong(0);
+
   public GzipDecorator(S s) {
     super(s);
   }
@@ -42,6 +53,7 @@ public class GzipDecorator<S extends EventSink> extends EventSinkDecorator<S> {
   public void append(Event e) throws IOException, InterruptedException {
     WriteableEvent we = new WriteableEvent(e);
     byte[] bs = we.toBytes();
+    eventSize.addAndGet(bs.length);
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     GZIPOutputStream gzos = new GZIPOutputStream(baos);
@@ -49,8 +61,20 @@ public class GzipDecorator<S extends EventSink> extends EventSinkDecorator<S> {
     gzos.close();
 
     Event gze = new EventImpl(new byte[0]);
-    gze.set(GunzipDecorator.GZDOC, baos.toByteArray());
+    byte[] compressed = baos.toByteArray();
+    gze.set(GunzipDecorator.GZDOC, compressed);
     super.append(gze);
+    gzipSize.addAndGet(compressed.length);
+    eventCount.incrementAndGet();
+  }
+
+  @Override
+  public ReportEvent getMetrics() {
+    ReportEvent rpt = super.getMetrics();
+    rpt.setLongMetric(R_EVENTCOUNT, eventCount.get());
+    rpt.setLongMetric(R_EVENTSIZE, eventSize.get());
+    rpt.setLongMetric(R_GZIPSIZE, gzipSize.get());
+    return rpt;
   }
 
   public static SinkDecoBuilder builder() {
