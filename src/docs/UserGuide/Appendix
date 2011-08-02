@@ -49,8 +49,16 @@ These sources are untranslated and generally need all of their arguments.
 [horizontal]
 +null+ :: Null source. Opens, closes, and returns null (last record) on next().
 
-+console+ :: Stdin console.  A flume node must be started with the
++console+ :: Stdin console source.  This is for inputting events as an
+interactive user and provides features such as edit history and
+keyboard edit shortcuts.  A flume node must be started with the +flume
+node_nowatch+ -- the watchdog does not allow console input.
+
++stdin+ :: Stdin source.  This is for piping data into a flume node's
+standard input data source.  A flume node must be started with the
 +flume node_nowatch+ -- the watchdog does not allow console input.
+WARNING: although this can be used as an interactive console, it will
+hang a flume node until a newline is entered.
 
 +rpcSource(_port_)+ :: A remote procedure call (RPC) server that is
 configured to listen on TCP port +_port_+. Supports both Apache-Thrift and 
