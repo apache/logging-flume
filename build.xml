@@ -645,10 +645,14 @@ to call at top-level: ant deploy-contrib compile-core-test
   <!-- ================================================================== -->
   <target name="tar" depends="jar,jar-test" description="Make flume.tar">
     <tar compression="gzip" destfile="${build.dir}/flume-${version}.tar.gz">
+      <tarfileset dir="build" mode="644"  prefix="flume-${version}">
+        <include name="*.jar" />
+        <include name="webapps/**" />
+      </tarfileset>
+
+
       <tarfileset dir="." mode="644" prefix="flume-${version}">
         <include name="build.xml" />
-        <include name="build/*.jar" />
-        <include name="build/webapps" />
         <include name="cloudera/**" />
         <include name="conf/**" />
         <include name="DEVNOTES" />
@@ -656,7 +660,6 @@ to call at top-level: ant deploy-contrib compile-core-test
         <include name="ivy.xml" />
         <include name="lib/**" />
         <include name="libbuild/**" />
-        <include name="libtest/**" />
         <include name="src/**" />
         <include name="Makefile" />
         <include name="properties/**" />
@@ -665,12 +668,14 @@ to call at top-level: ant deploy-contrib compile-core-test
 	<exclude name="libtest/findbugs-ant.jar" />
 	<exclude name="libtest/findbugs.jar" />
       </tarfileset>
+
       <tarfileset dir="." mode="755" prefix="flume-${version}">
  	<exclude name="bin/flume-env.sh" />
 	<exclude name="bin/flume_extra" />
 	<exclude name="bin/flume_test" />
 	<include name="bin/**"/>
       </tarfileset>
+
     </tar>
   </target>
 
