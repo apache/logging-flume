@@ -39,7 +39,7 @@
 
 <%
   Properties props = System.getProperties();
-  for (Map.Entry<Object,Object> p : props.entrySet()) {
+  for (Map.Entry<Object,Object> p : new TreeMap<Object,Object>(props).entrySet()) {
 %>
     <tr><th><%= p.getKey() %></th><td><div class="<%= p.getKey() %>">
     <%= p.getValue() %>
