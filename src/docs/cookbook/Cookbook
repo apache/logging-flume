@@ -49,7 +49,7 @@ how to troubleshoot distributed deployments.
 
 include::Testing[]
 //include::Apache[]
-//include::Syslog[]
+include::Syslog[]
 include::Scribe[]
 // include::Log4J[]
 // include::ConfigOnStart[]

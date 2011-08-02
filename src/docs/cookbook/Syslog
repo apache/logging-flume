@@ -1,0 +1,245 @@
+
+
+////////////////////
+Licensed to Cloudera, Inc. under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  Cloudera, Inc. licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+////////////////////
+
+== Flume Agents for Syslog data
+
++syslog+ is the standard unix single machine logging service.  Events
+are generally emited as lines with a time stamp, "facility" type,
+priority, and message.  Syslog can be configured to send data to
+remote destinations.  The default syslog remote delivery was
+originally designed to provide best effort delivery service.  Today,
+there are several more advanced syslog services that deliver messages
+with improved reliability (TCP connections with memory buffering on
+failure).  The reliability guarentees however are one hop and weaker
+than Flume's more reliable delivery mechanism.
+
+This section describes collecting syslog data using two methods.  The
+first part describes a file tailing approach.  The latter parts
+describe syslog system configuration guidance that enables directly
+feeding Flume's +syslog*+ sources.
+
+=== Tailing files
+
+The quickest way to record syslog messages is to tail syslog generated
+log files.  These files generally live in +/var/log+.
+
+Some examples include:
+----
+/var/log/auth.log
+/var/log/messages
+/var/log/syslog
+/var/log/user.log
+----
+
+These files could be tailed by Flume nodes with tail sources:
+
+----
+tail("/var/log/auth.log")
+tail("/var/log/messages")
+tail("/var/log/syslog")
+tail("/var/log/user.log")
+----
+
+Depending on your system configuration, there may be permissions
+issues when accessing these files from the Flume node process.
+
+NOTE: Red Hat/CentOS systems default to writing log files owned by
+root, in group root, and with 0600 (-rw-------) permissions. Flume
+could be run as root, but this is not advised becuase Flume can be
+remotely configured to execute arbitrary programs.
+
+NOTE: Ubuntu systems default to writing logs files owned by syslog, in
+group adm, and with 0640 (-rw-r-----) permissions.  By adding the user
+"flume" to group "adm", a Flume node running user "flume" should be
+able to read the syslog generated files.
+
+NOTE: When tailing files, the time when the event is read is used as the
+time stamp.
+
+=== Delivering Syslog events via sockets
+
+The original syslog listens to the +/dev/log+ named pipe, and can be
+configured to listen on UDP port
+514. (http://tools.ietf.org/search/rfc5424). More advanced versions
+(rsyslog, syslog-ng) can send and recieve over TCP and may do
+in-memory queing/buffering. For example, syslog-ng and rsyslog can
+optionally use the default UDP port 514 or use TCP port 514 for better
+recovery options.
+
+NOTE: By default only superusers can listen on on UDP/TCP ports 514.
+Unix systems usually only allow ports <1024 to be bound by
+superusers. While Flume can run as superuser, from a security stance
+this is not advised.  The examples provide directions to route to the
+user-bindable port 5140.
+
+For debugging syslog configurations, you can just use 'flume dump'
+with syslog sources.  This command outputs received syslog data to the
+console.  To test if syslog data is coming in to the proper port you
+can run this command from the command line:
+
+----
+$ flume dump 'syslogUdp(5140)' 
+----
+
+This will dump all incoming events to the console.
+
+If you are satisfied with your connection, you can have a Flume node
+run on the machine configure its sink for the reliability level you
+desire.
+
+Using a +syslog*+ Flume source will save the entire line of event
+data, use the timestamp found in the original data, extract a +host+,
+and attempt to extract a service from the syslog line.  All of these
+map to a Flume event's fields except for +service+ so this is added as
+extra metadata field to each event (this is a convention with
+syslog defined in RFC).
+
+So, a syslog entry whose body is this:
+
+----
+Sep 14 07:57:24 blitzwing dhclient: bound to 192.168.126.212 -- renewal in 710 seconds.
+----
+
+will have the Flume event body:
+
+----
+Sep 14 07:57:24 blitzwing dhclient: bound to 192.168.126.212 -- renewal in 710 seconds.
+----
+
+The event will also translated the "Sep 14 07:57:24" date+time data so
+that it will be bucketable.  Since this date does not have a year, it
+assumes the current year and since it has no timezone it assumes the
+local timezone.  The host field should be "blitzwing", and the
+optional "service" metadata field will contain "dhclient".
+
+====  Configuring +syslogd+
+
+The original syslog is +syslogd+.  It is configured by an
++/etc/syslog.conf+ file.  Its format is fairly simple.
+
+Syslog recieves messages and then sends to out to different facilities
+that have associated names
+(http://tools.ietf.org/search/rfc5424#section-6.2).
+
+The +/etc/syslog.conf+ file essentially contains lists of facilities
+and "actions".  These "actions" are destinations such as regular
+files, but can also be named pipes, consoles, or remote machines.  One
+can specify a remote machine by prefixing an '@' symbol in front the
+desitination host machine.  If no port is specified, events are sent
+via UDP port 514.
+
+The example below specifies delivery to machine localhost on port
+5140.
+
+----
+user.*     @localhost:5140 
+----
+
+A Flume node daemon running on this machine would have a +syslogUdp+
+source listening for new log data.
+
+----
+host-syslog : syslogUdp(5140) | autoE2EChain ;
+----
+
+==== Configuring +rsyslog+ 
+
++rsyslog+ is a more advanced drop-in replacement for syslog and the
+default syslog system used by Ubuntu systems.  It supports basic
+filtering, best effort delivery, and queuing for handling one-hop
+downstream failures.
+
++rsyslog+ actually extends the syslog configuration file format.
+Similar to regular +syslogd+ you can send data to a remote machine on
+listening on UDP port 514 (standard syslog port).
+
+----
+*.*   @remotehost
+----
+
+Moreover, +rsyslog+ also allows you to use the more reliable TCP
+protocol to send data to a remote host listening on TCP port 514.  In
++rsyslog+ configurations, an '@@' prefix ditcates the use of TCP.
+
+----
+*.*  @@remotehost
+----
+
+Similarly, you can also append a suffix port number to have it deliver
+to a particular port.  In this example, events are delivered to
+localhost TCP port 5140.
+
+----
+*.*  @@localhost:5140
+----
+
+Assuming you have a Flume node daemon running on the local host, you
+can capture syslog data by adding a logical node with the following
+configuration:
+
+----
+host-syslog : syslogTcp(5140) | autoE2EChain ; 
+----
+
+////
+
+TODO: (this requires new FileReaderSource)
+
+You can also log data to a named pipe that flume can listen on.
+
+Named pipes
+----
+*.*  |/dev/flume
+----
+
+////
+
+==== Configuring +syslog-ng+
+
+Syslog-ng is another common replacement for the default syslog logging
+system.  Syslog-ng has a different configuration file format but
+essentially gives the operator the ability to send syslog data from
+different facilities to different remote destinations.  TCP or UDP can
+be used.
+
+Here is an example of modifications to a +syslog-ng.conf+ (often found
+in +/etc/syslog-ng/+) file.
+
+----
+## set up logging to loghost (which is flume) 
+destination loghost { 
+        tcp("localhost" port(5140)); 
+}; 
+
+# send everything to loghost, too 
+log { 
+        source(src); 
+        destination(loghost); 
+}; 
+----
+
+Assuming you have a Flume node daemon running on the local host, you
+can capture syslog data by adding a logical node with the following
+configuration:
+
+----
+host-syslog : syslogTcp(5140) | autoE2EChain ; 
+----
+
