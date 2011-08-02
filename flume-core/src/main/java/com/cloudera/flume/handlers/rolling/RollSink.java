@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.FlumeBuilder.FunctionSpec;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.core.CompositeSink;
 import com.cloudera.flume.core.Event;
@@ -55,6 +56,7 @@ import com.google.common.base.Preconditions;
  */
 public class RollSink extends EventSink.Base {
   static final Logger LOG = LoggerFactory.getLogger(RollSink.class);
+  public static final String C_TRIGGER = "trigger";
 
   final String fspec;
   EventSink curSink;
@@ -414,33 +416,68 @@ public class RollSink extends EventSink.Base {
     return trigger.getTagger().getTag();
   }
 
+  public static RollTrigger createRollTrigger(Context ctx, long rollmillis) {
+    RollTrigger rt = null;
+    FunctionSpec fs = ctx.getObj(C_TRIGGER, FunctionSpec.class);
+    if (fs == null) {
+      rt = new TimeTrigger(new ProcessTagger(), rollmillis);
+    } else {
+      if ("time".equals(fs.getName())) {
+        rt = new TimeTrigger(new ProcessTagger(), rollmillis);
+      } else if ("size".equals(fs.getName())) {
+        Tagger t = new ProcessTagger();
+        Preconditions.checkArgument(fs.getArgs().length == 1,
+            "size trigger requires argument");
+        long sz = Long.parseLong(fs.getArgs()[0].toString());
+        rt = new OrTrigger(t, new TimeTrigger(t, rollmillis), new SizeTrigger(
+            sz, t));
+      } else {
+        throw new IllegalArgumentException("Illegal trigger type specified: "
+            + fs.getName());
+      }
+    }
+    return rt;
+  }
+
   /**
    * Builder for a spec based rolling sink. (most general version, does not
    * necessarily output to files!).
+   *
+   * Note: trigger is in context so can be set from any parent source such as
+   * collectorSink
    */
   public static SinkBuilder builder() {
     return new SinkBuilder() {
       @Override
-      public EventSink build(Context ctx, String... argv) {
+      public EventSink create(Context ctx, Object... argv) {
         Preconditions.checkArgument(argv.length >= 2 && argv.length <= 3,
-            "roll(rollmillis[, checkmillis]) { sink }");
-        String spec = argv[0];
-        long rollmillis = Long.parseLong(argv[1]);
+            "roll(rollmillis[, checkmillis]{, trigger=time|size(n)}) { sink }");
+        String spec = argv[0].toString();
+        long rollmillis = Long.parseLong(argv[1].toString());
 
-        long checkmillis = 250; // TODO (jon) parameterize 250 argument.
+        long checkmillis = 250;
         if (argv.length >= 3) {
-          checkmillis = Long.parseLong(argv[2]);
+          checkmillis = Long.parseLong(argv[2].toString());
         }
+
+        RollTrigger rt = createRollTrigger(ctx, rollmillis);
 
         try {
           // check sub spec to make sure it works.
           FlumeBuilder.buildSink(ctx, spec);
 
           // ok it worked, instantiate the roller
-          return new RollSink(ctx, spec, rollmillis, checkmillis);
+          return new RollSink(ctx, spec, rt, checkmillis);
         } catch (FlumeSpecException e) {
           throw new IllegalArgumentException("Failed to parse/build " + spec, e);
         }
+      }
+
+      @Deprecated
+      @Override
+      public EventSink build(Context ctx, String... argv) {
+        throw new RuntimeException(
+            "Old sink builder for RollSink should not be exercised");
       }
     };
   }

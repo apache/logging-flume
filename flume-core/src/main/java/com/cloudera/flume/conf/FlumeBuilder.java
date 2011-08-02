@@ -569,16 +569,29 @@ public class FlumeBuilder {
     case ROLL: {
       List<CommonTree> rollArgs = (List<CommonTree>) t.getChildren();
       try {
-        Preconditions.checkArgument(rollArgs.size() == 2, "bad parse tree! "
-            + t.toStringTree() + "roll only takes two arguments");
+        Preconditions.checkArgument(rollArgs.size() >= 2, "bad parse tree! "
+            + t.toStringTree() + "roll requires at least two arguments");
+        SinkBuilder rollBuilder = RollSink.builder();
+        Context ctx = new Context(context); // new scope
+        List<Object> args = new ArrayList<Object>();
+
+        // first is the sub sink spec
         CommonTree ctbody = rollArgs.get(0);
-        // TODO change long args into Long instead of String
-        Long period = Long
-            .parseLong(buildSimpleArg(rollArgs.get(1)).toString());
-        String body = FlumeSpecGen.genEventSink(ctbody);
-        // TODO (jon) replace the hard coded 250 with a parameterizable value
-        RollSink roller = new RollSink(context, body, period, 250);
-        return roller;
+        String body= FlumeSpecGen.genEventSink(ctbody);
+        args.add(body);
+
+        // all others are args
+        for (int i =1; i< rollArgs.size(); i++) {
+          CommonTree tr = rollArgs.get(i);
+          Object arg = buildSimpleArg(tr);
+          if (arg != null) {
+            args.add(arg);
+          } else {
+            Pair<String, CommonTree> kwarg = buildKWArg(tr);
+            ctx.putObj(kwarg.getLeft(), buildSimpleArg(kwarg.getRight()));
+          }
+        }
+        return rollBuilder.create(ctx, args.toArray());
       } catch (IllegalArgumentException iae) {
         throw new FlumeSpecException(iae.getMessage());
       }

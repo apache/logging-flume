@@ -344,4 +344,49 @@ public class TestRollSink {
     assertTrue(success);
   }
 
+  @Test
+  public void testTriggerKWArg() throws FlumeSpecException {
+    FlumeBuilder.buildSink(LogicalNodeContext.testingContext(),
+        "roll(1000, trigger=time) { null }");
+    FlumeBuilder.buildSink(LogicalNodeContext.testingContext(),
+        "roll(1000, trigger=size(1000)) { null }");
+  }
+
+  @Test(expected = FlumeSpecException.class)
+  public void testBadTriggerKWArgType() throws FlumeSpecException {
+    FlumeBuilder.buildSink(LogicalNodeContext.testingContext(),
+        "roll(1000, trigger=foo) { null }");
+  }
+
+  @Test(expected = FlumeSpecException.class)
+  public void testBadMissingTimeTriggerKWArg() throws FlumeSpecException {
+    FlumeBuilder.buildSink(LogicalNodeContext.testingContext(),
+        "roll(trigger=size(100)) { null }");
+  }
+
+  @Test(expected = FlumeSpecException.class)
+  public void testBadTriggerKWArgArg() throws FlumeSpecException {
+    FlumeBuilder.buildSink(LogicalNodeContext.testingContext(),
+        "roll(1000, trigger=size(\"badarg\")) { null }");
+  }
+
+  @Test
+  public void testSizeTriggerFunctional() throws FlumeSpecException,
+      IOException, InterruptedException {
+    // a ridiculous amount of time trigger time to forces size trigger
+    EventSink snk = FlumeBuilder.buildSink(LogicalNodeContext.testingContext(),
+        "roll(1000000, trigger=size(10)) { console }");
+    snk.open();
+
+    // Events from this loop:
+    // 0, 1, trigger, 2, 3, trigger, 4, 5, trigger, 6, 7, trigger, 8 ,9,
+    for (int i = 0; i < 10; i++) {
+      snk.append(new EventImpl("6chars".getBytes()));
+    }
+    snk.close();
+
+    ReportEvent rpt = snk.getMetrics();
+    // See above for why there are 4 triggers:
+    assertEquals(4, (long) rpt.getLongMetric(RollSink.A_ROLLS));
+  }
 }
