@@ -114,9 +114,9 @@ public class InputStreamPipe {
 
         out.close();
       } catch (IOException e) {
-        LOG.info("Input stream pipe closed", e);
+        LOG.error("Input stream pipe closed", e);
       } catch (InterruptedException e) {
-        LOG.error("Input stream pipe interrupted", e);
+        LOG.info("Input stream pipe interrupted");
       }
     }
   }

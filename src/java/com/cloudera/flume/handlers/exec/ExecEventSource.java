@@ -52,7 +52,11 @@ import com.google.common.base.Preconditions;
  * 
  * TODO(henry) - expose more of 'exec' parameters to callers, like ENV and CWD
  * setting.
+ * 
+ * This deprecated and slated for removal after more testing of its replacement,
+ * ExecNioSource.
  */
+@Deprecated
 public class ExecEventSource extends EventSource.Base {
   // Input sources
   ReadableByteChannel stdout = null;

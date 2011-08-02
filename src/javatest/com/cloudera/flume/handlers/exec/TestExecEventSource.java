@@ -1,7 +1,7 @@
 /**
  * Licensed to Cloudera, Inc. under one
  * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
+ * distributed with this work for additional information 
  * regarding copyright ownership.  Cloudera, Inc. licenses this file
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
@@ -27,9 +27,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.Ignore;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,8 +42,6 @@ import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.util.FileUtil;
-
-import org.junit.Test;
 
 /**
  * Tests for the shell-based process exec event source.
@@ -54,7 +55,7 @@ public class TestExecEventSource {
   @Test
   public void testStreamBuilder() throws IOException, FlumeSpecException {
     ExecEventSource e = (ExecEventSource) FlumeBuilder
-        .buildSource("execStream(\"ps -aux\")");
+        .buildSource("execStreamOld(\"ps -aux\")");
     assertEquals(e.aggregate, false);
     assertEquals(e.command, "ps -aux");
     assertEquals(e.restart, false);
@@ -64,7 +65,7 @@ public class TestExecEventSource {
   @Test
   public void testExecBuilder() throws IOException, FlumeSpecException {
     ExecEventSource e = (ExecEventSource) FlumeBuilder
-        .buildSource("exec(\"ps -aux\", true, true, 1000)");
+        .buildSource("execOld(\"ps -aux\", true, true, 1000)");
     assertEquals(e.aggregate, true);
     assertEquals(e.command, "ps -aux");
     assertEquals(e.restart, true);
@@ -74,7 +75,7 @@ public class TestExecEventSource {
   @Test
   public void testPeriodicBuilder() throws IOException, FlumeSpecException {
     ExecEventSource e = (ExecEventSource) FlumeBuilder
-        .buildSource("execPeriodic(\"ps -aux\", 1000)");
+        .buildSource("execPeriodicOld(\"ps -aux\", 1000)");
     assertEquals(e.aggregate, true);
     assertEquals(e.command, "ps -aux");
     assertEquals(e.restart, true);
@@ -83,6 +84,10 @@ public class TestExecEventSource {
 
   /**
    * Test that a too-large event is caught and source is closed cleanly
+   * 
+   * The semantics in this version is to throw a BufferOverflowExcetpion and
+   * exit "cleanly". This probably should actually either exit with error, or
+   * truncate, warn, and then continue.
    */
   @Test
   public void testLargeEvent() throws IOException, FlumeSpecException {
@@ -92,18 +97,18 @@ public class TestExecEventSource {
     StringBuilder tooLarge = new StringBuilder();
     for (int i = 0; i < max + 5; ++i) {
       tooLarge.append("X");
-    }    
+    }
     FileOutputStream f = new FileOutputStream(tmp);
     f.write(tooLarge.toString().getBytes());
     f.close();
     EventSource source = new ExecEventSource.Builder().build("cat "
         + tmp.getCanonicalPath());
     source.open();
-    assertNull(source.next());    
-    source.close();    
+    assertNull(source.next());
+    source.close();
     FileUtil.rmr(tmpdir);
     // Check that the stdout reader closed correctly
-    assertTrue(((ExecEventSource)source).readOut.signalDone.get()); 
+    assertTrue(((ExecEventSource) source).readOut.signalDone.get());
   }
 
   /**
@@ -271,5 +276,35 @@ public class TestExecEventSource {
             + " with failure " + e, false);
       }
     }
+  }
+
+  @Ignore
+  @Test
+  public void testNoRandomPrepend() throws IOException {
+    File f = File.createTempFile("prepend", "bar");
+    f.deleteOnExit();
+    FileWriter fw = new FileWriter(f);
+
+    ExecEventSource.Builder builder = new ExecEventSource.Builder();
+    EventSource source = builder.build("tail -F " + f.getAbsolutePath());
+    source.open();
+
+    fw.write("foo\n");
+    fw.flush();
+    Event e = source.next();
+    assertTrue(Arrays.equals("foo".getBytes(), e.getBody()));
+
+    // This one is prepended by a log of '\x0' chars and fails.
+    fw.write("bar\n");
+    fw.flush();
+    e = source.next();
+    assertTrue(Arrays.equals("bar".getBytes(), e.getBody()));
+
+    fw.write("baz\n");
+    fw.flush();
+    e = source.next();
+    assertTrue(Arrays.equals("baz".getBytes(), e.getBody()));
+
+    source.close();
   }
 }

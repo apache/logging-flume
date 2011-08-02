@@ -43,6 +43,7 @@ import com.cloudera.flume.handlers.debug.SynthSource;
 import com.cloudera.flume.handlers.debug.SynthSourceRndSize;
 import com.cloudera.flume.handlers.debug.TextFileSource;
 import com.cloudera.flume.handlers.exec.ExecEventSource;
+import com.cloudera.flume.handlers.exec.ExecNioSource;
 import com.cloudera.flume.handlers.hdfs.SeqfileEventSource;
 import com.cloudera.flume.handlers.irc.IrcSource;
 import com.cloudera.flume.handlers.rpc.RpcSource;
@@ -88,9 +89,13 @@ public class SourceFactoryImpl extends SourceFactory {
       { "syslogUdp", SyslogUdpSource.builder() },
       { "syslogTcp", SyslogTcpSourceThreads.builder() },
       { "syslogTcp1", SyslogTcpSource.builder() },
-      { "execPeriodic", ExecEventSource.buildPeriodic() },
-      { "execStream", ExecEventSource.buildStream() },
-      { "exec", ExecEventSource.builder() },
+      { "execPeriodic", ExecNioSource.buildPeriodic() },
+      { "execStream", ExecNioSource.buildStream() },
+      { "exec", ExecNioSource.builder() },
+
+      { "execPeriodicOld", ExecEventSource.buildPeriodic() },
+      { "execStreamOld", ExecEventSource.buildStream() },
+      { "execOld", ExecEventSource.builder() },
       { "synth", SynthSource.builder() },
       { "nonlsynth", NoNlSynthSource.builder() },
       { "asciisynth", NoNlASCIISynthSource.builder() },
