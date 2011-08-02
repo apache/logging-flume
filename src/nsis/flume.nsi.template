@@ -79,15 +79,15 @@ Var ServiceInstallLog
 
   ;Install Options pages
   LangString TEXT_JVM_TITLE ${LANG_ENGLISH} "Java Virtual Machine"
-  LangString TEXT_JVM_SUBTITLE ${LANG_ENGLISH} "Java Virtual Machine path selection."
-  LangString TEXT_JVM_PAGETITLE ${LANG_ENGLISH} ": Java Virtual Machine path selection"
+  LangString TEXT_JVM_SUBTITLE ${LANG_ENGLISH} "Java Virtual Machine Path Selection."
+  LangString TEXT_JVM_PAGETITLE ${LANG_ENGLISH} ": Java Virtual Machine Path Selection"
 
   LangString TEXT_CONF_TITLE ${LANG_ENGLISH} "Configuration"
   LangString TEXT_CONF_SUBTITLE ${LANG_ENGLISH} "Flume basic configuration."
   LangString TEXT_CONF_PAGETITLE ${LANG_ENGLISH} ": Configuration Options"
 
   LangString TEXT_JVM_LABEL1 ${LANG_ENGLISH} "Please select the path of a Java SE 6.0 or later JRE installed on your system."
-  LangString TEXT_CONF_LABEL_PORT ${LANG_ENGLISH} "Flume Node Status http port"
+  LangString TEXT_CONF_LABEL_PORT ${LANG_ENGLISH} "Flume Node Status HTTP port"
   LangString TEXT_CONF_LABEL_MASTERHOST ${LANG_ENGLISH} "Flume Node master host"
 
   ;Install Page order
