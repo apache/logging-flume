@@ -39,6 +39,7 @@ function usage {
   echo "  classpath       Dump the classpath used by the java executables"
   echo "  shell           Start the flume shell"
   echo "  killmaster      Kill a running master"
+  echo "  dumplog         Takes a specified WAL/DFO log file and dumps to console"
   exit -1
 }
 
@@ -271,6 +272,10 @@ elif [ "$CMD" = "dump" ] ; then
   # this has no error checking.  be careful!
   exec java $JOPTS $UOPTS com.cloudera.flume.agent.FlumeNode \
       -1 -s -r -n dump -c "dump: $1 | console; "
+elif [ "$CMD" = "dumplog" ] ; then
+  # this has no error checking.  be careful!
+  exec java $JOPTS $UOPTS com.cloudera.flume.agent.FlumeNode \
+      -1 -s -r -n dump -c "dump: seqfile(\"$1\") | console(\"avrojson\"); "
 elif [ "$CMD" = "shell" ] ; then
   exec java $JOPTS $UOPTS com.cloudera.flume.util.FlumeShell "$@"
 elif [ "$CMD" = "killmaster" ] ; then
