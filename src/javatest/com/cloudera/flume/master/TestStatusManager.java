@@ -27,6 +27,7 @@ import java.io.IOException;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
+import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.master.StatusManager.NodeState;
 import com.cloudera.flume.util.MockClock;
@@ -44,7 +45,19 @@ public class TestStatusManager {
   @Test
   public void testStatusManagerHeartbeats() throws IOException {
     StatusManager stats = new StatusManager();
-
+    
+    FlumeConfiguration cfg = FlumeConfiguration.createTestableConfiguration();
+    Clock.resetDefault();
+    cfg.set(FlumeConfiguration.WEBAPPS_PATH, "build/webapps");
+    cfg.set(FlumeConfiguration.MASTER_STORE, "memory");
+    
+    // avoiding gossip ack manager until it shuts down cleanly.
+    ConfigStore cfgStore = FlumeMaster.createConfigStore(cfg);
+    FlumeMaster fm = new FlumeMaster(new CommandManager(), new ConfigManager(
+        cfgStore), stats, new MasterAckManager(), cfg);
+        
+    fm.getSpecMan().addLogicalNode("physnode", "foo");
+    
     // foo is in state HELLO and has configuration numbered 0
     long prev = Clock.unixTime();
     boolean needsRefresh = stats.updateHeartbeatStatus(NetUtils.localhost(),

@@ -38,7 +38,7 @@ import com.cloudera.util.Clock;
  */
 public class StatusManager implements Reportable {
 
-  static Logger log = Logger.getLogger(StatusManager.class);
+  static final Logger LOG = Logger.getLogger(StatusManager.class);
 
   public static class NodeStatus {
     public NodeState state;
@@ -64,19 +64,27 @@ public class StatusManager implements Reportable {
   }
 
   public enum NodeState {
-    HELLO, IDLE, CONFIGURING, ACTIVE, ERROR, LOST
+    HELLO, IDLE, CONFIGURING, ACTIVE, ERROR, LOST, DECOMMISSIONED
   };
 
   // runtime state of the flume system
-  Map<String, NodeStatus> statuses = new HashMap<String, NodeStatus>();
+  final Map<String, NodeStatus> statuses = new HashMap<String, NodeStatus>();  
 
   public boolean updateHeartbeatStatus(String host, String physicalNode,
       String logicalNode, NodeState stat, long version) {
-    log.debug("Heartbeat from host:" + host + " logicalnode:" + logicalNode
+    LOG.debug("Heartbeat from host:" + host + " logicalnode:" + logicalNode
         + " (" + stat + "," + new Date(version) + ")");
 
     boolean configChanged = false;
     synchronized (statuses) {
+
+      String expectedPhys = FlumeMaster.getInstance().getSpecMan()
+          .getPhysicalNode(logicalNode);
+
+      if (expectedPhys == null || !expectedPhys.equals(physicalNode)) {
+        stat = NodeState.DECOMMISSIONED;
+      }
+
       NodeStatus status = statuses.get(logicalNode);
       if (status == null) {
         status = new NodeStatus(stat, version, Clock.unixTime(), "", "");
@@ -112,6 +120,13 @@ public class StatusManager implements Reportable {
       long delta = now - ns.lastseen;
       if (delta > timeout) {
         ns.state = NodeState.LOST;
+      }
+
+      // Check mapping exists, if it doesn't set status to DECOMMISSIONED
+      String expectedPhys = FlumeMaster.getInstance().getSpecMan()
+          .getPhysicalNode(e.getKey());
+      if (expectedPhys == null || !expectedPhys.equals(ns.physicalNode)) {
+        ns.state = NodeState.DECOMMISSIONED;
       }
 
     }

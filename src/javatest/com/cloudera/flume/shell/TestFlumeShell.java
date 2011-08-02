@@ -137,9 +137,10 @@ public class TestFlumeShell extends SetupMasterTestEnv {
   @Test
   public void testNodesDone() throws InterruptedException, TTransportException,
       IOException {
-    assertEquals(0, flumeMaster.getSpecMan().getAllConfigs().size());
+    assertEquals(0, flumeMaster.getSpecMan().getAllConfigs().size());    
 
-    String nodename = "foo";
+    String nodename = "bar";
+    flumeMaster.getSpecMan().addLogicalNode(nodename, "foo");
     FlumeNode n = new FlumeNode(FlumeConfiguration.get(), nodename,
         new DirectMasterRPC(flumeMaster), false, false);
     n.start();
@@ -148,7 +149,8 @@ public class TestFlumeShell extends SetupMasterTestEnv {
     // started)
     n.getLivenessManager().heartbeatChecks();
 
-    assertEquals(1, flumeMaster.getStatMan().getNodeStatuses().size());
+    // One for the logical node by default, one for foo
+    assertEquals(2, flumeMaster.getStatMan().getNodeStatuses().size());
 
     FlumeShell sh = new FlumeShell();
     sh.executeLine("connect localhost: "
@@ -163,7 +165,7 @@ public class TestFlumeShell extends SetupMasterTestEnv {
 
     sh.executeLine("waitForNodesDone 0 foo");
     n.getLivenessManager().heartbeatChecks();
-    NodeState status = flumeMaster.getStatMan().getNodeStatuses().get(nodename).state;
+    NodeState status = flumeMaster.getStatMan().getNodeStatuses().get("foo").state;
     NodeState idle = NodeState.IDLE;
     assertEquals(status, idle);
 //    TODO: uncomment when there is a clean way to get at the reportable

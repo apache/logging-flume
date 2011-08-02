@@ -35,6 +35,8 @@ import com.cloudera.flume.agent.LivenessManager;
 import com.cloudera.flume.agent.MasterRPC;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.master.StatusManager.NodeState;
+import com.cloudera.util.Clock;
 import com.cloudera.util.NetUtils;
 
 public class TestLogicalNodeMapping {
@@ -110,6 +112,47 @@ public class TestLogicalNodeMapping {
     liveMan.checkLogicalNodes();
     // the two added nodes, plus the always present physnode/logical
     assertEquals(3, node.getLogicalNodeManager().getNodes().size());
+  }
+
+  /**
+   * Checks to make sure that an unmapped node correctly transitions to
+   * DECOMMISSIONED
+   */
+  @Test
+  public void testUnmappedLogicalNodeGetsDecommissioned() throws IOException,
+      InterruptedException {
+    FlumeMaster master = new FlumeMaster(cfg);
+    MasterRPC rpc = new DirectMasterRPC(master);
+
+    FlumeNode node = new FlumeNode(rpc, false, false);
+    // should have nothing.
+    assertEquals(0, node.getLogicalNodeManager().getNodes().size());
+
+    master.getSpecMan().addLogicalNode(node.getPhysicalNodeName(),
+        "foo");
+
+    master.getStatMan().updateHeartbeatStatus(NetUtils.localhost(),
+        node.getPhysicalNodeName(), "foo",
+        NodeState.ACTIVE, 10);
+
+    master.getSpecMan().unmapLogicalNode(NetUtils.localhost(),
+        "foo");
+
+    master.getStatMan().checkup();        
+
+    assertEquals(NodeState.DECOMMISSIONED, master.getStatMan()
+        .getNodeStatuses().get("foo").state);
+
+    master.getSpecMan().addLogicalNode(node.getPhysicalNodeName(),
+    "foo");
+    master.getStatMan().updateHeartbeatStatus(NetUtils.localhost(),
+        node.getPhysicalNodeName(), "foo",
+        NodeState.ACTIVE, 10);
+    
+    master.getStatMan().checkup();
+    
+    assertEquals(NodeState.ACTIVE, master.getStatMan()
+        .getNodeStatuses().get("foo").state);    
   }
 
   /**

@@ -38,7 +38,8 @@ enum FlumeNodeState {
   CONFIGURING =2,
   ACTIVE=3,
   ERROR =4,
-  LOST=5
+  LOST=5,
+  DECOMMISSIONED=6
 }
 
 struct FlumeConfigData {

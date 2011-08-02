@@ -137,6 +137,8 @@ public class MasterClientServer extends ThriftServer implements
       return NodeState.IDLE;
     case LOST:
       return NodeState.LOST;
+    case DECOMMISSIONED:
+      return NodeState.DECOMMISSIONED;
     default:
       throw new IllegalStateException("Unknown value " + s);
     }
@@ -161,6 +163,8 @@ public class MasterClientServer extends ThriftServer implements
       return FlumeNodeState.IDLE;
     case LOST:
       return FlumeNodeState.LOST;
+    case DECOMMISSIONED:
+      return FlumeNodeState.DECOMMISSIONED;
     default:
       throw new IllegalStateException("Unknown value " + s);
     }
