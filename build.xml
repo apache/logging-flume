@@ -197,6 +197,8 @@ to call at top-level: ant deploy-contrib compile-core-test
     <ivy:cachepath pathid="releaseaudit-classpath" conf="releaseaudit"/>
   </target>
 
+  <target name="ivy-retrieve-all" depends="ivy-retrieve-test,ivy-retrieve-findbugs,ivy-retrieve-coverage,ivy-retrieve-releaseaudit" />
+
   <target name="compile-aho" depends="init,ivy-retrieve-test">
     <javac 
      encoding="${build.encoding}" 
