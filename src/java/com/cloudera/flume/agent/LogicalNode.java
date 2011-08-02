@@ -299,7 +299,7 @@ public class LogicalNode implements Reportable {
         return;
       }
 
-      newSrc = FlumeBuilder.buildSource(cfg.sourceConfig);
+      newSrc = FlumeBuilder.buildSource(ctx, cfg.sourceConfig);
       if (newSrc == null) {
         newSnk.close(); // close the open sink.
         LOG.error("failed to create sink config: " + cfg.sourceConfig);

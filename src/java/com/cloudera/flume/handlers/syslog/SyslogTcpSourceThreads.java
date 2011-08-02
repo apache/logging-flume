@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSource;
@@ -52,14 +53,14 @@ import com.cloudera.flume.handlers.text.EventExtractException;
  * contention
  */
 public class SyslogTcpSourceThreads extends EventSource.Base {
-  static final Logger LOG =
-      LoggerFactory.getLogger(SyslogTcpSourceThreads.class);
+  static final Logger LOG = LoggerFactory
+      .getLogger(SyslogTcpSourceThreads.class);
 
   final public static int SYSLOG_TCP_PORT = 514;
   final int port;
   final LinkedBlockingQueue<Event> eventsQ = new LinkedBlockingQueue<Event>();
-  final List<ReaderThread> readers =
-      Collections.synchronizedList(new ArrayList<ReaderThread>());
+  final List<ReaderThread> readers = Collections
+      .synchronizedList(new ArrayList<ReaderThread>());
   final AtomicLong rejects = new AtomicLong();
   volatile boolean closed = true;
 
@@ -233,7 +234,7 @@ public class SyslogTcpSourceThreads extends EventSource.Base {
     return new SourceBuilder() {
 
       @Override
-      public EventSource build(String... argv) {
+      public EventSource build(Context ctx, String... argv) {
         int port = SYSLOG_TCP_PORT; // default udp port, need root permissions
         // for this.
         if (argv.length > 1) {

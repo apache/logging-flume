@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Attributes;
@@ -522,7 +523,7 @@ public class ExecNioSource extends EventSource.Base {
      * finished, and how often if so to restart.
      */
     @Override
-    public EventSource build(String... argv) {
+    public EventSource build(Context ctx, String... argv) {
       Preconditions.checkArgument(argv.length >= 1 && argv.length <= 4,
           "exec(\"cmdline \"[,aggregate [,restart [,period]]]], )");
       String command = argv[0];
@@ -551,7 +552,7 @@ public class ExecNioSource extends EventSource.Base {
   public static SourceBuilder buildPeriodic() {
     return new SourceBuilder() {
       @Override
-      public EventSource build(String... argv) {
+      public EventSource build(Context ctx, String... argv) {
         Preconditions.checkArgument(argv.length == 2,
             "execPeriodic(\"cmdline \",period)");
         String command = argv[0];
@@ -572,7 +573,7 @@ public class ExecNioSource extends EventSource.Base {
   public static SourceBuilder buildStream() {
     return new SourceBuilder() {
       @Override
-      public EventSource build(String... argv) {
+      public EventSource build(Context ctx, String... argv) {
         Preconditions.checkArgument(argv.length == 1,
             "execStream(\"cmdline \")");
         String command = argv[0];

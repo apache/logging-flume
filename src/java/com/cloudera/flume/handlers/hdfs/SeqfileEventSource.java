@@ -26,6 +26,7 @@ import org.apache.hadoop.io.SequenceFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSource;
@@ -35,8 +36,7 @@ import com.google.common.base.Preconditions;
  * This is an iterator for a sequence file.
  */
 public class SeqfileEventSource extends EventSource.Base {
-  static final Logger LOG =
-      LoggerFactory.getLogger(SeqfileEventSource.class);
+  static final Logger LOG = LoggerFactory.getLogger(SeqfileEventSource.class);
 
   private String fname;
   private SequenceFile.Reader reader;
@@ -112,7 +112,7 @@ public class SeqfileEventSource extends EventSource.Base {
     return new SourceBuilder() {
 
       @Override
-      public EventSource build(String... argv) {
+      public EventSource build(Context ctx, String... argv) {
         if (argv.length != 1) {
           throw new IllegalArgumentException("usage: seqfile(filename)");
         }

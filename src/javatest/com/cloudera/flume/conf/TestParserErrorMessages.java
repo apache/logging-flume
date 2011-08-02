@@ -29,7 +29,8 @@ import org.junit.Test;
  * exception.
  */
 public class TestParserErrorMessages {
-  public static final Logger LOG = LoggerFactory.getLogger(TestParserErrorMessages.class);
+  public static final Logger LOG = LoggerFactory
+      .getLogger(TestParserErrorMessages.class);
 
   @Test
   public void testBadLexer() {
@@ -45,7 +46,8 @@ public class TestParserErrorMessages {
   @Test
   public void testBadSourceValue() {
     try {
-      FlumeBuilder.buildSource("foo");
+      Context ctx = LogicalNodeContext.testingContext();
+      FlumeBuilder.buildSource(ctx, "foo");
     } catch (FlumeSpecException e) {
       LOG.info(e.getMessage());
       assertEquals("Invalid source: foo", e.getMessage());

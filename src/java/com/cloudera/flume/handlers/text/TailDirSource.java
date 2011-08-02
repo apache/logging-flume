@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSource;
@@ -75,7 +76,8 @@ public class TailDirSource extends EventSource.Base {
     this(f, regex, startFromEnd, 0);
   }
 
-  public TailDirSource(File f, String regex, boolean startFromEnd, int recurseDepth) {
+  public TailDirSource(File f, String regex, boolean startFromEnd,
+      int recurseDepth) {
     Preconditions.checkArgument(f != null, "File should not be null!");
     Preconditions.checkArgument(regex != null,
         "Regex filter should not be null");
@@ -104,7 +106,8 @@ public class TailDirSource extends EventSource.Base {
     tail.open();
   }
 
-  private DirWatcher createWatcher(File dir, final String regex, final int recurseDepth) {
+  private DirWatcher createWatcher(File dir, final String regex,
+      final int recurseDepth) {
     // 250 ms between checks
     DirWatcher watcher = new DirWatcher(dir, new RegexFileFilter(regex), 250);
     watcher.addHandler(new DirChangeHandler() {
@@ -115,7 +118,8 @@ public class TailDirSource extends EventSource.Base {
         if (f.isDirectory()) {
           if (recurseDepth <= 0) {
             LOG.debug("Tail dir will not read or recurse "
-                + "into subdirectory " + f + ", this watcher recurseDepth: " + recurseDepth);
+                + "into subdirectory " + f + ", this watcher recurseDepth: "
+                + recurseDepth);
             return;
           }
 
@@ -131,7 +135,8 @@ public class TailDirSource extends EventSource.Base {
         LOG.info("added file " + f);
         Cursor c;
         if (startFromEnd && !dirChecked) {
-          // init cursor positions on first dir check when startFromEnd is set to true
+          // init cursor positions on first dir check when startFromEnd is set
+          // to true
           c = new Cursor(tail.sync, f, f.length(), f.length(), f.lastModified());
           try {
             c.initCursorPos();
@@ -153,8 +158,8 @@ public class TailDirSource extends EventSource.Base {
       public void fileDeleted(File f) {
         LOG.debug("handling deletion of file " + f);
         String fileName = f.getPath();
-        // we cannot just check here with f.isDirectory() because f was deleted and
-        // f.isDirectory() will return false always
+        // we cannot just check here with f.isDirectory() because f was deleted
+        // and f.isDirectory() will return false always
         DirWatcher watcher = subdirWatcherMap.remove(fileName);
         if (watcher != null) {
           LOG.info("removed dir " + f);
@@ -229,8 +234,9 @@ public class TailDirSource extends EventSource.Base {
   public static SourceBuilder builder() {
     return new SourceBuilder() {
       @Override
-      public EventSource build(String... argv) {
-        Preconditions.checkArgument(argv.length >= 1 && argv.length <= 4, USAGE);
+      public EventSource build(Context ctx, String... argv) {
+        Preconditions
+            .checkArgument(argv.length >= 1 && argv.length <= 4, USAGE);
 
         String regex = ".*"; // default to accepting all
         if (argv.length >= 2) {
@@ -244,9 +250,11 @@ public class TailDirSource extends EventSource.Base {
         if (argv.length >= 4) {
           recurseDepth = Integer.parseInt(argv[3]);
           Preconditions.checkArgument(recurseDepth >= 0,
-                  "\"recurseDepth\" should be >= 0, but was: " + recurseDepth + ".\n" + USAGE);
+              "\"recurseDepth\" should be >= 0, but was: " + recurseDepth
+                  + ".\n" + USAGE);
         }
-        return new TailDirSource(new File(argv[0]), regex, startFromEnd, recurseDepth);
+        return new TailDirSource(new File(argv[0]), regex, startFromEnd,
+            recurseDepth);
       }
     };
   }

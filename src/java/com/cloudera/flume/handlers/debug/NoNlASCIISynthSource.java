@@ -20,6 +20,7 @@ package com.cloudera.flume.handlers.debug;
 
 import java.io.IOException;
 
+import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSource;
@@ -69,7 +70,7 @@ public class NoNlASCIISynthSource extends SynthSource {
   public static SourceBuilder builder() {
     return new SourceBuilder() {
       @Override
-      public EventSource build(String... argv) {
+      public EventSource build(Context ctx, String... argv) {
         int size = 150;
         long count = 0;
         if (argv.length > 2) {

@@ -34,6 +34,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -86,9 +87,9 @@ public class ConfigManager implements ConfigurationManager {
       // make sure the sink specified is parsable and instantiable.
 
       // TODO the first arg should be physical node name
-      FlumeBuilder.buildSink(new LogicalNodeContext(logicalNode, logicalNode),
-          sink);
-      FlumeBuilder.buildSource(source);
+      Context ctx = new LogicalNodeContext(logicalNode, logicalNode);
+      FlumeBuilder.buildSink(ctx, sink);
+      FlumeBuilder.buildSource(ctx, source);
     } catch (Exception e) {
       throw new IllegalArgumentException(
           "Attempted to write an invalid sink/source: " + e.getMessage(), e);

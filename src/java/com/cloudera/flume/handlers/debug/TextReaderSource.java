@@ -24,6 +24,7 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
@@ -77,7 +78,7 @@ public class TextReaderSource extends EventSource.Base {
     return new SourceBuilder() {
 
       @Override
-      public EventSource build(String... argv) {
+      public EventSource build(Context ctx, String... argv) {
         if (argv.length != 1) {
           throw new IllegalArgumentException("usage: text(filename)");
         }

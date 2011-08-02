@@ -27,6 +27,7 @@ import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.util.FileUtil;
@@ -123,7 +124,8 @@ public class TestAgentSink {
       InterruptedException {
     String snkcfg = "agentSink(\"localhost\", 12345)";
 
-    EventSource src = FlumeBuilder.buildSource("collectorSource(12345)");
+    EventSource src = FlumeBuilder.buildSource(LogicalNodeContext
+        .testingContext(), "collectorSource(12345)");
     src.open();
 
     for (int i = 0; i < 100; i++) {
@@ -133,5 +135,6 @@ public class TestAgentSink {
     }
 
   }
+
 
 }

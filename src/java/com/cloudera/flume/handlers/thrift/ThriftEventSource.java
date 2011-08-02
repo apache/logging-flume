@@ -32,6 +32,7 @@ import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
@@ -173,8 +174,9 @@ public class ThriftEventSource extends EventSource.Base {
       if (Clock.unixTime() - start > maxSleep) {
         if (sz == q.size()) {
           // no progress made, timeout and close it.
-          LOG.warn("Close timed out due to no progress.  Closing despite having "
-              + q.size() + " values still enqued");
+          LOG
+              .warn("Close timed out due to no progress.  Closing despite having "
+                  + q.size() + " values still enqued");
           return;
         }
         // there was some progress, go another cycle.
@@ -225,7 +227,7 @@ public class ThriftEventSource extends EventSource.Base {
   public static SourceBuilder builder() {
     return new SourceBuilder() {
       @Override
-      public EventSource build(String... argv) {
+      public EventSource build(Context ctx, String... argv) {
         Preconditions.checkArgument(argv.length == 1,
             "usage: thriftSource(port)");
 

@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
@@ -227,9 +228,9 @@ public class TailSource extends EventSource.Base {
     }
 
     /**
-     * Closes cursor and releases all resources used by it.
-     * NOTE: to flush any buffering the cursor has done and close cursor
-     * use {@link #flush()} instead.
+     * Closes cursor and releases all resources used by it. NOTE: to flush any
+     * buffering the cursor has done and close cursor use {@link #flush()}
+     * instead.
      */
     void close() {
       if (raf != null) {
@@ -611,7 +612,7 @@ public class TailSource extends EventSource.Base {
     return new SourceBuilder() {
 
       @Override
-      public EventSource build(String... argv) {
+      public EventSource build(Context ctx, String... argv) {
         if (argv.length != 1 && argv.length != 2) {
           throw new IllegalArgumentException(
               "usage: tail(filename, [startFromEnd]) ");
@@ -630,7 +631,7 @@ public class TailSource extends EventSource.Base {
     return new SourceBuilder() {
 
       @Override
-      public EventSource build(String... argv) {
+      public EventSource build(Context ctx, String... argv) {
         Preconditions.checkArgument(argv.length >= 1,
             "usage: multitail(file1[, file2[, ...]]) ");
         boolean startFromEnd = false;

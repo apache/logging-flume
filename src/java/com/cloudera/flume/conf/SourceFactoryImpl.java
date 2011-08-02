@@ -129,14 +129,14 @@ public class SourceFactoryImpl extends SourceFactory {
   }
 
   @Override
-  public EventSource getSource(String name, String... args)
+  public EventSource getSource(Context ctx, String name, String... args)
       throws FlumeSpecException {
     try {
       SourceBuilder builder = sources.get(name);
       if (builder == null) {
         return null;
       }
-      return builder.build(args);
+      return builder.build(ctx, args);
     } catch (NumberFormatException nfe) {
       throw new FlumeArgException("Illegal number format: " + nfe.getMessage());
     } catch (IllegalArgumentException iae) {

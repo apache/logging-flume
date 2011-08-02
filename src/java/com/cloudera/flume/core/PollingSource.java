@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.FlumeNode;
+import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.util.Clock;
@@ -41,9 +42,8 @@ public class PollingSource extends EventSource.Base {
 
   final Pollable src;
   final long period; // Time to wait if restart is true
-  final BlockingQueue<Event> eventQueue =
-      new ArrayBlockingQueue<Event>(FlumeConfiguration.get()
-          .getPollerQueueSize());
+  final BlockingQueue<Event> eventQueue = new ArrayBlockingQueue<Event>(
+      FlumeConfiguration.get().getPollerQueueSize());
   CountDownLatch started = null;
   CountDownLatch closed = null;
   volatile boolean shutdown = false;
@@ -149,7 +149,7 @@ public class PollingSource extends EventSource.Base {
   public static SourceBuilder reporterPollBuilder() {
     return new SourceBuilder() {
       @Override
-      public EventSource build(String... argv) {
+      public EventSource build(Context ctx, String... argv) {
         Preconditions.checkArgument(argv.length >= 0 && argv.length <= 1,
             "reportPoller[(periodMs)]");
 

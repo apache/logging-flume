@@ -28,6 +28,7 @@ import org.schwering.irc.lib.IRCUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
@@ -186,7 +187,7 @@ public class IrcSource extends EventSource.Base {
   @Override
   public Event next() throws IOException {
     try {
-      Event e =  q.take();
+      Event e = q.take();
       updateEventProcessingStats(e);
       return e;
     } catch (InterruptedException e) {
@@ -198,7 +199,7 @@ public class IrcSource extends EventSource.Base {
   public static SourceBuilder builder() {
     return new SourceBuilder() {
       @Override
-      public EventSource build(String... argv) {
+      public EventSource build(Context ctx, String... argv) {
         Preconditions.checkArgument(argv.length == 4,
             "usage: ircSource(server, port, nick, chan)");
         String server = argv[0];

@@ -23,8 +23,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
@@ -175,7 +178,7 @@ public class AvroEventSource extends EventSource.Base {
       } catch (InterruptedException e) {
         LOG.error("Unexpected interrupt of close " + e.getMessage(), e);
         Thread.currentThread().interrupt();
-        closed=true;
+        closed = true;
         throw new IOException(e);
       }
     }
@@ -215,7 +218,7 @@ public class AvroEventSource extends EventSource.Base {
   public static SourceBuilder builder() {
     return new SourceBuilder() {
       @Override
-      public EventSource build(String... argv) {
+      public EventSource build(Context ctx, String... argv) {
         Preconditions
             .checkArgument(argv.length == 1, "usage: avroSource(port)");
         int port = Integer.parseInt(argv[0]);

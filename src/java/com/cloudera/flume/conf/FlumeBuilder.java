@@ -175,7 +175,7 @@ public class FlumeBuilder {
     CommonTree tsrc = (CommonTree) t.getChild(0);
     CommonTree tsnk = (CommonTree) t.getChild(1);
 
-    return new Pair<EventSource, EventSink>(buildEventSource(tsrc),
+    return new Pair<EventSource, EventSink>(buildEventSource(context, tsrc),
         buildEventSink(context, tsnk, sinkFactory));
   }
 
@@ -241,7 +241,8 @@ public class FlumeBuilder {
         CommonTree tsnk = (CommonTree) t.getChild(2);
 
         Pair<EventSource, EventSink> p = new Pair<EventSource, EventSink>(
-            buildEventSource(tsrc), buildEventSink(context, tsnk, sinkFactory));
+            buildEventSource(context, tsrc), buildEventSink(context, tsnk,
+                sinkFactory));
         cfg.put(host, p);
       }
       return cfg;
@@ -258,10 +259,11 @@ public class FlumeBuilder {
    * This should only throw FlumeSpecExceptions (No illegal arg exceptions
    * anymore)
    */
-  public static EventSource buildSource(String s) throws FlumeSpecException {
+  public static EventSource buildSource(Context ctx, String s)
+      throws FlumeSpecException {
     try {
       CommonTree srcTree = parseSource(s);
-      return buildEventSource(srcTree);
+      return buildEventSource(ctx, srcTree);
     } catch (RecognitionException re) {
       LOG.debug("Failure to parse and instantiate sink: '" + s + "'", re);
       throw new FlumeSpecException(re.toString());
@@ -399,19 +401,17 @@ public class FlumeBuilder {
     return new Pair<String, List<String>>(sinkType, args);
   }
 
-  @SuppressWarnings("unchecked")
-  static EventSource buildEventSource(CommonTree t) throws FlumeSpecException {
+  static EventSource buildEventSource(Context context, CommonTree t)
+      throws FlumeSpecException {
     ASTNODE type = ASTNODE.valueOf(t.getText()); // convert to enum
     switch (type) {
     case SOURCE: {
-      // TODO thread context through sources
-      // Context ctx = new Context(context);
-      Context ctx = new Context();
+      Context ctx = new Context(context);
       Pair<String, List<String>> idArgs = handleArgs(t, ctx);
       String sourceType = idArgs.getLeft();
       List<String> args = idArgs.getRight();
 
-      EventSource src = srcFactory.getSource(sourceType, args
+      EventSource src = srcFactory.getSource(ctx, sourceType, args
           .toArray(new String[0]));
       if (src == null) {
         throw new FlumeIdException("Invalid source: "

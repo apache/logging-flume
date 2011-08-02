@@ -33,6 +33,7 @@ import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.FlumeSpecGen;
 import com.cloudera.flume.conf.FlumeConfigData;
+import com.cloudera.flume.conf.LogicalNodeContext;
 import com.google.common.base.Preconditions;
 
 /**
@@ -76,8 +77,10 @@ public class MultiConfigCommand {
           List<FlumeNodeSpec> cfgs = FlumeSpecGen.generate(argv[0]);
           // check all cfgs to make sure they are valid
           for (FlumeNodeSpec spec : cfgs) {
-            FlumeBuilder.buildSource(spec.src);
-            FlumeBuilder.buildSink(new Context(), spec.sink);
+            // TODO: first arg should be physical node
+            Context ctx = new LogicalNodeContext(spec.node, spec.node);
+            FlumeBuilder.buildSource(ctx, spec.src);
+            FlumeBuilder.buildSink(ctx, spec.sink);
           }
 
           // set all cfgs to make sure they are valid.

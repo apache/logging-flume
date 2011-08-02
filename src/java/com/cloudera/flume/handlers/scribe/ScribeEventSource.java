@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.VersionInfo;
+import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
@@ -224,7 +225,7 @@ public class ScribeEventSource extends ThriftServer implements EventSource,
   public static SourceBuilder builder() {
     return new SourceBuilder() {
       @Override
-      public EventSource build(String... argv) {
+      public EventSource build(Context ctx, String... argv) {
         Preconditions.checkArgument(argv.length <= 1, "usage: scribe[(port={"
             + FlumeConfiguration.DEFAULT_SCRIBE_SOURCE_PORT + "})]");
         int port = FlumeConfiguration.get().getScribeSourcePort();
@@ -246,5 +247,6 @@ public class ScribeEventSource extends ThriftServer implements EventSource,
   @Override
   public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
     reports.put(namePrefix + getName(), getReport());
+
   }
 }

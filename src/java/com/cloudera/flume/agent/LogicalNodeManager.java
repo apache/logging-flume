@@ -71,7 +71,8 @@ public class LogicalNodeManager implements Reportable {
   synchronized public void spawn(String name, String src, String snk)
       throws IOException, FlumeSpecException {
     Context ctx = new LogicalNodeContext(physicalNode, name);
-    spawn(ctx, name, FlumeBuilder.buildSource(src), new CompositeSink(ctx, snk));
+    spawn(ctx, name, FlumeBuilder.buildSource(ctx, src), new CompositeSink(ctx,
+        snk));
   }
 
   /**

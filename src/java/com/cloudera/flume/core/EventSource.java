@@ -20,6 +20,7 @@ package com.cloudera.flume.core;
 import java.io.IOException;
 import java.util.Map;
 
+import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.Reportable;
@@ -85,7 +86,7 @@ public interface EventSource extends Reportable {
     public static SourceBuilder builder() {
       return new SourceBuilder() {
         @Override
-        public EventSource build(String... argv) {
+        public EventSource build(Context ctx, String... argv) {
           return new StubSource();
         }
       };
@@ -97,7 +98,7 @@ public interface EventSource extends Reportable {
     public static SourceBuilder builder(final int minArgs, final int maxArgs) {
       return new SourceBuilder() {
         @Override
-        public EventSource build(String... argv) {
+        public EventSource build(Context ctx, String... argv) {
           Preconditions.checkArgument(argv.length >= minArgs,
               "Too few arguments: expected at least " + minArgs
                   + " but only had " + argv.length);

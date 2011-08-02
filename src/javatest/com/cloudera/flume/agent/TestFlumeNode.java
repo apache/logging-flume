@@ -136,7 +136,7 @@ public class TestFlumeNode {
     ;
 
     FlumeBuilder.setSourceFactory(new SourceFactory() {
-      public EventSource getSource(String name, String... args) {
+      public EventSource getSource(Context ctx, String name, String... args) {
         return new NextExnSource();
       }
 

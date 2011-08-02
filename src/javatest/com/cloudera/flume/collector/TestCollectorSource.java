@@ -26,6 +26,7 @@ import org.junit.Test;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
@@ -37,14 +38,16 @@ public class TestCollectorSource {
 
   @Test
   public void testBuilder() throws FlumeSpecException {
+    Context ctx = LogicalNodeContext.testingContext();
     String src = "collectorSource";
-    FlumeBuilder.buildSource(src);
+    FlumeBuilder.buildSource(ctx, src);
 
     String src2 = "collectorSource(5150)";
-    FlumeBuilder.buildSource(src2);
+    FlumeBuilder.buildSource(ctx, src2);
 
     try {
-      FlumeBuilder.buildSource("collectorSource(99, \"red luftballoons\")");
+      FlumeBuilder
+          .buildSource(ctx, "collectorSource(99, \"red luftballoons\")");
     } catch (Exception e) {
       return;
     }
@@ -58,8 +61,10 @@ public class TestCollectorSource {
    * @throws InterruptedException
    */
   @Test
-  public void testCollectorSource() throws FlumeSpecException, IOException, InterruptedException {
-    EventSource src = FlumeBuilder.buildSource("collectorSource(34568)");
+  public void testCollectorSource() throws FlumeSpecException, IOException,
+      InterruptedException {
+    EventSource src = FlumeBuilder.buildSource(LogicalNodeContext
+        .testingContext(), "collectorSource(34568)");
     EventSink snk = FlumeBuilder.buildSink(new Context(),
         "rpcSink(\"localhost\", 34568)");
     src.open();

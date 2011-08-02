@@ -68,8 +68,9 @@ public class TestFlumeBuilderFunctional implements ExampleData {
   @Test
   public void testBuildTextSource() throws IOException, FlumeSpecException,
       InterruptedException {
+    Context ctx = LogicalNodeContext.testingContext();
     LOG.info("Working Dir path: " + new File(".").getAbsolutePath());
-    EventSource src = FlumeBuilder.buildSource(SOURCE);
+    EventSource src = FlumeBuilder.buildSource(ctx, SOURCE);
     src.open();
     Event e = null;
     int cnt = 0;
@@ -84,10 +85,11 @@ public class TestFlumeBuilderFunctional implements ExampleData {
   @Test
   public void testConnector() throws IOException, InterruptedException,
       FlumeSpecException {
+    Context ctx = LogicalNodeContext.testingContext();
     EventSink snk = FlumeBuilder.buildSink(new Context(), "console");
     snk.open();
 
-    EventSource src = FlumeBuilder.buildSource(SOURCE);
+    EventSource src = FlumeBuilder.buildSource(ctx, SOURCE);
     src.open();
 
     DirectDriver conn = new DirectDriver(src, snk);
@@ -103,9 +105,10 @@ public class TestFlumeBuilderFunctional implements ExampleData {
   @Test
   public void testMultiSink() throws IOException, FlumeSpecException,
       InterruptedException {
+    Context ctx = LogicalNodeContext.testingContext();
     LOG.info("== multi test start");
     String multi = "[ console , accumulator(\"count\") ]";
-    EventSource src = FlumeBuilder.buildSource(SOURCE);
+    EventSource src = FlumeBuilder.buildSource(ctx, SOURCE);
     EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), multi);
     src.open();
     snk.open();
@@ -121,11 +124,13 @@ public class TestFlumeBuilderFunctional implements ExampleData {
   @Test
   public void testDecorated() throws IOException, FlumeSpecException,
       InterruptedException {
+    Context ctx = LogicalNodeContext.testingContext();
+
     LOG.info("== Decorated start");
     String decorated = "{ intervalSampler(5) =>  accumulator(\"count\")}";
     // String decorated = "{ intervalSampler(5) =>  console }";
 
-    EventSource src = FlumeBuilder.buildSource(SOURCE);
+    EventSource src = FlumeBuilder.buildSource(ctx, SOURCE);
     EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(),
         decorated);
     src.open();
@@ -142,10 +147,12 @@ public class TestFlumeBuilderFunctional implements ExampleData {
   @Test
   public void testFailover() throws IOException, FlumeSpecException,
       InterruptedException {
+    Context ctx = LogicalNodeContext.testingContext();
+
     LOG.info("== failover start");
     // the primary is 90% flakey
     String multi = "< { flakeyAppend(.9,1337) => console } ? accumulator(\"count\") >";
-    EventSource src = FlumeBuilder.buildSource(SOURCE);
+    EventSource src = FlumeBuilder.buildSource(ctx, SOURCE);
     EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), multi);
     src.open();
     snk.open();

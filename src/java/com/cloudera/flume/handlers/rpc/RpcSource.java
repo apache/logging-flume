@@ -20,6 +20,7 @@ package com.cloudera.flume.handlers.rpc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.EventSink;
@@ -42,7 +43,7 @@ public class RpcSource extends EventSink.Base {
   public static SourceBuilder builder() {
     return new SourceBuilder() {
       @Override
-      public EventSource build(String... argv) {
+      public EventSource build(Context ctx, String... argv) {
         Preconditions.checkArgument(argv.length == 1, "usage: rpcSource(port)");
 
         int port = Integer.parseInt(argv[0]);

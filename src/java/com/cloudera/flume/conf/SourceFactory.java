@@ -28,11 +28,17 @@ import com.cloudera.flume.core.EventSource;
  */
 abstract public class SourceFactory {
   abstract public static class SourceBuilder {
-    public abstract EventSource build(String... argv);
+    @Deprecated
+    public EventSource build(String... argv) {
+      return build(new Context(), argv);
+    }
+
+    public abstract EventSource build(Context ctx, String... argv);
   };
 
-  abstract public EventSource getSource(String name, String... args)
-      throws FlumeSpecException;
+  
+  abstract public EventSource getSource(Context ctx, String name,
+      String... args) throws FlumeSpecException;
 
   /**
    * Returns the list of sources that we can instantiate

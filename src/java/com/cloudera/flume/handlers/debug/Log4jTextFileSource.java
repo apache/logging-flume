@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
@@ -77,8 +78,9 @@ public class Log4jTextFileSource extends TextFileSource {
         if (s2 == null) {
           // reached the last line
           prevLine = null;
-          Event e = new EventImpl(builder.toString().getBytes(), d.getTime(), 
-              Priority.valueOf(prio), nanos, host, new HashMap<String, byte[]>());
+          Event e = new EventImpl(builder.toString().getBytes(), d.getTime(),
+              Priority.valueOf(prio), nanos, host,
+              new HashMap<String, byte[]>());
           return e;
         }
 
@@ -86,8 +88,9 @@ public class Log4jTextFileSource extends TextFileSource {
         Matcher m2 = l4jPat.matcher(s2);
         if (m2.matches()) {
           // a new matching line? event finished, save line for next round.
-          Event e = new EventImpl(builder.toString().getBytes(), d.getTime(), 
-              Priority.valueOf(prio), nanos, host, new HashMap<String, byte[]>());
+          Event e = new EventImpl(builder.toString().getBytes(), d.getTime(),
+              Priority.valueOf(prio), nanos, host,
+              new HashMap<String, byte[]>());
           prevLine = s2;
           return e;
         }
@@ -136,7 +139,7 @@ public class Log4jTextFileSource extends TextFileSource {
   public static SourceBuilder builder() {
     return new SourceBuilder() {
       @Override
-      public EventSource build(String... argv) {
+      public EventSource build(Context ctx, String... argv) {
         if (argv.length != 1) {
           throw new IllegalArgumentException("usage: log4jfile(filename) ");
         }
