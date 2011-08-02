@@ -123,13 +123,6 @@ public class FlumeConfiguration extends Configuration {
   protected FlumeConfiguration(boolean loadDefaults) {
     super();
     if (loadDefaults) {
-      Path home = null;
-      String flumeHome = getFlumeHome();
-      if (flumeHome == null) {
-        home = new Path(".");
-      } else {
-        home = new Path(flumeHome);
-      }
       Path conf = new Path(getFlumeConfDir());
       LOG.info("Loading configurations from " + conf);
       super.addResource(new Path(conf, "flume-conf.xml"));
