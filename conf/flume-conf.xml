@@ -41,7 +41,7 @@ configuration values placed in flume-site.xml.  -->
     subprocess.</description>
   </property>
 
-	<!-- ================================================== -->
+  <!-- ================================================== -->
   <!-- Node Common ====================================== -->
   <!-- ================================================== -->
   <property>
@@ -91,7 +91,7 @@ configuration values placed in flume-site.xml.  -->
   <property>
     <name>flume.agent.logdir.maxage</name>
     <value>10000</value>
-    <description> number of milliseconds before a log file is
+    <description> number of milliseconds before a local log file is
     considered closed and ready to forward.
     </description>
   </property>
@@ -99,8 +99,10 @@ configuration values placed in flume-site.xml.  -->
   <property>
     <name>flume.agent.logdir.retransmit</name>
     <value>60000</value>
-    <description>The time (in  milliseconds) before a sent event is assumed
-    lost and needs to be retried in end-to-end reliability mode.
+    <description>The time (in milliseconds) before a sent event is
+    assumed lost and needs to be retried in end-to-end reliability
+    mode again.  This should be at least 2x the
+    flume.collector.roll.millis.
     </description>
   </property> 
   
@@ -171,7 +173,7 @@ configuration values placed in flume-site.xml.  -->
       avrojson - this outputs data as json encoded by avro
       avrodata - this outputs data as a avro binary encoded data
       debug - used only for debugging
-			raw - output only the event body, no metadata
+      raw - output only the event body, no metadata
     </description>
   </property>  
 
@@ -179,36 +181,37 @@ configuration values placed in flume-site.xml.  -->
   <!-- Master =========================================== -->
   <!-- ================================================== -->
 
-	<property>
-		<name>flume.master.servers</name>
-		<value>localhost</value>
-		<description>A comma-separated list of hostnames, one for each
-		machine in the Flume Master.
-		</description>
-	</property>
-	
-	<property>
-		<name>flume.master.store</name>
-		<value>zookeeper</value>
-		<description>How the Flume Master stores node configurations. Must
-		be either 'zookeeper' or 'memory'.</description>
-	</property>
-
-	<property>
-		<name>flume.master.serverid</name>
-		<value>0</value>
-		<description>The unique identifier for a machine in a Flume Master
-		ensemble. Must be different on every machine.</description>
-	</property>
-
-	<property>
-		<name>flume.master.http.port</name>
-		<value>35871</value>
-		<description>The port on which a Flume Master machine starts its
-		HTTP server.
-		</description>
-	</property>
-
+  <property>
+    <name>flume.master.servers</name>
+    <value>localhost</value>
+    <description>A comma-separated list of hostnames, one for each
+      machine in the Flume Master.
+    </description>
+  </property>
+  
+  <property>
+    <name>flume.master.store</name>
+    <value>zookeeper</value>
+    <description>How the Flume Master stores node configurations. Must
+      be either 'zookeeper' or 'memory'.</description>
+  </property>
+  
+  <property>
+    <name>flume.master.serverid</name>
+    <value>0</value>
+    <description>The unique identifier for a machine in a
+      Flume Master ensemble. Must be different on every
+      master instance.</description>
+  </property>
+  
+  <property>
+    <name>flume.master.http.port</name>
+    <value>35871</value>
+    <description>The port on which a Flume Master machine starts its
+      HTTP server.
+    </description>
+  </property>
+  
   <property>
     <name>flume.master.heartbeat.missed.max</name>
     <value>10</value>
@@ -233,21 +236,21 @@ configuration values placed in flume-site.xml.  -->
     </description>
   </property>
 
-	<property>
-		<name>flume.master.gossip.period</name>
-		<value>1000</value>
+  <property>
+    <name>flume.master.gossip.period</name>
+    <value>1000</value>
     <description>The time (in milliseconds) that a Flume Master server
-    waits between rounds of gossip.</description>
-	</property>
-
+      waits between rounds of gossip.</description>
+  </property>
+  
   <!-- ================================================== -->
   <!-- Master ZooKeeper store =========================== -->
   <!-- ================================================== -->
-
-	<property>
-		<name>flume.master.zk.logdir</name>
-		<value>/tmp/flume-zk</value>
-		<description>The base directory in which the ZBCS stores data.</description>
-	</property>
-
+  
+  <property>
+    <name>flume.master.zk.logdir</name>
+    <value>/tmp/flume-zk</value>
+    <description>The base directory in which the ZBCS stores data.</description>
+  </property>
+  
 </configuration>

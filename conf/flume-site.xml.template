@@ -23,20 +23,18 @@
 <configuration>
 
   <property>
-    <name>flume.config.master.addr</name>
+    <name>flume.master.servers</name>
     <value>masterhost</value>
     <description>This is the address for the config servers status
     server (http)
     </description>
   </property>
 
-
+<!--
   <property>
-    <name>flume.collector.event.host</name>
-    <value>collectorhost</value>
-    <description>remote collector machine address
-    </description>
+    <name>flume.plugin.classes</name>
+    <value>helloworld.HelloWorldSink,helloworld.HelloWorldSource,helloworld.HelloWorldDecorator</value>
+    <description>Comma separated list of plugin classes</description>
   </property>
-
-
+-->
 </configuration>

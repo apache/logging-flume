@@ -105,8 +105,6 @@ public class FlumeConfiguration extends Configuration {
 
   // Agent parameters
   public final static String AGENT_LOG_DIR_NEW = "flume.agent.logdir";
-  // public final static String AGENT_LOG_DIR_ACKED =
-  // "flume.agent.logdir.acked";
   public final static String AGENT_LOG_MAX_AGE = "flume.agent.logdir.maxage";
   public static final String AGENT_LOG_ACKED_RETRANSMIT_AGE = "flume.agent.logdir.retransmit";
 
@@ -385,7 +383,7 @@ public class FlumeConfiguration extends Configuration {
   }
 
   public String getAgentLogsDir() {
-    return get(AGENT_LOG_DIR_NEW, "/tmp/flume");
+    return get(AGENT_LOG_DIR_NEW, "/tmp/flume/agent");
   }
 
   public long getAgentLogMaxAge() {
@@ -819,15 +817,15 @@ public class FlumeConfiguration extends Configuration {
   public String getDefaultFlowName() {
     return get(DEFAULT_FLOW_NAME, "default-flow");
   }
-  
+
   /**
    * Returns the current FlumeConfiguration as an HTML string
    */
   public String toHtml() {
-    Iterator<Entry<String,String>> iter = iterator();
+    Iterator<Entry<String, String>> iter = iterator();
     ArrayList<String> keys = new ArrayList<String>();
     while (iter.hasNext()) {
-      Entry<String,String> e = iter.next();
+      Entry<String, String> e = iter.next();
       keys.add(e.getKey());
     }
     Collections.sort(keys);
