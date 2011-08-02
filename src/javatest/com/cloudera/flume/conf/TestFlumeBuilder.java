@@ -40,7 +40,8 @@ import com.cloudera.flume.master.availability.FailoverChainSink;
  */
 public class TestFlumeBuilder implements ExampleData {
 
-  public static final Logger LOG = LoggerFactory.getLogger(TestFlumeBuilder.class);
+  public static final Logger LOG = LoggerFactory
+      .getLogger(TestFlumeBuilder.class);
   String SOURCE = "text(\"bogusfile\")";
 
   @Test
@@ -77,7 +78,7 @@ public class TestFlumeBuilder implements ExampleData {
     try {
       // too many arguments
       FlumeBuilder.buildSink(new Context(), "console(1,2,3,4,5,6)");
-    } catch (FlumeArgException e) {
+    } catch (FlumeSpecException e) {
       System.out.println(e);
       return;// we expected this exception to be thrown.
     }
@@ -178,8 +179,17 @@ public class TestFlumeBuilder implements ExampleData {
 
   @Test
   public void testFailover() throws IOException, FlumeSpecException {
+    String multi2 = "< flakeyAppend(.9,1337) console ? counter(\"count\") >";
+    FlumeBuilder.buildSink(new Context(), multi2);
+
     String multi = "< { flakeyAppend(.9,1337) => console } ? counter(\"count\") >";
     FlumeBuilder.buildSink(new Context(), multi);
+  }
+
+  @Test
+  public void testTerseDeco() throws IOException, FlumeSpecException {
+    String multi2 = "flakeyAppend(.9,1337) console";
+    FlumeBuilder.buildSink(new Context(), multi2);
   }
 
   @Test

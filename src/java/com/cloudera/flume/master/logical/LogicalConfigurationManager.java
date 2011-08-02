@@ -48,7 +48,8 @@ import com.cloudera.flume.master.logical.LogicalNameManager.PhysicalNodeInfo;
  */
 public class LogicalConfigurationManager extends
     TranslatingConfigurationManager implements Translator {
-  static final Logger LOG = LoggerFactory.getLogger(LogicalConfigurationManager.class);
+  static final Logger LOG = LoggerFactory
+      .getLogger(LogicalConfigurationManager.class);
   public static final String NAME = "LogicalTranslator";
   final LogicalNameManager nameMan;
 
@@ -70,8 +71,8 @@ public class LogicalConfigurationManager extends
       FlumeSpecException {
     CommonTree lsnkTree = FlumeBuilder.parseSink(sink);
     LOG.debug(lsnkTree.toStringTree());
-    PatternMatch p = recursive(var("lsnk", kind("SINK").child(
-        kind("logicalSink"))));
+    PatternMatch p = recursive(var("lsnk", kind("DECO").child(
+        kind("SINK").child(kind("logicalSink")))));
     Map<String, CommonTree> matches = p.match(lsnkTree);
 
     if (matches == null) {
@@ -83,7 +84,8 @@ public class LogicalConfigurationManager extends
     final String orig = StringEscapeUtils.escapeJava(FlumeSpecGen
         .genEventSink(lsnk));
 
-    String tgtLn = FlumeBuilder.buildSimpleArg((CommonTree) lsnk.getChild(1));
+    String tgtLn = FlumeBuilder.buildSimpleArg((CommonTree) lsnk.getChild(0)
+        .getChild(1));
 
     PhysicalNodeInfo pni = nameMan.getPhysicalNodeInfo(tgtLn);
 

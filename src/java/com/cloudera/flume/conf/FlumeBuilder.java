@@ -463,8 +463,20 @@ public class FlumeBuilder {
     }
     case DECO: {
       List<CommonTree> decoNodes = (List<CommonTree>) t.getChildren();
-      Preconditions.checkArgument(decoNodes.size() == 2,
-          "Only supports one decorator per expression");
+      Preconditions.checkArgument(decoNodes.size() <= 2,
+          "Only supports one or no decorators per expression");
+      // no decorators
+      if (decoNodes.size() == 1) {
+        CommonTree snkt = decoNodes.get(0);
+        try {
+          EventSink singleSnk = buildEventSink(context, snkt, sinkFactory);
+          return singleSnk;
+        } catch (FlumeSpecException ife) {
+          throw ife;
+        }
+      }
+
+      // single decorator
       CommonTree deco = decoNodes.get(0);
       CommonTree decoSnk = decoNodes.get(1);
       EventSinkDecorator<EventSink> decoSink = buildEventSinkDecorator(context,

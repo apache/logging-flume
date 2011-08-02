@@ -129,7 +129,12 @@ public class FlumeSpecGen {
 
     case DECO: {
       List<CommonTree> decoNodes = (List<CommonTree>) t.getChildren();
-      Preconditions.checkArgument(decoNodes.size() == 2);
+      Preconditions.checkArgument(decoNodes.size() == 2
+          || decoNodes.size() == 1);
+      if (decoNodes.size() == 1) {
+        CommonTree snk = decoNodes.get(0);
+        return genEventSink(snk);
+      }
       CommonTree deco = decoNodes.get(0);
       CommonTree decoSnk = decoNodes.get(1);
       String decoSink = genEventSinkDecorator(deco);

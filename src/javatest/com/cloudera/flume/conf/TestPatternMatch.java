@@ -125,7 +125,8 @@ public class TestPatternMatch {
   public void testAnyChild() throws RecognitionException {
     CommonTree sink = FlumeBuilder.parseSink(simple);
     PatternMatch pp = kind("DECO").child(
-        kind("SINK").child(var("node", kind("logicalNode"))));
+        kind("DECO")
+            .child(kind("SINK").child(var("node", kind("logicalNode")))));
 
     Map<String, CommonTree> m = pp.match(sink);
     assertNotNull(m);
@@ -136,8 +137,10 @@ public class TestPatternMatch {
   @Test
   public void testNth() throws RecognitionException {
     CommonTree sink = FlumeBuilder.parseSink(simple);
-    PatternMatch pp = kind("DECO").nth(1,
-        kind("SINK").child(var("node", kind("logicalNode"))));
+    PatternMatch pp = kind("DECO").nth(
+        1,
+        kind("DECO")
+            .child(kind("SINK").child(var("node", kind("logicalNode")))));
 
     Map<String, CommonTree> m = pp.match(sink);
     assertNotNull(m);
@@ -158,7 +161,7 @@ public class TestPatternMatch {
   @Test
   public void testRecursive() throws RecognitionException {
     CommonTree sink = FlumeBuilder
-        .parseSink("let foo := < null ? [ console, { test => { test2 =>  { batch(10) => logicalNode(\"collector\")  } } } ] > in foo");
+        .parseSink("roll (200) { < null ? [ console, { test => { test2 =>  { batch(10) => logicalNode(\"collector\")  } } } ] > }");
     LOG.info(sink.toStringTree());
 
     PatternMatch pp = recursive(var("batchsize", kind("DEC")));
@@ -193,8 +196,8 @@ public class TestPatternMatch {
     CommonTree sink = FlumeBuilder
         .parseSink(" { batch(10) => logicalNode(\"collector\")  } ");
     // PatternMatch pdeco = var("deco", kind("DECO"));
-    PatternMatch pdeco = tuple(kind("DECO"), var("deco", kind("SINK")), var(
-        "child", kind("SINK")));
+    PatternMatch pdeco = tuple(kind("DECO"), var("deco", kind("SINK")), kind(
+        "DECO").child(var("child", kind("SINK"))));
 
     /*
      * .child( tuple(var("deco", kind("SINK")), var("child", wild())));
@@ -239,7 +242,7 @@ public class TestPatternMatch {
     CommonTree replace = FlumeBuilder.parseSink("rpcSink(\"foo\",12345)");
     LOG.info(replace.toStringTree());
 
-    fix.parent.replaceChildren(1, 1, replace);
+    fix.parent.parent.replaceChildren(1, 1, replace);
 
     LOG.info(sink.toStringTree());
     String out = FlumeSpecGen.genEventSink(sink);
@@ -281,8 +284,9 @@ public class TestPatternMatch {
     LOG.info(m);
 
     // shadow -- left wins. (could be collector1, collector2, or collector 3)
-    pp = recursive(tuple(kind("MULTI"), var("ln", kind("SINK")), var("ln",
-        kind("SINK")), var("ln", kind("SINK"))));
+    pp = recursive(tuple(kind("MULTI"), kind("DECO").child(
+        var("ln", kind("SINK"))), kind("DECO").child(var("ln", kind("SINK"))),
+        kind("DECO").child(var("ln", kind("SINK")))));
     m = pp.match(sink);
     assertNotNull(m);
     lnCt = (CommonTree) m.get("ln").getChild(1);
@@ -291,8 +295,9 @@ public class TestPatternMatch {
     LOG.info(m);
 
     // shadow -- parent wins. (could be MULTI, or collector1,2,3)
-    pp = recursive(tuple(var("ln", kind("MULTI")), var("ln", kind("SINK")),
-        var("ln", kind("SINK")), var("ln", kind("SINK"))));
+    pp = recursive(tuple(var("ln", kind("MULTI")), kind("DECO").child(
+        var("ln", kind("SINK"))), kind("DECO").child(var("ln", kind("SINK"))),
+        kind("DECO").child(var("ln", kind("SINK")))));
     m = pp.match(sink);
     assertNotNull(m);
     lnCt = (CommonTree) m.get("ln");

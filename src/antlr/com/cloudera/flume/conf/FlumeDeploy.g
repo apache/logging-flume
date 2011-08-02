@@ -119,14 +119,15 @@ singleSink	:	Identifier args? 	-> ^(SINK Identifier args?);
 sinkEof		:	simpleSink EOF;
 
 simpleSink	:	'[' multiSink ']'  	-> ^(MULTI multiSink) 
+        |   singleSink simpleSink?  -> ^(DECO singleSink simpleSink?) 
 		|	'{' decoratedSink '}'	-> ^(DECO decoratedSink)
 		|	'<' failoverSink '>'	-> ^(BACKUP failoverSink)
 		|   letSink                 -> letSink
-		|	singleSink              -> singleSink 
         |   rollSink                -> rollSink
         |   failoverChain           -> failoverChain 
 		; 
  			
+
 decoratedSink   :  singleSink '=>' sink	 		-> singleSink sink;
 multiSink       :  simpleSink (',' simpleSink)* 	-> simpleSink* ;
 failoverSink    :  simpleSink ('?' simpleSink)+	-> simpleSink+;	

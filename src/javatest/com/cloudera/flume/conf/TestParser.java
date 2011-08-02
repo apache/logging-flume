@@ -97,7 +97,7 @@ public class TestParser implements ExampleData {
     LOG.info(s);
     LOG.info(toTree(o));
     assertEquals(
-        "(SINK text (KWARG bogus (STRING \"bogusdata\")) (KWARG foo (STRING \"bar\")))",
+        "(DECO (SINK text (KWARG bogus (STRING \"bogusdata\")) (KWARG foo (STRING \"bar\"))))",
         toTree(o));
 
     // normal arg then kwargs
@@ -106,7 +106,7 @@ public class TestParser implements ExampleData {
     LOG.info(s2);
     LOG.info(toTree(o2));
     assertEquals(
-        "(SINK text (STRING \"bogusdata\") (KWARG foo (STRING \"bar\")))",
+        "(DECO (SINK text (STRING \"bogusdata\") (KWARG foo (STRING \"bar\"))))",
         toTree(o2));
 
     // normal arg then kwargs
@@ -115,7 +115,7 @@ public class TestParser implements ExampleData {
     LOG.info(s2);
     LOG.info(toTree(o2));
     assertEquals(
-        "(SINK text (STRING \"bogusdata\") (KWARG foo (STRING \"bar\")) (KWARG boo (FLOAT 1.5)))",
+        "(DECO (SINK text (STRING \"bogusdata\") (KWARG foo (STRING \"bar\")) (KWARG boo (FLOAT 1.5))))",
         toTree(o2));
 
   }
@@ -202,27 +202,27 @@ public class TestParser implements ExampleData {
     Object o = FlumeBuilder.parseSink(s);
     LOG.info(s);
     LOG.info(toTree(o));
-    assertEquals("(SINK text)", toTree(o));
+    assertEquals("(DECO (SINK text))", toTree(o));
 
     String s2 = "text(\"bogusdata\")";
 
     Object o2 = FlumeBuilder.parseSink(s2);
     LOG.info(s2);
     LOG.info(toTree(o2));
-    assertEquals("(SINK text (STRING \"bogusdata\"))", toTree(o2));
+    assertEquals("(DECO (SINK text (STRING \"bogusdata\")))", toTree(o2));
 
     String s3 = "[text(true)]";
     Object o3 = FlumeBuilder.parseSink(s3);
     LOG.info(s3);
     LOG.info(toTree(o3));
-    assertEquals("(MULTI (SINK text (BOOL true)))", toTree(o3));
+    assertEquals("(MULTI (DECO (SINK text (BOOL true))))", toTree(o3));
 
     String s4 = "[text(true) , tail(\"somthingelse\") ]";
     Object o4 = FlumeBuilder.parseSink(s4);
     LOG.info(s4);
     LOG.info(toTree(o4));
     assertEquals(
-        "(MULTI (SINK text (BOOL true)) (SINK tail (STRING \"somthingelse\")))",
+        "(MULTI (DECO (SINK text (BOOL true))) (DECO (SINK tail (STRING \"somthingelse\"))))",
         toTree(o4));
   }
 
@@ -234,7 +234,8 @@ public class TestParser implements ExampleData {
     String s = "nodename : nodesource | nodesink;";
     Object o = FlumeBuilder.parse(s);
     LOG.info(toTree(o));
-    assertEquals("(NODE nodename (SOURCE nodesource) (SINK nodesink)) null",
+    assertEquals(
+        "(NODE nodename (SOURCE nodesource) (DECO (SINK nodesink))) null",
         toTree(o));
   }
 
@@ -245,19 +246,39 @@ public class TestParser implements ExampleData {
     String s = "{ deco => nodesink } ";
     Object o = FlumeBuilder.parseSink(s);
     LOG.info(toTree(o));
-    assertEquals("(DECO (SINK deco) (SINK nodesink))", toTree(o));
+    assertEquals("(DECO (SINK deco) (DECO (SINK nodesink)))", toTree(o));
 
     String s3 = "{ deco1 => [ sink1, sink2] } ";
     Object o3 = FlumeBuilder.parseSink(s3);
     LOG.info(toTree(o3));
-    assertEquals("(DECO (SINK deco1) (MULTI (SINK sink1) (SINK sink2)))",
+    assertEquals(
+        "(DECO (SINK deco1) (MULTI (DECO (SINK sink1)) (DECO (SINK sink2))))",
         toTree(o3));
 
     // Test a "tight decorator" -- no extra spaces
     String s4 = "{deco1=>sink1} ";
     Object o4 = FlumeBuilder.parseSink(s4);
     LOG.info(toTree(o4));
-    assertEquals("(DECO (SINK deco1) (SINK sink1))", toTree(o4));
+    assertEquals("(DECO (SINK deco1) (DECO (SINK sink1)))", toTree(o4));
+  }
+
+  @Test
+  public void testTerseDeco() throws RecognitionException {
+    String multi2 = "flakeyAppend(.9,1337) console";
+    Object o = FlumeBuilder.parseSink(multi2);
+    LOG.info(toTree(o));
+
+    assertEquals(
+        "(DECO (SINK flakeyAppend (FLOAT .9) (DEC 1337)) (DECO (SINK console)))",
+        toTree(o));
+
+    String multi = "stubbornAppend flakeyAppend(.9,1337) console";
+    Object o2 = FlumeBuilder.parseSink(multi);
+    LOG.info(toTree(o2));
+
+    assertEquals(
+        "(DECO (SINK stubbornAppend) (DECO (SINK flakeyAppend (FLOAT .9) (DEC 1337)) (DECO (SINK console))))",
+        toTree(o2));
   }
 
   @Test(expected = RuntimeRecognitionException.class)
@@ -270,26 +291,39 @@ public class TestParser implements ExampleData {
         toTree(o2));
   }
 
+  @Test
   public void testFailover() throws RecognitionException {
     LOG.info("== Failover ==");
 
     String s = "< deco ? nodesink > ";
     Object o = FlumeBuilder.parseSink(s);
     LOG.info(toTree(o));
-    assertEquals("(BACKUP (SINK deco) (SINK nodesink))", toTree(o));
+    assertEquals("(BACKUP (DECO (SINK deco)) (DECO (SINK nodesink)))",
+        toTree(o));
 
     String s2 = "<<  deco1 ? deco22 > ? nodesink > ";
     Object o2 = FlumeBuilder.parseSink(s2);
     LOG.info(toTree(o2));
     assertEquals(
-        "(BACKUP (BACKUP (SINK deco1) (SINK deco22)) (SINK nodesink))",
+        "(BACKUP (BACKUP (DECO (SINK deco1)) (DECO (SINK deco22))) (DECO (SINK nodesink)))",
         toTree(o2));
 
     String s3 = "< deco1 ? [ sink1, sink2] > ";
     Object o3 = FlumeBuilder.parseSink(s3);
     LOG.info(toTree(o3));
-    assertEquals("(BACKUP (SINK deco1) (MULTI (SINK sink1) (SINK sink2)))",
+    assertEquals(
+        "(BACKUP (DECO (SINK deco1)) (MULTI (DECO (SINK sink1)) (DECO (SINK sink2))))",
         toTree(o3));
+  }
+
+  @Test
+  public void testRoll() throws RecognitionException {
+    LOG.info("== roll == ");
+
+    String s = "roll(100) { null }";
+    Object o = FlumeBuilder.parseSink(s);
+    LOG.info(toTree(o));
+    assertEquals("(ROLL (DECO (SINK null)) (DEC 100))", toTree(o));
   }
 
   /**
@@ -297,43 +331,46 @@ public class TestParser implements ExampleData {
    * that it works as a subsink, and can compose other lets (in the arg and body
    * slots).
    */
+  @Test
   public void testLet() throws RecognitionException {
     LOG.info("== Let ==");
 
     String s = "let foo := console in foo ";
     Object o = FlumeBuilder.parseSink(s);
     LOG.info(toTree(o));
-    assertEquals("(LET foo (SINK console) (SINK foo))", toTree(o));
+    assertEquals("(LET foo (DECO (SINK console)) (DECO (SINK foo)))", toTree(o));
 
     String s2 = "let foo := console in < foo ? [ console, foo] >";
     Object o2 = FlumeBuilder.parseSink(s2);
     LOG.info(toTree(o2));
     assertEquals(
-        "(LET foo (SINK console) (BACKUP (SINK foo) (MULTI (SINK console) (SINK foo))))",
+        "(LET foo (DECO (SINK console)) (BACKUP (DECO (SINK foo)) (MULTI (DECO (SINK console)) (DECO (SINK foo)))))",
         toTree(o2));
 
     String s3 = "[ let foo := console in foo, let bar := console in bar ]";
     Object o3 = FlumeBuilder.parseSink(s3);
     LOG.info(toTree(o3));
     assertEquals(
-        "(MULTI (LET foo (SINK console) (SINK foo)) (LET bar (SINK console) (SINK bar)))",
+        "(MULTI (LET foo (DECO (SINK console)) (DECO (SINK foo))) (LET bar (DECO (SINK console)) (DECO (SINK bar))))",
         toTree(o3));
 
     String s4 = "let foo := console in let bar := console in [ foo, bar ]";
     Object o4 = FlumeBuilder.parseSink(s4);
     LOG.info(toTree(o4));
     assertEquals(
-        "(LET foo (SINK console) (LET bar (SINK console) (MULTI (SINK foo) (SINK bar))))",
+        "(LET foo (DECO (SINK console)) (LET bar (DECO (SINK console)) (MULTI (DECO (SINK foo)) (DECO (SINK bar)))))",
         toTree(o4));
 
     String s5 = "let foo := let bar := console in bar in foo";
     Object o5 = FlumeBuilder.parseSink(s5);
     LOG.info(toTree(o5));
-    assertEquals("(LET foo (LET bar (SINK console) (SINK bar)) (SINK foo))",
+    assertEquals(
+        "(LET foo (LET bar (DECO (SINK console)) (DECO (SINK bar))) (DECO (SINK foo)))",
         toTree(o5));
 
   }
 
+  @Test
   public void testCombo() throws RecognitionException {
     LOG.info("== Combo ==");
 
@@ -341,21 +378,21 @@ public class TestParser implements ExampleData {
     Object o = FlumeBuilder.parseSink(s);
     LOG.info(toTree(o));
     assertEquals(
-        "(BACKUP (SINK deco) (MULTI (SINK nodesink) (SINK nodesink2)))",
+        "(BACKUP (DECO (SINK deco)) (MULTI (DECO (SINK nodesink)) (DECO (SINK nodesink2))))",
         toTree(o));
 
     String s2 = "{ deco1 =>  <<  deco1 ? deco22 > ? nodesink > }";
     Object o2 = FlumeBuilder.parseSink(s2);
     LOG.info(toTree(o2));
     assertEquals(
-        "(DECO (SINK deco1) (BACKUP (BACKUP (SINK deco1) (SINK deco22)) (SINK nodesink)))",
+        "(DECO (SINK deco1) (BACKUP (BACKUP (DECO (SINK deco1)) (DECO (SINK deco22))) (DECO (SINK nodesink))))",
         toTree(o2));
 
     String s3 = "< deco1 ? [ {sampler => sink1 } , sink2] > ";
     Object o3 = FlumeBuilder.parseSink(s3);
     LOG.info(toTree(o3));
     assertEquals(
-        "(BACKUP (SINK deco1) (MULTI (DECO (SINK sampler) (SINK sink1)) (SINK sink2)))",
+        "(BACKUP (DECO (SINK deco1)) (MULTI (DECO (SINK sampler) (DECO (SINK sink1))) (DECO (SINK sink2))))",
         toTree(o3));
   }
 
