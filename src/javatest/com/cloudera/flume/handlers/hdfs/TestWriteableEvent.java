@@ -24,17 +24,20 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
-import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.Event.Priority;
+import com.cloudera.flume.core.EventImpl;
 import com.cloudera.util.Clock;
 import com.cloudera.util.NetUtils;
 
 /**
  * Test to make sure Writeables serialize and deserialize to the same values.
  */
-public class TestWriteableEvent extends TestCase {
+public class TestWriteableEvent {
+
+  @Test
   public void testWritableReversible() throws IOException {
     String s = "this is a test string";
     WriteableEvent e = new WriteableEvent(new EventImpl(s.getBytes()));
@@ -45,15 +48,16 @@ public class TestWriteableEvent extends TestCase {
     byte[] stuff = bas.toByteArray();
 
     WriteableEvent e2 = WriteableEvent.createWriteableEvent(stuff);
-    assertEquals(e.getTimestamp(), e2.getTimestamp());
-    assertEquals(e.getPriority(), e2.getPriority());
-    assertTrue(Arrays.equals(e.getBody(), e2.getBody()));
+    Assert.assertEquals(e.getTimestamp(), e2.getTimestamp());
+    Assert.assertEquals(e.getPriority(), e2.getPriority());
+    Assert.assertTrue(Arrays.equals(e.getBody(), e2.getBody()));
 
   }
 
   /**
    * Test the map serialization and deserialization.
    */
+  @Test
   public void testWritableReversibleWithField() throws IOException {
     String s = "this is a test string";
     Map<String, byte[]> fields = new HashMap<String, byte[]>();
@@ -70,18 +74,19 @@ public class TestWriteableEvent extends TestCase {
     byte[] stuff = bas.toByteArray();
 
     WriteableEvent e2 = WriteableEvent.createWriteableEvent(stuff);
-    assertEquals(e.getTimestamp(), e2.getTimestamp());
-    assertEquals(e.getPriority(), e2.getPriority());
-    assertTrue(Arrays.equals(e.getBody(), e2.getBody()));
+    Assert.assertEquals(e.getTimestamp(), e2.getTimestamp());
+    Assert.assertEquals(e.getPriority(), e2.getPriority());
+    Assert.assertTrue(Arrays.equals(e.getBody(), e2.getBody()));
 
     byte[] data2 = e2.get("test");
-    assertTrue(Arrays.equals(data, data2));
+    Assert.assertTrue(Arrays.equals(data, data2));
 
   }
 
   /**
    * Test the map serialization and deserialization.
    */
+  @Test
   public void testWritableReversibleWithFields() throws IOException {
     String s = "this is a test string";
     Map<String, byte[]> fields = new HashMap<String, byte[]>();
@@ -100,12 +105,12 @@ public class TestWriteableEvent extends TestCase {
     byte[] stuff = bas.toByteArray();
 
     WriteableEvent e2 = WriteableEvent.createWriteableEvent(stuff);
-    assertEquals(e.getTimestamp(), e2.getTimestamp());
-    assertEquals(e.getPriority(), e2.getPriority());
-    assertTrue(Arrays.equals(e.getBody(), e2.getBody()));
+    Assert.assertEquals(e.getTimestamp(), e2.getTimestamp());
+    Assert.assertEquals(e.getPriority(), e2.getPriority());
+    Assert.assertTrue(Arrays.equals(e.getBody(), e2.getBody()));
 
     byte[] data2 = e2.get("test");
-    assertTrue(Arrays.equals(data, data2));
-    assertTrue(val.equals(new String(e2.get("moredata"))));
+    Assert.assertTrue(Arrays.equals(data, data2));
+    Assert.assertTrue(val.equals(new String(e2.get("moredata"))));
   }
 }

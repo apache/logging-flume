@@ -21,7 +21,8 @@ package com.cloudera.flume.reporter;
 import java.io.IOException;
 import java.util.Collection;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.ExampleData;
 import com.cloudera.flume.core.EventSource;
@@ -36,7 +37,9 @@ import com.cloudera.flume.reporter.histogram.RegexGroupHistogramSink;
  * Currently this is just a quick test harness to make sure things don't
  * explode, and to feel out the data set that I am looking at.
  */
-public class TestHadoopLogData extends TestCase implements ExampleData {
+public class TestHadoopLogData implements ExampleData {
+
+  @Test
   public void testLineCount() throws IOException {
     EventSource src = new NoNlASCIISynthSource(25, 100, 1);
     src.open();
@@ -52,7 +55,7 @@ public class TestHadoopLogData extends TestCase implements ExampleData {
     for (RegexGroupHistogramSink r : sinks) {
       System.out.println(r.getHistogram());
     }
-    assertEquals(5, sinks.size());
+    Assert.assertEquals(5, sinks.size());
 
   }
 

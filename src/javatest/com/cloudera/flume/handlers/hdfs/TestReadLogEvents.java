@@ -20,7 +20,8 @@ package com.cloudera.flume.handlers.hdfs;
 import java.io.File;
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
@@ -30,8 +31,9 @@ import com.cloudera.flume.core.EventImpl;
  * 
  * TODO (jon) Update this test because of change in event format.
  */
-public class TestReadLogEvents extends TestCase {
+public class TestReadLogEvents {
 
+  @Test
   public void testReadLogEvents() throws IOException {
     File tmp = File.createTempFile("test", "tmp");
     tmp.deleteOnExit();
@@ -51,6 +53,6 @@ public class TestReadLogEvents extends TestCase {
       System.out.println("" + i + " " + e);
       i++;
     }
-    assertEquals(i, 100);
+    Assert.assertEquals(i, 100);
   }
 }

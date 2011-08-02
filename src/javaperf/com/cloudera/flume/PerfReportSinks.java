@@ -21,7 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventUtil;
@@ -38,7 +38,9 @@ import com.cloudera.util.Benchmark;
  * This set of performance tests isolate the system from I/O so so we can
  * measure the overhead of the actual reporting machinery.
  */
-public class PerfReportSinks extends TestCase implements ExamplePerfData {
+public class PerfReportSinks implements ExamplePerfData {
+
+  @Test
   public void testNullSink() throws IOException {
     Benchmark b = new Benchmark("nullsink");
     b.mark("begin");
@@ -57,6 +59,7 @@ public class PerfReportSinks extends TestCase implements ExamplePerfData {
     b.done();
   }
 
+  @Test
   public void testCountSink() throws IOException {
     Benchmark b = new Benchmark("nullsink");
     b.mark("begin");
@@ -75,6 +78,7 @@ public class PerfReportSinks extends TestCase implements ExamplePerfData {
     b.done();
   }
 
+  @Test
   public void testHadoopRegexes() throws IOException {
     Benchmark b = new Benchmark("hadoop_regexes");
     b.mark("begin");
@@ -100,6 +104,7 @@ public class PerfReportSinks extends TestCase implements ExamplePerfData {
     b.done();
   }
 
+  @Test
   public void testHadoopRegexes11() throws IOException {
     Benchmark b = new Benchmark("hadoop_regexes");
     b.mark("begin");

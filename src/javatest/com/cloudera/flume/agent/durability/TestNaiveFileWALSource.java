@@ -22,10 +22,11 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import junit.framework.TestCase;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.handlers.hdfs.SeqfileEventSource;
@@ -36,7 +37,7 @@ import com.cloudera.util.FileUtil;
  * This tests the write ahead log source against some trouble conditions --
  * empty file, truncated file.
  */
-public class TestNaiveFileWALSource extends TestCase {
+public class TestNaiveFileWALSource {
 
   // has 5 good entries.
   final static String WAL_OK = "src/data/hadoop_logs_5.hdfs";
@@ -44,6 +45,7 @@ public class TestNaiveFileWALSource extends TestCase {
   // this file has been prematurely truncated and is thus corrupt.
   final static String WAL_CORRUPT = "src/data/hadoop_logs_5.hdfs.aa";
 
+  @Before
   public void setUp() {
     System.out.println("====================================================");
     Logger LOG = Logger.getLogger(NaiveFileWALManager.class.getName());
@@ -53,6 +55,7 @@ public class TestNaiveFileWALSource extends TestCase {
   /**
    * Seqfile should fail on open when reading an empty file
    */
+  @Test
   public void testSeqfileErrorOnOpen() throws IOException, InterruptedException {
     System.out.println("Exception on open empty file with seqfile");
     File tmpdir = FileUtil.mktempdir();
@@ -76,7 +79,7 @@ public class TestNaiveFileWALSource extends TestCase {
       return;
     }
 
-    fail("should have failed with io exception");
+    Assert.fail("should have failed with io exception");
 
   }
 
@@ -87,6 +90,7 @@ public class TestNaiveFileWALSource extends TestCase {
    * This test demonstrates this by starting the WALSource, calling next in a
    * separate thread, and waits a little. Nothing should have happened.
    */
+  @Test
   public void testSurviveErrorOnOpen() throws IOException, InterruptedException {
     System.out.println("Survive error on open with WALSource");
     File basedir = FileUtil.mktempdir();
@@ -131,7 +135,7 @@ public class TestNaiveFileWALSource extends TestCase {
 
     src.close();
 
-    assertTrue(okstate.get()); // no unexepcted exns or fall throughs.
+    Assert.assertTrue(okstate.get()); // no unexepcted exns or fall throughs.
   }
 
   /**
@@ -139,6 +143,7 @@ public class TestNaiveFileWALSource extends TestCase {
    * should then encounter a file with zero size and fails to open). It should
    * continue if there are more data or block if there is not.
    */
+  @Test
   public void testSurviveEmptyFile() throws IOException, InterruptedException {
 
     System.out.println("Survive empty file with walsource");
@@ -195,8 +200,8 @@ public class TestNaiveFileWALSource extends TestCase {
 
     src.close();
 
-    assertTrue(okstate.get()); // no unexpected exceptions
-    assertEquals(5, count.get());
+    Assert.assertTrue(okstate.get()); // no unexpected exceptions
+    Assert.assertEquals(5, count.get());
 
     // After this call okstate will be false becuase IOExcpetion is thrown on
     // close.
@@ -208,6 +213,7 @@ public class TestNaiveFileWALSource extends TestCase {
    * should then encounter a file with zero size and fails to open). It should
    * continue if there are more data or block if there is not.
    */
+  @Test
   public void testSurviveTwoEmptyFiles() throws IOException,
       InterruptedException {
 
@@ -270,8 +276,8 @@ public class TestNaiveFileWALSource extends TestCase {
 
     src.close();
 
-    assertTrue(okstate.get()); // no unexpected exceptions
-    assertEquals(5, count.get());
+    Assert.assertTrue(okstate.get()); // no unexpected exceptions
+    Assert.assertEquals(5, count.get());
 
     // After this call okstate will be false becuase IOExcpetion is thrown on
     // close.
@@ -286,6 +292,7 @@ public class TestNaiveFileWALSource extends TestCase {
    * We want this to send all entries it can, fire some event with the bad wal
    * file, and the continue on with other ok files.
    */
+  @Test
   public void testSurviveCorruptFile() throws IOException, InterruptedException {
 
     System.out.println("Survive zero file with walsource");
@@ -336,8 +343,8 @@ public class TestNaiveFileWALSource extends TestCase {
     src.close();
     System.out.println("Outputted " + count.get() + " events");
 
-    assertTrue(okstate.get()); // no unexpected exceptions
-    assertEquals(3, count.get());
+    Assert.assertTrue(okstate.get()); // no unexpected exceptions
+    Assert.assertEquals(3, count.get());
   }
 
 }

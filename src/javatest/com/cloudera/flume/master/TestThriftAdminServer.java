@@ -23,23 +23,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.TestCase;
-
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.thrift.FlumeMasterAdminServer;
+import com.cloudera.flume.conf.thrift.FlumeMasterAdminServer.Iface;
 import com.cloudera.flume.conf.thrift.FlumeMasterCommandThrift;
 import com.cloudera.flume.conf.thrift.FlumeNodeStatusThrift;
 import com.cloudera.flume.conf.thrift.ThriftFlumeConfigData;
-import com.cloudera.flume.conf.thrift.FlumeMasterAdminServer.Iface;
 import com.cloudera.flume.util.AdminRPC;
 import com.cloudera.flume.util.AdminRPCThrift;
 import com.cloudera.flume.util.ThriftServer;
 
-public class TestThriftAdminServer extends TestCase {
+public class TestThriftAdminServer {
+
   public static Logger LOG = Logger.getLogger(TestThriftAdminServer.class);
 
   class MyThriftServer extends ThriftServer implements Iface {
@@ -88,6 +89,7 @@ public class TestThriftAdminServer extends TestCase {
     }
   }
 
+  @Test
   public void testMasterAdminServer() throws IOException, TTransportException {
     MyThriftServer server = new MyThriftServer();
     server.serve();
@@ -96,24 +98,25 @@ public class TestThriftAdminServer extends TestCase {
     LOG.info("Connected to test master");
 
     long submit = client.submit(new Command(""));
-    assertEquals("Expected response was 42, got " + submit, submit, 42);
+    Assert.assertEquals("Expected response was 42, got " + submit, submit, 42);
 
     boolean succ = client.isSuccess(42);
-    assertEquals("Expected response was false, got " + succ, succ, false);
+    Assert.assertEquals("Expected response was false, got " + succ, succ, false);
 
     boolean fail = client.isFailure(42);
-    assertEquals("Expected response was true, got " + fail, fail, true);
+    Assert.assertEquals("Expected response was true, got " + fail, fail, true);
 
     Map<String, FlumeConfigData> cfgs = client.getConfigs();
-    assertEquals("Expected response was 0, got " + cfgs.size(), cfgs.size(), 0);
+    Assert.assertEquals("Expected response was 0, got " + cfgs.size(), cfgs.size(), 0);
 
     Map<String, List<String>> mappings = client.getMappings(null);
-    assertEquals("Expected response was 0 got " + mappings.size(), mappings
+    Assert.assertEquals("Expected response was 0 got " + mappings.size(), mappings
         .size(), 0);
 
     server.stop();
   }
 
+  @Test
   public void testThriftServerOpenClose() throws TTransportException {
     MyThriftServer server = new MyThriftServer();
     for (int i = 0; i < 50; i++) {

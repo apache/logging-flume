@@ -21,7 +21,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
@@ -46,10 +47,11 @@ import com.cloudera.util.Pair;
  * reservoir sampler to have a flush method.)
  * 
  */
-public class TestSamplers extends TestCase {
+public class TestSamplers {
 
   static long longwait = 10000000; // using forced rotation instead of timed
 
+  @Test
   public void testReserviorSamplerSink() throws IOException,
       InterruptedException {
     System.out.println("Reservoir sampler");
@@ -110,11 +112,12 @@ public class TestSamplers extends TestCase {
     i = 0;
     for (Pair<Long, CounterSink> p : h) {
       long count = p.getRight().getCount();
-      assertEquals(ans[i], count);
+      Assert.assertEquals(ans[i], count);
       i++;
     }
   }
 
+  @Test
   public void testSimpleIntervalSamplerSink() throws IOException {
     System.out.println("Simple interval sampler sink");
     CounterSink count = new CounterSink("count");
@@ -124,7 +127,7 @@ public class TestSamplers extends TestCase {
     for (int i = 0; i < 30; i++) {
       sink.append(new EventImpl(("test " + i).getBytes()));
     }
-    assertEquals(3, count.getCount());
+    Assert.assertEquals(3, count.getCount());
     sink.close();
 
     // do the boundary condition.
@@ -135,10 +138,11 @@ public class TestSamplers extends TestCase {
     for (int i = 0; i < 31; i++) {
       sink2.append(new EventImpl(("test " + i).getBytes()));
     }
-    assertEquals(4, count2.getCount());
+    Assert.assertEquals(4, count2.getCount());
     sink2.close();
   }
 
+  @Test
   public void testIntervalSamplerSink() throws IOException,
       InterruptedException {
     System.out.println("IntervalSamplerSink");
@@ -200,11 +204,12 @@ public class TestSamplers extends TestCase {
     i = 0;
     for (Pair<Long, CounterSink> p : h) {
       long count = p.getRight().getCount();
-      assertEquals(ans[i], count);
+      Assert.assertEquals(ans[i], count);
       i++;
     }
   }
 
+  @Test
   public void testProbabilitySamplerSink() throws IOException,
       InterruptedException {
     System.out.println("Probability sampler");
@@ -254,7 +259,7 @@ public class TestSamplers extends TestCase {
     for (Pair<Long, CounterSink> p : h) {
       long count = p.getRight().getCount();
       System.out.println(p.getLeft() + " :: " + count);
-      assertEquals(ans[i], count);
+      Assert.assertEquals(ans[i], count);
       i++;
     }
   }

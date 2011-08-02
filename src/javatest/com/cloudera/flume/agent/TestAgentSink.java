@@ -20,7 +20,8 @@ package com.cloudera.flume.agent;
 import java.io.File;
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
@@ -34,19 +35,20 @@ import com.cloudera.util.FileUtil;
  * This just tests the creation of agent sinks based on their configuration
  * strings.
  */
-public class TestAgentSink extends TestCase {
+public class TestAgentSink {
 
   FlumeNode node;
   MockMasterRPC mock;
   File tmpdir = null;
 
   // TODO (jon) the perf suit patch fixes this problem.
+  @Test
   public void setUp() {
     // change config so that the write ahead log dir is in a new uniq place
     try {
       tmpdir = FileUtil.mktempdir();
     } catch (Exception e) {
-      fail("mk temp dir failed");
+      Assert.fail("mk temp dir failed");
     }
     FlumeConfiguration conf = FlumeConfiguration.get();
     conf.set(FlumeConfiguration.AGENT_LOG_DIR_NEW, tmpdir.getAbsolutePath());
@@ -72,7 +74,7 @@ public class TestAgentSink extends TestCase {
     } catch (Exception e) {
       return;
     }
-    fail("unexpected fall through");
+    Assert.fail("unexpected fall through");
   }
 
   public void testDiskFailoverBuilder() throws FlumeSpecException {
@@ -90,7 +92,7 @@ public class TestAgentSink extends TestCase {
     } catch (Exception e) {
       return;
     }
-    fail("unexpected fall through");
+    Assert.fail("unexpected fall through");
   }
 
   public void testBestEffortBuilder() throws FlumeSpecException {
@@ -108,7 +110,7 @@ public class TestAgentSink extends TestCase {
     } catch (Exception e) {
       return;
     }
-    fail("unexpected fall through");
+    Assert.fail("unexpected fall through");
   }
 
   /**

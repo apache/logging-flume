@@ -19,14 +19,16 @@ package com.cloudera.util;
 
 import java.util.List;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Reservoir sampling extracts a certain number of samples from a set with
  * uniform probability without knowing how many elements are in the total set.
  */
-public class TestReservoirSampler extends TestCase {
+public class TestReservoirSampler {
 
+  @Test
   public void testReserviorSampler() {
     Histogram<Integer> h = new Histogram<Integer>();
     for (int i = 0; i < 10000; i++) {
@@ -51,7 +53,7 @@ public class TestReservoirSampler extends TestCase {
       // TODO (jon) it should be somewhere around 1000 hits per slot, but I'll
       // approximate with these values for now. There is a formula somewhere for
       // a more reasonable statistical bounds.
-      assertTrue(j < 1150 && j > 850);
+      Assert.assertTrue(j < 1150 && j > 850);
     }
 
   }

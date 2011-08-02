@@ -21,11 +21,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.TimeZone;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.core.Event;
-import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.Event.Priority;
+import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.handlers.avro.AvroJsonOutputFormat;
 import com.cloudera.flume.handlers.syslog.SyslogWireOutputFormat;
 import com.cloudera.flume.handlers.text.SyslogEntryFormat;
@@ -38,20 +39,23 @@ import com.cloudera.flume.handlers.text.SyslogEntryFormat;
  * break in different times of the year, PST vs EST break if tested in other
  * timezones. Effort to force a timezone punted on.
  */
-public class TestOutputFormats extends TestCase {
+public class TestOutputFormats {
+
   Event e = new EventImpl("test".getBytes(), 0, Priority.INFO, 0, "hostname");
   TimeZone tz = TimeZone.getTimeZone("GMT");
 
+  @Test
   public void testOutput() throws IOException {
     OutputFormat format = new DebugOutputFormat();
     ByteArrayOutputStream sos = new ByteArrayOutputStream();
     format.format(sos, e);
     String s = new String(sos.toByteArray());
     System.out.print(s);
-    assertTrue(s.startsWith("hostname ["));
-    assertTrue(s.endsWith("] test\n"));
+    Assert.assertTrue(s.startsWith("hostname ["));
+    Assert.assertTrue(s.endsWith("] test\n"));
   }
 
+  @Test
   public void testLog4j() throws IOException {
     OutputFormat format = new Log4jOutputFormat();
     ByteArrayOutputStream sos = new ByteArrayOutputStream();
@@ -59,27 +63,30 @@ public class TestOutputFormats extends TestCase {
     byte[] data = sos.toByteArray();
     String s = new String(data);
     System.out.print(s);
-    assertTrue(s.endsWith("INFO log4j: test\n"));
+    Assert.assertTrue(s.endsWith("INFO log4j: test\n"));
   }
 
+  @Test
   public void testSyslogWire() throws IOException {
     OutputFormat format = new SyslogWireOutputFormat();
     ByteArrayOutputStream sos = new ByteArrayOutputStream();
     format.format(sos, e);
     String s = new String(sos.toByteArray());
     System.out.print(s);
-    assertEquals(s, "<13>test\n");
+    Assert.assertEquals(s, "<13>test\n");
   }
 
+  @Test
   public void testSyslogEntry() throws IOException {
     OutputFormat format = new SyslogEntryFormat();
     ByteArrayOutputStream sos = new ByteArrayOutputStream();
     format.format(sos, e);
     String s = new String(sos.toByteArray());
     System.out.print(s);
-    assertTrue(s.endsWith("hostname test\n"));
+    Assert.assertTrue(s.endsWith("hostname test\n"));
   }
 
+  @Test
   public void testAvroJson() throws IOException {
     OutputFormat format = new AvroJsonOutputFormat();
     ByteArrayOutputStream sos = new ByteArrayOutputStream();
@@ -88,7 +95,7 @@ public class TestOutputFormats extends TestCase {
     System.out.print(s);
     // TODO (jon) not sure if this will pass on every machine the same (how does
     // avro order fields?)
-    assertEquals(
+    Assert.assertEquals(
         s,
         "{\"body\":\"test\",\"timestamp\":0,\"pri\":\"INFO\",\"nanos\":0,\"host\":\"hostname\",\"fields\":{}}\n");
   }

@@ -24,15 +24,17 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * This is a sandbox to test the semantics of ByteBuffer. This will provide
  * insight into how/if to use them them in when converting the events away from
  * <String,byte[]>'s
  */
-public class TestByteBufferSemantics extends TestCase {
+public class TestByteBufferSemantics  {
 
+  @Test
   public void testToArray() {
     ByteBuffer buf = ByteBuffer.allocate(100);
     buf.putInt(0xdead);
@@ -40,56 +42,57 @@ public class TestByteBufferSemantics extends TestCase {
 
     // returns the backing array -- the entire thing regardless of how much
     // of it is filled.
-    assertEquals(100, buf.array().length);
-    assertEquals(100, buf.capacity()); // same as array().length
-    assertEquals(92, buf.remaining());
-    assertEquals(8, buf.position());
+    Assert.assertEquals(100, buf.array().length);
+    Assert.assertEquals(100, buf.capacity()); // same as array().length
+    Assert.assertEquals(92, buf.remaining());
+    Assert.assertEquals(8, buf.position());
 
     // byte offset for these.
-    assertEquals(0xdead, buf.getInt(0));
-    assertEquals(0xbeef, buf.getInt(4));
+    Assert.assertEquals(0xdead, buf.getInt(0));
+    Assert.assertEquals(0xbeef, buf.getInt(4));
 
     // didn't go anywhere. whoa!
-    assertEquals(100, buf.array().length);
-    assertEquals(100, buf.capacity()); // same as array().length
-    assertEquals(92, buf.remaining());
-    assertEquals(8, buf.position());
+    Assert.assertEquals(100, buf.array().length);
+    Assert.assertEquals(100, buf.capacity()); // same as array().length
+    Assert.assertEquals(92, buf.remaining());
+    Assert.assertEquals(8, buf.position());
 
     buf.flip();
-    assertEquals(0xdead, buf.getInt());
-    assertEquals(0xbeef, buf.getInt());
+    Assert.assertEquals(0xdead, buf.getInt());
+    Assert.assertEquals(0xbeef, buf.getInt());
     // still in the same place
-    assertEquals(0xdead, buf.getInt(0));
-    assertEquals(0xbeef, buf.getInt(4));
+    Assert.assertEquals(0xdead, buf.getInt(0));
+    Assert.assertEquals(0xbeef, buf.getInt(4));
 
-    assertEquals(100, buf.array().length);
-    assertEquals(100, buf.capacity()); // same as array().length
-    assertEquals(0, buf.remaining());
-    assertEquals(8, buf.position());
+    Assert.assertEquals(100, buf.array().length);
+    Assert.assertEquals(100, buf.capacity()); // same as array().length
+    Assert.assertEquals(0, buf.remaining());
+    Assert.assertEquals(8, buf.position());
 
     buf.flip();
-    assertEquals(100, buf.array().length);
-    assertEquals(100, buf.capacity()); // same as array().length
-    assertEquals(8, buf.remaining());
-    assertEquals(0, buf.position());
+    Assert.assertEquals(100, buf.array().length);
+    Assert.assertEquals(100, buf.capacity()); // same as array().length
+    Assert.assertEquals(8, buf.remaining());
+    Assert.assertEquals(0, buf.position());
 
     buf.clear(); // just resets pointers
-    assertEquals(100, buf.array().length);
-    assertEquals(100, buf.capacity()); // same as array().length
-    assertEquals(100, buf.remaining());
-    assertEquals(0, buf.position());
+    Assert.assertEquals(100, buf.array().length);
+    Assert.assertEquals(100, buf.capacity()); // same as array().length
+    Assert.assertEquals(100, buf.remaining());
+    Assert.assertEquals(0, buf.position());
     // note: still not erased.
-    assertEquals(0xdead, buf.getInt(0));
-    assertEquals(0xbeef, buf.getInt(4));
+    Assert.assertEquals(0xdead, buf.getInt(0));
+    Assert.assertEquals(0xbeef, buf.getInt(4));
 
     // this overwrites.
     buf.putInt(0xf00d);
     buf.putInt(0xcafe);
-    assertEquals(0xf00d, buf.getInt(0));
-    assertEquals(0xcafe, buf.getInt(4));
+    Assert.assertEquals(0xf00d, buf.getInt(0));
+    Assert.assertEquals(0xcafe, buf.getInt(4));
 
   }
 
+  @Test
   public void testBuffers() throws IOException {
     byte[] bs = new byte[100];
     for (int i = 0; i < bs.length; i++) {
@@ -102,21 +105,21 @@ public class TestByteBufferSemantics extends TestCase {
     buf.limit(8);
     System.out.println("artificially set limit to :" + buf.limit());
     rch.read(buf);
-    assertEquals(0, buf.get(0));
-    assertEquals(1, buf.get(1));
-    assertEquals(7, buf.get(7));
+    Assert.assertEquals(0, buf.get(0));
+    Assert.assertEquals(1, buf.get(1));
+    Assert.assertEquals(7, buf.get(7));
     buf.clear();
 
     System.out.println("after clear limit is :" + buf.limit());
-    assertEquals(100, buf.limit());
+    Assert.assertEquals(100, buf.limit());
 
     // reset limit to 8.
     buf.limit(8);
     // read the next 8 bytes
     rch.read(buf);
-    assertEquals(8, buf.get(0));
-    assertEquals(9, buf.get(1));
-    assertEquals(15, buf.get(7));
+    Assert.assertEquals(8, buf.get(0));
+    Assert.assertEquals(9, buf.get(1));
+    Assert.assertEquals(15, buf.get(7));
 
     // now can read 16
     System.out.println("limit was :" + buf.limit());
@@ -124,13 +127,13 @@ public class TestByteBufferSemantics extends TestCase {
     System.out.println("limit now bumped up to :" + buf.limit());
     rch.read(buf);
     // still same as before
-    assertEquals(8, buf.get(0));
-    assertEquals(9, buf.get(1));
-    assertEquals(15, buf.get(7));
+    Assert.assertEquals(8, buf.get(0));
+    Assert.assertEquals(9, buf.get(1));
+    Assert.assertEquals(15, buf.get(7));
     // but now new data is read as well!
-    assertEquals(16, buf.get(8));
-    assertEquals(17, buf.get(9));
-    assertEquals(23, buf.get(15));
+    Assert.assertEquals(16, buf.get(8));
+    Assert.assertEquals(17, buf.get(9));
+    Assert.assertEquals(23, buf.get(15));
 
   }
 

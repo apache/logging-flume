@@ -19,9 +19,9 @@ package com.cloudera.flume.agent;
 
 import java.io.IOException;
 
-import junit.framework.TestCase;
-
 import org.apache.thrift.TException;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.core.Event;
@@ -36,9 +36,10 @@ import com.cloudera.flume.handlers.endtoend.CollectorAckListener;
 /**
  * This tests the flow of messages and acks through a mock'ed out master
  */
-public class TestAcks extends TestCase {
+public class TestAcks {
 
   // check that agents properly manage a list of outstanding acks
+  @Test
   public void testAckAgent() throws IOException, TException {
     // mock master rpc interface
     MockMasterRPC svr = new MockMasterRPC();
@@ -60,28 +61,29 @@ public class TestAcks extends TestCase {
 
     // agent should have pending stuff.
     System.out.println("Agent: Pending " + aac.pending);
-    assertEquals(1, aac.pending.size());
+    Assert.assertEquals(1, aac.pending.size());
 
     // periodically trigger master check (this one doesn't change agent's state)
     aac.checkAcks();
-    assertEquals(1, aac.pending.size());
+    Assert.assertEquals(1, aac.pending.size());
 
     // simulate the collector by sending "acknowledge" message to master, agent
     // doesn't know about this.
     String ackid = aac.pending.keys().nextElement();
     svr.acknowledge(ackid);
-    assertEquals(1, aac.pending.size());
+    Assert.assertEquals(1, aac.pending.size());
     System.out.println("Agent: (still) pending " + aac.pending);
 
     // agent checks and learns of new acks. agent learns that it no longer have
     // to worry about this ack.
     aac.checkAcks();
-    assertEquals(0, aac.pending.size());
+    Assert.assertEquals(0, aac.pending.size());
     System.out.println("Agent: No more pending " + aac.pending);
   }
 
   // check that collectors/receivers properly notify master of received complete
   // acks.
+  @Test
   public void testAckAgentCollector() throws IOException, TException {
     // mock master rpc interface
     MockMasterRPC svr = new MockMasterRPC();
@@ -107,12 +109,12 @@ public class TestAcks extends TestCase {
 
     // agent should have pending stuff.
     System.out.println("Agent: Pending " + aac.pending);
-    assertEquals(1, aac.pending.size());
+    Assert.assertEquals(1, aac.pending.size());
 
     // periodically trigger master check (this one doesn't change agent's state)
     aac.checkAcks();
     System.out.println("Agent: No more pending " + aac.pending);
-    assertEquals(0, aac.pending.size());
+    Assert.assertEquals(0, aac.pending.size());
   }
 
   // error cases. Make sure things eventually make it.

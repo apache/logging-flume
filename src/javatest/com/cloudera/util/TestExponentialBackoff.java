@@ -17,40 +17,43 @@
  */
 package com.cloudera.util;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.util.MockClock;
 
 /**
  * Testing the exponential backoff algorithm.
  */
-public class TestExponentialBackoff extends TestCase {
+public class TestExponentialBackoff {
+
   MockClock mock = new MockClock(0);
 
+  @Test
   public void testBackoff() throws InterruptedException {
     Clock.setClock(mock);
     System.out.println(mock);
     ExponentialBackoff bo = new ExponentialBackoff(100, 5);
     // time = 0
-    assertTrue(bo.isRetryOk());
-    assertFalse(bo.isFailed());
+    Assert.assertTrue(bo.isRetryOk());
+    Assert.assertFalse(bo.isFailed());
 
     mock.forward(1); // time = 1
     System.out.println(mock);
-    assertTrue(bo.isRetryOk());
-    assertFalse(bo.isFailed());
+    Assert.assertTrue(bo.isRetryOk());
+    Assert.assertFalse(bo.isFailed());
 
     // should be ok in +100, but not at +99
     bo.backoff();
     mock.forward(99);
     System.out.println(mock);
-    assertFalse(bo.isFailed());
-    assertFalse(bo.isRetryOk());
+    Assert.assertFalse(bo.isFailed());
+    Assert.assertFalse(bo.isRetryOk());
 
     mock.forward(1); // time = 100
     System.out.println(mock);
-    assertTrue(bo.isRetryOk());
-    assertFalse(bo.isFailed());
+    Assert.assertTrue(bo.isRetryOk());
+    Assert.assertFalse(bo.isFailed());
 
     // we were succesfull
     bo.reset();
@@ -65,14 +68,14 @@ public class TestExponentialBackoff extends TestCase {
 
     mock.forward(1599);
     System.out.println(mock);
-    assertFalse(bo.isRetryOk());
-    assertTrue(bo.isFailed());
+    Assert.assertFalse(bo.isRetryOk());
+    Assert.assertTrue(bo.isFailed());
 
     mock.forward(1);
     System.out.println(mock);
-    assertFalse(bo.isRetryOk()); // still should be false despite time out
+    Assert.assertFalse(bo.isRetryOk()); // still should be false despite time out
     // because in failed state
-    assertTrue(bo.isFailed());
+    Assert.assertTrue(bo.isFailed());
 
   }
 }

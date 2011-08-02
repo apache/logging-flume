@@ -26,6 +26,8 @@ import junit.framework.TestCase;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.reflect.ReflectDatumReader;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
@@ -40,8 +42,9 @@ import com.cloudera.flume.handlers.debug.MemorySinkSource;
  * This test takes a small canned batch of events, writes them to a avro data
  * file, and then reads them back checking the values.
  */
-public class TestAvroDataFile extends TestCase {
+public class TestAvroDataFile {
 
+  @Test
   public void testAvroDataFileWriteRead() throws IOException,
       FlumeSpecException {
 
@@ -66,7 +69,7 @@ public class TestAvroDataFile extends TestCase {
     for (Object o : dr) {
       eout = (EventImpl) o; // TODO (jon) fix AVRO -- this is gross
       Event expected = mem.next();
-      assertTrue(Arrays.equals(eout.getBody(), expected.getBody()));
+      Assert.assertTrue(Arrays.equals(eout.getBody(), expected.getBody()));
     }
 
   }

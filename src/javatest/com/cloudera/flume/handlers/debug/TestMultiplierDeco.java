@@ -19,9 +19,9 @@ package com.cloudera.flume.handlers.debug;
 
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
-import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.ReportTestingContext;
@@ -35,8 +35,9 @@ import com.cloudera.flume.reporter.aggregator.CounterSink;
 /**
  * Simply tests the multiplier. (send a single message n times)
  */
-public class TestMultiplierDeco extends TestCase {
+public class TestMultiplierDeco {
 
+  @Test
   public void testMultiplier() throws IOException {
     final int repeat = 9;
     final int msgs = 10;
@@ -50,12 +51,13 @@ public class TestMultiplierDeco extends TestCase {
       s.append(e);
     }
 
-    assertEquals(msgs * repeat, cnt.getCount());
+    Assert.assertEquals(msgs * repeat, cnt.getCount());
   }
 
   /**
    * Test the builder interface.
    */
+  @Test
   public void testMultiplierBuilder() throws IOException, FlumeSpecException {
     final int repeat = 7;
     final int msgs = 10;
@@ -70,13 +72,14 @@ public class TestMultiplierDeco extends TestCase {
     }
 
     CounterSink cnt = (CounterSink) ReportManager.get().getReportable("count");
-    assertEquals(msgs * repeat, cnt.getCount());
+    Assert.assertEquals(msgs * repeat, cnt.getCount());
   }
 
   /**
    * Test the builder interface. Makes sure the multiplier doesn't multiply the
    * benchmark messages.
    */
+  @Test
   public void testBenchmarkMultiplierBuilder() throws IOException,
       FlumeSpecException {
     final int repeat = 3;
@@ -96,7 +99,7 @@ public class TestMultiplierDeco extends TestCase {
 
     CounterSink cnt = (CounterSink) ReportManager.get().getReportable("count");
     // +3 -> start, first, stop
-    assertEquals(msgs * repeat + 3, cnt.getCount());
+    Assert.assertEquals(msgs * repeat + 3, cnt.getCount());
 
   }
 }

@@ -19,7 +19,7 @@ package com.cloudera.flume.master;
 
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
@@ -27,7 +27,7 @@ import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.util.Benchmark;
 
-public class EvilExhaustConnections extends TestCase {
+public class EvilExhaustConnections {
 
   /**
    * This is just to see how many open connections a process can have, and to
@@ -39,6 +39,7 @@ public class EvilExhaustConnections extends TestCase {
    * 
    * @throws FlumeSpecException
    */
+  @Test
   public void testTooManyOpens() throws IOException, FlumeSpecException {
     Benchmark b = new Benchmark("connection exhaust");
 
@@ -64,6 +65,7 @@ public class EvilExhaustConnections extends TestCase {
     b.done();
   }
 
+  @Test
   public void testSurviveManyOpens() throws IOException, FlumeSpecException {
     Benchmark b = new Benchmark("connection exhaust");
 

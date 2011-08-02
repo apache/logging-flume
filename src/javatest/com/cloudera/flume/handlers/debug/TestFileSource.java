@@ -19,7 +19,8 @@ package com.cloudera.flume.handlers.debug;
 
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.ExampleData;
 import com.cloudera.flume.core.Event;
@@ -28,8 +29,9 @@ import com.cloudera.flume.core.EventSource;
 /**
  * These tests tests the simple FileSource reader
  */
-public class TestFileSource extends TestCase implements ExampleData {
+public class TestFileSource implements ExampleData {
 
+  @Test
   public void testFileSource() throws IOException {
     EventSource src = new TextFileSource(TEST);
     src.open();
@@ -42,7 +44,7 @@ public class TestFileSource extends TestCase implements ExampleData {
       System.out.println(e);
     }
     System.out.println("read " + count + " lines");
-    assertEquals(56, count);
+    Assert.assertEquals(56, count);
     src.close();
   }
 

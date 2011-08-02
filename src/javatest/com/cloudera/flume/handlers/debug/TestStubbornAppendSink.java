@@ -27,8 +27,8 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import junit.framework.TestCase;
-
+import org.junit.Assert;
+import org.junit.Test;
 import org.mockito.Mockito;
 
 import com.cloudera.flume.core.Event;
@@ -40,8 +40,9 @@ import com.cloudera.flume.reporter.ReportEvent;
  * This makes sure that if an exception occurs, that the subordinate sink is
  * closed and re-opened.
  */
-public class TestStubbornAppendSink extends TestCase {
+public class TestStubbornAppendSink {
 
+  @Test
   public void testStubborn() throws IOException {
     // just using as an int reference
     final AtomicInteger ok = new AtomicInteger();
@@ -79,7 +80,7 @@ public class TestStubbornAppendSink extends TestCase {
       Event e = new EventImpl(("attempt " + i).getBytes());
       sink.append(e);
     }
-    assertEquals(ok.get(), 100);
+    Assert.assertEquals(ok.get(), 100);
 
     ReportEvent rpt = sink.getReport();
     Writer out = new OutputStreamWriter(System.out);
@@ -89,16 +90,19 @@ public class TestStubbornAppendSink extends TestCase {
     // 100 good messages. every 4th message fails -- 3 good 1 bad.
     // 00 01 02 xx 03 04 05 xx 06 07 08 xx ...
     // so 100 good msgs, 133 total messages, 33 bad msgs
-    assertEquals(new Long(100), rpt
-        .getLongMetric(StubbornAppendSink.A_SUCCESSES));
-    assertEquals(new Long(33), rpt.getLongMetric(StubbornAppendSink.A_FAILS));
-    assertEquals(new Long(33), rpt.getLongMetric(StubbornAppendSink.A_RECOVERS));
+    Assert.assertEquals(new Long(100),
+        rpt.getLongMetric(StubbornAppendSink.A_SUCCESSES));
+    Assert.assertEquals(new Long(33),
+        rpt.getLongMetric(StubbornAppendSink.A_FAILS));
+    Assert.assertEquals(new Long(33),
+        rpt.getLongMetric(StubbornAppendSink.A_RECOVERS));
   }
 
   /**
    * This test is similar to the previous but uses mockito. (and make much fewer
    * calls)
    */
+  @Test
   public void testStubbornNew() throws IOException {
     EventSink failAppend = mock(EventSink.class);
     Event e = new EventImpl("test".getBytes());
@@ -121,10 +125,11 @@ public class TestStubbornAppendSink extends TestCase {
     }
 
     ReportEvent rpt = sink.getReport();
-    assertEquals(new Long(1), rpt.getLongMetric(StubbornAppendSink.A_FAILS));
-    assertEquals(new Long(1), rpt.getLongMetric(StubbornAppendSink.A_RECOVERS));
+    Assert.assertEquals(new Long(1), rpt.getLongMetric(StubbornAppendSink.A_FAILS));
+    Assert.assertEquals(new Long(1), rpt.getLongMetric(StubbornAppendSink.A_RECOVERS));
   }
 
+  @Test
   public void testStubbornIntervalFlakey() throws IOException {
 
     // count resets on open and close, this one does not.
@@ -147,15 +152,18 @@ public class TestStubbornAppendSink extends TestCase {
       Event e = new EventImpl(("attempt " + i).getBytes());
       sink.append(e);
     }
-    assertEquals(ok.get(), 100);
+    Assert.assertEquals(ok.get(), 100);
 
     ReportEvent rpt = sink.getReport();
     // why isn't this 25?
-    assertEquals(new Long(24), rpt.getLongMetric(StubbornAppendSink.A_FAILS));
-    assertEquals(new Long(24), rpt.getLongMetric(StubbornAppendSink.A_RECOVERS));
+    Assert.assertEquals(new Long(24),
+        rpt.getLongMetric(StubbornAppendSink.A_FAILS));
+    Assert.assertEquals(new Long(24),
+        rpt.getLongMetric(StubbornAppendSink.A_RECOVERS));
 
   }
 
+  @Test
   public void testExceptionFallthrough() throws IOException {
     EventSink mock = mock(EventSink.class);
     // two ok, and then two exception throwing cases
@@ -172,13 +180,14 @@ public class TestStubbornAppendSink extends TestCase {
       sink.append(e);
     } catch (Exception exn) {
       ReportEvent rpt = sink.getReport();
-      assertEquals(new Long(2), rpt
+      Assert.assertEquals(new Long(2), rpt
           .getLongMetric(StubbornAppendSink.A_SUCCESSES));
-      assertEquals(new Long(1), rpt.getLongMetric(StubbornAppendSink.A_FAILS));
-      assertEquals(new Long(0), rpt
+      Assert.assertEquals(new Long(1),
+          rpt.getLongMetric(StubbornAppendSink.A_FAILS));
+      Assert.assertEquals(new Long(0), rpt
           .getLongMetric(StubbornAppendSink.A_RECOVERS));
       return;
     }
-    fail("should have thrown exception");
+    Assert.fail("should have thrown exception");
   }
 }

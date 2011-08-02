@@ -19,7 +19,8 @@ package com.cloudera.flume.agent;
 
 import java.util.ArrayList;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.agent.MemoryMonitor.Listener;
 
@@ -31,7 +32,7 @@ import com.cloudera.flume.agent.MemoryMonitor.Listener;
  * here (in the real use case, we would exit hard).
  * 
  */
-public class TestMemoryMonitor extends TestCase {
+public class TestMemoryMonitor {
   static double threshold = .50;
 
   volatile boolean failed = false;
@@ -40,6 +41,7 @@ public class TestMemoryMonitor extends TestCase {
    * This forces a GC when memory is near a threshold. If after the gc we are
    * still above the threshold mark with the failed condition.
    */
+  @Test
   public void testNormalExhaust() {
     MemoryMonitor.setPercentageUsageThreshold(threshold);
     final MemoryMonitor mem = MemoryMonitor.getMemoryMonitor();
@@ -73,12 +75,13 @@ public class TestMemoryMonitor extends TestCase {
       byte[] b = new byte[10 * 1024 * 1024];
       b[0] = 0;
       if (failed) {
-        fail("Out of memory!");
+        Assert.fail("Out of memory!");
       }
     }
     mem.removeListener(l);
   }
 
+  @Test
   public void testExhaustRecover() {
     MemoryMonitor.setPercentageUsageThreshold(threshold);
     final MemoryMonitor mem = MemoryMonitor.getMemoryMonitor();
@@ -125,10 +128,10 @@ public class TestMemoryMonitor extends TestCase {
       // this is the expected case
       return;
     } catch (OutOfMemoryError oome) {
-      fail("expected this to get caught and dealt with");
+      Assert.fail("expected this to get caught and dealt with");
     } finally {
       mem.removeListener(l);
     }
-    fail("expected a failure");
+    Assert.fail("expected a failure");
   }
 }

@@ -17,36 +17,38 @@
  */
 package com.cloudera.flume.handlers.thrift;
 
-import junit.framework.TestCase;
-
 import org.apache.thrift.transport.TMemoryBuffer;
 import org.apache.thrift.transport.TTransportException;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * This tests the TStatsTransport and verifies that counters are updated
  * properly.
  */
-public class TestTStatsTransport extends TestCase {
+public class TestTStatsTransport {
 
   /**
    * Tests writes
    */
+  @Test
   public void testTStatsWritten() throws TTransportException {
     TMemoryBuffer mb = new TMemoryBuffer(1 << 20); // 1 MB memory buffer
     TStatsTransport stats = new TStatsTransport(mb);
 
     stats.write(new byte[100]);
-    assertEquals(stats.getBytesRead(), 0);
-    assertEquals(stats.getBytesWritten(), 100);
+    Assert.assertEquals(stats.getBytesRead(), 0);
+    Assert.assertEquals(stats.getBytesWritten(), 100);
 
     stats.write(new byte[42]);
-    assertEquals(stats.getBytesRead(), 0);
-    assertEquals(stats.getBytesWritten(), 142);
+    Assert.assertEquals(stats.getBytesRead(), 0);
+    Assert.assertEquals(stats.getBytesWritten(), 142);
   }
 
   /**
    * Does a write to fill the buffer and then tests reads.
    */
+  @Test
   public void testTStatsRead() throws TTransportException {
     TMemoryBuffer mb = new TMemoryBuffer(1 << 20); // 1 MB memory buffer
     TStatsTransport stats = new TStatsTransport(mb);
@@ -54,18 +56,18 @@ public class TestTStatsTransport extends TestCase {
     stats.write(new byte[200]);
 
     stats.read(new byte[100], 0, 100);
-    assertEquals(stats.getBytesRead(), 100);
-    assertEquals(stats.getBytesWritten(), 200);
+    Assert.assertEquals(stats.getBytesRead(), 100);
+    Assert.assertEquals(stats.getBytesWritten(), 200);
 
     stats.read(new byte[42], 0, 42);
-    assertEquals(stats.getBytesRead(), 142);
-    assertEquals(stats.getBytesWritten(), 200);
+    Assert.assertEquals(stats.getBytesRead(), 142);
+    Assert.assertEquals(stats.getBytesWritten(), 200);
 
     // buffer can be under filled but says by how much
     int count = stats.read(new byte[100], 0, 100);
-    assertEquals(58, count);
-    assertEquals(stats.getBytesRead(), 200);
-    assertEquals(stats.getBytesWritten(), 200);
+    Assert.assertEquals(58, count);
+    Assert.assertEquals(stats.getBytesRead(), 200);
+    Assert.assertEquals(stats.getBytesWritten(), 200);
   }
 
 }

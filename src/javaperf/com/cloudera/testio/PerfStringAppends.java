@@ -17,7 +17,7 @@
  */
 package com.cloudera.testio;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import com.cloudera.util.Benchmark;
 
@@ -33,11 +33,13 @@ import com.cloudera.util.Benchmark;
 // StringBuilder -> .75s 0.77 .78 ------> 13.0Mops/s
 // StringFormat --> 13.9s 14.3 15.7 -----> 0.7Mops/s
 
-public class PerfStringAppends extends TestCase {
+public class PerfStringAppends {
+
   int times = 10000000;
 
   String base = "this is a test";
 
+  @Test
   public void testStringAppend() {
     Benchmark b = new Benchmark("String Append");
 
@@ -50,6 +52,7 @@ public class PerfStringAppends extends TestCase {
     b.done();
   }
 
+  @Test
   public void testStringBufferAppend() {
     StringBuffer buf = new StringBuffer(base);
     Benchmark b = new Benchmark("StringBuffer Append");
@@ -62,6 +65,7 @@ public class PerfStringAppends extends TestCase {
     b.done();
   }
 
+  @Test
   public void testStringBuilderAppend() {
     StringBuilder buf = new StringBuilder(base);
     Benchmark b = new Benchmark("StringBuffer Append");
@@ -74,6 +78,7 @@ public class PerfStringAppends extends TestCase {
     b.done();
   }
 
+  @Test
   public void testStringFormat() {
     String format = "%s%d";
     Benchmark b = new Benchmark("StringFormatAppend");
@@ -87,6 +92,7 @@ public class PerfStringAppends extends TestCase {
 
   }
 
+  @Test
   public void testStringAppend2() {
     Benchmark b = new Benchmark("String Append");
 
@@ -99,6 +105,7 @@ public class PerfStringAppends extends TestCase {
     b.done();
   }
 
+  @Test
   public void testStringBufferAppend2() {
     StringBuffer buf = new StringBuffer(base);
     Benchmark b = new Benchmark("StringBuffer Append");
@@ -111,6 +118,7 @@ public class PerfStringAppends extends TestCase {
     b.done();
   }
 
+  @Test
   public void testStringBuilderAppend2() {
     StringBuilder buf = new StringBuilder(base);
     Benchmark b = new Benchmark("StringBuffer Append");
@@ -123,6 +131,7 @@ public class PerfStringAppends extends TestCase {
     b.done();
   }
 
+  @Test
   public void testStringFormat2() {
     String format = "%s%d";
     Benchmark b = new Benchmark("StringFormatAppend");

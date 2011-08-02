@@ -20,14 +20,15 @@ package com.cloudera.flume.handlers.text;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.core.Event;
 
 /**
  * Unit tests for default Apache Access Log format.
  */
-public class TestApacheInputFormat extends TestCase {
+public class TestApacheInputFormat {
 
   String test1 = "209.62.54.130 - - [21/Jun/2009:05:06:17 -0400] \"GET / HTTP/1.0\" 301 -";
   String test2 = "209.62.54.130 - - [21/Jun/2009:05:06:18 -0400] \"GET /reports/39/issues/ HTTP/1.0\" 200 16663";
@@ -35,23 +36,25 @@ public class TestApacheInputFormat extends TestCase {
   String test4 = "66.249.71.16 - - [28/Jun/2009:05:06:48 -0400] \"GET /debian/dists/hardy/contrib/source/?C=S;O=A HTTP/1.1\" 200 1366 \"-\" \"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)\"";
   String test5 = "207.218.231.170 - - [28/Jun/2009:05:07:33 -0400] \"GET / HTTP/1.0\" 200 3421 \"-\" \"Pingdom.com_bot_version_1.4_(http://www.pingdom.com/)\"";
 
+  @Test
   public void testRegex() {
     Pattern p = ApacheAccessLogFormat.APACHE_PAT;
     Matcher m1 = p.matcher(test1);
-    assertTrue(m1.matches());
+    Assert.assertTrue(m1.matches());
 
     for (int i = 0; i <= m1.groupCount(); i++) {
       System.out.println(m1.group(i));
     }
 
     Matcher m2 = p.matcher(test5);
-    assertTrue(m2.matches());
+    Assert.assertTrue(m2.matches());
     for (int i = 0; i <= m2.groupCount(); i++) {
       System.out.println(m2.group(i));
     }
 
   }
 
+  @Test
   public void testApacheFormat() {
     ApacheAccessLogFormat fmt = new ApacheAccessLogFormat();
     Event e1 = fmt.extract(test1);

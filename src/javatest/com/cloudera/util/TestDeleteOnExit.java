@@ -20,12 +20,14 @@ package com.cloudera.util;
 import java.io.File;
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 /**
  * Does delete on exit delete based on file or based on file name?
  */
-public class TestDeleteOnExit extends TestCase {
+public class TestDeleteOnExit {
+
+  @Test
   public void testDeleteOnExit() throws IOException {
 
     File f = File.createTempFile("foo", ".tmp");

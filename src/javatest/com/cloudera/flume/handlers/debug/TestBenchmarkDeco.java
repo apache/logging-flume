@@ -20,7 +20,8 @@ package com.cloudera.flume.handlers.debug;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.ExampleData;
 import com.cloudera.flume.conf.Context;
@@ -38,8 +39,9 @@ import com.cloudera.flume.reporter.aggregator.CounterSink;
  * This just uses the benchmark decorators and requires users to manualy inspect
  * them to see if values are reasonable.
  */
-public class TestBenchmarkDeco extends TestCase implements ExampleData {
+public class TestBenchmarkDeco implements ExampleData {
 
+  @Test
   public void testSimpleMem() throws IOException, InterruptedException {
 
     EventSource src = new NoNlASCIISynthSource(25, 100, 1);
@@ -58,6 +60,7 @@ public class TestBenchmarkDeco extends TestCase implements ExampleData {
     snk2.getReport().toText(new OutputStreamWriter(System.err));
   }
 
+  @Test
   public void testSimple() throws IOException, InterruptedException {
     EventSource src = new NoNlASCIISynthSource(25, 100, 1);
     EventSink snk = new ConsoleEventSink();
@@ -74,21 +77,25 @@ public class TestBenchmarkDeco extends TestCase implements ExampleData {
     snk2.getReport().toText(new OutputStreamWriter(System.err));
   }
 
+  @Test
   public void testSimpleBuilder() throws FlumeSpecException {
     String spec = "{benchinject => null}";
     FlumeBuilder.buildSink(new Context(), spec);
   }
 
+  @Test
   public void testSimpleBuilder2() throws FlumeSpecException {
     String spec = "{benchreport(\"report\") => null}";
     FlumeBuilder.buildSink(new Context(), spec);
   }
 
+  @Test
   public void testBuildReportSink2() throws FlumeSpecException {
     String spec = "{benchreport(\"report\", \"text(\\\"test\\\")\") => null } ";
     FlumeBuilder.buildSink(new Context(), spec);
   }
 
+  @Test
   public void testBuildInjectDeco() throws FlumeSpecException {
     String spec = "{benchinject(\"report\") => null}";
     FlumeBuilder.buildSink(new Context(), spec);
@@ -97,6 +104,7 @@ public class TestBenchmarkDeco extends TestCase implements ExampleData {
   /**
    * Tests to make sure the report sink receives data.
    */
+  @Test
   public void testReportSink() throws FlumeSpecException, IOException {
     String spec = "{benchinject(\"foo\") => {benchreport(\"report\", \"[ console , counter(\\\"test\\\") ]\")  => null } }";
     EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), spec);
@@ -106,7 +114,7 @@ public class TestBenchmarkDeco extends TestCase implements ExampleData {
     snk.close();
 
     CounterSink ctr = (CounterSink) ReportManager.get().getReportable("test");
-    assertEquals(1, ctr.getCount());
+    Assert.assertEquals(1, ctr.getCount());
 
   }
 

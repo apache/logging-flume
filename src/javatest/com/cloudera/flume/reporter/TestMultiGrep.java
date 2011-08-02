@@ -20,9 +20,9 @@ package com.cloudera.flume.reporter;
 import java.io.IOException;
 import java.util.Collection;
 
-import junit.framework.TestCase;
-
 import org.arabidopsis.ahocorasick.AhoCorasick;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.ExampleData;
 import com.cloudera.flume.core.EventImpl;
@@ -33,7 +33,8 @@ import com.cloudera.flume.reporter.builder.MultiGrepReporterBuilder;
 import com.cloudera.flume.reporter.histogram.MultiGrepReporterSink;
 import com.cloudera.util.Histogram;
 
-public class TestMultiGrep extends TestCase implements ExampleData {
+public class TestMultiGrep implements ExampleData {
+
   final static String NPE = "NullPointerException";
   final static String LOST = "Lost tracker";
 
@@ -41,6 +42,7 @@ public class TestMultiGrep extends TestCase implements ExampleData {
       "Retrying connect to server", "Receiving block", "Received block", LOST,
       "mapred.TaskTracker: Resending" };
 
+  @Test
   public void testMultiGrep() throws IOException {
     // build the aho from the file.
     AhoCorasick<String> aho = new AhoCorasick<String>();
@@ -64,19 +66,20 @@ public class TestMultiGrep extends TestCase implements ExampleData {
     Histogram<String> h = snk.getHistogram();
     System.out.println(h);
 
-    assertEquals(3, h.total());
-    assertEquals(2, h.get(LOST));
-    assertEquals(1, h.get(NPE));
+    Assert.assertEquals(3, h.total());
+    Assert.assertEquals(2, h.get(LOST));
+    Assert.assertEquals(1, h.get(NPE));
 
     snk.close();
     src.close();
 
   }
 
+  @Test
   public void testMultiGrepBuilder() throws IOException {
     Collection<MultiGrepReporterSink<String>> c = new MultiGrepReporterBuilder(
         HADOOP_GREP).load();
-    assertEquals(1, c.size());
+    Assert.assertEquals(1, c.size());
 
     MultiGrepReporterSink<String> snk = c.iterator().next();
     snk.open();
@@ -93,9 +96,9 @@ public class TestMultiGrep extends TestCase implements ExampleData {
     Histogram<String> h = snk.getHistogram();
     System.out.println(h);
 
-    assertEquals(3, h.total());
-    assertEquals(2, h.get(LOST));
-    assertEquals(1, h.get(NPE));
+    Assert.assertEquals(3, h.total());
+    Assert.assertEquals(2, h.get(LOST));
+    Assert.assertEquals(1, h.get(NPE));
 
     snk.close();
     src.close();

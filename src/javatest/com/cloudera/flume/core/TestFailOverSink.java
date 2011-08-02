@@ -19,7 +19,8 @@ package com.cloudera.flume.core;
 
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.handlers.debug.IntervalFlakeyEventSink;
 import com.cloudera.flume.reporter.aggregator.CounterSink;
@@ -30,8 +31,9 @@ import com.cloudera.flume.reporter.aggregator.CounterSink;
  * fails over to the secondary. If the secondary fails as well, an exception is
  * thrown.
  */
-public class TestFailOverSink extends TestCase {
+public class TestFailOverSink {
 
+  @Test
   public void testFailOverSink() throws IOException {
     CounterSink primary = new CounterSink("primary");
     CounterSink secondary = new CounterSink("backup");
@@ -48,12 +50,13 @@ public class TestFailOverSink extends TestCase {
     // this should succeed, with the counts being equal in primary and
     // secondary.
     failsink.close();
-    assertEquals(primary.getCount(), secondary.getCount());
+    Assert.assertEquals(primary.getCount(), secondary.getCount());
   }
 
   /**
    * This does multiple levels of failover.
    */
+  @Test
   public void testMultiFailOverSink() throws IOException {
     CounterSink primary = new CounterSink("primary");
     CounterSink secondary = new CounterSink("backup");
@@ -74,9 +77,9 @@ public class TestFailOverSink extends TestCase {
     // this should succeed, with the counts being equal in primary and
     // secondary, and tertiary.
     failsink.close();
-    assertEquals(50, primary.getCount());
-    assertEquals(25, secondary.getCount());
-    assertEquals(25, tertiary.getCount());
+    Assert.assertEquals(50, primary.getCount());
+    Assert.assertEquals(25, secondary.getCount());
+    Assert.assertEquals(25, tertiary.getCount());
 
   }
 }

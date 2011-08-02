@@ -20,7 +20,8 @@ package com.cloudera.flume.handlers.text;
 import java.util.Calendar;
 import java.util.Date;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.core.Event;
 
@@ -28,47 +29,49 @@ import com.cloudera.flume.core.Event;
  * Simple tests for syslog file output. Extracts service if there a colon,
  * otherwise skips it.
  */
-public class TestSyslogInputFormat extends TestCase {
+public class TestSyslogInputFormat {
 
+  @Test
   public void testSyslogExtractorService() throws EventExtractException {
     String test = "Aug 21 08:02:39 soundwave NetworkManager: <info>  (wlan0): supplicant connection state:  completed -> group handshake";
 
     SyslogEntryFormat ex = new SyslogEntryFormat();
     Event e = ex.extract(test, 2009);
 
-    assertNotNull(e);
+    Assert.assertNotNull(e);
     System.out.println(e);
 
-    assertEquals("soundwave", e.getHost());
-    assertEquals("NetworkManager", new String(e.get("service")));
-    assertEquals(test, new String(e.getBody()));
+    Assert.assertEquals("soundwave", e.getHost());
+    Assert.assertEquals("NetworkManager", new String(e.get("service")));
+    Assert.assertEquals(test, new String(e.getBody()));
 
     Calendar c = Calendar.getInstance();
     c.set(2009, Calendar.AUGUST, 21, 8, 2, 39);
     c.set(Calendar.MILLISECOND, 0);
     System.out.printf("extracted %s expected %s\n", new Date(e.getTimestamp()),
         c.getTime());
-    assertEquals(c.getTime().getTime(), e.getTimestamp());
+    Assert.assertEquals(c.getTime().getTime(), e.getTimestamp());
   }
 
+  @Test
   public void testSyslogExtractorNoService() throws EventExtractException {
     String test = "Aug 21 08:03:14 soundwave last message repeated 2 times";
     SyslogEntryFormat ex = new SyslogEntryFormat();
     Event e = ex.extract(test, 2009);
 
-    assertNotNull(e);
+    Assert.assertNotNull(e);
     System.out.println(e);
 
-    assertEquals("soundwave", e.getHost());
-    assertEquals(test, new String(e.getBody()));
-    assertEquals(null, e.get("service"));
+    Assert.assertEquals("soundwave", e.getHost());
+    Assert.assertEquals(test, new String(e.getBody()));
+    Assert.assertEquals(null, e.get("service"));
 
     Calendar c = Calendar.getInstance();
     c.set(2009, Calendar.AUGUST, 21, 8, 3, 14);
     c.set(Calendar.MILLISECOND, 0);
     System.out.printf("extracted %s expected %s\n", new Date(e.getTimestamp()),
         c.getTime());
-    assertEquals(c.getTime().getTime(), e.getTimestamp());
+    Assert.assertEquals(c.getTime().getTime(), e.getTimestamp());
 
   }
 

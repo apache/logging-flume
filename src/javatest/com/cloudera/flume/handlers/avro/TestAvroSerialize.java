@@ -21,8 +21,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import junit.framework.TestCase;
-
 import org.apache.avro.Schema;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.BinaryEncoder;
@@ -34,18 +32,22 @@ import org.apache.avro.reflect.ReflectData;
 import org.apache.avro.reflect.ReflectDatumReader;
 import org.apache.avro.reflect.ReflectDatumWriter;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import com.cloudera.flume.core.Attributes;
-import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.Event.Priority;
+import com.cloudera.flume.core.EventImpl;
 
 /**
  * Tests to see how Avro serialization/deserialization works.
  */
-public class TestAvroSerialize extends TestCase {
+public class TestAvroSerialize {
 
   final static Logger LOG = Logger.getLogger(TestAvroSerialize.class.getName());
 
+  @Before
   public void setUp() {
     LOG.info("----");
   }
@@ -53,6 +55,7 @@ public class TestAvroSerialize extends TestCase {
   /**
    * Experiment to see what a schema looks like.
    */
+  @Test
   public void testEventSchema() throws IOException {
     ReflectData reflectData = ReflectData.get();
     Schema schm = reflectData.getSchema(EventImpl.class);
@@ -108,6 +111,7 @@ public class TestAvroSerialize extends TestCase {
   /**
    * Try BinaryEncoder
    */
+  @Test
   public void testSerializeBinary() throws IOException {
     ReflectData reflectData = ReflectData.get();
     Schema schm = reflectData.getSchema(A.class);
@@ -120,7 +124,7 @@ public class TestAvroSerialize extends TestCase {
 
     byte[] bs = out.toByteArray();
     dump(bs);
-    assertEquals(12, bs.length);
+    Assert.assertEquals(12, bs.length);
 
     ByteArrayInputStream bais = new ByteArrayInputStream(bs);
     ReflectDatumReader<A> reader = new ReflectDatumReader<A>(schm);
@@ -132,6 +136,7 @@ public class TestAvroSerialize extends TestCase {
   /**
    * Try JsonEncoder
    */
+  @Test
   public void testSerializeJson() throws IOException {
     ReflectData reflectData = ReflectData.get();
     Schema schm = reflectData.getSchema(A.class);
@@ -145,12 +150,12 @@ public class TestAvroSerialize extends TestCase {
     byte[] bs = out.toByteArray();
     int len = bs.length;
     LOG.info("output size: " + len);
-    assertEquals(0, bs.length); // This is strange!
+    Assert.assertEquals(0, bs.length); // This is strange!
 
     json.flush(); // there should be a ReflectDatumWriter.flush();
     bs = out.toByteArray();
     dump(bs);
-    assertEquals(67, bs.length);
+    Assert.assertEquals(67, bs.length);
 
     ByteArrayInputStream bais = new ByteArrayInputStream(bs);
     ReflectDatumReader<A> reader = new ReflectDatumReader<A>(schm);
@@ -172,6 +177,7 @@ public class TestAvroSerialize extends TestCase {
   /**
    * JsonEncoder and JsonDecoder on a EventImpl
    */
+  @Test
   public void testEventSchemaSerializeJson() throws IOException {
     ReflectData reflectData = ReflectData.get();
     Schema schm = reflectData.getSchema(EventImpl.class);
@@ -185,7 +191,7 @@ public class TestAvroSerialize extends TestCase {
     json.flush();
     byte[] bs = out.toByteArray();
     dump(bs);
-    assertEquals(138, bs.length);
+    Assert.assertEquals(138, bs.length);
 
     ByteArrayInputStream bais = new ByteArrayInputStream(bs);
     ReflectDatumReader<EventImpl> reader = new ReflectDatumReader<EventImpl>(
@@ -197,6 +203,7 @@ public class TestAvroSerialize extends TestCase {
   /**
    * BinaryEnconder and BinaryDecoder on a EventImpl
    */
+  @Test
   public void testEventSchemaSerializeBin() throws IOException {
     ReflectData reflectData = ReflectData.get();
     Schema schm = reflectData.getSchema(EventImpl.class);
@@ -209,7 +216,7 @@ public class TestAvroSerialize extends TestCase {
 
     byte[] bs = out.toByteArray();
     dump(bs);
-    assertEquals(60, bs.length);
+    Assert.assertEquals(60, bs.length);
 
     ByteArrayInputStream bais = new ByteArrayInputStream(bs);
     ReflectDatumReader<EventImpl> reader = new ReflectDatumReader<EventImpl>(

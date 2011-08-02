@@ -18,9 +18,8 @@
 
 package com.cloudera.flume.master;
 
-import junit.framework.Assert;
-
 import org.apache.log4j.Logger;
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.cloudera.flume.reporter.ReportEvent;
@@ -34,11 +33,10 @@ public class TestMasterReport extends SetupMasterTestEnv {
   public void testReportContainsRequiredAttributes() {
     ReportEvent rpt = flumeMaster.getReport();
 
-    Assert.assertNotNull(
-        rpt.getStringMetric(FlumeMaster.REPORTKEY_HOSTNAME));
-    Assert.assertNotNull(
-        rpt.getLongMetric(FlumeMaster.REPORTKEY_NODES_REPORTING_COUNT));
-        
+    Assert.assertNotNull(rpt.getStringMetric(FlumeMaster.REPORTKEY_HOSTNAME));
+    Assert.assertNotNull(rpt
+        .getLongMetric(FlumeMaster.REPORTKEY_NODES_REPORTING_COUNT));
+
     // log for visual inspection
     LOG.info(rpt);
   }

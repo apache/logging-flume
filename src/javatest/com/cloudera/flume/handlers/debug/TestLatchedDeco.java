@@ -19,7 +19,8 @@ package com.cloudera.flume.handlers.debug;
 
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
@@ -35,12 +36,13 @@ import com.cloudera.flume.reporter.aggregator.CounterSink;
  * TODO (jon) problem with this approach is that extra triggers may happen it we
  * are not likely able to control the scheduler order.
  */
-public class TestLatchedDeco extends TestCase {
+public class TestLatchedDeco {
 
   /**
    * Nothing is done until the trigger is toggled "total" times. We trigger in a
    * separate thread.
    */
+  @Test
   public void testLatchedDeco() throws IOException, InterruptedException {
     final CounterSink c = new CounterSink("count");
     final FanOutSink<EventSink> s = new FanOutSink<EventSink>();
@@ -76,6 +78,6 @@ public class TestLatchedDeco extends TestCase {
     t.join();
     long count = c.getCount();
     System.out.println("trigger thread joined, count is now: " + count);
-    assertEquals(total, count);
+    Assert.assertEquals(total, count);
   }
 }

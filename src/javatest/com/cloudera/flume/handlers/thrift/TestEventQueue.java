@@ -17,7 +17,8 @@
  */
 package com.cloudera.flume.handlers.thrift;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
@@ -26,7 +27,7 @@ import com.cloudera.flume.handlers.thrift.PrioritizedThriftEventSource.EventQueu
 /**
  * This verifies the behavior of the comparator for the event priority queue
  */
-public class TestEventQueue extends TestCase {
+public class TestEventQueue {
 
   /**
    * These are specifically generate for tests below
@@ -40,6 +41,7 @@ public class TestEventQueue extends TestCase {
   final Event e6 = new EventImpl("F".getBytes(), Event.Priority.DEBUG);
 
   @SuppressWarnings("serial")
+  @Test
   public void testEventQueuePriority() throws InterruptedException {
 
     EventQueue q = new EventQueue(10) {
@@ -51,13 +53,14 @@ public class TestEventQueue extends TestCase {
       }
     };
 
-    assertEquals(q.take(), e5); // WARN
-    assertEquals(q.take(), e1); // INFO
-    assertEquals(q.take(), e6); // DEBUG
+    Assert.assertEquals(q.take(), e5); // WARN
+    Assert.assertEquals(q.take(), e1); // INFO
+    Assert.assertEquals(q.take(), e6); // DEBUG
 
   }
 
   @SuppressWarnings("serial")
+  @Test
   public void testEventQueueNanos() throws InterruptedException {
 
     EventQueue q = new EventQueue(10) {
@@ -82,12 +85,13 @@ public class TestEventQueue extends TestCase {
       Event qe = q.take();
       System.out.println("take   " + qe.getTimestamp() + " " + qe.getNanos()
           + " " + qe);
-      assertEquals(ordered[i], qe);
+      Assert.assertEquals(ordered[i], qe);
     }
 
   }
 
   @SuppressWarnings("serial")
+  @Test
   public void testEventQueueMillis() throws InterruptedException {
     Thread.sleep(100);
 
@@ -117,7 +121,7 @@ public class TestEventQueue extends TestCase {
       Event qe = q.take();
       System.out.println("take   " + qe.getTimestamp() + " " + qe.getNanos()
           + " " + qe);
-      assertEquals(ordered[i], qe);
+      Assert.assertEquals(ordered[i], qe);
     }
 
   }

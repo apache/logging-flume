@@ -17,15 +17,18 @@
  */
 package com.cloudera.flume.util;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * This tests activating a blocked MockClock after some virtualized sleep time
  * has passed.
  */
-public class TestMockClock extends TestCase {
+public class TestMockClock {
+
   volatile boolean done = false;
 
+  @Test
   public void testSleepResume() {
     final MockClock m = new MockClock(0);
     done = false;
@@ -61,6 +64,6 @@ public class TestMockClock extends TestCase {
     }
 
     t.interrupt();
-    fail("mock clock should have woken up and flipped done");
+    Assert.fail("mock clock should have woken up and flipped done");
   }
 }

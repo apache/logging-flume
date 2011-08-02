@@ -19,7 +19,8 @@ package com.cloudera.flume.handlers.batch;
 
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
@@ -35,8 +36,9 @@ import com.cloudera.flume.reporter.aggregator.CounterSink;
 /**
  * This tests batching/unbatching and gzip/gunzip compression
  */
-public class TestBatching extends TestCase {
+public class TestBatching {
 
+  @Test
   public void testBatch() throws IOException {
     final int total = 104;
     // create a batch
@@ -51,7 +53,7 @@ public class TestBatching extends TestCase {
       b.append(e);
     }
     b.close();
-    assertEquals(11, cnt.getCount());
+    Assert.assertEquals(11, cnt.getCount());
 
     // unbatch the batch.
     CounterSink cnt2 = new CounterSink("unbatch");
@@ -62,12 +64,13 @@ public class TestBatching extends TestCase {
     while ((ue = mem.next()) != null) {
       ub.append(ue);
     }
-    assertEquals(total, cnt2.getCount());
+    Assert.assertEquals(total, cnt2.getCount());
   }
 
   /**
    * Test that a timeout causes a batch to get committed.
    */
+  @Test
   public void testTimeout() throws IOException, InterruptedException {
     final int total = 100;
     // create a batch
@@ -82,7 +85,7 @@ public class TestBatching extends TestCase {
       b.append(e);
     }
     Thread.sleep(5000);
-    assertEquals(1, cnt.getCount());
+    Assert.assertEquals(1, cnt.getCount());
     b.close();
   }
 
@@ -90,6 +93,7 @@ public class TestBatching extends TestCase {
    * Test that close correctly flushes the remaining events, even if they don't
    * form an entire batch.
    */
+  @Test
   public void testCloseFlushes() throws IOException, InterruptedException {
     final int total = 102;
     // create a batch
@@ -104,15 +108,17 @@ public class TestBatching extends TestCase {
       b.append(e);
     }
     b.close();
-    assertEquals(11, cnt.getCount());
+    Assert.assertEquals(11, cnt.getCount());
   }
 
+  @Test
   public void testBatchBuilder() throws FlumeSpecException {
     String cfg = " { batch(10) => {unbatch => counter(\"cnt\") }}";
     @SuppressWarnings("unused")
     EventSink sink = FlumeBuilder.buildSink(new Context(), cfg);
   }
 
+  @Test
   public void testGzip() throws FlumeSpecException, IOException {
 
     MemorySinkSource mem = new MemorySinkSource();
@@ -144,11 +150,12 @@ public class TestBatching extends TestCase {
     System.out.printf("before: %d  gzip: %d  gunzip: %d\n", origsz, gzipsz,
         ungzsz);
 
-    assertTrue(origsz > gzipsz); // got some benefit for compressing?
-    assertEquals(origsz, ungzsz); // uncompress is same size as precompressed?
+    Assert.assertTrue(origsz > gzipsz); // got some benefit for compressing?
+    Assert.assertEquals(origsz, ungzsz); // uncompress is same size as precompressed?
 
   }
 
+  @Test
   public void testGzipBuilder() throws FlumeSpecException {
     String cfg = " { gzip => {gunzip => counter(\"cnt\") }}";
     @SuppressWarnings("unused")

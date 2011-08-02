@@ -22,7 +22,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
@@ -36,13 +36,14 @@ import com.cloudera.flume.core.EventSink;
  * output is just for visual inspection -- what we are trying to avoid here are
  * parser exceptions or NPEs from generating the
  */
-public class TestOutputFormatFactory extends TestCase {
+public class TestOutputFormatFactory {
 
   final int count = 5;
 
   /**
    * Visual inspection
    */
+  @Test
   public void testSyslogConsole() throws FlumeSpecException, IOException {
 
     EventSink snk =
@@ -58,6 +59,7 @@ public class TestOutputFormatFactory extends TestCase {
   /**
    * Visual inspection
    */
+  @Test
   public void testDefaultConsole() throws FlumeSpecException, IOException {
 
     EventSink snk =
@@ -73,6 +75,7 @@ public class TestOutputFormatFactory extends TestCase {
   /**
    * Visual inspection
    */
+  @Test
   public void testLog4jConsole() throws FlumeSpecException, IOException {
 
     EventSink snk = FlumeBuilder.buildSink(new Context(), "console(\"log4j\")");
@@ -98,6 +101,7 @@ public class TestOutputFormatFactory extends TestCase {
   /**
    * Write out to file and check to make sure there are 5 lines.
    */
+  @Test
   public void testSyslogText() throws FlumeSpecException, IOException {
 
     File tmp = File.createTempFile("syslogText", ".txt");
@@ -118,6 +122,7 @@ public class TestOutputFormatFactory extends TestCase {
   /**
    * Write out to file and check to make sure there are 5 lines.
    */
+  @Test
   public void testDefaultText() throws FlumeSpecException, IOException {
 
     File tmp = File.createTempFile("defaultText", ".txt");
@@ -139,6 +144,7 @@ public class TestOutputFormatFactory extends TestCase {
   /**
    * Write out to file and check to make sure there are 5 lines.
    */
+  @Test
   public void testLog4jText() throws FlumeSpecException, IOException {
 
     File tmp = File.createTempFile("log4jText", ".txt");
@@ -159,6 +165,7 @@ public class TestOutputFormatFactory extends TestCase {
   /**
    * Write out to file and check to make sure there are 5 lines.
    */
+  @Test
   public void testSyslogDfs() throws FlumeSpecException, IOException {
 
     File tmp = File.createTempFile("syslogDfs", ".txt");
@@ -179,6 +186,7 @@ public class TestOutputFormatFactory extends TestCase {
   /**
    * Write out to file and check to make sure there are 5 lines.
    */
+  @Test
   public void testDefaultDfs() throws FlumeSpecException, IOException {
 
     File tmp = File.createTempFile("defaultDfs", ".txt");
@@ -200,6 +208,7 @@ public class TestOutputFormatFactory extends TestCase {
   /**
    * Write out to file and check to make sure there are 5 lines.
    */
+  @Test
   public void testLog4jDfs() throws FlumeSpecException, IOException {
 
     File tmp = File.createTempFile("log4jDfs", ".txt");

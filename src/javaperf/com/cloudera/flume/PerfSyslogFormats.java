@@ -19,7 +19,7 @@ package com.cloudera.flume;
 
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventUtil;
@@ -35,8 +35,9 @@ import com.cloudera.util.Benchmark;
  * Performance testing for the throughput of syslog and apache log format
  * parsing.
  */
-public class PerfSyslogFormats extends TestCase implements ExamplePerfData {
+public class PerfSyslogFormats implements ExamplePerfData {
 
+  @Test
   public void testSyslogFormat() throws IOException, EventExtractException {
     Benchmark b = new Benchmark("Syslog format + nullsink");
     b.mark("begin");

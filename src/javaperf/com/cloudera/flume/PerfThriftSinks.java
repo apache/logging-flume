@@ -19,7 +19,7 @@ package com.cloudera.flume;
 
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.core.EventUtil;
@@ -33,7 +33,7 @@ import com.cloudera.util.Benchmark;
 /**
  * These tests are for microbenchmarking the thrift sink and server elements.
  */
-public class PerfThriftSinks extends TestCase implements ExamplePerfData {
+public class PerfThriftSinks implements ExamplePerfData {
 
   /**
    * Pipeline is:
@@ -42,6 +42,7 @@ public class PerfThriftSinks extends TestCase implements ExamplePerfData {
    * 
    * mem -> ThriftEventSink -> ThriftEventSource -> NullSink
    */
+  @Test
   public void testThriftSend() throws IOException {
 
     Benchmark b = new Benchmark("nullsink");
@@ -97,6 +98,7 @@ public class PerfThriftSinks extends TestCase implements ExamplePerfData {
    * 
    * mem -> ThriftEventSink -> ThriftEventSource -> NullSink
    **/
+  @Test
   public void testThriftSendMulti() throws IOException, InterruptedException {
 
     Benchmark b = new Benchmark("nullsink");
@@ -163,6 +165,7 @@ public class PerfThriftSinks extends TestCase implements ExamplePerfData {
    * 
    * mem -> ThriftRawEventSink -> ThriftEventSource -> NullSink
    */
+  @Test
   public void testThriftRawSend() throws IOException {
 
     Benchmark b = new Benchmark("nullsink");

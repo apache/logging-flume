@@ -20,14 +20,16 @@ package com.cloudera.util;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Experiments to see how different charsets work.
  */
-public class TestCharset extends TestCase {
+public class TestCharset  {
 
   // Wow, hudson defaults to US-ASCII!
+  @Test
   public void testDefaultCharset() {
     System.out.println("Default: " + Charset.defaultCharset());
 
@@ -37,6 +39,7 @@ public class TestCharset extends TestCase {
     // Hudson : assertEquals("US-ASCII", charset); // hudson
   }
 
+  @Test
   public void testDumpCharsets() {
     System.out.println("== charsets");
     for (String s : Charset.availableCharsets().keySet()) {
@@ -63,6 +66,7 @@ public class TestCharset extends TestCase {
   /**
    * Basically, ISO-8859-1 is "raw" -- to and from, one byte to one char
    */
+  @Test
   public void testDefaultStringCharset() {
     byte[] all = allbytes();
     String auto = new String(all);
@@ -85,7 +89,7 @@ public class TestCharset extends TestCase {
     System.out.printf("latin1   : %s\n", dumpHex(latin1.getBytes(Charset
         .forName("ISO-8859-1"))));
 
-    assertTrue(Arrays.equals(all, latin1
+    Assert.assertTrue(Arrays.equals(all, latin1
         .getBytes(Charset.forName("ISO-8859-1"))));
   }
 }

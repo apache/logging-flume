@@ -20,12 +20,11 @@ package com.cloudera.flume;
 import java.io.File;
 import java.io.IOException;
 
-import junit.framework.TestCase;
-
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.SequenceFile.Writer;
+import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.core.Event;
@@ -37,8 +36,9 @@ import com.cloudera.flume.handlers.hdfs.WriteableEvent;
 import com.cloudera.flume.handlers.hdfs.WriteableEventKey;
 import com.cloudera.util.Benchmark;
 
-public class PerfHdfsIO extends TestCase implements ExamplePerfData {
+public class PerfHdfsIO implements ExamplePerfData {
 
+  @Test
   public void testCopy() throws IOException {
 
     Benchmark b = new Benchmark("hdfs seqfile copy");
@@ -77,6 +77,7 @@ public class PerfHdfsIO extends TestCase implements ExamplePerfData {
     b.done();
   }
 
+  @Test
   public void testDirectWrite() throws IOException {
 
     Benchmark b = new Benchmark("hdfs seqfile write");

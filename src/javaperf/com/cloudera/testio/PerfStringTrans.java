@@ -19,7 +19,7 @@ package com.cloudera.testio;
 
 import java.nio.ByteBuffer;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import com.cloudera.util.Benchmark;
 
@@ -27,11 +27,12 @@ import com.cloudera.util.Benchmark;
  * This is a performance test to see how expensive different string/byte
  * translations cost
  */
-public class PerfStringTrans extends TestCase {
+public class PerfStringTrans  {
   int times = 10000000;
 
   String base = "this is a test";
 
+  @Test
   public void testStringToByteArray() {
     Benchmark b = new Benchmark("String to ByteArray");
 
@@ -43,6 +44,7 @@ public class PerfStringTrans extends TestCase {
     b.done();
   }
 
+  @Test
   public void testStringToWrapByteBuffer() {
     Benchmark b = new Benchmark("String wrap ByteBuf");
 
@@ -55,6 +57,7 @@ public class PerfStringTrans extends TestCase {
 
   }
 
+  @Test
   public void testStringtoByteBufferCopy() {
     Benchmark b = new Benchmark("String alloc ByteBuf");
 
@@ -68,6 +71,7 @@ public class PerfStringTrans extends TestCase {
     b.done();
   }
 
+  @Test
   public void testStringToByteArray2() {
     Benchmark b = new Benchmark("String to ByteArray");
 
@@ -79,6 +83,7 @@ public class PerfStringTrans extends TestCase {
     b.done();
   }
 
+  @Test
   public void testStringToWrapByteBuffer2() {
     Benchmark b = new Benchmark("String wrap ByteBuf");
 
@@ -91,6 +96,7 @@ public class PerfStringTrans extends TestCase {
 
   }
 
+  @Test
   public void testStringtoByteBufferCopy2() {
     Benchmark b = new Benchmark("String alloc ByteBuf");
 

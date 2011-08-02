@@ -20,7 +20,7 @@ package com.cloudera.flume;
 import java.io.File;
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import com.cloudera.flume.core.EventUtil;
 import com.cloudera.flume.handlers.debug.Log4jTextFileSource;
@@ -34,8 +34,9 @@ import com.cloudera.util.Benchmark;
  * This performance test tests the throughput of various disk reading and
  * writing sources and sinks.
  */
-public class PerfDiskIO extends TestCase implements ExamplePerfData {
+public class PerfDiskIO implements ExamplePerfData {
 
+  @Test
   public void testWrite() throws IOException {
     Benchmark b = new Benchmark("seqfile write");
     b.mark("begin");
@@ -76,6 +77,7 @@ public class PerfDiskIO extends TestCase implements ExamplePerfData {
     b2.done();
   }
 
+  @Test
   public void testReadFormat() throws IOException {
     Benchmark b = new Benchmark("log4j format read");
     b.mark("begin");

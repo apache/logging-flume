@@ -21,12 +21,14 @@ import java.text.DateFormat;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 /**
  * Sandbox for testing some date time related things.
  */
-public class TestDateTimeSemantics extends TestCase {
+public class TestDateTimeSemantics {
+
+  @Test
   public void testDateFormatLocals() {
     Locale[] locales = DateFormat.getAvailableLocales();
     for (Locale l : locales) {
@@ -34,6 +36,7 @@ public class TestDateTimeSemantics extends TestCase {
     }
   }
 
+  @Test
   public void testTimeZone() {
     TimeZone tz = TimeZone.getTimeZone("GMT");
     System.out.println(tz);

@@ -21,7 +21,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
@@ -32,8 +33,9 @@ import com.cloudera.flume.core.EventSink;
  * This outputs data for a series of sinks but doens't verify values. This is
  * done by visual inspection of output for now.
  */
-public class TestHierarchicalReports extends TestCase {
+public class TestHierarchicalReports {
 
+  @Test
   public void testSimple() throws FlumeSpecException {
     String s = "console";
     EventSink sink = FlumeBuilder.buildSink(new Context(), s);
@@ -46,9 +48,10 @@ public class TestHierarchicalReports extends TestCase {
     }
     System.out.println(r);
 
-    assertTrue(r.contains("X." + sink.getName()));
+    Assert.assertTrue(r.contains("X." + sink.getName()));
   }
 
+  @Test
   public void testOneDeco() throws FlumeSpecException {
     String s = "{ stubbornAppend => console}";
     EventSink sink = FlumeBuilder.buildSink(new Context(), s);
@@ -60,9 +63,10 @@ public class TestHierarchicalReports extends TestCase {
       r += e.getKey() + " = " + e.getValue().toText();
     }
     System.out.println(r);
-    assertTrue(r.contains("X." + sink.getName()));
+    Assert.assertTrue(r.contains("X." + sink.getName()));
   }
 
+  @Test
   public void testHierarchy() throws FlumeSpecException {
     String s =
         "{ intervalSampler(5) => { stubbornAppend => { insistentOpen => console } } }";
@@ -75,10 +79,11 @@ public class TestHierarchicalReports extends TestCase {
       r += e.getKey() + " = " + e.getValue().toText();
     }
     System.out.println(r);
-    assertTrue(r.contains("X." + sink.getName()));
-    assertTrue(r.contains("X.IntervalSampler.StubbornAppend.InsistentOpen"));
+    Assert.assertTrue(r.contains("X." + sink.getName()));
+    Assert.assertTrue(r.contains("X.IntervalSampler.StubbornAppend.InsistentOpen"));
   }
 
+  @Test
   public void testWalDeco() throws FlumeSpecException {
     String s =
         "{ ackedWriteAhead => { stubbornAppend => { insistentOpen => console } } }";
@@ -91,10 +96,11 @@ public class TestHierarchicalReports extends TestCase {
       r += e.getKey() + " = " + e.getValue().toText();
     }
     System.out.println(r);
-    assertTrue(r.contains("X." + sink.getName()));
-    assertTrue(r.contains("X.NaiveFileWAL.StubbornAppend.InsistentOpen"));
+    Assert.assertTrue(r.contains("X." + sink.getName()));
+    Assert.assertTrue(r.contains("X.NaiveFileWAL.StubbornAppend.InsistentOpen"));
   }
 
+  @Test
   public void testWrappedWal() throws FlumeSpecException {
     String s =
         "{ insistentOpen => { ackedWriteAhead => { stubbornAppend => { insistentOpen => console } } } }";
@@ -107,11 +113,12 @@ public class TestHierarchicalReports extends TestCase {
       r += e.getKey() + " = " + e.getValue().toText();
     }
     System.out.println(r);
-    assertTrue(r.contains("X." + sink.getName()));
-    assertTrue(r
+    Assert.assertTrue(r.contains("X." + sink.getName()));
+    Assert.assertTrue(r
         .contains("X.InsistentOpen.NaiveFileWAL.StubbornAppend.InsistentOpen"));
   }
 
+  @Test
   public void testFailover() throws FlumeSpecException {
     String s = " { ackedWriteAhead => < thriftSink ? console > } ";
     EventSink sink = FlumeBuilder.buildSink(new Context(), s);
@@ -123,14 +130,15 @@ public class TestHierarchicalReports extends TestCase {
       r += e.getKey() + " = " + e.getValue().toText();
     }
     System.out.println(r);
-    assertTrue(r.contains("X." + sink.getName()));
-    assertTrue(r
+    Assert.assertTrue(r.contains("X." + sink.getName()));
+    Assert.assertTrue(r
         .contains("X.NaiveFileWAL.BackoffFailover.primary.ThriftEventSink"));
 
-    assertTrue(r
+    Assert.assertTrue(r
         .contains("X.NaiveFileWAL.BackoffFailover.backup.ConsoleEventSink"));
   }
 
+  @Test
   public void testMultiple() throws FlumeSpecException {
     String s = " { ackedWriteAhead => [ thriftSink , console ] } ";
     EventSink sink = FlumeBuilder.buildSink(new Context(), s);
@@ -142,8 +150,8 @@ public class TestHierarchicalReports extends TestCase {
       r += e.getKey() + " = " + e.getValue().toText();
     }
     System.out.println(r);
-    assertTrue(r.contains("X." + sink.getName()));
-    assertTrue(r.contains("X.NaiveFileWAL.Fanout.0.ThriftEventSink"));
-    assertTrue(r.contains("X.NaiveFileWAL.Fanout.1.ConsoleEventSink"));
+    Assert.assertTrue(r.contains("X." + sink.getName()));
+    Assert.assertTrue(r.contains("X.NaiveFileWAL.Fanout.0.ThriftEventSink"));
+    Assert.assertTrue(r.contains("X.NaiveFileWAL.Fanout.1.ConsoleEventSink"));
   }
 }

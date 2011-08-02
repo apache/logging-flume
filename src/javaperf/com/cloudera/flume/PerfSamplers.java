@@ -19,7 +19,7 @@ package com.cloudera.flume;
 
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventUtil;
@@ -35,7 +35,9 @@ import com.cloudera.util.Benchmark;
 /**
  * Performance testing for the various samplers.
  */
-public class PerfSamplers extends TestCase implements ExamplePerfData {
+public class PerfSamplers implements ExamplePerfData {
+
+  @Test
   public void testReservoirSampler() throws IOException {
     Benchmark b = new Benchmark("Reservoir sampler + nullsink");
     b.mark("begin");
@@ -76,6 +78,7 @@ public class PerfSamplers extends TestCase implements ExamplePerfData {
     b.done();
   }
 
+  @Test
   public void testIntervalSampler() throws IOException {
     Benchmark b = new Benchmark("Interval sampler + nullsink");
     b.mark("begin");
@@ -116,6 +119,7 @@ public class PerfSamplers extends TestCase implements ExamplePerfData {
     b.done();
   }
 
+  @Test
   public void testProbabilitySampler() throws IOException {
     Benchmark b = new Benchmark("Reservoir sampler + nullsink");
     b.mark("begin");

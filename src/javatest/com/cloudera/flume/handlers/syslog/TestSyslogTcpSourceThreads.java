@@ -19,7 +19,8 @@ package com.cloudera.flume.handlers.syslog;
 
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Previously there were intermittent problems with opening and closing and
@@ -29,12 +30,13 @@ import junit.framework.TestCase;
  * @author jon
  * 
  */
-public class TestSyslogTcpSourceThreads extends TestCase {
+public class TestSyslogTcpSourceThreads {
 
   /*
    * A previous version with have problems when opening and closing this kind of
    * sink
    */
+  @Test
   public void testOpenCloseSame() throws IOException {
     SyslogTcpSourceThreads svr = new SyslogTcpSourceThreads(5140);
     for (int i = 0; i < 100; i++) {
@@ -45,6 +47,7 @@ public class TestSyslogTcpSourceThreads extends TestCase {
     }
   }
 
+  @Test
   public void testOpenCloseNew() throws IOException {
     for (int i = 0; i < 100; i++) {
       SyslogTcpSourceThreads srv = new SyslogTcpSourceThreads(5140);
@@ -69,9 +72,10 @@ public class TestSyslogTcpSourceThreads extends TestCase {
       srv2.close();
       srv1.close();
     }
-    fail("this is not supposed to happen");
+    Assert.fail("this is not supposed to happen");
   }
 
+  @Test
   public void testOpenMultipleDiffPort() throws IOException {
     SyslogTcpSourceThreads srv1 = new SyslogTcpSourceThreads(5140);
     SyslogTcpSourceThreads srv2 = new SyslogTcpSourceThreads(5141);
@@ -80,7 +84,7 @@ public class TestSyslogTcpSourceThreads extends TestCase {
       srv1.open();
       srv2.open();
     } catch (IOException e) {
-      fail("this is not supposed to happen");
+      Assert.fail("this is not supposed to happen");
     } finally {
       srv2.close();
       srv1.close();

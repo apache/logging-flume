@@ -17,23 +17,26 @@
  */
 package com.cloudera.util;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 
-public class TestFixedRetryPolicy extends TestCase {  
+public class TestFixedRetryPolicy {
+
   /**
    * Simple functional tests for FixedRetryPolicy
    */
+  @Test
   public void testFixedRetryPolicy() {
     FixedRetryPolicy policy = new FixedRetryPolicy(3);
-    assertTrue(policy.isRetryOk());
+    Assert.assertTrue(policy.isRetryOk());
     policy.backoff();
     policy.backoff();
     policy.backoff();
-    assertFalse(policy.isRetryOk());
-    assertTrue(policy.isFailed());
+    Assert.assertFalse(policy.isRetryOk());
+    Assert.assertTrue(policy.isFailed());
     
     policy.reset();
-    assertTrue(policy.isRetryOk());
-  }    
+    Assert.assertTrue(policy.isRetryOk());
+  }
 }

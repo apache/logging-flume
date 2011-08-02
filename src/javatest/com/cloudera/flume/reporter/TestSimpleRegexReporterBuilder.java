@@ -20,7 +20,7 @@ package com.cloudera.flume.reporter;
 import java.io.IOException;
 import java.util.Collection;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import com.cloudera.flume.ExampleData;
 import com.cloudera.flume.core.EventImpl;
@@ -32,7 +32,7 @@ import com.cloudera.flume.reporter.histogram.RegexGroupHistogramSink;
  * This test the file loader on a known good file to make sure it doesn't
  * explode on us.
  */
-public class TestSimpleRegexReporterBuilder extends TestCase implements
+public class TestSimpleRegexReporterBuilder implements
     ExampleData {
 
   public static final String sample = "123.45.67.89 - - [27/Oct/2000:09:27:09 -0400] "
@@ -42,6 +42,7 @@ public class TestSimpleRegexReporterBuilder extends TestCase implements
   /**
    * This is just to make sure it doesn't explode.
    */
+  @Test
   public void testLoad() throws IOException {
     SimpleRegexReporterBuilder b = new SimpleRegexReporterBuilder(
         APACHE_REGEXES);

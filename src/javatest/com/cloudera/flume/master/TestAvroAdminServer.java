@@ -23,12 +23,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.TestCase;
-
 import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.ipc.HttpServer;
 import org.apache.avro.specific.SpecificResponder;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.avro.AvroFlumeConfigData;
@@ -38,10 +38,12 @@ import com.cloudera.flume.conf.avro.FlumeNodeStatusAvro;
 import com.cloudera.flume.util.AdminRPC;
 import com.cloudera.flume.util.AdminRPCAvro;
 
-public class TestAvroAdminServer extends TestCase {
+public class TestAvroAdminServer {
+
   public static Logger LOG = Logger.getLogger(TestAvroAdminServer.class);
 
   public class MyAvroServer implements FlumeMasterAdminServerAvro {
+
     private HttpServer server;
 
     public void serve() throws IOException {
@@ -96,6 +98,7 @@ public class TestAvroAdminServer extends TestCase {
     }
   }
 
+  @Test
   public void testMasterAdminServer() throws IOException {
     MyAvroServer server = new MyAvroServer();
     server.serve();
@@ -103,19 +106,20 @@ public class TestAvroAdminServer extends TestCase {
     LOG.info("Connected to test master");
 
     long submit = client.submit(new Command(""));
-    assertEquals("Expected response was 42, got " + submit, submit, 42);
+    Assert.assertEquals("Expected response was 42, got " + submit, submit, 42);
 
     boolean succ = client.isSuccess(42);
-    assertEquals("Expected response was false, got " + succ, succ, false);
+    Assert.assertEquals("Expected response was false, got " + succ, succ, false);
 
     boolean fail = client.isFailure(42);
-    assertEquals("Expected response was true, got " + fail, fail, true);
+    Assert.assertEquals("Expected response was true, got " + fail, fail, true);
 
     Map<String, FlumeConfigData> cfgs = client.getConfigs();
-    assertEquals("Expected response was 0, got " + cfgs.size(), cfgs.size(), 0);
+    Assert.assertEquals("Expected response was 0, got " + cfgs.size(), cfgs.size(), 0);
     server.stop();
   }
 
+  @Test
   public void testAvroServerOpenClose() throws IOException {
     MyAvroServer server = new MyAvroServer();
     for (int i = 0; i < 50; i++) {

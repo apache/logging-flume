@@ -23,7 +23,7 @@ import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.handlers.debug.NoNlSynthSource;
@@ -46,7 +46,7 @@ import com.cloudera.util.Benchmark;
  * 
  * 500MB / 15.3 => 32.7 MB/s
  */
-public class PerfSyslogWireExtract extends TestCase {
+public class PerfSyslogWireExtract {
 
   /**
    * Generates a dataset, puts it into a memory buffer, and the uses the
@@ -54,6 +54,7 @@ public class PerfSyslogWireExtract extends TestCase {
    * 
    * 1M x 100 bytes, 5 times
    */
+  @Test
   public void testNewExtractScan100() throws IOException, EventExtractException {
     Benchmark b = new Benchmark("new extract - scan 100 blocks");
 
@@ -99,6 +100,7 @@ public class PerfSyslogWireExtract extends TestCase {
    * 
    * 1M x 100 bytes, 5 times
    */
+  @Test
   public void testNewExtractScan1000() throws IOException,
       EventExtractException {
     Benchmark b = new Benchmark("new extract - scan 1000 blocks");
@@ -147,6 +149,7 @@ public class PerfSyslogWireExtract extends TestCase {
    * 
    * 1M x 100 bytes, 5 times
    */
+  @Test
   public void testNewExtractScan() throws IOException, EventExtractException {
     Benchmark b = new Benchmark("new extract - scan single byte");
 
@@ -191,6 +194,7 @@ public class PerfSyslogWireExtract extends TestCase {
    * Generates a dataset, puts it into a memory buffer, and the uses the
    * DataInputStream machinery to read through it one parsed record at a time.
    */
+  @Test
   public void testNewExtract() throws IOException, EventExtractException {
     Benchmark b = new Benchmark("regex extract");
 

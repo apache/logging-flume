@@ -21,7 +21,8 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.util.Arrays;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.handlers.text.EventExtractException;
@@ -29,24 +30,27 @@ import com.cloudera.flume.handlers.text.EventExtractException;
 /**
  * This tests the wire extractors using the new parser.
  */
-public class TestSyslogWireExtractor extends TestCase {
+public class TestSyslogWireExtractor {
+
   /**
    * Test the extractor
    */
+  @Test
   public void testNewExtractor() throws EventExtractException {
     String msg = "This is a test";
     String entry = "<13>" + msg + "\n";
     DataInputStream in = new DataInputStream(new ByteArrayInputStream(entry
         .getBytes()));
     Event e = SyslogWireExtractor.extractEvent(in);
-    assertEquals(1, e.get(SyslogConsts.SYSLOG_FACILITY)[0]); // 1 is syslog
-    assertEquals(5, e.get(SyslogConsts.SYSLOG_SEVERITY)[0]); // 5 is
-    assertTrue(Arrays.equals(msg.getBytes(), e.getBody()));
+    Assert.assertEquals(1, e.get(SyslogConsts.SYSLOG_FACILITY)[0]); // 1 is syslog
+    Assert.assertEquals(5, e.get(SyslogConsts.SYSLOG_SEVERITY)[0]); // 5 is
+    Assert.assertTrue(Arrays.equals(msg.getBytes(), e.getBody()));
   }
 
   /**
    * Extractors and formatters should be reversable
    */
+  @Test
   public void testNewFormatExtractor() throws EventExtractException {
     String msg = "Aug 21 08:02:39 soundwave NetworkManager: <info>  (wlan0): supplicant connection state:  completed -> group handshake";
     String entry = "<13>" + msg + "\n";
@@ -58,12 +62,13 @@ public class TestSyslogWireExtractor extends TestCase {
     Event e = fmt.extract(in);
     System.out.printf("size entry: %d, size formatted: %d ",
         entry.getBytes().length, fmt.toBytes(e).length);
-    assertTrue(Arrays.equals(entry.getBytes(), fmt.toBytes(e)));
+    Assert.assertTrue(Arrays.equals(entry.getBytes(), fmt.toBytes(e)));
   }
 
   /**
    * Extractors and formatters should be reversable
    */
+  @Test
   public void testNewFormatExtractor2() throws EventExtractException {
     // this is an example from beast.
     String msg = "Oct 14 22:12:49 Hostd: [2 009-10-14 22:12:49.912 100C1B90 verbose 'Cimsvc' ] Ticket issued for CIMOM version 1.0, user root";
@@ -74,13 +79,14 @@ public class TestSyslogWireExtractor extends TestCase {
 
     SyslogWireExtractor fmt = new SyslogWireExtractor();
     Event e = fmt.extract(in);
-    assertTrue(Arrays.equals(entry.getBytes(), fmt.toBytes(e)));
+    Assert.assertTrue(Arrays.equals(entry.getBytes(), fmt.toBytes(e)));
 
   }
 
   /**
    * Extractors and formatters should be reversable
    */
+  @Test
   public void testNewFormatExtractor3() throws EventExtractException {
     // this is an example from beast.
     String msg = "Oct 15 01:04:15 Hostd: [2009-10-15 01:04:15.484 17FA5B90 verbose 'vm:/vmfs/volumes/4acaa2a2-a85a3928-97b1-003048c93e5f/Centos 386 Build01/Centos 386 Build01.vmx'] Updating current heartbeatStatus: greenellow2e09476e6b0]5285369c-0d52-ca5a-594e-f1de890";
@@ -91,13 +97,14 @@ public class TestSyslogWireExtractor extends TestCase {
 
     SyslogWireExtractor fmt = new SyslogWireExtractor();
     Event e = fmt.extract(in);
-    assertTrue(Arrays.equals(entry.getBytes(), fmt.toBytes(e)));
+    Assert.assertTrue(Arrays.equals(entry.getBytes(), fmt.toBytes(e)));
 
   }
 
   /**
    * RFC5426 does not require syslog messages to be newline terminated
    */
+  @Test
   public void testNewFormatMissingNewlineTerminator() throws EventExtractException {
     // this is an example from beast.
     String msg = "Oct 15 01:04:15 Hostd: [2009-10-15 01:04:15.484 17FA5B90 verbose 'vm:/vmfs/volumes/4acaa2a2-a85a3928-97b1-003048c93e5f/Centos 386 Build01/Centos 386 Build01.vmx'] Updating current heartbeatStatus: greenellow2e09476e6b0]5285369c-0d52-ca5a-594e-f1de890";
@@ -110,11 +117,12 @@ public class TestSyslogWireExtractor extends TestCase {
     Event e = fmt.extract(in);
     
     // verify that the newline is added when formatting the entry using fmt
-    assertTrue(Arrays.equals(new String(entry + "\n").getBytes(),
+    Assert.assertTrue(Arrays.equals(new String(entry + "\n").getBytes(),
         fmt.toBytes(e)));
 
   }
 
+  @Test
   public void testNewFail() {
     String msg = "this will fail";
     Event e = null;
@@ -128,7 +136,7 @@ public class TestSyslogWireExtractor extends TestCase {
       System.out.println("expected:" + e1);
       return; // success!
     }
-    fail("Should have thrown exception");
+    Assert.fail("Should have thrown exception");
   }
 
 }

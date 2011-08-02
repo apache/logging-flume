@@ -17,13 +17,16 @@
  */
 package com.cloudera.util;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
-public class TestRetryHarness extends TestCase {
+public class TestRetryHarness {
+
   /** 
    * Simple test to ensure that a RetryHarness actually does retry / fail
    * when the Retryable fails.
    */
+  @Test
   public void testRetryHarness() throws InterruptedException, Exception {
     Retryable retry = new Retryable() {
       int totaltries = 0;
@@ -38,15 +41,16 @@ public class TestRetryHarness extends TestCase {
     };
     
     RetryHarness harness = new RetryHarness(retry, new FixedRetryPolicy(3));
-    assertTrue(harness.attempt());
+    Assert.assertTrue(harness.attempt());
     harness = new RetryHarness(retry, new FixedRetryPolicy(1));
-    assertFalse(harness.attempt());
+    Assert.assertFalse(harness.attempt());
   }  
   
   /**
    * Test that abort works to give an early exit. 
    * 
    */
+  @Test
   public void testAbort() throws Exception {   
     class TestRetryable extends Retryable {
       public int totaltries = 0;
@@ -58,8 +62,8 @@ public class TestRetryHarness extends TestCase {
     };    
     TestRetryable retry = new TestRetryable();    
     RetryHarness harness = new RetryHarness(retry, new FixedRetryPolicy(3));    
-    assertFalse("doTry should be false!", harness.attempt());    
-    assertEquals("doTry called too many times! " + retry.totaltries, retry.totaltries, 1);    
+    Assert.assertFalse("doTry should be false!", harness.attempt());    
+    Assert.assertEquals("doTry called too many times! " + retry.totaltries, retry.totaltries, 1);    
     harness = new RetryHarness(retry, new FixedRetryPolicy(1));    
   }
   
@@ -67,6 +71,7 @@ public class TestRetryHarness extends TestCase {
    * Test the two variants of RetryHarness, one where exceptions are rethrown 
    * after failure, one where they are always masked.  
    */
+  @Test
   public void testException() {
     Exception e = null;
     Retryable retry = new Retryable() {
@@ -82,7 +87,7 @@ public class TestRetryHarness extends TestCase {
     } catch (Exception e1) {
       e = e1;
     }
-    assertNotNull("Expected exception not thrown!",e);
+    Assert.assertNotNull("Expected exception not thrown!",e);
     e = null;
     harness = new RetryHarness(retry, new FixedRetryPolicy(3), false);    
     try { 
@@ -90,6 +95,6 @@ public class TestRetryHarness extends TestCase {
     } catch (Exception e1) {
       e = e1;
     }
-    assertNull("Unexpected exception thrown!",e);
+    Assert.assertNull("Unexpected exception thrown!",e);
   }
 }

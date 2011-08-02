@@ -20,7 +20,8 @@ package dk.brics.automaton;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * This is testing an alternate regex library. Instead of java's default nfa
@@ -38,19 +39,21 @@ import junit.framework.TestCase;
  * 
  * It has a BSD license.
  */
-public class TestAutomaton extends TestCase {
+public class TestAutomaton {
 
+  @Test
   public void testJdkRegex() {
     Pattern p = Pattern.compile("a|ab");
     Matcher m = p.matcher("ab");
-    assertTrue(m.matches());
+    Assert.assertTrue(m.matches());
   }
 
+  @Test
   public void testAutomatonRegex() {
     RegExp re = new RegExp("a|ab");
     RunAutomaton ra = new RunAutomaton(re.toAutomaton());
 
-    assertTrue(ra.run("ab"));
+    Assert.assertTrue(ra.run("ab"));
   }
 
 }

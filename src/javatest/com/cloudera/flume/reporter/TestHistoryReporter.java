@@ -19,7 +19,8 @@ package com.cloudera.flume.reporter;
 
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
@@ -34,7 +35,7 @@ import com.cloudera.util.Pair;
 /**
  * This tests the time lining abilities of the history reporter.
  */
-public class TestHistoryReporter extends TestCase {
+public class TestHistoryReporter {
 
   Tagger t = new DumbTagger();
 
@@ -42,6 +43,7 @@ public class TestHistoryReporter extends TestCase {
    * This version uses wall clock time to test roll over from one epoch to the
    * next.
    */
+  @Test
   public void testTestCountHistory() throws IOException, InterruptedException {
     // have a huge period and just force them in the test.
     CountHistoryReporter r = new CountHistoryReporter("test timeline", 5000000,
@@ -82,7 +84,7 @@ public class TestHistoryReporter extends TestCase {
     for (Pair<Long, CounterSink> p : r.getHistory()) {
       System.out.printf("time: %,18d count: %8d\n", p.getLeft(), p.getRight()
           .getCount());
-      assertEquals(ans[i], p.getRight().getCount());
+      Assert.assertEquals(ans[i], p.getRight().getCount());
       i++;
     }
     r.close();
@@ -92,6 +94,7 @@ public class TestHistoryReporter extends TestCase {
    * This version uses a mock clock to test roll over from one epoch to the
    * next. We can check mock clock time as well to make sure it works.
    */
+  @Test
   public void testTestCountHistoryClocked() throws IOException {
     MockClock m = new MockClock(0);
     Clock.setClock(m);
@@ -134,8 +137,8 @@ public class TestHistoryReporter extends TestCase {
     for (Pair<Long, CounterSink> p : r.getHistory()) {
       System.out.printf("time: %8d count: %8d\n", p.getLeft(), p.getRight()
           .getCount());
-      assertEquals(ans[i], p.getRight().getCount());
-      assertEquals((long) p.getLeft(), times[i]);
+      Assert.assertEquals(ans[i], p.getRight().getCount());
+      Assert.assertEquals((long) p.getLeft(), times[i]);
       i++;
     }
     r.close();

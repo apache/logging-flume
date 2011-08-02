@@ -20,7 +20,8 @@ package com.cloudera.flume;
 import java.io.File;
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.cloudera.flume.core.EventUtil;
 import com.cloudera.flume.handlers.debug.MemorySinkSource;
@@ -36,8 +37,9 @@ import com.cloudera.util.Histogram;
  * 
  * This crashes with OOME's .. What is wrong!?
  */
-public class PerfGrepReportSinks extends TestCase implements ExamplePerfData {
+public class PerfGrepReportSinks implements ExamplePerfData {
 
+  @Test
   public void testHadoopGrep() throws IOException {
     Benchmark b = new Benchmark("hadoop_greps");
     b.mark("begin");
@@ -63,10 +65,10 @@ public class PerfGrepReportSinks extends TestCase implements ExamplePerfData {
     System.out.println(histo);
     
     // from grep | wc
-    assertEquals(230659, histo.get("NullPointerException"));
-    assertEquals(2916, histo.get("ConnectException"));
-    assertEquals(230663, histo.get("Lost tracker"));
-    assertEquals(166834, histo.get("mapred.TaskTracker: Resending"));
+    Assert.assertEquals(230659, histo.get("NullPointerException"));
+    Assert.assertEquals(2916, histo.get("ConnectException"));
+    Assert.assertEquals(230663, histo.get("Lost tracker"));
+    Assert.assertEquals(166834, histo.get("mapred.TaskTracker: Resending"));
     
     
     b.done();
