@@ -548,7 +548,16 @@ public class FlumeNode implements Reportable {
       m.invoke(null, FlumeConfiguration.get(),
           FlumeConfiguration.SECURITY_KERBEROS_KEYTAB,
           FlumeConfiguration.SECURITY_KERBEROS_PRINCIPAL);
+    } catch (Exception e) {
+      LOG.error("Flume failed when attempting to authenticate with keytab "
+          + FlumeConfiguration.get().getKerberosKeytab() + " and principal '"
+          + FlumeConfiguration.get().getKerberosPrincipal() + "'", e);
 
+      // e.getMessage() comes from hadoop is worthless
+      return;
+    }
+
+    try {
       /*
        * getLoginUser, getAuthenticationMethod, and isLoginKeytabBased are not
        * in Hadoop 20.2, only kerberized enhanced version.
@@ -575,9 +584,8 @@ public class FlumeNode implements Reportable {
       LOG.info(" User name: " + ugi.getUserName());
       LOG.info(" Using keytab: " + keytabBased);
     } catch (Exception e) {
-      LOG.error("Flume is using Hadoop core "
-          + org.apache.hadoop.util.VersionInfo.getVersion() + " which failed: "
-          + e.getMessage());
+      LOG.error("Flume was unable to dump kerberos login user"
+          + " and authentication method", e);
       return;
     }
 
