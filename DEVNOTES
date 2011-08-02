@@ -124,22 +124,38 @@ Always should build.
 
 Ideally tests all pass
 
-== push invarients
+== Push invariants
 
 We should tag pushes with JIRA nubmers.
 
+== Flume's web application
 
-== Debugging JSP web applications in jetty inside eclipse.
 
 The default setup for flume is to run its servlets from precompiled
-jsps.  Debugging is easier when it is more dynamic and our servlet
+jsps.  The default configuration points jetty (a jsp server) to
+information found in the ./webapps directory.  We assume that most
+developers and users will be in core, so at the git project root dir,
+./webapps is a symlink that points to the build/webapps directory.
+This is where static files and auto-generated files that are generated when
+flume is compiled.  Using this symlink makes the flume webapp use
+precompiled jsp pages.
+
+One can debug the jsp pages or have them autogenerate at runtime
+(useful for development) by changing this symlink to point to
+src/webapps.  This directory has subapps and jsp source
+code. Debugging is easier when it is more dynamic and our servlet
 container Jetty can dyamically comile jsp pages to hasten the
-debugging process.  This is useful when using running the Flume Master
-or FlumeNode from inside eclipse.
+debugging process.  
+
+Here are some tips for getting the web apps for Flume Master or Flume
+Node running from inside eclipse.
 
 * Make sure `tools.jar` is in your java classpath.  This allows the compiler to be present.
 * Ant is used to compile jsps.  Make sure some version of ant-launcher.jar and ant-1.x.x.jar is in your build path. (if you are in eclipse for example)
 * The default is to point to a the web app at a precompiled version of of the servlets.  There is a hook in flume-site.xml to point the jetty at a directory full of jsps.  It assumes that hte flume directory is the base for relative paths or can use a fully qualified path 
+
+Alternately, instead of using symlnks, one can set the following
+property in the system's flume-site.conf file, like below.
 
 ----
   <property>
@@ -153,8 +169,7 @@ or FlumeNode from inside eclipse.
   </property>
 ----
 
-
-== Compiling JSPs
+=== Problems when compiling JSPs
 
 BUILD FAILED
 /home/jon/flume/build.xml:471: java.lang.ExceptionInInitializerError
@@ -190,15 +205,6 @@ lib/jackson-core-asl-1.1.1.jar    # json parser
 lib/jackson-mapper-asl-1.1.1.jar  # json parser
 ----
 
-== Hudson
-
-Hudson should pull the head of the repository and build.  (Chad).
-
-Add 'git clean -xdf' to the build execute shell config panel to force
-hudson to rebuild.  
-
-archive artifacts: build/test/TEST*.txt to get outputs of unit test
-
 == Developer mode.
 
 This is an option in the bin/flume for using eclipse built class files
@@ -214,20 +220,20 @@ It is assumed that the eclipse build path is build_eclipse/.
 
 == License
 
-----
-Licensed to Cloudera, Inc. under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  Cloudera, Inc. licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-----
+/**
+ * Licensed to Cloudera, Inc. under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  Cloudera, Inc. licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
