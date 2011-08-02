@@ -50,6 +50,10 @@ out the command line being executed.
 +FLUME_VERBOSE_JAVA+ :: If this is toggled along with FLUME_VERBOSE,
 the "-verbose" flag will be passed to the JVM running flume.
 
-
++LD_LIBRARY_PATH+ :: Populate with a : separated list of file paths to
+extend the java.library.path aspect of Flume. This allows you to include 
+native libraries in the java lookup path. Example usage would be with Lzo
+where you need to extend the path with the Lzo C libraries contained in your
+Hadoop install.
 
 

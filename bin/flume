@@ -155,7 +155,7 @@ if [ "$cygwin" == false ] ; then
       break
   done
 
-  JOPTS="$JOPTS -Djava.library.path=$CMDPATH/lib "
+  JOPTS="$JOPTS -Djava.library.path=$CMDPATH/lib:$LD_LIBRARY_PATH:$JAVA_LIBRARY_PATH"
 
   append_jars_onto_classpath "$CMDPATH/lib"
   append_jars_onto_classpath "$CMDPATH/libtest"

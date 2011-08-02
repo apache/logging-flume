@@ -22,3 +22,4 @@
 # export JAVA_HOME=/usr/lib/jvm/java-6-sun
 
 # export FLUME_MASTER="localhost"
+# export JAVA_LIBRARY_PATH=/path/to/extra/libs:$JAVA_LIBRARY_PATH
