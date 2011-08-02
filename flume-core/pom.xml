@@ -12,6 +12,9 @@
   <name>Flume Core</name>
   <artifactId>flume-core</artifactId>
 
+  <properties>
+    <build.revision>NOT AVAILABLE</build.revision>
+  </properties>
   <build>
     <plugins>
 
@@ -35,26 +38,6 @@
           </dependency>
         </dependencies>
       </plugin>
-      <!-- this breaks if not in git repo.  commented out until resolved -->
-      <!--
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>cloudera-buildnumber-maven-plugin</artifactId>
-        <version>1.0-beta-5</version>
-        <configuration>
-          <fullGitRev>true</fullGitRev>
-          <timestampFormat>{0, date, E MMM dd HH:mm:ss z yyyy}</timestampFormat>
-        </configuration>
-        <executions>
-          <execution>
-            <phase>validate</phase>
-            <goals>
-              <goal>create</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      --> 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
@@ -62,6 +45,10 @@
         <executions>
           <execution>
             <id>generate-version-file</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
             <configuration>
               <target>
                 <copy
@@ -70,18 +57,14 @@
                   <fileset dir="${basedir}/src/main/version" />
                   <filterset begintoken="%" endtoken="%">
                     <filter token="VERSION" value="${project.version}" />
-                    <filter token="REV" value="${buildNumber}" />
+                    <filter token="REV" value="${build.revision}" />
                     <filter token="USER" value="${user.name}" />
-                    <filter token="DATE" value="${timestamp}" />
+                    <filter token="DATE" value="${maven.build.timestamp}" />
                     <filter token="URL" value="${project.scm.url}" />
                   </filterset>
                 </copy>
               </target>
             </configuration>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>run</goal>
-            </goals>
           </execution>
         </executions>
       </plugin>
