@@ -203,7 +203,7 @@ public class TestEscapedCustomOutputDfs {
   }
 
   /**
-   * Test to write few log lines, compress using gzip, write to disk, read back
+   * Test to write few log lines, compress using bzip2, write to disk, read back
    * the compressed file and verify the written lines.
    * 
    * @throws IOException
@@ -215,6 +215,56 @@ public class TestEscapedCustomOutputDfs {
     FlumeConfiguration conf = FlumeConfiguration.get();
     conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, "syslog");
     conf.set(FlumeConfiguration.COLLECTOR_DFS_COMPRESS_CODEC, "BZip2Codec");
+
+    // build a sink that outputs to that format.
+    File f = FileUtil.mktempdir();
+    SinkBuilder builder = EscapedCustomDfsSink.builder();
+    EventSink snk = builder.build(new Context(), "file:///" + f.getPath()
+        + "/sub-%{service}");
+    Event e = new EventImpl("this is a test message".getBytes());
+    Attributes.setString(e, "service", "foo");
+    snk.open();
+    snk.append(e);
+    snk.close();
+
+    ByteArrayOutputStream exWriter = new ByteArrayOutputStream();
+    SyslogEntryFormat fmt = new SyslogEntryFormat();
+    fmt.format(exWriter, e);
+    exWriter.close();
+    String expected = new String(exWriter.toByteArray());
+
+    // check the output to make sure it is what we expected.
+    // read the gzip file and verify the contents
+    BZip2Codec bz2Codec = new BZip2Codec();
+    InputStream bz2in = bz2Codec.createInputStream(new FileInputStream(f
+        .getPath() + "/sub-foo.bz2"));
+    byte[] buf = new byte[1];
+    StringBuilder output = new StringBuilder();
+
+    while ((bz2in.read(buf)) > 0) {
+      output.append(new String(buf));
+    }
+    bz2in.close(); // Must close for windows to delete
+    assertEquals(expected, output.toString());
+
+    assertTrue("temp folder successfully deleted", FileUtil.rmr(f));
+  }
+
+  /**
+   * Test to write few log lines, compress using bzip2, write to disk, read back
+   * the compressed file and verify the written lines.
+   *
+   * This test uses the wrong case for the codec name.
+   *
+   * @throws IOException
+   * @throws InterruptedException
+   */
+  @Test
+  public void testBZip2CodecWrongCase() throws IOException, InterruptedException {
+    // set the output format.
+    FlumeConfiguration conf = FlumeConfiguration.get();
+    conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, "syslog");
+    conf.set(FlumeConfiguration.COLLECTOR_DFS_COMPRESS_CODEC, "bzip2Codec");
 
     // build a sink that outputs to that format.
     File f = FileUtil.mktempdir();

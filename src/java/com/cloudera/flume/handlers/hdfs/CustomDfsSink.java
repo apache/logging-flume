@@ -134,7 +134,7 @@ public class CustomDfsSink extends EventSink.Base {
     for (Class<? extends CompressionCodec> cls : codecs) {
       codecStrs.add(cls.getSimpleName());
 
-      if (cls.getSimpleName().equals(codecName)) {
+      if (cls.getSimpleName().equalsIgnoreCase(codecName)) {
         try {
           codec = cls.newInstance();
         } catch (InstantiationException e) {
@@ -146,7 +146,7 @@ public class CustomDfsSink extends EventSink.Base {
     }
 
     if (codec == null) {
-      if (!codecName.equals("None")) {
+      if (!codecName.equalsIgnoreCase("None")) {
         LOG.warn("Unsupported compression codec " + codecName
             + ".  Please choose from: " + codecStrs);
       }
