@@ -19,7 +19,13 @@ limitations under the License.
 
 == Versions
 
-=== history
+=== History
+
+v0.9.3 2/4/11:: Multi-master functional.  Microsoft Windows support.
+Metrics framework including json support. Updated Source/Sink API.
+Improved robustness of non-translated agent chains and multiple
+logical node configurations.  Updated configuration languages
+cconstructs.  Usability improvements.
 
 v0.9.2 11/15/10:: Support for all Hadoop supported compression codecs.
 Avro RPC support.  Flexible throughput throttling.  Useful error
@@ -41,7 +47,7 @@ high level sinks.  Open source and initial push to github.
 v0.3 3/31/10 :: ZK based master/multi-master, automatic failovers for
 data and control planes.  flume shell. deb/rpm packaging.
 
-v0.2 1/21/09 :: Different reliability modes: WAL 2.0, DFO, Best
+v0.2 1/21/10 :: Different reliability modes: WAL 2.0, DFO, Best
 effort. Output file escaping/bucketing.  Proliferation of many sink
 and decorators.
 

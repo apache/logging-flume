@@ -32,9 +32,9 @@ to call at top-level: ant deploy-contrib compile-core-test
   <property name="version.minor" value="9"/>
   <property name="version.rev" value="3"/>
   <property name="version.numbers" value="${version.major}.${version.minor}.${version.rev}"/>
-  <property name="version" value="${version.numbers}-SNAPSHOT"/>
+  <property name="version" value="${version.numbers}"/>
   <property name="final.name" value="${name}-${version}"/>
-  <property name="year" value="2009-2010"/>
+  <property name="year" value="2009-2011"/>
 
   <property name="build.dir" value="${basedir}/build"/>
   <property name="build.src" value="${build.dir}/src"/>
@@ -878,6 +878,7 @@ to call at top-level: ant deploy-contrib compile-core-test
         <include name="build.xml" />
         <include name="cloudera/**" />
         <include name="conf/**" />
+        <include name="CHANGELOG.html" />
         <include name="DEVNOTES" />
         <include name="RELEASENOTES" />
         <include name="LICENSE" />

@@ -1,0 +1,200 @@
+        Release Notes - Flume - Version v0.9.3
+    
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-63'>FLUME-63</a>] -         Master complains about logical nodes contexts with multiple WALs
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-99'>FLUME-99</a>] -         Errors in default ports documentation
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-164'>FLUME-164</a>] -         empty files cause NullPointerException, agent stops collecting further data but keeps running in background
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-280'>FLUME-280</a>] -         &#39;+=&#39; Operation not work. bash-3.0
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-320'>FLUME-320</a>] -         Race condition in new NIO based TailSource
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-333'>FLUME-333</a>] -         &#39;ant tar&#39; did not include LICENSE, RELEASENOTES, README, and NOTICE
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-336'>FLUME-336</a>] -         Fix Tests that fail due to permissions in windows
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-337'>FLUME-337</a>] -         TestAvroDataFile tests fail
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-339'>FLUME-339</a>] -         Fix Tests that break due to windows path escaping.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-345'>FLUME-345</a>] -         Generated html from ASCIIDOC contains GPL code.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-347'>FLUME-347</a>] -         Developer guide asciidoc does not build.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-348'>FLUME-348</a>] -         ThriftEventAdaptor should return null when a nonexistent attribute is fetched
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-349'>FLUME-349</a>] -         Fix tests that break due to file semantics in windows.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-350'>FLUME-350</a>] -         Typo in conf/log4j.properties
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-362'>FLUME-362</a>] -         Typos in man pages
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-365'>FLUME-365</a>] -         &#39;refresh&#39; command with auto*Chain replaces autoCollectorSource with logicalSource.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-376'>FLUME-376</a>] -         Multiple WALs not isolated when using multiple agentE2ESinks.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-382'>FLUME-382</a>] -         All logical nodes in multi master mode are stuck in DECOMISSIONED mode.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-395'>FLUME-395</a>] -         Incorrect zip-compression codec name inside flume documentation
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-411'>FLUME-411</a>] -         Events sent down each branch of a FanOut sink should be independent 
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-416'>FLUME-416</a>] -         CollectorSink hangs due to ConcurrentModificationException in RollSink
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-430'>FLUME-430</a>] -         E2E Mode recovery doesn&#39;t deliver all events.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-433'>FLUME-433</a>] -         Agents end up in ERROR mode when all collectors are killed in BE or DFO mode
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-435'>FLUME-435</a>] -         Be nice when there is a null body in ThriftEventAdapter
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-439'>FLUME-439</a>] -         Auto Find Port in StatusHttpServer doesn&#39;t work.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-466'>FLUME-466</a>] -         Documentation typos
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-483'>FLUME-483</a>] -         Some code in src/javatest-torture and plugins fails to build.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-508'>FLUME-508</a>] -         Fix TestMasterReportPusher tests
+</li>
+</ul>
+        
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-17'>FLUME-17</a>] -         Remove LET sink expressions
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-122'>FLUME-122</a>] -         Make all Source/Sink/Decos API calls cancellable by throwing InterruptedExceptions
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-131'>FLUME-131</a>] -         Handle source/sink/deco cancellation cleanly.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-240'>FLUME-240</a>] -         Flume master status page keeps accumulating information
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-307'>FLUME-307</a>] -         Auto-generate all build version strings during build.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-327'>FLUME-327</a>] -         StatusHttpServers should use create paths in a OS agnostic way
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-377'>FLUME-377</a>] -         Node statuses should be displayed in a sorted order.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-379'>FLUME-379</a>] -         Better error message when mapping already mapped logical node.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-391'>FLUME-391</a>] -         Changing sleep from 100ms to 10ms in exec source
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-398'>FLUME-398</a>] -         Node Configurations should be displayed in sorted order.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-399'>FLUME-399</a>] -         Update Source API to use InterruptedExceptions
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-405'>FLUME-405</a>] -         Parameterize gossip ack max age
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-407'>FLUME-407</a>] -         Remove dead code from FlumeConfiguration
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-412'>FLUME-412</a>] -         Text Sink should use KW Args.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-422'>FLUME-422</a>] -         Remove unsupported FanInSource.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-423'>FLUME-423</a>] -         Remove deprecated ExecEventSource
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-428'>FLUME-428</a>] -         Get rid of FAILCHAIN from language and flume config parser.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-434'>FLUME-434</a>] -         Remove multi source from configuration grammer
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-436'>FLUME-436</a>] -         Reduce the severity of being unable to connect to a master
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-437'>FLUME-437</a>] -         Reduce the severity of being unable to connect to a master gossip port
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-438'>FLUME-438</a>] -         Add ${user-name} escape sequence to default agent/master log dirs in FlumeConfiguration.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-444'>FLUME-444</a>] -         Remove flumereporter.jsp file from node webapp.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-445'>FLUME-445</a>] -         Remove the use of LET in agentDFOChain sink.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-446'>FLUME-446</a>] -         Reactivate tests in TestAgentSink.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-469'>FLUME-469</a>] -         node table should show flow-id
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-470'>FLUME-470</a>] -         Flume code generator should regenerate kwargs 
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-479'>FLUME-479</a>] -         Lexer error is inconsistent
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-487'>FLUME-487</a>] -         Update Thrift to 0.5.0
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-488'>FLUME-488</a>] -         Fix some tests that have wrong names
+</li>
+</ul>
+    
+<h2>        New Feature
+</h2>
+<ul>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-58'>FLUME-58</a>] -         Builders and configuration language should support keyword arguments
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-107'>FLUME-107</a>] -         Allow Flume to run on Windows
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-165'>FLUME-165</a>] -         Allow collector sink to output to other sinks.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-208'>FLUME-208</a>] -         add &quot;startFromEnd&quot; args to tailDir
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-338'>FLUME-338</a>] -         Service&#39;ify flume node/master for windows.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-356'>FLUME-356</a>] -         Installer for Windows Flume.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-360'>FLUME-360</a>] -         Generic JSON output format
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-361'>FLUME-361</a>] -         bin/flume dump: Allow specifying output format
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-367'>FLUME-367</a>] -         JSON interface for master 
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-385'>FLUME-385</a>] -         Flume node read-only JSON interface
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-408'>FLUME-408</a>] -         Expose ack information in a master for debugging
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-410'>FLUME-410</a>] -         Add ability to tail subdirs to tailDir sink
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-413'>FLUME-413</a>] -         Sources should have a Context as an argument.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-424'>FLUME-424</a>] -         Make Multi master startup not depend on special config vars or special command line flags.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-425'>FLUME-425</a>] -         Comprehensive node metrics traversal mechanism.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-426'>FLUME-426</a>] -         Use Jettison Library to generate JSON objects in Master
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-440'>FLUME-440</a>] -         Add &#39;dumplog&#39; command to bin/flume
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-443'>FLUME-443</a>] -         Simplify how decorators are specified.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-471'>FLUME-471</a>] -         Add metrics to batching/unbatching/gzip/gunzip decorators
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-505'>FLUME-505</a>] -         Message Digest decorator
+</li>
+</ul>
+        
+<h2>        Task
+</h2>
+<ul>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-291'>FLUME-291</a>] -         Support using pmd or checkstyle with Flume
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-309'>FLUME-309</a>] -         Logging Developer Guidelines
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-315'>FLUME-315</a>] -         Create Developer Guide documentation
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-328'>FLUME-328</a>] -         Identify Tests that break/fail  in Windows
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-335'>FLUME-335</a>] -         Include asciidoc artifacts in repo and only build docs when necessary
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-340'>FLUME-340</a>] -         Check that all files use unix style newlines instead of windows style newlines
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-341'>FLUME-341</a>] -         Link to the DeveloperGuide from the index.html
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-352'>FLUME-352</a>] -         Document running flume on windows.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-415'>FLUME-415</a>] -         Properly handle license for aho-corasick code.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-461'>FLUME-461</a>] -         Document auto find port option of flume node
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-462'>FLUME-462</a>] -         Cleanup type casting warnings in core build.
+</li>
+<li>[<a href='https://issues.cloudera.org/browse/FLUME-489'>FLUME-489</a>] -         Update docs to explain new 0.9.3 syntax.
+</li>
+</ul>
+        

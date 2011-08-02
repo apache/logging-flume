@@ -237,6 +237,16 @@ The current cut does not deal with differences between 32-bit vs
 64-bit versions, proper error handling situations, or checks to see if
 not run as administrator.
 
+== Building documentation
+
+Documentation for Flume is written in asciidoc.  It relys on several
+libraries to generate images.
+
+* asciidoc v8.5.2
+* graphviz (dot) v2.26.3
+
+Documents can be built by running 'ant docs'
+
 == License
 
 All source files must include the following header:

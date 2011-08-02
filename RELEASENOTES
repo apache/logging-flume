@@ -1,5 +1,5 @@
-Flume 0.9.3 (Unreleased)
-========================
+Flume 0.9.3
+===========
 
 There have been some changes that removed advanced and purposely
 undocumented sinks such as the 'let' sink and the 'failchain' sink.
