@@ -58,7 +58,7 @@ public class SyslogTcpSourceThreads extends EventSource.Base {
 
   final public static int SYSLOG_TCP_PORT = 514;
   final int port;
-  final LinkedBlockingQueue<Event> eventsQ = new LinkedBlockingQueue<Event>();
+  final LinkedBlockingQueue<Event> eventsQ = new LinkedBlockingQueue<Event>(100000);
   final List<ReaderThread> readers = Collections
       .synchronizedList(new ArrayList<ReaderThread>());
   final AtomicLong rejects = new AtomicLong();
