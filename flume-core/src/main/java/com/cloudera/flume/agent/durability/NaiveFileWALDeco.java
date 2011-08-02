@@ -248,8 +248,8 @@ public class NaiveFileWALDeco extends EventSinkDecorator<EventSink> {
     walConsumerDriver = new DirectDriver("naive file wal consumer",
         walConsumer, drainSink);
     walConsumerDriver.start();
-    boolean success = walConsumerDriver.waitForAtLeastState(
-        DriverState.OPENING, 1000);
+    boolean success = walConsumerDriver.waitForAtLeastState(DriverState.ACTIVE,
+        1000);
     if (!success) {
       walConsumerDriver.stop();
       attemptToForwardException();

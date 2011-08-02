@@ -141,18 +141,17 @@ public class TestAgentSink {
       InterruptedException {
     String snkcfg = "agentSink(\"localhost\", 12345)";
 
-    EventSource src = FlumeBuilder.buildSource(LogicalNodeContext
-        .testingContext(), "collectorSource(12345)");
+    EventSource src = FlumeBuilder.buildSource(
+        LogicalNodeContext.testingContext(), "collectorSource(12345)");
     src.open();
 
-    for (int i = 0; i < 100; i++) {
-      EventSink snk = FlumeBuilder.buildSink(LogicalNodeContext
-          .testingContext(), snkcfg);
+    for (int i = 0; i < 20; i++) {
+      EventSink snk = FlumeBuilder.buildSink(
+          LogicalNodeContext.testingContext(), snkcfg);
       snk.open();
       snk.close();
     }
 
   }
-
 
 }
