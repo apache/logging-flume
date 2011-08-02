@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<assembly
+  xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
+
+  <id>bin</id>
+
+  <formats>
+    <format>dir</format>
+    <format>tar.gz</format>
+    <format>zip</format>
+  </formats>
+
+  <moduleSets>
+
+    <!-- Copy flume core jar to lib -->
+    <moduleSet>
+      <useAllReactorProjects>true</useAllReactorProjects>
+
+      <binaries>
+        <outputDirectory>lib</outputDirectory>
+        <unpack>false</unpack>
+        <includes />
+
+        <dependencySets>
+          <dependencySet>
+            <outputDirectory>lib</outputDirectory>
+            <includes />
+          </dependencySet>
+        </dependencySets>
+      </binaries>
+
+      <includes>
+        <include>com.cloudera:flume-core</include>
+      </includes>
+    </moduleSet>
+
+    <!-- Copy flume master web app -->
+    <moduleSet>
+      <useAllReactorProjects>true</useAllReactorProjects>
+
+      <binaries>
+        <outputDirectory>webapps</outputDirectory>
+        <outputFileNameMapping>flumemaster.${module.extension}</outputFileNameMapping>
+        <unpack>false</unpack>
+        <includes />
+      </binaries>
+
+      <includes>
+        <include>com.cloudera:flume-config-web</include>
+      </includes>
+    </moduleSet>
+
+    <!-- Copy flume agent web app -->
+    <moduleSet>
+      <useAllReactorProjects>true</useAllReactorProjects>
+
+      <binaries>
+        <outputDirectory>webapps</outputDirectory>
+        <outputFileNameMapping>flumeagent.${module.extension}</outputFileNameMapping>
+        <unpack>false</unpack>
+        <includes />
+      </binaries>
+
+      <includes>
+        <include>com.cloudera:flume-node-web</include>
+      </includes>
+    </moduleSet>
+
+  </moduleSets>
+
+  <fileSets>
+
+    <!-- Copy bin directory -->
+    <fileSet>
+      <outputDirectory>bin</outputDirectory>
+      <directory>../bin</directory>
+      <includes />
+    </fileSet>
+
+    <!-- Copy conf directory -->
+    <fileSet>
+      <outputDirectory>conf</outputDirectory>
+      <directory>../conf</directory>
+      <includes />
+    </fileSet>
+
+    <!-- Copy contrib directory -->
+    <fileSet>
+      <outputDirectory>contrib</outputDirectory>
+      <directory>../contrib</directory>
+      <includes />
+    </fileSet>
+
+    <!-- Copy docs directory -->
+    <fileSet>
+      <outputDirectory>docs</outputDirectory>
+      <directory>../flume-docs/target/docs</directory>
+      <includes />
+    </fileSet>
+
+    <!-- copy the man pages -->
+    <fileSet>
+      <outputDirectory>docs/man</outputDirectory>
+      <directory>../docs/man</directory>
+      <includes />
+    </fileSet>
+
+    <!-- Copy miscellaneous top level files -->
+    <fileSet>
+      <directory>../</directory>
+      <includes>
+        <include>CHANGELOG.html</include>
+        <include>DEVNOTES</include>
+        <include>LICENSE</include>
+        <include>NOTICE</include>
+        <include>README</include>
+      </includes>
+    </fileSet>
+
+  </fileSets>
+
+</assembly>

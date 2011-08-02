@@ -149,7 +149,7 @@ Section "Core" SecFlumeCore
   File LICENSE
   File NOTICE
   File README
-  File RELEASENOTES
+  File /nonfatal RELEASENOTES
   SetOutPath $INSTDIR\bin
   File bin\flumenode-service.bat
   File bin\flumenodew.exe
@@ -178,13 +178,12 @@ Section "Core" SecFlumeCore
   
   SetOutPath $INSTDIR\lib   
   File /r lib\*.*
-  File build\flume*.jar  ; copy the flume jars into lib dir
 
   ; Note: just calling 'SetOutPath' will create the empty folders for us
   SetOutPath $INSTDIR\log
 
   SetOutPath $INSTDIR\webapps
-  File /r build\webapps\*.*
+  File webapps\*.war
 
   FileOpen $ServiceInstallLog "$INSTDIR\log\service-install.log" a
   FileSeek $ServiceInstallLog 0 END

@@ -1,0 +1,91 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <artifactId>flume</artifactId>
+    <groupId>com.cloudera</groupId>
+    <version>0.9.4-SNAPSHOT</version>
+  </parent>
+
+  <groupId>com.cloudera</groupId>
+  <artifactId>flume-windows-dist</artifactId>
+  <version>0.9.4-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>Flume Windows Distribution</name>
+  <description>A module to handle all distribution packaging and
+  assembly of a windows installer.</description>
+
+  <build>
+    <plugins>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.2</version>
+        <executions>
+          <execution>
+            <id>assemble</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <inherited>false</inherited>
+            <configuration>
+              <descriptors>
+                <descriptor>src/main/assembly/dist.xml</descriptor>
+              </descriptors>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.6</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <configuration>
+              <target>
+                <property name="module">${project.artifactId}-${version}</property>
+                <property name="version">${version}</property>
+                <ant antfile="build.xml" target="windows" />
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>com.cloudera</groupId>
+      <artifactId>flume-core</artifactId>
+      <version>0.9.4-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.cloudera</groupId>
+      <artifactId>flume-config-web</artifactId>
+      <type>war</type>
+      <version>0.9.4-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.cloudera</groupId>
+      <artifactId>flume-node-web</artifactId>
+      <type>war</type>
+      <version>0.9.4-SNAPSHOT</version>
+    </dependency>
+
+  </dependencies>
+
+</project>

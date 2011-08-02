@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<!-- This ant build file creates a window installer executable using
+NSIS (nullsoft installer system).  It copies a flume.nsi.template
+filtering out some parameters and the execute the build from the
+distribution directory.  If successful the output should be an
+executable in the distribution directory. -->
+
+<project name="flume" default="windows" xmlns:ivy="antlib:org.apache.ivy.ant">
+  <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+    <classpath>
+      <pathelement location="${basedir}/libbuild/ant-contrib-1.0b3.jar"/>
+    </classpath>
+  </taskdef>
+  <!-- this is overridden by maven -->
+  <property name="name" value="flume"/>  
+  <property name="version.major" value="0"/>
+  <property name="version.minor" value="9"/>
+  <property name="version.rev" value="4"/>
+  <property name="version.numbers" value="${version.major}.${version.minor}.${version.rev}"/>
+  <property name="version" value="${version.numbers}"/>
+  <property name="final.name" value="${name}-${version}"/>
+  <property name="year" value="2009-2011"/>
+
+  <!-- version info filters set -->
+  <tstamp> 
+    <format property="year" pattern="yyyy" locale="en"/>
+  </tstamp>
+
+  <filterset id="version.filters">
+    <filter token="YEAR" value="${year}" />
+    <filter token="VERSION" value="${version}"/>
+    <filter token="VERSION_NUMBER" value="${version.numbers}.0"/>
+    <filter token="VERSION_MAJOR_MINOR" value="${version.numbers}"/>
+    <filter token="VERSION_MAJOR" value="${version.major}.${version.minor}"/>
+  </filterset>
+
+  <target name="version-filter" description="update windows installer script version">
+   <copy file="src/main/nsis/flume.nsi.template" tofile="target\${module}-bin\${module}\flume.nsi">
+     <filterset refid="version.filters"/>
+   </copy>
+  </target>
+
+  <!-- assumes makensis is in path -->
+  <target name="windows" depends="version-filter" description="build NSIS windows installer">
+    <exec executable="makensis" dir="target\${module}-bin\${module}" failonerror="true">
+      <arg line="flume.nsi"/>
+    </exec>
+  </target>
+
+</project>
