@@ -39,6 +39,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.CompositeSink;
 import com.cloudera.flume.core.Event;
@@ -46,7 +47,6 @@ import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.core.EventUtil;
 import com.cloudera.flume.handlers.debug.MemorySinkSource;
-import com.cloudera.flume.handlers.text.TailSource.Cursor;
 import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.aggregator.CounterSink;
 import com.cloudera.util.Clock;
@@ -111,7 +111,8 @@ public class TestTailSource {
 
     f.deleteOnExit();
 
-    eventSource = TailSource.builder().build(f.getAbsolutePath());
+    eventSource = TailSource.builder().build(
+        LogicalNodeContext.testingContext(), f.getAbsolutePath());
     eventSink = new CompositeSink(new ReportTestingContext(),
         "{ delay(50) => counter(\"count\") }");
     workerFailed = new AtomicBoolean(false);
@@ -176,7 +177,8 @@ public class TestTailSource {
     f.deleteOnExit();
     final CompositeSink snk = new CompositeSink(new ReportTestingContext(),
         "{ delay(50) => counter(\"count\") }");
-    final EventSource src = TailSource.builder().build(f.getAbsolutePath());
+    final EventSource src = TailSource.builder().build(
+        LogicalNodeContext.testingContext(), f.getAbsolutePath());
     final CountDownLatch done = new CountDownLatch(1);
     final int count = 30;
     runDriver(src, snk, done, count);
@@ -206,7 +208,8 @@ public class TestTailSource {
     f2.deleteOnExit();
     final CompositeSink snk = new CompositeSink(new ReportTestingContext(),
         "{ delay(50) => counter(\"count\") }");
-    final EventSource src = TailSource.builder().build(f.getAbsolutePath());
+    final EventSource src = TailSource.builder().build(
+        LogicalNodeContext.testingContext(), f.getAbsolutePath());
     final CountDownLatch done = new CountDownLatch(1);
     final int count = 30;
     runDriver(src, snk, done, count);
@@ -253,7 +256,8 @@ public class TestTailSource {
     final CompositeSink snk = new CompositeSink(new ReportTestingContext(),
         "{ delay(50) => counter(\"count\") }");
     final EventSource src = TailSource.multiTailBuilder().build(
-        f.getAbsolutePath(), f2.getAbsolutePath());
+        LogicalNodeContext.testingContext(), f.getAbsolutePath(),
+        f2.getAbsolutePath());
     final CountDownLatch done = new CountDownLatch(1);
     final int count = 60;
     runDriver(src, snk, done, count);
@@ -295,7 +299,8 @@ public class TestTailSource {
     f2.deleteOnExit();
     final MemorySinkSource snk = new MemorySinkSource();
     final EventSource src = TailSource.multiTailBuilder().build(
-        f.getAbsolutePath(), f2.getAbsolutePath());
+        LogicalNodeContext.testingContext(), f.getAbsolutePath(),
+        f2.getAbsolutePath());
     final CountDownLatch done = new CountDownLatch(1);
     final int count = 60;
     Thread t = new Thread() {
@@ -371,7 +376,7 @@ public class TestTailSource {
         "{ delay(50) => counter(\"count\") }");
     // Test start from end.
     final TailSource src = (TailSource) TailSource.builder().build(
-        f.getAbsolutePath(), "true");
+        LogicalNodeContext.testingContext(), f.getAbsolutePath(), "true");
     final CountDownLatch done = new CountDownLatch(1);
 
     runDriver(src, snk, done, count);
@@ -437,7 +442,8 @@ public class TestTailSource {
     tmpFile = File.createTempFile("tmp-", ".tmp");
     tmpFile.deleteOnExit();
 
-    source = TailSource.builder().build(tmpFile.getAbsolutePath(), "true");
+    source = TailSource.builder().build(LogicalNodeContext.testingContext(),
+        tmpFile.getAbsolutePath(), "true");
     sink = CounterSink.builder().build(new ReportTestingContext(), "count");
     workerFailed = new AtomicBoolean(false);
     os = null;

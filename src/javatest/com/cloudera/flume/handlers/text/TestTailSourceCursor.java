@@ -43,7 +43,6 @@ import org.junit.Test;
 import org.mortbay.log.Log;
 
 import com.cloudera.flume.core.Event;
-import com.cloudera.flume.handlers.text.TailSource.Cursor;
 import com.cloudera.util.Clock;
 import com.cloudera.util.OSUtils;
 

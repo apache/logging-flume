@@ -32,7 +32,6 @@ import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSource;
-import com.cloudera.flume.handlers.text.TailSource.Cursor;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.util.dirwatcher.DirChangeHandler;
 import com.cloudera.util.dirwatcher.DirWatcher;
