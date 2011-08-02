@@ -15,6 +15,26 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 -->
-<a href="flumeagent.jsp">agent</a> | 
-<a href="flumereporter.jsp">report metrics</a>
-<br>
+<html><head>
+<!-- Copyright (c) 2010 Cloudera, Inc.  All rights reserved. -->
+<!-- Retro web 1.0 flume Agent configuration display -->
+<%@ page
+	contentType="text/html; charset=UTF-8"
+	import="javax.servlet.*"
+	import="javax.servlet.http.*"
+	import="java.io.*"
+	import="java.util.*"
+	import="java.text.DecimalFormat"
+	import="com.cloudera.flume.conf.FlumeConfiguration"
+%>
+<link rel="stylesheet" type="text/css" href="/flume.css" />
+
+</head>
+<body>
+<jsp:include page="menu_agent.jsp" />
+
+<h1> Static Configuration </h1>
+
+<%= FlumeConfiguration.get().toHtml() %>
+
+</body></html>

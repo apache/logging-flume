@@ -17,10 +17,14 @@
  */
 package com.cloudera.flume.conf;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -814,5 +818,40 @@ public class FlumeConfiguration extends Configuration {
    */
   public String getDefaultFlowName() {
     return get(DEFAULT_FLOW_NAME, "default-flow");
+  }
+  
+  /**
+   * Returns the current FlumeConfiguration as an HTML string
+   */
+  public String toHtml() {
+    Iterator<Entry<String,String>> iter = iterator();
+    ArrayList<String> keys = new ArrayList<String>();
+    while (iter.hasNext()) {
+      Entry<String,String> e = iter.next();
+      keys.add(e.getKey());
+    }
+    Collections.sort(keys);
+
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+
+    pw.print("<table>");
+
+    for (String k : keys) {
+      String value = get(k);
+      pw.println("<tr><th>" + k + "</th>");
+      pw.print("<td>");
+      pw.print("<div class=\"" + k + "\">");
+      pw.print(value);
+      pw.print("</div>");
+      pw.println("</td>");
+      pw.println("</tr>");
+    }
+
+    pw.print("</table>");
+
+    pw.flush();
+
+    return sw.getBuffer().toString();
   }
 }

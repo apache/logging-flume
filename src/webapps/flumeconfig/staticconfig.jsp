@@ -25,8 +25,7 @@
 	import="java.io.*"
 	import="java.util.*"
 	import="java.text.DecimalFormat"
-	import="com.cloudera.flume.VersionInfo"
-	import="com.cloudera.flume.agent.FlumeNode"
+	import="com.cloudera.flume.conf.FlumeConfiguration"
 %>
 <link rel="stylesheet" type="text/css" href="/flume.css" />
 
@@ -34,21 +33,8 @@
 <body>
 <jsp:include page="menu_agent.jsp" />
 
-<h1> Flume Agent </h1>
+<h1> Static Configuration </h1>
 
-<%--
-<b>Started:</b> <%= new Date(tracker.getStartTime())%><br>
---%>
-<b>Version:</b> <%= VersionInfo.getVersion()%>,
-								r<%= VersionInfo.getRevision()%><br>
-<b>Compiled:</b> <%= VersionInfo.getDate()%> by
-								 <%= VersionInfo.getUser()%><br>
-<%--
-<b>Identifier:</b> <%= tracker.getTrackerIdentifier()%><br>
---%>
-
-
-
-<%= FlumeNode.getInstance().report() %>
+<%= FlumeConfiguration.get().toHtml() %>
 
 </body></html>

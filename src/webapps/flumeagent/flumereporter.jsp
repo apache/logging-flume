@@ -36,7 +36,7 @@
 </head>
 <body>
 
-<jsp:include page="menu.jsp" />
+<jsp:include page="menu_agent.jsp" />
 
 <h1> Flume Agent Metrics Report (JSON) </h1>
 

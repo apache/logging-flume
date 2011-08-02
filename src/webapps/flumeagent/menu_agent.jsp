@@ -15,8 +15,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 -->
-<a href="flumemaster.jsp">master</a> | 
-<a href="flumeconfig.jsp">config</a> | 
-<a href="mastercommand.jsp">raw commands</a> | 
-<a href="staticconfig.jsp">static config</a>
+<a href="flumeagent.jsp">agent</a> | 
+<a href="staticconfig.jsp">static config</a> | 
+<a href="flumereporter.jsp">report metrics</a>
 <br>
