@@ -308,4 +308,18 @@ public class SinkFactoryImpl extends SinkFactory {
       throw new FlumeArgException(iae.getMessage());
     }
   }
+
+  /**
+   * This is only for testing
+   */
+  public void setSink(String name, SinkBuilder builder) {
+    sinks.put(name, builder);
+  }
+
+  /**
+   * This is only for testing
+   */
+  public void setDeco(String name, SinkDecoBuilder builder) {
+    decos.put(name, builder);
+  }
 }

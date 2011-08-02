@@ -133,14 +133,11 @@ public class TestFlumeNode extends TestCase {
 
     // sleep so that we open-append-fail-close, open-append-fail-close
     // multiple times.
-    Clock.sleep(5000); // TODO (jon) replace with countdownlatch
+    Clock.sleep(1000); // TODO (jon) replace with countdownlatch
 
     System.out.printf("next called %d times", count.get());
     System.out.flush();
-    // node.close(); // this is a differetn testnow
-
-    // successful if open-append-close has been done many times.
-    assertTrue(count.get() > 1);
+    assertEquals(1, count.get());
   }
 
   public void testFailfastOutException() throws IOException {

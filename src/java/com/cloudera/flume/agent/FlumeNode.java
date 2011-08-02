@@ -230,9 +230,9 @@ public class FlumeNode implements Reportable {
             .getNodeStatusPort(), findport);
         http.start();
       } catch (IOException e) {
-        LOG.error("Flume node failed: " + e);
+        LOG.error("Flume node failed: " + e.getMessage(), e);
       } catch (Throwable t) {
-        LOG.error("Unexcepted exception/error thrown! " + t);
+        LOG.error("Unexcepted exception/error thrown! " + t.getMessage(), t);
       }
     }
 

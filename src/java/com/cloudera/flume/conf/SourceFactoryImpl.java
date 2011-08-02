@@ -161,4 +161,12 @@ public class SourceFactoryImpl extends SourceFactory {
     }
   }
 
+  /**
+   * This is for testing only. It allows us to add arbitrary sources to the
+   * builder.
+   */
+  public void setSource(String name, SourceBuilder builder) {
+    sources.put(name, builder);
+  }
+
 }

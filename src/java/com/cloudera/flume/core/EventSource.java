@@ -45,8 +45,8 @@ public interface EventSource extends Reportable {
   public void close() throws IOException;
 
   /**
-   * Generates one or more reports in some sort of readable format using
-   * the supplied naming prefix.
+   * Generates one or more reports in some sort of readable format using the
+   * supplied naming prefix.
    */
   public void getReports(String namePrefix, Map<String, ReportEvent> reports);
 
@@ -108,13 +108,13 @@ public interface EventSource extends Reportable {
         }
       };
     }
-      
+
     @Override
     public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
       reports.put(namePrefix + getName(), getReport());
     }
   }
-       
+
   public static class Base implements EventSource {
     /** type attribute is common to all sinks */
     protected static final String R_TYPE = "type";
@@ -140,7 +140,6 @@ public interface EventSource extends Reportable {
     /**
      * This method should be called from sources which wish to track event
      * statistics.
-     * @param e the next Event
      */
     synchronized protected void updateEventProcessingStats(Event e) {
       if (e == null)

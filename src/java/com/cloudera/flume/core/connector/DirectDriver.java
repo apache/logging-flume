@@ -81,7 +81,7 @@ public class DirectDriver extends Driver {
         stopped = false;
         error = null;
         state = NodeState.ACTIVE;
-        LOG.debug("Starting stream source: " + DirectDriver.this);
+        LOG.debug("Starting driver " + DirectDriver.this);
         fireStart();
 
         while (!stopped) {
@@ -96,12 +96,12 @@ public class DirectDriver extends Driver {
         error = e1;
         stopped = true;
         state = NodeState.ERROR;
-        LOG.error("Stream source failed! " + DirectDriver.this, e1);
+        LOG.error("Driver exited with error! " + DirectDriver.this);
         fireError(e1);
         return;
       }
       state = NodeState.IDLE;
-      LOG.debug("Stream source completed: " + DirectDriver.this);
+      LOG.debug("Drive completed: " + DirectDriver.this);
       fireStop();
     }
   }
