@@ -21,7 +21,7 @@
 Before you can run these subtargets directly, you need
 to call at top-level: ant deploy-contrib compile-core-test
 -->
-<project name="flume" default="tar" xmlns:ivy="antlib:org.apache.ivy.ant">
+<project name="flume" default="jar-test" xmlns:ivy="antlib:org.apache.ivy.ant">
   <taskdef resource="net/sf/antcontrib/antcontrib.properties">
     <classpath>
       <pathelement location="${basedir}/libbuild/ant-contrib-1.0b3.jar"/>
@@ -37,7 +37,7 @@ to call at top-level: ant deploy-contrib compile-core-test
   <property name="build.classes" value="${build.dir}/classes"/>
   <property name="build.encoding" value="ISO-8859-1"/>
   <property name="build.test" value="${build.dir}/test"/>
-  <property name="build.docs" value="${build.dir}/docs" />
+  <property name="build.docs" value="${basedir}/docs" />
   <property name="build.javadoc" value="${build.docs}/api" />
 
   <property name="build.perf" value="${build.dir}/perf"/>
@@ -52,6 +52,8 @@ to call at top-level: ant deploy-contrib compile-core-test
   <property name="aho.src.dir" value="${src.dir}/ahocorasick"/>
   <property name="test.src.dir" value="${src.dir}/javatest"/>
   <property name="perf.src.dir" value="${src.dir}/javaperf"/>
+  <property name="docs.dir" value="${basedir}/docs/"/>
+  <property name="docs.src.dir" value="${src.dir}/docs"/>
   <property name="conf.dir" value="${basedir}/conf"/>
   <property name="data.dir" value="${src.dir}/data"/>  	
   <property name="perf.data.dir" value="${src.dir}/javaperf/data"/>  	
@@ -150,13 +152,13 @@ to call at top-level: ant deploy-contrib compile-core-test
   <target name="init">
     <mkdir dir="${build.dir}"/>
     <mkdir dir="${build.dir}/flume"/>
-    <mkdir dir="${build.dir}/flume/docs"/>
     <mkdir dir="${build.classes}"/>
     <mkdir dir="${test.build.dir}"/>
     <mkdir dir="${test.build.classes}"/>
     <mkdir dir="${thrift.gen.dir}"/>
     <mkdir dir="${avro.gen.dir}" />
     <mkdir dir="${basedir}/libtest"/>
+    <mkdir dir="${build.docs}"/>
     <mkdir dir="${ivy.tools.lib}"/>
 
     <condition property="ivy.jar.exists">
@@ -704,39 +706,36 @@ to call at top-level: ant deploy-contrib compile-core-test
   </target>  
 
   <!-- ================================================================== -->
-  <!-- Make Docs (README.html)                                            -->
+  <!-- Make Docs (UserGuide.html/cookbook.html)                           -->
+  <!--  in ubuntu requires pkgs: asciidoc,source-highlight,graphviz       -->
   <!-- ================================================================== -->
-  <target name="docs" depends="init" description="Build documentation">
+  <target name="docs" depends="userguide,cookbook" description="Build documentation"/>
 
+  <target name="userguide" depends="init" description="Build UserGuide">
     <exec executable="asciidoc" dir="${basedir}" failonerror="true">
-      <arg line="-a toc -o ${build.dir}/flume/docs/UserGuide.html ${basedir}/src/docs/UserGuide/FullGuide"/>
+      <arg line="-a toc -o ${build.docs}/UserGuide.html ${docs.src.dir}/UserGuide/FullGuide"/>
     </exec>
 
-    <copy todir="${build.dir}/flume/docs/">
-      <fileset dir="${basedir}/src/docs/UserGuide" includes="**/*.png"/>
+    <copy todir="${docs.dir}">
+      <fileset dir="${docs.src.dir}/UserGuide" includes="**/*.png"/>
     </copy>
-
   </target>
 
   <target name="cookbook" depends="init" description="Build documentation">
-
     <exec executable="asciidoc" dir="${basedir}" failonerror="true">
-      <arg line="-a toc -o ${build.dir}/flume/docs/Cookbook.html ${basedir}/src/docs/cookbook/Cookbook"/>
+      <arg line="-a toc -o ${build.docs}/Cookbook.html ${docs.src.dir}/cookbook/Cookbook"/>
     </exec>
 
-    <copy todir="${build.dir}/flume/docs/">
-      <fileset dir="${basedir}/src/docs/cookbook" includes="**/*.png"/>
+    <copy todir="${docs.dir}">
+      <fileset dir="${docs.src.dir}/cookbook" includes="**/*.png"/>
     </copy>
-
   </target>
 
-  
-
-
+ 
   <!-- ================================================================== -->
   <!-- Make flume.tgz                                                     -->
   <!-- ================================================================== -->
-  <target name="tar" depends="jar,jar-test" description="Make flume.tar">
+  <target name="tar" depends="jar,jar-test,docs" description="Make flume.tar">
     <tar compression="gzip" destfile="${build.dir}/flume-${version}.tar.gz">
       <tarfileset dir="build" mode="644"  prefix="flume-${version}">
         <include name="*.jar" />
@@ -757,6 +756,7 @@ to call at top-level: ant deploy-contrib compile-core-test
         <include name="Makefile" />
         <include name="properties/**" />
         <include name="src/**" />
+	<include name="docs/**" />
 	<exclude name="findbugsExclude.xml" />
 	<exclude name="libtest/findbugs-ant.jar" />
 	<exclude name="libtest/findbugs.jar" />
