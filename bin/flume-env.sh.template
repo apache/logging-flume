@@ -14,7 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This file is sourced before execution of the flume script.
+# If this file is named bin/flume-env.sh, it sourced during execution
+# of the flume script and the flume-daemon.sh script.
+
 # Enviroment variables can be set here.
 
 # export JAVA_HOME=/usr/lib/jvm/java-6-sun

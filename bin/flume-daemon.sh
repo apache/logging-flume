@@ -49,6 +49,10 @@ flume_rotate_log ()
     fi
 }
 
+if [ -f "${bin}/flume-env.sh" ]; then
+    source "${bin}/flume-env.sh"
+fi
+
 if [ "$FLUME_HOME" = "" ]; then
   export FLUME_HOME=/usr/lib/flume
 fi
