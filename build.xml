@@ -128,7 +128,7 @@ to call at top-level: ant deploy-contrib compile-core-test
     <mkdir dir="${build.classes}"/>
     <mkdir dir="${test.build.dir}"/>
     <mkdir dir="${test.build.classes}"/>
-
+    <mkdir dir="${thrift.gen.dir}"/>
     <mkdir dir="${basedir}/libtest"/>
 
     <condition property="ivy.jar.exists">
@@ -348,7 +348,7 @@ to call at top-level: ant deploy-contrib compile-core-test
   <!-- Build core                                                         -->
   <!-- ================================================================== -->
 
-  <target name="compile-core" depends="init,ivy-retrieve,compile-aho,compile-gen">
+  <target name="version"> 
     <!-- generate package-info annotation file. This has to be done here
       so that the timestamp of package-info.java is newer than the timestamp
       of the output directory -->
@@ -356,6 +356,23 @@ to call at top-level: ant deploy-contrib compile-core-test
        <arg line="src/saveVersion.sh ${version}"/>
       <!--  <env key="HADOOP_REVISION" value="${cloudera.hash}" /> -->
     </exec>
+    <javac 
+     encoding="${build.encoding}" 
+     srcdir="${core.src.dir};${thrift.gen.dir}"
+     includes="com/cloudera/flume/package-info.java"
+     destdir="${build.classes}"
+     debug="${javac.debug}"
+     optimize="${javac.optimize}"
+     target="${javac.version}"
+     source="${javac.version}"
+     deprecation="${javac.deprecation}">
+      <compilerarg line="${javac.args} ${javac.args.warnings}" />
+      <classpath refid="classpath"/>
+    </javac>  
+
+  </target>
+
+  <target name="compile-core" depends="init,version,compile-aho,compile-gen">
 
     <!-- Compile Java files (excluding JSPs) checking warnings -->
     <javac 
