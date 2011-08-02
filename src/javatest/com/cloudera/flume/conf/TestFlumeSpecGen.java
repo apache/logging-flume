@@ -148,4 +148,28 @@ public class TestFlumeSpecGen {
     assertEquals(orig, out);
   }
 
+  @Test
+  public void testKeywordArgGen() throws RecognitionException,
+      FlumeSpecException {
+
+    // kwargs only
+    String s = "text( bogus=\"bogusdata\", foo=\"bar\" )";
+    CommonTree o = FlumeBuilder.parseSink(s);
+    String out = FlumeSpecGen.genEventSink(o);
+    assertEquals(s, out);
+
+    // normal arg then kwargs
+    String s2 = "text( \"bogusdata\", foo=\"bar\" )";
+    CommonTree o2 = FlumeBuilder.parseSink(s2);
+    out = FlumeSpecGen.genEventSink(o2);
+    assertEquals(s2, out);
+
+    // normal arg then kwargs
+    s2 = "text( \"bogusdata\", foo=\"bar\", boo=1.5 )";
+    o2 = FlumeBuilder.parseSink(s2);
+    out = FlumeSpecGen.genEventSink(o2);
+    assertEquals(s2, out);
+
+  }
+
 }

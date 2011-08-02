@@ -45,6 +45,8 @@ public class FlumeSpecGen {
     case STRING:
     case FLOAT:
       return t.getChild(0).getText();
+    case KWARG:
+      return t.getChild(0).getText() + "=" + genArg((CommonTree) t.getChild(1));
     default:
       throw new FlumeSpecException("Not a node of literal type: "
           + t.toStringTree());
