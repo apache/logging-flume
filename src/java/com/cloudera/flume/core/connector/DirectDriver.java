@@ -144,15 +144,14 @@ public class DirectDriver extends Driver {
 
   @Override
   public void join() throws InterruptedException {
+    join(0);
+  }
+
+  @Override
+  public boolean join(long ms) throws InterruptedException {
     final PumperThread t = thd;
-    if (t.isAlive()) {
-      t.join(30000);
-      if (t.isAlive()) {
-        // Timed out and didn't finish yet?
-        throw new InterruptedException(
-            "Bailing out becuase it took too long to join with thread");
-      }
-    }
+    t.join(ms);
+    return t.isAlive();
   }
 
   public Exception getError() {

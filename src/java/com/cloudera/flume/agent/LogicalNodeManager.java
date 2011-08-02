@@ -21,7 +21,6 @@ package com.cloudera.flume.agent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -60,8 +59,8 @@ public class LogicalNodeManager implements Reportable {
     this.physicalNode = physicalNode;
   }
 
-  public Collection<LogicalNode> getNodes() {
-    return Collections.unmodifiableCollection(threads.values());
+  synchronized public Collection<LogicalNode> getNodes() {
+    return new ArrayList<LogicalNode>(threads.values());
   }
 
   /**
@@ -142,7 +141,7 @@ public class LogicalNodeManager implements Reportable {
     return "LogicalNodeManager";
   }
 
-  public LogicalNode get(String ln) {
+  synchronized public LogicalNode get(String ln) {
     return threads.get(ln);
   }
 

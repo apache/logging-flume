@@ -52,7 +52,7 @@ public class TestBenchmarkDeco extends TestCase implements ExampleData {
     src.open();
     snk4.open();
     connect.start();
-    connect.join();
+    connect.join(Long.MAX_VALUE);
     src.close();
     snk4.close();
     snk2.getReport().toText(new OutputStreamWriter(System.err));
@@ -68,7 +68,7 @@ public class TestBenchmarkDeco extends TestCase implements ExampleData {
     src.open();
     snk3.open();
     connect.start();
-    connect.join();
+    connect.join(Long.MAX_VALUE);
     src.close();
     snk3.close();
     snk2.getReport().toText(new OutputStreamWriter(System.err));

@@ -48,11 +48,20 @@ abstract public class Driver {
   abstract public void start() throws IOException;
 
   /**
-   * Signals driver to stop.  this does not block.
+   * Signals driver to stop. this does not block.
    */
   abstract public void stop() throws IOException;
 
+  /**
+   * This causes the driver to block until it is "done".
+   */
   abstract public void join() throws InterruptedException;
+
+  /**
+   * return true if the driver has completed within specified ms. If it has not
+   * completed by the specified time, it returns false.
+   */
+  abstract public boolean join(long ms) throws InterruptedException;
 
   abstract public NodeState getState();
 

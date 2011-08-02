@@ -98,7 +98,7 @@ public class DiskFailoverDeco<S extends EventSink> extends
     try {
       // wait for sub-thread to complete.
       LOG.debug("Waiting for subthread to complete .. ");
-      conn.join();
+      conn.join(Long.MAX_VALUE);
       LOG.debug(".. subthread to completed");
     } catch (InterruptedException e) {
       LOG.error("WAL drain thread was interrupted", e);

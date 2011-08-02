@@ -171,6 +171,11 @@ public class LogicalNode implements Reportable {
     if (driver != null) {
       // stop the existing connector.
       driver.stop();
+      try {
+        driver.join(Long.MAX_VALUE);
+      } catch (InterruptedException e) {
+        LOG.error("Previous driver took too long to close!", e);
+      }
     }
 
     // this will be replaceable with multi-threaded queueing versions or other
@@ -397,7 +402,7 @@ public class LogicalNode implements Reportable {
       src.close();
       snk.close();
       try {
-        driver.join();
+        driver.join(Long.MAX_VALUE);
       } catch (InterruptedException e) {
         LOG.error("Unexpected interruption when closing logical node");
       }

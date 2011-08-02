@@ -90,7 +90,7 @@ public class TestFlumeBuilderFunctional implements ExampleData {
     DirectDriver conn = new DirectDriver(src, snk);
     conn.start();
 
-    conn.join();
+    conn.join(Long.MAX_VALUE);
 
     snk.close();
     src.close();
@@ -121,7 +121,8 @@ public class TestFlumeBuilderFunctional implements ExampleData {
     // String decorated = "{ intervalSampler(5) =>  console }";
 
     EventSource src = FlumeBuilder.buildSource(SOURCE);
-    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), decorated);
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(),
+        decorated);
     src.open();
     snk.open();
     EventUtil.dumpAll(src, snk);
@@ -179,7 +180,8 @@ public class TestFlumeBuilderFunctional implements ExampleData {
     // messages.
     String letcount = "let count := accumulator(\"count\") in < { flakeyAppend(.5,1337) => count} ? count >";
     EventSource src = MemorySinkSource.cannedData("canned data ", 100);
-    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(), letcount);
+    EventSink snk = FlumeBuilder
+        .buildSink(new ReportTestingContext(), letcount);
     src.open();
     snk.open();
     EventUtil.dumpAll(src, snk);

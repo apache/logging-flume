@@ -142,7 +142,8 @@ public class NaiveFileWALDeco<S extends EventSink> extends
       if (conn == null) {
         LOG.warn("Driver was null, shutting down");
       } else {
-        conn.join();
+        // conn.stop();
+        conn.join(Long.MAX_VALUE);
         LOG.debug(".. subthread completed");
       }
 

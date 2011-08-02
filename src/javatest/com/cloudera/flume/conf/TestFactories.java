@@ -72,7 +72,7 @@ public class TestFactories extends TestCase implements ExampleData {
     DirectDriver conn = new DirectDriver(src, snk);
     conn.start();
 
-    conn.join();
+    conn.join(Long.MAX_VALUE);
 
     snk.close();
     src.close();
@@ -120,7 +120,7 @@ public class TestFactories extends TestCase implements ExampleData {
     DirectDriver cliconn = new DirectDriver(txtsrc, tsnk);
     cliconn.start();
 
-    cliconn.join();
+    cliconn.join(Long.MAX_VALUE);
     Thread.sleep(250);
 
     svrconn.stop();
