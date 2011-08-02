@@ -17,6 +17,7 @@
  */
 package com.cloudera.util;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -81,7 +82,7 @@ public class StatusHttpServer {
 
     String appDir = webAppsPath;
     // set up the context for "/" jsp files
-    String webapp = appDir + "/" + name;
+    String webapp = new File(appDir, name).getAbsolutePath();
     LOG.info("starting web app in directory: " + webapp);
     webAppContext = new WebAppContext(webapp, "/");
     webServer.setHandler(webAppContext);
@@ -185,7 +186,7 @@ public class StatusHttpServer {
             Throwable sub = ex.getThrowable(0);
             if (sub instanceof BindException) {
               if (!findPort)
-                throw (BindException)sub; // java.net.BindException
+                throw (BindException) sub; // java.net.BindException
               needNewPort = true;
             }
           }
