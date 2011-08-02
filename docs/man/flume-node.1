@@ -1,0 +1,142 @@
+'\" t
+.\"     Title: flume-node
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\"      Date: 11/09/2010
+.\"    Manual: \ \&
+.\"    Source: \ \&
+.\"  Language: English
+.\"
+.TH "FLUME\-NODE" "1" "11/09/2010" "\ \&" "\ \&"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+flume-node \- Flume node flume\-node_nowatch \- Flume node with no watchdog
+.SH "SYNOPSIS"
+.sp
+USAGE: \fBflume node\fR [\-1] [\-c <arg>] [\-h] [\-m] [\-n <arg>] [\-s] [\-v]
+.SH "DESCRIPTION"
+.sp
+Start a Flume node daemon or execute a Flume node in one\-shot mode\&.
+.SH "OPTIONS"
+.PP
+\fB\-1\fR
+.RS 4
+One shot mode \(em do not attepmt to heartbeat with the Flume master
+.RE
+.PP
+\fB\-c <arg>\fR
+.RS 4
+Initialialize with configuration\&. This configuration needs to be a single arg in the Flume configuraiton spec language\&.
+.RE
+.PP
+\fB\-h\fR
+.RS 4
+Output usage help
+.RE
+.PP
+\fB\-m\fR
+.RS 4
+Hard exit if memory constraints causes gc to starts thrashing\&.
+.RE
+.PP
+\fB\-n <name>\fR
+.RS 4
+Set physical node name for instance\&. Default is the machine\(cqs hostname\&. This is useful for if you want to run multiple instances of Flume node on a single machine\&.
+.RE
+.PP
+\fB\-s\fR
+.RS 4
+Do not start local Flume status server on node\&. Often used with
+\fI\-1\fR
+which allows a Flume node to exit after a source has been exhausted\&.
+.RE
+.SH "EXIT STATUS"
+.PP
+\fB0\fR
+.RS 4
+Success
+.RE
+.PP
+\fB1\fR
+.RS 4
+Failure (syntax or usage error; configuration error; document processing failure; unexpected error)\&.
+.RE
+.SH "FILES"
+.PP
+/etc/flume/conf
+.RS 4
+This symbolic link points to the currently active Flume configuration directory\&.
+.RE
+.PP
+/etc/flume/conf/flume\-site\&.xml
+.RS 4
+This is the path to the currently deployed Flume site configuration\&.
+.RE
+.PP
+/etc/init\&.d/flume\-node
+.RS 4
+Service script for starting and stopping a Flume Node
+.RE
+.PP
+/etc/init\&.d/flume\-master
+.RS 4
+Service script for starting and stopping a Flume Master
+.RE
+.SH "ENVIRONMENT"
+.sp
+See flume(1) for more details\&.
+.SH "EXAMPLES"
+.sp
+Start flume node with default physical node name:
+.sp
+$ flume node
+.sp
+Start a flume node with specfiied physical node name "physicalname"
+.sp
+$ flume node \-n physicalname
+.sp
+Start a flume node that does not heartbeat, that does not have a status web page, with physical node name "foo", and configured to read /var/log/message and output to the console\&.
+.sp
+$ flume node_nowatch \-1 \-s \-n foo \-c \fIfoo:text("/var/log/messages")|console;\fR
+.SH "AUTHOR"
+.sp
+See the Contributors site here: http://wiki\&.github\&.com/cloudera/flume/Contributors
+.SH "RESOURCES"
+.sp
+Github web site and code repository: http://github\&.com/cloudera/flume/
+.sp
+Flume User guide: http://archive\&.cloudera\&.com/cdh/3/flume/UserGuide\&.html
+.sp
+Flume Cookbook: http://archive\&.cloudera\&.com/cdh/3/flume/Cookbook\&.html
+.SH "COPYING"
+.sp
+Copyright (C) 2009\-2010 Cloudera, Inc\&.
+.SH "SEE ALSO"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+flume(1), flume\-master(1), flume\-node(1), flume\-shell(1)
+.fi
+.if n \{\
+.RE
+.\}
