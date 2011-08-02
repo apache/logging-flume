@@ -33,6 +33,12 @@ agentSinks forwarding to port +_port_+.  If port is not specified, the
 node default collector TCP port, 35863.  This source registers itself 
 at the Master so that its failover chains can automatically be determined.
 
++autoCollectorSource+ :: Auto collector source. Creates a logical collector
+that, when assigned to a physical node, will be included in the list of
+collectors in a failover chain. This is the collector counterpart to
+auto*Chain() sinks. See the section Automatic Failover Chains for additional
+information.
+
 +logicalSource+ :: Logical Source. This source has a port assigned to it by 
 the Master and listens for rpcSink formatted data.
 
