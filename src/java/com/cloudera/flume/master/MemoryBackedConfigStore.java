@@ -66,6 +66,10 @@ public class MemoryBackedConfigStore extends ConfigStore {
       .<String, String> create();
 
   public void addLogicalNode(String physNode, String logicNode) {
+    if (nodeMap.containsEntry(physNode, logicNode)) {
+      // already present.
+      return;
+    }
     nodeMap.put(physNode, logicNode);
   }
 

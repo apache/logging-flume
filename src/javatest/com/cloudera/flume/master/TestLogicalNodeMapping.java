@@ -36,8 +36,8 @@ import com.cloudera.flume.agent.MasterRPC;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.master.StatusManager.NodeState;
-import com.cloudera.util.Clock;
 import com.cloudera.util.NetUtils;
+import com.google.common.collect.Multimap;
 
 public class TestLogicalNodeMapping {
 
@@ -128,31 +128,26 @@ public class TestLogicalNodeMapping {
     // should have nothing.
     assertEquals(0, node.getLogicalNodeManager().getNodes().size());
 
-    master.getSpecMan().addLogicalNode(node.getPhysicalNodeName(),
-        "foo");
+    master.getSpecMan().addLogicalNode(node.getPhysicalNodeName(), "foo");
 
     master.getStatMan().updateHeartbeatStatus(NetUtils.localhost(),
-        node.getPhysicalNodeName(), "foo",
-        NodeState.ACTIVE, 10);
+        node.getPhysicalNodeName(), "foo", NodeState.ACTIVE, 10);
 
-    master.getSpecMan().unmapLogicalNode(NetUtils.localhost(),
-        "foo");
+    master.getSpecMan().unmapLogicalNode(NetUtils.localhost(), "foo");
 
-    master.getStatMan().checkup();        
+    master.getStatMan().checkup();
 
     assertEquals(NodeState.DECOMMISSIONED, master.getStatMan()
         .getNodeStatuses().get("foo").state);
 
-    master.getSpecMan().addLogicalNode(node.getPhysicalNodeName(),
-    "foo");
+    master.getSpecMan().addLogicalNode(node.getPhysicalNodeName(), "foo");
     master.getStatMan().updateHeartbeatStatus(NetUtils.localhost(),
-        node.getPhysicalNodeName(), "foo",
-        NodeState.ACTIVE, 10);
-    
+        node.getPhysicalNodeName(), "foo", NodeState.ACTIVE, 10);
+
     master.getStatMan().checkup();
-    
-    assertEquals(NodeState.ACTIVE, master.getStatMan()
-        .getNodeStatuses().get("foo").state);    
+
+    assertEquals(NodeState.ACTIVE, master.getStatMan().getNodeStatuses().get(
+        "foo").state);
   }
 
   /**
@@ -230,6 +225,36 @@ public class TestLogicalNodeMapping {
     assertEquals(null, master.getSpecMan().getPhysicalNode("bar"));
     assertEquals(null, master.getSpecMan().getPhysicalNode("baz"));
     assertEquals(local, master.getSpecMan().getPhysicalNode(local));
+  }
+
+  @Test
+  public void testDuplicateSpawn() throws IOException {
+    // use the simple command manger, non-gossip ackmanager
+    FlumeMaster master = new FlumeMaster(new CommandManager(),
+        new ConfigManager(), new StatusManager(), new MasterAckManager(), cfg);
+    MasterRPC rpc = new DirectMasterRPC(master);
+    FlumeNode node = new FlumeNode(rpc, false, false);
+    // should have nothing.
+    assertEquals(0, node.getLogicalNodeManager().getNodes().size());
+
+    String local = NetUtils.localhost();
+
+    // these are spawn commands
+    master.getSpecMan().addLogicalNode(local, node.getPhysicalNodeName());
+    master.getSpecMan().addLogicalNode(local, "bar");
+    master.getSpecMan().addLogicalNode(local, "baz");
+
+    // there should not be duplicates in the mapping table.
+    master.getSpecMan().addLogicalNode(local, node.getPhysicalNodeName());
+    master.getSpecMan().addLogicalNode(local, "bar");
+    master.getSpecMan().addLogicalNode(local, "baz");
+
+    Multimap<String, String> mapping = master.getSpecMan().getLogicalNodeMap();
+    assertEquals(3, mapping.size());
+
+    LivenessManager liveMan = node.getLivenessManager();
+    liveMan.checkLogicalNodes();
+    assertEquals(3, node.getLogicalNodeManager().getNodes().size());
   }
 
   @Test

@@ -411,6 +411,10 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
   @Override
   public synchronized void addLogicalNode(String physNode, String logicNode) {
     Preconditions.checkArgument(client != null);
+    if (nodeMap.containsEntry(physNode, logicNode)) {
+      // already present.
+      return;
+    }
     nodeMap.put(physNode, logicNode);
     saveNodeMaps(NODEMAPS_PATH);
   }
@@ -461,7 +465,8 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
    * Remove a logical node from the logical node data flow mapping.
    */
   @Override
-  synchronized public void removeLogicalNode(String logicNode) throws IOException {
+  synchronized public void removeLogicalNode(String logicNode)
+      throws IOException {
     Preconditions.checkArgument(client != null);
     try {
       currentVersion = zkCounter.incrementAndGet();
