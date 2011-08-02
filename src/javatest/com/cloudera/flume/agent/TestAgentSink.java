@@ -17,19 +17,32 @@
  */
 package com.cloudera.flume.agent;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.File;
 import java.io.IOException;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.LogicalNodeContext;
+import com.cloudera.flume.conf.SinkFactoryImpl;
+import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
+import com.cloudera.flume.core.Event;
+import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
+import com.cloudera.flume.core.EventUtil;
+import com.cloudera.flume.handlers.avro.AvroJsonOutputFormat;
+import com.cloudera.flume.handlers.debug.ConsoleEventSink;
+import com.cloudera.flume.handlers.debug.MemorySinkSource;
 import com.cloudera.util.FileUtil;
 
 /**
@@ -37,13 +50,13 @@ import com.cloudera.util.FileUtil;
  * strings.
  */
 public class TestAgentSink {
-
+  public static final Logger LOG = LoggerFactory.getLogger(TestAgentSink.class);
   FlumeNode node;
   MockMasterRPC mock;
   File tmpdir = null;
 
   // TODO (jon) the perf suit patch fixes this problem.
-  @Test
+  @Before
   public void setUp() {
     // change config so that the write ahead log dir is in a new uniq place
     try {
@@ -60,42 +73,45 @@ public class TestAgentSink {
     node = new FlumeNode(mock, false /* starthttp */, false /* oneshot */);
   }
 
+  @Test
   public void testBuilder() throws FlumeSpecException {
     String snk = " agentSink";
-    FlumeBuilder.buildSink(new Context(), snk);
+    FlumeBuilder.buildSink(LogicalNodeContext.testingContext(), snk);
 
     String snk2 = "agentSink(\"localhost\")";
-    FlumeBuilder.buildSink(new Context(), snk2);
+    FlumeBuilder.buildSink(LogicalNodeContext.testingContext(), snk2);
 
     String snk3 = "agentSink(\"localhost\", 12345)";
-    FlumeBuilder.buildSink(new Context(), snk3);
+    FlumeBuilder.buildSink(LogicalNodeContext.testingContext(), snk3);
     try {
       String snk4 = "agentSink(\"localhost\", 12345, \"fail\")";
-      FlumeBuilder.buildSink(new Context(), snk4);
+      FlumeBuilder.buildSink(LogicalNodeContext.testingContext(), snk4);
     } catch (Exception e) {
       return;
     }
     Assert.fail("unexpected fall through");
   }
 
+  @Test
   public void testDiskFailoverBuilder() throws FlumeSpecException {
     String snk = " agentFailoverSink";
-    FlumeBuilder.buildSink(new Context(), snk);
+    FlumeBuilder.buildSink(LogicalNodeContext.testingContext(), snk);
 
     String snk2 = "agentFailoverSink(\"localhost\")";
-    FlumeBuilder.buildSink(new Context(), snk2);
+    FlumeBuilder.buildSink(LogicalNodeContext.testingContext(), snk2);
 
     String snk3 = "agentFailoverSink(\"localhost\", 12345)";
-    FlumeBuilder.buildSink(new Context(), snk3);
+    FlumeBuilder.buildSink(LogicalNodeContext.testingContext(), snk3);
     try {
       String snk4 = "agentFailoverSink(\"localhost\", 12345, \"fail\")";
-      FlumeBuilder.buildSink(new Context(), snk4);
+      FlumeBuilder.buildSink(LogicalNodeContext.testingContext(), snk4);
     } catch (Exception e) {
       return;
     }
     Assert.fail("unexpected fall through");
   }
 
+  @Test
   public void testBestEffortBuilder() throws FlumeSpecException {
     String snk = " agentBestEffortSink";
     FlumeBuilder.buildSink(new Context(), snk);
@@ -120,6 +136,7 @@ public class TestAgentSink {
    * 
    * @throws InterruptedException
    */
+  @Test
   public void testAgentSink() throws FlumeSpecException, IOException,
       InterruptedException {
     String snkcfg = "agentSink(\"localhost\", 12345)";
@@ -129,7 +146,8 @@ public class TestAgentSink {
     src.open();
 
     for (int i = 0; i < 100; i++) {
-      EventSink snk = FlumeBuilder.buildSink(new Context(), snkcfg);
+      EventSink snk = FlumeBuilder.buildSink(LogicalNodeContext
+          .testingContext(), snkcfg);
       snk.open();
       snk.close();
     }
