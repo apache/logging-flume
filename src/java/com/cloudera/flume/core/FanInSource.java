@@ -21,8 +21,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.util.MultipleIOException;
 
 /**
@@ -107,4 +109,10 @@ public class FanInSource<S extends EventSource> extends EventSource.Base {
     return null;
   }
 
+  @Override
+  public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+    super.getReports(namePrefix, reports);
+    //TODO reports for all "sinks", see collectorsource
+  }
+  
 }

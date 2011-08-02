@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import org.arabidopsis.ahocorasick.AhoCorasick;
@@ -59,7 +60,7 @@ import com.google.common.base.Preconditions;
  * We can't use the other HistogramSink because this extractor pulls out
  * multiple values instead of single values (tags vs strict categorization).
  */
-public class MultiGrepReporterSink<T> implements EventSink {
+public class MultiGrepReporterSink<T> extends EventSink.Base {
 
   final String name;
   final AhoCorasick<T> aho;
@@ -111,10 +112,7 @@ public class MultiGrepReporterSink<T> implements EventSink {
     for (T t : ts) {
       histo.increment(t.toString());
     }
-  }
-
-  @Override
-  public void close() throws IOException {
+    super.append(e);
   }
 
   @Override

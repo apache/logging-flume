@@ -55,6 +55,7 @@ public class ThriftRawEventSink extends ThriftEventSink {
 
     try {
       client.rawAppend(re);
+      updateAppendStats(e);
     } catch (TException e1) {
       e1.printStackTrace();
       throw new IOException("Append failed " + e);

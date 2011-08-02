@@ -61,6 +61,7 @@ public class SyslogTcpSource extends EventSource.Base {
     while (true) {
       try {
         e = SyslogWireExtractor.extractEvent(is);
+        updateEventProcessingStats(e);
         return e;
       } catch (EventExtractException ex) {
         rejects++;

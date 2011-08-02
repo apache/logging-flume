@@ -368,6 +368,7 @@ public class TailSource extends EventSource.Base {
         Event e = sync.poll(100, TimeUnit.MILLISECONDS);
         if (e == null)
           continue; // nothing there, retry.
+        updateEventProcessingStats(e);
         return e;
       }
       return null; // closed

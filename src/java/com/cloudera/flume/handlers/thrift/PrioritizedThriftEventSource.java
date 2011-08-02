@@ -118,6 +118,7 @@ public class PrioritizedThriftEventSource extends EventSource.Base {
                 @Override
                 public void append(Event e) throws IOException {
                   q.add(e);
+                  super.append(e);
                 }
               }));
       Factory protFactory = new TBinaryProtocol.Factory(true, true);
@@ -151,7 +152,9 @@ public class PrioritizedThriftEventSource extends EventSource.Base {
   public Event next() throws IOException {
 
     try {
-      return q.take();
+      Event e = q.take();
+      updateEventProcessingStats(e);
+      return e;
     } catch (InterruptedException e) {
       e.printStackTrace();
       throw new IOException("Waiting for queue element was interupted! " + e);

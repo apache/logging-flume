@@ -162,6 +162,7 @@ public class GangliaSink extends EventSink.Base {
       return;
     }
     emitMetric(attr, typeTable.get(type), value, units);
+    super.append(e);
   }
 
   @Override

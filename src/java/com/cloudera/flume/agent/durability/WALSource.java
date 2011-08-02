@@ -18,11 +18,13 @@
 package com.cloudera.flume.agent.durability;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSource;
+import com.cloudera.flume.reporter.ReportEvent;
 
 /**
  * This is a wrapper for the NaiveFileWALManager that blocks if there is no
@@ -82,8 +84,10 @@ class WALSource extends EventSource.Base {
 
     // read next event
     Event e = getValidNext();
-    if (e != null)
+    if (e != null) {
+      updateEventProcessingStats(e);
       return e; // successful case
+    }
 
     // no more events? try to get next source
     do {
@@ -107,7 +111,16 @@ class WALSource extends EventSource.Base {
       }
       e = getValidNext();
     } while (e == null);
+    updateEventProcessingStats(e);
     return e; // return valid event
+  }
+
+  @Override
+  public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+    super.getReports(namePrefix, reports);
+    if (curSource != null) {
+      curSource.getReports(namePrefix + getName() + ".", reports);
+    }
   }
 
   public void recover() throws IOException {

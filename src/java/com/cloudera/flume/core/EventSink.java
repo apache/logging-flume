@@ -18,6 +18,7 @@
 package com.cloudera.flume.core;
 
 import java.io.IOException;
+import java.util.Map;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
@@ -32,7 +33,6 @@ import com.cloudera.flume.reporter.Reportable;
  * 
  */
 public interface EventSink extends Reportable {
-
   /**
    * This appends another event to the sink. It can throw two kinds of
    * exceptions IOExceptions and RuntimeExceptions (failed preconditions,
@@ -63,11 +63,37 @@ public interface EventSink extends Reportable {
   public void close() throws IOException;
 
   /**
+   * Generates one or more reports in some sort of readable format using
+   * the supplied naming prefix.
+   */
+  public void getReports(String namePrefix, Map<String, ReportEvent> reports);
+
+  /**
    * A do-nothing Sink that has default name (class name) and default report.
    * */
   public static class Base implements EventSink {
+    /** type attribute is common to all sinks */
+    protected static final String R_TYPE = "type";
+    /** byte count attribute is common to all sinks */
+    protected static final String R_NUM_BYTES = "number of bytes";
+    /** event count attribute is common to all sinks */
+    protected static final String R_NUM_EVENTS = "number of events";
+
+    /** total number of events appended to this sink */
+    private long numEvents = 0;
+    /** total number bytes appended to this sink */
+    private long numBytes = 0;
+
     @Override
-    public void append(Event e) throws IOException {
+    synchronized public void append(Event e) throws IOException {
+      updateAppendStats(e);
+    }
+    
+    synchronized protected void updateAppendStats(Event e) {
+      if (e == null)
+        return;
+      numBytes += e.getBody().length;
+      numEvents++;
     }
 
     @Override
@@ -84,11 +110,22 @@ public interface EventSink extends Reportable {
     }
 
     @Override
-    public ReportEvent getReport() {
-      return new ReportEvent(getName());
+    synchronized public ReportEvent getReport() {
+      ReportEvent rpt = new ReportEvent(getName());
+
+      rpt.setStringMetric(R_TYPE, getName());
+      rpt.setLongMetric(R_NUM_BYTES, numBytes);
+      rpt.setLongMetric(R_NUM_EVENTS, numEvents);
+
+      return rpt;
+    }
+
+    @Override
+    public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+      reports.put(namePrefix + getName(), getReport());
     }
   }
-
+  
   /**
    * This is an invalid sink that will instantiate but will always fail on use.
    * This can be used as a stub for sinks that get assigned later using let

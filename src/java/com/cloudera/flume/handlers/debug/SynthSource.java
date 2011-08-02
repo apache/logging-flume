@@ -68,6 +68,7 @@ public class SynthSource extends EventSource.Base {
     byte[] data = new byte[size];
     rand.nextBytes(data);
     Event e = new EventImpl(data);
+    updateEventProcessingStats(e);
     return e;
   }
 

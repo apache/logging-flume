@@ -200,6 +200,7 @@ public class SyslogTcpSourceThreads extends EventSource.Base {
       LOG.error("Tcp source polling interrupted ", e1); // Fail by throwing exn
       throw new IOException(e1);
     }
+    updateEventProcessingStats(e);
     return e;
   }
 

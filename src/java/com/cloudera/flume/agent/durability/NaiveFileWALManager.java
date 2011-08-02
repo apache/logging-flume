@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -449,9 +450,10 @@ public class NaiveFileWALManager implements WALManager {
    */
   class StateChangeDeco extends EventSource.Base {
     final String tag;
-    EventSource src;
+    final EventSource src;
 
     public StateChangeDeco(EventSource src, String tag) {
+      Preconditions.checkNotNull(src, "StateChangeDeco called with null src");
       this.src = src;
       this.tag = tag;
     }
@@ -495,6 +497,7 @@ public class NaiveFileWALManager implements WALManager {
         // a problem if a downstream roller tries to add its own rolltag. This
         // prevents that from being a problem.
         Event e2 = EventImpl.unselect(e1, "rolltag");
+        updateEventProcessingStats(e2);
         return e2;
       } catch (IOException ioe) {
         LOG.warn("next had a problem " + src, ioe);
@@ -502,6 +505,12 @@ public class NaiveFileWALManager implements WALManager {
         errCount.incrementAndGet();
         throw ioe;
       }
+    }
+
+    @Override
+    public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+      super.getReports(namePrefix, reports);
+      src.getReports(namePrefix + getName() + ".", reports);
     }
   }
 

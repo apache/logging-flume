@@ -55,7 +55,9 @@ public class StdinSource extends EventSource.Base {
     if (s == null) {
       return null; // end of stream
     }
-    return new EventImpl(s.getBytes(CharEncUtils.RAW));
+    Event e = new EventImpl(s.getBytes(CharEncUtils.RAW));
+    updateEventProcessingStats(e);
+    return e;
   }
 
   @Override

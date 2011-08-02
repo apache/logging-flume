@@ -95,6 +95,7 @@ public class AttrSynthSource extends EventSource.Base {
       e.set(a, val);
 
     }
+    updateEventProcessingStats(e);
 
     return e;
   }

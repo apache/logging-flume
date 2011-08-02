@@ -54,6 +54,8 @@ import com.cloudera.flume.conf.thrift.FlumeNodeState;
 import com.cloudera.flume.conf.thrift.FlumeNodeStatus;
 import com.cloudera.flume.conf.thrift.FlumeMasterAdminServer.Client;
 import com.cloudera.flume.master.Command;
+import com.cloudera.flume.reporter.server.FlumeReport;
+import com.cloudera.flume.reporter.server.FlumeReportServer;
 import com.cloudera.flume.shell.CommandBuilder;
 
 /**
@@ -156,10 +158,13 @@ public class FlumeShell {
     commandMap.put("submit unmap", new CommandDescription(
         "physicalnode logicalnode", true, 3));
     commandMap.put("submit unmapAll", new CommandDescription("", true, 1));
+    commandMap.put("getreports", new CommandDescription(
+        "", true, 0));
 
   }
 
   protected Client client = null;
+  protected FlumeReportServer.Client reportClient = null;
   public static final long CMD_WAIT_TIME_MS = 10 * 1000;
 
   protected static class FlumeCompletor implements Completor {
@@ -486,6 +491,24 @@ public class FlumeShell {
       return 0;
     }
 
+    if (cmd.getCommand().equals("getreports")) {
+      Map<String, FlumeReport> reports;
+      try {
+        reports = reportClient.getAllReports();
+      } catch (TException e) {
+        LOG.debug("Disconnected!", e);
+        disconnect();
+        return -1;
+      }
+      System.out.println("Master knows about " + reports.size() + " reports");
+
+      for (Entry<String, FlumeReport> e : reports.entrySet()) {
+        System.out.println("\t" + e.getKey() + " --> "
+            + e.getValue().toString());
+      }
+      return 0;
+    }
+
     // Waits until the list of specified nodes are either in IDLE or in ERROR
     // state
     if (cmd.getCommand().equals("waitForNodesDone")) {
@@ -732,15 +755,31 @@ public class FlumeShell {
         + (connected ? (curhost + ":" + curport) : "(disconnected)") + "] ";
   }
 
+  private Client connectClient(String host, int port) throws TTransportException {
+    TTransport masterTransport = new TSocket(host, port);
+    TProtocol protocol = new TBinaryProtocol(masterTransport);
+    masterTransport.open();
+    return new Client(protocol);
+  }
+
+  private FlumeReportServer.Client connectReportClient(String host, int port)
+    throws TTransportException {
+    TTransport masterTransport = new TSocket(host, port);
+    TProtocol protocol = new TBinaryProtocol(masterTransport);
+    masterTransport.open();
+    return new FlumeReportServer.Client(protocol);
+  }
+
   protected void connect(String host, int port) throws TTransportException {
     connected = false;
     System.out.println("Connecting to Flume master " + host + ":" + port
         + "...");
 
-    TTransport masterTransport = new TSocket(host, port);
-    TProtocol protocol = new TBinaryProtocol(masterTransport);
-    masterTransport.open();
-    client = new Client(protocol);
+    client = connectClient(host, port);
+    // use default for now
+    reportClient = connectReportClient(host,
+        FlumeConfiguration.DEFAULT_REPORT_SERVER_PORT);
+    
     curhost = host;
     curport = port;
     connected = true;

@@ -63,7 +63,9 @@ public class SeqfileEventSource extends EventSource.Base {
     if (!ok)
       return null;
 
-    return e.getEvent();
+    Event evt = e.getEvent();
+    updateEventProcessingStats(evt);
+    return evt;
   }
 
   @Override

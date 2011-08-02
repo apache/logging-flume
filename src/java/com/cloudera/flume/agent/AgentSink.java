@@ -18,6 +18,7 @@
 package com.cloudera.flume.agent;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -48,7 +49,7 @@ import com.google.common.base.Preconditions;
  * 
  * TODO (jon) replace with substitution instead of this sink.
  */
-public class AgentSink implements EventSink {
+public class AgentSink extends EventSink.Base {
   final static Logger LOG = Logger.getLogger(AgentSink.class.getName());
 
   public enum ReliabilityMode {
@@ -58,7 +59,7 @@ public class AgentSink implements EventSink {
     BEST_EFFORT, // this is equivalent to syslog's best effort mechanism.
   };
 
-  EventSink sink;
+  final EventSink sink;
 
   public AgentSink(String dsthost, int port, ReliabilityMode mode)
       throws FlumeSpecException {
@@ -100,8 +101,7 @@ public class AgentSink implements EventSink {
     }
 
     default:
-      Preconditions
-          .checkArgument(false, "unexpected agent mode: " + mode + "!");
+      throw new FlumeSpecException("unexpected agent mode: " + mode + "!");
     }
 
   }
@@ -109,6 +109,7 @@ public class AgentSink implements EventSink {
   @Override
   public void append(Event e) throws IOException {
     sink.append(e);
+    super.append(e);
   }
 
   @Override
@@ -237,10 +238,8 @@ public class AgentSink implements EventSink {
   }
 
   @Override
-  public ReportEvent getReport() {
-    ReportEvent rpt = new ReportEvent(getName());
-    ReportEvent snkRpt = sink.getReport();
-    rpt.hierarchicalMerge(getName(), snkRpt);
-    return rpt;
+  public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+    super.getReports(namePrefix, reports);
+    sink.getReports(namePrefix + getName() + ".", reports);
   }
 }

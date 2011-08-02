@@ -118,6 +118,7 @@ public class PollingSource extends EventSource.Base {
         if (evt == null) {
           continue;
         }
+        updateEventProcessingStats(evt);
         return evt;
       }
     } catch (InterruptedException e) {

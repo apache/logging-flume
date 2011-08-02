@@ -82,11 +82,11 @@ public class ThriftEventSource extends EventSource.Base {
    */
   synchronized public ReportEvent getReport() {
     ReportEvent rpt = super.getReport();
-    Attributes.setInt(rpt, A_QUEUE_CAPACITY, q.size());
-    Attributes.setInt(rpt, A_QUEUE_FREE, q.remainingCapacity());
-    Attributes.setLong(rpt, A_ENQUEUED, enqueued.get());
-    Attributes.setLong(rpt, A_DEQUEUED, dequeued.get());
-    Attributes.setLong(rpt, A_BYTES_IN, server.getBytesReceived());
+    rpt.setLongMetric(A_QUEUE_CAPACITY, q.size());
+    rpt.setLongMetric(A_QUEUE_FREE, q.remainingCapacity());
+    rpt.setLongMetric(A_ENQUEUED, enqueued.get());
+    rpt.setLongMetric(A_DEQUEUED, dequeued.get());
+    rpt.setLongMetric(A_BYTES_IN, server.getBytesReceived());
     return rpt;
   }
 
@@ -127,6 +127,7 @@ public class ThriftEventSource extends EventSource.Base {
             @Override
             public void append(Event e) throws IOException {
               enqueue(e);
+              super.append(e);
             }
           }));
       Factory protFactory = new TBinaryProtocol.Factory(true, true);
@@ -191,6 +192,7 @@ public class ThriftEventSource extends EventSource.Base {
     try {
       Event e = q.take();
       dequeued.getAndIncrement();
+      updateEventProcessingStats(e);
       return e;
     } catch (InterruptedException e) {
       throw new IOException("Waiting for queue element was interupted! " + e);

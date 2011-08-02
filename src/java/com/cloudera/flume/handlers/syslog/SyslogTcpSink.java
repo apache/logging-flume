@@ -49,6 +49,7 @@ public class SyslogTcpSink extends EventSink.Base {
   public void append(Event e) throws IOException {
     byte[] data = SyslogWireExtractor.formatEventToBytes(e);
     sock.getOutputStream().write(data);
+    super.append(e);
   }
 
   @Override

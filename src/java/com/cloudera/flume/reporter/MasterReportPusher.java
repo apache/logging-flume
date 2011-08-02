@@ -19,12 +19,15 @@
 package com.cloudera.flume.reporter;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
+import com.cloudera.flume.agent.FlumeNode;
+import com.cloudera.flume.agent.LogicalNode;
 import com.cloudera.flume.agent.MasterRPC;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.util.Clock;
@@ -85,15 +88,30 @@ public class MasterReportPusher {
    * Thread to do the periodic pushing work. Every report is pushed with a name that 
    */
   class PusherThread extends Thread {
+    void queryReportMan(Map<String, ReportEvent> reports) {
+      Map<String, Reportable> reportables = rptMan.getReportables();
+      for (Entry<String, Reportable> e : reportables.entrySet()) {
+        reports.put(prefix + e.getKey(), e.getValue().getReport());
+      }
+    }
+    
+    void querySrcSinkReports(Map<String, ReportEvent> reports) {
+      Collection<LogicalNode> lnodes =
+        FlumeNode.getInstance().getLogicalNodeManager().getNodes();
+      for (LogicalNode n : lnodes) {
+        n.getReports(reports);
+      }
+    }
+    
     public void run() {
       try {
         while (!shutdown) {          
           Clock.sleep(cfg.getReporterPollPeriod());
           Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();
-          Map<String, Reportable> reportables = rptMan.getReportables();
-          for (Entry<String, Reportable> e : reportables.entrySet()) {
-            reports.put(prefix + e.getKey(), e.getValue().getReport());
-          }
+
+          queryReportMan(reports);
+          querySrcSinkReports(reports);
+
           masterRPC.putReports(reports);
         }
       } catch (InterruptedException e) {

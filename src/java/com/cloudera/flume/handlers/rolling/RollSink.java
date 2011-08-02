@@ -18,6 +18,7 @@
 package com.cloudera.flume.handlers.rolling;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -189,6 +190,7 @@ public class RollSink extends EventSink.Base {
 
     curSink.append(e);
     trigger.append(e);
+    super.append(e);
   }
 
   synchronized public boolean rotate() {
@@ -247,15 +249,19 @@ public class RollSink extends EventSink.Base {
 
   @Override
   synchronized public ReportEvent getReport() {
-    ReportEvent rpt = new ReportEvent(getName());
+    ReportEvent rpt = super.getReport();
     rpt.setLongMetric(A_ROLLS, rolls.get());
     rpt.setLongMetric(A_ROLLFAILS, rollfails.get());
     rpt.setStringMetric(A_ROLLSPEC, fspec);
-    if (curSink != null) {
-      ReportEvent snkRpt = curSink.getReport();
-      rpt.hierarchicalMerge(curSink.getName(), snkRpt);
-    }
     return rpt;
+  }
+
+  @Override
+  public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+    super.getReports(namePrefix, reports);
+    if (curSink != null) {
+      curSink.getReports(namePrefix + getName() + ".", reports);
+    }
   }
 
   /**

@@ -57,7 +57,9 @@ public class TextFileSource extends EventSource.Base {
     if (s == null)
       return null;
 
-    return new EventImpl(s.getBytes());
+    Event e = new EventImpl(s.getBytes());
+    updateEventProcessingStats(e);
+    return e;
   }
 
   @Override

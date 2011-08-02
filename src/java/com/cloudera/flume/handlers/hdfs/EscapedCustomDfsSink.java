@@ -119,6 +119,7 @@ public class EscapedCustomDfsSink extends EventSink.Base {
       }
     }
     w.append(e);
+    super.append(e);
   }
 
   @Override

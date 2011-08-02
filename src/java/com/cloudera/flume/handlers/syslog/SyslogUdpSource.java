@@ -94,6 +94,7 @@ public class SyslogUdpSource extends EventSource.Base {
       // need a sane way to fall out of his loop.
     } while (e == null);
 
+    updateEventProcessingStats(e);
     return e;
   }
 

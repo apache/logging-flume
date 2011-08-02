@@ -18,6 +18,7 @@
 package com.cloudera.flume.core;
 
 import java.io.IOException;
+import java.util.Map;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
@@ -34,7 +35,7 @@ import com.cloudera.flume.reporter.ReportEvent;
  * there may be due to different spec syntax.
  */
 public class CompositeSink extends EventSink.Base {
-  EventSink snk;
+  final EventSink snk;
 
   public CompositeSink(Context context, String spec) throws FlumeSpecException {
     snk = FlumeBuilder.buildSink(context, spec);
@@ -62,6 +63,7 @@ public class CompositeSink extends EventSink.Base {
   @Override
   public void append(Event e) throws IOException {
     snk.append(e);
+    super.append(e);
   }
 
   @Override
@@ -70,8 +72,9 @@ public class CompositeSink extends EventSink.Base {
   }
 
   @Override
-  public ReportEvent getReport() {
-    return snk.getReport();
+  public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+    super.getReports(namePrefix, reports);
+    snk.getReports(namePrefix + getName() + ".", reports);
   }
 
 }

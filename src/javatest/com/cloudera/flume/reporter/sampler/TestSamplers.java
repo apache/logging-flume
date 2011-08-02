@@ -19,6 +19,7 @@ package com.cloudera.flume.reporter.sampler;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import junit.framework.TestCase;
 
@@ -72,6 +73,11 @@ public class TestSamplers extends TestCase {
       @Override
       public ReportEvent getReport() {
         return null;
+      }
+
+      @Override
+      public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+        reports.put(namePrefix + getName(), getReport());
       }
 
     };
@@ -159,6 +165,11 @@ public class TestSamplers extends TestCase {
       public ReportEvent getReport() {
         return null;
       }
+      
+      @Override
+      public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+        reports.put(namePrefix + getName(), getReport());
+      }
     };
     IntervalSampler<ScheduledHistoryReporter<CounterSink>> hist = new IntervalSampler<ScheduledHistoryReporter<CounterSink>>(
         sched, 10);
@@ -217,6 +228,10 @@ public class TestSamplers extends TestCase {
         return null;
       }
 
+      @Override
+      public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+        reports.put(namePrefix + getName(), getReport());
+      }
     };
     ProbabilitySampler<ScheduledHistoryReporter<CounterSink>> sample = new ProbabilitySampler<ScheduledHistoryReporter<CounterSink>>(
         hist, .10, 1337);

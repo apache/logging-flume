@@ -18,6 +18,7 @@
 package com.cloudera.flume.core;
 
 import java.io.IOException;
+import java.util.Map;
 
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.reporter.ReportEvent;
@@ -42,6 +43,12 @@ public interface EventSource extends Reportable {
   public void open() throws IOException;
 
   public void close() throws IOException;
+
+  /**
+   * Generates one or more reports in some sort of readable format using
+   * the supplied naming prefix.
+   */
+  public void getReports(String namePrefix, Map<String, ReportEvent> reports);
 
   /**
    * The stub source is a place holder that can get instantiated but never
@@ -101,9 +108,26 @@ public interface EventSource extends Reportable {
         }
       };
     }
+      
+    @Override
+    public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+      reports.put(namePrefix + getName(), getReport());
+    }
   }
-
+       
   public static class Base implements EventSource {
+    /** type attribute is common to all sinks */
+    protected static final String R_TYPE = "type";
+    /** byte count attribute is common to all sinks */
+    protected static final String R_NUM_BYTES = "number of bytes";
+    /** event count attribute is common to all sinks */
+    protected static final String R_NUM_EVENTS = "number of events";
+
+    /** total number of events appended to this sink */
+    private long numEvents = 0;
+    /** total number bytes appended to this sink */
+    private long numBytes = 0;
+
     @Override
     public void close() throws IOException {
     }
@@ -111,6 +135,18 @@ public interface EventSource extends Reportable {
     @Override
     public Event next() throws IOException {
       return null;
+    }
+
+    /**
+     * This method should be called from sources which wish to track event
+     * statistics.
+     * @param e the next Event
+     */
+    synchronized protected void updateEventProcessingStats(Event e) {
+      if (e == null)
+        return;
+      numBytes += e.getBody().length;
+      numEvents++;
     }
 
     @Override
@@ -123,8 +159,20 @@ public interface EventSource extends Reportable {
     }
 
     @Override
-    public ReportEvent getReport() {
-      return new ReportEvent(getName());
+    synchronized public ReportEvent getReport() {
+      ReportEvent rpt = new ReportEvent(getName());
+
+      rpt.setStringMetric(R_TYPE, getName());
+      rpt.setLongMetric(R_NUM_BYTES, numBytes);
+      rpt.setLongMetric(R_NUM_EVENTS, numEvents);
+
+      return rpt;
+    }
+
+    @Override
+    public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+      reports.put(namePrefix + getName(), getReport());
     }
   }
+
 }

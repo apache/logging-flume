@@ -209,6 +209,12 @@ public class ScribeEventSource extends ThriftServer implements EventSource,
   @Override
   public ReportEvent getReport() {
     // TODO(henry): add metrics
+    // TODO missing EventSource stats
     return new ReportEvent("scribe-source");
+  }
+
+  @Override
+  public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+    reports.put(namePrefix + getName(), getReport());
   }
 }

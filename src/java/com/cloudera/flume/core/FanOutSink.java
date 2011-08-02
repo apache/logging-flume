@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 
@@ -118,6 +119,7 @@ public class FanOutSink<S extends EventSink> extends EventSink.Base {
     for (S snk : sinks) {
       try {
         snk.append(e);
+        super.append(e);
       } catch (IOException ioe) {
         exs.add(ioe);
       }
@@ -135,15 +137,13 @@ public class FanOutSink<S extends EventSink> extends EventSink.Base {
   }
 
   @Override
-  public ReportEvent getReport() {
-    ReportEvent rpt = super.getReport();
+  public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+    super.getReports(namePrefix, reports);
     int i = 0;
     for (EventSink s : sinks) {
-      rpt.hierarchicalMerge(getName() + "[" + i + "]." + s.getName(), s
-          .getReport());
+      s.getReports(namePrefix + getName() + "." + i + ".", reports);
       i++;
     }
-    return rpt;
   }
 
 }

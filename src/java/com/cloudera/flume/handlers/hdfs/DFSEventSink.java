@@ -88,6 +88,7 @@ public class DFSEventSink extends EventSink.Base {
       }
     }
     w.append(new WriteableEventKey(e), new WriteableEvent(e));
+    super.append(e);
   }
 
   @Override

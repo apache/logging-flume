@@ -124,7 +124,9 @@ public class Log4jTextFileSource extends TextFileSource {
 
     Matcher m = l4jPat.matcher(s);
     if (m.matches()) {
-      return readUntilNextEvent(m);
+      Event e = readUntilNextEvent(m);
+      updateEventProcessingStats(e);
+      return e;
     }
 
     // This is unreachable.

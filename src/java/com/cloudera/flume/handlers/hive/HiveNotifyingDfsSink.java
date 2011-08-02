@@ -177,6 +177,7 @@ public class HiveNotifyingDfsSink extends EventSink.Base {
   public void append(Event e) throws IOException {
     EventSink w = getWriter(e);
     w.append(e);
+    super.append(e);
   }
 
   @Override

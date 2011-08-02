@@ -18,6 +18,7 @@
 package com.cloudera.flume.reporter.aggregator;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
@@ -33,7 +34,7 @@ import com.google.common.base.Preconditions;
 /**
  * This just counts the number of entries appended.
  */
-public class CounterSink implements EventSink {
+public class CounterSink extends EventSink.Base {
   static Logger LOG = Logger.getLogger(CounterSink.class);
 
   AtomicLong cnt;
@@ -50,6 +51,7 @@ public class CounterSink implements EventSink {
   public void append(Event e) throws IOException {
     Preconditions.checkState(isOpen);
     cnt.incrementAndGet();
+    super.append(e);
   }
 
   @Override
@@ -74,7 +76,7 @@ public class CounterSink implements EventSink {
 
   @Override
   public ReportEvent getReport() {
-    ReportEvent re = new ReportEvent(name);
+    ReportEvent re = super.getReport();
     re.setLongMetric(name, cnt.get());
     return re;
   }

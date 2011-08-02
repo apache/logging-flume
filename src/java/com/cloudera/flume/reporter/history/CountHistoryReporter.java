@@ -19,6 +19,7 @@ package com.cloudera.flume.reporter.history;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;

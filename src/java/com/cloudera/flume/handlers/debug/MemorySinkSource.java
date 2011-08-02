@@ -48,6 +48,7 @@ public class MemorySinkSource extends EventSink.Base implements EventSource {
   @Override
   public void append(Event e) throws IOException {
     evts.add(e);
+    super.append(e);
   }
 
   @Override
@@ -69,6 +70,7 @@ public class MemorySinkSource extends EventSink.Base implements EventSource {
 
     Event e = evts.get(idx);
     idx++;
+    //TODO missing source reports
     return e;
   }
 

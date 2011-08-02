@@ -49,7 +49,7 @@ import com.google.common.base.Preconditions;
 public class ReportEvent extends EventImpl {
   final static Logger LOG = Logger.getLogger(ReportEvent.class);
 
-  final public static String R_SOURCE = "sink";
+  final public static String R_NAME = "name";
   final public static String A_COUNT = "count";
 
   final Map<String, Long> longMetrics = new HashMap<String, Long>();
@@ -174,7 +174,7 @@ public class ReportEvent extends EventImpl {
 
   public ReportEvent(String src) {
     super(new byte[0]); // empty body
-    this.setStringMetric(R_SOURCE, src);
+    this.setStringMetric(R_NAME, src);
   }
 
   /**

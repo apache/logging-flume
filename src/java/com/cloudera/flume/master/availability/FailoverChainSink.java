@@ -20,6 +20,7 @@ package com.cloudera.flume.master.availability;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -43,7 +44,7 @@ import com.google.common.base.Preconditions;
 public class FailoverChainSink extends EventSink.Base {
   final static Logger LOG = Logger.getLogger(FailoverChainSink.class);
 
-  EventSink snk;
+  final EventSink snk;
 
   public FailoverChainSink(String specFormat, List<String> list,
       BackoffPolicy backoff) throws FlumeSpecException {
@@ -87,6 +88,7 @@ public class FailoverChainSink extends EventSink.Base {
   @Override
   public void append(Event e) throws IOException {
     snk.append(e);
+    super.append(e);
   }
 
   @Override
@@ -100,8 +102,9 @@ public class FailoverChainSink extends EventSink.Base {
   }
 
   @Override
-  public ReportEvent getReport() {
-    return snk.getReport();
+  public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+    super.getReports(namePrefix, reports);
+    snk.getReports(namePrefix + getName() + ".", reports);
   }
 
   public static SinkBuilder builder() {

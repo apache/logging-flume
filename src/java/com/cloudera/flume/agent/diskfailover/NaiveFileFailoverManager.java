@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -396,9 +397,10 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
    */
   class StateChangeDeco extends EventSource.Base {
     final String tag;
-    EventSource src;
+    final EventSource src;
 
     public StateChangeDeco(EventSource src, String tag) {
+      Preconditions.checkNotNull(src, "StateChangeDeco called with null src");
       this.src = src;
       this.tag = tag;
     }
@@ -436,6 +438,7 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
         if (e != null) {
           readEvtCount.incrementAndGet();
         }
+        updateEventProcessingStats(e);
         return e;
       } catch (IOException ioe) {
         LOG.warn("next had a problem " + src, ioe);
@@ -443,6 +446,12 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
         errCount.incrementAndGet();
         throw ioe;
       }
+    }
+    
+    @Override
+    public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+      super.getReports(namePrefix, reports);
+      src.getReports(namePrefix + getName() + ".", reports);
     }
   }
 

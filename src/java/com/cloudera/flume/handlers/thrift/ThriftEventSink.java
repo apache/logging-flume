@@ -75,6 +75,7 @@ public class ThriftEventSink extends EventSink.Base {
     try {
       client.append(tfe);
       sentBytes.set(stats.getBytesWritten());
+      super.append(e);
     } catch (TException e1) {
       e1.printStackTrace();
       throw new IOException("Append failed " + e);
@@ -120,9 +121,9 @@ public class ThriftEventSink extends EventSink.Base {
   @Override
   public ReportEvent getReport() {
     ReportEvent rpt = super.getReport();
-    Attributes.setString(rpt, A_SERVERHOST, host);
-    Attributes.setInt(rpt, A_SERVERPORT, port);
-    Attributes.setLong(rpt, A_SENTBYTES, sentBytes.get());
+    rpt.setStringMetric(A_SERVERHOST, host);
+    rpt.setLongMetric(A_SERVERPORT, port);
+    rpt.setLongMetric(A_SENTBYTES, sentBytes.get());
     return rpt;
   }
 

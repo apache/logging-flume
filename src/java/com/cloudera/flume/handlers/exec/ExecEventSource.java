@@ -274,6 +274,7 @@ public class ExecEventSource extends EventSource.Base {
             // We may have missed events between waking up and testing
             line = eventQueue.poll();
             if (line != null) {
+              updateEventProcessingStats(line);
               return line;
             }
             if (restart) {
@@ -285,6 +286,7 @@ public class ExecEventSource extends EventSource.Base {
             }
           }
         } else {
+          updateEventProcessingStats(line);
           return line;
         }
       } catch (InterruptedException e) {

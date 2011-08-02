@@ -18,11 +18,13 @@
 package com.cloudera.flume.agent.diskfailover;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSource;
+import com.cloudera.flume.reporter.ReportEvent;
 
 /**
  * This source provides saved entries from a entries written with fail
@@ -80,6 +82,7 @@ public class DiskFailoverSource extends EventSource.Base {
     // read next event
     Event e = getValidNext();
     if (e != null) {
+      updateEventProcessingStats(e);
       return e; // successful case
     }
 
@@ -106,7 +109,16 @@ public class DiskFailoverSource extends EventSource.Base {
       }
       e = getValidNext();
     } while (e == null);
+    updateEventProcessingStats(e);
     return e; // return valid event
+  }
+
+  @Override
+  public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+    super.getReports(namePrefix, reports);
+    if (curSource != null) {
+      curSource.getReports(namePrefix + getName() + ".", reports);
+    }
   }
 
   public void recover() throws IOException {

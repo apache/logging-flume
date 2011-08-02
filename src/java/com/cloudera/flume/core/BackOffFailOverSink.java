@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
@@ -58,8 +59,8 @@ public class BackOffFailOverSink extends EventSink.Base {
   final String A_FAILS = "failsPrimary";
   final String A_BACKUPS = "sentBackups";
 
-  EventSink primary;
-  EventSink backup;
+  final EventSink primary;
+  final EventSink backup;
   AtomicLong primarySent = new AtomicLong();
   AtomicLong fails = new AtomicLong();
   AtomicLong backups = new AtomicLong();
@@ -70,6 +71,8 @@ public class BackOffFailOverSink extends EventSink.Base {
 
   public BackOffFailOverSink(EventSink primary, EventSink backup,
       BackoffPolicy backoff) {
+    Preconditions.checkNotNull(primary, "BackOffFailOverSink called with null primary");
+    Preconditions.checkNotNull(backup, "BackOffFailOverSink called with null backup");
     this.primary = primary;
     this.backup = backup;
     this.backoffPolicy = backoff;
@@ -103,6 +106,7 @@ public class BackOffFailOverSink extends EventSink.Base {
             // fall back onto secondary after primary retry failure.
             backup.append(e); // attempt on secondary.
             backups.incrementAndGet();
+            super.append(e);
             return;
           } catch (IOException ioe2) {
             // complete failure case.
@@ -117,6 +121,7 @@ public class BackOffFailOverSink extends EventSink.Base {
         // not ready to retry, fall back to secondary.
         backup.append(e);
         backups.incrementAndGet();
+        super.append(e);
         return;
       }
     }
@@ -125,6 +130,7 @@ public class BackOffFailOverSink extends EventSink.Base {
     try {
       primary.append(e);
       primarySent.incrementAndGet();
+      super.append(e);
       primaryOk = true;
       backoffPolicy.reset(); // successfully sent with primary, so backoff
       // isreset
@@ -135,6 +141,7 @@ public class BackOffFailOverSink extends EventSink.Base {
       backoffPolicy.backoff();
       backup.append(e);
       backups.incrementAndGet();
+      super.append(e);
     }
   }
 
@@ -211,17 +218,20 @@ public class BackOffFailOverSink extends EventSink.Base {
 
   @Override
   public ReportEvent getReport() {
+    ReportEvent rpt = super.getReport();
 
-    ReportEvent e = super.getReport();
+    rpt.setLongMetric(A_FAILS, fails.get());
+    rpt.setLongMetric(A_BACKUPS, backups.get());
+    rpt.setLongMetric(A_PRIMARY, primarySent.get());
 
-    e.hierarchicalMerge(getName() + "[primary]", primary.getReport());
-    e.hierarchicalMerge(getName() + "[backup]", backup.getReport());
+    return rpt;
+  }
 
-    Attributes.setLong(e, A_FAILS, fails.get());
-    Attributes.setLong(e, A_BACKUPS, backups.get());
-    Attributes.setLong(e, A_PRIMARY, primarySent.get());
-
-    return e;
+  @Override
+  public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+    super.getReports(namePrefix, reports);
+    primary.getReports(namePrefix + getName() + ".primary.", reports);
+    backup.getReports(namePrefix + getName() + ".backup.", reports);
   }
 
   public long getFails() {

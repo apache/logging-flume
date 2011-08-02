@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -43,7 +44,7 @@ import com.google.common.base.Preconditions;
  */
 public class AgentFailChainSink extends EventSink.Base {
   final static Logger LOG = Logger.getLogger(CompositeSink.class.getName());
-  EventSink snk;
+  final EventSink snk;
 
   public enum RELIABILITY {
     E2E, DFO, BE
@@ -84,6 +85,9 @@ public class AgentFailChainSink extends EventSink.Base {
       snk = new CompositeSink(context, chains);
       break;
     }
+    default: {
+      throw new FlumeSpecException("Unknown relability " + rel);
+    }
     }
   }
 
@@ -100,11 +104,13 @@ public class AgentFailChainSink extends EventSink.Base {
   @Override
   public void append(Event e) throws IOException {
     snk.append(e);
+    super.append(e);
   }
 
   @Override
-  public ReportEvent getReport() {
-    return snk.getReport();
+  public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+    super.getReports(namePrefix, reports);
+    snk.getReports(namePrefix + getName() + ".", reports);
   }
 
   /**

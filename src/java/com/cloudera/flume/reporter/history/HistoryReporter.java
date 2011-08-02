@@ -34,7 +34,7 @@ import com.cloudera.util.Pair;
  * 
  * TODO (jon) unify this RollSink
  */
-abstract public class HistoryReporter<S extends EventSink> implements EventSink {
+abstract public class HistoryReporter<S extends EventSink> extends EventSink.Base {
 
   // timestamp and the old report.
   LinkedList<Pair<Long, S>> history;
@@ -81,6 +81,7 @@ abstract public class HistoryReporter<S extends EventSink> implements EventSink 
     }
 
     sink.append(e);
+    super.append(e);
   }
 
   @Override

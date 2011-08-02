@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -28,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.handlers.rolling.Tagger;
+import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.util.Pair;
 import com.google.common.base.Preconditions;
 
@@ -43,8 +45,8 @@ import com.google.common.base.Preconditions;
  * TODO (jon) Hack ScheduledExecutorService so that it uses MockClock instead of
  * system time.
  */
-abstract public class ScheduledHistoryReporter<S extends EventSink> implements
-    EventSink {
+abstract public class ScheduledHistoryReporter<S extends EventSink> extends
+    EventSink.Base {
 
   // History is a list of timestamp and the old reports. New entries are
   // appended at the end, old entries are aged off of the head
@@ -119,6 +121,7 @@ abstract public class ScheduledHistoryReporter<S extends EventSink> implements
     synchronized (this) {
       Preconditions.checkNotNull(sink);
       sink.append(e);
+      super.append(e);
     }
   }
 
@@ -143,6 +146,14 @@ abstract public class ScheduledHistoryReporter<S extends EventSink> implements
 
   synchronized public List<Pair<Long, S>> getHistory() {
     return Collections.unmodifiableList(history);
+  }
+
+  @Override
+  public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+    super.getReports(namePrefix, reports);
+    if (sink != null) {
+      sink.getReports(namePrefix + getName() + ".", reports);
+    }
   }
 
 }

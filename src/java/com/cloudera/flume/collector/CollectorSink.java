@@ -19,6 +19,7 @@ package com.cloudera.flume.collector;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
@@ -55,7 +56,7 @@ import com.google.common.collect.Multimap;
 public class CollectorSink extends EventSink.Base {
   final static Logger LOG = Logger.getLogger(CollectorSink.class.getName());
 
-  EventSink snk;
+  final EventSink snk;
   AckAccumulator accum = new AckAccumulator();
 
   // RollTag, AckTag
@@ -148,6 +149,7 @@ public class CollectorSink extends EventSink.Base {
   @Override
   public void append(Event e) throws IOException {
     snk.append(e);
+    super.append(e);
   }
 
   @Override
@@ -166,11 +168,9 @@ public class CollectorSink extends EventSink.Base {
   }
 
   @Override
-  public ReportEvent getReport() {
-    ReportEvent rpt = new ReportEvent(getName());
-    ReportEvent snkRpt = snk.getReport();
-    rpt.hierarchicalMerge(snk.getName(), snkRpt);
-    return rpt;
+  public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+    super.getReports(namePrefix, reports);
+    snk.getReports(namePrefix + getName() + ".", reports);
   }
 
   public EventSink getSink() {

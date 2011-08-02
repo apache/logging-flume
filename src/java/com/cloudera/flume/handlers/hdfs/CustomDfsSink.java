@@ -18,6 +18,7 @@
 package com.cloudera.flume.handlers.hdfs;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -41,7 +42,7 @@ import com.google.common.base.Preconditions;
  * This creates a raw hadoop dfs file that outputs data formatted by the
  * provided OutputFormat. It is assumed that the output is a file of some sort.
  */
-public class CustomDfsSink implements EventSink {
+public class CustomDfsSink extends EventSink.Base {
   final static Logger LOG = Logger.getLogger(CustomDfsSink.class.getName());
 
   private static final String A_OUTPUTFORMAT = "recordformat";
@@ -66,6 +67,7 @@ public class CustomDfsSink implements EventSink {
     }
     format.format(writer, e);
     count.getAndIncrement();
+    super.append(e);
   }
 
   @Override
@@ -115,9 +117,9 @@ public class CustomDfsSink implements EventSink {
 
   @Override
   public ReportEvent getReport() {
-    ReportEvent rpt = new ReportEvent(getName());
-    Attributes.setString(rpt, A_OUTPUTFORMAT, format.getFormatName());
-    Attributes.setLong(rpt, ReportEvent.A_COUNT, count.get());
+    ReportEvent rpt = super.getReport();
+    rpt.setStringMetric(A_OUTPUTFORMAT, format.getFormatName());
+    rpt.setLongMetric(ReportEvent.A_COUNT, count.get());
     return rpt;
   }
 }

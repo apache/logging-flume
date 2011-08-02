@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
@@ -43,7 +44,7 @@ import com.google.common.base.Preconditions;
  * Most folks will want to use BackOffFailOver. This remains because it is so
  * much easier for testing.
  */
-public class FailOverSink implements EventSink, Reportable {
+public class FailOverSink extends EventSink.Base {
   final static Logger LOG = Logger.getLogger(FailOverSink.class.getName());
 
   // makes sure this doesn't cause conflict when constructor called
@@ -51,8 +52,8 @@ public class FailOverSink implements EventSink, Reportable {
   static AtomicInteger uniq = new AtomicInteger();
 
   int suffix;
-  EventSink primary;
-  EventSink backup;
+  final EventSink primary;
+  final EventSink backup;
   long fails;
   long backups;
   boolean primaryOpen = false;
@@ -63,6 +64,8 @@ public class FailOverSink implements EventSink, Reportable {
   final String R_BACKUPS;
 
   public FailOverSink(EventSink primary, EventSink backup) {
+    Preconditions.checkNotNull(primary);
+    Preconditions.checkNotNull(backup);
     this.primary = primary;
     this.backup = backup;
     suffix = uniq.getAndIncrement();
@@ -76,6 +79,7 @@ public class FailOverSink implements EventSink, Reportable {
     if (primaryOpen) {
       try {
         primary.append(e);
+        super.append(e);
         return;
       } catch (IOException ex) {
         fails++;
@@ -83,6 +87,7 @@ public class FailOverSink implements EventSink, Reportable {
     }
     backup.append(e);
     backups++;
+    super.append(e);
   }
 
   @Override
@@ -138,10 +143,17 @@ public class FailOverSink implements EventSink, Reportable {
 
   @Override
   public ReportEvent getReport() {
-    ReportEvent e = new ReportEvent(name);
-    Attributes.setLong(e, R_FAILS, fails);
-    Attributes.setLong(e, R_BACKUPS, backups);
-    return e;
+    ReportEvent rpt = super.getReport();
+    rpt.setLongMetric(R_FAILS, fails);
+    rpt.setLongMetric(R_BACKUPS, backups);
+    return rpt;
+  }
+
+  @Override
+  public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+    super.getReports(namePrefix, reports);
+    primary.getReports(namePrefix + getName() + ".primary.", reports);
+    backup.getReports(namePrefix + getName() + ".backup.", reports);
   }
 
   @Override

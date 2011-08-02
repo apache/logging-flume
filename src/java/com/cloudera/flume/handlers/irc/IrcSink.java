@@ -147,6 +147,7 @@ public class IrcSink extends EventSink.Base {
   @Override
   public void append(Event e) throws IOException {
     conn.doPrivmsg(this.chan, e.toString());
+    super.append(e);
   }
 
   public static SinkBuilder builder() {

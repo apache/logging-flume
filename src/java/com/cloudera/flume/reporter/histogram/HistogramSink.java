@@ -18,6 +18,7 @@
 package com.cloudera.flume.reporter.histogram;
 
 import java.io.IOException;
+import java.util.Map;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
@@ -29,7 +30,7 @@ import com.cloudera.util.Histogram;
  * This sink histograms values. The extract abstract method is used to pull
  * values out of an event and is used to bin events.
  */
-abstract public class HistogramSink implements EventSink {
+abstract public class HistogramSink extends EventSink.Base {
   Histogram<String> h;
   final String name;
 
@@ -50,15 +51,8 @@ abstract public class HistogramSink implements EventSink {
     // if failed to extract, skip
     if (t != null) {
       h.increment(t);
+      super.append(e);
     }
-  }
-
-  @Override
-  public void close() throws IOException {
-  }
-
-  @Override
-  public void open() throws IOException {
   }
 
   @Override

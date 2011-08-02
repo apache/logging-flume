@@ -21,6 +21,7 @@ package com.cloudera.flume.agent;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
@@ -329,6 +330,18 @@ public class LogicalNode implements Reportable {
     return true;
   }
 
+  synchronized public void getReports(Map<String, ReportEvent> reports) {
+    String phyName = FlumeNode.getInstance().getPhysicalNodeName();
+    String rprefix = phyName + "." + getName() + ".";
+    
+    if (snk != null) {
+      snk.getReports(rprefix, reports);
+    }
+    if (src != null) {
+      src.getReports(rprefix, reports);
+    }
+  }
+  
   synchronized public ReportEvent getReport() {
     ReportEvent rpt = new ReportEvent(nodeName);
     rpt.setStringMetric("nodename", nodeName);

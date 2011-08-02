@@ -51,6 +51,7 @@ public class ConsoleEventSink extends EventSink.Base {
   @Override
   public void append(Event e) throws IOException {
     fmt.format(System.out, e);
+    super.append(e);
   }
 
   @Override

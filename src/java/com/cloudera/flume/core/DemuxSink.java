@@ -24,6 +24,7 @@ import java.util.Map;
 
 
 import com.cloudera.flume.handlers.debug.NullSink;
+import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.util.MultipleIOException;
 import com.google.common.base.Preconditions;
 
@@ -34,11 +35,12 @@ public class DemuxSink<S extends EventSink> extends EventSink.Base {
 
   String field;
   Map<byte[], S> split;
-  EventSink fallthrough;
+  final EventSink fallthrough;
 
   public DemuxSink(String field, Map<byte[], S> split, EventSink fallthrough) {
     Preconditions.checkNotNull(field);
     Preconditions.checkNotNull(split);
+    Preconditions.checkNotNull(fallthrough);
     this.field = field;
     this.split = split;
     this.fallthrough = fallthrough;
@@ -59,11 +61,13 @@ public class DemuxSink<S extends EventSink> extends EventSink.Base {
     }
 
     handler.append(e);
+    super.append(e);
   }
 
   public void fallThrough(byte[] val, Event e) throws IOException {
     // default is pass to fallthrough sink
     fallthrough.append(e);
+    super.append(e);
   }
 
   @Override
@@ -98,6 +102,17 @@ public class DemuxSink<S extends EventSink> extends EventSink.Base {
     if (!exs.isEmpty()) {
       throw MultipleIOException.createIOException(exs);
     }
+  }
+
+  @Override
+  public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+    super.getReports(namePrefix, reports);
+    int count = 0;
+    for (S snk : split.values()) {
+      snk.getReports(namePrefix + getName() + "." + count + ".", reports);
+      count++;
+    }
+    fallthrough.getReports(namePrefix + getName() + ".fallthrough.", reports);
   }
 
 }

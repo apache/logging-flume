@@ -176,7 +176,9 @@ public class TestFlumeNode extends TestCase {
 
       @Override
       public Event next() throws IOException {
-        return new EventImpl(new byte[0]); // / do not return null.
+        Event e = new EventImpl(new byte[0]); // / do not return null.
+        updateEventProcessingStats(e);
+        return e;
       }
 
       @Override

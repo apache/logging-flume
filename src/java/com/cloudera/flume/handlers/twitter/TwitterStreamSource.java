@@ -81,6 +81,7 @@ public class TwitterStreamSource extends EventSource.Base {
     }
     Event e = new EventImpl(line.getBytes());
     Attributes.setString(e, Event.A_SERVICE, "twitter");
+    updateEventProcessingStats(e);
     return e;
   }
 

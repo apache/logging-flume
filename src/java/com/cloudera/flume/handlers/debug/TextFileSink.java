@@ -64,6 +64,7 @@ public class TextFileSink extends EventSink.Base {
     fmt.format(out, e);
     out.flush();
     count++;
+    super.append(e);
   }
 
   @Override
@@ -84,7 +85,7 @@ public class TextFileSink extends EventSink.Base {
   @Override
   synchronized public ReportEvent getReport() {
     ReportEvent rpt = super.getReport();
-    Attributes.setLong(rpt, ReportEvent.A_COUNT, count);
+    rpt.setLongMetric(ReportEvent.A_COUNT, count);
     return rpt;
   }
 

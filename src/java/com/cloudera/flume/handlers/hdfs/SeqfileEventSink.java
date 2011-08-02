@@ -104,6 +104,7 @@ public class SeqfileEventSink extends EventSink.Base {
       writer.sync(); // this isn't flushing or sync'ing on local file system :(
 
     count++;
+    super.append(e);
   }
 
   public void setBufferIO(boolean bufferedIO) {

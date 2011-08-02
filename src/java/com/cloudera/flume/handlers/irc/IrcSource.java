@@ -185,7 +185,9 @@ public class IrcSource extends EventSource.Base {
   @Override
   public Event next() throws IOException {
     try {
-      return q.take();
+      Event e =  q.take();
+      updateEventProcessingStats(e);
+      return e;
     } catch (InterruptedException e) {
       LOG.error("IrcSource interrupted", e);
       throw new IOException(e);

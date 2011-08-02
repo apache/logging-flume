@@ -68,6 +68,7 @@ public class ThriftAckedEventSink extends EventSink.Base {
 
     try {
       EventStatus res = client.ackedAppend(tfe);
+      super.append(e);
       if (res == EventStatus.ACK || res == EventStatus.COMMITED) {
         return;
       }

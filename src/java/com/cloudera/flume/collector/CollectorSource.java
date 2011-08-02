@@ -18,6 +18,7 @@
 package com.cloudera.flume.collector;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -26,6 +27,7 @@ import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.handlers.thrift.ThriftEventSource;
+import com.cloudera.flume.reporter.ReportEvent;
 import com.google.common.base.Preconditions;
 
 /**
@@ -43,7 +45,7 @@ import com.google.common.base.Preconditions;
 public class CollectorSource extends EventSource.Base {
   final static Logger LOG = Logger.getLogger(CollectorSource.class.getName());
 
-  EventSource src;
+  final EventSource src;
   int port;
 
   public CollectorSource(int port) {
@@ -65,7 +67,15 @@ public class CollectorSource extends EventSource.Base {
 
   @Override
   public Event next() throws IOException {
-    return src.next();
+    Event e = src.next();
+    updateEventProcessingStats(e);
+    return e;
+  }
+
+  @Override
+  public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+    super.getReports(namePrefix, reports);
+    src.getReports(namePrefix + getName() + ".", reports);
   }
 
   /**

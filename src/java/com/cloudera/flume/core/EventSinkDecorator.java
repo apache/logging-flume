@@ -19,6 +19,7 @@
 package com.cloudera.flume.core;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.cloudera.flume.conf.Context;
@@ -55,7 +56,7 @@ public class EventSinkDecorator<S extends EventSink> extends EventSink.Base {
     Preconditions.checkState(isOpen.get(), "EventSink " + this.getName()
         + " not open");
     sink.append(e);
-
+    super.append(e);
   }
 
   @Override
@@ -74,11 +75,10 @@ public class EventSinkDecorator<S extends EventSink> extends EventSink.Base {
   }
 
   @Override
-  public ReportEvent getReport() {
-    ReportEvent rpt = new ReportEvent(getName());
-    ReportEvent sinkReport = sink.getReport();
-    rpt.hierarchicalMerge(getName(), sinkReport);
-    return rpt;
+  public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+    Preconditions.checkNotNull(sink);
+    super.getReports(namePrefix, reports);
+    sink.getReports(namePrefix + getName() + ".", reports);
   }
 
   public S getSink() {
