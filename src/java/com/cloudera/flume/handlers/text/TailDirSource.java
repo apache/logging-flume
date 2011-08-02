@@ -32,7 +32,9 @@ import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSource;
+import com.cloudera.flume.handlers.text.CustomDelimCursor.DelimMode;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.util.Pair;
 import com.cloudera.util.dirwatcher.DirChangeHandler;
 import com.cloudera.util.dirwatcher.DirWatcher;
 import com.cloudera.util.dirwatcher.RegexFileFilter;
@@ -52,6 +54,10 @@ public class TailDirSource extends EventSource.Base {
   final private String regex;
   private final boolean startFromEnd;
   private final int recurseDepth;
+
+  final private String delimRegex;
+  final private DelimMode delimMode;
+
   // Indicates whether dir was checked. It is false before source is open
   // and set to true after the first check of a dir
   private volatile boolean dirChecked = false;
@@ -88,6 +94,25 @@ public class TailDirSource extends EventSource.Base {
 
     // 100 ms between checks
     this.tail = new TailSource(100);
+    this.delimMode = null;
+    this.delimRegex = null;
+  }
+
+  public TailDirSource(File f, String regex, boolean startFromEnd,
+      int recurseDepth, String delimRegex, DelimMode delimMode) {
+    Preconditions.checkArgument(f != null, "File should not be null!");
+    Preconditions.checkArgument(regex != null,
+        "Regex filter should not be null");
+
+    this.dir = f;
+    this.regex = regex;
+    this.startFromEnd = startFromEnd;
+    this.recurseDepth = recurseDepth;
+
+    // 100 ms between checks
+    this.tail = new TailSource(100);
+    this.delimRegex = delimRegex;
+    this.delimMode = delimMode;
   }
 
   /**
@@ -133,19 +158,39 @@ public class TailDirSource extends EventSource.Base {
         // Add a new file to the multi tail.
         LOG.info("added file " + f);
         Cursor c;
-        if (startFromEnd && !dirChecked) {
-          // init cursor positions on first dir check when startFromEnd is set
-          // to true
-          c = new Cursor(tail.sync, f, f.length(), f.length(), f.lastModified());
-          try {
-            c.initCursorPos();
-          } catch (InterruptedException e) {
-            LOG.error("Initializing of cursor failed", e);
-            c.close();
-            return;
+        if (delimRegex == null) {
+          if (startFromEnd && !dirChecked) {
+            // init cursor positions on first dir check when startFromEnd is set
+            // to true
+            c = new Cursor(tail.sync, f, f.length(), f.length(), f
+                .lastModified());
+            try {
+              c.initCursorPos();
+            } catch (InterruptedException e) {
+              LOG.error("Initializing of cursor failed", e);
+              c.close();
+              return;
+            }
+          } else {
+            c = new Cursor(tail.sync, f);
           }
         } else {
-          c = new Cursor(tail.sync, f);
+          // special delimiter modes
+          if (startFromEnd && !dirChecked) {
+            // init cursor positions on first dir check when startFromEnd is set
+            // to true
+            c = new CustomDelimCursor(tail.sync, f, f.length(), f.length(), f
+                .lastModified(), delimRegex, delimMode);
+            try {
+              c.initCursorPos();
+            } catch (InterruptedException e) {
+              LOG.error("Initializing of custom delimiter cursor failed", e);
+              c.close();
+              return;
+            }
+          } else {
+            c = new CustomDelimCursor(tail.sync, f, delimRegex, delimMode);
+          }
         }
 
         curmap.put(f.getPath(), c);
@@ -252,8 +297,16 @@ public class TailDirSource extends EventSource.Base {
               "\"recurseDepth\" should be >= 0, but was: " + recurseDepth
                   + ".\n" + USAGE);
         }
+
+        // delim regex, delim mode
+        Pair<String, DelimMode> mode = TailSource.extractDelimContext(ctx);
+        if (mode != null) {
+          return new TailDirSource(new File(argv[0]), regex, startFromEnd,
+              recurseDepth, mode.getLeft(), mode.getRight());
+        }
         return new TailDirSource(new File(argv[0]), regex, startFromEnd,
             recurseDepth);
+
       }
     };
   }

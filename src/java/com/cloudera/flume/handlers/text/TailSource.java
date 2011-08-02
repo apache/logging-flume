@@ -32,7 +32,9 @@ import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSource;
+import com.cloudera.flume.handlers.text.CustomDelimCursor.DelimMode;
 import com.cloudera.util.Clock;
+import com.cloudera.util.Pair;
 import com.google.common.base.Preconditions;
 
 /**
@@ -117,6 +119,29 @@ public class TailSource extends EventSource.Base {
     long readOffset = startFromEnd ? fileLen : offset;
     long modTime = f.lastModified();
     Cursor c = new Cursor(sync, f, readOffset, fileLen, modTime);
+    addCursor(c);
+
+  }
+
+  /** Custom delimiter version **/
+  public TailSource(File f, long offset, long waitTime, boolean startFromEnd,
+      String regex, DelimMode dm) {
+    Preconditions.checkArgument(f != null, "Null File is an illegal argument");
+    Preconditions.checkArgument(waitTime > 0,
+        "waitTime <=0 is an illegal argument");
+    Preconditions.checkArgument(regex != null,
+        "Null regex is an illegal argument");
+    Preconditions.checkArgument(dm != null,
+        "Null Delimiter mode is an illegal argument");
+    this.sleepTime = waitTime;
+
+    // add initial cursor.
+    long fileLen = f.length();
+    long readOffset = startFromEnd ? fileLen : offset;
+    long modTime = f.lastModified();
+
+    Cursor c = new CustomDelimCursor(sync, f, readOffset, fileLen, modTime,
+        regex, dm);
     addCursor(c);
   }
 
@@ -258,6 +283,34 @@ public class TailSource extends EventSource.Base {
     thd.start();
   }
 
+  /**
+   * This takes a context and extracts the delimiter regex and dilimiter mode.
+   * If no mode is specified it defaults to EXCLUDE mode. If no regex is
+   * specified, null is returned.
+   */
+  public static Pair<String, DelimMode> extractDelimContext(Context ctx) {
+    String delimRegex = ctx.getValue("delim");
+    if (delimRegex == null) {
+      // don't have a regex, return null;
+      return null;
+    }
+
+    // figure out mode, and delimiters
+    String delimModeStr = ctx.getValue("delimMode");
+    DelimMode delimMode = DelimMode.EXCLUDE; // default to exclude mode
+    if (delimModeStr != null) {
+      if ("exclude".equals(delimModeStr)) {
+        delimMode = DelimMode.EXCLUDE;
+      } else if ("prev".equals(delimModeStr)) {
+        delimMode = DelimMode.INCLUDE_PREV;
+      } else if ("next".equals(delimModeStr)) {
+        delimMode = DelimMode.INCLUDE_NEXT;
+      }
+    }
+    return new Pair<String, DelimMode>(delimRegex, delimMode);
+
+  }
+
   public static SourceBuilder builder() {
     return new SourceBuilder() {
 
@@ -265,14 +318,23 @@ public class TailSource extends EventSource.Base {
       public EventSource build(Context ctx, String... argv) {
         if (argv.length != 1 && argv.length != 2) {
           throw new IllegalArgumentException(
-              "usage: tail(filename, [startFromEnd]) ");
+              "usage: tail(filename, [startFromEnd] {, delim=\"regex\", delimMode=\"exclude|prev|next\"}) ");
         }
         boolean startFromEnd = false;
         if (argv.length == 2) {
           startFromEnd = Boolean.parseBoolean(argv[1]);
         }
+
+        // delim regex, delim mode
+        Pair<String, DelimMode> mode = extractDelimContext(ctx);
+        if (mode == null) {
+          // normal '\n' delimiter in exclude mode
+          return new TailSource(new File(argv[0]), 0, FlumeConfiguration.get()
+              .getTailPollPeriod(), startFromEnd);
+        }
+
         return new TailSource(new File(argv[0]), 0, FlumeConfiguration.get()
-            .getTailPollPeriod(), startFromEnd);
+            .getTailPollPeriod(), startFromEnd, mode.getLeft(), mode.getRight());
       }
     };
   }
@@ -287,11 +349,29 @@ public class TailSource extends EventSource.Base {
         boolean startFromEnd = false;
         long pollPeriod = FlumeConfiguration.get().getTailPollPeriod();
         TailSource src = null;
+
+        // delim regex, delim mode
+        Pair<String, DelimMode> mode = extractDelimContext(ctx);
+
         for (int i = 0; i < argv.length; i++) {
-          if (src == null) {
-            src = new TailSource(new File(argv[i]), 0, pollPeriod, startFromEnd);
+          if (mode == null) {
+            // default '\n' exclude mode
+            if (src == null) {
+              src = new TailSource(new File(argv[i]), 0, pollPeriod,
+                  startFromEnd);
+            } else {
+              src.addCursor(new Cursor(src.sync, new File(argv[i])));
+            }
           } else {
-            src.addCursor(new Cursor(src.sync, new File(argv[i])));
+            // custom delimiters and delimiter modes
+            if (src == null) {
+              src = new TailSource(new File(argv[i]), 0, pollPeriod,
+                  startFromEnd, mode.getLeft(), mode.getRight());
+            } else {
+              src.addCursor(new CustomDelimCursor(src.sync, new File(argv[i]),
+                  mode.getLeft(), mode.getRight()));
+            }
+
           }
         }
         return src;
