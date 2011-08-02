@@ -54,11 +54,9 @@ public class TestRollRollTags {
   @Test
   public void testMaskNoConflict() throws IOException, InterruptedException {
     MemorySinkSource mem = new MemorySinkSource();
-    EventSink s1 = new ValueDecorator<EventSink>(mem, "duped",
-        "second".getBytes());
+    EventSink s1 = new ValueDecorator<EventSink>(mem, "duped", "second");
     EventSink s2 = new MaskDecorator<EventSink>(s1, "duped");
-    EventSink snk = new ValueDecorator<EventSink>(s2, "duped",
-        "first".getBytes());
+    EventSink snk = new ValueDecorator<EventSink>(s2, "duped", "first");
     snk.open();
 
     Event e = new EventImpl("foo".getBytes());

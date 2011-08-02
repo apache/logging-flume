@@ -28,20 +28,33 @@ import com.google.common.base.Preconditions;
 
 /**
  * This decorator adds values to events that pass through it.
+ * By default decorator does not escape value, use "escape=true" to escape it.
  */
 public class ValueDecorator<S extends EventSink> extends EventSinkDecorator<S> {
-
+  public static final String KW_ESCAPE = "escape";
   final String attr; // attribute to tag
+
+  // We store the value in two forms for optimization purposes
+  final String unescapedValue;
   final byte[] value;
 
-  public ValueDecorator(S s, String attr, byte[] value) {
+  final boolean escape;
+
+  public ValueDecorator(S s, String attr, String value) {
+    this(s, attr, value, false);
+  }
+
+  public ValueDecorator(S s, String attr, String value, boolean escape) {
     super(s);
     this.attr = attr;
-    this.value = value.clone();
+    this.escape = escape;
+    this.unescapedValue = value;
+    this.value = value.getBytes().clone();
   }
 
   public void append(Event e) throws IOException, InterruptedException {
-    e.set(attr, value);
+    byte[] attrVal = escape ? e.escapeString(unescapedValue).getBytes() : value;
+    e.set(attr, attrVal);
     super.append(e);
   }
 
@@ -51,10 +64,12 @@ public class ValueDecorator<S extends EventSink> extends EventSinkDecorator<S> {
       public EventSinkDecorator<EventSink> build(Context context,
           String... argv) {
         Preconditions.checkArgument(argv.length == 2,
-            "usage: value(\"attr\", \"value\")");
+            "usage: value(\"attr\", \"value\"{, " + KW_ESCAPE + "=true|false})");
         String attr = argv[0];
         String v = argv[1];
-        return new ValueDecorator<EventSink>(null, attr, v.getBytes());
+        String escapedArg = context.getValue(KW_ESCAPE);
+        boolean escape = (escapedArg == null) ? false : Boolean.parseBoolean(escapedArg);
+        return new ValueDecorator<EventSink>(null, attr, v, escape);
       }
     };
 

@@ -387,9 +387,12 @@ If this second attempt fails, it throws an exception. This is useful in
 conjunction with network sinks where connections can be broken.  The open/
 close retry attempt is often sufficient to re-establish the connection.
 
-+value("_attr_","_value_")+ :: The value decorator adds a new metadata 
++value("_attr_","_value_"{,escape=true|false})+ :: The value decorator adds a new metadata
 attribute _attr_ with the value _value_.  Agents can mark their data with 
-specific tags for later demultiplexing.
+specific tags for later demultiplexing. By default a value the user entered
+will be attached.  By setting escape=true, the value will be interpreted and
+attempt to replace escape sequences with values from the event's attribute
+list.
 
 +mask("_attr1_"[,"_attr2_", ...])+ :: The mask decorator outputs inputted 
 events that are modified so that all metadata *except* the attributes 
