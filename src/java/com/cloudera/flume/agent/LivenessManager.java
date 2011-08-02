@@ -156,7 +156,10 @@ public class LivenessManager {
     checkLogicalNodeConfigs();
 
     // check for end to end acks.
-    ackcheck.checkAcks();
+    ackcheck.checkAcks(); // check for acks on master
+
+    // check local ack ages. If too old, retry those event groups.
+    ackcheck.checkRetry();
 
   }
 

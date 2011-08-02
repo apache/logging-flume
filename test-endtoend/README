@@ -1,0 +1,64 @@
+
+# Licensed to Cloudera, Inc. under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  Cloudera, Inc. licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+Test-endtoend scripts.
+
+These scripts are used for testing various end-to-end properties of Flume.
+
+== count-forever tests
+
+The goal of these scripts is to generate data, shove it through an
+agent, a collector and then to confirm that the output delivery and
+issues with their delivery. 
+
+count-forever -> agent -> collector -> count-forever-verify
+
+count-forever          Simple script that prints lines with count an tag
+count-forever-cleanup  Script that pulls out body from avrojson records
+
+count-forever-verify   Script that pulls out body from avrojson records
+		       and the n only reports when there are count
+		       discontinuities or duplicates.
+
+== Example:
+
+=== Local testing:
+
+In different terminals:
+$ flume master
+$ flume node -n agent
+$ flume node -n collector
+
+In flume shell 
+exec config agent 'exec("test-endtoend/count-forever")' 'agentE2EChain("localhost")'
+exec config collector 'collectorSource' 'collectorSink("file:///tmp/collector","data")'
+
+In another terminal, you can run the count-forever-verify script to
+see different discontinuities or dupes.
+
+# One shot:
+$ cat /tmp/collector/* | count-forever-verify
+
+# repeatedly:
+$ watch 'cat /tmp/collector/* | count-forever-verify'
+
+The count-forever-clean script can be used to output intermediate
+data.
+
+One can kill the collector and then restart the collector after a
+while.  You will likely see a discontinuity, and then when it
+recovers, see duplicatate entries.

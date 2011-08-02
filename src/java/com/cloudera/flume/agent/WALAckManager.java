@@ -140,11 +140,13 @@ public class WALAckManager implements Reportable {
     long now = Clock.unixTime();
     List<String> retried = new ArrayList<String>();
     for (Entry<String, Long> ack : pending.entrySet()) {
-      if (now - ack.getValue() > retransmitTime) {
+      long delta = now - ack.getValue();
+      if (delta > retransmitTime) {
         // retransmit.. enqueue to retransimt.... move it back to agent dir..
         // (lame but good enough for now)
         try {
-          LOG.info("Retransmitting " + ack.getKey());
+          LOG.info("Retransmitting " + ack.getKey() + " after being stale for "
+              + delta + "ms");
           listener.expired(ack.getKey());
           retried.add(ack.getKey());
         } catch (IOException e) {

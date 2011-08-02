@@ -255,10 +255,10 @@ public class NaiveFileWALManager implements WALManager {
     File dir = getDir(State.WRITING);
     final String tag = tagger.newTag();
 
-    EventSink bareSink = new SeqfileEventSink(
-        new File(dir, tag).getAbsoluteFile());
-    EventSink curSink = new AckChecksumInjector<EventSink>(bareSink,
-        tag.getBytes(), al);
+    EventSink bareSink = new SeqfileEventSink(new File(dir, tag)
+        .getAbsoluteFile());
+    EventSink curSink = new AckChecksumInjector<EventSink>(bareSink, tag
+        .getBytes(), al);
 
     writingQ.add(tag);
     WALData data = new WALData(tag);
@@ -295,8 +295,8 @@ public class NaiveFileWALManager implements WALManager {
       throws IOException {
     File dir = getDir(State.WRITING);
     final String tag = tagger.newTag();
-    EventSink curSink = new SeqfileEventSink(
-        new File(dir, tag).getAbsoluteFile());
+    EventSink curSink = new SeqfileEventSink(new File(dir, tag)
+        .getAbsoluteFile());
     writingQ.add(tag);
     WALData data = new WALData(tag);
     table.put(tag, data);
@@ -574,6 +574,10 @@ public class NaiveFileWALManager implements WALManager {
   synchronized public void retry(String tag) throws IOException {
     // Yuck. This is like a CAS right now.
     WALData data = table.get(tag);
+    if (data == null) {
+      // wrong WALManager
+      return;
+    }
     if (data != null) {
       if (data.s == State.SENDING || data.s == State.LOGGED) {
         LOG.warn("There was a race that happend with SENT vs SENDING states");
