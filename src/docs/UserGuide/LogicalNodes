@@ -181,8 +181,8 @@ directories.  You could then spawn the nodes onto physical nodes:
 ----
 spawn host1 fooNode1
 spawn host1 barNode1
-spawn host2 fooNode1
-spawn host2 barNode1
+spawn host2 fooNode2
+spawn host2 barNode2
 spawn host3 fooConsumer
 spawn host3 barConsumer
 ----
@@ -240,8 +240,8 @@ You specify flow groups by adding an extra parameter to the spawn command:
 ----
 spawn host1 fooNode1 flowfoo
 spawn host1 barNode1 flowbar
-spawn host2 fooNode1 flowfoo
-spawn host2 barNode1 flowbar
+spawn host2 fooNode2 flowfoo
+spawn host2 barNode2 flowbar
 spawn host3 fooConsumer flowfoo
 spawn host3 barConsumer flowbar
 ----
