@@ -1,4 +1,4 @@
-// $ANTLR 3.1.3 Mar 18, 2009 10:09:25 /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g 2010-06-10 15:15:47
+// $ANTLR 3.1.3 Mar 18, 2009 10:09:25 /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g 2010-06-17 15:09:40
 
 /**
  * Licensed to Cloudera, Inc. under one
@@ -108,8 +108,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__39;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:22:7: ( ':' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:22:9: ':'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:30:7: ( ':' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:30:9: ':'
             {
             match(':'); 
 
@@ -128,8 +128,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__40;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:23:7: ( '|' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:23:9: '|'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:31:7: ( '|' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:31:9: '|'
             {
             match('|'); 
 
@@ -148,8 +148,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__41;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:24:7: ( ';' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:24:9: ';'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:32:7: ( ';' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:32:9: ';'
             {
             match(';'); 
 
@@ -168,8 +168,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__42;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:25:7: ( '[' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:25:9: '['
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:33:7: ( '[' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:33:9: '['
             {
             match('['); 
 
@@ -188,8 +188,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__43;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:26:7: ( ']' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:26:9: ']'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:34:7: ( ']' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:34:9: ']'
             {
             match(']'); 
 
@@ -208,8 +208,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__44;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:27:7: ( ',' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:27:9: ','
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:35:7: ( ',' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:35:9: ','
             {
             match(','); 
 
@@ -228,8 +228,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__45;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:28:7: ( '{' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:28:9: '{'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:36:7: ( '{' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:36:9: '{'
             {
             match('{'); 
 
@@ -248,8 +248,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__46;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:29:7: ( '}' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:29:9: '}'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:37:7: ( '}' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:37:9: '}'
             {
             match('}'); 
 
@@ -268,8 +268,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__47;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:30:7: ( '<' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:30:9: '<'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:38:7: ( '<' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:38:9: '<'
             {
             match('<'); 
 
@@ -288,8 +288,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__48;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:31:7: ( '>' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:31:9: '>'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:39:7: ( '>' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:39:9: '>'
             {
             match('>'); 
 
@@ -308,8 +308,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__49;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:32:7: ( '=>' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:32:9: '=>'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:40:7: ( '=>' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:40:9: '=>'
             {
             match("=>"); 
 
@@ -329,8 +329,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__50;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:33:7: ( '?' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:33:9: '?'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:41:7: ( '?' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:41:9: '?'
             {
             match('?'); 
 
@@ -349,8 +349,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__51;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:34:7: ( 'let' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:34:9: 'let'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:42:7: ( 'let' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:42:9: 'let'
             {
             match("let"); 
 
@@ -370,8 +370,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__52;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:35:7: ( ':=' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:35:9: ':='
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:43:7: ( ':=' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:43:9: ':='
             {
             match(":="); 
 
@@ -391,8 +391,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__53;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:36:7: ( 'in' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:36:9: 'in'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:44:7: ( 'in' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:44:9: 'in'
             {
             match("in"); 
 
@@ -412,8 +412,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__54;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:37:7: ( 'roll' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:37:9: 'roll'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:45:7: ( 'roll' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:45:9: 'roll'
             {
             match("roll"); 
 
@@ -433,8 +433,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__55;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:38:7: ( 'failchain' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:38:9: 'failchain'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:46:7: ( 'failchain' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:46:9: 'failchain'
             {
             match("failchain"); 
 
@@ -454,8 +454,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__56;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:39:7: ( '(' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:39:9: '('
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:47:7: ( '(' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:47:9: '('
             {
             match('('); 
 
@@ -474,8 +474,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__57;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:40:7: ( ')' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:40:9: ')'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:48:7: ( ')' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:48:9: ')'
             {
             match(')'); 
 
@@ -494,8 +494,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__58;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:41:7: ( 'true' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:41:9: 'true'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:49:7: ( 'true' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:49:9: 'true'
             {
             match("true"); 
 
@@ -515,8 +515,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = T__59;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:42:7: ( 'false' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:42:9: 'false'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:50:7: ( 'false' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:50:9: 'false'
             {
             match("false"); 
 
@@ -536,8 +536,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = HexLiteral;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:139:12: ( '0' ( 'x' | 'X' ) ( HexDigit )+ )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:139:14: '0' ( 'x' | 'X' ) ( HexDigit )+
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:163:12: ( '0' ( 'x' | 'X' ) ( HexDigit )+ )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:163:14: '0' ( 'x' | 'X' ) ( HexDigit )+
             {
             match('0'); 
             if ( input.LA(1)=='X'||input.LA(1)=='x' ) {
@@ -549,7 +549,7 @@ public class FlumeDeployLexer extends Lexer {
                 recover(mse);
                 throw mse;}
 
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:139:28: ( HexDigit )+
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:163:28: ( HexDigit )+
             int cnt1=0;
             loop1:
             do {
@@ -563,7 +563,7 @@ public class FlumeDeployLexer extends Lexer {
 
                 switch (alt1) {
             	case 1 :
-            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:139:28: HexDigit
+            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:163:28: HexDigit
             	    {
             	    mHexDigit(); 
 
@@ -595,10 +595,10 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = DecimalLiteral;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:141:16: ( ( '0' | '1' .. '9' ( '0' .. '9' )* ) )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:141:18: ( '0' | '1' .. '9' ( '0' .. '9' )* )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:165:16: ( ( '0' | '1' .. '9' ( '0' .. '9' )* ) )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:165:18: ( '0' | '1' .. '9' ( '0' .. '9' )* )
             {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:141:18: ( '0' | '1' .. '9' ( '0' .. '9' )* )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:165:18: ( '0' | '1' .. '9' ( '0' .. '9' )* )
             int alt3=2;
             int LA3_0 = input.LA(1);
 
@@ -616,17 +616,17 @@ public class FlumeDeployLexer extends Lexer {
             }
             switch (alt3) {
                 case 1 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:141:19: '0'
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:165:19: '0'
                     {
                     match('0'); 
 
                     }
                     break;
                 case 2 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:141:25: '1' .. '9' ( '0' .. '9' )*
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:165:25: '1' .. '9' ( '0' .. '9' )*
                     {
                     matchRange('1','9'); 
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:141:34: ( '0' .. '9' )*
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:165:34: ( '0' .. '9' )*
                     loop2:
                     do {
                         int alt2=2;
@@ -639,7 +639,7 @@ public class FlumeDeployLexer extends Lexer {
 
                         switch (alt2) {
                     	case 1 :
-                    	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:141:34: '0' .. '9'
+                    	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:165:34: '0' .. '9'
                     	    {
                     	    matchRange('0','9'); 
 
@@ -673,11 +673,11 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = OctalLiteral;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:143:14: ( '0' ( '0' .. '7' )+ )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:143:16: '0' ( '0' .. '7' )+
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:167:14: ( '0' ( '0' .. '7' )+ )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:167:16: '0' ( '0' .. '7' )+
             {
             match('0'); 
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:143:20: ( '0' .. '7' )+
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:167:20: ( '0' .. '7' )+
             int cnt4=0;
             loop4:
             do {
@@ -691,7 +691,7 @@ public class FlumeDeployLexer extends Lexer {
 
                 switch (alt4) {
             	case 1 :
-            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:143:21: '0' .. '7'
+            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:167:21: '0' .. '7'
             	    {
             	    matchRange('0','7'); 
 
@@ -721,8 +721,8 @@ public class FlumeDeployLexer extends Lexer {
     // $ANTLR start "HexDigit"
     public final void mHexDigit() throws RecognitionException {
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:146:10: ( ( '0' .. '9' | 'a' .. 'f' | 'A' .. 'F' ) )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:146:12: ( '0' .. '9' | 'a' .. 'f' | 'A' .. 'F' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:170:10: ( ( '0' .. '9' | 'a' .. 'f' | 'A' .. 'F' ) )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:170:12: ( '0' .. '9' | 'a' .. 'f' | 'A' .. 'F' )
             {
             if ( (input.LA(1)>='0' && input.LA(1)<='9')||(input.LA(1)>='A' && input.LA(1)<='F')||(input.LA(1)>='a' && input.LA(1)<='f') ) {
                 input.consume();
@@ -745,8 +745,8 @@ public class FlumeDeployLexer extends Lexer {
     // $ANTLR start "IntegerTypeSuffix"
     public final void mIntegerTypeSuffix() throws RecognitionException {
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:150:19: ( ( 'l' | 'L' ) )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:150:21: ( 'l' | 'L' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:174:19: ( ( 'l' | 'L' ) )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:174:21: ( 'l' | 'L' )
             {
             if ( input.LA(1)=='L'||input.LA(1)=='l' ) {
                 input.consume();
@@ -771,11 +771,11 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = StringLiteral;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:158:5: ( '\"' (~ ( '\\\\' | '\"' ) | EscapeSequence )* '\"' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:158:8: '\"' (~ ( '\\\\' | '\"' ) | EscapeSequence )* '\"'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:182:5: ( '\"' (~ ( '\\\\' | '\"' ) | EscapeSequence )* '\"' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:182:8: '\"' (~ ( '\\\\' | '\"' ) | EscapeSequence )* '\"'
             {
             match('\"'); 
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:158:12: (~ ( '\\\\' | '\"' ) | EscapeSequence )*
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:182:12: (~ ( '\\\\' | '\"' ) | EscapeSequence )*
             loop5:
             do {
                 int alt5=3;
@@ -791,7 +791,7 @@ public class FlumeDeployLexer extends Lexer {
 
                 switch (alt5) {
             	case 1 :
-            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:158:14: ~ ( '\\\\' | '\"' )
+            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:182:14: ~ ( '\\\\' | '\"' )
             	    {
             	    if ( (input.LA(1)>='\u0000' && input.LA(1)<='!')||(input.LA(1)>='#' && input.LA(1)<='[')||(input.LA(1)>=']' && input.LA(1)<='\uFFFF') ) {
             	        input.consume();
@@ -806,7 +806,7 @@ public class FlumeDeployLexer extends Lexer {
             	    }
             	    break;
             	case 2 :
-            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:158:29: EscapeSequence
+            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:182:29: EscapeSequence
             	    {
             	    mEscapeSequence(); 
 
@@ -835,11 +835,11 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = IPLiteral;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:161:2: ( ( DecimalLiteral '.' DecimalLiteral '.' DecimalLiteral '.' DecimalLiteral ) )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:161:4: ( DecimalLiteral '.' DecimalLiteral '.' DecimalLiteral '.' DecimalLiteral )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:185:2: ( ( DecimalLiteral '.' DecimalLiteral '.' DecimalLiteral '.' DecimalLiteral ) )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:185:4: ( DecimalLiteral '.' DecimalLiteral '.' DecimalLiteral '.' DecimalLiteral )
             {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:161:4: ( DecimalLiteral '.' DecimalLiteral '.' DecimalLiteral '.' DecimalLiteral )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:161:5: DecimalLiteral '.' DecimalLiteral '.' DecimalLiteral '.' DecimalLiteral
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:185:4: ( DecimalLiteral '.' DecimalLiteral '.' DecimalLiteral '.' DecimalLiteral )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:185:5: DecimalLiteral '.' DecimalLiteral '.' DecimalLiteral '.' DecimalLiteral
             {
             mDecimalLiteral(); 
             match('.'); 
@@ -865,7 +865,7 @@ public class FlumeDeployLexer extends Lexer {
     // $ANTLR start "EscapeSequence"
     public final void mEscapeSequence() throws RecognitionException {
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:166:5: ( '\\\\' ( 'b' | 't' | 'n' | 'f' | 'r' | '\\\"' | '\\'' | '\\\\' ) | UnicodeEscape | OctalEscape )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:190:5: ( '\\\\' ( 'b' | 't' | 'n' | 'f' | 'r' | '\\\"' | '\\'' | '\\\\' ) | UnicodeEscape | OctalEscape )
             int alt6=3;
             int LA6_0 = input.LA(1);
 
@@ -916,7 +916,7 @@ public class FlumeDeployLexer extends Lexer {
             }
             switch (alt6) {
                 case 1 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:166:9: '\\\\' ( 'b' | 't' | 'n' | 'f' | 'r' | '\\\"' | '\\'' | '\\\\' )
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:190:9: '\\\\' ( 'b' | 't' | 'n' | 'f' | 'r' | '\\\"' | '\\'' | '\\\\' )
                     {
                     match('\\'); 
                     if ( input.LA(1)=='\"'||input.LA(1)=='\''||input.LA(1)=='\\'||input.LA(1)=='b'||input.LA(1)=='f'||input.LA(1)=='n'||input.LA(1)=='r'||input.LA(1)=='t' ) {
@@ -932,14 +932,14 @@ public class FlumeDeployLexer extends Lexer {
                     }
                     break;
                 case 2 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:167:9: UnicodeEscape
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:191:9: UnicodeEscape
                     {
                     mUnicodeEscape(); 
 
                     }
                     break;
                 case 3 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:168:9: OctalEscape
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:192:9: OctalEscape
                     {
                     mOctalEscape(); 
 
@@ -956,7 +956,7 @@ public class FlumeDeployLexer extends Lexer {
     // $ANTLR start "OctalEscape"
     public final void mOctalEscape() throws RecognitionException {
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:173:5: ( '\\\\' ( '0' .. '3' ) ( '0' .. '7' ) ( '0' .. '7' ) | '\\\\' ( '0' .. '7' ) ( '0' .. '7' ) | '\\\\' ( '0' .. '7' ) )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:197:5: ( '\\\\' ( '0' .. '3' ) ( '0' .. '7' ) ( '0' .. '7' ) | '\\\\' ( '0' .. '7' ) ( '0' .. '7' ) | '\\\\' ( '0' .. '7' ) )
             int alt7=3;
             int LA7_0 = input.LA(1);
 
@@ -1002,25 +1002,25 @@ public class FlumeDeployLexer extends Lexer {
             }
             switch (alt7) {
                 case 1 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:173:9: '\\\\' ( '0' .. '3' ) ( '0' .. '7' ) ( '0' .. '7' )
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:197:9: '\\\\' ( '0' .. '3' ) ( '0' .. '7' ) ( '0' .. '7' )
                     {
                     match('\\'); 
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:173:14: ( '0' .. '3' )
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:173:15: '0' .. '3'
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:197:14: ( '0' .. '3' )
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:197:15: '0' .. '3'
                     {
                     matchRange('0','3'); 
 
                     }
 
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:173:25: ( '0' .. '7' )
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:173:26: '0' .. '7'
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:197:25: ( '0' .. '7' )
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:197:26: '0' .. '7'
                     {
                     matchRange('0','7'); 
 
                     }
 
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:173:36: ( '0' .. '7' )
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:173:37: '0' .. '7'
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:197:36: ( '0' .. '7' )
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:197:37: '0' .. '7'
                     {
                     matchRange('0','7'); 
 
@@ -1030,18 +1030,18 @@ public class FlumeDeployLexer extends Lexer {
                     }
                     break;
                 case 2 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:174:9: '\\\\' ( '0' .. '7' ) ( '0' .. '7' )
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:198:9: '\\\\' ( '0' .. '7' ) ( '0' .. '7' )
                     {
                     match('\\'); 
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:174:14: ( '0' .. '7' )
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:174:15: '0' .. '7'
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:198:14: ( '0' .. '7' )
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:198:15: '0' .. '7'
                     {
                     matchRange('0','7'); 
 
                     }
 
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:174:25: ( '0' .. '7' )
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:174:26: '0' .. '7'
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:198:25: ( '0' .. '7' )
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:198:26: '0' .. '7'
                     {
                     matchRange('0','7'); 
 
@@ -1051,11 +1051,11 @@ public class FlumeDeployLexer extends Lexer {
                     }
                     break;
                 case 3 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:175:9: '\\\\' ( '0' .. '7' )
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:199:9: '\\\\' ( '0' .. '7' )
                     {
                     match('\\'); 
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:175:14: ( '0' .. '7' )
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:175:15: '0' .. '7'
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:199:14: ( '0' .. '7' )
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:199:15: '0' .. '7'
                     {
                     matchRange('0','7'); 
 
@@ -1075,8 +1075,8 @@ public class FlumeDeployLexer extends Lexer {
     // $ANTLR start "UnicodeEscape"
     public final void mUnicodeEscape() throws RecognitionException {
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:180:5: ( '\\\\' 'u' HexDigit HexDigit HexDigit HexDigit )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:180:9: '\\\\' 'u' HexDigit HexDigit HexDigit HexDigit
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:204:5: ( '\\\\' 'u' HexDigit HexDigit HexDigit HexDigit )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:204:9: '\\\\' 'u' HexDigit HexDigit HexDigit HexDigit
             {
             match('\\'); 
             match('u'); 
@@ -1098,11 +1098,11 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = Identifier;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:184:5: ( Letter ( Letter | JavaIDDigit | '.' | '-' | '_' )* )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:184:9: Letter ( Letter | JavaIDDigit | '.' | '-' | '_' )*
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:208:5: ( Letter ( Letter | JavaIDDigit | '.' | '-' | '_' )* )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:208:9: Letter ( Letter | JavaIDDigit | '.' | '-' | '_' )*
             {
             mLetter(); 
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:184:16: ( Letter | JavaIDDigit | '.' | '-' | '_' )*
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:208:16: ( Letter | JavaIDDigit | '.' | '-' | '_' )*
             loop8:
             do {
                 int alt8=2;
@@ -1151,14 +1151,14 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = FloatingPointLiteral;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:188:5: ( ( '0' .. '9' )+ '.' ( '0' .. '9' )* ( Exponent )? ( FloatTypeSuffix )? | '.' ( '0' .. '9' )+ ( Exponent )? ( FloatTypeSuffix )? | ( '0' .. '9' )+ Exponent ( FloatTypeSuffix )? | ( '0' .. '9' )+ FloatTypeSuffix )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:212:5: ( ( '0' .. '9' )+ '.' ( '0' .. '9' )* ( Exponent )? ( FloatTypeSuffix )? | '.' ( '0' .. '9' )+ ( Exponent )? ( FloatTypeSuffix )? | ( '0' .. '9' )+ Exponent ( FloatTypeSuffix )? | ( '0' .. '9' )+ FloatTypeSuffix )
             int alt19=4;
             alt19 = dfa19.predict(input);
             switch (alt19) {
                 case 1 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:188:9: ( '0' .. '9' )+ '.' ( '0' .. '9' )* ( Exponent )? ( FloatTypeSuffix )?
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:212:9: ( '0' .. '9' )+ '.' ( '0' .. '9' )* ( Exponent )? ( FloatTypeSuffix )?
                     {
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:188:9: ( '0' .. '9' )+
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:212:9: ( '0' .. '9' )+
                     int cnt9=0;
                     loop9:
                     do {
@@ -1172,7 +1172,7 @@ public class FlumeDeployLexer extends Lexer {
 
                         switch (alt9) {
                     	case 1 :
-                    	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:188:10: '0' .. '9'
+                    	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:212:10: '0' .. '9'
                     	    {
                     	    matchRange('0','9'); 
 
@@ -1189,7 +1189,7 @@ public class FlumeDeployLexer extends Lexer {
                     } while (true);
 
                     match('.'); 
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:188:25: ( '0' .. '9' )*
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:212:25: ( '0' .. '9' )*
                     loop10:
                     do {
                         int alt10=2;
@@ -1202,7 +1202,7 @@ public class FlumeDeployLexer extends Lexer {
 
                         switch (alt10) {
                     	case 1 :
-                    	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:188:26: '0' .. '9'
+                    	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:212:26: '0' .. '9'
                     	    {
                     	    matchRange('0','9'); 
 
@@ -1214,7 +1214,7 @@ public class FlumeDeployLexer extends Lexer {
                         }
                     } while (true);
 
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:188:37: ( Exponent )?
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:212:37: ( Exponent )?
                     int alt11=2;
                     int LA11_0 = input.LA(1);
 
@@ -1223,7 +1223,7 @@ public class FlumeDeployLexer extends Lexer {
                     }
                     switch (alt11) {
                         case 1 :
-                            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:188:37: Exponent
+                            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:212:37: Exponent
                             {
                             mExponent(); 
 
@@ -1232,7 +1232,7 @@ public class FlumeDeployLexer extends Lexer {
 
                     }
 
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:188:47: ( FloatTypeSuffix )?
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:212:47: ( FloatTypeSuffix )?
                     int alt12=2;
                     int LA12_0 = input.LA(1);
 
@@ -1241,7 +1241,7 @@ public class FlumeDeployLexer extends Lexer {
                     }
                     switch (alt12) {
                         case 1 :
-                            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:188:47: FloatTypeSuffix
+                            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:212:47: FloatTypeSuffix
                             {
                             mFloatTypeSuffix(); 
 
@@ -1254,10 +1254,10 @@ public class FlumeDeployLexer extends Lexer {
                     }
                     break;
                 case 2 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:189:9: '.' ( '0' .. '9' )+ ( Exponent )? ( FloatTypeSuffix )?
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:213:9: '.' ( '0' .. '9' )+ ( Exponent )? ( FloatTypeSuffix )?
                     {
                     match('.'); 
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:189:13: ( '0' .. '9' )+
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:213:13: ( '0' .. '9' )+
                     int cnt13=0;
                     loop13:
                     do {
@@ -1271,7 +1271,7 @@ public class FlumeDeployLexer extends Lexer {
 
                         switch (alt13) {
                     	case 1 :
-                    	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:189:14: '0' .. '9'
+                    	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:213:14: '0' .. '9'
                     	    {
                     	    matchRange('0','9'); 
 
@@ -1287,7 +1287,7 @@ public class FlumeDeployLexer extends Lexer {
                         cnt13++;
                     } while (true);
 
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:189:25: ( Exponent )?
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:213:25: ( Exponent )?
                     int alt14=2;
                     int LA14_0 = input.LA(1);
 
@@ -1296,7 +1296,7 @@ public class FlumeDeployLexer extends Lexer {
                     }
                     switch (alt14) {
                         case 1 :
-                            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:189:25: Exponent
+                            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:213:25: Exponent
                             {
                             mExponent(); 
 
@@ -1305,7 +1305,7 @@ public class FlumeDeployLexer extends Lexer {
 
                     }
 
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:189:35: ( FloatTypeSuffix )?
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:213:35: ( FloatTypeSuffix )?
                     int alt15=2;
                     int LA15_0 = input.LA(1);
 
@@ -1314,7 +1314,7 @@ public class FlumeDeployLexer extends Lexer {
                     }
                     switch (alt15) {
                         case 1 :
-                            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:189:35: FloatTypeSuffix
+                            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:213:35: FloatTypeSuffix
                             {
                             mFloatTypeSuffix(); 
 
@@ -1327,9 +1327,9 @@ public class FlumeDeployLexer extends Lexer {
                     }
                     break;
                 case 3 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:190:9: ( '0' .. '9' )+ Exponent ( FloatTypeSuffix )?
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:214:9: ( '0' .. '9' )+ Exponent ( FloatTypeSuffix )?
                     {
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:190:9: ( '0' .. '9' )+
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:214:9: ( '0' .. '9' )+
                     int cnt16=0;
                     loop16:
                     do {
@@ -1343,7 +1343,7 @@ public class FlumeDeployLexer extends Lexer {
 
                         switch (alt16) {
                     	case 1 :
-                    	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:190:10: '0' .. '9'
+                    	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:214:10: '0' .. '9'
                     	    {
                     	    matchRange('0','9'); 
 
@@ -1360,7 +1360,7 @@ public class FlumeDeployLexer extends Lexer {
                     } while (true);
 
                     mExponent(); 
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:190:30: ( FloatTypeSuffix )?
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:214:30: ( FloatTypeSuffix )?
                     int alt17=2;
                     int LA17_0 = input.LA(1);
 
@@ -1369,7 +1369,7 @@ public class FlumeDeployLexer extends Lexer {
                     }
                     switch (alt17) {
                         case 1 :
-                            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:190:30: FloatTypeSuffix
+                            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:214:30: FloatTypeSuffix
                             {
                             mFloatTypeSuffix(); 
 
@@ -1382,9 +1382,9 @@ public class FlumeDeployLexer extends Lexer {
                     }
                     break;
                 case 4 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:191:9: ( '0' .. '9' )+ FloatTypeSuffix
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:215:9: ( '0' .. '9' )+ FloatTypeSuffix
                     {
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:191:9: ( '0' .. '9' )+
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:215:9: ( '0' .. '9' )+
                     int cnt18=0;
                     loop18:
                     do {
@@ -1398,7 +1398,7 @@ public class FlumeDeployLexer extends Lexer {
 
                         switch (alt18) {
                     	case 1 :
-                    	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:191:10: '0' .. '9'
+                    	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:215:10: '0' .. '9'
                     	    {
                     	    matchRange('0','9'); 
 
@@ -1431,8 +1431,8 @@ public class FlumeDeployLexer extends Lexer {
     // $ANTLR start "Exponent"
     public final void mExponent() throws RecognitionException {
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:195:10: ( ( 'e' | 'E' ) ( '+' | '-' )? ( '0' .. '9' )+ )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:195:12: ( 'e' | 'E' ) ( '+' | '-' )? ( '0' .. '9' )+
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:219:10: ( ( 'e' | 'E' ) ( '+' | '-' )? ( '0' .. '9' )+ )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:219:12: ( 'e' | 'E' ) ( '+' | '-' )? ( '0' .. '9' )+
             {
             if ( input.LA(1)=='E'||input.LA(1)=='e' ) {
                 input.consume();
@@ -1443,7 +1443,7 @@ public class FlumeDeployLexer extends Lexer {
                 recover(mse);
                 throw mse;}
 
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:195:22: ( '+' | '-' )?
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:219:22: ( '+' | '-' )?
             int alt20=2;
             int LA20_0 = input.LA(1);
 
@@ -1469,7 +1469,7 @@ public class FlumeDeployLexer extends Lexer {
 
             }
 
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:195:33: ( '0' .. '9' )+
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:219:33: ( '0' .. '9' )+
             int cnt21=0;
             loop21:
             do {
@@ -1483,7 +1483,7 @@ public class FlumeDeployLexer extends Lexer {
 
                 switch (alt21) {
             	case 1 :
-            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:195:34: '0' .. '9'
+            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:219:34: '0' .. '9'
             	    {
             	    matchRange('0','9'); 
 
@@ -1511,8 +1511,8 @@ public class FlumeDeployLexer extends Lexer {
     // $ANTLR start "FloatTypeSuffix"
     public final void mFloatTypeSuffix() throws RecognitionException {
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:198:17: ( ( 'f' | 'F' | 'd' | 'D' ) )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:198:19: ( 'f' | 'F' | 'd' | 'D' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:222:17: ( ( 'f' | 'F' | 'd' | 'D' ) )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:222:19: ( 'f' | 'F' | 'd' | 'D' )
             {
             if ( input.LA(1)=='D'||input.LA(1)=='F'||input.LA(1)=='d'||input.LA(1)=='f' ) {
                 input.consume();
@@ -1535,7 +1535,7 @@ public class FlumeDeployLexer extends Lexer {
     // $ANTLR start "JavaIDDigit"
     public final void mJavaIDDigit() throws RecognitionException {
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:202:2: ( '0' | '1' .. '9' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:226:2: ( '0' | '1' .. '9' )
             // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:
             {
             if ( (input.LA(1)>='0' && input.LA(1)<='9') ) {
@@ -1559,7 +1559,7 @@ public class FlumeDeployLexer extends Lexer {
     // $ANTLR start "Letter"
     public final void mLetter() throws RecognitionException {
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:205:9: ( 'a' .. 'z' | 'A' .. 'Z' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:229:9: ( 'a' .. 'z' | 'A' .. 'Z' )
             // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:
             {
             if ( (input.LA(1)>='A' && input.LA(1)<='Z')||(input.LA(1)>='a' && input.LA(1)<='z') ) {
@@ -1585,8 +1585,8 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = WS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:207:5: ( ( ' ' | '\\r' | '\\t' | '\\u000C' | '\\n' ) )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:207:8: ( ' ' | '\\r' | '\\t' | '\\u000C' | '\\n' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:231:5: ( ( ' ' | '\\r' | '\\t' | '\\u000C' | '\\n' ) )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:231:8: ( ' ' | '\\r' | '\\t' | '\\u000C' | '\\n' )
             {
             if ( (input.LA(1)>='\t' && input.LA(1)<='\n')||(input.LA(1)>='\f' && input.LA(1)<='\r')||input.LA(1)==' ' ) {
                 input.consume();
@@ -1614,12 +1614,12 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = COMMENT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:211:5: ( '/*' ( options {greedy=false; } : . )* '*/' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:211:9: '/*' ( options {greedy=false; } : . )* '*/'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:235:5: ( '/*' ( options {greedy=false; } : . )* '*/' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:235:9: '/*' ( options {greedy=false; } : . )* '*/'
             {
             match("/*"); 
 
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:211:14: ( options {greedy=false; } : . )*
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:235:14: ( options {greedy=false; } : . )*
             loop22:
             do {
                 int alt22=2;
@@ -1644,7 +1644,7 @@ public class FlumeDeployLexer extends Lexer {
 
                 switch (alt22) {
             	case 1 :
-            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:211:42: .
+            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:235:42: .
             	    {
             	    matchAny(); 
 
@@ -1675,12 +1675,12 @@ public class FlumeDeployLexer extends Lexer {
         try {
             int _type = LINE_COMMENT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:215:5: ( '//' (~ ( '\\n' | '\\r' ) )* ( '\\r' )? '\\n' )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:215:7: '//' (~ ( '\\n' | '\\r' ) )* ( '\\r' )? '\\n'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:239:5: ( '//' (~ ( '\\n' | '\\r' ) )* ( '\\r' )? '\\n' )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:239:7: '//' (~ ( '\\n' | '\\r' ) )* ( '\\r' )? '\\n'
             {
             match("//"); 
 
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:215:12: (~ ( '\\n' | '\\r' ) )*
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:239:12: (~ ( '\\n' | '\\r' ) )*
             loop23:
             do {
                 int alt23=2;
@@ -1693,7 +1693,7 @@ public class FlumeDeployLexer extends Lexer {
 
                 switch (alt23) {
             	case 1 :
-            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:215:12: ~ ( '\\n' | '\\r' )
+            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:239:12: ~ ( '\\n' | '\\r' )
             	    {
             	    if ( (input.LA(1)>='\u0000' && input.LA(1)<='\t')||(input.LA(1)>='\u000B' && input.LA(1)<='\f')||(input.LA(1)>='\u000E' && input.LA(1)<='\uFFFF') ) {
             	        input.consume();
@@ -1713,7 +1713,7 @@ public class FlumeDeployLexer extends Lexer {
                 }
             } while (true);
 
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:215:26: ( '\\r' )?
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:239:26: ( '\\r' )?
             int alt24=2;
             int LA24_0 = input.LA(1);
 
@@ -1722,7 +1722,7 @@ public class FlumeDeployLexer extends Lexer {
             }
             switch (alt24) {
                 case 1 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:215:26: '\\r'
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:239:26: '\\r'
                     {
                     match('\r'); 
 
@@ -2025,7 +2025,7 @@ public class FlumeDeployLexer extends Lexer {
             this.transition = DFA19_transition;
         }
         public String getDescription() {
-            return "187:1: FloatingPointLiteral : ( ( '0' .. '9' )+ '.' ( '0' .. '9' )* ( Exponent )? ( FloatTypeSuffix )? | '.' ( '0' .. '9' )+ ( Exponent )? ( FloatTypeSuffix )? | ( '0' .. '9' )+ Exponent ( FloatTypeSuffix )? | ( '0' .. '9' )+ FloatTypeSuffix );";
+            return "211:1: FloatingPointLiteral : ( ( '0' .. '9' )+ '.' ( '0' .. '9' )* ( Exponent )? ( FloatTypeSuffix )? | '.' ( '0' .. '9' )+ ( Exponent )? ( FloatTypeSuffix )? | ( '0' .. '9' )+ Exponent ( FloatTypeSuffix )? | ( '0' .. '9' )+ FloatTypeSuffix );";
         }
     }
     static final String DFA25_eotS =

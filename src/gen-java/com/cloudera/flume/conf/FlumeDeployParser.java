@@ -1,4 +1,4 @@
-// $ANTLR 3.1.3 Mar 18, 2009 10:09:25 /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g 2010-06-10 15:15:47
+// $ANTLR 3.1.3 Mar 18, 2009 10:09:25 /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g 2010-06-17 15:09:39
 
 /**
  * Licensed to Cloudera, Inc. under one
@@ -29,6 +29,23 @@ import java.util.ArrayList;
 
 import org.antlr.runtime.tree.*;
 
+/**
+ * Licensed to Cloudera, Inc. under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  Cloudera, Inc. licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 public class FlumeDeployParser extends Parser {
     public static final String[] tokenNames = new String[] {
         "<invalid>", "<EOR>", "<DOWN>", "<UP>", "NODE", "BLANK", "SINK", "BACKUP", "LET", "ROLL", "FAILCHAIN", "DECO", "SOURCE", "MULTI", "HEX", "OCT", "DEC", "STRING", "BOOL", "FLOAT", "Identifier", "IPLiteral", "StringLiteral", "FloatingPointLiteral", "HexLiteral", "OctalLiteral", "DecimalLiteral", "HexDigit", "IntegerTypeSuffix", "EscapeSequence", "UnicodeEscape", "OctalEscape", "Letter", "JavaIDDigit", "Exponent", "FloatTypeSuffix", "WS", "COMMENT", "LINE_COMMENT", "':'", "'|'", "';'", "'['", "']'", "','", "'{'", "'}'", "'<'", "'>'", "'=>'", "'?'", "'let'", "':='", "'in'", "'roll'", "'failchain'", "'('", "')'", "'true'", "'false'"
@@ -127,7 +144,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "deflist"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:72:1: deflist : ( def )* EOF ;
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:96:1: deflist : ( def )* EOF ;
     public final FlumeDeployParser.deflist_return deflist() throws RecognitionException {
         FlumeDeployParser.deflist_return retval = new FlumeDeployParser.deflist_return();
         retval.start = input.LT(1);
@@ -141,12 +158,12 @@ public class FlumeDeployParser extends Parser {
         Object EOF2_tree=null;
 
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:72:9: ( ( def )* EOF )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:72:11: ( def )* EOF
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:96:9: ( ( def )* EOF )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:96:11: ( def )* EOF
             {
             root_0 = (Object)adaptor.nil();
 
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:72:11: ( def )*
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:96:11: ( def )*
             loop1:
             do {
                 int alt1=2;
@@ -159,9 +176,9 @@ public class FlumeDeployParser extends Parser {
 
                 switch (alt1) {
             	case 1 :
-            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:72:11: def
+            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:96:11: def
             	    {
-            	    pushFollow(FOLLOW_def_in_deflist147);
+            	    pushFollow(FOLLOW_def_in_deflist140);
             	    def1=def();
 
             	    state._fsp--;
@@ -176,7 +193,7 @@ public class FlumeDeployParser extends Parser {
                 }
             } while (true);
 
-            EOF2=(Token)match(input,EOF,FOLLOW_EOF_in_deflist150); 
+            EOF2=(Token)match(input,EOF,FOLLOW_EOF_in_deflist143); 
             EOF2_tree = (Object)adaptor.create(EOF2);
             adaptor.addChild(root_0, EOF2_tree);
 
@@ -207,7 +224,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "def"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:74:1: def : host ':' source '|' sink ';' -> ^( NODE host source sink ) ;
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:98:1: def : host ':' source '|' sink ';' -> ^( NODE host source sink ) ;
     public final FlumeDeployParser.def_return def() throws RecognitionException {
         FlumeDeployParser.def_return retval = new FlumeDeployParser.def_return();
         retval.start = input.LT(1);
@@ -234,34 +251,34 @@ public class FlumeDeployParser extends Parser {
         RewriteRuleSubtreeStream stream_source=new RewriteRuleSubtreeStream(adaptor,"rule source");
         RewriteRuleSubtreeStream stream_sink=new RewriteRuleSubtreeStream(adaptor,"rule sink");
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:74:5: ( host ':' source '|' sink ';' -> ^( NODE host source sink ) )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:74:7: host ':' source '|' sink ';'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:98:5: ( host ':' source '|' sink ';' -> ^( NODE host source sink ) )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:98:7: host ':' source '|' sink ';'
             {
-            pushFollow(FOLLOW_host_in_def160);
+            pushFollow(FOLLOW_host_in_def153);
             host3=host();
 
             state._fsp--;
 
             stream_host.add(host3.getTree());
-            char_literal4=(Token)match(input,39,FOLLOW_39_in_def162);  
+            char_literal4=(Token)match(input,39,FOLLOW_39_in_def155);  
             stream_39.add(char_literal4);
 
-            pushFollow(FOLLOW_source_in_def164);
+            pushFollow(FOLLOW_source_in_def157);
             source5=source();
 
             state._fsp--;
 
             stream_source.add(source5.getTree());
-            char_literal6=(Token)match(input,40,FOLLOW_40_in_def166);  
+            char_literal6=(Token)match(input,40,FOLLOW_40_in_def159);  
             stream_40.add(char_literal6);
 
-            pushFollow(FOLLOW_sink_in_def168);
+            pushFollow(FOLLOW_sink_in_def161);
             sink7=sink();
 
             state._fsp--;
 
             stream_sink.add(sink7.getTree());
-            char_literal8=(Token)match(input,41,FOLLOW_41_in_def171);  
+            char_literal8=(Token)match(input,41,FOLLOW_41_in_def164);  
             stream_41.add(char_literal8);
 
 
@@ -277,9 +294,9 @@ public class FlumeDeployParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (Object)adaptor.nil();
-            // 74:37: -> ^( NODE host source sink )
+            // 98:37: -> ^( NODE host source sink )
             {
-                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:74:40: ^( NODE host source sink )
+                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:98:40: ^( NODE host source sink )
                 {
                 Object root_1 = (Object)adaptor.nil();
                 root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(NODE, "NODE"), root_1);
@@ -320,7 +337,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "host"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:76:1: host : ( Identifier | IPLiteral );
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:100:1: host : ( Identifier | IPLiteral );
     public final FlumeDeployParser.host_return host() throws RecognitionException {
         FlumeDeployParser.host_return retval = new FlumeDeployParser.host_return();
         retval.start = input.LT(1);
@@ -332,7 +349,7 @@ public class FlumeDeployParser extends Parser {
         Object set9_tree=null;
 
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:76:5: ( Identifier | IPLiteral )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:100:5: ( Identifier | IPLiteral )
             // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:
             {
             root_0 = (Object)adaptor.nil();
@@ -375,7 +392,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "connection"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:80:1: connection : source '|' sink -> ^( NODE BLANK source sink ) ;
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:104:1: connection : source '|' sink -> ^( NODE BLANK source sink ) ;
     public final FlumeDeployParser.connection_return connection() throws RecognitionException {
         FlumeDeployParser.connection_return retval = new FlumeDeployParser.connection_return();
         retval.start = input.LT(1);
@@ -393,19 +410,19 @@ public class FlumeDeployParser extends Parser {
         RewriteRuleSubtreeStream stream_source=new RewriteRuleSubtreeStream(adaptor,"rule source");
         RewriteRuleSubtreeStream stream_sink=new RewriteRuleSubtreeStream(adaptor,"rule sink");
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:81:2: ( source '|' sink -> ^( NODE BLANK source sink ) )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:81:5: source '|' sink
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:105:2: ( source '|' sink -> ^( NODE BLANK source sink ) )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:105:5: source '|' sink
             {
-            pushFollow(FOLLOW_source_in_connection207);
+            pushFollow(FOLLOW_source_in_connection200);
             source10=source();
 
             state._fsp--;
 
             stream_source.add(source10.getTree());
-            char_literal11=(Token)match(input,40,FOLLOW_40_in_connection209);  
+            char_literal11=(Token)match(input,40,FOLLOW_40_in_connection202);  
             stream_40.add(char_literal11);
 
-            pushFollow(FOLLOW_sink_in_connection211);
+            pushFollow(FOLLOW_sink_in_connection204);
             sink12=sink();
 
             state._fsp--;
@@ -414,7 +431,7 @@ public class FlumeDeployParser extends Parser {
 
 
             // AST REWRITE
-            // elements: source, sink
+            // elements: sink, source
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -424,9 +441,9 @@ public class FlumeDeployParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (Object)adaptor.nil();
-            // 81:21: -> ^( NODE BLANK source sink )
+            // 105:21: -> ^( NODE BLANK source sink )
             {
-                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:81:24: ^( NODE BLANK source sink )
+                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:105:24: ^( NODE BLANK source sink )
                 {
                 Object root_1 = (Object)adaptor.nil();
                 root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(NODE, "NODE"), root_1);
@@ -467,7 +484,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "source"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:83:1: source : ( singleSource -> singleSource | '[' multiSource ']' -> ^( MULTI multiSource ) );
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:107:1: source : ( singleSource -> singleSource | '[' multiSource ']' -> ^( MULTI multiSource ) );
     public final FlumeDeployParser.source_return source() throws RecognitionException {
         FlumeDeployParser.source_return retval = new FlumeDeployParser.source_return();
         retval.start = input.LT(1);
@@ -488,7 +505,7 @@ public class FlumeDeployParser extends Parser {
         RewriteRuleSubtreeStream stream_multiSource=new RewriteRuleSubtreeStream(adaptor,"rule multiSource");
         RewriteRuleSubtreeStream stream_singleSource=new RewriteRuleSubtreeStream(adaptor,"rule singleSource");
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:83:10: ( singleSource -> singleSource | '[' multiSource ']' -> ^( MULTI multiSource ) )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:107:10: ( singleSource -> singleSource | '[' multiSource ']' -> ^( MULTI multiSource ) )
             int alt2=2;
             int LA2_0 = input.LA(1);
 
@@ -506,9 +523,9 @@ public class FlumeDeployParser extends Parser {
             }
             switch (alt2) {
                 case 1 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:83:12: singleSource
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:107:12: singleSource
                     {
-                    pushFollow(FOLLOW_singleSource_in_source233);
+                    pushFollow(FOLLOW_singleSource_in_source226);
                     singleSource13=singleSource();
 
                     state._fsp--;
@@ -527,7 +544,7 @@ public class FlumeDeployParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (Object)adaptor.nil();
-                    // 83:26: -> singleSource
+                    // 107:26: -> singleSource
                     {
                         adaptor.addChild(root_0, stream_singleSource.nextTree());
 
@@ -537,18 +554,18 @@ public class FlumeDeployParser extends Parser {
                     }
                     break;
                 case 2 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:84:6: '[' multiSource ']'
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:108:6: '[' multiSource ']'
                     {
-                    char_literal14=(Token)match(input,42,FOLLOW_42_in_source245);  
+                    char_literal14=(Token)match(input,42,FOLLOW_42_in_source238);  
                     stream_42.add(char_literal14);
 
-                    pushFollow(FOLLOW_multiSource_in_source247);
+                    pushFollow(FOLLOW_multiSource_in_source240);
                     multiSource15=multiSource();
 
                     state._fsp--;
 
                     stream_multiSource.add(multiSource15.getTree());
-                    char_literal16=(Token)match(input,43,FOLLOW_43_in_source249);  
+                    char_literal16=(Token)match(input,43,FOLLOW_43_in_source242);  
                     stream_43.add(char_literal16);
 
 
@@ -564,9 +581,9 @@ public class FlumeDeployParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (Object)adaptor.nil();
-                    // 84:26: -> ^( MULTI multiSource )
+                    // 108:26: -> ^( MULTI multiSource )
                     {
-                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:84:29: ^( MULTI multiSource )
+                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:108:29: ^( MULTI multiSource )
                         {
                         Object root_1 = (Object)adaptor.nil();
                         root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(MULTI, "MULTI"), root_1);
@@ -607,7 +624,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "sourceEof"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:85:1: sourceEof : source EOF -> source ;
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:109:1: sourceEof : source EOF -> source ;
     public final FlumeDeployParser.sourceEof_return sourceEof() throws RecognitionException {
         FlumeDeployParser.sourceEof_return retval = new FlumeDeployParser.sourceEof_return();
         retval.start = input.LT(1);
@@ -622,16 +639,16 @@ public class FlumeDeployParser extends Parser {
         RewriteRuleTokenStream stream_EOF=new RewriteRuleTokenStream(adaptor,"token EOF");
         RewriteRuleSubtreeStream stream_source=new RewriteRuleSubtreeStream(adaptor,"rule source");
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:85:11: ( source EOF -> source )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:85:14: source EOF
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:109:11: ( source EOF -> source )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:109:14: source EOF
             {
-            pushFollow(FOLLOW_source_in_sourceEof267);
+            pushFollow(FOLLOW_source_in_sourceEof260);
             source17=source();
 
             state._fsp--;
 
             stream_source.add(source17.getTree());
-            EOF18=(Token)match(input,EOF,FOLLOW_EOF_in_sourceEof269);  
+            EOF18=(Token)match(input,EOF,FOLLOW_EOF_in_sourceEof262);  
             stream_EOF.add(EOF18);
 
 
@@ -647,7 +664,7 @@ public class FlumeDeployParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (Object)adaptor.nil();
-            // 85:27: -> source
+            // 109:27: -> source
             {
                 adaptor.addChild(root_0, stream_source.nextTree());
 
@@ -680,7 +697,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "singleSource"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:86:1: singleSource : Identifier ( args )? -> ^( SOURCE Identifier ( args )? ) ;
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:110:1: singleSource : Identifier ( args )? -> ^( SOURCE Identifier ( args )? ) ;
     public final FlumeDeployParser.singleSource_return singleSource() throws RecognitionException {
         FlumeDeployParser.singleSource_return retval = new FlumeDeployParser.singleSource_return();
         retval.start = input.LT(1);
@@ -695,13 +712,13 @@ public class FlumeDeployParser extends Parser {
         RewriteRuleTokenStream stream_Identifier=new RewriteRuleTokenStream(adaptor,"token Identifier");
         RewriteRuleSubtreeStream stream_args=new RewriteRuleSubtreeStream(adaptor,"rule args");
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:86:14: ( Identifier ( args )? -> ^( SOURCE Identifier ( args )? ) )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:86:16: Identifier ( args )?
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:110:14: ( Identifier ( args )? -> ^( SOURCE Identifier ( args )? ) )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:110:16: Identifier ( args )?
             {
-            Identifier19=(Token)match(input,Identifier,FOLLOW_Identifier_in_singleSource282);  
+            Identifier19=(Token)match(input,Identifier,FOLLOW_Identifier_in_singleSource275);  
             stream_Identifier.add(Identifier19);
 
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:86:27: ( args )?
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:110:27: ( args )?
             int alt3=2;
             int LA3_0 = input.LA(1);
 
@@ -710,9 +727,9 @@ public class FlumeDeployParser extends Parser {
             }
             switch (alt3) {
                 case 1 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:86:27: args
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:110:27: args
                     {
-                    pushFollow(FOLLOW_args_in_singleSource284);
+                    pushFollow(FOLLOW_args_in_singleSource277);
                     args20=args();
 
                     state._fsp--;
@@ -737,15 +754,15 @@ public class FlumeDeployParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (Object)adaptor.nil();
-            // 86:33: -> ^( SOURCE Identifier ( args )? )
+            // 110:33: -> ^( SOURCE Identifier ( args )? )
             {
-                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:86:36: ^( SOURCE Identifier ( args )? )
+                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:110:36: ^( SOURCE Identifier ( args )? )
                 {
                 Object root_1 = (Object)adaptor.nil();
                 root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(SOURCE, "SOURCE"), root_1);
 
                 adaptor.addChild(root_1, stream_Identifier.nextNode());
-                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:86:56: ( args )?
+                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:110:56: ( args )?
                 if ( stream_args.hasNext() ) {
                     adaptor.addChild(root_1, stream_args.nextTree());
 
@@ -784,7 +801,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "multiSource"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:87:1: multiSource : singleSource ( ',' singleSource )* -> ( singleSource )+ ;
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:111:1: multiSource : singleSource ( ',' singleSource )* -> ( singleSource )+ ;
     public final FlumeDeployParser.multiSource_return multiSource() throws RecognitionException {
         FlumeDeployParser.multiSource_return retval = new FlumeDeployParser.multiSource_return();
         retval.start = input.LT(1);
@@ -801,16 +818,16 @@ public class FlumeDeployParser extends Parser {
         RewriteRuleTokenStream stream_44=new RewriteRuleTokenStream(adaptor,"token 44");
         RewriteRuleSubtreeStream stream_singleSource=new RewriteRuleSubtreeStream(adaptor,"rule singleSource");
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:87:13: ( singleSource ( ',' singleSource )* -> ( singleSource )+ )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:87:15: singleSource ( ',' singleSource )*
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:111:13: ( singleSource ( ',' singleSource )* -> ( singleSource )+ )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:111:15: singleSource ( ',' singleSource )*
             {
-            pushFollow(FOLLOW_singleSource_in_multiSource303);
+            pushFollow(FOLLOW_singleSource_in_multiSource296);
             singleSource21=singleSource();
 
             state._fsp--;
 
             stream_singleSource.add(singleSource21.getTree());
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:87:28: ( ',' singleSource )*
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:111:28: ( ',' singleSource )*
             loop4:
             do {
                 int alt4=2;
@@ -823,12 +840,12 @@ public class FlumeDeployParser extends Parser {
 
                 switch (alt4) {
             	case 1 :
-            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:87:29: ',' singleSource
+            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:111:29: ',' singleSource
             	    {
-            	    char_literal22=(Token)match(input,44,FOLLOW_44_in_multiSource306);  
+            	    char_literal22=(Token)match(input,44,FOLLOW_44_in_multiSource299);  
             	    stream_44.add(char_literal22);
 
-            	    pushFollow(FOLLOW_singleSource_in_multiSource308);
+            	    pushFollow(FOLLOW_singleSource_in_multiSource301);
             	    singleSource23=singleSource();
 
             	    state._fsp--;
@@ -856,7 +873,7 @@ public class FlumeDeployParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (Object)adaptor.nil();
-            // 87:48: -> ( singleSource )+
+            // 111:48: -> ( singleSource )+
             {
                 if ( !(stream_singleSource.hasNext()) ) {
                     throw new RewriteEarlyExitException();
@@ -896,7 +913,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "sink"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:90:1: sink : simpleSink -> simpleSink ;
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:114:1: sink : simpleSink -> simpleSink ;
     public final FlumeDeployParser.sink_return sink() throws RecognitionException {
         FlumeDeployParser.sink_return retval = new FlumeDeployParser.sink_return();
         retval.start = input.LT(1);
@@ -908,10 +925,10 @@ public class FlumeDeployParser extends Parser {
 
         RewriteRuleSubtreeStream stream_simpleSink=new RewriteRuleSubtreeStream(adaptor,"rule simpleSink");
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:90:7: ( simpleSink -> simpleSink )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:90:9: simpleSink
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:114:7: ( simpleSink -> simpleSink )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:114:9: simpleSink
             {
-            pushFollow(FOLLOW_simpleSink_in_sink327);
+            pushFollow(FOLLOW_simpleSink_in_sink320);
             simpleSink24=simpleSink();
 
             state._fsp--;
@@ -930,7 +947,7 @@ public class FlumeDeployParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (Object)adaptor.nil();
-            // 90:20: -> simpleSink
+            // 114:20: -> simpleSink
             {
                 adaptor.addChild(root_0, stream_simpleSink.nextTree());
 
@@ -963,7 +980,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "singleSink"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:92:1: singleSink : Identifier ( args )? -> ^( SINK Identifier ( args )? ) ;
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:116:1: singleSink : Identifier ( args )? -> ^( SINK Identifier ( args )? ) ;
     public final FlumeDeployParser.singleSink_return singleSink() throws RecognitionException {
         FlumeDeployParser.singleSink_return retval = new FlumeDeployParser.singleSink_return();
         retval.start = input.LT(1);
@@ -978,20 +995,20 @@ public class FlumeDeployParser extends Parser {
         RewriteRuleTokenStream stream_Identifier=new RewriteRuleTokenStream(adaptor,"token Identifier");
         RewriteRuleSubtreeStream stream_args=new RewriteRuleSubtreeStream(adaptor,"rule args");
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:92:12: ( Identifier ( args )? -> ^( SINK Identifier ( args )? ) )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:92:14: Identifier ( args )?
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:116:12: ( Identifier ( args )? -> ^( SINK Identifier ( args )? ) )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:116:14: Identifier ( args )?
             {
-            Identifier25=(Token)match(input,Identifier,FOLLOW_Identifier_in_singleSink339);  
+            Identifier25=(Token)match(input,Identifier,FOLLOW_Identifier_in_singleSink332);  
             stream_Identifier.add(Identifier25);
 
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:92:25: ( args )?
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:116:25: ( args )?
             int alt5=2;
             alt5 = dfa5.predict(input);
             switch (alt5) {
                 case 1 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:92:25: args
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:116:25: args
                     {
-                    pushFollow(FOLLOW_args_in_singleSink341);
+                    pushFollow(FOLLOW_args_in_singleSink334);
                     args26=args();
 
                     state._fsp--;
@@ -1016,15 +1033,15 @@ public class FlumeDeployParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (Object)adaptor.nil();
-            // 92:32: -> ^( SINK Identifier ( args )? )
+            // 116:32: -> ^( SINK Identifier ( args )? )
             {
-                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:92:35: ^( SINK Identifier ( args )? )
+                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:116:35: ^( SINK Identifier ( args )? )
                 {
                 Object root_1 = (Object)adaptor.nil();
                 root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(SINK, "SINK"), root_1);
 
                 adaptor.addChild(root_1, stream_Identifier.nextNode());
-                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:92:53: ( args )?
+                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:116:53: ( args )?
                 if ( stream_args.hasNext() ) {
                     adaptor.addChild(root_1, stream_args.nextTree());
 
@@ -1063,7 +1080,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "sinkEof"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:94:1: sinkEof : simpleSink EOF ;
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:118:1: sinkEof : simpleSink EOF ;
     public final FlumeDeployParser.sinkEof_return sinkEof() throws RecognitionException {
         FlumeDeployParser.sinkEof_return retval = new FlumeDeployParser.sinkEof_return();
         retval.start = input.LT(1);
@@ -1077,18 +1094,18 @@ public class FlumeDeployParser extends Parser {
         Object EOF28_tree=null;
 
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:94:10: ( simpleSink EOF )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:94:12: simpleSink EOF
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:118:10: ( simpleSink EOF )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:118:12: simpleSink EOF
             {
             root_0 = (Object)adaptor.nil();
 
-            pushFollow(FOLLOW_simpleSink_in_sinkEof363);
+            pushFollow(FOLLOW_simpleSink_in_sinkEof356);
             simpleSink27=simpleSink();
 
             state._fsp--;
 
             adaptor.addChild(root_0, simpleSink27.getTree());
-            EOF28=(Token)match(input,EOF,FOLLOW_EOF_in_sinkEof365); 
+            EOF28=(Token)match(input,EOF,FOLLOW_EOF_in_sinkEof358); 
             EOF28_tree = (Object)adaptor.create(EOF28);
             adaptor.addChild(root_0, EOF28_tree);
 
@@ -1119,7 +1136,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "simpleSink"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:96:1: simpleSink : ( '[' multiSink ']' -> ^( MULTI multiSink ) | '{' decoratedSink '}' -> ^( DECO decoratedSink ) | '<' failoverSink '>' -> ^( BACKUP failoverSink ) | letSink -> letSink | singleSink -> singleSink | rollSink -> rollSink | failoverChain -> failoverChain );
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:120:1: simpleSink : ( '[' multiSink ']' -> ^( MULTI multiSink ) | '{' decoratedSink '}' -> ^( DECO decoratedSink ) | '<' failoverSink '>' -> ^( BACKUP failoverSink ) | letSink -> letSink | singleSink -> singleSink | rollSink -> rollSink | failoverChain -> failoverChain );
     public final FlumeDeployParser.simpleSink_return simpleSink() throws RecognitionException {
         FlumeDeployParser.simpleSink_return retval = new FlumeDeployParser.simpleSink_return();
         retval.start = input.LT(1);
@@ -1167,7 +1184,7 @@ public class FlumeDeployParser extends Parser {
         RewriteRuleSubtreeStream stream_rollSink=new RewriteRuleSubtreeStream(adaptor,"rule rollSink");
         RewriteRuleSubtreeStream stream_decoratedSink=new RewriteRuleSubtreeStream(adaptor,"rule decoratedSink");
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:96:12: ( '[' multiSink ']' -> ^( MULTI multiSink ) | '{' decoratedSink '}' -> ^( DECO decoratedSink ) | '<' failoverSink '>' -> ^( BACKUP failoverSink ) | letSink -> letSink | singleSink -> singleSink | rollSink -> rollSink | failoverChain -> failoverChain )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:120:12: ( '[' multiSink ']' -> ^( MULTI multiSink ) | '{' decoratedSink '}' -> ^( DECO decoratedSink ) | '<' failoverSink '>' -> ^( BACKUP failoverSink ) | letSink -> letSink | singleSink -> singleSink | rollSink -> rollSink | failoverChain -> failoverChain )
             int alt6=7;
             switch ( input.LA(1) ) {
             case 42:
@@ -1214,18 +1231,18 @@ public class FlumeDeployParser extends Parser {
 
             switch (alt6) {
                 case 1 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:96:14: '[' multiSink ']'
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:120:14: '[' multiSink ']'
                     {
-                    char_literal29=(Token)match(input,42,FOLLOW_42_in_simpleSink373);  
+                    char_literal29=(Token)match(input,42,FOLLOW_42_in_simpleSink366);  
                     stream_42.add(char_literal29);
 
-                    pushFollow(FOLLOW_multiSink_in_simpleSink375);
+                    pushFollow(FOLLOW_multiSink_in_simpleSink368);
                     multiSink30=multiSink();
 
                     state._fsp--;
 
                     stream_multiSink.add(multiSink30.getTree());
-                    char_literal31=(Token)match(input,43,FOLLOW_43_in_simpleSink377);  
+                    char_literal31=(Token)match(input,43,FOLLOW_43_in_simpleSink370);  
                     stream_43.add(char_literal31);
 
 
@@ -1241,9 +1258,9 @@ public class FlumeDeployParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (Object)adaptor.nil();
-                    // 96:34: -> ^( MULTI multiSink )
+                    // 120:34: -> ^( MULTI multiSink )
                     {
-                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:96:37: ^( MULTI multiSink )
+                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:120:37: ^( MULTI multiSink )
                         {
                         Object root_1 = (Object)adaptor.nil();
                         root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(MULTI, "MULTI"), root_1);
@@ -1259,18 +1276,18 @@ public class FlumeDeployParser extends Parser {
                     }
                     break;
                 case 2 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:97:5: '{' decoratedSink '}'
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:121:5: '{' decoratedSink '}'
                     {
-                    char_literal32=(Token)match(input,45,FOLLOW_45_in_simpleSink394);  
+                    char_literal32=(Token)match(input,45,FOLLOW_45_in_simpleSink387);  
                     stream_45.add(char_literal32);
 
-                    pushFollow(FOLLOW_decoratedSink_in_simpleSink396);
+                    pushFollow(FOLLOW_decoratedSink_in_simpleSink389);
                     decoratedSink33=decoratedSink();
 
                     state._fsp--;
 
                     stream_decoratedSink.add(decoratedSink33.getTree());
-                    char_literal34=(Token)match(input,46,FOLLOW_46_in_simpleSink398);  
+                    char_literal34=(Token)match(input,46,FOLLOW_46_in_simpleSink391);  
                     stream_46.add(char_literal34);
 
 
@@ -1286,9 +1303,9 @@ public class FlumeDeployParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (Object)adaptor.nil();
-                    // 97:27: -> ^( DECO decoratedSink )
+                    // 121:27: -> ^( DECO decoratedSink )
                     {
-                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:97:30: ^( DECO decoratedSink )
+                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:121:30: ^( DECO decoratedSink )
                         {
                         Object root_1 = (Object)adaptor.nil();
                         root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(DECO, "DECO"), root_1);
@@ -1304,18 +1321,18 @@ public class FlumeDeployParser extends Parser {
                     }
                     break;
                 case 3 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:98:5: '<' failoverSink '>'
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:122:5: '<' failoverSink '>'
                     {
-                    char_literal35=(Token)match(input,47,FOLLOW_47_in_simpleSink412);  
+                    char_literal35=(Token)match(input,47,FOLLOW_47_in_simpleSink405);  
                     stream_47.add(char_literal35);
 
-                    pushFollow(FOLLOW_failoverSink_in_simpleSink414);
+                    pushFollow(FOLLOW_failoverSink_in_simpleSink407);
                     failoverSink36=failoverSink();
 
                     state._fsp--;
 
                     stream_failoverSink.add(failoverSink36.getTree());
-                    char_literal37=(Token)match(input,48,FOLLOW_48_in_simpleSink416);  
+                    char_literal37=(Token)match(input,48,FOLLOW_48_in_simpleSink409);  
                     stream_48.add(char_literal37);
 
 
@@ -1331,9 +1348,9 @@ public class FlumeDeployParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (Object)adaptor.nil();
-                    // 98:26: -> ^( BACKUP failoverSink )
+                    // 122:26: -> ^( BACKUP failoverSink )
                     {
-                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:98:29: ^( BACKUP failoverSink )
+                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:122:29: ^( BACKUP failoverSink )
                         {
                         Object root_1 = (Object)adaptor.nil();
                         root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(BACKUP, "BACKUP"), root_1);
@@ -1349,9 +1366,9 @@ public class FlumeDeployParser extends Parser {
                     }
                     break;
                 case 4 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:99:7: letSink
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:123:7: letSink
                     {
-                    pushFollow(FOLLOW_letSink_in_simpleSink432);
+                    pushFollow(FOLLOW_letSink_in_simpleSink425);
                     letSink38=letSink();
 
                     state._fsp--;
@@ -1370,7 +1387,7 @@ public class FlumeDeployParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (Object)adaptor.nil();
-                    // 99:31: -> letSink
+                    // 123:31: -> letSink
                     {
                         adaptor.addChild(root_0, stream_letSink.nextTree());
 
@@ -1380,9 +1397,9 @@ public class FlumeDeployParser extends Parser {
                     }
                     break;
                 case 5 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:100:5: singleSink
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:124:5: singleSink
                     {
-                    pushFollow(FOLLOW_singleSink_in_simpleSink458);
+                    pushFollow(FOLLOW_singleSink_in_simpleSink451);
                     singleSink39=singleSink();
 
                     state._fsp--;
@@ -1401,7 +1418,7 @@ public class FlumeDeployParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (Object)adaptor.nil();
-                    // 100:29: -> singleSink
+                    // 124:29: -> singleSink
                     {
                         adaptor.addChild(root_0, stream_singleSink.nextTree());
 
@@ -1411,9 +1428,9 @@ public class FlumeDeployParser extends Parser {
                     }
                     break;
                 case 6 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:101:13: rollSink
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:125:13: rollSink
                     {
-                    pushFollow(FOLLOW_rollSink_in_simpleSink490);
+                    pushFollow(FOLLOW_rollSink_in_simpleSink483);
                     rollSink40=rollSink();
 
                     state._fsp--;
@@ -1432,7 +1449,7 @@ public class FlumeDeployParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (Object)adaptor.nil();
-                    // 101:37: -> rollSink
+                    // 125:37: -> rollSink
                     {
                         adaptor.addChild(root_0, stream_rollSink.nextTree());
 
@@ -1442,9 +1459,9 @@ public class FlumeDeployParser extends Parser {
                     }
                     break;
                 case 7 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:102:13: failoverChain
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:126:13: failoverChain
                     {
-                    pushFollow(FOLLOW_failoverChain_in_simpleSink523);
+                    pushFollow(FOLLOW_failoverChain_in_simpleSink516);
                     failoverChain41=failoverChain();
 
                     state._fsp--;
@@ -1463,7 +1480,7 @@ public class FlumeDeployParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (Object)adaptor.nil();
-                    // 102:37: -> failoverChain
+                    // 126:37: -> failoverChain
                     {
                         adaptor.addChild(root_0, stream_failoverChain.nextTree());
 
@@ -1498,7 +1515,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "decoratedSink"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:105:1: decoratedSink : singleSink '=>' sink -> singleSink sink ;
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:129:1: decoratedSink : singleSink '=>' sink -> singleSink sink ;
     public final FlumeDeployParser.decoratedSink_return decoratedSink() throws RecognitionException {
         FlumeDeployParser.decoratedSink_return retval = new FlumeDeployParser.decoratedSink_return();
         retval.start = input.LT(1);
@@ -1516,19 +1533,19 @@ public class FlumeDeployParser extends Parser {
         RewriteRuleSubtreeStream stream_sink=new RewriteRuleSubtreeStream(adaptor,"rule sink");
         RewriteRuleSubtreeStream stream_singleSink=new RewriteRuleSubtreeStream(adaptor,"rule singleSink");
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:105:17: ( singleSink '=>' sink -> singleSink sink )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:105:20: singleSink '=>' sink
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:129:17: ( singleSink '=>' sink -> singleSink sink )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:129:20: singleSink '=>' sink
             {
-            pushFollow(FOLLOW_singleSink_in_decoratedSink557);
+            pushFollow(FOLLOW_singleSink_in_decoratedSink550);
             singleSink42=singleSink();
 
             state._fsp--;
 
             stream_singleSink.add(singleSink42.getTree());
-            string_literal43=(Token)match(input,49,FOLLOW_49_in_decoratedSink559);  
+            string_literal43=(Token)match(input,49,FOLLOW_49_in_decoratedSink552);  
             stream_49.add(string_literal43);
 
-            pushFollow(FOLLOW_sink_in_decoratedSink561);
+            pushFollow(FOLLOW_sink_in_decoratedSink554);
             sink44=sink();
 
             state._fsp--;
@@ -1537,7 +1554,7 @@ public class FlumeDeployParser extends Parser {
 
 
             // AST REWRITE
-            // elements: singleSink, sink
+            // elements: sink, singleSink
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -1547,7 +1564,7 @@ public class FlumeDeployParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (Object)adaptor.nil();
-            // 105:44: -> singleSink sink
+            // 129:44: -> singleSink sink
             {
                 adaptor.addChild(root_0, stream_singleSink.nextTree());
                 adaptor.addChild(root_0, stream_sink.nextTree());
@@ -1581,7 +1598,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "multiSink"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:106:1: multiSink : simpleSink ( ',' simpleSink )* -> ( simpleSink )* ;
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:130:1: multiSink : simpleSink ( ',' simpleSink )* -> ( simpleSink )* ;
     public final FlumeDeployParser.multiSink_return multiSink() throws RecognitionException {
         FlumeDeployParser.multiSink_return retval = new FlumeDeployParser.multiSink_return();
         retval.start = input.LT(1);
@@ -1598,16 +1615,16 @@ public class FlumeDeployParser extends Parser {
         RewriteRuleTokenStream stream_44=new RewriteRuleTokenStream(adaptor,"token 44");
         RewriteRuleSubtreeStream stream_simpleSink=new RewriteRuleSubtreeStream(adaptor,"rule simpleSink");
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:106:17: ( simpleSink ( ',' simpleSink )* -> ( simpleSink )* )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:106:20: simpleSink ( ',' simpleSink )*
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:130:17: ( simpleSink ( ',' simpleSink )* -> ( simpleSink )* )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:130:20: simpleSink ( ',' simpleSink )*
             {
-            pushFollow(FOLLOW_simpleSink_in_multiSink584);
+            pushFollow(FOLLOW_simpleSink_in_multiSink577);
             simpleSink45=simpleSink();
 
             state._fsp--;
 
             stream_simpleSink.add(simpleSink45.getTree());
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:106:31: ( ',' simpleSink )*
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:130:31: ( ',' simpleSink )*
             loop7:
             do {
                 int alt7=2;
@@ -1620,12 +1637,12 @@ public class FlumeDeployParser extends Parser {
 
                 switch (alt7) {
             	case 1 :
-            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:106:32: ',' simpleSink
+            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:130:32: ',' simpleSink
             	    {
-            	    char_literal46=(Token)match(input,44,FOLLOW_44_in_multiSink587);  
+            	    char_literal46=(Token)match(input,44,FOLLOW_44_in_multiSink580);  
             	    stream_44.add(char_literal46);
 
-            	    pushFollow(FOLLOW_simpleSink_in_multiSink589);
+            	    pushFollow(FOLLOW_simpleSink_in_multiSink582);
             	    simpleSink47=simpleSink();
 
             	    state._fsp--;
@@ -1653,9 +1670,9 @@ public class FlumeDeployParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (Object)adaptor.nil();
-            // 106:50: -> ( simpleSink )*
+            // 130:50: -> ( simpleSink )*
             {
-                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:106:53: ( simpleSink )*
+                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:130:53: ( simpleSink )*
                 while ( stream_simpleSink.hasNext() ) {
                     adaptor.addChild(root_0, stream_simpleSink.nextTree());
 
@@ -1691,7 +1708,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "failoverSink"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:107:1: failoverSink : simpleSink ( '?' simpleSink )+ -> ( simpleSink )+ ;
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:131:1: failoverSink : simpleSink ( '?' simpleSink )+ -> ( simpleSink )+ ;
     public final FlumeDeployParser.failoverSink_return failoverSink() throws RecognitionException {
         FlumeDeployParser.failoverSink_return retval = new FlumeDeployParser.failoverSink_return();
         retval.start = input.LT(1);
@@ -1708,16 +1725,16 @@ public class FlumeDeployParser extends Parser {
         RewriteRuleTokenStream stream_50=new RewriteRuleTokenStream(adaptor,"token 50");
         RewriteRuleSubtreeStream stream_simpleSink=new RewriteRuleSubtreeStream(adaptor,"rule simpleSink");
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:107:17: ( simpleSink ( '?' simpleSink )+ -> ( simpleSink )+ )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:107:20: simpleSink ( '?' simpleSink )+
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:131:17: ( simpleSink ( '?' simpleSink )+ -> ( simpleSink )+ )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:131:20: simpleSink ( '?' simpleSink )+
             {
-            pushFollow(FOLLOW_simpleSink_in_failoverSink609);
+            pushFollow(FOLLOW_simpleSink_in_failoverSink602);
             simpleSink48=simpleSink();
 
             state._fsp--;
 
             stream_simpleSink.add(simpleSink48.getTree());
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:107:31: ( '?' simpleSink )+
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:131:31: ( '?' simpleSink )+
             int cnt8=0;
             loop8:
             do {
@@ -1731,12 +1748,12 @@ public class FlumeDeployParser extends Parser {
 
                 switch (alt8) {
             	case 1 :
-            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:107:32: '?' simpleSink
+            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:131:32: '?' simpleSink
             	    {
-            	    char_literal49=(Token)match(input,50,FOLLOW_50_in_failoverSink612);  
+            	    char_literal49=(Token)match(input,50,FOLLOW_50_in_failoverSink605);  
             	    stream_50.add(char_literal49);
 
-            	    pushFollow(FOLLOW_simpleSink_in_failoverSink614);
+            	    pushFollow(FOLLOW_simpleSink_in_failoverSink607);
             	    simpleSink50=simpleSink();
 
             	    state._fsp--;
@@ -1768,7 +1785,7 @@ public class FlumeDeployParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (Object)adaptor.nil();
-            // 107:49: -> ( simpleSink )+
+            // 131:49: -> ( simpleSink )+
             {
                 if ( !(stream_simpleSink.hasNext()) ) {
                     throw new RewriteEarlyExitException();
@@ -1808,7 +1825,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "letSink"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:108:1: letSink : 'let' Identifier ':=' simpleSink 'in' simpleSink -> ^( LET Identifier ( simpleSink )+ ) ;
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:132:1: letSink : 'let' Identifier ':=' simpleSink 'in' simpleSink -> ^( LET Identifier ( simpleSink )+ ) ;
     public final FlumeDeployParser.letSink_return letSink() throws RecognitionException {
         FlumeDeployParser.letSink_return retval = new FlumeDeployParser.letSink_return();
         retval.start = input.LT(1);
@@ -1834,28 +1851,28 @@ public class FlumeDeployParser extends Parser {
         RewriteRuleTokenStream stream_Identifier=new RewriteRuleTokenStream(adaptor,"token Identifier");
         RewriteRuleSubtreeStream stream_simpleSink=new RewriteRuleSubtreeStream(adaptor,"rule simpleSink");
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:108:17: ( 'let' Identifier ':=' simpleSink 'in' simpleSink -> ^( LET Identifier ( simpleSink )+ ) )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:108:20: 'let' Identifier ':=' simpleSink 'in' simpleSink
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:132:17: ( 'let' Identifier ':=' simpleSink 'in' simpleSink -> ^( LET Identifier ( simpleSink )+ ) )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:132:20: 'let' Identifier ':=' simpleSink 'in' simpleSink
             {
-            string_literal51=(Token)match(input,51,FOLLOW_51_in_letSink638);  
+            string_literal51=(Token)match(input,51,FOLLOW_51_in_letSink631);  
             stream_51.add(string_literal51);
 
-            Identifier52=(Token)match(input,Identifier,FOLLOW_Identifier_in_letSink640);  
+            Identifier52=(Token)match(input,Identifier,FOLLOW_Identifier_in_letSink633);  
             stream_Identifier.add(Identifier52);
 
-            string_literal53=(Token)match(input,52,FOLLOW_52_in_letSink642);  
+            string_literal53=(Token)match(input,52,FOLLOW_52_in_letSink635);  
             stream_52.add(string_literal53);
 
-            pushFollow(FOLLOW_simpleSink_in_letSink644);
+            pushFollow(FOLLOW_simpleSink_in_letSink637);
             simpleSink54=simpleSink();
 
             state._fsp--;
 
             stream_simpleSink.add(simpleSink54.getTree());
-            string_literal55=(Token)match(input,53,FOLLOW_53_in_letSink646);  
+            string_literal55=(Token)match(input,53,FOLLOW_53_in_letSink639);  
             stream_53.add(string_literal55);
 
-            pushFollow(FOLLOW_simpleSink_in_letSink648);
+            pushFollow(FOLLOW_simpleSink_in_letSink641);
             simpleSink56=simpleSink();
 
             state._fsp--;
@@ -1864,7 +1881,7 @@ public class FlumeDeployParser extends Parser {
 
 
             // AST REWRITE
-            // elements: simpleSink, Identifier
+            // elements: Identifier, simpleSink
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -1874,9 +1891,9 @@ public class FlumeDeployParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (Object)adaptor.nil();
-            // 109:35: -> ^( LET Identifier ( simpleSink )+ )
+            // 133:35: -> ^( LET Identifier ( simpleSink )+ )
             {
-                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:109:38: ^( LET Identifier ( simpleSink )+ )
+                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:133:38: ^( LET Identifier ( simpleSink )+ )
                 {
                 Object root_1 = (Object)adaptor.nil();
                 root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(LET, "LET"), root_1);
@@ -1923,7 +1940,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "rollSink"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:110:1: rollSink : 'roll' args '{' simpleSink '}' -> ^( ROLL simpleSink args ) ;
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:134:1: rollSink : 'roll' args '{' simpleSink '}' -> ^( ROLL simpleSink args ) ;
     public final FlumeDeployParser.rollSink_return rollSink() throws RecognitionException {
         FlumeDeployParser.rollSink_return retval = new FlumeDeployParser.rollSink_return();
         retval.start = input.LT(1);
@@ -1947,34 +1964,34 @@ public class FlumeDeployParser extends Parser {
         RewriteRuleSubtreeStream stream_args=new RewriteRuleSubtreeStream(adaptor,"rule args");
         RewriteRuleSubtreeStream stream_simpleSink=new RewriteRuleSubtreeStream(adaptor,"rule simpleSink");
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:110:17: ( 'roll' args '{' simpleSink '}' -> ^( ROLL simpleSink args ) )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:110:20: 'roll' args '{' simpleSink '}'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:134:17: ( 'roll' args '{' simpleSink '}' -> ^( ROLL simpleSink args ) )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:134:20: 'roll' args '{' simpleSink '}'
             {
-            string_literal57=(Token)match(input,54,FOLLOW_54_in_rollSink709);  
+            string_literal57=(Token)match(input,54,FOLLOW_54_in_rollSink702);  
             stream_54.add(string_literal57);
 
-            pushFollow(FOLLOW_args_in_rollSink711);
+            pushFollow(FOLLOW_args_in_rollSink704);
             args58=args();
 
             state._fsp--;
 
             stream_args.add(args58.getTree());
-            char_literal59=(Token)match(input,45,FOLLOW_45_in_rollSink713);  
+            char_literal59=(Token)match(input,45,FOLLOW_45_in_rollSink706);  
             stream_45.add(char_literal59);
 
-            pushFollow(FOLLOW_simpleSink_in_rollSink715);
+            pushFollow(FOLLOW_simpleSink_in_rollSink708);
             simpleSink60=simpleSink();
 
             state._fsp--;
 
             stream_simpleSink.add(simpleSink60.getTree());
-            char_literal61=(Token)match(input,46,FOLLOW_46_in_rollSink717);  
+            char_literal61=(Token)match(input,46,FOLLOW_46_in_rollSink710);  
             stream_46.add(char_literal61);
 
 
 
             // AST REWRITE
-            // elements: args, simpleSink
+            // elements: simpleSink, args
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -1984,9 +2001,9 @@ public class FlumeDeployParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (Object)adaptor.nil();
-            // 111:35: -> ^( ROLL simpleSink args )
+            // 135:35: -> ^( ROLL simpleSink args )
             {
-                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:111:38: ^( ROLL simpleSink args )
+                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:135:38: ^( ROLL simpleSink args )
                 {
                 Object root_1 = (Object)adaptor.nil();
                 root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(ROLL, "ROLL"), root_1);
@@ -2026,7 +2043,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "failoverChain"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:112:1: failoverChain : 'failchain' args '{' simpleSink '}' -> ^( FAILCHAIN simpleSink args ) ;
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:136:1: failoverChain : 'failchain' args '{' simpleSink '}' -> ^( FAILCHAIN simpleSink args ) ;
     public final FlumeDeployParser.failoverChain_return failoverChain() throws RecognitionException {
         FlumeDeployParser.failoverChain_return retval = new FlumeDeployParser.failoverChain_return();
         retval.start = input.LT(1);
@@ -2050,28 +2067,28 @@ public class FlumeDeployParser extends Parser {
         RewriteRuleSubtreeStream stream_args=new RewriteRuleSubtreeStream(adaptor,"rule args");
         RewriteRuleSubtreeStream stream_simpleSink=new RewriteRuleSubtreeStream(adaptor,"rule simpleSink");
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:112:17: ( 'failchain' args '{' simpleSink '}' -> ^( FAILCHAIN simpleSink args ) )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:112:20: 'failchain' args '{' simpleSink '}'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:136:17: ( 'failchain' args '{' simpleSink '}' -> ^( FAILCHAIN simpleSink args ) )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:136:20: 'failchain' args '{' simpleSink '}'
             {
-            string_literal62=(Token)match(input,55,FOLLOW_55_in_failoverChain771);  
+            string_literal62=(Token)match(input,55,FOLLOW_55_in_failoverChain764);  
             stream_55.add(string_literal62);
 
-            pushFollow(FOLLOW_args_in_failoverChain773);
+            pushFollow(FOLLOW_args_in_failoverChain766);
             args63=args();
 
             state._fsp--;
 
             stream_args.add(args63.getTree());
-            char_literal64=(Token)match(input,45,FOLLOW_45_in_failoverChain775);  
+            char_literal64=(Token)match(input,45,FOLLOW_45_in_failoverChain768);  
             stream_45.add(char_literal64);
 
-            pushFollow(FOLLOW_simpleSink_in_failoverChain777);
+            pushFollow(FOLLOW_simpleSink_in_failoverChain770);
             simpleSink65=simpleSink();
 
             state._fsp--;
 
             stream_simpleSink.add(simpleSink65.getTree());
-            char_literal66=(Token)match(input,46,FOLLOW_46_in_failoverChain779);  
+            char_literal66=(Token)match(input,46,FOLLOW_46_in_failoverChain772);  
             stream_46.add(char_literal66);
 
 
@@ -2087,9 +2104,9 @@ public class FlumeDeployParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (Object)adaptor.nil();
-            // 113:35: -> ^( FAILCHAIN simpleSink args )
+            // 137:35: -> ^( FAILCHAIN simpleSink args )
             {
-                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:113:38: ^( FAILCHAIN simpleSink args )
+                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:137:38: ^( FAILCHAIN simpleSink args )
                 {
                 Object root_1 = (Object)adaptor.nil();
                 root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(FAILCHAIN, "FAILCHAIN"), root_1);
@@ -2129,7 +2146,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "arglist"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:115:1: arglist : literal ( ',' literal )* -> ( literal )+ ;
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:139:1: arglist : literal ( ',' literal )* -> ( literal )+ ;
     public final FlumeDeployParser.arglist_return arglist() throws RecognitionException {
         FlumeDeployParser.arglist_return retval = new FlumeDeployParser.arglist_return();
         retval.start = input.LT(1);
@@ -2146,16 +2163,16 @@ public class FlumeDeployParser extends Parser {
         RewriteRuleTokenStream stream_44=new RewriteRuleTokenStream(adaptor,"token 44");
         RewriteRuleSubtreeStream stream_literal=new RewriteRuleSubtreeStream(adaptor,"rule literal");
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:115:9: ( literal ( ',' literal )* -> ( literal )+ )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:115:11: literal ( ',' literal )*
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:139:9: ( literal ( ',' literal )* -> ( literal )+ )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:139:11: literal ( ',' literal )*
             {
-            pushFollow(FOLLOW_literal_in_arglist831);
+            pushFollow(FOLLOW_literal_in_arglist824);
             literal67=literal();
 
             state._fsp--;
 
             stream_literal.add(literal67.getTree());
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:115:19: ( ',' literal )*
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:139:19: ( ',' literal )*
             loop9:
             do {
                 int alt9=2;
@@ -2168,12 +2185,12 @@ public class FlumeDeployParser extends Parser {
 
                 switch (alt9) {
             	case 1 :
-            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:115:20: ',' literal
+            	    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:139:20: ',' literal
             	    {
-            	    char_literal68=(Token)match(input,44,FOLLOW_44_in_arglist834);  
+            	    char_literal68=(Token)match(input,44,FOLLOW_44_in_arglist827);  
             	    stream_44.add(char_literal68);
 
-            	    pushFollow(FOLLOW_literal_in_arglist836);
+            	    pushFollow(FOLLOW_literal_in_arglist829);
             	    literal69=literal();
 
             	    state._fsp--;
@@ -2201,7 +2218,7 @@ public class FlumeDeployParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (Object)adaptor.nil();
-            // 115:34: -> ( literal )+
+            // 139:34: -> ( literal )+
             {
                 if ( !(stream_literal.hasNext()) ) {
                     throw new RewriteEarlyExitException();
@@ -2241,7 +2258,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "args"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:116:1: args : '(' ( arglist )? ')' -> ( arglist )? ;
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:140:1: args : '(' ( arglist )? ')' -> ( arglist )? ;
     public final FlumeDeployParser.args_return args() throws RecognitionException {
         FlumeDeployParser.args_return retval = new FlumeDeployParser.args_return();
         retval.start = input.LT(1);
@@ -2259,13 +2276,13 @@ public class FlumeDeployParser extends Parser {
         RewriteRuleTokenStream stream_56=new RewriteRuleTokenStream(adaptor,"token 56");
         RewriteRuleSubtreeStream stream_arglist=new RewriteRuleSubtreeStream(adaptor,"rule arglist");
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:116:7: ( '(' ( arglist )? ')' -> ( arglist )? )
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:116:9: '(' ( arglist )? ')'
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:140:7: ( '(' ( arglist )? ')' -> ( arglist )? )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:140:9: '(' ( arglist )? ')'
             {
-            char_literal70=(Token)match(input,56,FOLLOW_56_in_args852);  
+            char_literal70=(Token)match(input,56,FOLLOW_56_in_args845);  
             stream_56.add(char_literal70);
 
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:116:13: ( arglist )?
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:140:13: ( arglist )?
             int alt10=2;
             int LA10_0 = input.LA(1);
 
@@ -2274,9 +2291,9 @@ public class FlumeDeployParser extends Parser {
             }
             switch (alt10) {
                 case 1 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:116:13: arglist
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:140:13: arglist
                     {
-                    pushFollow(FOLLOW_arglist_in_args854);
+                    pushFollow(FOLLOW_arglist_in_args847);
                     arglist71=arglist();
 
                     state._fsp--;
@@ -2288,7 +2305,7 @@ public class FlumeDeployParser extends Parser {
 
             }
 
-            char_literal72=(Token)match(input,57,FOLLOW_57_in_args857);  
+            char_literal72=(Token)match(input,57,FOLLOW_57_in_args850);  
             stream_57.add(char_literal72);
 
 
@@ -2304,9 +2321,9 @@ public class FlumeDeployParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (Object)adaptor.nil();
-            // 116:26: -> ( arglist )?
+            // 140:26: -> ( arglist )?
             {
-                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:116:29: ( arglist )?
+                // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:140:29: ( arglist )?
                 if ( stream_arglist.hasNext() ) {
                     adaptor.addChild(root_0, stream_arglist.nextTree());
 
@@ -2342,7 +2359,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "literal"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:120:1: literal : ( integerLiteral | StringLiteral -> ^( STRING StringLiteral ) | booleanLiteral | FloatingPointLiteral -> ^( FLOAT FloatingPointLiteral ) );
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:144:1: literal : ( integerLiteral | StringLiteral -> ^( STRING StringLiteral ) | booleanLiteral | FloatingPointLiteral -> ^( FLOAT FloatingPointLiteral ) );
     public final FlumeDeployParser.literal_return literal() throws RecognitionException {
         FlumeDeployParser.literal_return retval = new FlumeDeployParser.literal_return();
         retval.start = input.LT(1);
@@ -2362,7 +2379,7 @@ public class FlumeDeployParser extends Parser {
         RewriteRuleTokenStream stream_FloatingPointLiteral=new RewriteRuleTokenStream(adaptor,"token FloatingPointLiteral");
 
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:121:5: ( integerLiteral | StringLiteral -> ^( STRING StringLiteral ) | booleanLiteral | FloatingPointLiteral -> ^( FLOAT FloatingPointLiteral ) )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:145:5: ( integerLiteral | StringLiteral -> ^( STRING StringLiteral ) | booleanLiteral | FloatingPointLiteral -> ^( FLOAT FloatingPointLiteral ) )
             int alt11=4;
             switch ( input.LA(1) ) {
             case HexLiteral:
@@ -2397,11 +2414,11 @@ public class FlumeDeployParser extends Parser {
 
             switch (alt11) {
                 case 1 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:121:9: integerLiteral
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:145:9: integerLiteral
                     {
                     root_0 = (Object)adaptor.nil();
 
-                    pushFollow(FOLLOW_integerLiteral_in_literal880);
+                    pushFollow(FOLLOW_integerLiteral_in_literal873);
                     integerLiteral73=integerLiteral();
 
                     state._fsp--;
@@ -2411,9 +2428,9 @@ public class FlumeDeployParser extends Parser {
                     }
                     break;
                 case 2 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:122:9: StringLiteral
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:146:9: StringLiteral
                     {
-                    StringLiteral74=(Token)match(input,StringLiteral,FOLLOW_StringLiteral_in_literal890);  
+                    StringLiteral74=(Token)match(input,StringLiteral,FOLLOW_StringLiteral_in_literal883);  
                     stream_StringLiteral.add(StringLiteral74);
 
 
@@ -2429,9 +2446,9 @@ public class FlumeDeployParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (Object)adaptor.nil();
-                    // 122:24: -> ^( STRING StringLiteral )
+                    // 146:24: -> ^( STRING StringLiteral )
                     {
-                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:122:27: ^( STRING StringLiteral )
+                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:146:27: ^( STRING StringLiteral )
                         {
                         Object root_1 = (Object)adaptor.nil();
                         root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(STRING, "STRING"), root_1);
@@ -2447,11 +2464,11 @@ public class FlumeDeployParser extends Parser {
                     }
                     break;
                 case 3 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:123:9: booleanLiteral
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:147:9: booleanLiteral
                     {
                     root_0 = (Object)adaptor.nil();
 
-                    pushFollow(FOLLOW_booleanLiteral_in_literal909);
+                    pushFollow(FOLLOW_booleanLiteral_in_literal902);
                     booleanLiteral75=booleanLiteral();
 
                     state._fsp--;
@@ -2461,9 +2478,9 @@ public class FlumeDeployParser extends Parser {
                     }
                     break;
                 case 4 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:124:9: FloatingPointLiteral
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:148:9: FloatingPointLiteral
                     {
-                    FloatingPointLiteral76=(Token)match(input,FloatingPointLiteral,FOLLOW_FloatingPointLiteral_in_literal919);  
+                    FloatingPointLiteral76=(Token)match(input,FloatingPointLiteral,FOLLOW_FloatingPointLiteral_in_literal912);  
                     stream_FloatingPointLiteral.add(FloatingPointLiteral76);
 
 
@@ -2479,9 +2496,9 @@ public class FlumeDeployParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (Object)adaptor.nil();
-                    // 124:30: -> ^( FLOAT FloatingPointLiteral )
+                    // 148:30: -> ^( FLOAT FloatingPointLiteral )
                     {
-                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:124:33: ^( FLOAT FloatingPointLiteral )
+                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:148:33: ^( FLOAT FloatingPointLiteral )
                         {
                         Object root_1 = (Object)adaptor.nil();
                         root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(FLOAT, "FLOAT"), root_1);
@@ -2522,7 +2539,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "integerLiteral"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:126:1: integerLiteral : ( HexLiteral -> ^( HEX HexLiteral ) | OctalLiteral -> ^( OCT OctalLiteral ) | DecimalLiteral -> ^( DEC DecimalLiteral ) );
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:150:1: integerLiteral : ( HexLiteral -> ^( HEX HexLiteral ) | OctalLiteral -> ^( OCT OctalLiteral ) | DecimalLiteral -> ^( DEC DecimalLiteral ) );
     public final FlumeDeployParser.integerLiteral_return integerLiteral() throws RecognitionException {
         FlumeDeployParser.integerLiteral_return retval = new FlumeDeployParser.integerLiteral_return();
         retval.start = input.LT(1);
@@ -2541,7 +2558,7 @@ public class FlumeDeployParser extends Parser {
         RewriteRuleTokenStream stream_OctalLiteral=new RewriteRuleTokenStream(adaptor,"token OctalLiteral");
 
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:127:5: ( HexLiteral -> ^( HEX HexLiteral ) | OctalLiteral -> ^( OCT OctalLiteral ) | DecimalLiteral -> ^( DEC DecimalLiteral ) )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:151:5: ( HexLiteral -> ^( HEX HexLiteral ) | OctalLiteral -> ^( OCT OctalLiteral ) | DecimalLiteral -> ^( DEC DecimalLiteral ) )
             int alt12=3;
             switch ( input.LA(1) ) {
             case HexLiteral:
@@ -2568,9 +2585,9 @@ public class FlumeDeployParser extends Parser {
 
             switch (alt12) {
                 case 1 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:127:9: HexLiteral
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:151:9: HexLiteral
                     {
-                    HexLiteral77=(Token)match(input,HexLiteral,FOLLOW_HexLiteral_in_integerLiteral945);  
+                    HexLiteral77=(Token)match(input,HexLiteral,FOLLOW_HexLiteral_in_integerLiteral938);  
                     stream_HexLiteral.add(HexLiteral77);
 
 
@@ -2586,9 +2603,9 @@ public class FlumeDeployParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (Object)adaptor.nil();
-                    // 127:21: -> ^( HEX HexLiteral )
+                    // 151:21: -> ^( HEX HexLiteral )
                     {
-                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:127:24: ^( HEX HexLiteral )
+                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:151:24: ^( HEX HexLiteral )
                         {
                         Object root_1 = (Object)adaptor.nil();
                         root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(HEX, "HEX"), root_1);
@@ -2604,9 +2621,9 @@ public class FlumeDeployParser extends Parser {
                     }
                     break;
                 case 2 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:128:9: OctalLiteral
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:152:9: OctalLiteral
                     {
-                    OctalLiteral78=(Token)match(input,OctalLiteral,FOLLOW_OctalLiteral_in_integerLiteral964);  
+                    OctalLiteral78=(Token)match(input,OctalLiteral,FOLLOW_OctalLiteral_in_integerLiteral957);  
                     stream_OctalLiteral.add(OctalLiteral78);
 
 
@@ -2622,9 +2639,9 @@ public class FlumeDeployParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (Object)adaptor.nil();
-                    // 128:23: -> ^( OCT OctalLiteral )
+                    // 152:23: -> ^( OCT OctalLiteral )
                     {
-                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:128:26: ^( OCT OctalLiteral )
+                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:152:26: ^( OCT OctalLiteral )
                         {
                         Object root_1 = (Object)adaptor.nil();
                         root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(OCT, "OCT"), root_1);
@@ -2640,9 +2657,9 @@ public class FlumeDeployParser extends Parser {
                     }
                     break;
                 case 3 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:129:9: DecimalLiteral
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:153:9: DecimalLiteral
                     {
-                    DecimalLiteral79=(Token)match(input,DecimalLiteral,FOLLOW_DecimalLiteral_in_integerLiteral983);  
+                    DecimalLiteral79=(Token)match(input,DecimalLiteral,FOLLOW_DecimalLiteral_in_integerLiteral976);  
                     stream_DecimalLiteral.add(DecimalLiteral79);
 
 
@@ -2658,9 +2675,9 @@ public class FlumeDeployParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (Object)adaptor.nil();
-                    // 129:25: -> ^( DEC DecimalLiteral )
+                    // 153:25: -> ^( DEC DecimalLiteral )
                     {
-                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:129:28: ^( DEC DecimalLiteral )
+                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:153:28: ^( DEC DecimalLiteral )
                         {
                         Object root_1 = (Object)adaptor.nil();
                         root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(DEC, "DEC"), root_1);
@@ -2701,7 +2718,7 @@ public class FlumeDeployParser extends Parser {
     };
 
     // $ANTLR start "booleanLiteral"
-    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:132:1: booleanLiteral : ( 'true' -> ^( BOOL 'true' ) | 'false' -> ^( BOOL 'false' ) );
+    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:156:1: booleanLiteral : ( 'true' -> ^( BOOL 'true' ) | 'false' -> ^( BOOL 'false' ) );
     public final FlumeDeployParser.booleanLiteral_return booleanLiteral() throws RecognitionException {
         FlumeDeployParser.booleanLiteral_return retval = new FlumeDeployParser.booleanLiteral_return();
         retval.start = input.LT(1);
@@ -2717,7 +2734,7 @@ public class FlumeDeployParser extends Parser {
         RewriteRuleTokenStream stream_58=new RewriteRuleTokenStream(adaptor,"token 58");
 
         try {
-            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:133:5: ( 'true' -> ^( BOOL 'true' ) | 'false' -> ^( BOOL 'false' ) )
+            // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:157:5: ( 'true' -> ^( BOOL 'true' ) | 'false' -> ^( BOOL 'false' ) )
             int alt13=2;
             int LA13_0 = input.LA(1);
 
@@ -2735,9 +2752,9 @@ public class FlumeDeployParser extends Parser {
             }
             switch (alt13) {
                 case 1 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:133:9: 'true'
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:157:9: 'true'
                     {
-                    string_literal80=(Token)match(input,58,FOLLOW_58_in_booleanLiteral1015);  
+                    string_literal80=(Token)match(input,58,FOLLOW_58_in_booleanLiteral1008);  
                     stream_58.add(string_literal80);
 
 
@@ -2753,9 +2770,9 @@ public class FlumeDeployParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (Object)adaptor.nil();
-                    // 133:18: -> ^( BOOL 'true' )
+                    // 157:18: -> ^( BOOL 'true' )
                     {
-                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:133:21: ^( BOOL 'true' )
+                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:157:21: ^( BOOL 'true' )
                         {
                         Object root_1 = (Object)adaptor.nil();
                         root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(BOOL, "BOOL"), root_1);
@@ -2771,9 +2788,9 @@ public class FlumeDeployParser extends Parser {
                     }
                     break;
                 case 2 :
-                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:134:9: 'false'
+                    // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:158:9: 'false'
                     {
-                    string_literal81=(Token)match(input,59,FOLLOW_59_in_booleanLiteral1035);  
+                    string_literal81=(Token)match(input,59,FOLLOW_59_in_booleanLiteral1028);  
                     stream_59.add(string_literal81);
 
 
@@ -2789,9 +2806,9 @@ public class FlumeDeployParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (Object)adaptor.nil();
-                    // 134:18: -> ^( BOOL 'false' )
+                    // 158:18: -> ^( BOOL 'false' )
                     {
-                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:134:21: ^( BOOL 'false' )
+                        // /home/jon/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g:158:21: ^( BOOL 'false' )
                         {
                         Object root_1 = (Object)adaptor.nil();
                         root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(BOOL, "BOOL"), root_1);
@@ -2887,91 +2904,91 @@ public class FlumeDeployParser extends Parser {
             this.transition = DFA5_transition;
         }
         public String getDescription() {
-            return "92:25: ( args )?";
+            return "116:25: ( args )?";
         }
     }
  
 
-    public static final BitSet FOLLOW_def_in_deflist147 = new BitSet(new long[]{0x0000000000300000L});
-    public static final BitSet FOLLOW_EOF_in_deflist150 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_host_in_def160 = new BitSet(new long[]{0x0000008000000000L});
-    public static final BitSet FOLLOW_39_in_def162 = new BitSet(new long[]{0x0000040000100000L});
-    public static final BitSet FOLLOW_source_in_def164 = new BitSet(new long[]{0x0000010000000000L});
-    public static final BitSet FOLLOW_40_in_def166 = new BitSet(new long[]{0x00C8A40000100000L});
-    public static final BitSet FOLLOW_sink_in_def168 = new BitSet(new long[]{0x0000020000000000L});
-    public static final BitSet FOLLOW_41_in_def171 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_def_in_deflist140 = new BitSet(new long[]{0x0000000000300000L});
+    public static final BitSet FOLLOW_EOF_in_deflist143 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_host_in_def153 = new BitSet(new long[]{0x0000008000000000L});
+    public static final BitSet FOLLOW_39_in_def155 = new BitSet(new long[]{0x0000040000100000L});
+    public static final BitSet FOLLOW_source_in_def157 = new BitSet(new long[]{0x0000010000000000L});
+    public static final BitSet FOLLOW_40_in_def159 = new BitSet(new long[]{0x00C8A40000100000L});
+    public static final BitSet FOLLOW_sink_in_def161 = new BitSet(new long[]{0x0000020000000000L});
+    public static final BitSet FOLLOW_41_in_def164 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_set_in_host0 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_source_in_connection207 = new BitSet(new long[]{0x0000010000000000L});
-    public static final BitSet FOLLOW_40_in_connection209 = new BitSet(new long[]{0x00C8A40000100000L});
-    public static final BitSet FOLLOW_sink_in_connection211 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_singleSource_in_source233 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_42_in_source245 = new BitSet(new long[]{0x0000000000100000L});
-    public static final BitSet FOLLOW_multiSource_in_source247 = new BitSet(new long[]{0x0000080000000000L});
-    public static final BitSet FOLLOW_43_in_source249 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_source_in_sourceEof267 = new BitSet(new long[]{0x0000000000000000L});
-    public static final BitSet FOLLOW_EOF_in_sourceEof269 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_Identifier_in_singleSource282 = new BitSet(new long[]{0x0100000000000002L});
-    public static final BitSet FOLLOW_args_in_singleSource284 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_singleSource_in_multiSource303 = new BitSet(new long[]{0x0000100000000002L});
-    public static final BitSet FOLLOW_44_in_multiSource306 = new BitSet(new long[]{0x0000000000100000L});
-    public static final BitSet FOLLOW_singleSource_in_multiSource308 = new BitSet(new long[]{0x0000100000000002L});
-    public static final BitSet FOLLOW_simpleSink_in_sink327 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_Identifier_in_singleSink339 = new BitSet(new long[]{0x0100000000000002L});
-    public static final BitSet FOLLOW_args_in_singleSink341 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_simpleSink_in_sinkEof363 = new BitSet(new long[]{0x0000000000000000L});
-    public static final BitSet FOLLOW_EOF_in_sinkEof365 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_42_in_simpleSink373 = new BitSet(new long[]{0x00C8A40000100000L});
-    public static final BitSet FOLLOW_multiSink_in_simpleSink375 = new BitSet(new long[]{0x0000080000000000L});
-    public static final BitSet FOLLOW_43_in_simpleSink377 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_45_in_simpleSink394 = new BitSet(new long[]{0x0000000000100000L});
-    public static final BitSet FOLLOW_decoratedSink_in_simpleSink396 = new BitSet(new long[]{0x0000400000000000L});
-    public static final BitSet FOLLOW_46_in_simpleSink398 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_47_in_simpleSink412 = new BitSet(new long[]{0x00C8A40000100000L});
-    public static final BitSet FOLLOW_failoverSink_in_simpleSink414 = new BitSet(new long[]{0x0001000000000000L});
-    public static final BitSet FOLLOW_48_in_simpleSink416 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_letSink_in_simpleSink432 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_singleSink_in_simpleSink458 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_rollSink_in_simpleSink490 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_failoverChain_in_simpleSink523 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_singleSink_in_decoratedSink557 = new BitSet(new long[]{0x0002000000000000L});
-    public static final BitSet FOLLOW_49_in_decoratedSink559 = new BitSet(new long[]{0x00C8A40000100000L});
-    public static final BitSet FOLLOW_sink_in_decoratedSink561 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_simpleSink_in_multiSink584 = new BitSet(new long[]{0x0000100000000002L});
-    public static final BitSet FOLLOW_44_in_multiSink587 = new BitSet(new long[]{0x00C8A40000100000L});
-    public static final BitSet FOLLOW_simpleSink_in_multiSink589 = new BitSet(new long[]{0x0000100000000002L});
-    public static final BitSet FOLLOW_simpleSink_in_failoverSink609 = new BitSet(new long[]{0x0004000000000000L});
-    public static final BitSet FOLLOW_50_in_failoverSink612 = new BitSet(new long[]{0x00C8A40000100000L});
-    public static final BitSet FOLLOW_simpleSink_in_failoverSink614 = new BitSet(new long[]{0x0004000000000002L});
-    public static final BitSet FOLLOW_51_in_letSink638 = new BitSet(new long[]{0x0000000000100000L});
-    public static final BitSet FOLLOW_Identifier_in_letSink640 = new BitSet(new long[]{0x0010000000000000L});
-    public static final BitSet FOLLOW_52_in_letSink642 = new BitSet(new long[]{0x00C8A40000100000L});
-    public static final BitSet FOLLOW_simpleSink_in_letSink644 = new BitSet(new long[]{0x0020000000000000L});
-    public static final BitSet FOLLOW_53_in_letSink646 = new BitSet(new long[]{0x00C8A40000100000L});
-    public static final BitSet FOLLOW_simpleSink_in_letSink648 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_54_in_rollSink709 = new BitSet(new long[]{0x0100000000000000L});
-    public static final BitSet FOLLOW_args_in_rollSink711 = new BitSet(new long[]{0x0000200000000000L});
-    public static final BitSet FOLLOW_45_in_rollSink713 = new BitSet(new long[]{0x00C8A40000100000L});
-    public static final BitSet FOLLOW_simpleSink_in_rollSink715 = new BitSet(new long[]{0x0000400000000000L});
-    public static final BitSet FOLLOW_46_in_rollSink717 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_55_in_failoverChain771 = new BitSet(new long[]{0x0100000000000000L});
-    public static final BitSet FOLLOW_args_in_failoverChain773 = new BitSet(new long[]{0x0000200000000000L});
-    public static final BitSet FOLLOW_45_in_failoverChain775 = new BitSet(new long[]{0x00C8A40000100000L});
-    public static final BitSet FOLLOW_simpleSink_in_failoverChain777 = new BitSet(new long[]{0x0000400000000000L});
-    public static final BitSet FOLLOW_46_in_failoverChain779 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_literal_in_arglist831 = new BitSet(new long[]{0x0000100000000002L});
-    public static final BitSet FOLLOW_44_in_arglist834 = new BitSet(new long[]{0x0C00000007C00000L});
-    public static final BitSet FOLLOW_literal_in_arglist836 = new BitSet(new long[]{0x0000100000000002L});
-    public static final BitSet FOLLOW_56_in_args852 = new BitSet(new long[]{0x0E00000007C00000L});
-    public static final BitSet FOLLOW_arglist_in_args854 = new BitSet(new long[]{0x0200000000000000L});
-    public static final BitSet FOLLOW_57_in_args857 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_integerLiteral_in_literal880 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_StringLiteral_in_literal890 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_booleanLiteral_in_literal909 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_FloatingPointLiteral_in_literal919 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_HexLiteral_in_integerLiteral945 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_OctalLiteral_in_integerLiteral964 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_DecimalLiteral_in_integerLiteral983 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_58_in_booleanLiteral1015 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_59_in_booleanLiteral1035 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_source_in_connection200 = new BitSet(new long[]{0x0000010000000000L});
+    public static final BitSet FOLLOW_40_in_connection202 = new BitSet(new long[]{0x00C8A40000100000L});
+    public static final BitSet FOLLOW_sink_in_connection204 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_singleSource_in_source226 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_42_in_source238 = new BitSet(new long[]{0x0000000000100000L});
+    public static final BitSet FOLLOW_multiSource_in_source240 = new BitSet(new long[]{0x0000080000000000L});
+    public static final BitSet FOLLOW_43_in_source242 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_source_in_sourceEof260 = new BitSet(new long[]{0x0000000000000000L});
+    public static final BitSet FOLLOW_EOF_in_sourceEof262 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_Identifier_in_singleSource275 = new BitSet(new long[]{0x0100000000000002L});
+    public static final BitSet FOLLOW_args_in_singleSource277 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_singleSource_in_multiSource296 = new BitSet(new long[]{0x0000100000000002L});
+    public static final BitSet FOLLOW_44_in_multiSource299 = new BitSet(new long[]{0x0000000000100000L});
+    public static final BitSet FOLLOW_singleSource_in_multiSource301 = new BitSet(new long[]{0x0000100000000002L});
+    public static final BitSet FOLLOW_simpleSink_in_sink320 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_Identifier_in_singleSink332 = new BitSet(new long[]{0x0100000000000002L});
+    public static final BitSet FOLLOW_args_in_singleSink334 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_simpleSink_in_sinkEof356 = new BitSet(new long[]{0x0000000000000000L});
+    public static final BitSet FOLLOW_EOF_in_sinkEof358 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_42_in_simpleSink366 = new BitSet(new long[]{0x00C8A40000100000L});
+    public static final BitSet FOLLOW_multiSink_in_simpleSink368 = new BitSet(new long[]{0x0000080000000000L});
+    public static final BitSet FOLLOW_43_in_simpleSink370 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_45_in_simpleSink387 = new BitSet(new long[]{0x0000000000100000L});
+    public static final BitSet FOLLOW_decoratedSink_in_simpleSink389 = new BitSet(new long[]{0x0000400000000000L});
+    public static final BitSet FOLLOW_46_in_simpleSink391 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_47_in_simpleSink405 = new BitSet(new long[]{0x00C8A40000100000L});
+    public static final BitSet FOLLOW_failoverSink_in_simpleSink407 = new BitSet(new long[]{0x0001000000000000L});
+    public static final BitSet FOLLOW_48_in_simpleSink409 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_letSink_in_simpleSink425 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_singleSink_in_simpleSink451 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_rollSink_in_simpleSink483 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_failoverChain_in_simpleSink516 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_singleSink_in_decoratedSink550 = new BitSet(new long[]{0x0002000000000000L});
+    public static final BitSet FOLLOW_49_in_decoratedSink552 = new BitSet(new long[]{0x00C8A40000100000L});
+    public static final BitSet FOLLOW_sink_in_decoratedSink554 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_simpleSink_in_multiSink577 = new BitSet(new long[]{0x0000100000000002L});
+    public static final BitSet FOLLOW_44_in_multiSink580 = new BitSet(new long[]{0x00C8A40000100000L});
+    public static final BitSet FOLLOW_simpleSink_in_multiSink582 = new BitSet(new long[]{0x0000100000000002L});
+    public static final BitSet FOLLOW_simpleSink_in_failoverSink602 = new BitSet(new long[]{0x0004000000000000L});
+    public static final BitSet FOLLOW_50_in_failoverSink605 = new BitSet(new long[]{0x00C8A40000100000L});
+    public static final BitSet FOLLOW_simpleSink_in_failoverSink607 = new BitSet(new long[]{0x0004000000000002L});
+    public static final BitSet FOLLOW_51_in_letSink631 = new BitSet(new long[]{0x0000000000100000L});
+    public static final BitSet FOLLOW_Identifier_in_letSink633 = new BitSet(new long[]{0x0010000000000000L});
+    public static final BitSet FOLLOW_52_in_letSink635 = new BitSet(new long[]{0x00C8A40000100000L});
+    public static final BitSet FOLLOW_simpleSink_in_letSink637 = new BitSet(new long[]{0x0020000000000000L});
+    public static final BitSet FOLLOW_53_in_letSink639 = new BitSet(new long[]{0x00C8A40000100000L});
+    public static final BitSet FOLLOW_simpleSink_in_letSink641 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_54_in_rollSink702 = new BitSet(new long[]{0x0100000000000000L});
+    public static final BitSet FOLLOW_args_in_rollSink704 = new BitSet(new long[]{0x0000200000000000L});
+    public static final BitSet FOLLOW_45_in_rollSink706 = new BitSet(new long[]{0x00C8A40000100000L});
+    public static final BitSet FOLLOW_simpleSink_in_rollSink708 = new BitSet(new long[]{0x0000400000000000L});
+    public static final BitSet FOLLOW_46_in_rollSink710 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_55_in_failoverChain764 = new BitSet(new long[]{0x0100000000000000L});
+    public static final BitSet FOLLOW_args_in_failoverChain766 = new BitSet(new long[]{0x0000200000000000L});
+    public static final BitSet FOLLOW_45_in_failoverChain768 = new BitSet(new long[]{0x00C8A40000100000L});
+    public static final BitSet FOLLOW_simpleSink_in_failoverChain770 = new BitSet(new long[]{0x0000400000000000L});
+    public static final BitSet FOLLOW_46_in_failoverChain772 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_literal_in_arglist824 = new BitSet(new long[]{0x0000100000000002L});
+    public static final BitSet FOLLOW_44_in_arglist827 = new BitSet(new long[]{0x0C00000007C00000L});
+    public static final BitSet FOLLOW_literal_in_arglist829 = new BitSet(new long[]{0x0000100000000002L});
+    public static final BitSet FOLLOW_56_in_args845 = new BitSet(new long[]{0x0E00000007C00000L});
+    public static final BitSet FOLLOW_arglist_in_args847 = new BitSet(new long[]{0x0200000000000000L});
+    public static final BitSet FOLLOW_57_in_args850 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_integerLiteral_in_literal873 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_StringLiteral_in_literal883 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_booleanLiteral_in_literal902 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_FloatingPointLiteral_in_literal912 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_HexLiteral_in_integerLiteral938 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_OctalLiteral_in_integerLiteral957 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_DecimalLiteral_in_integerLiteral976 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_58_in_booleanLiteral1008 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_59_in_booleanLiteral1028 = new BitSet(new long[]{0x0000000000000002L});
 
 }

@@ -1,4 +1,4 @@
-// $ANTLR 3.1.3 Mar 18, 2009 10:09:25 /home/jon/flume/src/antlr/FlumeShell.g 2010-06-10 15:15:48
+// $ANTLR 3.1.3 Mar 18, 2009 10:09:25 /home/jon/flume/src/antlr/FlumeShell.g 2010-06-17 15:09:40
 
 /**
  * Licensed to Cloudera, Inc. under one
@@ -29,6 +29,23 @@ import java.util.ArrayList;
 
 import org.antlr.runtime.tree.*;
 
+/**
+ * Licensed to Cloudera, Inc. under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  Cloudera, Inc. licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 public class FlumeShellParser extends Parser {
     public static final String[] tokenNames = new String[] {
         "<invalid>", "<EOR>", "<DOWN>", "<UP>", "CMD", "DQUOTE", "SQUOTE", "STRING", "DQuoteLiteral", "SQuoteLiteral", "Argument", "HexDigit", "EscapeSequence", "UnicodeEscape", "OctalEscape", "Letter", "JavaIDDigit", "WS", "LINE_COMMENT", "';'"
@@ -88,7 +105,7 @@ public class FlumeShellParser extends Parser {
     };
 
     // $ANTLR start "lines"
-    // /home/jon/flume/src/antlr/FlumeShell.g:62:1: lines : command ( ';' command )* EOF -> ( command )+ ;
+    // /home/jon/flume/src/antlr/FlumeShell.g:86:1: lines : command ( ';' command )* EOF -> ( command )+ ;
     public final FlumeShellParser.lines_return lines() throws RecognitionException {
         FlumeShellParser.lines_return retval = new FlumeShellParser.lines_return();
         retval.start = input.LT(1);
@@ -108,16 +125,16 @@ public class FlumeShellParser extends Parser {
         RewriteRuleTokenStream stream_EOF=new RewriteRuleTokenStream(adaptor,"token EOF");
         RewriteRuleSubtreeStream stream_command=new RewriteRuleSubtreeStream(adaptor,"rule command");
         try {
-            // /home/jon/flume/src/antlr/FlumeShell.g:62:7: ( command ( ';' command )* EOF -> ( command )+ )
-            // /home/jon/flume/src/antlr/FlumeShell.g:62:9: command ( ';' command )* EOF
+            // /home/jon/flume/src/antlr/FlumeShell.g:86:7: ( command ( ';' command )* EOF -> ( command )+ )
+            // /home/jon/flume/src/antlr/FlumeShell.g:86:9: command ( ';' command )* EOF
             {
-            pushFollow(FOLLOW_command_in_lines92);
+            pushFollow(FOLLOW_command_in_lines85);
             command1=command();
 
             state._fsp--;
 
             stream_command.add(command1.getTree());
-            // /home/jon/flume/src/antlr/FlumeShell.g:62:17: ( ';' command )*
+            // /home/jon/flume/src/antlr/FlumeShell.g:86:17: ( ';' command )*
             loop1:
             do {
                 int alt1=2;
@@ -130,12 +147,12 @@ public class FlumeShellParser extends Parser {
 
                 switch (alt1) {
             	case 1 :
-            	    // /home/jon/flume/src/antlr/FlumeShell.g:62:18: ';' command
+            	    // /home/jon/flume/src/antlr/FlumeShell.g:86:18: ';' command
             	    {
-            	    char_literal2=(Token)match(input,19,FOLLOW_19_in_lines95);  
+            	    char_literal2=(Token)match(input,19,FOLLOW_19_in_lines88);  
             	    stream_19.add(char_literal2);
 
-            	    pushFollow(FOLLOW_command_in_lines97);
+            	    pushFollow(FOLLOW_command_in_lines90);
             	    command3=command();
 
             	    state._fsp--;
@@ -150,7 +167,7 @@ public class FlumeShellParser extends Parser {
                 }
             } while (true);
 
-            EOF4=(Token)match(input,EOF,FOLLOW_EOF_in_lines101);  
+            EOF4=(Token)match(input,EOF,FOLLOW_EOF_in_lines94);  
             stream_EOF.add(EOF4);
 
 
@@ -166,7 +183,7 @@ public class FlumeShellParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (Object)adaptor.nil();
-            // 62:36: -> ( command )+
+            // 86:36: -> ( command )+
             {
                 if ( !(stream_command.hasNext()) ) {
                     throw new RewriteEarlyExitException();
@@ -206,7 +223,7 @@ public class FlumeShellParser extends Parser {
     };
 
     // $ANTLR start "line"
-    // /home/jon/flume/src/antlr/FlumeShell.g:64:1: line : command EOF -> command ;
+    // /home/jon/flume/src/antlr/FlumeShell.g:88:1: line : command EOF -> command ;
     public final FlumeShellParser.line_return line() throws RecognitionException {
         FlumeShellParser.line_return retval = new FlumeShellParser.line_return();
         retval.start = input.LT(1);
@@ -221,16 +238,16 @@ public class FlumeShellParser extends Parser {
         RewriteRuleTokenStream stream_EOF=new RewriteRuleTokenStream(adaptor,"token EOF");
         RewriteRuleSubtreeStream stream_command=new RewriteRuleSubtreeStream(adaptor,"rule command");
         try {
-            // /home/jon/flume/src/antlr/FlumeShell.g:64:6: ( command EOF -> command )
-            // /home/jon/flume/src/antlr/FlumeShell.g:64:8: command EOF
+            // /home/jon/flume/src/antlr/FlumeShell.g:88:6: ( command EOF -> command )
+            // /home/jon/flume/src/antlr/FlumeShell.g:88:8: command EOF
             {
-            pushFollow(FOLLOW_command_in_line114);
+            pushFollow(FOLLOW_command_in_line107);
             command5=command();
 
             state._fsp--;
 
             stream_command.add(command5.getTree());
-            EOF6=(Token)match(input,EOF,FOLLOW_EOF_in_line116);  
+            EOF6=(Token)match(input,EOF,FOLLOW_EOF_in_line109);  
             stream_EOF.add(EOF6);
 
 
@@ -246,7 +263,7 @@ public class FlumeShellParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (Object)adaptor.nil();
-            // 64:20: -> command
+            // 88:20: -> command
             {
                 adaptor.addChild(root_0, stream_command.nextTree());
 
@@ -279,7 +296,7 @@ public class FlumeShellParser extends Parser {
     };
 
     // $ANTLR start "command"
-    // /home/jon/flume/src/antlr/FlumeShell.g:66:1: command : ( literal )+ -> ^( CMD ( literal )+ ) ;
+    // /home/jon/flume/src/antlr/FlumeShell.g:90:1: command : ( literal )+ -> ^( CMD ( literal )+ ) ;
     public final FlumeShellParser.command_return command() throws RecognitionException {
         FlumeShellParser.command_return retval = new FlumeShellParser.command_return();
         retval.start = input.LT(1);
@@ -291,10 +308,10 @@ public class FlumeShellParser extends Parser {
 
         RewriteRuleSubtreeStream stream_literal=new RewriteRuleSubtreeStream(adaptor,"rule literal");
         try {
-            // /home/jon/flume/src/antlr/FlumeShell.g:66:9: ( ( literal )+ -> ^( CMD ( literal )+ ) )
-            // /home/jon/flume/src/antlr/FlumeShell.g:66:11: ( literal )+
+            // /home/jon/flume/src/antlr/FlumeShell.g:90:9: ( ( literal )+ -> ^( CMD ( literal )+ ) )
+            // /home/jon/flume/src/antlr/FlumeShell.g:90:11: ( literal )+
             {
-            // /home/jon/flume/src/antlr/FlumeShell.g:66:11: ( literal )+
+            // /home/jon/flume/src/antlr/FlumeShell.g:90:11: ( literal )+
             int cnt2=0;
             loop2:
             do {
@@ -308,9 +325,9 @@ public class FlumeShellParser extends Parser {
 
                 switch (alt2) {
             	case 1 :
-            	    // /home/jon/flume/src/antlr/FlumeShell.g:66:11: literal
+            	    // /home/jon/flume/src/antlr/FlumeShell.g:90:11: literal
             	    {
-            	    pushFollow(FOLLOW_literal_in_command129);
+            	    pushFollow(FOLLOW_literal_in_command122);
             	    literal7=literal();
 
             	    state._fsp--;
@@ -342,9 +359,9 @@ public class FlumeShellParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (Object)adaptor.nil();
-            // 66:20: -> ^( CMD ( literal )+ )
+            // 90:20: -> ^( CMD ( literal )+ )
             {
-                // /home/jon/flume/src/antlr/FlumeShell.g:66:23: ^( CMD ( literal )+ )
+                // /home/jon/flume/src/antlr/FlumeShell.g:90:23: ^( CMD ( literal )+ )
                 {
                 Object root_1 = (Object)adaptor.nil();
                 root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(CMD, "CMD"), root_1);
@@ -390,7 +407,7 @@ public class FlumeShellParser extends Parser {
     };
 
     // $ANTLR start "literal"
-    // /home/jon/flume/src/antlr/FlumeShell.g:69:1: literal : ( DQuoteLiteral -> ^( DQUOTE DQuoteLiteral ) | SQuoteLiteral -> ^( SQUOTE SQuoteLiteral ) | Argument -> ^( STRING Argument ) );
+    // /home/jon/flume/src/antlr/FlumeShell.g:93:1: literal : ( DQuoteLiteral -> ^( DQUOTE DQuoteLiteral ) | SQuoteLiteral -> ^( SQUOTE SQuoteLiteral ) | Argument -> ^( STRING Argument ) );
     public final FlumeShellParser.literal_return literal() throws RecognitionException {
         FlumeShellParser.literal_return retval = new FlumeShellParser.literal_return();
         retval.start = input.LT(1);
@@ -409,7 +426,7 @@ public class FlumeShellParser extends Parser {
         RewriteRuleTokenStream stream_SQuoteLiteral=new RewriteRuleTokenStream(adaptor,"token SQuoteLiteral");
 
         try {
-            // /home/jon/flume/src/antlr/FlumeShell.g:70:5: ( DQuoteLiteral -> ^( DQUOTE DQuoteLiteral ) | SQuoteLiteral -> ^( SQUOTE SQuoteLiteral ) | Argument -> ^( STRING Argument ) )
+            // /home/jon/flume/src/antlr/FlumeShell.g:94:5: ( DQuoteLiteral -> ^( DQUOTE DQuoteLiteral ) | SQuoteLiteral -> ^( SQUOTE SQuoteLiteral ) | Argument -> ^( STRING Argument ) )
             int alt3=3;
             switch ( input.LA(1) ) {
             case DQuoteLiteral:
@@ -436,9 +453,9 @@ public class FlumeShellParser extends Parser {
 
             switch (alt3) {
                 case 1 :
-                    // /home/jon/flume/src/antlr/FlumeShell.g:70:9: DQuoteLiteral
+                    // /home/jon/flume/src/antlr/FlumeShell.g:94:9: DQuoteLiteral
                     {
-                    DQuoteLiteral8=(Token)match(input,DQuoteLiteral,FOLLOW_DQuoteLiteral_in_literal157);  
+                    DQuoteLiteral8=(Token)match(input,DQuoteLiteral,FOLLOW_DQuoteLiteral_in_literal150);  
                     stream_DQuoteLiteral.add(DQuoteLiteral8);
 
 
@@ -454,9 +471,9 @@ public class FlumeShellParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (Object)adaptor.nil();
-                    // 70:23: -> ^( DQUOTE DQuoteLiteral )
+                    // 94:23: -> ^( DQUOTE DQuoteLiteral )
                     {
-                        // /home/jon/flume/src/antlr/FlumeShell.g:70:26: ^( DQUOTE DQuoteLiteral )
+                        // /home/jon/flume/src/antlr/FlumeShell.g:94:26: ^( DQUOTE DQuoteLiteral )
                         {
                         Object root_1 = (Object)adaptor.nil();
                         root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(DQUOTE, "DQUOTE"), root_1);
@@ -472,9 +489,9 @@ public class FlumeShellParser extends Parser {
                     }
                     break;
                 case 2 :
-                    // /home/jon/flume/src/antlr/FlumeShell.g:71:9: SQuoteLiteral
+                    // /home/jon/flume/src/antlr/FlumeShell.g:95:9: SQuoteLiteral
                     {
-                    SQuoteLiteral9=(Token)match(input,SQuoteLiteral,FOLLOW_SQuoteLiteral_in_literal177);  
+                    SQuoteLiteral9=(Token)match(input,SQuoteLiteral,FOLLOW_SQuoteLiteral_in_literal170);  
                     stream_SQuoteLiteral.add(SQuoteLiteral9);
 
 
@@ -490,9 +507,9 @@ public class FlumeShellParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (Object)adaptor.nil();
-                    // 71:23: -> ^( SQUOTE SQuoteLiteral )
+                    // 95:23: -> ^( SQUOTE SQuoteLiteral )
                     {
-                        // /home/jon/flume/src/antlr/FlumeShell.g:71:26: ^( SQUOTE SQuoteLiteral )
+                        // /home/jon/flume/src/antlr/FlumeShell.g:95:26: ^( SQUOTE SQuoteLiteral )
                         {
                         Object root_1 = (Object)adaptor.nil();
                         root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(SQUOTE, "SQUOTE"), root_1);
@@ -508,9 +525,9 @@ public class FlumeShellParser extends Parser {
                     }
                     break;
                 case 3 :
-                    // /home/jon/flume/src/antlr/FlumeShell.g:72:9: Argument
+                    // /home/jon/flume/src/antlr/FlumeShell.g:96:9: Argument
                     {
-                    Argument10=(Token)match(input,Argument,FOLLOW_Argument_in_literal195);  
+                    Argument10=(Token)match(input,Argument,FOLLOW_Argument_in_literal188);  
                     stream_Argument.add(Argument10);
 
 
@@ -526,9 +543,9 @@ public class FlumeShellParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (Object)adaptor.nil();
-                    // 72:21: -> ^( STRING Argument )
+                    // 96:21: -> ^( STRING Argument )
                     {
-                        // /home/jon/flume/src/antlr/FlumeShell.g:72:24: ^( STRING Argument )
+                        // /home/jon/flume/src/antlr/FlumeShell.g:96:24: ^( STRING Argument )
                         {
                         Object root_1 = (Object)adaptor.nil();
                         root_1 = (Object)adaptor.becomeRoot((Object)adaptor.create(STRING, "STRING"), root_1);
@@ -568,15 +585,15 @@ public class FlumeShellParser extends Parser {
 
  
 
-    public static final BitSet FOLLOW_command_in_lines92 = new BitSet(new long[]{0x0000000000080000L});
-    public static final BitSet FOLLOW_19_in_lines95 = new BitSet(new long[]{0x0000000000000700L});
-    public static final BitSet FOLLOW_command_in_lines97 = new BitSet(new long[]{0x0000000000080000L});
-    public static final BitSet FOLLOW_EOF_in_lines101 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_command_in_line114 = new BitSet(new long[]{0x0000000000000000L});
-    public static final BitSet FOLLOW_EOF_in_line116 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_literal_in_command129 = new BitSet(new long[]{0x0000000000000702L});
-    public static final BitSet FOLLOW_DQuoteLiteral_in_literal157 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_SQuoteLiteral_in_literal177 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_Argument_in_literal195 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_command_in_lines85 = new BitSet(new long[]{0x0000000000080000L});
+    public static final BitSet FOLLOW_19_in_lines88 = new BitSet(new long[]{0x0000000000000700L});
+    public static final BitSet FOLLOW_command_in_lines90 = new BitSet(new long[]{0x0000000000080000L});
+    public static final BitSet FOLLOW_EOF_in_lines94 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_command_in_line107 = new BitSet(new long[]{0x0000000000000000L});
+    public static final BitSet FOLLOW_EOF_in_line109 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_literal_in_command122 = new BitSet(new long[]{0x0000000000000702L});
+    public static final BitSet FOLLOW_DQuoteLiteral_in_literal150 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_SQuoteLiteral_in_literal170 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_Argument_in_literal188 = new BitSet(new long[]{0x0000000000000002L});
 
 }

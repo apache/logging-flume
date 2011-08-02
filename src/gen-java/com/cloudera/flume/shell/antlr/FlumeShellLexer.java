@@ -1,4 +1,4 @@
-// $ANTLR 3.1.3 Mar 18, 2009 10:09:25 /home/jon/flume/src/antlr/FlumeShell.g 2010-06-10 15:15:48
+// $ANTLR 3.1.3 Mar 18, 2009 10:09:25 /home/jon/flume/src/antlr/FlumeShell.g 2010-06-17 15:09:40
 
 /**
  * Licensed to Cloudera, Inc. under one
@@ -69,8 +69,8 @@ public class FlumeShellLexer extends Lexer {
         try {
             int _type = T__19;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/FlumeShell.g:23:7: ( ';' )
-            // /home/jon/flume/src/antlr/FlumeShell.g:23:9: ';'
+            // /home/jon/flume/src/antlr/FlumeShell.g:31:7: ( ';' )
+            // /home/jon/flume/src/antlr/FlumeShell.g:31:9: ';'
             {
             match(';'); 
 
@@ -87,8 +87,8 @@ public class FlumeShellLexer extends Lexer {
     // $ANTLR start "HexDigit"
     public final void mHexDigit() throws RecognitionException {
         try {
-            // /home/jon/flume/src/antlr/FlumeShell.g:83:10: ( ( '0' .. '9' | 'a' .. 'f' | 'A' .. 'F' ) )
-            // /home/jon/flume/src/antlr/FlumeShell.g:83:12: ( '0' .. '9' | 'a' .. 'f' | 'A' .. 'F' )
+            // /home/jon/flume/src/antlr/FlumeShell.g:107:10: ( ( '0' .. '9' | 'a' .. 'f' | 'A' .. 'F' ) )
+            // /home/jon/flume/src/antlr/FlumeShell.g:107:12: ( '0' .. '9' | 'a' .. 'f' | 'A' .. 'F' )
             {
             if ( (input.LA(1)>='0' && input.LA(1)<='9')||(input.LA(1)>='A' && input.LA(1)<='F')||(input.LA(1)>='a' && input.LA(1)<='f') ) {
                 input.consume();
@@ -113,11 +113,11 @@ public class FlumeShellLexer extends Lexer {
         try {
             int _type = DQuoteLiteral;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/FlumeShell.g:88:5: ( '\"' (~ ( '\\\\' | '\"' ) | EscapeSequence )* '\"' )
-            // /home/jon/flume/src/antlr/FlumeShell.g:88:8: '\"' (~ ( '\\\\' | '\"' ) | EscapeSequence )* '\"'
+            // /home/jon/flume/src/antlr/FlumeShell.g:112:5: ( '\"' (~ ( '\\\\' | '\"' ) | EscapeSequence )* '\"' )
+            // /home/jon/flume/src/antlr/FlumeShell.g:112:8: '\"' (~ ( '\\\\' | '\"' ) | EscapeSequence )* '\"'
             {
             match('\"'); 
-            // /home/jon/flume/src/antlr/FlumeShell.g:88:12: (~ ( '\\\\' | '\"' ) | EscapeSequence )*
+            // /home/jon/flume/src/antlr/FlumeShell.g:112:12: (~ ( '\\\\' | '\"' ) | EscapeSequence )*
             loop1:
             do {
                 int alt1=3;
@@ -133,7 +133,7 @@ public class FlumeShellLexer extends Lexer {
 
                 switch (alt1) {
             	case 1 :
-            	    // /home/jon/flume/src/antlr/FlumeShell.g:88:14: ~ ( '\\\\' | '\"' )
+            	    // /home/jon/flume/src/antlr/FlumeShell.g:112:14: ~ ( '\\\\' | '\"' )
             	    {
             	    if ( (input.LA(1)>='\u0000' && input.LA(1)<='!')||(input.LA(1)>='#' && input.LA(1)<='[')||(input.LA(1)>=']' && input.LA(1)<='\uFFFF') ) {
             	        input.consume();
@@ -148,7 +148,7 @@ public class FlumeShellLexer extends Lexer {
             	    }
             	    break;
             	case 2 :
-            	    // /home/jon/flume/src/antlr/FlumeShell.g:88:29: EscapeSequence
+            	    // /home/jon/flume/src/antlr/FlumeShell.g:112:29: EscapeSequence
             	    {
             	    mEscapeSequence(); 
 
@@ -177,11 +177,11 @@ public class FlumeShellLexer extends Lexer {
         try {
             int _type = SQuoteLiteral;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/FlumeShell.g:92:5: ( '\\'' (~ '\\'' )* '\\'' )
-            // /home/jon/flume/src/antlr/FlumeShell.g:92:8: '\\'' (~ '\\'' )* '\\''
+            // /home/jon/flume/src/antlr/FlumeShell.g:116:5: ( '\\'' (~ '\\'' )* '\\'' )
+            // /home/jon/flume/src/antlr/FlumeShell.g:116:8: '\\'' (~ '\\'' )* '\\''
             {
             match('\''); 
-            // /home/jon/flume/src/antlr/FlumeShell.g:92:13: (~ '\\'' )*
+            // /home/jon/flume/src/antlr/FlumeShell.g:116:13: (~ '\\'' )*
             loop2:
             do {
                 int alt2=2;
@@ -194,7 +194,7 @@ public class FlumeShellLexer extends Lexer {
 
                 switch (alt2) {
             	case 1 :
-            	    // /home/jon/flume/src/antlr/FlumeShell.g:92:15: ~ '\\''
+            	    // /home/jon/flume/src/antlr/FlumeShell.g:116:15: ~ '\\''
             	    {
             	    if ( (input.LA(1)>='\u0000' && input.LA(1)<='&')||(input.LA(1)>='(' && input.LA(1)<='\uFFFF') ) {
             	        input.consume();
@@ -229,7 +229,7 @@ public class FlumeShellLexer extends Lexer {
     // $ANTLR start "EscapeSequence"
     public final void mEscapeSequence() throws RecognitionException {
         try {
-            // /home/jon/flume/src/antlr/FlumeShell.g:97:5: ( '\\\\' ( 'b' | 't' | 'n' | 'f' | 'r' | '\\\"' | '\\'' | '\\\\' ) | UnicodeEscape | OctalEscape )
+            // /home/jon/flume/src/antlr/FlumeShell.g:121:5: ( '\\\\' ( 'b' | 't' | 'n' | 'f' | 'r' | '\\\"' | '\\'' | '\\\\' ) | UnicodeEscape | OctalEscape )
             int alt3=3;
             int LA3_0 = input.LA(1);
 
@@ -280,7 +280,7 @@ public class FlumeShellLexer extends Lexer {
             }
             switch (alt3) {
                 case 1 :
-                    // /home/jon/flume/src/antlr/FlumeShell.g:97:9: '\\\\' ( 'b' | 't' | 'n' | 'f' | 'r' | '\\\"' | '\\'' | '\\\\' )
+                    // /home/jon/flume/src/antlr/FlumeShell.g:121:9: '\\\\' ( 'b' | 't' | 'n' | 'f' | 'r' | '\\\"' | '\\'' | '\\\\' )
                     {
                     match('\\'); 
                     if ( input.LA(1)=='\"'||input.LA(1)=='\''||input.LA(1)=='\\'||input.LA(1)=='b'||input.LA(1)=='f'||input.LA(1)=='n'||input.LA(1)=='r'||input.LA(1)=='t' ) {
@@ -296,14 +296,14 @@ public class FlumeShellLexer extends Lexer {
                     }
                     break;
                 case 2 :
-                    // /home/jon/flume/src/antlr/FlumeShell.g:98:9: UnicodeEscape
+                    // /home/jon/flume/src/antlr/FlumeShell.g:122:9: UnicodeEscape
                     {
                     mUnicodeEscape(); 
 
                     }
                     break;
                 case 3 :
-                    // /home/jon/flume/src/antlr/FlumeShell.g:99:9: OctalEscape
+                    // /home/jon/flume/src/antlr/FlumeShell.g:123:9: OctalEscape
                     {
                     mOctalEscape(); 
 
@@ -320,7 +320,7 @@ public class FlumeShellLexer extends Lexer {
     // $ANTLR start "OctalEscape"
     public final void mOctalEscape() throws RecognitionException {
         try {
-            // /home/jon/flume/src/antlr/FlumeShell.g:104:5: ( '\\\\' ( '0' .. '3' ) ( '0' .. '7' ) ( '0' .. '7' ) | '\\\\' ( '0' .. '7' ) ( '0' .. '7' ) | '\\\\' ( '0' .. '7' ) )
+            // /home/jon/flume/src/antlr/FlumeShell.g:128:5: ( '\\\\' ( '0' .. '3' ) ( '0' .. '7' ) ( '0' .. '7' ) | '\\\\' ( '0' .. '7' ) ( '0' .. '7' ) | '\\\\' ( '0' .. '7' ) )
             int alt4=3;
             int LA4_0 = input.LA(1);
 
@@ -366,25 +366,25 @@ public class FlumeShellLexer extends Lexer {
             }
             switch (alt4) {
                 case 1 :
-                    // /home/jon/flume/src/antlr/FlumeShell.g:104:9: '\\\\' ( '0' .. '3' ) ( '0' .. '7' ) ( '0' .. '7' )
+                    // /home/jon/flume/src/antlr/FlumeShell.g:128:9: '\\\\' ( '0' .. '3' ) ( '0' .. '7' ) ( '0' .. '7' )
                     {
                     match('\\'); 
-                    // /home/jon/flume/src/antlr/FlumeShell.g:104:14: ( '0' .. '3' )
-                    // /home/jon/flume/src/antlr/FlumeShell.g:104:15: '0' .. '3'
+                    // /home/jon/flume/src/antlr/FlumeShell.g:128:14: ( '0' .. '3' )
+                    // /home/jon/flume/src/antlr/FlumeShell.g:128:15: '0' .. '3'
                     {
                     matchRange('0','3'); 
 
                     }
 
-                    // /home/jon/flume/src/antlr/FlumeShell.g:104:25: ( '0' .. '7' )
-                    // /home/jon/flume/src/antlr/FlumeShell.g:104:26: '0' .. '7'
+                    // /home/jon/flume/src/antlr/FlumeShell.g:128:25: ( '0' .. '7' )
+                    // /home/jon/flume/src/antlr/FlumeShell.g:128:26: '0' .. '7'
                     {
                     matchRange('0','7'); 
 
                     }
 
-                    // /home/jon/flume/src/antlr/FlumeShell.g:104:36: ( '0' .. '7' )
-                    // /home/jon/flume/src/antlr/FlumeShell.g:104:37: '0' .. '7'
+                    // /home/jon/flume/src/antlr/FlumeShell.g:128:36: ( '0' .. '7' )
+                    // /home/jon/flume/src/antlr/FlumeShell.g:128:37: '0' .. '7'
                     {
                     matchRange('0','7'); 
 
@@ -394,18 +394,18 @@ public class FlumeShellLexer extends Lexer {
                     }
                     break;
                 case 2 :
-                    // /home/jon/flume/src/antlr/FlumeShell.g:105:9: '\\\\' ( '0' .. '7' ) ( '0' .. '7' )
+                    // /home/jon/flume/src/antlr/FlumeShell.g:129:9: '\\\\' ( '0' .. '7' ) ( '0' .. '7' )
                     {
                     match('\\'); 
-                    // /home/jon/flume/src/antlr/FlumeShell.g:105:14: ( '0' .. '7' )
-                    // /home/jon/flume/src/antlr/FlumeShell.g:105:15: '0' .. '7'
+                    // /home/jon/flume/src/antlr/FlumeShell.g:129:14: ( '0' .. '7' )
+                    // /home/jon/flume/src/antlr/FlumeShell.g:129:15: '0' .. '7'
                     {
                     matchRange('0','7'); 
 
                     }
 
-                    // /home/jon/flume/src/antlr/FlumeShell.g:105:25: ( '0' .. '7' )
-                    // /home/jon/flume/src/antlr/FlumeShell.g:105:26: '0' .. '7'
+                    // /home/jon/flume/src/antlr/FlumeShell.g:129:25: ( '0' .. '7' )
+                    // /home/jon/flume/src/antlr/FlumeShell.g:129:26: '0' .. '7'
                     {
                     matchRange('0','7'); 
 
@@ -415,11 +415,11 @@ public class FlumeShellLexer extends Lexer {
                     }
                     break;
                 case 3 :
-                    // /home/jon/flume/src/antlr/FlumeShell.g:106:9: '\\\\' ( '0' .. '7' )
+                    // /home/jon/flume/src/antlr/FlumeShell.g:130:9: '\\\\' ( '0' .. '7' )
                     {
                     match('\\'); 
-                    // /home/jon/flume/src/antlr/FlumeShell.g:106:14: ( '0' .. '7' )
-                    // /home/jon/flume/src/antlr/FlumeShell.g:106:15: '0' .. '7'
+                    // /home/jon/flume/src/antlr/FlumeShell.g:130:14: ( '0' .. '7' )
+                    // /home/jon/flume/src/antlr/FlumeShell.g:130:15: '0' .. '7'
                     {
                     matchRange('0','7'); 
 
@@ -439,8 +439,8 @@ public class FlumeShellLexer extends Lexer {
     // $ANTLR start "UnicodeEscape"
     public final void mUnicodeEscape() throws RecognitionException {
         try {
-            // /home/jon/flume/src/antlr/FlumeShell.g:111:5: ( '\\\\' 'u' HexDigit HexDigit HexDigit HexDigit )
-            // /home/jon/flume/src/antlr/FlumeShell.g:111:9: '\\\\' 'u' HexDigit HexDigit HexDigit HexDigit
+            // /home/jon/flume/src/antlr/FlumeShell.g:135:5: ( '\\\\' 'u' HexDigit HexDigit HexDigit HexDigit )
+            // /home/jon/flume/src/antlr/FlumeShell.g:135:9: '\\\\' 'u' HexDigit HexDigit HexDigit HexDigit
             {
             match('\\'); 
             match('u'); 
@@ -462,10 +462,10 @@ public class FlumeShellLexer extends Lexer {
         try {
             int _type = Argument;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/FlumeShell.g:115:5: ( ( Letter | JavaIDDigit | ':' | '.' | '-' | '_' )+ )
-            // /home/jon/flume/src/antlr/FlumeShell.g:115:7: ( Letter | JavaIDDigit | ':' | '.' | '-' | '_' )+
+            // /home/jon/flume/src/antlr/FlumeShell.g:139:5: ( ( Letter | JavaIDDigit | ':' | '.' | '-' | '_' )+ )
+            // /home/jon/flume/src/antlr/FlumeShell.g:139:7: ( Letter | JavaIDDigit | ':' | '.' | '-' | '_' )+
             {
-            // /home/jon/flume/src/antlr/FlumeShell.g:115:7: ( Letter | JavaIDDigit | ':' | '.' | '-' | '_' )+
+            // /home/jon/flume/src/antlr/FlumeShell.g:139:7: ( Letter | JavaIDDigit | ':' | '.' | '-' | '_' )+
             int cnt5=0;
             loop5:
             do {
@@ -517,7 +517,7 @@ public class FlumeShellLexer extends Lexer {
     // $ANTLR start "JavaIDDigit"
     public final void mJavaIDDigit() throws RecognitionException {
         try {
-            // /home/jon/flume/src/antlr/FlumeShell.g:120:8: ( '0' | '1' .. '9' )
+            // /home/jon/flume/src/antlr/FlumeShell.g:144:8: ( '0' | '1' .. '9' )
             // /home/jon/flume/src/antlr/FlumeShell.g:
             {
             if ( (input.LA(1)>='0' && input.LA(1)<='9') ) {
@@ -541,7 +541,7 @@ public class FlumeShellLexer extends Lexer {
     // $ANTLR start "Letter"
     public final void mLetter() throws RecognitionException {
         try {
-            // /home/jon/flume/src/antlr/FlumeShell.g:123:9: ( 'a' .. 'z' | 'A' .. 'Z' )
+            // /home/jon/flume/src/antlr/FlumeShell.g:147:9: ( 'a' .. 'z' | 'A' .. 'Z' )
             // /home/jon/flume/src/antlr/FlumeShell.g:
             {
             if ( (input.LA(1)>='A' && input.LA(1)<='Z')||(input.LA(1)>='a' && input.LA(1)<='z') ) {
@@ -567,8 +567,8 @@ public class FlumeShellLexer extends Lexer {
         try {
             int _type = WS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/FlumeShell.g:125:5: ( ( ' ' | '\\r' | '\\t' | '\\u000C' | '\\n' ) )
-            // /home/jon/flume/src/antlr/FlumeShell.g:125:8: ( ' ' | '\\r' | '\\t' | '\\u000C' | '\\n' )
+            // /home/jon/flume/src/antlr/FlumeShell.g:149:5: ( ( ' ' | '\\r' | '\\t' | '\\u000C' | '\\n' ) )
+            // /home/jon/flume/src/antlr/FlumeShell.g:149:8: ( ' ' | '\\r' | '\\t' | '\\u000C' | '\\n' )
             {
             if ( (input.LA(1)>='\t' && input.LA(1)<='\n')||(input.LA(1)>='\f' && input.LA(1)<='\r')||input.LA(1)==' ' ) {
                 input.consume();
@@ -596,11 +596,11 @@ public class FlumeShellLexer extends Lexer {
         try {
             int _type = LINE_COMMENT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/jon/flume/src/antlr/FlumeShell.g:130:5: ( '#' (~ ( '\\n' | '\\r' ) )* ( '\\r' )? '\\n' )
-            // /home/jon/flume/src/antlr/FlumeShell.g:130:7: '#' (~ ( '\\n' | '\\r' ) )* ( '\\r' )? '\\n'
+            // /home/jon/flume/src/antlr/FlumeShell.g:154:5: ( '#' (~ ( '\\n' | '\\r' ) )* ( '\\r' )? '\\n' )
+            // /home/jon/flume/src/antlr/FlumeShell.g:154:7: '#' (~ ( '\\n' | '\\r' ) )* ( '\\r' )? '\\n'
             {
             match('#'); 
-            // /home/jon/flume/src/antlr/FlumeShell.g:130:11: (~ ( '\\n' | '\\r' ) )*
+            // /home/jon/flume/src/antlr/FlumeShell.g:154:11: (~ ( '\\n' | '\\r' ) )*
             loop6:
             do {
                 int alt6=2;
@@ -613,7 +613,7 @@ public class FlumeShellLexer extends Lexer {
 
                 switch (alt6) {
             	case 1 :
-            	    // /home/jon/flume/src/antlr/FlumeShell.g:130:11: ~ ( '\\n' | '\\r' )
+            	    // /home/jon/flume/src/antlr/FlumeShell.g:154:11: ~ ( '\\n' | '\\r' )
             	    {
             	    if ( (input.LA(1)>='\u0000' && input.LA(1)<='\t')||(input.LA(1)>='\u000B' && input.LA(1)<='\f')||(input.LA(1)>='\u000E' && input.LA(1)<='\uFFFF') ) {
             	        input.consume();
@@ -633,7 +633,7 @@ public class FlumeShellLexer extends Lexer {
                 }
             } while (true);
 
-            // /home/jon/flume/src/antlr/FlumeShell.g:130:25: ( '\\r' )?
+            // /home/jon/flume/src/antlr/FlumeShell.g:154:25: ( '\\r' )?
             int alt7=2;
             int LA7_0 = input.LA(1);
 
@@ -642,7 +642,7 @@ public class FlumeShellLexer extends Lexer {
             }
             switch (alt7) {
                 case 1 :
-                    // /home/jon/flume/src/antlr/FlumeShell.g:130:25: '\\r'
+                    // /home/jon/flume/src/antlr/FlumeShell.g:154:25: '\\r'
                     {
                     match('\r'); 
 
