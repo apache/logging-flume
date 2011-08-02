@@ -26,12 +26,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.durability.NaiveFileWALManager;
+import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.handlers.hdfs.SeqfileEventSource;
 import com.cloudera.util.Clock;
@@ -42,7 +44,8 @@ import com.cloudera.util.FileUtil;
  * empty file, truncated file.
  */
 public class TestDiskFailoverSource {
-  public static Logger LOG = Logger.getLogger(TestDiskFailoverSource.class);
+  public static Logger LOG = LoggerFactory
+      .getLogger(TestDiskFailoverSource.class);
 
   // has 5 good entries.
   final static String WAL_OK = "src/data/hadoop_logs_5.hdfs";
@@ -53,8 +56,8 @@ public class TestDiskFailoverSource {
   @Before
   public void setUp() {
     LOG.info("====================================================");
-    Logger LOG = Logger.getLogger(NaiveFileFailoverManager.class.getName());
-    LOG.setLevel(Level.DEBUG);
+    org.apache.log4j.Logger.getLogger(NaiveFileFailoverManager.class.getName())
+        .setLevel(Level.DEBUG);
   }
 
   /**
@@ -67,8 +70,8 @@ public class TestDiskFailoverSource {
     tmpdir.deleteOnExit();
 
     // create empty file.
-    File corrupt =
-        new File(tmpdir, "walempty.00000000.20091104-101213997-0800.seq");
+    File corrupt = new File(tmpdir,
+        "walempty.00000000.20091104-101213997-0800.seq");
     LOG.info("corrupt file is named: " + corrupt.getAbsolutePath());
     corrupt.createNewFile();
     corrupt.deleteOnExit();
@@ -103,8 +106,8 @@ public class TestDiskFailoverSource {
     // create empty file.
     File logDir = new File(basedir, NaiveFileWALManager.LOGGEDDIR);
     logDir.mkdirs();
-    File corrupt =
-        new File(logDir, "walempty.00000000.20091104-101213997-0800.seq");
+    File corrupt = new File(logDir,
+        "walempty.00000000.20091104-101213997-0800.seq");
     LOG.info("corrupt file is named: " + corrupt.getAbsolutePath());
     corrupt.createNewFile();
     corrupt.deleteOnExit();
@@ -122,7 +125,7 @@ public class TestDiskFailoverSource {
 
           // this should block and never make progress.
           src.next();
-        } catch (IOException e) {
+        } catch (Exception e) {
           e.printStackTrace();
         } finally {
           // this should never execute.
@@ -158,8 +161,8 @@ public class TestDiskFailoverSource {
     // create a few empty files and writing them to the wal/logged dir
     File logdir = new File(basedir, NaiveFileFailoverManager.LOGGEDDIR);
     logdir.mkdirs();
-    File emptyfile =
-        new File(logdir, "walempty.0000000.20091104-101213997-0800.seq");
+    File emptyfile = new File(logdir,
+        "walempty.0000000.20091104-101213997-0800.seq");
     LOG.info("zero file is named: " + emptyfile.getAbsolutePath());
     emptyfile.createNewFile();
     emptyfile.deleteOnExit();
@@ -186,10 +189,16 @@ public class TestDiskFailoverSource {
           for (int i = 0; i < 10; i++) {
             // this eventually blocks and never make progress.
             // It will always read the good entries and skip over the bad file.
-            src.next();
+            Event e = src.next();
+            LOG.warn("SurviveEmptyFile ok event {}: {} ", i, e);
+            if (e == null) {
+              // If the source is closing, it may return null here. This could
+              // result in extra count increments if we don't exit here.
+              return;
+            }
             count.getAndIncrement();
           }
-        } catch (IOException e) {
+        } catch (Exception e) {
           LOG.info("about to fail because of " + e);
           e.printStackTrace();
           okstate.set(false);
@@ -230,14 +239,14 @@ public class TestDiskFailoverSource {
     // create a few empty files.
     File logdir = new File(basedir, NaiveFileFailoverManager.LOGGEDDIR);
     logdir.mkdirs();
-    File emptyfile =
-        new File(logdir, "walempty.0000000.20091104-101213997-0800.seq");
+    File emptyfile = new File(logdir,
+        "walempty.0000000.20091104-101213997-0800.seq");
     LOG.info("zero file is named: " + emptyfile.getAbsolutePath());
     emptyfile.createNewFile();
     emptyfile.deleteOnExit();
 
-    File emptyfile2 =
-        new File(logdir, "walempty2.0000000.20091104-101213997-0800.seq");
+    File emptyfile2 = new File(logdir,
+        "walempty2.0000000.20091104-101213997-0800.seq");
     LOG.info("zero file is named: " + emptyfile2.getAbsolutePath());
     emptyfile2.createNewFile();
     emptyfile2.deleteOnExit();
@@ -264,10 +273,16 @@ public class TestDiskFailoverSource {
           for (int i = 0; i < 10; i++) {
             // this eventually blocks and never make progress.
             // It will always read the good entries and skip over the bad file.
-            src.next();
+            Event e = src.next();
+            LOG.warn("SurviveTwoEmptyFiles ok event {}: {} ", i, e);
+            if (e == null) {
+              // If the source is closing, it may return null here. This could
+              // result in extra count increments if we don't exit here.
+              return;
+            }
             count.getAndIncrement();
           }
-        } catch (IOException e) {
+        } catch (Exception e) {
           e.printStackTrace();
           okstate.set(false);
         }
@@ -291,7 +306,7 @@ public class TestDiskFailoverSource {
   }
 
   /**
-   *In this stuation we intially open a file that starts of ok. However, at
+   * In this situation we initially open a file that starts of ok. However, at
    * some point in runs into an unexpected end of file (due to a program /
    * machine/ write failure).
    * 
@@ -308,8 +323,8 @@ public class TestDiskFailoverSource {
     logdir.mkdirs();
 
     // create empty file.
-    File corrupt =
-        new File(logdir, "walcorrupt.0000000.20091104-101213997-0800.seq");
+    File corrupt = new File(logdir,
+        "walcorrupt.0000000.20091104-101213997-0800.seq");
     LOG.info("corrupt file is named: " + corrupt.getAbsolutePath());
     FileUtil.dumbfilecopy(new File(WAL_CORRUPT), corrupt);
     corrupt.deleteOnExit();
@@ -330,10 +345,16 @@ public class TestDiskFailoverSource {
           for (int i = 0; true; i++) {
             // this eventually blocks and never make progress.
             // It will always read the good entries and skip over the bad file.
-            src.next();
+            Event e = src.next();
+            LOG.warn("SurviveCorruptFile ok event {}: {} ", i, e);
+            if (e == null) {
+              // If the source is closing, it may return null here. This could
+              // result in extra count increments if we don't exit here.
+              return;
+            }
             count.getAndIncrement();
           }
-        } catch (IOException e) {
+        } catch (Exception e) {
           e.printStackTrace();
           okstate.set(false);
         }
@@ -361,7 +382,7 @@ public class TestDiskFailoverSource {
   // eventually
   @Test
   @Ignore
-  public void testBadDfman() throws IOException {
+  public void testBadDfman() throws IOException, InterruptedException {
     File dir = FileUtil.mktempdir();
     // adding a ridiculous age.
     DiskFailoverManager dfman = new NaiveFileFailoverManager(dir) {

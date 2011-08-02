@@ -23,11 +23,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.handlers.hdfs.SeqfileEventSource;
 import com.cloudera.util.Clock;
@@ -38,7 +40,7 @@ import com.cloudera.util.FileUtil;
  * empty file, truncated file.
  */
 public class TestNaiveFileWALSource {
-
+  Logger LOG = LoggerFactory.getLogger(TestNaiveFileWALSource.class);
   // has 5 good entries.
   final static String WAL_OK = "src/data/hadoop_logs_5.hdfs";
 
@@ -48,8 +50,8 @@ public class TestNaiveFileWALSource {
   @Before
   public void setUp() {
     System.out.println("====================================================");
-    Logger LOG = Logger.getLogger(NaiveFileWALManager.class.getName());
-    LOG.setLevel(Level.DEBUG);
+    org.apache.log4j.Logger.getLogger(NaiveFileWALManager.class.getName())
+        .setLevel(Level.DEBUG);
   }
 
   /**
@@ -181,7 +183,13 @@ public class TestNaiveFileWALSource {
           for (int i = 0; i < 10; i++) {
             // this eventually blocks and never make progress.
             // It will always read the good entries and skip over the bad file.
-            src.next();
+            Event e = src.next();
+            LOG.warn("SurviveEmptyFile ok event {}: {} ", i, e);
+            if (e == null) {
+              // If the source is closing, it may return null here. This could
+              // result in extra count increments if we don't exit here.
+              return;
+            }
             count.getAndIncrement();
           }
         } catch (Exception e) {
@@ -258,7 +266,13 @@ public class TestNaiveFileWALSource {
           for (int i = 0; i < 10; i++) {
             // this eventually blocks and never make progress.
             // It will always read the good entries and skip over the bad file.
-            src.next();
+            Event e = src.next();
+            LOG.warn("SurviveTwoEmptyFiles ok event {}: {} ", i, e);
+            if (e == null) {
+              // If the source is closing, it may return null here. This could
+              // result in extra count increments if we don't exit here.
+              return;
+            }
             count.getAndIncrement();
           }
         } catch (Exception e) {
@@ -285,7 +299,7 @@ public class TestNaiveFileWALSource {
   }
 
   /**
-   * In this stuation we intially open a file that starts of ok. However, at
+   * In this situation we initially open a file that starts of ok. However, at
    * some point in runs into an unexpected end of file (due to a program /
    * machine/ write failure).
    * 
@@ -324,7 +338,13 @@ public class TestNaiveFileWALSource {
           for (int i = 0; true; i++) {
             // this eventually blocks and never make progress.
             // It will always read the good entries and skip over the bad file.
-            src.next();
+            Event e = src.next();
+            LOG.warn("SurviveCorruptFile ok event {}: {} ", i, e);
+            if (e == null) {
+              // If the source is closing, it may return null here. This could
+              // result in extra count increments if we don't exit here.
+              return;
+            }
             count.getAndIncrement();
           }
         } catch (Exception e) {
