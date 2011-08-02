@@ -41,7 +41,7 @@ public class DiskFailoverSource extends EventSource.Base {
     curSource = null;
   }
 
-  EventSource getValidSource() throws IOException {
+  EventSource getValidSource() throws IOException, InterruptedException {
 
     while (curSource == null) {
       curSource = dfMan.getUnsentSource();
@@ -74,7 +74,7 @@ public class DiskFailoverSource extends EventSource.Base {
   }
 
   @Override
-  public Event next() throws IOException {
+  public Event next() throws IOException, InterruptedException {
     curSource = getValidSource();
     if (curSource == null) {
       return null;
@@ -99,7 +99,12 @@ public class DiskFailoverSource extends EventSource.Base {
       }
 
       // this will block if unsent is currently exhausted
-      curSource = dfMan.getUnsentSource();
+      try {
+        curSource = dfMan.getUnsentSource();
+      } catch (InterruptedException ie) {
+        LOG.info("DFO Source exited cleanly by interrupt because buffer was empty");
+        return null;
+      }
       if (curSource == null)
         return null; // no more sources;
       try {

@@ -99,7 +99,7 @@ public interface WALManager extends Reportable, WALCompletionNotifier {
    * Gets an unacked batch. Read from the WAL by getting event sources from the
    * WAL manager.
    */
-  public EventSource getUnackedSource() throws IOException;
+  public EventSource getUnackedSource() throws IOException, InterruptedException;
 
   /**
    * Get a logical sink that breaks stream of data into mini batches

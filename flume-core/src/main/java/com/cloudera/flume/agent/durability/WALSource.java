@@ -46,7 +46,7 @@ class WALSource extends EventSource.Base {
     curSource = null;
   }
 
-  EventSource getValidSource() throws IOException {
+  EventSource getValidSource() throws IOException, InterruptedException {
     while (curSource == null) {
       curSource = walMan.getUnackedSource();
       if (curSource == null) {
@@ -101,7 +101,13 @@ class WALSource extends EventSource.Base {
         LOG.warn("Exception closing (just continue)", ex);
       }
 
-      curSource = walMan.getUnackedSource();
+      try {
+        curSource = walMan.getUnackedSource();
+      } catch (InterruptedException ie) {
+        // unacked source was blocked an interrupted
+        LOG.info("WAL Source exited cleanly by interrupt because buffer was empty");
+        return null;
+      }
       if (curSource == null)
         return null; // no more sources;
       try {

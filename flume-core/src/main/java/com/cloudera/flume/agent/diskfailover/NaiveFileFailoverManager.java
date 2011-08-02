@@ -95,7 +95,7 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
   // still be drained by the subordinate thread, but no new data can be
   // inserted. This is necessary for clean closes.
   enum ManagerState {
-    INIT, OPEN, CLOSED, CLOSING
+    INIT, OPEN, CLOSING, CLOSED
   };
 
   volatile ManagerState state = ManagerState.INIT;
@@ -136,12 +136,7 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
   }
 
   synchronized public void open() throws IOException {
-    // TODO (jon) be less strict. ?? need to return on and figure out why this is
-    // wrong, add
-    // latches.
-
-    // Preconditions.checkState(state == ManagerState.CLOSED,
-    // "Must be in CLOSED state to open, currently " + state);
+    // TODO (jon) be less strict.
 
     // make the dirs if they do not exist
     if (!FileUtil.makeDirs(importDir)) {
@@ -240,8 +235,8 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
       throws IOException {
     File dir = getDir(State.WRITING);
     final String tag = tagger.newTag();
-    EventSink curSink = new SeqfileEventSink(new File(dir, tag)
-        .getAbsoluteFile());
+    EventSink curSink = new SeqfileEventSink(
+        new File(dir, tag).getAbsoluteFile());
     writingQ.add(tag);
     DFOData data = new DFOData(tag);
     table.put(tag, data);
@@ -476,8 +471,7 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
     }
 
     @Override
-    public void getReports(String namePrefix,
-        Map<String, ReportEvent> reports) {
+    public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
       super.getReports(namePrefix, reports);
       src.getReports(namePrefix + getName() + ".", reports);
     }
@@ -490,7 +484,7 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
    * Will block unless this manager has been told to close. When closed will
    * return null;
    */
-  public EventSource getUnsentSource() throws IOException {
+  public EventSource getUnsentSource() throws IOException, InterruptedException {
     synchronized (this) {
       if (state == ManagerState.CLOSED) {
         return null;
@@ -519,7 +513,23 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
 
     } catch (InterruptedException e) {
       LOG.error("interrupted", e);
-      throw new IOException(e);
+      synchronized (this) {
+        if (state != ManagerState.CLOSING) {
+          LOG.warn("!!! Caught interrupted exception but not closed so rethrowing interrupted. loggedQ:"
+              + loggedQ.size() + " sendingQ:" + sendingQ.size());
+          throw e;
+        }
+        if (state == ManagerState.CLOSING) {
+          if (loggedQ.isEmpty() && sendingQ.isEmpty()) {
+            // if empty and interrupted, return cleanly.
+            return null;
+          } else {
+            LOG.warn("!!! Interrupted but queues still have elements so throw exception. loggedQ:"
+                + loggedQ.size() + " sendingQ:" + sendingQ.size());
+            throw new IOException(e);
+          }
+        }
+      }
     }
 
     LOG.info("opening new file for " + sendingTag);

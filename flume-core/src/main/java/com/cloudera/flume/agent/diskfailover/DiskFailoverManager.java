@@ -97,7 +97,7 @@ public interface DiskFailoverManager extends Reportable {
    * sources from the DiskFailoverManager. This changes state, and will block
    * when exhausted, or return null when shutdown.
    */
-  public EventSource getUnsentSource() throws IOException;
+  public EventSource getUnsentSource() throws IOException, InterruptedException;
 
   /**
    * Get a logical sink that breaks stream of data into mini batches

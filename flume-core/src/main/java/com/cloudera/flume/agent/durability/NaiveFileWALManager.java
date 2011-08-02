@@ -99,7 +99,7 @@ public class NaiveFileWALManager implements WALManager {
   private AtomicLong recoverCount = new AtomicLong(0); // batches recovered
   private AtomicLong errCount = new AtomicLong(0); // batches with errors
 
-  private volatile boolean closed = false;
+  private volatile boolean shuttingDown = false;
 
   /**
    * Simple record for keeping the state of tag.
@@ -172,7 +172,11 @@ public class NaiveFileWALManager implements WALManager {
       throw new IOException("Unable to create logged dir: " + errorDir);
     }
 
-    closed = false;
+    if (shuttingDown) {
+      LOG.warn("Strange, shutting down but now reopening");
+    }
+    shuttingDown = false;
+    LOG.info("NaiveFileWALManager is now open");
   }
 
   public Collection<String> getWritingTags() {
@@ -197,7 +201,11 @@ public class NaiveFileWALManager implements WALManager {
    * This is not a blocking close.
    */
   synchronized public void stopDrains() throws IOException {
-    closed = true;
+    if (shuttingDown) {
+      LOG.warn("Already shutting down, but getting another shutting down notice, odd");
+    }
+    shuttingDown = true;
+    LOG.info("NaiveFileWALManager shutting down");
   }
 
   /**
@@ -273,6 +281,7 @@ public class NaiveFileWALManager implements WALManager {
    */
   void recoverLog(final File dir, final String f) throws IOException,
       InterruptedException {
+    LOG.info("Attempting to recover " + dir.getAbsolutePath() + " / " + f);
     MemorySinkSource strippedEvents = new MemorySinkSource();
     AckFramingState state = null;
     try {
@@ -713,8 +722,8 @@ public class NaiveFileWALManager implements WALManager {
    * Will block unless this manager has been told to close. When closed will
    * return null;
    */
-  public EventSource getUnackedSource() throws IOException {
-    // need to get a current file?
+  public EventSource getUnackedSource() throws IOException,
+      InterruptedException {
     String sendingTag = null;
     try {
       while (sendingTag == null) {
@@ -723,17 +732,32 @@ public class NaiveFileWALManager implements WALManager {
 
         if (sendingTag == null) {
           synchronized (this) {
-            if (closed && loggedQ.isEmpty() && sendingQ.isEmpty())
+            if (shuttingDown && loggedQ.isEmpty() && sendingQ.isEmpty())
               return null;
           }
         }
       }
     } catch (InterruptedException e) {
       LOG.error("interrupted", e);
-      throw new IOException(e);
+      synchronized (this) {
+        if (!shuttingDown) {
+          LOG.warn("!!! Caught interrupted exception but not closed so rethrowing interrupted. loggedQ:"
+              + loggedQ.size() + " sendingQ:" + sendingQ.size());
+          throw e;
+        }
+        if (shuttingDown) {
+          if (loggedQ.isEmpty() && sendingQ.isEmpty()) {
+            // if empty and interrupted, return cleanly.
+            return null;
+          } else {
+            LOG.warn("!!! Interrupted but queues still have elements so throw exception. loggedQ:"
+                + loggedQ.size() + " sendingQ:" + sendingQ.size());
+            throw new IOException(e);
+          }
+        }
+      }
     }
-
-    LOG.info("opening log file  {}", sendingTag);
+    LOG.info("opening log file {}", sendingTag);
     changeState(sendingTag, State.LOGGED, State.SENDING);
     sendingCount.incrementAndGet();
     File curFile = getFile(sendingTag);
