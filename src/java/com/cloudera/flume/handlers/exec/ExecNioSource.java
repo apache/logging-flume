@@ -247,7 +247,7 @@ public class ExecNioSource extends EventSource.Base {
 
           if (read == 0) {
             // don't burn the cpu if nothing is read.
-            Clock.sleep(100);
+            Clock.sleep(10);
             continue;
           }
 
