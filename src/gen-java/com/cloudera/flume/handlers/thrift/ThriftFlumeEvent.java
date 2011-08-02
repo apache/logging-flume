@@ -15,15 +15,18 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
-public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent._Fields>, java.io.Serializable, Cloneable {
+public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent, ThriftFlumeEvent._Fields>, java.io.Serializable, Cloneable {
   private static final TStruct STRUCT_DESC = new TStruct("ThriftFlumeEvent");
 
   private static final TField TIMESTAMP_FIELD_DESC = new TField("timestamp", TType.I64, (short)1);
@@ -39,10 +42,10 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent._Fields>, java.i
    * @see Priority
    */
   public Priority priority;
-  public byte[] body;
+  public ByteBuffer body;
   public long nanos;
   public String host;
-  public Map<String,byte[]> fields;
+  public Map<String,ByteBuffer> fields;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements TFieldIdEnum {
@@ -57,12 +60,10 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent._Fields>, java.i
     HOST((short)5, "host"),
     FIELDS((short)6, "fields");
 
-    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
     static {
       for (_Fields field : EnumSet.allOf(_Fields.class)) {
-        byId.put((int)field._thriftId, field);
         byName.put(field.getFieldName(), field);
       }
     }
@@ -71,7 +72,22 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent._Fields>, java.i
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      return byId.get(fieldId);
+      switch(fieldId) {
+        case 1: // TIMESTAMP
+          return TIMESTAMP;
+        case 2: // PRIORITY
+          return PRIORITY;
+        case 3: // BODY
+          return BODY;
+        case 4: // NANOS
+          return NANOS;
+        case 5: // HOST
+          return HOST;
+        case 6: // FIELDS
+          return FIELDS;
+        default:
+          return null;
+      }
     }
 
     /**
@@ -113,24 +129,24 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent._Fields>, java.i
   private static final int __NANOS_ISSET_ID = 1;
   private BitSet __isset_bit_vector = new BitSet(2);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.TIMESTAMP, new FieldMetaData("timestamp", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.I64)));
-    put(_Fields.PRIORITY, new FieldMetaData("priority", TFieldRequirementType.DEFAULT, 
+  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  static {
+    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.TIMESTAMP, new FieldMetaData("timestamp", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.I64        , "Timestamp")));
+    tmpMap.put(_Fields.PRIORITY, new FieldMetaData("priority", TFieldRequirementType.DEFAULT, 
         new EnumMetaData(TType.ENUM, Priority.class)));
-    put(_Fields.BODY, new FieldMetaData("body", TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.BODY, new FieldMetaData("body", TFieldRequirementType.DEFAULT, 
         new FieldValueMetaData(TType.STRING)));
-    put(_Fields.NANOS, new FieldMetaData("nanos", TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.NANOS, new FieldMetaData("nanos", TFieldRequirementType.DEFAULT, 
         new FieldValueMetaData(TType.I64)));
-    put(_Fields.HOST, new FieldMetaData("host", TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.HOST, new FieldMetaData("host", TFieldRequirementType.DEFAULT, 
         new FieldValueMetaData(TType.STRING)));
-    put(_Fields.FIELDS, new FieldMetaData("fields", TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.FIELDS, new FieldMetaData("fields", TFieldRequirementType.DEFAULT, 
         new MapMetaData(TType.MAP, 
             new FieldValueMetaData(TType.STRING), 
             new FieldValueMetaData(TType.STRING))));
-  }});
-
-  static {
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(ThriftFlumeEvent.class, metaDataMap);
   }
 
@@ -140,10 +156,10 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent._Fields>, java.i
   public ThriftFlumeEvent(
     long timestamp,
     Priority priority,
-    byte[] body,
+    ByteBuffer body,
     long nanos,
     String host,
-    Map<String,byte[]> fields)
+    Map<String,ByteBuffer> fields)
   {
     this();
     this.timestamp = timestamp;
@@ -167,24 +183,24 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent._Fields>, java.i
       this.priority = other.priority;
     }
     if (other.isSetBody()) {
-      this.body = new byte[other.body.length];
-      System.arraycopy(other.body, 0, body, 0, other.body.length);
+      this.body = ByteBuffer.wrap(new byte[other.body.limit() - other.body.arrayOffset()]);
+      System.arraycopy(other.body.array(), other.body.arrayOffset(), body.array(), 0, other.body.limit() - other.body.arrayOffset());
     }
     this.nanos = other.nanos;
     if (other.isSetHost()) {
       this.host = other.host;
     }
     if (other.isSetFields()) {
-      Map<String,byte[]> __this__fields = new HashMap<String,byte[]>();
-      for (Map.Entry<String, byte[]> other_element : other.fields.entrySet()) {
+      Map<String,ByteBuffer> __this__fields = new HashMap<String,ByteBuffer>();
+      for (Map.Entry<String, ByteBuffer> other_element : other.fields.entrySet()) {
 
         String other_element_key = other_element.getKey();
-        byte[] other_element_value = other_element.getValue();
+        ByteBuffer other_element_value = other_element.getValue();
 
         String __this__fields_copy_key = other_element_key;
 
-        byte[] __this__fields_copy_value = new byte[other_element_value.length];
-        System.arraycopy(other_element_value, 0, __this__fields_copy_value, 0, other_element_value.length);
+        ByteBuffer __this__fields_copy_value = ByteBuffer.wrap(new byte[other_element_value.limit() - other_element_value.arrayOffset()]);
+        System.arraycopy(other_element_value.array(), other_element_value.arrayOffset(), __this__fields_copy_value.array(), 0, other_element_value.limit() - other_element_value.arrayOffset());
 
         __this__fields.put(__this__fields_copy_key, __this__fields_copy_value);
       }
@@ -199,6 +215,18 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent._Fields>, java.i
   @Deprecated
   public ThriftFlumeEvent clone() {
     return new ThriftFlumeEvent(this);
+  }
+
+  @Override
+  public void clear() {
+    setTimestampIsSet(false);
+    this.timestamp = 0;
+    this.priority = null;
+    this.body = null;
+    setNanosIsSet(false);
+    this.nanos = 0;
+    this.host = null;
+    this.fields = null;
   }
 
   public long getTimestamp() {
@@ -256,11 +284,11 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent._Fields>, java.i
     }
   }
 
-  public byte[] getBody() {
+  public ByteBuffer getBody() {
     return this.body;
   }
 
-  public ThriftFlumeEvent setBody(byte[] body) {
+  public ThriftFlumeEvent setBody(ByteBuffer body) {
     this.body = body;
     return this;
   }
@@ -331,18 +359,18 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent._Fields>, java.i
     return (this.fields == null) ? 0 : this.fields.size();
   }
 
-  public void putToFields(String key, byte[] val) {
+  public void putToFields(String key, ByteBuffer val) {
     if (this.fields == null) {
-      this.fields = new HashMap<String,byte[]>();
+      this.fields = new HashMap<String,ByteBuffer>();
     }
     this.fields.put(key, val);
   }
 
-  public Map<String,byte[]> getFields() {
+  public Map<String,ByteBuffer> getFields() {
     return this.fields;
   }
 
-  public ThriftFlumeEvent setFields(Map<String,byte[]> fields) {
+  public ThriftFlumeEvent setFields(Map<String,ByteBuffer> fields) {
     this.fields = fields;
     return this;
   }
@@ -384,7 +412,7 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent._Fields>, java.i
       if (value == null) {
         unsetBody();
       } else {
-        setBody((byte[])value);
+        setBody((ByteBuffer)value);
       }
       break;
 
@@ -408,7 +436,7 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent._Fields>, java.i
       if (value == null) {
         unsetFields();
       } else {
-        setFields((Map<String,byte[]>)value);
+        setFields((Map<String,ByteBuffer>)value);
       }
       break;
 
@@ -506,7 +534,7 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent._Fields>, java.i
     if (this_present_body || that_present_body) {
       if (!(this_present_body && that_present_body))
         return false;
-      if (!java.util.Arrays.equals(this.body, that.body))
+      if (!this.body.equals(that.body))
         return false;
     }
 
@@ -545,6 +573,71 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent._Fields>, java.i
     return 0;
   }
 
+  public int compareTo(ThriftFlumeEvent other) {
+    if (!getClass().equals(other.getClass())) {
+      return getClass().getName().compareTo(other.getClass().getName());
+    }
+
+    int lastComparison = 0;
+    ThriftFlumeEvent typedOther = (ThriftFlumeEvent)other;
+
+    lastComparison = Boolean.valueOf(isSetTimestamp()).compareTo(typedOther.isSetTimestamp());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetTimestamp()) {      lastComparison = TBaseHelper.compareTo(this.timestamp, typedOther.timestamp);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetPriority()).compareTo(typedOther.isSetPriority());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetPriority()) {      lastComparison = TBaseHelper.compareTo(this.priority, typedOther.priority);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetBody()).compareTo(typedOther.isSetBody());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetBody()) {      lastComparison = TBaseHelper.compareTo(this.body, typedOther.body);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetNanos()).compareTo(typedOther.isSetNanos());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetNanos()) {      lastComparison = TBaseHelper.compareTo(this.nanos, typedOther.nanos);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetHost()).compareTo(typedOther.isSetHost());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetHost()) {      lastComparison = TBaseHelper.compareTo(this.host, typedOther.host);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetFields()).compareTo(typedOther.isSetFields());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetFields()) {      lastComparison = TBaseHelper.compareTo(this.fields, typedOther.fields);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    return 0;
+  }
+
   public void read(TProtocol iprot) throws TException {
     TField field;
     iprot.readStructBegin();
@@ -554,70 +647,67 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent._Fields>, java.i
       if (field.type == TType.STOP) { 
         break;
       }
-      _Fields fieldId = _Fields.findByThriftId(field.id);
-      if (fieldId == null) {
-        TProtocolUtil.skip(iprot, field.type);
-      } else {
-        switch (fieldId) {
-          case TIMESTAMP:
-            if (field.type == TType.I64) {
-              this.timestamp = iprot.readI64();
-              setTimestampIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case PRIORITY:
-            if (field.type == TType.I32) {
-              this.priority = Priority.findByValue(iprot.readI32());
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case BODY:
-            if (field.type == TType.STRING) {
-              this.body = iprot.readBinary();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case NANOS:
-            if (field.type == TType.I64) {
-              this.nanos = iprot.readI64();
-              setNanosIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case HOST:
-            if (field.type == TType.STRING) {
-              this.host = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case FIELDS:
-            if (field.type == TType.MAP) {
+      switch (field.id) {
+        case 1: // TIMESTAMP
+          if (field.type == TType.I64) {
+            this.timestamp = iprot.readI64();
+            setTimestampIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 2: // PRIORITY
+          if (field.type == TType.I32) {
+            this.priority = Priority.findByValue(iprot.readI32());
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 3: // BODY
+          if (field.type == TType.STRING) {
+            this.body = iprot.readBinary();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 4: // NANOS
+          if (field.type == TType.I64) {
+            this.nanos = iprot.readI64();
+            setNanosIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 5: // HOST
+          if (field.type == TType.STRING) {
+            this.host = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 6: // FIELDS
+          if (field.type == TType.MAP) {
+            {
+              TMap _map0 = iprot.readMapBegin();
+              this.fields = new HashMap<String,ByteBuffer>(2*_map0.size);
+              for (int _i1 = 0; _i1 < _map0.size; ++_i1)
               {
-                TMap _map0 = iprot.readMapBegin();
-                this.fields = new HashMap<String,byte[]>(2*_map0.size);
-                for (int _i1 = 0; _i1 < _map0.size; ++_i1)
-                {
-                  String _key2;
-                  byte[] _val3;
-                  _key2 = iprot.readString();
-                  _val3 = iprot.readBinary();
-                  this.fields.put(_key2, _val3);
-                }
-                iprot.readMapEnd();
+                String _key2;
+                ByteBuffer _val3;
+                _key2 = iprot.readString();
+                _val3 = iprot.readBinary();
+                this.fields.put(_key2, _val3);
               }
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              iprot.readMapEnd();
             }
-            break;
-        }
-        iprot.readFieldEnd();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
       }
+      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 
@@ -654,7 +744,7 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent._Fields>, java.i
       oprot.writeFieldBegin(FIELDS_FIELD_DESC);
       {
         oprot.writeMapBegin(new TMap(TType.STRING, TType.STRING, this.fields.size()));
-        for (Map.Entry<String, byte[]> _iter4 : this.fields.entrySet())
+        for (Map.Entry<String, ByteBuffer> _iter4 : this.fields.entrySet())
         {
           oprot.writeString(_iter4.getKey());
           oprot.writeBinary(_iter4.getValue());
@@ -680,15 +770,7 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent._Fields>, java.i
     if (this.priority == null) {
       sb.append("null");
     } else {
-      String priority_name = priority.name();
-      if (priority_name != null) {
-        sb.append(priority_name);
-        sb.append(" (");
-      }
       sb.append(this.priority);
-      if (priority_name != null) {
-        sb.append(")");
-      }
     }
     first = false;
     if (!first) sb.append(", ");
@@ -696,12 +778,7 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent._Fields>, java.i
     if (this.body == null) {
       sb.append("null");
     } else {
-        int __body_size = Math.min(this.body.length, 128);
-        for (int i = 0; i < __body_size; i++) {
-          if (i != 0) sb.append(" ");
-          sb.append(Integer.toHexString(this.body[i]).length() > 1 ? Integer.toHexString(this.body[i]).substring(Integer.toHexString(this.body[i]).length() - 2).toUpperCase() : "0" + Integer.toHexString(this.body[i]).toUpperCase());
-        }
-        if (this.body.length > 128) sb.append(" ...");
+      TBaseHelper.toString(this.body, sb);
     }
     first = false;
     if (!first) sb.append(", ");

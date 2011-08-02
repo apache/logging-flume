@@ -15,15 +15,18 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
-public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift._Fields>, java.io.Serializable, Cloneable, Comparable<FlumeMasterCommandThrift> {
+public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift, FlumeMasterCommandThrift._Fields>, java.io.Serializable, Cloneable {
   private static final TStruct STRUCT_DESC = new TStruct("FlumeMasterCommandThrift");
 
   private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)1);
@@ -37,12 +40,10 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift.
     COMMAND((short)1, "command"),
     ARGUMENTS((short)2, "arguments");
 
-    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
     static {
       for (_Fields field : EnumSet.allOf(_Fields.class)) {
-        byId.put((int)field._thriftId, field);
         byName.put(field.getFieldName(), field);
       }
     }
@@ -51,7 +52,14 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift.
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      return byId.get(fieldId);
+      switch(fieldId) {
+        case 1: // COMMAND
+          return COMMAND;
+        case 2: // ARGUMENTS
+          return ARGUMENTS;
+        default:
+          return null;
+      }
     }
 
     /**
@@ -90,15 +98,15 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift.
 
   // isset id assignments
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
+  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  static {
+    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
         new FieldValueMetaData(TType.STRING)));
-    put(_Fields.ARGUMENTS, new FieldMetaData("arguments", TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.ARGUMENTS, new FieldMetaData("arguments", TFieldRequirementType.DEFAULT, 
         new ListMetaData(TType.LIST, 
             new FieldValueMetaData(TType.STRING))));
-  }});
-
-  static {
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(FlumeMasterCommandThrift.class, metaDataMap);
   }
 
@@ -137,6 +145,12 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift.
   @Deprecated
   public FlumeMasterCommandThrift clone() {
     return new FlumeMasterCommandThrift(this);
+  }
+
+  @Override
+  public void clear() {
+    this.command = null;
+    this.arguments = null;
   }
 
   public String getCommand() {
@@ -305,21 +319,23 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift.
     int lastComparison = 0;
     FlumeMasterCommandThrift typedOther = (FlumeMasterCommandThrift)other;
 
-    lastComparison = Boolean.valueOf(isSetCommand()).compareTo(isSetCommand());
+    lastComparison = Boolean.valueOf(isSetCommand()).compareTo(typedOther.isSetCommand());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(command, typedOther.command);
+    if (isSetCommand()) {      lastComparison = TBaseHelper.compareTo(this.command, typedOther.command);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetArguments()).compareTo(typedOther.isSetArguments());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetArguments()).compareTo(isSetArguments());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(arguments, typedOther.arguments);
-    if (lastComparison != 0) {
-      return lastComparison;
+    if (isSetArguments()) {      lastComparison = TBaseHelper.compareTo(this.arguments, typedOther.arguments);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
     }
     return 0;
   }
@@ -333,38 +349,35 @@ public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift.
       if (field.type == TType.STOP) { 
         break;
       }
-      _Fields fieldId = _Fields.findByThriftId(field.id);
-      if (fieldId == null) {
-        TProtocolUtil.skip(iprot, field.type);
-      } else {
-        switch (fieldId) {
-          case COMMAND:
-            if (field.type == TType.STRING) {
-              this.command = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case ARGUMENTS:
-            if (field.type == TType.LIST) {
+      switch (field.id) {
+        case 1: // COMMAND
+          if (field.type == TType.STRING) {
+            this.command = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 2: // ARGUMENTS
+          if (field.type == TType.LIST) {
+            {
+              TList _list0 = iprot.readListBegin();
+              this.arguments = new ArrayList<String>(_list0.size);
+              for (int _i1 = 0; _i1 < _list0.size; ++_i1)
               {
-                TList _list0 = iprot.readListBegin();
-                this.arguments = new ArrayList<String>(_list0.size);
-                for (int _i1 = 0; _i1 < _list0.size; ++_i1)
-                {
-                  String _elem2;
-                  _elem2 = iprot.readString();
-                  this.arguments.add(_elem2);
-                }
-                iprot.readListEnd();
+                String _elem2;
+                _elem2 = iprot.readString();
+                this.arguments.add(_elem2);
               }
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              iprot.readListEnd();
             }
-            break;
-        }
-        iprot.readFieldEnd();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
       }
+      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 

@@ -15,12 +15,15 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
 public class ThriftFlumeEventServer {
@@ -37,7 +40,29 @@ public class ThriftFlumeEventServer {
 
   }
 
-  public static class Client implements Iface {
+  public interface AsyncIface {
+
+    public void append(ThriftFlumeEvent evt, AsyncMethodCallback<AsyncClient.append_call> resultHandler) throws TException;
+
+    public void rawAppend(RawEvent evt, AsyncMethodCallback<AsyncClient.rawAppend_call> resultHandler) throws TException;
+
+    public void ackedAppend(ThriftFlumeEvent evt, AsyncMethodCallback<AsyncClient.ackedAppend_call> resultHandler) throws TException;
+
+    public void close(AsyncMethodCallback<AsyncClient.close_call> resultHandler) throws TException;
+
+  }
+
+  public static class Client implements TServiceClient, Iface {
+    public static class Factory implements TServiceClientFactory<Client> {
+      public Factory() {}
+      public Client getClient(TProtocol prot) {
+        return new Client(prot);
+      }
+      public Client getClient(TProtocol iprot, TProtocol oprot) {
+        return new Client(iprot, oprot);
+      }
+    }
+
     public Client(TProtocol prot)
     {
       this(prot, prot);
@@ -71,9 +96,9 @@ public class ThriftFlumeEventServer {
 
     public void send_append(ThriftFlumeEvent evt) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("append", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("append", TMessageType.CALL, ++seqid_));
       append_args args = new append_args();
-      args.evt = evt;
+      args.setEvt(evt);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -86,9 +111,9 @@ public class ThriftFlumeEventServer {
 
     public void send_rawAppend(RawEvent evt) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("rawAppend", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("rawAppend", TMessageType.CALL, ++seqid_));
       rawAppend_args args = new rawAppend_args();
-      args.evt = evt;
+      args.setEvt(evt);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -102,9 +127,9 @@ public class ThriftFlumeEventServer {
 
     public void send_ackedAppend(ThriftFlumeEvent evt) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("ackedAppend", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("ackedAppend", TMessageType.CALL, ++seqid_));
       ackedAppend_args args = new ackedAppend_args();
-      args.evt = evt;
+      args.setEvt(evt);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -117,6 +142,9 @@ public class ThriftFlumeEventServer {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "ackedAppend failed: out of sequence response");
       }
       ackedAppend_result result = new ackedAppend_result();
       result.read(iprot_);
@@ -135,7 +163,7 @@ public class ThriftFlumeEventServer {
 
     public void send_close() throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("close", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("close", TMessageType.CALL, ++seqid_));
       close_args args = new close_args();
       args.write(oprot_);
       oprot_.writeMessageEnd();
@@ -150,6 +178,9 @@ public class ThriftFlumeEventServer {
         iprot_.readMessageEnd();
         throw x;
       }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "close failed: out of sequence response");
+      }
       close_result result = new close_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
@@ -157,6 +188,144 @@ public class ThriftFlumeEventServer {
     }
 
   }
+  public static class AsyncClient extends TAsyncClient implements AsyncIface {
+    public static class Factory implements TAsyncClientFactory<AsyncClient> {
+      private TAsyncClientManager clientManager;
+      private TProtocolFactory protocolFactory;
+      public Factory(TAsyncClientManager clientManager, TProtocolFactory protocolFactory) {
+        this.clientManager = clientManager;
+        this.protocolFactory = protocolFactory;
+      }
+      public AsyncClient getAsyncClient(TNonblockingTransport transport) {
+        return new AsyncClient(protocolFactory, clientManager, transport);
+      }
+    }
+
+    public AsyncClient(TProtocolFactory protocolFactory, TAsyncClientManager clientManager, TNonblockingTransport transport) {
+      super(protocolFactory, clientManager, transport);
+    }
+
+    public void append(ThriftFlumeEvent evt, AsyncMethodCallback<append_call> resultHandler) throws TException {
+      checkReady();
+      append_call method_call = new append_call(evt, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class append_call extends TAsyncMethodCall {
+      private ThriftFlumeEvent evt;
+      public append_call(ThriftFlumeEvent evt, AsyncMethodCallback<append_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, true);
+        this.evt = evt;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("append", TMessageType.CALL, 0));
+        append_args args = new append_args();
+        args.setEvt(evt);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+      }
+    }
+
+    public void rawAppend(RawEvent evt, AsyncMethodCallback<rawAppend_call> resultHandler) throws TException {
+      checkReady();
+      rawAppend_call method_call = new rawAppend_call(evt, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class rawAppend_call extends TAsyncMethodCall {
+      private RawEvent evt;
+      public rawAppend_call(RawEvent evt, AsyncMethodCallback<rawAppend_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, true);
+        this.evt = evt;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("rawAppend", TMessageType.CALL, 0));
+        rawAppend_args args = new rawAppend_args();
+        args.setEvt(evt);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+      }
+    }
+
+    public void ackedAppend(ThriftFlumeEvent evt, AsyncMethodCallback<ackedAppend_call> resultHandler) throws TException {
+      checkReady();
+      ackedAppend_call method_call = new ackedAppend_call(evt, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class ackedAppend_call extends TAsyncMethodCall {
+      private ThriftFlumeEvent evt;
+      public ackedAppend_call(ThriftFlumeEvent evt, AsyncMethodCallback<ackedAppend_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.evt = evt;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("ackedAppend", TMessageType.CALL, 0));
+        ackedAppend_args args = new ackedAppend_args();
+        args.setEvt(evt);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public EventStatus getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_ackedAppend();
+      }
+    }
+
+    public void close(AsyncMethodCallback<close_call> resultHandler) throws TException {
+      checkReady();
+      close_call method_call = new close_call(resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class close_call extends TAsyncMethodCall {
+      public close_call(AsyncMethodCallback<close_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("close", TMessageType.CALL, 0));
+        close_args args = new close_args();
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_close();
+      }
+    }
+
+  }
+
   public static class Processor implements TProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class.getName());
     public Processor(Iface iface)
@@ -197,7 +366,17 @@ public class ThriftFlumeEventServer {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         append_args args = new append_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("append", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         iface_.append(args.evt);
         return;
@@ -208,7 +387,17 @@ public class ThriftFlumeEventServer {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         rawAppend_args args = new rawAppend_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("rawAppend", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         iface_.rawAppend(args.evt);
         return;
@@ -219,7 +408,17 @@ public class ThriftFlumeEventServer {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         ackedAppend_args args = new ackedAppend_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("ackedAppend", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         ackedAppend_result result = new ackedAppend_result();
         result.success = iface_.ackedAppend(args.evt);
@@ -235,7 +434,17 @@ public class ThriftFlumeEventServer {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         close_args args = new close_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("close", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         close_result result = new close_result();
         iface_.close();
@@ -249,7 +458,7 @@ public class ThriftFlumeEventServer {
 
   }
 
-  public static class append_args implements TBase<append_args._Fields>, java.io.Serializable, Cloneable   {
+  public static class append_args implements TBase<append_args, append_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("append_args");
 
     private static final TField EVT_FIELD_DESC = new TField("evt", TType.STRUCT, (short)1);
@@ -260,12 +469,10 @@ public class ThriftFlumeEventServer {
     public enum _Fields implements TFieldIdEnum {
       EVT((short)1, "evt");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -274,7 +481,12 @@ public class ThriftFlumeEventServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // EVT
+            return EVT;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -313,12 +525,12 @@ public class ThriftFlumeEventServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.EVT, new FieldMetaData("evt", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, ThriftFlumeEvent.class)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.EVT, new FieldMetaData("evt", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, ThriftFlumeEvent.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(append_args.class, metaDataMap);
     }
 
@@ -348,6 +560,11 @@ public class ThriftFlumeEventServer {
     @Deprecated
     public append_args clone() {
       return new append_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.evt = null;
     }
 
     public ThriftFlumeEvent getEvt() {
@@ -447,6 +664,26 @@ public class ThriftFlumeEventServer {
       return 0;
     }
 
+    public int compareTo(append_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      append_args typedOther = (append_args)other;
+
+      lastComparison = Boolean.valueOf(isSetEvt()).compareTo(typedOther.isSetEvt());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetEvt()) {        lastComparison = TBaseHelper.compareTo(this.evt, typedOther.evt);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
     public void read(TProtocol iprot) throws TException {
       TField field;
       iprot.readStructBegin();
@@ -456,22 +693,19 @@ public class ThriftFlumeEventServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case EVT:
-              if (field.type == TType.STRUCT) {
-                this.evt = new ThriftFlumeEvent();
-                this.evt.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // EVT
+            if (field.type == TType.STRUCT) {
+              this.evt = new ThriftFlumeEvent();
+              this.evt.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -514,7 +748,7 @@ public class ThriftFlumeEventServer {
 
   }
 
-  public static class rawAppend_args implements TBase<rawAppend_args._Fields>, java.io.Serializable, Cloneable, Comparable<rawAppend_args>   {
+  public static class rawAppend_args implements TBase<rawAppend_args, rawAppend_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("rawAppend_args");
 
     private static final TField EVT_FIELD_DESC = new TField("evt", TType.STRUCT, (short)1);
@@ -525,12 +759,10 @@ public class ThriftFlumeEventServer {
     public enum _Fields implements TFieldIdEnum {
       EVT((short)1, "evt");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -539,7 +771,12 @@ public class ThriftFlumeEventServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // EVT
+            return EVT;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -578,12 +815,12 @@ public class ThriftFlumeEventServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.EVT, new FieldMetaData("evt", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, RawEvent.class)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.EVT, new FieldMetaData("evt", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, RawEvent.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(rawAppend_args.class, metaDataMap);
     }
 
@@ -613,6 +850,11 @@ public class ThriftFlumeEventServer {
     @Deprecated
     public rawAppend_args clone() {
       return new rawAppend_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.evt = null;
     }
 
     public RawEvent getEvt() {
@@ -720,13 +962,14 @@ public class ThriftFlumeEventServer {
       int lastComparison = 0;
       rawAppend_args typedOther = (rawAppend_args)other;
 
-      lastComparison = Boolean.valueOf(isSetEvt()).compareTo(isSetEvt());
+      lastComparison = Boolean.valueOf(isSetEvt()).compareTo(typedOther.isSetEvt());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(evt, typedOther.evt);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetEvt()) {        lastComparison = TBaseHelper.compareTo(this.evt, typedOther.evt);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -740,22 +983,19 @@ public class ThriftFlumeEventServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case EVT:
-              if (field.type == TType.STRUCT) {
-                this.evt = new RawEvent();
-                this.evt.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // EVT
+            if (field.type == TType.STRUCT) {
+              this.evt = new RawEvent();
+              this.evt.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -798,7 +1038,7 @@ public class ThriftFlumeEventServer {
 
   }
 
-  public static class ackedAppend_args implements TBase<ackedAppend_args._Fields>, java.io.Serializable, Cloneable   {
+  public static class ackedAppend_args implements TBase<ackedAppend_args, ackedAppend_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("ackedAppend_args");
 
     private static final TField EVT_FIELD_DESC = new TField("evt", TType.STRUCT, (short)1);
@@ -809,12 +1049,10 @@ public class ThriftFlumeEventServer {
     public enum _Fields implements TFieldIdEnum {
       EVT((short)1, "evt");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -823,7 +1061,12 @@ public class ThriftFlumeEventServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // EVT
+            return EVT;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -862,12 +1105,12 @@ public class ThriftFlumeEventServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.EVT, new FieldMetaData("evt", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, ThriftFlumeEvent.class)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.EVT, new FieldMetaData("evt", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, ThriftFlumeEvent.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(ackedAppend_args.class, metaDataMap);
     }
 
@@ -897,6 +1140,11 @@ public class ThriftFlumeEventServer {
     @Deprecated
     public ackedAppend_args clone() {
       return new ackedAppend_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.evt = null;
     }
 
     public ThriftFlumeEvent getEvt() {
@@ -996,6 +1244,26 @@ public class ThriftFlumeEventServer {
       return 0;
     }
 
+    public int compareTo(ackedAppend_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      ackedAppend_args typedOther = (ackedAppend_args)other;
+
+      lastComparison = Boolean.valueOf(isSetEvt()).compareTo(typedOther.isSetEvt());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetEvt()) {        lastComparison = TBaseHelper.compareTo(this.evt, typedOther.evt);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
     public void read(TProtocol iprot) throws TException {
       TField field;
       iprot.readStructBegin();
@@ -1005,22 +1273,19 @@ public class ThriftFlumeEventServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case EVT:
-              if (field.type == TType.STRUCT) {
-                this.evt = new ThriftFlumeEvent();
-                this.evt.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // EVT
+            if (field.type == TType.STRUCT) {
+              this.evt = new ThriftFlumeEvent();
+              this.evt.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -1063,7 +1328,7 @@ public class ThriftFlumeEventServer {
 
   }
 
-  public static class ackedAppend_result implements TBase<ackedAppend_result._Fields>, java.io.Serializable, Cloneable, Comparable<ackedAppend_result>   {
+  public static class ackedAppend_result implements TBase<ackedAppend_result, ackedAppend_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("ackedAppend_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.I32, (short)0);
@@ -1082,12 +1347,10 @@ public class ThriftFlumeEventServer {
        */
       SUCCESS((short)0, "success");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -1096,7 +1359,12 @@ public class ThriftFlumeEventServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -1135,12 +1403,12 @@ public class ThriftFlumeEventServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new EnumMetaData(TType.ENUM, EventStatus.class)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new EnumMetaData(TType.ENUM, EventStatus.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(ackedAppend_result.class, metaDataMap);
     }
 
@@ -1170,6 +1438,11 @@ public class ThriftFlumeEventServer {
     @Deprecated
     public ackedAppend_result clone() {
       return new ackedAppend_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
     }
 
     /**
@@ -1285,13 +1558,14 @@ public class ThriftFlumeEventServer {
       int lastComparison = 0;
       ackedAppend_result typedOther = (ackedAppend_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -1305,21 +1579,18 @@ public class ThriftFlumeEventServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.I32) {
-                this.success = EventStatus.findByValue(iprot.readI32());
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.I32) {
+              this.success = EventStatus.findByValue(iprot.readI32());
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -1348,15 +1619,7 @@ public class ThriftFlumeEventServer {
       if (this.success == null) {
         sb.append("null");
       } else {
-        String success_name = success.name();
-        if (success_name != null) {
-          sb.append(success_name);
-          sb.append(" (");
-        }
         sb.append(this.success);
-        if (success_name != null) {
-          sb.append(")");
-        }
       }
       first = false;
       sb.append(")");
@@ -1369,7 +1632,7 @@ public class ThriftFlumeEventServer {
 
   }
 
-  public static class close_args implements TBase<close_args._Fields>, java.io.Serializable, Cloneable, Comparable<close_args>   {
+  public static class close_args implements TBase<close_args, close_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("close_args");
 
 
@@ -1378,12 +1641,10 @@ public class ThriftFlumeEventServer {
     public enum _Fields implements TFieldIdEnum {
 ;
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -1392,7 +1653,10 @@ public class ThriftFlumeEventServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          default:
+            return null;
+        }
       }
 
       /**
@@ -1428,10 +1692,10 @@ public class ThriftFlumeEventServer {
         return _fieldName;
       }
     }
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(close_args.class, metaDataMap);
     }
 
@@ -1451,6 +1715,10 @@ public class ThriftFlumeEventServer {
     @Deprecated
     public close_args clone() {
       return new close_args(this);
+    }
+
+    @Override
+    public void clear() {
     }
 
     public void setFieldValue(_Fields field, Object value) {
@@ -1524,14 +1792,11 @@ public class ThriftFlumeEventServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -1562,7 +1827,7 @@ public class ThriftFlumeEventServer {
 
   }
 
-  public static class close_result implements TBase<close_result._Fields>, java.io.Serializable, Cloneable, Comparable<close_result>   {
+  public static class close_result implements TBase<close_result, close_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("close_result");
 
 
@@ -1571,12 +1836,10 @@ public class ThriftFlumeEventServer {
     public enum _Fields implements TFieldIdEnum {
 ;
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -1585,7 +1848,10 @@ public class ThriftFlumeEventServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          default:
+            return null;
+        }
       }
 
       /**
@@ -1621,10 +1887,10 @@ public class ThriftFlumeEventServer {
         return _fieldName;
       }
     }
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(close_result.class, metaDataMap);
     }
 
@@ -1644,6 +1910,10 @@ public class ThriftFlumeEventServer {
     @Deprecated
     public close_result clone() {
       return new close_result(this);
+    }
+
+    @Override
+    public void clear() {
     }
 
     public void setFieldValue(_Fields field, Object value) {
@@ -1717,14 +1987,11 @@ public class ThriftFlumeEventServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 

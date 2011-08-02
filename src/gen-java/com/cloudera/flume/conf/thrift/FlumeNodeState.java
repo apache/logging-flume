@@ -9,20 +9,15 @@ package com.cloudera.flume.conf.thrift;
 import java.util.Map;
 import java.util.HashMap;
 import org.apache.thrift.TEnum;
-public enum FlumeNodeState implements TEnum{
-    HELLO(0),
-    IDLE(1),
-    CONFIGURING(2),
-    ACTIVE(3),
-    ERROR(4),
-    LOST(5),
-    DECOMMISSIONED(6);
 
-  private static final Map<Integer, FlumeNodeState> BY_VALUE = new HashMap<Integer,FlumeNodeState>() {{
-    for(FlumeNodeState val : FlumeNodeState.values()) {
-      put(val.getValue(), val);
-    }
-  }};
+public enum FlumeNodeState implements TEnum {
+  HELLO(0),
+  IDLE(1),
+  CONFIGURING(2),
+  ACTIVE(3),
+  ERROR(4),
+  LOST(5),
+  DECOMMISSIONED(6);
 
   private final int value;
 
@@ -42,6 +37,23 @@ public enum FlumeNodeState implements TEnum{
    * @return null if the value is not found.
    */
   public static FlumeNodeState findByValue(int value) { 
-    return BY_VALUE.get(value);
+    switch (value) {
+      case 0:
+        return HELLO;
+      case 1:
+        return IDLE;
+      case 2:
+        return CONFIGURING;
+      case 3:
+        return ACTIVE;
+      case 4:
+        return ERROR;
+      case 5:
+        return LOST;
+      case 6:
+        return DECOMMISSIONED;
+      default:
+        return null;
+    }
   }
 }

@@ -15,15 +15,18 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
-public class FlumeClientServer {
+public class ThriftFlumeClientServer {
 
   public interface Iface {
 
@@ -39,11 +42,39 @@ public class FlumeClientServer {
 
     public boolean checkAck(String ackid) throws TException;
 
-    public void putReports(Map<String,com.cloudera.flume.reporter.server.FlumeReport> reports) throws TException;
+    public void putReports(Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> reports) throws TException;
 
   }
 
-  public static class Client implements Iface {
+  public interface AsyncIface {
+
+    public void heartbeat(String logicalNode, String physicalNode, String host, FlumeNodeState s, long timestamp, AsyncMethodCallback<AsyncClient.heartbeat_call> resultHandler) throws TException;
+
+    public void getConfig(String sourceId, AsyncMethodCallback<AsyncClient.getConfig_call> resultHandler) throws TException;
+
+    public void getLogicalNodes(String physNode, AsyncMethodCallback<AsyncClient.getLogicalNodes_call> resultHandler) throws TException;
+
+    public void getChokeMap(String physNode, AsyncMethodCallback<AsyncClient.getChokeMap_call> resultHandler) throws TException;
+
+    public void acknowledge(String ackid, AsyncMethodCallback<AsyncClient.acknowledge_call> resultHandler) throws TException;
+
+    public void checkAck(String ackid, AsyncMethodCallback<AsyncClient.checkAck_call> resultHandler) throws TException;
+
+    public void putReports(Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> reports, AsyncMethodCallback<AsyncClient.putReports_call> resultHandler) throws TException;
+
+  }
+
+  public static class Client implements TServiceClient, Iface {
+    public static class Factory implements TServiceClientFactory<Client> {
+      public Factory() {}
+      public Client getClient(TProtocol prot) {
+        return new Client(prot);
+      }
+      public Client getClient(TProtocol iprot, TProtocol oprot) {
+        return new Client(iprot, oprot);
+      }
+    }
+
     public Client(TProtocol prot)
     {
       this(prot, prot);
@@ -78,13 +109,13 @@ public class FlumeClientServer {
 
     public void send_heartbeat(String logicalNode, String physicalNode, String host, FlumeNodeState s, long timestamp) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("heartbeat", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("heartbeat", TMessageType.CALL, ++seqid_));
       heartbeat_args args = new heartbeat_args();
-      args.logicalNode = logicalNode;
-      args.physicalNode = physicalNode;
-      args.host = host;
-      args.s = s;
-      args.timestamp = timestamp;
+      args.setLogicalNode(logicalNode);
+      args.setPhysicalNode(physicalNode);
+      args.setHost(host);
+      args.setS(s);
+      args.setTimestamp(timestamp);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -97,6 +128,9 @@ public class FlumeClientServer {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "heartbeat failed: out of sequence response");
       }
       heartbeat_result result = new heartbeat_result();
       result.read(iprot_);
@@ -115,9 +149,9 @@ public class FlumeClientServer {
 
     public void send_getConfig(String sourceId) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("getConfig", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("getConfig", TMessageType.CALL, ++seqid_));
       getConfig_args args = new getConfig_args();
-      args.sourceId = sourceId;
+      args.setSourceId(sourceId);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -130,6 +164,9 @@ public class FlumeClientServer {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "getConfig failed: out of sequence response");
       }
       getConfig_result result = new getConfig_result();
       result.read(iprot_);
@@ -148,9 +185,9 @@ public class FlumeClientServer {
 
     public void send_getLogicalNodes(String physNode) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("getLogicalNodes", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("getLogicalNodes", TMessageType.CALL, ++seqid_));
       getLogicalNodes_args args = new getLogicalNodes_args();
-      args.physNode = physNode;
+      args.setPhysNode(physNode);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -163,6 +200,9 @@ public class FlumeClientServer {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "getLogicalNodes failed: out of sequence response");
       }
       getLogicalNodes_result result = new getLogicalNodes_result();
       result.read(iprot_);
@@ -181,9 +221,9 @@ public class FlumeClientServer {
 
     public void send_getChokeMap(String physNode) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("getChokeMap", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("getChokeMap", TMessageType.CALL, ++seqid_));
       getChokeMap_args args = new getChokeMap_args();
-      args.physNode = physNode;
+      args.setPhysNode(physNode);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -196,6 +236,9 @@ public class FlumeClientServer {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "getChokeMap failed: out of sequence response");
       }
       getChokeMap_result result = new getChokeMap_result();
       result.read(iprot_);
@@ -214,9 +257,9 @@ public class FlumeClientServer {
 
     public void send_acknowledge(String ackid) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("acknowledge", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("acknowledge", TMessageType.CALL, ++seqid_));
       acknowledge_args args = new acknowledge_args();
-      args.ackid = ackid;
+      args.setAckid(ackid);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -229,6 +272,9 @@ public class FlumeClientServer {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "acknowledge failed: out of sequence response");
       }
       acknowledge_result result = new acknowledge_result();
       result.read(iprot_);
@@ -244,9 +290,9 @@ public class FlumeClientServer {
 
     public void send_checkAck(String ackid) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("checkAck", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("checkAck", TMessageType.CALL, ++seqid_));
       checkAck_args args = new checkAck_args();
-      args.ackid = ackid;
+      args.setAckid(ackid);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -260,6 +306,9 @@ public class FlumeClientServer {
         iprot_.readMessageEnd();
         throw x;
       }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "checkAck failed: out of sequence response");
+      }
       checkAck_result result = new checkAck_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
@@ -269,17 +318,17 @@ public class FlumeClientServer {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "checkAck failed: unknown result");
     }
 
-    public void putReports(Map<String,com.cloudera.flume.reporter.server.FlumeReport> reports) throws TException
+    public void putReports(Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> reports) throws TException
     {
       send_putReports(reports);
       recv_putReports();
     }
 
-    public void send_putReports(Map<String,com.cloudera.flume.reporter.server.FlumeReport> reports) throws TException
+    public void send_putReports(Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> reports) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("putReports", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("putReports", TMessageType.CALL, ++seqid_));
       putReports_args args = new putReports_args();
-      args.reports = reports;
+      args.setReports(reports);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -293,6 +342,9 @@ public class FlumeClientServer {
         iprot_.readMessageEnd();
         throw x;
       }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "putReports failed: out of sequence response");
+      }
       putReports_result result = new putReports_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
@@ -300,6 +352,254 @@ public class FlumeClientServer {
     }
 
   }
+  public static class AsyncClient extends TAsyncClient implements AsyncIface {
+    public static class Factory implements TAsyncClientFactory<AsyncClient> {
+      private TAsyncClientManager clientManager;
+      private TProtocolFactory protocolFactory;
+      public Factory(TAsyncClientManager clientManager, TProtocolFactory protocolFactory) {
+        this.clientManager = clientManager;
+        this.protocolFactory = protocolFactory;
+      }
+      public AsyncClient getAsyncClient(TNonblockingTransport transport) {
+        return new AsyncClient(protocolFactory, clientManager, transport);
+      }
+    }
+
+    public AsyncClient(TProtocolFactory protocolFactory, TAsyncClientManager clientManager, TNonblockingTransport transport) {
+      super(protocolFactory, clientManager, transport);
+    }
+
+    public void heartbeat(String logicalNode, String physicalNode, String host, FlumeNodeState s, long timestamp, AsyncMethodCallback<heartbeat_call> resultHandler) throws TException {
+      checkReady();
+      heartbeat_call method_call = new heartbeat_call(logicalNode, physicalNode, host, s, timestamp, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class heartbeat_call extends TAsyncMethodCall {
+      private String logicalNode;
+      private String physicalNode;
+      private String host;
+      private FlumeNodeState s;
+      private long timestamp;
+      public heartbeat_call(String logicalNode, String physicalNode, String host, FlumeNodeState s, long timestamp, AsyncMethodCallback<heartbeat_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.logicalNode = logicalNode;
+        this.physicalNode = physicalNode;
+        this.host = host;
+        this.s = s;
+        this.timestamp = timestamp;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("heartbeat", TMessageType.CALL, 0));
+        heartbeat_args args = new heartbeat_args();
+        args.setLogicalNode(logicalNode);
+        args.setPhysicalNode(physicalNode);
+        args.setHost(host);
+        args.setS(s);
+        args.setTimestamp(timestamp);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public boolean getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_heartbeat();
+      }
+    }
+
+    public void getConfig(String sourceId, AsyncMethodCallback<getConfig_call> resultHandler) throws TException {
+      checkReady();
+      getConfig_call method_call = new getConfig_call(sourceId, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class getConfig_call extends TAsyncMethodCall {
+      private String sourceId;
+      public getConfig_call(String sourceId, AsyncMethodCallback<getConfig_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.sourceId = sourceId;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("getConfig", TMessageType.CALL, 0));
+        getConfig_args args = new getConfig_args();
+        args.setSourceId(sourceId);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public ThriftFlumeConfigData getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getConfig();
+      }
+    }
+
+    public void getLogicalNodes(String physNode, AsyncMethodCallback<getLogicalNodes_call> resultHandler) throws TException {
+      checkReady();
+      getLogicalNodes_call method_call = new getLogicalNodes_call(physNode, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class getLogicalNodes_call extends TAsyncMethodCall {
+      private String physNode;
+      public getLogicalNodes_call(String physNode, AsyncMethodCallback<getLogicalNodes_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.physNode = physNode;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("getLogicalNodes", TMessageType.CALL, 0));
+        getLogicalNodes_args args = new getLogicalNodes_args();
+        args.setPhysNode(physNode);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<String> getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getLogicalNodes();
+      }
+    }
+
+    public void getChokeMap(String physNode, AsyncMethodCallback<getChokeMap_call> resultHandler) throws TException {
+      checkReady();
+      getChokeMap_call method_call = new getChokeMap_call(physNode, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class getChokeMap_call extends TAsyncMethodCall {
+      private String physNode;
+      public getChokeMap_call(String physNode, AsyncMethodCallback<getChokeMap_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.physNode = physNode;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("getChokeMap", TMessageType.CALL, 0));
+        getChokeMap_args args = new getChokeMap_args();
+        args.setPhysNode(physNode);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public Map<String,Integer> getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getChokeMap();
+      }
+    }
+
+    public void acknowledge(String ackid, AsyncMethodCallback<acknowledge_call> resultHandler) throws TException {
+      checkReady();
+      acknowledge_call method_call = new acknowledge_call(ackid, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class acknowledge_call extends TAsyncMethodCall {
+      private String ackid;
+      public acknowledge_call(String ackid, AsyncMethodCallback<acknowledge_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ackid = ackid;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("acknowledge", TMessageType.CALL, 0));
+        acknowledge_args args = new acknowledge_args();
+        args.setAckid(ackid);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_acknowledge();
+      }
+    }
+
+    public void checkAck(String ackid, AsyncMethodCallback<checkAck_call> resultHandler) throws TException {
+      checkReady();
+      checkAck_call method_call = new checkAck_call(ackid, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class checkAck_call extends TAsyncMethodCall {
+      private String ackid;
+      public checkAck_call(String ackid, AsyncMethodCallback<checkAck_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ackid = ackid;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("checkAck", TMessageType.CALL, 0));
+        checkAck_args args = new checkAck_args();
+        args.setAckid(ackid);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public boolean getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_checkAck();
+      }
+    }
+
+    public void putReports(Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> reports, AsyncMethodCallback<putReports_call> resultHandler) throws TException {
+      checkReady();
+      putReports_call method_call = new putReports_call(reports, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class putReports_call extends TAsyncMethodCall {
+      private Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> reports;
+      public putReports_call(Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> reports, AsyncMethodCallback<putReports_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.reports = reports;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("putReports", TMessageType.CALL, 0));
+        putReports_args args = new putReports_args();
+        args.setReports(reports);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_putReports();
+      }
+    }
+
+  }
+
   public static class Processor implements TProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class.getName());
     public Processor(Iface iface)
@@ -343,7 +643,17 @@ public class FlumeClientServer {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         heartbeat_args args = new heartbeat_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("heartbeat", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         heartbeat_result result = new heartbeat_result();
         result.success = iface_.heartbeat(args.logicalNode, args.physicalNode, args.host, args.s, args.timestamp);
@@ -360,7 +670,17 @@ public class FlumeClientServer {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         getConfig_args args = new getConfig_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("getConfig", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         getConfig_result result = new getConfig_result();
         result.success = iface_.getConfig(args.sourceId);
@@ -376,7 +696,17 @@ public class FlumeClientServer {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         getLogicalNodes_args args = new getLogicalNodes_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("getLogicalNodes", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         getLogicalNodes_result result = new getLogicalNodes_result();
         result.success = iface_.getLogicalNodes(args.physNode);
@@ -392,7 +722,17 @@ public class FlumeClientServer {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         getChokeMap_args args = new getChokeMap_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("getChokeMap", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         getChokeMap_result result = new getChokeMap_result();
         result.success = iface_.getChokeMap(args.physNode);
@@ -408,7 +748,17 @@ public class FlumeClientServer {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         acknowledge_args args = new acknowledge_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("acknowledge", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         acknowledge_result result = new acknowledge_result();
         iface_.acknowledge(args.ackid);
@@ -424,7 +774,17 @@ public class FlumeClientServer {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         checkAck_args args = new checkAck_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("checkAck", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         checkAck_result result = new checkAck_result();
         result.success = iface_.checkAck(args.ackid);
@@ -441,7 +801,17 @@ public class FlumeClientServer {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         putReports_args args = new putReports_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("putReports", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         putReports_result result = new putReports_result();
         iface_.putReports(args.reports);
@@ -455,7 +825,7 @@ public class FlumeClientServer {
 
   }
 
-  public static class heartbeat_args implements TBase<heartbeat_args._Fields>, java.io.Serializable, Cloneable, Comparable<heartbeat_args>   {
+  public static class heartbeat_args implements TBase<heartbeat_args, heartbeat_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("heartbeat_args");
 
     private static final TField LOGICAL_NODE_FIELD_DESC = new TField("logicalNode", TType.STRING, (short)1);
@@ -486,12 +856,10 @@ public class FlumeClientServer {
       S((short)2, "s"),
       TIMESTAMP((short)3, "timestamp");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -500,7 +868,20 @@ public class FlumeClientServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // LOGICAL_NODE
+            return LOGICAL_NODE;
+          case 4: // PHYSICAL_NODE
+            return PHYSICAL_NODE;
+          case 5: // HOST
+            return HOST;
+          case 2: // S
+            return S;
+          case 3: // TIMESTAMP
+            return TIMESTAMP;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -541,20 +922,20 @@ public class FlumeClientServer {
     private static final int __TIMESTAMP_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.LOGICAL_NODE, new FieldMetaData("logicalNode", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.PHYSICAL_NODE, new FieldMetaData("physicalNode", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.HOST, new FieldMetaData("host", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.S, new FieldMetaData("s", TFieldRequirementType.DEFAULT, 
-          new EnumMetaData(TType.ENUM, FlumeNodeState.class)));
-      put(_Fields.TIMESTAMP, new FieldMetaData("timestamp", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.LOGICAL_NODE, new FieldMetaData("logicalNode", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.PHYSICAL_NODE, new FieldMetaData("physicalNode", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.HOST, new FieldMetaData("host", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.S, new FieldMetaData("s", TFieldRequirementType.DEFAULT, 
+          new EnumMetaData(TType.ENUM, FlumeNodeState.class)));
+      tmpMap.put(_Fields.TIMESTAMP, new FieldMetaData("timestamp", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(heartbeat_args.class, metaDataMap);
     }
 
@@ -605,6 +986,16 @@ public class FlumeClientServer {
     @Deprecated
     public heartbeat_args clone() {
       return new heartbeat_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.logicalNode = null;
+      this.physicalNode = null;
+      this.host = null;
+      this.s = null;
+      setTimestampIsSet(false);
+      this.timestamp = 0;
     }
 
     public String getLogicalNode() {
@@ -903,45 +1294,50 @@ public class FlumeClientServer {
       int lastComparison = 0;
       heartbeat_args typedOther = (heartbeat_args)other;
 
-      lastComparison = Boolean.valueOf(isSetLogicalNode()).compareTo(isSetLogicalNode());
+      lastComparison = Boolean.valueOf(isSetLogicalNode()).compareTo(typedOther.isSetLogicalNode());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(logicalNode, typedOther.logicalNode);
+      if (isSetLogicalNode()) {        lastComparison = TBaseHelper.compareTo(this.logicalNode, typedOther.logicalNode);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetPhysicalNode()).compareTo(typedOther.isSetPhysicalNode());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetPhysicalNode()).compareTo(isSetPhysicalNode());
+      if (isSetPhysicalNode()) {        lastComparison = TBaseHelper.compareTo(this.physicalNode, typedOther.physicalNode);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetHost()).compareTo(typedOther.isSetHost());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(physicalNode, typedOther.physicalNode);
+      if (isSetHost()) {        lastComparison = TBaseHelper.compareTo(this.host, typedOther.host);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetS()).compareTo(typedOther.isSetS());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetHost()).compareTo(isSetHost());
+      if (isSetS()) {        lastComparison = TBaseHelper.compareTo(this.s, typedOther.s);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTimestamp()).compareTo(typedOther.isSetTimestamp());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(host, typedOther.host);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = Boolean.valueOf(isSetS()).compareTo(isSetS());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(s, typedOther.s);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = Boolean.valueOf(isSetTimestamp()).compareTo(isSetTimestamp());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(timestamp, typedOther.timestamp);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetTimestamp()) {        lastComparison = TBaseHelper.compareTo(this.timestamp, typedOther.timestamp);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -955,50 +1351,47 @@ public class FlumeClientServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case LOGICAL_NODE:
-              if (field.type == TType.STRING) {
-                this.logicalNode = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case PHYSICAL_NODE:
-              if (field.type == TType.STRING) {
-                this.physicalNode = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case HOST:
-              if (field.type == TType.STRING) {
-                this.host = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case S:
-              if (field.type == TType.I32) {
-                this.s = FlumeNodeState.findByValue(iprot.readI32());
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case TIMESTAMP:
-              if (field.type == TType.I64) {
-                this.timestamp = iprot.readI64();
-                setTimestampIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // LOGICAL_NODE
+            if (field.type == TType.STRING) {
+              this.logicalNode = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 4: // PHYSICAL_NODE
+            if (field.type == TType.STRING) {
+              this.physicalNode = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 5: // HOST
+            if (field.type == TType.STRING) {
+              this.host = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // S
+            if (field.type == TType.I32) {
+              this.s = FlumeNodeState.findByValue(iprot.readI32());
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // TIMESTAMP
+            if (field.type == TType.I64) {
+              this.timestamp = iprot.readI64();
+              setTimestampIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -1070,15 +1463,7 @@ public class FlumeClientServer {
       if (this.s == null) {
         sb.append("null");
       } else {
-        String s_name = s.name();
-        if (s_name != null) {
-          sb.append(s_name);
-          sb.append(" (");
-        }
         sb.append(this.s);
-        if (s_name != null) {
-          sb.append(")");
-        }
       }
       first = false;
       if (!first) sb.append(", ");
@@ -1095,7 +1480,7 @@ public class FlumeClientServer {
 
   }
 
-  public static class heartbeat_result implements TBase<heartbeat_result._Fields>, java.io.Serializable, Cloneable, Comparable<heartbeat_result>   {
+  public static class heartbeat_result implements TBase<heartbeat_result, heartbeat_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("heartbeat_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.BOOL, (short)0);
@@ -1106,12 +1491,10 @@ public class FlumeClientServer {
     public enum _Fields implements TFieldIdEnum {
       SUCCESS((short)0, "success");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -1120,7 +1503,12 @@ public class FlumeClientServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -1161,12 +1549,12 @@ public class FlumeClientServer {
     private static final int __SUCCESS_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.BOOL)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.BOOL)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(heartbeat_result.class, metaDataMap);
     }
 
@@ -1197,6 +1585,12 @@ public class FlumeClientServer {
     @Deprecated
     public heartbeat_result clone() {
       return new heartbeat_result(this);
+    }
+
+    @Override
+    public void clear() {
+      setSuccessIsSet(false);
+      this.success = false;
     }
 
     public boolean isSuccess() {
@@ -1303,13 +1697,14 @@ public class FlumeClientServer {
       int lastComparison = 0;
       heartbeat_result typedOther = (heartbeat_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -1323,22 +1718,19 @@ public class FlumeClientServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.BOOL) {
-                this.success = iprot.readBool();
-                setSuccessIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.BOOL) {
+              this.success = iprot.readBool();
+              setSuccessIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -1376,7 +1768,7 @@ public class FlumeClientServer {
 
   }
 
-  public static class getConfig_args implements TBase<getConfig_args._Fields>, java.io.Serializable, Cloneable, Comparable<getConfig_args>   {
+  public static class getConfig_args implements TBase<getConfig_args, getConfig_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getConfig_args");
 
     private static final TField SOURCE_ID_FIELD_DESC = new TField("sourceId", TType.STRING, (short)1);
@@ -1387,12 +1779,10 @@ public class FlumeClientServer {
     public enum _Fields implements TFieldIdEnum {
       SOURCE_ID((short)1, "sourceId");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -1401,7 +1791,12 @@ public class FlumeClientServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // SOURCE_ID
+            return SOURCE_ID;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -1440,12 +1835,12 @@ public class FlumeClientServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SOURCE_ID, new FieldMetaData("sourceId", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SOURCE_ID, new FieldMetaData("sourceId", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getConfig_args.class, metaDataMap);
     }
 
@@ -1475,6 +1870,11 @@ public class FlumeClientServer {
     @Deprecated
     public getConfig_args clone() {
       return new getConfig_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.sourceId = null;
     }
 
     public String getSourceId() {
@@ -1582,13 +1982,14 @@ public class FlumeClientServer {
       int lastComparison = 0;
       getConfig_args typedOther = (getConfig_args)other;
 
-      lastComparison = Boolean.valueOf(isSetSourceId()).compareTo(isSetSourceId());
+      lastComparison = Boolean.valueOf(isSetSourceId()).compareTo(typedOther.isSetSourceId());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(sourceId, typedOther.sourceId);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetSourceId()) {        lastComparison = TBaseHelper.compareTo(this.sourceId, typedOther.sourceId);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -1602,21 +2003,18 @@ public class FlumeClientServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SOURCE_ID:
-              if (field.type == TType.STRING) {
-                this.sourceId = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // SOURCE_ID
+            if (field.type == TType.STRING) {
+              this.sourceId = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -1659,7 +2057,7 @@ public class FlumeClientServer {
 
   }
 
-  public static class getConfig_result implements TBase<getConfig_result._Fields>, java.io.Serializable, Cloneable, Comparable<getConfig_result>   {
+  public static class getConfig_result implements TBase<getConfig_result, getConfig_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getConfig_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
@@ -1670,12 +2068,10 @@ public class FlumeClientServer {
     public enum _Fields implements TFieldIdEnum {
       SUCCESS((short)0, "success");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -1684,7 +2080,12 @@ public class FlumeClientServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -1723,12 +2124,12 @@ public class FlumeClientServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, ThriftFlumeConfigData.class)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, ThriftFlumeConfigData.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getConfig_result.class, metaDataMap);
     }
 
@@ -1758,6 +2159,11 @@ public class FlumeClientServer {
     @Deprecated
     public getConfig_result clone() {
       return new getConfig_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
     }
 
     public ThriftFlumeConfigData getSuccess() {
@@ -1865,13 +2271,14 @@ public class FlumeClientServer {
       int lastComparison = 0;
       getConfig_result typedOther = (getConfig_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -1885,22 +2292,19 @@ public class FlumeClientServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.STRUCT) {
-                this.success = new ThriftFlumeConfigData();
-                this.success.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.STRUCT) {
+              this.success = new ThriftFlumeConfigData();
+              this.success.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -1942,7 +2346,7 @@ public class FlumeClientServer {
 
   }
 
-  public static class getLogicalNodes_args implements TBase<getLogicalNodes_args._Fields>, java.io.Serializable, Cloneable, Comparable<getLogicalNodes_args>   {
+  public static class getLogicalNodes_args implements TBase<getLogicalNodes_args, getLogicalNodes_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getLogicalNodes_args");
 
     private static final TField PHYS_NODE_FIELD_DESC = new TField("physNode", TType.STRING, (short)1);
@@ -1953,12 +2357,10 @@ public class FlumeClientServer {
     public enum _Fields implements TFieldIdEnum {
       PHYS_NODE((short)1, "physNode");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -1967,7 +2369,12 @@ public class FlumeClientServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // PHYS_NODE
+            return PHYS_NODE;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -2006,12 +2413,12 @@ public class FlumeClientServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.PHYS_NODE, new FieldMetaData("physNode", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.PHYS_NODE, new FieldMetaData("physNode", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getLogicalNodes_args.class, metaDataMap);
     }
 
@@ -2041,6 +2448,11 @@ public class FlumeClientServer {
     @Deprecated
     public getLogicalNodes_args clone() {
       return new getLogicalNodes_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.physNode = null;
     }
 
     public String getPhysNode() {
@@ -2148,13 +2560,14 @@ public class FlumeClientServer {
       int lastComparison = 0;
       getLogicalNodes_args typedOther = (getLogicalNodes_args)other;
 
-      lastComparison = Boolean.valueOf(isSetPhysNode()).compareTo(isSetPhysNode());
+      lastComparison = Boolean.valueOf(isSetPhysNode()).compareTo(typedOther.isSetPhysNode());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(physNode, typedOther.physNode);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetPhysNode()) {        lastComparison = TBaseHelper.compareTo(this.physNode, typedOther.physNode);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -2168,21 +2581,18 @@ public class FlumeClientServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case PHYS_NODE:
-              if (field.type == TType.STRING) {
-                this.physNode = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // PHYS_NODE
+            if (field.type == TType.STRING) {
+              this.physNode = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -2225,7 +2635,7 @@ public class FlumeClientServer {
 
   }
 
-  public static class getLogicalNodes_result implements TBase<getLogicalNodes_result._Fields>, java.io.Serializable, Cloneable, Comparable<getLogicalNodes_result>   {
+  public static class getLogicalNodes_result implements TBase<getLogicalNodes_result, getLogicalNodes_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getLogicalNodes_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.LIST, (short)0);
@@ -2236,12 +2646,10 @@ public class FlumeClientServer {
     public enum _Fields implements TFieldIdEnum {
       SUCCESS((short)0, "success");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -2250,7 +2658,12 @@ public class FlumeClientServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -2289,13 +2702,13 @@ public class FlumeClientServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
           new ListMetaData(TType.LIST, 
               new FieldValueMetaData(TType.STRING))));
-    }});
-
-    static {
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getLogicalNodes_result.class, metaDataMap);
     }
 
@@ -2329,6 +2742,11 @@ public class FlumeClientServer {
     @Deprecated
     public getLogicalNodes_result clone() {
       return new getLogicalNodes_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
     }
 
     public int getSuccessSize() {
@@ -2451,13 +2869,14 @@ public class FlumeClientServer {
       int lastComparison = 0;
       getLogicalNodes_result typedOther = (getLogicalNodes_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -2471,31 +2890,28 @@ public class FlumeClientServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.LIST) {
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.LIST) {
+              {
+                TList _list0 = iprot.readListBegin();
+                this.success = new ArrayList<String>(_list0.size);
+                for (int _i1 = 0; _i1 < _list0.size; ++_i1)
                 {
-                  TList _list0 = iprot.readListBegin();
-                  this.success = new ArrayList<String>(_list0.size);
-                  for (int _i1 = 0; _i1 < _list0.size; ++_i1)
-                  {
-                    String _elem2;
-                    _elem2 = iprot.readString();
-                    this.success.add(_elem2);
-                  }
-                  iprot.readListEnd();
+                  String _elem2;
+                  _elem2 = iprot.readString();
+                  this.success.add(_elem2);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readListEnd();
               }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -2544,7 +2960,7 @@ public class FlumeClientServer {
 
   }
 
-  public static class getChokeMap_args implements TBase<getChokeMap_args._Fields>, java.io.Serializable, Cloneable, Comparable<getChokeMap_args>   {
+  public static class getChokeMap_args implements TBase<getChokeMap_args, getChokeMap_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getChokeMap_args");
 
     private static final TField PHYS_NODE_FIELD_DESC = new TField("physNode", TType.STRING, (short)1);
@@ -2555,12 +2971,10 @@ public class FlumeClientServer {
     public enum _Fields implements TFieldIdEnum {
       PHYS_NODE((short)1, "physNode");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -2569,7 +2983,12 @@ public class FlumeClientServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // PHYS_NODE
+            return PHYS_NODE;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -2608,12 +3027,12 @@ public class FlumeClientServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.PHYS_NODE, new FieldMetaData("physNode", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.PHYS_NODE, new FieldMetaData("physNode", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getChokeMap_args.class, metaDataMap);
     }
 
@@ -2643,6 +3062,11 @@ public class FlumeClientServer {
     @Deprecated
     public getChokeMap_args clone() {
       return new getChokeMap_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.physNode = null;
     }
 
     public String getPhysNode() {
@@ -2750,13 +3174,14 @@ public class FlumeClientServer {
       int lastComparison = 0;
       getChokeMap_args typedOther = (getChokeMap_args)other;
 
-      lastComparison = Boolean.valueOf(isSetPhysNode()).compareTo(isSetPhysNode());
+      lastComparison = Boolean.valueOf(isSetPhysNode()).compareTo(typedOther.isSetPhysNode());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(physNode, typedOther.physNode);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetPhysNode()) {        lastComparison = TBaseHelper.compareTo(this.physNode, typedOther.physNode);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -2770,21 +3195,18 @@ public class FlumeClientServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case PHYS_NODE:
-              if (field.type == TType.STRING) {
-                this.physNode = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // PHYS_NODE
+            if (field.type == TType.STRING) {
+              this.physNode = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -2827,7 +3249,7 @@ public class FlumeClientServer {
 
   }
 
-  public static class getChokeMap_result implements TBase<getChokeMap_result._Fields>, java.io.Serializable, Cloneable   {
+  public static class getChokeMap_result implements TBase<getChokeMap_result, getChokeMap_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getChokeMap_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.MAP, (short)0);
@@ -2838,12 +3260,10 @@ public class FlumeClientServer {
     public enum _Fields implements TFieldIdEnum {
       SUCCESS((short)0, "success");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -2852,7 +3272,12 @@ public class FlumeClientServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -2891,14 +3316,14 @@ public class FlumeClientServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
           new MapMetaData(TType.MAP, 
               new FieldValueMetaData(TType.STRING), 
               new FieldValueMetaData(TType.I32))));
-    }});
-
-    static {
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getChokeMap_result.class, metaDataMap);
     }
 
@@ -2940,6 +3365,11 @@ public class FlumeClientServer {
     @Deprecated
     public getChokeMap_result clone() {
       return new getChokeMap_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
     }
 
     public int getSuccessSize() {
@@ -3050,6 +3480,26 @@ public class FlumeClientServer {
       return 0;
     }
 
+    public int compareTo(getChokeMap_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getChokeMap_result typedOther = (getChokeMap_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
     public void read(TProtocol iprot) throws TException {
       TField field;
       iprot.readStructBegin();
@@ -3059,33 +3509,30 @@ public class FlumeClientServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.MAP) {
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.MAP) {
+              {
+                TMap _map4 = iprot.readMapBegin();
+                this.success = new HashMap<String,Integer>(2*_map4.size);
+                for (int _i5 = 0; _i5 < _map4.size; ++_i5)
                 {
-                  TMap _map4 = iprot.readMapBegin();
-                  this.success = new HashMap<String,Integer>(2*_map4.size);
-                  for (int _i5 = 0; _i5 < _map4.size; ++_i5)
-                  {
-                    String _key6;
-                    int _val7;
-                    _key6 = iprot.readString();
-                    _val7 = iprot.readI32();
-                    this.success.put(_key6, _val7);
-                  }
-                  iprot.readMapEnd();
+                  String _key6;
+                  int _val7;
+                  _key6 = iprot.readString();
+                  _val7 = iprot.readI32();
+                  this.success.put(_key6, _val7);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readMapEnd();
               }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -3135,7 +3582,7 @@ public class FlumeClientServer {
 
   }
 
-  public static class acknowledge_args implements TBase<acknowledge_args._Fields>, java.io.Serializable, Cloneable, Comparable<acknowledge_args>   {
+  public static class acknowledge_args implements TBase<acknowledge_args, acknowledge_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("acknowledge_args");
 
     private static final TField ACKID_FIELD_DESC = new TField("ackid", TType.STRING, (short)1);
@@ -3146,12 +3593,10 @@ public class FlumeClientServer {
     public enum _Fields implements TFieldIdEnum {
       ACKID((short)1, "ackid");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -3160,7 +3605,12 @@ public class FlumeClientServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // ACKID
+            return ACKID;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -3199,12 +3649,12 @@ public class FlumeClientServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.ACKID, new FieldMetaData("ackid", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ACKID, new FieldMetaData("ackid", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(acknowledge_args.class, metaDataMap);
     }
 
@@ -3234,6 +3684,11 @@ public class FlumeClientServer {
     @Deprecated
     public acknowledge_args clone() {
       return new acknowledge_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.ackid = null;
     }
 
     public String getAckid() {
@@ -3341,13 +3796,14 @@ public class FlumeClientServer {
       int lastComparison = 0;
       acknowledge_args typedOther = (acknowledge_args)other;
 
-      lastComparison = Boolean.valueOf(isSetAckid()).compareTo(isSetAckid());
+      lastComparison = Boolean.valueOf(isSetAckid()).compareTo(typedOther.isSetAckid());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(ackid, typedOther.ackid);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetAckid()) {        lastComparison = TBaseHelper.compareTo(this.ackid, typedOther.ackid);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -3361,21 +3817,18 @@ public class FlumeClientServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case ACKID:
-              if (field.type == TType.STRING) {
-                this.ackid = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // ACKID
+            if (field.type == TType.STRING) {
+              this.ackid = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -3418,7 +3871,7 @@ public class FlumeClientServer {
 
   }
 
-  public static class acknowledge_result implements TBase<acknowledge_result._Fields>, java.io.Serializable, Cloneable, Comparable<acknowledge_result>   {
+  public static class acknowledge_result implements TBase<acknowledge_result, acknowledge_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("acknowledge_result");
 
 
@@ -3427,12 +3880,10 @@ public class FlumeClientServer {
     public enum _Fields implements TFieldIdEnum {
 ;
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -3441,7 +3892,10 @@ public class FlumeClientServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          default:
+            return null;
+        }
       }
 
       /**
@@ -3477,10 +3931,10 @@ public class FlumeClientServer {
         return _fieldName;
       }
     }
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(acknowledge_result.class, metaDataMap);
     }
 
@@ -3500,6 +3954,10 @@ public class FlumeClientServer {
     @Deprecated
     public acknowledge_result clone() {
       return new acknowledge_result(this);
+    }
+
+    @Override
+    public void clear() {
     }
 
     public void setFieldValue(_Fields field, Object value) {
@@ -3573,14 +4031,11 @@ public class FlumeClientServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -3610,7 +4065,7 @@ public class FlumeClientServer {
 
   }
 
-  public static class checkAck_args implements TBase<checkAck_args._Fields>, java.io.Serializable, Cloneable, Comparable<checkAck_args>   {
+  public static class checkAck_args implements TBase<checkAck_args, checkAck_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("checkAck_args");
 
     private static final TField ACKID_FIELD_DESC = new TField("ackid", TType.STRING, (short)1);
@@ -3621,12 +4076,10 @@ public class FlumeClientServer {
     public enum _Fields implements TFieldIdEnum {
       ACKID((short)1, "ackid");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -3635,7 +4088,12 @@ public class FlumeClientServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // ACKID
+            return ACKID;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -3674,12 +4132,12 @@ public class FlumeClientServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.ACKID, new FieldMetaData("ackid", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ACKID, new FieldMetaData("ackid", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(checkAck_args.class, metaDataMap);
     }
 
@@ -3709,6 +4167,11 @@ public class FlumeClientServer {
     @Deprecated
     public checkAck_args clone() {
       return new checkAck_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.ackid = null;
     }
 
     public String getAckid() {
@@ -3816,13 +4279,14 @@ public class FlumeClientServer {
       int lastComparison = 0;
       checkAck_args typedOther = (checkAck_args)other;
 
-      lastComparison = Boolean.valueOf(isSetAckid()).compareTo(isSetAckid());
+      lastComparison = Boolean.valueOf(isSetAckid()).compareTo(typedOther.isSetAckid());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(ackid, typedOther.ackid);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetAckid()) {        lastComparison = TBaseHelper.compareTo(this.ackid, typedOther.ackid);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -3836,21 +4300,18 @@ public class FlumeClientServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case ACKID:
-              if (field.type == TType.STRING) {
-                this.ackid = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // ACKID
+            if (field.type == TType.STRING) {
+              this.ackid = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -3893,7 +4354,7 @@ public class FlumeClientServer {
 
   }
 
-  public static class checkAck_result implements TBase<checkAck_result._Fields>, java.io.Serializable, Cloneable, Comparable<checkAck_result>   {
+  public static class checkAck_result implements TBase<checkAck_result, checkAck_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("checkAck_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.BOOL, (short)0);
@@ -3904,12 +4365,10 @@ public class FlumeClientServer {
     public enum _Fields implements TFieldIdEnum {
       SUCCESS((short)0, "success");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -3918,7 +4377,12 @@ public class FlumeClientServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -3959,12 +4423,12 @@ public class FlumeClientServer {
     private static final int __SUCCESS_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.BOOL)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.BOOL)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(checkAck_result.class, metaDataMap);
     }
 
@@ -3995,6 +4459,12 @@ public class FlumeClientServer {
     @Deprecated
     public checkAck_result clone() {
       return new checkAck_result(this);
+    }
+
+    @Override
+    public void clear() {
+      setSuccessIsSet(false);
+      this.success = false;
     }
 
     public boolean isSuccess() {
@@ -4101,13 +4571,14 @@ public class FlumeClientServer {
       int lastComparison = 0;
       checkAck_result typedOther = (checkAck_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -4121,22 +4592,19 @@ public class FlumeClientServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.BOOL) {
-                this.success = iprot.readBool();
-                setSuccessIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.BOOL) {
+              this.success = iprot.readBool();
+              setSuccessIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -4174,23 +4642,21 @@ public class FlumeClientServer {
 
   }
 
-  public static class putReports_args implements TBase<putReports_args._Fields>, java.io.Serializable, Cloneable   {
+  public static class putReports_args implements TBase<putReports_args, putReports_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("putReports_args");
 
     private static final TField REPORTS_FIELD_DESC = new TField("reports", TType.MAP, (short)1);
 
-    public Map<String,com.cloudera.flume.reporter.server.FlumeReport> reports;
+    public Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> reports;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
       REPORTS((short)1, "reports");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -4199,7 +4665,12 @@ public class FlumeClientServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // REPORTS
+            return REPORTS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -4238,14 +4709,14 @@ public class FlumeClientServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.REPORTS, new FieldMetaData("reports", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.REPORTS, new FieldMetaData("reports", TFieldRequirementType.DEFAULT, 
           new MapMetaData(TType.MAP, 
               new FieldValueMetaData(TType.STRING), 
-              new StructMetaData(TType.STRUCT, com.cloudera.flume.reporter.server.FlumeReport.class))));
-    }});
-
-    static {
+              new StructMetaData(TType.STRUCT, com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport.class))));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(putReports_args.class, metaDataMap);
     }
 
@@ -4253,7 +4724,7 @@ public class FlumeClientServer {
     }
 
     public putReports_args(
-      Map<String,com.cloudera.flume.reporter.server.FlumeReport> reports)
+      Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> reports)
     {
       this();
       this.reports = reports;
@@ -4264,15 +4735,15 @@ public class FlumeClientServer {
      */
     public putReports_args(putReports_args other) {
       if (other.isSetReports()) {
-        Map<String,com.cloudera.flume.reporter.server.FlumeReport> __this__reports = new HashMap<String,com.cloudera.flume.reporter.server.FlumeReport>();
-        for (Map.Entry<String, com.cloudera.flume.reporter.server.FlumeReport> other_element : other.reports.entrySet()) {
+        Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> __this__reports = new HashMap<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport>();
+        for (Map.Entry<String, com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> other_element : other.reports.entrySet()) {
 
           String other_element_key = other_element.getKey();
-          com.cloudera.flume.reporter.server.FlumeReport other_element_value = other_element.getValue();
+          com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport other_element_value = other_element.getValue();
 
           String __this__reports_copy_key = other_element_key;
 
-          com.cloudera.flume.reporter.server.FlumeReport __this__reports_copy_value = new com.cloudera.flume.reporter.server.FlumeReport(other_element_value);
+          com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport __this__reports_copy_value = new com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport(other_element_value);
 
           __this__reports.put(__this__reports_copy_key, __this__reports_copy_value);
         }
@@ -4289,22 +4760,27 @@ public class FlumeClientServer {
       return new putReports_args(this);
     }
 
+    @Override
+    public void clear() {
+      this.reports = null;
+    }
+
     public int getReportsSize() {
       return (this.reports == null) ? 0 : this.reports.size();
     }
 
-    public void putToReports(String key, com.cloudera.flume.reporter.server.FlumeReport val) {
+    public void putToReports(String key, com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport val) {
       if (this.reports == null) {
-        this.reports = new HashMap<String,com.cloudera.flume.reporter.server.FlumeReport>();
+        this.reports = new HashMap<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport>();
       }
       this.reports.put(key, val);
     }
 
-    public Map<String,com.cloudera.flume.reporter.server.FlumeReport> getReports() {
+    public Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> getReports() {
       return this.reports;
     }
 
-    public putReports_args setReports(Map<String,com.cloudera.flume.reporter.server.FlumeReport> reports) {
+    public putReports_args setReports(Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> reports) {
       this.reports = reports;
       return this;
     }
@@ -4330,7 +4806,7 @@ public class FlumeClientServer {
         if (value == null) {
           unsetReports();
         } else {
-          setReports((Map<String,com.cloudera.flume.reporter.server.FlumeReport>)value);
+          setReports((Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport>)value);
         }
         break;
 
@@ -4397,6 +4873,26 @@ public class FlumeClientServer {
       return 0;
     }
 
+    public int compareTo(putReports_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      putReports_args typedOther = (putReports_args)other;
+
+      lastComparison = Boolean.valueOf(isSetReports()).compareTo(typedOther.isSetReports());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetReports()) {        lastComparison = TBaseHelper.compareTo(this.reports, typedOther.reports);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
     public void read(TProtocol iprot) throws TException {
       TField field;
       iprot.readStructBegin();
@@ -4406,34 +4902,31 @@ public class FlumeClientServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case REPORTS:
-              if (field.type == TType.MAP) {
+        switch (field.id) {
+          case 1: // REPORTS
+            if (field.type == TType.MAP) {
+              {
+                TMap _map9 = iprot.readMapBegin();
+                this.reports = new HashMap<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport>(2*_map9.size);
+                for (int _i10 = 0; _i10 < _map9.size; ++_i10)
                 {
-                  TMap _map9 = iprot.readMapBegin();
-                  this.reports = new HashMap<String,com.cloudera.flume.reporter.server.FlumeReport>(2*_map9.size);
-                  for (int _i10 = 0; _i10 < _map9.size; ++_i10)
-                  {
-                    String _key11;
-                    com.cloudera.flume.reporter.server.FlumeReport _val12;
-                    _key11 = iprot.readString();
-                    _val12 = new com.cloudera.flume.reporter.server.FlumeReport();
-                    _val12.read(iprot);
-                    this.reports.put(_key11, _val12);
-                  }
-                  iprot.readMapEnd();
+                  String _key11;
+                  com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport _val12;
+                  _key11 = iprot.readString();
+                  _val12 = new com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport();
+                  _val12.read(iprot);
+                  this.reports.put(_key11, _val12);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readMapEnd();
               }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -4449,7 +4942,7 @@ public class FlumeClientServer {
         oprot.writeFieldBegin(REPORTS_FIELD_DESC);
         {
           oprot.writeMapBegin(new TMap(TType.STRING, TType.STRUCT, this.reports.size()));
-          for (Map.Entry<String, com.cloudera.flume.reporter.server.FlumeReport> _iter13 : this.reports.entrySet())
+          for (Map.Entry<String, com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> _iter13 : this.reports.entrySet())
           {
             oprot.writeString(_iter13.getKey());
             _iter13.getValue().write(oprot);
@@ -4484,7 +4977,7 @@ public class FlumeClientServer {
 
   }
 
-  public static class putReports_result implements TBase<putReports_result._Fields>, java.io.Serializable, Cloneable, Comparable<putReports_result>   {
+  public static class putReports_result implements TBase<putReports_result, putReports_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("putReports_result");
 
 
@@ -4493,12 +4986,10 @@ public class FlumeClientServer {
     public enum _Fields implements TFieldIdEnum {
 ;
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -4507,7 +4998,10 @@ public class FlumeClientServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          default:
+            return null;
+        }
       }
 
       /**
@@ -4543,10 +5037,10 @@ public class FlumeClientServer {
         return _fieldName;
       }
     }
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(putReports_result.class, metaDataMap);
     }
 
@@ -4566,6 +5060,10 @@ public class FlumeClientServer {
     @Deprecated
     public putReports_result clone() {
       return new putReports_result(this);
+    }
+
+    @Override
+    public void clear() {
     }
 
     public void setFieldValue(_Fields field, Object value) {
@@ -4639,14 +5137,11 @@ public class FlumeClientServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 

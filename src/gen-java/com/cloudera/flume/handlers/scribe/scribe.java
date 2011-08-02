@@ -15,12 +15,15 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
 public class scribe {
@@ -31,7 +34,23 @@ public class scribe {
 
   }
 
-  public static class Client extends com.cloudera.flume.handlers.scribe.FacebookService.Client implements Iface {
+  public interface AsyncIface extends com.cloudera.flume.handlers.scribe.FacebookService .AsyncIface {
+
+    public void Log(List<LogEntry> messages, AsyncMethodCallback<AsyncClient.Log_call> resultHandler) throws TException;
+
+  }
+
+  public static class Client extends com.cloudera.flume.handlers.scribe.FacebookService.Client implements TServiceClient, Iface {
+    public static class Factory implements TServiceClientFactory<Client> {
+      public Factory() {}
+      public Client getClient(TProtocol prot) {
+        return new Client(prot);
+      }
+      public Client getClient(TProtocol iprot, TProtocol oprot) {
+        return new Client(iprot, oprot);
+      }
+    }
+
     public Client(TProtocol prot)
     {
       this(prot, prot);
@@ -50,9 +69,9 @@ public class scribe {
 
     public void send_Log(List<LogEntry> messages) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("Log", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("Log", TMessageType.CALL, ++seqid_));
       Log_args args = new Log_args();
-      args.messages = messages;
+      args.setMessages(messages);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -66,6 +85,9 @@ public class scribe {
         iprot_.readMessageEnd();
         throw x;
       }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "Log failed: out of sequence response");
+      }
       Log_result result = new Log_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
@@ -76,6 +98,56 @@ public class scribe {
     }
 
   }
+  public static class AsyncClient extends com.cloudera.flume.handlers.scribe.FacebookService.AsyncClient implements AsyncIface {
+    public static class Factory implements TAsyncClientFactory<AsyncClient> {
+      private TAsyncClientManager clientManager;
+      private TProtocolFactory protocolFactory;
+      public Factory(TAsyncClientManager clientManager, TProtocolFactory protocolFactory) {
+        this.clientManager = clientManager;
+        this.protocolFactory = protocolFactory;
+      }
+      public AsyncClient getAsyncClient(TNonblockingTransport transport) {
+        return new AsyncClient(protocolFactory, clientManager, transport);
+      }
+    }
+
+    public AsyncClient(TProtocolFactory protocolFactory, TAsyncClientManager clientManager, TNonblockingTransport transport) {
+      super(protocolFactory, clientManager, transport);
+    }
+
+    public void Log(List<LogEntry> messages, AsyncMethodCallback<Log_call> resultHandler) throws TException {
+      checkReady();
+      Log_call method_call = new Log_call(messages, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class Log_call extends TAsyncMethodCall {
+      private List<LogEntry> messages;
+      public Log_call(List<LogEntry> messages, AsyncMethodCallback<Log_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.messages = messages;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("Log", TMessageType.CALL, 0));
+        Log_args args = new Log_args();
+        args.setMessages(messages);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public ResultCode getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_Log();
+      }
+    }
+
+  }
+
   public static class Processor extends com.cloudera.flume.handlers.scribe.FacebookService.Processor implements TProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class.getName());
     public Processor(Iface iface)
@@ -109,7 +181,17 @@ public class scribe {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         Log_args args = new Log_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("Log", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         Log_result result = new Log_result();
         result.success = iface_.Log(args.messages);
@@ -123,7 +205,7 @@ public class scribe {
 
   }
 
-  public static class Log_args implements TBase<Log_args._Fields>, java.io.Serializable, Cloneable, Comparable<Log_args>   {
+  public static class Log_args implements TBase<Log_args, Log_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("Log_args");
 
     private static final TField MESSAGES_FIELD_DESC = new TField("messages", TType.LIST, (short)1);
@@ -134,12 +216,10 @@ public class scribe {
     public enum _Fields implements TFieldIdEnum {
       MESSAGES((short)1, "messages");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -148,7 +228,12 @@ public class scribe {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // MESSAGES
+            return MESSAGES;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -187,13 +272,13 @@ public class scribe {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.MESSAGES, new FieldMetaData("messages", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.MESSAGES, new FieldMetaData("messages", TFieldRequirementType.DEFAULT, 
           new ListMetaData(TType.LIST, 
               new StructMetaData(TType.STRUCT, LogEntry.class))));
-    }});
-
-    static {
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(Log_args.class, metaDataMap);
     }
 
@@ -227,6 +312,11 @@ public class scribe {
     @Deprecated
     public Log_args clone() {
       return new Log_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.messages = null;
     }
 
     public int getMessagesSize() {
@@ -349,13 +439,14 @@ public class scribe {
       int lastComparison = 0;
       Log_args typedOther = (Log_args)other;
 
-      lastComparison = Boolean.valueOf(isSetMessages()).compareTo(isSetMessages());
+      lastComparison = Boolean.valueOf(isSetMessages()).compareTo(typedOther.isSetMessages());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(messages, typedOther.messages);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetMessages()) {        lastComparison = TBaseHelper.compareTo(this.messages, typedOther.messages);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -369,32 +460,29 @@ public class scribe {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case MESSAGES:
-              if (field.type == TType.LIST) {
+        switch (field.id) {
+          case 1: // MESSAGES
+            if (field.type == TType.LIST) {
+              {
+                TList _list0 = iprot.readListBegin();
+                this.messages = new ArrayList<LogEntry>(_list0.size);
+                for (int _i1 = 0; _i1 < _list0.size; ++_i1)
                 {
-                  TList _list0 = iprot.readListBegin();
-                  this.messages = new ArrayList<LogEntry>(_list0.size);
-                  for (int _i1 = 0; _i1 < _list0.size; ++_i1)
-                  {
-                    LogEntry _elem2;
-                    _elem2 = new LogEntry();
-                    _elem2.read(iprot);
-                    this.messages.add(_elem2);
-                  }
-                  iprot.readListEnd();
+                  LogEntry _elem2;
+                  _elem2 = new LogEntry();
+                  _elem2.read(iprot);
+                  this.messages.add(_elem2);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readListEnd();
               }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -444,7 +532,7 @@ public class scribe {
 
   }
 
-  public static class Log_result implements TBase<Log_result._Fields>, java.io.Serializable, Cloneable, Comparable<Log_result>   {
+  public static class Log_result implements TBase<Log_result, Log_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("Log_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.I32, (short)0);
@@ -463,12 +551,10 @@ public class scribe {
        */
       SUCCESS((short)0, "success");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -477,7 +563,12 @@ public class scribe {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -516,12 +607,12 @@ public class scribe {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new EnumMetaData(TType.ENUM, ResultCode.class)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new EnumMetaData(TType.ENUM, ResultCode.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(Log_result.class, metaDataMap);
     }
 
@@ -551,6 +642,11 @@ public class scribe {
     @Deprecated
     public Log_result clone() {
       return new Log_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
     }
 
     /**
@@ -666,13 +762,14 @@ public class scribe {
       int lastComparison = 0;
       Log_result typedOther = (Log_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -686,21 +783,18 @@ public class scribe {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.I32) {
-                this.success = ResultCode.findByValue(iprot.readI32());
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.I32) {
+              this.success = ResultCode.findByValue(iprot.readI32());
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -729,15 +823,7 @@ public class scribe {
       if (this.success == null) {
         sb.append("null");
       } else {
-        String success_name = success.name();
-        if (success_name != null) {
-          sb.append(success_name);
-          sb.append(" (");
-        }
         sb.append(this.success);
-        if (success_name != null) {
-          sb.append(")");
-        }
       }
       first = false;
       sb.append(")");

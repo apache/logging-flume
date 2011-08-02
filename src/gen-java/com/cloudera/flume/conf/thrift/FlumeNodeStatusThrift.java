@@ -15,15 +15,18 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
-public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift._Fields>, java.io.Serializable, Cloneable, Comparable<FlumeNodeStatusThrift> {
+public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift, FlumeNodeStatusThrift._Fields>, java.io.Serializable, Cloneable {
   private static final TStruct STRUCT_DESC = new TStruct("FlumeNodeStatusThrift");
 
   private static final TField STATE_FIELD_DESC = new TField("state", TType.I32, (short)1);
@@ -57,12 +60,10 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift._Field
     HOST((short)4, "host"),
     PHYSICAL_NODE((short)5, "physicalNode");
 
-    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
     static {
       for (_Fields field : EnumSet.allOf(_Fields.class)) {
-        byId.put((int)field._thriftId, field);
         byName.put(field.getFieldName(), field);
       }
     }
@@ -71,7 +72,22 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift._Field
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      return byId.get(fieldId);
+      switch(fieldId) {
+        case 1: // STATE
+          return STATE;
+        case 2: // VERSION
+          return VERSION;
+        case 3: // LASTSEEN
+          return LASTSEEN;
+        case 6: // LAST_SEEN_DELTA_MILLIS
+          return LAST_SEEN_DELTA_MILLIS;
+        case 4: // HOST
+          return HOST;
+        case 5: // PHYSICAL_NODE
+          return PHYSICAL_NODE;
+        default:
+          return null;
+      }
     }
 
     /**
@@ -114,22 +130,22 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift._Field
   private static final int __LASTSEENDELTAMILLIS_ISSET_ID = 2;
   private BitSet __isset_bit_vector = new BitSet(3);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.STATE, new FieldMetaData("state", TFieldRequirementType.DEFAULT, 
-        new EnumMetaData(TType.ENUM, com.cloudera.flume.conf.thrift.FlumeNodeState.class)));
-    put(_Fields.VERSION, new FieldMetaData("version", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.I64)));
-    put(_Fields.LASTSEEN, new FieldMetaData("lastseen", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.I64)));
-    put(_Fields.LAST_SEEN_DELTA_MILLIS, new FieldMetaData("lastSeenDeltaMillis", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.I64)));
-    put(_Fields.HOST, new FieldMetaData("host", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-    put(_Fields.PHYSICAL_NODE, new FieldMetaData("physicalNode", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-  }});
-
+  public static final Map<_Fields, FieldMetaData> metaDataMap;
   static {
+    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.STATE, new FieldMetaData("state", TFieldRequirementType.DEFAULT, 
+        new EnumMetaData(TType.ENUM, com.cloudera.flume.conf.thrift.FlumeNodeState.class)));
+    tmpMap.put(_Fields.VERSION, new FieldMetaData("version", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.I64)));
+    tmpMap.put(_Fields.LASTSEEN, new FieldMetaData("lastseen", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.I64)));
+    tmpMap.put(_Fields.LAST_SEEN_DELTA_MILLIS, new FieldMetaData("lastSeenDeltaMillis", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.I64)));
+    tmpMap.put(_Fields.HOST, new FieldMetaData("host", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.STRING)));
+    tmpMap.put(_Fields.PHYSICAL_NODE, new FieldMetaData("physicalNode", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.STRING)));
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(FlumeNodeStatusThrift.class, metaDataMap);
   }
 
@@ -183,6 +199,19 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift._Field
   @Deprecated
   public FlumeNodeStatusThrift clone() {
     return new FlumeNodeStatusThrift(this);
+  }
+
+  @Override
+  public void clear() {
+    this.state = null;
+    setVersionIsSet(false);
+    this.version = 0;
+    setLastseenIsSet(false);
+    this.lastseen = 0;
+    setLastSeenDeltaMillisIsSet(false);
+    this.lastSeenDeltaMillis = 0;
+    this.host = null;
+    this.physicalNode = null;
   }
 
   /**
@@ -525,53 +554,59 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift._Field
     int lastComparison = 0;
     FlumeNodeStatusThrift typedOther = (FlumeNodeStatusThrift)other;
 
-    lastComparison = Boolean.valueOf(isSetState()).compareTo(isSetState());
+    lastComparison = Boolean.valueOf(isSetState()).compareTo(typedOther.isSetState());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(state, typedOther.state);
+    if (isSetState()) {      lastComparison = TBaseHelper.compareTo(this.state, typedOther.state);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetVersion()).compareTo(typedOther.isSetVersion());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetVersion()).compareTo(isSetVersion());
+    if (isSetVersion()) {      lastComparison = TBaseHelper.compareTo(this.version, typedOther.version);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetLastseen()).compareTo(typedOther.isSetLastseen());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(version, typedOther.version);
+    if (isSetLastseen()) {      lastComparison = TBaseHelper.compareTo(this.lastseen, typedOther.lastseen);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetLastSeenDeltaMillis()).compareTo(typedOther.isSetLastSeenDeltaMillis());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetLastseen()).compareTo(isSetLastseen());
+    if (isSetLastSeenDeltaMillis()) {      lastComparison = TBaseHelper.compareTo(this.lastSeenDeltaMillis, typedOther.lastSeenDeltaMillis);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetHost()).compareTo(typedOther.isSetHost());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(lastseen, typedOther.lastseen);
+    if (isSetHost()) {      lastComparison = TBaseHelper.compareTo(this.host, typedOther.host);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetPhysicalNode()).compareTo(typedOther.isSetPhysicalNode());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetLastSeenDeltaMillis()).compareTo(isSetLastSeenDeltaMillis());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(lastSeenDeltaMillis, typedOther.lastSeenDeltaMillis);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetHost()).compareTo(isSetHost());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(host, typedOther.host);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetPhysicalNode()).compareTo(isSetPhysicalNode());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(physicalNode, typedOther.physicalNode);
-    if (lastComparison != 0) {
-      return lastComparison;
+    if (isSetPhysicalNode()) {      lastComparison = TBaseHelper.compareTo(this.physicalNode, typedOther.physicalNode);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
     }
     return 0;
   }
@@ -585,59 +620,56 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift._Field
       if (field.type == TType.STOP) { 
         break;
       }
-      _Fields fieldId = _Fields.findByThriftId(field.id);
-      if (fieldId == null) {
-        TProtocolUtil.skip(iprot, field.type);
-      } else {
-        switch (fieldId) {
-          case STATE:
-            if (field.type == TType.I32) {
-              this.state = com.cloudera.flume.conf.thrift.FlumeNodeState.findByValue(iprot.readI32());
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case VERSION:
-            if (field.type == TType.I64) {
-              this.version = iprot.readI64();
-              setVersionIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case LASTSEEN:
-            if (field.type == TType.I64) {
-              this.lastseen = iprot.readI64();
-              setLastseenIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case LAST_SEEN_DELTA_MILLIS:
-            if (field.type == TType.I64) {
-              this.lastSeenDeltaMillis = iprot.readI64();
-              setLastSeenDeltaMillisIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case HOST:
-            if (field.type == TType.STRING) {
-              this.host = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case PHYSICAL_NODE:
-            if (field.type == TType.STRING) {
-              this.physicalNode = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-        }
-        iprot.readFieldEnd();
+      switch (field.id) {
+        case 1: // STATE
+          if (field.type == TType.I32) {
+            this.state = com.cloudera.flume.conf.thrift.FlumeNodeState.findByValue(iprot.readI32());
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 2: // VERSION
+          if (field.type == TType.I64) {
+            this.version = iprot.readI64();
+            setVersionIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 3: // LASTSEEN
+          if (field.type == TType.I64) {
+            this.lastseen = iprot.readI64();
+            setLastseenIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 6: // LAST_SEEN_DELTA_MILLIS
+          if (field.type == TType.I64) {
+            this.lastSeenDeltaMillis = iprot.readI64();
+            setLastSeenDeltaMillisIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 4: // HOST
+          if (field.type == TType.STRING) {
+            this.host = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 5: // PHYSICAL_NODE
+          if (field.type == TType.STRING) {
+            this.physicalNode = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
       }
+      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 
@@ -686,15 +718,7 @@ public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift._Field
     if (this.state == null) {
       sb.append("null");
     } else {
-      String state_name = state.name();
-      if (state_name != null) {
-        sb.append(state_name);
-        sb.append(" (");
-      }
       sb.append(this.state);
-      if (state_name != null) {
-        sb.append(")");
-      }
     }
     first = false;
     if (!first) sb.append(", ");

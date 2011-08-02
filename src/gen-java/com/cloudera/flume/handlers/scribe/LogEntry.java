@@ -15,15 +15,18 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
-public class LogEntry implements TBase<LogEntry._Fields>, java.io.Serializable, Cloneable, Comparable<LogEntry> {
+public class LogEntry implements TBase<LogEntry, LogEntry._Fields>, java.io.Serializable, Cloneable {
   private static final TStruct STRUCT_DESC = new TStruct("LogEntry");
 
   private static final TField CATEGORY_FIELD_DESC = new TField("category", TType.STRING, (short)1);
@@ -37,12 +40,10 @@ public class LogEntry implements TBase<LogEntry._Fields>, java.io.Serializable, 
     CATEGORY((short)1, "category"),
     MESSAGE((short)2, "message");
 
-    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
     static {
       for (_Fields field : EnumSet.allOf(_Fields.class)) {
-        byId.put((int)field._thriftId, field);
         byName.put(field.getFieldName(), field);
       }
     }
@@ -51,7 +52,14 @@ public class LogEntry implements TBase<LogEntry._Fields>, java.io.Serializable, 
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      return byId.get(fieldId);
+      switch(fieldId) {
+        case 1: // CATEGORY
+          return CATEGORY;
+        case 2: // MESSAGE
+          return MESSAGE;
+        default:
+          return null;
+      }
     }
 
     /**
@@ -90,14 +98,14 @@ public class LogEntry implements TBase<LogEntry._Fields>, java.io.Serializable, 
 
   // isset id assignments
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.CATEGORY, new FieldMetaData("category", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-    put(_Fields.MESSAGE, new FieldMetaData("message", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-  }});
-
+  public static final Map<_Fields, FieldMetaData> metaDataMap;
   static {
+    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.CATEGORY, new FieldMetaData("category", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.STRING)));
+    tmpMap.put(_Fields.MESSAGE, new FieldMetaData("message", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.STRING)));
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(LogEntry.class, metaDataMap);
   }
 
@@ -132,6 +140,12 @@ public class LogEntry implements TBase<LogEntry._Fields>, java.io.Serializable, 
   @Deprecated
   public LogEntry clone() {
     return new LogEntry(this);
+  }
+
+  @Override
+  public void clear() {
+    this.category = null;
+    this.message = null;
   }
 
   public String getCategory() {
@@ -285,21 +299,23 @@ public class LogEntry implements TBase<LogEntry._Fields>, java.io.Serializable, 
     int lastComparison = 0;
     LogEntry typedOther = (LogEntry)other;
 
-    lastComparison = Boolean.valueOf(isSetCategory()).compareTo(isSetCategory());
+    lastComparison = Boolean.valueOf(isSetCategory()).compareTo(typedOther.isSetCategory());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(category, typedOther.category);
+    if (isSetCategory()) {      lastComparison = TBaseHelper.compareTo(this.category, typedOther.category);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetMessage()).compareTo(typedOther.isSetMessage());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetMessage()).compareTo(isSetMessage());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(message, typedOther.message);
-    if (lastComparison != 0) {
-      return lastComparison;
+    if (isSetMessage()) {      lastComparison = TBaseHelper.compareTo(this.message, typedOther.message);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
     }
     return 0;
   }
@@ -313,28 +329,25 @@ public class LogEntry implements TBase<LogEntry._Fields>, java.io.Serializable, 
       if (field.type == TType.STOP) { 
         break;
       }
-      _Fields fieldId = _Fields.findByThriftId(field.id);
-      if (fieldId == null) {
-        TProtocolUtil.skip(iprot, field.type);
-      } else {
-        switch (fieldId) {
-          case CATEGORY:
-            if (field.type == TType.STRING) {
-              this.category = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case MESSAGE:
-            if (field.type == TType.STRING) {
-              this.message = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-        }
-        iprot.readFieldEnd();
+      switch (field.id) {
+        case 1: // CATEGORY
+          if (field.type == TType.STRING) {
+            this.category = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 2: // MESSAGE
+          if (field.type == TType.STRING) {
+            this.message = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
       }
+      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 

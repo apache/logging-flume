@@ -15,12 +15,15 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
 public class FacebookService {
@@ -108,7 +111,47 @@ public class FacebookService {
 
   }
 
-  public static class Client implements Iface {
+  public interface AsyncIface {
+
+    public void getName(AsyncMethodCallback<AsyncClient.getName_call> resultHandler) throws TException;
+
+    public void getVersion(AsyncMethodCallback<AsyncClient.getVersion_call> resultHandler) throws TException;
+
+    public void getStatus(AsyncMethodCallback<AsyncClient.getStatus_call> resultHandler) throws TException;
+
+    public void getStatusDetails(AsyncMethodCallback<AsyncClient.getStatusDetails_call> resultHandler) throws TException;
+
+    public void getCounters(AsyncMethodCallback<AsyncClient.getCounters_call> resultHandler) throws TException;
+
+    public void getCounter(String key, AsyncMethodCallback<AsyncClient.getCounter_call> resultHandler) throws TException;
+
+    public void setOption(String key, String value, AsyncMethodCallback<AsyncClient.setOption_call> resultHandler) throws TException;
+
+    public void getOption(String key, AsyncMethodCallback<AsyncClient.getOption_call> resultHandler) throws TException;
+
+    public void getOptions(AsyncMethodCallback<AsyncClient.getOptions_call> resultHandler) throws TException;
+
+    public void getCpuProfile(int profileDurationInSec, AsyncMethodCallback<AsyncClient.getCpuProfile_call> resultHandler) throws TException;
+
+    public void aliveSince(AsyncMethodCallback<AsyncClient.aliveSince_call> resultHandler) throws TException;
+
+    public void reinitialize(AsyncMethodCallback<AsyncClient.reinitialize_call> resultHandler) throws TException;
+
+    public void shutdown(AsyncMethodCallback<AsyncClient.shutdown_call> resultHandler) throws TException;
+
+  }
+
+  public static class Client implements TServiceClient, Iface {
+    public static class Factory implements TServiceClientFactory<Client> {
+      public Factory() {}
+      public Client getClient(TProtocol prot) {
+        return new Client(prot);
+      }
+      public Client getClient(TProtocol iprot, TProtocol oprot) {
+        return new Client(iprot, oprot);
+      }
+    }
+
     public Client(TProtocol prot)
     {
       this(prot, prot);
@@ -143,7 +186,7 @@ public class FacebookService {
 
     public void send_getName() throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("getName", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("getName", TMessageType.CALL, ++seqid_));
       getName_args args = new getName_args();
       args.write(oprot_);
       oprot_.writeMessageEnd();
@@ -157,6 +200,9 @@ public class FacebookService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "getName failed: out of sequence response");
       }
       getName_result result = new getName_result();
       result.read(iprot_);
@@ -175,7 +221,7 @@ public class FacebookService {
 
     public void send_getVersion() throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("getVersion", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("getVersion", TMessageType.CALL, ++seqid_));
       getVersion_args args = new getVersion_args();
       args.write(oprot_);
       oprot_.writeMessageEnd();
@@ -189,6 +235,9 @@ public class FacebookService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "getVersion failed: out of sequence response");
       }
       getVersion_result result = new getVersion_result();
       result.read(iprot_);
@@ -207,7 +256,7 @@ public class FacebookService {
 
     public void send_getStatus() throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("getStatus", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("getStatus", TMessageType.CALL, ++seqid_));
       getStatus_args args = new getStatus_args();
       args.write(oprot_);
       oprot_.writeMessageEnd();
@@ -221,6 +270,9 @@ public class FacebookService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "getStatus failed: out of sequence response");
       }
       getStatus_result result = new getStatus_result();
       result.read(iprot_);
@@ -239,7 +291,7 @@ public class FacebookService {
 
     public void send_getStatusDetails() throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("getStatusDetails", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("getStatusDetails", TMessageType.CALL, ++seqid_));
       getStatusDetails_args args = new getStatusDetails_args();
       args.write(oprot_);
       oprot_.writeMessageEnd();
@@ -253,6 +305,9 @@ public class FacebookService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "getStatusDetails failed: out of sequence response");
       }
       getStatusDetails_result result = new getStatusDetails_result();
       result.read(iprot_);
@@ -271,7 +326,7 @@ public class FacebookService {
 
     public void send_getCounters() throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("getCounters", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("getCounters", TMessageType.CALL, ++seqid_));
       getCounters_args args = new getCounters_args();
       args.write(oprot_);
       oprot_.writeMessageEnd();
@@ -285,6 +340,9 @@ public class FacebookService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "getCounters failed: out of sequence response");
       }
       getCounters_result result = new getCounters_result();
       result.read(iprot_);
@@ -303,9 +361,9 @@ public class FacebookService {
 
     public void send_getCounter(String key) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("getCounter", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("getCounter", TMessageType.CALL, ++seqid_));
       getCounter_args args = new getCounter_args();
-      args.key = key;
+      args.setKey(key);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -318,6 +376,9 @@ public class FacebookService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "getCounter failed: out of sequence response");
       }
       getCounter_result result = new getCounter_result();
       result.read(iprot_);
@@ -336,10 +397,10 @@ public class FacebookService {
 
     public void send_setOption(String key, String value) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("setOption", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("setOption", TMessageType.CALL, ++seqid_));
       setOption_args args = new setOption_args();
-      args.key = key;
-      args.value = value;
+      args.setKey(key);
+      args.setValue(value);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -352,6 +413,9 @@ public class FacebookService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "setOption failed: out of sequence response");
       }
       setOption_result result = new setOption_result();
       result.read(iprot_);
@@ -367,9 +431,9 @@ public class FacebookService {
 
     public void send_getOption(String key) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("getOption", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("getOption", TMessageType.CALL, ++seqid_));
       getOption_args args = new getOption_args();
-      args.key = key;
+      args.setKey(key);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -382,6 +446,9 @@ public class FacebookService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "getOption failed: out of sequence response");
       }
       getOption_result result = new getOption_result();
       result.read(iprot_);
@@ -400,7 +467,7 @@ public class FacebookService {
 
     public void send_getOptions() throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("getOptions", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("getOptions", TMessageType.CALL, ++seqid_));
       getOptions_args args = new getOptions_args();
       args.write(oprot_);
       oprot_.writeMessageEnd();
@@ -414,6 +481,9 @@ public class FacebookService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "getOptions failed: out of sequence response");
       }
       getOptions_result result = new getOptions_result();
       result.read(iprot_);
@@ -432,9 +502,9 @@ public class FacebookService {
 
     public void send_getCpuProfile(int profileDurationInSec) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("getCpuProfile", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("getCpuProfile", TMessageType.CALL, ++seqid_));
       getCpuProfile_args args = new getCpuProfile_args();
-      args.profileDurationInSec = profileDurationInSec;
+      args.setProfileDurationInSec(profileDurationInSec);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -447,6 +517,9 @@ public class FacebookService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "getCpuProfile failed: out of sequence response");
       }
       getCpuProfile_result result = new getCpuProfile_result();
       result.read(iprot_);
@@ -465,7 +538,7 @@ public class FacebookService {
 
     public void send_aliveSince() throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("aliveSince", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("aliveSince", TMessageType.CALL, ++seqid_));
       aliveSince_args args = new aliveSince_args();
       args.write(oprot_);
       oprot_.writeMessageEnd();
@@ -479,6 +552,9 @@ public class FacebookService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "aliveSince failed: out of sequence response");
       }
       aliveSince_result result = new aliveSince_result();
       result.read(iprot_);
@@ -496,7 +572,7 @@ public class FacebookService {
 
     public void send_reinitialize() throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("reinitialize", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("reinitialize", TMessageType.CALL, ++seqid_));
       reinitialize_args args = new reinitialize_args();
       args.write(oprot_);
       oprot_.writeMessageEnd();
@@ -510,7 +586,7 @@ public class FacebookService {
 
     public void send_shutdown() throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("shutdown", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("shutdown", TMessageType.CALL, ++seqid_));
       shutdown_args args = new shutdown_args();
       args.write(oprot_);
       oprot_.writeMessageEnd();
@@ -518,6 +594,402 @@ public class FacebookService {
     }
 
   }
+  public static class AsyncClient extends TAsyncClient implements AsyncIface {
+    public static class Factory implements TAsyncClientFactory<AsyncClient> {
+      private TAsyncClientManager clientManager;
+      private TProtocolFactory protocolFactory;
+      public Factory(TAsyncClientManager clientManager, TProtocolFactory protocolFactory) {
+        this.clientManager = clientManager;
+        this.protocolFactory = protocolFactory;
+      }
+      public AsyncClient getAsyncClient(TNonblockingTransport transport) {
+        return new AsyncClient(protocolFactory, clientManager, transport);
+      }
+    }
+
+    public AsyncClient(TProtocolFactory protocolFactory, TAsyncClientManager clientManager, TNonblockingTransport transport) {
+      super(protocolFactory, clientManager, transport);
+    }
+
+    public void getName(AsyncMethodCallback<getName_call> resultHandler) throws TException {
+      checkReady();
+      getName_call method_call = new getName_call(resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class getName_call extends TAsyncMethodCall {
+      public getName_call(AsyncMethodCallback<getName_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("getName", TMessageType.CALL, 0));
+        getName_args args = new getName_args();
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public String getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getName();
+      }
+    }
+
+    public void getVersion(AsyncMethodCallback<getVersion_call> resultHandler) throws TException {
+      checkReady();
+      getVersion_call method_call = new getVersion_call(resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class getVersion_call extends TAsyncMethodCall {
+      public getVersion_call(AsyncMethodCallback<getVersion_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("getVersion", TMessageType.CALL, 0));
+        getVersion_args args = new getVersion_args();
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public String getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getVersion();
+      }
+    }
+
+    public void getStatus(AsyncMethodCallback<getStatus_call> resultHandler) throws TException {
+      checkReady();
+      getStatus_call method_call = new getStatus_call(resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class getStatus_call extends TAsyncMethodCall {
+      public getStatus_call(AsyncMethodCallback<getStatus_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("getStatus", TMessageType.CALL, 0));
+        getStatus_args args = new getStatus_args();
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public fb_status getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getStatus();
+      }
+    }
+
+    public void getStatusDetails(AsyncMethodCallback<getStatusDetails_call> resultHandler) throws TException {
+      checkReady();
+      getStatusDetails_call method_call = new getStatusDetails_call(resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class getStatusDetails_call extends TAsyncMethodCall {
+      public getStatusDetails_call(AsyncMethodCallback<getStatusDetails_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("getStatusDetails", TMessageType.CALL, 0));
+        getStatusDetails_args args = new getStatusDetails_args();
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public String getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getStatusDetails();
+      }
+    }
+
+    public void getCounters(AsyncMethodCallback<getCounters_call> resultHandler) throws TException {
+      checkReady();
+      getCounters_call method_call = new getCounters_call(resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class getCounters_call extends TAsyncMethodCall {
+      public getCounters_call(AsyncMethodCallback<getCounters_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("getCounters", TMessageType.CALL, 0));
+        getCounters_args args = new getCounters_args();
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public Map<String,Long> getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getCounters();
+      }
+    }
+
+    public void getCounter(String key, AsyncMethodCallback<getCounter_call> resultHandler) throws TException {
+      checkReady();
+      getCounter_call method_call = new getCounter_call(key, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class getCounter_call extends TAsyncMethodCall {
+      private String key;
+      public getCounter_call(String key, AsyncMethodCallback<getCounter_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.key = key;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("getCounter", TMessageType.CALL, 0));
+        getCounter_args args = new getCounter_args();
+        args.setKey(key);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public long getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getCounter();
+      }
+    }
+
+    public void setOption(String key, String value, AsyncMethodCallback<setOption_call> resultHandler) throws TException {
+      checkReady();
+      setOption_call method_call = new setOption_call(key, value, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class setOption_call extends TAsyncMethodCall {
+      private String key;
+      private String value;
+      public setOption_call(String key, String value, AsyncMethodCallback<setOption_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.key = key;
+        this.value = value;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("setOption", TMessageType.CALL, 0));
+        setOption_args args = new setOption_args();
+        args.setKey(key);
+        args.setValue(value);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_setOption();
+      }
+    }
+
+    public void getOption(String key, AsyncMethodCallback<getOption_call> resultHandler) throws TException {
+      checkReady();
+      getOption_call method_call = new getOption_call(key, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class getOption_call extends TAsyncMethodCall {
+      private String key;
+      public getOption_call(String key, AsyncMethodCallback<getOption_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.key = key;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("getOption", TMessageType.CALL, 0));
+        getOption_args args = new getOption_args();
+        args.setKey(key);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public String getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getOption();
+      }
+    }
+
+    public void getOptions(AsyncMethodCallback<getOptions_call> resultHandler) throws TException {
+      checkReady();
+      getOptions_call method_call = new getOptions_call(resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class getOptions_call extends TAsyncMethodCall {
+      public getOptions_call(AsyncMethodCallback<getOptions_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("getOptions", TMessageType.CALL, 0));
+        getOptions_args args = new getOptions_args();
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public Map<String,String> getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getOptions();
+      }
+    }
+
+    public void getCpuProfile(int profileDurationInSec, AsyncMethodCallback<getCpuProfile_call> resultHandler) throws TException {
+      checkReady();
+      getCpuProfile_call method_call = new getCpuProfile_call(profileDurationInSec, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class getCpuProfile_call extends TAsyncMethodCall {
+      private int profileDurationInSec;
+      public getCpuProfile_call(int profileDurationInSec, AsyncMethodCallback<getCpuProfile_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.profileDurationInSec = profileDurationInSec;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("getCpuProfile", TMessageType.CALL, 0));
+        getCpuProfile_args args = new getCpuProfile_args();
+        args.setProfileDurationInSec(profileDurationInSec);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public String getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getCpuProfile();
+      }
+    }
+
+    public void aliveSince(AsyncMethodCallback<aliveSince_call> resultHandler) throws TException {
+      checkReady();
+      aliveSince_call method_call = new aliveSince_call(resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class aliveSince_call extends TAsyncMethodCall {
+      public aliveSince_call(AsyncMethodCallback<aliveSince_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("aliveSince", TMessageType.CALL, 0));
+        aliveSince_args args = new aliveSince_args();
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public long getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_aliveSince();
+      }
+    }
+
+    public void reinitialize(AsyncMethodCallback<reinitialize_call> resultHandler) throws TException {
+      checkReady();
+      reinitialize_call method_call = new reinitialize_call(resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class reinitialize_call extends TAsyncMethodCall {
+      public reinitialize_call(AsyncMethodCallback<reinitialize_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, true);
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("reinitialize", TMessageType.CALL, 0));
+        reinitialize_args args = new reinitialize_args();
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+      }
+    }
+
+    public void shutdown(AsyncMethodCallback<shutdown_call> resultHandler) throws TException {
+      checkReady();
+      shutdown_call method_call = new shutdown_call(resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class shutdown_call extends TAsyncMethodCall {
+      public shutdown_call(AsyncMethodCallback<shutdown_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, true);
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("shutdown", TMessageType.CALL, 0));
+        shutdown_args args = new shutdown_args();
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+      }
+    }
+
+  }
+
   public static class Processor implements TProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class.getName());
     public Processor(Iface iface)
@@ -567,7 +1039,17 @@ public class FacebookService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         getName_args args = new getName_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("getName", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         getName_result result = new getName_result();
         result.success = iface_.getName();
@@ -583,7 +1065,17 @@ public class FacebookService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         getVersion_args args = new getVersion_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("getVersion", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         getVersion_result result = new getVersion_result();
         result.success = iface_.getVersion();
@@ -599,7 +1091,17 @@ public class FacebookService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         getStatus_args args = new getStatus_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("getStatus", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         getStatus_result result = new getStatus_result();
         result.success = iface_.getStatus();
@@ -615,7 +1117,17 @@ public class FacebookService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         getStatusDetails_args args = new getStatusDetails_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("getStatusDetails", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         getStatusDetails_result result = new getStatusDetails_result();
         result.success = iface_.getStatusDetails();
@@ -631,7 +1143,17 @@ public class FacebookService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         getCounters_args args = new getCounters_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("getCounters", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         getCounters_result result = new getCounters_result();
         result.success = iface_.getCounters();
@@ -647,7 +1169,17 @@ public class FacebookService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         getCounter_args args = new getCounter_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("getCounter", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         getCounter_result result = new getCounter_result();
         result.success = iface_.getCounter(args.key);
@@ -664,7 +1196,17 @@ public class FacebookService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         setOption_args args = new setOption_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("setOption", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         setOption_result result = new setOption_result();
         iface_.setOption(args.key, args.value);
@@ -680,7 +1222,17 @@ public class FacebookService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         getOption_args args = new getOption_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("getOption", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         getOption_result result = new getOption_result();
         result.success = iface_.getOption(args.key);
@@ -696,7 +1248,17 @@ public class FacebookService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         getOptions_args args = new getOptions_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("getOptions", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         getOptions_result result = new getOptions_result();
         result.success = iface_.getOptions();
@@ -712,7 +1274,17 @@ public class FacebookService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         getCpuProfile_args args = new getCpuProfile_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("getCpuProfile", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         getCpuProfile_result result = new getCpuProfile_result();
         result.success = iface_.getCpuProfile(args.profileDurationInSec);
@@ -728,7 +1300,17 @@ public class FacebookService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         aliveSince_args args = new aliveSince_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("aliveSince", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         aliveSince_result result = new aliveSince_result();
         result.success = iface_.aliveSince();
@@ -745,7 +1327,17 @@ public class FacebookService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         reinitialize_args args = new reinitialize_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("reinitialize", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         iface_.reinitialize();
         return;
@@ -756,7 +1348,17 @@ public class FacebookService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         shutdown_args args = new shutdown_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("shutdown", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         iface_.shutdown();
         return;
@@ -765,7 +1367,7 @@ public class FacebookService {
 
   }
 
-  public static class getName_args implements TBase<getName_args._Fields>, java.io.Serializable, Cloneable, Comparable<getName_args>   {
+  public static class getName_args implements TBase<getName_args, getName_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getName_args");
 
 
@@ -774,12 +1376,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
 ;
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -788,7 +1388,10 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          default:
+            return null;
+        }
       }
 
       /**
@@ -824,10 +1427,10 @@ public class FacebookService {
         return _fieldName;
       }
     }
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getName_args.class, metaDataMap);
     }
 
@@ -847,6 +1450,10 @@ public class FacebookService {
     @Deprecated
     public getName_args clone() {
       return new getName_args(this);
+    }
+
+    @Override
+    public void clear() {
     }
 
     public void setFieldValue(_Fields field, Object value) {
@@ -920,14 +1527,11 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -958,7 +1562,7 @@ public class FacebookService {
 
   }
 
-  public static class getName_result implements TBase<getName_result._Fields>, java.io.Serializable, Cloneable, Comparable<getName_result>   {
+  public static class getName_result implements TBase<getName_result, getName_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getName_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
@@ -969,12 +1573,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
       SUCCESS((short)0, "success");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -983,7 +1585,12 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -1022,12 +1629,12 @@ public class FacebookService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getName_result.class, metaDataMap);
     }
 
@@ -1057,6 +1664,11 @@ public class FacebookService {
     @Deprecated
     public getName_result clone() {
       return new getName_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
     }
 
     public String getSuccess() {
@@ -1164,13 +1776,14 @@ public class FacebookService {
       int lastComparison = 0;
       getName_result typedOther = (getName_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -1184,21 +1797,18 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.STRING) {
-                this.success = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.STRING) {
+              this.success = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -1240,7 +1850,7 @@ public class FacebookService {
 
   }
 
-  public static class getVersion_args implements TBase<getVersion_args._Fields>, java.io.Serializable, Cloneable, Comparable<getVersion_args>   {
+  public static class getVersion_args implements TBase<getVersion_args, getVersion_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getVersion_args");
 
 
@@ -1249,12 +1859,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
 ;
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -1263,7 +1871,10 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          default:
+            return null;
+        }
       }
 
       /**
@@ -1299,10 +1910,10 @@ public class FacebookService {
         return _fieldName;
       }
     }
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getVersion_args.class, metaDataMap);
     }
 
@@ -1322,6 +1933,10 @@ public class FacebookService {
     @Deprecated
     public getVersion_args clone() {
       return new getVersion_args(this);
+    }
+
+    @Override
+    public void clear() {
     }
 
     public void setFieldValue(_Fields field, Object value) {
@@ -1395,14 +2010,11 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -1433,7 +2045,7 @@ public class FacebookService {
 
   }
 
-  public static class getVersion_result implements TBase<getVersion_result._Fields>, java.io.Serializable, Cloneable, Comparable<getVersion_result>   {
+  public static class getVersion_result implements TBase<getVersion_result, getVersion_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getVersion_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
@@ -1444,12 +2056,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
       SUCCESS((short)0, "success");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -1458,7 +2068,12 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -1497,12 +2112,12 @@ public class FacebookService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getVersion_result.class, metaDataMap);
     }
 
@@ -1532,6 +2147,11 @@ public class FacebookService {
     @Deprecated
     public getVersion_result clone() {
       return new getVersion_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
     }
 
     public String getSuccess() {
@@ -1639,13 +2259,14 @@ public class FacebookService {
       int lastComparison = 0;
       getVersion_result typedOther = (getVersion_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -1659,21 +2280,18 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.STRING) {
-                this.success = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.STRING) {
+              this.success = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -1715,7 +2333,7 @@ public class FacebookService {
 
   }
 
-  public static class getStatus_args implements TBase<getStatus_args._Fields>, java.io.Serializable, Cloneable, Comparable<getStatus_args>   {
+  public static class getStatus_args implements TBase<getStatus_args, getStatus_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getStatus_args");
 
 
@@ -1724,12 +2342,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
 ;
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -1738,7 +2354,10 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          default:
+            return null;
+        }
       }
 
       /**
@@ -1774,10 +2393,10 @@ public class FacebookService {
         return _fieldName;
       }
     }
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getStatus_args.class, metaDataMap);
     }
 
@@ -1797,6 +2416,10 @@ public class FacebookService {
     @Deprecated
     public getStatus_args clone() {
       return new getStatus_args(this);
+    }
+
+    @Override
+    public void clear() {
     }
 
     public void setFieldValue(_Fields field, Object value) {
@@ -1870,14 +2493,11 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -1908,7 +2528,7 @@ public class FacebookService {
 
   }
 
-  public static class getStatus_result implements TBase<getStatus_result._Fields>, java.io.Serializable, Cloneable, Comparable<getStatus_result>   {
+  public static class getStatus_result implements TBase<getStatus_result, getStatus_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getStatus_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.I32, (short)0);
@@ -1927,12 +2547,10 @@ public class FacebookService {
        */
       SUCCESS((short)0, "success");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -1941,7 +2559,12 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -1980,12 +2603,12 @@ public class FacebookService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new EnumMetaData(TType.ENUM, fb_status.class)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new EnumMetaData(TType.ENUM, fb_status.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getStatus_result.class, metaDataMap);
     }
 
@@ -2015,6 +2638,11 @@ public class FacebookService {
     @Deprecated
     public getStatus_result clone() {
       return new getStatus_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
     }
 
     /**
@@ -2130,13 +2758,14 @@ public class FacebookService {
       int lastComparison = 0;
       getStatus_result typedOther = (getStatus_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -2150,21 +2779,18 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.I32) {
-                this.success = fb_status.findByValue(iprot.readI32());
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.I32) {
+              this.success = fb_status.findByValue(iprot.readI32());
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -2193,15 +2819,7 @@ public class FacebookService {
       if (this.success == null) {
         sb.append("null");
       } else {
-        String success_name = success.name();
-        if (success_name != null) {
-          sb.append(success_name);
-          sb.append(" (");
-        }
         sb.append(this.success);
-        if (success_name != null) {
-          sb.append(")");
-        }
       }
       first = false;
       sb.append(")");
@@ -2214,7 +2832,7 @@ public class FacebookService {
 
   }
 
-  public static class getStatusDetails_args implements TBase<getStatusDetails_args._Fields>, java.io.Serializable, Cloneable, Comparable<getStatusDetails_args>   {
+  public static class getStatusDetails_args implements TBase<getStatusDetails_args, getStatusDetails_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getStatusDetails_args");
 
 
@@ -2223,12 +2841,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
 ;
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -2237,7 +2853,10 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          default:
+            return null;
+        }
       }
 
       /**
@@ -2273,10 +2892,10 @@ public class FacebookService {
         return _fieldName;
       }
     }
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getStatusDetails_args.class, metaDataMap);
     }
 
@@ -2296,6 +2915,10 @@ public class FacebookService {
     @Deprecated
     public getStatusDetails_args clone() {
       return new getStatusDetails_args(this);
+    }
+
+    @Override
+    public void clear() {
     }
 
     public void setFieldValue(_Fields field, Object value) {
@@ -2369,14 +2992,11 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -2407,7 +3027,7 @@ public class FacebookService {
 
   }
 
-  public static class getStatusDetails_result implements TBase<getStatusDetails_result._Fields>, java.io.Serializable, Cloneable, Comparable<getStatusDetails_result>   {
+  public static class getStatusDetails_result implements TBase<getStatusDetails_result, getStatusDetails_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getStatusDetails_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
@@ -2418,12 +3038,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
       SUCCESS((short)0, "success");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -2432,7 +3050,12 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -2471,12 +3094,12 @@ public class FacebookService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getStatusDetails_result.class, metaDataMap);
     }
 
@@ -2506,6 +3129,11 @@ public class FacebookService {
     @Deprecated
     public getStatusDetails_result clone() {
       return new getStatusDetails_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
     }
 
     public String getSuccess() {
@@ -2613,13 +3241,14 @@ public class FacebookService {
       int lastComparison = 0;
       getStatusDetails_result typedOther = (getStatusDetails_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -2633,21 +3262,18 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.STRING) {
-                this.success = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.STRING) {
+              this.success = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -2689,7 +3315,7 @@ public class FacebookService {
 
   }
 
-  public static class getCounters_args implements TBase<getCounters_args._Fields>, java.io.Serializable, Cloneable, Comparable<getCounters_args>   {
+  public static class getCounters_args implements TBase<getCounters_args, getCounters_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getCounters_args");
 
 
@@ -2698,12 +3324,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
 ;
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -2712,7 +3336,10 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          default:
+            return null;
+        }
       }
 
       /**
@@ -2748,10 +3375,10 @@ public class FacebookService {
         return _fieldName;
       }
     }
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getCounters_args.class, metaDataMap);
     }
 
@@ -2771,6 +3398,10 @@ public class FacebookService {
     @Deprecated
     public getCounters_args clone() {
       return new getCounters_args(this);
+    }
+
+    @Override
+    public void clear() {
     }
 
     public void setFieldValue(_Fields field, Object value) {
@@ -2844,14 +3475,11 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -2882,7 +3510,7 @@ public class FacebookService {
 
   }
 
-  public static class getCounters_result implements TBase<getCounters_result._Fields>, java.io.Serializable, Cloneable   {
+  public static class getCounters_result implements TBase<getCounters_result, getCounters_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getCounters_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.MAP, (short)0);
@@ -2893,12 +3521,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
       SUCCESS((short)0, "success");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -2907,7 +3533,12 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -2946,14 +3577,14 @@ public class FacebookService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
           new MapMetaData(TType.MAP, 
               new FieldValueMetaData(TType.STRING), 
               new FieldValueMetaData(TType.I64))));
-    }});
-
-    static {
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getCounters_result.class, metaDataMap);
     }
 
@@ -2995,6 +3626,11 @@ public class FacebookService {
     @Deprecated
     public getCounters_result clone() {
       return new getCounters_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
     }
 
     public int getSuccessSize() {
@@ -3105,6 +3741,26 @@ public class FacebookService {
       return 0;
     }
 
+    public int compareTo(getCounters_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getCounters_result typedOther = (getCounters_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
     public void read(TProtocol iprot) throws TException {
       TField field;
       iprot.readStructBegin();
@@ -3114,33 +3770,30 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.MAP) {
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.MAP) {
+              {
+                TMap _map0 = iprot.readMapBegin();
+                this.success = new HashMap<String,Long>(2*_map0.size);
+                for (int _i1 = 0; _i1 < _map0.size; ++_i1)
                 {
-                  TMap _map0 = iprot.readMapBegin();
-                  this.success = new HashMap<String,Long>(2*_map0.size);
-                  for (int _i1 = 0; _i1 < _map0.size; ++_i1)
-                  {
-                    String _key2;
-                    long _val3;
-                    _key2 = iprot.readString();
-                    _val3 = iprot.readI64();
-                    this.success.put(_key2, _val3);
-                  }
-                  iprot.readMapEnd();
+                  String _key2;
+                  long _val3;
+                  _key2 = iprot.readString();
+                  _val3 = iprot.readI64();
+                  this.success.put(_key2, _val3);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readMapEnd();
               }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -3190,7 +3843,7 @@ public class FacebookService {
 
   }
 
-  public static class getCounter_args implements TBase<getCounter_args._Fields>, java.io.Serializable, Cloneable, Comparable<getCounter_args>   {
+  public static class getCounter_args implements TBase<getCounter_args, getCounter_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getCounter_args");
 
     private static final TField KEY_FIELD_DESC = new TField("key", TType.STRING, (short)1);
@@ -3201,12 +3854,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
       KEY((short)1, "key");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -3215,7 +3866,12 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // KEY
+            return KEY;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -3254,12 +3910,12 @@ public class FacebookService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.KEY, new FieldMetaData("key", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.KEY, new FieldMetaData("key", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getCounter_args.class, metaDataMap);
     }
 
@@ -3289,6 +3945,11 @@ public class FacebookService {
     @Deprecated
     public getCounter_args clone() {
       return new getCounter_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.key = null;
     }
 
     public String getKey() {
@@ -3396,13 +4057,14 @@ public class FacebookService {
       int lastComparison = 0;
       getCounter_args typedOther = (getCounter_args)other;
 
-      lastComparison = Boolean.valueOf(isSetKey()).compareTo(isSetKey());
+      lastComparison = Boolean.valueOf(isSetKey()).compareTo(typedOther.isSetKey());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(key, typedOther.key);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetKey()) {        lastComparison = TBaseHelper.compareTo(this.key, typedOther.key);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -3416,21 +4078,18 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case KEY:
-              if (field.type == TType.STRING) {
-                this.key = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // KEY
+            if (field.type == TType.STRING) {
+              this.key = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -3473,7 +4132,7 @@ public class FacebookService {
 
   }
 
-  public static class getCounter_result implements TBase<getCounter_result._Fields>, java.io.Serializable, Cloneable, Comparable<getCounter_result>   {
+  public static class getCounter_result implements TBase<getCounter_result, getCounter_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getCounter_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.I64, (short)0);
@@ -3484,12 +4143,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
       SUCCESS((short)0, "success");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -3498,7 +4155,12 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -3539,12 +4201,12 @@ public class FacebookService {
     private static final int __SUCCESS_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getCounter_result.class, metaDataMap);
     }
 
@@ -3575,6 +4237,12 @@ public class FacebookService {
     @Deprecated
     public getCounter_result clone() {
       return new getCounter_result(this);
+    }
+
+    @Override
+    public void clear() {
+      setSuccessIsSet(false);
+      this.success = 0;
     }
 
     public long getSuccess() {
@@ -3681,13 +4349,14 @@ public class FacebookService {
       int lastComparison = 0;
       getCounter_result typedOther = (getCounter_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -3701,22 +4370,19 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.I64) {
-                this.success = iprot.readI64();
-                setSuccessIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.I64) {
+              this.success = iprot.readI64();
+              setSuccessIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -3754,7 +4420,7 @@ public class FacebookService {
 
   }
 
-  public static class setOption_args implements TBase<setOption_args._Fields>, java.io.Serializable, Cloneable, Comparable<setOption_args>   {
+  public static class setOption_args implements TBase<setOption_args, setOption_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("setOption_args");
 
     private static final TField KEY_FIELD_DESC = new TField("key", TType.STRING, (short)1);
@@ -3768,12 +4434,10 @@ public class FacebookService {
       KEY((short)1, "key"),
       VALUE((short)2, "value");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -3782,7 +4446,14 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // KEY
+            return KEY;
+          case 2: // VALUE
+            return VALUE;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -3821,14 +4492,14 @@ public class FacebookService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.KEY, new FieldMetaData("key", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.VALUE, new FieldMetaData("value", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.KEY, new FieldMetaData("key", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.VALUE, new FieldMetaData("value", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(setOption_args.class, metaDataMap);
     }
 
@@ -3863,6 +4534,12 @@ public class FacebookService {
     @Deprecated
     public setOption_args clone() {
       return new setOption_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.key = null;
+      this.value = null;
     }
 
     public String getKey() {
@@ -4016,21 +4693,23 @@ public class FacebookService {
       int lastComparison = 0;
       setOption_args typedOther = (setOption_args)other;
 
-      lastComparison = Boolean.valueOf(isSetKey()).compareTo(isSetKey());
+      lastComparison = Boolean.valueOf(isSetKey()).compareTo(typedOther.isSetKey());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(key, typedOther.key);
+      if (isSetKey()) {        lastComparison = TBaseHelper.compareTo(this.key, typedOther.key);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetValue()).compareTo(typedOther.isSetValue());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetValue()).compareTo(isSetValue());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(value, typedOther.value);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetValue()) {        lastComparison = TBaseHelper.compareTo(this.value, typedOther.value);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -4044,28 +4723,25 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case KEY:
-              if (field.type == TType.STRING) {
-                this.key = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case VALUE:
-              if (field.type == TType.STRING) {
-                this.value = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // KEY
+            if (field.type == TType.STRING) {
+              this.key = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // VALUE
+            if (field.type == TType.STRING) {
+              this.value = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -4121,7 +4797,7 @@ public class FacebookService {
 
   }
 
-  public static class setOption_result implements TBase<setOption_result._Fields>, java.io.Serializable, Cloneable, Comparable<setOption_result>   {
+  public static class setOption_result implements TBase<setOption_result, setOption_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("setOption_result");
 
 
@@ -4130,12 +4806,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
 ;
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -4144,7 +4818,10 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          default:
+            return null;
+        }
       }
 
       /**
@@ -4180,10 +4857,10 @@ public class FacebookService {
         return _fieldName;
       }
     }
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(setOption_result.class, metaDataMap);
     }
 
@@ -4203,6 +4880,10 @@ public class FacebookService {
     @Deprecated
     public setOption_result clone() {
       return new setOption_result(this);
+    }
+
+    @Override
+    public void clear() {
     }
 
     public void setFieldValue(_Fields field, Object value) {
@@ -4276,14 +4957,11 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -4313,7 +4991,7 @@ public class FacebookService {
 
   }
 
-  public static class getOption_args implements TBase<getOption_args._Fields>, java.io.Serializable, Cloneable, Comparable<getOption_args>   {
+  public static class getOption_args implements TBase<getOption_args, getOption_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getOption_args");
 
     private static final TField KEY_FIELD_DESC = new TField("key", TType.STRING, (short)1);
@@ -4324,12 +5002,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
       KEY((short)1, "key");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -4338,7 +5014,12 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // KEY
+            return KEY;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -4377,12 +5058,12 @@ public class FacebookService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.KEY, new FieldMetaData("key", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.KEY, new FieldMetaData("key", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getOption_args.class, metaDataMap);
     }
 
@@ -4412,6 +5093,11 @@ public class FacebookService {
     @Deprecated
     public getOption_args clone() {
       return new getOption_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.key = null;
     }
 
     public String getKey() {
@@ -4519,13 +5205,14 @@ public class FacebookService {
       int lastComparison = 0;
       getOption_args typedOther = (getOption_args)other;
 
-      lastComparison = Boolean.valueOf(isSetKey()).compareTo(isSetKey());
+      lastComparison = Boolean.valueOf(isSetKey()).compareTo(typedOther.isSetKey());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(key, typedOther.key);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetKey()) {        lastComparison = TBaseHelper.compareTo(this.key, typedOther.key);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -4539,21 +5226,18 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case KEY:
-              if (field.type == TType.STRING) {
-                this.key = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // KEY
+            if (field.type == TType.STRING) {
+              this.key = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -4596,7 +5280,7 @@ public class FacebookService {
 
   }
 
-  public static class getOption_result implements TBase<getOption_result._Fields>, java.io.Serializable, Cloneable, Comparable<getOption_result>   {
+  public static class getOption_result implements TBase<getOption_result, getOption_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getOption_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
@@ -4607,12 +5291,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
       SUCCESS((short)0, "success");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -4621,7 +5303,12 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -4660,12 +5347,12 @@ public class FacebookService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getOption_result.class, metaDataMap);
     }
 
@@ -4695,6 +5382,11 @@ public class FacebookService {
     @Deprecated
     public getOption_result clone() {
       return new getOption_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
     }
 
     public String getSuccess() {
@@ -4802,13 +5494,14 @@ public class FacebookService {
       int lastComparison = 0;
       getOption_result typedOther = (getOption_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -4822,21 +5515,18 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.STRING) {
-                this.success = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.STRING) {
+              this.success = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -4878,7 +5568,7 @@ public class FacebookService {
 
   }
 
-  public static class getOptions_args implements TBase<getOptions_args._Fields>, java.io.Serializable, Cloneable, Comparable<getOptions_args>   {
+  public static class getOptions_args implements TBase<getOptions_args, getOptions_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getOptions_args");
 
 
@@ -4887,12 +5577,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
 ;
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -4901,7 +5589,10 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          default:
+            return null;
+        }
       }
 
       /**
@@ -4937,10 +5628,10 @@ public class FacebookService {
         return _fieldName;
       }
     }
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getOptions_args.class, metaDataMap);
     }
 
@@ -4960,6 +5651,10 @@ public class FacebookService {
     @Deprecated
     public getOptions_args clone() {
       return new getOptions_args(this);
+    }
+
+    @Override
+    public void clear() {
     }
 
     public void setFieldValue(_Fields field, Object value) {
@@ -5033,14 +5728,11 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -5071,7 +5763,7 @@ public class FacebookService {
 
   }
 
-  public static class getOptions_result implements TBase<getOptions_result._Fields>, java.io.Serializable, Cloneable   {
+  public static class getOptions_result implements TBase<getOptions_result, getOptions_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getOptions_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.MAP, (short)0);
@@ -5082,12 +5774,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
       SUCCESS((short)0, "success");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -5096,7 +5786,12 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -5135,14 +5830,14 @@ public class FacebookService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
           new MapMetaData(TType.MAP, 
               new FieldValueMetaData(TType.STRING), 
               new FieldValueMetaData(TType.STRING))));
-    }});
-
-    static {
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getOptions_result.class, metaDataMap);
     }
 
@@ -5184,6 +5879,11 @@ public class FacebookService {
     @Deprecated
     public getOptions_result clone() {
       return new getOptions_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
     }
 
     public int getSuccessSize() {
@@ -5294,6 +5994,26 @@ public class FacebookService {
       return 0;
     }
 
+    public int compareTo(getOptions_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getOptions_result typedOther = (getOptions_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
     public void read(TProtocol iprot) throws TException {
       TField field;
       iprot.readStructBegin();
@@ -5303,33 +6023,30 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.MAP) {
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.MAP) {
+              {
+                TMap _map5 = iprot.readMapBegin();
+                this.success = new HashMap<String,String>(2*_map5.size);
+                for (int _i6 = 0; _i6 < _map5.size; ++_i6)
                 {
-                  TMap _map5 = iprot.readMapBegin();
-                  this.success = new HashMap<String,String>(2*_map5.size);
-                  for (int _i6 = 0; _i6 < _map5.size; ++_i6)
-                  {
-                    String _key7;
-                    String _val8;
-                    _key7 = iprot.readString();
-                    _val8 = iprot.readString();
-                    this.success.put(_key7, _val8);
-                  }
-                  iprot.readMapEnd();
+                  String _key7;
+                  String _val8;
+                  _key7 = iprot.readString();
+                  _val8 = iprot.readString();
+                  this.success.put(_key7, _val8);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readMapEnd();
               }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -5379,7 +6096,7 @@ public class FacebookService {
 
   }
 
-  public static class getCpuProfile_args implements TBase<getCpuProfile_args._Fields>, java.io.Serializable, Cloneable, Comparable<getCpuProfile_args>   {
+  public static class getCpuProfile_args implements TBase<getCpuProfile_args, getCpuProfile_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getCpuProfile_args");
 
     private static final TField PROFILE_DURATION_IN_SEC_FIELD_DESC = new TField("profileDurationInSec", TType.I32, (short)1);
@@ -5390,12 +6107,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
       PROFILE_DURATION_IN_SEC((short)1, "profileDurationInSec");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -5404,7 +6119,12 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // PROFILE_DURATION_IN_SEC
+            return PROFILE_DURATION_IN_SEC;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -5445,12 +6165,12 @@ public class FacebookService {
     private static final int __PROFILEDURATIONINSEC_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.PROFILE_DURATION_IN_SEC, new FieldMetaData("profileDurationInSec", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I32)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.PROFILE_DURATION_IN_SEC, new FieldMetaData("profileDurationInSec", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I32)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getCpuProfile_args.class, metaDataMap);
     }
 
@@ -5481,6 +6201,12 @@ public class FacebookService {
     @Deprecated
     public getCpuProfile_args clone() {
       return new getCpuProfile_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setProfileDurationInSecIsSet(false);
+      this.profileDurationInSec = 0;
     }
 
     public int getProfileDurationInSec() {
@@ -5587,13 +6313,14 @@ public class FacebookService {
       int lastComparison = 0;
       getCpuProfile_args typedOther = (getCpuProfile_args)other;
 
-      lastComparison = Boolean.valueOf(isSetProfileDurationInSec()).compareTo(isSetProfileDurationInSec());
+      lastComparison = Boolean.valueOf(isSetProfileDurationInSec()).compareTo(typedOther.isSetProfileDurationInSec());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(profileDurationInSec, typedOther.profileDurationInSec);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetProfileDurationInSec()) {        lastComparison = TBaseHelper.compareTo(this.profileDurationInSec, typedOther.profileDurationInSec);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -5607,22 +6334,19 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case PROFILE_DURATION_IN_SEC:
-              if (field.type == TType.I32) {
-                this.profileDurationInSec = iprot.readI32();
-                setProfileDurationInSecIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // PROFILE_DURATION_IN_SEC
+            if (field.type == TType.I32) {
+              this.profileDurationInSec = iprot.readI32();
+              setProfileDurationInSecIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -5659,7 +6383,7 @@ public class FacebookService {
 
   }
 
-  public static class getCpuProfile_result implements TBase<getCpuProfile_result._Fields>, java.io.Serializable, Cloneable, Comparable<getCpuProfile_result>   {
+  public static class getCpuProfile_result implements TBase<getCpuProfile_result, getCpuProfile_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getCpuProfile_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
@@ -5670,12 +6394,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
       SUCCESS((short)0, "success");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -5684,7 +6406,12 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -5723,12 +6450,12 @@ public class FacebookService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getCpuProfile_result.class, metaDataMap);
     }
 
@@ -5758,6 +6485,11 @@ public class FacebookService {
     @Deprecated
     public getCpuProfile_result clone() {
       return new getCpuProfile_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
     }
 
     public String getSuccess() {
@@ -5865,13 +6597,14 @@ public class FacebookService {
       int lastComparison = 0;
       getCpuProfile_result typedOther = (getCpuProfile_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -5885,21 +6618,18 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.STRING) {
-                this.success = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.STRING) {
+              this.success = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -5941,7 +6671,7 @@ public class FacebookService {
 
   }
 
-  public static class aliveSince_args implements TBase<aliveSince_args._Fields>, java.io.Serializable, Cloneable, Comparable<aliveSince_args>   {
+  public static class aliveSince_args implements TBase<aliveSince_args, aliveSince_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("aliveSince_args");
 
 
@@ -5950,12 +6680,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
 ;
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -5964,7 +6692,10 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          default:
+            return null;
+        }
       }
 
       /**
@@ -6000,10 +6731,10 @@ public class FacebookService {
         return _fieldName;
       }
     }
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(aliveSince_args.class, metaDataMap);
     }
 
@@ -6023,6 +6754,10 @@ public class FacebookService {
     @Deprecated
     public aliveSince_args clone() {
       return new aliveSince_args(this);
+    }
+
+    @Override
+    public void clear() {
     }
 
     public void setFieldValue(_Fields field, Object value) {
@@ -6096,14 +6831,11 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -6134,7 +6866,7 @@ public class FacebookService {
 
   }
 
-  public static class aliveSince_result implements TBase<aliveSince_result._Fields>, java.io.Serializable, Cloneable, Comparable<aliveSince_result>   {
+  public static class aliveSince_result implements TBase<aliveSince_result, aliveSince_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("aliveSince_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.I64, (short)0);
@@ -6145,12 +6877,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
       SUCCESS((short)0, "success");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -6159,7 +6889,12 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -6200,12 +6935,12 @@ public class FacebookService {
     private static final int __SUCCESS_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(aliveSince_result.class, metaDataMap);
     }
 
@@ -6236,6 +6971,12 @@ public class FacebookService {
     @Deprecated
     public aliveSince_result clone() {
       return new aliveSince_result(this);
+    }
+
+    @Override
+    public void clear() {
+      setSuccessIsSet(false);
+      this.success = 0;
     }
 
     public long getSuccess() {
@@ -6342,13 +7083,14 @@ public class FacebookService {
       int lastComparison = 0;
       aliveSince_result typedOther = (aliveSince_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -6362,22 +7104,19 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.I64) {
-                this.success = iprot.readI64();
-                setSuccessIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.I64) {
+              this.success = iprot.readI64();
+              setSuccessIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -6415,7 +7154,7 @@ public class FacebookService {
 
   }
 
-  public static class reinitialize_args implements TBase<reinitialize_args._Fields>, java.io.Serializable, Cloneable, Comparable<reinitialize_args>   {
+  public static class reinitialize_args implements TBase<reinitialize_args, reinitialize_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("reinitialize_args");
 
 
@@ -6424,12 +7163,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
 ;
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -6438,7 +7175,10 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          default:
+            return null;
+        }
       }
 
       /**
@@ -6474,10 +7214,10 @@ public class FacebookService {
         return _fieldName;
       }
     }
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(reinitialize_args.class, metaDataMap);
     }
 
@@ -6497,6 +7237,10 @@ public class FacebookService {
     @Deprecated
     public reinitialize_args clone() {
       return new reinitialize_args(this);
+    }
+
+    @Override
+    public void clear() {
     }
 
     public void setFieldValue(_Fields field, Object value) {
@@ -6570,14 +7314,11 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -6608,7 +7349,7 @@ public class FacebookService {
 
   }
 
-  public static class shutdown_args implements TBase<shutdown_args._Fields>, java.io.Serializable, Cloneable, Comparable<shutdown_args>   {
+  public static class shutdown_args implements TBase<shutdown_args, shutdown_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("shutdown_args");
 
 
@@ -6617,12 +7358,10 @@ public class FacebookService {
     public enum _Fields implements TFieldIdEnum {
 ;
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -6631,7 +7370,10 @@ public class FacebookService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          default:
+            return null;
+        }
       }
 
       /**
@@ -6667,10 +7409,10 @@ public class FacebookService {
         return _fieldName;
       }
     }
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(shutdown_args.class, metaDataMap);
     }
 
@@ -6690,6 +7432,10 @@ public class FacebookService {
     @Deprecated
     public shutdown_args clone() {
       return new shutdown_args(this);
+    }
+
+    @Override
+    public void clear() {
     }
 
     public void setFieldValue(_Fields field, Object value) {
@@ -6763,14 +7509,11 @@ public class FacebookService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 

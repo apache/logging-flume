@@ -9,22 +9,17 @@ package com.cloudera.flume.handlers.scribe;
 import java.util.Map;
 import java.util.HashMap;
 import org.apache.thrift.TEnum;
+
 /**
  * Common status reporting mechanism across all services
  */
-public enum fb_status implements TEnum{
-    DEAD(0),
-    STARTING(1),
-    ALIVE(2),
-    STOPPING(3),
-    STOPPED(4),
-    WARNING(5);
-
-  private static final Map<Integer, fb_status> BY_VALUE = new HashMap<Integer,fb_status>() {{
-    for(fb_status val : fb_status.values()) {
-      put(val.getValue(), val);
-    }
-  }};
+public enum fb_status implements TEnum {
+  DEAD(0),
+  STARTING(1),
+  ALIVE(2),
+  STOPPING(3),
+  STOPPED(4),
+  WARNING(5);
 
   private final int value;
 
@@ -44,6 +39,21 @@ public enum fb_status implements TEnum{
    * @return null if the value is not found.
    */
   public static fb_status findByValue(int value) { 
-    return BY_VALUE.get(value);
+    switch (value) {
+      case 0:
+        return DEAD;
+      case 1:
+        return STARTING;
+      case 2:
+        return ALIVE;
+      case 3:
+        return STOPPING;
+      case 4:
+        return STOPPED;
+      case 5:
+        return WARNING;
+      default:
+        return null;
+    }
   }
 }

@@ -9,19 +9,14 @@ package com.cloudera.flume.handlers.thrift;
 import java.util.Map;
 import java.util.HashMap;
 import org.apache.thrift.TEnum;
-public enum Priority implements TEnum{
-    FATAL(0),
-    ERROR(1),
-    WARN(2),
-    INFO(3),
-    DEBUG(4),
-    TRACE(5);
 
-  private static final Map<Integer, Priority> BY_VALUE = new HashMap<Integer,Priority>() {{
-    for(Priority val : Priority.values()) {
-      put(val.getValue(), val);
-    }
-  }};
+public enum Priority implements TEnum {
+  FATAL(0),
+  ERROR(1),
+  WARN(2),
+  INFO(3),
+  DEBUG(4),
+  TRACE(5);
 
   private final int value;
 
@@ -41,6 +36,21 @@ public enum Priority implements TEnum{
    * @return null if the value is not found.
    */
   public static Priority findByValue(int value) { 
-    return BY_VALUE.get(value);
+    switch (value) {
+      case 0:
+        return FATAL;
+      case 1:
+        return ERROR;
+      case 2:
+        return WARN;
+      case 3:
+        return INFO;
+      case 4:
+        return DEBUG;
+      case 5:
+        return TRACE;
+      default:
+        return null;
+    }
   }
 }

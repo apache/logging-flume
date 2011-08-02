@@ -15,15 +15,18 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
-public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData._Fields>, java.io.Serializable, Cloneable, Comparable<ThriftFlumeConfigData> {
+public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData, ThriftFlumeConfigData._Fields>, java.io.Serializable, Cloneable {
   private static final TStruct STRUCT_DESC = new TStruct("ThriftFlumeConfigData");
 
   private static final TField TIMESTAMP_FIELD_DESC = new TField("timestamp", TType.I64, (short)1);
@@ -49,12 +52,10 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData._Field
     SINK_VERSION((short)5, "sinkVersion"),
     FLOW_ID((short)6, "flowID");
 
-    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
     static {
       for (_Fields field : EnumSet.allOf(_Fields.class)) {
-        byId.put((int)field._thriftId, field);
         byName.put(field.getFieldName(), field);
       }
     }
@@ -63,7 +64,22 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData._Field
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      return byId.get(fieldId);
+      switch(fieldId) {
+        case 1: // TIMESTAMP
+          return TIMESTAMP;
+        case 2: // SOURCE_CONFIG
+          return SOURCE_CONFIG;
+        case 3: // SINK_CONFIG
+          return SINK_CONFIG;
+        case 4: // SOURCE_VERSION
+          return SOURCE_VERSION;
+        case 5: // SINK_VERSION
+          return SINK_VERSION;
+        case 6: // FLOW_ID
+          return FLOW_ID;
+        default:
+          return null;
+      }
     }
 
     /**
@@ -106,22 +122,22 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData._Field
   private static final int __SINKVERSION_ISSET_ID = 2;
   private BitSet __isset_bit_vector = new BitSet(3);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.TIMESTAMP, new FieldMetaData("timestamp", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.I64)));
-    put(_Fields.SOURCE_CONFIG, new FieldMetaData("sourceConfig", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-    put(_Fields.SINK_CONFIG, new FieldMetaData("sinkConfig", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-    put(_Fields.SOURCE_VERSION, new FieldMetaData("sourceVersion", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.I64)));
-    put(_Fields.SINK_VERSION, new FieldMetaData("sinkVersion", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.I64)));
-    put(_Fields.FLOW_ID, new FieldMetaData("flowID", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-  }});
-
+  public static final Map<_Fields, FieldMetaData> metaDataMap;
   static {
+    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.TIMESTAMP, new FieldMetaData("timestamp", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.I64        , "Timestamp")));
+    tmpMap.put(_Fields.SOURCE_CONFIG, new FieldMetaData("sourceConfig", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.STRING)));
+    tmpMap.put(_Fields.SINK_CONFIG, new FieldMetaData("sinkConfig", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.STRING)));
+    tmpMap.put(_Fields.SOURCE_VERSION, new FieldMetaData("sourceVersion", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.I64)));
+    tmpMap.put(_Fields.SINK_VERSION, new FieldMetaData("sinkVersion", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.I64)));
+    tmpMap.put(_Fields.FLOW_ID, new FieldMetaData("flowID", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.STRING)));
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(ThriftFlumeConfigData.class, metaDataMap);
   }
 
@@ -175,6 +191,19 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData._Field
   @Deprecated
   public ThriftFlumeConfigData clone() {
     return new ThriftFlumeConfigData(this);
+  }
+
+  @Override
+  public void clear() {
+    setTimestampIsSet(false);
+    this.timestamp = 0;
+    this.sourceConfig = null;
+    this.sinkConfig = null;
+    setSourceVersionIsSet(false);
+    this.sourceVersion = 0;
+    setSinkVersionIsSet(false);
+    this.sinkVersion = 0;
+    this.flowID = null;
   }
 
   public long getTimestamp() {
@@ -509,53 +538,59 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData._Field
     int lastComparison = 0;
     ThriftFlumeConfigData typedOther = (ThriftFlumeConfigData)other;
 
-    lastComparison = Boolean.valueOf(isSetTimestamp()).compareTo(isSetTimestamp());
+    lastComparison = Boolean.valueOf(isSetTimestamp()).compareTo(typedOther.isSetTimestamp());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(timestamp, typedOther.timestamp);
+    if (isSetTimestamp()) {      lastComparison = TBaseHelper.compareTo(this.timestamp, typedOther.timestamp);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetSourceConfig()).compareTo(typedOther.isSetSourceConfig());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetSourceConfig()).compareTo(isSetSourceConfig());
+    if (isSetSourceConfig()) {      lastComparison = TBaseHelper.compareTo(this.sourceConfig, typedOther.sourceConfig);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetSinkConfig()).compareTo(typedOther.isSetSinkConfig());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(sourceConfig, typedOther.sourceConfig);
+    if (isSetSinkConfig()) {      lastComparison = TBaseHelper.compareTo(this.sinkConfig, typedOther.sinkConfig);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetSourceVersion()).compareTo(typedOther.isSetSourceVersion());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetSinkConfig()).compareTo(isSetSinkConfig());
+    if (isSetSourceVersion()) {      lastComparison = TBaseHelper.compareTo(this.sourceVersion, typedOther.sourceVersion);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetSinkVersion()).compareTo(typedOther.isSetSinkVersion());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(sinkConfig, typedOther.sinkConfig);
+    if (isSetSinkVersion()) {      lastComparison = TBaseHelper.compareTo(this.sinkVersion, typedOther.sinkVersion);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetFlowID()).compareTo(typedOther.isSetFlowID());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetSourceVersion()).compareTo(isSetSourceVersion());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(sourceVersion, typedOther.sourceVersion);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetSinkVersion()).compareTo(isSetSinkVersion());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(sinkVersion, typedOther.sinkVersion);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetFlowID()).compareTo(isSetFlowID());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(flowID, typedOther.flowID);
-    if (lastComparison != 0) {
-      return lastComparison;
+    if (isSetFlowID()) {      lastComparison = TBaseHelper.compareTo(this.flowID, typedOther.flowID);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
     }
     return 0;
   }
@@ -569,59 +604,56 @@ public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData._Field
       if (field.type == TType.STOP) { 
         break;
       }
-      _Fields fieldId = _Fields.findByThriftId(field.id);
-      if (fieldId == null) {
-        TProtocolUtil.skip(iprot, field.type);
-      } else {
-        switch (fieldId) {
-          case TIMESTAMP:
-            if (field.type == TType.I64) {
-              this.timestamp = iprot.readI64();
-              setTimestampIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case SOURCE_CONFIG:
-            if (field.type == TType.STRING) {
-              this.sourceConfig = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case SINK_CONFIG:
-            if (field.type == TType.STRING) {
-              this.sinkConfig = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case SOURCE_VERSION:
-            if (field.type == TType.I64) {
-              this.sourceVersion = iprot.readI64();
-              setSourceVersionIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case SINK_VERSION:
-            if (field.type == TType.I64) {
-              this.sinkVersion = iprot.readI64();
-              setSinkVersionIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case FLOW_ID:
-            if (field.type == TType.STRING) {
-              this.flowID = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-        }
-        iprot.readFieldEnd();
+      switch (field.id) {
+        case 1: // TIMESTAMP
+          if (field.type == TType.I64) {
+            this.timestamp = iprot.readI64();
+            setTimestampIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 2: // SOURCE_CONFIG
+          if (field.type == TType.STRING) {
+            this.sourceConfig = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 3: // SINK_CONFIG
+          if (field.type == TType.STRING) {
+            this.sinkConfig = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 4: // SOURCE_VERSION
+          if (field.type == TType.I64) {
+            this.sourceVersion = iprot.readI64();
+            setSourceVersionIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 5: // SINK_VERSION
+          if (field.type == TType.I64) {
+            this.sinkVersion = iprot.readI64();
+            setSinkVersionIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 6: // FLOW_ID
+          if (field.type == TType.STRING) {
+            this.flowID = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
       }
+      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 

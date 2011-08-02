@@ -3,7 +3,7 @@
  *
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  */
-package com.cloudera.flume.reporter.server;
+package com.cloudera.flume.reporter.server.thrift;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -15,25 +15,46 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
-public class FlumeReportServer {
+public class ThriftFlumeReportServer {
 
   public interface Iface {
 
-    public Map<String,FlumeReport> getAllReports() throws TException;
+    public Map<String,ThriftFlumeReport> getAllReports() throws TException;
 
-    public FlumeReport getReportByName(String reportName) throws TException;
+    public ThriftFlumeReport getReportByName(String reportName) throws TException;
 
   }
 
-  public static class Client implements Iface {
+  public interface AsyncIface {
+
+    public void getAllReports(AsyncMethodCallback<AsyncClient.getAllReports_call> resultHandler) throws TException;
+
+    public void getReportByName(String reportName, AsyncMethodCallback<AsyncClient.getReportByName_call> resultHandler) throws TException;
+
+  }
+
+  public static class Client implements TServiceClient, Iface {
+    public static class Factory implements TServiceClientFactory<Client> {
+      public Factory() {}
+      public Client getClient(TProtocol prot) {
+        return new Client(prot);
+      }
+      public Client getClient(TProtocol iprot, TProtocol oprot) {
+        return new Client(iprot, oprot);
+      }
+    }
+
     public Client(TProtocol prot)
     {
       this(prot, prot);
@@ -60,7 +81,7 @@ public class FlumeReportServer {
       return this.oprot_;
     }
 
-    public Map<String,FlumeReport> getAllReports() throws TException
+    public Map<String,ThriftFlumeReport> getAllReports() throws TException
     {
       send_getAllReports();
       return recv_getAllReports();
@@ -68,20 +89,23 @@ public class FlumeReportServer {
 
     public void send_getAllReports() throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("getAllReports", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("getAllReports", TMessageType.CALL, ++seqid_));
       getAllReports_args args = new getAllReports_args();
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
     }
 
-    public Map<String,FlumeReport> recv_getAllReports() throws TException
+    public Map<String,ThriftFlumeReport> recv_getAllReports() throws TException
     {
       TMessage msg = iprot_.readMessageBegin();
       if (msg.type == TMessageType.EXCEPTION) {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "getAllReports failed: out of sequence response");
       }
       getAllReports_result result = new getAllReports_result();
       result.read(iprot_);
@@ -92,7 +116,7 @@ public class FlumeReportServer {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "getAllReports failed: unknown result");
     }
 
-    public FlumeReport getReportByName(String reportName) throws TException
+    public ThriftFlumeReport getReportByName(String reportName) throws TException
     {
       send_getReportByName(reportName);
       return recv_getReportByName();
@@ -100,21 +124,24 @@ public class FlumeReportServer {
 
     public void send_getReportByName(String reportName) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("getReportByName", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("getReportByName", TMessageType.CALL, ++seqid_));
       getReportByName_args args = new getReportByName_args();
-      args.reportName = reportName;
+      args.setReportName(reportName);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
     }
 
-    public FlumeReport recv_getReportByName() throws TException
+    public ThriftFlumeReport recv_getReportByName() throws TException
     {
       TMessage msg = iprot_.readMessageBegin();
       if (msg.type == TMessageType.EXCEPTION) {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "getReportByName failed: out of sequence response");
       }
       getReportByName_result result = new getReportByName_result();
       result.read(iprot_);
@@ -126,6 +153,84 @@ public class FlumeReportServer {
     }
 
   }
+  public static class AsyncClient extends TAsyncClient implements AsyncIface {
+    public static class Factory implements TAsyncClientFactory<AsyncClient> {
+      private TAsyncClientManager clientManager;
+      private TProtocolFactory protocolFactory;
+      public Factory(TAsyncClientManager clientManager, TProtocolFactory protocolFactory) {
+        this.clientManager = clientManager;
+        this.protocolFactory = protocolFactory;
+      }
+      public AsyncClient getAsyncClient(TNonblockingTransport transport) {
+        return new AsyncClient(protocolFactory, clientManager, transport);
+      }
+    }
+
+    public AsyncClient(TProtocolFactory protocolFactory, TAsyncClientManager clientManager, TNonblockingTransport transport) {
+      super(protocolFactory, clientManager, transport);
+    }
+
+    public void getAllReports(AsyncMethodCallback<getAllReports_call> resultHandler) throws TException {
+      checkReady();
+      getAllReports_call method_call = new getAllReports_call(resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class getAllReports_call extends TAsyncMethodCall {
+      public getAllReports_call(AsyncMethodCallback<getAllReports_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("getAllReports", TMessageType.CALL, 0));
+        getAllReports_args args = new getAllReports_args();
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public Map<String,ThriftFlumeReport> getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getAllReports();
+      }
+    }
+
+    public void getReportByName(String reportName, AsyncMethodCallback<getReportByName_call> resultHandler) throws TException {
+      checkReady();
+      getReportByName_call method_call = new getReportByName_call(reportName, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class getReportByName_call extends TAsyncMethodCall {
+      private String reportName;
+      public getReportByName_call(String reportName, AsyncMethodCallback<getReportByName_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.reportName = reportName;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("getReportByName", TMessageType.CALL, 0));
+        getReportByName_args args = new getReportByName_args();
+        args.setReportName(reportName);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public ThriftFlumeReport getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getReportByName();
+      }
+    }
+
+  }
+
   public static class Processor implements TProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class.getName());
     public Processor(Iface iface)
@@ -164,7 +269,17 @@ public class FlumeReportServer {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         getAllReports_args args = new getAllReports_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("getAllReports", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         getAllReports_result result = new getAllReports_result();
         result.success = iface_.getAllReports();
@@ -180,7 +295,17 @@ public class FlumeReportServer {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         getReportByName_args args = new getReportByName_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("getReportByName", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         getReportByName_result result = new getReportByName_result();
         result.success = iface_.getReportByName(args.reportName);
@@ -194,7 +319,7 @@ public class FlumeReportServer {
 
   }
 
-  public static class getAllReports_args implements TBase<getAllReports_args._Fields>, java.io.Serializable, Cloneable, Comparable<getAllReports_args>   {
+  public static class getAllReports_args implements TBase<getAllReports_args, getAllReports_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getAllReports_args");
 
 
@@ -203,12 +328,10 @@ public class FlumeReportServer {
     public enum _Fields implements TFieldIdEnum {
 ;
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -217,7 +340,10 @@ public class FlumeReportServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          default:
+            return null;
+        }
       }
 
       /**
@@ -253,10 +379,10 @@ public class FlumeReportServer {
         return _fieldName;
       }
     }
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getAllReports_args.class, metaDataMap);
     }
 
@@ -276,6 +402,10 @@ public class FlumeReportServer {
     @Deprecated
     public getAllReports_args clone() {
       return new getAllReports_args(this);
+    }
+
+    @Override
+    public void clear() {
     }
 
     public void setFieldValue(_Fields field, Object value) {
@@ -349,14 +479,11 @@ public class FlumeReportServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -387,23 +514,21 @@ public class FlumeReportServer {
 
   }
 
-  public static class getAllReports_result implements TBase<getAllReports_result._Fields>, java.io.Serializable, Cloneable   {
+  public static class getAllReports_result implements TBase<getAllReports_result, getAllReports_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getAllReports_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.MAP, (short)0);
 
-    public Map<String,FlumeReport> success;
+    public Map<String,ThriftFlumeReport> success;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
       SUCCESS((short)0, "success");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -412,7 +537,12 @@ public class FlumeReportServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -451,14 +581,14 @@ public class FlumeReportServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
           new MapMetaData(TType.MAP, 
               new FieldValueMetaData(TType.STRING), 
-              new StructMetaData(TType.STRUCT, FlumeReport.class))));
-    }});
-
-    static {
+              new StructMetaData(TType.STRUCT, ThriftFlumeReport.class))));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getAllReports_result.class, metaDataMap);
     }
 
@@ -466,7 +596,7 @@ public class FlumeReportServer {
     }
 
     public getAllReports_result(
-      Map<String,FlumeReport> success)
+      Map<String,ThriftFlumeReport> success)
     {
       this();
       this.success = success;
@@ -477,15 +607,15 @@ public class FlumeReportServer {
      */
     public getAllReports_result(getAllReports_result other) {
       if (other.isSetSuccess()) {
-        Map<String,FlumeReport> __this__success = new HashMap<String,FlumeReport>();
-        for (Map.Entry<String, FlumeReport> other_element : other.success.entrySet()) {
+        Map<String,ThriftFlumeReport> __this__success = new HashMap<String,ThriftFlumeReport>();
+        for (Map.Entry<String, ThriftFlumeReport> other_element : other.success.entrySet()) {
 
           String other_element_key = other_element.getKey();
-          FlumeReport other_element_value = other_element.getValue();
+          ThriftFlumeReport other_element_value = other_element.getValue();
 
           String __this__success_copy_key = other_element_key;
 
-          FlumeReport __this__success_copy_value = new FlumeReport(other_element_value);
+          ThriftFlumeReport __this__success_copy_value = new ThriftFlumeReport(other_element_value);
 
           __this__success.put(__this__success_copy_key, __this__success_copy_value);
         }
@@ -502,22 +632,27 @@ public class FlumeReportServer {
       return new getAllReports_result(this);
     }
 
+    @Override
+    public void clear() {
+      this.success = null;
+    }
+
     public int getSuccessSize() {
       return (this.success == null) ? 0 : this.success.size();
     }
 
-    public void putToSuccess(String key, FlumeReport val) {
+    public void putToSuccess(String key, ThriftFlumeReport val) {
       if (this.success == null) {
-        this.success = new HashMap<String,FlumeReport>();
+        this.success = new HashMap<String,ThriftFlumeReport>();
       }
       this.success.put(key, val);
     }
 
-    public Map<String,FlumeReport> getSuccess() {
+    public Map<String,ThriftFlumeReport> getSuccess() {
       return this.success;
     }
 
-    public getAllReports_result setSuccess(Map<String,FlumeReport> success) {
+    public getAllReports_result setSuccess(Map<String,ThriftFlumeReport> success) {
       this.success = success;
       return this;
     }
@@ -543,7 +678,7 @@ public class FlumeReportServer {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((Map<String,FlumeReport>)value);
+          setSuccess((Map<String,ThriftFlumeReport>)value);
         }
         break;
 
@@ -610,6 +745,26 @@ public class FlumeReportServer {
       return 0;
     }
 
+    public int compareTo(getAllReports_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getAllReports_result typedOther = (getAllReports_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
     public void read(TProtocol iprot) throws TException {
       TField field;
       iprot.readStructBegin();
@@ -619,34 +774,31 @@ public class FlumeReportServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.MAP) {
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.MAP) {
+              {
+                TMap _map15 = iprot.readMapBegin();
+                this.success = new HashMap<String,ThriftFlumeReport>(2*_map15.size);
+                for (int _i16 = 0; _i16 < _map15.size; ++_i16)
                 {
-                  TMap _map15 = iprot.readMapBegin();
-                  this.success = new HashMap<String,FlumeReport>(2*_map15.size);
-                  for (int _i16 = 0; _i16 < _map15.size; ++_i16)
-                  {
-                    String _key17;
-                    FlumeReport _val18;
-                    _key17 = iprot.readString();
-                    _val18 = new FlumeReport();
-                    _val18.read(iprot);
-                    this.success.put(_key17, _val18);
-                  }
-                  iprot.readMapEnd();
+                  String _key17;
+                  ThriftFlumeReport _val18;
+                  _key17 = iprot.readString();
+                  _val18 = new ThriftFlumeReport();
+                  _val18.read(iprot);
+                  this.success.put(_key17, _val18);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readMapEnd();
               }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -661,7 +813,7 @@ public class FlumeReportServer {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeMapBegin(new TMap(TType.STRING, TType.STRUCT, this.success.size()));
-          for (Map.Entry<String, FlumeReport> _iter19 : this.success.entrySet())
+          for (Map.Entry<String, ThriftFlumeReport> _iter19 : this.success.entrySet())
           {
             oprot.writeString(_iter19.getKey());
             _iter19.getValue().write(oprot);
@@ -696,7 +848,7 @@ public class FlumeReportServer {
 
   }
 
-  public static class getReportByName_args implements TBase<getReportByName_args._Fields>, java.io.Serializable, Cloneable, Comparable<getReportByName_args>   {
+  public static class getReportByName_args implements TBase<getReportByName_args, getReportByName_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getReportByName_args");
 
     private static final TField REPORT_NAME_FIELD_DESC = new TField("reportName", TType.STRING, (short)1);
@@ -707,12 +859,10 @@ public class FlumeReportServer {
     public enum _Fields implements TFieldIdEnum {
       REPORT_NAME((short)1, "reportName");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -721,7 +871,12 @@ public class FlumeReportServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // REPORT_NAME
+            return REPORT_NAME;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -760,12 +915,12 @@ public class FlumeReportServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.REPORT_NAME, new FieldMetaData("reportName", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.REPORT_NAME, new FieldMetaData("reportName", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getReportByName_args.class, metaDataMap);
     }
 
@@ -795,6 +950,11 @@ public class FlumeReportServer {
     @Deprecated
     public getReportByName_args clone() {
       return new getReportByName_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.reportName = null;
     }
 
     public String getReportName() {
@@ -902,13 +1062,14 @@ public class FlumeReportServer {
       int lastComparison = 0;
       getReportByName_args typedOther = (getReportByName_args)other;
 
-      lastComparison = Boolean.valueOf(isSetReportName()).compareTo(isSetReportName());
+      lastComparison = Boolean.valueOf(isSetReportName()).compareTo(typedOther.isSetReportName());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(reportName, typedOther.reportName);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetReportName()) {        lastComparison = TBaseHelper.compareTo(this.reportName, typedOther.reportName);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -922,21 +1083,18 @@ public class FlumeReportServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case REPORT_NAME:
-              if (field.type == TType.STRING) {
-                this.reportName = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // REPORT_NAME
+            if (field.type == TType.STRING) {
+              this.reportName = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -979,23 +1137,21 @@ public class FlumeReportServer {
 
   }
 
-  public static class getReportByName_result implements TBase<getReportByName_result._Fields>, java.io.Serializable, Cloneable   {
+  public static class getReportByName_result implements TBase<getReportByName_result, getReportByName_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("getReportByName_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
 
-    public FlumeReport success;
+    public ThriftFlumeReport success;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
       SUCCESS((short)0, "success");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -1004,7 +1160,12 @@ public class FlumeReportServer {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -1043,12 +1204,12 @@ public class FlumeReportServer {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, FlumeReport.class)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, ThriftFlumeReport.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(getReportByName_result.class, metaDataMap);
     }
 
@@ -1056,7 +1217,7 @@ public class FlumeReportServer {
     }
 
     public getReportByName_result(
-      FlumeReport success)
+      ThriftFlumeReport success)
     {
       this();
       this.success = success;
@@ -1067,7 +1228,7 @@ public class FlumeReportServer {
      */
     public getReportByName_result(getReportByName_result other) {
       if (other.isSetSuccess()) {
-        this.success = new FlumeReport(other.success);
+        this.success = new ThriftFlumeReport(other.success);
       }
     }
 
@@ -1080,11 +1241,16 @@ public class FlumeReportServer {
       return new getReportByName_result(this);
     }
 
-    public FlumeReport getSuccess() {
+    @Override
+    public void clear() {
+      this.success = null;
+    }
+
+    public ThriftFlumeReport getSuccess() {
       return this.success;
     }
 
-    public getReportByName_result setSuccess(FlumeReport success) {
+    public getReportByName_result setSuccess(ThriftFlumeReport success) {
       this.success = success;
       return this;
     }
@@ -1110,7 +1276,7 @@ public class FlumeReportServer {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((FlumeReport)value);
+          setSuccess((ThriftFlumeReport)value);
         }
         break;
 
@@ -1177,6 +1343,26 @@ public class FlumeReportServer {
       return 0;
     }
 
+    public int compareTo(getReportByName_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getReportByName_result typedOther = (getReportByName_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
     public void read(TProtocol iprot) throws TException {
       TField field;
       iprot.readStructBegin();
@@ -1186,22 +1372,19 @@ public class FlumeReportServer {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.STRUCT) {
-                this.success = new FlumeReport();
-                this.success.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.STRUCT) {
+              this.success = new ThriftFlumeReport();
+              this.success.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 

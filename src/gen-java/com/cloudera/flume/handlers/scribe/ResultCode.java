@@ -9,15 +9,10 @@ package com.cloudera.flume.handlers.scribe;
 import java.util.Map;
 import java.util.HashMap;
 import org.apache.thrift.TEnum;
-public enum ResultCode implements TEnum{
-    OK(0),
-    TRY_LATER(1);
 
-  private static final Map<Integer, ResultCode> BY_VALUE = new HashMap<Integer,ResultCode>() {{
-    for(ResultCode val : ResultCode.values()) {
-      put(val.getValue(), val);
-    }
-  }};
+public enum ResultCode implements TEnum {
+  OK(0),
+  TRY_LATER(1);
 
   private final int value;
 
@@ -37,6 +32,13 @@ public enum ResultCode implements TEnum{
    * @return null if the value is not found.
    */
   public static ResultCode findByValue(int value) { 
-    return BY_VALUE.get(value);
+    switch (value) {
+      case 0:
+        return OK;
+      case 1:
+        return TRY_LATER;
+      default:
+        return null;
+    }
   }
 }

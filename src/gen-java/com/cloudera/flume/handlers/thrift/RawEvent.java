@@ -15,31 +15,32 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
-public class RawEvent implements TBase<RawEvent._Fields>, java.io.Serializable, Cloneable, Comparable<RawEvent> {
+public class RawEvent implements TBase<RawEvent, RawEvent._Fields>, java.io.Serializable, Cloneable {
   private static final TStruct STRUCT_DESC = new TStruct("RawEvent");
 
   private static final TField RAW_FIELD_DESC = new TField("raw", TType.STRING, (short)1);
 
-  public byte[] raw;
+  public ByteBuffer raw;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements TFieldIdEnum {
     RAW((short)1, "raw");
 
-    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
     static {
       for (_Fields field : EnumSet.allOf(_Fields.class)) {
-        byId.put((int)field._thriftId, field);
         byName.put(field.getFieldName(), field);
       }
     }
@@ -48,7 +49,12 @@ public class RawEvent implements TBase<RawEvent._Fields>, java.io.Serializable, 
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      return byId.get(fieldId);
+      switch(fieldId) {
+        case 1: // RAW
+          return RAW;
+        default:
+          return null;
+      }
     }
 
     /**
@@ -87,12 +93,12 @@ public class RawEvent implements TBase<RawEvent._Fields>, java.io.Serializable, 
 
   // isset id assignments
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.RAW, new FieldMetaData("raw", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-  }});
-
+  public static final Map<_Fields, FieldMetaData> metaDataMap;
   static {
+    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.RAW, new FieldMetaData("raw", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.STRING)));
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(RawEvent.class, metaDataMap);
   }
 
@@ -100,7 +106,7 @@ public class RawEvent implements TBase<RawEvent._Fields>, java.io.Serializable, 
   }
 
   public RawEvent(
-    byte[] raw)
+    ByteBuffer raw)
   {
     this();
     this.raw = raw;
@@ -111,8 +117,8 @@ public class RawEvent implements TBase<RawEvent._Fields>, java.io.Serializable, 
    */
   public RawEvent(RawEvent other) {
     if (other.isSetRaw()) {
-      this.raw = new byte[other.raw.length];
-      System.arraycopy(other.raw, 0, raw, 0, other.raw.length);
+      this.raw = ByteBuffer.wrap(new byte[other.raw.limit() - other.raw.arrayOffset()]);
+      System.arraycopy(other.raw.array(), other.raw.arrayOffset(), raw.array(), 0, other.raw.limit() - other.raw.arrayOffset());
     }
   }
 
@@ -125,11 +131,16 @@ public class RawEvent implements TBase<RawEvent._Fields>, java.io.Serializable, 
     return new RawEvent(this);
   }
 
-  public byte[] getRaw() {
+  @Override
+  public void clear() {
+    this.raw = null;
+  }
+
+  public ByteBuffer getRaw() {
     return this.raw;
   }
 
-  public RawEvent setRaw(byte[] raw) {
+  public RawEvent setRaw(ByteBuffer raw) {
     this.raw = raw;
     return this;
   }
@@ -155,7 +166,7 @@ public class RawEvent implements TBase<RawEvent._Fields>, java.io.Serializable, 
       if (value == null) {
         unsetRaw();
       } else {
-        setRaw((byte[])value);
+        setRaw((ByteBuffer)value);
       }
       break;
 
@@ -210,7 +221,7 @@ public class RawEvent implements TBase<RawEvent._Fields>, java.io.Serializable, 
     if (this_present_raw || that_present_raw) {
       if (!(this_present_raw && that_present_raw))
         return false;
-      if (!java.util.Arrays.equals(this.raw, that.raw))
+      if (!this.raw.equals(that.raw))
         return false;
     }
 
@@ -230,13 +241,14 @@ public class RawEvent implements TBase<RawEvent._Fields>, java.io.Serializable, 
     int lastComparison = 0;
     RawEvent typedOther = (RawEvent)other;
 
-    lastComparison = Boolean.valueOf(isSetRaw()).compareTo(isSetRaw());
+    lastComparison = Boolean.valueOf(isSetRaw()).compareTo(typedOther.isSetRaw());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(raw, typedOther.raw);
-    if (lastComparison != 0) {
-      return lastComparison;
+    if (isSetRaw()) {      lastComparison = TBaseHelper.compareTo(this.raw, typedOther.raw);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
     }
     return 0;
   }
@@ -250,21 +262,18 @@ public class RawEvent implements TBase<RawEvent._Fields>, java.io.Serializable, 
       if (field.type == TType.STOP) { 
         break;
       }
-      _Fields fieldId = _Fields.findByThriftId(field.id);
-      if (fieldId == null) {
-        TProtocolUtil.skip(iprot, field.type);
-      } else {
-        switch (fieldId) {
-          case RAW:
-            if (field.type == TType.STRING) {
-              this.raw = iprot.readBinary();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-        }
-        iprot.readFieldEnd();
+      switch (field.id) {
+        case 1: // RAW
+          if (field.type == TType.STRING) {
+            this.raw = iprot.readBinary();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
       }
+      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 
@@ -294,12 +303,7 @@ public class RawEvent implements TBase<RawEvent._Fields>, java.io.Serializable, 
     if (this.raw == null) {
       sb.append("null");
     } else {
-        int __raw_size = Math.min(this.raw.length, 128);
-        for (int i = 0; i < __raw_size; i++) {
-          if (i != 0) sb.append(" ");
-          sb.append(Integer.toHexString(this.raw[i]).length() > 1 ? Integer.toHexString(this.raw[i]).substring(Integer.toHexString(this.raw[i]).length() - 2).toUpperCase() : "0" + Integer.toHexString(this.raw[i]).toUpperCase());
-        }
-        if (this.raw.length > 128) sb.append(" ...");
+      TBaseHelper.toString(this.raw, sb);
     }
     first = false;
     sb.append(")");
