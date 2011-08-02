@@ -36,6 +36,13 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-test</artifactId>
+      <version>0.20.2-cdh3u0</version>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
 
 </project>
