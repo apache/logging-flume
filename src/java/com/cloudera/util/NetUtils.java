@@ -18,7 +18,12 @@
 package com.cloudera.util;
 
 import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,6 +67,58 @@ public class NetUtils {
       port = Integer.parseInt(parts[1]);
     }
     return new Pair<String, Integer>(parts[0], port);
+  }
+
+  /**
+   * Returns the index of the hostname/ip in the list that is the machine
+   * running the process.
+   * 
+   * @param hosts
+   * @return the index of the array that is localhost, or -1 if localhost is not
+   *         in the list.
+   * @throws UnknownHostException
+   * @throws SocketException
+   */
+  public static int findHostIndex(String[] hosts) throws UnknownHostException,
+      SocketException {
+
+    // if any addresses are loopbacks, return the index of the loopback addr.
+    InetAddress[][] hostAddrsLst = new InetAddress[hosts.length][];
+    for (int i = 0; i < hosts.length; i++) {
+      // cache lists
+      InetAddress[] hostAddrs = InetAddress.getAllByName(hosts[i]);
+      hostAddrsLst[i] = InetAddress.getAllByName(hosts[i]);
+
+      // check for loopbacks
+      for (InetAddress hostAddr : hostAddrs) {
+        if (hostAddr.isLoopbackAddress()) {
+          return i;
+        }
+      }
+    }
+
+    // for each nic
+    Enumeration<NetworkInterface> nics = NetworkInterface
+        .getNetworkInterfaces();
+    while (nics.hasMoreElements()) {
+      NetworkInterface nic = nics.nextElement();
+
+      // for each ip address of that nic
+      Enumeration<InetAddress> iaddrs = nic.getInetAddresses();
+      while (iaddrs.hasMoreElements()) {
+        InetAddress laddr = iaddrs.nextElement();
+
+        // check each host to see if there is a match
+        for (int i = 0; i < hosts.length; i++) {
+          List<InetAddress> maddrs = Arrays.asList(hostAddrsLst[i]);
+          if (maddrs.contains(laddr)) {
+            return i;
+          }
+        }
+      }
+    }
+
+    return -1; // didn't find it.
   }
 
 }

@@ -23,6 +23,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.Enumeration;
 import java.util.Set;
 
 import javax.ws.rs.core.Application;
@@ -435,6 +440,33 @@ public class FlumeMaster implements Reportable {
   }
 
   /**
+   * This returns true if the host running this process is in the list of master
+   * servers. The index is set in the FlumeConfiguration. If the host doesn't
+   * match, false is returned. If the hostnames in the master server list fail
+   * to resolve, an exception is thrown.
+   */
+  public static boolean inferMasterHostID() throws UnknownHostException,
+      SocketException {
+    String masters = FlumeConfiguration.get().getMasterServers();
+    String[] mtrs = masters.split(",");
+
+    int idx = NetUtils.findHostIndex(mtrs);
+    if (idx < 0) {
+
+      String localhost = NetUtils.localhost();
+      LOG.error("Attempted to start a master '{}' that is not "
+          + "in the master servers list: '{}'", localhost, mtrs);
+      // localhost ips weren't in the list.
+      return false;
+    }
+
+    FlumeConfiguration.get().setInt(FlumeConfiguration.MASTER_SERVER_ID, idx);
+    LOG.info("Inferred master server index {}", idx);
+    return true;
+
+  }
+
+  /**
    * This is the method that gets run when bin/flume master is executed.
    */
   public static void main(String[] argv) {
@@ -460,7 +492,7 @@ public class FlumeMaster implements Reportable {
     } catch (ParseException e) {
       HelpFormatter fmt = new HelpFormatter();
       fmt.printHelp("FlumeNode", options, true);
-      System.exit(0);
+      System.exit(1);
     }
 
     String nodeconfig = FlumeConfiguration.get().getMasterSavefile();
@@ -470,6 +502,8 @@ public class FlumeMaster implements Reportable {
     }
 
     if (cmd != null && cmd.hasOption("i")) {
+      // if manually overriden by command line, accept it, live with
+      // consequences.
       String sid = cmd.getOptionValue("i");
       LOG.info("Setting serverid from command line to be " + sid);
       try {
@@ -478,8 +512,20 @@ public class FlumeMaster implements Reportable {
             serverid);
       } catch (NumberFormatException e) {
         LOG.error("Couldn't parse server id as integer: " + sid);
-        System.exit(0);
+        System.exit(1);
       }
+    } else {
+      // attempt to auto detect master id.
+      try {
+        if (!inferMasterHostID()) {
+          System.exit(1);
+        }
+      } catch (Exception e) {
+        // master needs to be valid to continue;
+        LOG.error("Unable to resolve host '{}' ", e.getMessage());
+        System.exit(1);
+      }
+
     }
 
     // This will instantiate and read FlumeConfiguration - so make sure that
