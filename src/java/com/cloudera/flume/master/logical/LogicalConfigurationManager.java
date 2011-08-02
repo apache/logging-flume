@@ -149,7 +149,7 @@ public class LogicalConfigurationManager extends
 
     String phys = getPhysicalNode(ln);
     if (phys == null) {
-      src = "fail( \"unmapped " + ln + "\" )";
+      src = "fail( \"no physical translation for " + ln + "\" )";
     }
 
     if (src == null) {

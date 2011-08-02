@@ -105,8 +105,8 @@ public class LogicalNodeManager implements Reportable {
       ReportManager.get().add(nd);
     }
 
-    nd.openSourceSink(src, snk);
-    nd.loadNode(src, snk);
+    nd.openLoadNode(src, snk);
+
   }
 
   /**

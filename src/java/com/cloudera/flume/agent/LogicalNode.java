@@ -35,6 +35,8 @@ import com.cloudera.flume.core.Driver;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.core.connector.DirectDriver;
+import com.cloudera.flume.handlers.debug.LazyOpenDecorator;
+import com.cloudera.flume.handlers.debug.LazyOpenSource;
 import com.cloudera.flume.master.StatusManager.NodeState;
 import com.cloudera.flume.master.StatusManager.NodeStatus;
 import com.cloudera.flume.reporter.ReportEvent;
@@ -100,8 +102,8 @@ public class LogicalNode implements Reportable {
         VERSION_INFIMUM, FlumeConfiguration.get().getDefaultFlowName());
   }
 
-  // TODO (jon) make private
-  void openSourceSink(EventSource newSrc, EventSink newSnk) throws IOException {
+  private void openSourceSink(EventSource newSrc, EventSink newSnk)
+      throws IOException {
     if (newSnk != null) {
       if (snk != null) {
         try {
@@ -138,6 +140,14 @@ public class LogicalNode implements Reportable {
    */
   synchronized void openLoadNode(EventSource newSrc, EventSink newSnk)
       throws IOException {
+    // TODO HACK! This is to prevent heartbeat from hanging if one fo the
+    // configs is unable to start due to open exception. It has the effect of
+    // defering any exceptions open would have triggered into the Driver thread.
+    // This acts similarly to a 'future' concurrency concept.
+
+    newSnk = new LazyOpenDecorator<EventSink>(newSnk);
+    newSrc = new LazyOpenSource<EventSource>(newSrc);
+
     openSourceSink(newSrc, newSnk);
     loadNode(newSrc, newSnk);
   }
@@ -146,8 +156,7 @@ public class LogicalNode implements Reportable {
    * This stops any existing connection (source=>sink pumper), and then creates
    * a new one with the specified *already opened* source and sink arguments.
    */
-  // TODO (jon) make private
-  synchronized void loadNode(EventSource newSrc, EventSink newSnk)
+  private void loadNode(EventSource newSrc, EventSink newSnk)
       throws IOException {
 
     if (connector != null) {
@@ -275,14 +284,12 @@ public class LogicalNode implements Reportable {
       throw e;
     }
 
-    openSourceSink(newSrc, newSnk);
+    openLoadNode(newSrc, newSnk);
 
     // We have successfully opened the source and sinks for the config. We can
     // mark this as the last good / successful config (which we try to reload if
     // the source fails)
     this.lastGoodCfg = cfg;
-
-    loadNode(newSrc, newSnk);
 
     LOG.info("Node config sucessfully set to " + cfg);
   }
@@ -364,6 +371,20 @@ public class LogicalNode implements Reportable {
       connector.stop();
     }
 
+  }
+
+  /**
+   * For testing only
+   */
+  public EventSink getSink() {
+    return snk;
+  }
+
+  /**
+   * For testing only
+   */
+  public EventSource getSource() {
+    return src;
   }
 
 }

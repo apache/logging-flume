@@ -156,13 +156,9 @@ public class TestFlumeNode extends TestCase {
     }
     ;
 
-    try {
-      node.openLoadNode(new OpenExnSource(), new NullSink());
-    } catch (IOException e) {
-      System.out.println("caught expected exception: " + e);
-      return;
-    }
-    fail("There should have been an exception thrown");
+    // there should be no exception thrown in this thread. (errors are thrown by
+    // logical node and handled at that level)
+    node.openLoadNode(new OpenExnSource(), new NullSink());
   }
 
   /**
@@ -193,10 +189,13 @@ public class TestFlumeNode extends TestCase {
     LogicalNode node = new LogicalNode(new Context(), "test");
     IsOpenSource prev = new IsOpenSource();
     node.openLoadNode(prev, new NullSink());
-    for (int i = 0; i < 100; i++) {
+    node.getSource().next(); // force lazy source to open
+    for (int i = 0; i < 10; i++) {
+
       assertTrue(prev.isOpen);
       IsOpenSource cur = new IsOpenSource();
       node.openLoadNode(cur, new NullSink());
+      node.getSource().next(); // force lazy source to open.
       assertFalse(prev.isOpen);
       assertTrue(cur.isOpen);
       prev = cur;
