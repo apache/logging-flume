@@ -101,13 +101,13 @@ public class PollingSource extends EventSource.Base {
 
       // TODO (jon) this should block until the queue has been drained right?
     } catch (InterruptedException e) {
-      LOG.debug("Waiting for exec thread exit was interrupted", e);
+      LOG.debug("Waiting for pollable thread exit was interrupted", e);
     }
   }
 
   /**
-   * Blocks on either output from stdout / stderr or process exit (at which
-   * point it throws an exception)
+   * Blocks on either getting an event from the queue or process exit (at which
+   * point it throws an exception).
    */
   public Event next() throws IOException {
     Event evt = null;
@@ -122,7 +122,7 @@ public class PollingSource extends EventSource.Base {
         return evt;
       }
     } catch (InterruptedException e) {
-      throw new RuntimeException("ExecEventSource was interrupted - " + e);
+      throw new RuntimeException("PollingSource was interrupted - " + e);
     }
   }
 
