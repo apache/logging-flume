@@ -66,7 +66,8 @@ public class ExecNioSource extends EventSource.Base {
   private final AtomicBoolean errFinished = new AtomicBoolean(false);
   private final AtomicBoolean outFinished = new AtomicBoolean(false);
 
-  private final BlockingQueue<Event> eventQueue = new LinkedBlockingQueue<Event>();
+  private final BlockingQueue<Event> eventQueue = new LinkedBlockingQueue<Event>(
+      1000);
 
   private static Logger LOG = LoggerFactory.getLogger(ExecNioSource.class);
 
