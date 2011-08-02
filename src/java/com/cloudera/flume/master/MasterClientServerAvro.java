@@ -67,7 +67,6 @@ public class MasterClientServerAvro implements FlumeReportAvroServer, RPCServer 
     }
     return out;
   }
-
   public AvroFlumeConfigData getConfig(CharSequence host)
       throws AvroRemoteException {
     FlumeConfigData data = delegate.getConfig(host.toString());
@@ -84,7 +83,6 @@ public class MasterClientServerAvro implements FlumeReportAvroServer, RPCServer 
   public boolean heartbeat(CharSequence logicalNode, CharSequence physicalNode,
       CharSequence clienthost, FlumeNodeState s, long version)
       throws AvroRemoteException {
-
     return delegate.heartbeat(logicalNode.toString(), physicalNode.toString(),
         clienthost.toString(), stateFromAvro(s), version);
   }

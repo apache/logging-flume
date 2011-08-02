@@ -16,52 +16,49 @@
  * limitations under the License.
  */
 
-package com.cloudera.flume.handlers.thrift;
+package com.cloudera.flume.handlers.avro;
 
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-
 import org.apache.log4j.Logger;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TBinaryProtocol.Factory;
-import org.apache.thrift.server.TSaneThreadPoolServer;
-import org.apache.thrift.transport.TSaneServerSocket;
-import org.apache.thrift.transport.TTransportException;
-
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
-import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.util.Clock;
 import com.google.common.base.Preconditions;
 
 /**
- * This sets up the port that listens for incoming flume event rpc calls using
- * Thrift.
+ * This sets up the port that listens for incoming flumeAvroEvent rpc calls
+ * using Avro. This class pretty much mimics ThriftEventSource.
  */
-public class ThriftEventSource extends EventSource.Base {
+public class AvroEventSource extends EventSource.Base {
+  /*
+   * In this version I am setting the following constants same as for the thrift
+   * case. Seems like these constants don't really need to depend on the
+   * underlying implementation, so maybe we can give them more general names
+   * later.
+   */
   final static int DEFAULT_QUEUE_SIZE = FlumeConfiguration.get()
       .getThriftQueueSize();
   final static long MAX_CLOSE_SLEEP = FlumeConfiguration.get()
       .getThriftCloseMaxSleep();
 
-  final static Logger LOG = Logger.getLogger(ThriftEventSource.class);
+  final static Logger LOG = Logger.getLogger(AvroEventSource.class);
 
   public static final String A_QUEUE_CAPACITY = "queueCapacity";
   public static final String A_QUEUE_FREE = "queueFree";
   public static final String A_ENQUEUED = "enqueued";
   public static final String A_DEQUEUED = "dequeued";
+  // BytesIN in here (unlike the Thrift version) corresponds to the total bytes
+  // of Event.body shipped.
   public static final String A_BYTES_IN = "bytesIn";
-
   final int port;
-  final ThriftFlumeEventServer svr;
-  TSaneThreadPoolServer server;
-
+  private FlumeEventAvroServerImpl svr;
   final BlockingQueue<Event> q;
   final AtomicLong enqueued = new AtomicLong();
   final AtomicLong dequeued = new AtomicLong();
@@ -70,40 +67,38 @@ public class ThriftEventSource extends EventSource.Base {
   boolean closed = true;
 
   /**
-   * Create a thrift event source listening on port with a qsize buffer.
+   * Create a Avro event source listening on port with a qsize buffer.
    */
-  public ThriftEventSource(int port, int qsize) {
+  public AvroEventSource(int port, int qsize) {
     this.port = port;
-    this.svr = new ThriftFlumeEventServer();
+    this.svr = new FlumeEventAvroServerImpl(port);
     this.q = new LinkedBlockingQueue<Event>(qsize);
   }
 
   /**
-   * Get reportable data from the thrift event source.
-   * 
-   * @Override
+   * Get reportable data from the Avro event source.
    */
+  @Override
   synchronized public ReportEvent getReport() {
     ReportEvent rpt = super.getReport();
     rpt.setLongMetric(A_QUEUE_CAPACITY, q.size());
     rpt.setLongMetric(A_QUEUE_FREE, q.remainingCapacity());
     rpt.setLongMetric(A_ENQUEUED, enqueued.get());
     rpt.setLongMetric(A_DEQUEUED, dequeued.get());
-    rpt.setLongMetric(A_BYTES_IN, server.getBytesReceived());
+    rpt.setLongMetric(A_BYTES_IN, bytesIn.get());
     return rpt;
   }
 
   /**
    * This constructor allows the for an arbitrary blocking queue implementation.
    */
-  public ThriftEventSource(int port, BlockingQueue<Event> q) {
+  public AvroEventSource(int port, BlockingQueue<Event> q) {
     Preconditions.checkNotNull(q);
     this.port = port;
-    this.svr = new ThriftFlumeEventServer();
     this.q = q;
   }
 
-  public ThriftEventSource(int port) {
+  public AvroEventSource(int port) {
     this(port, DEFAULT_QUEUE_SIZE);
   }
 
@@ -114,54 +109,48 @@ public class ThriftEventSource extends EventSource.Base {
     try {
       q.put(e);
       enqueued.getAndIncrement();
+      bytesIn.getAndAdd(e.getBody().length);
     } catch (InterruptedException e1) {
       LOG.error("blocked append was interrupted", e1);
       throw new IOException(e1);
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   synchronized public void open() throws IOException {
 
-    try {
-
-      ThriftFlumeEventServer.Processor processor = new ThriftFlumeEventServer.Processor(
-          new ThriftFlumeEventServerImpl(new EventSink.Base() {
-            @Override
-            public void append(Event e) throws IOException {
-              enqueue(e);
-              super.append(e);
-            }
-          }));
-      Factory protFactory = new TBinaryProtocol.Factory(true, true);
-
-      TSaneServerSocket serverTransport = new TSaneServerSocket(port);
-      server = new TSaneThreadPoolServer(processor, serverTransport,
-          protFactory);
-      LOG.info(String.format(
-          "Starting blocking thread pool server on port %d...", port));
-
-      server.start();
-      this.closed = false;
-
-    } catch (TTransportException e) {
-      throw new IOException("Failed to create event server " + e.getMessage(),
-          e);
-    }
+    this.svr = new FlumeEventAvroServerImpl(port) {
+      @Override
+      public void append(AvroFlumeEvent evt) {
+        // convert AvroEvent evt -> e
+        AvroEventAdaptor adapt = new AvroEventAdaptor(evt);
+        try {
+          enqueue(adapt.toFlumeEvent());
+        } catch (IOException e1) {
+          e1.printStackTrace();
+        }
+        super.append(evt);
+      }
+    };
+    LOG.info(String.format("Avro listening server on port %d...", port));
+    this.svr.start();
+    this.closed = false;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   synchronized public void close() throws IOException {
-    if (server == null) {
-      LOG.info(String.format("Server on port %d was already closed!", port));
-      return;
-    }
-
-    server.stop();
-    LOG.info(String.format("Closed server on port %d...", port));
 
     long sz = q.size();
     LOG.info(String.format("Queue still has %d elements ...", sz));
+
+    // Close down the server
+    this.svr.close();
 
     // drain the queue
     // TODO (jon) parameterize queue drain max sleep is one minute
@@ -185,7 +174,7 @@ public class ThriftEventSource extends EventSource.Base {
       } catch (InterruptedException e) {
         LOG.error("Unexpected interrupt of close " + e.getMessage(), e);
         Thread.currentThread().interrupt();
-        closed = true;
+        closed=true;
         throw new IOException(e);
       }
     }
@@ -194,11 +183,12 @@ public class ThriftEventSource extends EventSource.Base {
     return;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Event next() throws IOException {
-
     try {
-
       Event e = null;
       // block until an event shows up
       while ((e = q.poll(100, TimeUnit.MILLISECONDS)) == null) {
@@ -209,7 +199,6 @@ public class ThriftEventSource extends EventSource.Base {
             return null;
           }
         }
-
       }
       // return the event
       synchronized (this) {
@@ -227,14 +216,11 @@ public class ThriftEventSource extends EventSource.Base {
     return new SourceBuilder() {
       @Override
       public EventSource build(String... argv) {
-        Preconditions.checkArgument(argv.length == 1,
-            "usage: thriftSource(port)");
-
+        Preconditions
+            .checkArgument(argv.length == 1, "usage: avroSource(port)");
         int port = Integer.parseInt(argv[0]);
-
-        return new ThriftEventSource(port);
+        return new AvroEventSource(port);
       }
-
     };
   }
 }

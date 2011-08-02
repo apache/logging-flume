@@ -43,7 +43,6 @@ public class EventUtil {
       if (e == null) {
         break;
       }
-
       snk.append(e);
     }
   }

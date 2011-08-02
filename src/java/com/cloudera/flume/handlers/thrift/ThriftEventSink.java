@@ -39,7 +39,7 @@ import com.cloudera.flume.handlers.thrift.ThriftFlumeEventServer.Client;
 import com.cloudera.flume.reporter.ReportEvent;
 
 /**
- * This is a sink that sends events to a remote host/port.
+ * This is a sink that sends events to a remote host/port using Thrift.
  */
 public class ThriftEventSink extends EventSink.Base {
 
@@ -150,7 +150,7 @@ public class ThriftEventSink extends EventSink.Base {
       public EventSink build(Context context, String... args) {
         if (args.length > 2) {
           throw new IllegalArgumentException(
-              "usage: thrift([hostname, [portno]]) ");
+              "usage: thriftSink([hostname, [portno]]) ");
         }
         String host = FlumeConfiguration.get().getCollectorHost();
         int port = FlumeConfiguration.get().getCollectorPort();
@@ -161,10 +161,8 @@ public class ThriftEventSink extends EventSink.Base {
         if (args.length >= 2) {
           port = Integer.parseInt(args[1]);
         }
-
         return new ThriftEventSink(host, port);
       }
     };
   }
-
 }

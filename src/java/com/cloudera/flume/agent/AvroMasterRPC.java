@@ -119,7 +119,6 @@ public class AvroMasterRPC implements MasterRPC {
       List<CharSequence> res = masterClient.getLogicalNodes(physNode);
       ArrayList<String> out = new ArrayList<String>((int) res.size());
       for (CharSequence r : res) {
-
         out.add(r.toString());
       }
       return out;

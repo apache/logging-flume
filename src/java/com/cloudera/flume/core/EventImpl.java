@@ -50,8 +50,7 @@ public class EventImpl extends EventBaseImpl {
   /**
    * Reflection based tools (like avro) require a null constructor
    */
-  @SuppressWarnings("unused")
-  private EventImpl() {
+  public EventImpl() {
     this(new byte[0], 0, Priority.INFO, 0, "");
   }
 

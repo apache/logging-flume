@@ -103,7 +103,6 @@ public class TestAvroMultiMasterRPC {
     public boolean heartbeat(CharSequence logicalNode,
         CharSequence physicalNode, CharSequence clienthost, FlumeNodeState s,
         long timestamp) throws AvroRemoteException {
-
       return true;
     }
 

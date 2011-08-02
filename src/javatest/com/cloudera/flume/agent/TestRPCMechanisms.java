@@ -138,7 +138,6 @@ public class TestRPCMechanisms {
       assertEquals(1, reports.size());
       FlumeReportAvro report = reports.get("reportKey");
       assertNotNull(report);
-
       Map<CharSequence, Long> longMetrics = report.longMetrics;
       assertEquals(2, longMetrics.size());
 
@@ -154,7 +153,6 @@ public class TestRPCMechanisms {
           .doubleValue(), 0.0001);
       assertEquals(Double.MAX_VALUE, ((Double) doubleMetrics.get("double2"))
           .doubleValue(), 0.0001);
-
       Map<CharSequence, CharSequence> stringMetrics = report.stringMetrics;
 
       assertEquals(2, stringMetrics.size());

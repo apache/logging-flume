@@ -132,6 +132,7 @@ public class FlumeConfiguration extends Configuration {
   public static final String HISTORY_DEFAULTPERIOD = "flume.countHistory.period";
   public static final String HISTORY_MAXLENGTH = "flume.history.maxlength";
   public static final String TAIL_POLLPERIOD = "flume.tail.pollperiod";
+  public static final String EVENT_RPC_TYPE = "flume.event.rpc";
 
   // Collector parameters
   public final static String COLLECTOR_EVENT_HOST = "flume.collector.event.host";
@@ -546,6 +547,24 @@ public class FlumeConfiguration extends Configuration {
     return getInt(COLLECTOR_EVENT_PORT, 35853);
   }
 
+  /**
+   * This returns the type of RPC mechanism (Thrift or Avro) chosen for the
+   * FlumeEventServer.
+   */
+  public String getEventRPC() {
+    String[] validRPCProtocols = { RPC_TYPE_AVRO, RPC_TYPE_THRIFT };
+    String entered = get(EVENT_RPC_TYPE, RPC_TYPE_THRIFT).toUpperCase();
+    for (String prot : validRPCProtocols) {
+      if (entered.equals(prot)) {
+        return prot;
+      }
+    }
+    // defaulting to Thrift with a polite warning
+    LOG.warn("event.rpc.type incorrectly defined, should be either"
+        + " \"THRIFT\" or \"AVRO\".  Defaulting to \"THRIFT\"");
+    return RPC_TYPE_THRIFT;
+  }
+
   public String getCollectorDfsDir() {
     return get(COLLECTOR_DFS_DIR, "file://tmp/flume/collected");
   }
@@ -795,7 +814,6 @@ public class FlumeConfiguration extends Configuration {
   public String getWebAppsPath() {
     return get(WEBAPPS_PATH, "webapps");
   }
-
 
   /**
    * This method loads the configuration, or does a hard exit if loading the

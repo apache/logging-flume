@@ -129,7 +129,6 @@ public class ReportServer extends ThriftServer implements
     }
 
     FlumeReportAvro out = new FlumeReportAvro();
-
     Map<CharSequence, CharSequence> stringMapUtf = new HashMap<CharSequence, CharSequence>();
     for (String s : stringMap.keySet()) {
       stringMapUtf.put(s, stringMap.get(s));
@@ -142,6 +141,7 @@ public class ReportServer extends ThriftServer implements
 
     Map<CharSequence, Long> longMapUtf = new HashMap<CharSequence, Long>();
     for (String s : longMap.keySet()) {
+
       longMapUtf.put(s, longMap.get(s));
     }
 

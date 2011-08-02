@@ -113,7 +113,7 @@ public class TestHierarchicalReports extends TestCase {
   }
 
   public void testFailover() throws FlumeSpecException {
-    String s = " { ackedWriteAhead => < thrift ? console > } ";
+    String s = " { ackedWriteAhead => < thriftSink ? console > } ";
     EventSink sink = FlumeBuilder.buildSink(new Context(), s);
 
     Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();
@@ -132,7 +132,7 @@ public class TestHierarchicalReports extends TestCase {
   }
 
   public void testMultiple() throws FlumeSpecException {
-    String s = " { ackedWriteAhead => [ thrift , console ] } ";
+    String s = " { ackedWriteAhead => [ thriftSink , console ] } ";
     EventSink sink = FlumeBuilder.buildSink(new Context(), s);
 
     Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();

@@ -47,8 +47,9 @@ These sources are untranslated and generally need all of their arguments.
 +flume node_nowatch+ -- the watchdog does not allow console input.
 
 +rpcSource(_port_)+ :: A remote procedure call (RPC) server that is
-configured to listen on TCP port +_port_+. Currently, the
-Apache-Thrift RPC framework is used.
+configured to listen on TCP port +_port_+. Supports both Apache-Thrift and 
+Apache-Avro RPC framework.  The type of RPC framework is specified by +event.rpc.type+ 
+property (THRIFT or AVRO), the default is THRIFT.  Note that same RPC framework is used for rpcSink.
 
 +text("_filename_")+ :: One-time text file source.  One event per +\n+ 
 delimited line.
@@ -266,7 +267,9 @@ can use escape sequences documented to bucket data as documented in the
 +rpcSink("_host_"[, _port_])+ :: A remote procedure call (RPC) sink that is 
 configured to send to machine +_host_+ on TCP port +_port_+. Default port is 35861 
 and can be overridden by setting the +flume.collector.event.port+ property. 
-Currently, the apache-thrift RPC framework is used.
+Supports both Apache-Thrift and Apache-Avro RPC framework.  
+The type of RPC framework is specified by +event.rpc.type+ property (THRIFT or AVRO), 
+the default is THRIFT.  Note that same RPC framework is used for rpcSource.
 
 +syslogTcp("_host_"[,_port_])+ :: Syslog TCP sink.  Write to host "host" on 
 port "port" in syslog over TCP format (syslog-ng compatible). Default port is 

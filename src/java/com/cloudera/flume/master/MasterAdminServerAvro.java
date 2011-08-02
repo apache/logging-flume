@@ -148,7 +148,6 @@ public class MasterAdminServerAvro implements FlumeMasterAdminServerAvro,
     mappings = new HashMap<CharSequence, List<CharSequence>>();
 
     for (Entry<String, List<String>> entry : nativeMappings.entrySet()) {
-
       ArrayList<CharSequence> values = new ArrayList<CharSequence>(entry
           .getValue().size());
 

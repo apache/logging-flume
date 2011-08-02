@@ -38,6 +38,7 @@ import com.cloudera.flume.core.MaskDecorator;
 import com.cloudera.flume.core.SelectDecorator;
 import com.cloudera.flume.core.extractors.RegexExtractor;
 import com.cloudera.flume.core.extractors.SplitExtractor;
+import com.cloudera.flume.handlers.avro.AvroEventSink;
 import com.cloudera.flume.handlers.batch.BatchingDecorator;
 import com.cloudera.flume.handlers.batch.GunzipDecorator;
 import com.cloudera.flume.handlers.batch.GzipDecorator;
@@ -69,6 +70,7 @@ import com.cloudera.flume.handlers.hdfs.EscapedCustomDfsSink;
 import com.cloudera.flume.handlers.hdfs.SeqfileEventSink;
 import com.cloudera.flume.handlers.irc.IrcSink;
 import com.cloudera.flume.handlers.syslog.SyslogTcpSink;
+import com.cloudera.flume.handlers.thrift.RpcSink;
 import com.cloudera.flume.handlers.thrift.ThriftAckedEventSink;
 import com.cloudera.flume.handlers.thrift.ThriftEventSink;
 import com.cloudera.flume.handlers.thrift.ThriftRawEventSink;
@@ -126,10 +128,11 @@ public class SinkFactoryImpl extends SinkFactory {
       { "dfs", DFSEventSink.builder() }, // escapes
       { "customdfs", CustomDfsSink.builder() }, // does not escape
       { "escapedCustomDfs", EscapedCustomDfsSink.builder() }, // escapes
-      { "rpcSink", ThriftEventSink.builder() },
+      { "rpcSink", RpcSink.builder() }, //creates AvroEventSink or ThriftEventSink
       { "syslogTcp", SyslogTcpSink.builder() },
       { "irc", IrcSink.builder() },
-
+      { "thriftSink", ThriftEventSink.builder() },
+      { "avroSink", AvroEventSink.builder() },
       // advanced
       { "failChain", FailoverChainSink.builder() }, // @deprecated
 
@@ -144,7 +147,6 @@ public class SinkFactoryImpl extends SinkFactory {
       { "regexhistospec", RegexGroupHistogramSink.builder() },
 
       // deprecated
-      { "thrift", ThriftEventSink.builder() },
       { "tsink", ThriftEventSink.builder() },
       { "tacksink", ThriftAckedEventSink.builder() },
       { "trawsink", ThriftRawEventSink.builder() }, };
