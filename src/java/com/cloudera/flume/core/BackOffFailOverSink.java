@@ -140,11 +140,12 @@ public class BackOffFailOverSink extends EventSink.Base {
       // isreset
       return;
     } catch (IOException ioe3) {
+      LOG.info(ioe3.getMessage());
       fails.incrementAndGet();
       primaryOk = false;
       backoffPolicy.backoff();
       backup.append(e);
-      backups.incrementAndGet();
+      backups.incrementAndGet();      
       super.append(e);
     }
   }
@@ -219,6 +220,14 @@ public class BackOffFailOverSink extends EventSink.Base {
     }
   }
 
+  public EventSink getPrimary() {
+	  return primary;
+  }
+  
+  public EventSink getBackup() {
+	  return backup;
+  }
+  
   @Override
   public String getName() {
     return "BackoffFailover";

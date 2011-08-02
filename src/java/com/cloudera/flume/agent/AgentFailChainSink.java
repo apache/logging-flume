@@ -75,6 +75,7 @@ public class AgentFailChainSink extends EventSink.Base {
       break;
     }
     case BE: {
+      thriftlist.add("null");
       String chains = AgentFailChainSink.genBestEffortChain(thriftlist
           .toArray(new String[0]));
       LOG.info("Setting failover chain to  " + chains);
@@ -156,8 +157,9 @@ public class AgentFailChainSink extends EventSink.Base {
    */
   public static String genDfoChain(String... chain) {
     String primaries = genBestEffortChain(chain);
-    String body = "< " + primaries + " ? {diskFailover => { insistentOpen =>  "
-        + primaries + " } } >";
+    String body = "< " + primaries
+        + " ? diskFailover insistentAppend stubbornAppend insistentOpen "
+        + primaries + " >";
 
     LOG.info("Setting dfo failover chain to  " + body);
     return body;

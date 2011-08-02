@@ -67,7 +67,8 @@ public class CappedExponentialBackoff implements BackoffPolicy {
    * Has time progressed enough to do a retry attempt?
    */
   public boolean isRetryOk() {
-    return retryTime <= Clock.unixTime();
+    long now = Clock.unixTime();
+    return retryTime <= now;
   }
 
   /**
@@ -83,7 +84,7 @@ public class CappedExponentialBackoff implements BackoffPolicy {
   public void reset() {
     sleepIncrement = initialSleep;
     long cur = Clock.unixTime();
-    retryTime = cur;
+    retryTime = cur + initialSleep;
   }
 
   @Override

@@ -59,11 +59,11 @@ public class StubbornAppendSink<S extends EventSink> extends
   @Override
   public void open() throws IOException, InterruptedException {
     Preconditions.checkNotNull(sink);
-    LOG.info("Opening Stubborn Append Sink " + this);
+    LOG.debug("Opening Stubborn Append Sink {}", this);
     isOpen.set(true); // slightly different than default semantics -- open
     // always keeps it in open state.
     sink.open();
-    LOG.info("Opening Stubborn Append Sink " + this);
+    LOG.debug("Opened Stubborn Append Sink {}", this);
   }
 
   @Override
@@ -73,6 +73,7 @@ public class StubbornAppendSink<S extends EventSink> extends
       appendSuccesses.incrementAndGet();
       return; // success case
     } catch (Exception ex) {
+      LOG.info(ex.getMessage());
       appendFails.incrementAndGet();
       super.close(); // close
 

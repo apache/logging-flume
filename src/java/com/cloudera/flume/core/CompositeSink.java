@@ -83,5 +83,9 @@ public class CompositeSink extends EventSink.Base {
     super.getReports(namePrefix, reports);
     snk.getReports(namePrefix + getName() + ".", reports);
   }
+  
+  public EventSink getSink() {
+	  return snk;
+  }
 
 }

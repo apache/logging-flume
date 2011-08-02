@@ -63,7 +63,8 @@ public class DiskFailoverDeco extends EventSinkDecorator<EventSink> {
 
   CountDownLatch drainCompleted = null; // block close until subthread is
   // completed
-  CountDownLatch drainStarted = null; // blocks open until subthread is started
+  CountDownLatch drainStarted = null; // blocks open until subthread is
+  // started
   volatile IOException lastExn = null;
 
   final long checkmillis;
@@ -251,10 +252,12 @@ public class DiskFailoverDeco extends EventSinkDecorator<EventSink> {
           checkmillis = Long.parseLong(argv[1]);
         }
 
-        // TODO (jon) this will cause problems with multiple nodes in same JVM
+        // TODO (jon) this will cause problems with multiple nodes in
+        // same JVM
         FlumeNode node = FlumeNode.getInstance();
 
-        // this makes the dfo present to the when reporting on the FlumeNode
+        // this makes the dfo present to the when reporting on the
+        // FlumeNode
         String dfonode = context.getValue(LogicalNodeContext.C_LOGICAL);
         Preconditions.checkArgument(dfonode != null,
             "Context does not have a logical node name");
@@ -282,12 +285,19 @@ public class DiskFailoverDeco extends EventSinkDecorator<EventSink> {
     Map<String, Reportable> map = new HashMap<String, Reportable>();
     map.put(sink.getName(), sink);
     map.put(dfoMan.getName(), dfoMan);
-    map.put("drainSink." + sink.getName(), sink);
     if (drainSource != null) {
       // careful, drainSource can be null if deco not opened yet
       map.put("drainSource." + drainSource.getName(), drainSource);
     }
 
     return map;
+  }
+
+  public DiskFailoverManager getFailoverManager() {
+    return dfoMan;
+  }
+
+  public RollSink getDFOWriter() {
+    return input;
   }
 }
