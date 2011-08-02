@@ -21,9 +21,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Level;
 import org.codehaus.jettison.json.JSONException;
@@ -35,7 +40,10 @@ import org.slf4j.LoggerFactory;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.conf.ReportTestingContext;
+import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
+import com.cloudera.flume.conf.SinkFactoryImpl;
 import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
@@ -159,20 +167,20 @@ public class TestRollSink {
 
     snk.open();
     Clock.sleep(100); // sleep until about 100 ms; no flush yet.
-    assertEquals(Long.valueOf(0), snk.getMetrics().getLongMetric(
-        RollSink.A_ROLLS));
+    assertEquals(Long.valueOf(0),
+        snk.getMetrics().getLongMetric(RollSink.A_ROLLS));
 
     Clock.sleep(200); // auto flush
-    assertEquals(Long.valueOf(1), snk.getMetrics().getLongMetric(
-        RollSink.A_ROLLS));
+    assertEquals(Long.valueOf(1),
+        snk.getMetrics().getLongMetric(RollSink.A_ROLLS));
 
     Clock.sleep(200); // auto flush.
-    assertEquals(Long.valueOf(2), snk.getMetrics().getLongMetric(
-        RollSink.A_ROLLS));
+    assertEquals(Long.valueOf(2),
+        snk.getMetrics().getLongMetric(RollSink.A_ROLLS));
 
     Clock.sleep(200); // auto flush.
-    assertEquals(Long.valueOf(3), snk.getMetrics().getLongMetric(
-        RollSink.A_ROLLS));
+    assertEquals(Long.valueOf(3),
+        snk.getMetrics().getLongMetric(RollSink.A_ROLLS));
     snk.close();
   }
 
@@ -188,42 +196,42 @@ public class TestRollSink {
 
     snk.open();
 
-    assertEquals(Long.valueOf(0), snk.getMetrics().getLongMetric(
-        RollSink.A_ROLLS));
+    assertEquals(Long.valueOf(0),
+        snk.getMetrics().getLongMetric(RollSink.A_ROLLS));
 
     // a 10 byte body
     Event e = new EventImpl("0123456789".getBytes());
     snk.append(e);
     Clock.sleep(200); // at least one check period
-    assertEquals(Long.valueOf(1), snk.getMetrics().getLongMetric(
-        RollSink.A_ROLLS));
+    assertEquals(Long.valueOf(1),
+        snk.getMetrics().getLongMetric(RollSink.A_ROLLS));
 
     // 5 bytes (no trigger)
     e = new EventImpl("01234".getBytes());
     snk.append(e);
     Clock.sleep(200); // at least one check period
-    assertEquals(Long.valueOf(1), snk.getMetrics().getLongMetric(
-        RollSink.A_ROLLS));
+    assertEquals(Long.valueOf(1),
+        snk.getMetrics().getLongMetric(RollSink.A_ROLLS));
     // 5 more bytes (ok trigger)
     e = new EventImpl("01234".getBytes());
     snk.append(e);
     Clock.sleep(200); // at least one check period
-    assertEquals(Long.valueOf(2), snk.getMetrics().getLongMetric(
-        RollSink.A_ROLLS));
+    assertEquals(Long.valueOf(2),
+        snk.getMetrics().getLongMetric(RollSink.A_ROLLS));
 
     // 27 bytes but only on trigger
     e = new EventImpl("012345678901234567890123456".getBytes());
     snk.append(e);
     Clock.sleep(200); // at least one check period
-    assertEquals(Long.valueOf(3), snk.getMetrics().getLongMetric(
-        RollSink.A_ROLLS));
+    assertEquals(Long.valueOf(3),
+        snk.getMetrics().getLongMetric(RollSink.A_ROLLS));
 
     // 5 bytes (no trigger)
     e = new EventImpl("01234".getBytes());
     snk.append(e);
     Clock.sleep(200); // at least one check period
-    assertEquals(Long.valueOf(3), snk.getMetrics().getLongMetric(
-        RollSink.A_ROLLS));
+    assertEquals(Long.valueOf(3),
+        snk.getMetrics().getLongMetric(RollSink.A_ROLLS));
 
     snk.close();
   }
@@ -259,6 +267,81 @@ public class TestRollSink {
     assertEquals("One", all.getStringMetric("One.name"));
 
     snk.close();
+  }
+
+  /**
+   * This test has an append that is blocked because a sink inside of a roll
+   * always throws an exception. (ex: a down network connection). This test
+   * attempts to guarantee that the rotate succeeds in a reasoanble amoutn of
+   * time.
+   *
+   * @throws IOException
+   * @throws InterruptedException
+   */
+  @Test
+  public void testRollAppendBlockedDeadlock() throws IOException,
+      InterruptedException {
+    final EventSink mock = mock(EventSink.Base.class);
+    doNothing().doThrow(new IOException()).when(mock).close();
+    final Event e1 = new EventImpl("foo1".getBytes());
+    final Event e2 = new EventImpl("foo2".getBytes());
+    doThrow(new IOException()).when(mock).append(e1);
+    doThrow(new IOException()).when(mock).append(e2);
+
+    SinkFactoryImpl sfi = new SinkFactoryImpl();
+    sfi.setSink("rollLock", new SinkBuilder() {
+      @Override
+      public EventSink build(Context context, String... argv) {
+        return mock;
+      }
+    });
+    FlumeBuilder.setSinkFactory(sfi);
+
+    final RollSink roll = new RollSink(LogicalNodeContext.testingContext(),
+        "insistentOpen stubbornAppend insistentAppend rollLock", 1000000,
+        1000000);
+    final CountDownLatch latch = new CountDownLatch(1);
+    // excessively long roll and check times which allow test to force checks.
+    Thread t = new Thread("blocked append thread") {
+      public void run() {
+        try {
+          roll.open();
+          roll.append(e1); // append blocks.
+        } catch (InterruptedException e) {
+          latch.countDown();
+          LOG.error("Exited with expected Exception");
+          return;
+        } catch (IOException e) {
+          LOG.info("Got the unexpected IOException exit", e);
+          e.printStackTrace();
+        }
+        LOG.info("Got the unexpected clean exit");
+      }
+    };
+    t.start();
+    // have another thread timeout.
+    final CountDownLatch latch2 = new CountDownLatch(1);
+    Thread t2 = new Thread("roll rotate thread") {
+      public void run() {
+        try {
+          Clock.sleep(1000); // this is imperfect, but wait for append to block.
+          roll.rotate();
+          roll.close();
+        } catch (IOException e) {
+          e.printStackTrace();
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        } finally {
+          latch2.countDown();
+        }
+      }
+    };
+    t2.start();
+    boolean success = latch.await(5, TimeUnit.SECONDS);
+    assertTrue(success);
+
+    success = latch2.await(5, TimeUnit.SECONDS);
+    assertTrue(success);
   }
 
 }

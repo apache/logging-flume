@@ -19,8 +19,17 @@ package com.cloudera.flume.handlers.rolling;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +41,7 @@ import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.core.CompositeSink;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
+import com.cloudera.flume.handlers.debug.LazyOpenDecorator;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportUtil;
 import com.cloudera.flume.reporter.Reportable;
@@ -51,6 +61,8 @@ public class RollSink extends EventSink.Base {
   final RollTrigger trigger;
   protected TriggerThread triggerThread = null;
 
+  protected ExecutorService executor = null;
+
   private static int threadInitNumber = 0;
   final long checkLatencyMs; // default 4x a second
   private Context ctx; // roll context
@@ -61,6 +73,8 @@ public class RollSink extends EventSink.Base {
   public final static String A_ROLLSPEC = "rollspec";
   public final String A_ROLL_TAG; // TODO (jon) parameterize this.
   public final static String DEFAULT_ROLL_TAG = "rolltag";
+
+  final ReadWriteLock lock = new ReentrantReadWriteLock();
 
   final AtomicLong rolls = new AtomicLong();
   final AtomicLong rollfails = new AtomicLong();
@@ -155,9 +169,49 @@ public class RollSink extends EventSink.Base {
     }
   };
 
+  // currently it is assumed that there is only one thread handling appends, but
+  // this has to be thread safe with respect to open and close (rotate) calls.
+  Future<Void> future;
+
   // This is a large synchronized section. Won't fix until it becomes a problem.
   @Override
-  public void append(Event e) throws IOException, InterruptedException {
+  public void append(final Event e) throws IOException, InterruptedException {
+    Callable<Void> task = new Callable<Void>() {
+      public Void call() throws Exception {
+        synchronousAppend(e);
+        return null;
+      }
+    };
+
+    // keep track of the last future.
+    future = executor.submit(task);
+    try {
+      future.get();
+    } catch (ExecutionException e1) {
+      Throwable cause = e1.getCause();
+      if (cause instanceof IOException) {
+        throw (IOException) cause;
+      } else if (cause instanceof InterruptedException) {
+        throw (InterruptedException) cause;
+      } else if (cause instanceof RuntimeException) {
+        throw (RuntimeException) cause;
+      } else {
+        // we have a throwable that is not an exception.
+        LOG.error("Got a throwable that is not an exception!", e1);
+      }
+    } catch (CancellationException ce) {
+      Thread.currentThread().interrupt();
+      throw new InterruptedException(
+          "Blocked append interrupted by rotation event");
+    } catch (InterruptedException ex) {
+      LOG.warn("Unexpected Exception " + ex.getMessage(), ex);
+      Thread.currentThread().interrupt();
+      throw (InterruptedException) ex;
+    }
+  }
+
+  public void synchronousAppend(Event e) throws IOException,
+      InterruptedException {
     Preconditions.checkState(curSink != null,
         "Attempted to append when rollsink not open");
 
@@ -170,26 +224,52 @@ public class RollSink extends EventSink.Base {
     String tag = trigger.getTagger().getTag();
 
     e.set(A_ROLL_TAG, tag.getBytes());
-    synchronized (this) {
+    lock.readLock().lock();
+    try {
       curSink.append(e);
       trigger.append(e);
       super.append(e);
+    } finally {
+      lock.readLock().unlock();
     }
   }
 
-  synchronized public boolean rotate() throws InterruptedException {
+  /**
+   * This method assumes it will be guarded by locks
+   */
+  boolean synchronousRotate() throws InterruptedException, IOException {
+    rolls.incrementAndGet();
+    if (curSink == null) {
+      // wtf, was closed or never opened
+      LOG.error("Attempting to rotate an already closed roller");
+      return false;
+    }
     try {
-      rolls.incrementAndGet();
-      if (curSink == null) {
-        // wtf, was closed or never opened
-        LOG.error("Attempting to rotate an already closed roller");
-        return false;
-      }
       curSink.close();
-      curSink = newSink(ctx);
-      curSink.open();
+    } catch (IOException ioe) {
+      // Eat this exception and just move to reopening
+      LOG.warn("IOException when closing subsink",ioe);
 
-      LOG.debug("rotated sink ");
+      // other exceptions propagate out of here.
+    }
+    curSink = newSink(ctx);
+    curSink.open();
+    LOG.debug("rotated sink ");
+    return true;
+  }
+
+  public boolean rotate() throws InterruptedException {
+    while (!lock.writeLock().tryLock(1000, TimeUnit.MILLISECONDS)) {
+      // interrupt the future on the other.
+      if (future != null) {
+        future.cancel(true);
+      }
+
+      // NOTE: there is no guarantee that this cancel actually succeeds.
+    }
+    // interrupted, lets go.
+    try {
+      synchronousRotate();
     } catch (IOException e1) {
       // TODO This is an error condition that needs to be handled -- could be
       // due to resource exhaustion.
@@ -197,6 +277,8 @@ public class RollSink extends EventSink.Base {
           + e1.getMessage());
       rollfails.incrementAndGet();
       return false;
+    } finally {
+      lock.writeLock().unlock();
     }
     return true;
   }
@@ -205,6 +287,23 @@ public class RollSink extends EventSink.Base {
   public void close() throws IOException, InterruptedException {
     LOG.info("closing RollSink '" + fspec + "'");
 
+    // attempt to get the lock, and if we cannot, issue a cancel
+    while (!lock.writeLock().tryLock(1000, TimeUnit.MILLISECONDS)) {
+      // interrupt the future on the other.
+      if (future != null) {
+        future.cancel(true);
+      }
+    }
+
+    // we have the write lock now.
+    try {
+      if (executor != null) {
+        executor.shutdown();
+        executor = null;
+      }
+    } finally {
+      lock.writeLock().unlock();
+    }
     // TODO triggerThread can race with an open call, but we really need to
     // avoid having the await while locked!
     if (triggerThread != null) {
@@ -212,37 +311,52 @@ public class RollSink extends EventSink.Base {
         triggerThread.interrupt();
         triggerThread.doneLatch.await();
       } catch (InterruptedException e) {
-        LOG
-            .warn("Interrupted while waiting for batch timeout thread to finish");
+        LOG.warn("Interrupted while waiting for batch timeout thread to finish");
         // TODO check finally
         throw e;
       }
     }
 
-    synchronized (this) {
+    lock.writeLock().lock();
+    try {
       if (curSink == null) {
         LOG.info("double close '" + fspec + "'");
         return;
       }
       curSink.close();
       curSink = null;
+    } finally {
+      lock.writeLock().unlock();
     }
   }
 
   @Override
-  synchronized public void open() throws IOException, InterruptedException {
-    Preconditions.checkState(curSink == null,
-        "Attempting to open already open RollSink '" + fspec + "'");
-    LOG.info("opening RollSink  '" + fspec + "'");
-    trigger.getTagger().newTag();
-    triggerThread = new TriggerThread();
-    triggerThread.doStart();
-
+  public void open() throws IOException, InterruptedException {
+    lock.writeLock().lock();
     try {
-      curSink = newSink(ctx);
-      curSink.open();
-    } catch (IOException e1) {
-      LOG.warn("Failure when attempting to open initial sink", e1);
+      if (executor != null) {
+        throw new IllegalStateException(
+            "Attempting to open already open roll sink");
+      }
+      executor = Executors.newFixedThreadPool(1);
+
+      Preconditions.checkState(curSink == null,
+          "Attempting to open already open RollSink '" + fspec + "'");
+      LOG.info("opening RollSink  '" + fspec + "'");
+      trigger.getTagger().newTag();
+      triggerThread = new TriggerThread();
+      triggerThread.doStart();
+    
+      try {
+        curSink = newSink(ctx);
+        curSink.open();
+      } catch (IOException e1) {
+        LOG.warn("Failure when attempting to open initial sink", e1);
+        executor.shutdown();
+        executor = null;
+      }
+    } finally {
+      lock.writeLock().unlock();
     }
   }
 

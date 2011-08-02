@@ -26,6 +26,8 @@ import static org.mockito.Mockito.mock;
 import java.io.IOException;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.ReportTestingContext;
@@ -46,10 +48,12 @@ import com.cloudera.util.CappedExponentialBackoff;
 import com.cloudera.util.Clock;
 
 /**
- * This tests the open, close, execution, shutdown and cancellation sematnics of
+ * This tests the open, close, execution, shutdown and cancellation semantics of
  * the direct driver
  */
 public class TestDirectDriver {
+  Logger LOG = LoggerFactory.getLogger(TestDirectDriver.class);
+  
   /**
    * Test a thread cancel on something blocked on open. This forces a
    * InterruptedException throw. Normally an insistentOpen will never return if
@@ -138,7 +142,7 @@ public class TestDirectDriver {
   }
 
   /**
-   * This checks to make sure that even though there is along roll period, the
+   * This checks to make sure that even though there is a long roll period, the
    * sink exits quickly due to the cancel call.
    */
   @Test
@@ -173,14 +177,18 @@ public class TestDirectDriver {
 
     DirectDriver driver = new DirectDriver(source, roll);
     driver.start();
+    LOG.info("Started driver");
     Clock.sleep(1000); // let the insistent append try a few times.
+    LOG.info("About to to trigger stop");
     driver.stop();
+
 
     boolean closed = driver.join(1000);
     assertFalse(closed);
+    LOG.info("Stop suggestion wasn't successful, now try to cancel");
 
     driver.cancel();
-    assertTrue(driver.join(1000)); // closed this time.
+    assertTrue(driver.join(5000)); // closed this time.
   }
 
   /**
