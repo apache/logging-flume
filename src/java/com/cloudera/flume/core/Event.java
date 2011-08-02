@@ -99,7 +99,7 @@ abstract public class Event {
    * These are useful to other classes which might want to search for tags in
    * strings.
    */
-  final public static String TAG_REGEX = "\\%(\\w|\\%)|\\%\\{(\\w+)\\}";
+  final public static String TAG_REGEX = "\\%(\\w|\\%)|\\%\\{([\\w\\.-]+)\\}";
   final public static Pattern tagPattern = Pattern.compile(TAG_REGEX);
 
   /**

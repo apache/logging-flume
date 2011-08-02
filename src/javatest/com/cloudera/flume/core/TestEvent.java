@@ -45,6 +45,20 @@ public class TestEvent {
   }
 
   /**
+   * Test replacement of %{...} strings with dots or dashes (FLUME-160)
+   */
+  @Test
+  public void testFlume160() {
+    Event e = new EventImpl("abcde".getBytes());
+    String test = "/henry/%{scribe.category}/test";
+    e.set("scribe.category", "default".getBytes());
+    assertEquals("Tag replacement of scribe.category failed!", "/henry/default/test", e.escapeString(test));
+    test = "/henry/%{foo-bar}/test";
+    e.set("foo-bar", "zomg".getBytes());
+    assertEquals("Tag replacement of foo-bar failed!", "/henry/zomg/test", e.escapeString(test));
+  }
+
+  /**
    * Test an instance of the special-cased form of tag escaping
    */
   @Test
