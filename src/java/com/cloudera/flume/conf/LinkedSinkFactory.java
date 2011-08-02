@@ -17,6 +17,10 @@
  */
 package com.cloudera.flume.conf;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSinkDecorator;
 import com.google.common.base.Preconditions;
@@ -57,4 +61,15 @@ public class LinkedSinkFactory extends SinkFactory {
     return parent.getSink(context, name, args);
   }
 
+  @Override
+  public Set<String> getSinkNames() {
+    HashSet<String> set = new HashSet<String>(parent.getSinkNames());
+    set.add(sinkname);
+    return Collections.unmodifiableSet(set);
+  }
+
+  @Override
+  public Set<String> getDecoratorNames() {
+    return parent.getDecoratorNames();
+  }
 }

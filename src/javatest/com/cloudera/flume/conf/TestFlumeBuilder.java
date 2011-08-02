@@ -290,4 +290,13 @@ public class TestFlumeBuilder implements ExampleData {
     LOG.info(parse.toStringTree());
   }
 
+  /**
+   * Verify basic functionality - contains basic sink/source/decorator
+   */
+  @Test
+  public void testListExtensions() {
+    FlumeBuilder.getSinkNames().contains("agentSink");
+    FlumeBuilder.getDecoratorNames().contains("regex");
+    FlumeBuilder.getSourceNames().contains("collectorSource");
+  }
 }

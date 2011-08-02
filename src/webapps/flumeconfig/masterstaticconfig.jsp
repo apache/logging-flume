@@ -15,10 +15,26 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 -->
-<a href="flumemaster.jsp">master</a> | 
-<a href="flumeconfig.jsp">config</a> | 
-<a href="mastercommand.jsp">raw commands</a> | 
-<a href="masterstaticconfig.jsp">static config</a> | 
-<a href="masterenv.jsp">env</a> | 
-<a href="masterext.jsp">extn</a>
-<br>
+<html><head>
+<!-- Copyright (c) 2010 Cloudera, Inc.  All rights reserved. -->
+<!-- Retro web 1.0 flume Agent configuration display -->
+<%@ page
+	contentType="text/html; charset=UTF-8"
+	import="javax.servlet.*"
+	import="javax.servlet.http.*"
+	import="java.io.*"
+	import="java.util.*"
+	import="java.text.DecimalFormat"
+	import="com.cloudera.flume.conf.FlumeConfiguration"
+%>
+<link rel="stylesheet" type="text/css" href="/flume.css" />
+
+</head>
+<body>
+<jsp:include page="menu.jsp" />
+
+<h1> Static Configuration </h1>
+
+<%= FlumeConfiguration.get().toHtml() %>
+
+</body></html>

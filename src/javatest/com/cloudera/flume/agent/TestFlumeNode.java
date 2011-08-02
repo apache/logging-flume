@@ -18,13 +18,16 @@
 
 package com.cloudera.flume.agent;
 
-import java.io.File;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
@@ -126,6 +129,13 @@ public class TestFlumeNode {
     FlumeBuilder.setSourceFactory(new SourceFactory() {
       public EventSource getSource(String name, String... args) {
         return new NextExnSource();
+      }
+
+      @Override
+      public Set<String> getSourceNames() {
+        HashSet<String> set = new HashSet<String>();
+        set.add("newExnSource");
+        return set;
       }
     });
 

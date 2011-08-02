@@ -17,5 +17,7 @@
 -->
 <a href="flumeagent.jsp">agent</a> | 
 <a href="staticconfig.jsp">static config</a> | 
+<a href="environment.jsp">env</a> | 
+<a href="extension.jsp">ext</a> | 
 <a href="flumereporter.jsp">report metrics</a>
 <br>

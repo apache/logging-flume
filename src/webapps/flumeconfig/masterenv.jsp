@@ -15,10 +15,38 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 -->
-<a href="flumemaster.jsp">master</a> | 
-<a href="flumeconfig.jsp">config</a> | 
-<a href="mastercommand.jsp">raw commands</a> | 
-<a href="masterstaticconfig.jsp">static config</a> | 
-<a href="masterenv.jsp">env</a> | 
-<a href="masterext.jsp">extn</a>
-<br>
+<html><head>
+<!-- Copyright (c) 2010 Cloudera, Inc.  All rights reserved. -->
+<!-- Retro web 1.0 flume Agent configuration display -->
+<%@ page
+	contentType="text/html; charset=UTF-8"
+	import="javax.servlet.*"
+	import="javax.servlet.http.*"
+	import="java.io.*"
+	import="java.util.*"
+	import="java.text.DecimalFormat"
+%>
+<link rel="stylesheet" type="text/css" href="/flume.css" />
+
+</head>
+<body>
+<jsp:include page="menu.jsp" />
+
+<h1>Environment</h1>
+
+<table>
+
+<%
+  Properties props = System.getProperties();
+  for (Map.Entry<Object,Object> p : props.entrySet()) {
+%>
+    <tr><th><%= p.getKey() %></th><td><div class="<%= p.getKey() %>">
+    <%= p.getValue() %>
+    </div></td></tr>
+<%
+  }
+%>
+
+</table>
+
+</body></html>

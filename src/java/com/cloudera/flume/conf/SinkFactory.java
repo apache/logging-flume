@@ -17,6 +17,9 @@
  */
 package com.cloudera.flume.conf;
 
+import java.util.Collections;
+import java.util.Set;
+
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSinkDecorator;
 
@@ -81,4 +84,13 @@ abstract public class SinkFactory {
     return getDecorator(new Context(), name, args);
   }
 
+  /**
+   * Returns the list of sinks that we can instantiate
+   */
+  abstract public Set<String> getSinkNames();
+
+  /**
+   * Returns the list of decorators that we can instantiate
+   */
+  abstract public Set<String> getDecoratorNames();
 }

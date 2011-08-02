@@ -19,9 +19,11 @@
 package com.cloudera.flume.conf;
 
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -171,4 +173,8 @@ public class SourceFactoryImpl extends SourceFactory {
     sources.put(name, builder);
   }
 
+  @Override
+  public Set<String> getSourceNames() {
+    return Collections.unmodifiableSet(sources.keySet());
+  }
 }

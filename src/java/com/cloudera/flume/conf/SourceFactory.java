@@ -17,6 +17,8 @@
  */
 package com.cloudera.flume.conf;
 
+import java.util.Set;
+
 import com.cloudera.flume.core.EventSource;
 
 /**
@@ -32,4 +34,8 @@ abstract public class SourceFactory {
   abstract public EventSource getSource(String name, String... args)
       throws FlumeSpecException;
 
+  /**
+   * Returns the list of sources that we can instantiate
+   */
+  abstract public Set<String> getSourceNames();
 }

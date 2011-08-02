@@ -222,16 +222,12 @@ public class SinkFactoryImpl extends SinkFactory {
     }
   }
 
-  /**
-   * Returns the list of sinks that we can instantiate
-   */
+  @Override
   public Set<String> getSinkNames() {
     return Collections.unmodifiableSet(sinks.keySet());
   }
 
-  /**
-   * Returns the list of decorators that we can instantiate
-   */
+  @Override
   public Set<String> getDecoratorNames() {
     return Collections.unmodifiableSet(decos.keySet());
   }

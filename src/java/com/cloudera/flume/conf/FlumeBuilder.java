@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.antlr.runtime.ANTLRFileStream;
 import org.antlr.runtime.ANTLRStringStream;
@@ -600,5 +601,26 @@ public class FlumeBuilder {
           + FlumeSpecGen.genEventSinkDecorator(t));
     }
     return deco;
+  }
+
+  /**
+   * Return the sinks this builder supports
+   */
+  public static Set<String> getSinkNames() {
+    return sinkFactory.getSinkNames();
+  }
+
+  /**
+   * Return the decorators this builder supports
+   */
+  public static Set<String> getDecoratorNames() {
+    return sinkFactory.getDecoratorNames();
+  }
+
+  /**
+   * Return the sources this builder supports
+   */
+  public static Set<String> getSourceNames() {
+    return srcFactory.getSourceNames();
   }
 }

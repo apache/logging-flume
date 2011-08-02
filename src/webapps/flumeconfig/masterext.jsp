@@ -25,16 +25,56 @@
 	import="java.io.*"
 	import="java.util.*"
 	import="java.text.DecimalFormat"
-	import="com.cloudera.flume.conf.FlumeConfiguration"
+	import="com.cloudera.flume.conf.FlumeBuilder"
 %>
 <link rel="stylesheet" type="text/css" href="/flume.css" />
 
 </head>
 <body>
-<jsp:include page="menu_agent.jsp" />
+<jsp:include page="menu.jsp" />
 
-<h1> Static Configuration </h1>
+<h1>Extensions - Sink/Source/Decorator</h1>
 
-<%= FlumeConfiguration.get().toHtml() %>
+<h2>Available Sinks</h2>
+<table>
+
+<%
+  // treeset so that the list is sorted
+  for (String n: new TreeSet<String>(FlumeBuilder.getSinkNames())) {
+%>
+    <tr><td><%= n %></td></tr>
+<%
+  }
+%>
+
+</table>
+
+<h2>Available Sources</h2>
+<table>
+
+<%
+  // treeset so that the list is sorted
+  for (String n: new TreeSet<String>(FlumeBuilder.getSourceNames())) {
+%>
+    <tr><td><%= n %></td></tr>
+<%
+  }
+%>
+
+</table>
+
+<h2>Available Decorator</h2>
+<table>
+
+<%
+  // treeset so that the list is sorted
+  for (String n: new TreeSet<String>(FlumeBuilder.getDecoratorNames())) {
+%>
+    <tr><td><%= n %></td></tr>
+<%
+  }
+%>
+
+</table>
 
 </body></html>
