@@ -23,8 +23,10 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Map.Entry;
+
+import javax.ws.rs.core.Application;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -53,6 +55,7 @@ import com.cloudera.flume.handlers.endtoend.CollectorAckListener;
 import com.cloudera.flume.handlers.text.FormatFactory;
 import com.cloudera.flume.handlers.text.FormatFactory.OutputFormatBuilder;
 import com.cloudera.flume.reporter.MasterReportPusher;
+import com.cloudera.flume.reporter.NodeReportResource;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.Reportable;
@@ -64,6 +67,8 @@ import com.cloudera.util.NetUtils;
 import com.cloudera.util.Pair;
 import com.cloudera.util.StatusHttpServer;
 import com.google.common.base.Preconditions;
+import com.sun.jersey.api.core.DefaultResourceConfig;
+import com.sun.jersey.spi.container.servlet.ServletContainer;
 
 /**
  * This is a configurable flume node.
@@ -223,6 +228,12 @@ public class FlumeNode implements Reportable {
     return webPath;
   }
 
+  ServletContainer jerseyNodeServlet() {
+    Application app = new DefaultResourceConfig(NodeReportResource.class);
+    ServletContainer sc = new ServletContainer(app);
+    return sc;
+  }
+
   /**
    * This also implements the Apache Commons Daemon interface's start
    */
@@ -237,8 +248,9 @@ public class FlumeNode implements Reportable {
         String webPath = getWebPath(conf);
 
         boolean findport = FlumeConfiguration.get().getNodeAutofindHttpPort();
-        this.http = new StatusHttpServer("flumeagent", webPath, "0.0.0.0",
-            conf.getNodeStatusPort(), findport);
+        this.http = new StatusHttpServer("flumeagent", webPath, "0.0.0.0", conf
+            .getNodeStatusPort(), findport);
+        http.addServlet(jerseyNodeServlet(), "/node/*");
         http.start();
       } catch (IOException e) {
         LOG.error("Flume node failed: " + e.getMessage(), e);
@@ -420,7 +432,8 @@ public class FlumeNode implements Reportable {
     File cur = f;
     while (cur != null) {
       if (cur.equals(tmp)) {
-        LOG.warn("Log directory is writing inside of /tmp.  This data may not survive reboot!");
+        LOG
+            .warn("Log directory is writing inside of /tmp.  This data may not survive reboot!");
         break;
       }
       cur = cur.getParentFile();
@@ -440,7 +453,8 @@ public class FlumeNode implements Reportable {
     logEnvironment(LOG);
     // Make sure the Java version is not older than 1.6
     if (!CheckJavaVersion.isVersionOk()) {
-      LOG.error("Exiting because of an old Java version or Java version in bad format");
+      LOG
+          .error("Exiting because of an old Java version or Java version in bad format");
       System.exit(-1);
     }
     LOG.info("Starting flume agent on: " + NetUtils.localhost());
@@ -671,8 +685,8 @@ public class FlumeNode implements Reportable {
     try {
       setup(argv);
     } catch (Exception e) {
-      LOG.error(
-          "Aborting: Unexpected problem with environment." + e.getMessage(), e);
+      LOG.error("Aborting: Unexpected problem with environment."
+          + e.getMessage(), e);
       System.exit(-1);
     }
   }
@@ -696,8 +710,8 @@ public class FlumeNode implements Reportable {
   public WALManager addWalManager(String walnode) {
     Preconditions.checkArgument(walnode != null);
     FlumeConfiguration conf = FlumeConfiguration.get();
-    WALManager wm = new NaiveFileWALManager(new File(new File(
-        conf.getAgentLogsDir()), walnode));
+    WALManager wm = new NaiveFileWALManager(new File(new File(conf
+        .getAgentLogsDir()), walnode));
     synchronized (walMans) {
       walMans.put(walnode, wm);
       return wm;
@@ -794,5 +808,13 @@ public class FlumeNode implements Reportable {
 
   public String getPhysicalNodeName() {
     return physicalNodeName;
+  }
+
+  public SystemInfo getSystemInfo() {
+    return sysInfo;
+  }
+
+  public FlumeVMInfo getVMInfo() {
+    return vmInfo;
   }
 }

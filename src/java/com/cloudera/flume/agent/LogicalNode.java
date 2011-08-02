@@ -97,6 +97,13 @@ public class LogicalNode implements Reportable {
   public static final String A_RECONFIGURES = "reconfigures";
 
   /**
+   * For JAXB
+   */
+  public LogicalNode() {
+
+  }
+
+  /**
    * Creates a logical node that will accept any configuration
    */
   public LogicalNode(Context ctx, String name) {
