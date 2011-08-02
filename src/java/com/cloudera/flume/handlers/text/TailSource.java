@@ -227,6 +227,24 @@ public class TailSource extends EventSource.Base {
     }
 
     /**
+     * Closes cursor and releases all resources used by it.
+     * NOTE: to flush any buffering the cursor has done and close cursor
+     * use {@link #flush()} instead.
+     */
+    void close() {
+      if (raf != null) {
+        try {
+          raf.close(); // release handles
+        } catch (IOException e) {
+          LOG.error("problem closing file " + e.getMessage(), e);
+        }
+      }
+
+      in = null;
+      buf.clear();
+    }
+
+    /**
      * Restart random accessfile cursor
      * 
      * This assumes that the buf is in write mode, and that any remainders in

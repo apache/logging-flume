@@ -20,6 +20,7 @@ package com.cloudera.flume.handlers.text;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -71,8 +72,10 @@ public class TestTailDirSource {
     File tmpdir = FileUtil.mktempdir();
     String src = "tailDir(\""
         + StringEscapeUtils.escapeJava(tmpdir.getAbsolutePath())
-        + "\", \"foo.*\")";
-    FlumeBuilder.buildSource(src);
+        + "\", \"foo.*\"";
+    FlumeBuilder.buildSource(src + ")"); // without startFromEnd param
+    FlumeBuilder.buildSource(src + ", true)"); // with startFromEnd = true
+    FlumeBuilder.buildSource(src + ", false)"); // with startFromEnd = false
     FileUtil.rmr(tmpdir);
   }
 
@@ -263,6 +266,60 @@ public class TestTailDirSource {
     src.close();
     cnt.close();
     FileUtil.rmr(tmpdir);
+  }
+
+  /**
+   * This is a tailDir source that starts from the end of files.
+   */
+  @Test
+  public void testTailDirSourceStartFromEnd() throws IOException,
+      FlumeSpecException, InterruptedException {
+    File tmpdir = FileUtil.mktempdir();
+    // generating files: emulating their existence prior to sink opening
+    genFiles(tmpdir, "foo", 10, 100);
+
+    TailDirSource src = new TailDirSource(tmpdir, ".*", true);
+    AccumulatorSink cnt = new AccumulatorSink("tailcount");
+    src.open();
+    cnt.open();
+    DirectDriver drv = new DirectDriver(src, cnt);
+
+    drv.start();
+    Clock.sleep(1000);
+    assertEquals(0, cnt.getCount());
+
+    // adding lines to existing files
+    addLinesToExistingFiles(tmpdir, 10);
+
+    Clock.sleep(1000);
+    assertEquals(10 * 10, cnt.getCount());
+
+    // generating new files
+    genFiles(tmpdir, "bar", 10, 100);
+
+    Clock.sleep(1000);
+    assertEquals(10 * 10 + 1000, cnt.getCount());
+
+    drv.stop();
+    src.close();
+    cnt.close();
+    FileUtil.rmr(tmpdir);
+
+    // in total 20 files were added
+    assertEquals(Long.valueOf(20),
+        src.getReport().getLongMetric(TailDirSource.A_FILESADDED));
+
+  }
+
+  private void addLinesToExistingFiles(File tmpdir, int lines) throws FileNotFoundException {
+    int fileIndex = 0;
+    for (File tmpfile : tmpdir.listFiles()) {
+      PrintWriter pw = new PrintWriter(tmpfile);
+      for (int j = 0; j < lines; j++) {
+        pw.println("this is file " + (++fileIndex) + " line " + j);
+      }
+      pw.close();
+    }
   }
 
   /**

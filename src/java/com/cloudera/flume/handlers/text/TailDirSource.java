@@ -46,6 +46,10 @@ public class TailDirSource extends EventSource.Base {
   private TailSource tail;
   final private File dir;
   final private String regex;
+  private final boolean startFromEnd;
+  // Indicates whether dir was checked. It is false before source is open
+  // and set to true after the first check of a dir
+  private volatile boolean dirChecked = false;
 
   final private AtomicLong filesAdded = new AtomicLong();
   final private AtomicLong filesDeleted = new AtomicLong();
@@ -55,12 +59,17 @@ public class TailDirSource extends EventSource.Base {
   final public static String A_FILESPRESENT = "filesPresent";
 
   public TailDirSource(File f, String regex) {
+    this(f, regex, false);
+  }
+
+  public TailDirSource(File f, String regex, boolean startFromEnd) {
     Preconditions.checkArgument(f != null, "File should not be null!");
     Preconditions.checkArgument(regex != null,
         "Regex filter should not be null");
 
     this.dir = f;
     this.regex = regex;
+    this.startFromEnd = startFromEnd;
 
     // 100 ms between checks
     this.tail = new TailSource(100);
@@ -90,7 +99,21 @@ public class TailDirSource extends EventSource.Base {
           }
 
           LOG.info("added file " + f);
-          Cursor c = new Cursor(tail.sync, f);
+          Cursor c;
+          if (startFromEnd && !dirChecked) {
+            // init cursor positions on first dir check when startFromEnd is set to true
+            c = new Cursor(tail.sync, f, f.length(), f.length(), f.lastModified());
+            try {
+              c.initCursorPos();
+            } catch (InterruptedException e) {
+              LOG.error("Initializing of cursor failed", e);
+              c.close();
+              return;
+            }
+          } else {
+            c = new Cursor(tail.sync, f);
+          }
+
           curmap.put(f.getName(), c);
           tail.addCursor(c);
           filesAdded.incrementAndGet();
@@ -106,6 +129,12 @@ public class TailDirSource extends EventSource.Base {
 
       });
 
+      // Separate check is needed to init cursor positions
+      // (to the end of the files in dir)
+      if (startFromEnd) {
+        this.watcher.check();
+      }
+      dirChecked = true;
       this.watcher.start();
     }
     tail.open();
@@ -145,14 +174,18 @@ public class TailDirSource extends EventSource.Base {
     return new SourceBuilder() {
       @Override
       public EventSource build(String... argv) {
-        Preconditions.checkArgument(argv.length >= 1 && argv.length <= 2,
-            "usage: tailDir(dir, regex) ");
+        Preconditions.checkArgument(argv.length >= 1 && argv.length <= 3,
+                "usage: tailDir(\"dirname\"[, fileregex=\".*\"[, startFromEnd=false]])");
 
         String regex = ".*"; // default to accepting all
         if (argv.length >= 2) {
           regex = argv[1];
         }
-        return new TailDirSource(new File(argv[0]), regex);
+        boolean startFromEnd = false;
+        if (argv.length >= 3) {
+          startFromEnd = Boolean.parseBoolean(argv[2]);
+        }
+        return new TailDirSource(new File(argv[0]), regex, startFromEnd);
       }
     };
   }
