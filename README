@@ -1,0 +1,42 @@
+h1. Welcome to Flume!
+
+Flume is a distributed, reliable, and available service for
+efficiently collecting, aggregating, and moving large amounts of log
+data. It has a simple and flexible architecture based on streaming
+data flows. It is robust and fault tolerant with tunable reliability
+mechanisms and many failover and recovery mechanisms. The system is
+centrally managed and allows for intelligent dynamic management. It
+uses a simple extensible data model that allows for online analytic
+application
+
+Flume is open-sourced under the Apache Software Foundation License v2.0.  
+
+h2.  Documentation
+
+Flume's installation instructions can be found here:
+
+https://docs.cloudera.com/display/DOC/Installing+Flume
+
+Flume's user guide is available here:
+
+http://archive.cloudera.com/cdh/3/flume/UserGuide.html
+
+h2. Contact us!
+
+* User mailing list: https://groups.google.com/a/cloudera.org/group/flume-user/topics
+* Developer mailling list: https://groups.google.com/a/cloudera.org/group/flume-dev/topics
+* IRC channel #flume on irc.freenode.net
+
+Bug and Issue tracker.
+
+* http://issues.cloudera.com
+* https://issues.cloudera.com/browse/FLUME
+
+h2. Compiling Flume
+
+Compiling Flume requires the following tools:
+
+* Java JDK 1.6
+* Apache ant (1.7.1)
+
+To compile Flume, run `ant`.  
