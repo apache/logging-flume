@@ -157,7 +157,6 @@ public class CustomDfsSink extends EventSink.Base {
     }
     LOG.info("Creating " + codec + " compressed HDFS file: "
         + dstPath.toString());
-    return;
   }
 
   public static SinkBuilder builder() {

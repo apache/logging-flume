@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
 import org.arabidopsis.ahocorasick.AhoCorasick;
@@ -34,7 +33,6 @@ import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.reporter.MultiReporter;
 import com.cloudera.flume.reporter.ReportEvent;
-import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.builder.MultiGrepReporterBuilder;
 import com.cloudera.flume.reporter.charts.ChartPackage;
 import com.cloudera.util.Histogram;

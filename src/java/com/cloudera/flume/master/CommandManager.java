@@ -265,7 +265,6 @@ public class CommandManager implements Reportable {
       throw new MasterExecException(e.getMessage(), e);
     }
     // other exceptions get handled at next layer.
-    return;
   }
 
   @Override

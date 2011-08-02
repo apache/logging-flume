@@ -146,7 +146,6 @@ public class PrioritizedThriftEventSource extends EventSource.Base {
     }
     server.stop();
     LOG.info(String.format("Closed server on port %d...", port));
-    return;
   }
 
   @Override

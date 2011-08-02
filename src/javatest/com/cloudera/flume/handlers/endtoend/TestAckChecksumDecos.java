@@ -155,7 +155,6 @@ public class TestAckChecksumDecos {
       // This is a semantics change -- no start increments a counter
       fail("didn't throw no start exception");
     }
-    return;
   }
 
   /**

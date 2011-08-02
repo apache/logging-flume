@@ -62,7 +62,6 @@ public class BenchmarkInjectDecorator<S extends EventSink> extends
     super(s);
     Preconditions.checkArgument(tag != null);
     this.tag = tag.getBytes();
-    ;
   }
 
   public BenchmarkInjectDecorator(S s) {

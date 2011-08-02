@@ -27,7 +27,6 @@ import java.io.IOException;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.master.StatusManager.NodeState;
 import com.cloudera.flume.util.MockClock;

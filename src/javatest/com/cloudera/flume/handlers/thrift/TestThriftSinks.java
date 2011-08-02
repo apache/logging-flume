@@ -37,7 +37,6 @@ import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.core.EventUtil;
 import com.cloudera.flume.handlers.debug.MemorySinkSource;
 import com.cloudera.flume.handlers.debug.NoNlASCIISynthSource;
-import com.cloudera.flume.handlers.debug.TextFileSource;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.aggregator.CounterSink;
 import com.cloudera.util.NetUtils;

@@ -93,7 +93,7 @@ public class Benchmark {
     boolean first = true;
     for (Object o : logs) {
       if (!first)
-        b.append(",");
+        b.append(',');
       b.append(o.toString());
       first = false;
       values.add(o.toString());

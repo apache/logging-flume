@@ -21,8 +21,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
-import junit.framework.TestCase;
-
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.reflect.ReflectDatumReader;

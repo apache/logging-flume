@@ -17,9 +17,7 @@
  */
 package com.cloudera.flume.handlers.irc;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
 import org.schwering.irc.lib.IRCConnection;
 import org.schwering.irc.lib.IRCEventListener;
@@ -31,9 +29,7 @@ import org.slf4j.LoggerFactory;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.core.Event;
-import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
-import com.cloudera.util.CharEncUtils;
 import com.google.common.base.Preconditions;
 
 /**

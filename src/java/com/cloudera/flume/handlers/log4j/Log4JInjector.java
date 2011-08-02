@@ -75,7 +75,7 @@ public class Log4JInjector {
       boolean first = true;
       for (int i = j; i < argv.length; i++) {
         if (!first) {
-          b.append(" ");
+          b.append(' ');
         }
 
         b.append(argv[i]);

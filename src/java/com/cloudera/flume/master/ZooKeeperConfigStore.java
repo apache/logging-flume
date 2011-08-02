@@ -366,7 +366,7 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
         out.add(new String(s));
       }
 
-      map.put(new String(name), out);
+      map.put(name, out);
     }
 
     avromap.nodemap = map;
@@ -424,7 +424,7 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
         tempMap.put(new String(mape.getKey()), mape.getValue());
       }
 
-      map.put(new String(name), tempMap);
+      map.put(name, tempMap);
     }
 
     avromap.chokemap = map;

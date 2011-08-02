@@ -18,7 +18,6 @@
 package com.cloudera.flume.reporter.histogram;
 
 import java.io.IOException;
-import java.util.Map;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;

@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.agent.LogicalNode;
 import com.cloudera.flume.agent.MasterRPC;
-import com.cloudera.flume.agent.MultiMasterRPC;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.util.Clock;
 

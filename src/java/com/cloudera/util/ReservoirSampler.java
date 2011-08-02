@@ -81,9 +81,6 @@ public class ReservoirSampler<T> {
       candidates.set(replace, v);
     }
     // else keep the current sample reservoir
-
-    return;
-
   }
 
   /**

@@ -71,7 +71,6 @@ public class FixedRetryPolicy implements BackoffPolicy {
   @Override
   public void waitUntilRetryOk() throws InterruptedException {
     // We can always retry
-    return;
   }
 
   @Override

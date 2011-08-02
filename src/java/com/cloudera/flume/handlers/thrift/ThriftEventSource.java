@@ -192,7 +192,6 @@ public class ThriftEventSource extends EventSource.Base {
     }
 
     closed = true;
-    return;
   }
 
   @Override

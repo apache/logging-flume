@@ -78,14 +78,14 @@ public class TestZKClient {
     properties.setProperty("server.0", "localhost:3181:4181");
     properties.setProperty("server.1", "localhost:3182:4182");
     properties.setProperty("server.2", "localhost:3183:4183");
-    properties.setProperty("electionAlg", new Integer(3).toString());
+    properties.setProperty("electionAlg", Integer.toString(3));
 
     for (int i = 0; i < 3; ++i) {
       LOG.info("Starting server " + i);
       properties.setProperty("dataDir", "/tmp/flume-test-zk/datadir" + i);
       properties.setProperty("dataLogDir", "/tmp/flume-test-zk/datadir" + i
           + "/logs");
-      properties.setProperty("clientPort", new Integer(2181 + i).toString());
+      properties.setProperty("clientPort", Integer.toString(2181 + i));
       properties.setProperty("serverID", "" + i);
       zks[i] = new ZKInProcessServer(properties);
       if (i < 2) {

@@ -17,8 +17,6 @@
  */
 package com.cloudera.util;
 
-import com.cloudera.util.Retryable;
-
 /**
  * Take a type parameter and expose a T getResult() method for the result of 
  * the retried computation.

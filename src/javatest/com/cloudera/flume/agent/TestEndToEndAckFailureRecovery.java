@@ -61,7 +61,7 @@ import com.cloudera.util.FileUtil;
  */
 public class TestEndToEndAckFailureRecovery {
 
-  public static Logger LOG = Logger
+  public static final Logger LOG = Logger
       .getLogger(TestEndToEndAckFailureRecovery.class);
 
   DirectMasterRPC mock;

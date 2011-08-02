@@ -19,6 +19,7 @@
 package com.cloudera.flume.master.logical;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 
@@ -246,7 +247,7 @@ public class TestLogicalConfigManager {
       LOG.info(fcd + " contains " + objs[4] + "?");
       assertTrue(fcd.getSinkConfig().contains(objs[4]));
       LOG.info(fcd + " does not contain logicalSink?");
-      assertTrue(!fcd.getSinkConfig().contains("logicalSink"));
+      assertFalse(fcd.getSinkConfig().contains("logicalSink"));
     }
   }
 

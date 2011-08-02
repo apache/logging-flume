@@ -18,7 +18,6 @@
 package com.cloudera.flume.handlers.thrift;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import org.apache.thrift.TException;
 

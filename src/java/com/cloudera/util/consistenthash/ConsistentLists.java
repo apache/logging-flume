@@ -209,7 +209,7 @@ public class ConsistentLists<T, V> {
       buf.append(bin);
       buf.append(" => ");
       buf.append(vs);
-      buf.append("\n");
+      buf.append('\n');
     }
     return buf.toString();
   }

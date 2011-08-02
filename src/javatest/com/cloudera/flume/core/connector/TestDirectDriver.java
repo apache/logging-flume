@@ -17,6 +17,7 @@
  */
 package com.cloudera.flume.core.connector;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -84,7 +85,7 @@ public class TestDirectDriver {
     driver.stop();
 
     boolean closed = driver.join(1000);
-    assertTrue(!closed);
+    assertFalse(closed);
 
     driver.cancel();
     assertTrue(driver.join(1000)); // closed this time.
@@ -132,7 +133,7 @@ public class TestDirectDriver {
     driver.stop();
 
     boolean closed = driver.join(1000);
-    assertTrue(!closed);
+    assertFalse(closed);
 
     driver.cancel();
     assertTrue(driver.join(1000)); // closed this time.
@@ -180,7 +181,7 @@ public class TestDirectDriver {
     driver.stop();
 
     boolean closed = driver.join(1000);
-    assertTrue(!closed);
+    assertFalse(closed);
 
     driver.cancel();
     assertTrue(driver.join(1000)); // closed this time.
@@ -226,7 +227,7 @@ public class TestDirectDriver {
     driver.stop();
 
     boolean closed = driver.join(1000);
-    assertTrue(!closed);
+    assertFalse(closed);
 
     driver.cancel();
     assertTrue(driver.join(1000)); // closed this time.

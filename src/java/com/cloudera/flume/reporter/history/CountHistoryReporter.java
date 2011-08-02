@@ -19,7 +19,6 @@ package com.cloudera.flume.reporter.history;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Map;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -27,7 +26,6 @@ import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.handlers.rolling.Tagger;
 import com.cloudera.flume.reporter.ReportEvent;
-import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.aggregator.CounterSink;
 import com.cloudera.flume.reporter.charts.ChartPackage;
 import com.cloudera.util.Pair;

@@ -27,7 +27,6 @@ import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.reporter.MultiReporter;
-import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.builder.SimpleRegexReporterBuilder;
 import com.google.common.base.Preconditions;
 

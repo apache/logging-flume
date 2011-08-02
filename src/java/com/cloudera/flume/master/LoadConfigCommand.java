@@ -22,7 +22,6 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cloudera.flume.conf.FlumeConfiguration;
 import com.google.common.base.Preconditions;
 
 /**

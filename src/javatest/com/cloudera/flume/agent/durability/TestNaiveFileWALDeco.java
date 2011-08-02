@@ -18,6 +18,7 @@
 package com.cloudera.flume.agent.durability;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -108,13 +109,13 @@ public class TestNaiveFileWALDeco {
     assertEquals(1037, cnt.getCount());
 
     // check to make sure wal file is gone
-    assertTrue(!new File(new File(tmp, "import"), acked.getName()).exists());
-    assertTrue(!new File(new File(tmp, "writing"), acked.getName()).exists());
-    assertTrue(!new File(new File(tmp, "logged"), acked.getName()).exists());
-    assertTrue(!new File(new File(tmp, "sending"), acked.getName()).exists());
-    assertTrue(!new File(new File(tmp, "sent"), acked.getName()).exists());
-    assertTrue(!new File(new File(tmp, "error"), acked.getName()).exists());
-    assertTrue(!new File(new File(tmp, "done"), acked.getName()).exists());
+    assertFalse(new File(new File(tmp, "import"), acked.getName()).exists());
+    assertFalse(new File(new File(tmp, "writing"), acked.getName()).exists());
+    assertFalse(new File(new File(tmp, "logged"), acked.getName()).exists());
+    assertFalse(new File(new File(tmp, "sending"), acked.getName()).exists());
+    assertFalse(new File(new File(tmp, "sent"), acked.getName()).exists());
+    assertFalse(new File(new File(tmp, "error"), acked.getName()).exists());
+    assertFalse(new File(new File(tmp, "done"), acked.getName()).exists());
 
     BenchmarkHarness.cleanupLocalWriteDir();
   }
@@ -161,12 +162,12 @@ public class TestNaiveFileWALDeco {
     assertEquals(1037, cnt.getCount());
 
     // check to make sure wal file is gone
-    assertTrue(!new File(new File(tmp, "import"), acked.getName()).exists());
-    assertTrue(!new File(new File(tmp, "writing"), acked.getName()).exists());
-    assertTrue(!new File(new File(tmp, "logged"), acked.getName()).exists());
-    assertTrue(!new File(new File(tmp, "sending"), acked.getName()).exists());
-    assertTrue(!new File(new File(tmp, "error"), acked.getName()).exists());
-    assertTrue(!new File(new File(tmp, "done"), acked.getName()).exists());
+    assertFalse(new File(new File(tmp, "import"), acked.getName()).exists());
+    assertFalse(new File(new File(tmp, "writing"), acked.getName()).exists());
+    assertFalse(new File(new File(tmp, "logged"), acked.getName()).exists());
+    assertFalse(new File(new File(tmp, "sending"), acked.getName()).exists());
+    assertFalse(new File(new File(tmp, "error"), acked.getName()).exists());
+    assertFalse(new File(new File(tmp, "done"), acked.getName()).exists());
 
     // TODO (jon) is this the right behavior? I think assuming no name changes
     // locally is reasonable for now.
@@ -220,19 +221,19 @@ public class TestNaiveFileWALDeco {
     // check to make sure wal file is gone
     File nodedir = new File(tmp, BenchmarkHarness.node.getPhysicalNodeName());
 
-    assertTrue(!new File(new File(nodedir, "import"), truncated.getName())
+    assertFalse(new File(new File(nodedir, "import"), truncated.getName())
         .exists());
-    assertTrue(!new File(new File(nodedir, "writing"), truncated.getName())
+    assertFalse(new File(new File(nodedir, "writing"), truncated.getName())
         .exists());
-    assertTrue(!new File(new File(nodedir, "logged"), truncated.getName())
+    assertFalse(new File(new File(nodedir, "logged"), truncated.getName())
         .exists());
-    assertTrue(!new File(new File(nodedir, "sending"), truncated.getName())
+    assertFalse(new File(new File(nodedir, "sending"), truncated.getName())
         .exists());
-    assertTrue(!new File(new File(nodedir, "sent"), truncated.getName())
+    assertFalse(new File(new File(nodedir, "sent"), truncated.getName())
         .exists());
     assertTrue(new File(new File(nodedir, "error"), truncated.getName())
         .exists());
-    assertTrue(!new File(new File(nodedir, "done"), truncated.getName())
+    assertFalse(new File(new File(nodedir, "done"), truncated.getName())
         .exists());
 
     BenchmarkHarness.cleanupLocalWriteDir();

@@ -17,7 +17,6 @@
  */
 package com.cloudera.flume.conf;
 
-import java.util.Collections;
 import java.util.Set;
 
 import com.cloudera.flume.core.EventSink;

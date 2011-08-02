@@ -131,8 +131,6 @@ public class StatusManager implements Reportable {
       }
 
     }
-    return;
-
   }
 
   @Override

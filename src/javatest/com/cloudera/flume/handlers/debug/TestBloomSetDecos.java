@@ -66,8 +66,8 @@ public class TestBloomSetDecos {
         b2.addInt(i);
     }
 
-    assertTrue(b1.equals(b1));
-    assertTrue(b2.equals(b2));
+    assertEquals(b1, b1);
+    assertEquals(b2, b2);
     assertTrue(b1.contains(b2));
     assertFalse(b2.contains(b1));
   }

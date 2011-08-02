@@ -181,7 +181,6 @@ public class AvroEventSource extends EventSource.Base {
     }
 
     closed = true;
-    return;
   }
 
   /**

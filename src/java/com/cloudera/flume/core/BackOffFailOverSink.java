@@ -164,10 +164,9 @@ public class BackOffFailOverSink extends EventSink.Base {
       exs.add(ex);
     }
 
-    if (exs.size() != 0)
+    if (exs.size() != 0) {
       throw MultipleIOException.createIOException(exs);
-
-    return;
+    }
   }
 
   IOException tryOpenPrimary() {

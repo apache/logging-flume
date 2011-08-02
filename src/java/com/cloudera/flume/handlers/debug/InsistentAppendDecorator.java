@@ -138,16 +138,6 @@ public class InsistentAppendDecorator<S extends EventSink> extends
     throw ioe;
   }
 
-  @Override
-  public void close() throws IOException {
-    super.close();
-  }
-
-  @Override
-  public void open() throws IOException {
-    super.open();
-  }
-
   public static SinkDecoBuilder builder() {
     return new SinkDecoBuilder() {
       @Override

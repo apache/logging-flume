@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SinkFactory.SinkDecoBuilder;
-import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSinkDecorator;
