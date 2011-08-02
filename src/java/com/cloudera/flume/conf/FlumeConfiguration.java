@@ -139,6 +139,7 @@ public class FlumeConfiguration extends Configuration {
   public static final String COLLECTOR_DFS_DIR = "flume.collector.dfs.dir";
   public static final String COLLECTOR_ROLL_MILLIS = "flume.collector.roll.millis";
   public static final String COLLECTOR_OUTPUT_FORMAT = "flume.collector.output.format";
+  public static final String COLLECTOR_DFS_COMPRESS_GZIP = "flume.collector.dfs.compress.gzip";
 
   // TODO(henry) move these to flume.master - they now tell the master which
   // interface / port to start up on
@@ -543,6 +544,10 @@ public class FlumeConfiguration extends Configuration {
   public String getCollectorDfsDir() {
     return get(COLLECTOR_DFS_DIR, "file://tmp/flume/collected");
   }
+
+  public boolean getCollectorDfsCompressGzipStatus() {
+    return getBoolean(COLLECTOR_DFS_COMPRESS_GZIP, false);
+}
 
   public long getCollectorRollMillis() {
     return getLong(COLLECTOR_ROLL_MILLIS, 30000);

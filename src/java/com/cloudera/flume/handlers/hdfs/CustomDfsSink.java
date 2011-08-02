@@ -23,6 +23,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.compress.CompressionCodec;
+import org.apache.hadoop.io.compress.CompressionOutputStream;
+import org.apache.hadoop.io.compress.Compressor;
+import org.apache.hadoop.io.compress.GzipCodec;
 import org.apache.log4j.Logger;
 
 import com.cloudera.flume.conf.Context;
@@ -44,11 +48,16 @@ public class CustomDfsSink extends EventSink.Base {
   final static Logger LOG = Logger.getLogger(CustomDfsSink.class.getName());
 
   private static final String A_OUTPUTFORMAT = "recordformat";
+  private static final String GZIP_EXTENSION = ".gz";
 
+  boolean compressOutput;
   OutputFormat format;
   FSDataOutputStream writer;
   AtomicLong count = new AtomicLong();
   String path;
+  Path dstPath;  
+  CompressionOutputStream gzOStm;
+
 
   public CustomDfsSink(String path, OutputFormat format) {
     Preconditions.checkArgument(path != null);
@@ -63,26 +72,55 @@ public class CustomDfsSink extends EventSink.Base {
     if (writer == null) {
       throw new IOException("Append failed, did you open the writer?");
     }
-    format.format(writer, e);
+    if (compressOutput) {
+      format.format(gzOStm, e);
+
+    } else {    
+      format.format(writer, e);
+    }
     count.getAndIncrement();
     super.append(e);
   }
 
   @Override
   public void close() throws IOException {
-    LOG.info("Closing " + path);
+    LOG.info("Closing HDFS file: " + dstPath);
+    if (compressOutput) {
+      gzOStm.flush();
+      gzOStm.close();
+      LOG.info("done writing compressed file to hdfs");   
+      gzOStm = null;      
+    } else {
+      LOG.info("done writing raw file to hdfs");
+    }
     writer.close();
     writer = null;
+    
+    
   }
 
   @Override
   public void open() throws IOException {
-    LOG.info("Opening " + path);
     FlumeConfiguration conf = FlumeConfiguration.get();
+    FileSystem hdfs;
+    
+    if (!conf.getCollectorDfsCompressGzipStatus()) { //compression disabled
+      dstPath = new Path(path);
+      hdfs = dstPath.getFileSystem(conf);
+      writer = hdfs.create(dstPath);
+      compressOutput = false;
+    } else { //compression enabled
+      compressOutput = true;
+      CompressionCodec gzipC = new GzipCodec();
+      Compressor gzCmp = gzipC.createCompressor();      
+      dstPath = new Path(path + GZIP_EXTENSION);
+      hdfs = dstPath.getFileSystem(conf);
+      writer = hdfs.create(dstPath);
+      gzOStm = gzipC.createOutputStream(writer, gzCmp);
 
-    Path dstPath = new Path(path);
-    FileSystem hdfs = dstPath.getFileSystem(conf);
-    writer = hdfs.create(dstPath);
+
+    }
+    LOG.info("Opening HDFS file: " + dstPath.toString());
   }
 
   public static SinkBuilder builder() {

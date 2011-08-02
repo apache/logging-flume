@@ -154,6 +154,14 @@ configuration values placed in flume-site.xml.  -->
   </property>  
 
   <property>
+    <name>flume.collector.dfs.compress.gzip</name>
+    <value>false</value>
+    <description>Writes compressed output in gzip format to dfs. value is boolean type, i.e. true/false    </description>
+  </property>
+
+
+
+  <property>
     <name>flume.collector.roll.millis</name>
     <value>30000</value>
     <description>The time (in milliseconds)

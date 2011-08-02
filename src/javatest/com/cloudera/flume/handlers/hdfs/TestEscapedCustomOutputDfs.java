@@ -20,8 +20,10 @@ package com.cloudera.flume.handlers.hdfs;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.zip.GZIPInputStream;
 
 import junit.framework.TestCase;
 
@@ -107,6 +109,9 @@ public class TestEscapedCustomOutputDfs extends TestCase {
     assertEquals(expected, read);
   }
 
+
+  
+  
   public void testLog4jOutputFormat() throws IOException {
     // set the output format.
     FlumeConfiguration conf = FlumeConfiguration.get();
@@ -132,10 +137,56 @@ public class TestEscapedCustomOutputDfs extends TestCase {
 
     // check the output to make sure it is what we expected.
     File fo = new File(f.getPath() + "/sub-foo");
-
     FileReader fr = new FileReader(fo);
     BufferedReader br = new BufferedReader(fr);
     String read = br.readLine() + "\n";
     assertEquals(expected, read);
   }
+  
+  /**
+   * Test to write few log lines, compress using gzip, write to disk, read back the compressed file and verify the written lines.
+   * @throws IOException
+   */
+  public void testGzipOutputFormat() throws IOException {
+    // set the output format.
+    FlumeConfiguration conf = FlumeConfiguration.get();
+    conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, "syslog");
+    conf.set(FlumeConfiguration.COLLECTOR_DFS_COMPRESS_GZIP, "true");
+
+    // build a sink that outputs to that format.
+    File f = FileUtil.mktempdir();
+    SinkBuilder builder = EscapedCustomDfsSink.builder();
+    EventSink snk =
+        builder.build(new Context(), "file:///" + f.getPath()
+            + "/sub-%{service}");
+    Event e = new EventImpl("this is a test message".getBytes());
+    Attributes.setString(e, "service", "foo");
+    snk.open();
+    snk.append(e);
+    snk.close();
+
+    ByteArrayOutputStream exWriter = new ByteArrayOutputStream();
+    SyslogEntryFormat fmt = new SyslogEntryFormat();
+    fmt.format(exWriter, e);
+    exWriter.close();
+    String expected = new String(exWriter.toByteArray());
+
+    // check the output to make sure it is what we expected.
+    // read the gzip file and verify the contents
+    
+    GZIPInputStream gzin = new GZIPInputStream(new FileInputStream(f.getPath() + "/sub-foo.gz"));
+    byte[] buf = new byte[1];
+    StringBuilder output = new StringBuilder();
+    
+    while ((gzin.read(buf)) > 0 ) {
+      output.append(new String(buf));
+    }
+    assertEquals(expected, output.toString());    
+    
+    assertTrue("temp folder successfully deleted",FileUtil.rmr(f));
+    
+    
+
+  }
+
 }
