@@ -20,7 +20,7 @@ package com.cloudera.flume.agent;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -32,7 +32,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
-import org.apache.hadoop.security.SecurityUtil;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -485,28 +485,99 @@ public class FlumeNode implements Reportable {
    * 
    * This should be able to support multiple hadoop clusters as long as the
    * particular principal is allowed on multiple clusters.
+   * 
+   * To preserve compatibility with non security enhanced hdfs, we use
+   * reflection on various UserGroupInformation and SecurityUtil related method
+   * calls.
    */
+  @SuppressWarnings("unchecked")
   static void tryKerberosLogin() throws IOException {
-    boolean useSec = UserGroupInformation.isSecurityEnabled();
+
+    /*
+     * UserGroupInformation is in hadoop 0.18
+     * UserGroupInformation.isSecurityEnabled() not in pre security API.
+     * 
+     * boolean useSec = UserGroupInformation.isSecurityEnabled();
+     */
+    boolean useSec = false;
+
+    try {
+      Class<UserGroupInformation> c = UserGroupInformation.class;
+      // static call, null this obj
+      useSec = (Boolean) c.getMethod("isSecurityEnabled").invoke(null);
+    } catch (Exception e) {
+      LOG.warn("Flume is using Hadoop core "
+          + org.apache.hadoop.util.VersionInfo.getVersion()
+          + " which does not support Security / Authentication: "
+          + e.getMessage());
+      return;
+    }
+
     LOG.info("Hadoop Security enabled: " + useSec);
     if (!useSec) {
       return;
     }
 
+    // At this point we know we are using a hadoop library that is kerberos
+    // enabled.
+
     // attempt to load kerberos information for authenticated hdfs comms.
-    String principle = FlumeConfiguration.get().getKerberosPrincipal();
+    String principal = FlumeConfiguration.get().getKerberosPrincipal();
     String keytab = FlumeConfiguration.get().getKerberosKeytab();
-    LOG.info("Kerberos login as " + principle + " from " + keytab);
+    LOG.info("Kerberos login as " + principal + " from " + keytab);
 
-    // Keytab login does not need to auto refresh
-    SecurityUtil.login(FlumeConfiguration.get(),
-        FlumeConfiguration.SECURITY_KERBEROS_KEYTAB,
-        FlumeConfiguration.SECURITY_KERBEROS_PRINCIPAL);
+    try {
+      /*
+       * SecurityUtil not present pre hadoop 20.2
+       * 
+       * SecurityUtil.login not in pre-security Hadoop API
+       * 
+       * // Keytab login does not need to auto refresh
+       * 
+       * SecurityUtil.login(FlumeConfiguration.get(),
+       * FlumeConfiguration.SECURITY_KERBEROS_KEYTAB,
+       * FlumeConfiguration.SECURITY_KERBEROS_PRINCIPAL);
+       */
+      Class c = Class.forName("org.apache.hadoop.security.SecurityUtil");
+      // get method login(Configuration, String, String);
+      Method m = c.getMethod("login", Configuration.class, String.class,
+          String.class);
+      m.invoke(null, FlumeConfiguration.get(),
+          FlumeConfiguration.SECURITY_KERBEROS_KEYTAB,
+          FlumeConfiguration.SECURITY_KERBEROS_PRINCIPAL);
 
-    UserGroupInformation ugi = UserGroupInformation.getLoginUser();
-    LOG.info("Auth method: " + ugi.getAuthenticationMethod());
-    LOG.info(" User name: " + ugi.getUserName());
-    LOG.info(" Using keytab: " + UserGroupInformation.isLoginKeytabBased());
+      /*
+       * getLoginUser, getAuthenticationMethod, and isLoginKeytabBased are not
+       * in Hadoop 20.2, only kerberized enhanced version.
+       * 
+       * getUserName is in all 0.18.3+
+       * 
+       * UserGroupInformation ugi = UserGroupInformation.getLoginUser();
+       * LOG.info("Auth method: " + ugi.getAuthenticationMethod());
+       * LOG.info(" User name: " + ugi.getUserName());
+       * LOG.info(" Using keytab: " +
+       * UserGroupInformation.isLoginKeytabBased());
+       */
+
+      Class<UserGroupInformation> c2 = UserGroupInformation.class;
+      // static call, null this obj
+      UserGroupInformation ugi = (UserGroupInformation) c2.getMethod(
+          "getLoginUser").invoke(null);
+      String authMethod = c2.getMethod("getAuthenticationMethod").invoke(ugi)
+          .toString();
+      boolean keytabBased = (Boolean) c2.getMethod("isLoginKeytabBased")
+          .invoke(ugi);
+
+      LOG.info("Auth method: " + authMethod);
+      LOG.info(" User name: " + ugi.getUserName());
+      LOG.info(" Using keytab: " + keytabBased);
+    } catch (Exception e) {
+      LOG.error("Flume is using Hadoop core "
+          + org.apache.hadoop.util.VersionInfo.getVersion() + " which failed: "
+          + e.getMessage());
+      return;
+    }
+
   }
 
   public static void main(String[] argv) {
