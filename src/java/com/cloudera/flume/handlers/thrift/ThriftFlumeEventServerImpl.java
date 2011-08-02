@@ -18,6 +18,7 @@
 package com.cloudera.flume.handlers.thrift;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.apache.thrift.TException;
 
@@ -59,7 +60,7 @@ class ThriftFlumeEventServerImpl implements Iface {
   @Override
   public void rawAppend(RawEvent evt) throws TException {
     try {
-      WriteableEvent e = WriteableEvent.create(evt.getRaw());
+      WriteableEvent e = WriteableEvent.create(evt.getRaw().array());
       sink.append(e);
     } catch (IOException e) {
       e.printStackTrace();

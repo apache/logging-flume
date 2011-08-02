@@ -112,7 +112,7 @@ public class TestThriftSinks implements ExampleData {
     tes.close();
     assertEquals(25, cnt.getCount());
     ReportEvent rpt = tes.getReport();
-    assertEquals(4474, rpt.getLongMetric(ThriftEventSource.A_BYTES_IN)
+    assertEquals(4475, rpt.getLongMetric(ThriftEventSource.A_BYTES_IN)
         .longValue());
     assertEquals(25, rpt.getLongMetric(ThriftEventSource.A_DEQUEUED)
         .longValue());
@@ -276,12 +276,12 @@ public class TestThriftSinks implements ExampleData {
     assertEquals(25 * threads, cnt.getCount());
     ReportEvent rpt = tes.getReport();
     assertEquals(4475 * threads, sendByteSum.get());
-    assertEquals(4474 * threads, rpt.getLongMetric(
-        ThriftEventSource.A_BYTES_IN).longValue());
-    assertEquals(25 * threads, rpt.getLongMetric(
-        ThriftEventSource.A_DEQUEUED).longValue());
-    assertEquals(25 * threads, rpt.getLongMetric(
-        ThriftEventSource.A_ENQUEUED).longValue());
+    assertEquals(4475 * threads, rpt
+        .getLongMetric(ThriftEventSource.A_BYTES_IN).longValue());
+    assertEquals(25 * threads, rpt.getLongMetric(ThriftEventSource.A_DEQUEUED)
+        .longValue());
+    assertEquals(25 * threads, rpt.getLongMetric(ThriftEventSource.A_ENQUEUED)
+        .longValue());
     assertEquals(0, rpt.getLongMetric(ThriftEventSource.A_QUEUE_CAPACITY)
         .longValue());
     assertEquals(1000, rpt.getLongMetric(ThriftEventSource.A_QUEUE_FREE)

@@ -19,10 +19,12 @@ package com.cloudera.flume.handlers.thrift;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringEscapeUtils;
+import java.nio.ByteBuffer;
 
 import com.cloudera.flume.core.Event;
 import com.google.common.base.Preconditions;
@@ -45,7 +47,7 @@ class ThriftEventAdaptor extends Event {
 
   @Override
   public byte[] getBody() {
-    return evt.getBody();
+    return evt.getBody().array();
   }
 
   @Override
@@ -122,13 +124,29 @@ class ThriftEventAdaptor extends Event {
    * future changes to the Event/ThriftFlumeEvent interface
    */
   public static ThriftFlumeEvent convert(Event e) {
-    return new ThriftFlumeEvent(e.getTimestamp(), convert(e.getPriority()), e
-        .getBody(), e.getNanos(), e.getHost(), e.getAttrs());
+    ThriftFlumeEvent evt = new ThriftFlumeEvent();
+    evt.timestamp = e.getTimestamp();
+    evt.priority = convert(e.getPriority());
+    ByteBuffer buf = ByteBuffer.wrap(e.getBody());
+    evt.body = buf;
+    evt.nanos = e.getNanos();
+    evt.host = e.getHost();
+
+    Map<String, byte[]> tempMap = e.getAttrs();
+    Map<String, ByteBuffer> returnMap = new HashMap<String, ByteBuffer>();
+    for (String key : tempMap.keySet()) {
+      buf.clear();
+      buf = ByteBuffer.wrap(tempMap.get(key));
+      returnMap.put(key, buf);
+    }
+
+    evt.fields = returnMap;
+    return evt;
   }
 
   @Override
   public byte[] get(String attr) {
-    return evt.fields.get(attr);
+    return evt.fields.get(attr).array();
   }
 
   @Override
@@ -136,16 +154,22 @@ class ThriftEventAdaptor extends Event {
     if (evt.fields == null) {
       return Collections.<String, byte[]> emptyMap();
     }
-    return Collections.unmodifiableMap(evt.fields);
+    Map<String, ByteBuffer> tempMap = Collections.unmodifiableMap(evt.fields);
+    Map<String, byte[]> returnMap = new HashMap<String, byte[]>();
+    for (String key : tempMap.keySet()) {
+      ByteBuffer buf = tempMap.get(key);
+      returnMap.put(key, buf.array());
+    }
+    return Collections.unmodifiableMap(returnMap);
   }
 
   @Override
-  public void set(String attr, byte[] v) {
+  public void set(String attr, byte[] vArray) {
     if (evt.fields.get(attr) != null) {
       throw new IllegalArgumentException(
           "Event already had an event with attribute " + attr);
     }
-    evt.fields.put(attr, v);
+    evt.fields.put(attr, ByteBuffer.wrap(vArray));
   }
 
   @Override

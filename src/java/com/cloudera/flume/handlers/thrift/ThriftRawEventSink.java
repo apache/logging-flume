@@ -18,6 +18,7 @@
 package com.cloudera.flume.handlers.thrift;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.apache.thrift.TException;
 
@@ -51,7 +52,7 @@ public class ThriftRawEventSink extends ThriftEventSink {
   @Override
   public void append(Event e) throws IOException {
     WriteableEvent we = new WriteableEvent(e);
-    RawEvent re = new RawEvent(we.toBytes());
+    RawEvent re = new RawEvent(ByteBuffer.wrap(we.toBytes()));
 
     try {
       client.rawAppend(re);
