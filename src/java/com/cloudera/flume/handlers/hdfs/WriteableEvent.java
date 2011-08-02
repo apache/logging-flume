@@ -41,7 +41,7 @@ import com.cloudera.flume.core.EventImpl;
 import com.google.common.base.Preconditions;
 
 /**
- * A wrapper to make my events hadoop/hdfs writables.
+ * A wrapper to make my events hadoop/hdfs writeables.
  * 
  */
 public class WriteableEvent extends EventBaseImpl implements Writable {
@@ -104,7 +104,7 @@ public class WriteableEvent extends EventBaseImpl implements Writable {
   }
 
   public void readFields(DataInput in) throws IOException {
-    // NOTE: NOT using read UTF8 becuase it is limited to 2^16 bytes (not
+    // NOTE: NOT using read UTF8 because it is limited to 2^16 bytes (not
     // characters). Char encoding will likely cause problems in edge cases.
 
     // String s = in.readUTF();

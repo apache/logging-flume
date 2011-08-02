@@ -35,7 +35,7 @@ import com.google.common.base.Preconditions;
 /**
  * This writes native Avro formatted files out as an output format.
  * 
- * Note: There is a separate avro container that does encoding currently from
+ * Note: There is a separate Avro container that does encoding currently from
  * the AvroEventSource/Sinks. A separate patch will consolidate the two.
  */
 public class AvroNativeFileOutputFormat extends AbstractOutputFormat {

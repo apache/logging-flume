@@ -54,7 +54,7 @@ public class MasterClientServerAvro implements AvroFlumeClientServer, RPCServer 
 
   public MasterClientServerAvro(MasterClientServer delegate) {
     Preconditions.checkArgument(delegate != null,
-        "MasterCleintServer is null in 'AvroMasterClientServer!");
+        "MasterClientServer is null in 'MasterClientServerAvro!");
     this.delegate = delegate;
     this.port = FlumeConfiguration.get().getMasterHeartbeatPort();
   }

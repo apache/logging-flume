@@ -49,7 +49,7 @@ import com.google.common.collect.Multimap;
  * If in-place changes are ok, use the same configuration manager as the parent
  * and self. If not, use a different configuration manager for parent and self.
  * 
- * Read method calls on a TranslatingConfiguraitonManager always read from the
+ * Read method calls on a TranslatingConfigurationManager always read from the
  * self manager. Write method calls write to the parent manager and write the
  * translated versions to the self manager.
  */
@@ -214,7 +214,7 @@ abstract public class TranslatingConfigurationManager implements
   }
 
   /**
-   * Returns the translations of all configuraitons
+   * Returns the translations of all configurations
    */
   synchronized public Map<String, FlumeConfigData> getTranslatedConfigs() {
     return selfMan.getAllConfigs();

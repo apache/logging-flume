@@ -110,7 +110,7 @@ public interface EventSource extends Reportable {
               "Too few arguments: expected at least " + minArgs
                   + " but only had " + argv.length);
           Preconditions.checkArgument(argv.length <= maxArgs,
-              "Too many arguments : exepected at most " + maxArgs + " but had "
+              "Too many arguments : expected at most " + maxArgs + " but had "
                   + argv.length);
           return new StubSource();
         }

@@ -47,7 +47,7 @@ public class FlakeyEventSink<S extends EventSink> extends EventSinkDecorator<S> 
   @Override
   public void append(Event e) throws IOException , InterruptedException {
     if (rand.nextDouble() < prob) {
-      throw new IOException("flakeyness struct and caused a failure");
+      throw new IOException("flakiness struck and caused a failure");
     }
     super.append(e);
   }

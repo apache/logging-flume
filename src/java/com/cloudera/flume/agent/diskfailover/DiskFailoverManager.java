@@ -119,7 +119,7 @@ public interface DiskFailoverManager extends Reportable {
    * 
    * TODO (jon) This interface is not quite right -- it should take a file and a
    * format as an arg. This will be revisited when we revist the Log4J, Log4Net,
-   * and avro serialization integration.
+   * and Avro serialization integration.
    */
   public void importData() throws IOException;
 

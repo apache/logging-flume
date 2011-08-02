@@ -166,7 +166,7 @@ public class AvroEventSource extends EventSource.Base {
           // no progress made, timeout and close it.
           LOG
               .warn("Close timed out due to no progress.  Closing despite having "
-                  + q.size() + " values still enqued");
+                  + q.size() + " values still enqueued");
           return;
         }
         // there was some progress, go another cycle.
@@ -210,7 +210,7 @@ public class AvroEventSource extends EventSource.Base {
         return e;
       }
     } catch (InterruptedException e) {
-      throw new IOException("Waiting for queue element was interupted! "
+      throw new IOException("Waiting for queue element was interrupted! "
           + e.getMessage(), e);
     }
   }

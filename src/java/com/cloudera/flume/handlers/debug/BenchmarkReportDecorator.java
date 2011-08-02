@@ -79,7 +79,7 @@ public class BenchmarkReportDecorator<S extends EventSink> extends
 
   /**
    * Checks for Benchmark Tags. If there are not tags events are passed through.
-   * If ther are, there are three kinds - 'start' which instantiates a
+   * If there are, there are three kinds - 'start' which instantiates a
    * benchmark; 'first' which starts a benchmark; and 'stop' which ends a
    * benchmark. These are consumed by this decorator.
    */

@@ -87,7 +87,7 @@ public class ZooKeeperService {
   }
 
   /**
-   * Initialises in standalone mode, creating an in-process ZK.
+   * Initializes in standalone mode, creating an in-process ZK.
    */
   protected void startZKStandalone(int port, String dir) throws IOException,
       InterruptedException {
@@ -97,7 +97,7 @@ public class ZooKeeperService {
   }
 
   /**
-   * Initialises in distributed mode, starting an in-process server
+   * Initializes in distributed mode, starting an in-process server
    */
   protected void startZKDistributed(FlumeConfiguration cfg) throws IOException,
       InterruptedException, ConfigException {
@@ -108,17 +108,17 @@ public class ZooKeeperService {
 
   /**
    * Returns the singleton ZooKeeperService, which will not be null. However, it
-   * may not be initialised and therefore attempts to connect to it with a
+   * may not be initialized and therefore attempts to connect to it with a
    * ZKClient may fail. Use getAndInit if you are not sure whether the service
-   * is initialised.
+   * is initialized.
    */
   static public ZooKeeperService get() {
     return zkServiceSingleton;
   }
 
   /**
-   * Returns the singleton ZooKeeperService, initialising it if it has not been
-   * initialised already.
+   * Returns the singleton ZooKeeperService, initializing it if it has not been
+   * initialized already.
    */
   synchronized public static ZooKeeperService getAndInit() throws IOException,
       InterruptedException {
@@ -127,8 +127,8 @@ public class ZooKeeperService {
   }
 
   /**
-   * Returns the singleton ZooKeeperService, initialising it if it has not been
-   * initialised already, using the supplied configuration
+   * Returns the singleton ZooKeeperService, initializing it if it has not been
+   * initialized already, using the supplied configuration
    */
   synchronized public static ZooKeeperService getAndInit(FlumeConfiguration cfg)
       throws IOException, InterruptedException {
@@ -137,7 +137,7 @@ public class ZooKeeperService {
   }
 
   /**
-   * Returns a new ZKClient initialised for this service, but not connected.
+   * Returns a new ZKClient initialized for this service, but not connected.
    */
   synchronized public ZKClient createClient() throws IOException {
     if (!initialised) {

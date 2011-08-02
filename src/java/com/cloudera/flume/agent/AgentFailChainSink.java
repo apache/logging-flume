@@ -83,7 +83,7 @@ public class AgentFailChainSink extends EventSink.Base {
       break;
     }
     default: {
-      throw new FlumeSpecException("Unknown relability " + rel);
+      throw new FlumeSpecException("Unknown reliability " + rel);
     }
     }
   }

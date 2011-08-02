@@ -32,7 +32,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ChokeManager extends Thread {
 
   // Time quanta in millisecs. It is a constant right now, we can change this
-  // later. The main thread of the Chokemanager fills up the buckets
+  // later. The main thread of the ChokeManager fills up the buckets
   // corresponding to different choke-ids and the physical node after this time
   // quanta.
 
@@ -185,7 +185,7 @@ public class ChokeManager extends Thread {
     // throttling policy.
     rwlChokeInfoMap.readLock().lock();
     try {
-      // simple policy for now: if the chokeid is not there then simply return,
+      // simple policy for now: if the chokeId is not there then simply return,
       // essentially no throttling with an invalid chokeID.
       if (this.isChokeId(id) != false) {
         int loopCount = 0;

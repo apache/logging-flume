@@ -58,7 +58,7 @@ import com.cloudera.util.NetUtils;
  * provided by FlumeConfigData for the logical node. It is assumed that there
  * are not multiple concurrent checkConfig calls.
  * 
- * If the config needs to be upadted, the logical node updates itself via
+ * If the config needs to be updated, the logical node updates itself via
  * loadConfig. If there is a previous configuration the driver, its source and
  * its sink is first closed. Configuration for a source and a sink are
  * instantiated and then instantiated into a new Driver. Any
@@ -158,9 +158,9 @@ public class LogicalNode implements Reportable {
    */
   synchronized void openLoadNode(EventSource newSrc, EventSink newSnk)
       throws IOException, InterruptedException {
-    // TODO HACK! This is to prevent heartbeat from hanging if one fo the
+    // TODO HACK! This is to prevent heartbeat from hanging if one of the
     // configs is unable to start due to open exception. It has the effect of
-    // defering any exceptions open would have triggered into the Driver thread.
+    // deferring any exceptions open would have triggered into the Driver thread.
     // This acts similarly to a 'future' concurrency concept.
 
     newSnk = new LazyOpenDecorator<EventSink>(newSnk);
@@ -335,7 +335,7 @@ public class LogicalNode implements Reportable {
       // this configuration will open without errors!
       this.lastGoodCfg = cfg;
 
-      LOG.info("Node config sucessfully set to " + cfg);
+      LOG.info("Node config successfully set to " + cfg);
     } catch (InterruptedException e) {
       // TODO figure out what to do on interruption
       LOG.error("Load Config interrupted", e);

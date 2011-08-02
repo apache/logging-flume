@@ -283,7 +283,7 @@ public class PatternMatch {
 
   /**
    * This method creates an nth child pattern match relation. For this to match,
-   * 'this' matches the parent, and the nth child of the parent maches the child
+   * 'this' matches the parent, and the nth child of the parent matches the child
    * pattern.
    */
   public PatternMatch nth(int n, PatternMatch child) {

@@ -136,7 +136,7 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
   }
 
   synchronized public void open() throws IOException {
-    // TODO (jon) be less strict. ?? need to return on and figure out why thisis
+    // TODO (jon) be less strict. ?? need to return on and figure out why this is
     // wrong, add
     // latches.
 

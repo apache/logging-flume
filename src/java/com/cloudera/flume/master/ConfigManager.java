@@ -240,7 +240,7 @@ public class ConfigManager implements ConfigurationManager {
     tmp.deleteOnExit();
     PrintWriter out = new PrintWriter(new FileWriter(tmp));
 
-    // writh all specs to tmp.
+    // write all specs to tmp.
     Map<String, FlumeConfigData> cfgs = cfgStore.getConfigs();
     for (Entry<String, FlumeConfigData> e : cfgs.entrySet()) {
       String name = e.getKey();
@@ -394,7 +394,7 @@ public class ConfigManager implements ConfigurationManager {
   }
 
   /**
-   * Unmaps all logical nodes from phsyical nodes except for the default one.
+   * Unmaps all logical nodes from physical nodes except for the default one.
    * (logical==physical)
    */
   @Override

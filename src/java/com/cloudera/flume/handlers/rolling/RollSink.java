@@ -115,7 +115,7 @@ public class RollSink extends EventSink.Base {
       startedLatch.countDown();
       try {
         while (!isInterrupted()) {
-          // TODO there should probably be a lcok on Roll sink but until we
+          // TODO there should probably be a lock on Roll sink but until we
           // handle
           // interruptions throughout the code, we cannot because this causes a
           // deadlock

@@ -62,7 +62,7 @@ public class ProbabilitySampler<S extends EventSink> extends
       public EventSinkDecorator<EventSink> build(Context context,
           String... argv) {
         Preconditions.checkArgument(argv.length == 1 || argv.length == 2,
-            "usage: proabilitySampler(prob[, seed])");
+            "usage: probabilitySampler(prob[, seed])");
 
         double prob = Double.parseDouble(argv[0]);
         long seed = Clock.unixTime();

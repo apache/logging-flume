@@ -183,7 +183,7 @@ abstract public class Event {
    * 
    * All shorthands are Date format strings, currently.
    * 
-   * Returns the empty string if an escape is not recognised.
+   * Returns the empty string if an escape is not recognized.
    * 
    * Dates follow the same format as unix date, with a few exceptions.
    * 
@@ -295,7 +295,7 @@ abstract public class Event {
    * Replace all substrings of form %{tagname} with get(tagname).toString() and
    * all shorthand substrings of form %x with a special value.
    * 
-   * Any unrecognised / not found tags will be replaced with the empty string.
+   * Any unrecognized / not found tags will be replaced with the empty string.
    * 
    * TODO(henry): we may want to consider taking this out of Event and into a
    * more general class when we get more use cases for this pattern.
@@ -330,7 +330,7 @@ abstract public class Event {
 
   /**
    * Instead of replacing escape sequences in a string, this method returns a
-   * mapping of an attibute name to the value based on the escape sequence found
+   * mapping of an attribute name to the value based on the escape sequence found
    * in the argument string.
    */
   public Map<String, String> getEscapeMapping(String in) {

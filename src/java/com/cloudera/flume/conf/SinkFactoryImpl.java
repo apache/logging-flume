@@ -113,7 +113,7 @@ public class SinkFactoryImpl extends SinkFactory {
       { "agentBEChain", AgentFailChainSink.beBuilder() },
 
       // autoE2EChain, autoDFOChain and autoBEChains are essentially node
-      // specific "macros", and use let expresion shadowing
+      // specific "macros", and use let expression shadowing
       { "autoBEChain", EventSink.StubSink.builder("autoBEChain") },
       { "autoDFOChain", EventSink.StubSink.builder("autoDFOChain") },
       { "autoE2EChain", EventSink.StubSink.builder("autoE2EChain") },

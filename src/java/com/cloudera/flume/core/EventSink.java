@@ -201,7 +201,7 @@ public interface EventSink extends Reportable {
      */
     @Override
     public void append(Event e) throws IOException, InterruptedException {
-      throw new IOException("Attemping to append to a Stub Sink!");
+      throw new IOException("Attempting to append to a Stub Sink!");
     }
 
     /**

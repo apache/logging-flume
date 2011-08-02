@@ -222,7 +222,7 @@ public class FailoverConfigurationManager extends
       }
 
       // diskfailover's subsink needs to never give up. So we wrap it with an
-      // inistentAppend. But append can fail if its subsink is not open. So
+      // insistentAppend. But append can fail if its subsink is not open. So
       // we add a stubborn append (it closes and reopens a subsink) and retries
       // opening the chain using the insistentOpen
       String dfo = "< " + FlumeSpecGen.genEventSink(dfoPrimaryChain)
@@ -299,7 +299,7 @@ public class FailoverConfigurationManager extends
    * expanded wal+end2end ack chain.
    * 
    * This version at one point was different from substE2EChainSimple's
-   * implementation but they have not convernged. This one should likely be
+   * implementation but they have not converged. This one should likely be
    * removed in the future.
    */
   @Deprecated
@@ -364,7 +364,7 @@ public class FailoverConfigurationManager extends
    * 
    * This pipeline writes data to the WAL adding ack tags. In the WAL's subsink
    * in a subservient DriverThread will attempt to send data to logical sink
-   * arg1, and then to logicla sink arg2, etc.. If all fail, stubbornAppend
+   * arg1, and then to logical sink arg2, etc.. If all fail, stubbornAppend
    * causes the entire failover chain to be closed and then reopened. If all the
    * elements of the failover chain still fail, the insistentOpen ensures that
    * they are tried again after an backing off.

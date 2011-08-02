@@ -30,7 +30,7 @@ import com.cloudera.flume.reporter.Reportable;
 
 /**
  * This is the interface for providing durability of events until the reach the
- * permanent store. This is intended fo use as a write ahead log option that
+ * permanent store. This is intended for use as a write ahead log option that
  * requires an ack before data can be eliminated. Different implementations can
  * be encapsulated by this interface.
  * 
@@ -124,8 +124,8 @@ public interface WALManager extends Reportable, WALCompletionNotifier {
    * testing.
    * 
    * TODO (jon) This interface is not quite right -- it should take a file and a
-   * format as an arg. This will be revisited when we revist the Log4J, Log4Net,
-   * and avro serialization integration.
+   * format as an arg. This will be revisited when we revisit the Log4J, Log4Net,
+   * and Avro serialization integration.
    */
   public void importData() throws IOException;
 

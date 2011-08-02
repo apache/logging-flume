@@ -33,7 +33,7 @@ public class HiveDirCreatedNotification {
 
   // hive table name and partitioning key/value metadata
   final String dir; // new dir added
-  final String table; // table that the dir should be added as a partiiton to
+  final String table; // table that the dir should be added as a partition to
   final Map<String, String> meta; // partition key-value metadata
 
   /**

@@ -43,7 +43,7 @@ import com.google.common.base.Preconditions;
  * human readable or machine parseable formats.
  * 
  * For now, we use a convention where a attribute starting with "rpt." is a a
- * reported field. Later we may include a avro schema or something to include
+ * reported field. Later we may include an Avro schema or something to include
  * type information as well.
  */
 public class ReportEvent extends EventImpl {
@@ -204,7 +204,7 @@ public class ReportEvent extends EventImpl {
   }
 
   /**
-   * Serialises event as JSON string
+   * Serializes event as JSON string
    */
   public void toJson(Writer o) throws IOException {
     PrintWriter pw = new PrintWriter(o);
@@ -344,7 +344,7 @@ public class ReportEvent extends EventImpl {
   }
 
   /**
-   * Serialises event as text to supplied writer.
+   * Serializes event as text to supplied writer.
    */
   public void toText(Writer o) throws IOException {
     o.write(StringEscapeUtils.escapeJava(this.toString()));
@@ -435,7 +435,7 @@ public class ReportEvent extends EventImpl {
   }
 
   /**
-   * Return escaped String serialisation of this event
+   * Return escaped String serialization of this event
    */
   public String toText() {
     return StringEscapeUtils.escapeJava(this.toString());

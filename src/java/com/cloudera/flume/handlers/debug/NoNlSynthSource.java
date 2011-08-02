@@ -27,7 +27,7 @@ import com.cloudera.flume.core.EventSource;
 /**
  * Syslog parser depends on using '\n' as a record delimiter. When we just use
  * random data, there is a chance that '\n's are in the event and can foul
- * benchmarks (due to forat exceptions) that assume clean data.
+ * benchmarks (due to format exceptions) that assume clean data.
  * 
  * This wrapper just replaces '\n' with ' '
  */

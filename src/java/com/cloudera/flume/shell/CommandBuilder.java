@@ -37,7 +37,7 @@ import com.cloudera.flume.shell.antlr.FlumeShellParser;
  * 
  * Unquoted tokens can contain alphanumeric, '.',':','_', or '-'. Tokens
  * enclosed in '"' will be java string unescaped. Tokens enclosed in ''' (single
- * quotes) are not unescaped at all and concontain any char except for '''.
+ * quotes) are not unescaped at all and can contain any char except for '''.
  * Exceptions are thrown if quotes are not properly matched or invalid chars
  * present in unquoted tokens. .
  */

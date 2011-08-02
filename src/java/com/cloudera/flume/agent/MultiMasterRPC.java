@@ -113,7 +113,7 @@ public class MultiMasterRPC implements MasterRPC {
         } else if (FlumeConfiguration.RPC_TYPE_AVRO.equals(rpcProtocol)) {
           out = new AvroMasterRPC(host.getLeft(), host.getRight());
         } else {
-          LOG.error("No valid RPC protocl in configurations.");
+          LOG.error("No valid RPC protocol in configurations.");
           continue;
         }
         curHost = host.getLeft();
@@ -263,7 +263,7 @@ public class MultiMasterRPC implements MasterRPC {
   /**
    * This method returns the ChokeId->limit (in KB/sec) map for the given
    * physical node. This limit puts an approximate upperbound on the number of
-   * bytes which can be shipped accross a choke decorator.
+   * bytes which can be shipped across a choke decorator.
    */
   public Map<String, Integer> getChokeMap(final String physicalNode)
       throws IOException {

@@ -50,7 +50,7 @@ public interface ConfigurationManager extends Reportable {
       throws IOException, FlumeSpecException;
 
   /**
-   * Load configurations from file 'from'. This does not clear prexisting
+   * Load configurations from file 'from'. This does not clear pre-existing
    * configurations but may overwrite configurations for existing nodes.
    */
   public void loadConfigFile(String from) throws IOException;

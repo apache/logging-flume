@@ -53,7 +53,7 @@ public class MasterClientServerThrift extends ThriftServer implements
 
   public MasterClientServerThrift(MasterClientServer delegate) {
     Preconditions.checkArgument(delegate != null,
-        "MasterCleintServer is null in 'ThriftMasterClientServer!");
+        "MasterClientServer is null in 'MasterClientServerThrift!");
     this.delegate = delegate;
     this.port = FlumeConfiguration.get().getMasterHeartbeatPort();
   }

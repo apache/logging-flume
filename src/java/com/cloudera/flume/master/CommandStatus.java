@@ -41,7 +41,7 @@ public class CommandStatus {
     QUEUED, EXECING, SUCCEEDED, FAILED
   };
 
-  long cmdId; // uniq id for command. Used to check status of a command.
+  long cmdId; // unique id for command. Used to check status of a command.
   Command cmd;
 
   State curState;

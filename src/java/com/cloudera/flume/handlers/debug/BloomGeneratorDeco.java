@@ -36,7 +36,7 @@ import com.google.common.base.Preconditions;
 /**
  * This decorator takes hashes of messages and then inserts them into a bloom
  * filter. On deco close, the bit map representation of the bloom filter is
- * transmittted into the stream.
+ * transmitted into the stream.
  * 
  * A corresponding BloomChecker can track received message and can approximately
  * verify that all messages injected were included. If the generator sends

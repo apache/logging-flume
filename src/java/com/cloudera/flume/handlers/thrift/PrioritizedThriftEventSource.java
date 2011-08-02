@@ -42,7 +42,7 @@ import com.google.common.base.Preconditions;
 /**
  * This sets up the port that listens for incoming flume event rpc calls. In
  * this version events are prioritized based on event priority and then by age
- * (older has higher priority). This doesn't have mechanims for dropping events
+ * (older has higher priority). This doesn't have mechanism for dropping events
  * at the moment.
  * 
  * There is a problem with the nonblocking server -- for some reason (it gets
@@ -98,7 +98,7 @@ public class PrioritizedThriftEventSource extends EventSource.Base {
   final BlockingQueue<Event> q;
 
   /**
-   * Creates a new priotized event source on port port with event queue size
+   * Creates a new prioritized event source on port port with event queue size
    * qsize.
    */
   public PrioritizedThriftEventSource(int port, int qsize) {
@@ -159,7 +159,7 @@ public class PrioritizedThriftEventSource extends EventSource.Base {
       return e;
     } catch (InterruptedException e) {
       e.printStackTrace();
-      throw new IOException("Waiting for queue element was interupted! " + e);
+      throw new IOException("Waiting for queue element was interrupted! " + e);
     }
   }
 

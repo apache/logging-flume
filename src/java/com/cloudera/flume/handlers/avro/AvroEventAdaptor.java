@@ -55,7 +55,7 @@ class AvroEventAdaptor extends Event {
   }
 
   public static Priority convert(com.cloudera.flume.handlers.avro.Priority p) {
-    Preconditions.checkNotNull(p, "Prioirity argument must be valid.");
+    Preconditions.checkNotNull(p, "Priority argument must be valid.");
     switch (p) {
     case FATAL:
       return Priority.FATAL;
@@ -133,7 +133,7 @@ class AvroEventAdaptor extends Event {
   }
 
   /**
-   * This returns the FlumEvent corresponding to the AvroEvent passed in the
+   * This returns the FlumeEvent corresponding to the AvroEvent passed in the
    * constructor of this object.
    */
   public Event toFlumeEvent() {

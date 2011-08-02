@@ -42,7 +42,7 @@ import com.google.common.base.Preconditions;
  * 
  * NOTE: the NFA-based regex algorithm used by java.util.regex.* (and in this
  * class) is slow and does not scale. It is fully featured but has an
- * exponential worst case runnning time. This will be replaced with a faster but
+ * exponential worst case running time. This will be replaced with a faster but
  * more memory hungry and less featured DFA-based regex algorithm. (We will lose
  * capture groups).
  */

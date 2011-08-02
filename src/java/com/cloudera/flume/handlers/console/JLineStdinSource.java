@@ -48,7 +48,7 @@ import com.google.common.base.Preconditions;
  * The normal StdinSource that uses System.in.readLine() only has a blocking
  * mode. It does not return if in the readLine call with no incoming data.
  * 
- * Here we use jline's readline which acts at a character by character. To close
+ * Here we use jline's readline which acts character by character. To close
  * the jline readline, we interpose a extra check on read() that will return
  * CTRL_D (EOF) and allow a pending readline to exit.
  * 

@@ -184,7 +184,7 @@ public class FlumeBuilder {
   /**
    * This parses a aggregate configuration (name: src|snk; ...) and returns a
    * map from logical node name to a source sink pair. Context is required now
-   * because a Flumenode's PhysicalNode information may need to be passed in
+   * because a FlumeNode's PhysicalNode information may need to be passed in
    */
   @SuppressWarnings("unchecked")
   public static Map<String, Pair<String, String>> parseConf(Context ctx,

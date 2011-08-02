@@ -49,7 +49,7 @@ import com.google.common.base.Preconditions;
  * 
  * NOTE: the NFA-based regex algorithm used by java.util.regex.* (and in this
  * class) is slow and does not scale. It is fully featured but has an
- * exponential worst case runnning time.
+ * exponential worst case running time.
  */
 public class RegexExtractor extends EventSinkDecorator<EventSink> {
   final String attr;

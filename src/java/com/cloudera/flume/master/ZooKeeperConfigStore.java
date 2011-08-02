@@ -100,7 +100,7 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
   }
 
   /**
-   * Reads the standard configuration and initialises client and optionally
+   * Reads the standard configuration and initializes client and optionally
    * server accordingly.
    */
   @Override

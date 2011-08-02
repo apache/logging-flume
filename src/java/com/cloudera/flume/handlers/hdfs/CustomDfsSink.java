@@ -149,7 +149,7 @@ public class CustomDfsSink extends EventSink.Base {
       writer = codec.createOutputStream(writer, cmp);
     } catch (NullPointerException npe) {
       // tries to find "native" version of codec, if that fails, then tries to
-      // find java version. If there is no java version, the createOutpuStream
+      // find java version. If there is no java version, the createOutputStream
       // exits via NPE. We capture this and convert it into a IOE with a more
       // useful error message.
       LOG.error("Unable to load compression codec " + codec);

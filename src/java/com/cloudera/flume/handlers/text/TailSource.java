@@ -81,7 +81,7 @@ import com.google.common.base.Preconditions;
  * TestTailSource.readRotatePrexistingSameSizeWithNewModetime)
  * 
  * Ideally this would use the inode number of file handle number but didn't find
- * java api to get these, or Java 7's WatchSevice file watcher API.
+ * java api to get these, or Java 7's WatchService file watcher API.
  */
 public class TailSource extends EventSource.Base {
   private static final Logger LOG = LoggerFactory.getLogger(TailSource.class);

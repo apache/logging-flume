@@ -97,7 +97,7 @@ abstract public class FlowConfigManager implements ConfigurationManager {
 
   /**
    * This creates a specific instance of a Configuration manager that will only
-   * recieve FCD's for a particular flow. This shall never return null. THis
+   * receive FCD's for a particular flow. This shall never return null. THis
    * does not need to be guarded by a lock.
    */
   public abstract ConfigurationManager createConfigMan();
@@ -354,7 +354,7 @@ abstract public class FlowConfigManager implements ConfigurationManager {
    */
   public static class FailoverFlowConfigManager extends FlowConfigManager {
     /**
-     * This is needed when constructing child ConfiguraitonManagers
+     * This is needed when constructing child ConfigurationManagers
      */
     final StatusManager statman;
 

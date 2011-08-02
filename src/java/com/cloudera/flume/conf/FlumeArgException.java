@@ -18,7 +18,7 @@
 package com.cloudera.flume.conf;
 
 /**
- * This excpetion is thrown when an illegal or invalid argument is passed to a
+ * This exception is thrown when an illegal or invalid argument is passed to a
  * flume spec's sink/source/deco
  */
 public class FlumeArgException extends FlumeSpecException {

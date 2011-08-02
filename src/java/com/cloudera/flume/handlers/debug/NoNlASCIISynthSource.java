@@ -40,7 +40,7 @@ public class NoNlASCIISynthSource extends SynthSource {
   }
 
   /**
-   * Converts all bytes into the ascii pritable range (32 >= 126),
+   * Converts all bytes into the ascii printable range (32 >= 126),
    */
   static byte toAscii(byte b) {
     b &= 0x7f;

@@ -143,7 +143,7 @@ public class WALAckManager implements Reportable {
     for (Entry<String, Long> ack : pending.entrySet()) {
       long delta = now - ack.getValue();
       if (delta > retransmitTime) {
-        // retransmit.. enqueue to retransimt.... move it back to agent dir..
+        // retransmit.. enqueue to retransmit.... move it back to agent dir..
         // (lame but good enough for now)
         try {
           LOG.info("Retransmitting " + ack.getKey() + " after being stale for "
@@ -165,7 +165,7 @@ public class WALAckManager implements Reportable {
     long now = Clock.unixTime();
     List<String> retried = new ArrayList<String>();
     for (Entry<String, Long> ack : pending.entrySet()) {
-      // retransmit.. enqueue to retransimt.... move it back to agent dir..
+      // retransmit.. enqueue to retransmit.... move it back to agent dir..
       // (lame but good enough for now)
       try {
         LOG.info("Retransmitting " + ack.getKey());

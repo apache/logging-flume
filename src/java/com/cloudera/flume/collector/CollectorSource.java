@@ -39,8 +39,8 @@ import com.google.common.base.Preconditions;
  * implementation details to may user configuration simpler. It has a default
  * options that come from flume-*.xml configuration file.
  * 
- * The actual implementation may change in the future (for example, thrift may
- * be replaced with avro) but user configurations would not need to change.
+ * The actual implementation may change in the future (for example, Thrift may
+ * be replaced with Avro) but user configurations would not need to change.
  * 
  * TODO (jon) auto version negotiation? (With agent sink)
  */

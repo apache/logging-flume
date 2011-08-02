@@ -113,7 +113,7 @@ public class Attributes {
   }
 
   /**
-   * This toStrng method is for human readable output. The html reports use this
+   * This toString method is for human readable output. The html reports use this
    * as opposed to the other.
    */
   public static String toString(Event e, String attr) {
@@ -138,7 +138,7 @@ public class Attributes {
             + readDouble(e, attr).toString();
       }
 
-      // this is a simlar hack that prints in int and string format when there
+      // this is a similar hack that prints in int and string format when there
       // are 4 bytes.
       if (bytes.length == 4) {
         return readInt(e, attr).toString() + " '" + readString(e, attr) + "'";
@@ -171,7 +171,7 @@ public class Attributes {
 
   /**
    * This toString method strictly uses the Attribute type information. When
-   * there is an untyped attribute, it defaults to outputing the data as a byte
+   * there is an untyped attribute, it defaults to outputting the data as a byte
    * array.
    */
   public static String toStringStrict(Event e, String attr) {

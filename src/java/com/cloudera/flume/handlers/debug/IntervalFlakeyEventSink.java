@@ -48,7 +48,7 @@ public class IntervalFlakeyEventSink<S extends EventSink> extends
     count++;
     if (count % interval == 0) {
       count = 0;
-      throw new IOException("flakeyness struck and caused a failure");
+      throw new IOException("flakiness struck and caused a failure");
     }
     super.append(e);
   }

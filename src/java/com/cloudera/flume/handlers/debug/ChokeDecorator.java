@@ -28,8 +28,8 @@ import com.cloudera.flume.core.EventSinkDecorator;
 import com.google.common.base.Preconditions;
 
 /**
- * This decorator adds a the capabilty to Throttle the data going out of the
- * sink. Each Chokedecorator is associated with a chokeId, and all the
+ * This decorator adds a the capability to Throttle the data going out of the
+ * sink. Each ChokeDecorator is associated with a chokeId, and all the
  * choke-decorators with the same chokeId are throttled together with some max
  * data transfer limit. The mapping from the chokeId to limit is set by the
  * Master and passed to FlumeNodes using an RPC call called getChokeMap().
@@ -48,7 +48,7 @@ public class ChokeDecorator<S extends EventSink> extends EventSinkDecorator<S> {
 
   /**
    * This append can block for a little while if the number of bytes shipped
-   * accross this Choke has reached its limit. But it does not block forever.
+   * across this Choke has reached its limit. But it does not block forever.
    */
   @Override
   public void append(Event e) throws IOException, InterruptedException {

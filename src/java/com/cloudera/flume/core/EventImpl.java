@@ -49,7 +49,7 @@ public class EventImpl extends EventBaseImpl {
       .getEventMaxSizeBytes();
 
   /**
-   * Reflection based tools (like avro) require a null constructor
+   * Reflection based tools (like Avro) require a null constructor
    */
   public EventImpl() {
     this(new byte[0], 0, Priority.INFO, 0, "");
@@ -57,7 +57,7 @@ public class EventImpl extends EventBaseImpl {
 
   /**
    * Copy constructor for converting events into EventImpl (required for
-   * reflection/avro)
+   * reflection/Avro)
    */
   public EventImpl(Event e) {
     this(e.getBody(), e.getTimestamp(), e.getPriority(), e.getNanos(), e
@@ -181,7 +181,7 @@ public class EventImpl extends EventBaseImpl {
   /**
    * This takes an event and a list of attribute names. It returns a new event
    * that has the same core event values and all of the attribute/values
-   * *except* for those attributes sepcified by the list.
+   * *except* for those attributes specified by the list.
    */
   public static Event unselect(Event e, String... attrs) {
     Event e2 = new EventImpl(e.getBody(), e.getTimestamp(), e.getPriority(), e

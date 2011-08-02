@@ -186,7 +186,7 @@ public class BatchingDecorator<S extends EventSink> extends
           timeoutThreadDone = true;
         } catch (InterruptedException e) {
           // TODO verify this is correct
-          LOG.error("Interrupted exceptoin when ending batch", e);
+          LOG.error("Interrupted exception when ending batch", e);
           timeoutThreadDone = true;
         }
       }

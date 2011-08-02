@@ -501,7 +501,7 @@ public class ExecNioSource extends EventSource.Base {
     proc = Runtime.getRuntime().exec(command);
 
     // Just reading from stdout and stderr can block, so we wrap them with
-    // InputSTreamPipe allows them to be nonblocking.
+    // InputStreamPipe allows them to be nonblocking.
     stdinISP = new InputStreamPipe(proc.getInputStream());
     stderrISP = new InputStreamPipe(proc.getErrorStream());
     stdout = (ReadableByteChannel) stdinISP.getChannel();
@@ -566,7 +566,7 @@ public class ExecNioSource extends EventSource.Base {
 
   /**
    * This builder creates a source that execs a long running program and takes
-   * each line of input as the body of an event. It takes one arguemnt, the
+   * each line of input as the body of an event. It takes one argument, the
    * command to run. If the command exits, the exec source returns null signally
    * end of records.
    */

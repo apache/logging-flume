@@ -47,7 +47,7 @@ import com.google.common.base.Preconditions;
  * attempt to reopen the primary and append to the primary. If the primary fails
  * again, backoff adjusted and we fall back to the secondary again.
  * 
- * If we reach the secodary and it fails, the append calls will throw an
+ * If we reach the secondary and it fails, the append calls will throw an
  * exception.
  * 
  * These can be chained if multiple failovers are desired. (failover to another
