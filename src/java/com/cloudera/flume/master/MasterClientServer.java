@@ -44,7 +44,7 @@ public class MasterClientServer {
   final protected FlumeMaster master;
   final protected FlumeConfiguration config;
   
-  MasterClientRPC masterRPC;
+  RPCServer masterRPC;
 
   public MasterClientServer(FlumeMaster master, FlumeConfiguration config) 
     throws IOException {
@@ -64,7 +64,7 @@ public class MasterClientServer {
   }
   
   public MasterClientServer(FlumeMaster master, FlumeConfiguration config, 
-      MasterClientRPC rpc) {
+      RPCServer rpc) {
     this.master = master;
     this.config = config;
     this.masterRPC = rpc;
@@ -73,7 +73,7 @@ public class MasterClientServer {
   /**
    * For testing.
    */
-  public MasterClientRPC getMasterRPC() {
+  public RPCServer getMasterRPC() {
     return this.masterRPC;
   }
 

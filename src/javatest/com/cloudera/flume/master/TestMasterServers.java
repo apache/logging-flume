@@ -25,11 +25,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
-import junit.framework.Assert;
 
 import org.apache.thrift.TException;
 import org.junit.After;
@@ -38,14 +35,10 @@ import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
-import com.cloudera.flume.conf.thrift.FlumeMasterCommand;
-import com.cloudera.flume.conf.thrift.FlumeNodeState;
 import com.cloudera.flume.master.StatusManager.NodeStatus;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.Reportable;
-import com.cloudera.flume.reporter.server.FlumeReport;
-import com.cloudera.flume.reporter.server.ReportServer;
 import com.cloudera.flume.util.MockClock;
 import com.cloudera.util.Clock;
 import com.cloudera.util.FileUtil;
@@ -120,7 +113,7 @@ public class TestMasterServers {
       FlumeSpecException {
     master = new FlumeMaster(cfg);
     master.serve();
-    MasterAdminServer mas = new MasterAdminServer(master);
+    MasterAdminServer mas = new MasterAdminServer(master, cfg);
 
     MockClock mclk = new MockClock(0);
     Clock.setClock(mclk);
@@ -173,13 +166,16 @@ public class TestMasterServers {
     mas.getConfigs();
     mas.isFailure(0);
     mas.isSuccess(0);
-    mas.submit(new FlumeMasterCommand("noop", new ArrayList<String>()));
-
+    mas.submit(new Command("noop", new String[0]));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testNullMasterAdmin() {
-    new MasterAdminServer(null);
+    try {
+      new MasterAdminServer(null, cfg);
+    } catch (IOException e) {
+
+    }
   }
   
   @Test

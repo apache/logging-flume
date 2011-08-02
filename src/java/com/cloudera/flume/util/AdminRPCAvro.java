@@ -1,0 +1,105 @@
+/**
+ * Licensed to Cloudera, Inc. under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  Cloudera, Inc. licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.cloudera.flume.util;
+
+import java.io.IOException;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.avro.ipc.HttpTransceiver;
+import org.apache.avro.ipc.Transceiver;
+import org.apache.avro.specific.SpecificRequestor;
+import org.apache.avro.util.Utf8;
+import org.apache.log4j.Logger;
+
+import com.cloudera.flume.conf.FlumeConfigData;
+import com.cloudera.flume.conf.avro.AvroFlumeConfigData;
+import com.cloudera.flume.conf.avro.FlumeMasterAdminServerAvro;
+import com.cloudera.flume.conf.avro.FlumeNodeStatusAvro;
+import com.cloudera.flume.master.Command;
+import com.cloudera.flume.master.MasterAdminServerAvro;
+import com.cloudera.flume.master.MasterClientServerAvro;
+import com.cloudera.flume.master.StatusManager.NodeStatus;
+
+/**
+ * Avro implementation of the Flume admin control RPC. This
+ * class manages the connection to a master and provides type conversion.
+ */
+public class AdminRPCAvro implements AdminRPC {
+  final static Logger LOG = Logger.getLogger(AdminRPCAvro.class);
+  
+  private String masterHostname;
+  private int masterPort;
+  private Transceiver trans;
+  protected FlumeMasterAdminServerAvro masterClient;
+  
+  public AdminRPCAvro(String masterHost, int masterPort) throws IOException {
+    this.masterHostname = masterHost;
+    this.masterPort = masterPort;
+    URL url = new URL("http", masterHostname, this.masterPort, "/");
+    trans = new HttpTransceiver(url);
+    this.masterClient = (FlumeMasterAdminServerAvro) 
+      SpecificRequestor.getClient(FlumeMasterAdminServerAvro.class, trans);
+    LOG.info("Connected to master at " + masterHostname + ":" + masterPort);
+  }
+  
+  @Override
+  public Map<String, FlumeConfigData> getConfigs() throws IOException {
+    Map<Utf8, AvroFlumeConfigData> results = this.masterClient.getConfigs();
+    Map<String, FlumeConfigData> out = new HashMap<String, FlumeConfigData>();
+    for (Utf8 key: results.keySet()) {
+      out.put(key.toString(), 
+          MasterClientServerAvro.configFromAvro(results.get(key)));
+    }
+    return out;
+  }
+
+  @Override
+  public Map<String, NodeStatus> getNodeStatuses() throws IOException {
+    Map<Utf8, FlumeNodeStatusAvro> results = 
+      this.masterClient.getNodeStatuses();
+    Map<String, NodeStatus> out = new HashMap<String, NodeStatus>();
+    for (Utf8 key: results.keySet()) {
+      out.put(key.toString(), 
+          MasterAdminServerAvro.statusFromAvro(results.get(key)));
+    }
+    return out;
+  }
+
+  @Override
+  public boolean hasCmdId(long cmdid) throws IOException {
+    return this.masterClient.hasCmdId(cmdid);
+  }
+
+  @Override
+  public boolean isFailure(long cmdid) throws IOException {
+    return this.masterClient.isFailure(cmdid);
+  }
+
+  @Override
+  public boolean isSuccess(long cmdid) throws IOException {
+    return this.masterClient.isSuccess(cmdid);
+  }
+
+  @Override
+  public long submit(Command command) throws IOException {
+    return this.masterClient.submit(
+        MasterAdminServerAvro.commandToAvro(command));
+  }
+}

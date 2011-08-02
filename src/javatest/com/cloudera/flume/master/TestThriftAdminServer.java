@@ -18,6 +18,7 @@
 
 package com.cloudera.flume.master;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,23 +26,20 @@ import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.thrift.FlumeMasterAdminServer;
-import com.cloudera.flume.conf.thrift.FlumeMasterCommand;
-import com.cloudera.flume.conf.thrift.FlumeNodeStatus;
+import com.cloudera.flume.conf.thrift.FlumeMasterCommandThrift;
+import com.cloudera.flume.conf.thrift.FlumeNodeStatusThrift;
 import com.cloudera.flume.conf.thrift.ThriftFlumeConfigData;
-import com.cloudera.flume.conf.thrift.FlumeMasterAdminServer.Client;
 import com.cloudera.flume.conf.thrift.FlumeMasterAdminServer.Iface;
+import com.cloudera.flume.util.AdminRPC;
+import com.cloudera.flume.util.AdminRPCThrift;
 import com.cloudera.flume.util.ThriftServer;
 
-public class TestThriftServer extends TestCase {
-  public static Logger LOG = Logger.getLogger(TestThriftServer.class);
+public class TestThriftAdminServer extends TestCase {
+  public static Logger LOG = Logger.getLogger(TestThriftAdminServer.class);
 
   class MyThriftServer extends ThriftServer implements Iface {
 
@@ -50,12 +48,13 @@ public class TestThriftServer extends TestCase {
       this.start(new FlumeMasterAdminServer.Processor(this), 56789,
           "MyThriftServer");
     }
-
+    
     @Override
-    public Map<String, FlumeNodeStatus> getNodeStatuses() throws TException {
-      return new HashMap<String, FlumeNodeStatus>();
+    public Map<String, FlumeNodeStatusThrift> getNodeStatuses()
+        throws TException {
+      return new HashMap<String, FlumeNodeStatusThrift>();
     }
-
+    
     @Override
     public boolean isFailure(long cmdid) throws TException {
       return true;
@@ -67,7 +66,7 @@ public class TestThriftServer extends TestCase {
     }
 
     @Override
-    public long submit(FlumeMasterCommand command) throws TException {
+    public long submit(FlumeMasterCommandThrift command) throws TException {
       return 42;
     }
 
@@ -82,16 +81,15 @@ public class TestThriftServer extends TestCase {
     }
   }
 
-  public void testMasterAdminServer() throws TException, InterruptedException {
+  public void testMasterAdminServer() throws IOException, TTransportException {
     MyThriftServer server = new MyThriftServer();
     server.serve();
 
-    // Try connection
-    TTransport masterTransport = new TSocket("localhost", 56789);
-    TProtocol protocol = new TBinaryProtocol(masterTransport);
-    masterTransport.open();
-    Client client = new Client(protocol);
-    long submit = client.submit(new FlumeMasterCommand());
+    AdminRPC client = new AdminRPCThrift("localhost", 56789);
+    LOG.info("Connected to test master");
+    
+    
+    long submit = client.submit(new Command(""));
     assertEquals("Expected response was 42, got " + submit, submit, 42);
 
     boolean succ = client.isSuccess(42);
@@ -100,7 +98,7 @@ public class TestThriftServer extends TestCase {
     boolean fail = client.isFailure(42);
     assertEquals("Expected response was true, got " + fail, fail, true);
 
-    Map<String, ThriftFlumeConfigData> cfgs = client.getConfigs();
+    Map<String, FlumeConfigData> cfgs = client.getConfigs();
     assertEquals("Expected response was 0, got " + cfgs.size(), cfgs.size(), 0);
 
     server.stop();

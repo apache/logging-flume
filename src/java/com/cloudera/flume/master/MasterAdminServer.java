@@ -18,102 +18,79 @@
 
 package com.cloudera.flume.master;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
-import org.apache.thrift.TException;
-import org.apache.thrift.transport.TTransportException;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeConfigData;
-import com.cloudera.flume.conf.thrift.FlumeMasterAdminServer;
-import com.cloudera.flume.conf.thrift.FlumeMasterCommand;
-import com.cloudera.flume.conf.thrift.FlumeNodeStatus;
-import com.cloudera.flume.conf.thrift.ThriftFlumeConfigData;
-import com.cloudera.flume.conf.thrift.FlumeMasterAdminServer.Iface;
-import com.cloudera.flume.util.ThriftServer;
 import com.google.common.base.Preconditions;
 
 /**
- * Implementation of the admin RPC interface over Thrift
+ * Implementation of the admin RPC interface. Since the 
+ * wire protocol is different for separate RPC implementations, they each 
+ * run their own stub servers, then delegate all requests to this common class.
  */
-public class MasterAdminServer extends ThriftServer implements Iface {
+public class MasterAdminServer {
   Logger LOG = Logger.getLogger(MasterAdminServer.class);
-  final int port;
   final protected FlumeMaster master;
+  private RPCServer stubServer;
 
-  public MasterAdminServer(FlumeMaster master) {
-    this(master, FlumeConfiguration.get().getConfigAdminPort());
-  }
-
-  public MasterAdminServer(FlumeMaster master, int port) {
+  public MasterAdminServer(FlumeMaster master, FlumeConfiguration config)
+      throws IOException {
     Preconditions.checkArgument(master != null,
         "FlumeConfigMaster is null in MasterAdminServer!");
     this.master = master;
-    this.port = port;
+    String rpcType = config.getMasterHeartbeatRPC();
+    this.stubServer = null;
+    if (FlumeConfiguration.RPC_TYPE_AVRO.equals(rpcType)) {
+      stubServer = new MasterAdminServerAvro(this);
+    } else if (FlumeConfiguration.RPC_TYPE_THRIFT.equals(rpcType)) {
+      stubServer = new MasterAdminServerThrift(this);
+    } else {
+      throw new IOException("No valid RPC framework specified in config");
+    } 
   }
 
-  @Override
-  public boolean isFailure(long cmdid) throws TException {
+  public boolean isFailure(long cmdid) {
     return master.getCmdMan().isFailure(cmdid);
   }
 
-  @Override
-  public boolean isSuccess(long cmdid) throws TException {
+  public boolean isSuccess(long cmdid) {
     return master.getCmdMan().isSuccess(cmdid);
   }
 
-  @Override
-  public long submit(FlumeMasterCommand command) throws TException {
-    return master.submit(new Command(command.command, command.arguments
-        .toArray(new String[0])));
+  public long submit(Command command) {
+    return master.submit(command);
   }
 
-  public void serve() throws TTransportException {
-    LOG.info(String.format(
-        "Starting blocking thread pool server for admin server on port %d...",
-        port));
-    this.start(new FlumeMasterAdminServer.Processor(this), port,
-        "MasterAdminServer");
+  public void serve() throws IOException {
+   this.stubServer.serve();
   }
 
-  protected FlumeNodeStatus toThrift(StatusManager.NodeStatus status) {
-    long time = System.currentTimeMillis();
-    return new FlumeNodeStatus(MasterClientServerThrift.stateToThrift(status.state),
-        status.version, status.lastseen, time - status.lastseen, status.host,
-        status.physicalNode);
+  public void stop() throws IOException {
+    this.stubServer.stop();
   }
-
-  @Override
-  public Map<String, FlumeNodeStatus> getNodeStatuses() throws TException {
+  
+  public Map<String, StatusManager.NodeStatus> getNodeStatuses() {
     Map<String, StatusManager.NodeStatus> statuses = master.getStatMan()
         .getNodeStatuses();
-    Map<String, FlumeNodeStatus> ret = new HashMap<String, FlumeNodeStatus>();
+    Map<String, StatusManager.NodeStatus> ret = 
+      new HashMap<String, StatusManager.NodeStatus>();
     for (Entry<String, StatusManager.NodeStatus> e : statuses.entrySet()) {
-      ret.put(e.getKey(), toThrift(e.getValue()));
+      ret.put(e.getKey(), e.getValue());
     }
     return ret;
   }
 
-  @Override
-  public Map<String, ThriftFlumeConfigData> getConfigs() throws TException {
-    Map<String, ThriftFlumeConfigData> out = 
-      new HashMap<String, ThriftFlumeConfigData>();
-    Map<String, FlumeConfigData> orig = master.getSpecMan().getAllConfigs();
-    for (String key: orig.keySet()) {
-      out.put(key, MasterClientServerThrift.configToThrift(orig.get(key)));
-    }
-    return out;
+  public Map<String, FlumeConfigData> getConfigs() {
+    return master.getSpecMan().getAllConfigs();
   }
 
-  /*
-   * Returns true if there is a command in the command manager with the
-   * specified id.
-   */
-  @Override
-  public boolean hasCmdId(long cmdid) throws TException {
+  public boolean hasCmdId(long cmdid) {
     return master.getCmdMan().getStatus(cmdid) != null;
   }
 }

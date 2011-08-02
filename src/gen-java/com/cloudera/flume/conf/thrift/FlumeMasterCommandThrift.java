@@ -23,8 +23,8 @@ import org.apache.thrift.*;
 import org.apache.thrift.meta_data.*;
 import org.apache.thrift.protocol.*;
 
-public class FlumeMasterCommand implements TBase<FlumeMasterCommand._Fields>, java.io.Serializable, Cloneable, Comparable<FlumeMasterCommand> {
-  private static final TStruct STRUCT_DESC = new TStruct("FlumeMasterCommand");
+public class FlumeMasterCommandThrift implements TBase<FlumeMasterCommandThrift._Fields>, java.io.Serializable, Cloneable, Comparable<FlumeMasterCommandThrift> {
+  private static final TStruct STRUCT_DESC = new TStruct("FlumeMasterCommandThrift");
 
   private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)1);
   private static final TField ARGUMENTS_FIELD_DESC = new TField("arguments", TType.LIST, (short)2);
@@ -99,13 +99,13 @@ public class FlumeMasterCommand implements TBase<FlumeMasterCommand._Fields>, ja
   }});
 
   static {
-    FieldMetaData.addStructMetaDataMap(FlumeMasterCommand.class, metaDataMap);
+    FieldMetaData.addStructMetaDataMap(FlumeMasterCommandThrift.class, metaDataMap);
   }
 
-  public FlumeMasterCommand() {
+  public FlumeMasterCommandThrift() {
   }
 
-  public FlumeMasterCommand(
+  public FlumeMasterCommandThrift(
     String command,
     List<String> arguments)
   {
@@ -117,7 +117,7 @@ public class FlumeMasterCommand implements TBase<FlumeMasterCommand._Fields>, ja
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public FlumeMasterCommand(FlumeMasterCommand other) {
+  public FlumeMasterCommandThrift(FlumeMasterCommandThrift other) {
     if (other.isSetCommand()) {
       this.command = other.command;
     }
@@ -130,20 +130,20 @@ public class FlumeMasterCommand implements TBase<FlumeMasterCommand._Fields>, ja
     }
   }
 
-  public FlumeMasterCommand deepCopy() {
-    return new FlumeMasterCommand(this);
+  public FlumeMasterCommandThrift deepCopy() {
+    return new FlumeMasterCommandThrift(this);
   }
 
   @Deprecated
-  public FlumeMasterCommand clone() {
-    return new FlumeMasterCommand(this);
+  public FlumeMasterCommandThrift clone() {
+    return new FlumeMasterCommandThrift(this);
   }
 
   public String getCommand() {
     return this.command;
   }
 
-  public FlumeMasterCommand setCommand(String command) {
+  public FlumeMasterCommandThrift setCommand(String command) {
     this.command = command;
     return this;
   }
@@ -182,7 +182,7 @@ public class FlumeMasterCommand implements TBase<FlumeMasterCommand._Fields>, ja
     return this.arguments;
   }
 
-  public FlumeMasterCommand setArguments(List<String> arguments) {
+  public FlumeMasterCommandThrift setArguments(List<String> arguments) {
     this.arguments = arguments;
     return this;
   }
@@ -262,12 +262,12 @@ public class FlumeMasterCommand implements TBase<FlumeMasterCommand._Fields>, ja
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof FlumeMasterCommand)
-      return this.equals((FlumeMasterCommand)that);
+    if (that instanceof FlumeMasterCommandThrift)
+      return this.equals((FlumeMasterCommandThrift)that);
     return false;
   }
 
-  public boolean equals(FlumeMasterCommand that) {
+  public boolean equals(FlumeMasterCommandThrift that) {
     if (that == null)
       return false;
 
@@ -297,13 +297,13 @@ public class FlumeMasterCommand implements TBase<FlumeMasterCommand._Fields>, ja
     return 0;
   }
 
-  public int compareTo(FlumeMasterCommand other) {
+  public int compareTo(FlumeMasterCommandThrift other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    FlumeMasterCommand typedOther = (FlumeMasterCommand)other;
+    FlumeMasterCommandThrift typedOther = (FlumeMasterCommandThrift)other;
 
     lastComparison = Boolean.valueOf(isSetCommand()).compareTo(isSetCommand());
     if (lastComparison != 0) {
@@ -399,7 +399,7 @@ public class FlumeMasterCommand implements TBase<FlumeMasterCommand._Fields>, ja
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("FlumeMasterCommand(");
+    StringBuilder sb = new StringBuilder("FlumeMasterCommandThrift(");
     boolean first = true;
 
     sb.append("command:");

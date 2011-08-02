@@ -23,8 +23,8 @@ import org.apache.thrift.*;
 import org.apache.thrift.meta_data.*;
 import org.apache.thrift.protocol.*;
 
-public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.Serializable, Cloneable, Comparable<FlumeNodeStatus> {
-  private static final TStruct STRUCT_DESC = new TStruct("FlumeNodeStatus");
+public class FlumeNodeStatusThrift implements TBase<FlumeNodeStatusThrift._Fields>, java.io.Serializable, Cloneable, Comparable<FlumeNodeStatusThrift> {
+  private static final TStruct STRUCT_DESC = new TStruct("FlumeNodeStatusThrift");
 
   private static final TField STATE_FIELD_DESC = new TField("state", TType.I32, (short)1);
   private static final TField VERSION_FIELD_DESC = new TField("version", TType.I64, (short)2);
@@ -130,13 +130,13 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
   }});
 
   static {
-    FieldMetaData.addStructMetaDataMap(FlumeNodeStatus.class, metaDataMap);
+    FieldMetaData.addStructMetaDataMap(FlumeNodeStatusThrift.class, metaDataMap);
   }
 
-  public FlumeNodeStatus() {
+  public FlumeNodeStatusThrift() {
   }
 
-  public FlumeNodeStatus(
+  public FlumeNodeStatusThrift(
     com.cloudera.flume.conf.thrift.FlumeNodeState state,
     long version,
     long lastseen,
@@ -159,7 +159,7 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public FlumeNodeStatus(FlumeNodeStatus other) {
+  public FlumeNodeStatusThrift(FlumeNodeStatusThrift other) {
     __isset_bit_vector.clear();
     __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetState()) {
@@ -176,13 +176,13 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
     }
   }
 
-  public FlumeNodeStatus deepCopy() {
-    return new FlumeNodeStatus(this);
+  public FlumeNodeStatusThrift deepCopy() {
+    return new FlumeNodeStatusThrift(this);
   }
 
   @Deprecated
-  public FlumeNodeStatus clone() {
-    return new FlumeNodeStatus(this);
+  public FlumeNodeStatusThrift clone() {
+    return new FlumeNodeStatusThrift(this);
   }
 
   /**
@@ -197,7 +197,7 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
    * 
    * @see com.cloudera.flume.conf.thrift.FlumeNodeState
    */
-  public FlumeNodeStatus setState(com.cloudera.flume.conf.thrift.FlumeNodeState state) {
+  public FlumeNodeStatusThrift setState(com.cloudera.flume.conf.thrift.FlumeNodeState state) {
     this.state = state;
     return this;
   }
@@ -221,7 +221,7 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
     return this.version;
   }
 
-  public FlumeNodeStatus setVersion(long version) {
+  public FlumeNodeStatusThrift setVersion(long version) {
     this.version = version;
     setVersionIsSet(true);
     return this;
@@ -244,7 +244,7 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
     return this.lastseen;
   }
 
-  public FlumeNodeStatus setLastseen(long lastseen) {
+  public FlumeNodeStatusThrift setLastseen(long lastseen) {
     this.lastseen = lastseen;
     setLastseenIsSet(true);
     return this;
@@ -267,7 +267,7 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
     return this.lastSeenDeltaMillis;
   }
 
-  public FlumeNodeStatus setLastSeenDeltaMillis(long lastSeenDeltaMillis) {
+  public FlumeNodeStatusThrift setLastSeenDeltaMillis(long lastSeenDeltaMillis) {
     this.lastSeenDeltaMillis = lastSeenDeltaMillis;
     setLastSeenDeltaMillisIsSet(true);
     return this;
@@ -290,7 +290,7 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
     return this.host;
   }
 
-  public FlumeNodeStatus setHost(String host) {
+  public FlumeNodeStatusThrift setHost(String host) {
     this.host = host;
     return this;
   }
@@ -314,7 +314,7 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
     return this.physicalNode;
   }
 
-  public FlumeNodeStatus setPhysicalNode(String physicalNode) {
+  public FlumeNodeStatusThrift setPhysicalNode(String physicalNode) {
     this.physicalNode = physicalNode;
     return this;
   }
@@ -446,12 +446,12 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof FlumeNodeStatus)
-      return this.equals((FlumeNodeStatus)that);
+    if (that instanceof FlumeNodeStatusThrift)
+      return this.equals((FlumeNodeStatusThrift)that);
     return false;
   }
 
-  public boolean equals(FlumeNodeStatus that) {
+  public boolean equals(FlumeNodeStatusThrift that) {
     if (that == null)
       return false;
 
@@ -517,13 +517,13 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
     return 0;
   }
 
-  public int compareTo(FlumeNodeStatus other) {
+  public int compareTo(FlumeNodeStatusThrift other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    FlumeNodeStatus typedOther = (FlumeNodeStatus)other;
+    FlumeNodeStatusThrift typedOther = (FlumeNodeStatusThrift)other;
 
     lastComparison = Boolean.valueOf(isSetState()).compareTo(isSetState());
     if (lastComparison != 0) {
@@ -679,7 +679,7 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("FlumeNodeStatus(");
+    StringBuilder sb = new StringBuilder("FlumeNodeStatusThrift(");
     boolean first = true;
 
     sb.append("state:");

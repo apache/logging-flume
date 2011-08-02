@@ -1,4 +1,4 @@
-// $ANTLR 3.1.3 Mar 18, 2009 10:09:25 /home/patrick/Documents/flume-git2/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g 2010-08-18 11:16:19
+// $ANTLR 3.1.3 Mar 18, 2009 10:09:25 /home/patrick/Documents/flume-git2/flume/src/antlr/com/cloudera/flume/conf/FlumeDeploy.g 2010-08-23 11:27:19
 
 /**
  * Licensed to Cloudera, Inc. under one
@@ -1023,7 +1023,7 @@ public class FlumeDeployParser extends Parser {
 
 
             // AST REWRITE
-            // elements: Identifier, args
+            // elements: args, Identifier
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -1991,7 +1991,7 @@ public class FlumeDeployParser extends Parser {
 
 
             // AST REWRITE
-            // elements: args, simpleSink
+            // elements: simpleSink, args
             // token labels: 
             // rule labels: retval
             // token list labels: 

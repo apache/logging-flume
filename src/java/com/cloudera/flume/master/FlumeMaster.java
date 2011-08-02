@@ -217,7 +217,7 @@ public class FlumeMaster implements Reportable {
     }
 
     controlServer = new MasterClientServer(this, FlumeConfiguration.get());
-    configServer = new MasterAdminServer(this);
+    configServer = new MasterAdminServer(this, FlumeConfiguration.get());
     reportServer = new ReportServer(FlumeConfiguration.get()
         .getReportServerPort());
 

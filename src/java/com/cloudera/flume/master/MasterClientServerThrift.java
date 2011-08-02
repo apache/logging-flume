@@ -45,7 +45,7 @@ import com.google.common.base.Preconditions;
  * delegates to a MasterClientServer.
  */
 public class MasterClientServerThrift extends ThriftServer implements
-    FlumeClientServer.Iface, MasterClientRPC {
+    FlumeClientServer.Iface, RPCServer {
   Logger LOG = Logger.getLogger(MasterClientServer.class);
   final protected int port;
   protected MasterClientServer delegate;

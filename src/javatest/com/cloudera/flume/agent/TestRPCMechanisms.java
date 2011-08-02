@@ -49,7 +49,6 @@ import com.cloudera.flume.conf.avro.FlumeNodeState;
 import com.cloudera.flume.conf.thrift.FlumeClientServer;
 import com.cloudera.flume.conf.thrift.ThriftFlumeConfigData;
 import com.cloudera.flume.conf.thrift.FlumeClientServer.Iface;
-import com.cloudera.flume.master.MasterClientRPC;
 import com.cloudera.flume.master.MasterClientServerAvro;
 import com.cloudera.flume.master.MasterClientServerThrift;
 import com.cloudera.flume.master.StatusManager;
@@ -165,7 +164,7 @@ public class TestRPCMechanisms {
    * Mock ThriftServer.
    */
   public class MockThriftServer extends ThriftServer implements
-  FlumeClientServer.Iface, MasterClientRPC {
+  FlumeClientServer.Iface {
 
     @Override
     public void acknowledge(String ackid) throws TException {      
@@ -238,7 +237,6 @@ public class TestRPCMechanisms {
       this.port = port;
     }
     
-    @Override
     public void serve() throws IOException {
       LOG
       .info(String

@@ -27,13 +27,13 @@ public class FlumeMasterAdminServer {
 
   public interface Iface {
 
-    public long submit(FlumeMasterCommand command) throws TException;
+    public long submit(FlumeMasterCommandThrift command) throws TException;
 
     public boolean isSuccess(long cmdid) throws TException;
 
     public boolean isFailure(long cmdid) throws TException;
 
-    public Map<String,FlumeNodeStatus> getNodeStatuses() throws TException;
+    public Map<String,FlumeNodeStatusThrift> getNodeStatuses() throws TException;
 
     public Map<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> getConfigs() throws TException;
 
@@ -68,13 +68,13 @@ public class FlumeMasterAdminServer {
       return this.oprot_;
     }
 
-    public long submit(FlumeMasterCommand command) throws TException
+    public long submit(FlumeMasterCommandThrift command) throws TException
     {
       send_submit(command);
       return recv_submit();
     }
 
-    public void send_submit(FlumeMasterCommand command) throws TException
+    public void send_submit(FlumeMasterCommandThrift command) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("submit", TMessageType.CALL, seqid_));
       submit_args args = new submit_args();
@@ -167,7 +167,7 @@ public class FlumeMasterAdminServer {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "isFailure failed: unknown result");
     }
 
-    public Map<String,FlumeNodeStatus> getNodeStatuses() throws TException
+    public Map<String,FlumeNodeStatusThrift> getNodeStatuses() throws TException
     {
       send_getNodeStatuses();
       return recv_getNodeStatuses();
@@ -182,7 +182,7 @@ public class FlumeMasterAdminServer {
       oprot_.getTransport().flush();
     }
 
-    public Map<String,FlumeNodeStatus> recv_getNodeStatuses() throws TException
+    public Map<String,FlumeNodeStatusThrift> recv_getNodeStatuses() throws TException
     {
       TMessage msg = iprot_.readMessageBegin();
       if (msg.type == TMessageType.EXCEPTION) {
@@ -410,7 +410,7 @@ public class FlumeMasterAdminServer {
 
     private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRUCT, (short)1);
 
-    public FlumeMasterCommand command;
+    public FlumeMasterCommandThrift command;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
@@ -471,7 +471,7 @@ public class FlumeMasterAdminServer {
 
     public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
       put(_Fields.COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, FlumeMasterCommand.class)));
+          new StructMetaData(TType.STRUCT, FlumeMasterCommandThrift.class)));
     }});
 
     static {
@@ -482,7 +482,7 @@ public class FlumeMasterAdminServer {
     }
 
     public submit_args(
-      FlumeMasterCommand command)
+      FlumeMasterCommandThrift command)
     {
       this();
       this.command = command;
@@ -493,7 +493,7 @@ public class FlumeMasterAdminServer {
      */
     public submit_args(submit_args other) {
       if (other.isSetCommand()) {
-        this.command = new FlumeMasterCommand(other.command);
+        this.command = new FlumeMasterCommandThrift(other.command);
       }
     }
 
@@ -506,11 +506,11 @@ public class FlumeMasterAdminServer {
       return new submit_args(this);
     }
 
-    public FlumeMasterCommand getCommand() {
+    public FlumeMasterCommandThrift getCommand() {
       return this.command;
     }
 
-    public submit_args setCommand(FlumeMasterCommand command) {
+    public submit_args setCommand(FlumeMasterCommandThrift command) {
       this.command = command;
       return this;
     }
@@ -536,7 +536,7 @@ public class FlumeMasterAdminServer {
         if (value == null) {
           unsetCommand();
         } else {
-          setCommand((FlumeMasterCommand)value);
+          setCommand((FlumeMasterCommandThrift)value);
         }
         break;
 
@@ -638,7 +638,7 @@ public class FlumeMasterAdminServer {
           switch (fieldId) {
             case COMMAND:
               if (field.type == TType.STRUCT) {
-                this.command = new FlumeMasterCommand();
+                this.command = new FlumeMasterCommandThrift();
                 this.command.read(iprot);
               } else { 
                 TProtocolUtil.skip(iprot, field.type);
@@ -2290,7 +2290,7 @@ public class FlumeMasterAdminServer {
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.MAP, (short)0);
 
-    public Map<String,FlumeNodeStatus> success;
+    public Map<String,FlumeNodeStatusThrift> success;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
@@ -2353,7 +2353,7 @@ public class FlumeMasterAdminServer {
       put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
           new MapMetaData(TType.MAP, 
               new FieldValueMetaData(TType.STRING), 
-              new StructMetaData(TType.STRUCT, FlumeNodeStatus.class))));
+              new StructMetaData(TType.STRUCT, FlumeNodeStatusThrift.class))));
     }});
 
     static {
@@ -2364,7 +2364,7 @@ public class FlumeMasterAdminServer {
     }
 
     public getNodeStatuses_result(
-      Map<String,FlumeNodeStatus> success)
+      Map<String,FlumeNodeStatusThrift> success)
     {
       this();
       this.success = success;
@@ -2375,15 +2375,15 @@ public class FlumeMasterAdminServer {
      */
     public getNodeStatuses_result(getNodeStatuses_result other) {
       if (other.isSetSuccess()) {
-        Map<String,FlumeNodeStatus> __this__success = new HashMap<String,FlumeNodeStatus>();
-        for (Map.Entry<String, FlumeNodeStatus> other_element : other.success.entrySet()) {
+        Map<String,FlumeNodeStatusThrift> __this__success = new HashMap<String,FlumeNodeStatusThrift>();
+        for (Map.Entry<String, FlumeNodeStatusThrift> other_element : other.success.entrySet()) {
 
           String other_element_key = other_element.getKey();
-          FlumeNodeStatus other_element_value = other_element.getValue();
+          FlumeNodeStatusThrift other_element_value = other_element.getValue();
 
           String __this__success_copy_key = other_element_key;
 
-          FlumeNodeStatus __this__success_copy_value = new FlumeNodeStatus(other_element_value);
+          FlumeNodeStatusThrift __this__success_copy_value = new FlumeNodeStatusThrift(other_element_value);
 
           __this__success.put(__this__success_copy_key, __this__success_copy_value);
         }
@@ -2404,18 +2404,18 @@ public class FlumeMasterAdminServer {
       return (this.success == null) ? 0 : this.success.size();
     }
 
-    public void putToSuccess(String key, FlumeNodeStatus val) {
+    public void putToSuccess(String key, FlumeNodeStatusThrift val) {
       if (this.success == null) {
-        this.success = new HashMap<String,FlumeNodeStatus>();
+        this.success = new HashMap<String,FlumeNodeStatusThrift>();
       }
       this.success.put(key, val);
     }
 
-    public Map<String,FlumeNodeStatus> getSuccess() {
+    public Map<String,FlumeNodeStatusThrift> getSuccess() {
       return this.success;
     }
 
-    public getNodeStatuses_result setSuccess(Map<String,FlumeNodeStatus> success) {
+    public getNodeStatuses_result setSuccess(Map<String,FlumeNodeStatusThrift> success) {
       this.success = success;
       return this;
     }
@@ -2441,7 +2441,7 @@ public class FlumeMasterAdminServer {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((Map<String,FlumeNodeStatus>)value);
+          setSuccess((Map<String,FlumeNodeStatusThrift>)value);
         }
         break;
 
@@ -2526,13 +2526,13 @@ public class FlumeMasterAdminServer {
               if (field.type == TType.MAP) {
                 {
                   TMap _map4 = iprot.readMapBegin();
-                  this.success = new HashMap<String,FlumeNodeStatus>(2*_map4.size);
+                  this.success = new HashMap<String,FlumeNodeStatusThrift>(2*_map4.size);
                   for (int _i5 = 0; _i5 < _map4.size; ++_i5)
                   {
                     String _key6;
-                    FlumeNodeStatus _val7;
+                    FlumeNodeStatusThrift _val7;
                     _key6 = iprot.readString();
-                    _val7 = new FlumeNodeStatus();
+                    _val7 = new FlumeNodeStatusThrift();
                     _val7.read(iprot);
                     this.success.put(_key6, _val7);
                   }
@@ -2559,7 +2559,7 @@ public class FlumeMasterAdminServer {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeMapBegin(new TMap(TType.STRING, TType.STRUCT, this.success.size()));
-          for (Map.Entry<String, FlumeNodeStatus> _iter8 : this.success.entrySet())
+          for (Map.Entry<String, FlumeNodeStatusThrift> _iter8 : this.success.entrySet())
           {
             oprot.writeString(_iter8.getKey());
             _iter8.getValue().write(oprot);

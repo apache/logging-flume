@@ -51,7 +51,7 @@ import com.google.common.base.Preconditions;
  * delegates to a MasterClientServer.
  */
 public class MasterClientServerAvro implements
-  FlumeReportAvroServer, MasterClientRPC {
+  FlumeReportAvroServer, RPCServer {
   Logger LOG = Logger.getLogger(MasterClientServer.class);
   final protected int port;
   protected MasterClientServer delegate;

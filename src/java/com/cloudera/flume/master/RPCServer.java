@@ -15,35 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.cloudera.flume.master;
 
-# Master configuration and administration interface
+import java.io.IOException;
 
-namespace java com.cloudera.flume.conf.thrift
-
-include "flumeconfig.thrift"
-
-struct FlumeMasterCommandThrift {
-  1: string command,
-  2: list<string> arguments
+/**
+ * This interface is for specific RPC implementations of the server side 
+ * of an RPC. Since the function signatures may be different depending on RPC 
+ * package-specific data types, we only include start/stop methods here.  
+ *
+ */
+public interface RPCServer {
+  
+  /**
+   * Start listening for client requests.
+   */
+  public void serve() throws IOException;
+  
+  /**
+   * Un-bind from the listen port.
+   */
+  public void stop() throws IOException;
 }
-
-// Equivalent to StatusManager.NodeStatus
-struct FlumeNodeStatusThrift {
-  1: flumeconfig.FlumeNodeState state,
-  2: i64 version,
-  3: i64 lastseen,
-  6: i64 lastSeenDeltaMillis,
-  4: string host,
-  5: string physicalNode,
-}
-
-service FlumeMasterAdminServer {
-  i64 submit(1: FlumeMasterCommandThrift command),
-  bool isSuccess(1: i64 cmdid),  
-  bool isFailure(1: i64 cmdid),  
-  map<string, FlumeNodeStatusThrift> getNodeStatuses(),
-  map<string, flumeconfig.ThriftFlumeConfigData> getConfigs(),
-  bool hasCmdId(1: i64 cmdid)
-  // TODO (jon) augment with getstate
-}
-
