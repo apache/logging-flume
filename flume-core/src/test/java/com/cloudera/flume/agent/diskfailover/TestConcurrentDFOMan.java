@@ -50,7 +50,7 @@ import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.Reportable;
 import com.cloudera.flume.reporter.aggregator.AccumulatorSink;
 import com.cloudera.flume.reporter.aggregator.CounterSink;
-import com.cloudera.util.BenchmarkHarness;
+import com.cloudera.util.FlumeTestHarness;
 import com.cloudera.util.FileUtil;
 
 /**
@@ -208,7 +208,7 @@ public class TestConcurrentDFOMan {
   public void doTestLogicalNodesConcurrentDFOMans(final int threads,
       final int events, int timeout) throws IOException, InterruptedException,
       FlumeSpecException {
-    BenchmarkHarness.setupLocalWriteDir();
+    FlumeTestHarness.setupLocalWriteDir();
     FlumeMaster master = new FlumeMaster();
     FlumeNode node = new FlumeNode(new DirectMasterRPC(master), false, false);
     final Reportable[] dfos = new Reportable[threads];
@@ -248,7 +248,7 @@ public class TestConcurrentDFOMan {
     }
     assertTrue("Counts did not line up", success);
 
-    BenchmarkHarness.cleanupLocalWriteDir();
+    FlumeTestHarness.cleanupLocalWriteDir();
   }
 
   /**

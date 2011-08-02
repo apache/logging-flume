@@ -38,7 +38,7 @@ import com.cloudera.flume.handlers.endtoend.AckChecksumInjector;
 import com.cloudera.flume.handlers.hdfs.SeqfileEventSink;
 import com.cloudera.flume.handlers.rolling.ProcessTagger;
 import com.cloudera.flume.handlers.rolling.Tagger;
-import com.cloudera.util.BenchmarkHarness;
+import com.cloudera.util.FlumeTestHarness;
 import com.cloudera.util.FileUtil;
 
 public class TestNaiveFileWALManager {
@@ -137,8 +137,8 @@ public class TestNaiveFileWALManager {
    */
   @Test
   public void testRecovers() throws IOException, FlumeSpecException {
-    BenchmarkHarness.setupLocalWriteDir();
-    File tmp = BenchmarkHarness.tmpdir;
+    FlumeTestHarness.setupLocalWriteDir();
+    File tmp = FlumeTestHarness.tmpdir;
 
     // putting in large ridiculous constant
     NaiveFileWALManager wal = new NaiveFileWALManager(tmp);
@@ -173,7 +173,7 @@ public class TestNaiveFileWALManager {
     // logged, writing, sending, sent
     assertEquals(4, new File(tmp, "logged").list().length);
 
-    BenchmarkHarness.cleanupLocalWriteDir();
+    FlumeTestHarness.cleanupLocalWriteDir();
   }
 
   /**
@@ -183,8 +183,8 @@ public class TestNaiveFileWALManager {
   @Test
   public void testReframeRecovers() throws IOException, FlumeSpecException,
       InterruptedException {
-    BenchmarkHarness.setupLocalWriteDir();
-    File tmp = BenchmarkHarness.tmpdir;
+    FlumeTestHarness.setupLocalWriteDir();
+    File tmp = FlumeTestHarness.tmpdir;
 
     NaiveFileWALManager wal = new NaiveFileWALManager(tmp);
     wal.open(); // create dirs
@@ -213,7 +213,7 @@ public class TestNaiveFileWALManager {
     assertEquals(1, new File(tmp, "error").list().length);
     assertEquals(1, new File(tmp, "logged").list().length);
 
-    BenchmarkHarness.cleanupLocalWriteDir();
+    FlumeTestHarness.cleanupLocalWriteDir();
   }
 
   /**
@@ -222,8 +222,8 @@ public class TestNaiveFileWALManager {
   @Test
   public void testReframeMultipleOpenAcks() throws IOException,
       InterruptedException {
-    BenchmarkHarness.setupLocalWriteDir();
-    File tmp = BenchmarkHarness.tmpdir;
+    FlumeTestHarness.setupLocalWriteDir();
+    File tmp = FlumeTestHarness.tmpdir;
 
     NaiveFileWALManager wal = new NaiveFileWALManager(tmp);
     wal.open(); // create dirs
@@ -255,7 +255,7 @@ public class TestNaiveFileWALManager {
     assertEquals(1, new File(tmp, "error").list().length);
     assertEquals(1, new File(tmp, "logged").list().length);
 
-    BenchmarkHarness.cleanupLocalWriteDir();
+    FlumeTestHarness.cleanupLocalWriteDir();
 
   }
 
@@ -264,8 +264,8 @@ public class TestNaiveFileWALManager {
    */
   @Test
   public void testReframeUnframed() throws IOException, InterruptedException {
-    BenchmarkHarness.setupLocalWriteDir();
-    File tmp = BenchmarkHarness.tmpdir;
+    FlumeTestHarness.setupLocalWriteDir();
+    File tmp = FlumeTestHarness.tmpdir;
 
     NaiveFileWALManager wal = new NaiveFileWALManager(tmp);
     wal.open(); // create dirs
@@ -290,7 +290,7 @@ public class TestNaiveFileWALManager {
     assertEquals(1, new File(tmp, "error").list().length);
     assertEquals(1, new File(tmp, "logged").list().length);
 
-    BenchmarkHarness.cleanupLocalWriteDir();
+    FlumeTestHarness.cleanupLocalWriteDir();
 
   }
 
@@ -300,8 +300,8 @@ public class TestNaiveFileWALManager {
   @Test
   public void testReframeBadAckChecksum() throws IOException,
       InterruptedException {
-    BenchmarkHarness.setupLocalWriteDir();
-    File tmp = BenchmarkHarness.tmpdir;
+    FlumeTestHarness.setupLocalWriteDir();
+    File tmp = FlumeTestHarness.tmpdir;
 
     NaiveFileWALManager wal = new NaiveFileWALManager(tmp);
     wal.open(); // create dirs
@@ -335,7 +335,7 @@ public class TestNaiveFileWALManager {
     assertEquals(1, new File(tmp, "error").list().length);
     assertEquals(1, new File(tmp, "logged").list().length);
 
-    BenchmarkHarness.cleanupLocalWriteDir();
+    FlumeTestHarness.cleanupLocalWriteDir();
 
   }
 

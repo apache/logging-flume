@@ -40,6 +40,7 @@ import com.google.common.base.Preconditions;
 public class Benchmark {
   long start;
   long last;
+  long lastDelta;
   PrintWriter out;
   PrintWriter log;
   List<String> values = new ArrayList<String>();
@@ -125,6 +126,7 @@ public class Benchmark {
 
     // skip over gc time
     last = System.nanoTime(); // don't count gc time.
+    lastDelta = delta;
   }
 
   /**
@@ -141,6 +143,10 @@ public class Benchmark {
 
   public PrintWriter getLog() {
     return log;
+  }
+
+  public long getLastDelta() {
+    return lastDelta;
   }
 
   /**

@@ -42,7 +42,7 @@ import com.cloudera.flume.core.Driver.DriverState;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.aggregator.AccumulatorSink;
-import com.cloudera.util.BenchmarkHarness;
+import com.cloudera.util.FlumeTestHarness;
 import com.cloudera.util.Clock;
 
 /**
@@ -59,12 +59,12 @@ public class TestDiskFailoverBehavior {
 
   @Before
   public void setup() {
-    BenchmarkHarness.setupLocalWriteDir();
+    FlumeTestHarness.setupLocalWriteDir();
   }
 
   @After
   public void teardown() throws IOException {
-    BenchmarkHarness.cleanupLocalWriteDir();
+    FlumeTestHarness.cleanupLocalWriteDir();
   }
 
   LogicalNode setupAgent(long count, String agentSink) throws IOException,

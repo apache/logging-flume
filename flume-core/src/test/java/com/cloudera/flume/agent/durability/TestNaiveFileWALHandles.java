@@ -28,7 +28,7 @@ import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.handlers.hdfs.SeqfileEventSink;
-import com.cloudera.util.BenchmarkHarness;
+import com.cloudera.util.FlumeTestHarness;
 
 /**
  * Test for file handle exhaustion problems with WAL and DFO
@@ -45,8 +45,8 @@ public class TestNaiveFileWALHandles {
    */
   @Test
   public void testSeqfileEventSinkHandleExhaust() throws IOException, InterruptedException {
-    BenchmarkHarness.setupLocalWriteDir();
-    File tmp = BenchmarkHarness.tmpdir;
+    FlumeTestHarness.setupLocalWriteDir();
+    File tmp = FlumeTestHarness.tmpdir;
 
     for (int i = 0; i < 3000; i++) {
       File path = new File(tmp, "" + i);

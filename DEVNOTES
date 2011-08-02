@@ -26,6 +26,7 @@ we describe the contents of different directories.
 ./flume-distribution	Flume distribution package module
 ./flume-docs		Flume documentation generation module
 ./flume-log4j-appender  Flume log4j-avro appender module
+./flume-microbenchmarks Flume performance microbenchmark test suite
 ./flume-node-web	Flume node status servlet module
 ./flume-windows-dist	Flume node Windows distribution package module
 ./plugins/              Flume plugin modules (hello world skeleton and hbase)
@@ -175,6 +176,39 @@ You can then traverse into
 ./flume-distribution/target/flume-distribution-<version>-bin/flume-distribution-<version>.
 This directory is setup exactly as the tarball installation of Flume
 would be.
+
+
+=== Running Performance Microbenchmarks.
+
+The suite of source and sink microbenchmark tests (located in
+./flume-microbenchmarks/javaperf) can be run by using `mvn test -Pperf`.
+
+Just like with the normal test cases, you can use the
+`-Dtest=<TestClass>`.  So you can do:
+
+----
+mvn test -Pperf -Dtest=PerfThriftSinks
+----
+
+The logs should output lines that are formatted similarly to these
+lines:
+
+----
+[junit] nullsink,ubuntu,begin,10998597,552872,disk_loaded,2895851957,301662152,receiver_started,156786445,305698624,sink_started,105303802,305704456,thrift sink to thrift source done,39520160510,320377056,MB/s,4.579940971898899,23094932,320379168
+    [junit] [                 0us,            547,544 b mem]    Starting (after gc)
+    [junit] [        10,998,597ns d         10,998,597ns            552,872 b mem]      begin
+    [junit] [     2,914,443,637ns d      2,895,851,957ns        301,662,152 b mem]      disk_loaded
+    [junit] [     3,514,297,391ns d        156,786,445ns        305,698,624 b mem]      receiver_started
+    [junit] [     4,082,661,503ns d        105,303,802ns        305,704,456 b mem]      sink_started
+    [junit] [    44,235,264,972ns d     39,520,160,510ns        320,377,056 b mem]      thrift sink to thrift source done
+    [junit] [    44,878,445,315ns d         23,094,932ns        320,379,168 b mem]      MB/s,4.579940971898899
+----
+
+The first line is a summary of all the information in cvs format.  The
+other lines are in a tabular, more human-readable form.  The left
+column is cumulative time in ns and the middle is delta from previous
+in ns.  The last column of numbers the amount of memory in heap,
+followed but some comments or labels.
 
 
 === Building on Windows platforms

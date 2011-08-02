@@ -30,13 +30,12 @@ import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventUtil;
 import com.cloudera.flume.handlers.debug.MemorySinkSource;
-import com.cloudera.flume.handlers.debug.TextFileSource;
 import com.cloudera.flume.handlers.hdfs.SeqfileEventSink;
 import com.cloudera.flume.handlers.hdfs.WriteableEvent;
 import com.cloudera.flume.handlers.hdfs.WriteableEventKey;
 import com.cloudera.util.Benchmark;
 
-public class PerfHdfsIO implements ExamplePerfData {
+public class PerfHdfsIO {
 
   @Test
   public void testCopy() throws IOException, InterruptedException {
@@ -44,12 +43,7 @@ public class PerfHdfsIO implements ExamplePerfData {
     Benchmark b = new Benchmark("hdfs seqfile copy");
     b.mark("begin");
 
-    TextFileSource txt = new TextFileSource(HADOOP_DATA[0]);
-    txt.open();
-    MemorySinkSource mem = new MemorySinkSource();
-    mem.open();
-    EventUtil.dumpAll(txt, mem);
-    txt.close();
+    MemorySinkSource mem = FlumeBenchmarkHarness.synthInMem();
     b.mark("disk_loaded");
 
     File tmp = File.createTempFile("test", "tmp");
@@ -83,12 +77,7 @@ public class PerfHdfsIO implements ExamplePerfData {
     Benchmark b = new Benchmark("hdfs seqfile write");
     b.mark("begin");
 
-    TextFileSource txt = new TextFileSource(HADOOP_DATA[0]);
-    txt.open();
-    MemorySinkSource mem = new MemorySinkSource();
-    mem.open();
-    EventUtil.dumpAll(txt, mem);
-    txt.close();
+    MemorySinkSource mem = FlumeBenchmarkHarness.synthInMem();
     b.mark("disk_loaded");
 
     FlumeConfiguration conf = FlumeConfiguration.get();

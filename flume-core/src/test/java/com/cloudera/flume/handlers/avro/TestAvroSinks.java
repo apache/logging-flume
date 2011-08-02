@@ -193,8 +193,8 @@ public class TestAvroSinks implements ExampleData {
             mem.close();
             snk.close();
 
-            sendByteSum.addAndGet(snk.sentBytes.get());
-            LOG.info("sink " + id + " sent " + snk.sentBytes + " bytes");
+            sendByteSum.addAndGet(snk.getSentBytes());
+            LOG.info("sink " + id + " sent " + snk.getSentBytes() + " bytes");
             sendDone.countDown();
 
           } catch (IOException e) {

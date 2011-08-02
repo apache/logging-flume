@@ -23,9 +23,7 @@ import java.io.IOException;
 import org.junit.Test;
 
 import com.cloudera.flume.core.EventUtil;
-import com.cloudera.flume.handlers.debug.Log4jTextFileSource;
 import com.cloudera.flume.handlers.debug.MemorySinkSource;
-import com.cloudera.flume.handlers.debug.TextFileSource;
 import com.cloudera.flume.handlers.hdfs.SeqfileEventSink;
 import com.cloudera.flume.handlers.hdfs.SeqfileEventSource;
 import com.cloudera.util.Benchmark;
@@ -34,19 +32,13 @@ import com.cloudera.util.Benchmark;
  * This performance test tests the throughput of various disk reading and
  * writing sources and sinks.
  */
-public class PerfDiskIO implements ExamplePerfData {
+public class PerfDiskIO {
 
   @Test
   public void testWrite() throws IOException, InterruptedException {
     Benchmark b = new Benchmark("seqfile write");
     b.mark("begin");
-
-    TextFileSource txt = new TextFileSource(HADOOP_DATA[0]);
-    txt.open();
-    MemorySinkSource mem = new MemorySinkSource();
-    mem.open();
-    EventUtil.dumpAll(txt, mem);
-    txt.close();
+    MemorySinkSource mem = FlumeBenchmarkHarness.synthInMem();
     b.mark("disk_loaded");
 
     File tmp = File.createTempFile("test", "tmp");
@@ -62,6 +54,7 @@ public class PerfDiskIO implements ExamplePerfData {
     sink.close();
     b.mark("seqfile size", tmp.length());
     b.done();
+    mem = null; // allow mem to be freed.
 
     // //////// second phase using the file written in previous phase.
     Benchmark b2 = new Benchmark("seqfile_disk_read");
@@ -77,18 +70,4 @@ public class PerfDiskIO implements ExamplePerfData {
     b2.done();
   }
 
-  @Test
-  public void testReadFormat() throws IOException, InterruptedException {
-    Benchmark b = new Benchmark("log4j format read");
-    b.mark("begin");
-
-    Log4jTextFileSource txt = new Log4jTextFileSource(HADOOP_DATA[0]);
-    txt.open();
-    MemorySinkSource mem = new MemorySinkSource();
-    mem.open();
-    EventUtil.dumpAll(txt, mem);
-    txt.close();
-    b.mark("log4j_disk_loaded");
-    b.done();
-  }
 }

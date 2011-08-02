@@ -35,7 +35,7 @@ import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.handlers.debug.ConsoleEventSink;
 import com.cloudera.flume.handlers.rolling.ProcessTagger;
 import com.cloudera.flume.handlers.rolling.Tagger;
-import com.cloudera.util.BenchmarkHarness;
+import com.cloudera.util.FlumeTestHarness;
 import com.cloudera.util.FileUtil;
 
 /**
@@ -134,8 +134,8 @@ public class TestDiskFailoverManager {
    */
   @Test
   public void testRecovers() throws IOException, FlumeSpecException {
-    BenchmarkHarness.setupLocalWriteDir();
-    File tmp = BenchmarkHarness.tmpdir;
+    FlumeTestHarness.setupLocalWriteDir();
+    File tmp = FlumeTestHarness.tmpdir;
 
     // putting in large ridiculous constant
     NaiveFileFailoverManager dfo = new NaiveFileFailoverManager(tmp);
@@ -169,7 +169,7 @@ public class TestDiskFailoverManager {
     assertEquals(0,
         new File(tmp, NaiveFileFailoverManager.WRITINGDIR).list().length);
 
-    BenchmarkHarness.cleanupLocalWriteDir();
+    FlumeTestHarness.cleanupLocalWriteDir();
   }
 
   /**

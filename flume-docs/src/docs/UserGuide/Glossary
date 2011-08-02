@@ -41,4 +41,3 @@ The place where a node sends its data after all processing is done.
 
 Source::
 The place where a node gets its data stream.
-

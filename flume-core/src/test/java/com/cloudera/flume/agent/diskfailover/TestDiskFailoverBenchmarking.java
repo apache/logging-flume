@@ -32,7 +32,7 @@ import com.cloudera.flume.core.EventUtil;
 import com.cloudera.flume.handlers.debug.MemorySinkSource;
 import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.aggregator.CounterSink;
-import com.cloudera.util.BenchmarkHarness;
+import com.cloudera.util.FlumeTestHarness;
 
 /**
  * This check to make sure basic benchmarking should work -- ie when closed all
@@ -43,7 +43,7 @@ public class TestDiskFailoverBenchmarking {
   @Test
   public void benchmarkBeforeFailover() throws FlumeSpecException, IOException,
       InterruptedException {
-    BenchmarkHarness.setupLocalWriteDir();
+    FlumeTestHarness.setupLocalWriteDir();
     // String spec =
     // "{ benchinject => { benchreport(\"pre\") =>  { diskFailover => [console, counter(\"beforecount\")] } } }";
     String spec = "{ benchinject => { benchreport(\"pre\") =>  { diskFailover => counter(\"beforecount\") } } }";
@@ -60,14 +60,14 @@ public class TestDiskFailoverBenchmarking {
     CounterSink cnt = (CounterSink) ReportManager.get().getReportable(
         "beforecount");
     Assert.assertEquals(5, cnt.getCount());
-    BenchmarkHarness.cleanupLocalWriteDir();
+    FlumeTestHarness.cleanupLocalWriteDir();
 
   }
 
   @Test
   public void benchmarkAfterFailover() throws FlumeSpecException, IOException,
       InterruptedException {
-    BenchmarkHarness.setupLocalWriteDir();
+    FlumeTestHarness.setupLocalWriteDir();
     String spec = "{ benchinject => { diskFailover => { benchreport(\"post\") =>  counter(\"beforecount\") } } }";
     EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(
         LogicalNodeContext.testingContext()), spec);
@@ -82,13 +82,13 @@ public class TestDiskFailoverBenchmarking {
     CounterSink cnt = (CounterSink) ReportManager.get().getReportable(
         "beforecount");
     Assert.assertEquals(5, cnt.getCount());
-    BenchmarkHarness.cleanupLocalWriteDir();
+    FlumeTestHarness.cleanupLocalWriteDir();
   }
 
   @Test
   public void benchmarkBeforeWriteahead() throws FlumeSpecException,
       IOException, InterruptedException {
-    BenchmarkHarness.setupLocalWriteDir();
+    FlumeTestHarness.setupLocalWriteDir();
     String spec = "{ benchinject => { benchreport(\"pre\") =>  { diskFailover => counter(\"beforecount\") } } }";
     EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(
         LogicalNodeContext.testingContext()), spec);
@@ -103,13 +103,13 @@ public class TestDiskFailoverBenchmarking {
     CounterSink cnt = (CounterSink) ReportManager.get().getReportable(
         "beforecount");
     Assert.assertEquals(5, cnt.getCount());
-    BenchmarkHarness.cleanupLocalWriteDir();
+    FlumeTestHarness.cleanupLocalWriteDir();
   }
 
   @Test
   public void benchmarkAfterWriteahead() throws FlumeSpecException,
       IOException, InterruptedException {
-    BenchmarkHarness.setupLocalWriteDir();
+    FlumeTestHarness.setupLocalWriteDir();
 
     String spec = "{ benchinject => { ackedWriteAhead => { benchreport(\"post\") =>  counter(\"beforecount\") } } }";
     EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(
@@ -127,7 +127,7 @@ public class TestDiskFailoverBenchmarking {
 
     // +2 because of wal ack begin and end messages.
     Assert.assertEquals(5 + 2, cnt.getCount());
-    BenchmarkHarness.cleanupLocalWriteDir();
+    FlumeTestHarness.cleanupLocalWriteDir();
 
   }
 }

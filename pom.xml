@@ -54,6 +54,19 @@
       </modules>
     </profile>
 
+    <!-- perf profile for microbenchmarks -->
+    <profile>
+      <id>perf</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <modules>
+        <module>flume-core</module>
+	<module>flume-microbenchmarks</module>
+      </modules>
+    </profile>
+
+
     <!-- windows package build, docs not generated -->
     <profile>
       <id>windows</id>

@@ -40,17 +40,17 @@ import com.cloudera.flume.core.EventUtil;
 import com.cloudera.flume.handlers.rolling.ProcessTagger;
 import com.cloudera.flume.handlers.rolling.TimeTrigger;
 import com.cloudera.flume.reporter.ReportEvent;
-import com.cloudera.util.BenchmarkHarness;
+import com.cloudera.util.FlumeTestHarness;
 
 public class TestDiskFailoverDeco {
   @Before
   public void setup() {
-    BenchmarkHarness.setupLocalWriteDir();
+    FlumeTestHarness.setupLocalWriteDir();
   }
 
   @After
   public void cleanup() {
-    BenchmarkHarness.setupLocalWriteDir();
+    FlumeTestHarness.setupLocalWriteDir();
 
   }
 

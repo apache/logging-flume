@@ -21,8 +21,8 @@ import java.io.IOException;
 
 import org.junit.Test;
 
+import com.cloudera.flume.FlumeBenchmarkHarness;
 import com.cloudera.flume.conf.FlumeSpecException;
-import com.cloudera.util.BenchmarkHarness;
 
 /**
  * Benchmark tests on basic decorators.
@@ -40,9 +40,12 @@ public class BenchmarkBasicDecos {
   public void basicDecorator() throws FlumeSpecException, IOException,
       InterruptedException {
     for (String d : decos) {
-      BenchmarkHarness.doDecoBenchmark(d, BenchmarkHarness.varyMsgBytes);
-      BenchmarkHarness.doDecoBenchmark(d, BenchmarkHarness.varyNumAttrs);
-      BenchmarkHarness.doDecoBenchmark(d, BenchmarkHarness.varyValSize);
+      FlumeBenchmarkHarness.doDecoBenchmark(d,
+          FlumeBenchmarkHarness.createVariedMsgBytesCases());
+      FlumeBenchmarkHarness.doDecoBenchmark(d,
+          FlumeBenchmarkHarness.createVariedNumAttrsCases());
+      FlumeBenchmarkHarness.doDecoBenchmark(d,
+          FlumeBenchmarkHarness.createVariedValSizeCases());
     }
   }
 }

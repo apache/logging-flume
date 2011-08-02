@@ -23,23 +23,23 @@ import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.core.EventUtil;
+import com.cloudera.flume.handlers.avro.AvroEventSink;
+import com.cloudera.flume.handlers.avro.AvroEventSource;
 import com.cloudera.flume.handlers.batch.BatchingDecorator;
 import com.cloudera.flume.handlers.debug.MemorySinkSource;
 import com.cloudera.flume.handlers.debug.NullSink;
-import com.cloudera.flume.handlers.thrift.ThriftEventSink;
-import com.cloudera.flume.handlers.thrift.ThriftEventSource;
 import com.cloudera.util.Benchmark;
 
 /**
- * These tests are for microbenchmarking the thrift sink and server elements.
+ * These tests are for microbenchmarking the Avro sink and server elements.
  */
-public class PerfThriftSinks {
+public class PerfAvroSinks {
 
   /**
-   * mem -> ThriftEventSink -> ThriftEventSource -> NullSink
+   * mem -> AvroEventSink -> AvroEventSource -> NullSink
    */
   @Test
-  public void testThriftSend() throws IOException, InterruptedException {
+  public void testAvroSend() throws IOException, InterruptedException {
 
     Benchmark b = new Benchmark("nullsink");
     b.mark("begin");
@@ -47,7 +47,7 @@ public class PerfThriftSinks {
     b.mark("disk_loaded");
 
     FlumeConfiguration conf = FlumeConfiguration.get();
-    final ThriftEventSource tes = new ThriftEventSource(conf.getCollectorPort());
+    final AvroEventSource tes = new AvroEventSource(conf.getCollectorPort());
     tes.open();
     // need to drain the sink otherwise its queue will fill up with events!
     Thread drain = new Thread("drain") {
@@ -63,13 +63,13 @@ public class PerfThriftSinks {
     drain.start(); // drain the sink.
     b.mark("receiver_started");
 
-    final ThriftEventSink snk = new ThriftEventSink("0.0.0.0",
+    final AvroEventSink snk = new AvroEventSink("0.0.0.0",
         conf.getCollectorPort());
     snk.open();
     b.mark("sink_started");
 
     EventUtil.dumpAll(mem, snk);
-    b.mark("thrift sink to thrift source done");
+    b.mark("Avro sink to Avro source done");
     // MB/s = B/us
     b.mark("MB/s", (double) snk.getSentBytes()
         / (double) (b.getLastDelta() / 1000));
@@ -80,10 +80,10 @@ public class PerfThriftSinks {
   }
 
   /**
-   * mem -> batch(10) ThriftEventSink -> ThriftEventSource -> NullSink
+   * mem -> batch(10) AvroEventSink -> AvroEventSource -> NullSink
    */
   @Test
-  public void testThriftBatchSend10() throws IOException, InterruptedException {
+  public void testAvroBatchSend10() throws IOException, InterruptedException {
 
     Benchmark b = new Benchmark("nullsink");
     b.mark("begin");
@@ -91,7 +91,7 @@ public class PerfThriftSinks {
     b.mark("disk_loaded");
 
     FlumeConfiguration conf = FlumeConfiguration.get();
-    final ThriftEventSource tes = new ThriftEventSource(conf.getCollectorPort());
+    final AvroEventSource tes = new AvroEventSource(conf.getCollectorPort());
     tes.open();
     // need to drain the sink otherwise its queue will fill up with events!
     Thread drain = new Thread("drain") {
@@ -107,7 +107,7 @@ public class PerfThriftSinks {
     drain.start(); // drain the sink.
     b.mark("receiver_started");
 
-    final ThriftEventSink tsnk = new ThriftEventSink("0.0.0.0",
+    final AvroEventSink tsnk = new AvroEventSink("0.0.0.0",
         conf.getCollectorPort());
     // make size happen first all the time.
     final BatchingDecorator snk = new BatchingDecorator(tsnk, 10, 10000000);
@@ -115,7 +115,7 @@ public class PerfThriftSinks {
     b.mark("sink_started");
 
     EventUtil.dumpAll(mem, snk);
-    b.mark("thrift sink to thrift source done");
+    b.mark("Avro sink to Avro source done");
     // MB/s = B/us
     b.mark("MB/s", (double) tsnk.getSentBytes()
         / (double) (b.getLastDelta() / 1000));
@@ -127,10 +127,10 @@ public class PerfThriftSinks {
   }
 
   /**
-   * mem -> batch(10) ThriftEventSink -> ThriftEventSource -> NullSink
+   * mem -> batch(10) AvroEventSink -> AvroEventSource -> NullSink
    */
   @Test
-  public void testThriftBatchSend100() throws IOException, InterruptedException {
+  public void testAvroBatchSend100() throws IOException, InterruptedException {
 
     Benchmark b = new Benchmark("nullsink");
     b.mark("begin");
@@ -138,7 +138,7 @@ public class PerfThriftSinks {
     b.mark("disk_loaded");
 
     FlumeConfiguration conf = FlumeConfiguration.get();
-    final ThriftEventSource tes = new ThriftEventSource(conf.getCollectorPort());
+    final AvroEventSource tes = new AvroEventSource(conf.getCollectorPort());
     tes.open();
     // need to drain the sink otherwise its queue will fill up with events!
     Thread drain = new Thread("drain") {
@@ -154,7 +154,7 @@ public class PerfThriftSinks {
     drain.start(); // drain the sink.
     b.mark("receiver_started");
 
-    final ThriftEventSink tsnk = new ThriftEventSink("0.0.0.0",
+    final AvroEventSink tsnk = new AvroEventSink("0.0.0.0",
         conf.getCollectorPort());
     // make size happen first all the time.
     final BatchingDecorator snk = new BatchingDecorator(tsnk, 100, 10000000);
@@ -162,7 +162,7 @@ public class PerfThriftSinks {
     b.mark("sink_started");
 
     EventUtil.dumpAll(mem, snk);
-    b.mark("thrift sink to thrift source done");
+    b.mark("Avro sink to Avro source done");
     // MB/s = B/us
     b.mark("MB/s", (double) tsnk.getSentBytes()
         / (double) (b.getLastDelta() / 1000));
@@ -172,7 +172,7 @@ public class PerfThriftSinks {
     drain.interrupt();
     b.done();
   }
-  
+
   /**
    * This is slighlty different by using another thread to kick off the sink. It
    * shouldn't really matter much.
@@ -181,10 +181,10 @@ public class PerfThriftSinks {
    * 
    * text -> mem
    * 
-   * mem -> ThriftEventSink -> ThriftEventSource -> NullSink
+   * mem -> AvroEventSink -> AvroEventSource -> NullSink
    **/
   @Test
-  public void testThriftSendMulti() throws IOException, InterruptedException {
+  public void testAvroSendMulti() throws IOException, InterruptedException {
 
     Benchmark b = new Benchmark("nullsink");
     b.mark("begin");
@@ -193,7 +193,7 @@ public class PerfThriftSinks {
     b.mark("disk_loaded");
 
     FlumeConfiguration conf = FlumeConfiguration.get();
-    final ThriftEventSource tes = new ThriftEventSource(conf.getCollectorPort());
+    final AvroEventSource tes = new AvroEventSource(conf.getCollectorPort());
     tes.open();
     // need to drain the sink otherwise its queue will fill up with events!
     Thread drain = new Thread("drain") {
@@ -209,7 +209,7 @@ public class PerfThriftSinks {
     drain.start(); // drain the sink.
     b.mark("receiver_started");
 
-    final ThriftEventSink snk = new ThriftEventSink("0.0.0.0",
+    final AvroEventSink snk = new AvroEventSink("0.0.0.0",
         conf.getCollectorPort());
 
     Thread t = new Thread() {
@@ -226,7 +226,7 @@ public class PerfThriftSinks {
     b.mark("sink_started");
 
     EventUtil.dumpAll(mem, snk);
-    b.mark("thrift sink to thrift source done");
+    b.mark("Avro sink to Avro source done");
     // MB/s = B/us
     b.mark("MB/s", (double) snk.getSentBytes()
         / (double) (b.getLastDelta() / 1000));
@@ -240,18 +240,18 @@ public class PerfThriftSinks {
   }
 
   /**
-   * Here we are using the ThriftRawEventSink instead of the ThriftEventSink
+   * Here we are using the AvroRawEventSink instead of the AvroEventSink
    * 
    * Pipeline is:
    * 
    * text -> mem
    * 
-   * mem -> ThriftRawEventSink -> ThriftEventSource -> NullSink
+   * mem -> AvroRawEventSink -> AvroEventSource -> NullSink
    * 
    * @throws InterruptedException
    */
   @Test
-  public void testThriftRawSend() throws IOException, InterruptedException {
+  public void testAvroRawSend() throws IOException, InterruptedException {
 
     Benchmark b = new Benchmark("nullsink");
     b.mark("begin");
@@ -260,7 +260,7 @@ public class PerfThriftSinks {
     b.mark("disk_loaded");
 
     FlumeConfiguration conf = FlumeConfiguration.get();
-    final ThriftEventSource tes = new ThriftEventSource(conf.getCollectorPort());
+    final AvroEventSource tes = new AvroEventSource(conf.getCollectorPort());
     tes.open();
     // need to drain the sink otherwise its queue will fill up with events!
     Thread drain = new Thread("drain") {
@@ -276,13 +276,13 @@ public class PerfThriftSinks {
     drain.start(); // drain the sink.
     b.mark("receiver_started");
 
-    final ThriftEventSink snk = new ThriftEventSink("0.0.0.0",
+    final AvroEventSink snk = new AvroEventSink("0.0.0.0",
         conf.getCollectorPort());
     snk.open();
     b.mark("sink_started");
 
     EventUtil.dumpAll(mem, snk);
-    b.mark("thrift sink to thrift source done");
+    b.mark("Avro sink to Avro source done");
     // MB/s = B/us
     b.mark("MB/s", (double) snk.getSentBytes()
         / (double) (b.getLastDelta() / 1000));

@@ -116,6 +116,10 @@ public class ThriftEventSink extends EventSink.Base {
     }
   }
 
+  public long getSentBytes() {
+    return sentBytes.get();
+  }
+
   @Override
   public ReportEvent getMetrics() {
     ReportEvent rpt = super.getMetrics();

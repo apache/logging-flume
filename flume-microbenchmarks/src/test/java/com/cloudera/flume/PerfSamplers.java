@@ -25,7 +25,6 @@ import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventUtil;
 import com.cloudera.flume.handlers.debug.MemorySinkSource;
 import com.cloudera.flume.handlers.debug.NullSink;
-import com.cloudera.flume.handlers.debug.TextFileSource;
 import com.cloudera.flume.reporter.aggregator.CounterSink;
 import com.cloudera.flume.reporter.sampler.IntervalSampler;
 import com.cloudera.flume.reporter.sampler.ProbabilitySampler;
@@ -35,17 +34,13 @@ import com.cloudera.util.Benchmark;
 /**
  * Performance testing for the various samplers.
  */
-public class PerfSamplers implements ExamplePerfData {
+public class PerfSamplers {
 
   @Test
   public void testReservoirSampler() throws IOException, InterruptedException {
     Benchmark b = new Benchmark("Reservoir sampler + nullsink");
     b.mark("begin");
-    TextFileSource txt = new TextFileSource(HADOOP_DATA[0]);
-    txt.open();
-    MemorySinkSource mem = new MemorySinkSource();
-    mem.open();
-    EventUtil.dumpAll(txt, mem);
+    MemorySinkSource mem = FlumeBenchmarkHarness.synthInMem();
     b.mark("disk_loaded");
 
     NullSink nullsnk = new NullSink();
@@ -82,11 +77,7 @@ public class PerfSamplers implements ExamplePerfData {
   public void testIntervalSampler() throws IOException, InterruptedException {
     Benchmark b = new Benchmark("Interval sampler + nullsink");
     b.mark("begin");
-    TextFileSource txt = new TextFileSource(HADOOP_DATA[0]);
-    txt.open();
-    MemorySinkSource mem = new MemorySinkSource();
-    mem.open();
-    EventUtil.dumpAll(txt, mem);
+    MemorySinkSource mem = FlumeBenchmarkHarness.synthInMem();
     b.mark("disk_loaded");
 
     NullSink nullsnk = new NullSink();
@@ -123,12 +114,7 @@ public class PerfSamplers implements ExamplePerfData {
   public void testProbabilitySampler() throws IOException, InterruptedException {
     Benchmark b = new Benchmark("Reservoir sampler + nullsink");
     b.mark("begin");
-    TextFileSource txt = new TextFileSource(HADOOP_DATA[0]);
-    txt.open();
-    MemorySinkSource mem = new MemorySinkSource();
-    mem.open();
-    EventUtil.dumpAll(txt, mem);
-
+    MemorySinkSource mem = FlumeBenchmarkHarness.synthInMem();
     b.mark("disk_loaded");
 
     NullSink nullsnk = new NullSink();
