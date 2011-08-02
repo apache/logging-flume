@@ -380,6 +380,12 @@ specified pass through.
 events that are modified so that *only* the metadata attributes specified pass 
 through.
 
++digest("_algorithm_","_attr_", base64="boolean")+ :: The digest decorator
+calculates a message digest of the event body and writes this value (as bytes)
+to the _attr_ attribute.  The valid algorithms are those valid for
++java.security.MessageDigest+ and includes MD5, SHA-1, SHA-256, SHA-384 and
+SHA-512. It can optionally base64 encode the digest value (defaults to false).
+
 +format("_pattern_")+ :: The format decorator outputs inputted events that are 
 modified so that their bodies are replaced with an escaped version of the 
 +_pattern_+ argument.  Since checksums rely on body data, this should only be 

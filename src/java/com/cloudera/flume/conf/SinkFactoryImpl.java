@@ -32,6 +32,7 @@ import com.cloudera.flume.agent.AgentSink;
 import com.cloudera.flume.agent.diskfailover.DiskFailoverDeco;
 import com.cloudera.flume.agent.durability.NaiveFileWALDeco;
 import com.cloudera.flume.collector.CollectorSink;
+import com.cloudera.flume.core.DigestDecorator;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSinkDecorator;
 import com.cloudera.flume.core.FormatterDecorator;
@@ -176,6 +177,9 @@ public class SinkFactoryImpl extends SinkFactory {
 
       // format the output
       { "format", FormatterDecorator.builder() },
+
+      // message digest of body
+      { "digest", DigestDecorator.builder() },
 
       // extractors
       { "regex", RegexExtractor.builder() },
