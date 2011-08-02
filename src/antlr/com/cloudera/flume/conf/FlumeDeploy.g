@@ -29,7 +29,6 @@ tokens {
   BACKUP;
   LET;
   ROLL;
-  FAILCHAIN;
   DECO;
   SOURCE;
   MULTI;
@@ -123,7 +122,6 @@ simpleSink	:	'[' multiSink ']'  	-> ^(MULTI multiSink)
 		|	'<' failoverSink '>'	-> ^(BACKUP failoverSink)
 		|   letSink                 -> letSink
         |   rollSink                -> rollSink
-        |   failoverChain           -> failoverChain 
 		; 
  			
 
@@ -134,8 +132,6 @@ letSink         :  'let' Identifier ':=' simpleSink 'in' simpleSink
                                   -> ^(LET Identifier simpleSink+);
 rollSink        :  'roll' args '{' simpleSink '}'
                                   -> ^(ROLL simpleSink args);
-failoverChain   :  'failchain' args '{' simpleSink '}'
-                                  -> ^(FAILCHAIN simpleSink args);
 
 args    : '(' ( arglist (',' kwarglist)?  ) ')' -> arglist kwarglist?
         | '(' kwarglist ')' -> kwarglist? 

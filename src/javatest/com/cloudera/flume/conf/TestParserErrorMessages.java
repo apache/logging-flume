@@ -125,7 +125,7 @@ public class TestParserErrorMessages {
       LOG.info(e.getMessage());
       // this is a friendlier exception
       assertEquals(
-          "Lexer error at char '2' at line 1 char 24",
+          "Lexer error at char '1' at line 1 char 24",
           e.getMessage());
     }
 

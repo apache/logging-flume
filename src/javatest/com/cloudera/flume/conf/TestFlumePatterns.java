@@ -39,10 +39,9 @@ public class TestFlumePatterns {
   public static Logger LOG = Logger.getLogger(TestFlumePatterns.class);
 
   final static String megasink = "{ deco1 => { deco2 =>  "
-      + "let letvar := test in [ < sink1 ? sink2> , sink3, { deco3 => sink4}  ]  } } ";
-  final static String megasink2 = "failchain (\"foo\") { "
-      + "{ deco1 => roll (200) { let letvar := test in "
-      + "[ < sink1 ? sink2> , sink3, { deco3 => sink4}  ] } } }";
+      + "[ < sink1 ? sink2> , sink3, { deco3 => sink4}  ] } } ";
+  final static String megasink2 = "{ deco1 => roll (200) { "
+      + "[ < sink1 ? sink2> , sink3, { deco3 => sink4}  ] } }";
 
   static CommonTree parse = null;
   static CommonTree parse2 = null;

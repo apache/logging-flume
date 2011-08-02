@@ -30,8 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.ExampleData;
+import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.handlers.rolling.RollSink;
-import com.cloudera.flume.master.availability.FailoverChainSink;
 
 /**
  * This code tests the parser and config spec error exceptions and data. Thses
@@ -279,13 +279,8 @@ public class TestFlumeBuilder implements ExampleData {
   @Test
   public void testRollSink() throws FlumeSpecException, RecognitionException {
     String roll = "roll (200) { null } ";
-    assertTrue(FlumeBuilder.buildSink(new Context(), roll) instanceof RollSink);
-  }
-
-  @Test
-  public void testFailChain() throws FlumeSpecException {
-    String failchain = "failchain (\"foo\", \"bar\",\"baz\") { logicalSink(\"%s\") } ";
-    assertTrue(FlumeBuilder.buildSink(new Context(), failchain) instanceof FailoverChainSink);
+    EventSink snk = FlumeBuilder.buildSink(new Context(), roll);
+    assertTrue(snk instanceof RollSink);
   }
 
   /**
