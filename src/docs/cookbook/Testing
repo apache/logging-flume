@@ -63,7 +63,13 @@ Here's a summary of what the options mean.
 [horizontal]
 +-1+ :: one shot execution.  This makes the node instance not use the
 heartbeating mechanism to get a config.
-+-s+ :: starts the Flume node without starting the http status web server.
+
++-s+ :: starts the Flume node without starting the node's http status
+web server.  If the status web server is started, a Flume node's
+status server will keep the process alive even if in one-shot mode.
+If the -s flag is specified along with one-shot mode (-1), the Flume
+node will exit after all logical nodes complete.
+
 +-c "node:src|snk;"+ :: Starts the node with the given configuration
  definition.  NOTE: If not using -1, this will be invalidated
  upon the first heartbeat to the master.
@@ -129,7 +135,7 @@ directly.  The next example pipes data from a program into Flume which
 then delivers it.
 
 ----
-$ <external process> | flume node_nowatch -1 -n foo -c 'foo:console|agentBESink("collector");'
+$ <external process> | flume node_nowatch -1 -s -n foo -c 'foo:console|agentBESink("collector");'
 ----
 
 Ideally, you could write data to a named pipe and just have Flume read
@@ -139,13 +145,13 @@ named pipes in a Linux environment.  However, you could pipe data to a
 Flume node listening on the stdin console:
 
 ----
-$ tail -f namedpipe | flume node_nowatch -1 -n foo -c 'foo:console|agentBESink;'
+$ tail -f namedpipe | flume node_nowatch -1 -s -n foo -c 'foo:console|agentBESink;'
 ----
 
 Or you can use the exec source to get its output data:
 
 ----
-$ flume node_nowatch -1 -n bar -c 'bar:exec("cat pipe")|agentBESink;' 
+$ flume node_nowatch -1 -s -n bar -c 'bar:exec("cat pipe")|agentBESink;' 
 ----
 
 === Monitoring nodes

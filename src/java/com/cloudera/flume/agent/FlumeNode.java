@@ -164,6 +164,7 @@ public class FlumeNode implements Reportable {
           new FlumeNodeWALNotifier(this.walMans));
       this.reportPusher = new MasterReportPusher(conf, ReportManager.get(),
           rpcMan);
+
     } else {
       this.liveMan = null;
       this.reportPusher = null;
@@ -250,6 +251,8 @@ public class FlumeNode implements Reportable {
     }
 
     if (chokeMan != null) {
+      // JVM exits if only daemons threads remain.
+      chokeMan.setDaemon(true);
       chokeMan.start();
     }
 
