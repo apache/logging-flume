@@ -21,6 +21,8 @@ package com.cloudera.flume.master;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.Map.Entry;
 
 import org.slf4j.Logger;
@@ -69,7 +71,7 @@ public class StatusManager implements Reportable {
   };
 
   // runtime state of the flume system
-  final Map<String, NodeStatus> statuses = new HashMap<String, NodeStatus>();  
+  final Map<String, NodeStatus> statuses = new HashMap<String, NodeStatus>();
 
   public boolean updateHeartbeatStatus(String host, String physicalNode,
       String logicalNode, NodeState stat, long version) {
@@ -151,7 +153,9 @@ public class StatusManager implements Reportable {
         + "<th>last seen</th></tr>");
 
     long now = Clock.unixTime();
-    for (Entry<String, NodeStatus> e : getNodeStatuses().entrySet()) {
+    SortedMap<String, NodeStatus> sorted = new TreeMap<String, NodeStatus>(
+        getNodeStatuses());
+    for (Entry<String, NodeStatus> e : sorted.entrySet()) {
       status.append("\n<tr>");
       NodeStatus v = e.getValue();
       String version = (v.version == 0) ? "none" : new Date(v.version)
