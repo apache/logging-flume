@@ -22,8 +22,10 @@ import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryUsage;
 import java.lang.management.RuntimeMXBean;
 import java.util.Date;
+import java.util.Map;
 
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.ReportUtil;
 import com.cloudera.flume.reporter.Reportable;
 
 /**
@@ -43,7 +45,7 @@ public class FlumeVMInfo implements Reportable {
   }
 
   @Override
-  public ReportEvent getReport() {
+  public ReportEvent getMetrics() {
     ReportEvent rpt = new ReportEvent(getName());
 
     // TODO (jon) class loader
@@ -85,6 +87,11 @@ public class FlumeVMInfo implements Reportable {
     // TODO (jon) threads
 
     return rpt;
+  }
+
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    return ReportUtil.noChildren();
   }
 
 }

@@ -205,7 +205,7 @@ public class TestMasterServers {
     
     assertEquals(1, reportables.size());
     assertNotNull(reportables.get("test-report"));
-    assertEquals("baz", reportables.get("test-report").getReport().getStringMetric("bar"));
+    assertEquals("baz", reportables.get("test-report").getMetrics().getStringMetric("bar"));
     
   }
 

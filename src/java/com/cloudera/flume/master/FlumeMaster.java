@@ -23,11 +23,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.Enumeration;
+import java.util.Map;
 import java.util.Set;
 
 import javax.ws.rs.core.Application;
@@ -48,6 +46,7 @@ import com.cloudera.flume.master.flows.FlowConfigManager;
 import com.cloudera.flume.master.logical.LogicalConfigurationManager;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
+import com.cloudera.flume.reporter.ReportUtil;
 import com.cloudera.flume.reporter.Reportable;
 import com.cloudera.flume.reporter.server.AvroReportServer;
 import com.cloudera.flume.reporter.server.ThriftReportServer;
@@ -399,9 +398,9 @@ public class FlumeMaster implements Reportable {
    */
 
   public void reportHtml(Writer o) throws IOException {
-    statman.getReport().toHtml(o);
-    specman.getReport().toHtml(o);
-    cmdman.getReport().toHtml(o);
+    statman.getMetrics().toHtml(o);
+    specman.getMetrics().toHtml(o);
+    cmdman.getMetrics().toHtml(o);
   }
 
   /**
@@ -434,7 +433,7 @@ public class FlumeMaster implements Reportable {
   }
 
   @Override
-  public ReportEvent getReport() {
+  public ReportEvent getMetrics() {
     ReportEvent rpt = new ReportEvent(getName());
 
     rpt.setStringMetric(REPORTKEY_HOSTNAME, NetUtils.localhost());
@@ -445,12 +444,18 @@ public class FlumeMaster implements Reportable {
     return rpt;
   }
 
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    return ReportUtil.noChildren();
+  }
+
   /**
    * This returns true if the host running this process is in the list of master
    * servers. The index is set in the FlumeConfiguration. If the host doesn't
    * match, false is returned. If the hostnames in the master server list fail
    * to resolve, an exception is thrown.
    */
+
   public static boolean inferMasterHostID() throws UnknownHostException,
       SocketException {
     String masters = FlumeConfiguration.get().getMasterServers();

@@ -163,7 +163,7 @@ public class PollingSource extends EventSource.Base {
         Pollable p = new Pollable() {
           @Override
           public Event poll() {
-            return FlumeNode.getInstance().getReport();
+            return FlumeNode.getInstance().getMetrics();
           }
         };
 

@@ -111,7 +111,7 @@ public class BenchmarkReportDecorator<S extends EventSink> extends
       b.mark("benchmarkDone");
       b.done();
 
-      ReportEvent rpt = getReport();
+      ReportEvent rpt = getMetrics();
       LOG.info(rpt.toText());
       reportSink.append(rpt);
 
@@ -119,9 +119,9 @@ public class BenchmarkReportDecorator<S extends EventSink> extends
       Benchmark b = benchmarks.get(tag).getLeft();
       b.mark("benchmarkError");
       b.done();
-      LOG.info(getReport().toText());
+      LOG.info(getMetrics().toText());
 
-      ReportEvent rpt = getReport();
+      ReportEvent rpt = getMetrics();
       LOG.info(rpt.toText());
       reportSink.append(rpt);
     } else {
@@ -142,7 +142,7 @@ public class BenchmarkReportDecorator<S extends EventSink> extends
   public void close() throws IOException, InterruptedException {
     super.close();
     reportSink.close();
-    LOG.info(new String(getReport().getBody()));
+    LOG.info(new String(getMetrics().getBody()));
   }
 
   @Override
@@ -151,7 +151,7 @@ public class BenchmarkReportDecorator<S extends EventSink> extends
   }
 
   @Override
-  public ReportEvent getReport() {
+  public ReportEvent getMetrics() {
     ReportEvent rpt = new ReportEvent(getName());
 
     StringWriter sw = new StringWriter();

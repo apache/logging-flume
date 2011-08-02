@@ -640,7 +640,7 @@ public class TestCollectorSink {
       t.join();
 
       cs.close();
-      long rolls = roll.getReport().getLongMetric(RollSink.A_ROLLS);
+      long rolls = roll.getMetrics().getLongMetric(RollSink.A_ROLLS);
       LOG.info("rolls {} ", rolls);
       LOG.info("start={} end={}", fakeMasterRpc.startCount,
           fakeMasterRpc.endCount);

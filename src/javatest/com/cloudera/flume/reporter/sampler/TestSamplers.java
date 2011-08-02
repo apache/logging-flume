@@ -73,13 +73,13 @@ public class TestSamplers {
       }
 
       @Override
-      public ReportEvent getReport() {
+      public ReportEvent getMetrics() {
         return null;
       }
 
       @Override
       public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
-        reports.put(namePrefix + getName(), getReport());
+        reports.put(namePrefix + getName(), getMetrics());
       }
 
     };
@@ -167,13 +167,13 @@ public class TestSamplers {
       }
 
       @Override
-      public ReportEvent getReport() {
+      public ReportEvent getMetrics() {
         return null;
       }
 
       @Override
       public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
-        reports.put(namePrefix + getName(), getReport());
+        reports.put(namePrefix + getName(), getMetrics());
       }
     };
     IntervalSampler<ScheduledHistoryReporter<CounterSink>> hist = new IntervalSampler<ScheduledHistoryReporter<CounterSink>>(
@@ -230,13 +230,13 @@ public class TestSamplers {
       }
 
       @Override
-      public ReportEvent getReport() {
+      public ReportEvent getMetrics() {
         return null;
       }
 
       @Override
       public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
-        reports.put(namePrefix + getName(), getReport());
+        reports.put(namePrefix + getName(), getMetrics());
       }
     };
     ProbabilitySampler<ScheduledHistoryReporter<CounterSink>> sample = new ProbabilitySampler<ScheduledHistoryReporter<CounterSink>>(

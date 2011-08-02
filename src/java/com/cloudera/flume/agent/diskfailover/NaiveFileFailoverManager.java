@@ -43,6 +43,7 @@ import com.cloudera.flume.handlers.rolling.RollSink;
 import com.cloudera.flume.handlers.rolling.RollTrigger;
 import com.cloudera.flume.handlers.rolling.Tagger;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.ReportUtil;
 import com.cloudera.flume.reporter.Reportable;
 import com.cloudera.util.FileUtil;
 import com.google.common.base.Preconditions;
@@ -239,8 +240,8 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
       throws IOException {
     File dir = getDir(State.WRITING);
     final String tag = tagger.newTag();
-    EventSink curSink = new SeqfileEventSink(
-        new File(dir, tag).getAbsoluteFile());
+    EventSink curSink = new SeqfileEventSink(new File(dir, tag)
+        .getAbsoluteFile());
     writingQ.add(tag);
     DFOData data = new DFOData(tag);
     table.put(tag, data);
@@ -475,7 +476,8 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
     }
 
     @Override
-    public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+    public void getReports(String namePrefix,
+        Map<String, ReportEvent> reports) {
       super.getReports(namePrefix, reports);
       src.getReports(namePrefix + getName() + ".", reports);
     }
@@ -583,7 +585,7 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
   }
 
   @Override
-  synchronized public ReportEvent getReport() {
+  synchronized public ReportEvent getMetrics() {
     ReportEvent rpt = new ReportEvent(getName());
 
     // historical counts
@@ -601,6 +603,11 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
     rpt.setLongMetric(A_MSG_WRITING, writingEvtCount.get());
     rpt.setLongMetric(A_MSG_READ, readEvtCount.get());
     return rpt;
+  }
+
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    return ReportUtil.noChildren();
   }
 
 }

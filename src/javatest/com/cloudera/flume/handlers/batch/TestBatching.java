@@ -183,7 +183,7 @@ public class TestBatching {
     }
     snk.close();
 
-    ReportEvent rpt = snk.getReport();
+    ReportEvent rpt = snk.getMetrics();
     LOG.info(rpt.toString());
     assertEquals(Long.valueOf(0), rpt.getLongMetric(BatchingDecorator.R_FILLED));
     assertEquals(Long.valueOf(10), rpt.getLongMetric(BatchingDecorator.R_EMPTY));

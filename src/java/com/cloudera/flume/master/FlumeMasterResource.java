@@ -65,10 +65,10 @@ public class FlumeMasterResource {
   @Produces("application/json")
   public JSONObject getMaster() {
     try {
-      JSONObject o = ReportUtil.toJSONObject(master.getReport());
+      JSONObject o = ReportUtil.toJSONObject(master.getMetrics());
       o.put("sysInfo", ReportUtil.toJSONObject(master.getSystemInfo()
-          .getReport()));
-      o.put("vmInfo", ReportUtil.toJSONObject(master.getVMInfo().getReport()));
+          .getMetrics()));
+      o.put("vmInfo", ReportUtil.toJSONObject(master.getVMInfo().getMetrics()));
       o.put("statusLink", uriInfo.getAbsolutePathBuilder().path("../status")
           .build().toASCIIString());
       o.put("configLink", uriInfo.getAbsolutePathBuilder().path("../configs")

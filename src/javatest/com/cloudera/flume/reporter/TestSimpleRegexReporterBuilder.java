@@ -54,7 +54,7 @@ public class TestSimpleRegexReporterBuilder implements ExampleData {
     mr.append(new EventImpl(sample.getBytes()));
 
     for (EventSink r : sinks) {
-      System.out.println(r.getReport());
+      System.out.println(r.getMetrics());
     }
   }
 }

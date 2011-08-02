@@ -60,7 +60,7 @@ public class CounterSink extends EventSink.Base {
   public void close() throws IOException, InterruptedException {
     isOpen = false;
     LOG.info(name + " closed, counted " + cnt + " events");
-    LOG.info("report: " + getReport().toText());
+    LOG.info("report: " + getMetrics().toText());
   }
 
   @Override
@@ -76,6 +76,14 @@ public class CounterSink extends EventSink.Base {
     return name;
   }
 
+  @Override
+  public ReportEvent getMetrics() {
+    ReportEvent re = super.getMetrics();
+    re.setLongMetric(name, cnt.get());
+    return re;
+  }
+
+  @Deprecated
   @Override
   public ReportEvent getReport() {
     ReportEvent re = super.getReport();

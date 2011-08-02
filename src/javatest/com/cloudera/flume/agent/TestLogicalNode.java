@@ -90,7 +90,7 @@ public class TestLogicalNode {
     long sleep = 1000;
     Clock.sleep(sleep); // sleep is not the right approach
 
-    long reconfs = node.getReport().getLongMetric(LogicalNode.A_RECONFIGURES);
+    long reconfs = node.getMetrics().getLongMetric(LogicalNode.A_RECONFIGURES);
     LOG.info("reconfigured " + reconfs + " times in " + sleep + " ms");
     // failed, and then to last good which is null|null;
     assertEquals(1, reconfs);

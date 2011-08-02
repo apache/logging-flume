@@ -17,13 +17,16 @@
  */
 package com.cloudera.flume.handlers.debug;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
+import org.codehaus.jettison.json.JSONException;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
@@ -31,7 +34,10 @@ import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
+import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
+import com.cloudera.flume.reporter.ReportTestUtils;
+import com.cloudera.flume.reporter.ReportUtil;
 import com.cloudera.flume.reporter.aggregator.CounterSink;
 
 /**
@@ -124,4 +130,23 @@ public class TestLazyOpen {
     assertEquals(1, cnt.getCount());
     snk.close();
   }
+
+  /**
+   * Test insistent append metrics
+   */
+  @Test
+  public void testLazyOpenMetrics() throws JSONException, FlumeSpecException,
+      IOException, InterruptedException {
+    ReportTestUtils.setupSinkFactory();
+
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(),
+        "lazyOpen one");
+    ReportEvent rpt = ReportUtil.getFlattenedReport(snk);
+    LOG.info(ReportUtil.toJSONObject(rpt).toString());
+    assertNotNull(rpt.getStringMetric(LazyOpenDecorator.A_ACTUALLY_OPEN));
+    assertNotNull(rpt.getStringMetric(LazyOpenDecorator.A_LOGICALLY_OPEN));
+    assertEquals("One", rpt.getStringMetric("One.name"));
+
+  }
+
 }

@@ -89,7 +89,7 @@ public class BenchmarkInjectDecorator<S extends EventSink> extends
 
   @Override
   public void close() throws IOException, InterruptedException {
-    super.append(tagBench(getReport(), BENCH_STOP));
+    super.append(tagBench(getMetrics(), BENCH_STOP));
     super.close();
 
   }

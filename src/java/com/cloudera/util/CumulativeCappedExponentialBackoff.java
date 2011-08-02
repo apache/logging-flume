@@ -67,8 +67,8 @@ public class CumulativeCappedExponentialBackoff extends
   }
 
   @Override
-  public ReportEvent getReport() {
-    ReportEvent rpt = super.getReport();
+  public ReportEvent getMetrics() {
+    ReportEvent rpt = super.getMetrics();
     rpt.setLongMetric(A_CUMULATIVECAP, cumulativeCap);
     return rpt;
   }

@@ -57,7 +57,7 @@ public class TestBenchmarkDeco implements ExampleData {
     connect.join(Long.MAX_VALUE);
     src.close();
     snk4.close();
-    snk2.getReport().toText(new OutputStreamWriter(System.err));
+    snk2.getMetrics().toText(new OutputStreamWriter(System.err));
   }
 
   @Test
@@ -74,7 +74,7 @@ public class TestBenchmarkDeco implements ExampleData {
     connect.join(Long.MAX_VALUE);
     src.close();
     snk3.close();
-    snk2.getReport().toText(new OutputStreamWriter(System.err));
+    snk2.getMetrics().toText(new OutputStreamWriter(System.err));
   }
 
   @Test

@@ -123,8 +123,8 @@ public class AvroEventSink extends EventSink.Base {
    * {@inheritDoc}
    */
   @Override
-  public ReportEvent getReport() {
-    ReportEvent rpt = super.getReport();
+  public ReportEvent getMetrics() {
+    ReportEvent rpt = super.getMetrics();
     rpt.setStringMetric(A_SERVERHOST, host);
     rpt.setLongMetric(A_SERVERPORT, port);
     rpt.setLongMetric(A_SENTBYTES, sentBytes.get());

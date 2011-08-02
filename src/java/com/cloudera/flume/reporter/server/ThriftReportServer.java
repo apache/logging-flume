@@ -105,7 +105,7 @@ public class ThriftReportServer extends ThriftServer implements
     ReportManager reportManager = ReportManager.get();
     Map<String, Reportable> reports = reportManager.getReportables();
     if (reports.containsKey(reportName)) {
-      return reportToThrift(reports.get(reportName).getReport());
+      return reportToThrift(reports.get(reportName).getMetrics());
     }
 
     return null;
@@ -122,7 +122,7 @@ public class ThriftReportServer extends ThriftServer implements
     Map<String, Reportable> reports = reportManager.getReportables();
 
     for (Entry<String, Reportable> e : reports.entrySet()) {
-      ThriftFlumeReport report = reportToThrift(e.getValue().getReport());
+      ThriftFlumeReport report = reportToThrift(e.getValue().getMetrics());
       retMap.put(e.getKey(), report);
     }
     return retMap;

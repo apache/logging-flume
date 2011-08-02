@@ -235,7 +235,7 @@ public class BenchmarkHarness {
         .getReportables());
     for (Map.Entry<String, Reportable> ent : sorted.entrySet()) {
       String params = ent.getKey();
-      ReportEvent r = ent.getValue().getReport();
+      ReportEvent r = ent.getValue().getMetrics();
       System.out.println(new String(r.toString()));
       System.err.print(new Date(r.getTimestamp()) + ",");
       System.err.print(params + ",");

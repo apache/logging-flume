@@ -23,15 +23,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
-import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.master.ConfigManager;
 import com.cloudera.flume.master.ConfigurationManager;
 import com.cloudera.flume.master.StatusManager;
 import com.cloudera.flume.master.availability.ConsistentHashFailoverChainManager;
 import com.cloudera.flume.master.failover.FailoverConfigurationManager;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.Reportable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Multimap;
 
@@ -331,14 +332,20 @@ abstract public class FlowConfigManager implements ConfigurationManager {
   }
 
   @Override
-  synchronized public ReportEvent getReport() {
+  synchronized public ReportEvent getMetrics() {
     ReportEvent rpt = new ReportEvent(getName());
-    rpt.hierarchicalMerge("parent", parent.getReport());
-    for (Entry<String, ConfigurationManager> e : flows.entrySet()) {
-      rpt.hierarchicalMerge("flow[" + e.getKey() + "]", e.getValue()
-          .getReport());
-    }
     return rpt;
+  }
+
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    Map<String, Reportable> map = new HashMap<String, Reportable>();
+    map.put("parent." + parent.getName(), parent);
+
+    for (Entry<String, ConfigurationManager> e : flows.entrySet()) {
+      map.put("flow[" + e.getKey() + "].", e.getValue());
+    }
+    return map;
   }
 
   /**

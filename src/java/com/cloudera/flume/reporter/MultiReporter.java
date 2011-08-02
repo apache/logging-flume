@@ -47,11 +47,11 @@ public class MultiReporter extends FanOutSink<EventSink> {
   }
 
   @Override
-  public ReportEvent getReport() {
+  public ReportEvent getMetrics() {
     StringWriter baos = new StringWriter();
     try {
       for (EventSink r : iter()) {
-        r.getReport().toText(baos);
+        r.getMetrics().toText(baos);
         baos.write('\n');
       }
     } catch (IOException e) {

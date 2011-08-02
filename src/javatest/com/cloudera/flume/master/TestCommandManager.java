@@ -119,7 +119,7 @@ public class TestCommandManager {
 
     }
 
-    LOG.info(cmdman.getReport());
+    LOG.info(cmdman.getMetrics());
   }
 
   /**

@@ -35,6 +35,7 @@ import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.master.availability.FailoverChainManager;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.Reportable;
 import com.cloudera.util.NetUtils;
 import com.cloudera.util.Pair;
 import com.google.common.base.Preconditions;
@@ -102,6 +103,17 @@ public class AgentFailChainSink extends EventSink.Base {
     super.append(e);
   }
 
+  @Override
+  public ReportEvent getMetrics() {
+    return snk.getMetrics();
+  }
+
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    return snk.getSubMetrics();
+  }
+
+  @Deprecated
   @Override
   public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
     super.getReports(namePrefix, reports);

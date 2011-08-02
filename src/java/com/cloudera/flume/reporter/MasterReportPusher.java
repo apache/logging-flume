@@ -37,6 +37,7 @@ import com.cloudera.util.Clock;
  * Polls the ReportManager for all reports (period configured by
  * REPORTER_POLLER_PERIOD) and pushes them to a Master server.
  */
+@Deprecated
 public class MasterReportPusher {
 
   static final Logger LOG = LoggerFactory.getLogger(MasterReportPusher.class);
@@ -75,36 +76,36 @@ public class MasterReportPusher {
   }
 
   /**
-   * Stops the report pusher thread.
-   * Does not wait until complete. 
-   * TODO: add option to wait until done. 
+   * Stops the report pusher thread. Does not wait until complete. TODO: add
+   * option to wait until done.
    */
   public void stop() {
     doShutdown();
   }
 
   /**
-   * Thread to do the periodic pushing work. Every report is pushed with a name that 
+   * Thread to do the periodic pushing work. Every report is pushed with a name
+   * that
    */
   class PusherThread extends Thread {
     void queryReportMan(Map<String, ReportEvent> reports) {
       Map<String, Reportable> reportables = rptMan.getReportables();
       for (Entry<String, Reportable> e : reportables.entrySet()) {
-        reports.put(e.getKey(), e.getValue().getReport());
+        reports.put(e.getKey(), e.getValue().getMetrics());
       }
     }
-    
+
     void querySrcSinkReports(Map<String, ReportEvent> reports) {
-      Collection<LogicalNode> lnodes =
-        FlumeNode.getInstance().getLogicalNodeManager().getNodes();
+      Collection<LogicalNode> lnodes = FlumeNode.getInstance()
+          .getLogicalNodeManager().getNodes();
       for (LogicalNode n : lnodes) {
         n.getReports(reports);
       }
     }
-    
+
     public void run() {
       try {
-        while (!shutdown) {          
+        while (!shutdown) {
           Clock.sleep(cfg.getReporterPollPeriod());
           Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();
 

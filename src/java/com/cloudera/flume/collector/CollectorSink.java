@@ -20,6 +20,7 @@ package com.cloudera.flume.collector;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -48,6 +49,7 @@ import com.cloudera.flume.handlers.rolling.RollSink;
 import com.cloudera.flume.handlers.rolling.Tagger;
 import com.cloudera.flume.handlers.rolling.TimeTrigger;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.Reportable;
 import com.cloudera.util.BackoffPolicy;
 import com.cloudera.util.CumulativeCappedExponentialBackoff;
 import com.google.common.base.Preconditions;
@@ -75,16 +77,17 @@ public class CollectorSink extends EventSink.Base {
   // References package exposed for testing
   final RollSink roller;
 
-  CollectorSink(Context ctx, String path, String filename, long millis, AckListener ackDest)
-      throws FlumeSpecException {
+  CollectorSink(Context ctx, String path, String filename, long millis,
+      AckListener ackDest) throws FlumeSpecException {
     this(ctx, path, filename, millis, new ProcessTagger(), 250, ackDest);
   }
 
-  CollectorSink(Context ctx,final String logdir, final String filename, final long millis,
-      final Tagger tagger, long checkmillis, AckListener ackDest) {
+  CollectorSink(Context ctx, final String logdir, final String filename,
+      final long millis, final Tagger tagger, long checkmillis,
+      AckListener ackDest) {
     this.ackDest = ackDest;
-    this.roller = new RollSink(ctx, "collectorSink", new TimeTrigger(
-        tagger, millis), checkmillis) {
+    this.roller = new RollSink(ctx, "collectorSink", new TimeTrigger(tagger,
+        millis), checkmillis) {
       @Override
       public EventSink newSink(Context ctx) throws IOException {
         String tag = tagger.newTag();
@@ -216,6 +219,20 @@ public class CollectorSink extends EventSink.Base {
   }
 
   @Override
+  public ReportEvent getMetrics() {
+    ReportEvent rpt = new ReportEvent(getName());
+    return rpt;
+  }
+
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    Map<String, Reportable> map = new HashMap<String, Reportable>();
+    map.put(snk.getName(), snk);
+    return map;
+  }
+
+  @Deprecated
+  @Override
   public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
     super.getReports(namePrefix, reports);
     snk.getReports(namePrefix + getName() + ".", reports);
@@ -244,8 +261,8 @@ public class CollectorSink extends EventSink.Base {
           millis = Long.parseLong(argv[2]);
         }
         try {
-          EventSink snk = new CollectorSink(context, logdir, prefix, millis, FlumeNode
-              .getInstance().getCollectorAckListener());
+          EventSink snk = new CollectorSink(context, logdir, prefix, millis,
+              FlumeNode.getInstance().getCollectorAckListener());
           return snk;
         } catch (FlumeSpecException e) {
           LOG.error("CollectorSink spec error " + e, e);

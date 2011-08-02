@@ -19,6 +19,7 @@
 package com.cloudera.flume.handlers.thrift;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
@@ -27,17 +28,23 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.thrift.server.TSaneThreadPoolServer;
+import org.codehaus.jettison.json.JSONException;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.cloudera.flume.ExampleData;
+import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
+import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.EventImpl;
+import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.core.EventUtil;
 import com.cloudera.flume.handlers.debug.MemorySinkSource;
 import com.cloudera.flume.handlers.debug.NoNlASCIISynthSource;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.ReportUtil;
 import com.cloudera.flume.reporter.aggregator.CounterSink;
 import com.cloudera.util.NetUtils;
 
@@ -100,8 +107,8 @@ public class TestThriftSinks implements ExampleData {
     t.start(); // drain the sink.
 
     // mem -> ThriftEventSink
-    ThriftEventSink snk = new ThriftEventSink("0.0.0.0",
-        conf.getCollectorPort() + 1);
+    ThriftEventSink snk = new ThriftEventSink("0.0.0.0", conf
+        .getCollectorPort() + 1);
     snk.open();
     EventUtil.dumpAll(mem, snk);
     mem.close();
@@ -115,7 +122,7 @@ public class TestThriftSinks implements ExampleData {
     }
     tes.close();
     assertEquals(25, cnt.getCount());
-    ReportEvent rpt = tes.getReport();
+    ReportEvent rpt = tes.getMetrics();
     assertEquals(4475, rpt.getLongMetric(ThriftEventSource.A_BYTES_IN)
         .longValue());
     assertEquals(25, rpt.getLongMetric(ThriftEventSource.A_DEQUEUED)
@@ -166,8 +173,8 @@ public class TestThriftSinks implements ExampleData {
     t.start(); // drain the sink.
 
     // mem -> thriftRawEventSink
-    ThriftRawEventSink snk = new ThriftRawEventSink("0.0.0.0",
-        conf.getCollectorPort());
+    ThriftRawEventSink snk = new ThriftRawEventSink("0.0.0.0", conf
+        .getCollectorPort());
     snk.open();
     EventUtil.dumpAll(mem, snk);
     mem.close();
@@ -247,8 +254,8 @@ public class TestThriftSinks implements ExampleData {
             txt.close();
 
             // mem -> ThriftEventSink
-            ThriftEventSink snk = new ThriftEventSink("0.0.0.0",
-                conf.getCollectorPort() + 1);
+            ThriftEventSink snk = new ThriftEventSink("0.0.0.0", conf
+                .getCollectorPort() + 1);
             snk.open();
 
             sendStarted.countDown();
@@ -280,7 +287,7 @@ public class TestThriftSinks implements ExampleData {
 
     tes.close();
     assertEquals(25 * threads, cnt.getCount());
-    ReportEvent rpt = tes.getReport();
+    ReportEvent rpt = tes.getMetrics();
     assertEquals(4475 * threads, sendByteSum.get());
     assertEquals(4475 * threads, rpt
         .getLongMetric(ThriftEventSource.A_BYTES_IN).longValue());
@@ -313,6 +320,21 @@ public class TestThriftSinks implements ExampleData {
 
     tes.close();
 
+  }
+
+  /**
+   * Test insistent append metrics
+   */
+  @Test
+  public void testThriftMetrics() throws JSONException, FlumeSpecException,
+      IOException, InterruptedException {
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(),
+        "thriftSink");
+    ReportEvent rpt = ReportUtil.getFlattenedReport(snk);
+    LOG.info(ReportUtil.toJSONObject(rpt).toString());
+    assertNotNull(rpt.getLongMetric(ThriftEventSink.A_SENTBYTES));
+    assertNotNull(rpt.getStringMetric(ThriftEventSink.A_SERVERHOST));
+    assertNotNull(rpt.getLongMetric(ThriftEventSink.A_SERVERPORT));
   }
 
 }

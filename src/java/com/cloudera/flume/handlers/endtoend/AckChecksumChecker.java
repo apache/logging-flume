@@ -196,6 +196,18 @@ public class AckChecksumChecker<S extends EventSink> extends
   }
 
   @Override
+  public ReportEvent getMetrics() {
+    ReportEvent rpt = super.getMetrics();
+    rpt.setLongMetric(A_ACK_FAILS, ackFails.get());
+    rpt.setLongMetric(A_ACK_SUCCESS, ackSuccesses.get());
+    rpt.setLongMetric(A_ACK_STARTS, ackStarts.get());
+    rpt.setLongMetric(A_ACK_ENDS, ackEnds.get());
+    rpt.setLongMetric(A_ACK_UNEXPECTED, unstarted);
+    return rpt;
+  }
+
+  @Deprecated
+  @Override
   public ReportEvent getReport() {
     ReportEvent rpt = super.getReport();
     rpt.setLongMetric(A_ACK_FAILS, ackFails.get());

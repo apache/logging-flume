@@ -69,9 +69,11 @@ public class NodeReportResource {
       }
       obj.put("logicalnodes", lnMap);
 
-      obj.put("jvmInfo", ReportUtil.toJSONObject(node.getVMInfo().getReport()));
+      obj
+          .put("jvmInfo", ReportUtil
+              .toJSONObject(node.getVMInfo().getMetrics()));
       obj.put("sysInfo", ReportUtil.toJSONObject(node.getSystemInfo()
-          .getReport()));
+          .getMetrics()));
 
       return obj;
     } catch (JSONException e1) {
@@ -99,7 +101,8 @@ public class NodeReportResource {
     }
 
     try {
-      return ReportUtil.toJSONObject(ln.getReport());
+      ReportEvent rpt = ReportUtil.getFlattenedReport(ln);
+      return ReportUtil.toJSONObject(rpt);
     } catch (JSONException e) {
       Log.warn("Problem converting report to JSON", e);
       return new JSONObject();

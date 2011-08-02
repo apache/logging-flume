@@ -155,7 +155,7 @@ public class BloomCheckDecorator extends EventSinkDecorator<EventSink> {
         }
       }
 
-      ReportEvent rpt = getReport();
+      ReportEvent rpt = getMetrics();
       LOG.info(rpt.toText());
       reportSink.append(e);
       // record info but do not pass the message on.
@@ -180,8 +180,8 @@ public class BloomCheckDecorator extends EventSinkDecorator<EventSink> {
    * {@inheritDoc}
    */
   @Override
-  synchronized public ReportEvent getReport() {
-    ReportEvent evt = super.getReport();
+  synchronized public ReportEvent getMetrics() {
+    ReportEvent evt = super.getMetrics();
     evt.set(A_STATE, state.toString().getBytes());
     Attributes.setInt(evt, A_SUCCESS, successCount);
     Attributes.setInt(evt, A_FAILS, failCount);

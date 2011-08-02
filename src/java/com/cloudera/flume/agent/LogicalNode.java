@@ -21,6 +21,7 @@ package com.cloudera.flume.agent;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -308,7 +309,9 @@ public class LogicalNode implements Reportable {
       }
 
     } catch (RuntimeException e) {
-      LOG.error("Runtime ex: " + new File(".").getAbsolutePath() + " " + cfg, e);
+      LOG
+          .error("Runtime ex: " + new File(".").getAbsolutePath() + " " + cfg,
+              e);
       state.state = NodeState.ERROR;
       throw e;
     } catch (FlumeSpecException e) {
@@ -374,7 +377,8 @@ public class LogicalNode implements Reportable {
     return true;
   }
 
-  public void getReports(Map<String, ReportEvent> reports) {
+  @Deprecated
+  synchronized public void getReports(Map<String, ReportEvent> reports) {
     String phyName = FlumeNode.getInstance().getPhysicalNodeName();
     String rprefix = phyName + "." + getName() + ".";
 
@@ -386,7 +390,8 @@ public class LogicalNode implements Reportable {
     }
   }
 
-  public ReportEvent getReport() {
+  @Deprecated
+  public synchronized ReportEvent getReport() {
     ReportEvent rpt = new ReportEvent(nodeName);
     rpt.setStringMetric("nodename", nodeName);
     rpt.setStringMetric("version", new Date(lastGoodCfg.timestamp).toString());
@@ -401,10 +406,39 @@ public class LogicalNode implements Reportable {
     rpt.setStringMetric("physicalnode", state.physicalNode);
 
     if (snk != null) {
-      rpt.hierarchicalMerge("LogicalNode", snk.getReport());
+      rpt.hierarchicalMerge("sink", snk.getReport());
     }
 
     return rpt;
+  }
+
+  public ReportEvent getMetrics() {
+    ReportEvent rpt = new ReportEvent(nodeName);
+    rpt.setStringMetric("nodename", nodeName);
+    rpt.setStringMetric("version", new Date(lastGoodCfg.timestamp).toString());
+    rpt.setStringMetric("state", state.state.toString());
+    rpt.setStringMetric("hostname", state.host);
+    rpt.setStringMetric("sourceConfig", (lastGoodCfg.sourceConfig == null) ? ""
+        : lastGoodCfg.sourceConfig);
+    rpt.setStringMetric("sinkConfig", (lastGoodCfg.sinkConfig == null) ? ""
+        : lastGoodCfg.sinkConfig);
+    rpt.setStringMetric("message", nodeMsg);
+    rpt.setLongMetric(A_RECONFIGURES, reconfigures.get());
+    rpt.setStringMetric("physicalnode", state.physicalNode);
+
+    return rpt;
+  }
+
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    Map<String, Reportable> map = new HashMap<String, Reportable>();
+    if (src != null) {
+      map.put("source." + src.getName(), src);
+    }
+    if (snk != null) {
+      map.put("sink." + snk.getName(), snk);
+    }
+    return map;
   }
 
   public String getName() {

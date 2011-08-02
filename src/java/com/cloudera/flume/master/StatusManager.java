@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.ReportUtil;
 import com.cloudera.flume.reporter.Reportable;
 import com.cloudera.util.Clock;
 
@@ -151,7 +152,7 @@ public class StatusManager implements Reportable {
    * TODO (jon) convert to a report
    */
   @Override
-  public ReportEvent getReport() {
+  public ReportEvent getMetrics() {
     StringBuilder status = new StringBuilder();
     status.append("<div class=\"StatusManager\">");
     status.append("<h2>Node status</h2>\n<table border=\"1\">"
@@ -181,6 +182,11 @@ public class StatusManager implements Reportable {
     status.append("</div>");
 
     return ReportEvent.createLegacyHtmlReport("", status.toString());
+  }
+
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    return ReportUtil.noChildren();
   }
 
   /**

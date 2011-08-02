@@ -80,7 +80,7 @@ public class TestTailDirSource {
     FlumeBuilder.buildSource(ctx, src + ")"); // without startFromEnd param
     FlumeBuilder.buildSource(ctx, src + ", true)"); // with startFromEnd = true
     FlumeBuilder.buildSource(ctx, src + ", false)"); // with startFromEnd =
-                                                     // false
+    // false
     FlumeBuilder.buildSource(ctx, src + ", true,2)"); // recursively w/
     // max-depth 2
     FileUtil.rmr(tmpdir);
@@ -214,7 +214,7 @@ public class TestTailDirSource {
     FileUtil.rmr(tmpdir);
 
     // only did 10 files, ignored the dir.
-    assertEquals(Long.valueOf(10), src.getReport().getLongMetric(
+    assertEquals(Long.valueOf(10), src.getMetrics().getLongMetric(
         TailDirSource.A_FILESADDED));
   }
 
@@ -314,7 +314,7 @@ public class TestTailDirSource {
     FileUtil.rmr(tmpdir);
 
     // in total 20 files were added
-    assertEquals(Long.valueOf(20), src.getReport().getLongMetric(
+    assertEquals(Long.valueOf(20), src.getMetrics().getLongMetric(
         TailDirSource.A_FILESADDED));
   }
 
@@ -403,7 +403,7 @@ public class TestTailDirSource {
     cnt.close();
     FileUtil.rmr(tmpdir);
 
-    ReportEvent report = src.getReport();
+    ReportEvent report = src.getMetrics();
     assertEquals(Long.valueOf(80), report
         .getLongMetric(TailDirSource.A_FILESADDED));
     assertEquals(Long.valueOf(20), report
@@ -452,7 +452,7 @@ public class TestTailDirSource {
     Clock.sleep(1000);
     assertEquals(2000, cnt.getCount());
 
-    ReportEvent rpt1 = src.getReport();
+    ReportEvent rpt1 = src.getMetrics();
     assertEquals(Long.valueOf(200), rpt1
         .getLongMetric(TailDirSource.A_FILESPRESENT));
 
@@ -462,7 +462,7 @@ public class TestTailDirSource {
     Clock.sleep(1000);
     assertEquals(2000, cnt.getCount());
 
-    ReportEvent rpt = src.getReport();
+    ReportEvent rpt = src.getMetrics();
     assertEquals(rpt.getLongMetric(TailDirSource.A_FILESADDED), rpt
         .getLongMetric(TailDirSource.A_FILESDELETED));
     assertEquals(Long.valueOf(0), rpt

@@ -17,6 +17,8 @@
  */
 package com.cloudera.flume.reporter;
 
+import java.util.Map;
+
 /**
  * Any statistics presenting element will implement this interface. These should
  * be registered to the ReporterManager so that they can be displayed.
@@ -31,6 +33,11 @@ public interface Reportable {
   /**
    * Generates a report in some sort of readable format.
    */
-  ReportEvent getReport();
+  ReportEvent getMetrics();
+
+  /**
+   * Get child reportables.
+   */
+  Map<String, Reportable> getSubMetrics();
 
 }

@@ -18,8 +18,12 @@
 
 package com.cloudera.util;
 
+import java.util.Map;
+
 import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.ReportUtil;
+import com.cloudera.flume.reporter.Reportable;
 
 /**
  * Simple class that retries a fixed number of times, then fails.
@@ -28,14 +32,14 @@ public class FixedRetryPolicy implements BackoffPolicy {
 
   protected int numRetries;
   protected int retryCount = 0;
-  
+
   final static public String A_MAX_ATTEMPTS = "fixedmaxAttempts";
   final static public String A_COUNT = "fixedRetryCount";
-  
+
   public FixedRetryPolicy(int numRetries) {
     this.numRetries = numRetries;
   }
-  
+
   /**
    * Increment the retry count.
    */
@@ -57,7 +61,7 @@ public class FixedRetryPolicy implements BackoffPolicy {
    */
   @Override
   public boolean isRetryOk() {
-   return retryCount < numRetries;
+    return retryCount < numRetries;
   }
 
   @Override
@@ -84,10 +88,15 @@ public class FixedRetryPolicy implements BackoffPolicy {
   }
 
   @Override
-  public ReportEvent getReport() {
+  public ReportEvent getMetrics() {
     ReportEvent rpt = new ReportEvent(getName());
     Attributes.setLong(rpt, A_MAX_ATTEMPTS, numRetries);
-    Attributes.setLong(rpt, A_COUNT, retryCount);    
-    return rpt;  
+    Attributes.setLong(rpt, A_COUNT, retryCount);
+    return rpt;
+  }
+
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    return ReportUtil.noChildren();
   }
 }

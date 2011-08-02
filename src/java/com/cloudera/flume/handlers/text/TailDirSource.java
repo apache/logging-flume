@@ -209,8 +209,8 @@ public class TailDirSource extends EventSource.Base {
   }
 
   @Override
-  synchronized public ReportEvent getReport() {
-    ReportEvent rpt = super.getReport();
+  synchronized public ReportEvent getMetrics() {
+    ReportEvent rpt = super.getMetrics();
     rpt.setLongMetric(A_FILESADDED, filesAdded.get());
     rpt.setLongMetric(A_FILESDELETED, filesDeleted.get());
     rpt.setLongMetric(A_SUBDIRSADDED, subdirsAdded.get());

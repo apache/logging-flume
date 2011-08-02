@@ -18,9 +18,13 @@
 package com.cloudera.flume.handlers.debug;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSource;
+import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.Reportable;
 
 /**
  * This delays turns a sink into a lazy one by delaying opening a node until an
@@ -59,5 +63,20 @@ public class LazyOpenSource<S extends EventSource> extends EventSource.Base {
     logicallyOpen = false;
     src.close();
 
+  }
+
+  @Override
+  public ReportEvent getMetrics() {
+    ReportEvent rpt = super.getMetrics();
+    rpt.setStringMetric("actuallyOpen", "" + actuallyOpen);
+    rpt.setStringMetric("logicallyOpen", "" + logicallyOpen);
+    return rpt;
+  }
+
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    Map<String, Reportable> map = new HashMap<String, Reportable>();
+    map.put(src.getName(), src);
+    return map;
   }
 }

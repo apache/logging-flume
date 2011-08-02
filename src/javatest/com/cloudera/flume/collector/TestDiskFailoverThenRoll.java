@@ -72,8 +72,8 @@ public class TestDiskFailoverThenRoll {
       InterruptedException {
     String agentCollector = "{diskFailover(1000) => roll (100000) { null } }";
     Event e = new EventImpl("foo".getBytes());
-    EventSink agent = FlumeBuilder.buildSink(
-        LogicalNodeContext.testingContext(), agentCollector);
+    EventSink agent = FlumeBuilder.buildSink(LogicalNodeContext
+        .testingContext(), agentCollector);
     agent.open();
     agent.append(e);
 

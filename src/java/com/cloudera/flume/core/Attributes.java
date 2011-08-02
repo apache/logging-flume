@@ -29,6 +29,7 @@ import com.google.common.base.Preconditions;
  * This is a singleton that keeps a mapping of attribute to a type. This is a
  * like a schema, and is for formatting used in reports.
  */
+@Deprecated
 public class Attributes {
   static final Logger LOG = LoggerFactory.getLogger(Attributes.class);
 

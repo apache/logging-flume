@@ -18,6 +18,7 @@
 package com.cloudera.flume.agent;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -31,6 +32,7 @@ import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.Reportable;
 import com.google.common.base.Preconditions;
 
 /**
@@ -239,6 +241,20 @@ public class AgentSink extends EventSink.Base {
     return "Agent";
   }
 
+  @Override
+  public ReportEvent getMetrics() {
+    ReportEvent rpt = new ReportEvent(getName());
+    return rpt;
+  }
+
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    Map<String, Reportable> map = new HashMap<String, Reportable>();
+    map.put(sink.getName(), sink);
+    return map;
+  }
+
+  @Deprecated
   @Override
   public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
     super.getReports(namePrefix, reports);

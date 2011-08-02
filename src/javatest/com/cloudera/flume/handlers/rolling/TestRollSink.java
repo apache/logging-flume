@@ -18,41 +18,54 @@
 package com.cloudera.flume.handlers.rolling;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
 
 import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.codehaus.jettison.json.JSONException;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
+import com.cloudera.flume.conf.FlumeBuilder;
+import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.handlers.hdfs.EscapedCustomDfsSink;
+import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
+import com.cloudera.flume.reporter.ReportTestUtils;
+import com.cloudera.flume.reporter.ReportUtil;
 import com.cloudera.flume.reporter.aggregator.CounterSink;
 import com.cloudera.util.Clock;
 import com.cloudera.util.FileUtil;
 
 public class TestRollSink {
+  public static final Logger LOG = LoggerFactory.getLogger(TestRollSink.class);
 
   @Before
   public void setDebug() {
-    Logger.getRootLogger().setLevel(Level.DEBUG);
+    // log4j specific debugging level
+    org.apache.log4j.Logger.getRootLogger().setLevel(Level.DEBUG);
   }
 
   /**
    * Tests that the rolling event sink correctly tags the output filename.
-   * @throws InterruptedException 
+   * 
+   * @throws InterruptedException
    */
   @Test
-  public void testEscapedFilenameCloseFlushes() throws IOException, InterruptedException {
+  public void testEscapedFilenameCloseFlushes() throws IOException,
+      InterruptedException {
     Tagger tagger = new ProcessTagger() {
       @Override
       public String getTag() {
@@ -146,19 +159,19 @@ public class TestRollSink {
 
     snk.open();
     Clock.sleep(100); // sleep until about 100 ms; no flush yet.
-    assertEquals(Long.valueOf(0), snk.getReport().getLongMetric(
+    assertEquals(Long.valueOf(0), snk.getMetrics().getLongMetric(
         RollSink.A_ROLLS));
 
     Clock.sleep(200); // auto flush
-    assertEquals(Long.valueOf(1), snk.getReport().getLongMetric(
+    assertEquals(Long.valueOf(1), snk.getMetrics().getLongMetric(
         RollSink.A_ROLLS));
 
     Clock.sleep(200); // auto flush.
-    assertEquals(Long.valueOf(2), snk.getReport().getLongMetric(
+    assertEquals(Long.valueOf(2), snk.getMetrics().getLongMetric(
         RollSink.A_ROLLS));
 
     Clock.sleep(200); // auto flush.
-    assertEquals(Long.valueOf(3), snk.getReport().getLongMetric(
+    assertEquals(Long.valueOf(3), snk.getMetrics().getLongMetric(
         RollSink.A_ROLLS));
     snk.close();
   }
@@ -175,43 +188,77 @@ public class TestRollSink {
 
     snk.open();
 
-    assertEquals(Long.valueOf(0), snk.getReport().getLongMetric(
+    assertEquals(Long.valueOf(0), snk.getMetrics().getLongMetric(
         RollSink.A_ROLLS));
 
     // a 10 byte body
     Event e = new EventImpl("0123456789".getBytes());
     snk.append(e);
     Clock.sleep(200); // at least one check period
-    assertEquals(Long.valueOf(1), snk.getReport().getLongMetric(
+    assertEquals(Long.valueOf(1), snk.getMetrics().getLongMetric(
         RollSink.A_ROLLS));
 
     // 5 bytes (no trigger)
     e = new EventImpl("01234".getBytes());
     snk.append(e);
     Clock.sleep(200); // at least one check period
-    assertEquals(Long.valueOf(1), snk.getReport().getLongMetric(
+    assertEquals(Long.valueOf(1), snk.getMetrics().getLongMetric(
         RollSink.A_ROLLS));
     // 5 more bytes (ok trigger)
     e = new EventImpl("01234".getBytes());
     snk.append(e);
     Clock.sleep(200); // at least one check period
-    assertEquals(Long.valueOf(2), snk.getReport().getLongMetric(
+    assertEquals(Long.valueOf(2), snk.getMetrics().getLongMetric(
         RollSink.A_ROLLS));
 
     // 27 bytes but only on trigger
     e = new EventImpl("012345678901234567890123456".getBytes());
     snk.append(e);
     Clock.sleep(200); // at least one check period
-    assertEquals(Long.valueOf(3), snk.getReport().getLongMetric(
+    assertEquals(Long.valueOf(3), snk.getMetrics().getLongMetric(
         RollSink.A_ROLLS));
 
     // 5 bytes (no trigger)
     e = new EventImpl("01234".getBytes());
     snk.append(e);
     Clock.sleep(200); // at least one check period
-    assertEquals(Long.valueOf(3), snk.getReport().getLongMetric(
+    assertEquals(Long.valueOf(3), snk.getMetrics().getLongMetric(
         RollSink.A_ROLLS));
 
     snk.close();
   }
+
+  /**
+   * Test metrics
+   * 
+   * @throws InterruptedException
+   * @throws IOException
+   */
+  @Test
+  public void testGetRollMetrics() throws JSONException, FlumeSpecException,
+      IOException, InterruptedException {
+    ReportTestUtils.setupSinkFactory();
+
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(),
+        "roll(100) { one } ");
+    ReportEvent rpt = ReportUtil.getFlattenedReport(snk);
+    LOG.info(ReportUtil.toJSONObject(rpt).toString());
+    assertNotNull(rpt.getLongMetric(RollSink.A_ROLLFAILS));
+    assertNotNull(rpt.getLongMetric(RollSink.A_ROLLS));
+    assertEquals("one", rpt.getStringMetric(RollSink.A_ROLLSPEC));
+    assertNull(rpt.getStringMetric("One.name"));
+
+    // need to open to have sub sink show up
+    snk.open();
+
+    ReportEvent all = ReportUtil.getFlattenedReport(snk);
+    LOG.info(ReportUtil.toJSONObject(all).toString());
+    assertNotNull(rpt.getLongMetric(RollSink.A_ROLLFAILS));
+    assertNotNull(rpt.getLongMetric(RollSink.A_ROLLS));
+    assertEquals("one", rpt.getStringMetric(RollSink.A_ROLLSPEC));
+    assertEquals("One", all.getStringMetric("One.name"));
+
+    snk.close();
+  }
+
 }

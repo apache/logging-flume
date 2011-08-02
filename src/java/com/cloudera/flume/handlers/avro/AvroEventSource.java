@@ -83,8 +83,8 @@ public class AvroEventSource extends EventSource.Base {
    * Get reportable data from the Avro event source.
    */
   @Override
-  synchronized public ReportEvent getReport() {
-    ReportEvent rpt = super.getReport();
+  synchronized public ReportEvent getMetrics() {
+    ReportEvent rpt = super.getMetrics();
     rpt.setLongMetric(A_QUEUE_CAPACITY, q.size());
     rpt.setLongMetric(A_QUEUE_FREE, q.remainingCapacity());
     rpt.setLongMetric(A_ENQUEUED, enqueued.get());

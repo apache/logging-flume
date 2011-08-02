@@ -36,6 +36,7 @@ import com.google.common.base.Preconditions;
  * Open is only required to start the http server that displays information.
  * 
  * This is now thread safe.
+ * 
  */
 public class ReportManager implements Reportable {
   static final Logger LOG = LoggerFactory.getLogger(ReportManager.class);
@@ -44,10 +45,11 @@ public class ReportManager implements Reportable {
   Map<String, Reportable> reports = new HashMap<String, Reportable>();
   String name;
 
-  private ReportManager(String name) {
+  public ReportManager(String name) {
     this.name = name;
   }
 
+  // TODO deprecate the singleton use of report manager
   public static ReportManager get() {
     return man;
   }
@@ -84,10 +86,10 @@ public class ReportManager implements Reportable {
   }
 
   @Override
-  public synchronized ReportEvent getReport() {
+  public synchronized ReportEvent getMetrics() {
     ReportEvent rpt = new ReportEvent(getName());
     for (Entry<String, Reportable> r : reports.entrySet()) {
-      rpt.hierarchicalMerge(r.getKey(), r.getValue().getReport());
+      rpt.hierarchicalMerge(r.getKey(), r.getValue().getMetrics());
     }
     return rpt;
   }
@@ -100,6 +102,11 @@ public class ReportManager implements Reportable {
     return new HashMap<String, Reportable>(reports);
   }
 
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    return ReportUtil.noChildren();
+  }
+
   /**
    * Removes all registered reportables from the ReportManager.
    */
@@ -107,7 +114,6 @@ public class ReportManager implements Reportable {
     reports.clear();
   }
 
-  
   public synchronized void remove(Reportable r) {
     Preconditions.checkArgument(r != null, "Cannot remove null reportable");
     reports.remove(r.getName());

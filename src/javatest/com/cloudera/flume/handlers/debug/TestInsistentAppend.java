@@ -15,61 +15,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.cloudera.flume.handlers.debug;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.antlr.runtime.RecognitionException;
 import org.codehaus.jettison.json.JSONException;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.EventSink;
-import com.cloudera.flume.handlers.avro.AvroDataFileOutputFormat;
-import com.cloudera.flume.handlers.avro.AvroJsonOutputFormat;
-import com.cloudera.flume.handlers.text.output.RawOutputFormat;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.ReportTestUtils;
 import com.cloudera.flume.reporter.ReportUtil;
 
-public class TestTextFileSink {
-
+public class TestInsistentAppend {
   public static final Logger LOG = LoggerFactory
-      .getLogger(TestTextFileSink.class);
-
-  @Test
-  public void testTextKWArg() throws RecognitionException, FlumeSpecException {
-    String s = "text(\"filename\", format=\"raw\")";
-    TextFileSink snk = (TextFileSink) FlumeBuilder.buildSink(new Context(), s);
-    assertTrue(snk.getFormat() instanceof RawOutputFormat);
-
-    s = "text(\"filename\", format=\"avrodata\")";
-    snk = (TextFileSink) FlumeBuilder.buildSink(new Context(), s);
-    assertTrue(snk.getFormat() instanceof AvroDataFileOutputFormat);
-
-    s = "text(\"filename\", format=\"avrojson\")";
-    snk = (TextFileSink) FlumeBuilder.buildSink(new Context(), s);
-    assertTrue(snk.getFormat() instanceof AvroJsonOutputFormat);
-  }
+      .getLogger(TestInsistentAppend.class);
 
   /**
    * Test insistent append metrics
    */
   @Test
-  public void testTextFileMetrics() throws JSONException, FlumeSpecException,
-      IOException, InterruptedException {
+  public void testInsistentAppendMetrics() throws JSONException,
+      FlumeSpecException, IOException, InterruptedException {
+    ReportTestUtils.setupSinkFactory();
+
     EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(),
-        "text(\"filename\")");
+        "insistentAppend one");
     ReportEvent rpt = ReportUtil.getFlattenedReport(snk);
     LOG.info(ReportUtil.toJSONObject(rpt).toString());
-    assertNotNull(rpt.getLongMetric(ReportEvent.A_COUNT));
+    assertNotNull(rpt.getLongMetric(InsistentAppendDecorator.A_ATTEMPTS));
+    assertNotNull(rpt.getLongMetric(InsistentAppendDecorator.A_GIVEUPS));
+    assertNotNull(rpt.getLongMetric(InsistentAppendDecorator.A_REQUESTS));
+    assertNotNull(rpt.getLongMetric(InsistentAppendDecorator.A_RETRIES));
+    assertNotNull(rpt.getLongMetric(InsistentAppendDecorator.A_SUCCESSES));
+    assertNotNull(rpt.getStringMetric("backoffPolicy.CappedExpBackoff.name"));
+    assertEquals("One", rpt.getStringMetric("One.name"));
   }
 
 }

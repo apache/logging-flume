@@ -213,7 +213,7 @@ public class TestBloomSetDecos {
     // Hack until we get a better mechanism:
     BloomCheckDecorator bcd = (BloomCheckDecorator) (((EventSinkDecorator<EventSink>) snk)
         .getSink());
-    ReportEvent r = bcd.getReport();
+    ReportEvent r = bcd.getMetrics();
     assertEquals(BloomCheckState.SUCCESS.toString(), new String(r
         .get(BloomCheckDecorator.A_STATE)));
     assertEquals(1, Attributes.readInt(r, BloomCheckDecorator.A_SUCCESS)

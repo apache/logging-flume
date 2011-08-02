@@ -68,7 +68,7 @@ public class CustomDfsSink extends EventSink.Base {
   }
 
   @Override
-  public void append(Event e) throws IOException, InterruptedException  {
+  public void append(Event e) throws IOException, InterruptedException {
     if (writer == null) {
       throw new IOException("Append failed, did you open the writer?");
     }
@@ -187,6 +187,15 @@ public class CustomDfsSink extends EventSink.Base {
     return "CustomDfs";
   }
 
+  @Override
+  public ReportEvent getMetrics() {
+    ReportEvent rpt = super.getMetrics();
+    rpt.setStringMetric(A_OUTPUTFORMAT, format.getBuilder().getName());
+    rpt.setLongMetric(ReportEvent.A_COUNT, count.get());
+    return rpt;
+  }
+
+  @Deprecated
   @Override
   public ReportEvent getReport() {
     ReportEvent rpt = super.getReport();

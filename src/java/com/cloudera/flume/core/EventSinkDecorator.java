@@ -19,12 +19,14 @@
 package com.cloudera.flume.core;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SinkFactory.SinkDecoBuilder;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.Reportable;
 import com.google.common.base.Preconditions;
 
 /**
@@ -74,6 +76,20 @@ public class EventSinkDecorator<S extends EventSink> extends EventSink.Base {
     isOpen.set(true);
   }
 
+  @Override
+  public ReportEvent getMetrics() {
+    ReportEvent rpt = new ReportEvent(getName());
+    return rpt;
+  }
+
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    HashMap<String, Reportable> map = new HashMap<String, Reportable>();
+    map.put(sink.getName(), sink);
+    return map;
+  }
+
+  @Deprecated
   @Override
   public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
     Preconditions.checkNotNull(sink);

@@ -65,7 +65,7 @@ public class TestDirectDriver {
       InterruptedException {
     EventSink fail4eva = mock(EventSink.Base.class);
     doThrow(new IOException("mock exception")).when(fail4eva).open();
-    doReturn(new ReportEvent("stub")).when(fail4eva).getReport();
+    doReturn(new ReportEvent("stub")).when(fail4eva).getMetrics();
 
     // max 5s, backoff initially at 10ms
     BackoffPolicy bop = new CappedExponentialBackoff(10, 5000);
@@ -108,7 +108,7 @@ public class TestDirectDriver {
     EventSink fail4eva = mock(EventSink.Base.class);
     final Event e = new EventImpl("foo".getBytes());
     doThrow(new IOException("mock exception")).when(fail4eva).append(e);
-    doReturn(new ReportEvent("mock report")).when(fail4eva).getReport();
+    doReturn(new ReportEvent("mock report")).when(fail4eva).getMetrics();
     doReturn("mock name").when(fail4eva).getName();
 
     // max 5s, backoff initially at 10ms
@@ -149,7 +149,7 @@ public class TestDirectDriver {
     EventSink fail4eva = mock(EventSink.Base.class);
     final Event e = new EventImpl("foo".getBytes());
     doThrow(new IOException("mock exception")).when(fail4eva).append(e);
-    doReturn(new ReportEvent("mock report")).when(fail4eva).getReport();
+    doReturn(new ReportEvent("mock report")).when(fail4eva).getMetrics();
     doReturn("mock name").when(fail4eva).getName();
 
     // max 5s, backoff initially at 10ms
@@ -202,7 +202,7 @@ public class TestDirectDriver {
   public void testDFOSubsinkCancel() throws IOException, InterruptedException {
     EventSink fail4eva = mock(EventSink.Base.class);
     doThrow(new IOException("mock exception")).when(fail4eva).open();
-    doReturn(new ReportEvent("stub")).when(fail4eva).getReport();
+    doReturn(new ReportEvent("stub")).when(fail4eva).getMetrics();
 
     // max 5s, backoff initially at 10ms
     BackoffPolicy bop = new CappedExponentialBackoff(10, 5000);

@@ -21,6 +21,7 @@ package com.cloudera.flume.agent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -32,11 +33,11 @@ import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.conf.ReportTestingContext;
-import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.core.CompositeSink;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
@@ -131,21 +132,30 @@ public class LogicalNodeManager implements Reportable {
 
   }
 
-  @Override
+  @Deprecated
   public ReportEvent getReport() {
     ReportEvent rpt = new ReportEvent(getName());
-
-    Collection<LogicalNode> copy = null;
-    synchronized (this) {
-      // copy the logical node list in an sychronized way, and make sure when
-      // LogicalNode is locked we don't need the LogicalNodeManager lock.
-      copy = getNodes();
-    }
-
-    for (LogicalNode t : copy) {
+    for (LogicalNode t : threads.values()) {
       rpt.hierarchicalMerge(t.getName(), t.getReport());
     }
     return rpt;
+  }
+
+  @Override
+  public ReportEvent getMetrics() {
+    ReportEvent rpt = new ReportEvent(getName());
+    // TODO add number of nodes present.
+    return rpt;
+  }
+
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    Collection<LogicalNode> copy = getNodes();
+    Map<String, Reportable> map = new HashMap<String, Reportable>(copy.size());
+    for (LogicalNode ln : copy) {
+      map.put(ln.getName(), ln);
+    }
+    return map;
   }
 
   public String getPhysicalNodeName() {

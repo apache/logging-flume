@@ -34,6 +34,7 @@ import com.cloudera.flume.core.CompositeSink;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.Reportable;
 import com.cloudera.util.BackoffPolicy;
 import com.cloudera.util.CappedExponentialBackoff;
 import com.google.common.base.Preconditions;
@@ -101,6 +102,17 @@ public class FailoverChainSink extends EventSink.Base {
     snk.open();
   }
 
+  @Override
+  public ReportEvent getMetrics() {
+    return snk.getMetrics();
+  }
+
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    return snk.getSubMetrics();
+  }
+
+  @Deprecated
   @Override
   public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
     super.getReports(namePrefix, reports);

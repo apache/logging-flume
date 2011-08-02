@@ -75,7 +75,7 @@ public class TestFailChainSink {
 
     // failover sink replaces each names
 
-    LOG.info(snk.getReport().toText());
+    LOG.info(snk.getMetrics().toText());
 
     snk.open();
     EventSource src = MemorySinkSource.cannedData("test is a test", 31);
@@ -85,7 +85,7 @@ public class TestFailChainSink {
     int[] ans = { 16, 8, 4, 2, 1 };
     for (int i = 0; i < ans.length; i++) {
       Reportable rptable = ReportManager.get().getReportable(names.get(i));
-      long val = rptable.getReport().getLongMetric(names.get(i));
+      long val = rptable.getMetrics().getLongMetric(names.get(i));
       assertEquals(ans[i], val);
     }
 
@@ -124,7 +124,7 @@ public class TestFailChainSink {
     System.out.println(spec);
     EventSink snk = new CompositeSink(new ReportTestingContext(), spec);
 
-    LOG.info(snk.getReport().toText());
+    LOG.info(snk.getMetrics().toText());
 
     snk.open();
     EventSource src = MemorySinkSource.cannedData("test is a test", 31);
@@ -134,7 +134,7 @@ public class TestFailChainSink {
     int[] ans = { 16, 8, 4, 2, 1 };
     for (int i = 0; i < ans.length; i++) {
       Reportable rptable = ReportManager.get().getReportable(names.get(i));
-      long val = rptable.getReport().getLongMetric(names.get(i));
+      long val = rptable.getMetrics().getLongMetric(names.get(i));
       System.out.println("report " + names.get(i) + " : " + val);
       System.out.flush();
       assertEquals(ans[i], val);

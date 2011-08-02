@@ -30,9 +30,11 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.ReportUtil;
+import com.cloudera.flume.reporter.Reportable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Multimap;
 
@@ -145,7 +147,7 @@ abstract public class TranslatingConfigurationManager implements
    * TODO convert to a report, do not depend on this output.
    */
   @Override
-  synchronized public ReportEvent getReport() {
+  synchronized public ReportEvent getMetrics() {
     StringBuilder html = new StringBuilder();
     html
         .append("<h2>Node configuration</h2>\n<table border=\"1\"><tr>"
@@ -178,6 +180,12 @@ abstract public class TranslatingConfigurationManager implements
     html.append("</table>\n\n");
 
     return ReportEvent.createLegacyHtmlReport("configs", html.toString());
+  }
+
+  // TODO make this point to child configuration translators
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    return ReportUtil.noChildren();
   }
 
   /**

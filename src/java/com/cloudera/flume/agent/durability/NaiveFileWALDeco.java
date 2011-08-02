@@ -19,6 +19,8 @@ package com.cloudera.flume.agent.durability;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 import org.slf4j.Logger;
@@ -43,6 +45,7 @@ import com.cloudera.flume.handlers.rolling.RollSink;
 import com.cloudera.flume.handlers.rolling.RollTrigger;
 import com.cloudera.flume.handlers.rolling.TimeTrigger;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.Reportable;
 import com.google.common.base.Preconditions;
 
 /**
@@ -60,7 +63,7 @@ public class NaiveFileWALDeco extends EventSinkDecorator<EventSink> {
   final long checkMs;
 
   RollSink input;
-  EventSource drainSource;
+  EventSource drainSource = null;
   Driver conn;
   Context ctx;
 
@@ -147,7 +150,7 @@ public class NaiveFileWALDeco extends EventSinkDecorator<EventSink> {
       LOG.debug("Waiting for subthread to complete .. ");
       int maxNoProgressTime = 10;
 
-      ReportEvent rpt = sink.getReport();
+      ReportEvent rpt = sink.getMetrics();
 
       Long levts = rpt.getLongMetric(EventSink.Base.R_NUM_EVENTS);
       long evts = (levts == null) ? 0 : levts;
@@ -160,7 +163,7 @@ public class NaiveFileWALDeco extends EventSinkDecorator<EventSink> {
         }
 
         // driver still running, did we make progress?
-        ReportEvent rpt2 = sink.getReport();
+        ReportEvent rpt2 = sink.getMetrics();
         Long levts2 = rpt2.getLongMetric(EventSink.Base.R_NUM_EVENTS);
         long evts2 = (levts2 == null) ? 0 : levts;
         if (evts2 > evts) {
@@ -186,7 +189,9 @@ public class NaiveFileWALDeco extends EventSinkDecorator<EventSink> {
       LOG.error("WAL drain thread interrupted", e);
     }
 
-    drainSource.close();
+    if (drainSource != null) {
+      drainSource.close();
+    }
     // This sets isOpen == false
     super.close();
 
@@ -334,14 +339,32 @@ public class NaiveFileWALDeco extends EventSinkDecorator<EventSink> {
     return "NaiveFileWAL";
   }
 
+  @Deprecated
   @Override
   public ReportEvent getReport() {
     ReportEvent rpt = super.getReport();
-    ReportEvent walRpt = walman.getReport();
+    ReportEvent walRpt = walman.getMetrics();
     rpt.merge(walRpt);
     ReportEvent sinkReport = sink.getReport();
     rpt.hierarchicalMerge(getName(), sinkReport);
-
     return rpt;
   }
+
+  @Override
+  public ReportEvent getMetrics() {
+    ReportEvent rpt = super.getMetrics();
+    return rpt;
+  }
+
+  public Map<String, Reportable> getSubMetrics() {
+    Map<String, Reportable> map = new HashMap<String, Reportable>();
+    map.put(walman.getName(), walman);
+    map.put("drainSink." + sink.getName(), sink);
+    if (drainSource != null) {
+      // careful, drainSource can be null if deco not opened yet
+      map.put("drainSource." + drainSource.getName(), drainSource);
+    }
+    return map;
+  }
+
 }

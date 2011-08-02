@@ -118,6 +118,16 @@ public class ThriftEventSink extends EventSink.Base {
   }
 
   @Override
+  public ReportEvent getMetrics() {
+    ReportEvent rpt = super.getMetrics();
+    rpt.setStringMetric(A_SERVERHOST, host);
+    rpt.setLongMetric(A_SERVERPORT, port);
+    rpt.setLongMetric(A_SENTBYTES, sentBytes.get());
+    return rpt;
+  }
+
+  @Deprecated
+  @Override
   public ReportEvent getReport() {
     ReportEvent rpt = super.getReport();
     rpt.setStringMetric(A_SERVERHOST, host);

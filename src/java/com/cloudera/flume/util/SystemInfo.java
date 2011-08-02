@@ -19,8 +19,10 @@ package com.cloudera.flume.util;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
+import java.util.Map;
 
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.ReportUtil;
 import com.cloudera.flume.reporter.Reportable;
 import com.cloudera.util.NetUtils;
 
@@ -31,18 +33,18 @@ import com.cloudera.util.NetUtils;
 public class SystemInfo implements Reportable {
 
   String name = "System";
-  
+
   @Override
   public String getName() {
     return this.name;
   }
-  
+
   public SystemInfo(String name) {
     this.name = name + "system-info";
   }
 
   @Override
-  public ReportEvent getReport() {
+  public ReportEvent getMetrics() {
     ReportEvent rpt = new ReportEvent(getName());
 
     // os
@@ -71,4 +73,8 @@ public class SystemInfo implements Reportable {
     return rpt;
   }
 
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    return ReportUtil.noChildren();
+  }
 }

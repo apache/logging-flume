@@ -17,17 +17,20 @@
  */
 package com.cloudera.flume.handlers.debug;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.connector.DirectDriver;
@@ -39,7 +42,8 @@ import com.cloudera.flume.reporter.ReportEvent;
  * test, their details are given with their respective test methods below.
  */
 public class TestChokeDecos {
-  public static final Logger LOG = LoggerFactory.getLogger(TestChokeDecos.class);
+  public static final Logger LOG = LoggerFactory
+      .getLogger(TestChokeDecos.class);
 
   Random rand = new Random(System.currentTimeMillis());
 

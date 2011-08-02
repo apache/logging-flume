@@ -33,6 +33,8 @@ import com.cloudera.flume.core.CompositeSink;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.ReportUtil;
+import com.cloudera.flume.reporter.Reportable;
 import com.cloudera.util.Clock;
 import com.google.common.base.Preconditions;
 
@@ -56,7 +58,7 @@ public class RollSink extends EventSink.Base {
   // reporting attributes and counters
   public final static String A_ROLLS = "rolls";
   public final static String A_ROLLFAILS = "rollfails";
-  public final String A_ROLLSPEC = "rollspec";
+  public final static String A_ROLLSPEC = "rollspec";
   public final String A_ROLL_TAG; // TODO (jon) parameterize this.
   public final static String DEFAULT_ROLL_TAG = "rolltag";
 
@@ -210,7 +212,8 @@ public class RollSink extends EventSink.Base {
         triggerThread.interrupt();
         triggerThread.doneLatch.await();
       } catch (InterruptedException e) {
-        LOG.warn("Interrupted while waiting for batch timeout thread to finish");
+        LOG
+            .warn("Interrupted while waiting for batch timeout thread to finish");
         // TODO check finally
         throw e;
       }
@@ -249,6 +252,22 @@ public class RollSink extends EventSink.Base {
   }
 
   @Override
+  synchronized public ReportEvent getMetrics() {
+    ReportEvent rpt = super.getMetrics();
+    rpt.setLongMetric(A_ROLLS, rolls.get());
+    rpt.setLongMetric(A_ROLLFAILS, rollfails.get());
+    rpt.setStringMetric(A_ROLLSPEC, fspec);
+    return rpt;
+  }
+
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    // subReports will handle case where curSink is null
+    return ReportUtil.subReports(curSink);
+  }
+
+  @Deprecated
+  @Override
   synchronized public ReportEvent getReport() {
     ReportEvent rpt = super.getReport();
     rpt.setLongMetric(A_ROLLS, rolls.get());
@@ -257,6 +276,7 @@ public class RollSink extends EventSink.Base {
     return rpt;
   }
 
+  @Deprecated
   @Override
   public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
     super.getReports(namePrefix, reports);

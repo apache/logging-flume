@@ -23,6 +23,7 @@ import java.util.Map;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.ReportUtil;
 import com.cloudera.flume.reporter.Reportable;
 
 /**
@@ -63,9 +64,18 @@ public interface EventSink extends Reportable {
   public void close() throws IOException, InterruptedException;
 
   /**
-   * Generates one or more reports in some sort of readable format using the
-   * supplied naming prefix.
+   * Generate a simplified report. This only gathers a limited number of metrics
+   * about the particular sink, and does not hierarchically gather information
+   * from subsinks.
    */
+  @Deprecated
+  public ReportEvent getReport();
+
+  /**
+   * Generates one or more simplified reports in some sort of readable format
+   * using the supplied naming prefix.
+   */
+  @Deprecated
   public void getReports(String namePrefix, Map<String, ReportEvent> reports);
 
   /**
@@ -84,6 +94,9 @@ public interface EventSink extends Reportable {
     /** total number bytes appended to this sink */
     private long numBytes = 0;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     synchronized public void append(Event e) throws IOException,
         InterruptedException {
@@ -97,19 +110,48 @@ public interface EventSink extends Reportable {
       numEvents++;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void close() throws IOException, InterruptedException {
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void open() throws IOException, InterruptedException {
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getName() {
       return this.getClass().getSimpleName();
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    synchronized public ReportEvent getMetrics() {
+      return new ReportEvent(getName());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Map<String, Reportable> getSubMetrics() {
+      return ReportUtil.noChildren();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Deprecated
     @Override
     public ReportEvent getReport() {
       ReportEvent rpt = new ReportEvent(getName());
@@ -121,6 +163,10 @@ public interface EventSink extends Reportable {
       return rpt;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Deprecated
     @Override
     public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
       reports.put(namePrefix + getName(), getReport());
@@ -142,21 +188,33 @@ public interface EventSink extends Reportable {
       this.name = name;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getName() {
       return name;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void append(Event e) throws IOException, InterruptedException {
       throw new IOException("Attemping to append to a Stub Sink!");
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void close() throws IOException, InterruptedException {
       // this does not throw exception because close always succeeds.
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void open() throws IOException, InterruptedException {
       throw new IOException("Attempting to open a stub sink '" + getName()

@@ -22,11 +22,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.Reportable;
 import com.cloudera.util.MultipleIOException;
 
 /**
@@ -41,6 +43,8 @@ public class FanOutSink<S extends EventSink> extends EventSink.Base {
   // not. Make a test to find out.
   final List<S> sinks = Collections
       .synchronizedList(new CopyOnWriteArrayList<S>());
+
+  public final static String R_SUBSINKS = "subsinks";
 
   public FanOutSink() {
   }
@@ -139,6 +143,25 @@ public class FanOutSink<S extends EventSink> extends EventSink.Base {
     return "Fanout";
   }
 
+  @Override
+  public ReportEvent getMetrics() {
+    ReportEvent rpt = super.getMetrics();
+    rpt.setLongMetric(R_SUBSINKS, sinks.size());
+    return rpt;
+  }
+
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    Map<String, Reportable> map = new HashMap<String, Reportable>();
+    int i = 0;
+    for (EventSink s : sinks) {
+      map.put(getName() + "[" + i + "]", s);
+      i++;
+    }
+    return map;
+  }
+
+  @Deprecated
   @Override
   public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
     super.getReports(namePrefix, reports);

@@ -108,6 +108,16 @@ public class StubbornAppendSink<S extends EventSink> extends
   }
 
   @Override
+  public ReportEvent getMetrics() {
+    ReportEvent e = super.getMetrics();
+    e.setLongMetric(A_SUCCESSES, appendSuccesses.get());
+    e.setLongMetric(A_FAILS, appendFails.get());
+    e.setLongMetric(A_RECOVERS, appendRecovers.get());
+    return e;
+  }
+
+  @Deprecated
+  @Override
   public ReportEvent getReport() {
     ReportEvent e = super.getReport();
     e.setLongMetric(A_SUCCESSES, appendSuccesses.get());

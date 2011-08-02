@@ -20,6 +20,7 @@ package com.cloudera.flume.core;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -31,6 +32,7 @@ import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.Reportable;
 import com.cloudera.util.MultipleIOException;
 import com.google.common.base.Preconditions;
 
@@ -60,8 +62,8 @@ public class FailOverSink extends EventSink.Base {
   boolean backupOpen = false;
 
   final String name;
-  final String R_FAILS;
-  final String R_BACKUPS;
+  public static final String R_FAILS = "fails";
+  public static final String R_BACKUPS = "backups";
 
   public FailOverSink(EventSink primary, EventSink backup) {
     Preconditions.checkNotNull(primary);
@@ -70,8 +72,6 @@ public class FailOverSink extends EventSink.Base {
     this.backup = backup;
     suffix = uniq.getAndIncrement();
     this.name = "failover_" + suffix;
-    this.R_FAILS = "rpt." + name + ".fails";
-    this.R_BACKUPS = "rpt." + name + ".backups";
   }
 
   @Override
@@ -142,6 +142,23 @@ public class FailOverSink extends EventSink.Base {
   }
 
   @Override
+  public ReportEvent getMetrics() {
+    ReportEvent rpt = super.getMetrics();
+    rpt.setLongMetric(R_FAILS, fails);
+    rpt.setLongMetric(R_BACKUPS, backups);
+    return rpt;
+  }
+
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    Map<String, Reportable> map = new HashMap<String, Reportable>();
+    map.put("primary." + primary.getName(), primary);
+    map.put("backup." + backup.getName(), backup);
+    return map;
+  }
+
+  @Deprecated
+  @Override
   public ReportEvent getReport() {
     ReportEvent rpt = super.getReport();
     rpt.setLongMetric(R_FAILS, fails);
@@ -149,6 +166,7 @@ public class FailOverSink extends EventSink.Base {
     return rpt;
   }
 
+  @Deprecated
   @Override
   public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
     super.getReports(namePrefix, reports);

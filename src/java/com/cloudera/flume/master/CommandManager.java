@@ -44,6 +44,7 @@ import com.cloudera.flume.master.commands.UnconfigCommand;
 import com.cloudera.flume.master.commands.UnmapLogicalNodeForm;
 import com.cloudera.flume.master.commands.UpdateAllCommand;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.ReportUtil;
 import com.cloudera.flume.reporter.Reportable;
 import com.google.common.base.Preconditions;
 
@@ -286,7 +287,7 @@ public class CommandManager implements Reportable {
 
   // TODO (jon) convert to a regular report
   @Override
-  public ReportEvent getReport() {
+  public ReportEvent getMetrics() {
 
     StringBuilder html = new StringBuilder();
     html.append("<div class=\"CommandManager\">");
@@ -327,4 +328,8 @@ public class CommandManager implements Reportable {
     return ReportEvent.createLegacyHtmlReport("", html.toString());
   }
 
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    return ReportUtil.noChildren();
+  }
 }

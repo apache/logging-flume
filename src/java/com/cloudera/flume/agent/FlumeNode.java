@@ -58,6 +58,7 @@ import com.cloudera.flume.reporter.MasterReportPusher;
 import com.cloudera.flume.reporter.NodeReportResource;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
+import com.cloudera.flume.reporter.ReportUtil;
 import com.cloudera.flume.reporter.Reportable;
 import com.cloudera.flume.util.FlumeVMInfo;
 import com.cloudera.flume.util.SystemInfo;
@@ -103,6 +104,7 @@ public class FlumeNode implements Reportable {
   private MasterRPC rpcMan;
   private LogicalNodeManager nodesMan;
 
+  private ReportManager simpleReportManager = new ReportManager("simple");
   private final MasterReportPusher reportPusher;
 
   /**
@@ -145,7 +147,7 @@ public class FlumeNode implements Reportable {
         + this.physicalNodeName + ".");
 
     this.reportPusher = new MasterReportPusher(FlumeConfiguration.get(),
-        ReportManager.get(), rpcMan);
+        simpleReportManager, rpcMan);
     this.sysInfo = new SystemInfo(PHYSICAL_NODE_REPORT_PREFIX
         + this.physicalNodeName + ".");
   }
@@ -169,7 +171,7 @@ public class FlumeNode implements Reportable {
     if (!oneshot) {
       this.liveMan = new LivenessManager(nodesMan, rpcMan,
           new FlumeNodeWALNotifier(this.walMans));
-      this.reportPusher = new MasterReportPusher(conf, ReportManager.get(),
+      this.reportPusher = new MasterReportPusher(conf, simpleReportManager,
           rpcMan);
 
     } else {
@@ -239,6 +241,29 @@ public class FlumeNode implements Reportable {
    */
   synchronized public void start() {
     FlumeConfiguration conf = FlumeConfiguration.get();
+
+    // the simple report interface
+    simpleReportManager.add(vmInfo);
+    simpleReportManager.add(sysInfo);
+    simpleReportManager.add(new Reportable() {
+
+      @Override
+      public String getName() {
+        return FlumeNode.this.getName();
+      }
+
+      @Override
+      public ReportEvent getMetrics() {
+        return FlumeNode.this.getReport();
+      }
+
+      @Override
+      public Map<String, Reportable> getSubMetrics() {
+        return ReportUtil.noChildren();
+      }
+    });
+
+    // the full report interface
     ReportManager.get().add(vmInfo);
     ReportManager.get().add(sysInfo);
     ReportManager.get().add(this);
@@ -361,8 +386,9 @@ public class FlumeNode implements Reportable {
   /**
    * This method is currently called by the JSP to display node information.
    */
+  @Deprecated
   public String report() {
-    return getReport().toHtml();
+    return ReportUtil.getFlattenedReport(this).toHtml();
   }
 
   public WALAckManager getAckChecker() {
@@ -790,7 +816,7 @@ public class FlumeNode implements Reportable {
     return PHYSICAL_NODE_REPORT_PREFIX + this.getPhysicalNodeName();
   }
 
-  @Override
+  @Deprecated
   public ReportEvent getReport() {
     ReportEvent node = new ReportEvent(getName());
     node.setLongMetric(R_NUM_LOGICAL_NODES, this.getLogicalNodeManager()
@@ -798,12 +824,36 @@ public class FlumeNode implements Reportable {
     node.hierarchicalMerge(nodesMan.getName(), nodesMan.getReport());
     if (getAckChecker() != null) {
       node.hierarchicalMerge(getAckChecker().getName(), getAckChecker()
-          .getReport());
+          .getMetrics());
     }
+    return node;
+  }
+
+  @Override
+  public ReportEvent getMetrics() {
+    ReportEvent node = new ReportEvent(getName());
+    node.setLongMetric(R_NUM_LOGICAL_NODES, this.getLogicalNodeManager()
+        .getNodes().size());
+    return node;
+  }
+
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    Map<String, Reportable> map = new HashMap<String, Reportable>();
+    map.put(nodesMan.getName(), nodesMan);
+
+    WALAckManager ack = getAckChecker();
+    if (ack != null) {
+      map.put(ack.getName(), ack);
+    }
+
+    map.put("jvmInfo", vmInfo);
+    map.put("sysInfo",sysInfo);
+    
     // TODO (jon) LivenessMan
     // TODO (jon) rpcMan
 
-    return node;
+    return map;
   }
 
   public String getPhysicalNodeName() {

@@ -31,7 +31,7 @@ public class TestMasterReport extends SetupMasterTestEnv {
   /** Verify that the report contains a particular set of attributes */
   @Test
   public void testReportContainsRequiredAttributes() {
-    ReportEvent rpt = flumeMaster.getReport();
+    ReportEvent rpt = flumeMaster.getMetrics();
 
     Assert.assertNotNull(rpt.getStringMetric(FlumeMaster.REPORTKEY_HOSTNAME));
     Assert.assertNotNull(rpt

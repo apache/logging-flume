@@ -28,11 +28,9 @@ import java.util.Map;
 import org.apache.avro.ipc.HttpTransceiver;
 import org.apache.avro.specific.SpecificRequestor;
 import org.apache.avro.util.Utf8;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,9 +38,10 @@ import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.Attributes.Type;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
+import com.cloudera.flume.reporter.ReportUtil;
 import com.cloudera.flume.reporter.Reportable;
-import com.cloudera.flume.reporter.server.avro.AvroFlumeReportServer;
 import com.cloudera.flume.reporter.server.avro.AvroFlumeReport;
+import com.cloudera.flume.reporter.server.avro.AvroFlumeReportServer;
 
 /**
  * Test cases for the Avro-based report server
@@ -75,8 +74,13 @@ public class TestAvroReportServer {
       }
 
       @Override
-      public ReportEvent getReport() {
+      public ReportEvent getMetrics() {
         return reportEvent;
+      }
+
+      @Override
+      public Map<String, Reportable> getSubMetrics() {
+        return ReportUtil.noChildren();
       }
     };
 

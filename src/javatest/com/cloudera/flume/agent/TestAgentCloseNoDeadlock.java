@@ -74,7 +74,7 @@ public class TestAgentCloseNoDeadlock {
         try {
           go.await();
           while (heartstop.getCount() > 0) {
-            lnm.getReport();
+            lnm.getMetrics();
           }
         } catch (Exception e) {
           LOG.error(e.getMessage(), e);

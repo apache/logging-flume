@@ -198,7 +198,7 @@ public class TestConcurrentDFOMan {
       assertEquals(exp, (int) cnt.getCount());
 
       // check dfo reports to see if they are sane.
-      ReportEvent rpt = dfos[i].getReport();
+      ReportEvent rpt = dfos[i].getMetrics();
       LOG.info(rpt);
       long failovered = rpt.getLongMetric(DiskFailoverManager.A_MSG_WRITING);
       assertEquals(events + i, failovered);
@@ -234,7 +234,7 @@ public class TestConcurrentDFOMan {
     boolean success = true;
 
     for (int i = 0; i < threads; i++) {
-      LOG.info(dfos[i].getReport());
+      LOG.info(dfos[i].getMetrics());
     }
 
     for (int i = 0; i < threads; i++) {
@@ -272,7 +272,7 @@ public class TestConcurrentDFOMan {
 
   boolean areDFOsReconfigured(Collection<LogicalNode> lns) {
     for (LogicalNode n : lns) {
-      long val = n.getReport().getLongMetric(LogicalNode.A_RECONFIGURES);
+      long val = n.getMetrics().getLongMetric(LogicalNode.A_RECONFIGURES);
       if (val == 0) {
         return false;
       }

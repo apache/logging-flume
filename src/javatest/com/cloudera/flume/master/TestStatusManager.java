@@ -109,7 +109,7 @@ public class TestStatusManager {
     assertEquals(NodeState.ACTIVE, ns.state);
     prev = ns.lastseen;
 
-    LOG.info(stats.getReport());
+    LOG.info(stats.getMetrics());
     LOG.info(stats.getName());
   }
 

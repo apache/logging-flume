@@ -17,10 +17,14 @@
  */
 package com.cloudera.util;
 
+import static java.lang.Math.max;
+
+import java.util.Map;
+
 import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.reporter.ReportEvent;
-
-import static java.lang.Math.max;
+import com.cloudera.flume.reporter.ReportUtil;
+import com.cloudera.flume.reporter.Reportable;
 
 /**
  * This provides a simple exponential backoff algorithm object. This has a
@@ -94,7 +98,7 @@ public class ExponentialBackoff implements BackoffPolicy {
   }
 
   @Override
-  public ReportEvent getReport() {
+  public ReportEvent getMetrics() {
     ReportEvent rpt = new ReportEvent(getName());
     Attributes.setLong(rpt, A_INITIAL, initialSleep);
     Attributes.setLong(rpt, A_COUNT, backoffCount);
@@ -104,12 +108,17 @@ public class ExponentialBackoff implements BackoffPolicy {
     return rpt;
   }
 
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    return ReportUtil.noChildren();
+  }
+
   /**
-   * Sleep until we reach retryTime. Call isRetryOk after this returns if 
-   * you are concerned about backoff() being called while this thread sleeps.
+   * Sleep until we reach retryTime. Call isRetryOk after this returns if you
+   * are concerned about backoff() being called while this thread sleeps.
    */
   @Override
-  public void waitUntilRetryOk() throws InterruptedException {    
-    Thread.sleep(max(0L,retryTime - Clock.unixTime()));    
+  public void waitUntilRetryOk() throws InterruptedException {
+    Thread.sleep(max(0L, retryTime - Clock.unixTime()));
   }
 }

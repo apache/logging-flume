@@ -26,29 +26,30 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.master.StatusManager.NodeState;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
+import com.cloudera.flume.reporter.ReportUtil;
 import com.cloudera.flume.reporter.Reportable;
 import com.google.common.base.Preconditions;
 
 /**
  * Master-side implementation of the master<->client RPC interaction.
- * Encapsulates the logic involved in processing client requests. Since the 
- * wire protocol is different for separate RPC implementations, they each 
- * run their own stub servers, then delegate all requests to this common class.
+ * Encapsulates the logic involved in processing client requests. Since the wire
+ * protocol is different for separate RPC implementations, they each run their
+ * own stub servers, then delegate all requests to this common class.
  */
 public class MasterClientServer {
   static final Logger LOG = LoggerFactory.getLogger(MasterClientServer.class);
   final protected FlumeMaster master;
   final protected FlumeConfiguration config;
-  
+
   RPCServer masterRPC;
 
-  public MasterClientServer(FlumeMaster master, FlumeConfiguration config) 
-    throws IOException {
+  public MasterClientServer(FlumeMaster master, FlumeConfiguration config)
+      throws IOException {
     Preconditions.checkArgument(master != null,
         "FlumeConfigMaster is null in MasterClientServer!");
     this.master = master;
@@ -63,14 +64,14 @@ public class MasterClientServer {
       throw new IOException("No valid RPC framework specified in config");
     }
   }
-  
-  public MasterClientServer(FlumeMaster master, FlumeConfiguration config, 
+
+  public MasterClientServer(FlumeMaster master, FlumeConfiguration config,
       RPCServer rpc) {
     this.master = master;
     this.config = config;
     this.masterRPC = rpc;
   }
-  
+
   /**
    * For testing.
    */
@@ -150,8 +151,13 @@ public class MasterClientServer {
         }
 
         @Override
-        public ReportEvent getReport() {
+        public ReportEvent getMetrics() {
           return new ReportEvent(r.getValue());
+        }
+
+        @Override
+        public Map<String, Reportable> getSubMetrics() {
+          return ReportUtil.noChildren();
         }
       });
     }
@@ -160,8 +166,8 @@ public class MasterClientServer {
   public void serve() throws IOException {
     this.masterRPC.serve();
   }
-  
-  public void stop () throws IOException {
+
+  public void stop() throws IOException {
     if (this.masterRPC != null) {
       this.masterRPC.stop();
     }

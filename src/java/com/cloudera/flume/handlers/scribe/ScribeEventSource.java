@@ -41,6 +41,8 @@ import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.ReportUtil;
+import com.cloudera.flume.reporter.Reportable;
 import com.cloudera.flume.util.ThriftServer;
 import com.cloudera.util.Clock;
 import com.google.common.base.Preconditions;
@@ -238,15 +240,19 @@ public class ScribeEventSource extends ThriftServer implements EventSource,
   }
 
   @Override
-  public ReportEvent getReport() {
+  public ReportEvent getMetrics() {
     // TODO(henry): add metrics
     // TODO missing EventSource stats
     return new ReportEvent("scribe-source");
   }
 
   @Override
-  public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
-    reports.put(namePrefix + getName(), getReport());
+  public Map<String, Reportable> getSubMetrics() {
+    return ReportUtil.noChildren();
+  }
 
+  @Override
+  public void getReports(String namePrefix, Map<String, ReportEvent> reports) {
+    reports.put(namePrefix + getName(), getMetrics());
   }
 }

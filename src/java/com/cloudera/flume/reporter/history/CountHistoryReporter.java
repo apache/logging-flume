@@ -49,11 +49,14 @@ public class CountHistoryReporter extends ScheduledHistoryReporter<CounterSink> 
     return new CounterSink(format.newTag());
   }
 
+  /**
+   * TODO make not use legacy html report
+   */
   @Override
-  public ReportEvent getReport() {
+  public ReportEvent getMetrics() {
 
-    ArrayList<Pair<Long, Long>> list =
-        new ArrayList<Pair<Long, Long>>(getHistory().size());
+    ArrayList<Pair<Long, Long>> list = new ArrayList<Pair<Long, Long>>(
+        getHistory().size());
     for (Pair<Long, CounterSink> p : getHistory()) {
       list.add(new Pair<Long, Long>(p.getLeft(), p.getRight().getCount()));
     }

@@ -250,7 +250,7 @@ public class TestConcurrentWALMan {
    */
   boolean areWALsDone(FlumeNode node, Collection<LogicalNode> lns) {
     for (LogicalNode n : lns) {
-      if (0 >= n.getReport().getLongMetric(LogicalNode.A_RECONFIGURES)) {
+      if (0 >= n.getMetrics().getLongMetric(LogicalNode.A_RECONFIGURES)) {
         // reconfigure count still at 0
         LOG.warn("Logical node reconfigure count <= 0");
         return false;

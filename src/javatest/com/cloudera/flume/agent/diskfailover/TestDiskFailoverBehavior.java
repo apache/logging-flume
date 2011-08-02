@@ -103,9 +103,9 @@ public class TestDiskFailoverBehavior {
       LOG.info("loop " + loops + " collector count = " + cnt1 + " count2 = "
           + cnt2);
       if (coll != null) {
-        LOG.info(coll.getReport().toText());
+        LOG.info(coll.getMetrics().toText());
       }
-      LOG.info(coll2.getReport().toText());
+      LOG.info(coll2.getMetrics().toText());
 
       if (cnt1 + cnt2 >= count)
         break;
@@ -201,8 +201,8 @@ public class TestDiskFailoverBehavior {
       LOG.info("loop " + loops + " collector count = " + ctr.getCount()
           + " count2 = " + ctr2.getCount());
 
-      LOG.info(coll.getReport().toText());
-      LOG.info(coll2.getReport().toText());
+      LOG.info(coll.getMetrics().toText());
+      LOG.info(coll2.getMetrics().toText());
       if (old == ctr.getCount()) {
         break;
       }

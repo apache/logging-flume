@@ -123,8 +123,11 @@ public class MultiGrepReporterSink<T> extends EventSink.Base {
     return name;
   }
 
+  /**
+   * TODO make not use legacy html report.
+   */
   @Override
-  public ReportEvent getReport() {
+  public ReportEvent getMetrics() {
     return ReportEvent.createLegacyHtmlReport(name, chartgen.generate(histo)
         + "<pre>" + histo + "</pre>");
   }

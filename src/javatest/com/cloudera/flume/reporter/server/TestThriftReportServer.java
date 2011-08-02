@@ -39,6 +39,7 @@ import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.Attributes.Type;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
+import com.cloudera.flume.reporter.ReportUtil;
 import com.cloudera.flume.reporter.Reportable;
 import com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport;
 import com.cloudera.flume.reporter.server.thrift.ThriftFlumeReportServer;
@@ -71,8 +72,13 @@ public class TestThriftReportServer {
       }
 
       @Override
-      public ReportEvent getReport() {
+      public ReportEvent getMetrics() {
         return reportEvent;
+      }
+
+      @Override
+      public Map<String, Reportable> getSubMetrics() {
+        return ReportUtil.noChildren();
       }
     };
 

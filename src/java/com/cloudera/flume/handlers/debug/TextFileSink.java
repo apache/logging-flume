@@ -84,6 +84,14 @@ public class TextFileSink extends EventSink.Base {
   }
 
   @Override
+  synchronized public ReportEvent getMetrics() {
+    ReportEvent rpt = super.getMetrics();
+    rpt.setLongMetric(ReportEvent.A_COUNT, count);
+    return rpt;
+  }
+
+  @Deprecated
+  @Override
   synchronized public ReportEvent getReport() {
     ReportEvent rpt = super.getReport();
     rpt.setLongMetric(ReportEvent.A_COUNT, count);

@@ -72,7 +72,7 @@ public class AvroReportServer implements AvroFlumeReportServer {
     Map<String, Reportable> reports = reportManager.getReportables();
 
     for (Entry<String, Reportable> e : reports.entrySet()) {
-      AvroFlumeReport report = reportToAvro(e.getValue().getReport());
+      AvroFlumeReport report = reportToAvro(e.getValue().getMetrics());
       retMap.put(e.getKey(), report);
     }
     return retMap;
@@ -87,7 +87,7 @@ public class AvroReportServer implements AvroFlumeReportServer {
     ReportManager reportManager = ReportManager.get();
     Map<String, Reportable> reports = reportManager.getReportables();
     if (reports.containsKey(reportName.toString())) {
-      return reportToAvro(reports.get(reportName.toString()).getReport());
+      return reportToAvro(reports.get(reportName.toString()).getMetrics());
     }
     return null;
   }

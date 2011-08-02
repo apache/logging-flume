@@ -225,8 +225,8 @@ public class BatchingDecorator<S extends EventSink> extends
   }
 
   @Override
-  public ReportEvent getReport() {
-    ReportEvent rpt = super.getReport();
+  public ReportEvent getMetrics() {
+    ReportEvent rpt = super.getMetrics();
     rpt.setLongMetric(R_TIMEOUTS, timeoutCount.get());
     rpt.setLongMetric(R_FILLED, filledCount.get());
     rpt.setLongMetric(R_TRIGGERS, totalCount.get());

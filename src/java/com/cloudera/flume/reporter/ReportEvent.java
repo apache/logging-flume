@@ -443,7 +443,10 @@ public class ReportEvent extends EventImpl {
 
   /**
    * Return event as JSON string
+   * 
+   * Use ReportUtil.toJSONObject instead of this method
    */
+  @Deprecated
   public String toJson() {
     StringWriter sw = new StringWriter();
     try {
@@ -468,4 +471,5 @@ public class ReportEvent extends EventImpl {
     }
     return sw.getBuffer().toString();
   }
+
 }

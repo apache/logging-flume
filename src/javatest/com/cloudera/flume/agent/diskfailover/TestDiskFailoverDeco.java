@@ -67,7 +67,7 @@ public class TestDiskFailoverDeco {
     doNothing().when(msnk).close();
     doNothing().doThrow(new IOException("foo")).doNothing().when(msnk)
         .append(Mockito.<Event> anyObject());
-    doReturn(new ReportEvent("blah")).when(msnk).getReport();
+    doReturn(new ReportEvent("blah")).when(msnk).getMetrics();
 
     // cannot write to the same instance.
     Event e1 = new EventImpl(new byte[0]);

@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.handlers.endtoend.AckListener;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.ReportUtil;
 import com.cloudera.flume.reporter.Reportable;
 import com.cloudera.util.Clock;
 import com.google.common.base.Preconditions;
@@ -187,7 +188,7 @@ public class WALAckManager implements Reportable {
   }
 
   @Override
-  synchronized public ReportEvent getReport() {
+  synchronized public ReportEvent getMetrics() {
     ReportEvent rpt = new ReportEvent(getName());
     Attributes.setLong(rpt, A_RETRANSMIT_TIMEOUT, retransmitTime);
     StringBuilder pendingAcks = new StringBuilder();
@@ -199,6 +200,11 @@ public class WALAckManager implements Reportable {
     }
     Attributes.setString(rpt, A_PENDING_ACK_INFO, pendingAcks.toString());
     return rpt;
+  }
+
+  @Override
+  public Map<String, Reportable> getSubMetrics() {
+    return ReportUtil.noChildren();
   }
 
   public Set<String> getPendingAckTags() {

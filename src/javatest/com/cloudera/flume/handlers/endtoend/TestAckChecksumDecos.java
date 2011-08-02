@@ -18,17 +18,20 @@
 package com.cloudera.flume.handlers.endtoend;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.codehaus.jettison.json.JSONException;
 import org.junit.Test;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
@@ -36,6 +39,10 @@ import com.cloudera.flume.core.EventSinkDecorator;
 import com.cloudera.flume.core.FanOutSink;
 import com.cloudera.flume.handlers.debug.ConsoleEventSink;
 import com.cloudera.flume.handlers.debug.MemorySinkSource;
+import com.cloudera.flume.handlers.debug.StubbornAppendSink;
+import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.ReportTestUtils;
+import com.cloudera.flume.reporter.ReportUtil;
 import com.cloudera.flume.reporter.aggregator.CounterSink;
 
 /**
@@ -249,7 +256,7 @@ public class TestAckChecksumDecos {
       return;
     }
 
-    LOG.info(cc.getReport().toJson());
+    LOG.info(cc.getMetrics().toJson());
 
     fail("should have failed");
   }
@@ -278,6 +285,27 @@ public class TestAckChecksumDecos {
   @Test(expected = FlumeSpecException.class)
   public void testAckCheckerBuilderBadArgs() throws FlumeSpecException {
     FlumeBuilder.buildSink(new Context(), "{ackChecker(false) => null}");
+  }
+
+  /**
+   * Test insistent append metrics
+   */
+  @Test
+  public void testStubbornAppendMetrics() throws JSONException,
+      FlumeSpecException, IOException, InterruptedException {
+    ReportTestUtils.setupSinkFactory();
+
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(),
+        "ackChecker one");
+    ReportEvent rpt = ReportUtil.getFlattenedReport(snk);
+    LOG.info(ReportUtil.toJSONObject(rpt).toString());
+    assertNotNull(rpt.getLongMetric(AckChecksumChecker.A_ACK_ENDS));
+    assertNotNull(rpt.getLongMetric(AckChecksumChecker.A_ACK_FAILS));
+    assertNotNull(rpt.getLongMetric(AckChecksumChecker.A_ACK_STARTS));
+    assertNotNull(rpt.getLongMetric(AckChecksumChecker.A_ACK_SUCCESS));
+    assertNotNull(rpt.getLongMetric(AckChecksumChecker.A_ACK_UNEXPECTED));
+    assertEquals("One", rpt.getStringMetric("One.name"));
+
   }
 
 }
