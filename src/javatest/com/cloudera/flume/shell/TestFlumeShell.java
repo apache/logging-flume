@@ -18,7 +18,15 @@
 
 package com.cloudera.flume.shell;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 
 import org.apache.thrift.transport.TTransportException;
@@ -27,8 +35,9 @@ import org.junit.Test;
 
 import com.cloudera.flume.agent.DirectMasterRPC;
 import com.cloudera.flume.agent.FlumeNode;
-import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfiguration;
+import com.cloudera.flume.master.ConfigurationManager;
 import com.cloudera.flume.master.SetupMasterTestEnv;
 import com.cloudera.flume.master.StatusManager.NodeState;
 import com.cloudera.flume.master.StatusManager.NodeStatus;
@@ -98,6 +107,64 @@ public class TestFlumeShell extends SetupMasterTestEnv {
     Clock.sleep(250);
     assertTrue(flumeMaster.getSpecMan().getAllConfigs().size() > 0);
   }
+
+  /**
+   * Create a master, connect via shell, create some logical nodes, save the
+   * config for the node and check if the output looks as expected.
+   */
+  @Test
+  public void testSaveConfigCommand() throws IOException {
+    FlumeShell sh = new FlumeShell();
+    long retval;
+
+    retval = sh.executeLine("connect localhost:"
+      + FlumeConfiguration.DEFAULT_ADMIN_PORT);
+    assertEquals(0, retval);
+
+    retval = sh.executeLine("exec config foo 'null' 'console'");
+    assertEquals(0, retval);
+
+    File saveFile = File.createTempFile("test-flume","");
+    saveFile.delete();
+    saveFile.deleteOnExit();
+
+    retval = sh.executeLine("exec save '" + saveFile.getAbsolutePath() + "'");
+    assertEquals(0, retval);
+
+    BufferedReader in = new BufferedReader(new FileReader(saveFile));
+    assertEquals("foo : null | console;", in.readLine());
+    assertNull(in.readLine());
+    in.close();
+  }
+
+  /**
+   * Create a master, create a config file, connect via shell, load config file,
+   * compare if flow looks as expected in FlumeConfigData.
+   */
+  @Test
+  public void testLoadConfigCommand() throws IOException {
+    FlumeShell sh = new FlumeShell();
+    long retval;
+
+    retval = sh.executeLine("connect localhost:"
+      + FlumeConfiguration.DEFAULT_ADMIN_PORT);
+    assertEquals(0, retval);
+
+    File saveFile = File.createTempFile("test-flume","");
+    saveFile.deleteOnExit();
+    BufferedWriter out = new BufferedWriter(new FileWriter(saveFile));
+    out.write("foo : null | console;\n");
+    out.close();
+
+    retval = sh.executeLine("exec load '" + saveFile.getAbsolutePath() + "'");
+    assertEquals(0, retval);
+
+    ConfigurationManager manager = flumeMaster.getSpecMan();
+    FlumeConfigData data = manager.getConfig("foo");
+    assertEquals(data.getSinkConfig(), "console");
+    assertEquals(data.getSourceConfig(), "null");
+  }
+
 
   /**
    * Create a master, connect via shell, create some logical nodes, spawn them,

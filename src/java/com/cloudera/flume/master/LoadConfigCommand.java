@@ -37,14 +37,15 @@ public class LoadConfigCommand {
   public static Execable buildExecable() {
     return new Execable() {
       @Override
-      public void exec(String[] argv) {
-        Preconditions.checkArgument(argv.length == 0);
+      public void exec(String[] argv) throws IOException {
+        Preconditions.checkArgument(argv.length == 1);
+        String configFileName = argv[0];
         FlumeMaster master = FlumeMaster.getInstance();
-        String f = FlumeConfiguration.get().getMasterSavefile();
         try {
-          master.getSpecMan().loadConfigFile(f);
+          master.getSpecMan().loadConfigFile(configFileName);
         } catch (IOException e) {
-          LOG.warn("Save Config " + f + " failed", e);
+          LOG.error("Loading Config " + configFileName + " failed", e);
+          throw e;
         }
       }
     };
