@@ -84,7 +84,7 @@ public class FlumeNode implements Reportable {
 
   private FlumeVMInfo vmInfo;
   private SystemInfo sysInfo;
-  private LivenessManager liveMan;
+  private final LivenessManager liveMan;
   private MasterRPC rpcMan;
   private LogicalNodeManager nodesMan;
 
@@ -147,12 +147,15 @@ public class FlumeNode implements Reportable {
 
     // no need for liveness tracker if a one shot execution.
     this.collectorAck = new CollectorAckListener(rpcMan);
-    if (!oneshot)
+    if (!oneshot) {
       this.liveMan = new LivenessManager(nodesMan, rpcMan,
           new FlumeNodeWALNotifier(this.walMans));
-
-    this.reportPusher = new MasterReportPusher(conf, ReportManager.get(),
-        rpcMan);
+      this.reportPusher = new MasterReportPusher(conf, ReportManager.get(),
+          rpcMan);
+    } else {
+      this.liveMan = null;
+      this.reportPusher = null;
+    }
 
     this.vmInfo = new FlumeVMInfo(PHYSICAL_NODE_REPORT_PREFIX
         + this.getPhysicalNodeName() + ".");
@@ -233,7 +236,9 @@ public class FlumeNode implements Reportable {
       }
     }
 
-    reportPusher.start();
+    if (reportPusher != null) {
+      reportPusher.start();
+    }
 
     if (liveMan != null) {
       liveMan.start();
@@ -248,9 +253,13 @@ public class FlumeNode implements Reportable {
       }
     }
 
-    reportPusher.stop();
+    if (reportPusher != null) {
+      reportPusher.stop();
+    }
 
-    liveMan.stop();
+    if (liveMan != null) {
+      liveMan.stop();
+    }
   }
 
   /**
