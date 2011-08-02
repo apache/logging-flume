@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudera.flume.handlers.thrift;
+package com.cloudera.flume.handlers.rpc;
 
 import org.apache.log4j.Logger;
 
@@ -24,6 +24,7 @@ import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.handlers.avro.AvroEventSource;
+import com.cloudera.flume.handlers.thrift.ThriftEventSource;
 import com.google.common.base.Preconditions;
 
 /**

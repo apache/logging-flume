@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudera.flume.handlers.thrift;
+package com.cloudera.flume.handlers.rpc;
 
 import org.apache.log4j.Logger;
 
@@ -24,6 +24,7 @@ import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.handlers.avro.AvroEventSink;
+import com.cloudera.flume.handlers.thrift.ThriftEventSink;
 
 /**
  * This is a sink that is used to send events through an RPC, it either uses
