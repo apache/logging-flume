@@ -43,7 +43,7 @@ sections will describe this in more details.
 
 
 
---------------------------------------------------
+------------------------------------------------------------------------------------
 nodeName      ::=  NodeId
 simpleSource  ::=  SourceId args?
 simpleSink    ::=  SinkId args?
@@ -53,15 +53,17 @@ source ::= simpleSource
 
 sink ::=   simpleSink            // single sink
      |     [ sink (, sink)* ]    // fanout sink
-     |     { decoratorSink => sink }  // decorator sink
+     |     { decoratorSink => sink } // decorator sink
+     |     decoratorSink1 decoratorSink2 ... decoratorSinkN sink // decorator sink
      |     < sink ? sink >           // failover / choice sink
-     |     roll(...) { sink }           // roll sink
-     |     let SinkId := sink in sink  // let expression
+     |     roll(...) { sink }        // roll sink
+     |     collector(...) { sink }   // generic collector sink
 
 logicalNode ::= NodeId : source | sink ;
 
 spec   ::=  (logicalNode)*
---------------------------------------------------
+------------------------------------------------------------------------------------
+
 
 ==== Special Sinks: Fan out, Fail over, and Roll
 
@@ -144,13 +146,17 @@ The following simple sampling example uses an intervalSampler which is
 configured to send every 10th element from source "source" to the sink "sink":
 
 ----
-flumenode: source | { intervalSampler(10) => sink };
+flumenode: source | intervalSampler(10) sink;
 ----
+
+NOTE: There is an older more verbose syntax for specifiying decorators
+that wraps decorators and sinks with +{ deco => sink }+ syntax.  The
+old syntax remains valid.
 
 Here's an example that batches every 100 events together.
 
 ----
-flumenode: source | { batch(100) => sink };
+flumenode: source | batch(100) sink;
 ----
 
 Like fanout and failover, decorators are also composable. Here is an example 
@@ -158,9 +164,34 @@ that creates batches of 100 events and then compresses them before moving
 them off to the sink:
 
 ----
-flumenode: source | { batch(100) =>  { gzip => sink } };
+flumenode: source | batch(100) gzip sink;
 ----
 
+As of v0.9.3, a new more generic collector sink that better
+encapsulates the "collectorMagic" functionality.  This allows you to
+specify arbitrary sinks (or mulitple sinks) using the flume
+specification language.  So the equivalent of 
+
+----
+collectorSink("xxx","yyy-%{rolltag}", 15000)
+----
+
+is now:
+
+----
+collector(15000) { escapedCustomDfs("xxx","yyy-%{rolltag}") }
+----
+
+Here is an example of newly expressable functionality:
+
+----
+collector(15000) { [ escapedCustomDfs("xxx","yyy-%{rolltag}"), hbase("aaa", "bbb-%{rolltag}"), elasticSearch("eeee","ffff") ] }
+----
+
+This would send data to all three destinations, and only send an ack
+if all three were successful.  Combined with some recovery decorators
+(stubborn*, insistent*), this can be used to precisely express
+potentially complex failure recovery policies.
 
 ==== Translations of High-level Sources and Sinks
 
@@ -185,10 +216,9 @@ In the translation phases, agentE2ESink is actually converted into these Flume
 sinks:
 
 ----
-node1 : tail("foo") | { ackedWriteAhead => { lazyOpen => { stubbornAppend 
-=> logicalSink("bar") } } } ;
-node2 : tail("foo") | let primary := { lazyOpen -> {stubbornAppend => logicalSink("bar") } } in < primary ? { diskFailover => { insistentOpen => primary} } >;
-node3 : tail("foo") | { lazyOpen => { stubbornAppend =>  logicalSink("bar")  } };
+node1 : tail("foo") | ackedWriteAhead lazyOpen stubbornAppend logicalSink("bar") ;
+node2 : tail("foo") | < lazyOpen stubbornAppend logicalSink("bar") ?  diskFailover insistentOpen lazyOpen stubbornAppend logicalSink("bar") >;
+node3 : tail("foo") | lazyOpen  stubbornAppend  logicalSink("bar");
 ----
 
 +ackedWriteAhead+ is actually a complicated decorator that internally
@@ -198,8 +228,7 @@ options.  For example, you could compress every 100 messages using
 gzip compression:
 
 ----
-node1 : tail("foo") | { ackedWriteAhead => { batch(100) => { gzip => { 
-lazyOpen => { stubbornAppend => logicalSink("bar") } } } } };
+node1 : tail("foo") | ackedWriteAhead batch(100) gzip lazyOpen stubbornAppend logicalSink("bar");
 ----
 
 +collectorSink("xxx","yyy",15000)+ is also a bit complicated with some custom 
@@ -207,7 +236,7 @@ decorators to handle acks.  Under the covers however, it depends on a roller
 with a escapedCustomDfsSink inside of it.
 
 ----
-roll(15000) { collectorMagic =>  escapedCustomDfs("xxx", "yyy-%rolltag") }
+roll(15000) { collectorMagic escapedCustomDfs("xxx", "yyy-%{rolltag}") }
 ----
 
 Another place translations happen is with logical nodes.  Lets start of with a 

@@ -1,6 +1,12 @@
 Flume 0.9.3 (Unreleased)
 ========================
 
+There have been some changes that removed advanced and purposely
+undocumented sinks such as the 'let' sink and the 'failchain' sink.
+Additions to the language include a new syntax for decorators,
+python-style keyword arguments, and a new 'collector' syntax that
+allows for multiple collector destinations.
+
 Flume 0.9.2
 ===========
 
