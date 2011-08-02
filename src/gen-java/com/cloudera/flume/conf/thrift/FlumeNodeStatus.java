@@ -29,6 +29,7 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
   private static final TField STATE_FIELD_DESC = new TField("state", TType.I32, (short)1);
   private static final TField VERSION_FIELD_DESC = new TField("version", TType.I64, (short)2);
   private static final TField LASTSEEN_FIELD_DESC = new TField("lastseen", TType.I64, (short)3);
+  private static final TField LAST_SEEN_DELTA_MILLIS_FIELD_DESC = new TField("lastSeenDeltaMillis", TType.I64, (short)6);
   private static final TField HOST_FIELD_DESC = new TField("host", TType.STRING, (short)4);
   private static final TField PHYSICAL_NODE_FIELD_DESC = new TField("physicalNode", TType.STRING, (short)5);
 
@@ -39,6 +40,7 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
   public com.cloudera.flume.conf.thrift.FlumeNodeState state;
   public long version;
   public long lastseen;
+  public long lastSeenDeltaMillis;
   public String host;
   public String physicalNode;
 
@@ -51,6 +53,7 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
     STATE((short)1, "state"),
     VERSION((short)2, "version"),
     LASTSEEN((short)3, "lastseen"),
+    LAST_SEEN_DELTA_MILLIS((short)6, "lastSeenDeltaMillis"),
     HOST((short)4, "host"),
     PHYSICAL_NODE((short)5, "physicalNode");
 
@@ -108,7 +111,8 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
   // isset id assignments
   private static final int __VERSION_ISSET_ID = 0;
   private static final int __LASTSEEN_ISSET_ID = 1;
-  private BitSet __isset_bit_vector = new BitSet(2);
+  private static final int __LASTSEENDELTAMILLIS_ISSET_ID = 2;
+  private BitSet __isset_bit_vector = new BitSet(3);
 
   public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
     put(_Fields.STATE, new FieldMetaData("state", TFieldRequirementType.DEFAULT, 
@@ -116,6 +120,8 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
     put(_Fields.VERSION, new FieldMetaData("version", TFieldRequirementType.DEFAULT, 
         new FieldValueMetaData(TType.I64)));
     put(_Fields.LASTSEEN, new FieldMetaData("lastseen", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.I64)));
+    put(_Fields.LAST_SEEN_DELTA_MILLIS, new FieldMetaData("lastSeenDeltaMillis", TFieldRequirementType.DEFAULT, 
         new FieldValueMetaData(TType.I64)));
     put(_Fields.HOST, new FieldMetaData("host", TFieldRequirementType.DEFAULT, 
         new FieldValueMetaData(TType.STRING)));
@@ -134,6 +140,7 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
     com.cloudera.flume.conf.thrift.FlumeNodeState state,
     long version,
     long lastseen,
+    long lastSeenDeltaMillis,
     String host,
     String physicalNode)
   {
@@ -143,6 +150,8 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
     setVersionIsSet(true);
     this.lastseen = lastseen;
     setLastseenIsSet(true);
+    this.lastSeenDeltaMillis = lastSeenDeltaMillis;
+    setLastSeenDeltaMillisIsSet(true);
     this.host = host;
     this.physicalNode = physicalNode;
   }
@@ -158,6 +167,7 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
     }
     this.version = other.version;
     this.lastseen = other.lastseen;
+    this.lastSeenDeltaMillis = other.lastSeenDeltaMillis;
     if (other.isSetHost()) {
       this.host = other.host;
     }
@@ -253,6 +263,29 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
     __isset_bit_vector.set(__LASTSEEN_ISSET_ID, value);
   }
 
+  public long getLastSeenDeltaMillis() {
+    return this.lastSeenDeltaMillis;
+  }
+
+  public FlumeNodeStatus setLastSeenDeltaMillis(long lastSeenDeltaMillis) {
+    this.lastSeenDeltaMillis = lastSeenDeltaMillis;
+    setLastSeenDeltaMillisIsSet(true);
+    return this;
+  }
+
+  public void unsetLastSeenDeltaMillis() {
+    __isset_bit_vector.clear(__LASTSEENDELTAMILLIS_ISSET_ID);
+  }
+
+  /** Returns true if field lastSeenDeltaMillis is set (has been asigned a value) and false otherwise */
+  public boolean isSetLastSeenDeltaMillis() {
+    return __isset_bit_vector.get(__LASTSEENDELTAMILLIS_ISSET_ID);
+  }
+
+  public void setLastSeenDeltaMillisIsSet(boolean value) {
+    __isset_bit_vector.set(__LASTSEENDELTAMILLIS_ISSET_ID, value);
+  }
+
   public String getHost() {
     return this.host;
   }
@@ -327,6 +360,14 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
       }
       break;
 
+    case LAST_SEEN_DELTA_MILLIS:
+      if (value == null) {
+        unsetLastSeenDeltaMillis();
+      } else {
+        setLastSeenDeltaMillis((Long)value);
+      }
+      break;
+
     case HOST:
       if (value == null) {
         unsetHost();
@@ -361,6 +402,9 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
     case LASTSEEN:
       return new Long(getLastseen());
 
+    case LAST_SEEN_DELTA_MILLIS:
+      return new Long(getLastSeenDeltaMillis());
+
     case HOST:
       return getHost();
 
@@ -384,6 +428,8 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
       return isSetVersion();
     case LASTSEEN:
       return isSetLastseen();
+    case LAST_SEEN_DELTA_MILLIS:
+      return isSetLastSeenDeltaMillis();
     case HOST:
       return isSetHost();
     case PHYSICAL_NODE:
@@ -433,6 +479,15 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
       if (!(this_present_lastseen && that_present_lastseen))
         return false;
       if (this.lastseen != that.lastseen)
+        return false;
+    }
+
+    boolean this_present_lastSeenDeltaMillis = true;
+    boolean that_present_lastSeenDeltaMillis = true;
+    if (this_present_lastSeenDeltaMillis || that_present_lastSeenDeltaMillis) {
+      if (!(this_present_lastSeenDeltaMillis && that_present_lastSeenDeltaMillis))
+        return false;
+      if (this.lastSeenDeltaMillis != that.lastSeenDeltaMillis)
         return false;
     }
 
@@ -494,6 +549,14 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
     if (lastComparison != 0) {
       return lastComparison;
     }
+    lastComparison = Boolean.valueOf(isSetLastSeenDeltaMillis()).compareTo(isSetLastSeenDeltaMillis());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = TBaseHelper.compareTo(lastSeenDeltaMillis, typedOther.lastSeenDeltaMillis);
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
     lastComparison = Boolean.valueOf(isSetHost()).compareTo(isSetHost());
     if (lastComparison != 0) {
       return lastComparison;
@@ -550,6 +613,14 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
+          case LAST_SEEN_DELTA_MILLIS:
+            if (field.type == TType.I64) {
+              this.lastSeenDeltaMillis = iprot.readI64();
+              setLastSeenDeltaMillisIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
           case HOST:
             if (field.type == TType.STRING) {
               this.host = iprot.readString();
@@ -599,6 +670,9 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
       oprot.writeString(this.physicalNode);
       oprot.writeFieldEnd();
     }
+    oprot.writeFieldBegin(LAST_SEEN_DELTA_MILLIS_FIELD_DESC);
+    oprot.writeI64(this.lastSeenDeltaMillis);
+    oprot.writeFieldEnd();
     oprot.writeFieldStop();
     oprot.writeStructEnd();
   }
@@ -622,6 +696,10 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
     if (!first) sb.append(", ");
     sb.append("lastseen:");
     sb.append(this.lastseen);
+    first = false;
+    if (!first) sb.append(", ");
+    sb.append("lastSeenDeltaMillis:");
+    sb.append(this.lastSeenDeltaMillis);
     first = false;
     if (!first) sb.append(", ");
     sb.append("host:");
