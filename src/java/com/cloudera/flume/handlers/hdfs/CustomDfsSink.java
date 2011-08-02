@@ -18,13 +18,15 @@
 package com.cloudera.flume.handlers.hdfs;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.compress.CompressionCodec;
-import org.apache.hadoop.io.compress.CompressionOutputStream;
+import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.io.compress.Compressor;
 import org.apache.hadoop.io.compress.GzipCodec;
 import org.apache.log4j.Logger;
@@ -48,16 +50,13 @@ public class CustomDfsSink extends EventSink.Base {
   final static Logger LOG = Logger.getLogger(CustomDfsSink.class.getName());
 
   private static final String A_OUTPUTFORMAT = "recordformat";
-  private static final String GZIP_EXTENSION = ".gz";
 
   boolean compressOutput;
   OutputFormat format;
-  FSDataOutputStream writer;
+  OutputStream writer;
   AtomicLong count = new AtomicLong();
   String path;
-  Path dstPath;  
-  CompressionOutputStream gzOStm;
-
+  Path dstPath;
 
   public CustomDfsSink(String path, OutputFormat format) {
     Preconditions.checkArgument(path != null);
@@ -72,12 +71,8 @@ public class CustomDfsSink extends EventSink.Base {
     if (writer == null) {
       throw new IOException("Append failed, did you open the writer?");
     }
-    if (compressOutput) {
-      format.format(gzOStm, e);
 
-    } else {    
-      format.format(writer, e);
-    }
+    format.format(writer, e);
     count.getAndIncrement();
     super.append(e);
   }
@@ -85,42 +80,83 @@ public class CustomDfsSink extends EventSink.Base {
   @Override
   public void close() throws IOException {
     LOG.info("Closing HDFS file: " + dstPath);
-    if (compressOutput) {
-      gzOStm.flush();
-      gzOStm.close();
-      LOG.info("done writing compressed file to hdfs");   
-      gzOStm = null;      
-    } else {
-      LOG.info("done writing raw file to hdfs");
-    }
+    writer.flush();
+    LOG.info("done writing raw file to hdfs");
     writer.close();
     writer = null;
-    
-    
   }
 
   @Override
   public void open() throws IOException {
     FlumeConfiguration conf = FlumeConfiguration.get();
     FileSystem hdfs;
-    
-    if (!conf.getCollectorDfsCompressGzipStatus()) { //compression disabled
+
+    // use v0.9.1 compression settings
+    if (conf.getCollectorDfsCompressGzipStatus()) {
+      LOG.warn("Config property "
+          + FlumeConfiguration.COLLECTOR_DFS_COMPRESS_GZIP
+          + " is deprecated, please use "
+          + FlumeConfiguration.COLLECTOR_DFS_COMPRESS_CODEC
+          + " set to GzipCodec instead");
+      CompressionCodec gzipC = new GzipCodec();
+      Compressor gzCmp = gzipC.createCompressor();
+      dstPath = new Path(path + gzipC.getDefaultExtension());
+      hdfs = dstPath.getFileSystem(conf);
+      writer = hdfs.create(dstPath);
+      writer = gzipC.createOutputStream(writer, gzCmp);
+      LOG.info("Creating HDFS gzip compressed file: " + dstPath.toString());
+      return;
+    }
+
+    String codecName = conf.getCollectorDfsCompressCodec();
+    List<Class<? extends CompressionCodec>> codecs = CompressionCodecFactory
+        .getCodecClasses(FlumeConfiguration.get());
+    CompressionCodec codec = null;
+    ArrayList<String> codecStrs = new ArrayList<String>();
+    codecStrs.add("None");
+    for (Class<? extends CompressionCodec> cls : codecs) {
+      codecStrs.add(cls.getSimpleName());
+
+      if (cls.getSimpleName().equals(codecName)) {
+        try {
+          codec = cls.newInstance();
+        } catch (InstantiationException e) {
+          LOG.error("Unable to instantiate " + codec + " class");
+        } catch (IllegalAccessException e) {
+          LOG.error("Unable to access " + codec + " class");
+        }
+      }
+    }
+
+    if (codec == null) {
+      if (!codecName.equals("None")) {
+        LOG.warn("Unsupported compression codec " + codecName
+            + ".  Please choose from: " + codecStrs);
+      }
       dstPath = new Path(path);
       hdfs = dstPath.getFileSystem(conf);
       writer = hdfs.create(dstPath);
-      compressOutput = false;
-    } else { //compression enabled
-      compressOutput = true;
-      CompressionCodec gzipC = new GzipCodec();
-      Compressor gzCmp = gzipC.createCompressor();      
-      dstPath = new Path(path + GZIP_EXTENSION);
-      hdfs = dstPath.getFileSystem(conf);
-      writer = hdfs.create(dstPath);
-      gzOStm = gzipC.createOutputStream(writer, gzCmp);
-
-
+      LOG.info("Creating HDFS file: " + dstPath.toString());
+      return;
     }
-    LOG.info("Opening HDFS file: " + dstPath.toString());
+
+    Compressor cmp = codec.createCompressor();
+    dstPath = new Path(path + codec.getDefaultExtension());
+    hdfs = dstPath.getFileSystem(conf);
+    writer = hdfs.create(dstPath);
+    try {
+      writer = codec.createOutputStream(writer, cmp);
+    } catch (NullPointerException npe) {
+      // tries to find "native" version of codec, if that fails, then tries to
+      // find java version. If there is no java version, the createOutpuStream
+      // exits via NPE. We capture this and convert it into a IOE with a more
+      // useful error message.
+      LOG.error("Unable to load compression codec " + codec);
+      throw new IOException("Unable to load compression codec " + codec);
+    }
+    LOG.info("Creating " + codec + " compressed HDFS file: "
+        + dstPath.toString());
+    return;
   }
 
   public static SinkBuilder builder() {

@@ -140,6 +140,7 @@ public class FlumeConfiguration extends Configuration {
   public static final String COLLECTOR_ROLL_MILLIS = "flume.collector.roll.millis";
   public static final String COLLECTOR_OUTPUT_FORMAT = "flume.collector.output.format";
   public static final String COLLECTOR_DFS_COMPRESS_GZIP = "flume.collector.dfs.compress.gzip";
+  public static final String COLLECTOR_DFS_COMPRESS_CODEC = "flume.collector.dfs.compress.codec";
 
   // TODO(henry) move these to flume.master - they now tell the master which
   // interface / port to start up on
@@ -212,7 +213,7 @@ public class FlumeConfiguration extends Configuration {
   // Options for RPC type
   public static final String RPC_TYPE_THRIFT = "THRIFT";
   public static final String RPC_TYPE_AVRO = "AVRO";
-  
+
   /**
    * Returns true if there is more than one server in MASTER_SERVERS.
    */
@@ -549,8 +550,13 @@ public class FlumeConfiguration extends Configuration {
     return get(COLLECTOR_DFS_DIR, "file://tmp/flume/collected");
   }
 
+  @Deprecated
   public boolean getCollectorDfsCompressGzipStatus() {
     return getBoolean(COLLECTOR_DFS_COMPRESS_GZIP, false);
+  }
+
+  public String getCollectorDfsCompressCodec() {
+    return get(COLLECTOR_DFS_COMPRESS_CODEC, "None");
   }
 
   public long getCollectorRollMillis() {
@@ -660,11 +666,10 @@ public class FlumeConfiguration extends Configuration {
     return Integer.parseInt(server[1].trim());
   }
 
-  
   public String getMasterHeartbeatRPC() {
-    String[] validRPCProtocols = {RPC_TYPE_AVRO, RPC_TYPE_THRIFT};
+    String[] validRPCProtocols = { RPC_TYPE_AVRO, RPC_TYPE_THRIFT };
     String entered = get(MASTER_HEARBEAT_RPC, RPC_TYPE_THRIFT).toUpperCase();
-    for (String prot: validRPCProtocols) {
+    for (String prot : validRPCProtocols) {
       if (entered.equals(prot)) {
         return prot;
       }
@@ -672,7 +677,7 @@ public class FlumeConfiguration extends Configuration {
     // default
     return RPC_TYPE_THRIFT;
   }
-  
+
   public int getMasterGossipPeriodMs() {
     return getInt(MASTER_GOSSIP_PERIOD_MS, 1000);
   }

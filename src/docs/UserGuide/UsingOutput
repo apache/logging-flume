@@ -227,16 +227,23 @@ operation for currently open HDFS files (patch is already slated for
 Hadoop HDFS 0.21.x).
 
 
-== Gzip Compression for files written to HDFS.
+== Compression for files written to HDFS.
 
-Flume now supports basic gzip compression for all log files that are written to HDFS.
-Compressed files are automatically suffixed with a .gz extension and follow the same naming format + directory structure as regularlog files. 
+Flume supports basic compression for all log files that are written to
+HDFS.  Compressed files are automatically suffixed with an extension
+and follow the same naming format + directory structure as regular log
+files.
+
+If GZipCodec is selected, ".gz" is appended to the file name, if
+BZip2Codec is selected, ".bz2" is appended.
+
 ----
   <property>
-    <name>flume.collector.dfs.compress.gzip</name>
-    <value>true</value>
-    <description>Writes compressed output in gzip format to dfs. Setting value to false or empty writes uncompressed data to disk
-    </description>
+    <name>flume.collector.dfs.compress.codec</name>
+    <value>None</value>
+    <description>Writes formated data compressed in specified codec to
+    dfs. Value is None, GZipCodec, DefaultCodec (deflate), BZip2Codec,
+    or any other Codec hadoop is aware of </description>
   </property>
 ----
 
