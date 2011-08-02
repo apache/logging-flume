@@ -26,6 +26,7 @@ import java.util.List;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 
@@ -51,7 +52,10 @@ public class TestScribeSource {
     // Open the client connection
     TTransport transport = new TSocket("localhost", 
         FlumeConfiguration.get().getScribeSourcePort());
-    TProtocol protocol = new TBinaryProtocol(transport);
+    // scribe clients used framed transports
+    transport = new TFramedTransport(transport);
+    // scribe clients do not use strict write
+    TProtocol protocol = new TBinaryProtocol(transport, false, false);
     transport.open();
     scribe.Client client = new scribe.Client(protocol);
     
@@ -92,7 +96,9 @@ public class TestScribeSource {
         
     // Open the client connection
     TTransport transport = new TSocket("localhost", 45872);
-    TProtocol protocol = new TBinaryProtocol(transport);
+    transport = new TFramedTransport(transport);
+    // scribe clients do not use strict write
+    TProtocol protocol = new TBinaryProtocol(transport, false, false);
     transport.open();
     scribe.Client client = new scribe.Client(protocol);
     

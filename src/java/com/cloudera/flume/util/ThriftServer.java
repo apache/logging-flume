@@ -24,6 +24,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TBinaryProtocol.Factory;
 import org.apache.thrift.server.TSaneThreadPoolServer;
 import org.apache.thrift.transport.TSaneServerSocket;
+import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransportException;
 
 import com.google.common.base.Preconditions;
@@ -31,13 +32,35 @@ import com.google.common.base.Preconditions;
 /**
  * Simple base class to encapsulate the code required to get a Thrift server up
  * and running.
+ * 
+ * TODO refactor this class -- seems like some of the start args should move to the constructor
  */
 public class ThriftServer {
-  Logger LOG = Logger.getLogger(ThriftServer.class);
-  protected TSaneServerSocket serverTransport = null;;
+  private static final Logger LOG = Logger.getLogger(ThriftServer.class);
+
+  protected TServerTransport serverTransport = null;;
   protected TSaneThreadPoolServer server = null;  
   String description;
   protected int port;
+
+  protected boolean strictRead = true;
+  protected boolean strictWrite = true;
+
+  /**
+   * Construct, but do not start, a thrift server. By default the server
+   * will create a TBinaryProtocol with strict reads and writes.
+   */
+  public ThriftServer() {}
+  
+  /**
+   * Construct, but do not start, a thrift server.
+   * @param strictRead strict TBinaryProtcol reads
+   * @param strictWrite strict TBinaryProtcol writes
+   */
+  public ThriftServer(boolean strictRead, boolean strictWrite) {
+    this.strictRead = strictRead;
+    this.strictWrite = strictWrite;
+  }
 
   synchronized public void stop() {
     Preconditions.checkArgument(server != null);
@@ -50,9 +73,19 @@ public class ThriftServer {
    */
   synchronized protected void start(TProcessor processor, final int port,
       final String description) throws TTransportException {
+    start(processor, description, new TSaneServerSocket(port));
+  }
+
+  /**
+   * Blocks until Thrift server has started and can accept connections
+   */
+  synchronized protected void start(TProcessor processor,
+      final String description, TServerTransport serverTransport)
+    throws TTransportException
+  {
     this.description = description;
-    this.serverTransport = new TSaneServerSocket(port);
-    Factory protFactory = new TBinaryProtocol.Factory(true, true);
+    this.serverTransport = serverTransport;
+    Factory protFactory = new TBinaryProtocol.Factory(strictRead, strictWrite);
     server = new TSaneThreadPoolServer(processor, serverTransport, protFactory);
     server.start();
   }

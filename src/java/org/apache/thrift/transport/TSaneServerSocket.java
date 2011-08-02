@@ -123,7 +123,7 @@ public class TSaneServerSocket extends TServerTransport {
     }
   }
 
-  protected TSocket acceptImpl() throws TTransportException {
+  protected TTransport acceptImpl() throws TTransportException {
     if (serverSocket_ == null) {
       throw new TTransportException(TTransportException.NOT_OPEN,
           "No underlying server socket.");

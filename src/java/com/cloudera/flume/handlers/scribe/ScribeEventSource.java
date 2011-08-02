@@ -27,6 +27,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
+import org.apache.thrift.transport.TFramedTransport;
+import org.apache.thrift.transport.TSaneServerSocket;
+import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 import com.cloudera.flume.VersionInfo;
@@ -35,7 +38,6 @@ import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSource;
-import com.cloudera.flume.handlers.scribe.scribe;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.util.ThriftServer;
 import com.cloudera.util.Clock;
@@ -53,8 +55,17 @@ public class ScribeEventSource extends ThriftServer implements EventSource,
   final AtomicBoolean running = new AtomicBoolean(false);
   long startedTime = 0;
   int port = 0;
-  
-  public ScribeEventSource(int port) {    
+
+  /**
+   * Construct a scribe event source.
+   * @param port port the server will listen on
+   */
+  public ScribeEventSource(int port) {
+    // turn off thrift strict read & write (respectively), otw legacy 
+    // thrift clients (ie scribe clients) won't be able to connect. This
+    // mimics what scribed does.
+    super(false, false);
+
     this.port = port;
   }
 
@@ -91,7 +102,17 @@ public class ScribeEventSource extends ThriftServer implements EventSource,
   @Override
   public synchronized void open() throws IOException {
     try {
-      this.start(new scribe.Processor(this), port, "ScribeEventSource");
+      // Start the thrift server with a framed transport - suitable for
+      // scribe clients
+      this.start(new scribe.Processor(this), "ScribeEventSource",
+          new TSaneServerSocket(port) {
+            // we are providing the transport to ThriftServer -- the sole
+            // job of this sane server subclass is to wrap the socket
+            // with a framed transport
+            protected TTransport acceptImpl() throws TTransportException {
+              return new TFramedTransport(super.acceptImpl());
+            }
+      });
       running.set(true);
       startedTime = Clock.unixTime();
     } catch (TTransportException e) {
