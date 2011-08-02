@@ -94,10 +94,13 @@ to call at top-level: ant deploy-contrib compile-core-test
   <property name="ivy.lib" value="${lib.dir}"/>
   <property name="ivy.test.lib" value="${test.lib.dir}"/>
 
+  <!-- eclipse property set -->
+  <property name="build.dir.eclipse" value=".eclipse"/>
+  <property name="build.dir.eclipse-main-classes" value="${build.dir.eclipse}/classes-main"/>
+  <property name="build.dir.eclipse-test-classes" value="${build.dir.eclipse}/classes-test"/>
 
-  <!-- the normal classpath -->
-  <path id="classpath">
-    <pathelement location="${build.classes}"/>
+  <path id="libs.classpath">
+    <pathelement location="${conf.dir}"/>
     <fileset dir="${lib.dir}">
       <include name="**/*.jar" />
       <exclude name="**/excluded/" />
@@ -106,7 +109,12 @@ to call at top-level: ant deploy-contrib compile-core-test
       <include name="**/*.jar" />
       <exclude name="**/excluded/" />
     </fileset>
-    <pathelement location="${conf.dir}"/>
+  </path>
+
+  <!-- the normal classpath -->
+  <path id="classpath">
+    <pathelement location="${build.classes}"/>
+    <path refid="libs.classpath"/>
   </path>
 
   <!-- the unit test classpath: uses test.src.dir for configuration -->
@@ -197,7 +205,8 @@ to call at top-level: ant deploy-contrib compile-core-test
     <ivy:cachepath pathid="releaseaudit-classpath" conf="releaseaudit"/>
   </target>
 
-  <target name="ivy-retrieve-all" depends="ivy-retrieve-test,ivy-retrieve-findbugs,ivy-retrieve-coverage,ivy-retrieve-releaseaudit" />
+  <target name="ivy-retrieve-all"
+          depends="ivy-retrieve,ivy-retrieve-test,ivy-retrieve-findbugs,ivy-retrieve-coverage,ivy-retrieve-releaseaudit" />
 
   <target name="compile-aho" depends="init,ivy-retrieve-test">
     <javac 
@@ -325,7 +334,9 @@ to call at top-level: ant deploy-contrib compile-core-test
     </foreach>
   </target>
 
-  <target name="compile-gen" depends="init, thrift-gen, antlr-gen, antlr-shell-gen">
+  <target name="generate-all" depends="init, thrift-gen, antlr-gen, antlr-shell-gen" />
+
+  <target name="compile-gen" depends="generate-all">
     <!-- dependendecy for antlr parsers -->
     <copy file="${basedir}/src/java/com/cloudera/flume/conf/RuntimeRecognitionException.java" tofile="${basedir}/src/gen-java/com/cloudera/flume/conf/RuntimeRecognitionException.java" />
     <javac 
@@ -828,6 +839,7 @@ to call at top-level: ant deploy-contrib compile-core-test
       <sysproperty key="hadoop.test.localoutputfile" value="${hadoop.test.localoutputfile}"/>
       <sysproperty key="hadoop.log.dir" value="${hadoop.log.dir}"/>
 
+  <!-- ================================================================== -->
       <!-- tools.jar from Sun JDK also required to invoke javac. -->
       <classpath>
         <path refid="test.classpath"/>
@@ -843,6 +855,78 @@ to call at top-level: ant deploy-contrib compile-core-test
       </batchtest>
     </junit>
     <fail if="tests.failed">Perf Tests failed!</fail>
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- eclipse setup                                                      -->
+  <!-- ================================================================== -->
+  <condition property="ant-eclipse.jar.exists">
+    <available file="${build.lib.dir}/ant-eclipse-1.0-jvm1.2.jar"/>
+  </condition>
+
+  <target name="ant-eclipse-download" unless="ant-eclipse.jar.exists">
+    <mkdir dir="${build.dir}/eclipse-unpack" />
+
+    <get src="http://downloads.sourceforge.net/project/ant-eclipse/ant-eclipse/1.0/ant-eclipse-1.0.bin.tar.bz2"
+         dest="${build.dir}/eclipse-unpack/ant-eclipse-1.0.bin.tar.bz2" usetimestamp="false" />
+
+    <bunzip2 src="${build.dir}/eclipse-unpack/ant-eclipse-1.0.bin.tar.bz2"/>
+
+    <untar src="${build.dir}/eclipse-unpack/ant-eclipse-1.0.bin.tar"
+           dest="${build.dir}/eclipse-unpack">
+      <patternset>
+        <include name="lib/ant-eclipse-1.0-jvm1.2.jar"/>
+      </patternset>
+    </untar>
+
+    <move file="${build.dir}/eclipse-unpack/lib/ant-eclipse-1.0-jvm1.2.jar" todir="${build.lib.dir}" />
+
+    <delete dir="${build.dir}/eclipse-unpack" />
+
+    <delete file="${build.dir}/ant-eclipse-1.0.bin.tar" />
+    <delete file="${build.dir}/ant-eclipse-1.0.bin.tar.bz2" />
+  </target>
+
+  <target name="eclipse"
+          depends="ant-eclipse-download,init,ivy-retrieve-all,generate-all"
+          description="Create eclipse project files">
+    <ivy:cachepath pathid="default.path.id" conf="default" />
+    <ivy:cachepath pathid="junit.path.id" conf="test" transitive="false"/>
+    <taskdef name="eclipse"
+             classname="prantl.ant.eclipse.EclipseTask"
+             classpathref="classpath" />
+    <eclipse updatealways="true">
+      <settings>
+        <resources encoding="UTF-8" />
+      </settings>
+      <project name="${ant.project.name}" />
+      <classpath>
+        <source path="${core.src.dir}"
+                output="${build.dir.eclipse-main-classes}" />
+        <source path="${aho.src.dir}"
+                output="${build.dir.eclipse-main-classes}" />
+        <source path="${thrift.gen.dir}"
+                output="${build.dir.eclipse-main-classes}"
+                excluding="com/cloudera/flume/conf/RuntimeRecognitionException.java" />
+        <source path="${perf.src.dir}"
+                output="${build.dir.eclipse-main-classes}" />
+        <source path="${test.src.dir}"
+                output="${build.dir.eclipse-test-classes}" />
+
+        <output path="${build.dir.eclipse-main-classes}" />
+        <library pathref="libs.classpath" />
+        <library pathref="default.path.id" exported="true" />
+        <library pathref="junit.path.id" exported="false" />
+      </classpath>
+    </eclipse>
+  </target>
+
+  <target name="clean-eclipse" description="Clean eclipse files">
+    <delete file=".classpath" />
+    <delete file=".eclipse" />
+    <delete file=".project" />
+    <delete dir=".settings" />
+    <delete dir="${build.dir.eclipse}" />
   </target>
 
   <!-- ================================================================== -->
