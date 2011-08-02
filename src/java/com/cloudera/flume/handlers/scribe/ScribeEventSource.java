@@ -51,17 +51,21 @@ public class ScribeEventSource extends ThriftServer implements EventSource,
   static final Logger LOG = Logger.getLogger(ScribeEventSource.class);
   final BlockingQueue<Event> pendingQueue = new LinkedBlockingQueue<Event>();
 
-  final static public String SCRIBE_CATEGORY = "scribe.category";    
+  final static public String SCRIBE_CATEGORY = "scribe.category";
   final AtomicBoolean running = new AtomicBoolean(false);
   long startedTime = 0;
   int port = 0;
 
+  final static Event DONE_EVENT = new EventImpl(new byte[0]);
+
   /**
    * Construct a scribe event source.
-   * @param port port the server will listen on
+   * 
+   * @param port
+   *          port the server will listen on
    */
   public ScribeEventSource(int port) {
-    // turn off thrift strict read & write (respectively), otw legacy 
+    // turn off thrift strict read & write (respectively), otw legacy
     // thrift clients (ie scribe clients) won't be able to connect. This
     // mimics what scribed does.
     super(false, false);
@@ -80,6 +84,7 @@ public class ScribeEventSource extends ThriftServer implements EventSource,
   public synchronized void close() throws IOException {
     running.set(false);
     this.stop();
+    pendingQueue.add(DONE_EVENT);
   }
 
   /**
@@ -88,7 +93,11 @@ public class ScribeEventSource extends ThriftServer implements EventSource,
   @Override
   public Event next() throws IOException {
     try {
-      return pendingQueue.take();
+      Event e = pendingQueue.take();
+      if (e == DONE_EVENT) {
+        return null;
+      }
+      return e;
     } catch (InterruptedException e) {
       LOG.error("ScribeEventSource was interrupted while waiting for an event",
           e);
@@ -112,7 +121,7 @@ public class ScribeEventSource extends ThriftServer implements EventSource,
             protected TTransport acceptImpl() throws TTransportException {
               return new TFramedTransport(super.acceptImpl());
             }
-      });
+          });
       running.set(true);
       startedTime = Clock.unixTime();
     } catch (TTransportException e) {
@@ -207,7 +216,7 @@ public class ScribeEventSource extends ThriftServer implements EventSource,
   public void shutdown() throws TException {
     throw new TException("shutdown not implemented!");
   }
-  
+
   /**
    * Builder takes one optional argument: the port to start on
    */
@@ -215,8 +224,7 @@ public class ScribeEventSource extends ThriftServer implements EventSource,
     return new SourceBuilder() {
       @Override
       public EventSource build(String... argv) {
-        Preconditions.checkArgument(argv.length <= 1,
-            "usage: scribe[(port={"
+        Preconditions.checkArgument(argv.length <= 1, "usage: scribe[(port={"
             + FlumeConfiguration.DEFAULT_SCRIBE_SOURCE_PORT + "})]");
         int port = FlumeConfiguration.get().getScribeSourcePort();
         if (argv.length >= 1) {
