@@ -50,7 +50,8 @@ public class ValueDecorator<S extends EventSink> extends EventSinkDecorator<S> {
       @Override
       public EventSinkDecorator<EventSink> build(Context context,
           String... argv) {
-        Preconditions.checkArgument(argv.length == 2);
+        Preconditions.checkArgument(argv.length == 2,
+            "usage: value(\"attr\", \"value\")");
         String attr = argv[0];
         String v = argv[1];
         return new ValueDecorator<EventSink>(null, attr, v.getBytes());
