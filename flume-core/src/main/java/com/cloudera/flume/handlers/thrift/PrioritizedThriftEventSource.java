@@ -123,7 +123,7 @@ public class PrioritizedThriftEventSource extends EventSource.Base {
               q.add(e);
               super.append(e);
             }
-          }));
+          }, false));
       Factory protFactory = new TBinaryProtocol.Factory(true, true);
 
       TSaneServerSocket serverTransport = new TSaneServerSocket(port);

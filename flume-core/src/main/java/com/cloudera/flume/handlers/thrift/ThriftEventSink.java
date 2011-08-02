@@ -71,7 +71,7 @@ public class ThriftEventSink extends EventSink.Base {
 
   @Override
   public void append(Event e) throws IOException, InterruptedException {
-    ThriftFlumeEvent tfe = ThriftEventAdaptor.convert(e);
+    ThriftFlumeEvent tfe = ThriftEventConvertUtil.toThriftEvent(e);
     try {
       client.append(tfe);
       sentBytes.set(stats.getBytesWritten());

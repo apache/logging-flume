@@ -69,7 +69,7 @@ public class AvroEventSink extends EventSink.Base {
   @Override
   public void append(Event e) throws IOException, InterruptedException {
     // convert the flumeEvent to AvroEevent
-    AvroFlumeEvent afe = AvroEventAdaptor.convert(e);
+    AvroFlumeEvent afe = AvroEventConvertUtil.toAvroEvent(e);
     // Make sure client side is initialized.
     this.ensureInitialized();
     try {

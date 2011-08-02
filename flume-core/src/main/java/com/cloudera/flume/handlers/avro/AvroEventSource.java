@@ -54,6 +54,7 @@ public class AvroEventSource extends EventSource.Base {
 
   static final Logger LOG = LoggerFactory.getLogger(AvroEventSource.class);
 
+  public static final String C_TRUNCATE = "truncate";
   public static final String A_SERVERPORT = "serverPort";
   public static final String A_QUEUE_CAPACITY = "queueCapacity";
   public static final String A_QUEUE_FREE = "queueFree";
@@ -68,16 +69,17 @@ public class AvroEventSource extends EventSource.Base {
   final AtomicLong enqueued = new AtomicLong();
   final AtomicLong dequeued = new AtomicLong();
   final AtomicLong bytesIn = new AtomicLong();
-
+  final boolean shouldTruncate;
   boolean closed = true;
 
   /**
    * Create a Avro event source listening on port with a qsize buffer.
    */
-  public AvroEventSource(int port, int qsize) {
+  public AvroEventSource(int port, int qsize, boolean truncates) {
     this.port = port;
     this.svr = new FlumeEventAvroServerImpl(port);
     this.q = new LinkedBlockingQueue<Event>(qsize);
+    this.shouldTruncate = truncates;
   }
 
   /**
@@ -98,14 +100,15 @@ public class AvroEventSource extends EventSource.Base {
   /**
    * This constructor allows the for an arbitrary blocking queue implementation.
    */
-  public AvroEventSource(int port, BlockingQueue<Event> q) {
+  public AvroEventSource(int port, BlockingQueue<Event> q, boolean truncates) {
     Preconditions.checkNotNull(q);
     this.port = port;
     this.q = q;
+    this.shouldTruncate = truncates;
   }
 
   public AvroEventSource(int port) {
-    this(port, DEFAULT_QUEUE_SIZE);
+    this(port, DEFAULT_QUEUE_SIZE, false);
   }
 
   /**
@@ -132,9 +135,9 @@ public class AvroEventSource extends EventSource.Base {
       @Override
       public void append(AvroFlumeEvent evt) {
         // convert AvroEvent evt -> e
-        AvroEventAdaptor adapt = new AvroEventAdaptor(evt);
+        Event e = AvroEventConvertUtil.toFlumeEvent(evt, shouldTruncate);
         try {
-          enqueue(adapt.toFlumeEvent());
+          enqueue(e);
         } catch (IOException e1) {
           e1.printStackTrace();
         }
@@ -166,9 +169,8 @@ public class AvroEventSource extends EventSource.Base {
       if (Clock.unixTime() - start > maxSleep) {
         if (sz == q.size()) {
           // no progress made, timeout and close it.
-          LOG
-              .warn("Close timed out due to no progress.  Closing despite having "
-                  + q.size() + " values still enqueued");
+          LOG.warn("Close timed out due to no progress.  Closing despite having "
+              + q.size() + " values still enqueued");
           return;
         }
         // there was some progress, go another cycle.
@@ -221,10 +223,14 @@ public class AvroEventSource extends EventSource.Base {
     return new SourceBuilder() {
       @Override
       public EventSource build(Context ctx, String... argv) {
-        Preconditions
-            .checkArgument(argv.length == 1, "usage: avroSource(port)");
+        Preconditions.checkArgument(argv.length == 1,
+            "usage: avroSource(port{," + C_TRUNCATE + "=false})");
         int port = Integer.parseInt(argv[0]);
-        return new AvroEventSource(port);
+
+        String val = ctx.getObj(C_TRUNCATE, String.class);
+        boolean truncates = (val == null) ? false : Boolean.parseBoolean(val);
+
+        return new AvroEventSource(port, DEFAULT_QUEUE_SIZE, truncates);
       }
     };
   }

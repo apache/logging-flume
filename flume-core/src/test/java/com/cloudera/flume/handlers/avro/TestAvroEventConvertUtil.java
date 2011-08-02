@@ -15,19 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudera.flume.handlers.thrift;
+package com.cloudera.flume.handlers.avro;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map.Entry;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 
-public class TestThriftEventAdaptor {
+public class TestAvroEventConvertUtil {
 
   private Event testEvent;
 
@@ -41,7 +44,7 @@ public class TestThriftEventAdaptor {
 
   @Test
   public void testConvert() {
-    ThriftFlumeEvent thriftEvent = ThriftEventAdaptor.convert(testEvent);
+    AvroFlumeEvent thriftEvent = AvroEventConvertUtil.toAvroEvent(testEvent);
 
     Assert.assertNotNull(thriftEvent);
     Assert.assertNotNull(thriftEvent.host);
@@ -58,18 +61,55 @@ public class TestThriftEventAdaptor {
 
   @Test
   public void testInvalidAttribute() {
-    ThriftFlumeEvent thriftEvent = ThriftEventAdaptor.convert(testEvent);
+    AvroFlumeEvent thriftEvent = AvroEventConvertUtil.toAvroEvent(testEvent);
 
     Assert.assertNotNull(thriftEvent);
-    Assert
-        .assertNull(new ThriftEventAdaptor(thriftEvent).get("i do not exist"));
+    Assert.assertNull(AvroEventConvertUtil.toFlumeEvent(thriftEvent).get(
+        "i do not exist"));
   }
 
   @Test
   public void testNullBody() {
-    ThriftFlumeEvent tEvt = new ThriftFlumeEvent(); // null body
+    AvroFlumeEvent tEvt = new AvroFlumeEvent(); // null body
     Assert.assertEquals(null, tEvt.body);
-    Assert.assertEquals(0, new ThriftEventAdaptor(tEvt).getBody().length);
+    Assert
+        .assertEquals(0, AvroEventConvertUtil.toFlumeEvent(tEvt).getBody().length);
+  }
+
+  /**
+   * This event is evil because it surpasses the max event size.
+   */
+  @Test(expected = RuntimeException.class)
+  public void testEvilEvent() {
+    long maxSize = FlumeConfiguration.get().getEventMaxSizeBytes();
+    ByteBuffer toobig = ByteBuffer.allocate((int) (maxSize * 2));
+    AvroFlumeEvent tevt = new AvroFlumeEvent();
+    tevt.timestamp = 0L;
+    tevt.priority = Priority.INFO;
+    tevt.body = toobig;
+    tevt.nanos = 0L;
+    tevt.host = "localhost";
+    tevt.fields = new HashMap<CharSequence, ByteBuffer>();
+    Event e = AvroEventConvertUtil.toFlumeEvent(tevt);
+    EventImpl.select(e);
+  }
+
+  /**
+   * This event is evil because it surpasses the max event size.
+   */
+  @Test
+  public void testTruncEvilEvent() {
+    long maxSize = FlumeConfiguration.get().getEventMaxSizeBytes();
+    ByteBuffer toobig = ByteBuffer.allocate((int) (maxSize * 2));
+    AvroFlumeEvent tevt = new AvroFlumeEvent();
+    tevt.timestamp = 0L;
+    tevt.priority = Priority.INFO;
+    tevt.body = toobig;
+    tevt.nanos = 0L;
+    tevt.host = "localhost";
+    tevt.fields = new HashMap<CharSequence, ByteBuffer>();
+    Event e = AvroEventConvertUtil.toFlumeEvent(tevt, true);
+    EventImpl.select(e);
   }
 
 }

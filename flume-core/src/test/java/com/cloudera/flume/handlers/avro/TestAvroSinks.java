@@ -19,18 +19,26 @@
 package com.cloudera.flume.handlers.avro;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.thrift.TException;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.cloudera.flume.ExampleData;
+import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
+import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.core.EventUtil;
@@ -38,6 +46,7 @@ import com.cloudera.flume.handlers.debug.MemorySinkSource;
 import com.cloudera.flume.handlers.debug.NoNlASCIISynthSource;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.aggregator.CounterSink;
+import com.cloudera.util.Clock;
 import com.cloudera.util.NetUtils;
 
 /**
@@ -233,5 +242,80 @@ public class TestAvroSinks implements ExampleData {
     tes.open();
     tes.enqueue(new EventImpl(new byte[0]));
     tes.close();
+  }
+
+  @Test
+  public void testTruncateReject() throws FlumeSpecException, IOException,
+      InterruptedException {
+    final AvroEventSource src = (AvroEventSource) FlumeBuilder
+        .buildSource(LogicalNodeContext.testingContext(),
+            "avroSource(1234,truncate=false)");
+    int sz = (int) FlumeConfiguration.get().getEventMaxSizeBytes();
+    ByteBuffer bb = ByteBuffer.allocate(sz * 2); // too big
+    final AvroFlumeEvent afe = new AvroFlumeEvent();
+    afe.timestamp = 0L;
+    afe.priority = com.cloudera.flume.handlers.avro.Priority.INFO;
+    afe.body = bb;
+    afe.nanos = 0L;
+    afe.host = "localhost";
+    afe.fields = new HashMap<CharSequence, ByteBuffer>();
+    final AvroEventSink snk = new AvroEventSink("localhost", 1234);
+    final CountDownLatch done = new CountDownLatch(1);
+    Thread t = new Thread() {
+      public void run() {
+        try {
+          src.open();
+          snk.open();
+          snk.avroClient.append(afe); // send non-compliant ThriftFlumeEvent
+        } catch (Exception e) {
+        } finally {
+          done.countDown();
+        }
+      }
+    };
+    t.start();
+    // other thread should not block
+    assertTrue(done.await(5, TimeUnit.SECONDS));
+    src.close();
+    snk.close();
+    assertEquals(0, src.enqueued.get()); // sent event should be rejected
+  }
+
+  @Test
+  public void testTruncate() throws TException, InterruptedException,
+      FlumeSpecException, IOException {
+    final AvroEventSource src = (AvroEventSource) FlumeBuilder.buildSource(
+        LogicalNodeContext.testingContext(), "avroSource(1234,truncate=true)");
+    int sz = (int) FlumeConfiguration.get().getEventMaxSizeBytes();
+    ByteBuffer bb = ByteBuffer.allocate(sz * 2); // too big
+    final AvroFlumeEvent afe = new AvroFlumeEvent();
+    afe.timestamp = 0L;
+    afe.priority = com.cloudera.flume.handlers.avro.Priority.INFO;
+    afe.body = bb;
+    afe.nanos = 0L;
+    afe.host = "localhost";
+    afe.fields = new HashMap<CharSequence, ByteBuffer>();
+    final AvroEventSink snk = new AvroEventSink("localhost", 1234);
+    final CountDownLatch done = new CountDownLatch(1);
+    Thread t = new Thread() {
+      public void run() {
+        try {
+          src.open();
+          snk.open();
+          snk.avroClient.append(afe); // send non-compliant ThriftFlumeEvent
+        } catch (Exception e) {
+        } finally {
+          done.countDown();
+        }
+      }
+    };
+    t.start();
+    // other thread should not block
+    assertTrue(done.await(5, TimeUnit.SECONDS));
+    Clock.sleep(250); // data can "hang out" in the tcp buffer
+    src.close();
+    snk.close();
+    // sent event should truncated and accepted
+    assertEquals(1, src.enqueued.get());
   }
 }

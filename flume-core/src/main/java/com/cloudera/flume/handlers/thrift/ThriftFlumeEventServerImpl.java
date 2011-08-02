@@ -32,9 +32,11 @@ class ThriftFlumeEventServerImpl implements Iface {
   private static final Logger LOG = LoggerFactory
       .getLogger(ThriftFlumeEventServerImpl.class);
   EventSink sink;
+  boolean truncates;
 
-  ThriftFlumeEventServerImpl(EventSink sink) {
+  ThriftFlumeEventServerImpl(EventSink sink, boolean truncates) {
     this.sink = sink;
+    this.truncates = truncates;
   }
 
   @Override
@@ -42,7 +44,7 @@ class ThriftFlumeEventServerImpl implements Iface {
     Preconditions.checkState(sink != null);
     Preconditions.checkNotNull(evt);
     try {
-      sink.append(new ThriftEventAdaptor(evt));
+      sink.append(ThriftEventConvertUtil.toFlumeEvent(evt, truncates));
     } catch (IOException e) {
       e.printStackTrace();
       throw new TException("Caught IO exception " + e);

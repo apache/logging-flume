@@ -18,58 +18,69 @@
 package com.cloudera.flume.handlers.thrift;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.lang.NotImplementedException;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.core.Event;
+import com.cloudera.flume.core.Event.Priority;
+import com.cloudera.flume.core.EventImpl;
 import com.google.common.base.Preconditions;
 
 /**
- * This wraps a Thrift generated ThriftFlumeEvent with a Flume Event interface.
+ * This converts a Thrift generated ThriftFlumeEvent in to a FlumeEvent.
  * 
  * This should only be used by the ThriftEventSink, ThriftEventSource, and
  * ThriftFlumeEventServerImpl. Its constructor, and static conversion function
  * are purposely package protected.
  */
-class ThriftEventAdaptor extends Event {
+class ThriftEventConvertUtil {
   public static final Logger LOG = LoggerFactory
-      .getLogger(ThriftEventAdaptor.class);
-  ThriftFlumeEvent evt;
+      .getLogger(ThriftEventConvertUtil.class);
 
-  ThriftEventAdaptor(ThriftFlumeEvent evt) {
-    super();
-    Preconditions.checkArgument(evt != null, "ThriftFlumeEvent is null!");
-    this.evt = evt;
+  private ThriftEventConvertUtil() {
   }
 
-  @Override
-  public byte[] getBody() {
-    byte[] buf = evt.getBody();
+  public static Event toFlumeEvent(ThriftFlumeEvent evt) {
+    return toFlumeEvent(evt, false);
+  }
+
+  public static Event toFlumeEvent(ThriftFlumeEvent evt, boolean truncates) {
+    Preconditions.checkArgument(evt != null, "ThriftFlumeEvent is null!");
+
+    byte[] body = convertBody(evt.getBody(), truncates);
+    com.cloudera.flume.handlers.thrift.Priority p = evt.getPriority();
+    p = (p == null) ? com.cloudera.flume.handlers.thrift.Priority.INFO : p;
+    Map<String, byte[]> attrs = getAttrs(evt);
+    return new EventImpl(body, evt.getTimestamp(), toFlumePriority(p),
+        evt.getNanos(), evt.getHost(), attrs);
+  }
+
+  private static byte[] convertBody(byte[] buf, boolean truncates) {
     if (buf == null) {
-      LOG.warn("Thrift Event had null body! " + evt);
+      LOG.warn("Thrift Event had null body! returning empty body");
       return new byte[0];
     }
+
+    int maxSz = (int) FlumeConfiguration.get().getEventMaxSizeBytes();
+    if (buf.length > maxSz) {
+      Preconditions.checkArgument(truncates,
+          "Unexpected too long Thrift Event body: max is " + maxSz
+              + " but body was buf.length");
+      byte[] trunc = Arrays.copyOf(buf, maxSz);
+      return trunc;
+    }
+    // normal case
     return buf;
   }
 
-  @Override
-  public Priority getPriority() {
-    return convert(evt.getPriority());
-  }
-
-  @Override
-  public long getTimestamp() {
-    return evt.timestamp;
-  }
-
-  public static Priority convert(com.cloudera.flume.handlers.thrift.Priority p) {
+  private static com.cloudera.flume.core.Event.Priority toFlumePriority(
+      com.cloudera.flume.handlers.thrift.Priority p) {
     Preconditions.checkNotNull(p, "Priority argument must be valid.");
 
     switch (p) {
@@ -90,7 +101,8 @@ class ThriftEventAdaptor extends Event {
     }
   }
 
-  public static com.cloudera.flume.handlers.thrift.Priority convert(Priority p) {
+  private static com.cloudera.flume.handlers.thrift.Priority toThriftPriority(
+      com.cloudera.flume.core.Event.Priority p) {
     Preconditions.checkNotNull(p, "Argument must not be null.");
 
     switch (p) {
@@ -111,31 +123,14 @@ class ThriftEventAdaptor extends Event {
     }
   }
 
-  @Override
-  public String toString() {
-    String mbody = StringEscapeUtils.escapeJava(new String(getBody()));
-    return "[" + getPriority().toString() + " " + new Date(getTimestamp())
-        + "] " + mbody;
-  }
-
-  @Override
-  public long getNanos() {
-    return evt.getNanos();
-  }
-
-  @Override
-  public String getHost() {
-    return evt.getHost();
-  }
-
   /**
    * This makes a thrift compatible copy of the event. It is here to encapsulate
    * future changes to the Event/ThriftFlumeEvent interface
    */
-  public static ThriftFlumeEvent convert(Event e) {
+  public static ThriftFlumeEvent toThriftEvent(Event e) {
     ThriftFlumeEvent evt = new ThriftFlumeEvent();
     evt.timestamp = e.getTimestamp();
-    evt.priority = convert(e.getPriority());
+    evt.priority = toThriftPriority(e.getPriority());
     ByteBuffer buf = ByteBuffer.wrap(e.getBody());
     evt.body = buf;
     evt.nanos = e.getNanos();
@@ -153,19 +148,7 @@ class ThriftEventAdaptor extends Event {
     return evt;
   }
 
-  @Override
-  public byte[] get(String attr) {
-    Preconditions.checkNotNull(evt.fields, "Event contains no attributes");
-
-    if (evt.fields.get(attr) == null) {
-      return null;
-    }
-
-    return evt.fields.get(attr).array();
-  }
-
-  @Override
-  public Map<String, byte[]> getAttrs() {
+  private static Map<String, byte[]> getAttrs(ThriftFlumeEvent evt) {
     if (evt.fields == null) {
       return Collections.<String, byte[]> emptyMap();
     }
@@ -176,25 +159,6 @@ class ThriftEventAdaptor extends Event {
       returnMap.put(key, buf.array());
     }
     return Collections.unmodifiableMap(returnMap);
-  }
-
-  @Override
-  public void set(String attr, byte[] vArray) {
-    if (evt.fields.get(attr) != null) {
-      throw new IllegalArgumentException(
-          "Event already had an event with attribute " + attr);
-    }
-    evt.fields.put(attr, ByteBuffer.wrap(vArray));
-  }
-
-  @Override
-  public void hierarchicalMerge(String prefix, Event e) {
-    throw new NotImplementedException();
-  }
-
-  @Override
-  public void merge(Event e) {
-    throw new NotImplementedException();
   }
 
 }

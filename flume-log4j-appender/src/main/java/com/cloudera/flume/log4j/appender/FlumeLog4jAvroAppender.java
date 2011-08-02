@@ -30,7 +30,7 @@ import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.helpers.LogLog;
 import org.apache.log4j.spi.LoggingEvent;
 
-import com.cloudera.flume.handlers.avro.AvroEventAdaptor;
+import com.cloudera.flume.handlers.avro.AvroEventConvertUtil;
 import com.cloudera.flume.handlers.avro.FlumeEventAvroServer;
 import com.cloudera.flume.handlers.log4j.Log4JEventAdaptor;
 
@@ -204,7 +204,7 @@ public class FlumeLog4jAvroAppender extends AppenderSkeleton {
          * intermediate object and go from the log4j event directly to the
          * AvroFlumeEvent.
          */
-        client.append(AvroEventAdaptor.convert(new Log4JEventAdaptor(event)));
+        client.append(AvroEventConvertUtil.toAvroEvent(new Log4JEventAdaptor(event)));
 
         break;
       } catch (UndeclaredThrowableException e) {
