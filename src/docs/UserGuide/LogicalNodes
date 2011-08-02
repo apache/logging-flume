@@ -109,6 +109,9 @@ section.
 
 ==== Logical Sources and Logical Sinks
 
+WARNING: The logical sources and logical sinks feature does not
+currently work when using multiple masters.
+
 In the previous example, we used two abstractions under-the-covers that allow 
 the specifications of a graph topology for communications 'without having to 
 use physical hostnames and ports'. These abstractions -- the *logical source* 
@@ -161,6 +164,9 @@ the removed collectors will be automatically replaced by other failover nodes.
 
 
 ==== Flow Isolation
+
+WARNING: The automatic flow isolation feature does not currently work
+when using multiple masters.
 
 What happens if you want collect different kinds of data from the same 
 physical node?  For example, suppose you wanted to collect httpd logs as well 

@@ -584,6 +584,8 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
    * This is called whenever an event is seen on the ZK ensemble that we
    * have registered for. We care particularly about changes to the list of
    * configurations, made by some other peer.
+   * 
+   * TODO This is broken because the translation mechanism "buries" these configs. 
    */
   public synchronized void process(WatchedEvent event) {
     if (client == null) {

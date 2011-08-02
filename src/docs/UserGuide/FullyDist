@@ -342,6 +342,8 @@ collectorC : collectorSource | collectorSink("hdfs://...","src");
 
 ==== Automatic Failover Chains
 
+WARNING: The automatic failover chain feature does not currently work
+when using multiple masters.
 
 Flume also provides a mechanism that automatically assigns failover chains based on how nodes are configured.  As collector nodes are assigned in the Flume Master, the Master attempts to distribute the agents evenly amongst the collectors.  In the face of failure, each agent is assigned a different failover chain.  This mitigates the chances of another collector becoming overloaded in the event of failure of a collector.
 
@@ -368,6 +370,11 @@ TIP: You can see the translation of the auto*Chain configuration in the node con
 include::LogicalNodes[]
 
 === Multiple Masters
+
+WARNING: The automatic failover chains, automatic flow isolation, and
+logical source/sink feature does not currently work when using
+multiple masters.
+
 
 The Master has two main jobs to perform. The first is to keep track of all the nodes in a Flume deployment and to keep them informed of any changes to their configuration. The second is to track acknowledgements from the end of a Flume flow that is operating in *reliable mode* so that the source at the top of that flow knows when to stop transmitting an event.
 

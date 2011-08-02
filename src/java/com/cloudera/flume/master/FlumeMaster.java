@@ -146,14 +146,20 @@ public class FlumeMaster implements Reportable {
 
     // configuration manager translate user entered configs
 
-    // TODO (jon) semantics have changed slightly -- different translations have
-    // thier configurations partitioned now, only the user entered root
-    // configurations are saved.
-    ConfigurationManager base = new ConfigManager(cfgStore);
-    ConfigurationManager flowedFailovers = new FlowConfigManager.FailoverFlowConfigManager(
-        base, statman);
-    this.specman = new LogicalConfigurationManager(flowedFailovers,
-        new ConfigManager(), statman);
+    if (FlumeConfiguration.get().getMasterIsDistributed()) {
+      LOG.info("Distributed master, disabling all config translations");
+      ConfigurationManager base = new ConfigManager(cfgStore);
+      this.specman = base;
+    } else {
+      // TODO (jon) translated configurations cause problems in multi-master
+      // situations. For now we disallow translation.
+      LOG.info("Single master, config translations enabled");
+      ConfigurationManager base = new ConfigManager(cfgStore);
+      ConfigurationManager flowedFailovers = new FlowConfigManager.FailoverFlowConfigManager(
+          base, statman);
+      this.specman = new LogicalConfigurationManager(flowedFailovers,
+          new ConfigManager(), statman);
+    }
 
     if (FlumeConfiguration.get().getMasterIsDistributed()) {
       this.ackman = new GossipedMasterAckManager(FlumeConfiguration.get());
