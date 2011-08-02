@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeBuilder;
@@ -66,7 +67,9 @@ public class TestTailDirSource {
   @Test
   public void testBuilder() throws IOException, FlumeSpecException {
     File tmpdir = FileUtil.mktempdir();
-    String src = "tailDir(\"" + tmpdir.getAbsolutePath() + "\", \"foo.*\")";
+    String src = "tailDir(\""
+        + StringEscapeUtils.escapeJava(tmpdir.getAbsolutePath())
+        + "\", \"foo.*\")";
     FlumeBuilder.buildSource(src);
     FileUtil.rmr(tmpdir);
   }
@@ -74,7 +77,9 @@ public class TestTailDirSource {
   @Test(expected = FlumeSpecException.class)
   public void testFailBuilder() throws IOException, FlumeSpecException {
     File tmpdir = FileUtil.mktempdir();
-    String src = "tailDir(\"" + tmpdir.getAbsolutePath() + "\", \"\\x.*\")";
+    String src = "tailDir(\""
+        + StringEscapeUtils.escapeJava(tmpdir.getAbsolutePath())
+        + "\", \"\\x.*\")";
     FlumeBuilder.buildSource(src);
     FileUtil.rmr(tmpdir);
   }
@@ -196,8 +201,8 @@ public class TestTailDirSource {
     FileUtil.rmr(tmpdir);
 
     // only did 10 files, ignored the dir.
-    assertEquals(Long.valueOf(10), src.getReport().getLongMetric(
-        TailDirSource.A_FILESADDED));
+    assertEquals(Long.valueOf(10),
+        src.getReport().getLongMetric(TailDirSource.A_FILESADDED));
   }
 
   /**
@@ -279,8 +284,8 @@ public class TestTailDirSource {
     assertEquals(2000, cnt.getCount());
 
     ReportEvent rpt1 = src.getReport();
-    assertEquals(Long.valueOf(200), rpt1
-        .getLongMetric(TailDirSource.A_FILESPRESENT));
+    assertEquals(Long.valueOf(200),
+        rpt1.getLongMetric(TailDirSource.A_FILESPRESENT));
 
     FileUtil.rmr(tmpdir);
     tmpdir.mkdirs();
@@ -288,10 +293,10 @@ public class TestTailDirSource {
     assertEquals(2000, cnt.getCount());
 
     ReportEvent rpt = src.getReport();
-    assertEquals(rpt.getLongMetric(TailDirSource.A_FILESADDED), rpt
-        .getLongMetric(TailDirSource.A_FILESDELETED));
-    assertEquals(Long.valueOf(0), rpt
-        .getLongMetric(TailDirSource.A_FILESPRESENT));
+    assertEquals(rpt.getLongMetric(TailDirSource.A_FILESADDED),
+        rpt.getLongMetric(TailDirSource.A_FILESDELETED));
+    assertEquals(Long.valueOf(0),
+        rpt.getLongMetric(TailDirSource.A_FILESPRESENT));
 
     drv.stop();
     src.close();

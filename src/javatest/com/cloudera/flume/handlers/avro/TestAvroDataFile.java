@@ -24,8 +24,11 @@ import java.util.Arrays;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.reflect.ReflectDatumReader;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
@@ -41,6 +44,8 @@ import com.cloudera.flume.handlers.debug.MemorySinkSource;
  * file, and then reads them back checking the values.
  */
 public class TestAvroDataFile {
+  private static final Logger LOG = LoggerFactory
+      .getLogger(TestAvroDataFile.class);
 
   @Test
   public void testAvroDataFileWriteRead() throws IOException,
@@ -51,7 +56,11 @@ public class TestAvroDataFile {
     // setup sink.
     File f = File.createTempFile("avrodata", ".avro");
     f.deleteOnExit();
-    String custom = "text(\"" + f.getAbsolutePath() + "\", \"avrodata\")";
+    LOG.info("filename before escaping: " + f.getAbsolutePath());
+    String custom = "text(\""
+        + StringEscapeUtils.escapeJava(f.getAbsolutePath())
+        + "\", \"avrodata\")";
+    LOG.info("sink to parse: " + custom);
     EventSink snk = FlumeBuilder.buildSink(new Context(), custom);
     snk.open();
     mem.open();
@@ -59,8 +68,8 @@ public class TestAvroDataFile {
     snk.close();
 
     mem.open();
-    DatumReader<EventImpl> dtm =
-        new ReflectDatumReader<EventImpl>(EventImpl.class);
+    DatumReader<EventImpl> dtm = new ReflectDatumReader<EventImpl>(
+        EventImpl.class);
     DataFileReader<EventImpl> dr = new DataFileReader<EventImpl>(f, dtm);
 
     EventImpl eout = null;
