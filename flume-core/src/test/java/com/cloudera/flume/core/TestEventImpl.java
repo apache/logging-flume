@@ -17,6 +17,8 @@
  */
 package com.cloudera.flume.core;
 
+import static org.junit.Assert.*;
+
 import com.cloudera.flume.conf.FlumeConfiguration;
 
 import org.junit.Test;
@@ -31,4 +33,30 @@ public class TestEventImpl {
     long maxSize = FlumeConfiguration.get().getEventMaxSizeBytes();
     new EventImpl(new byte[(int) (maxSize + 1)]);
   }
+
+  @Test
+  public void testEvilReplacement() {
+    // '$' in the replacement strings are evil. If the $ has a number following
+    // it replaces with a regex group. If it $ is followed by a char, it emits a
+    // "IllegalArgumentException: Illegal group reference"
+    Event e = new EventImpl("$evil".getBytes());
+    String after = e.escapeString("this is the body: %{body}");
+    assertEquals("this is the body: $evil", after);
+  }
+
+  @Test
+  public void testEvilReplacement2() {
+    // '\' in the replacement strings are evil. They are omitted if not escaped.
+    Event e = new EventImpl("\\evil".getBytes());
+    String after = e.escapeString("this is the body: %{body}");
+    assertEquals("this is the body: \\evil", after);
+  }
+
+  @Test
+  public void testEvilCompound() {
+    Event e2 = new EventImpl("\\$\\evil".getBytes());
+    String after = e2.escapeString("this is the body: %{body}");
+    assertEquals("this is the body: \\$\\evil", after);
+  }
+
 }

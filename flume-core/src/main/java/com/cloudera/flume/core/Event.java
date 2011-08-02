@@ -322,6 +322,20 @@ abstract public class Event {
             "Expected to match single character tag in string " + in);
         replacement = replaceShorthand(matcher.group(1).charAt(0));
       }
+
+      // The replacement string must have '$' and '\' chars escaped. This
+      // replacement string is pretty arcane.
+      //
+      // replacee : '$' -> for java '\$' -> for regex "\\$"
+      // replacement: '\$' -> for regex '\\\$' -> for java "\\\\\\$"
+      //
+      // replacee : '\' -> for java "\\" -> for regex "\\\\"
+      // replacement: '\\' -> for regex "\\\\" -> for java "\\\\\\\\"
+
+      // note: order matters
+      replacement = replacement.replaceAll("\\\\", "\\\\\\\\");
+      replacement = replacement.replaceAll("\\$", "\\\\\\$");
+
       matcher.appendReplacement(sb, replacement);
     }
     matcher.appendTail(sb);
@@ -330,8 +344,8 @@ abstract public class Event {
 
   /**
    * Instead of replacing escape sequences in a string, this method returns a
-   * mapping of an attribute name to the value based on the escape sequence found
-   * in the argument string.
+   * mapping of an attribute name to the value based on the escape sequence
+   * found in the argument string.
    */
   public Map<String, String> getEscapeMapping(String in) {
     Map<String, String> mapping = new HashMap<String, String>();
