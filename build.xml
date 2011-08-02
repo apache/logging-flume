@@ -717,6 +717,19 @@ to call at top-level: ant deploy-contrib compile-core-test
     </copy>
 
   </target>
+
+  <target name="cookbook" depends="init" description="Build documentation">
+
+    <exec executable="asciidoc" dir="${basedir}" failonerror="true">
+      <arg line="-a toc -o ${build.dir}/flume/docs/Cookbook.html ${basedir}/src/docs/cookbook/Cookbook"/>
+    </exec>
+
+    <copy todir="${build.dir}/flume/docs/">
+      <fileset dir="${basedir}/src/docs/cookbook" includes="**/*.png"/>
+    </copy>
+
+  </target>
+
   
 
 
