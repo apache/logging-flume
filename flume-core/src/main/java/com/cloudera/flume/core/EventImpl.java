@@ -101,7 +101,7 @@ public class EventImpl extends EventBaseImpl {
         + "increase flume.event.max.size.bytes in your flume-site.xml file");
     // this string construction took ~5% of exec time!
     // , "byte length is " + s.length + " which is not < " + MAX_BODY_SIZE);
-    Preconditions.checkNotNull(pri, "Failed when atttempt to "
+    Preconditions.checkNotNull(pri, "Failed when atttempting to "
         + "create event with null priority");
     this.body = s;
     this.timestamp = timestamp;
