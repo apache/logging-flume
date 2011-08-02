@@ -28,7 +28,6 @@ import java.util.Map.Entry;
 import org.apache.avro.ipc.HttpTransceiver;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.specific.SpecificRequestor;
-
 import org.apache.log4j.Logger;
 
 import com.cloudera.flume.conf.FlumeConfigData;
@@ -36,6 +35,7 @@ import com.cloudera.flume.conf.avro.AvroFlumeConfigData;
 import com.cloudera.flume.conf.avro.FlumeMasterAdminServerAvro;
 import com.cloudera.flume.conf.avro.FlumeNodeStatusAvro;
 import com.cloudera.flume.master.Command;
+import com.cloudera.flume.master.CommandStatus;
 import com.cloudera.flume.master.MasterAdminServerAvro;
 import com.cloudera.flume.master.MasterClientServerAvro;
 import com.cloudera.flume.master.StatusManager.NodeStatus;
@@ -112,6 +112,12 @@ public class AdminRPCAvro implements AdminRPC {
   @Override
   public boolean hasCmdId(long cmdid) throws IOException {
     return this.masterClient.hasCmdId(cmdid);
+  }
+
+  @Override
+  public CommandStatus getCommandStatus(long cmdid) throws IOException {
+    throw new UnsupportedOperationException(
+        "Avro not supported for this command yet");
   }
 
   @Override

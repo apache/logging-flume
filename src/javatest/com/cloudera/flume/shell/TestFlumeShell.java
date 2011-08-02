@@ -24,11 +24,16 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 
+import org.apache.log4j.Logger;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -51,6 +56,8 @@ import com.cloudera.util.Clock;
  */
 public class TestFlumeShell extends SetupMasterTestEnv {
 
+  final public static Logger LOG = Logger.getLogger(TestFlumeShell.class);
+
   /**
    * Start a master, connect to it via the shell, and then issue a
    * configuration.
@@ -71,12 +78,12 @@ public class TestFlumeShell extends SetupMasterTestEnv {
   }
 
   /**
-   * Start a master, connect to it via the shell, and then issue a setChokeLimit and
-   * make sure the chokeMap at the master is updated.
+   * Start a master, connect to it via the shell, and then issue a setChokeLimit
+   * and make sure the chokeMap at the master is updated.
    */
   @Test
-  public void testSetChokeLimit() throws InterruptedException, TTransportException,
-      IOException {
+  public void testSetChokeLimit() throws InterruptedException,
+      TTransportException, IOException {
 
     FlumeShell sh = new FlumeShell();
 
@@ -118,13 +125,13 @@ public class TestFlumeShell extends SetupMasterTestEnv {
     long retval;
 
     retval = sh.executeLine("connect localhost:"
-      + FlumeConfiguration.DEFAULT_ADMIN_PORT);
+        + FlumeConfiguration.DEFAULT_ADMIN_PORT);
     assertEquals(0, retval);
 
     retval = sh.executeLine("exec config foo 'null' 'console'");
     assertEquals(0, retval);
 
-    File saveFile = File.createTempFile("test-flume","");
+    File saveFile = File.createTempFile("test-flume", "");
     saveFile.delete();
     saveFile.deleteOnExit();
 
@@ -147,10 +154,10 @@ public class TestFlumeShell extends SetupMasterTestEnv {
     long retval;
 
     retval = sh.executeLine("connect localhost:"
-      + FlumeConfiguration.DEFAULT_ADMIN_PORT);
+        + FlumeConfiguration.DEFAULT_ADMIN_PORT);
     assertEquals(0, retval);
 
-    File saveFile = File.createTempFile("test-flume","");
+    File saveFile = File.createTempFile("test-flume", "");
     saveFile.deleteOnExit();
     BufferedWriter out = new BufferedWriter(new FileWriter(saveFile));
     out.write("foo : null | console;\n");
@@ -164,7 +171,6 @@ public class TestFlumeShell extends SetupMasterTestEnv {
     assertEquals(data.getSinkConfig(), "console");
     assertEquals(data.getSourceConfig(), "null");
   }
-
 
   /**
    * Create a master, connect via shell, create some logical nodes, spawn them,
@@ -425,6 +431,38 @@ public class TestFlumeShell extends SetupMasterTestEnv {
         "count");
     assertEquals(100, cnt.getCount());
     n.stop();
+  }
+
+  @Test
+  public void testGetCommandStatus() throws IOException {
+    PrintStream olderr = System.err;
+    ByteArrayOutputStream tmpErr = new ByteArrayOutputStream();
+    System.setErr(new PrintStream(tmpErr));
+
+    FlumeShell sh = new FlumeShell();
+    sh.executeLine("connect localhost: "
+        + FlumeConfiguration.DEFAULT_ADMIN_PORT);
+
+    // this is a bad command line
+    long task = sh.executeLine("exec config foo 'blah' "
+        + "'{delay(100) => accumulator(\"count\") }' ");
+
+    // restore err
+    System.setErr(olderr);
+    ByteArrayInputStream bais = new ByteArrayInputStream(tmpErr.toByteArray());
+    BufferedReader bis = new BufferedReader(new InputStreamReader(bais));
+
+    int count = 0;
+    while (bis.ready()) {
+      String line = bis.readLine();
+      count++;
+      LOG.error(line);
+      assertTrue(line.equals("Command failed")
+          || line.equals("Attempted to write an invalid sink/source:"
+              + " Invalid source: blah"));
+    }
+    assertEquals(2, count);
+
   }
 
 }

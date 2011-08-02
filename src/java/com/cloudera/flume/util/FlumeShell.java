@@ -25,8 +25,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.Map.Entry;
 
 import jline.Completor;
 import jline.ConsoleReader;
@@ -51,8 +51,8 @@ import com.cloudera.flume.VersionInfo;
 import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
-
 import com.cloudera.flume.master.Command;
+import com.cloudera.flume.master.CommandStatus;
 import com.cloudera.flume.master.StatusManager;
 import com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport;
 import com.cloudera.flume.reporter.server.thrift.ThriftFlumeReportServer;
@@ -267,8 +267,9 @@ public class FlumeShell {
     while (System.currentTimeMillis() - start < maxmillis) {
 
       if (client.isFailure(cmdid)) {
-        System.out.println("Command failed");
-        // TODO (jon) get the commands history message and display it.
+        System.err.println("Command failed");
+        CommandStatus stat = client.getCommandStatus(cmdid);
+        System.err.println(stat.getMessage());
         return -1;
       }
       if (client.isSuccess(cmdid)) {
@@ -279,7 +280,7 @@ public class FlumeShell {
       }
       Thread.sleep(POLL_DELAY_MS);
     }
-    System.out.println("Command timed out");
+    System.err.println("Command timed out");
     return -1;
 
   }
@@ -833,7 +834,7 @@ public class FlumeShell {
       ShellCommand cmd = new ShellCommand(line);
       return execCommand(cmd);
     } catch (Exception e) {
-      System.err.println("Failed to run command '" + line + "' due to "
+      System.out.println("Failed to run command '" + line + "' due to "
           + e.getMessage());
       LOG.error("Failed to run command '" + line + "'");
       return -1;
@@ -850,8 +851,8 @@ public class FlumeShell {
             : "(disconnected)") + "] ";
   }
 
-  private ThriftFlumeReportServer.Client connectReportClient(String host, int port)
-      throws TTransportException {
+  private ThriftFlumeReportServer.Client connectReportClient(String host,
+      int port) throws TTransportException {
     TTransport masterTransport = new TSocket(host, port);
     TProtocol protocol = new TBinaryProtocol(masterTransport);
     masterTransport.open();

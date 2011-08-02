@@ -19,6 +19,7 @@
 package com.cloudera.flume.master;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,8 +30,9 @@ import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
-import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfiguration;
+import com.cloudera.flume.conf.thrift.CommandStatusThrift;
 import com.cloudera.flume.conf.thrift.FlumeMasterAdminServer;
 import com.cloudera.flume.conf.thrift.FlumeMasterCommandThrift;
 import com.cloudera.flume.conf.thrift.FlumeNodeStatusThrift;
@@ -42,15 +44,15 @@ import com.google.common.base.Preconditions;
 /**
  * Thrift implementation of the MasterAdmin server. This is a stub server
  * responsible only for listening for requests and function signatures which
- * contain Thrift-specific types. It delegates all function calls to a 
+ * contain Thrift-specific types. It delegates all function calls to a
  * MasterAdminServer.
  */
-public class MasterAdminServerThrift extends ThriftServer 
-    implements Iface, RPCServer {
+public class MasterAdminServerThrift extends ThriftServer implements Iface,
+    RPCServer {
   // STATIC TYPE CONVERSION METHODS
   /**
-   * Convert from a { @link StatusManager.NodeStatus } object
-   * to Thrift's { @link FlumeNodeStatusThrift }. 
+   * Convert from a { @link StatusManager.NodeStatus } object to Thrift's { @link
+   * FlumeNodeStatusThrift }.
    */
   public static FlumeNodeStatusThrift statusToThrift(
       StatusManager.NodeStatus status) {
@@ -64,41 +66,40 @@ public class MasterAdminServerThrift extends ThriftServer
     out.physicalNode = status.physicalNode;
     return out;
   }
-  
+
   /**
-   * Convert from a { @link FlumeNodeStatusThrift } object
-   * to the native { @link StatusManager.NodeStatus }. 
+   * Convert from a { @link FlumeNodeStatusThrift } object to the native { @link
+   * StatusManager.NodeStatus }.
    */
-  public static StatusManager.NodeStatus 
-      statusFromThrift(FlumeNodeStatusThrift status) {
-    return new StatusManager.NodeStatus(
-      MasterClientServerThrift.stateFromThrift(status.state), status.version,
-      status.lastseen, status.host, status.physicalNode);
+  public static StatusManager.NodeStatus statusFromThrift(
+      FlumeNodeStatusThrift status) {
+    return new StatusManager.NodeStatus(MasterClientServerThrift
+        .stateFromThrift(status.state), status.version, status.lastseen,
+        status.host, status.physicalNode);
   }
-  
+
   /**
-   * Convert from a { @link Command } object to a 
-   * { @link FlumeMasterCommandThrift } object.
+   * Convert from a { @link Command } object to a { @link
+   * FlumeMasterCommandThrift } object.
    */
   public static FlumeMasterCommandThrift commandToThrift(Command cmd) {
     FlumeMasterCommandThrift out = new FlumeMasterCommandThrift();
     out.command = cmd.command;
     out.arguments = new LinkedList<String>();
-    for (String s: cmd.args) {
+    for (String s : cmd.args) {
       out.arguments.add(s);
     }
     return out;
   }
-  
+
   /**
-   * Convert from a { @link commandFromThrift } object to a 
-   * { @link Command } object.
+   * Convert from a { @link commandFromThrift } object to a { @link Command }
+   * object.
    */
   public static Command commandFromThrift(FlumeMasterCommandThrift cmd) {
-    return new Command(
-      cmd.command, cmd.arguments.toArray(new String[0]));
+    return new Command(cmd.command, cmd.arguments.toArray(new String[0]));
   }
-  
+
   Logger LOG = Logger.getLogger(MasterAdminServerThrift.class);
   final int port;
   final protected MasterAdminServer delegate;
@@ -129,18 +130,15 @@ public class MasterAdminServerThrift extends ThriftServer
   protected static FlumeNodeStatusThrift toThrift(
       StatusManager.NodeStatus status) {
     long time = System.currentTimeMillis();
-    return new FlumeNodeStatusThrift(
-        MasterClientServerThrift.stateToThrift(status.state),
-        status.version, status.lastseen, time - status.lastseen, status.host,
-        status.physicalNode);
+    return new FlumeNodeStatusThrift(MasterClientServerThrift
+        .stateToThrift(status.state), status.version, status.lastseen, time
+        - status.lastseen, status.host, status.physicalNode);
   }
 
   @Override
-  public Map<String, FlumeNodeStatusThrift> getNodeStatuses() 
-      throws TException {
+  public Map<String, FlumeNodeStatusThrift> getNodeStatuses() throws TException {
     Map<String, StatusManager.NodeStatus> statuses = delegate.getNodeStatuses();
-    Map<String, FlumeNodeStatusThrift> ret = 
-      new HashMap<String, FlumeNodeStatusThrift>();
+    Map<String, FlumeNodeStatusThrift> ret = new HashMap<String, FlumeNodeStatusThrift>();
     for (Entry<String, StatusManager.NodeStatus> e : statuses.entrySet()) {
       ret.put(e.getKey(), toThrift(e.getValue()));
     }
@@ -155,10 +153,9 @@ public class MasterAdminServerThrift extends ThriftServer
 
   @Override
   public Map<String, ThriftFlumeConfigData> getConfigs() throws TException {
-    Map<String, ThriftFlumeConfigData> out = 
-      new HashMap<String, ThriftFlumeConfigData>();
+    Map<String, ThriftFlumeConfigData> out = new HashMap<String, ThriftFlumeConfigData>();
     Map<String, FlumeConfigData> orig = delegate.getConfigs();
-    for (String key: orig.keySet()) {
+    for (String key : orig.keySet()) {
       out.put(key, MasterClientServerThrift.configToThrift(orig.get(key)));
     }
     return out;
@@ -182,4 +179,14 @@ public class MasterAdminServerThrift extends ThriftServer
     }
   }
 
+  @Override
+  public CommandStatusThrift getCmdStatus(long cmdid) throws TException {
+    CommandStatus cmd = delegate.getCommandStatus(cmdid);
+    Command c = cmd.getCommand();
+    FlumeMasterCommandThrift fmct = new FlumeMasterCommandThrift(
+        c.getCommand(), Arrays.asList(c.getArgs()));
+    CommandStatusThrift cst = new CommandStatusThrift(cmd.getCmdID(), cmd
+        .getState().toString(), cmd.getMessage(), fmct);
+    return cst;
+  }
 }

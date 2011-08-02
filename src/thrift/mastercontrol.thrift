@@ -37,13 +37,21 @@ struct FlumeNodeStatusThrift {
   5: string physicalNode,
 }
 
+struct CommandStatusThrift {
+  1: i64 cmdId,
+  2: string state,
+  3: string message,
+  4: FlumeMasterCommandThrift cmd,
+}
+
 service FlumeMasterAdminServer {
   i64 submit(1: FlumeMasterCommandThrift command),
   bool isSuccess(1: i64 cmdid),  
   bool isFailure(1: i64 cmdid),  
   map<string, FlumeNodeStatusThrift> getNodeStatuses(),
   map<string, flumeconfig.ThriftFlumeConfigData> getConfigs(),
-  bool hasCmdId(1: i64 cmdid)
+  bool hasCmdId(1: i64 cmdid),
+  CommandStatusThrift getCmdStatus(1: i64 cmdid),
   map<string, list<string>> getMappings(1: string physicalNode)
   // TODO (jon) augment with getstate
 }

@@ -18,7 +18,11 @@
 
 package com.cloudera.flume.master;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +34,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeConfigData;
+import com.cloudera.flume.conf.thrift.CommandStatusThrift;
 import com.cloudera.flume.conf.thrift.FlumeMasterAdminServer;
 import com.cloudera.flume.conf.thrift.FlumeMasterAdminServer.Iface;
 import com.cloudera.flume.conf.thrift.FlumeMasterCommandThrift;
@@ -87,6 +92,18 @@ public class TestThriftAdminServer {
         throws TException {
       return new HashMap<String, List<String>>();
     }
+
+    @Override
+    public CommandStatusThrift getCmdStatus(long cmdid) throws TException {
+      if (cmdid == 1337) {
+        List<String> l = new ArrayList<String>();
+        l.add("arg1");
+        l.add("arg2");
+        return new CommandStatusThrift(cmdid, CommandStatus.State.SUCCEEDED
+            .toString(), "message", new FlumeMasterCommandThrift("cmd", l));
+      }
+      return null;
+    }
   }
 
   @Test
@@ -113,7 +130,35 @@ public class TestThriftAdminServer {
     Assert.assertEquals("Expected response was 0 got " + mappings.size(), mappings
         .size(), 0);
 
+    CommandStatus cs = client.getCommandStatus(1337);
+    assertEquals(1337, cs.getCmdID());
+    assertEquals("message", cs.getMessage());
+    Command cmd = cs.getCommand();
+    assertEquals("cmd", cmd.getCommand());
+    assertEquals("arg1", cmd.getArgs()[0]);
+    assertEquals("arg2", cmd.getArgs()[1]);
+
     server.stop();
+  }
+
+  @Test
+  public void testMasterAdminServerBad() throws TTransportException,
+      IOException {
+    MyThriftServer server = new MyThriftServer();
+    server.serve();
+    AdminRPC client = new AdminRPCThrift("localhost", 56789);
+    LOG.info("Connected to test master");
+
+    try {
+      CommandStatus bad = client.getCommandStatus(1234);
+    } catch (IOException ioe) {
+      // success!
+      return;
+    } finally {
+      server.stop();
+    }
+
+    fail("should have thrown exception");
   }
 
   @Test

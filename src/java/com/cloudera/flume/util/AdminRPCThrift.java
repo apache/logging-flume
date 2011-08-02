@@ -31,25 +31,27 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 import com.cloudera.flume.conf.FlumeConfigData;
-import com.cloudera.flume.master.Command;
-import com.cloudera.flume.master.MasterAdminServerThrift;
-import com.cloudera.flume.master.MasterClientServerThrift;
-import com.cloudera.flume.master.StatusManager.NodeStatus;
+import com.cloudera.flume.conf.thrift.CommandStatusThrift;
+import com.cloudera.flume.conf.thrift.FlumeMasterCommandThrift;
 import com.cloudera.flume.conf.thrift.FlumeNodeStatusThrift;
 import com.cloudera.flume.conf.thrift.ThriftFlumeConfigData;
 import com.cloudera.flume.conf.thrift.FlumeMasterAdminServer.Client;
+import com.cloudera.flume.master.Command;
+import com.cloudera.flume.master.CommandStatus;
+import com.cloudera.flume.master.MasterAdminServerThrift;
+import com.cloudera.flume.master.MasterClientServerThrift;
+import com.cloudera.flume.master.StatusManager.NodeStatus;
 
 /**
- * Thrift implementation of the Flume admin control RPC. This
- * class manages the connection to a master and provides type conversion.
+ * Thrift implementation of the Flume admin control RPC. This class manages the
+ * connection to a master and provides type conversion.
  */
 public class AdminRPCThrift implements AdminRPC {
   final static Logger LOG = Logger.getLogger(AdminRPCThrift.class);
-  
+
   Client masterClient;
-  
-  public AdminRPCThrift(String masterHost, int masterPort) 
-      throws IOException {
+
+  public AdminRPCThrift(String masterHost, int masterPort) throws IOException {
     TTransport masterTransport = new TSocket(masterHost, masterPort);
     TProtocol protocol = new TBinaryProtocol(masterTransport);
     try {
@@ -60,7 +62,7 @@ public class AdminRPCThrift implements AdminRPC {
     masterClient = new Client(protocol);
     LOG.info("Connected to master at " + masterHost + ":" + masterPort);
   }
-  
+
   @Override
   public Map<String, FlumeConfigData> getConfigs() throws IOException {
     Map<String, ThriftFlumeConfigData> results;
@@ -70,7 +72,7 @@ public class AdminRPCThrift implements AdminRPC {
       throw new IOException(e);
     }
     Map<String, FlumeConfigData> out = new HashMap<String, FlumeConfigData>();
-    for (String s: results.keySet()) {
+    for (String s : results.keySet()) {
       out.put(s, MasterClientServerThrift.configFromThrift(results.get(s)));
     }
     return out;
@@ -85,7 +87,7 @@ public class AdminRPCThrift implements AdminRPC {
       throw new IOException(e);
     }
     Map<String, NodeStatus> out = new HashMap<String, NodeStatus>();
-    for (String s: results.keySet()) {
+    for (String s : results.keySet()) {
       out.put(s, MasterAdminServerThrift.statusFromThrift(results.get(s)));
     }
     return out;
@@ -105,6 +107,24 @@ public class AdminRPCThrift implements AdminRPC {
   public boolean hasCmdId(long cmdid) throws IOException {
     try {
       return masterClient.hasCmdId(cmdid);
+    } catch (TException e) {
+      throw new IOException(e);
+    }
+  }
+
+  @Override
+  public CommandStatus getCommandStatus(long cmdid) throws IOException {
+    try {
+      CommandStatusThrift cst = masterClient.getCmdStatus(cmdid);
+      if (cst == null) {
+        throw new IOException("Illegal command id: " + cmdid);
+      }
+      FlumeMasterCommandThrift cmdt = cst.getCmd();
+      Command cmd = new Command(cmdt.getCommand(), cmdt.arguments
+          .toArray(new String[0]));
+      CommandStatus cs = new CommandStatus(cst.getCmdId(), cmd,
+          CommandStatus.State.valueOf(cst.state), cst.getMessage());
+      return cs;
     } catch (TException e) {
       throw new IOException(e);
     }
@@ -131,8 +151,8 @@ public class AdminRPCThrift implements AdminRPC {
   @Override
   public long submit(Command command) throws IOException {
     try {
-      return masterClient.submit(
-          MasterAdminServerThrift.commandToThrift(command));
+      return masterClient.submit(MasterAdminServerThrift
+          .commandToThrift(command));
     } catch (TException e) {
       throw new IOException(e);
     }

@@ -34,7 +34,7 @@ import com.google.common.base.Preconditions;
  * conveying failure reason.
  */
 public class CommandStatus {
-  private enum State {
+  public static enum State {
     QUEUED, EXECING, SUCCEEDED, FAILED
   };
 
@@ -42,17 +42,17 @@ public class CommandStatus {
   final Command cmd;
 
   State curState;
-  String message; // this for extra information like why somethign failed.
+  String message; // this for extra information like why something failed.
 
-  CommandStatus(long cmdId, Command cmd, State state) {
+  public CommandStatus(long cmdId, Command cmd, State state, String msg) {
     this.cmdId = cmdId;
     this.cmd = cmd;
     curState = state;
-    message = "";
+    message = msg;
   }
 
   static CommandStatus createCommandStatus(long cmdId, Command cmd) {
-    return new CommandStatus(cmdId, cmd, State.QUEUED);
+    return new CommandStatus(cmdId, cmd, State.QUEUED, "");
   }
 
   public long getCmdID() {

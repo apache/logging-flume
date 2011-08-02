@@ -33,9 +33,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Multimap;
 
 /**
- * Implementation of the admin RPC interface. Since the 
- * wire protocol is different for separate RPC implementations, they each 
- * run their own stub servers, then delegate all requests to this common class.
+ * Implementation of the admin RPC interface. Since the wire protocol is
+ * different for separate RPC implementations, they each run their own stub
+ * servers, then delegate all requests to this common class.
  */
 public class MasterAdminServer {
   Logger LOG = Logger.getLogger(MasterAdminServer.class);
@@ -55,7 +55,7 @@ public class MasterAdminServer {
       stubServer = new MasterAdminServerThrift(this);
     } else {
       throw new IOException("No valid RPC framework specified in config");
-    } 
+    }
   }
 
   public boolean isFailure(long cmdid) {
@@ -71,18 +71,17 @@ public class MasterAdminServer {
   }
 
   public void serve() throws IOException {
-   this.stubServer.serve();
+    this.stubServer.serve();
   }
 
   public void stop() throws IOException {
     this.stubServer.stop();
   }
-  
+
   public Map<String, StatusManager.NodeStatus> getNodeStatuses() {
     Map<String, StatusManager.NodeStatus> statuses = master.getStatMan()
         .getNodeStatuses();
-    Map<String, StatusManager.NodeStatus> ret = 
-      new HashMap<String, StatusManager.NodeStatus>();
+    Map<String, StatusManager.NodeStatus> ret = new HashMap<String, StatusManager.NodeStatus>();
     for (Entry<String, StatusManager.NodeStatus> e : statuses.entrySet()) {
       ret.put(e.getKey(), e.getValue());
     }
@@ -111,8 +110,8 @@ public class MasterAdminServer {
           physicalNode);
 
       if (logicalNodes != null && logicalNodes.size() > 0) {
-        resultMap.put(physicalNode,
-            master.getSpecMan().getLogicalNode(physicalNode));
+        resultMap.put(physicalNode, master.getSpecMan().getLogicalNode(
+            physicalNode));
       }
     } else {
       Multimap<String, String> m = master.getSpecMan().getLogicalNodeMap();
@@ -136,5 +135,9 @@ public class MasterAdminServer {
    */
   public boolean hasCmdId(long cmdid) {
     return master.getCmdMan().getStatus(cmdid) != null;
+  }
+
+  public CommandStatus getCommandStatus(long cmdId) {
+    return master.getCmdMan().getStatus(cmdId);
   }
 }

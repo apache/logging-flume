@@ -23,12 +23,13 @@ import java.util.Map;
 
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.master.Command;
+import com.cloudera.flume.master.CommandStatus;
 import com.cloudera.flume.master.StatusManager;
 
 /**
- * This interface represents the client side of master control RPC exchange.
- * We implement this interface for each RPC package that Flume uses. We 
- * interpret an IOException as a loss of connection to the master.
+ * This interface represents the client side of master control RPC exchange. We
+ * implement this interface for each RPC package that Flume uses. We interpret
+ * an IOException as a loss of connection to the master.
  */
 public interface AdminRPC {
   public boolean isFailure(long cmdid) throws IOException;
@@ -38,7 +39,7 @@ public interface AdminRPC {
   public long submit(Command command) throws IOException;
 
   public Map<String, StatusManager.NodeStatus> getNodeStatuses()
-    throws IOException;
+      throws IOException;
 
   public Map<String, FlumeConfigData> getConfigs() throws IOException;
 
@@ -52,7 +53,10 @@ public interface AdminRPC {
    * @return
    * @throws IOException
    */
-  public Map<String, List<String>> getMappings(String physicalNode) throws IOException;
+  public Map<String, List<String>> getMappings(String physicalNode)
+      throws IOException;
 
   public boolean hasCmdId(long cmdid) throws IOException;
+
+  public CommandStatus getCommandStatus(long cmdid) throws IOException;
 }
