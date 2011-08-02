@@ -17,16 +17,17 @@
  */
 package com.cloudera.flume.collector;
 
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 
-import junit.framework.TestCase;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Before;
+import org.junit.Test;
 
 import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.agent.durability.NaiveFileWALDeco;
@@ -51,13 +52,15 @@ import com.cloudera.util.Pair;
 /**
  * This tests the builder
  */
-public class TestCollectorSink extends TestCase {
+public class TestCollectorSink {
   final static Logger LOG = Logger.getLogger(TestCollectorSink.class);
 
+  @Before
   public void setUp() {
     Logger.getRootLogger().setLevel(Level.DEBUG);
   }
 
+  @Test
   public void testBuilder() throws FlumeSpecException {
     Exception ex = null;
     try {
@@ -86,6 +89,7 @@ public class TestCollectorSink extends TestCase {
     fail("unexpected fall through");
   }
 
+  @Test
   public void testOpenClose() throws FlumeSpecException, IOException {
     String src2 = "collectorSink(\"file:///tmp/test\",\"testfilename\")";
 
@@ -99,6 +103,7 @@ public class TestCollectorSink extends TestCase {
   /**
    * Test that file paths are correctly constructed from dir + path + tag
    */
+  @Test
   public void testCorrectFilename() throws IOException {
     CollectorSink sink = new CollectorSink(
         "file:///tmp/flume-test-correct-filename", "actual-file-", 10000,
@@ -185,6 +190,7 @@ public class TestCollectorSink extends TestCase {
   /**
    * We need to make sure the ack doesn't get sent until the roll happens.
    */
+  @Test
   public void testIdealAckOnRoll() throws IOException, FlumeSpecException,
       InterruptedException {
     // we don't care about the durability parts of the walMan, only the ack
@@ -252,6 +258,7 @@ public class TestCollectorSink extends TestCase {
    * This one does unalighned acks where the first event after a rotation is an
    * ack end.
    */
+  @Test
   public void testUnalignedAckOnRollEndBoundary() throws IOException,
       FlumeSpecException, InterruptedException {
     // we don't care about the durability parts of the walMan, only the ack
@@ -312,6 +319,7 @@ public class TestCollectorSink extends TestCase {
   /**
    * We need to make sure the ack doesn't get sent until the roll happens.
    */
+  @Test
   public void testUnalignedAckOnRoll() throws IOException, FlumeSpecException,
       InterruptedException {
     // we don't care about the durability parts of the walMan, only the ack

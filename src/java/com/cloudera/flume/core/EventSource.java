@@ -22,6 +22,7 @@ import java.io.IOException;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.Reportable;
+import com.google.common.base.Preconditions;
 
 /**
  * This provides a synchronous interface to getting events. An state/event-based
@@ -78,6 +79,24 @@ public interface EventSource extends Reportable {
       return new SourceBuilder() {
         @Override
         public EventSource build(String... argv) {
+          return new StubSource();
+        }
+      };
+    }
+
+    /**
+     * Bounded ranges on stubs sources.
+     */
+    public static SourceBuilder builder(final int minArgs, final int maxArgs) {
+      return new SourceBuilder() {
+        @Override
+        public EventSource build(String... argv) {
+          Preconditions.checkArgument(argv.length >= minArgs,
+              "Too few arguments: expected at least " + minArgs
+                  + " but only had " + argv.length);
+          Preconditions.checkArgument(argv.length <= maxArgs,
+              "Too many arguments : exepected at most " + maxArgs + " but had "
+                  + argv.length);
           return new StubSource();
         }
       };

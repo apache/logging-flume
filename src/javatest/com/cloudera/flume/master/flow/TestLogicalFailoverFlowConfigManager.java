@@ -87,16 +87,16 @@ public class TestLogicalFailoverFlowConfigManager {
     // Instead of loading from a ZK Store, we just see the config in the "deep"
     // config manager. Any translations will not occur.
     ConfigurationManager loaded = cfgMan;
-    loaded.setConfig("coll11", "flow1", "collectorSource", "null");
-    loaded.setConfig("coll12", "flow1", "collectorSource", "null");
-    loaded.setConfig("coll13", "flow1", "collectorSource", "null");
-    loaded.setConfig("coll14", "flow1", "collectorSource", "null");
+    loaded.setConfig("coll11", "flow1", "autoCollectorSource", "null");
+    loaded.setConfig("coll12", "flow1", "autoCollectorSource", "null");
+    loaded.setConfig("coll13", "flow1", "autoCollectorSource", "null");
+    loaded.setConfig("coll14", "flow1", "autoCollectorSource", "null");
     loaded.setConfig("agent1", "flow1", "null", "autoBEChain");
 
-    loaded.setConfig("coll21", "flow2", "collectorSource", "null");
-    loaded.setConfig("coll22", "flow2", "collectorSource", "null");
-    loaded.setConfig("coll23", "flow2", "collectorSource", "null");
-    loaded.setConfig("coll24", "flow2", "collectorSource", "null");
+    loaded.setConfig("coll21", "flow2", "autoCollectorSource", "null");
+    loaded.setConfig("coll22", "flow2", "autoCollectorSource", "null");
+    loaded.setConfig("coll23", "flow2", "autoCollectorSource", "null");
+    loaded.setConfig("coll24", "flow2", "autoCollectorSource", "null");
     loaded.setConfig("agent2", "flow2", "null", "autoBEChain");
 
     // this is the outer configman, should have no translation.
@@ -209,7 +209,7 @@ public class TestLogicalFailoverFlowConfigManager {
         + "\", 35857 ) } } > >", agent2.sinkConfig);
 
     // change the flow group of one of the relevent logicalSinks.
-    logical.setConfig("coll14", "flow2", "collectorSource", "null");
+    logical.setConfig("coll14", "flow2", "autoCollectorSource", "null");
     FlumeConfigData nextAgent1 = logical.getConfig("agent1");
     FlumeConfigData nextAgent2 = logical.getConfig("agent2");
 

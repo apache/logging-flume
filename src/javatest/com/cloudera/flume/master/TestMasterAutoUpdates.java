@@ -80,10 +80,10 @@ public class TestMasterAutoUpdates {
     // Instead of loading from a ZK Store, we just see the config in the "deep"
     // config manager. Any translations will not occur.
     ConfigurationManager loaded = cfgMan;
-    loaded.setConfig("node1", "flow", "collectorSource", "null");
-    loaded.setConfig("node2", "flow", "collectorSource", "null");
-    loaded.setConfig("node3", "flow", "collectorSource", "null");
-    loaded.setConfig("node4", "flow", "collectorSource", "null");
+    loaded.setConfig("node1", "flow", "autoCollectorSource", "null");
+    loaded.setConfig("node2", "flow", "autoCollectorSource", "null");
+    loaded.setConfig("node3", "flow", "autoCollectorSource", "null");
+    loaded.setConfig("node4", "flow", "autoCollectorSource", "null");
     loaded.setConfig("agent", "flow", "null", "autoBEChain");
 
     // this is the outer configman, should have no translation.
@@ -219,8 +219,8 @@ public class TestMasterAutoUpdates {
       FlumeSpecException {
 
     // a user initiated removal of a node would cause the config to change.
-    flumeMaster.getSpecMan().setConfig("nodeNew", "flow", "collectorSource",
-        "null");
+    flumeMaster.getSpecMan().setConfig("nodeNew", "flow",
+        "autoCollectorSource", "null");
 
     // Look, no explicit update call!
 

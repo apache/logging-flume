@@ -17,16 +17,25 @@
  */
 package com.cloudera.flume.collector;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.fail;
 
+import java.io.IOException;
+
+import org.junit.Test;
+
+import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.core.EventImpl;
+import com.cloudera.flume.core.EventSink;
+import com.cloudera.flume.core.EventSource;
 
 /**
  * So far this tests the builder and repeated opens and closes.
  */
-public class TestCollectorSource extends TestCase {
+public class TestCollectorSource {
 
+  @Test
   public void testBuilder() throws FlumeSpecException {
     String src = "collectorSource";
     FlumeBuilder.buildSource(src);
@@ -40,6 +49,24 @@ public class TestCollectorSource extends TestCase {
       return;
     }
     fail("should have caught aproblem");
+  }
+
+  /**
+   * This test makes sure the port specified is opened and can be written This
+   * will fail if any piece failes to open, append, next, or close
+   */
+  @Test
+  public void testCollectorSource() throws FlumeSpecException, IOException {
+    EventSource src = FlumeBuilder.buildSource("collectorSource(34568)");
+    EventSink snk = FlumeBuilder.buildSink(new Context(),
+        "rpcSink(\"localhost\", 34568)");
+    src.open();
+    snk.open();
+    snk.append(new EventImpl("foo".getBytes()));
+    src.next();
+    snk.close();
+    src.close();
+
   }
 
   /**

@@ -28,13 +28,11 @@ import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.CommonTree;
 import org.apache.log4j.Logger;
 
-import com.cloudera.flume.collector.CollectorSource;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumePatterns;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.FlumeSpecGen;
 import com.cloudera.flume.conf.PatternMatch;
-import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.master.ConfigurationManager;
 import com.cloudera.flume.master.TranslatingConfigurationManager;
 import com.cloudera.flume.master.Translator;
@@ -84,8 +82,7 @@ public class FailoverConfigurationManager extends
     Preconditions.checkArgument(source != null);
 
     // register the source.
-    EventSource src = FlumeBuilder.buildSource(source);
-    if (src instanceof CollectorSource) {
+    if ("autoCollectorSource".equals(source)) {
       failchainMan.addCollector(lnode);
       source = "logicalSource"; // convert to logical source.
     } else {

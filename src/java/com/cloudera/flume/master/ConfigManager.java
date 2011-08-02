@@ -74,7 +74,8 @@ public class ConfigManager implements ConfigurationManager {
 
   /**
    * This sets a specified configuration. Only valid source and sinks are
-   * allowed.
+   * allowed. An exception is thrown if any piece is unparsable, or fails to
+   * instantiate.
    */
   synchronized public void setConfig(String logicalNode, String flowid,
       String source, String sink) throws IOException {
@@ -92,7 +93,8 @@ public class ConfigManager implements ConfigurationManager {
   }
 
   /**
-   * Sets many configurations in one operation
+   * Sets many configurations in one operation. The change should be atomic. All
+   * changes go in or none of them go in (and exception thrown).
    */
   synchronized public void setBulkConfig(Map<String, FlumeConfigData> configs)
       throws IOException {
@@ -100,14 +102,14 @@ public class ConfigManager implements ConfigurationManager {
   }
 
   /**
-   * Returns an unmodifiable map of all configurations
+   * Returns a copy of the map of all configurations
    */
   synchronized public Map<String, FlumeConfigData> getAllConfigs() {
     return new HashMap<String, FlumeConfigData>(cfgStore.getConfigs());
   }
 
   /**
-   * Returns the translations of all configurations
+   * Returns a copy of the translations of all configurations
    */
   synchronized public Map<String, FlumeConfigData> getTranslatedConfigs() {
     // translated and non translated are the same on the StoreConfigManager

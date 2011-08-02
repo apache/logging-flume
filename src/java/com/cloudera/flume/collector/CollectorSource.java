@@ -44,9 +44,11 @@ public class CollectorSource extends EventSource.Base {
   final static Logger LOG = Logger.getLogger(CollectorSource.class.getName());
 
   EventSource src;
+  int port;
 
   public CollectorSource(int port) {
-    src = new ThriftEventSource(port);
+    this.src = new ThriftEventSource(port);
+    this.port = port;
   }
 
   @Override
@@ -64,6 +66,13 @@ public class CollectorSource extends EventSource.Base {
   @Override
   public Event next() throws IOException {
     return src.next();
+  }
+
+  /**
+   * Get the port the collector source listens on.
+   */
+  public int getPort() {
+    return port;
   }
 
   public static SourceBuilder builder() {

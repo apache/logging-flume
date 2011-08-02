@@ -81,23 +81,23 @@ public class TestLogicalConfigManager {
 
   void setupCollectorAgentConfigs() throws IOException, FlumeSpecException {
     // 3 collectors, one auto chain
-    trans.setConfig("foo", DEFAULTFLOW, "collectorSource", "null");
-    trans.setConfig("foo2", DEFAULTFLOW, "collectorSource", "null");
-    trans.setConfig("foo3", DEFAULTFLOW, "collectorSource", "null");
+    trans.setConfig("foo", DEFAULTFLOW, "autoCollectorSource", "null");
+    trans.setConfig("foo2", DEFAULTFLOW, "autoCollectorSource", "null");
+    trans.setConfig("foo3", DEFAULTFLOW, "autoCollectorSource", "null");
     trans.setConfig("bar", DEFAULTFLOW, "null", "autoBEChain");
   }
 
   // make it so that the local host info is present
   void setupHeartbeats() {
     String host = NetUtils.localhost();
-    statman.updateHeartbeatStatus(host, "physnode", "foo", NodeState.HELLO, Clock
-        .unixTime());
-    statman.updateHeartbeatStatus(host, "physnode", "foo2", NodeState.HELLO, Clock
-        .unixTime());
-    statman.updateHeartbeatStatus(host, "physnode", "foo3", NodeState.HELLO, Clock
-        .unixTime());
-    statman.updateHeartbeatStatus(host, "physnode", "bar", NodeState.HELLO, Clock
-        .unixTime());
+    statman.updateHeartbeatStatus(host, "physnode", "foo", NodeState.HELLO,
+        Clock.unixTime());
+    statman.updateHeartbeatStatus(host, "physnode", "foo2", NodeState.HELLO,
+        Clock.unixTime());
+    statman.updateHeartbeatStatus(host, "physnode", "foo3", NodeState.HELLO,
+        Clock.unixTime());
+    statman.updateHeartbeatStatus(host, "physnode", "bar", NodeState.HELLO,
+        Clock.unixTime());
   }
 
   // Next mapped logical node to a physical
@@ -175,7 +175,7 @@ public class TestLogicalConfigManager {
     setupHeartbeats();
     setupLogicalMapping();
     setupCollectorAgentConfigs();
-    
+
     // update the configurations
     trans.updateAll();
     LOG.info("Full Translation: " + trans);
@@ -225,8 +225,8 @@ public class TestLogicalConfigManager {
     // setup nodes
     for (String[] objs : lists) {
       // register nodes in the status manager
-      statman.updateHeartbeatStatus(host, "physnode", objs[0], NodeState.HELLO, Clock
-          .unixTime());
+      statman.updateHeartbeatStatus(host, "physnode", objs[0], NodeState.HELLO,
+          Clock.unixTime());
 
       // Next spawn so that all are mapped onto a node and now gets a physical
       trans.addLogicalNode(host, objs[0]);
@@ -367,8 +367,8 @@ public class TestLogicalConfigManager {
     int foo2port = foo1port + 1;
     String host = NetUtils.localhost();
     String[][] lists = {
-        { "foo1", "collectorSource", "null", "rpcSource( 35853 )", "null" },
-        { "foo2", "collectorSource", "null", "rpcSource( 35854 )", "null" },
+        { "foo1", "autoCollectorSource", "null", "rpcSource( 35853 )", "null" },
+        { "foo2", "autoCollectorSource", "null", "rpcSource( 35854 )", "null" },
         { "bar0", "null", "autoBEChain", "null",
             "rpcSink( \"" + host + "\", " + foo1port + " )" },
         { "bar1", "null", "autoDFOChain", "null",
@@ -528,7 +528,7 @@ public class TestLogicalConfigManager {
   @Test
   public void testUnconfigures() throws IOException, FlumeSpecException {
     setupNewManagers();
-    setupHeartbeats() ;
+    setupHeartbeats();
     setupLogicalMapping();
     setupCollectorAgentConfigs();
 
@@ -609,8 +609,8 @@ public class TestLogicalConfigManager {
     assertEquals(first, transData0.getSinkConfig());
 
     // update one at a time and check config
-    statman.updateHeartbeatStatus(NetUtils.localhost(), "physnode", "foo", NodeState.HELLO,
-        Clock.unixTime());
+    statman.updateHeartbeatStatus(NetUtils.localhost(), "physnode", "foo",
+        NodeState.HELLO, Clock.unixTime());
     trans.updateAll(); // TODO remove
     String second = "< { lazyOpen => { stubbornAppend => rpcSink( \""
         + lh
@@ -626,7 +626,7 @@ public class TestLogicalConfigManager {
     assertEquals("null", transCollData.getSinkConfig());
 
     // update one at a time and check config
-    statman.updateHeartbeatStatus(NetUtils.localhost(), "physnode", "foo2", 
+    statman.updateHeartbeatStatus(NetUtils.localhost(), "physnode", "foo2",
         NodeState.HELLO, Clock.unixTime());
     trans.updateAll();
     String third = "< { lazyOpen => { stubbornAppend => rpcSink( \""
@@ -698,8 +698,8 @@ public class TestLogicalConfigManager {
     assertEquals(first, transData0.getSinkConfig());
 
     // update one at a time and check config
-    statman.updateHeartbeatStatus(NetUtils.localhost(), "physnode", "foo", NodeState.HELLO,
-        Clock.unixTime());
+    statman.updateHeartbeatStatus(NetUtils.localhost(), "physnode", "foo",
+        NodeState.HELLO, Clock.unixTime());
     trans.updateAll(); // TODO remove
     String second = "< { lazyOpen => { stubbornAppend => rpcSink( \""
         + lh
@@ -715,8 +715,8 @@ public class TestLogicalConfigManager {
     assertEquals("null", transCollData.getSinkConfig());
 
     // We knock out a node. What is the right behavior? Use old information.
-    statman.updateHeartbeatStatus(NetUtils.localhost(), "physnode", "foo", NodeState.LOST,
-        Clock.unixTime());
+    statman.updateHeartbeatStatus(NetUtils.localhost(), "physnode", "foo",
+        NodeState.LOST, Clock.unixTime());
     trans.updateAll(); // TODO remove
     String third = "< { lazyOpen => { stubbornAppend => rpcSink( \""
         + lh

@@ -59,6 +59,7 @@ public class SourceFactoryImpl extends SourceFactory {
   static Object[][] sourceList = {
       // high level sources
       { "logicalSource", StubSource.builder() },
+      { "autoCollectorSource", StubSource.builder(0, 0) },// no args allowed
       { "collectorSource", CollectorSource.builder() },
 
       // low level Sources
