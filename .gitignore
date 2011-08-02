@@ -14,3 +14,7 @@ conf/flume-site.xml
 bin/.settings
 libtest/
 lib/ivy-*.jar
+src/avro-gen-java
+src/avro/*.avpr
+docs/
+.eclipse
