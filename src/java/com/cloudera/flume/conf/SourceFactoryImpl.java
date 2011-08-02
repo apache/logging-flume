@@ -42,7 +42,6 @@ import com.cloudera.flume.handlers.debug.StdinSource;
 import com.cloudera.flume.handlers.debug.SynthSource;
 import com.cloudera.flume.handlers.debug.SynthSourceRndSize;
 import com.cloudera.flume.handlers.debug.TextFileSource;
-import com.cloudera.flume.handlers.exec.ExecEventSource;
 import com.cloudera.flume.handlers.exec.ExecNioSource;
 import com.cloudera.flume.handlers.hdfs.SeqfileEventSource;
 import com.cloudera.flume.handlers.irc.IrcSource;
@@ -93,9 +92,6 @@ public class SourceFactoryImpl extends SourceFactory {
       { "execStream", ExecNioSource.buildStream() },
       { "exec", ExecNioSource.builder() },
 
-      { "execPeriodicOld", ExecEventSource.buildPeriodic() },
-      { "execStreamOld", ExecEventSource.buildStream() },
-      { "execOld", ExecEventSource.builder() },
       { "synth", SynthSource.builder() },
       { "nonlsynth", NoNlSynthSource.builder() },
       { "asciisynth", NoNlASCIISynthSource.builder() },
