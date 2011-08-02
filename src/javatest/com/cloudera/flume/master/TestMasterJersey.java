@@ -108,4 +108,41 @@ public class TestMasterJersey extends SetupMasterTestEnv {
     assertTrue(content.contains("\"sourceConfig\":\"null\",\"sourceVersion\""));
   }
 
+  /**
+   * Test json interface for getting ack informaiton.
+   * 
+   * @throws IOException
+   * @throws InterruptedException
+   * @throws FlumeSpecException
+   */
+  @Test
+  public void testMasterAckManager() throws IOException, InterruptedException,
+      FlumeSpecException {
+    String content = curl("http://localhost:35871/master/acks");
+    LOG.info("content: " + content);
+    assertEquals("null\n", content);
+
+    // Set a config, and show that json has ne config
+    String foo = "foobarama is better than wackadoodles";
+    flumeMaster.ackman.acknowledge(foo);
+
+    // excludes timestamp related json encoded stuff
+    content = curl("http://localhost:35871/master/acks");
+    LOG.info("content: " + content);
+    assertEquals(content, "{\"acks\":\"" + foo + "\"}\n");
+
+    // Set a config, and show that json has ne config
+    String baz = "bazapolooza is cool too";
+    flumeMaster.ackman.acknowledge(baz);
+    content = curl("http://localhost:35871/master/acks");
+    LOG.info("content: " + content);
+    assertEquals(content, "{\"acks\":[\"" + foo + "\",\"" + baz + "\"]}\n");
+
+    // consume the ack
+    flumeMaster.ackman.check("foobarama is better than wackadoodles");
+    content = curl("http://localhost:35871/master/acks");
+    LOG.info("content: " + content);
+    assertEquals(content, "{\"acks\":\"" + baz + "\"}\n");
+
+  }
 }

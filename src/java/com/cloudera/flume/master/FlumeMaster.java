@@ -229,7 +229,7 @@ public class FlumeMaster implements Reportable {
   ServletContainer jerseyMasterServlet() {
     Application app = new DefaultResourceConfig(FlumeMasterResource.class,
         StatusManagerResource.class, ConfigManagerResource.class,
-        CommandManagerResource.class);
+        CommandManagerResource.class, MasterAckManagerResource.class);
     ServletContainer sc = new ServletContainer(app);
 
     return sc;
