@@ -300,6 +300,7 @@
           <configuration>
             <forkMode>always</forkMode>
             <forkedProcessTimeoutInSeconds>480</forkedProcessTimeoutInSeconds>
+            <redirectTestOutputToFile>true</redirectTestOutputToFile>
           </configuration>
         </plugin>
 
