@@ -87,7 +87,7 @@ public class AckChecksumInjector<S extends EventSink> extends
    * 
    * Use the host and the nanos as a tag at the collector side.
    */
-  private Event openEvent() {
+  public Event openEvent() {
     Event e = new EventImpl(new byte[0]);
     e.set(ATTR_ACK_TYPE, CHECKSUM_START);
     checksum = e.getTimestamp();
@@ -100,7 +100,7 @@ public class AckChecksumInjector<S extends EventSink> extends
   /**
    * Close events has the cumulative checksum value
    */
-  private Event closeEvent() {
+  public Event closeEvent() {
     Event e = new EventImpl(new byte[0]);
     e.set(ATTR_ACK_TYPE, CHECKSUM_STOP);
     e.set(ATTR_ACK_HASH, ByteBuffer.allocate(8).putLong(checksum).array());

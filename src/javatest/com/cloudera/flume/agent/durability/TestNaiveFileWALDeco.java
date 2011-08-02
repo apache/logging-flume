@@ -80,8 +80,8 @@ public class TestNaiveFileWALDeco {
     // file with ack begin, data, and end messages
     File acked = new File("src/data/acked.00000000.20100204-015814430-0800.seq");
     // Assumes the NaiveFileWALManager!
-    File writing = new File(new File(tmp, BenchmarkHarness.node
-        .getPhysicalNodeName()), "writing");
+    File writing = new File(new File(tmp,
+        BenchmarkHarness.node.getPhysicalNodeName()), "writing");
     writing.mkdirs();
 
     // Must rename file because that name is in the meta data of the event
@@ -137,8 +137,8 @@ public class TestNaiveFileWALDeco {
     // file with ack begin, data, and end messages
     File acked = new File("src/data/acked.00000000.20100204-015814430-0800.seq");
     // Assumes the NaiveFileWALManager!
-    File writing = new File(new File(tmp, BenchmarkHarness.node
-        .getPhysicalNodeName()), "writing");
+    File writing = new File(new File(tmp,
+        BenchmarkHarness.node.getPhysicalNodeName()), "writing");
     writing.mkdirs();
 
     // /////////////////////
@@ -174,8 +174,9 @@ public class TestNaiveFileWALDeco {
     // TODO (jon) is this the right behavior? I think assuming no name changes
     // locally is reasonable for now.
 
-    assertTrue(new File(new File(new File(tmp, BenchmarkHarness.node
-        .getPhysicalNodeName()), "sent"), acked.getName()).exists());
+    assertTrue(new File(new File(new File(tmp,
+        BenchmarkHarness.node.getPhysicalNodeName()), "sent"), acked.getName())
+        .exists());
 
     BenchmarkHarness.cleanupLocalWriteDir();
   }
@@ -199,8 +200,8 @@ public class TestNaiveFileWALDeco {
     // file with ack begin, data and then truncated
     File truncated = new File(
         "src/data/truncated.00000000.20100204-015814430-0800.seq");
-    File writing = new File(new File(tmp, BenchmarkHarness.node
-        .getPhysicalNodeName()), "writing");
+    File writing = new File(new File(tmp,
+        BenchmarkHarness.node.getPhysicalNodeName()), "writing");
 
     writing.mkdirs();
     FileUtil.dumbfilecopy(truncated, new File(writing, truncated.getName()));
@@ -234,8 +235,11 @@ public class TestNaiveFileWALDeco {
         .exists());
     assertFalse(new File(new File(nodedir, "sending"), truncated.getName())
         .exists());
-    assertFalse(new File(new File(nodedir, "sent"), truncated.getName())
+    // some of the corrupt data was recovered and re-framed so it ends up in sent
+    // state.
+    assertTrue(new File(new File(nodedir, "sent"), truncated.getName())
         .exists());
+    // the original had some problems so it ends up in error state.
     assertTrue(new File(new File(nodedir, "error"), truncated.getName())
         .exists());
     assertFalse(new File(new File(nodedir, "done"), truncated.getName())
@@ -251,9 +255,10 @@ public class TestNaiveFileWALDeco {
    */
   @Test
   public void testAppendBeforeOpen() throws InterruptedException {
-    final NaiveFileWALDeco d = new NaiveFileWALDeco(LogicalNodeContext
-        .testingContext(), new NullSink(), new NaiveFileWALManager(new File(
-        "/tmp")), new SizeTrigger(0, null), new AckListener.Empty(), 1000000);
+    final NaiveFileWALDeco d = new NaiveFileWALDeco(
+        LogicalNodeContext.testingContext(), new NullSink(),
+        new NaiveFileWALManager(new File("/tmp")), new SizeTrigger(0, null),
+        new AckListener.Empty(), 1000000);
     final CountDownLatch cdl1 = new CountDownLatch(1);
     new Thread() {
       public void run() {
@@ -281,9 +286,10 @@ public class TestNaiveFileWALDeco {
   @Test
   public void testBadRegistererAppend() throws InterruptedException {
 
-    final NaiveFileWALDeco d = new NaiveFileWALDeco(LogicalNodeContext
-        .testingContext(), new NullSink(), new NaiveFileWALManager(new File(
-        "/tmp")), new SizeTrigger(0, null), new AckListener.Empty(), 1000000);
+    final NaiveFileWALDeco d = new NaiveFileWALDeco(
+        LogicalNodeContext.testingContext(), new NullSink(),
+        new NaiveFileWALManager(new File("/tmp")), new SizeTrigger(0, null),
+        new AckListener.Empty(), 1000000);
 
     final CountDownLatch cdl1 = new CountDownLatch(1);
     new Thread() {

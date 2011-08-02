@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -33,6 +34,8 @@ import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.handlers.debug.ConsoleEventSink;
+import com.cloudera.flume.handlers.endtoend.AckChecksumInjector;
+import com.cloudera.flume.handlers.hdfs.SeqfileEventSink;
 import com.cloudera.flume.handlers.rolling.ProcessTagger;
 import com.cloudera.flume.handlers.rolling.Tagger;
 import com.cloudera.util.BenchmarkHarness;
@@ -78,7 +81,6 @@ public class TestNaiveFileWALManager {
     assertEquals(0, wal.getSentTags().size());
 
     wal.stopDrains();
-
   }
 
   @Test
@@ -141,7 +143,7 @@ public class TestNaiveFileWALManager {
     NaiveFileWALManager wal = new NaiveFileWALManager(tmp);
     wal.open(); // create dirs
 
-    File acked = new File(WAL_OK);
+    File acked = new File(WAL_OK); // ok but unframed
 
     // copy files and then recover them.
     FileUtil.dumbfilecopy(acked, new File(wal.writingDir,
@@ -164,10 +166,175 @@ public class TestNaiveFileWALManager {
     assertEquals(0, new File(tmp, "sending").list().length);
     assertEquals(0, new File(tmp, "sent").list().length);
     assertEquals(0, new File(tmp, "done").list().length);
-    assertEquals(1, new File(tmp, "error").list().length);
+    // pre-existing error, and writing didn't have proper ack wrappers
+    assertEquals(4, new File(tmp, "error").list().length);
+    // logged, writing, sending, sent
     assertEquals(4, new File(tmp, "logged").list().length);
 
     BenchmarkHarness.cleanupLocalWriteDir();
+  }
+
+  /**
+   * This test puts a file in each log dir and makes sure they are all
+   * recovered. This test has no closing ack event.
+   */
+  @Test
+  public void testReframeRecovers() throws IOException, FlumeSpecException,
+      InterruptedException {
+    BenchmarkHarness.setupLocalWriteDir();
+    File tmp = BenchmarkHarness.tmpdir;
+
+    NaiveFileWALManager wal = new NaiveFileWALManager(tmp);
+    wal.open(); // create dirs
+
+    // create a seq file with no ack close.
+    File f = new File(wal.writingDir,
+        "writing.00000000.20100204-015814F430-0800.seq");
+    SeqfileEventSink sf = new SeqfileEventSink(f);
+    AckChecksumInjector<EventSink> inj = new AckChecksumInjector<EventSink>(sf);
+    inj.open();
+    inj.append(new EventImpl("test".getBytes()));
+    // notice ack checksum inj not closed, but the subsink is.
+    // no ack end event sent on purpose, which forces recover() to reframe the
+    // data.
+    sf.close();
+
+    // do the low level recovery
+    wal.recover();
+
+    // check to make sure wal file is gone
+    // assertTrue(new File(tmp, "import").list().length == 0);
+    assertEquals(0, new File(tmp, "writing").list().length);
+    assertEquals(0, new File(tmp, "sending").list().length);
+    assertEquals(0, new File(tmp, "sent").list().length);
+    assertEquals(0, new File(tmp, "done").list().length);
+    assertEquals(1, new File(tmp, "error").list().length);
+    assertEquals(1, new File(tmp, "logged").list().length);
+
+    BenchmarkHarness.cleanupLocalWriteDir();
+  }
+
+  /**
+   * Multiple ack-starts should cause problem that gets cleaned up.
+   */
+  @Test
+  public void testReframeMultipleOpenAcks() throws IOException,
+      InterruptedException {
+    BenchmarkHarness.setupLocalWriteDir();
+    File tmp = BenchmarkHarness.tmpdir;
+
+    NaiveFileWALManager wal = new NaiveFileWALManager(tmp);
+    wal.open(); // create dirs
+
+    // create a seq file with no ack close.
+    File f = new File(wal.writingDir,
+        "writing.00000000.20100204-015814F430-0800.seq");
+    SeqfileEventSink sf = new SeqfileEventSink(f);
+    AckChecksumInjector<EventSink> inj = new AckChecksumInjector<EventSink>(sf);
+    inj.open();
+    inj.append(new EventImpl("test".getBytes()));
+
+    // Cause a state ack check state error
+    Event e = inj.openEvent();
+    sf.append(e);
+
+    // proper close event
+    inj.close();
+
+    // do the low level recovery
+    wal.recover();
+
+    // check to make sure wal file is gone
+    // assertTrue(new File(tmp, "import").list().length == 0);
+    assertEquals(0, new File(tmp, "writing").list().length);
+    assertEquals(0, new File(tmp, "sending").list().length);
+    assertEquals(0, new File(tmp, "sent").list().length);
+    assertEquals(0, new File(tmp, "done").list().length);
+    assertEquals(1, new File(tmp, "error").list().length);
+    assertEquals(1, new File(tmp, "logged").list().length);
+
+    BenchmarkHarness.cleanupLocalWriteDir();
+
+  }
+
+  /**
+   * This reframes data that has no ack-start and no ack-end.
+   */
+  @Test
+  public void testReframeUnframed() throws IOException, InterruptedException {
+    BenchmarkHarness.setupLocalWriteDir();
+    File tmp = BenchmarkHarness.tmpdir;
+
+    NaiveFileWALManager wal = new NaiveFileWALManager(tmp);
+    wal.open(); // create dirs
+
+    // create a seq file with no ack close or ack open
+    File f = new File(wal.writingDir,
+        "writing.00000000.20100204-015814F430-0800.seq");
+    SeqfileEventSink sf = new SeqfileEventSink(f);
+    sf.open();
+    sf.append(new EventImpl("test".getBytes()));
+    sf.close();
+
+    // do the low level recovery
+    wal.recover();
+
+    // check to make sure wal file is gone
+    // assertTrue(new File(tmp, "import").list().length == 0);
+    assertEquals(0, new File(tmp, "writing").list().length);
+    assertEquals(0, new File(tmp, "sending").list().length);
+    assertEquals(0, new File(tmp, "sent").list().length);
+    assertEquals(0, new File(tmp, "done").list().length);
+    assertEquals(1, new File(tmp, "error").list().length);
+    assertEquals(1, new File(tmp, "logged").list().length);
+
+    BenchmarkHarness.cleanupLocalWriteDir();
+
+  }
+
+  /**
+   * This reframes data that has a bad ack-end checksum
+   */
+  @Test
+  public void testReframeBadAckChecksum() throws IOException,
+      InterruptedException {
+    BenchmarkHarness.setupLocalWriteDir();
+    File tmp = BenchmarkHarness.tmpdir;
+
+    NaiveFileWALManager wal = new NaiveFileWALManager(tmp);
+    wal.open(); // create dirs
+
+    // create a seq file with no ack close.
+    File f = new File(wal.writingDir,
+        "writing.00000000.20100204-015814F430-0800.seq");
+    SeqfileEventSink sf = new SeqfileEventSink(f);
+    AckChecksumInjector<EventSink> inj = new AckChecksumInjector<EventSink>(sf);
+    inj.open();
+    inj.append(new EventImpl("test".getBytes()));
+
+    // need to keep the tag from the inj, but purposely mess up checksum
+    Event e = inj.closeEvent();
+    byte[] ref = e.get(AckChecksumInjector.ATTR_ACK_HASH);
+    Arrays.fill(ref, (byte) 0);
+    sf.append(e);
+
+    // close, and do not send good ack close
+    sf.close();
+
+    // do the low level recovery
+    wal.recover();
+
+    // check to make sure wal file is gone
+    // assertTrue(new File(tmp, "import").list().length == 0);
+    assertEquals(0, new File(tmp, "writing").list().length);
+    assertEquals(0, new File(tmp, "sending").list().length);
+    assertEquals(0, new File(tmp, "sent").list().length);
+    assertEquals(0, new File(tmp, "done").list().length);
+    assertEquals(1, new File(tmp, "error").list().length);
+    assertEquals(1, new File(tmp, "logged").list().length);
+
+    BenchmarkHarness.cleanupLocalWriteDir();
+
   }
 
   /**
@@ -281,5 +448,4 @@ public class TestNaiveFileWALManager {
   public void testBadRecoverWriting() throws IOException {
     doTestBadRecover(NaiveFileWALManager.WRITINGDIR);
   }
-
 }

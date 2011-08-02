@@ -38,6 +38,10 @@ import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSinkDecorator;
 import com.cloudera.flume.core.EventSource;
+import com.cloudera.flume.core.EventUtil;
+import com.cloudera.flume.core.MaskDecorator;
+import com.cloudera.flume.handlers.debug.MemorySinkSource;
+import com.cloudera.flume.handlers.endtoend.AckChecksumChecker;
 import com.cloudera.flume.handlers.endtoend.AckChecksumInjector;
 import com.cloudera.flume.handlers.endtoend.AckListener;
 import com.cloudera.flume.handlers.hdfs.SeqfileEventSink;
@@ -194,6 +198,182 @@ public class NaiveFileWALManager implements WALManager {
   }
 
   /**
+   * This a call back that will record if a proper ack start and ack end have
+   * been encountered.
+   */
+  static class AckFramingState implements AckListener {
+    boolean started = false;
+    boolean ended = false;
+    boolean failed = false;
+    String ackgroup = null;
+
+    @Override
+    public void start(String group) throws IOException {
+      if (ackgroup != null) {
+        LOG.warn("Unexpected multiple groups in same WAL file. "
+            + "previous={} current={}", ackgroup, group);
+        failed = true;
+        return;
+      }
+      ackgroup = group;
+      started = true;
+    }
+
+    @Override
+    public void end(String group) throws IOException {
+      // only happens if group is properly acked.
+      if (ackgroup == null) {
+        LOG.warn("Unexpected end ack tag {} before start ack tag", group);
+        failed = true;
+        return;
+      }
+
+      if (!ackgroup.equals(group)) {
+        LOG.warn(
+            "Ack tag mismatch: end ack tag '{}' does not start ack tag '{}'",
+            group, ackgroup);
+        failed = true;
+        return;
+      }
+      ended = true;
+    }
+
+    @Override
+    public void err(String group) throws IOException {
+      // ignore; detected by lack of end call.
+    }
+
+    @Override
+    public void expired(String key) throws IOException {
+      // ignore; only relevent with retry attempts.
+    }
+
+    /**
+     * This method returns true only if the ackChecker is properly framed.
+     **/
+    public boolean isFramingValid() {
+      return !failed && started && ended;
+    }
+  }
+
+  /**
+   * This method attempts to recover a log and checks to see if it is either
+   * corrupt or improperly framed (a properly framed file has an ack start and
+   * an ack end events with proper checksum).
+   * 
+   * If corrupt, the file is moved into the error bucket.
+   * 
+   * If improperly framed, it attempts to reframe logs. After a new,
+   * properly-framed log is generated, the original log is moved to the error
+   * bucket. Without this, these log files will get stuck forever in e2e mode's
+   * retry loop.
+   */
+  void recoverLog(final File dir, final String f) throws IOException,
+      InterruptedException {
+    MemorySinkSource strippedEvents = new MemorySinkSource();
+    AckFramingState state = null;
+    try {
+      state = checkAndStripAckFraming(dir, f, strippedEvents);
+    } catch (IOException e) {
+      // try to restore as many as made it through
+      restoreAckFramingToLoggedState(f, strippedEvents);
+      moveToErrorState(dir, f);
+      LOG.info("Recover moved {} from WRITING, rewritten to LOGGED"
+          + " and old version moved to ERROR", f, e);
+      return;
+    }
+    if (state.isFramingValid()) {
+      // good, this is recoverable with just a move.
+      File old = new File(dir, f);
+      if (!old.isFile() || !old.renameTo(new File(loggedDir, f))) {
+        throw new IOException("Unable to recover - couldn't rename " + old
+            + " to " + loggedDir + f);
+      }
+      return;
+    }
+
+    // oh no, this had no ack close, let's restore them.
+    LOG.info("Valid events in {} but does not have proper ack tags!", f);
+    restoreAckFramingToLoggedState(f, strippedEvents);
+    moveToErrorState(dir, f);
+    LOG.info("Recover moved {} from WRITING, rewritten to LOGGED "
+        + "and old version moved to ERROR", f);
+
+    // no need to add to queues, once in LOGGED dir, the recover() function
+    // takes over and adds them.
+  }
+
+  /**
+   * ok now lets move the corrupt file to the error state.
+   */
+  private void moveToErrorState(final File dir, final String f)
+      throws IOException {
+    try {
+      File old = new File(dir, f);
+      if (!old.isFile() || !old.renameTo(new File(errorDir, f))) {
+        throw new IOException("Unable to recover - couldn't rename " + old
+            + " to " + loggedDir + f);
+      }
+    } catch (IOException e) {
+      LOG.error("Failed to move incorrectly ack framed file {}", dir + f, e);
+      throw e;
+    }
+  }
+
+  /**
+   * Takes stripped events and writes new log with proper framing to the LOGGED
+   * state. This assumes all events in mem are stripped of ack related
+   * attributes and events.
+   */
+  private void restoreAckFramingToLoggedState(final String f,
+      MemorySinkSource mem) throws IOException, InterruptedException {
+    EventSink ackfixed = new AckChecksumInjector<EventSink>(
+        new SeqfileEventSink(new File(loggedDir, f).getAbsoluteFile()));
+    try {
+      ackfixed.open();
+      EventUtil.dumpAll(mem, ackfixed);
+      ackfixed.close();
+    } catch (IOException e) {
+      LOG.error("problem when attempting to fix corrupted WAL log {}", f, e);
+      throw e;
+    }
+  }
+
+  /**
+   * Checks the framing of a the log file f, and strips all the ack related tags
+   * from a WAL log file. Returns a state that knows if the group has been
+   * properly ack framed, and all the stripped events are added to the memory
+   * buffer.
+   */
+  private AckFramingState checkAndStripAckFraming(final File dir,
+      final String f, MemorySinkSource mem) throws InterruptedException,
+      IOException {
+    EventSource src = new SeqfileEventSource(new File(dir, f).getAbsolutePath());
+    AckFramingState state = new AckFramingState();
+    // strip previous ack tagged attributes out of events before putting raw
+    // events.
+    EventSink mask = new MaskDecorator<EventSink>(mem,
+        AckChecksumInjector.ATTR_ACK_TYPE, AckChecksumInjector.ATTR_ACK_TAG,
+        AckChecksumInjector.ATTR_ACK_HASH);
+    // check for and extract the ack events.
+    AckChecksumChecker<EventSink> check = new AckChecksumChecker<EventSink>(
+        mask, state);
+
+    try {
+      // copy all raw events into mem buffer
+      src.open();
+      check.open();
+      EventUtil.dumpAll(src, check);
+      src.close();
+      check.close();
+    } catch (IOException e) {
+      LOG.warn("Recovered log file {}  was corrupt", f);
+      throw e;
+    }
+    return state;
+  }
+
+  /**
    * This looks at directory structure and recovers state based on where files
    * are in the file system.
    * 
@@ -205,34 +385,32 @@ public class NaiveFileWALManager implements WALManager {
 
     // move all writing into the logged dir.
     for (String f : writingDir.list()) {
-      File old = new File(writingDir, f);
-      if (!old.isFile() || !old.renameTo(new File(loggedDir, f))) {
-        throw new IOException("Unable to recover - couldn't rename " + old
-            + " to " + loggedDir + f);
+      try {
+        recoverLog(writingDir, f);
+      } catch (InterruptedException e) {
+        LOG.error("Interupted when trying to recover WAL log {}", f, e);
+        throw new IOException("Unable to recover " + writingDir + f);
       }
-      LOG.debug("Recover moved " + f + " from WRITING to LOGGED");
     }
 
     // move all sending into the logged dir
     for (String f : sendingDir.list()) {
-      File old = new File(sendingDir, f);
-      if (!old.isFile() || !old.renameTo(new File(loggedDir, f))) {
-        throw new IOException("Unable to recover - couldn't rename " + old
-            + " to " + loggedDir + f);
+      try {
+        recoverLog(sendingDir, f);
+      } catch (InterruptedException e) {
+        LOG.error("Interupted when trying to recover WAL log {}", f, e);
+        throw new IOException("Unable to recover " + sendingDir + f);
       }
-      LOG.debug("Recover moved " + f + " from SENDING to LOGGED");
-
     }
 
     // move all sent into the logged dir.
     for (String f : sentDir.list()) {
-      File old = new File(sentDir, f);
-      if (!old.isFile() || !old.renameTo(new File(loggedDir, f))) {
-        throw new IOException("Unable to recover - couldn't rename " + old
-            + " to " + loggedDir + f);
+      try {
+        recoverLog(sentDir, f);
+      } catch (InterruptedException e) {
+        LOG.error("Interupted when trying to recover WAL log {}", f, e);
+        throw new IOException("Unable to recover " + sentDir + f);
       }
-      LOG.debug("Recover moved " + f + " from SENT to LOGGED");
-
     }
 
     // add all logged to loggedQ and table
@@ -242,7 +420,7 @@ public class NaiveFileWALManager implements WALManager {
       table.put(f, data);
       loggedQ.add(f);
       recoverCount.incrementAndGet();
-      LOG.debug("Recover loaded " + f);
+      LOG.debug("Recover loaded {}", f);
     }
 
     // carry on now on your merry way.
@@ -257,10 +435,10 @@ public class NaiveFileWALManager implements WALManager {
     File dir = getDir(State.WRITING);
     final String tag = tagger.newTag();
 
-    EventSink bareSink = new SeqfileEventSink(new File(dir, tag)
-        .getAbsoluteFile());
-    EventSink curSink = new AckChecksumInjector<EventSink>(bareSink, tag
-        .getBytes(), al);
+    EventSink bareSink = new SeqfileEventSink(
+        new File(dir, tag).getAbsoluteFile());
+    EventSink curSink = new AckChecksumInjector<EventSink>(bareSink,
+        tag.getBytes(), al);
 
     writingQ.add(tag);
     WALData data = new WALData(tag);
@@ -278,10 +456,10 @@ public class NaiveFileWALManager implements WALManager {
         super.close();
         synchronized (NaiveFileWALManager.this) {
           if (!writingQ.contains(tag)) {
-            LOG.warn("Already changed tag " + tag + " out of WRITING state");
+            LOG.warn("Already changed tag {} out of WRITING state", tag);
             return;
           }
-          LOG.info("File lives in " + getFile(tag));
+          LOG.info("File lives in {}", getFile(tag));
 
           changeState(tag, State.WRITING, State.LOGGED);
           loggedCount.incrementAndGet();
@@ -297,8 +475,8 @@ public class NaiveFileWALManager implements WALManager {
       throws IOException {
     File dir = getDir(State.WRITING);
     final String tag = tagger.newTag();
-    EventSink curSink = new SeqfileEventSink(new File(dir, tag)
-        .getAbsoluteFile());
+    EventSink curSink = new SeqfileEventSink(
+        new File(dir, tag).getAbsoluteFile());
     writingQ.add(tag);
     WALData data = new WALData(tag);
     table.put(tag, data);
@@ -434,17 +612,16 @@ public class NaiveFileWALManager implements WALManager {
     // E2EACKED is terminal state just delete it.
     // TODO (jon) add option to keep logged files
     if (newState == State.E2EACKED) {
-      LOG.debug("Deleting WAL file: " + newf.getAbsoluteFile());
+      LOG.debug("Deleting WAL file: {}", newf.getAbsoluteFile());
       boolean res = newf.delete();
       if (!res) {
-        LOG.warn("Failed to delete complete WAL file: "
-            + newf.getAbsoluteFile());
-
+        LOG.warn("Failed to delete complete WAL file: {}",
+            newf.getAbsoluteFile());
       }
     }
 
     // is successful, update queues.
-    LOG.debug("old state is " + oldState);
+    LOG.debug("old state is {}", oldState);
     getQueue(oldState).remove(tag);
     BlockingQueue<String> q = getQueue(newState);
     if (q != null) {
@@ -486,7 +663,7 @@ public class NaiveFileWALManager implements WALManager {
         changeState(tag, State.SENDING, State.SENT);
         sentCount.incrementAndGet();
       } catch (IOException ioe) {
-        LOG.warn("close had a problem " + src, ioe);
+        LOG.warn("close had a problem {}", src, ioe);
         changeState(tag, null, State.ERROR);
         throw ioe; // rethrow this
       }
@@ -507,7 +684,7 @@ public class NaiveFileWALManager implements WALManager {
         updateEventProcessingStats(e2);
         return e2;
       } catch (IOException ioe) {
-        LOG.warn("next had a problem " + src, ioe);
+        LOG.warn("next had a problem {}", src, ioe);
         changeState(tag, null, State.ERROR);
         errCount.incrementAndGet();
         throw ioe;
@@ -553,7 +730,7 @@ public class NaiveFileWALManager implements WALManager {
       throw new IOException(e);
     }
 
-    LOG.info("opening log file  " + sendingTag);
+    LOG.info("opening log file  {}", sendingTag);
     changeState(sendingTag, State.LOGGED, State.SENDING);
     sendingCount.incrementAndGet();
     File curFile = getFile(sendingTag);
