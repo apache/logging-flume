@@ -1,0 +1,48 @@
+﻿////////////////////
+Licensed to Cloudera, Inc. under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  Cloudera, Inc. licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+////////////////////
+
+
+==== What are the default ports?
+
+TCP ports are used in all situations.
+
+[width="40%"] 
+|===========================================================================
+| node collector port      | +flume.collector.port+                 | 35853+
+| node status web server   | +flume.node.http.port+                 | 35862+
+| master status web server | +flume.master.http.port+               | 35871
+| master heartbeat port    | +flume.master.heartbeat.port+          | 35872
+| master admin/shell port  | +flume.master.admin.port+              | 35873
+| master gossip port       | +flume.master.gossip.port+             | 57890  
+| master report port       | +flume.report.server.port+             | 45678
+| master -> zk port        | +flume.master.zk.client.port+          |  3181
+| zk -> zk quorum port     | +flume.master.zk.server.quorum.port+   |  3182
+| zk -> zk election port   | +flume.master.zk.server.election.port+ |  3183
+|===========================================================================
+
+When using auto chains for collectors, each collector source will
+automatically search for a free port by incrementing starting from
+port +flume.collector.port+ and incrementing the port number.   
+
+When there is more than one physical node on a machine, the node
+status web server will attempt to bind to port +flume.node.http.port+.
+If the bind fails, the port number will be incremented and the bind
+retried until a free port is found.  The port that is eventually bound
+to is logged.
+
+

@@ -97,7 +97,14 @@
     <!-- Copy docs directory -->
     <fileSet>
       <outputDirectory>docs</outputDirectory>
-      <directory>../docs</directory>
+      <directory>../flume-docs/target/docs</directory>
+      <includes />
+    </fileSet>
+
+    <!-- copy the man pages -->
+    <fileSet>
+      <outputDirectory>docs/man</outputDirectory>
+      <directory>../docs/man</directory>
       <includes />
     </fileSet>
 

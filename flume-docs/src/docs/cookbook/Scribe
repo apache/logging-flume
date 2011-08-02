@@ -1,0 +1,60 @@
+
+////////////////////
+Licensed to Cloudera, Inc. under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  Cloudera, Inc. licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+////////////////////
+
+== Logging Scribe Events to a Flume Agent
+
+Flume can emulate a downstream node for applications that log using
+Scribe.  Scribe is Facebook's open source log aggregation framework.
+It has a simple API and uses Thrift as its core network transport
+mechanism.  Flume uses the same Thrift IDL file and can listen for
+data provided by Scribe sources.
+
+Scribe comes with an example application called +scribe_cat+.  It acts
+like the unix +cat+ program but sends data to a downstream host with a
+specified "category".  Scribe by default uses TCP port 1463.
+
+You can configure a Flume node to listen for incoming Scribe traffic
+by creating a logical node that uses the +scribe+ source.  We can then
+assign an arbitrary sink to the node.  In the example below, the
+Scribe nodes receives events, send its events to both the console and
+an automatically-assigned end-to-end agent which delivers the events
+downstream to its collector pools.
+
+----
+scribe: scribe | [console, autoE2EChain];
+----
+
+Assuming that this node communicates with the master, and that the
+node is on +localhost+, we can use the +scribe_cat+ program to send
+data to Flume.
+
+----
+$ echo "foo" | scribe_cat localhost testcategory
+----
+
+When the Scribe source accepts the Scribe events, it converts Scribe's
+category information into a new Flume event metadata entry, and then
+delivers the event to its sinks.  Since Scribe does not include time
+metadata, the timestamp of the created Flume event will be the arrival
+time of the Scribe event.
+
+
+
+
+

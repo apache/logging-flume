@@ -65,6 +65,12 @@
       <version>0.9.4-SNAPSHOT</version>
     </dependency>
 
+    <dependency>
+      <groupId>com.cloudera</groupId>
+      <artifactId>flume-docs</artifactId>
+      <version>0.9.4-SNAPSHOT</version>
+    </dependency>
+
   </dependencies>
 
 </project>

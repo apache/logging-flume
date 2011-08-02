@@ -17,15 +17,42 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
-  <modules>
-    <module>flume-core</module>
-    <module>flume-config-web</module>
-    <module>flume-node-web</module>
-    <module>flume-distribution</module>
-    <module>flume-log4j-appender</module>
-    <module>plugins/flume-plugin-helloworld</module>
-    <module>plugins/flume-plugin-hbasesink</module>
-  </modules>
+  <profiles>
+    <!-- full build profile, including docs -->
+    <profile>
+      <id>full-build</id>
+      <activation>
+	<activeByDefault>false</activeByDefault>
+      </activation>
+      <modules>
+	<module>flume-core</module>
+	<module>flume-config-web</module>
+	<module>flume-node-web</module>
+	<module>flume-docs</module>
+	<module>flume-distribution</module>
+	<module>flume-log4j-appender</module>
+	<module>plugins/flume-plugin-helloworld</module>
+	<module>plugins/flume-plugin-hbasesink</module>
+      </modules>
+    </profile>
+
+    <!-- dev profile for testing, docs not generated -->
+    <profile>
+      <id>dev</id>
+      <activation>
+	<activeByDefault>true</activeByDefault>
+      </activation>
+      <modules>
+	<module>flume-core</module>
+	<module>flume-config-web</module>
+	<module>flume-node-web</module>
+	<module>flume-distribution</module>
+	<module>flume-log4j-appender</module>
+	<module>plugins/flume-plugin-helloworld</module>
+	<module>plugins/flume-plugin-hbasesink</module>
+      </modules>
+    </profile>
+  </profiles>
 
   <inceptionYear>2009</inceptionYear>
 
