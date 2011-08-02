@@ -604,21 +604,21 @@ public class FlumeBuilder {
   }
 
   /**
-   * Return the sinks this builder supports
+   * Returns an unmodifiable set containing the sinks this builder supports
    */
   public static Set<String> getSinkNames() {
     return sinkFactory.getSinkNames();
   }
 
   /**
-   * Return the decorators this builder supports
+   * Return an unmodifiable set containing the decorators this builder supports
    */
   public static Set<String> getDecoratorNames() {
     return sinkFactory.getDecoratorNames();
   }
 
   /**
-   * Return the sources this builder supports
+   * Return an unmodifiable set containing the sources this builder supports
    */
   public static Set<String> getSourceNames() {
     return srcFactory.getSourceNames();

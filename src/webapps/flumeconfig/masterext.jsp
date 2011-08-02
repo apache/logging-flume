@@ -63,7 +63,7 @@
 
 </table>
 
-<h2>Available Decorator</h2>
+<h2>Available Decorators</h2>
 <table>
 
 <%
