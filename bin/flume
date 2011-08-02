@@ -48,25 +48,33 @@ CMDPATH=`dirname $CMDPATH`
 
 FLUME=$CMDPATH/bin/flume
 
-if [ FLUME_PID_DIR = "" ]
-	then MASTERPID="/tmp/flumemaster.pid"
-else
-	MASTERPID=${FLUME_PID_DIR}/flumemaster.pid
-fi
+MASTERPID=${FLUME_PID_DIR:="/tmp"}/flumemaster.pid
 
-# NODEPID
-
-CMD=$1
-
-if [ "$CMD" == "" ] ; 
-then
-  usage
+CMD="$1"
+if [ -z "$CMD" ]; then
+    usage
 fi 
 
 cygwin=false
+pathsep=":"
 case "`uname`" in
-CYGWIN*) cygwin=true;;
+    CYGWIN*)
+        cygwin=true
+        pathsep=";"
+        ;;
 esac
+
+function append_jars_onto_classpath() {
+    local JARS
+    JARS=`find $1/*.jar 2> /dev/null || true`
+    for i in $JARS; do
+        if [ -n "$CLASSPATH" ]; then
+            CLASSPATH+=${pathsep}${i}
+        else
+            CLASSPATH=${i}
+        fi
+    done
+}
 
 # name of script
 BINPATH=`dirname $0`
@@ -74,90 +82,91 @@ BINPATH=`dirname $0`
 CMDPATH=`dirname $BINPATH` 
 
 if [ -f "${BINPATH}/flume-env.sh" ]; then
-  source $BINPATH/flume-env.sh
+    source "$BINPATH/flume-env.sh"
 fi
 
-export FLUME_HOME=${FLUME_HOME:-$CMDPATH}
+if [ -z "$FLUME_HOME" ]; then
+    export FLUME_HOME="$CMDPATH"
+fi
 
-
-JARPATH=$CMDPATH/lib
-JARPATH2=$CMDPATH/libtest
-JARS=`find $JARPATH/*.jar $JARPATH2/*.jar 2> /dev/null || true`
-
-CPJARS=
-JOPTS=" -Dflume.log.dir=${FLUME_LOG_DIR:-${FLUME_HOME}/logs} "
-JOPTS+=" -Dflume.log.file=${FLUME_LOGFILE:-flume.log} "
-JOPTS+=" -Dflume.root.logger=${FLUME_ROOT_LOGGER:-INFO,console} "
-JOPTS+=" -Dzookeeper.root.logger=${ZOOKEEPER_ROOT_LOGGER:-ERROR,console} "
-JOPTS+=" -Dwatchdog.root.logger=${WATCHDOG_ROOT_LOGGER:-INFO,console} "
+JOPTS="-Dflume.log.dir=${FLUME_LOG_DIR:-${FLUME_HOME}/logs} "
+JOPTS+="-Dflume.log.file=${FLUME_LOGFILE:-flume.log} "
+JOPTS+="-Dflume.root.logger=${FLUME_ROOT_LOGGER:-INFO,console} "
+JOPTS+="-Dzookeeper.root.logger=${ZOOKEEPER_ROOT_LOGGER:-ERROR,console} "
+JOPTS+="-Dwatchdog.root.logger=${WATCHDOG_ROOT_LOGGER:-INFO,console} "
 
 if [ "$cygwin" == false ] ; then 
-  # linux setup
-  JOPTS+="-Djava.library.path=$CMDPATH/lib -Xmx2000m"    
+  # unix and "unix-like" setup
+  # pick user override, or check for dev env, or check for install
+  if [ -n "$FLUME_CONF_DIR" ]; then
+      echo -n "" #nada
+  elif [ -e "./conf/flume-conf.xml" ]; then
+      export FLUME_CONF_DIR="./conf"
+  elif [ -e "/etc/flume/conf/flume-conf.xml" ]; then
+      export FLUME_CONF_DIR="/etc/flume/conf"
+  else
+      echo "FLUME_CONF_DIR cannot be determined, please set explicitly"
+      exit -1
+  fi
+  # conf dir first in the class path in order to ensure we get flume log4j.properties
+  CLASSPATH="$FLUME_CONF_DIR"
 
-  for i in $JARS ;
-  do
-    CPJARS=$i:$CPJARS
-  done
-  CPJARS=$CPJARS:$JAVA_HOME/lib/tools.jar
+  if [ -n "$FLUME_CLASSPATH" ]; then
+      CLASSPATH+=":${FLUME_CLASSPATH}"
+  fi
+
+  if [ -n "$HADOOP_HOME" ]; then
+      CLASSPATH+=":${HADOOP_HOME}/hadoop-*-core.jar:${HADOOP_HOME}/lib/hadoop-*-core.jar"
+  elif [ -f "/usr/lib/hadoop/hadoop-*core.jar" ]; then
+	export CDH_CLASSPATH="/usr/lib/hadoop"
+ 	CLASSPATH+=":${CDH_CLASSPATH}/*"
+  else
+    echo "HADOOP_HOME is unset and /usr/lib/hadoop missing core jars therefore hadoop jars not explicitly added to classpath"
+  fi
+
+  JOPTS+="-Djava.library.path=$CMDPATH/lib "
+
+  append_jars_onto_classpath "$CMDPATH/lib"
+  append_jars_onto_classpath "$CMDPATH/libtest"
+
+  CLASSPATH+=":$JAVA_HOME/lib/tools.jar"
+
   if [ "$FLUME_DEVMODE" == true ] ; then 
-    CPJARS=$CMDPATH/build_eclipse:$CPJARS
-
     # allow Jetty to compile servlets in dev mode
-    BUILDJARS=`find $CMDPATH/libbuild/*.jar 2> /dev/null || true`
-    for i in $BUILDJARS ;
-    do
-      CPJARS=$i:$CPJARS
-    done
+      append_jars_onto_classpath "$CMDPATH/libbuild"
   fi
 
-  
-  export FLUME_CONF_DIR=${FLUME_CONF_DIR:-/etc/flume/conf/}
-  CLASSPATH=${FLUME_CONF_DIR}
-
-  if [ ! $FLUME_CLASSPATH == "" ] 
-	then CLASSPATH+=:${FLUME_CLASSPATH}:
+  if [ -z "$ZOOKEEPER_HOME" ]; then
+    export ZOOKEEPER_HOME="/usr/lib/zookeeper"
   fi
 
-  if [ ! $HADOOP_HOME == "" ] 
-	then CLASSPATH+=:${HADOOP_HOME}/hadoop-*-core.jar:${HADOOP_HOME}/lib/hadoop-*-core.jar
-  elif [ -f /usr/lib/hadoop/hadoop-*core.jar ]
-	export CDH_CLASSPATH=/usr/lib/hadoop
- 	then CLASSPATH+=:${CDH_CLASSPATH}/*
-  fi
+  append_jars_onto_classpath "${ZOOKEEPER_HOME}"
 
-  if [ "$ZOOKEEPER_HOME" = "" ]; then
-    export ZOOKEEPER_HOME=/usr/lib/zookeeper
-  fi
+  CLASSPATH+=":$CMDPATH/build/classes"
+  append_jars_onto_classpath "$CMDPATH/build"
+  append_jars_onto_classpath "${FLUME_HOME}"
 
-
-  export CLASSPATH+=:$CPJARS:${ZOOKEEPER_HOME}/*:$CMDPATH/build/*:${FLUME_HOME}/*
 else 
   # windows with cygwin
-  JOPTS+="-Djava.library.path=`cygpath -d $CMDPATH/lib`"
-  for i in $JARS ;
-  do
-    CPJARS="`cygpath -d $i`;$CPJARS"
-  done
-  CPJARS="$CPJARS;$JAVA_HOME/lib/tools.jar"
-  if [ "$FLUME_DEVMODE" == true ] ; then
-    CPJARS="$CMDPATH/build_eclipse;$CPJARS"
+  JOPTS+="-Djava.library.path=`cygpath -d $CMDPATH/lib` "
 
+  CLASSPATH="$JAVA_HOME/lib/tools.jar"
+
+  append_jars_onto_classpath "$CMDPATH/lib"
+  append_jars_onto_classpath "$CMDPATH/libtest"
+
+  if [ "$FLUME_DEVMODE" == true ] ; then
     # allow Jetty to compile servlets in dev mode
-    BUILDJARS=`find $CMDPATH/libbuild/*.jar 2> /dev/null || true`
-    for i in $BUILDJARS ;
-    do
-      CPJARS="`cygpath -d $i`;$CPJARS"
-    done
+    append_jars_onto_classpath "$CMDPATH/libbuild"
   fi
 
-  export CLASSPATH="$CLASSPATH;$CPJARS;`cygpath -d $CMDPATH/build_eclipse`"
 fi 
+
+export CLASSPATH
 
 if [ -f "${HADOOP_CONF_DIR}/hadoop-env.sh" ]; then
   . "${HADOOP_CONF_DIR}/hadoop-env.sh"
 fi
-
 
 shift
 
@@ -167,11 +176,20 @@ shift
 # watchdog kills the watched child process if killed cleanly.
 WATCHDOG_OPTS="-Dpid=$$ -Dpidfile="
 WATCHDOG_CLASS=com.cloudera.flume.watchdog.FlumeWatchdog 
-MASTER_WATCHDOG="java ${JOPTS} -Dpid=$$ -Dpidfile=/tmp/flumemaster.pid $WATCHDOG_CLASS"
-MASTERI_WATCHDOG="java ${JOPTS} -Dpid=$$ -Dpidfile=/tmp/flumemaster.pid  $WATCHDOG_CLASS"
-NODE_WATCHDOG="java ${JOPTS} -Dpid=$$ -Dpidfile=/tmp/flumenode-$$.pid $WATCHDOG_CLASS"
 
-NODEI_WATCHDOG="java ${JOPTS} -Dfwdstdin=true -Dpid=$$ -Dpidfile=/tmp/flumenode-$$.pid $WATCHDOG_CLASS"
+MASTER_WATCHDOG="java ${JOPTS} -Dpid=$$ -Dpidfile=$MASTERPID $WATCHDOG_CLASS"
+MASTERI_WATCHDOG="java ${JOPTS} -Dpid=$$ -Dpidfile=$MASTERPID  $WATCHDOG_CLASS"
+
+NODE_WATCHDOG="java ${JOPTS} -Dpid=$$ -Dpidfile=${FLUME_PID_DIR}/flumenode-$$.pid $WATCHDOG_CLASS"
+NODEI_WATCHDOG="java ${JOPTS} -Dfwdstdin=true -Dpid=$$ -Dpidfile=${FLUME_PID_DIR}/flumenode-$$.pid $WATCHDOG_CLASS"
+
+if [ -n "$FLUME_VERBOSE" ]; then
+    if [ -n "$FLUME_VERBOSE_JAVA" ]; then
+        JOPTS+="-verbose "
+    fi
+    echo "$CLASSPATH"
+    set -x
+fi
 
 if [ "$CMD" = "-h" ] ; then 
   usage
@@ -181,8 +199,6 @@ elif [ "$CMD" = "node" ] ; then
 elif [ "$CMD" = "nodei" ] ; then
   # there can be multiple nodes.
   exec $NODEI_WATCHDOG java $JOPTS $UOPTS com.cloudera.flume.agent.FlumeNode "$@"
-
-
 elif [ "$CMD" = "master" ] ; then
   # only allow one master
   if [ -f $MASTERPID ] ; then 
