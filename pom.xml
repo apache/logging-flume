@@ -15,6 +15,10 @@
 
     <!-- Set default encoding to UTF-8 to remove maven complaints -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <!-- defaults for flaky test and focused test exclusions -->
+    <test.exclude.pattern>$</test.exclude.pattern> <!-- junk pattern -->
+    <test.include.pattern>**/Test*.java</test.include.pattern>
   </properties>
 
   <profiles>
@@ -356,6 +360,13 @@
             <forkMode>always</forkMode>
             <forkedProcessTimeoutInSeconds>480</forkedProcessTimeoutInSeconds>
             <redirectTestOutputToFile>true</redirectTestOutputToFile>
+	    <includes>
+	      <include>${test.include.pattern}</include>
+	    </includes>
+	    <excludes>
+	      <exclude>**/*$*</exclude>
+	      <exclude>${test.exclude.pattern}</exclude>
+	    </excludes>
           </configuration>
         </plugin>
 

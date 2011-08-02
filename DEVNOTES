@@ -163,6 +163,59 @@ different directories and thus need to change the setting.
 </settings>
 ----
 
+==== Including or excluding specific sets of tests.
+
+We've added hooks to the maven build that will enable you to exclude
+or include specific tests on a test run.  This is useful for excluding
+flakey tests or making a build that focuses solely upon flakey tests.
+
+To do this we created two variables:
+
+# test.include.pattern
+# test.exclude.pattern
+
+These variables take regular expression patterns of the files to be
+included or excluded.
+
+For the next set of examples, let's say you have flakey test called
+TestFlaky1 and TestFlaky2.
+
+You can execute tests that skip TestFlaky1 and TestFlaky2 by using the
+following command line:
+
+----
+mvn test -Dtest.exclude.pattern=**/TestFlaky*.java
+----
+
+Alternately, you could be more explicit
+
+----
+mvn test -Dtest.exclude.pattern=**/TestFlaky1.java,**/TestFlaky2.java
+----
+
+Conversely, you could execute only the flaky tests by using:
+
+----
+mvn test -Dtest.include.pattern=**/TestFlaky*.java
+----
+
+You can also have a combination of imports and exports.  This runs
+TestFlaky* but skips over TestFlaky2:
+
+----
+mvn test -Dtest.include.pattern=**/TestFlaky*.java -Dtest.exclude.pattern=**/TestFlaky2.java
+----
+
+NOTE: Both test.exclude.pattern and test.include.pattern get
+overridden if the test parameter is used.  Consider:
+
+----
+mvn test -Dtest.exclude.pattern=**/TestFlaky*.java -Dtest=TestFlaky1
+---
+
+In this case, TestFlaky1 will be run despite being in the
+test.exclude.pattern.
+
 === Running the most recent build
 
 To run the most recent build of Flume, first build the distribuion
