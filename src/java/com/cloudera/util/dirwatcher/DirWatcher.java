@@ -145,7 +145,9 @@ public class DirWatcher {
     Set<File> removedFiles = new HashSet<File>(previous);
     removedFiles.removeAll(newfiles);
     for (File f : removedFiles) {
-      fireDeletedFile(f);
+      if (filter.isSelected(f)) {
+        fireDeletedFile(f);
+      }
     }
 
     previous = newfiles;

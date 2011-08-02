@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -29,6 +30,8 @@ import org.junit.Test;
 
 import com.cloudera.util.Clock;
 import com.cloudera.util.FileUtil;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * TODO(jon) Make this really use the mock clock, and make the test finish
@@ -131,5 +134,83 @@ public class TestDirWatcher {
 
     FileUtil.rmr(tempdir);
 
+  }
+
+  @Test
+  public void testChecksFilterWhenFileAdded() throws IOException {
+
+    class DirChangeHandlerImp implements DirChangeHandler {
+      public List<File> filesAdded = new LinkedList<File>();
+
+      @Override
+      public void fileCreated(File f) {
+        filesAdded.add(f);
+      }
+
+      @Override
+      public void fileDeleted(File f) {
+      }
+    }
+
+    DirChangeHandlerImp handler = new DirChangeHandlerImp();
+    File tempdir = FileUtil.mktempdir();
+
+    DirWatcher watcher = new DirWatcher(tempdir, filt, 1000);
+    watcher.addHandler(handler);
+
+    File matchingFile = File.createTempFile("foo", "bar", tempdir);
+    matchingFile.deleteOnExit();
+    watcher.check();
+
+    assertEquals(1, handler.filesAdded.size());
+    assertEquals(matchingFile, handler.filesAdded.get(0));
+
+    File notMatchingFile = File.createTempFile("something", "different", tempdir);
+    notMatchingFile.deleteOnExit();
+    watcher.check();
+
+    assertEquals("File not matching regex should not have invoked fileCreated", 1, handler.filesAdded.size());
+    assertEquals(matchingFile, handler.filesAdded.get(0));
+  }
+
+  @Test
+  public void testChecksFilterWhenFileRemoved() throws IOException {
+
+    class DirChangeHandlerImp implements DirChangeHandler {
+      public List<File> filesRemoved = new LinkedList<File>();
+
+      @Override
+      public void fileCreated(File f) {
+      }
+
+      @Override
+      public void fileDeleted(File f) {
+        filesRemoved.add(f);
+      }
+    }
+
+    DirChangeHandlerImp handler = new DirChangeHandlerImp();
+    File tempdir = FileUtil.mktempdir();
+
+    DirWatcher watcher = new DirWatcher(tempdir, filt, 1000);
+    watcher.addHandler(handler);
+
+    File matchingFile = File.createTempFile("foo", "bar", tempdir);
+    watcher.check();
+
+    matchingFile.delete();
+    watcher.check();
+
+    assertEquals(1, handler.filesRemoved.size());
+    assertEquals(matchingFile, handler.filesRemoved.get(0));
+
+    File notMatchingFile = File.createTempFile("something", "different", tempdir);
+    watcher.check();
+
+    notMatchingFile.delete();
+    watcher.check();
+
+    assertEquals("File not matching regex should not have invoked fileDeleted", 1, handler.filesRemoved.size());
+    assertEquals(matchingFile, handler.filesRemoved.get(0));
   }
 }
