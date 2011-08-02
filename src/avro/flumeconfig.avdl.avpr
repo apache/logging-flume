@@ -49,6 +49,29 @@
         "values" : "double"
       }
     } ]
+  }, {
+    "type" : "record",
+    "name" : "AvroFlumeConfigDataMap",
+    "fields" : [ {
+      "name" : "configs",
+      "type" : {
+        "type" : "map",
+        "values" : "AvroFlumeConfigData"
+      }
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "AvroFlumeNodeMap",
+    "fields" : [ {
+      "name" : "nodemap",
+      "type" : {
+        "type" : "map",
+        "values" : {
+          "type" : "array",
+          "items" : "string"
+        }
+      }
+    } ]
   } ],
   "messages" : {
     "heartbeat" : {
