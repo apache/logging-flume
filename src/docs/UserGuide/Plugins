@@ -1,0 +1,182 @@
+﻿
+=== Extending via Sink/Source/Decorator Plugins
+
+An experimental plugin mechanism is provided that allows you to add new custom 
+sources, sinks, and decorators to the system.  Two steps are required to use 
+this feature.
+
+First, add jars with the new classes to the Java CLASSPATH.  If it requires 
+dlls/so's make sure these are in the LD_LIBRARY_PATH (unix .so) or PATH 
+(windows .dll) 
+
+Second, in +flume-site.xml+, add the class names of the new source or sinks.  
+Many classes can be specified by comma separating the list. Java reflection is 
+used to find some special static methods that add new components to the system 
+and data flow language's library.
+
+Two components have been "pluginified" -- the RabbitMQ based ampq sources and 
+sinks, and the pcap based pcap sources.  Let's add the RabbitMQ plugin as an 
+example.
+
+* Add +flume-rabbitMQ.jar+ to the CLASSPATH 
+* Add the following data
+"com.cloudera.flume.handlers.amqp.AmqpPollingSource,
+com.cloudera.flume.handlers.amqp.AmqpSink,
+com.cloudera.flume.handlers.amqp.AmqpSubscrpitionSource" to the
++flume.plugin.classes+ property.
+
+// Hiding this until we know what the external dev list. 
+// NOTE: If you want more information about writing your own plugins, 
+// please contact dev-flume@cloudera.com.
+
+////////
+HIDDEN FOR NOW, THIS IS HALF BAKED
+
+=== Ganglia Reporting
+
+First we need two nodes -- in this example they are run on the same machine.  
+
+----
+Terminal 1: $ bin/flume node 
+
+Terminal 2: $ bin/flume node -n localhost
+----
+
+We assume the node is called _host_.
+
+Next let's spawn a new logical node called _report_.
+
+----
+spawn localhost report
+----
+
+Finally lets set the configuration of the three nodes (replacing _host_ with 
+the actual host name).
+
+----
+host : asciisynth(0,100) | { delay(250) => agentSink } ;
+report : reportPoller | [ console, 
+dganglia("LogicalNodeManager._node_.LogicalNode.Agent.NaiveFileWAL.appendSucce
+ss", "msgs", "long") ];
+localhost : collectorSource | collectorSink("file:///tmp/test/%H","blah",5000);
+----
+
+This setup synthesize random ascii data events, and sends one evert 250s 
+through the agentSink pipeline.  These are received by the +localhost+ node 
+which write data into hourly directories.  Meanwhile, the +report+ node on 
++_host_+ is a separate logical node that periodically polls the physical node 
+for reports and sends them to the console and a +dganglia+ sink.  The 
++dganglia+ sends the deltas (rate information) between particular values to 
+the ganglia gmond daemon.
+
+
+==== Experimental Sources and Sinks
+
+.Flume's Plugin Sources [horizontal] +amqpPoll(_..._)+ :: AMPQ (Advanced 
+Message Queuing Protocol) based on polling
+
++amqpSub(_..._)+ :: AMPQ (Advanced Message Queuing Protocol) based on 
+subscribing
+
++pcapfile("_pcap file_")+ :: One shot pcap file source (packet capture ala 
+wireshark).  One packet is one event
+
++pcap("_filterspec_")+ :: Live filtered pcap source (package capture ala 
+wireshark).  One packet is one event.
+
+.Flume's Plugin Sinks
+
++ampq()+ :: AMQP sink.  Write to specified AMQP broker (this is not present.)
+
+NOTE: Graphing currently uses Google charts API and requires the browser to 
+external network connectivity
+
+.Flume's Reporter Sinks (Experimental):
+[horizontal]
++ganglia("_attr_","_units_","_type_"[,"_gmondservers_"])+ :: This sink reads 
+absolute value of the attribute +_attr_+ as a type +_type_+ where +_type_+ may 
+be +int+, +long+, +double+ or +string+.  One may optionally specify a list of 
+gmond servers to send metric data to.
+
++dganglia("_attr_","_units_","_type_"[,"_gmondservers_"])+ :: This sink reads 
+the attribute +_attr_+ as a type +_type_+ where +_type_+ may be +int+, +long+, 
+or +double+ and then emits the delta of the previous value.  One may 
+optionally specify a list of gmond servers to send metric data to.
+
++counter("_name_")+ :: counts number of events received, and registers report 
+to report manager as +_name_+.
+
++counterHistory("name", .... )+ :: generates historical count versus time 
+graph
+
++multigrep(...)+ :: makes histogram that counts number of events that matches 
+substring grep
+
++multigrepspec(...)+ :: makes histogram that counts number of events that 
+match substring grep (uses config file instead of inline)|
+
++regexhisto(...)+ :: uses regex and builds histogram based on matching group's 
+value
+
++regexhisto(...)+ :: uses regex and builds histogram based on matching group's 
+value (uses config file instead of inline)
+
+.Flume's Experimental/Debugging Sink Decorators (unsupported)
+[horizontal] 
++flakeyAppend(_p_)+ :: each append has a probability +_p_+ (where 0.0 &le; _p_ 
+&le; 1.0) of failing and throwing an exception.
+
++intervalFlakeyAppend(_n_)+ :: every +_n_+ th element fails by throwing an 
+exception
+
++intervalDroppyAppend(_n_)+ :: every +_n_+ th element fails by throwing an 
+exception
+
++inmem+ :: buffers events in memory and then flushes all on close. Good for 
+benchmarking.
+
++benchinject+ :: injects an extra benchmark begin event on open and a 
+benchmark end event on close
+
++benchreport("_name_")+ :: starts a benchmark when it receives a benchmark 
+begin event and stops a benchmark when it receives a corresponding benchmark 
+end event.  Benchmark events are not forwarded, but all other events are.
+
++mult(_n_)+ :: takes each event and sends it _n_ copies of it before sending 
+the next event.
+
+// unused, easier to just remove.
+// +latch(...)+ :: (Unsupported) adds a latch that blocks until
+// triggered.  This is only really useful for debugging and test cases.
+
+===== Deprecated 
+
+.Flume's Deprecated Sources
+
+These sources are "too specific" or perform poorly and are thus deprecated 
+(but still available).  They will likely be replaced with a more generic 
+mechanisms (similar to the output format mechanism).
+
+.Flume's Experimental Sources
+
+[horizontal]
++tpriosource(_port_)+ :: Thrift RPC base source on TCP port, port,
+prioritized by priority (higher priority first) and then age (older 
+messages first)
+
++tsource(_port_)+ :: Same as RPC but specifically thrift RPC
+
+.Flume's Deprecated Sinks
+
+Many of these sinks are left over from earlier iterations.
+
+[horizontal]
++tsink+ :: 
+
++tacksink(...)+ :: thrift acked sink
+
++trawsink(...)+ :: thrift using writable serialization instead of thrift 
+serialization
+
+ END OF HIDDEN FOR NOW HALF BAKED 
+///////////////// 

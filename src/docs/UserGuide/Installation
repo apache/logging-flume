@@ -1,0 +1,172 @@
+[[Installation]]
+== Installation
+
+There are currently three packaging options available for installing Flume: a tarball (TGZ), a RPM
+and a DEB file. The only prerequisite to running Flume is Java 1.6.
+
+.Installation Prerequisites
+****
+* A Unix-like system (tested on Centos 5.3+ and Ubuntu 9.04+, Mac OS X)
+* Java 1.6.x (only tested with Sun JRE/JDK 1.6)
+****
+
+=== Installation by Tarball (TGZ)
+
+The tarball is a self-contained package containing everything needed
+ to do get Flume up and running on a Unix-like system.  Installing
+ from the tarball is as easy as unpacking it in an appropriate
+ directory. For instance on most Linux based systems this can be
+ achieved by typing:
+
+----
+$ (cd /usr/local/ && sudo tar -zxvf <path_to_flume.tgz> )
+----
+
+To complete the configuration of a tarball-based installation, you need to set the environment variable +$FLUME_CONF_DIR+ to be the +conf/+ subdirectory of the location that you installed Flume into - e.g.
+
+----
+$ export FLUME_CONF_DIR=/usr/local/flume/conf
+----
+
+//If a user is running older bin tools you can achieve the same objective by typing:
+//----
+//$ ( cd /opt && mkdir flume && cd flume && gzip -cd  <path_to_flume.tgz> | tar -xvf - )
+//----
+
+The tarball does not come with any scripts suitable for running Flume
+as a service or daemon. This makes the tarball distribution
+appropriate for ad-hoc installations and preliminary testing, but a
+more complete installation is provided by the binary packages.
+
+=== RPM or Deb Based install
+The RPMs and DEBs are much more convenient than a tarball based install in that they:
+
+* Handle dependencies
+* Provide for easy upgrades
+* Automatically install resources to conventional locations
+* Handle daemon startup and shutdown
+
+Both the RPMs and DEBs are broken up into three packages
+
+* +flume-core+ (Everything you need to run Flume)
+* +flume-master+ (Handles starting and stopping the Flume master as a service)
+* +flume-node+ (Handles starting and stopping the Flume node as a service)
+
+All Flume installations require the common code provided by +flume-core+. To install on a Debian-package compatible system:
+----
+$ sudo dpkg --install <path to flume core deb>
+----
+
+or with +apt-get+:
+----
+$ sudo apt-get install <path to flume core deb>
+----
+
+At this point, you should have everything necessary to run Flume, and the +flume+ command should be in your +$PATH+. You can test this by running:
+
+----
+$ flume
+----
+You should see something like
+----
+usage: flume command [args...]
+commands include: 
+  dump            Takes a specified source and dumps to console
+  node            Start a Flume node/agent (with watchdog)
+  master          Start a Flume Master server (with watchdog)
+  version         Dump flume build version information 
+  node_nowatch    Start a flume node/agent (no watchdog)
+  master_nowatch  Start a Flume Master server (no watchdog)
+  class <class>   Run specified fully qualified class using Flume environment (no watchdog)
+                   ex: flume com.cloudera.flume.agent.FlumeNode 
+  shell           Start the flume shell
+  killmaster      Kill a running master
+----
+
+.Can't find Flume?
+**************************
+If +flume+ is not found, and you installed from from a tarball, make sure that +$FLUME_HOME/bin+ is in your $PATH.
+**************************
+
+The final step in a package based install is to automatically start
+Flume via system runtime levels. The +flume-node+ and +flume-master+
+packages make this easy.  
+
+==== Starting Nodes Automatically
+
+On DEB based systems:
+----
+$ sudo dpkg --install <path to flume node deb>
+----
+or with +apt-get+:
+----
+$ sudo apt-get install <path to flume node deb>
+----
+
+On RPM based systems:
+----
+$ sudo rpm --install <path to flume node rpm>
+----
+
+==== Starting the Flume Master Automatically
+----
+$ sudo dpkg --install <path to flume master deb>
+----
+or with +apt-get+:
+----
+$ sudo apt-get install <path to flume master deb>
+----
+
+On RPM based systems:
+----
+$ sudo rpm --install <path to flume master rpm>
+----
+
+=== Running Flume
+Once flume is installed via a RPM or DEB you can start, stop or restart either the Flume Master or the Flume node via init scripts with the following commands:
+
+To control the Flume Master simply type:
+----
+$ /etc/init.d/flume-master <start | stop | restart >
+----
+
+To control the Flume node:
+----
+$ /etc/init.d/flume-node <start | stop | restart >
+----
+
+The node and master can also be run in the foreground directly with any of the installation methods with the +flume+ command. 
+
+To start the Flume node simply type:
+
+----
+$ flume node 
+----
+
+Or to start the Flume master simply type:
+----
+$ flume master
+----
+
+.Can I run master and node on the same machine?
+*****************
+When using Flume for the first time, it's common to try running both master and node on the same machine. This should work without a problem - both node and master can share the same configuration files and should not conflict on any ports they open. See the Pseudo-Distributed Mode section for more details.
+*****************
+
+=== Reference: What do the packages install and where?
+
+[grid="all"]
+`----------------------------`-----------------
+Resource                       Location
+Config Directory               /etc/flume/conf
+User Customizable Config File  /etc/flume/conf/flume-site.xml
+Daemon Log Directory           /var/log/flume
+Default Flume Home¶            /usr/lib/flume 
+Flume Master startup script¶   /etc/init.d/flume-master
+Flume Node startup script¶     /etc/init.d/flume-node
+Recommended TGZ Flume Home§    /usr/local/lib/flume
+----------------------------
+
+Key:
+§ Recommended but installation dependent
+¶ Provided by RPMS and DEBS

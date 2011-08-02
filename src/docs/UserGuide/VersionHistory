@@ -1,0 +1,29 @@
+
+
+== Versions
+
+=== history
+
+v0.9 6/29/10 :: metrics and reporting framework, logical nodes+logical
+names abstraction, wal/dfo isolation by flow, transformation-based
+high level sinks.  Open source and initial push to github.
+
+v0.3 3/31/10 :: ZK based master/multi-master, automatic failovers for
+data and control planes.  flume shell. deb/rpm packaging.
+
+v0.2 1/21/09 :: Different reliability modes: WAL 2.0, DFO, Best
+effort. Output file escaping/bucketing.  Proliferation of many sink
+and decorators.
+
+v0.1 11/23/09 :: First installation depoyment, users tests.
+
+v0.0 9/21/09 :: First cut with current architecture (centralized
+master, configuration language, web interface.)  First version of WAL.
+Simple visualizations, samplers, thrift based rpc.
+
+pre history 7/21/09 :: First commit.  design, experimental
+implementations.  Initial implementation had individual agent and
+collector programs, watchdog
+
+
+

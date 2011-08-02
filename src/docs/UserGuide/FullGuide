@@ -1,0 +1,29 @@
+Flume User Guide 
+=================
+flume-dev@cloudera.org
+v0.9.0, June 29th 2010
+
+// Copyright (c) 2010, Cloudera Inc.  All rights reserved.
+
+
+// Upgrading to use asciidoc 8.4.4
+// Build using 'asciidoc -a toc FullGuide'
+
+include::Introduction[]
+// include::Installation[]  // In confluence Wiki
+include::QuickStart[]
+include::PseudoDist[]
+include::FullyDist[]
+include::CustomInput[]
+include::UsingOutput[]
+include::Advanced[]
+// include::Experimental[] // in really bad shape
+include::Appendix[]
+include::Glossary[]
+include::VersionHistory[]
+     ______
+    / ___//_  ______  ____
+   / /_/ / / / /    \/ __/
+  / __/ / /_/ / / / / __/
+ / / /_/\____/_/_/_/\__/
+/_/ Distributed Log Collection.

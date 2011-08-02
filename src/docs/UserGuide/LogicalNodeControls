@@ -1,0 +1,237 @@
+=== Logical Nodes: Multiple nodes in on a single JVM
+
+So far, we have talked about a simple setup where one data flow
+corresponds to on JVM instance and one machine.  We may want to have
+multple data flow nodes in a single JVM, each with a different data
+flow specification.  For example, we may want a separate logical node
+that sends aggregate reporting information about the node to a
+separate analytics node. Enabling this requires a little bit of new
+terminology and the addition of some new API calls.
+
+We call each JVM running an instance of the node program a *physical
+node*.  Each of the data flows running on a physical node is called a
+*logical node*.  Each JVM instance of the node program has a name
+which is by default the `hostname` of the machine.  We call this the
+*physical node name*.  Each physical node by default starts one
+logical node.  This is by default has the same name as the physical
+node.  We call this name the *logical node name*.
+
+NOTE: If we just use *node*, instead of physical node or node program,
+we mean a logical node.
+
+["graphviz", "singlelogicalphysical.png"]
+---------------------------------------------------------------------
+digraph single_logical_physical { 
+  rankdir=LR;
+  node[shape=record];
+
+ // need to name with "cluster" for grouping
+  subgraph cluster_A {  label="nodeA"; nodeA; }
+  subgraph cluster_B {  label="nodeB"; nodeB; }
+
+  nodeA -> nodeB -> HDFS;
+}
+---------------------------------------------------------------------
+
+As an example, in the picture above we expose a little more detail
+with the simple single logical to physical node mapping.  Here we have
+a physical node called "nodeA" (the outer container) which has a
+logical node named "nodeA", and a physical "nodeB" with logical
+"nodeB".
+
+The master now must maintain a new table that tracks each mapping from
+a physical node to a set of logical nodes.  We call this the *virtual
+node table* This information must be persistent -- if a physical node
+goes down we want it to come back up, retrieve its logical nodes list
+and restore their configuraitons.  Below is a representation of the
+mapping from the graph above:
+
+[grid="all"]
+`-------------`----------------
+Physical Node Logical Nodes
++nodeA+	      +nodeA+
++nodeB+	      +nodeB+
+----------------------------
+
+==== spawn
+
+Users can control the mappings to this table by issuing commands to
+the master.  By using the +spawn+ command (found the raw command
+form), a new logical node is associated with a physical node.  Spawn
+takes two arguments: a phyiscal node name and a new logical node name;
+and updates the master physical node mapping table.  When a node
+heartbeats, it finds out the list of nodes it is expected to have
+instantiated.  If a logical node is not present on the physical node,
+the physical node instantiates a new logical node in the node program.
+
+So, lets spawn some logical nodes!
+
+----
+spawn nodeA nodeAreport
+spawn nodeA foo
+spawn nodeB nodeBreport
+----
+
+The updated virtual node table should look like 
+[grid="all"]
+`-------------`------------------------------
+Physical Node Logical Nodes
++nodeA+	      +nodeA+, +nodeAreport+, +foo+
++nodeB+	      +nodeB+, +nodeBreport+
+---------------------------------------------
+
+["graphviz", "multiplelogical1.png"]
+---------------------------------------------------------------------
+digraph multiple_logical_node { 
+  rankdir=LR;
+  node[shape=record];
+
+ // need to name with "cluster" for grouping
+  subgraph cluster_A {  label="nodeA"; nodeA; nodeAreports; foo; }
+  subgraph cluster_B {  label="nodeB"; nodeB; nodeBreports; }
+
+  nodeA -> nodeB -> HDFS;
+ }
+---------------------------------------------------------------------
+
+Great! We now have new logical nodes instantiated on the physical
+nodes.  But wait, all the nodes are in IDLE mode!  Just adding a new
+physical-logical node mapping does not guarentee that the logical node
+a configuration.  A user still must assign a data flow to the logical
+node name.
+
+Let's configure some of these nodes to have a sink that sends report
+data to another node called +reports+.
+
+["graphviz", "multiplelogical2.png"]
+---------------------------------------------------------------------
+digraph multiple_logical_node { 
+  rankdir=LR;
+  node[shape=record];
+
+ // need to name with "cluster" for grouping
+  subgraph cluster_A {  label="nodeA"; nodeA; nodeAreports; foo; }
+  subgraph cluster_B {  label="nodeB"; nodeB; nodeBreports; }
+
+  nodeA -> nodeB -> HDFS;
+  nodeAreports -> reports;
+  nodeBreports -> reports;
+ }
+---------------------------------------------------------------------
+
+
+==== decommission
+
+Users can decommission a logical node by using the +decommission+
+command.  It takes one argument: the logical node name.  If the
+logical node name is present, it is removed from the data flow node
+table.  The virtual node mapping is also removed.  Because the logical
+node is no longer present, if a physical node heartbeats and gets a
+logical node list that does not specify a node currently instantiated,
+it shuts down those particular logical nodes.
+
+So, when we decommission +nodeAreports+,
+
+----
+decomission nodeAreports
+----
+
+our virtual node mapping looks like this.
+
+[grid="all"]
+`-------------`------------------------------
+Physical Node Logical Nodes
++nodeA+	      +nodeA+, +foo+
++nodeB+	      +nodeB+, +nodeBreport+
+---------------------------------------------
+
+["graphviz", "multiplelogical3.png"]
+---------------------------------------------------------------------
+digraph multiple_logical_node { 
+  rankdir=LR;
+  node[shape=record];
+
+ // need to name with "cluster" for grouping
+  subgraph cluster_A {  label="nodeA"; nodeA;  foo; }
+  subgraph cluster_B {  label="nodeB"; nodeB; nodeBreports; }
+
+  nodeA -> nodeB -> HDFS;
+  nodeBreports -> reports;
+ }
+---------------------------------------------------------------------
+
+==== unmap
+
+Finally, users can also use the +unmap+ command.  This takes two
+arguments -- a physical node name and a logical node name -- and only
+removes the physical-logical node mapping from the master.  Because
+the logical node is not present for that particular physical node, the
+original physical node will decommission the logical node.  This can
+be used to "move" a logical node from one machine to another by
+subsequently using the +spawn+ command with a different physical node
+arguement.
+
+----
+unmap nodeA foo
+----
+
+[grid="all"]
+`-------------`------------------------------
+Physical Node Logical Nodes
++nodeA+	      +nodeA+ 
++nodeB+	      +nodeB+, +nodeBreport+
+---------------------------------------------
+
+["graphviz", "multiplelogical4.png"]
+---------------------------------------------------------------------
+digraph multiple_logical_node { 
+  rankdir=LR;
+  node[shape=record];
+
+ // need to name with "cluster" for grouping
+  subgraph cluster_A {  label="nodeA"; nodeA;    }
+  subgraph cluster_B {  label="nodeB"; nodeB; nodeBreports;  }
+
+  nodeA -> nodeB -> HDFS;
+  nodeBreports -> reports;
+ }
+---------------------------------------------------------------------
+
+We can then spawn foo onto nodeB:
+
+----
+spawn nodeB foo
+----
+
+and the same configuration that used to be on +nodeA+ will be
+instantiated on +nodeB+.
+
+
+Curently the primary use case for logical nodes is to add extra
+metrics reporting data flows.  We are currently working on makign the
+WAL and DFO sharable by all of the logical nodes on a physcal
+node. 
+
+
+
+[grid="all"]
+`-------------`------------------------------
+Physical Node Logical Nodes
++nodeA+	      +nodeA+
++nodeB+	      +nodeB+, +nodeBreport+, +foo+ 
+---------------------------------------------
+
+["graphviz", "multiplelogical5.png"]
+---------------------------------------------------------------------
+digraph multiple_logical_node { 
+  rankdir=LR;
+  node[shape=record];
+
+ // need to name with "cluster" for grouping
+  subgraph cluster_A {  label="nodeA"; nodeA;    }
+  subgraph cluster_B {  label="nodeB"; nodeB; nodeBreports; foo; }
+
+  nodeA -> nodeB -> HDFS;
+  nodeBreports -> reports;
+ }
+---------------------------------------------------------------------

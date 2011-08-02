@@ -1,0 +1,17 @@
+﻿==== What are the default ports?
+
+TCP ports are used in all situations.
+
+[width="40%"] 
+|=========================================================================
+| node collector port      | +flume.collector.port+        | 35853+
+| node status web server   | +flume.node.http.port+        | 35862+
+| master status web server | +flume.master.http.port+      | 35871
+| master heartbeat port    | +flume.master.heartbeat.port+ | 35872
+| master admin/shell port  | +flume.master.admin.port+     | 35873
+| master gossip port       | +flume.master.gossip.port+    | 35890  
+| master -> zk port        | +flume.master.zk.client.port+ |  3181
+| zk -> zk port            | +flume.master.zk.server.port+ |  2181
+|=========================================================================
+
+

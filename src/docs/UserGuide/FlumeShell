@@ -1,0 +1,168 @@
+﻿
+=== The Flume Command Shell
+
+So far, you have been modifying the state of Flume using a simple (but 
+primitive) web interface to a Master server.  
+
+Flume also provides a shell, which allows the user to type commands into a 
+terminal and have them executed on a Flume deployment.
+
+All of the commands available in the web form are available in the Flume 
+Shell.  The Flume Shell, however, actually has extra controls for command 
+submission control, state checking, that aid scriptability.
+
+==== Using the Flume Command Shell
+
+You can start the FlumeShell by running +flume shell+ in a terminal window. 
+The +connect+ command can be used to establish a connection to any Master 
+server.
+
+----
+hostname:~/flume$ flume shell
+[flume (disconnected)] connect localhost:35873
+Connecting to Flume master localhost:35873...
+[flume localhost:35873]
+----
+
+----
+hostname:~/flume$ flume shell -c localhost:35873
+Connecting to Flume master localhost:35873...
+[flume localhost:35873]
+----
+
+******
+The port to use is the value of +flume.config.admin.port+ and defaults to 35873. 
+******
+
+The command line parameters for the Flume Shell are as follows:
+
+----
+usage: FlumeShell [-c <arg>] [-e <arg>] [-q] [-s <arg>]
+ -?         Command line usage help
+ -c <arg>   Connect to master:port
+ -e <arg>   Run a single command
+ -q         Run in quiet mode - only print command results
+ -s <arg>   Run a FlumeShell script
+----
+
+The FlumeShell makes scripting Flume possible - either by using a single 
+invocation with +-e+ or by running a script of commands with +-s+. It is also 
+possible to pipe +stdin+ to the FlumeShell as in the following example:
+
+----
+echo "connect localhost:35873\ngetconfigs\nquit" | flume shell -q
+----
+
+.Flume Commands
+
+You can press Tab any time for some hints on available commands.  If you start 
+typing a command you can use TAB to complete command.
+
++help+ :: List the commands available in the shell.
+
++connect _master:port_+ :: connect to a master at machine _master_ on port 
+_port_.
+
++config+ _logicalnode_ _source_ _sink_ :: configure a single logical node 
+_logicalnode_ with source _source_ and sink _sink_.  _source_ and _sink_ will 
+likely need quotes to support some of the Flume configuration syntax.
+
++nodestatus+ :: Output the status of the nodes the master knows about. Nodes 
+are in either HELLO, CONFIGURING, ACTIVE, IDLE, or ERROR states.
+
++getconfigs+ :: This gets and dumps the configuration specifications of all 
+the logical nodes the master knows about.
+
++exec+ :: Synchronously execute a command on the master.  This command will 
+block until it is completed.
+
++source _file_+ :: Reads the specified file and attempts to execute all of the 
+specified commands.
+
++submit+ :: Asynchronously execute a command on the master.  This command will 
+return immediately and allows the submission of other commands.  The command 
+id of the last command submitted is recorded.
+
++wait _ms_ [_cmdid_]+ :: This commands blocks for up to +ms+ milliseconds 
+until +cmdid+ has entered the SUCCEEDED or FAILED state. If +ms+ is 0 the 
+command may block forever.  If the command times out, the shell will 
+disconnect.  This is useful in conjunction with +submitted+ commands.
+
++waitForNodesActive _ms_ node1 [node2 [...]]+ :: This command blocks for up to 
++ms+ milliseconds until the specified list of nodes have entered the ACTIVE or 
+CONFIGURING state.  If ms==0 then the command may block forever.
+
++waitForNodesDone _ms_ node1 [node2 [...]]+ :: This command blocks for up to 
++ms+ milliseconds until the specified list of nodes have entered the IDLE, 
+ERROR, or LOST state.
+
++quit+ :: Exit the shell.
+
+.Exec and Submit commands
+
+Both the web form and the FlumeShell are interfaces to the same command 
+processing infrastructure inside Flume. This section introduces the 
+FlumeShell and show how you can use it to make administering Flume more 
+simple.
+
+These commands are issued and run as if run from the master.  In the command 
+shell they have the form:
+
++exec _command_ [_arg1 [_arg2_ [ ... ] ] ]+
+
++submit _command_ [_arg1 [_arg2_ [ ... ] ] ]+
+
+Complex arguments like those with spaces, or non alpha-numeric characters can 
+be expressed by using "double quotes"s and `single quotes's.  If enclosed in 
+double quotes, the bodies of the strings are Java string unescaped.  If they 
+are enclosed in single quotes, arbitrary characters can be included except for 
+the ' character.
+
++exec+ commands block until they are completed.  +submit+ commands are 
+asynchronously sent to the master in order to be executed.  +wait+ are 
+essentially joins for recently +submit+ ted commands.
+
++noop+ :: This command contacts the master and issue a noop (no operation) 
+command.
+
++config _logicalnode_ 'source' 'sink'+ :: This command configures a node.  
+This is nearly identical to the 'config' command.
+
++multiconfig '_flumespec_'+ :: This command configures a set of nodes on the 
+master using the aggregated format.
+
++unconfig _logicalnode_+ :: This command changes the configuration of a 
+particular node to have a +null+ source and a +null+ state.  +refresh 
+_logicalnode_+ :: This command refreshes the current configuration of a 
+logical node.  This forces the logicalnode to stop and then restart.  This 
+also causes a master re-evaluation that may change the failover lists.
+
++refreshAll _logicalnode_+ :: This atomically issues a refresh command to all 
+of the logical nodes.
+
++save '_filename_'+ :: This saves the current configuration to the master's 
+disk.
+
++load '_filename_'+ :: This augments the current configuration with the 
+logical node specifications found in +_filename_+.
+
++spawn _physicalnode_ _logicalnode_+:: This creates a new logical node 
+_logicalnode_ on physical node +_physicalnode_+.  The node starts with a 
++null+ source and a +null+ sink, and updates its configuration specified at 
+the master when it begins heartbeating.  Thus if a logical node configuration 
+already exists and a new node is spawned, it will pick up the configuration for 
+the logical node.
+
++decommission _logicalnode_+ :: This removes a logical node from the logical 
+node configuration table, and unmaps it from any physical nodes it may be 
+installed on.
+
++unmap _physicalnode_ _logicalnode_+ :: This command breaks the assignment of 
+a _logicalnode_ from machine _physicalnode_.  A logical node can be reassigned 
+to another physical node using the +spawn+ command.
+
++unmapAll+ :: This command breaks the assignment of all logical node from 
+physical nodes.  A logical node can be reassigned to another physical node 
+using the +spawn+ command.
+
+

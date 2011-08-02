@@ -1,0 +1,24 @@
+﻿[glossary]
+== Glossary
+
+Agent::
+A Flume node located at the start of a flow that captures data from 
+external sources, ready for feeding downstream. 
+
+Collector::
+A Flume node located at the end of a flow that delivers data to its eventual destination.
+
+Flow::
+A set of nodes wired together in sequence which together process data 
+from a single source into its eventual destination.
+
+Master::
+A service that controls the configuration of all nodes, and to 
+which all nodes report. 
+
+Sink::
+The place where a node sends its data after all processing is done.
+
+Source::
+The place where a node gets its data stream.
+

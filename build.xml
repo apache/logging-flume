@@ -133,6 +133,7 @@ to call at top-level: ant deploy-contrib compile-core-test
   <target name="init">
     <mkdir dir="${build.dir}"/>
     <mkdir dir="${build.dir}/flume"/>
+    <mkdir dir="${build.dir}/flume/docs"/>
     <mkdir dir="${build.classes}"/>
     <mkdir dir="${test.build.dir}"/>
     <mkdir dir="${test.build.classes}"/>
@@ -650,6 +651,23 @@ to call at top-level: ant deploy-contrib compile-core-test
       </manifest>
     </jar>
   </target>  
+
+  <!-- ================================================================== -->
+  <!-- Make Docs (README.html)                                            -->
+  <!-- ================================================================== -->
+  <target name="docs" depends="init" description="Build documentation">
+
+    <exec executable="asciidoc" dir="${basedir}" failonerror="true">
+      <arg line="-a toc -o ${build.dir}/flume/docs/UserGuide.html ${basedir}/src/docs/UserGuide/FullGuide"/>
+    </exec>
+
+    <copy todir="${build.dir}/flume/docs/">
+      <fileset dir="${basedir}/src/docs/UserGuide" includes="**/*.png"/>
+    </copy>
+
+  </target>
+  
+
 
   <!-- ================================================================== -->
   <!-- Make flume.tgz                                                     -->
