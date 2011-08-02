@@ -134,7 +134,7 @@ public class FlushingSequenceFileWriter extends SequenceFile.Writer {
     // super(conf, out, keyClass, valClass, metadata);
 
     // instead we duplicate the constructor code.
-    this.ownOutputStream = false;
+    this.ownOutputStream = true;
     init(null, conf, out, keyClass, valClass, false, null, metadata);
 
     initializeFileHeader();
