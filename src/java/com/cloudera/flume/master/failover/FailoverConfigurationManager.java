@@ -109,7 +109,7 @@ public class FailoverConfigurationManager extends
       List<String> failovers = failchainMan.getFailovers(lnode);
       xsink = FlumeSpecGen.genEventSink(substBEChains(sink, failovers));
       xsink = FlumeSpecGen.genEventSink(substDFOChainsNoLet(xsink, failovers));
-      xsink = FlumeSpecGen.genEventSink(substE2EChains(xsink, failovers));
+      xsink = FlumeSpecGen.genEventSink(substE2EChainsSimple(xsink, failovers));
       return xsink;
     } catch (RecognitionException e) {
       throw new FlumeSpecException(e.getMessage());
@@ -182,7 +182,7 @@ public class FailoverConfigurationManager extends
     }
 
     while (dfoMatches != null) {
-      // found a autoBEChain, replace it with the chain.
+      // found a autoDFOChain, replace it with the chain.
       CommonTree dfoTree = dfoMatches.get("dfo");
 
       // All the logical sinks are lazy individually
@@ -232,7 +232,7 @@ public class FailoverConfigurationManager extends
     }
 
     while (dfoMatches != null) {
-      // found a autoBEChain, replace it with the chain.
+      // found a autoDFOChain, replace it with the chain.
       CommonTree dfoTree = dfoMatches.get("dfo");
       CommonTree dfoFailChain = buildFailChainAST(
           "{ lazyOpen => { stubbornAppend => logicalSink(\"%s\") } }  ",
@@ -279,7 +279,7 @@ public class FailoverConfigurationManager extends
     }
 
     while (e2eMatches != null) {
-      // found a autoBEChain, replace it with the chain.
+      // found a autoE2EChain, replace it with the chain.
       CommonTree beTree = e2eMatches.get("e2e");
 
       // generate
@@ -313,6 +313,59 @@ public class FailoverConfigurationManager extends
     int idx = replace.getChildIndex();
     replace.parent.replaceChildren(idx, idx, sinkTree);
     return wrapper;
+  }
+
+  /**
+   * Takes a full sink specification and substitutes 'autoE2EChain' with an
+   * expanded wal+end2end ack chain. It just replaces the sink and does not
+   * attempt any sandwiching of decorators
+   */
+  static CommonTree substE2EChainsSimple(String sink, List<String> collectors)
+      throws RecognitionException, FlumeSpecException {
+
+    PatternMatch e2ePat = recursive(var("e2e", FlumePatterns.sink(AUTO_E2E)));
+    CommonTree sinkTree = FlumeBuilder.parseSink(sink);
+    Map<String, CommonTree> e2eMatches = e2ePat.match(sinkTree);
+
+    if (e2eMatches == null) {
+      // bail out early.
+      return sinkTree;
+    }
+
+    while (e2eMatches != null) {
+      // found a autoE2EChain, replace it with the chain.
+      CommonTree e2eTree = e2eMatches.get("e2e");
+
+      // generate
+      CommonTree e2eFailChain = buildFailChainAST(
+          "{ lazyOpen => { stubbornAppend => logicalSink(\"%s\") } }  ",
+          collectors);
+
+      // Check if beFailChain is null
+      if (e2eFailChain == null) {
+        e2eFailChain = FlumeBuilder.parseSink("fail(\"no collectors\")");
+      }
+
+      // now lets wrap the beFailChain with the ackedWriteAhead
+      String translated = "{ ackedWriteAhead => "
+          + FlumeSpecGen.genEventSink(e2eFailChain) + " }";
+      CommonTree wrapper = FlumeBuilder.parseSink(translated);
+
+      // subst
+      int idx = e2eTree.getChildIndex();
+      CommonTree parent = e2eTree.parent;
+      if (parent == null) {
+        sinkTree = wrapper;
+      } else {
+        parent.replaceChildren(idx, idx, wrapper);
+      }
+
+      // pattern match again.
+      e2eMatches = e2ePat.match(sinkTree);
+    }
+
+    // wrap the sink with the ackedWriteAhead
+    return sinkTree;
   }
 
   /**

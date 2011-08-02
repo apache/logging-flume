@@ -183,6 +183,36 @@ public class TestFailChainTranslator {
   }
 
   @Test
+  public void testSubstE2ESimple() throws FlumeSpecException,
+      RecognitionException {
+    List<String> collectors = new ArrayList<String>();
+    collectors.add("collector1");
+    collectors.add("collector2");
+    collectors.add("collector3");
+
+    // autoE2EChain substituted
+    CommonTree failchain = FailoverConfigurationManager.substE2EChainsSimple(
+        "autoE2EChain", collectors);
+    String failChainSink = FlumeSpecGen.genEventSink(failchain);
+    LOG.info(failChainSink);
+    assertEquals(232, failChainSink.length()); // output is 232 chars long
+
+    // many autoE2EChain substitutions.
+    CommonTree failchain2 = FailoverConfigurationManager.substE2EChainsSimple(
+        "[ autoE2EChain, { lazyOpen => autoE2EChain } ]", collectors);
+    String failChainSink2 = FlumeSpecGen.genEventSink(failchain2);
+    LOG.info(failChainSink2);
+    assertEquals(486, failChainSink2.length()); // output is 486 chars long
+
+    // no change
+    CommonTree nothing = FailoverConfigurationManager.substE2EChainsSimple(
+        "null", collectors);
+    String nothingSink = FlumeSpecGen.genEventSink(nothing);
+    assertEquals("null", nothingSink);
+
+  }
+
+  @Test
   public void testConsistentHashAvailMan() throws FlumeSpecException,
       IOException {
     FailoverChainManager am = new ConsistentHashFailoverChainManager(3);
