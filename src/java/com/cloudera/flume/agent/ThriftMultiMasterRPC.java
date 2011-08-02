@@ -173,7 +173,9 @@ public class ThriftMultiMasterRPC extends ThriftMasterRPC implements MasterRPC {
            * try block.
            */
           try {
-            LOG.info("Connection to master lost, looking for another...");
+            LOG.info("Connection to master lost due to " + e.getMessage()
+                + ", looking for another...");
+            LOG.debug(e.getMessage(), e);
             findServer();
           } catch (IOException e1) {
             LOG.error("Unable to find a master server", e1);

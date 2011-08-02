@@ -58,43 +58,79 @@ public class ReportEvent extends EventImpl {
 
   /**
    * Set a long-valued metric to supplied value. NOT THREAD SAFE.
+   * 
+   * @param name    metric name, null not allowed, if the report previously 
+   * contained a mapping for the name the old value is replaced with the new.
+   * @param value   metric value to associate with name
+   * @throws IllegalArgumentException if illegal arguments provided
    */
   public void setLongMetric(String name, long value) {
+    Preconditions.checkArgument(name != null);
     longMetrics.put(name, value);
   }
 
   /**
    * Set a double-valued metric to supplied value. NOT THREAD SAFE.
+   * 
+   * @param name    metric name, null not allowed, if the report previously 
+   * contained a mapping for the name the old value is replaced with the new.
+   * @param value   metric value to associate with name
+   * @throws IllegalArgumentException if illegal arguments provided
    */
   public void setDoubleMetric(String name, double value) {
+    Preconditions.checkArgument(name != null);
     doubleMetrics.put(name, value);
   }
 
   /**
    * Set a string-valued metric to supplied value. NOT THREAD SAFE.
+   * 
+   * @param name    metric name, null not allowed, if the report previously 
+   * contained a mapping for the name the old value is replaced with the new.
+   * @param value   metric value to associate with name. Null values will be
+   * ignored (not included in the report).
+   * @throws IllegalArgumentException if illegal arguments provided
    */
   public void setStringMetric(String name, String value) {
-    stringMetrics.put(name, value);
+    Preconditions.checkArgument(name != null);
+    if (value != null) {
+      stringMetrics.put(name, value);
+    } else if (LOG.isDebugEnabled()) {
+      // TODO we should look for this during testing and address
+      LOG.debug("Ignoring null string metric " + name);
+    }
   }
 
   /**
    * Returns the value of a long-valued metric. NOT THREAD SAFE.
+   * 
+   * @param name    metric name, null not allowed
+   * @throws IllegalArgumentException if illegal arguments provided
    */
   public Long getLongMetric(String name) {
+    Preconditions.checkArgument(name != null);
     return longMetrics.get(name);
   }
 
   /**
    * Returns the value of a double-valued metric. NOT THREAD SAFE.
+   * 
+   * @param name    metric name, null not allowed
+   * @throws IllegalArgumentException if illegal arguments provided
    */
   public Double getDoubleMetric(String name) {
+    Preconditions.checkArgument(name != null);
     return doubleMetrics.get(name);
   }
 
   /**
    * Returns the value of a string-valued metric. NOT THREAD SAFE.
+   * 
+   * @param name    metric name, null not allowed
+   * @throws IllegalArgumentException if illegal arguments provided
    */
   public String getStringMetric(String name) {
+    Preconditions.checkArgument(name != null);
     return stringMetrics.get(name);
   }
 
