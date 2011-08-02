@@ -179,6 +179,7 @@ to call at top-level: ant deploy-contrib compile-core-test
     <mkdir dir="${build.docs}/DeveloperGuide"/>
     <mkdir dir="${build.docs}/UserGuide"/>
     <mkdir dir="${build.docs}/Cookbook"/>
+    <mkdir dir="${build.docs}/Windows"/>
     <mkdir dir="${ivy.tools.lib}"/>
 
     <condition property="ivy.jar.exists">
@@ -732,7 +733,7 @@ to call at top-level: ant deploy-contrib compile-core-test
   <!--  converts to docbook and then to html to avoid GPL code insertion  -->
   <!--  in ubuntu requires pkgs: asciidoc,source-highlight,graphviz       -->
   <!-- ================================================================== -->
-  <target name="docs" depends="userguide,cookbook,developerguide,docindex" description="Build documentation"/>
+  <target name="docs" depends="userguide,cookbook,developerguide,windowsguide,docindex" description="Build documentation"/>
 
   <uptodate property="userguide.uptodate"
 	    targetfile="${build.docs}/UserGuide/index.html">
@@ -747,6 +748,11 @@ to call at top-level: ant deploy-contrib compile-core-test
   <uptodate property="developerguide.uptodate"
 	    targetfile="${build.docs}/DeveloperGuide/index.html" >
     <srcfiles dir="${docs.src.dir}/DeveloperGuide" includes="*"/>
+    <srcfiles dir="${docs.src.dir}/web" includes="*"/>
+  </uptodate>
+  <uptodate property="windowsguide.uptodate"
+	    targetfile="${build.docs}/Windows/index.html" >
+    <srcfiles dir="${docs.src.dir}/Windows" includes="*"/>
     <srcfiles dir="${docs.src.dir}/web" includes="*"/>
   </uptodate>
   <uptodate property="docindex.uptodate"
@@ -812,6 +818,27 @@ to call at top-level: ant deploy-contrib compile-core-test
 
     <copy todir="${docs.dir}/DeveloperGuide">
       <fileset dir="${docs.src.dir}/DeveloperGuide" includes="**/*.png"/>
+    </copy>
+  </target>
+
+
+  <target name="windowsguide" depends="init" description="Build Windows Guide" unless="windowsguide.uptodate">
+    <exec executable="asciidoc" dir="${basedir}" failonerror="true">
+      <arg line="-a revnumber=${version} -a revdate='${TODAY}' -b docbook -o ${build.docs}/Windows/index.xml ${docs.src.dir}/Windows/Windows"/>
+    </exec>
+
+    <exec executable="xmlto" dir="${basedir}" failonerror="true">
+      <arg line="--skip-validation -o ${build.docs}/Windows -m src/docs/web/html.xsl html-nochunks ${build.docs}/Windows/index.xml "/>
+    </exec>
+
+    <delete file="${build.docs}/Windows/index.xml" />
+
+    <copy todir="${docs.dir}/Windows">
+      <fileset dir="${docs.src.dir}/web" includes="**"/>
+    </copy>
+
+    <copy todir="${docs.dir}/Windows">
+      <fileset dir="${docs.src.dir}/Windows" includes="**/*.png"/>
     </copy>
   </target>
 

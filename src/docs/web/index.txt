@@ -24,4 +24,4 @@ The following pages are the documentation for Flume v{revnumber}:
 - link:UserGuide/index.html[Flume User Guide]
 - link:DeveloperGuide/index.html[Flume Developer Guide]
 - link:Cookbook/index.html[Flume Cookbook]
-
+- link:Windows/index.html[Flume Windows Guide]
