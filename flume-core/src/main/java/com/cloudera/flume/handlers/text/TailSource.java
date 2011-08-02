@@ -199,7 +199,7 @@ public class TailSource extends EventSource.Base {
         }
         LOG.debug("Tail got done flag");
       } catch (InterruptedException e) {
-        LOG.error("tail unexpected interrupted: " + e.getMessage(), e);
+        LOG.error("Tail thread nterrupted: " + e.getMessage(), e);
       } finally {
         LOG.info("TailThread has exited");
       }
@@ -244,9 +244,17 @@ public class TailSource extends EventSource.Base {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     synchronized (this) {
       done = true;
+      if (thd == null) {
+        LOG.warn("TailSource double closed");
+        return;
+      }
+      while (thd.isAlive() ){
+        thd.join(100L);
+        thd.interrupt();
+      }
       thd = null;
     }
   }
@@ -256,7 +264,7 @@ public class TailSource extends EventSource.Base {
    * is reached.
    */
   @Override
-  public Event next() throws IOException {
+  public Event next() throws IOException, InterruptedException {
     try {
       while (!done) {
         // This blocks on the synchronized queue until a new event arrives.
@@ -269,8 +277,7 @@ public class TailSource extends EventSource.Base {
       return null; // closed
     } catch (InterruptedException e1) {
       LOG.warn("next unexpectedly interrupted :" + e1.getMessage(), e1);
-      Thread.currentThread().interrupt();
-      throw new IOException(e1.getMessage());
+      throw e1;
     }
   }
 

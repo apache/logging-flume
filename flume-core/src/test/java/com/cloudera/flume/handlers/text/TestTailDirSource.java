@@ -59,7 +59,7 @@ public class TestTailDirSource {
   }
 
   @Test
-  public void testOpenClose() throws IOException {
+  public void testOpenClose() throws IOException, InterruptedException {
     File tmpdir = FileUtil.mktempdir();
     TailDirSource src = new TailDirSource(tmpdir, ".*");
     for (int i = 0; i < 20; i++) {

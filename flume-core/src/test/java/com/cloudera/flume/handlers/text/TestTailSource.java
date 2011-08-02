@@ -542,4 +542,60 @@ public class TestTailSource {
      * (((CounterSink) sink).getCount() - 1000) < 50);
      */
   }
+
+  @Test
+  public void testCloseBlocksUntilThreadDone() throws InterruptedException {
+    final CountDownLatch start = new CountDownLatch(1);
+    final CountDownLatch done1 = new CountDownLatch(1);
+    final CountDownLatch done2 = new CountDownLatch(1);
+
+    // count # of active threads before, we should have the same number after
+    int threads = Thread.activeCount();
+
+    // 10000s wait when backing off (needs to be interrupted to exit reasonably)
+    final TailSource src = new TailSource(10000000);
+    Thread t = new Thread() {
+      @Override
+      public void run() {
+        try {
+          src.open();
+          start.countDown();
+          src.next();
+        } catch (Throwable t) {
+          LOG.error("Test failed because exception thrown");
+          return; // this is a failure path
+        }
+        done1.countDown();
+
+      }
+    };
+    t.start();
+
+    Thread t2 = new Thread() {
+      @Override
+      public void run() {
+        try {
+          if (!start.await(1000, TimeUnit.MILLISECONDS)) {
+            return;
+          }
+          Clock.sleep(150); // wait next call to start
+          src.close();
+        } catch (Throwable t) {
+          LOG.error("Test failed because exception thrown");
+          return;
+        }
+        done2.countDown();
+
+      }
+    };
+    t2.start();
+
+    // make sure both threads did stuff
+    assertTrue(done1.await(3, TimeUnit.SECONDS));
+    assertTrue(done2.await(3, TimeUnit.SECONDS));
+
+    // if close doesn't block until subthread is done, there will a leaked
+    // thread!
+    assertEquals(threads, Thread.activeCount());
+  }
 }

@@ -240,9 +240,10 @@ public class TailDirSource extends EventSource.Base {
 
   /**
    * Must be synchronized to isolate watcher
+   * @throws InterruptedException
    */
   @Override
-  synchronized public void close() throws IOException {
+  synchronized public void close() throws IOException, InterruptedException {
     tail.close();
     this.watcher.stop();
     this.watcher = null;
@@ -264,7 +265,7 @@ public class TailDirSource extends EventSource.Base {
   }
 
   @Override
-  public Event next() throws IOException {
+  public Event next() throws IOException, InterruptedException {
     // this cannot be in synchronized because it has a
     // blocking call to a queue inside it.
     Event e = tail.next();
