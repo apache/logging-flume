@@ -221,6 +221,22 @@ $ declare -x FLUME_DEVMODE=true
 
 It is assumed that the eclipse build path is build_eclipse/.
 
+== Building Windows packages
+
+Building a full windows package and installer executable requires a
+few steps.  A cygwin envrionment is currently assumed.
+
+1) Build flume jars ('ant tar').
+
+2) Update the installer script to add versioning information ('ant
+winstall-filter').  This generates ./flume.nsi.
+
+3) Run nsis compiler on the generated flume.nsi.  We've used v2.46 http://nsis.sourceforge.net/Download. 
+
+The current cut does not deal with differences between 32-bit vs
+64-bit versions, proper error handling situations, or checks to see if
+not run as administrator.
+
 == License
 
 All source files must include the following header:

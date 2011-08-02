@@ -27,8 +27,12 @@ to call at top-level: ant deploy-contrib compile-core-test
       <pathelement location="${basedir}/libbuild/ant-contrib-1.0b3.jar"/>
     </classpath>
   </taskdef>
-  <property name="name" value="flume"/>
-  <property name="version" value="0.9.3-SNAPSHOT"/>
+  <property name="name" value="flume"/>  
+  <property name="version.major" value="0"/>
+  <property name="version.minor" value="9"/>
+  <property name="version.rev" value="3"/>
+  <property name="version.numbers" value="${version.major}.${version.minor}.${version.rev}"/>
+  <property name="version" value="${version.numbers}-SNAPSHOT"/>
   <property name="final.name" value="${name}-${version}"/>
   <property name="year" value="2009-2010"/>
 
@@ -111,6 +115,20 @@ to call at top-level: ant deploy-contrib compile-core-test
   <!-- javadoc properties  -->
   <property name="javadoc.link.java" value="http://java.sun.com/j2se/1.6.0/docs/api/" />
 
+  <!-- version info filters set -->
+  <tstamp> 
+    <format property="year" pattern="yyyy" locale="en"/>
+  </tstamp>
+
+
+  <filterset id="version.filters">
+    <filter token="YEAR" value="${year}" />
+    <filter token="VERSION" value="${version}"/>
+    <filter token="VERSION_NUMBER" value="${version.numbers}.0"/>
+    <filter token="VERSION_MAJOR_MINOR" value="${version.numbers}"/>
+    <filter token="VERSION_MAJOR" value="${version.major}.${version.minor}"/>
+  </filterset>
+
   <path id="libs.classpath">
     <pathelement location="${conf.dir}"/>
     <fileset dir="${lib.dir}">
@@ -184,7 +202,6 @@ to call at top-level: ant deploy-contrib compile-core-test
         <exclude name="**/*.jsp" />
       </fileset>
     </copy>
-    <tstamp/>
 
   </target>
 
@@ -1157,6 +1174,12 @@ to call at top-level: ant deploy-contrib compile-core-test
       </classpath>
         <group title="flume" packages="com.cloudera.flume*" />
     </javadoc>
+  </target>
+
+  <target name="winstall-filter" description="update windows installer script version">
+   <copy file="${src.dir}/nsis/flume.nsi.template" tofile="${basedir}/flume.nsi">
+     <filterset refid="version.filters"/>
+   </copy>
   </target>
 
 </project>
