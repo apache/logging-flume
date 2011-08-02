@@ -196,6 +196,8 @@ public class StatusHttpServer {
     try {
       while (true) {
         try {
+          LOG.info("Status server available at http://" + NetUtils.localhost()
+              + ":" + listener.getPort());
           webServer.start();
           break;
         } catch (MultiException ex) {

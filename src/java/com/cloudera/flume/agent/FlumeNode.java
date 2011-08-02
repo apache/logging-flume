@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -29,6 +31,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import com.cloudera.flume.VersionInfo;
@@ -269,10 +272,17 @@ public class FlumeNode implements Reportable {
     return collectorAck;
   }
 
-  public static void logVersion(Logger log) {
-    log.info("Flume " + VersionInfo.getVersion());
-    log.info(" rev " + VersionInfo.getRevision());
-    log.info("Compiled  on " + VersionInfo.getDate());
+  public static void logVersion(Logger log, Level level) {
+    log.log(level, "Flume " + VersionInfo.getVersion());
+    log.log(level, " rev " + VersionInfo.getRevision());
+    log.log(level, "Compiled  on " + VersionInfo.getDate());
+  }
+
+  public static void logEnvironment(Logger log, Level level) {
+    Properties props = System.getProperties();
+    for (Entry<Object,Object> p : props.entrySet()) {
+      log.log(level, "System property " + p.getKey() + "=" + p.getValue());
+    }
   }
 
   /**
@@ -328,6 +338,9 @@ public class FlumeNode implements Reportable {
   }
 
   public static void setup(String[] argv) throws IOException {
+    logVersion(LOG, Level.INFO);
+    logEnvironment(LOG, Level.INFO);
+
     LOG.info("Starting flume agent on: " + NetUtils.localhost());
     LOG.info(" Working directory is: " + new File(".").getAbsolutePath());
 
@@ -353,8 +366,6 @@ public class FlumeNode implements Reportable {
       fmt.printHelp("FlumeNode", options, true);
       return;
     }
-
-    logVersion(LOG);
 
     // dump version info only
     if (cmd != null && cmd.hasOption("v")) {
