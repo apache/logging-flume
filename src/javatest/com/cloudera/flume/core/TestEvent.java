@@ -22,6 +22,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.junit.Test;
 
@@ -110,11 +111,11 @@ public class TestEvent {
 
   /**
    * Test getting an attribute names from a escape sequence.
-   * 
-   * TODO (jon) This assumes a US PST locale currently
    */
   @Test
   public void testAttributeNames() {
+    TimeZone tz = TimeZone.getTimeZone("America/Los_Angeles");
+    TimeZone.setDefault(tz);
     String test = "%a %A %b %B %c %d %D %H %I %j %k %l %m";
     Event e = new EventImpl(new byte[0], 1267578391, Priority.INFO, 0,
         "localhost");
@@ -154,8 +155,6 @@ public class TestEvent {
   /**
    * Unhandled escape sequences just return the shorthand and an empty string
    * value
-   * 
-   * TODO (jon) This assumes a US PST locale currently
    */
   @Test
   public void testBadAttributeName() {
