@@ -233,6 +233,11 @@
 
     <dependency>
       <groupId>org.antlr</groupId>
+      <artifactId>antlr-runtime</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.antlr</groupId>
       <artifactId>stringtemplate</artifactId>
     </dependency>
 

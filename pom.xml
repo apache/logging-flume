@@ -444,8 +444,20 @@
 
       <dependency>
         <groupId>org.antlr</groupId>
+        <artifactId>antlr-runtime</artifactId>
+        <version>3.2</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.antlr</groupId>
         <artifactId>stringtemplate</artifactId>
         <version>3.2</version>
+        <exclusions>
+          <exclusion>
+            <groupId>antlr</groupId>
+            <artifactId>antlr</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
