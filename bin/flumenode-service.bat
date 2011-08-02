@@ -52,13 +52,15 @@ goto end
 :java_home_defined_ok
 
 REM ***** force JAVA HOME to be a shortened path name *****
+echo JAVA_HOME is %JAVA_HOME%
 rem call :expand "%JAVA_HOME%"
 
 
-for %%i in (%JAVA_HOME%) do call :expand %%i
+for %%i in ("%JAVA_HOME%") do call :expand %%i
 goto :actually
 :expand
 set JAVA_HOME=%~dpfs1
+echo changed to %JAVA_HOME%
 goto :eof
 :actually
 
@@ -185,9 +187,16 @@ set PR_JVMMX=1024
 set PR_STOPTIMEOUT=5
 
 rem ***** Set the server jvm from JAVA_HOME *****
+rem * server JRE
+set PR_JVM=%JAVA_HOME%\bin\server\jvm.dll
+if exist "%PR_JVM%" goto foundJvm
+rem * client JRE (32-bit)
+set PR_JVM=%JAVA_HOME%\bin\client\jvm.dll
+if exist "%PR_JVM%" goto foundJvm
+rem * server JDK 
 set PR_JVM=%JAVA_HOME%\jre\bin\server\jvm.dll
 if exist "%PR_JVM%" goto foundJvm
-rem Set the client jvm from JAVA_HOME
+rem * client JDK (32-bit)
 set PR_JVM=%JAVA_HOME%\jre\bin\client\jvm.dll
 if exist "%PR_JVM%" goto foundJvm
 set PR_JVM=auto

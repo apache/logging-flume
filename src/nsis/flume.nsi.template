@@ -149,12 +149,24 @@ Section "Core" SecFlumeCore
   File NOTICE
   File README
   File RELEASENOTES
-
   SetOutPath $INSTDIR\bin
   File bin\flumenode-service.bat
-  File bin\flumenode.exe
   File bin\flumenodew.exe
   
+  ; Figure out the target JVM's platform: x86 / AMD64 / IA64
+  Call configure
+
+  ${If} $Arch == "x86"
+    DetailPrint "Using Jvm: $JavaHome, $Arch (32 bit x86)"
+    File /oname=flumenode.exe bin\flumenode.exe
+  ${ElseIf} $Arch == "x64"
+    DetailPrint "Using Jvm: $JavaHome, $Arch (amd64)"
+    File /oname=flumenode.exe bin\amd64\flumenode.exe
+  ${ElseIf} $Arch == "i64"
+    DetailPrint "Using Jvm: $JavaHome, $Arch (ia64)"
+    File /oname=flumenode.exe bin\ia64\flumenode.exe
+  ${EndIf}
+
   SetOutPath $INSTDIR\conf
   File conf\flume-conf.xml
   File conf\flume-site.xml.template
@@ -173,19 +185,6 @@ Section "Core" SecFlumeCore
   SetOutPath $INSTDIR\webapps
   File /r build\webapps\*.*
 
-  Call configure
-
-  DetailPrint "Using Jvm: $JavaHome"
-
-  ; Get the current platform x86 / AMD64 / IA64
-;  ${If} $Arch == "x86"
-;    File /oname=flumenode.exe bin\flumenode.exe
-;  ${ElseIf} $Arch == "x64"
-;    File /oname=flumenode.exe bin\x64\flumenode.exe
-;  ${ElseIf} $Arch == "i64"
-;    File /oname=flumenode.exe bin\i64\flumenode.exe
-;  ${EndIf}
-
   FileOpen $ServiceInstallLog "$INSTDIR\log\service-install.log" a
   FileSeek $ServiceInstallLog 0 END
 
@@ -199,6 +198,7 @@ Section "Service Startup" SecFlumeService
   SectionIn 1
   ; snipped from http://nsis.sourceforge.net/Setting_Environment_Variables
   System::Call 'Kernel32::SetEnvironmentVariable(t,t) i("JAVA_HOME", "$JavaHome").r0'
+  DetailPrint "Set JAVA_HOME before service install to $JavaHome"
   StrCmp $0 0 error
     nsExec::ExecToLog '"$INSTDIR\bin\flumenode-service.bat" install' $0
     goto done
@@ -261,6 +261,11 @@ Section -post
                    "DisplayName" "Cloudera Flume @VERSION_MAJOR_MINOR@ (remove only)"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Cloudera Flume @VERSION_MAJOR_MINOR@" \
                    "UninstallString" '"$INSTDIR\Uninstall.exe"'
+
+
+  StrCpy $0 "$EXEDIR\install.log"
+  Push $0
+  Call DumpLog
 
 SectionEnd
 
@@ -618,7 +623,7 @@ Function configure
   StrCpy $R5 ''
 
   DetailPrint 'Flume Node has master set to  "$FlumeMaster"'
-  DetailPrint 'Flume Node sttatus http server on port "$FlumePort"'
+  DetailPrint 'Flume Node status http server on port "$FlumePort"'
 
   ; Build final flume-site.xml
   Delete "$INSTDIR\conf\flume-site.xml"
@@ -721,6 +726,54 @@ Function createShortcuts
 ;                 "$INSTDIR\flume.ico" 0 SW_SHOWNORMAL
 
 FunctionEnd
+
+; dump install log to a file so we can debug.
+
+
+!define LVM_GETITEMCOUNT 0x1004
+!define LVM_GETITEMTEXT 0x102D
+ 
+Function DumpLog
+  Exch $5
+  Push $0
+  Push $1
+  Push $2
+  Push $3
+  Push $4
+  Push $6
+ 
+  FindWindow $0 "#32770" "" $HWNDPARENT
+  GetDlgItem $0 $0 1016
+  StrCmp $0 0 exit
+  FileOpen $5 $5 "w"
+  StrCmp $5 "" exit
+    SendMessage $0 ${LVM_GETITEMCOUNT} 0 0 $6
+    System::Alloc ${NSIS_MAX_STRLEN}
+    Pop $3
+    StrCpy $2 0
+    System::Call "*(i, i, i, i, i, i, i, i, i) i \
+      (0, 0, 0, 0, 0, r3, ${NSIS_MAX_STRLEN}) .r1"
+    loop: StrCmp $2 $6 done
+      System::Call "User32::SendMessageA(i, i, i, i) i \
+        ($0, ${LVM_GETITEMTEXT}, $2, r1)"
+      System::Call "*$3(&t${NSIS_MAX_STRLEN} .r4)"
+      FileWrite $5 "$4$\r$\n"
+      IntOp $2 $2 + 1
+      Goto loop
+    done:
+      FileClose $5
+      System::Free $1
+      System::Free $3
+  exit:
+    Pop $6
+    Pop $4
+    Pop $3
+    Pop $2
+    Pop $1
+    Pop $0
+    Exch $5
+FunctionEnd
+
 
 ;--------------------------------
 ;Uninstaller Section
