@@ -290,5 +290,18 @@ configuration values placed in flume-site.xml.  -->
     <value>/tmp/flume-${user.name}-zk</value>
     <description>The base directory in which the ZBCS stores data.</description>
   </property>
+
+  
+  <!-- ================================================== -->
+  <!-- Thrift RPC settings ============================== -->
+  <!-- ================================================== -->
+  
+  <property>
+    <name>flume.thrift.socket.timeout.ms</name>
+    <value>10000</value>
+    <description>Milliseconds with no transmissions before thrift
+    client times out a connection</description>
+  </property>
+
   
 </configuration>

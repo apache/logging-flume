@@ -94,13 +94,14 @@ public class ThriftEventSink extends EventSink.Base {
   public void open() throws IOException {
 
     try {
+      int timeout = FlumeConfiguration.get().getThriftSocketTimeoutMs();
       if (nonblocking) {
         // non blocking must use "Framed transport"
-        transport = new TSocket(host, port);
+        transport = new TSocket(host, port, timeout);
         stats = new TStatsTransport(transport);
         transport = new TFramedTransport(stats);
       } else {
-        transport = new TSocket(host, port);
+        transport = new TSocket(host, port, timeout);
         stats = new TStatsTransport(transport);
         transport = stats;
       }

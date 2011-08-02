@@ -52,8 +52,11 @@ public class FlumeConfiguration extends Configuration {
 
   /**
    * Returns the 'FLUME_HOME' location. Taken in order of precedence:
+   * 
    * - Java system property 'flume.home'
+   * 
    * - $FLUME_HOME in the environment.
+   * 
    * - null if neither of these are set.
    */
   public static String getFlumeHome() {
@@ -71,9 +74,13 @@ public class FlumeConfiguration extends Configuration {
 
   /**
    * Returns the 'FLUME_CONF_DIR' location. Taken in order of precedence:
+   * 
    * - Java system property 'flume.conf.dir'
+   * 
    * - $FLUME_CONF_DIR in the environment
+   * 
    * - getFlumeHome()/conf
+   * 
    * - ./conf
    */
   public static String getFlumeConfDir() {
@@ -168,6 +175,7 @@ public class FlumeConfiguration extends Configuration {
   public static final String POLLER_QUEUESIZE = "flume.poller.queuesize";
   public static final String THRIFT_QUEUESIZE = "flume.thrift.queuesize";
   public static final String THRIFT_CLOSE_MAX_SLEEP = "flume.thrift.close.maxsleep";
+  public static final String THRIFT_SOCKET_TIMEOUT_MS = "flume.thrift.socket.timeout.ms";
   public static final String INSISTENTOPEN_INIT_BACKOFF = "flume.inisistentOpen.init.backoff";
   public static final String HISTORY_DEFAULTPERIOD = "flume.countHistory.period";
   public static final String HISTORY_MAXLENGTH = "flume.history.maxlength";
@@ -550,6 +558,10 @@ public class FlumeConfiguration extends Configuration {
     return getInt(THRIFT_QUEUESIZE, 1000);
   }
 
+  public int getThriftSocketTimeoutMs() {
+    return getInt(THRIFT_SOCKET_TIMEOUT_MS, 10000);
+  }
+
   /**
    * Initial backoff in mills after a failed open attempt in an insistentOpen
    * decorator
@@ -702,7 +714,6 @@ public class FlumeConfiguration extends Configuration {
     return getInt(REPORT_SERVER_PORT, DEFAULT_REPORT_SERVER_PORT);
   }
 
-
   /**
    * This returns the type of RPC mechanism (Thrift or Avro) chosen for the
    * FlumeReportServer.
@@ -716,11 +727,12 @@ public class FlumeConfiguration extends Configuration {
       }
     }
     // defaulting to Thrift with a polite warning
-    LOG.warn("flume.report.server.rpc.type incorrectly defined, should be either"
-        + " \"THRIFT\" or \"AVRO\".  Defaulting to \"THRIFT\"");
+    LOG.warn("flume.report.server.rpc.type incorrectly defined, "
+        + "should be either \"THRIFT\" or \"AVRO\".  "
+        + "Defaulting to \"THRIFT\"");
     return RPC_TYPE_THRIFT;
   }
-  
+
   /**
    * If MASTER_HEARTBEAT_PORT is set, we use that as our heartbeat port. If not,
    * we look at the list of server:port pairs in MASTER_HEARTBEAT_SERVERS, in

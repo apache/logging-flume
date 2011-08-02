@@ -15,6 +15,13 @@ configurations or node maps written by masters from <0.9.2
 installations. There is no upgrade path yet to preserve both node maps
 and configurations, but one is planned for the 0.9.2 release.
 
+The bug that caused FLUME-286 has been fixed for Thrift RPCs but not
+for Avro-based RPC mechanisms.  Previous to the fix, the Thrift
+version would not recover when a downstream RPC server had a network
+partion such as a wire cut or power down.  Unlike killing a server,
+these situations provided no failure feedback.  The Avro version
+currently does not properly detect or recover from these situations so
+the DFO mode can lose data.  This is reported as issue FLUME-313.
 
 Flume 0.9.1 Update 1 (CDH3b3) Release Notes
 ===========================================   

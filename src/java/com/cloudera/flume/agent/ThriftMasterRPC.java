@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.thrift.ThriftFlumeClientServer;
 import com.cloudera.flume.conf.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.thrift.ThriftFlumeClientServer.Client;
 import com.cloudera.flume.handlers.endtoend.AckListener;
 import com.cloudera.flume.handlers.endtoend.CollectorAckListener;
@@ -65,7 +66,8 @@ public class ThriftMasterRPC implements MasterRPC {
   ThriftMasterRPC(String masterHostname, int masterPort) throws IOException {
     Preconditions.checkState(masterClient == null,
         "client already initialized -- double init not allowed");
-    TTransport masterTransport = new TSocket(masterHostname, masterPort);
+    int timeout = FlumeConfiguration.get().getThriftSocketTimeoutMs();
+    TTransport masterTransport = new TSocket(masterHostname, masterPort, timeout);
     TProtocol protocol = new TBinaryProtocol(masterTransport);
     try {
       masterTransport.open();
