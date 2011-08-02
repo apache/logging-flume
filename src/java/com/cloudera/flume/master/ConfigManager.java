@@ -27,6 +27,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang.StringUtils;
@@ -153,7 +154,8 @@ public class ConfigManager implements ConfigurationManager {
     StringBuilder html = new StringBuilder();
     html.append("<h2>Node configuration</h2>\n<table border=\"1\"><tr>"
         + "<th>Node</th><th>Version</th><th>Source</th><th>Sink</th></tr>");
-    Map<String, FlumeConfigData> cfgs = cfgStore.getConfigs();
+    Map<String, FlumeConfigData> cfgs = new TreeMap<String, FlumeConfigData>(
+        cfgStore.getConfigs());
     synchronized (cfgs) {
       for (Entry<String, FlumeConfigData> e : cfgs.entrySet()) {
         appendHtmlFlumeConfigData(html, e.getKey(), e.getValue());
