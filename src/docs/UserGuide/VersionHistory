@@ -4,6 +4,11 @@
 
 === history
 
+v0.9.1 8/9/10:: Improved error messages and visiblity of property
+configuration values.  First external contributions.  Fixed
+reconfiguration hangs.  Improved implementing plugins documentation.
+Updated scribe and syslog support.  Compression on output files.
+
 v0.9 6/29/10 :: metrics and reporting framework, logical nodes+logical
 names abstraction, wal/dfo isolation by flow, transformation-based
 high level sinks.  Open source and initial push to github.

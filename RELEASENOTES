@@ -1,7 +1,11 @@
-Flume 0.9.0 Release Notes
+Flume 0.9.1 Release Notes
 =========================   
 
-This release of Flume has implements the core framework and has implementations of most of the major features of the Flume system describes in the Flume User Guide.  Some sections are stable, while others are have code under  active development.  We also list several known bugs and instabilities.  
+This release of Flume has implements the core framework and has
+implementations of most of the major features of the Flume system
+describes in the Flume User Guide.  Some sections are stable, while
+others are have code under active development.  We also list several
+known bugs and instabilities.
 
 Supported platforms: Linux, requires Java 1.6, not tested on windows
 
@@ -13,30 +17,37 @@ Stable:
 ** Agent/collector roles
 * Fully-Distributed Mode section:
 ** Static configuration of failover chains.
-** Single master Memory-Backed and Zookeeper-Backed Configuration Store.
+** Single master Memory-Backed and Zookeeper-Backed Configuration
+   Store.
 * Data model of Flume event
 * Output Bucketing with the CollectorSink
 * Flume's Dataflow language
 * Flume Shell
 
-Active Development:
+Stabilizing:
 * Fully-Distributed Mode: 
 ** Modes for unreliable network conditions in testing
-*** Disk failover mode and End-to-end modes 
-** Automatic versions of failover.
-** Logical Naming translations.
+** Disk failover mode and End-to-end modes 
+** DFO and E2E retransmission is unstable when connected to a network
+   sink.
+* Sink/Source/Decorator Plugins
+
+Active Development:
+* Automatic versions of failover.
+* Logical Naming translations.
 * Multiple Flume Masters
 * Output Formatting options
 * Custom metadata extraction
-* Sink/Source/Decorator Plugins
 
 Known Bugs
-
-* ZK session timeout makes master unrecoverable (hope to fix today tho!)
+* ZK session timeout makes master unrecoverable 
 * Shell does not provide useful feedback on errors
-* DFO and E2E retransmission is unstable when connected to a network sink.
-* Translated configurations are not always auto-updated when logical nodes are newly spawned onto physical nodes.  An extra 'refreshAll' command may need to be executed.
-* Two collectorSources on the same node sometimes fails to translate the more recent collectorSource
+* Translated configurations are not always auto-updated when logical
+  nodes are newly spawned onto physical nodes.  An extra 'refreshAll'
+  command may need to be executed.
+* Two collectorSources on the same node sometimes fails to translate
+  the more recent collectorSource
 * Logical node names must be unique
-* Logical nodes with the same name as the physical nodes on which they run cannot be deleted
+* Logical nodes with the same name as the physical nodes on which they
+  run cannot be deleted
 
