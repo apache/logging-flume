@@ -129,7 +129,7 @@ public class TestFlumeNode extends TestCase {
 
     Map<String, ReportEvent> reports = new HashMap<String, ReportEvent>();
     node.getReports(reports);
-    assertEquals(2, reports.size()); // source + sink reports
+    assertEquals(3, reports.size()); // source + sink reports
 
     // sleep so that we open-append-fail-close, open-append-fail-close
     // multiple times.
