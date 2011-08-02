@@ -447,7 +447,7 @@ public class FlumeConfiguration extends Configuration {
    * Where should ZK server store its persistent logs? (Shouldn't be in tmp!)
    */
   public String getMasterZKLogDir() {
-    return get(MASTER_ZK_LOGDIR, "/tmp/flume/master/zk");
+    return get(MASTER_ZK_LOGDIR, "/tmp/flume-${user.name}/master/zk");
   }
 
   /**
@@ -483,7 +483,7 @@ public class FlumeConfiguration extends Configuration {
   }
 
   public String getAgentLogsDir() {
-    return get(AGENT_LOG_DIR_NEW, "/tmp/flume/agent");
+    return get(AGENT_LOG_DIR_NEW, "/tmp/flume-${user.name}/agent");
   }
 
   public long getAgentLogMaxAge() {
@@ -617,7 +617,7 @@ public class FlumeConfiguration extends Configuration {
   }
 
   public String getCollectorDfsDir() {
-    return get(COLLECTOR_DFS_DIR, "file://tmp/flume/collected");
+    return get(COLLECTOR_DFS_DIR, "file://tmp/flume-${user.name}/collected");
   }
 
   @Deprecated
