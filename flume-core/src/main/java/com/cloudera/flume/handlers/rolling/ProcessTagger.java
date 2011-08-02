@@ -62,7 +62,10 @@ public class ProcessTagger implements Tagger {
       name = name.substring(0, 200); // concatenate long prefixes
     }
 
-    String fname = String.format("%s.%08d.%s.seq", name, pid, f);
+    long nanos = Clock.nanos();
+    // formatted so that lexigraphical and chronological can use same sort
+    // yyyyMMdd-HHmmssSSSz.0000000nanos.00000pid
+    String fname = String.format("%s.%012d.%08d", f, nanos, pid);
     return fname;
   }
 
@@ -104,7 +107,9 @@ public class ProcessTagger implements Tagger {
       prefix = prefix.substring(0, 200); // concatenate long prefixes
     }
 
-    lastTag = String.format("%s.%08d.%s.%012d.seq", prefix, pid, f, nanos);
+    // formatted so that lexigraphical and chronological can use same sort
+    // yyyyMMdd-HHmmssSSSz.0000000nanos.00000pid
+    lastTag = String.format("%s.%012d.%08d", f, nanos, pid);
 
     this.pid = pid;
     this.exe = prefix;
