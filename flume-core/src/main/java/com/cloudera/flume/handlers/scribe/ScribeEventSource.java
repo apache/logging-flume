@@ -53,6 +53,8 @@ import com.google.common.base.Preconditions;
 public class ScribeEventSource extends ThriftServer implements EventSource,
     scribe.Iface {
   static final Logger LOG = LoggerFactory.getLogger(ScribeEventSource.class);
+  public static final String A_SERVERPORT = "serverPort";
+
   final BlockingQueue<Event> pendingQueue = new LinkedBlockingQueue<Event>();
 
   final static public String SCRIBE_CATEGORY = "scribe.category";
@@ -243,7 +245,9 @@ public class ScribeEventSource extends ThriftServer implements EventSource,
   public ReportEvent getMetrics() {
     // TODO(henry): add metrics
     // TODO missing EventSource stats
-    return new ReportEvent("scribe-source");
+    ReportEvent rpt = new ReportEvent("scribe-source");
+    rpt.setLongMetric(A_SERVERPORT, port);
+    return rpt;
   }
 
   @Override

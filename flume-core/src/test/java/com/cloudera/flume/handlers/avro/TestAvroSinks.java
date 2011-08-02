@@ -76,7 +76,9 @@ public class TestAvroSinks implements ExampleData {
     txt.close();
 
     FlumeConfiguration conf = FlumeConfiguration.get();
-    final AvroEventSource tes = new AvroEventSource(conf.getCollectorPort() + 1);
+    // this is a slight tweak to avoid port conflicts
+    final int port = conf.getCollectorPort() + 1;
+    final AvroEventSource tes = new AvroEventSource(port);
     tes.open();
 
     final CounterSink cnt = new CounterSink("count");
@@ -92,8 +94,7 @@ public class TestAvroSinks implements ExampleData {
     t.start(); // drain the sink.
 
     // mem -> AvroEventSink
-    AvroEventSink snk = new AvroEventSink("0.0.0.0",
-        conf.getCollectorPort() + 1);
+    AvroEventSink snk = new AvroEventSink("0.0.0.0", port);
     snk.open();
     EventUtil.dumpAll(mem, snk);
     mem.close();
@@ -121,11 +122,13 @@ public class TestAvroSinks implements ExampleData {
         .intValue());
     assertEquals(1000, rpt.getLongMetric(AvroEventSource.A_QUEUE_FREE)
         .intValue());
+    assertEquals(port, rpt.getLongMetric(AvroEventSource.A_SERVERPORT)
+        .intValue());
   }
 
   /**
    * This tests starts many threads and confirms that the metrics values in
-   * ThiftEventSource are consistently updated.
+   * AvroEventSource are consistently updated.
    * 
    * The pipeline is:
    * 
@@ -139,7 +142,8 @@ public class TestAvroSinks implements ExampleData {
     final int threads = 10;
     final FlumeConfiguration conf = FlumeConfiguration.get();
     // this is a slight tweak to avoid port conflicts
-    final AvroEventSource tes = new AvroEventSource(conf.getCollectorPort() + 1);
+    final int port = conf.getCollectorPort() + 1;
+    final AvroEventSource tes = new AvroEventSource(port);
     tes.open();
 
     final CounterSink cnt = new CounterSink("count");
@@ -171,8 +175,7 @@ public class TestAvroSinks implements ExampleData {
             txt.close();
 
             // mem -> AvroEventSink
-            AvroEventSink snk = new AvroEventSink("0.0.0.0", conf
-                .getCollectorPort() + 1);
+            AvroEventSink snk = new AvroEventSink("0.0.0.0", port);
             snk.open();
 
             sendStarted.countDown();
@@ -215,6 +218,8 @@ public class TestAvroSinks implements ExampleData {
         .longValue());
     assertEquals(1000, rpt.getLongMetric(AvroEventSource.A_QUEUE_FREE)
         .longValue());
+    assertEquals(port, rpt.getLongMetric(AvroEventSource.A_SERVERPORT)
+        .intValue());
   }
 
   /**

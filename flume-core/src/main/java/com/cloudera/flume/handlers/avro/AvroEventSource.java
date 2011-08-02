@@ -54,6 +54,7 @@ public class AvroEventSource extends EventSource.Base {
 
   static final Logger LOG = LoggerFactory.getLogger(AvroEventSource.class);
 
+  public static final String A_SERVERPORT = "serverPort";
   public static final String A_QUEUE_CAPACITY = "queueCapacity";
   public static final String A_QUEUE_FREE = "queueFree";
   public static final String A_ENQUEUED = "enqueued";
@@ -85,6 +86,7 @@ public class AvroEventSource extends EventSource.Base {
   @Override
   synchronized public ReportEvent getMetrics() {
     ReportEvent rpt = super.getMetrics();
+    rpt.setLongMetric(A_SERVERPORT, port);
     rpt.setLongMetric(A_QUEUE_CAPACITY, q.size());
     rpt.setLongMetric(A_QUEUE_FREE, q.remainingCapacity());
     rpt.setLongMetric(A_ENQUEUED, enqueued.get());

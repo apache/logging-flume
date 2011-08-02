@@ -86,9 +86,9 @@ public class TestThriftSinks implements ExampleData {
     txt.close();
 
     FlumeConfiguration conf = FlumeConfiguration.get();
-    final ThriftEventSource tes = new ThriftEventSource(
-        conf.getCollectorPort() + 1); // this is a slight
-    // tweak to avoid port conflicts
+    // this is a slight tweak to avoid port conflicts
+    final int port = conf.getCollectorPort() + 1;
+    final ThriftEventSource tes = new ThriftEventSource(port);
     tes.open();
 
     final CounterSink cnt = new CounterSink("count");
@@ -107,8 +107,7 @@ public class TestThriftSinks implements ExampleData {
     t.start(); // drain the sink.
 
     // mem -> ThriftEventSink
-    ThriftEventSink snk = new ThriftEventSink("0.0.0.0", conf
-        .getCollectorPort() + 1);
+    ThriftEventSink snk = new ThriftEventSink("0.0.0.0", port);
     snk.open();
     EventUtil.dumpAll(mem, snk);
     mem.close();
@@ -133,7 +132,8 @@ public class TestThriftSinks implements ExampleData {
         .intValue());
     assertEquals(1000, rpt.getLongMetric(ThriftEventSource.A_QUEUE_FREE)
         .intValue());
-
+    assertEquals(port, rpt.getLongMetric(ThriftEventSource.A_SERVERPORT)
+        .intValue());
   }
 
   @Test
@@ -149,7 +149,7 @@ public class TestThriftSinks implements ExampleData {
 
   /**
    * This tests starts many threads and confirms that the metrics values in
-   * ThiftEventSource are consistently updated.
+   * ThriftEventSource are consistently updated.
    * 
    * The pipeline is:
    * 
@@ -163,8 +163,8 @@ public class TestThriftSinks implements ExampleData {
     final int threads = 100;
     final FlumeConfiguration conf = FlumeConfiguration.get();
     // this is a slight tweak to avoid port conflicts
-    final ThriftEventSource tes = new ThriftEventSource(
-        conf.getCollectorPort() + 1);
+    final int port = conf.getCollectorPort() + 1;
+    final ThriftEventSource tes = new ThriftEventSource(port);
     tes.open();
 
     final CounterSink cnt = new CounterSink("count");
@@ -199,8 +199,7 @@ public class TestThriftSinks implements ExampleData {
             txt.close();
 
             // mem -> ThriftEventSink
-            ThriftEventSink snk = new ThriftEventSink("0.0.0.0", conf
-                .getCollectorPort() + 1);
+            ThriftEventSink snk = new ThriftEventSink("0.0.0.0", port);
             snk.open();
 
             sendStarted.countDown();
@@ -244,7 +243,8 @@ public class TestThriftSinks implements ExampleData {
         .longValue());
     assertEquals(1000, rpt.getLongMetric(ThriftEventSource.A_QUEUE_FREE)
         .longValue());
-
+    assertEquals(port, rpt.getLongMetric(ThriftEventSource.A_SERVERPORT)
+        .intValue());
   }
 
   /**
