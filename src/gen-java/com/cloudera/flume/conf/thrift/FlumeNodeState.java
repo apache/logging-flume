@@ -16,7 +16,8 @@ public enum FlumeNodeState implements TEnum {
   CONFIGURING(2),
   ACTIVE(3),
   ERROR(4),
-  LOST(5);
+  LOST(5),
+  DECOMMISSIONED(6);
 
   private static final Map<Integer, FlumeNodeState> BY_VALUE = new HashMap<Integer,FlumeNodeState>() {{
     for(FlumeNodeState val : FlumeNodeState.values()) {
