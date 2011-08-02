@@ -20,7 +20,8 @@ package com.cloudera.flume.agent.diskfailover;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.conf.Context;
@@ -49,7 +50,7 @@ import com.google.common.base.Preconditions;
  */
 public class DiskFailoverDeco<S extends EventSink> extends
     EventSinkDecorator<S> {
-  static Logger LOG = Logger.getLogger(DiskFailoverDeco.class);
+  static final Logger LOG = LoggerFactory.getLogger(DiskFailoverDeco.class);
 
   final DiskFailoverManager dfoMan;
   final RollTrigger trigger;
@@ -218,7 +219,7 @@ public class DiskFailoverDeco<S extends EventSink> extends
     try {
       drainStarted.await();
     } catch (InterruptedException e) {
-      LOG.error(e, e);
+      LOG.error("Unexpected error waiting for drain to start", e);
       throw new IOException(e);
     }
     LOG.debug("Opened DiskFailoverDeco");

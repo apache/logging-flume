@@ -23,7 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.durability.WALCompletionNotifier;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -40,7 +41,7 @@ import com.google.common.base.Preconditions;
  * TODO (jon) rename to HeartbeatManager
  */
 public class LivenessManager {
-  final static Logger LOG = Logger.getLogger(LivenessManager.class);
+  static final Logger LOG = LoggerFactory.getLogger(LivenessManager.class);
   final long BACKOFF_MILLIS;
 
   MasterRPC master;
@@ -193,9 +194,7 @@ public class LivenessManager {
             try {
               master.close();
             } catch (IOException e1) {
-              LOG.error("Failed when attempting to close master: "
-                  + e1.getMessage());
-              LOG.debug(e1, e1);
+              LOG.error("Failed when attempting to close master", e1);
             }
 
             Clock.sleep(backoff);

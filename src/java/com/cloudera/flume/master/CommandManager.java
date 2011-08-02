@@ -30,7 +30,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.master.commands.CreateLogicalNodeForm;
 import com.cloudera.flume.master.commands.DecommissionLogicalNodeForm;
@@ -57,7 +58,7 @@ import com.google.common.base.Preconditions;
  * (time/space).
  */
 public class CommandManager implements Reportable {
-  final static Logger LOG = Logger.getLogger(CommandManager.class);
+  static final Logger LOG = LoggerFactory.getLogger(CommandManager.class);
 
   // queue of commands pending execution.
   final LinkedBlockingQueue<CommandStatus> queue = new LinkedBlockingQueue<CommandStatus>();
@@ -82,7 +83,7 @@ public class CommandManager implements Reportable {
         try {
           Thread.sleep(delay);
         } catch (InterruptedException e) {
-          LOG.debug(e, e);
+          LOG.debug("Delay noop interrupted", e);
           throw new MasterExecException("Delay Noop Interrupted!", e);
         }
       }

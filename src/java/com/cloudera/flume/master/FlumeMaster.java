@@ -31,8 +31,9 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
-import org.apache.log4j.Logger;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -61,7 +62,7 @@ public class FlumeMaster implements Reportable {
 
   protected final FlumeConfiguration cfg;
 
-  static Logger LOG = Logger.getLogger(FlumeMaster.class);
+  static final Logger LOG = LoggerFactory.getLogger(FlumeMaster.class);
 
   /** report key -- hostname of this master */
   static final String REPORTKEY_HOSTNAME = "hostname";
@@ -324,11 +325,9 @@ public class FlumeMaster implements Reportable {
       }
 
     } catch (IOException e) {
-      LOG.error("Exception when shutting down master! " + e.getMessage());
-      LOG.debug(e, e);
+      LOG.error("Exception when shutting down master!", e);
     } catch (Exception e) {
-      LOG.error("Exception when shutting down master! " + e.getMessage());
-      LOG.debug(e, e);
+      LOG.error("Exception when shutting down master!", e);
     }
 
   }

@@ -34,7 +34,8 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.VersionInfo;
 import com.cloudera.flume.agent.diskfailover.DiskFailoverManager;
@@ -78,7 +79,7 @@ import com.google.common.base.Preconditions;
  * 
  */
 public class FlumeNode implements Reportable {
-  final static Logger LOG = Logger.getLogger(FlumeNode.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(FlumeNode.class);
   final static String PHYSICAL_NODE_REPORT_PREFIX = "pn-";
   static final String R_NUM_LOGICAL_NODES = "Logical nodes";
 

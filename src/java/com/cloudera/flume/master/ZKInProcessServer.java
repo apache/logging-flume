@@ -26,12 +26,13 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.Properties;
 
-import org.apache.log4j.Logger;
 import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerMain;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.google.common.base.Preconditions;
@@ -65,7 +66,7 @@ public class ZKInProcessServer {
     }
   }
 
-  final static Logger LOG = Logger.getLogger(ZKInProcessServer.class);
+  static final Logger LOG = LoggerFactory.getLogger(ZKInProcessServer.class);
 
   FlumeZKQuorumPeerMain quorumPeer = null;
   FlumeZKServerMain zkServerMain = null;
@@ -313,7 +314,7 @@ public class ZKInProcessServer {
     createDirs(conf.getMasterZKLogDir() + "/server-" + serverid, conf
         .getMasterZKLogDir()
         + "/logs-" + serverid, serverid);
-    LOG.info(properties);
+    LOG.info("configuration: {}", properties);
     config.parseProperties(properties);
     this.standalone = false;
   }

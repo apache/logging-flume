@@ -30,7 +30,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
@@ -48,7 +49,7 @@ import com.google.common.collect.Multimap;
  * This maintains the global configuration state of the flume nodes.
  */
 public class ConfigManager implements ConfigurationManager {
-  static Logger LOG = Logger.getLogger(ConfigManager.class);
+  static final Logger LOG = LoggerFactory.getLogger(ConfigManager.class);
   ConfigStore cfgStore;
   Map<String, String> logicalToPhysical = new HashMap<String, String>();
 
@@ -195,7 +196,7 @@ public class ConfigManager implements ConfigurationManager {
             spec.src, spec.sink);
       }
     } catch (FlumeSpecException e) {
-      LOG.debug(e, e);
+      LOG.debug("Invalid Flume specification", e);
       throw new IOException(e.getMessage());
     } finally {
       if (r != null) {

@@ -28,7 +28,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.core.Attributes;
@@ -59,7 +60,7 @@ import com.google.common.base.Preconditions;
  * IllegalArgumentExceptions and NullPointerExceptions can be thrown.
  */
 public class NaiveFileWALManager implements WALManager {
-  static Logger LOG = Logger.getLogger(NaiveFileWALManager.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(NaiveFileWALManager.class);
 
   // Batches lives in queues
   final private ConcurrentHashMap<String, WALData> table = new ConcurrentHashMap<String, WALData>();
@@ -303,9 +304,7 @@ public class NaiveFileWALManager implements WALManager {
     return new EventSinkDecorator<EventSink>(curSink) {
       @Override
       public void append(Event e) throws IOException {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug(e); // performance sensitive
-        }
+        LOG.debug("Appending event: {}", e); // performance sensitive
         getSink().append(e);
 
       }

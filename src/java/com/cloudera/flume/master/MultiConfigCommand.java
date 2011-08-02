@@ -23,7 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.LogicalNode;
 import com.cloudera.flume.conf.Context;
@@ -42,7 +43,7 @@ import com.google.common.base.Preconditions;
  * TODO (jon) rename to MultiConfigForm
  */
 public class MultiConfigCommand {
-  final static Logger LOG = Logger.getLogger(MultiConfigCommand.class);
+  static final Logger LOG = LoggerFactory.getLogger(MultiConfigCommand.class);
 
   String specification;
 
@@ -100,7 +101,7 @@ public class MultiConfigCommand {
           }
 
         } catch (FlumeSpecException e) {
-          LOG.error(e);
+          LOG.error("Invalid Flume specification", e);
           throw new IOException(e);
         }
       }

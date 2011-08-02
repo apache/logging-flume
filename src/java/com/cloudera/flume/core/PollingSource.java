@@ -23,7 +23,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -36,7 +37,7 @@ import com.google.common.base.Preconditions;
  * event for consumption. The Pollable should provide events without blocking.
  */
 public class PollingSource extends EventSource.Base {
-  static Logger LOG = Logger.getLogger(PollingSource.class);
+  static final Logger LOG = LoggerFactory.getLogger(PollingSource.class);
 
   final Pollable src;
   final long period; // Time to wait if restart is true
@@ -76,7 +77,7 @@ public class PollingSource extends EventSource.Base {
         while (!shutdown) {
           Event e = src.poll();
           if (e != null) {
-            LOG.debug(e);
+            LOG.debug("Polled event: {}", e);
             while (!eventQueue.offer(e, 200, TimeUnit.MILLISECONDS)) {
             }
           }

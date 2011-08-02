@@ -40,7 +40,6 @@ import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.avro.util.Utf8;
-import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -48,6 +47,8 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.avro.AvroFlumeChokeMap;
@@ -72,7 +73,7 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
       .<String, String> create();
   Map<String, Map<String, Integer>> chokeMap = new HashMap<String, Map<String, Integer>>();
 
-  final static Logger LOG = Logger.getLogger(ZooKeeperConfigStore.class);
+  static final Logger LOG = LoggerFactory.getLogger(ZooKeeperConfigStore.class);
   final static String CFGS_PATH = "/flume-cfgs";
   final static String NODEMAPS_PATH = "/flume-nodes";
   final static String CHOKEMAP_PATH = "/flume-chokemap";
@@ -486,7 +487,7 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
 
       chokeMap.putAll(deserializeChokeMap(data));
     } catch (Exception e) {
-      LOG.error(e, e);
+      LOG.error("Unexpected exception in loadChokeMap", e);
       throw new IOException("Unexpected exception in loadChokeMap", e);
     }
   }
@@ -549,8 +550,8 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
         nodeMap.putAll(mapping.getLeft(), mapping.getRight());
       }
     } catch (Exception e) {
-      LOG.error(e, e);
-      throw new IOException("Unexpected exception in loadNodes", e);
+      LOG.error("Unexpected exception in loadNodeMaps", e);
+      throw new IOException("Unexpected exception in loadNodeMaps", e);
     }
   }
 

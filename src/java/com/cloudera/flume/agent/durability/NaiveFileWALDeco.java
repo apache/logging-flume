@@ -21,7 +21,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.conf.Context;
@@ -51,7 +52,7 @@ import com.google.common.base.Preconditions;
  */
 public class NaiveFileWALDeco<S extends EventSink> extends
     EventSinkDecorator<S> {
-  static Logger LOG = Logger.getLogger(NaiveFileWALDeco.class);
+  static final Logger LOG = LoggerFactory.getLogger(NaiveFileWALDeco.class);
 
   final WALManager walman;
   final RollTrigger trigger;
@@ -262,7 +263,7 @@ public class NaiveFileWALDeco<S extends EventSink> extends
     try {
       started.await();
     } catch (InterruptedException e) {
-      LOG.error(e, e);
+      LOG.error("Unexpected error waiting", e);
       throw new IOException(e);
     }
     LOG.debug("Opened NaiveFileWALDeco");
