@@ -139,6 +139,8 @@ public class FlumeShell {
     commandMap.put("exec noop", new CommandDescription(
         "[delaymillis (no arg means no wait)]", true, 1));
     commandMap.put("exec spawn", new CommandDescription(
+        "physicalnode logicalnode (synonym for exec map. deprecated.)", true, 3));
+    commandMap.put("exec map", new CommandDescription(
         "physicalnode logicalnode", true, 3));
     commandMap.put("exec decommission", new CommandDescription("logicalnode",
         true, 2));
@@ -155,6 +157,8 @@ public class FlumeShell {
     commandMap.put("submit refreshAll", new CommandDescription("", true, 1));
     commandMap.put("submit noop", new CommandDescription("", true, 1));
     commandMap.put("submit spawn", new CommandDescription(
+        "physicalnode logicalnode (synonym for submit map. deprecated.)", true, 3));
+    commandMap.put("submit map", new CommandDescription(
         "physicalnode logicalnode", true, 3));
     commandMap.put("submit decommission", new CommandDescription("logicalnode",
         true, 2));

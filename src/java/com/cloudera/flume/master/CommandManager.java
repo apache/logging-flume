@@ -99,6 +99,7 @@ public class CommandManager implements Reportable {
       { "save", SaveConfigCommand.buildExecable() },
       { "load", LoadConfigCommand.buildExecable() },
       { "spawn", CreateLogicalNodeForm.buildExecable() },
+      { "map", CreateLogicalNodeForm.buildExecable() },
       { "decommission", DecommissionLogicalNodeForm.buildExecable() },
       { "unmap", UnmapLogicalNodeForm.buildExecable() },
       { "unmapAll", UnmapLogicalNodeForm.buildUnmapAllExecable() }, };

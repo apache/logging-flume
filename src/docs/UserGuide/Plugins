@@ -116,10 +116,10 @@ Terminal 2: $ bin/flume node -n localhost
 
 We assume the node is called _host_.
 
-Next let's spawn a new logical node called _report_.
+Next let's map a new logical node called _report_ to localhost.
 
 ----
-spawn localhost report
+map localhost report
 ----
 
 Finally lets set the configuration of the three nodes (replacing _host_ with 

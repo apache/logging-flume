@@ -234,8 +234,8 @@ on host2.
 ----
 # flume shell commands
 exec unmapAll
-exec spawn host1 node2
-exec spawn host2 node1
+exec map host1 node2
+exec map host2 node1
 ----
 
 The original configuration will now be translated to: 

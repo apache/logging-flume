@@ -61,13 +61,13 @@ collector1 : collectorSource | collectorSink("hdfs://....") ;
 ----
 
 Later you learn that host1 is the name of the agent1 machine and host2 is the 
-name of the collector machine.  You can 'spawn' logical nodes onto the 
-physical Flume instances on host1 and host2 by issuing the following spawn 
+name of the collector machine.  You can 'map' logical nodes onto the
+physical Flume instances on host1 and host2 by issuing the following map
 commands:
 
 ----
-spawn host1 agent1 
-spawn host2 collector1
+map host1 agent1
+map host2 collector1
 ----
 
 Afterwards, the node status table should display a new row of information for 
@@ -89,7 +89,7 @@ This terminates the thread and removes the configuration associated with a
 logical node, and the mapping between the logical node and physical node.
 
 You can also move a logical node from one physical node to another by first 
-unmapping a logical node and then spawning it on another physical node.  In 
+unmapping a logical node and then mapping it on another physical node.  In
 this scenario, you change the collector1 from being on host2 to host3.  
 
 ----
@@ -97,11 +97,11 @@ unmap host2 collector1
 ----
 
 At this point, the logical node mapping is removed, and colletor1 is not 
-active anywhere. You can then map collector1 onto host3 by using the spawn 
+active anywhere. You can then map collector1 onto host3 by using the map
 command:
 
 ----
-spawn host3 colletor1
+map host3 colletor1
 ----
 
 NOTE: There are some limitations that need to be further described in this 
@@ -133,9 +133,9 @@ configuration.
 When the logical nodes get mapped to physical nodes:
 
 ----
-spawn host1 dataProducer1
-spawn host2 dataProducer2
-spawn host3 dataConsumer
+map host1 dataProducer1
+map host2 dataProducer2
+map host3 dataConsumer
 ----
 
 and after the Master learns the host names (the host1, host2, and host3 
@@ -195,15 +195,15 @@ barConsumer : collectorSource | collectorSink("hdfs://nn/bardir") ;
 In the scenario, there are two physical machines that produce both kinds of 
 data -- foo data and bar data. You want to send data to single collector that 
 collects both foo data and bar data and writes it to different HDFS 
-directories.  You could then spawn the nodes onto physical nodes:
+directories.  You could then map the nodes onto physical nodes:
 
 ----
-spawn host1 fooNode1
-spawn host1 barNode1
-spawn host2 fooNode2
-spawn host2 barNode2
-spawn host3 fooConsumer
-spawn host3 barConsumer
+map host1 fooNode1
+map host1 barNode1
+map host2 fooNode2
+map host2 barNode2
+map host3 fooConsumer
+map host3 barConsumer
 ----
 
 
@@ -254,15 +254,15 @@ data in the Flume cluster.  The auto*Chain based agents would only send data
 to collectors in the same flow group.  This isolates data so that it only 
 flows to nodes within the group.
 
-You specify flow groups by adding an extra parameter to the spawn command:
+You specify flow groups by adding an extra parameter to the map command:
 
 ----
-spawn host1 fooNode1 flowfoo
-spawn host1 barNode1 flowbar
-spawn host2 fooNode2 flowfoo
-spawn host2 barNode2 flowbar
-spawn host3 fooConsumer flowfoo
-spawn host3 barConsumer flowbar
+map host1 fooNode1 flowfoo
+map host1 barNode1 flowbar
+map host2 fooNode2 flowfoo
+map host2 barNode2 flowbar
+map host3 fooConsumer flowfoo
+map host3 barConsumer flowbar
 ----
 
 

@@ -175,12 +175,15 @@ disk.
 +load '_filename_'+ :: This augments the current configuration with the 
 logical node specifications found in +_filename_+.
 
-+spawn _physicalnode_ _logicalnode_+:: This creates a new logical node 
-_logicalnode_ on physical node +_physicalnode_+.  The node starts with a 
-+null+ source and a +null+ sink, and updates its configuration specified at 
-the master when it begins heartbeating.  Thus if a logical node configuration 
-already exists and a new node is spawned, it will pick up the configuration for 
-the logical node.
++map _physicalnode_ _logicalnode_+:: This creates a new mapping between logical
+node _logicalnode_ and physical node +_physicalnode_+.  The node starts with a
++null+ source and a +null+ sink, and updates its configuration specified at the
+master when it begins heartbeating.  Thus if a logical node configuration
+already exists and is mapped, it will pick up the configuration for the logical
+node.
+
++spawn _physicalnode_ _logicalnode_+:: The +spawn: command is a synonym for the
++map+ command and has been deprecated.
 
 +decommission _logicalnode_+ :: This removes a logical node from the logical 
 node configuration table, and unmaps it from any physical nodes it may be 
@@ -188,10 +191,10 @@ installed on.
 
 +unmap _physicalnode_ _logicalnode_+ :: This command breaks the assignment of 
 a _logicalnode_ from machine _physicalnode_.  A logical node can be reassigned 
-to another physical node using the +spawn+ command.
+to another physical node using the +map+ command.
 
 +unmapAll+ :: This command breaks the assignment of all logical node from 
 physical nodes.  A logical node can be reassigned to another physical node 
-using the +spawn+ command.
+using the +map+ command.
 
 
