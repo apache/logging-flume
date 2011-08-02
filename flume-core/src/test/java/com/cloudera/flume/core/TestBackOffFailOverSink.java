@@ -20,6 +20,7 @@ package com.cloudera.flume.core;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
@@ -33,6 +34,7 @@ import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.handlers.debug.ExceptionTwiddleDecorator;
 import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.handlers.debug.NullSink;
 import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.ReportTestUtils;
 import com.cloudera.flume.reporter.ReportUtil;
@@ -336,4 +338,51 @@ public class TestBackOffFailOverSink {
     assertEquals("Two", all.getStringMetric("backup.Two.name"));
   }
 
+  /**
+   * Enforce the semantics of interruption exception handling.
+   * 
+   * @throws IOException
+   * @throws InterruptedException
+   */
+  @Test
+  public void testAppendInterruption() throws IOException, InterruptedException {
+    EventSink snk = new BackOffFailOverSink(InterruptSinks.appendSink(),
+        new NullSink());
+    snk.open();
+    try {
+      snk.append(new EventImpl("test".getBytes()));
+    } catch (InterruptedException ie) {
+      // interrupted should remain open.
+      return;
+    }
+    fail("expected interruption!");
+  }
+
+  @Test
+  public void testOpenInterruption() throws IOException, InterruptedException {
+    EventSink snk = new BackOffFailOverSink(InterruptSinks.openSink(),
+        new NullSink());
+    try {
+      snk.open();
+    } catch (InterruptedException ie) {
+      // if interrupted, it should be closed.
+      return;
+    }
+    fail("expected interruption!");
+  }
+
+  @Test
+  public void testCloseInterruption() throws IOException, InterruptedException {
+    EventSink snk = new BackOffFailOverSink(InterruptSinks.closeSink(),
+        new NullSink());
+    snk.open();
+    snk.append(new EventImpl("test".getBytes()));
+    try {
+      snk.close();
+    } catch (InterruptedException ie) {
+      // if interrupted, should be closed.
+      return;
+    }
+    fail("expected interruption!");
+  }
 }

@@ -20,6 +20,7 @@ package com.cloudera.flume.handlers.debug;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -42,6 +43,7 @@ import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
+import com.cloudera.flume.core.InterruptSinks;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportTestUtils;
 import com.cloudera.flume.reporter.ReportUtil;
@@ -102,12 +104,12 @@ public class TestStubbornAppendSink {
     // 100 good messages. every 4th message fails -- 3 good 1 bad.
     // 00 01 02 xx 03 04 05 xx 06 07 08 xx ...
     // so 100 good msgs, 133 total messages, 33 bad msgs
-    Assert.assertEquals(new Long(100), rpt
-        .getLongMetric(StubbornAppendSink.A_SUCCESSES));
-    Assert.assertEquals(new Long(33), rpt
-        .getLongMetric(StubbornAppendSink.A_FAILS));
-    Assert.assertEquals(new Long(33), rpt
-        .getLongMetric(StubbornAppendSink.A_RECOVERS));
+    Assert.assertEquals(new Long(100),
+        rpt.getLongMetric(StubbornAppendSink.A_SUCCESSES));
+    Assert.assertEquals(new Long(33),
+        rpt.getLongMetric(StubbornAppendSink.A_FAILS));
+    Assert.assertEquals(new Long(33),
+        rpt.getLongMetric(StubbornAppendSink.A_RECOVERS));
   }
 
   /**
@@ -173,10 +175,10 @@ public class TestStubbornAppendSink {
 
     ReportEvent rpt = sink.getMetrics();
     // why isn't this 25?
-    Assert.assertEquals(new Long(24), rpt
-        .getLongMetric(StubbornAppendSink.A_FAILS));
-    Assert.assertEquals(new Long(24), rpt
-        .getLongMetric(StubbornAppendSink.A_RECOVERS));
+    Assert.assertEquals(new Long(24),
+        rpt.getLongMetric(StubbornAppendSink.A_FAILS));
+    Assert.assertEquals(new Long(24),
+        rpt.getLongMetric(StubbornAppendSink.A_RECOVERS));
 
   }
 
@@ -225,7 +227,26 @@ public class TestStubbornAppendSink {
     assertNotNull(rpt.getLongMetric(StubbornAppendSink.A_RECOVERS));
     assertNotNull(rpt.getLongMetric(StubbornAppendSink.A_SUCCESSES));
     assertEquals("One", rpt.getStringMetric("One.name"));
-
+  }
+  
+  /**
+   * Enforce the semantics of interruption exception handling.
+   * 
+   * @throws IOException
+   * @throws InterruptedException
+   */
+  @Test
+  public void testAppendInterruption() throws IOException, InterruptedException {
+    EventSink snk = new StubbornAppendSink<EventSink>(
+        InterruptSinks.appendSink());
+    snk.open();
+    try {
+      snk.append(new EventImpl("test".getBytes()));
+    } catch (InterruptedException ie) {
+      // if interrupted, it should be closed.
+      return;
+    }
+    fail("expected interruption!");
   }
 
 }

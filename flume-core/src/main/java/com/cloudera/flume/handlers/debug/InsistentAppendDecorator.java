@@ -95,9 +95,11 @@ public class InsistentAppendDecorator<S extends EventSink> extends
   /**
    * We have to be careful with this append method -- it has the potential to
    * block forever!
+   * 
+   * @throws InterruptedException
    */
   @Override
-  public void append(Event evt) throws IOException {
+  public void append(Event evt) throws IOException, InterruptedException {
     List<IOException> exns = new ArrayList<IOException>();
     int attemptRetries = 0;
     appendRequests++;
@@ -109,6 +111,8 @@ public class InsistentAppendDecorator<S extends EventSink> extends
         appendSuccesses++;
         backoff.reset(); // reset backoff counter;
         return;
+      } catch (InterruptedException ie) {
+        throw ie;
       } catch (Exception e) {
         // this is an unexpected exception
         long waitTime = backoff.sleepIncrement();
@@ -122,9 +126,7 @@ public class InsistentAppendDecorator<S extends EventSink> extends
           backoff.waitUntilRetryOk();
         } catch (InterruptedException e1) {
           // got an interrupted signal, bail out!
-          exns.add(new IOException(e1));
-          Thread.currentThread().interrupt();
-          throw MultipleIOException.createIOException(exns);
+          throw e1;
         } finally {
           attemptRetries++;
           appendRetries++;

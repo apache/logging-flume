@@ -60,9 +60,8 @@ public class StubbornAppendSink<S extends EventSink> extends
   public void open() throws IOException, InterruptedException {
     Preconditions.checkNotNull(sink);
     LOG.debug("Opening Stubborn Append Sink {}", this);
-    isOpen.set(true); // slightly different than default semantics -- open
-    // always keeps it in open state.
     sink.open();
+    isOpen.set(true);
     LOG.debug("Opened Stubborn Append Sink {}", this);
   }
 
@@ -72,15 +71,18 @@ public class StubbornAppendSink<S extends EventSink> extends
       super.append(e);
       appendSuccesses.incrementAndGet();
       return; // success case
-    } catch (Exception ex) {
-      LOG.info("append failed on event '{}' with error: {}", e, ex.getMessage());
+    } catch (InterruptedException ie) {
+      LOG.info("append Interrupted event '{}' with error: {}", e,
+          ie.getMessage());
       appendFails.incrementAndGet();
       super.close(); // close
+      throw ie;
 
-      if (Thread.currentThread().isInterrupted()) {
-        throw new IOException(
-            "throwing exception because stubborn append was interrupted");
-      }
+    } catch (Exception ex) {
+      LOG.info("append failed on event '{}' with error: {}", e, ex.getMessage());
+
+      appendFails.incrementAndGet();
+      super.close(); // close
 
       open(); // attempt to reopen
       super.append(e); // resend

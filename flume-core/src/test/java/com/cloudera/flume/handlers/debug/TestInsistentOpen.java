@@ -39,6 +39,7 @@ import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
+import com.cloudera.flume.core.InterruptSinks;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportTestUtils;
 import com.cloudera.flume.reporter.ReportUtil;
@@ -51,7 +52,6 @@ import com.cloudera.util.Clock;
  * This tests the insistent opener (it tries many times before giving up)
  */
 public class TestInsistentOpen {
-
   public static final Logger LOG = LoggerFactory
       .getLogger(TestInsistentOpen.class);
 
@@ -123,6 +123,8 @@ public class TestInsistentOpen {
 
     try {
       sink.open();
+    } catch (InterruptedException ie) {
+      LOG.error("Interrupted Exception not expected", ie);
     } catch (IOException e1) {
 
       ReportEvent rpt = sink.getMetrics();
@@ -134,10 +136,10 @@ public class TestInsistentOpen {
       // 11 attempts - one each at 100 * x for x in [0,1,2,3,4,5,6,7,8,9,10]
       // Retry trigger in IOD only fails when time > max, but passes when time =
       // max.
-      assertEquals(new Long(11), rpt
-          .getLongMetric(InsistentOpenDecorator.A_ATTEMPTS));
-      assertEquals(new Long(11), rpt
-          .getLongMetric(InsistentOpenDecorator.A_RETRIES));
+      assertEquals(new Long(11),
+          rpt.getLongMetric(InsistentOpenDecorator.A_ATTEMPTS));
+      assertEquals(new Long(11),
+          rpt.getLongMetric(InsistentOpenDecorator.A_RETRIES));
       Clock.resetDefault();
       return; // success
     }
@@ -174,9 +176,11 @@ public class TestInsistentOpen {
       public void run() {
         try {
           sink.open();
-        } catch (IOException e) {
-          // insistent translates interruptions into io exceptions
+        } catch (InterruptedException e) {
           done.countDown();
+        } catch (IOException e) {
+          e.printStackTrace();
+          LOG.error("this will fail and timeout");
         }
       }
     };
@@ -209,4 +213,23 @@ public class TestInsistentOpen {
 
   }
 
+  /**
+   * Enforce the semantics of interruption exception handling.
+   * 
+   * @throws IOException
+   * @throws InterruptedException
+   */
+  @Test
+  public void testOpenInterruption() throws IOException, InterruptedException {
+    BackoffPolicy bop = new CappedExponentialBackoff(10, 5000);
+    EventSink snk = new InsistentOpenDecorator<EventSink>(
+        InterruptSinks.openSink(), bop);
+    try {
+      snk.open();
+    } catch (InterruptedException ie) {
+      // if interrupted, it should be closed.
+      return;
+    }
+    fail("expected interruption!");
+  }
 }
