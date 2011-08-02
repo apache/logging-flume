@@ -19,8 +19,6 @@ package com.cloudera.flume.handlers.rolling;
 
 import java.util.Date;
 
-import com.cloudera.flume.core.Event;
-
 /**
  * A tagger is a mechanism that creates unique names for groups of events and
  * adds annotation data to events. It keeps some state -- the name for most
@@ -41,10 +39,5 @@ public interface Tagger {
   String newTag();
 
   Date getDate();
-
-  /**
-   * This allows the tagger to add structured data or metadata to an event
-   */
-  void annotate(Event e);
 
 }

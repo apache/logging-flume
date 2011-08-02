@@ -19,7 +19,6 @@ package com.cloudera.flume.reporter.history;
 
 import java.util.Date;
 
-import com.cloudera.flume.core.Event;
 import com.cloudera.flume.handlers.rolling.Tagger;
 import com.cloudera.util.Clock;
 
@@ -49,11 +48,6 @@ public class DumbTagger implements Tagger {
   public String newTag() {
     d = Clock.date();
     return getTag();
-  }
-
-  @Override
-  public void annotate(Event e) {
-    // Do nothing
   }
 
 }
