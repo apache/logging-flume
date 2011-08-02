@@ -75,7 +75,7 @@ Var ServiceInstallLog
 ;  !define MUI_UNICON flume.ico
 
   ;General
-  OutFile flume-installer.exe
+  OutFile flume-node-@VERSION@.exe
 
   ;Install Options pages
   LangString TEXT_JVM_TITLE ${LANG_ENGLISH} "Java Virtual Machine"

@@ -1184,10 +1184,17 @@ to call at top-level: ant deploy-contrib compile-core-test
     </javadoc>
   </target>
 
-  <target name="winstall-filter" description="update windows installer script version">
-   <copy file="${src.dir}/nsis/flume.nsi.template" tofile="${basedir}/flume.nsi">
+  <target name="winstall-filter" depends="tar" description="update windows installer script version">
+   <copy file="${src.dir}/nsis/flume.nsi.template" tofile="flume.nsi">
      <filterset refid="version.filters"/>
    </copy>
+  </target>
+
+  <!-- assumes makensis is in path -->
+  <target name="winstall" depends="winstall-filter" description="build NSIS windows installer">
+    <exec executable="makensis" dir="${basedir}" failonerror="true">
+      <arg line="flume.nsi"/>
+    </exec>
   </target>
 
 </project>
