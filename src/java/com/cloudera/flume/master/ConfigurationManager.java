@@ -92,7 +92,7 @@ public interface ConfigurationManager extends Reportable {
    * This removes the logical node data flow configuration from both the flow
    * table and the phys-logical mapping
    */
-  public void removeLogicalNode(String logicNode);
+  public void removeLogicalNode(String logicNode) throws IOException;
 
   /**
    * This removes the mapping from a physical node to the logical node, but

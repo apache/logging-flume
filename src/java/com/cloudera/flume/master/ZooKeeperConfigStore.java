@@ -451,8 +451,13 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
    * Remove a logical node from the logical node data flow mapping.
    */
   @Override
-  synchronized public void removeLogicalNode(String logicNode) {
+  synchronized public void removeLogicalNode(String logicNode) throws IOException {
     Preconditions.checkArgument(client != null);
+    try {
+      currentVersion = zkCounter.incrementAndGet();
+    } catch (Exception e) {
+      throw new IOException("Could not increment version counter...", e);
+    }
     cfgs.remove(logicNode);
     saveConfigs(CFGS_PATH);
   }

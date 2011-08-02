@@ -355,7 +355,7 @@ abstract public class TranslatingConfigurationManager implements
    * Remove the logical node.
    */
   @Override
-  synchronized public void removeLogicalNode(String logicNode) {
+  synchronized public void removeLogicalNode(String logicNode) throws IOException {
     // only remove once if parent == self
     if (parentMan != selfMan) {
       parentMan.removeLogicalNode(logicNode);

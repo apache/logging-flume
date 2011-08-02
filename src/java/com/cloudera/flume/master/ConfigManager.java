@@ -323,7 +323,7 @@ public class ConfigManager implements ConfigurationManager {
    * table and the phys-logical mapping
    */
   @Override
-  synchronized public void removeLogicalNode(String logicNode) {
+  synchronized public void removeLogicalNode(String logicNode) throws IOException {
     cfgStore.removeLogicalNode(logicNode);
     String physical = getPhysicalNode(logicNode);
     if (physical != null) {

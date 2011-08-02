@@ -21,6 +21,7 @@ package com.cloudera.flume.master.failover;
 import static com.cloudera.flume.conf.PatternMatch.recursive;
 import static com.cloudera.flume.conf.PatternMatch.var;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -64,10 +65,10 @@ public class FailoverConfigurationManager extends
   }
 
   /**
-   * Remove the logical node.
+   * Remove the logical node. 
    */
   @Override
-  public void removeLogicalNode(String logicNode) {
+  public void removeLogicalNode(String logicNode) throws IOException {
     failchainMan.removeCollector(logicNode);
     super.removeLogicalNode(logicNode);
   }

@@ -232,7 +232,7 @@ abstract public class FlowConfigManager implements ConfigurationManager {
   }
 
   @Override
-  synchronized public void removeLogicalNode(String logicNode) {
+  synchronized public void removeLogicalNode(String logicNode) throws IOException {
     String oldflow = getFlowId(logicNode);
     parent.removeLogicalNode(logicNode);
     flows.get(oldflow).removeLogicalNode(logicNode);

@@ -76,9 +76,9 @@ abstract public class ConfigStore {
   abstract public void unmapLogicalNode(String physNode, String logicNode);
 
   /**
-   * Remove a logical node from the logical node data flow mapping.
+   * Remove a logical node from the logical node data flow mapping. 
    */
-  abstract public void removeLogicalNode(String logicNode);
+  abstract public void removeLogicalNode(String logicNode) throws IOException;
 
   /**
    * Unmaps all logical nodes from all physical nodes, except for the main
