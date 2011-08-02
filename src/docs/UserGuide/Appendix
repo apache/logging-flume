@@ -400,7 +400,7 @@ the pipeline.  This blocks and prevents other events from entering the
 pipeline.  This is useful for workload simulation in conjunction with 
 +asciisynth+ sources.
 
-
+include::Environment[]
 
 === flume-site.xml configuration settings
 
