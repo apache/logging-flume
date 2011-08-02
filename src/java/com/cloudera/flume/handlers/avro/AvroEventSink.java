@@ -24,7 +24,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.ipc.HttpTransceiver;
 import org.apache.avro.specific.SpecificRequestor;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -38,7 +39,7 @@ import com.cloudera.flume.reporter.ReportEvent;
  */
 public class AvroEventSink extends EventSink.Base {
 
-  static Logger LOG = Logger.getLogger(AvroEventSink.class);
+  static final Logger LOG = LoggerFactory.getLogger(AvroEventSink.class);
 
   final public static String A_SERVERHOST = "serverHost";
   final public static String A_SERVERPORT = "serverPort";

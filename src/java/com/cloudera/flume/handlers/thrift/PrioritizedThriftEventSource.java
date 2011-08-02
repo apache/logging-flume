@@ -23,12 +23,13 @@ import java.util.Comparator;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
-import org.apache.log4j.Logger;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TBinaryProtocol.Factory;
 import org.apache.thrift.server.TSaneThreadPoolServer;
 import org.apache.thrift.transport.TSaneServerSocket;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
@@ -52,7 +53,7 @@ import com.google.common.base.Preconditions;
 public class PrioritizedThriftEventSource extends EventSource.Base {
   static int DEFAULT_QUEUE_SIZE = 1000;
 
-  static Logger LOG = Logger.getLogger(PrioritizedThriftEventSource.class);
+  static final Logger LOG = LoggerFactory.getLogger(PrioritizedThriftEventSource.class);
   int port;
   ThriftFlumeEventServer svr;
   TSaneThreadPoolServer server;

@@ -24,7 +24,8 @@ import java.net.DatagramSocket;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
@@ -44,7 +45,7 @@ import com.cloudera.util.ByteBufferInputStream;
  * 
  */
 public class SyslogUdpSource extends EventSource.Base {
-  final static Logger LOG = Logger.getLogger(SyslogUdpSource.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(SyslogUdpSource.class);
   final public static int SYSLOG_UDP_PORT = 514;
   int port = SYSLOG_UDP_PORT; // default udp syslog port
   int maxsize = 1 << 16; // 64k is max allowable in RFC 5426

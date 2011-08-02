@@ -22,7 +22,8 @@ import static org.junit.Assert.fail;
 
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.CommonTree;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.junit.Test;
 
 import com.cloudera.flume.ExampleData;
@@ -33,7 +34,7 @@ import com.cloudera.flume.ExampleData;
  */
 public class TestParser implements ExampleData {
 
-  final static Logger LOG = Logger.getLogger(TestParser.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(TestParser.class);
 
   /**
    * Test parsing of literals.

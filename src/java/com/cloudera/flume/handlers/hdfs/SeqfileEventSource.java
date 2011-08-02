@@ -23,7 +23,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
@@ -34,8 +35,8 @@ import com.google.common.base.Preconditions;
  * This is an iterator for a sequence file.
  */
 public class SeqfileEventSource extends EventSource.Base {
-  final static Logger LOG =
-      Logger.getLogger(SeqfileEventSource.class.getName());
+  static final Logger LOG =
+      LoggerFactory.getLogger(SeqfileEventSource.class);
 
   private String fname;
   private SequenceFile.Reader reader;

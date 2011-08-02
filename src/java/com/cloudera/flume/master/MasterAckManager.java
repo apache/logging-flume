@@ -21,13 +21,14 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is a master side ack tag manager.
  */
 public class MasterAckManager {
-  final static Logger LOG = Logger.getLogger(MasterAckManager.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(MasterAckManager.class);
 
   Set<String> acked = new HashSet<String>();
 

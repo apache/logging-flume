@@ -25,8 +25,9 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.util.Clock;
 import com.cloudera.util.FileUtil;
@@ -38,7 +39,7 @@ import static org.junit.Assert.assertEquals;
  * faster. Currently it takes about 20s
  */
 public class TestDirWatcher {
-  final public static Logger LOG = Logger.getLogger(TestDirWatcher.class);
+  public static final Logger LOG = LoggerFactory.getLogger(TestDirWatcher.class);
   FileFilter filt = new RegexFileFilter("foo.*bar");
 
   @Test

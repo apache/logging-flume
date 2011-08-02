@@ -19,9 +19,10 @@ package com.cloudera.flume.master;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
@@ -29,7 +30,7 @@ import com.google.common.base.Preconditions;
  * A simple distributed atomic counter using ZooKeeper.
  */
 public class ZooKeeperCounter {
-  static final Logger LOG = Logger.getLogger(ZooKeeperCounter.class);
+  static final Logger LOG = LoggerFactory.getLogger(ZooKeeperCounter.class);
   ZooKeeperService zkService;
   ZKClient client;
   String prefix;

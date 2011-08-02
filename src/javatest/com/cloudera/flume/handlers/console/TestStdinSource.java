@@ -19,16 +19,17 @@ package com.cloudera.flume.handlers.console;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.handlers.StandardSourceSinkHarnesses;
 import com.cloudera.flume.handlers.debug.StdinSource;
 
 public class TestStdinSource {
-  final public static Logger LOG = Logger.getLogger(TestStdinSource.class);
+  public static final Logger LOG = LoggerFactory.getLogger(TestStdinSource.class);
 
   @Test
   public void testCloseClose() throws IOException {

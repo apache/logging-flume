@@ -56,7 +56,7 @@ import org.slf4j.LoggerFactory;
 public class TSaneServerSocket extends TServerTransport {
 
   private static final Logger LOGGER = LoggerFactory
-      .getLogger(TSaneServerSocket.class.getName());
+      .getLogger(TSaneServerSocket.class);
 
   /**
    * Underlying serversocket object

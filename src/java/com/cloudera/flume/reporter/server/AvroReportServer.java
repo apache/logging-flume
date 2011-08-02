@@ -25,7 +25,8 @@ import java.util.Map.Entry;
 import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.ipc.HttpServer;
 import org.apache.avro.specific.SpecificResponder;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.Attributes.Type;
@@ -40,7 +41,7 @@ import com.google.common.base.Preconditions;
  * Serves reports over Avro.
  */
 public class AvroReportServer implements AvroFlumeReportServer {
-  final static protected Logger LOG = Logger.getLogger(AvroReportServer.class);
+  protected static final Logger LOG = LoggerFactory.getLogger(AvroReportServer.class);
   private HttpServer http;
   int port;
 

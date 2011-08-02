@@ -26,9 +26,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -100,7 +101,7 @@ public class MasterAdminServerThrift extends ThriftServer implements Iface,
     return new Command(cmd.command, cmd.arguments.toArray(new String[0]));
   }
 
-  Logger LOG = Logger.getLogger(MasterAdminServerThrift.class);
+  static final Logger LOG = LoggerFactory.getLogger(MasterAdminServerThrift.class);
   final int port;
   final protected MasterAdminServer delegate;
 

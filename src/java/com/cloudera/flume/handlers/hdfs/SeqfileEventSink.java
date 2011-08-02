@@ -24,7 +24,8 @@ import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.FlushingSequenceFileWriter;
 import org.apache.hadoop.io.SequenceFile;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -39,7 +40,7 @@ import com.google.common.base.Preconditions;
  * system..
  */
 public class SeqfileEventSink extends EventSink.Base {
-  final static Logger LOG = Logger.getLogger(SeqfileEventSink.class);
+  static final Logger LOG = LoggerFactory.getLogger(SeqfileEventSink.class);
 
   private SequenceFile.Writer writer;
   private long count = 0;

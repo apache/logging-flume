@@ -29,7 +29,8 @@ import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.io.compress.Compressor;
 import org.apache.hadoop.io.compress.GzipCodec;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -47,7 +48,7 @@ import com.google.common.base.Preconditions;
  * provided OutputFormat. It is assumed that the output is a file of some sort.
  */
 public class CustomDfsSink extends EventSink.Base {
-  final static Logger LOG = Logger.getLogger(CustomDfsSink.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(CustomDfsSink.class);
 
   private static final String A_OUTPUTFORMAT = "recordformat";
 

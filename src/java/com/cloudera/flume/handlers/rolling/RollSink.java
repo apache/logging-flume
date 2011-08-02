@@ -22,7 +22,8 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
@@ -41,7 +42,7 @@ import com.google.common.base.Preconditions;
  * subordinate configuration is closed and a new instance of the sink is opened.
  */
 public class RollSink extends EventSink.Base {
-  final static Logger LOG = Logger.getLogger(RollSink.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(RollSink.class);
 
   final String fspec;
   EventSink curSink;

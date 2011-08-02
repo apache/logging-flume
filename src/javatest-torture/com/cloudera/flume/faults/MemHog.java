@@ -22,14 +22,15 @@ import java.lang.management.MemoryMXBean;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This allocates and holds valid references to the memory to exhause heap space. 
  */
 public class MemHog extends ResourceHog {
 
-  static Logger logger = Logger.getLogger(MemHog.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(MemHog.class);
 
   int delay;
   boolean random;
@@ -52,7 +53,7 @@ public class MemHog extends ResourceHog {
   public void increment() {
     memHog.add(new byte[increment]);
 
-    logger.info("Using " + mem.getHeapMemoryUsage().getUsed() / 1024 / 1024
+    LOG.info("Using " + mem.getHeapMemoryUsage().getUsed() / 1024 / 1024
         + "MB of memory");
   }
 

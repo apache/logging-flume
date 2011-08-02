@@ -22,7 +22,8 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.junit.Test;
 
 import com.cloudera.flume.conf.Context;
@@ -43,7 +44,7 @@ import com.cloudera.flume.reporter.aggregator.CounterSink;
  */
 public class TestAckChecksumDecos {
 
-  public static Logger LOG = Logger.getLogger(TestAckChecksumDecos.class);
+  public static final Logger LOG = LoggerFactory.getLogger(TestAckChecksumDecos.class);
 
   // Just a test to see the output.
   @Test

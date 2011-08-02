@@ -21,11 +21,12 @@ import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.apache.log4j.Logger;
 import org.schwering.irc.lib.IRCConnection;
 import org.schwering.irc.lib.IRCEventListener;
 import org.schwering.irc.lib.IRCModeParser;
 import org.schwering.irc.lib.IRCUser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
@@ -41,7 +42,7 @@ import com.google.common.base.Preconditions;
  * an IrcSink.
  */
 public class IrcSource extends EventSource.Base {
-  static Logger LOG = Logger.getLogger(IrcSource.class);
+  static final Logger LOG = LoggerFactory.getLogger(IrcSource.class);
 
   private IRCConnection conn;
 

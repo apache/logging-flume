@@ -45,9 +45,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.metrics.spi.Util;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -79,7 +79,7 @@ public class GangliaSink extends EventSink.Base {
   private static final int DEFAULT_PORT = 8649;
   private static final int BUFFER_SIZE = 1500; // as per libgmond.c
 
-  private final Log LOG = LogFactory.getLog(this.getClass());
+  private static final Logger LOG = LoggerFactory.getLogger(GangliaSink.class);
   private final String servers;
 
   private static final Map<Type, String> typeTable =

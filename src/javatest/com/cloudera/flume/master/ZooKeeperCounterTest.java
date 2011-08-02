@@ -25,11 +25,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.util.FileUtil;
@@ -38,7 +39,7 @@ import com.cloudera.util.FileUtil;
  * Unit tests for ZooKeeperCounter
  */
 public class ZooKeeperCounterTest {
-  final static Logger LOG = Logger.getLogger(ZooKeeperCounterTest.class);
+  static final Logger LOG = LoggerFactory.getLogger(ZooKeeperCounterTest.class);
   static ZooKeeperService svc;
   static File tmp;
 

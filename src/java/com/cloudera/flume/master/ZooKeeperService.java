@@ -20,8 +20,9 @@ package com.cloudera.flume.master;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 
@@ -30,7 +31,7 @@ import com.cloudera.flume.conf.FlumeConfiguration;
  * either in-process or external ZK servers.
  */
 public class ZooKeeperService {
-  final static Logger LOG = Logger.getLogger(ZooKeeperService.class);
+  static final Logger LOG = LoggerFactory.getLogger(ZooKeeperService.class);
   boolean external;
   ZKInProcessServer zk = null;
   boolean initialised = false;

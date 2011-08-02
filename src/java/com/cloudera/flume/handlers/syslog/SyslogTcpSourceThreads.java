@@ -28,7 +28,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
@@ -51,8 +52,8 @@ import com.cloudera.flume.handlers.text.EventExtractException;
  * contention
  */
 public class SyslogTcpSourceThreads extends EventSource.Base {
-  final static Logger LOG =
-      Logger.getLogger(SyslogTcpSourceThreads.class.getName());
+  static final Logger LOG =
+      LoggerFactory.getLogger(SyslogTcpSourceThreads.class);
 
   final public static int SYSLOG_TCP_PORT = 514;
   final int port;

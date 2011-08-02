@@ -30,7 +30,8 @@ import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.ipc.HttpTransceiver;
 import org.apache.avro.specific.SpecificRequestor;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.avro.AvroFlumeConfigData;
@@ -50,7 +51,7 @@ import com.google.common.base.Preconditions;
  * 
  */
 public class AvroMasterRPC implements MasterRPC {
-  final static Logger LOG = Logger.getLogger(AvroMasterRPC.class);
+  static final Logger LOG = LoggerFactory.getLogger(AvroMasterRPC.class);
 
   /**
    * Network name of the master

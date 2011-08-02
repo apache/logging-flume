@@ -32,7 +32,8 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -53,7 +54,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 
 public class TestZKBackedConfigStore {
-  protected static Logger LOG = Logger.getLogger(TestZKBackedConfigStore.class);
+  protected static final Logger LOG = LoggerFactory.getLogger(TestZKBackedConfigStore.class);
 
   /**
    * Test that set and get work correctly, and that recovery after restart works

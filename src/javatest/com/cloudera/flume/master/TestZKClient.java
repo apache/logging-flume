@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
 
-import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -34,6 +33,8 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A variety of tests both for ZKClient and the ZKServer
@@ -42,7 +43,7 @@ import org.junit.Test;
  * zookeeper operation - the key is whether the tests pass or fail.
  */
 public class TestZKClient {
-  final static Logger LOG = Logger.getLogger(TestZKClient.class);
+  static final Logger LOG = LoggerFactory.getLogger(TestZKClient.class);
 
   /**
    * Tests bringing up and shutting down a standalone ZooKeeper instance

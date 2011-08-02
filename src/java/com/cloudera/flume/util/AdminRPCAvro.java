@@ -29,7 +29,8 @@ import java.util.Map.Entry;
 import org.apache.avro.ipc.HttpTransceiver;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.specific.SpecificRequestor;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.avro.AvroFlumeConfigData;
@@ -48,7 +49,7 @@ import com.cloudera.flume.master.StatusManager.NodeStatus;
  * connection to a master and provides type conversion.
  */
 public class AdminRPCAvro implements AdminRPC {
-  final static Logger LOG = Logger.getLogger(AdminRPCAvro.class);
+  static final Logger LOG = LoggerFactory.getLogger(AdminRPCAvro.class);
 
   private String masterHostname;
   private int masterPort;

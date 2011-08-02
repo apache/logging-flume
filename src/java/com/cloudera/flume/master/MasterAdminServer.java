@@ -25,7 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -38,7 +39,7 @@ import com.google.common.collect.Multimap;
  * servers, then delegate all requests to this common class.
  */
 public class MasterAdminServer {
-  Logger LOG = Logger.getLogger(MasterAdminServer.class);
+  static final Logger LOG = LoggerFactory.getLogger(MasterAdminServer.class);
   final protected FlumeMaster master;
   private RPCServer stubServer;
 

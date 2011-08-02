@@ -24,7 +24,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.agent.LogicalNode;
@@ -39,7 +40,7 @@ import com.cloudera.util.Clock;
  */
 public class MasterReportPusher {
 
-  static final Logger LOG = Logger.getLogger(MasterReportPusher.class);
+  static final Logger LOG = LoggerFactory.getLogger(MasterReportPusher.class);
 
   final FlumeConfiguration cfg;
   final ReportManager rptMan;

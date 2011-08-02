@@ -19,7 +19,8 @@ package com.cloudera.flume.handlers.endtoend;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is a interface decouple event-stream extracted notifications from the
@@ -37,7 +38,7 @@ public interface AckListener {
   public void expired(String key) throws IOException;
 
   public static class Empty implements AckListener {
-    static Logger LOG = Logger.getLogger(Empty.class);
+    static final Logger LOG = LoggerFactory.getLogger(Empty.class);
 
     @Override
     public void end(String group) throws IOException {

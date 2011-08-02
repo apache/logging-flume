@@ -28,9 +28,10 @@ import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.ipc.HttpServer;
 import org.apache.avro.specific.SpecificResponder;
-import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.avro.AvroFlumeConfigData;
@@ -43,7 +44,7 @@ import com.cloudera.flume.util.AdminRPCAvro;
 
 public class TestAvroAdminServer {
 
-  public static Logger LOG = Logger.getLogger(TestAvroAdminServer.class);
+  public static final Logger LOG = LoggerFactory.getLogger(TestAvroAdminServer.class);
 
   public class MyAvroServer implements FlumeMasterAdminServerAvro {
 

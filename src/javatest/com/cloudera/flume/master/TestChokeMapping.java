@@ -23,7 +23,8 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,7 +37,7 @@ import com.cloudera.flume.agent.MasterRPC;
 import com.cloudera.flume.conf.FlumeConfiguration;
 
 public class TestChokeMapping {
-  final public static Logger LOG = Logger.getLogger(TestChokeMapping.class);
+  public static final Logger LOG = LoggerFactory.getLogger(TestChokeMapping.class);
   FlumeMaster master = null;
 
   FlumeConfiguration cfg;

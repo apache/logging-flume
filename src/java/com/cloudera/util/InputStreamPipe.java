@@ -24,7 +24,8 @@ import java.nio.channels.Pipe;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.WritableByteChannel;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Channels that wrap input streams are blocking, so this wrapper creates a
@@ -32,7 +33,7 @@ import org.apache.log4j.Logger;
  * interface to the data.
  */
 public class InputStreamPipe {
-  final static Logger LOG = Logger.getLogger(InputStreamPipe.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(InputStreamPipe.class);
   final InputStream input;
   final Pipe pipe;
   final CopyThread copyThread;

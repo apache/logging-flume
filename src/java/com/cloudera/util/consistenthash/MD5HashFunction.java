@@ -20,14 +20,15 @@ package com.cloudera.util.consistenthash;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Uses MD5 as a hash generator. This version actually takes a hashs of the
  * toString String.
  */
 public class MD5HashFunction implements HashFunction {
-  final static Logger LOG = Logger.getLogger(MD5HashFunction.class);
+  static final Logger LOG = LoggerFactory.getLogger(MD5HashFunction.class);
 
   MessageDigest digest;
 

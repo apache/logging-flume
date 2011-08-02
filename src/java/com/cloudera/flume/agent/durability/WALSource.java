@@ -20,7 +20,8 @@ package com.cloudera.flume.agent.durability;
 import java.io.IOException;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSource;
@@ -35,7 +36,7 @@ import com.cloudera.flume.reporter.ReportEvent;
  * should be through a NaiveFileWALDeco
  */
 class WALSource extends EventSource.Base {
-  static Logger LOG = Logger.getLogger(WALSource.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(WALSource.class);
 
   final WALManager walMan;
   EventSource curSource;

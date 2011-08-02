@@ -21,7 +21,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
@@ -40,7 +41,7 @@ import com.cloudera.flume.core.EventSource;
  */
 public class MemorySinkSource extends EventSink.Base implements EventSource {
 
-  final static Logger LOG = Logger.getLogger(MemorySinkSource.class);
+  static final Logger LOG = LoggerFactory.getLogger(MemorySinkSource.class);
 
   List<Event> evts = new ArrayList<Event>();
   int idx = 0;

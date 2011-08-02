@@ -23,7 +23,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
@@ -37,7 +38,7 @@ import com.google.common.base.Preconditions;
  * This is now thread safe.
  */
 public class ReportManager implements Reportable {
-  static Logger logger = Logger.getLogger(ReportManager.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(ReportManager.class);
   final static ReportManager man = new ReportManager("root");
 
   Map<String, Reportable> reports = new HashMap<String, Reportable>();

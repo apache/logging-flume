@@ -21,11 +21,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import org.apache.log4j.Logger;
 import org.schwering.irc.lib.IRCConnection;
 import org.schwering.irc.lib.IRCEventListener;
 import org.schwering.irc.lib.IRCModeParser;
 import org.schwering.irc.lib.IRCUser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
@@ -39,7 +40,7 @@ import com.google.common.base.Preconditions;
  * This simple sink dumps data to irc.
  */
 public class IrcSink extends EventSink.Base {
-  static Logger LOG = Logger.getLogger(IrcSink.class);
+  static final Logger LOG = LoggerFactory.getLogger(IrcSink.class);
 
   private IRCConnection conn;
 

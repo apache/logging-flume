@@ -27,7 +27,8 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.handlers.endtoend.AckListener;
@@ -62,7 +63,7 @@ public class WALAckManager implements Reportable {
   private static final String A_RETRANSMIT_TIMEOUT = "retransmitTimeout";
   private static final String A_PENDING_ACK_INFO = "pendingAckInfo";
 
-  static Logger LOG = Logger.getLogger(WALAckManager.class);
+  static final Logger LOG = LoggerFactory.getLogger(WALAckManager.class);
 
   // a pending set of acks
   final ConcurrentHashMap<String, Long> pending = new ConcurrentHashMap<String, Long>();

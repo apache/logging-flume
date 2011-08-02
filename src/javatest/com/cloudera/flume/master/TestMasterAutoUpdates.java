@@ -24,7 +24,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.After;
 import org.junit.Before;
@@ -48,7 +49,7 @@ import com.cloudera.util.NetUtils;
  * 
  */
 public class TestMasterAutoUpdates {
-  final public static Logger LOG = Logger
+  public static final Logger LOG = LoggerFactory
       .getLogger(TestMasterAutoUpdates.class);
 
   // /////////

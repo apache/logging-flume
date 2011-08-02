@@ -30,9 +30,10 @@ import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.reflect.ReflectData;
 import org.apache.avro.reflect.ReflectDatumReader;
-import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
@@ -51,7 +52,7 @@ import com.cloudera.flume.handlers.text.SyslogEntryFormat;
  * timezones. Effort to force a timezone punted on.
  */
 public class TestOutputFormats {
-  final public static Logger LOG = Logger.getLogger(TestOutputFormats.class);
+  public static final Logger LOG = LoggerFactory.getLogger(TestOutputFormats.class);
 
   Event e = new EventImpl("test".getBytes(), 0, Priority.INFO, 0, "hostname");
   TimeZone tz = TimeZone.getTimeZone("GMT");

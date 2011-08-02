@@ -19,7 +19,8 @@ package com.cloudera.flume.handlers.debug;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeSpecException;
@@ -36,7 +37,7 @@ import com.google.common.base.Preconditions;
  * of raw to give interactive users more feedback and information.
  */
 public class ConsoleEventSink extends EventSink.Base {
-  final static Logger LOG = Logger.getLogger(ConsoleEventSink.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(ConsoleEventSink.class);
 
   OutputFormat fmt;
 

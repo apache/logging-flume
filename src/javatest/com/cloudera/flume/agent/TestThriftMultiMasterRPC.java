@@ -21,12 +21,12 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.thrift.ThriftFlumeClientServer;
@@ -42,7 +42,7 @@ import com.cloudera.flume.util.ThriftServer;
  * Tests for master failover from clients.
  */
 public class TestThriftMultiMasterRPC {
-  Logger LOG = Logger.getLogger(TestThriftMultiMasterRPC.class);
+  static final Logger LOG = LoggerFactory.getLogger(TestThriftMultiMasterRPC.class);
 
   /**
    * Mock ThriftServer.

@@ -20,7 +20,8 @@ package com.cloudera.flume.core;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
@@ -29,7 +30,7 @@ import com.google.common.base.Preconditions;
  * like a schema, and is for formatting used in reports.
  */
 public class Attributes {
-  final static Logger LOG = Logger.getLogger(Attributes.class);
+  static final Logger LOG = LoggerFactory.getLogger(Attributes.class);
 
   public enum Type {
     INT, LONG, DOUBLE, STRING,

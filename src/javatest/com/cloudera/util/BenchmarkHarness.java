@@ -25,8 +25,9 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.apache.log4j.Logger;
 import org.junit.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.agent.LivenessManager;
@@ -60,7 +61,7 @@ import com.cloudera.flume.reporter.Reportable;
  */
 @SuppressWarnings("serial")
 public class BenchmarkHarness {
-  final static Logger LOG = Logger.getLogger(BenchmarkHarness.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(BenchmarkHarness.class);
 
   // These are setup to point to new default logging dir for each test.
   public static FlumeNode node;

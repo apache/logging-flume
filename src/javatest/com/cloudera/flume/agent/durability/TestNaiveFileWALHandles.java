@@ -20,8 +20,9 @@ package com.cloudera.flume.agent.durability;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
@@ -33,7 +34,7 @@ import com.cloudera.util.BenchmarkHarness;
  * Test for file handle exhaustion problems with WAL and DFO
  */
 public class TestNaiveFileWALHandles {
-  final public static Logger LOG = Logger
+  public static final Logger LOG = LoggerFactory
       .getLogger(TestNaiveFileWALHandles.class);
 
   /*

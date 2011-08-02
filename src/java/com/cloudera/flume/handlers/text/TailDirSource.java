@@ -23,7 +23,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
@@ -40,7 +41,7 @@ import com.google.common.base.Preconditions;
  * expression.
  */
 public class TailDirSource extends EventSource.Base {
-  final public static Logger LOG = Logger.getLogger(TailDirSource.class);
+  public static final Logger LOG = LoggerFactory.getLogger(TailDirSource.class);
   private DirWatcher watcher;
   private TailSource tail;
   final private File dir;

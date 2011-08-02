@@ -29,7 +29,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.util.InputStreamPipe;
@@ -55,7 +56,7 @@ import com.cloudera.util.InputStreamPipe;
  * 
  */
 public class Watchdog {
-  static Logger LOG = Logger.getLogger(Watchdog.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(Watchdog.class);
 
   String[] args;
 

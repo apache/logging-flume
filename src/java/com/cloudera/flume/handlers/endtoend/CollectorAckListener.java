@@ -19,7 +19,8 @@ package com.cloudera.flume.handlers.endtoend;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.MasterRPC;
 
@@ -28,8 +29,7 @@ import com.cloudera.flume.agent.MasterRPC;
  * successfully received tagged groups.
  */
 public class CollectorAckListener extends AckListener.Empty {
-  final static Logger LOG = Logger.getLogger(CollectorAckListener.class
-      .getName());
+  static final Logger LOG = LoggerFactory.getLogger(CollectorAckListener.class);
 
   MasterRPC c;
 

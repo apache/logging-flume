@@ -20,7 +20,8 @@ package com.cloudera.flume.master;
 import java.io.IOException;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.distributed.GossipMulticast;
 import com.cloudera.distributed.Group;
@@ -36,7 +37,7 @@ import com.cloudera.util.Pair;
  */
 public class GossipedMasterAckManager extends MasterAckManager 
 implements MessageReceiver<GossipMulticast.GossipMessage> {
-  Logger LOG = Logger.getLogger(GossipedMasterAckManager.class);
+  static final Logger LOG = LoggerFactory.getLogger(GossipedMasterAckManager.class);
   GossipMulticast gossip;
   final Group group;
   final int port;

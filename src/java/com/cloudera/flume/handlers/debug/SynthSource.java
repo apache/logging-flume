@@ -20,7 +20,8 @@ package com.cloudera.flume.handlers.debug;
 import java.io.IOException;
 import java.util.Random;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
@@ -36,7 +37,7 @@ import com.cloudera.util.Clock;
  * of events.
  */
 public class SynthSource extends EventSource.Base {
-  final static Logger LOG = Logger.getLogger(SynthSource.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(SynthSource.class);
 
   final int size;
   final long total;

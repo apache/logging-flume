@@ -24,7 +24,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.Context;
@@ -52,7 +53,7 @@ import com.google.common.base.Preconditions;
  */
 public class BenchmarkReportDecorator<S extends EventSink> extends
     EventSinkDecorator<S> {
-  final static Logger LOG = Logger.getLogger(BenchmarkReportDecorator.class);
+  static final Logger LOG = LoggerFactory.getLogger(BenchmarkReportDecorator.class);
 
   public final static String A_BENCHMARK_RPT = "benchmarkReport";
   public final static String A_BENCHMARK_CSV = "benchmarkCsv";

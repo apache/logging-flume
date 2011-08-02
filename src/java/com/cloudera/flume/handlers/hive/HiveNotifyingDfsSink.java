@@ -24,7 +24,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.hadoop.fs.Path;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -51,8 +52,8 @@ import com.google.common.base.Preconditions;
  * TODO (jon) refactor this to be sane. Not happening now.
  */
 public class HiveNotifyingDfsSink extends EventSink.Base {
-  final static Logger LOG =
-      Logger.getLogger(HiveNotifyingDfsSink.class.getName());
+  static final Logger LOG =
+      LoggerFactory.getLogger(HiveNotifyingDfsSink.class);
   final String dirpath;
   final OutputFormat format;
   final String hivetable;

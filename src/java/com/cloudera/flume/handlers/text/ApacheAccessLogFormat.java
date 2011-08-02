@@ -26,7 +26,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
@@ -82,7 +83,7 @@ import com.cloudera.util.NetUtils;
  * TODO (jon) implement apache format outputter.
  */
 public class ApacheAccessLogFormat implements InputFormat {
-  static Logger LOG = Logger.getLogger(ApacheAccessLogFormat.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(ApacheAccessLogFormat.class);
 
   final static Pattern APACHE_PAT = Pattern
       .compile("^(\\S+) (\\S+) (\\S+) \\[(.*?)\\] \\\"(.*?)\\\" (\\S+) (\\S+)( \\\"(.*?)\\\" \\\"(.*?)\\\")?$");

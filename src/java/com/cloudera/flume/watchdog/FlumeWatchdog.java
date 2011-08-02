@@ -21,7 +21,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 
@@ -36,7 +37,7 @@ import com.cloudera.flume.conf.FlumeConfiguration;
  */
 public class FlumeWatchdog {
 
-  static Logger LOG = Logger.getLogger(FlumeWatchdog.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(FlumeWatchdog.class);
 
   public static void main(String[] argv) {
     if (argv.length == 0) {

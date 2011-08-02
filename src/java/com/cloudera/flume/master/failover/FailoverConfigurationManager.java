@@ -28,7 +28,8 @@ import java.util.Map;
 
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.CommonTree;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumePatterns;
@@ -46,7 +47,7 @@ import com.google.common.base.Preconditions;
  */
 public class FailoverConfigurationManager extends
     TranslatingConfigurationManager implements Translator {
-  final public static Logger LOG = Logger
+  public static final Logger LOG = LoggerFactory
       .getLogger(FailoverConfigurationManager.class);
   FailoverChainManager failchainMan;
   final public static String NAME = "FailoverTranslator";

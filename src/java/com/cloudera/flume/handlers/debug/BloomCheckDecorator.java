@@ -21,7 +21,8 @@ package com.cloudera.flume.handlers.debug;
 import java.io.IOException;
 import java.util.Arrays;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeSpecException;
@@ -52,7 +53,7 @@ import com.google.common.base.Preconditions;
  * The number of successful and failed bloom checks are also recorded.
  */
 public class BloomCheckDecorator extends EventSinkDecorator<EventSink> {
-  final public static Logger LOG = Logger.getLogger(BloomCheckDecorator.class);
+  public static final Logger LOG = LoggerFactory.getLogger(BloomCheckDecorator.class);
   protected BloomSet bloom;
   final int size; // size of bloom bit array in bytes
   final int hashes; // number of hashes per insertion/membership test

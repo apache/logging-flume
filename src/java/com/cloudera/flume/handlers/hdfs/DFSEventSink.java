@@ -26,7 +26,8 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.SequenceFile.Writer;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -41,7 +42,7 @@ import com.google.common.base.Preconditions;
  * variable
  */
 public class DFSEventSink extends EventSink.Base {
-  final static Logger LOG = Logger.getLogger(DFSEventSink.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(DFSEventSink.class);
   String path;
   Writer writer = null;
   // We keep a - potentially unbounded - set of writers around to deal with

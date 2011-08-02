@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -32,6 +31,8 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.thrift.ThriftFlumeClientServer;
 import com.cloudera.flume.conf.FlumeConfigData;
@@ -50,7 +51,7 @@ import com.google.common.base.Preconditions;
  */
 public class ThriftMasterRPC implements MasterRPC {
 
-  final static Logger LOG = Logger.getLogger(ThriftMasterRPC.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(ThriftMasterRPC.class);
 
   // master config and connections
   protected String masterHostname; // network name of the master

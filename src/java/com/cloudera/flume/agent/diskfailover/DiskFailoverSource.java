@@ -20,7 +20,8 @@ package com.cloudera.flume.agent.diskfailover;
 import java.io.IOException;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSource;
@@ -31,7 +32,7 @@ import com.cloudera.flume.reporter.ReportEvent;
  * mechanism.
  */
 public class DiskFailoverSource extends EventSource.Base {
-  static Logger LOG = Logger.getLogger(DiskFailoverSource.class);
+  static final Logger LOG = LoggerFactory.getLogger(DiskFailoverSource.class);
   final DiskFailoverManager dfMan;
   EventSource curSource;
 

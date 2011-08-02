@@ -17,7 +17,8 @@
  */
 package com.cloudera.flume.handlers.rpc;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -32,7 +33,7 @@ import com.cloudera.flume.handlers.thrift.ThriftEventSink;
  * file.
  */
 public class RpcSink extends EventSink.Base {
-  final public static Logger LOG = Logger.getLogger(RpcSink.class);
+  public static final Logger LOG = LoggerFactory.getLogger(RpcSink.class);
 
   /**
    * This class will build an AvroEventSink or ThriftEventSink depending on the

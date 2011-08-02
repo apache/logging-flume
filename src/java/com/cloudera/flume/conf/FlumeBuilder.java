@@ -31,7 +31,8 @@ import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.CommonTree;
 import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.core.BackOffFailOverSink;
 import com.cloudera.flume.core.Event;
@@ -80,7 +81,7 @@ import com.google.common.base.Preconditions;
  * TODO(jon) add usage to each Source/Sink/SinkDeco builder.
  */
 public class FlumeBuilder {
-  final static Logger LOG = Logger.getLogger(FlumeBuilder.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(FlumeBuilder.class);
 
   static SourceFactory srcFactory = new SourceFactoryImpl();
   static SinkFactory sinkFactory = new SinkFactoryImpl();

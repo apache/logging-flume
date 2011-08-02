@@ -23,7 +23,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Map;
 
-import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -33,6 +32,8 @@ import org.apache.thrift.transport.TTransportException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.Attributes.Type;
@@ -46,7 +47,7 @@ import com.cloudera.flume.reporter.server.thrift.ThriftFlumeReportServer;
  * Test cases for the Thrift-based report server
  */
 public class TestThriftReportServer {
-  protected final static Logger LOG = Logger
+  protected static final Logger LOG = LoggerFactory
       .getLogger(TestThriftReportServer.class);
   ThriftReportServer reportServer;
   final static int PORT = 23456;

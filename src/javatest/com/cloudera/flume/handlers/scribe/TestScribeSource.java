@@ -25,7 +25,8 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -44,7 +45,7 @@ import com.cloudera.flume.core.EventSource;
  */
 public class TestScribeSource {
 
-  final public static Logger LOG = Logger.getLogger(TestScribeSource.class);
+  public static final Logger LOG = LoggerFactory.getLogger(TestScribeSource.class);
 
   /**
    * Test that events can be sent and received, and that the correct metadata is

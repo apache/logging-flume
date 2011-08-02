@@ -23,8 +23,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeConfigData;
@@ -40,7 +41,7 @@ import com.cloudera.flume.reporter.ReportEvent;
  * another.
  */
 public class MultiMasterRPC implements MasterRPC {
-  final static Logger LOG = Logger.getLogger(MultiMasterRPC.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(MultiMasterRPC.class);
   final protected int MAX_RETRIES;
   final protected int RETRY_PAUSE_MS;
   final String rpcProtocol;

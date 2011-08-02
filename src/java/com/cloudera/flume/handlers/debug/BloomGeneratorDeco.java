@@ -21,7 +21,8 @@ package com.cloudera.flume.handlers.debug;
 import java.io.IOException;
 import java.util.Arrays;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SinkFactory.SinkDecoBuilder;
@@ -50,7 +51,7 @@ import com.google.common.base.Preconditions;
  * 
  */
 public class BloomGeneratorDeco extends EventSinkDecorator<EventSink> {
-  public static Logger LOG = Logger.getLogger(BloomGeneratorDeco.class);
+  public static final Logger LOG = LoggerFactory.getLogger(BloomGeneratorDeco.class);
   protected BloomSet bloom;
   final int size; // size of bloom bit array in bits
   final int hashes; // number of hashes per insertion/membership test

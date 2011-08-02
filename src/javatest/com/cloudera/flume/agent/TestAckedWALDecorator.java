@@ -24,10 +24,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
@@ -51,7 +52,7 @@ import com.cloudera.util.FileUtil;
  * Tests WriteAheadLogDeco's builder, multiple open close, and actual behavior.
  */
 public class TestAckedWALDecorator {
-  final static Logger LOG = Logger.getLogger(TestAckedWALDecorator.class);
+  static final Logger LOG = LoggerFactory.getLogger(TestAckedWALDecorator.class);
 
   File tmpdir = null;
   FlumeNode node;

@@ -19,7 +19,6 @@ package com.cloudera.flume.handlers.thrift;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -27,6 +26,8 @@ import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -44,7 +45,7 @@ import com.cloudera.flume.handlers.thrift.ThriftFlumeEventServer.Client;
  */
 public class ThriftAckedEventSink extends EventSink.Base {
 
-  static Logger LOG = Logger.getLogger(ThriftAckedEventSink.class);
+  static final Logger LOG = LoggerFactory.getLogger(ThriftAckedEventSink.class);
 
   String host;
   int port;

@@ -21,7 +21,8 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.junit.Test;
 
 import com.cloudera.flume.conf.Context;
@@ -33,7 +34,7 @@ import com.cloudera.flume.core.CompositeSink;
  */
 public class TestFailChainManager {
 
-  static Logger LOG = Logger.getLogger(TestFailChainManager.class);
+  static final Logger LOG = LoggerFactory.getLogger(TestFailChainManager.class);
 
   String[] collectors =
       { "collector 1", "collector 2", "collector 3", "collector 4",

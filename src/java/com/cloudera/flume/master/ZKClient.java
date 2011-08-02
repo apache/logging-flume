@@ -26,7 +26,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -38,6 +37,8 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.util.BackoffPolicy;
 import com.cloudera.util.FixedRetryPolicy;
@@ -55,7 +56,7 @@ import com.google.common.base.Preconditions;
 public class ZKClient implements Watcher {
   protected ZooKeeper zk;
   final String hosts;
-  final static Logger LOG = Logger.getLogger(ZKClient.class);
+  static final Logger LOG = LoggerFactory.getLogger(ZKClient.class);
 
   class ZKRetryHarness {
     final protected RetryHarness harness;

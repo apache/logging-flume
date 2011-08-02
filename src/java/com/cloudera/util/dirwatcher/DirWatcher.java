@@ -25,7 +25,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.util.Clock;
 import com.google.common.base.Preconditions;
@@ -35,7 +36,7 @@ import com.google.common.base.Preconditions;
  * "age off" events. It spawns a thread that periodically checks the directory.
  */
 public class DirWatcher {
-  static Logger LOG = Logger.getLogger(DirWatcher.class);
+  static final Logger LOG = LoggerFactory.getLogger(DirWatcher.class);
 
   final private List<DirChangeHandler> list = Collections
       .synchronizedList(new ArrayList<DirChangeHandler>());

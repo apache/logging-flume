@@ -21,7 +21,8 @@ package com.cloudera.flume.agent;
 import java.io.IOException;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.durability.WALCompletionNotifier;
 import com.cloudera.flume.agent.durability.WALManager;
@@ -34,7 +35,7 @@ import com.cloudera.flume.agent.durability.WALManager;
  * elsewhere (e.g. in FlumeNode)
  */
 public class FlumeNodeWALNotifier implements WALCompletionNotifier {
-  final public static Logger LOG = Logger.getLogger(FlumeNodeWALNotifier.class);
+  public static final Logger LOG = LoggerFactory.getLogger(FlumeNodeWALNotifier.class);
   final Map<String, WALManager> node;
 
   /**

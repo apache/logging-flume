@@ -21,7 +21,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
@@ -39,7 +40,7 @@ import com.google.common.base.Preconditions;
  * This version uses Buffered readers, hopefully this is faster.
  */
 public class TextReaderSource extends EventSource.Base {
-  static Logger LOG = Logger.getLogger(TextReaderSource.class);
+  static final Logger LOG = LoggerFactory.getLogger(TextReaderSource.class);
 
   String fname;
   BufferedReader in;

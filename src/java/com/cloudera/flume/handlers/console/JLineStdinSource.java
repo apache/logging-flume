@@ -29,7 +29,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import jline.ConsoleOperations;
 import jline.ConsoleReader;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
@@ -55,7 +56,7 @@ import com.google.common.base.Preconditions;
  * main/java/jline;hb=HEAD
  */
 public class JLineStdinSource extends EventSource.Base {
-  final static Logger LOG = Logger.getLogger(JLineStdinSource.class);
+  static final Logger LOG = LoggerFactory.getLogger(JLineStdinSource.class);
   final AtomicBoolean opened = new AtomicBoolean(false);
   ConsoleReader rd;
 

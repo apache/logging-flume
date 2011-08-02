@@ -24,10 +24,11 @@ import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.DirectMasterRPC;
 import com.cloudera.flume.agent.FlumeNode;
@@ -38,7 +39,7 @@ import com.cloudera.flume.master.FlumeMaster;
 import com.cloudera.util.NetUtils;
 
 public class TestDiskFailoverAgent {
-  final public static Logger LOG = Logger
+  public static final Logger LOG = LoggerFactory
       .getLogger(TestDiskFailoverAgent.class);
 
   FlumeMaster master = null;

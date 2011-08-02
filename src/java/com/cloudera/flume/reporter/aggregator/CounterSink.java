@@ -20,7 +20,8 @@ package com.cloudera.flume.reporter.aggregator;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.ReportTestingContext;
@@ -35,7 +36,7 @@ import com.google.common.base.Preconditions;
  * This just counts the number of entries appended.
  */
 public class CounterSink extends EventSink.Base {
-  static Logger LOG = Logger.getLogger(CounterSink.class);
+  static final Logger LOG = LoggerFactory.getLogger(CounterSink.class);
 
   AtomicLong cnt;
   String name;

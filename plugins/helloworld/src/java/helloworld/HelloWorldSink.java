@@ -23,7 +23,8 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
@@ -36,7 +37,7 @@ import com.google.common.base.Preconditions;
  * Simple Sink that writes to a "helloworld.txt" file.
  */
 public class HelloWorldSink extends EventSink.Base {
-  static Logger LOG = Logger.getLogger(HelloWorldSink.class);
+  static final Logger LOG = LoggerFactory.getLogger(HelloWorldSink.class);
   private PrintWriter pw;
   
   @Override

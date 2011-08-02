@@ -23,7 +23,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.reporter.ReportEvent;
@@ -38,7 +39,7 @@ import com.cloudera.util.Clock;
  */
 public class StatusManager implements Reportable {
 
-  static final Logger LOG = Logger.getLogger(StatusManager.class);
+  static final Logger LOG = LoggerFactory.getLogger(StatusManager.class);
 
   public static class NodeStatus {
     public NodeState state;

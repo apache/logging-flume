@@ -30,7 +30,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
@@ -77,7 +78,7 @@ public class ExecEventSource extends EventSource.Base {
 
   final BlockingQueue<EventImpl> eventQueue = new LinkedBlockingQueue<EventImpl>();
 
-  static Logger LOG = Logger.getLogger(ExecEventSource.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(ExecEventSource.class);
 
   public static final String A_PROC_SOURCE = "procsource";
   public static final String A_EXEC_CMD = "execcmd";

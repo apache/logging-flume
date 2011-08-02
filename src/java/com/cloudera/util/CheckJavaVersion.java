@@ -17,13 +17,14 @@
  */
 package com.cloudera.util;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class simply checks that the current Java version is no older than 1.6.
  */
 public class CheckJavaVersion {
-  final public static Logger LOG = Logger.getLogger(CheckJavaVersion.class);
+  public static final Logger LOG = LoggerFactory.getLogger(CheckJavaVersion.class);
   // this is recorded locally
   private final static double minJavaVersion = 1.6;
 

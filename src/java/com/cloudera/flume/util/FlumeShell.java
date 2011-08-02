@@ -38,13 +38,14 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
-import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.VersionInfo;
 import com.cloudera.flume.conf.FlumeConfigData;
@@ -63,7 +64,7 @@ import com.cloudera.util.CheckJavaVersion;
  * TODO (jon) move to com.cloudera.flume.shell
  */
 public class FlumeShell {
-  private static final Logger LOG = Logger.getLogger(FlumeShell.class);
+  private static final Logger LOG = LoggerFactory.getLogger(FlumeShell.class);
   // Sort on command name
   protected static final Map<String, CommandDescription> commandMap = new TreeMap<String, CommandDescription>();
   protected boolean printPrompt = true;

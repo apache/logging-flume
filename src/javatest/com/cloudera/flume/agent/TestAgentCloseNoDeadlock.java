@@ -23,8 +23,9 @@ import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeSpecException;
 
@@ -39,7 +40,7 @@ import com.cloudera.flume.conf.FlumeSpecException;
  */
 public class TestAgentCloseNoDeadlock {
 
-  final public static Logger LOG = Logger
+  public static final Logger LOG = LoggerFactory
       .getLogger(TestAgentCloseNoDeadlock.class);
 
   public void doReportDeadlockTest(final String sink) throws IOException,

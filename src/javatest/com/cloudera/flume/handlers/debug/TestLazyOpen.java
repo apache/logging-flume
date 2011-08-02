@@ -21,7 +21,8 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeBuilder;
@@ -37,7 +38,7 @@ import com.cloudera.flume.reporter.aggregator.CounterSink;
  * Demonstrates that lazy open defers until append happens to actually open.
  */
 public class TestLazyOpen {
-  final public static Logger LOG = Logger.getLogger(TestLazyOpen.class);
+  public static final Logger LOG = LoggerFactory.getLogger(TestLazyOpen.class);
 
   static class OpenInstanceCountingSink extends EventSink.Base {
     int opened = 0;

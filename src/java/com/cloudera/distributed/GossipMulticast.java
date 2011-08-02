@@ -38,7 +38,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.google.common.base.Preconditions;
@@ -54,7 +55,7 @@ import com.google.common.base.Preconditions;
  * 
  */
 public class GossipMulticast implements Multicast<GossipMulticast.GossipMessage> {
-  Logger LOG = Logger.getLogger(GossipMulticast.class);
+  static final Logger LOG = LoggerFactory.getLogger(GossipMulticast.class);
   
   public GossipMulticast(Group group, TCPNodeId me) {
     this.group = group;

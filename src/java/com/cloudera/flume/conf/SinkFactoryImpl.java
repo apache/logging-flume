@@ -24,7 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.AgentFailChainSink;
 import com.cloudera.flume.agent.AgentSink;
@@ -91,7 +92,7 @@ import com.cloudera.util.Pair;
  * recompile to add new types.
  */
 public class SinkFactoryImpl extends SinkFactory {
-  static final Logger LOG = Logger.getLogger(SinkFactoryImpl.class);
+  static final Logger LOG = LoggerFactory.getLogger(SinkFactoryImpl.class);
 
   // The actual types are <String, SinkBuilder>
   static Object[][] sinkList = {

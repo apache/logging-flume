@@ -30,7 +30,8 @@ import java.util.TreeMap;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.EventImpl;
@@ -46,7 +47,7 @@ import com.google.common.base.Preconditions;
  * type information as well.
  */
 public class ReportEvent extends EventImpl {
-  final static Logger LOG = Logger.getLogger(ReportEvent.class);
+  static final Logger LOG = LoggerFactory.getLogger(ReportEvent.class);
 
   final public static String R_NAME = "name";
   final public static String A_COUNT = "count";

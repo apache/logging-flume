@@ -20,7 +20,8 @@ package com.cloudera.flume.reporter.aggregator;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.ReportTestingContext;
@@ -36,7 +37,7 @@ import com.google.common.base.Preconditions;
  * sink does not reset the count when opened/closed
  */
 public class AccumulatorSink extends EventSink.Base {
-  static Logger LOG = Logger.getLogger(AccumulatorSink.class);
+  static final Logger LOG = LoggerFactory.getLogger(AccumulatorSink.class);
 
   AtomicLong cnt;
   String name;

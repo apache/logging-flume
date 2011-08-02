@@ -17,7 +17,8 @@
  */
 package com.cloudera.flume.handlers.rpc;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
@@ -32,7 +33,7 @@ import com.google.common.base.Preconditions;
  * Thrift depending upon the EVENT_RPC_TYPE set in the configuration file.
  */
 public class RpcSource extends EventSink.Base {
-  final public static Logger LOG = Logger.getLogger(RpcSource.class);
+  public static final Logger LOG = LoggerFactory.getLogger(RpcSource.class);
 
   /**
    * This class will build an AvroEventSource or ThriftEventSource depending on

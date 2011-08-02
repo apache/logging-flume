@@ -19,7 +19,8 @@ package com.cloudera.flume.master;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.google.common.base.Preconditions;
@@ -29,7 +30,7 @@ import com.google.common.base.Preconditions;
  */
 public class LoadConfigCommand {
 
-  static Logger LOG = Logger.getLogger(LoadConfigCommand.class);
+  static final Logger LOG = LoggerFactory.getLogger(LoadConfigCommand.class);
 
   /**
    * Actual Command execution.

@@ -19,7 +19,8 @@ package com.cloudera.flume.handlers.debug;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SinkFactory.SinkDecoBuilder;
@@ -35,7 +36,7 @@ import com.google.common.base.Preconditions;
  */
 public class IntervalDroppyEventSink<S extends EventSink> extends
     EventSinkDecorator<S> {
-  final static Logger LOG = Logger.getLogger(IntervalDroppyEventSink.class);
+  static final Logger LOG = LoggerFactory.getLogger(IntervalDroppyEventSink.class);
 
   int interval;
   int count = 0;

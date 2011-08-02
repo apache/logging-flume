@@ -30,9 +30,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Logger;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.diskfailover.NaiveFileFailoverManager;
 import com.cloudera.flume.agent.durability.NaiveFileWALManager;
@@ -61,7 +62,7 @@ import com.cloudera.util.FileUtil;
  */
 public class TestFlumeNode {
 
-  public static Logger LOG = Logger.getLogger(TestFlumeNode.class);
+  public static final Logger LOG = LoggerFactory.getLogger(TestFlumeNode.class);
 
   /**
    * There was a bug -- when source that threw exception when closing twice

@@ -24,7 +24,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.junit.Before;
 import org.junit.Test;
 import com.cloudera.flume.core.Event;
@@ -38,7 +39,7 @@ import com.cloudera.flume.reporter.ReportEvent;
  * test, their details are given with their respective test methods below.
  */
 public class TestChokeDecos {
-  final public static Logger LOG = Logger.getLogger(TestChokeDecos.class);
+  public static final Logger LOG = LoggerFactory.getLogger(TestChokeDecos.class);
 
   Random rand = new Random(System.currentTimeMillis());
 

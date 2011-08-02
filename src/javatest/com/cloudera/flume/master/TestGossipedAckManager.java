@@ -25,13 +25,14 @@ import java.util.Random;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.util.Clock;
 import com.cloudera.util.Pair;
 
 public class TestGossipedAckManager {
-  Logger LOG = Logger.getLogger(TestGossipedAckManager.class);
+  static final Logger LOG = LoggerFactory.getLogger(TestGossipedAckManager.class);
   
   @Test
   public void testGAM() throws InterruptedException, IOException {

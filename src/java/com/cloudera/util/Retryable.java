@@ -17,14 +17,15 @@
  */
 package com.cloudera.util;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Analagously to Runnable, this is a wrapper class that implements an interface
  * that is called by RetryHarness to retry an operation. 
  */
 public class Retryable {
-  final static Logger LOG = Logger.getLogger(Retryable.class);
+  static final Logger LOG = LoggerFactory.getLogger(Retryable.class);
   protected RetryHarness harness = null;
   
   /**

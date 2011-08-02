@@ -23,7 +23,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.antlr.runtime.tree.CommonTree;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class provides a library of pattern matching primitives over ANTLR's
@@ -49,7 +50,7 @@ import org.apache.log4j.Logger;
  * generator. This is not directly tied to the actual lex/parser.
  */
 public class PatternMatch {
-  final public static Logger LOG = Logger.getLogger(PatternMatch.class);
+  public static final Logger LOG = LoggerFactory.getLogger(PatternMatch.class);
 
   enum PatternType {
     WILD, VAR, KIND, TUPLE, PARENT, PARENT_NTH, PARENT_RECURSIVE, OR

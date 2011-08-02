@@ -24,7 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeSpecException;
@@ -44,7 +45,7 @@ import com.google.common.base.Preconditions;
  * much easier for testing.
  */
 public class FailOverSink extends EventSink.Base {
-  final static Logger LOG = Logger.getLogger(FailOverSink.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(FailOverSink.class);
 
   // makes sure this doesn't cause conflict when constructor called
   // concurrently.

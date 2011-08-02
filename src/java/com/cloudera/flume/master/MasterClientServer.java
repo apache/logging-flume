@@ -23,7 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeConfigData;
@@ -40,7 +41,7 @@ import com.google.common.base.Preconditions;
  * run their own stub servers, then delegate all requests to this common class.
  */
 public class MasterClientServer {
-  Logger LOG = Logger.getLogger(MasterClientServer.class);
+  static final Logger LOG = LoggerFactory.getLogger(MasterClientServer.class);
   final protected FlumeMaster master;
   final protected FlumeConfiguration config;
   

@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
 import org.junit.Test;
 
 import com.cloudera.flume.core.EventSource;

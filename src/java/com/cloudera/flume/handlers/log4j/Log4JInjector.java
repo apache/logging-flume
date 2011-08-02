@@ -84,7 +84,7 @@ public class Log4JInjector {
       break;
     }
     PropertyConfigurator.configure(props);
-    Logger logger = Logger.getLogger(Log4JInjector.class.getName());
+    Logger logger = Logger.getLogger(Log4JInjector.class);
 
     // send test for specified number of iterations.
     for (long l = 0; l < iters || endless; l++) {

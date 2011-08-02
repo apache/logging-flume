@@ -20,7 +20,8 @@ package com.cloudera.flume.agent;
 import java.io.IOException;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
@@ -50,7 +51,7 @@ import com.google.common.base.Preconditions;
  * TODO (jon) replace with substitution instead of this sink.
  */
 public class AgentSink extends EventSink.Base {
-  final static Logger LOG = Logger.getLogger(AgentSink.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(AgentSink.class);
 
   public enum ReliabilityMode {
     ENDTOEND, // this does writeahead along with end-to-end acks

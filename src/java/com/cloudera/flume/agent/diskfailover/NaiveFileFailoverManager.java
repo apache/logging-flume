@@ -28,7 +28,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.core.Event;
@@ -54,7 +55,7 @@ import com.google.common.base.Preconditions;
  */
 public class NaiveFileFailoverManager implements DiskFailoverManager,
     Reportable {
-  static Logger LOG = Logger.getLogger(NaiveFileFailoverManager.class);
+  static final Logger LOG = LoggerFactory.getLogger(NaiveFileFailoverManager.class);
 
   // This is the state of the node.
   final private ConcurrentHashMap<String, DFOData> table = new ConcurrentHashMap<String, DFOData>();

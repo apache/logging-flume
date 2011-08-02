@@ -26,14 +26,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is a test harness for the consistent hash implementation.
  */
 public class TestConsistentHash {
-  final static Logger LOG = Logger.getLogger(TestConsistentHash.class);
+  static final Logger LOG = LoggerFactory.getLogger(TestConsistentHash.class);
 
   // These are the bins values can go into
   List<String> machines = Arrays.asList("machine A", "machine B", "machine C",

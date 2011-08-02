@@ -20,7 +20,8 @@ package com.cloudera.flume.conf;
 
 import static org.junit.Assert.assertEquals;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.junit.Test;
 
 /**
@@ -28,7 +29,7 @@ import org.junit.Test;
  * exception.
  */
 public class TestParserErrorMessages {
-  public static Logger LOG = Logger.getLogger(TestParserErrorMessages.class);
+  public static final Logger LOG = LoggerFactory.getLogger(TestParserErrorMessages.class);
 
   @Test
   public void testBadLexer() {

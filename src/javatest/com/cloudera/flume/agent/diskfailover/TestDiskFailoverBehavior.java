@@ -25,10 +25,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.LogicalNode;
 import com.cloudera.flume.conf.Context;
@@ -52,7 +53,7 @@ import com.cloudera.util.Clock;
  **/
 public class TestDiskFailoverBehavior {
 
-  final public static Logger LOG = Logger
+  public static final Logger LOG = LoggerFactory
       .getLogger(TestDiskFailoverBehavior.class);
 
   @Before

@@ -17,8 +17,9 @@
  */
 package com.cloudera.flume.agent;
 
-import org.apache.log4j.Logger;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
@@ -28,7 +29,7 @@ import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.reporter.ReportManager;
 
 public class TestAgentFailChainSink {
-  static Logger LOG = Logger.getLogger(TestAgentFailChainSink.class);
+  static final Logger LOG = LoggerFactory.getLogger(TestAgentFailChainSink.class);
 
   /**
    * These should fail if there are any exceptions thrown.

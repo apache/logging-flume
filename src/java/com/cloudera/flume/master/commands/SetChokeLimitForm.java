@@ -20,7 +20,8 @@ package com.cloudera.flume.master.commands;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.master.Command;
 import com.cloudera.flume.master.Execable;
@@ -32,7 +33,7 @@ import com.google.common.base.Preconditions;
  * This implements the "setChokeLimit" command
  */
 public class SetChokeLimitForm {
-  final static Logger LOG = Logger.getLogger(SetChokeLimitForm.class);
+  static final Logger LOG = LoggerFactory.getLogger(SetChokeLimitForm.class);
   String logicalNode;
 
   public String getLogicalNode() {

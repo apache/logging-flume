@@ -25,10 +25,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.apache.avro.specific.SpecificResponder;
-import org.apache.log4j.Logger;
 import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.ipc.HttpServer;
 import org.apache.avro.ipc.Server;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.avro.AvroFlumeConfigData;
 import com.cloudera.flume.conf.avro.FlumeNodeState;
@@ -46,7 +47,7 @@ import com.google.common.base.Preconditions;
  * delegates to a MasterClientServer.
  */
 public class MasterClientServerAvro implements AvroFlumeClientServer, RPCServer {
-  Logger LOG = Logger.getLogger(MasterClientServerAvro.class);
+  static final Logger LOG = LoggerFactory.getLogger(MasterClientServerAvro.class);
   final protected int port;
   protected MasterClientServer delegate;
   protected Server server;

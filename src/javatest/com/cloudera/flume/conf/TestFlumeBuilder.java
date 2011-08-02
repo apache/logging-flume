@@ -24,9 +24,10 @@ import java.io.IOException;
 
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.CommonTree;
-import org.apache.log4j.Logger;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.ExampleData;
 import com.cloudera.flume.handlers.rolling.RollSink;
@@ -39,7 +40,7 @@ import com.cloudera.flume.master.availability.FailoverChainSink;
  */
 public class TestFlumeBuilder implements ExampleData {
 
-  public static Logger LOG = Logger.getLogger(TestFlumeBuilder.class);
+  public static final Logger LOG = LoggerFactory.getLogger(TestFlumeBuilder.class);
   String SOURCE = "text(\"bogusfile\")";
 
   @Test

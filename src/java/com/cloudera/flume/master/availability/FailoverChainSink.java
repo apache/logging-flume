@@ -22,7 +22,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -42,7 +43,7 @@ import com.google.common.base.Preconditions;
  * of lazyopening failover nodes
  */
 public class FailoverChainSink extends EventSink.Base {
-  final static Logger LOG = Logger.getLogger(FailoverChainSink.class);
+  static final Logger LOG = LoggerFactory.getLogger(FailoverChainSink.class);
 
   final EventSink snk;
 

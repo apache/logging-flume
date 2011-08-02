@@ -20,7 +20,8 @@ package com.cloudera.flume.handlers.debug;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
@@ -39,7 +40,7 @@ import com.google.common.base.Preconditions;
  * RandomAccessFile uses readline and StringBuffer - these take 60% of cpu time!
  */
 public class TextFileSource extends EventSource.Base {
-  static Logger LOG = Logger.getLogger(TextFileSource.class);
+  static final Logger LOG = LoggerFactory.getLogger(TextFileSource.class);
 
   String fname;
   RandomAccessFile raf;

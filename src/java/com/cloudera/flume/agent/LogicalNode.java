@@ -24,7 +24,8 @@ import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
@@ -75,7 +76,7 @@ import com.cloudera.util.NetUtils;
  * look at this code may be necessary.
  */
 public class LogicalNode implements Reportable {
-  final static Logger LOG = Logger.getLogger(LogicalNode.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(LogicalNode.class);
 
   private FlumeConfigData lastGoodCfg;
   private Driver driver; // the connector that pumps data from src to snk

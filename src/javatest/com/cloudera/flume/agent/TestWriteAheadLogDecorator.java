@@ -20,11 +20,12 @@ package com.cloudera.flume.agent;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
@@ -43,7 +44,7 @@ import com.cloudera.util.FileUtil;
  * Tests WriteAheadLogDeco's builder, multiple open close, and actual behavior.
  */
 public class TestWriteAheadLogDecorator {
-  static Logger LOG = Logger.getLogger(TestWriteAheadLogDecorator.class);
+  static final Logger LOG = LoggerFactory.getLogger(TestWriteAheadLogDecorator.class);
   File tmpdir = null;
 
   @Before

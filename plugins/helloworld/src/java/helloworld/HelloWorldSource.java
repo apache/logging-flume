@@ -21,7 +21,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
@@ -34,7 +35,7 @@ import com.google.common.base.Preconditions;
  * Simple Source that generates a "hello world!" event every 3 seconds.
  */
 public class HelloWorldSource extends EventSource.Base {
-  static Logger LOG = Logger.getLogger(HelloWorldSource.class);
+  static final Logger LOG = LoggerFactory.getLogger(HelloWorldSource.class);
   
   private String helloWorld;
 

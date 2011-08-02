@@ -27,7 +27,8 @@ import java.util.Map.Entry;
 import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.ipc.HttpServer;
 import org.apache.avro.specific.SpecificResponder;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -102,7 +103,7 @@ public class MasterAdminServerAvro implements FlumeMasterAdminServerAvro,
     return out;
   }
 
-  Logger LOG = Logger.getLogger(MasterAdminServerAvro.class);
+  static final Logger LOG = LoggerFactory.getLogger(MasterAdminServerAvro.class);
   final int port;
   final protected MasterAdminServer delegate;
   protected HttpServer server;

@@ -24,7 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.handlers.endtoend.AckListener;
@@ -35,7 +36,7 @@ import com.cloudera.flume.reporter.ReportEvent;
  * This mocks out enough of the RPC interface for local tests.
  */
 public class MockMasterRPC implements MasterRPC {
-  static Logger LOG = Logger.getLogger(MockMasterRPC.class);
+  static final Logger LOG = LoggerFactory.getLogger(MockMasterRPC.class);
 
   final MasterAckManager ackman = new MasterAckManager();
 

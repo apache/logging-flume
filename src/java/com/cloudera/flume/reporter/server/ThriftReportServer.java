@@ -21,10 +21,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.core.Attributes;
@@ -42,7 +43,7 @@ import com.google.common.base.Preconditions;
  */
 public class ThriftReportServer extends ThriftServer implements
     ThriftFlumeReportServer.Iface {
-  final static protected Logger LOG = Logger
+  protected static final Logger LOG = LoggerFactory
       .getLogger(ThriftReportServer.class);
 
   /**

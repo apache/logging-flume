@@ -27,7 +27,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
@@ -78,8 +79,7 @@ import com.google.common.base.Preconditions;
  * java api to get these, or Java 7's WatchSevice file watcher API.
  */
 public class TailSource extends EventSource.Base {
-  private final static Logger LOG = Logger
-      .getLogger(TailSource.class.getName());
+  private static final Logger LOG = LoggerFactory.getLogger(TailSource.class);
 
   private static int thd_count = 0;
   private volatile boolean done = false;

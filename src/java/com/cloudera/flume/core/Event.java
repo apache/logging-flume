@@ -24,7 +24,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
@@ -32,7 +33,7 @@ import com.google.common.base.Preconditions;
  * This is the abstract class for events in flume.
  */
 abstract public class Event {
-  final static Logger LOG = Logger.getLogger(Event.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(Event.class);
 
   public final static String A_SERVICE = "service";
 

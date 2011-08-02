@@ -27,7 +27,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
@@ -49,7 +50,7 @@ import com.cloudera.util.MultipleIOException;
  * This maintains a set of the logical nodes in the process.
  */
 public class LogicalNodeManager implements Reportable {
-  final protected static Logger LOG = Logger
+  protected static final Logger LOG = LoggerFactory
       .getLogger(LogicalNodeManager.class);
 
   Map<String, LogicalNode> threads = new ConcurrentHashMap<String, LogicalNode>();

@@ -27,7 +27,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.CRC32;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.conf.Context;
@@ -53,7 +54,7 @@ import com.google.common.base.Preconditions;
  */
 public class AckChecksumChecker<S extends EventSink> extends
     EventSinkDecorator<S> {
-  static Logger LOG = Logger.getLogger(AckChecksumChecker.class);
+  static final Logger LOG = LoggerFactory.getLogger(AckChecksumChecker.class);
 
   final static public String A_ACK_STARTS = "ackStarts";
   final static public String A_ACK_ENDS = "ackEnds";

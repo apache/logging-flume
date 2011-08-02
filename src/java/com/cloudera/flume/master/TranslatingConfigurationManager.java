@@ -27,7 +27,8 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.FlumeConfigData;
@@ -52,7 +53,7 @@ import com.google.common.collect.Multimap;
  */
 abstract public class TranslatingConfigurationManager implements
     ConfigurationManager, Translator {
-  final static Logger LOG = Logger
+  static final Logger LOG = LoggerFactory
       .getLogger(TranslatingConfigurationManager.class);
   ConfigurationManager parentMan;
   ConfigurationManager selfMan;

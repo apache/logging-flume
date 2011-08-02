@@ -29,7 +29,8 @@ import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.util.Pair;
 import com.google.common.base.Preconditions;
@@ -45,7 +46,7 @@ import com.google.common.base.Preconditions;
  * and causes a stack overflow.
  */
 public class FlumeConfiguration extends Configuration {
-  final protected static Logger LOG = Logger
+  protected static final Logger LOG = LoggerFactory
       .getLogger(FlumeConfiguration.class);
   private static FlumeConfiguration singleton;
 

@@ -30,7 +30,8 @@ import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -45,7 +46,7 @@ import org.junit.Test;
  * Tests for the shell-based process exec event source.
  */
 public class TestExecEventSource {
-  static Logger LOG = Logger.getLogger(TestExecEventSource.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(TestExecEventSource.class);
 
   /**
    * Test builders

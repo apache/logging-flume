@@ -25,12 +25,13 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSaneServerSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.VersionInfo;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -48,7 +49,7 @@ import com.google.common.base.Preconditions;
  */
 public class ScribeEventSource extends ThriftServer implements EventSource,
     scribe.Iface {
-  static final Logger LOG = Logger.getLogger(ScribeEventSource.class);
+  static final Logger LOG = LoggerFactory.getLogger(ScribeEventSource.class);
   final BlockingQueue<Event> pendingQueue = new LinkedBlockingQueue<Event>();
 
   final static public String SCRIBE_CATEGORY = "scribe.category";

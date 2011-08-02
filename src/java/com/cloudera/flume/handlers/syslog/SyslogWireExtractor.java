@@ -22,7 +22,8 @@ import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
@@ -37,8 +38,8 @@ import com.google.common.base.Preconditions;
  * the previous regex based approach.
  */
 public class SyslogWireExtractor implements Extractor, SyslogConsts {
-  final static Logger LOG =
-      Logger.getLogger(SyslogWireExtractor.class.getName());
+  static final Logger LOG =
+      LoggerFactory.getLogger(SyslogWireExtractor.class);
 
   static SyslogWireExtractor format = new SyslogWireExtractor();
 

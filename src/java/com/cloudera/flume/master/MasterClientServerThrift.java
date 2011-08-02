@@ -24,9 +24,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.thrift.ThriftFlumeClientServer;
@@ -46,7 +47,7 @@ import com.google.common.base.Preconditions;
  */
 public class MasterClientServerThrift extends ThriftServer implements
     ThriftFlumeClientServer.Iface, RPCServer {
-  Logger LOG = Logger.getLogger(MasterClientServerThrift.class);
+  static final Logger LOG = LoggerFactory.getLogger(MasterClientServerThrift.class);
   final protected int port;
   protected MasterClientServer delegate;
 

@@ -27,11 +27,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.thrift.CommandStatusThrift;
@@ -46,7 +47,7 @@ import com.cloudera.flume.util.ThriftServer;
 
 public class TestThriftAdminServer {
 
-  public static Logger LOG = Logger.getLogger(TestThriftAdminServer.class);
+  public static final Logger LOG = LoggerFactory.getLogger(TestThriftAdminServer.class);
 
   class MyThriftServer extends ThriftServer implements Iface {
 

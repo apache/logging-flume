@@ -20,7 +20,8 @@ package com.cloudera.flume.collector;
 import java.io.IOException;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
@@ -43,7 +44,7 @@ import com.google.common.base.Preconditions;
  * TODO (jon) auto version negotiation? (With agent sink)
  */
 public class CollectorSource extends EventSource.Base {
-  final static Logger LOG = Logger.getLogger(CollectorSource.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(CollectorSource.class);
 
   final EventSource src;
   int port;

@@ -28,7 +28,8 @@ import java.util.Map;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.CommonTree;
 import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumePatterns;
@@ -47,7 +48,7 @@ import com.cloudera.flume.master.logical.LogicalNameManager.PhysicalNodeInfo;
  */
 public class LogicalConfigurationManager extends
     TranslatingConfigurationManager implements Translator {
-  final static Logger LOG = Logger.getLogger(LogicalConfigurationManager.class);
+  static final Logger LOG = LoggerFactory.getLogger(LogicalConfigurationManager.class);
   public static final String NAME = "LogicalTranslator";
   final LogicalNameManager nameMan;
 

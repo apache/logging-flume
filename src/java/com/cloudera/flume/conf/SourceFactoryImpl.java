@@ -25,7 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.collector.CollectorSource;
 import com.cloudera.flume.core.EventSource;
@@ -61,7 +62,7 @@ import com.cloudera.util.Pair;
  * new sources are added.
  */
 public class SourceFactoryImpl extends SourceFactory {
-  static Logger LOG = Logger.getLogger(SourceFactoryImpl.class);
+  static final Logger LOG = LoggerFactory.getLogger(SourceFactoryImpl.class);
 
   static Object[][] sourceList = {
       // high level sources

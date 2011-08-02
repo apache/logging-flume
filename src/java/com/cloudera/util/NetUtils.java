@@ -20,13 +20,14 @@ package com.cloudera.util;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is a gets the local machine's domain name.
  */
 public class NetUtils {
-  final public static Logger LOG = Logger.getLogger(NetUtils.class);
+  public static final Logger LOG = LoggerFactory.getLogger(NetUtils.class);
   // this is recorded locally
   private static String localhost;
 

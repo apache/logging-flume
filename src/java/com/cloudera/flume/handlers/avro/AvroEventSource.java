@@ -23,7 +23,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
@@ -48,7 +49,7 @@ public class AvroEventSource extends EventSource.Base {
   final static long MAX_CLOSE_SLEEP = FlumeConfiguration.get()
       .getThriftCloseMaxSleep();
 
-  final static Logger LOG = Logger.getLogger(AvroEventSource.class);
+  static final Logger LOG = LoggerFactory.getLogger(AvroEventSource.class);
 
   public static final String A_QUEUE_CAPACITY = "queueCapacity";
   public static final String A_QUEUE_FREE = "queueFree";

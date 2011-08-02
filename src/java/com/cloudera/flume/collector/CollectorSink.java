@@ -22,7 +22,8 @@ import java.util.Collection;
 import java.util.Map;
 
 import org.apache.hadoop.fs.Path;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.conf.Context;
@@ -60,7 +61,7 @@ import com.google.common.collect.Multimap;
  * new tagged output writer and the custom format dfs writer..
  */
 public class CollectorSink extends EventSink.Base {
-  final static Logger LOG = Logger.getLogger(CollectorSink.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(CollectorSink.class);
 
   final EventSink snk;
   AckAccumulator accum = new AckAccumulator();

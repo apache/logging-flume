@@ -21,7 +21,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
 import com.cloudera.flume.core.Event;
@@ -37,7 +38,7 @@ import com.google.common.base.Preconditions;
  * by default when using it
  */
 public class StdinSource extends EventSource.Base {
-  final static Logger LOG = Logger.getLogger(StdinSource.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(StdinSource.class);
 
   BufferedReader rd = null;
 

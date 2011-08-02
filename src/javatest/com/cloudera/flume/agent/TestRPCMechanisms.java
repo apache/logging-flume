@@ -28,13 +28,14 @@ import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.ipc.HttpServer;
 import org.apache.avro.ipc.Server;
 import org.apache.avro.specific.SpecificResponder;
-import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 import org.mortbay.log.Log;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -57,7 +58,7 @@ import com.cloudera.flume.util.ThriftServer;
  * basic stub client/server interaction.
  */
 public class TestRPCMechanisms {
-  Logger LOG = Logger.getLogger(TestRPCMechanisms.class);
+  static final Logger LOG = LoggerFactory.getLogger(TestRPCMechanisms.class);
 
   /**
    * Mock AvroServer.

@@ -20,9 +20,10 @@ package com.cloudera.flume.conf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import java.io.IOException;
-import org.apache.log4j.Logger;
 import org.junit.Test;
 import org.mortbay.log.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.cloudera.flume.ExampleData;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
@@ -43,7 +44,7 @@ import com.cloudera.flume.reporter.aggregator.CounterSink;
 public class TestFactories implements ExampleData {
   public static SinkFactory fact = new SinkFactoryImpl();
   public static SourceFactory srcfact = new SourceFactoryImpl();
-  final public static Logger LOG = Logger.getLogger(TestFactories.class);
+  public static final Logger LOG = LoggerFactory.getLogger(TestFactories.class);
   final static int LINES = 25;
 
   @Test

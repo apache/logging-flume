@@ -25,7 +25,8 @@ import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.CommonTree;
 import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.master.Command;
 import com.cloudera.flume.shell.antlr.FlumeShellLexer;
@@ -41,7 +42,7 @@ import com.cloudera.flume.shell.antlr.FlumeShellParser;
  * present in unquoted tokens. .
  */
 public class CommandBuilder {
-  final public static Logger LOG = Logger.getLogger(CommandBuilder.class);
+  public static final Logger LOG = LoggerFactory.getLogger(CommandBuilder.class);
 
   enum ASTNODE {
     CMD, DQUOTE, SQUOTE, STRING

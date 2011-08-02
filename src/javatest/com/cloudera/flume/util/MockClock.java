@@ -19,7 +19,8 @@ package com.cloudera.flume.util;
 
 import java.util.Date;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.util.Clock;
 
@@ -30,7 +31,7 @@ import com.cloudera.util.Clock;
  * It uses wait() and notify() for simulating a sleep in a separate thread.
  */
 public class MockClock extends Clock {
-  static Logger logger = Logger.getLogger(MockClock.class.getName());
+  static final Logger LOG = LoggerFactory.getLogger(MockClock.class);
 
   long time = 0;
   Object lock = new Object();
@@ -78,7 +79,7 @@ public class MockClock extends Clock {
       time += millis;
 
       lock.notifyAll(); // alert any waiting sleeps
-      logger.debug("running thread: " + this);
+      LOG.debug("running thread: " + this);
     }
     try {
       Thread.sleep(0); // yield to other threads.
@@ -106,7 +107,7 @@ public class MockClock extends Clock {
         lock.wait(); // wait until condition is met.
       }
     }
-    logger.debug("sleeping thread awoke: " + this);
+    LOG.debug("sleeping thread awoke: " + this);
 
   }
 

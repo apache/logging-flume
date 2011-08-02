@@ -28,11 +28,13 @@ import java.util.Map;
 import org.apache.avro.ipc.HttpTransceiver;
 import org.apache.avro.specific.SpecificRequestor;
 import org.apache.avro.util.Utf8;
-import org.apache.log4j.Logger;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.Attributes.Type;
@@ -46,7 +48,7 @@ import com.cloudera.flume.reporter.server.avro.AvroFlumeReport;
  * Test cases for the Avro-based report server
  */
 public class TestAvroReportServer {
-  protected final static Logger LOG = Logger
+  protected static final Logger LOG = LoggerFactory
       .getLogger(TestAvroReportServer.class);
   AvroReportServer reportServer;
   final static int PORT = 23456;

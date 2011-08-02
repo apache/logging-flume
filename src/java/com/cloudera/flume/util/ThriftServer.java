@@ -18,7 +18,6 @@
 
 package com.cloudera.flume.util;
 
-import org.apache.log4j.Logger;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TBinaryProtocol.Factory;
@@ -26,6 +25,8 @@ import org.apache.thrift.server.TSaneThreadPoolServer;
 import org.apache.thrift.transport.TSaneServerSocket;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
@@ -36,7 +37,7 @@ import com.google.common.base.Preconditions;
  * TODO refactor this class -- seems like some of the start args should move to the constructor
  */
 public class ThriftServer {
-  private static final Logger LOG = Logger.getLogger(ThriftServer.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ThriftServer.class);
 
   protected TServerTransport serverTransport = null;;
   protected TSaneThreadPoolServer server = null;  

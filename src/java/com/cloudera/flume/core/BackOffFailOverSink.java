@@ -24,7 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -52,8 +53,7 @@ import com.google.common.base.Preconditions;
  * with a lazyOpen decorator
  */
 public class BackOffFailOverSink extends EventSink.Base {
-  final static Logger LOG = Logger.getLogger(BackOffFailOverSink.class
-      .getName());
+  static final Logger LOG = LoggerFactory.getLogger(BackOffFailOverSink.class);
 
   final String A_PRIMARY = "sentPrimary";
   final String A_FAILS = "failsPrimary";
