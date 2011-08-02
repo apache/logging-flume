@@ -180,7 +180,7 @@ $ flume dump 'syslogTcp(5140)'
 And send it data:
 
 ----
-$ echo "<37>hello via syslog" | nc -u localhost 5140 
+$ echo "<37>hello via syslog" | nc -t localhost 5140 
 ----
 
 TIP: You may need to press ^C to exit this command.
