@@ -34,10 +34,14 @@ listen on TCP port +_port_+. Currently, the apache-thrift RPC framework is used.
 +text("_filename_")+ :: One shot text file source.  One event per +\n+ 
 delimited line.
 
-+tail("_filename_")+ :: Similar to Unix's tail utility. One line is one event.  
-Stays open for more data, and follows filename.  (e.g. if tailing file "foo" 
-and then "foo" is moved to "bar" and a new file appears named "foo", it will 
-finish reading the new "bar" file and then start from the beginning of "foo").
++tail("_filename_"[, _startFromEnd_=false])+ :: Similar to Unix's tail
+utility. One line is one event. Generates events for the entire file
+then stays open for more data, and follows filename.  (e.g. if tailing
+file "foo" and then "foo" is moved to "bar" and a new file appears
+named "foo", it will finish reading the new "bar" file and then start
+from the beginning of "foo"). If the +startFromEnd+ parameter is
+false, tail will re-read from the beginning of the file.  If it is
+true, it will only start reading from the current end of file.
 
 +multitail("_filename_"[, _file2_ [,_file3_ ... ] ])+ :: Like +tail+ but can 
 follow multiple files concurrently.
