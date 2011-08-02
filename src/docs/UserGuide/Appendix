@@ -392,6 +392,17 @@ modified so that their bodies are replaced with an escaped version of the
 used on unreliable flows or reporting flows. Inappropriate use may result in 
 message loss.
 
++exDate("_attr_","_pattern_" [, "_prefix_" [, "_padding_"]])+ :: Parse a date string from 
+the _attr_ value of the event, using the _pattern_ as a reference of how to 
+parse it. The major values of the date will be assigned to new event attributes 
+using "date" as a prefix if no _prefix_ is provided. To add or remove zero padding there
+is the _padding_ variable. By default zero padding is on. Example of zero padding 2010-1-1 becomes 2010-01-01.
+More info on how to construct the _pattern_ can be found here 
+http://download-llnw.oracle.com/javase/1.4.2/docs/api/java/text/SimpleDateFormat.html
+Do note that _attr_ is an already extracted date string from the body of the event.
+exDate doesn't attempt to extract it from the body for you. Example output attributes would be
+dateday, datemonth, dateyear, datehr, datemin, datesec. Where _date_ is the _prefix_.
+
 +regex("_regex_",idx,"_attr_")+ :: The regex decorator applies the regular 
 expression _regex_, extracts the _idx_ th capture group, and writes this value 
 to the _attr_ attribute.  The regex must use java-style escaping.  Thus a 
