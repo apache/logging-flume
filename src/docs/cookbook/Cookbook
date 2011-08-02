@@ -40,15 +40,15 @@ kinds of sources.  Finally we'll do a quick setup for collectors and
 how to troubleshoot distributed deployments.
 
 * Basic debugging with one-shot Flume nodes
-// * Flume agents for Apache web server logging
-// * Flume agents for syslog / syslog-ng logging
+* Flume agents for Apache web server logging
+* Flume agents for syslog / syslog-ng logging
 * Flume agents for scribe logging
 // * Flume agents for logging via log4j
 // * Configuring nodes on node startup
 // * Small Deployments.
 
 include::Testing[]
-//include::Apache[]
+include::Apache[]
 include::Syslog[]
 include::Scribe[]
 // include::Log4J[]
