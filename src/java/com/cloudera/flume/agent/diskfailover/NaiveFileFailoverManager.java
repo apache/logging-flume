@@ -248,15 +248,24 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
 
     return new EventSinkDecorator<EventSink>(curSink) {
       @Override
-      public void append(Event e) throws IOException {
-        getSink().append(e);
-        writingEvtCount.incrementAndGet();
+      synchronized public void append(Event e) throws IOException {
+        synchronized (NaiveFileFailoverManager.this) {
+          getSink().append(e);
+          writingEvtCount.incrementAndGet();
+        }
       }
 
       @Override
-      public void close() throws IOException {
-        super.close();
+      synchronized public void close() throws IOException {
+        // NaiveFileFailoverManager.this.close();
         synchronized (NaiveFileFailoverManager.this) {
+          super.close();
+          if (!writingQ.contains(tag)) {
+            LOG.warn("Already changed tag " + tag + " out of WRITING state");
+            return;
+          }
+          LOG.info("File lives in " + getFile(tag));
+
           changeState(tag, State.WRITING, State.LOGGED);
           loggedCount.incrementAndGet();
         }
@@ -435,7 +444,7 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
     public void close() throws IOException {
       try {
         src.close();
-        changeState(tag, null, State.SENT);
+        changeState(tag, State.SENDING, State.SENT);
         sentCount.incrementAndGet();
       } catch (IOException ioe) {
         LOG.warn("close had a problem " + src, ioe);
@@ -476,9 +485,10 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
    * return null;
    */
   public EventSource getUnsentSource() throws IOException {
-
-    if (state == ManagerState.CLOSED) {
-      return null;
+    synchronized (this) {
+      if (state == ManagerState.CLOSED) {
+        return null;
+      }
     }
 
     // need to get a current file?
@@ -540,7 +550,7 @@ public class NaiveFileFailoverManager implements DiskFailoverManager,
    * This is a hook that imports external files to the dfo bypassing the default
    * append
    */
-  public void importData() throws IOException {
+  synchronized public void importData() throws IOException {
     // move all writing into the logged dir.
     for (String fn : importDir.list()) {
       // add to logging queue

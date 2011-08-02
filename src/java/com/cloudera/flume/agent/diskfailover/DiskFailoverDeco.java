@@ -34,6 +34,7 @@ import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSinkDecorator;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.core.connector.DirectDriver;
+import com.cloudera.flume.handlers.debug.LazyOpenDecorator;
 import com.cloudera.flume.handlers.rolling.ProcessTagger;
 import com.cloudera.flume.handlers.rolling.RollSink;
 import com.cloudera.flume.handlers.rolling.RollTrigger;
@@ -54,21 +55,26 @@ public class DiskFailoverDeco<S extends EventSink> extends
   final RollTrigger trigger;
 
   RollSink input;
-  EventSource output;
-  Driver conn;
+  EventSource drainSource;
+  Driver drainDriver;
 
-  CountDownLatch completed = null; // block close until subthread is completed
-  CountDownLatch started = null; // blocks open until subthread is started
+  CountDownLatch drainCompleted = null; // block close until subthread is
+  // completed
+  CountDownLatch drainStarted = null; // blocks open until subthread is started
   volatile IOException lastExn = null;
 
   final long checkmillis;
 
   public DiskFailoverDeco(S s, final DiskFailoverManager dfoman, RollTrigger t,
       long checkmillis) {
-    super(s);
+    super((S) new LazyOpenDecorator(s));
     this.dfoMan = dfoman;
     this.trigger = t;
     this.checkmillis = checkmillis;
+  }
+
+  public void setSink(S sink) {
+    this.sink = (S) new LazyOpenDecorator(sink);
   }
 
   /**
@@ -98,17 +104,53 @@ public class DiskFailoverDeco<S extends EventSink> extends
     try {
       // wait for sub-thread to complete.
       LOG.debug("Waiting for subthread to complete .. ");
-      conn.join(Long.MAX_VALUE);
-      LOG.debug(".. subthread to completed");
+      int maxNoProgressTime = 10;
+
+      ReportEvent rpt = sink.getReport();
+
+      Long levts = rpt.getLongMetric(EventSink.Base.R_NUM_EVENTS);
+      long evts = (levts == null) ? 0 : levts;
+      int count = 0;
+      while (true) {
+        if (drainDriver.join(500)) {
+          // driver successfully completed
+          LOG.debug(".. subthread to completed");
+          break;
+        }
+
+        // driver still running, did we make progress?
+        ReportEvent rpt2 = sink.getReport();
+        Long levts2 = rpt2.getLongMetric(EventSink.Base.R_NUM_EVENTS);
+        long evts2 = (levts2 == null) ? 0 : levts;
+        if (evts2 > evts) {
+          // progress is being made, reset counts
+          count = 0;
+          evts = evts2;
+          LOG.info("Closing disk failover log, subsink still making progress");
+          continue;
+        }
+
+        // no progress.
+        count++;
+        LOG.info("Attempt " + count
+            + " with no progress being made on disk failover subsink");
+        if (count >= maxNoProgressTime) {
+          LOG.warn("DFO drain thread was not making progress, forcing close");
+          drainDriver.cancel();
+          break;
+        }
+      }
+
     } catch (InterruptedException e) {
-      LOG.error("WAL drain thread was interrupted", e);
+      LOG.error("Interrupted, DFO drain thread was not "
+          + "making progress forcing close", e);
     }
 
-    output.close();
+    drainSource.close();
     super.close();
 
     try {
-      completed.await();
+      drainCompleted.await();
     } catch (InterruptedException e) {
       LOG.error("DFO closing flush was interrupted", e);
     }
@@ -130,29 +172,31 @@ public class DiskFailoverDeco<S extends EventSink> extends
         "Attepted to open a null DiskFailoverDeco subsink");
     LOG.debug("Opening DiskFailoverDeco");
     input = dfoMan.getEventSink(trigger);
-    output = dfoMan.getEventSource();
+    drainSource = dfoMan.getEventSource();
 
     // TODO (jon) catch exceptions here and close them before rethrowing
+    drainSource.open(); // before anything can be recovered
+
     super.open();
     input.open();
-    output.open();
-    started = new CountDownLatch(1);
-    completed = new CountDownLatch(1);
 
-    conn = new DirectDriver("FileFailover", output, sink);
+    drainStarted = new CountDownLatch(1);
+    drainCompleted = new CountDownLatch(1);
+
+    drainDriver = new DirectDriver("FileFailover", drainSource, sink);
     /**
      * Don't synchronize on DiskFailoverDeco.this in the ConnectorListener
      * otherwise you might get a deadlock.
      */
-    conn.registerListener(new DriverListener.Base() {
+    drainDriver.registerListener(new DriverListener.Base() {
       @Override
       public void fireStarted(Driver c) {
-        started.countDown();
+        drainStarted.countDown();
       }
 
       @Override
       public void fireStopped(Driver c) {
-        completed.countDown();
+        drainCompleted.countDown();
       }
 
       @Override
@@ -161,18 +205,18 @@ public class DiskFailoverDeco<S extends EventSink> extends
         lastExn = (ex instanceof IOException) ? (IOException) ex
             : new IOException(ex.getMessage());
         try {
-          conn.getSource().close();
-          conn.getSink().close();
-        } catch (IOException e) {
+          drainDriver.getSource().close();
+          drainDriver.getSink().close();
+        } catch (Exception e) {
           LOG.error("Error closing", e);
         }
-        completed.countDown();
-        LOG.info("Error'ed Connector closed " + conn);
+        drainCompleted.countDown();
+        LOG.info("Error'ed Connector closed " + drainDriver);
       }
     });
-    conn.start();
+    drainDriver.start();
     try {
-      started.await();
+      drainStarted.await();
     } catch (InterruptedException e) {
       LOG.error(e, e);
       throw new IOException(e);

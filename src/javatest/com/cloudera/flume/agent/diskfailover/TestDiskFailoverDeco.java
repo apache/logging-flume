@@ -19,6 +19,7 @@ package com.cloudera.flume.agent.diskfailover;
 
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -38,6 +39,7 @@ import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.core.EventUtil;
 import com.cloudera.flume.handlers.rolling.ProcessTagger;
 import com.cloudera.flume.handlers.rolling.TimeTrigger;
+import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.util.BenchmarkHarness;
 
 public class TestDiskFailoverDeco {
@@ -63,6 +65,7 @@ public class TestDiskFailoverDeco {
     doNothing().when(msnk).close();
     doNothing().doThrow(new IOException("foo")).doNothing().when(msnk).append(
         Mockito.<Event> anyObject());
+    doReturn(new ReportEvent("blah")).when(msnk).getReport();
 
     // cannot write to the same instance.
     Event e1 = new EventImpl(new byte[0]);

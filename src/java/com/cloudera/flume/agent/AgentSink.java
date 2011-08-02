@@ -81,21 +81,19 @@ public class AgentSink extends EventSink.Base {
       long maxSingleBo = conf.getFailoverMaxSingleBackoff();
       long initialBo = conf.getFailoverInitialBackoff();
       long maxCumulativeBo = conf.getFailoverMaxCumulativeBackoff();
-      String snk = String.format(
-          "let shared := rpcSink(\"%s\", %d) in < shared ? "
-              + " { diskFailover => { insistentAppend => { stubbornAppend => "
-              + "{ insistentOpen(%d,%d,%d) => shared } } } } >", dsthost, port,
-          maxSingleBo, initialBo, maxCumulativeBo);
+      String rpc = String.format("rpcSink(\"%s\", %d)", dsthost, port);
+
+      String snk = String.format("< %s ? { diskFailover => { insistentAppend "
+          + "=> { stubbornAppend => { insistentOpen(%d,%d,%d) => %s} } } } >",
+          rpc, maxSingleBo, initialBo, maxCumulativeBo, rpc);
       sink = FlumeBuilder.buildSink(new Context(), snk);
       break;
 
     }
 
     case BEST_EFFORT: {
-      String snk = String
-          .format(
-              "< { insistentOpen => { stubbornAppend => rpcSink(\"%s\", %d) } }  ? null>",
-              dsthost, port);
+      String snk = String.format("< { insistentOpen => { stubbornAppend => "
+          + "rpcSink(\"%s\", %d) } }  ? null>", dsthost, port);
       sink = FlumeBuilder.buildSink(new Context(), snk);
       break;
     }

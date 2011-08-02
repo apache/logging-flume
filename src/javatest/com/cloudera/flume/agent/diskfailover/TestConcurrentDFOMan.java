@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.cloudera.flume.agent.diskfailover;
 
 import static org.junit.Assert.assertEquals;
@@ -42,11 +41,13 @@ import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.core.EventUtil;
 import com.cloudera.flume.handlers.debug.NoNlASCIISynthSource;
+import com.cloudera.flume.handlers.rolling.RollSink;
 import com.cloudera.flume.handlers.rolling.TimeTrigger;
 import com.cloudera.flume.master.FlumeMaster;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.Reportable;
+import com.cloudera.flume.reporter.aggregator.AccumulatorSink;
 import com.cloudera.flume.reporter.aggregator.CounterSink;
 import com.cloudera.util.BenchmarkHarness;
 import com.cloudera.util.FileUtil;
@@ -60,7 +61,9 @@ public class TestConcurrentDFOMan {
 
   @Before
   public void setDebug() {
-    Logger.getRootLogger().setLevel(Level.DEBUG);
+    Logger.getLogger(CounterSink.class).setLevel(Level.DEBUG);
+    Logger.getLogger(AccumulatorSink.class).setLevel(Level.DEBUG);
+    Logger.getLogger(RollSink.class).setLevel(Level.DEBUG);
   }
 
   @Test
@@ -115,9 +118,10 @@ public class TestConcurrentDFOMan {
   }
 
   @Test
+  @Ignore("takes too long")
   public void test100logicalNodesBig() throws IOException,
       InterruptedException, FlumeSpecException {
-    doTestLogicalNodesConcurrentDFOMans(100, 10000, 60000);
+    doTestLogicalNodesConcurrentDFOMans(100, 10000, 1800000);
   }
 
   @Test
@@ -140,17 +144,18 @@ public class TestConcurrentDFOMan {
 
     for (int i = 0; i < threads; i++) {
       final int idx = i;
-      new Thread() {
+      new Thread("Concurrent-" + i) {
         @Override
         public void run() {
-
           try {
             File f1 = FileUtil.mktempdir();
-            CounterSink cnt1 = new CounterSink("count." + idx);
+            AccumulatorSink cnt1 = new AccumulatorSink("count." + idx);
             DiskFailoverManager dfoMan = new NaiveFileFailoverManager(f1);
             dfos[idx] = dfoMan; // save for checking.
+
+            // short trigger causes lots of rolls
             EventSink snk = new DiskFailoverDeco<EventSink>(cnt1, dfoMan,
-                new TimeTrigger(100), 50); // short trigger causes lots of rolls
+                new TimeTrigger(100), 50);
 
             ReportManager.get().add(cnt1);
             // make each parallel instance send a slightly different number of
@@ -177,15 +182,18 @@ public class TestConcurrentDFOMan {
 
     }
 
+    started.await();
     boolean ok = done.await(timeout, TimeUnit.MILLISECONDS);
     assertTrue("Test timed out", ok);
 
     for (int i = 0; i < threads; i++) {
-      CounterSink cnt = (CounterSink) ReportManager.get().getReportable(
-          "count." + i);
+      AccumulatorSink cnt = (AccumulatorSink) ReportManager.get()
+          .getReportable("count." + i);
       // check for the slightly different counts based on thread.
       int exp = events + i;
-      LOG.info("expected " + exp + " and got " + cnt.getCount());
+      LOG
+          .info("count." + i + " expected " + exp + " and got "
+              + cnt.getCount());
       assertEquals(exp, (int) cnt.getCount());
 
       // check dfo reports to see if they are sane.
@@ -209,27 +217,21 @@ public class TestConcurrentDFOMan {
       String report = "report." + i;
       int count = events + i;
       String src = "asciisynth(" + count + ",100)";
-
       String snk = "{ diskFailover => counter(\"" + report + "\") } ";
-
-      // String snk = " let shared := accumulator(\""
-      // + report
-      // +
-      // "\") in < { flakeyAppend(.50) => shared } ? { diskFailover => shared } >";
       node.getLogicalNodeManager().testingSpawn(name, src, snk);
-
       dfos[i] = node.getLogicalNodeManager().get(name);
     }
 
     // TODO (jon) using sleep is cheating to give all threads a chance to start.
     // Test seems flakey without this due to a race condition.
-    Thread.sleep(250);
+    Thread.sleep(500);
 
     // wait for all to be done.
     waitForEmptyDFOs(node, timeout);
 
     // check to make sure everyone got the right number of events
     boolean success = true;
+
     for (int i = 0; i < threads; i++) {
       LOG.info(dfos[i].getReport());
     }
