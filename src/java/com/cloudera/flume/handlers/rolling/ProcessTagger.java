@@ -33,10 +33,9 @@ import com.cloudera.util.Clock;
  * files. It uses a file name convention and to tag on batches of events.
  */
 public class ProcessTagger implements Tagger {
-  private final static DateFormat dateFormat = new SimpleDateFormat(
-      "yyyyMMdd-HHmmssSSSZ");
   private final static Pattern p = Pattern
       .compile(".*\\.(\\d+)\\.(\\d+-\\d+-\\d+)\\.seq");
+  private final static String DATE_FORMAT = "yyyyMMdd-HHmmssSSSZ";
 
   /**
    * These event attributes names are used to keep some group information on
@@ -55,11 +54,10 @@ public class ProcessTagger implements Tagger {
   }
 
   public String createTag(String name, int pid) {
+    SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
     String f;
-    // see: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6231579
-    synchronized (dateFormat) {
-      f = dateFormat.format(new Date(Clock.unixTime()));
-    }
+    f = dateFormat.format(new Date(Clock.unixTime()));
+
     if (name.length() > 200) {
       name = name.substring(0, 200); // concatenate long prefixes
     }
@@ -69,6 +67,7 @@ public class ProcessTagger implements Tagger {
   }
 
   public static Date extractDate(String s) {
+    DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
     if (s == null)
       return null;
 
@@ -79,11 +78,8 @@ public class ProcessTagger implements Tagger {
     }
     String date = m.group(2);
 
-    // see: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6231579
-    synchronized (dateFormat) {
-      Date d = dateFormat.parse(date, new ParsePosition(0));
-      return d;
-    }
+    Date d = dateFormat.parse(date, new ParsePosition(0));
+    return d;
   }
 
   @Override
@@ -93,6 +89,7 @@ public class ProcessTagger implements Tagger {
 
   @Override
   public String newTag() {
+    DateFormat dateFormat2 = new SimpleDateFormat(DATE_FORMAT);
 
     long pid = Thread.currentThread().getId();
     String prefix = "log";
@@ -100,8 +97,8 @@ public class ProcessTagger implements Tagger {
     long nanos = Clock.nanos();
     String f;
     // see: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6231579
-    synchronized (dateFormat) {
-      f = dateFormat.format(now);
+    synchronized (dateFormat2) {
+      f = dateFormat2.format(now);
     }
     if (prefix.length() > 200) {
       prefix = prefix.substring(0, 200); // concatenate long prefixes
