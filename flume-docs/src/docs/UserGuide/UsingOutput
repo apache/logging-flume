@@ -289,6 +289,10 @@ files.
 If GzipCodec is selected, ".gz" is appended to the file name, if
 BZip2Codec is selected, ".bz2" is appended.
 
+NOTE: SequenceFiles (+seqfile+) and Avro Data Files (+avrodata+) support
+internal compression, so you should use that instead, and not
+specify +flume.collector.dfs.compress.codec+.
+
 ----
   <property>
     <name>flume.collector.dfs.compress.codec</name>
