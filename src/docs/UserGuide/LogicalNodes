@@ -188,14 +188,15 @@ fooNode1 : fooSrc | autoBEChain ;
 barNode1 : barSrc | autoBEChain ;
 forNode2 : fooSrc | autoBEChain ;
 barNode2 : barSrc | autoBEChain ; 
-fooConsumer : collectorSource | collectorSink("hdfs://nn/foodir") ;
-barConsumer : collectorSource | collectorSink("hdfs://nn/bardir") ;
+fooConsumer : autoCollectorSource | collectorSink("hdfs://nn/foodir") ;
+barConsumer : autoCollectorSource | collectorSink("hdfs://nn/bardir") ;
 ----
 
-In the scenario, there are two physical machines that produce both kinds of 
-data -- foo data and bar data. You want to send data to single collector that 
-collects both foo data and bar data and writes it to different HDFS 
-directories.  You could then map the nodes onto physical nodes:
+In this scenario, there are two physical machines that produce both
+kinds of data -- foo data and bar data. You want to send data to
+single collector that collects both foo data and bar data and writes
+it to different HDFS directories.  You could then map the nodes onto
+physical nodes:
 
 ----
 map host1 fooNode1
@@ -254,15 +255,35 @@ data in the Flume cluster.  The auto*Chain based agents would only send data
 to collectors in the same flow group.  This isolates data so that it only 
 flows to nodes within the group.
 
-You specify flow groups by adding an extra parameter to the map command:
+Currently, the compact form of the configuration language does not
+allow you to specify flows.  Instead you must add an extra argument to
+the config command to specify a flow.
+
+This example shows commands that would be entered in the Flume shell
+without flow group information.  In this case all of the nodes are in
+the same flow.
 
 ----
-map host1 fooNode1 flowfoo
-map host1 barNode1 flowbar
-map host2 fooNode2 flowfoo
-map host2 barNode2 flowbar
-map host3 fooConsumer flowfoo
-map host3 barConsumer flowbar
+exec config fooNode1 fooSrc autoBEChain
+exec config barNode1 barSrc autoBEChain
+exec config fooNode2 fooSrc autoBEChain
+exec config barNode2 barSrc autoBEChain
+exec config fooConsumer autoCollectorSource 'collectorSink("hdfs://nn/foodir")'
+exec config barConsumer autoCollectorSource 'collectorSink("hdfs://nn/bardir")'
+----
+
+Now using the following commands you can specify flows by adding an
+extra parameter after the node name.  In this example we have two
+flows: flowfoo and flowbar.  flowfoo contains fooNode1, fooNode2 and
+fooConsumer.  flowbar contains barNode1, barNode2 and barConsumer.
+
+----
+exec config fooNode1 flowfoo fooSrc autoBEChain
+exec config barNode1 flowbar barSrc autoBEChain
+exec config fooNode2 flowfoo fooSrc autoBEChain
+exec config barNode2 flowbar barSrc autoBEChain
+exec config fooConsumer flowfoo autoCollectorSource 'collectorSink("hdfs://nn/foodir")'
+exec config barConsumer flowbar autoCollectorSource 'collectorSink("hdfs://nn/bardir")'
 ----
 
 
@@ -296,16 +317,17 @@ digraph multi_flow {
 
 
 
-By using this command, the data from fooNode1 and fooNode2 will only be sent 
-to fooConsumer, and barNode1 and barNode2's data will only be sent to 
-barConsumer.  Data from one node is not mixed with other data from other 
-nodes unless explicitly connected.
+By using these commands, the data from fooNode1 and fooNode2 will only
+be sent to fooConsumer, and barNode1 and barNode2's data will only be
+sent to barConsumer.  Data from one node is not mixed with other data
+from other nodes unless explicitly connected.
 
-TIP: In practice it is a good idea to use different node names and different 
-flow ids for different kinds of data.  When node names are reused, the default 
-behavior is to attempt to recover from failures assuming that leftover data 
-from a crashed execution or previous source/sink configuration version are 
-still producing the same kind of data.
+TIP: In practice it is a good idea to use different node names and
+different flow ids for different kinds of data.  When node names are
+reused, the default behavior is to attempt to recover from failures
+assuming that leftover data from a crashed execution or previous
+source/sink configuration version are still producing the same kind of
+data.
 
 ==== Section Summary
 
