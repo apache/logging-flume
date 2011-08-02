@@ -36,6 +36,7 @@ import java.util.concurrent.BlockingQueue;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -44,6 +45,7 @@ import org.mortbay.log.Log;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.handlers.text.TailSource.Cursor;
 import com.cloudera.util.Clock;
+import com.cloudera.util.OSUtils;
 
 /**
  * Test the new and improved TailSource cursor. It also shows some test code
@@ -173,6 +175,10 @@ public class TestTailSourceCursor {
   @Test
   public void testCursorRotatePrexistingNewLonger() throws IOException,
       InterruptedException {
+
+    // Windows rename semantics different than unix
+    Assume.assumeTrue(!OSUtils.isWindowsOS());
+
     // normal implementation uses synchronous queue, but we use array blocking
     // queue for single threaded testing
     File f2 = File.createTempFile("move", ".tmp");
@@ -208,6 +214,10 @@ public class TestTailSourceCursor {
   @Test
   public void testCursorRotatePrexistingNewShorter() throws IOException,
       InterruptedException {
+
+    // Windows rename semantics different than unix
+    Assume.assumeTrue(!OSUtils.isWindowsOS());
+
     // normal implementation uses synchronous queue, but we use array blocking
     // queue for single threaded testing
     File f2 = File.createTempFile("move", ".tmp");
@@ -243,6 +253,10 @@ public class TestTailSourceCursor {
   @Test
   public void testCursorRotatePrexistingSameSizeWithDelete()
       throws IOException, InterruptedException {
+
+    // Windows rename semantics different than unix
+    Assume.assumeTrue(!OSUtils.isWindowsOS());
+
     // normal implementation uses synchronous queue, but we use array blocking
     // queue for single threaded testing
     File f2 = File.createTempFile("move", ".tmp");
@@ -280,6 +294,10 @@ public class TestTailSourceCursor {
   @Test
   public void testCursorRotatePrexistingSameSizeWithNewModtime()
       throws IOException, InterruptedException {
+
+    // Windows rename semantics different than unix
+    Assume.assumeTrue(!OSUtils.isWindowsOS());
+
     // normal implementation uses synchronous queue, but we use array blocking
     // queue for single threaded testing
     File f2 = File.createTempFile("move", ".tmp");
@@ -702,6 +720,10 @@ public class TestTailSourceCursor {
    */
   @Test
   public void testHandleExhaust() throws IOException, InterruptedException {
+
+    // Windows rename semantics different than unix
+    Assume.assumeTrue(!OSUtils.isWindowsOS());
+
     File f = File.createTempFile("tailexhaust", ".txt");
     f.deleteOnExit();
     File f2 = File.createTempFile("tailexhaust", ".txt");

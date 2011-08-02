@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import org.apache.commons.lang.StringEscapeUtils;
+import org.junit.Assume;
 import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeBuilder;
@@ -33,6 +34,7 @@ import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.aggregator.AccumulatorSink;
 import com.cloudera.util.Clock;
 import com.cloudera.util.FileUtil;
+import com.cloudera.util.OSUtils;
 
 /**
  * This class tests the tail dir source. It looks at a local file system and
@@ -264,11 +266,14 @@ public class TestTailDirSource {
   }
 
   /**
-   * This creates a many files that need to show up and then get deleted. This
+   * This creates many files that need to show up and then get deleted. This
    * just verifies that the files have been removed.
    */
   @Test
   public void testCursorExhaustion() throws IOException, InterruptedException {
+    // Windows semantics for rm different from unix
+    Assume.assumeTrue(!OSUtils.isWindowsOS());
+
     File tmpdir = FileUtil.mktempdir();
     TailDirSource src = new TailDirSource(tmpdir, ".*");
     AccumulatorSink cnt = new AccumulatorSink("tailcount");
@@ -287,7 +292,8 @@ public class TestTailDirSource {
     assertEquals(Long.valueOf(200),
         rpt1.getLongMetric(TailDirSource.A_FILESPRESENT));
 
-    FileUtil.rmr(tmpdir);
+    FileUtil.rmr(tmpdir); // This fails in windows because taildir keeps file
+                          // open
     tmpdir.mkdirs();
     Clock.sleep(1000);
     assertEquals(2000, cnt.getCount());

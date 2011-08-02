@@ -192,8 +192,10 @@ public class TestEscapedCustomOutputDfs {
     while ((gzin.read(buf)) > 0) {
       output.append(new String(buf));
     }
+    gzin.close(); // Must close for windows to delete
     assertEquals(expected, output.toString());
 
+    // This doesn't get deleted in windows but the core test succeeds
     assertTrue("temp folder successfully deleted", FileUtil.rmr(f));
   }
 
@@ -231,14 +233,14 @@ public class TestEscapedCustomOutputDfs {
     // read the gzip file and verify the contents
     BZip2Codec bz2Codec = new BZip2Codec();
     InputStream bz2in = bz2Codec.createInputStream(new FileInputStream(f
-        .getPath()
-        + "/sub-foo.bz2"));
+        .getPath() + "/sub-foo.bz2"));
     byte[] buf = new byte[1];
     StringBuilder output = new StringBuilder();
 
     while ((bz2in.read(buf)) > 0) {
       output.append(new String(buf));
     }
+    bz2in.close(); // Must close for windows to delete
     assertEquals(expected, output.toString());
 
     assertTrue("temp folder successfully deleted", FileUtil.rmr(f));
@@ -285,6 +287,7 @@ public class TestEscapedCustomOutputDfs {
     while ((gzin.read(buf)) > 0) {
       output.append(new String(buf));
     }
+    gzin.close();// Must close for windows to delete
     assertEquals(expected, output.toString());
 
     assertTrue("temp folder successfully deleted", FileUtil.rmr(f));
