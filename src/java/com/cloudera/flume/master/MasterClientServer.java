@@ -18,60 +18,83 @@
 
 package com.cloudera.flume.master;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
-import org.apache.thrift.TException;
-import org.apache.thrift.transport.TTransportException;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
-import com.cloudera.flume.conf.thrift.FlumeClientServer;
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
-import com.cloudera.flume.conf.thrift.FlumeNodeState;
-import com.cloudera.flume.conf.thrift.FlumeClientServer.Iface;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.master.StatusManager.NodeState;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.Reportable;
-import com.cloudera.flume.reporter.server.FlumeReport;
-import com.cloudera.flume.util.ThriftServer;
 import com.google.common.base.Preconditions;
 
 /**
- * Master-side implementation of the master<->client RPC interface over Thrift.
+ * Master-side implementation of the master<->client RPC interaction.
+ * Encapsulates the logic involved in processing client requests. Since the 
+ * wire protocol is different for separate RPC implementations, they each 
+ * run their own stub servers, then delegate all requests to this common class.
  */
-public class MasterClientServer extends ThriftServer implements
-    FlumeClientServer.Iface {
+public class MasterClientServer {
   Logger LOG = Logger.getLogger(MasterClientServer.class);
   final protected FlumeMaster master;
-  final protected int port;
+  final protected FlumeConfiguration config;
+  
+  MasterClientRPC masterRPC;
 
-  public MasterClientServer(FlumeMaster master) {
+  public MasterClientServer(FlumeMaster master, FlumeConfiguration config) 
+    throws IOException {
     Preconditions.checkArgument(master != null,
         "FlumeConfigMaster is null in MasterClientServer!");
     this.master = master;
-    this.port = FlumeConfiguration.get().getMasterHeartbeatPort();
+    this.config = config;
+    String rpcType = config.getMasterHeartbeatRPC();
+    masterRPC = null;
+    if (FlumeConfiguration.RPC_TYPE_AVRO.equals(rpcType)) {
+      masterRPC = new MasterClientServerAvro(this);
+    } else if (FlumeConfiguration.RPC_TYPE_THRIFT.equals(rpcType)) {
+      masterRPC = new MasterClientServerThrift(this);
+    } else {
+      throw new IOException("No valid RPC framework specified in config");
+    }
+  }
+  
+  public MasterClientServer(FlumeMaster master, FlumeConfiguration config, 
+      MasterClientRPC rpc) {
+    this.master = master;
+    this.config = config;
+    this.masterRPC = rpc;
+  }
+  
+  /**
+   * For testing.
+   */
+  public MasterClientRPC getMasterRPC() {
+    return this.masterRPC;
   }
 
-  @Override
-  public List<String> getLogicalNodes(String physNode) throws TException {
+  public List<String> getLogicalNodes(String physNode) {
     return master.getSpecMan().getLogicalNode(physNode);
   }
 
-  @Override
-  public FlumeConfigData getConfig(String host) throws TException {
-    return master.getSpecMan().getConfig(host);
+  public FlumeConfigData getConfig(String host) {
+    FlumeConfigData config = master.getSpecMan().getConfig(host);
+    if (config != null) {
+      return config;
+    }
+    return null;
   }
 
   /**
    * Returns true if needs to do a update configuration Here host is the logical
    * node name. Version is the node's current configuration version.
    */
-  @Override
   public boolean heartbeat(String logicalNode, String physicalNode,
-      String clienthost, FlumeNodeState s, long version) throws TException {
+      String clienthost, NodeState s, long version) {
 
     // sanity check with physicalnode.
     List<String> lns = master.getSpecMan().getLogicalNode(physicalNode);
@@ -86,7 +109,7 @@ public class MasterClientServer extends ThriftServer implements
     }
 
     boolean configChanged = master.getStatMan().updateHeartbeatStatus(
-        clienthost, physicalNode, logicalNode, stateFromThrift(s), version);
+        clienthost, physicalNode, logicalNode, s, version);
     FlumeConfigData cfg = master.getSpecMan().getConfig(logicalNode);
 
     if (cfg == null || version < cfg.getTimestamp()) {
@@ -95,91 +118,25 @@ public class MasterClientServer extends ThriftServer implements
       // upgrade
     }
     return configChanged;
-
   }
 
-  @Override
-  public void acknowledge(String ackid) throws TException {
+  public void acknowledge(String ackid) {
     master.getAckMan().acknowledge(ackid);
   }
 
-  @Override
-  public boolean checkAck(String ackid) throws TException {
+  public boolean checkAck(String ackid) {
     return master.getAckMan().check(ackid);
-  }
-
-  public void serve() throws TTransportException {
-    LOG
-        .info(String
-            .format(
-                "Starting blocking thread pool server for control server on port %d...",
-                port));
-    this.start(new FlumeClientServer.Processor((Iface) this), port,
-        "MasterClientServer");
-  }
-
-  /**
-   * Converts a thrift generated NodeStatus enum value to a flume master
-   * StatusManager NodeState enum
-   */
-  public static NodeState stateFromThrift(FlumeNodeState s) {
-    Preconditions.checkNotNull(s, "Argument may not be null.");
-    switch (s) {
-    case ACTIVE:
-      return NodeState.ACTIVE;
-    case CONFIGURING:
-      return NodeState.CONFIGURING;
-    case ERROR:
-      return NodeState.ERROR;
-    case HELLO:
-      return NodeState.HELLO;
-    case IDLE:
-      return NodeState.IDLE;
-    case LOST:
-      return NodeState.LOST;
-    case DECOMMISSIONED:
-      return NodeState.DECOMMISSIONED;
-    default:
-      throw new IllegalStateException("Unknown value " + s);
-    }
-  }
-
-  /**
-   * Converts a flume master StatusManager NodeState enum to a thrift generated
-   * NodeStatus enum value.
-   */
-  public static FlumeNodeState stateToThrift(NodeState s) {
-    Preconditions.checkNotNull(s, "Argument may not be null.");
-    switch (s) {
-    case ACTIVE:
-      return FlumeNodeState.ACTIVE;
-    case CONFIGURING:
-      return FlumeNodeState.CONFIGURING;
-    case ERROR:
-      return FlumeNodeState.ERROR;
-    case HELLO:
-      return FlumeNodeState.HELLO;
-    case IDLE:
-      return FlumeNodeState.IDLE;
-    case LOST:
-      return FlumeNodeState.LOST;
-    case DECOMMISSIONED:
-      return FlumeNodeState.DECOMMISSIONED;
-    default:
-      throw new IllegalStateException("Unknown value " + s);
-    }
   }
 
   /**
    * Adds a set of reports to the singleton ReportManager, after wrapping them
    * in Reportable objects.
    */
-  @Override
-  public void putReports(Map<String, FlumeReport> reports) throws TException {
+  public void putReports(Map<String, ReportEvent> reports) {
     Preconditions.checkNotNull(reports,
         "putReports called with null report map");
     ReportManager rptManager = ReportManager.get();
-    for (final Entry<String, FlumeReport> r : reports.entrySet()) {
+    for (final Entry<String, ReportEvent> r : reports.entrySet()) {
       rptManager.add(new Reportable() {
 
         @Override
@@ -192,6 +149,16 @@ public class MasterClientServer extends ThriftServer implements
           return new ReportEvent(r.getValue());
         }
       });
+    }
+  }
+
+  public void serve() throws IOException {
+    this.masterRPC.serve();
+  }
+  
+  public void stop () throws IOException {
+    if (this.masterRPC != null) {
+      this.masterRPC.stop();
     }
   }
 }

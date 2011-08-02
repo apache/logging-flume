@@ -30,7 +30,7 @@ import org.junit.Test;
 import com.cloudera.flume.agent.DirectMasterRPC;
 import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.conf.FlumeConfiguration;
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.master.SetupMasterTestEnv;
 import com.cloudera.flume.master.StatusManager.NodeState;
 import com.cloudera.flume.master.StatusManager.NodeStatus;

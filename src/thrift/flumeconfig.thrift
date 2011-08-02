@@ -42,7 +42,7 @@ enum FlumeNodeState {
   DECOMMISSIONED=6
 }
 
-struct FlumeConfigData {
+struct ThriftFlumeConfigData {
   1: Timestamp timestamp,
   2: string sourceConfig,
   3: string sinkConfig,
@@ -60,7 +60,7 @@ service FlumeClientServer {
   bool heartbeat(1:string logicalNode, 4:string physicalNode, 5:string host, 2:FlumeNodeState s, 3:i64 timestamp),
   
   // This gets the configuration from the specified sourceId/name 
-  FlumeConfigData getConfig(1:string sourceId),
+  ThriftFlumeConfigData getConfig(1:string sourceId),
 
   list<string> getLogicalNodes(1: string physNode),
   

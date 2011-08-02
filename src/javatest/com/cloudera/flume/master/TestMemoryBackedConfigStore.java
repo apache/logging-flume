@@ -26,8 +26,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.junit.Test;
-
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfigData;
 
 public class TestMemoryBackedConfigStore {
   /**

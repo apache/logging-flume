@@ -29,9 +29,11 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
+import org.apache.avro.util.Utf8;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
 
+import com.cloudera.flume.conf.avro.FlumeReportAvro;
 import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.Attributes.Type;
@@ -178,17 +180,17 @@ public class ReportEvent extends EventImpl {
   }
 
   /**
-   * Constructs a new ReportEvent which has the same metrics as the supplied
-   * Thrift-style FlumeReport
+   * Construct a ReportEvent given various metrics.
    */
-  public ReportEvent(FlumeReport r) {
+  public ReportEvent(Map<String, Long> longMetrics, 
+      Map<String, String> stringMetrics, Map<String, Double> doubleMetrics) {
     super(new byte[0]);
-    Preconditions.checkNotNull(r);
-    this.longMetrics.putAll(r.getLongMetrics());
-    this.stringMetrics.putAll(r.getStringMetrics());
-    this.doubleMetrics.putAll(r.getDoubleMetrics());
+    this.longMetrics.putAll(longMetrics);
+    this.stringMetrics.putAll(stringMetrics);
+    this.doubleMetrics.putAll(doubleMetrics);
   }
-
+  
+  
   /**
    * Serialises event as JSON string
    */

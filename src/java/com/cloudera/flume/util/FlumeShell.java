@@ -50,7 +50,8 @@ import org.apache.thrift.transport.TTransportException;
 import com.cloudera.flume.VersionInfo;
 import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.conf.FlumeConfiguration;
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
+
+import com.cloudera.flume.conf.thrift.ThriftFlumeConfigData;
 import com.cloudera.flume.conf.thrift.FlumeMasterAdminServer.Client;
 import com.cloudera.flume.conf.thrift.FlumeMasterCommand;
 import com.cloudera.flume.conf.thrift.FlumeNodeState;
@@ -714,7 +715,7 @@ public class FlumeShell {
 
     if (cmd.getCommand().equals("getconfigs")) {
       try {
-        Map<String, FlumeConfigData> configs = client.getConfigs();
+        Map<String, ThriftFlumeConfigData> configs = client.getConfigs();
 
         if (configs.size() == 0) {
           System.out.println("Master has no logical node configurations.");
@@ -722,7 +723,7 @@ public class FlumeShell {
         }
 
         int maxnode = 0, maxsink = 0, maxsource = 0, maxflow = 0;
-        for (Entry<String, FlumeConfigData> e : configs.entrySet()) {
+        for (Entry<String, ThriftFlumeConfigData> e : configs.entrySet()) {
           maxnode = java.lang.Math.max(maxnode, e.getKey().length());
           maxsink = java.lang.Math.max(maxsink, e.getValue().sinkConfig
               .length());
@@ -737,7 +738,7 @@ public class FlumeShell {
             "SOURCE", "SINK");
         System.out.println(title);
 
-        for (Entry<String, FlumeConfigData> e : configs.entrySet()) {
+        for (Entry<String, ThriftFlumeConfigData> e : configs.entrySet()) {
           String line = String.format("%-" + maxnode + "s\t%-" + maxflow
               + "s\t%-" + maxsource + "s\t%-" + maxsink + "s", e.getKey(), e
               .getValue().getFlowID(), e.getValue().sourceConfig,

@@ -42,7 +42,7 @@ service FlumeMasterAdminServer {
   bool isSuccess(1: i64 cmdid),  
   bool isFailure(1: i64 cmdid),  
   map<string, FlumeNodeStatus> getNodeStatuses(),
-  map<string, flumeconfig.FlumeConfigData> getConfigs(),
+  map<string, flumeconfig.ThriftFlumeConfigData> getConfigs(),
   bool hasCmdId(1: i64 cmdid)
   // TODO (jon) augment with getstate
 }

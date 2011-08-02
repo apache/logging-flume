@@ -29,6 +29,7 @@ import org.apache.log4j.Logger;
 import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.agent.LogicalNode;
 import com.cloudera.flume.agent.MasterRPC;
+import com.cloudera.flume.agent.MultiMasterRPC;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.util.Clock;
 
@@ -53,10 +54,10 @@ public class MasterReportPusher {
    * masterRPC.
    */
   public MasterReportPusher(FlumeConfiguration cfg, ReportManager rptMan,
-      MasterRPC masterRPC) {
+      MasterRPC rpcMan) {
     this.cfg = cfg;
     this.rptMan = rptMan;
-    this.masterRPC = masterRPC;
+    this.masterRPC = rpcMan;
   }
 
   /**

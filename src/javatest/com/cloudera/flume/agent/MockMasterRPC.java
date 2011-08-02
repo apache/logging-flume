@@ -25,7 +25,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.handlers.endtoend.AckListener;
 import com.cloudera.flume.master.MasterAckManager;
 import com.cloudera.flume.reporter.ReportEvent;
@@ -51,14 +51,11 @@ public class MockMasterRPC implements MasterRPC {
     return ret;
   }
 
-  @Override
   public void open() {
-
   }
 
   @Override
   public void close() {
-    
   }
 
   @Override

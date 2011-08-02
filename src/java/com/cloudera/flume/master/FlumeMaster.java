@@ -216,7 +216,7 @@ public class FlumeMaster implements Reportable {
       http.start();
     }
 
-    controlServer = new MasterClientServer(this);
+    controlServer = new MasterClientServer(this, FlumeConfiguration.get());
     configServer = new MasterAdminServer(this);
     reportServer = new ReportServer(FlumeConfiguration.get()
         .getReportServerPort());
@@ -294,7 +294,11 @@ public class FlumeMaster implements Reportable {
       if (cfg.getMasterStore().equals(ZK_CFG_STORE)) {
         ZooKeeperService.get().shutdown();
       }
+      
     } catch (IOException e) {
+      LOG.error("Exception when shutting down master! " + e.getMessage());
+      LOG.debug(e, e);
+    } catch (Exception e) {
       LOG.error("Exception when shutting down master! " + e.getMessage());
       LOG.debug(e, e);
     }

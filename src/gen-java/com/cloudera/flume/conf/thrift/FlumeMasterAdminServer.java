@@ -35,7 +35,7 @@ public class FlumeMasterAdminServer {
 
     public Map<String,FlumeNodeStatus> getNodeStatuses() throws TException;
 
-    public Map<String,com.cloudera.flume.conf.thrift.FlumeConfigData> getConfigs() throws TException;
+    public Map<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> getConfigs() throws TException;
 
     public boolean hasCmdId(long cmdid) throws TException;
 
@@ -199,7 +199,7 @@ public class FlumeMasterAdminServer {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "getNodeStatuses failed: unknown result");
     }
 
-    public Map<String,com.cloudera.flume.conf.thrift.FlumeConfigData> getConfigs() throws TException
+    public Map<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> getConfigs() throws TException
     {
       send_getConfigs();
       return recv_getConfigs();
@@ -214,7 +214,7 @@ public class FlumeMasterAdminServer {
       oprot_.getTransport().flush();
     }
 
-    public Map<String,com.cloudera.flume.conf.thrift.FlumeConfigData> recv_getConfigs() throws TException
+    public Map<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> recv_getConfigs() throws TException
     {
       TMessage msg = iprot_.readMessageBegin();
       if (msg.type == TMessageType.EXCEPTION) {
@@ -2792,7 +2792,7 @@ public class FlumeMasterAdminServer {
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.MAP, (short)0);
 
-    public Map<String,com.cloudera.flume.conf.thrift.FlumeConfigData> success;
+    public Map<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> success;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
@@ -2855,7 +2855,7 @@ public class FlumeMasterAdminServer {
       put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
           new MapMetaData(TType.MAP, 
               new FieldValueMetaData(TType.STRING), 
-              new StructMetaData(TType.STRUCT, com.cloudera.flume.conf.thrift.FlumeConfigData.class))));
+              new StructMetaData(TType.STRUCT, com.cloudera.flume.conf.thrift.ThriftFlumeConfigData.class))));
     }});
 
     static {
@@ -2866,7 +2866,7 @@ public class FlumeMasterAdminServer {
     }
 
     public getConfigs_result(
-      Map<String,com.cloudera.flume.conf.thrift.FlumeConfigData> success)
+      Map<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> success)
     {
       this();
       this.success = success;
@@ -2877,15 +2877,15 @@ public class FlumeMasterAdminServer {
      */
     public getConfigs_result(getConfigs_result other) {
       if (other.isSetSuccess()) {
-        Map<String,com.cloudera.flume.conf.thrift.FlumeConfigData> __this__success = new HashMap<String,com.cloudera.flume.conf.thrift.FlumeConfigData>();
-        for (Map.Entry<String, com.cloudera.flume.conf.thrift.FlumeConfigData> other_element : other.success.entrySet()) {
+        Map<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> __this__success = new HashMap<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData>();
+        for (Map.Entry<String, com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> other_element : other.success.entrySet()) {
 
           String other_element_key = other_element.getKey();
-          com.cloudera.flume.conf.thrift.FlumeConfigData other_element_value = other_element.getValue();
+          com.cloudera.flume.conf.thrift.ThriftFlumeConfigData other_element_value = other_element.getValue();
 
           String __this__success_copy_key = other_element_key;
 
-          com.cloudera.flume.conf.thrift.FlumeConfigData __this__success_copy_value = new com.cloudera.flume.conf.thrift.FlumeConfigData(other_element_value);
+          com.cloudera.flume.conf.thrift.ThriftFlumeConfigData __this__success_copy_value = new com.cloudera.flume.conf.thrift.ThriftFlumeConfigData(other_element_value);
 
           __this__success.put(__this__success_copy_key, __this__success_copy_value);
         }
@@ -2906,18 +2906,18 @@ public class FlumeMasterAdminServer {
       return (this.success == null) ? 0 : this.success.size();
     }
 
-    public void putToSuccess(String key, com.cloudera.flume.conf.thrift.FlumeConfigData val) {
+    public void putToSuccess(String key, com.cloudera.flume.conf.thrift.ThriftFlumeConfigData val) {
       if (this.success == null) {
-        this.success = new HashMap<String,com.cloudera.flume.conf.thrift.FlumeConfigData>();
+        this.success = new HashMap<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData>();
       }
       this.success.put(key, val);
     }
 
-    public Map<String,com.cloudera.flume.conf.thrift.FlumeConfigData> getSuccess() {
+    public Map<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> getSuccess() {
       return this.success;
     }
 
-    public getConfigs_result setSuccess(Map<String,com.cloudera.flume.conf.thrift.FlumeConfigData> success) {
+    public getConfigs_result setSuccess(Map<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> success) {
       this.success = success;
       return this;
     }
@@ -2943,7 +2943,7 @@ public class FlumeMasterAdminServer {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((Map<String,com.cloudera.flume.conf.thrift.FlumeConfigData>)value);
+          setSuccess((Map<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData>)value);
         }
         break;
 
@@ -3028,13 +3028,13 @@ public class FlumeMasterAdminServer {
               if (field.type == TType.MAP) {
                 {
                   TMap _map9 = iprot.readMapBegin();
-                  this.success = new HashMap<String,com.cloudera.flume.conf.thrift.FlumeConfigData>(2*_map9.size);
+                  this.success = new HashMap<String,com.cloudera.flume.conf.thrift.ThriftFlumeConfigData>(2*_map9.size);
                   for (int _i10 = 0; _i10 < _map9.size; ++_i10)
                   {
                     String _key11;
-                    com.cloudera.flume.conf.thrift.FlumeConfigData _val12;
+                    com.cloudera.flume.conf.thrift.ThriftFlumeConfigData _val12;
                     _key11 = iprot.readString();
-                    _val12 = new com.cloudera.flume.conf.thrift.FlumeConfigData();
+                    _val12 = new com.cloudera.flume.conf.thrift.ThriftFlumeConfigData();
                     _val12.read(iprot);
                     this.success.put(_key11, _val12);
                   }
@@ -3061,7 +3061,7 @@ public class FlumeMasterAdminServer {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeMapBegin(new TMap(TType.STRING, TType.STRUCT, this.success.size()));
-          for (Map.Entry<String, com.cloudera.flume.conf.thrift.FlumeConfigData> _iter13 : this.success.entrySet())
+          for (Map.Entry<String, com.cloudera.flume.conf.thrift.ThriftFlumeConfigData> _iter13 : this.success.entrySet())
           {
             oprot.writeString(_iter13.getKey());
             _iter13.getValue().write(oprot);

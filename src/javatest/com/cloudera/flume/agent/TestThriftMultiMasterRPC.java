@@ -21,24 +21,27 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.TestCase;
-
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.thrift.FlumeClientServer;
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.flume.conf.thrift.ThriftFlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.thrift.FlumeNodeState;
 import com.cloudera.flume.conf.thrift.FlumeClientServer.Iface;
+import com.cloudera.flume.master.MasterClientServerThrift;
 import com.cloudera.flume.reporter.server.FlumeReport;
 import com.cloudera.flume.util.ThriftServer;
 
 /**
  * Tests for master failover from clients.
  */
-public class TestThriftMultiMasterRPC extends TestCase {
+public class TestThriftMultiMasterRPC {
   Logger LOG = Logger.getLogger(TestThriftMultiMasterRPC.class);
 
   /**
@@ -72,8 +75,8 @@ public class TestThriftMultiMasterRPC extends TestCase {
     }
 
     @Override
-    public FlumeConfigData getConfig(String sourceId) throws TException {
-      return new FlumeConfigData();
+    public ThriftFlumeConfigData getConfig(String sourceId) throws TException {
+      return MasterClientServerThrift.configToThrift(new FlumeConfigData());
     }
 
     @Override
@@ -97,12 +100,14 @@ public class TestThriftMultiMasterRPC extends TestCase {
   /**
    * Tries to connect to several servers in turn and compensate as masters fail.
    */
+  @Test
   public void testConnect() throws TTransportException, IOException,
       InterruptedException {
     FlumeConfiguration conf = FlumeConfiguration.get();
     conf.set(FlumeConfiguration.MASTER_HEARTBEAT_SERVERS,
         "localhost:9999,localhost:56789,localhost:56790");
-    ThriftMultiMasterRPC masterRPC = new ThriftMultiMasterRPC(conf, false);
+    conf.set(FlumeConfiguration.MASTER_HEARBEAT_RPC, "THRIFT");
+    MultiMasterRPC masterRPC = new MultiMasterRPC(conf, false);
     MyThriftServer server1 = new MyThriftServer();
     server1.serve(56789);
     MyThriftServer server2 = new MyThriftServer();

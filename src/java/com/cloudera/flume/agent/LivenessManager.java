@@ -28,7 +28,7 @@ import org.apache.log4j.Logger;
 import com.cloudera.flume.agent.durability.WALCompletionNotifier;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.handlers.endtoend.AckListener.Empty;
 import com.cloudera.util.Clock;
 import com.google.common.base.Preconditions;
@@ -179,7 +179,6 @@ public class LivenessManager {
             Clock.sleep(heartbeatPeriod);
 
           } catch (Exception e) {
-
             backoff *= 2; // sleep twice as long
             backoff = backoff > backoffLimit ? backoffLimit : backoff;
 

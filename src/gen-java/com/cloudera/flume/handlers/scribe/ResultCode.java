@@ -9,10 +9,9 @@ package com.cloudera.flume.handlers.scribe;
 import java.util.Map;
 import java.util.HashMap;
 import org.apache.thrift.TEnum;
-
-public enum ResultCode implements TEnum {
-  OK(0),
-  TRY_LATER(1);
+public enum ResultCode implements TEnum{
+    OK(0),
+    TRY_LATER(1);
 
   private static final Map<Integer, ResultCode> BY_VALUE = new HashMap<Integer,ResultCode>() {{
     for(ResultCode val : ResultCode.values()) {

@@ -32,7 +32,7 @@ import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.master.StatusManager.NodeState;
 import com.cloudera.flume.master.availability.ConsistentHashFailoverChainManager;
 import com.cloudera.flume.master.availability.FailoverChainManager;

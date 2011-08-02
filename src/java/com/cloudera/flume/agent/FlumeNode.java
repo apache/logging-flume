@@ -174,7 +174,7 @@ public class FlumeNode implements Reportable {
   public FlumeNode(String nodename, FlumeConfiguration conf, boolean startHttp,
       boolean oneshot) {
     // Use a failover-enabled master RPC, which randomizes the failover order
-    this(conf, nodename, new ThriftMultiMasterRPC(conf, true), startHttp,
+    this(conf, nodename, new MultiMasterRPC(conf, true), startHttp,
         oneshot);
   }
 

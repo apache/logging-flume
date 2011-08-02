@@ -33,18 +33,16 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
-import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.thrift.FlumeClientServer;
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.thrift.FlumeClientServer.Client;
 import com.cloudera.flume.handlers.endtoend.AckListener;
 import com.cloudera.flume.handlers.endtoend.CollectorAckListener;
-import com.cloudera.flume.master.MasterClientServer;
+import com.cloudera.flume.master.MasterClientServerThrift;
 import com.cloudera.flume.master.StatusManager.NodeStatus;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.server.FlumeReport;
 import com.cloudera.flume.reporter.server.ReportServer;
-import com.cloudera.util.Pair;
 import com.google.common.base.Preconditions;
 
 /**
@@ -55,47 +53,35 @@ public class ThriftMasterRPC implements MasterRPC {
   final static Logger LOG = Logger.getLogger(ThriftMasterRPC.class.getName());
 
   // master config and connections
-  final String masterHostname; // network name of the master
-  final int masterPort; // master's heartbeat tcp port
+  protected String masterHostname; // network name of the master
+  protected int masterPort; // master's heartbeat tcp port
   protected FlumeClientServer.Iface masterClient;// master thrift rpc client
 
-  ThriftMasterRPC(FlumeConfiguration conf) {
-    Preconditions
-        .checkArgument(conf.getMasterHeartbeatServersList().size() > 0);
-    // Rather than use two separate configurations for many masters and just one
-    // we default to taking the first master in the list, and simply don't fail
-    // over.
-    Pair<String, Integer> master = conf.getMasterHeartbeatServersList().get(0);
-    masterHostname = master.getLeft();
-    masterPort = master.getRight();
-  }
-
-  public void open() throws IOException {
+  /**
+   * Create a ThriftMasterRPC that speaks to Thrift server on
+   * masterHostname:masterPort.
+   */
+  ThriftMasterRPC(String masterHostname, int masterPort) throws IOException {
+    Preconditions.checkState(masterClient == null,
+        "client already initialized -- double init not allowed");
+    TTransport masterTransport = new TSocket(masterHostname, masterPort);
+    TProtocol protocol = new TBinaryProtocol(masterTransport);
     try {
-      open(masterHostname, masterPort);
+      masterTransport.open();
     } catch (TTransportException e) {
       throw new IOException(e.getMessage());
     }
-  }
-
-  protected synchronized FlumeClientServer.Iface open(String host, int port)
-      throws IOException, TTransportException {
-    // single open only
-    Preconditions.checkState(masterClient == null, // && masterTransport ==
-        // null,
-        "client already open -- double open not allowed");
-    TTransport masterTransport = new TSocket(host, port);
-    TProtocol protocol = new TBinaryProtocol(masterTransport);
-    masterTransport.open();
     masterClient = new Client(protocol);
-    LOG.info("Connected to master at " + host + ":" + port);
-    return masterClient;
+    LOG.info("Connected to master at " + masterHostname + ":" + masterPort);
   }
 
-  protected synchronized FlumeClientServer.Iface ensureConnected()
+
+  protected void ensureConnected()
       throws TTransportException, IOException {
-    return (masterClient != null) ? masterClient : open(masterHostname,
-        masterPort);
+    if (masterClient == null) {
+      throw new IOException(
+        "MasterRPC called while disconnected.");
+    }
   }
 
   public synchronized void close() {
@@ -137,7 +123,8 @@ public class ThriftMasterRPC implements MasterRPC {
       throws IOException {
     try {
       ensureConnected();
-      return masterClient.getConfig(n.getName());
+      return MasterClientServerThrift.configFromThrift(
+          masterClient.getConfig(n.getName()));
     } catch (TApplicationException e) {
       LOG.debug(e.getMessage()); // master has not config for node
       return null;
@@ -147,9 +134,7 @@ public class ThriftMasterRPC implements MasterRPC {
     }
   }
 
-  /**
-   * This checks for an ack with a given ackid at the master
-   */
+  @Override
   public synchronized boolean checkAck(String ackid) throws IOException {
     try {
       ensureConnected();
@@ -166,7 +151,7 @@ public class ThriftMasterRPC implements MasterRPC {
       ensureConnected();
       NodeStatus status = n.getStatus();
       return masterClient.heartbeat(n.getName(), status.physicalNode,
-          status.host, MasterClientServer.stateToThrift(status.state), n
+          status.host, MasterClientServerThrift.stateToThrift(status.state), n
               .getConfigVersion());
 
     } catch (TException e) {

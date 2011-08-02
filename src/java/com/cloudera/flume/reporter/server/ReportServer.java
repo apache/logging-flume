@@ -22,12 +22,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.avro.util.Utf8;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.transport.TTransportException;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
+import com.cloudera.flume.conf.avro.FlumeReportAvro;
 import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.Attributes.Type;
 import com.cloudera.flume.reporter.ReportEvent;
@@ -91,6 +93,64 @@ public class ReportServer extends ThriftServer implements
       }
     }
     return new FlumeReport(stringMap, longMap, doubleMap);
+  }
+  
+  /**
+   * Turn a ReportEvent into a serializable object
+   */
+  static public FlumeReportAvro reportToAvro(ReportEvent report) {
+    Preconditions.checkNotNull(report, "reportToThrift: report is null");
+    Map<String, String> stringMap =
+        new HashMap<String, String>(report.getAllStringMetrics());
+    Map<String, Double> doubleMap =
+        new HashMap<String, Double>(report.getAllDoubleMetrics());
+    Map<String, Long> longMap =
+        new HashMap<String, Long>(report.getAllLongMetrics());
+    for (String k : report.getAttrs().keySet()) {
+      Type t = Attributes.getType(k);
+
+      // If there's nothing in the Attributes table, guess at String
+      // When the Attributes table goes away this won't be necessary.
+      if (t == null) {
+        t = Type.STRING;
+      }
+      switch (t) {
+      case DOUBLE:
+        doubleMap.put(k, Attributes.readDouble(report, k));
+        break;
+      case STRING:
+        stringMap.put(k, Attributes.readString(report, k));
+        break;
+      case LONG:
+        longMap.put(k, Attributes.readLong(report, k));
+        break;
+      default:
+        LOG.warn("Unknown type " + t);
+      }
+    }
+    
+    FlumeReportAvro out = new FlumeReportAvro();
+    
+    // Translate to Utf8
+    Map<Utf8, Utf8> stringMapUtf = new HashMap<Utf8, Utf8>();
+    for (String s: stringMap.keySet()) { 
+      stringMapUtf.put(new Utf8(s), new Utf8(stringMap.get(s)));
+    }
+    
+    Map<Utf8, Double> doubleMapUtf = new HashMap<Utf8, Double>();
+    for (String s: doubleMap.keySet()) { 
+      doubleMapUtf.put(new Utf8(s), doubleMap.get(s));
+    }
+
+    Map<Utf8, Long> longMapUtf = new HashMap<Utf8, Long>();
+    for (String s: longMap.keySet()) { 
+      longMapUtf.put(new Utf8(s), longMap.get(s));
+    }
+    
+    out.stringMetrics = stringMapUtf;
+    out.doubleMetrics = doubleMapUtf;
+    out.longMetrics = longMapUtf;
+    return out;
   }
 
   /**

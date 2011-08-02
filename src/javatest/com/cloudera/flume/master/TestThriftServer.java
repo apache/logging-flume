@@ -31,10 +31,11 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.thrift.FlumeMasterAdminServer;
 import com.cloudera.flume.conf.thrift.FlumeMasterCommand;
 import com.cloudera.flume.conf.thrift.FlumeNodeStatus;
+import com.cloudera.flume.conf.thrift.ThriftFlumeConfigData;
 import com.cloudera.flume.conf.thrift.FlumeMasterAdminServer.Client;
 import com.cloudera.flume.conf.thrift.FlumeMasterAdminServer.Iface;
 import com.cloudera.flume.util.ThriftServer;
@@ -71,8 +72,8 @@ public class TestThriftServer extends TestCase {
     }
 
     @Override
-    public Map<String, FlumeConfigData> getConfigs() throws TException {
-      return new HashMap<String, FlumeConfigData>();
+    public Map<String, ThriftFlumeConfigData> getConfigs() throws TException {
+      return new HashMap<String, ThriftFlumeConfigData>();
     }
 
     @Override
@@ -99,7 +100,7 @@ public class TestThriftServer extends TestCase {
     boolean fail = client.isFailure(42);
     assertEquals("Expected response was true, got " + fail, fail, true);
 
-    Map<String, FlumeConfigData> cfgs = client.getConfigs();
+    Map<String, ThriftFlumeConfigData> cfgs = client.getConfigs();
     assertEquals("Expected response was 0, got " + cfgs.size(), cfgs.size(), 0);
 
     server.stop();

@@ -34,7 +34,7 @@ import com.cloudera.flume.conf.SinkFactoryImpl;
 import com.cloudera.flume.conf.SourceFactoryImpl;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSource;

@@ -59,6 +59,9 @@ to call at top-level: ant deploy-contrib compile-core-test
   <property name="build.webapps" value="${build.dir}/webapps"/>
   <property name="src.webapps" value="${basedir}/src/webapps"/>
 
+  <property name="avro.src.dir" value="${src.dir}/avro"/>
+  <property name="avro.gen.dir" value="${basedir}/src/avro-gen-java" />
+
   <property name="thrift.src.dir" value="${src.dir}/thrift"/>
   <property name="thrift.gen.dir" value="${basedir}/src/gen-java"/>
   <property name="thrift.event.package" value="com/cloudera/flume/handlers/thrift"/> 
@@ -152,6 +155,7 @@ to call at top-level: ant deploy-contrib compile-core-test
     <mkdir dir="${test.build.dir}"/>
     <mkdir dir="${test.build.classes}"/>
     <mkdir dir="${thrift.gen.dir}"/>
+    <mkdir dir="${avro.gen.dir}" />
     <mkdir dir="${basedir}/libtest"/>
     <mkdir dir="${ivy.tools.lib}"/>
 
@@ -314,6 +318,39 @@ to call at top-level: ant deploy-contrib compile-core-test
   </target>
 
   <!-- ========================== -->
+  <!-- avro  -->
+  <!-- ========================== -->
+  <target name="avro-call">
+    <echo message="Converting avro-dl file: ${avrofile}"/>
+    <path id="avro.classpath">
+      <fileset dir="${lib.dir}">
+        <include name="**/*.jar"/>
+      </fileset>
+    </path>
+    <echo message="Compiling avro file: ${avrofile}.avpr"/>
+    <java classname="org.apache.avro.tool.Main">
+      <classpath refid="avro.classpath" />
+      <arg value="genavro" />
+      <arg value="${avrofile}" />
+      <arg value="${avrofile}.avpr" />
+    </java>
+    <java classname="org.apache.avro.specific.SpecificCompiler">
+      <classpath refid="avro.classpath" />
+      <arg value="${avrofile}.avpr" />
+      <arg value="${avro.gen.dir}" />
+    </java>
+
+
+  </target>
+
+  <target name="avro-gen">
+    <foreach target="avro-call" param="avrofile">
+      <fileset dir="${avro.src.dir}">
+        <include name="**/*.avdl"/>
+      </fileset>
+    </foreach>
+  </target>
+  <!-- ========================== -->
   <!-- thrift  -->
   <!-- ========================== -->
   <target name="call-thrift">
@@ -350,7 +387,7 @@ to call at top-level: ant deploy-contrib compile-core-test
     </foreach>
   </target>
 
-  <target name="generate-all" depends="init, thrift-gen, antlr-gen, antlr-shell-gen" />
+  <target name="generate-all" depends="init, thrift-gen, antlr-gen, antlr-shell-gen, avro-gen" />
 
   <target name="compile-gen" depends="generate-all">
     <!-- dependendecy for antlr parsers -->
@@ -385,7 +422,7 @@ to call at top-level: ant deploy-contrib compile-core-test
     </exec>
     <javac 
      encoding="${build.encoding}" 
-     srcdir="${core.src.dir};${thrift.gen.dir}"
+     srcdir="${core.src.dir};${thrift.gen.dir};${avro.gen.dir}"
      includes="com/cloudera/flume/package-info.java"
      destdir="${build.classes}"
      debug="${javac.debug}"
@@ -404,7 +441,7 @@ to call at top-level: ant deploy-contrib compile-core-test
     <!-- Compile Java files (excluding JSPs) checking warnings -->
     <javac 
      encoding="${build.encoding}" 
-     srcdir="${core.src.dir};${thrift.gen.dir}"
+     srcdir="${core.src.dir};${thrift.gen.dir};${avro.gen.dir}"
      includes="com/cloudera/**/*.java"
      destdir="${build.classes}"
      debug="${javac.debug}"
@@ -417,7 +454,7 @@ to call at top-level: ant deploy-contrib compile-core-test
     </javac>   
     <javac 
      encoding="${build.encoding}" 
-     srcdir="${core.src.dir};${thrift.gen.dir}"
+     srcdir="${core.src.dir};${thrift.gen.dir};${avro.gen.dir}"
      includes="org/apache/**/*.java"
      destdir="${build.classes}"
      debug="${javac.debug}"
@@ -777,6 +814,7 @@ to call at top-level: ant deploy-contrib compile-core-test
       <jvmarg line="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=2601" />
       -->
       <env key="FLUME_HOME" value="${basedir}" />
+      <sysproperty key="javax.xml.parsers.DocumentBuilderFactory" value="com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl" />
       <sysproperty key="java.library.path" value="${lib.dir}" />
       <sysproperty key="test.build.data" value="${build.test}/data"/>
       <sysproperty key="build.test" value="${build.test}"/>
@@ -974,6 +1012,7 @@ to call at top-level: ant deploy-contrib compile-core-test
     <echo message="Cleaning generated files and stuff"/>
     <delete dir="${build.dir}" />
     <delete dir="${thrift.gen.dir}" />
+    <delete dir="${avro.gen.dir}" />
   </target>
 
   <!-- ================================================================== -->

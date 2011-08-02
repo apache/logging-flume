@@ -45,7 +45,7 @@ import org.junit.Test;
 
 import com.cloudera.flume.agent.LogicalNode;
 import com.cloudera.flume.conf.FlumeConfiguration;
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.util.Clock;
 import com.cloudera.util.FileUtil;
 

@@ -23,8 +23,8 @@ import org.apache.thrift.*;
 import org.apache.thrift.meta_data.*;
 import org.apache.thrift.protocol.*;
 
-public class FlumeConfigData implements TBase<FlumeConfigData._Fields>, java.io.Serializable, Cloneable, Comparable<FlumeConfigData> {
-  private static final TStruct STRUCT_DESC = new TStruct("FlumeConfigData");
+public class ThriftFlumeConfigData implements TBase<ThriftFlumeConfigData._Fields>, java.io.Serializable, Cloneable, Comparable<ThriftFlumeConfigData> {
+  private static final TStruct STRUCT_DESC = new TStruct("ThriftFlumeConfigData");
 
   private static final TField TIMESTAMP_FIELD_DESC = new TField("timestamp", TType.I64, (short)1);
   private static final TField SOURCE_CONFIG_FIELD_DESC = new TField("sourceConfig", TType.STRING, (short)2);
@@ -122,13 +122,13 @@ public class FlumeConfigData implements TBase<FlumeConfigData._Fields>, java.io.
   }});
 
   static {
-    FieldMetaData.addStructMetaDataMap(FlumeConfigData.class, metaDataMap);
+    FieldMetaData.addStructMetaDataMap(ThriftFlumeConfigData.class, metaDataMap);
   }
 
-  public FlumeConfigData() {
+  public ThriftFlumeConfigData() {
   }
 
-  public FlumeConfigData(
+  public ThriftFlumeConfigData(
     long timestamp,
     String sourceConfig,
     String sinkConfig,
@@ -151,7 +151,7 @@ public class FlumeConfigData implements TBase<FlumeConfigData._Fields>, java.io.
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public FlumeConfigData(FlumeConfigData other) {
+  public ThriftFlumeConfigData(ThriftFlumeConfigData other) {
     __isset_bit_vector.clear();
     __isset_bit_vector.or(other.__isset_bit_vector);
     this.timestamp = other.timestamp;
@@ -168,20 +168,20 @@ public class FlumeConfigData implements TBase<FlumeConfigData._Fields>, java.io.
     }
   }
 
-  public FlumeConfigData deepCopy() {
-    return new FlumeConfigData(this);
+  public ThriftFlumeConfigData deepCopy() {
+    return new ThriftFlumeConfigData(this);
   }
 
   @Deprecated
-  public FlumeConfigData clone() {
-    return new FlumeConfigData(this);
+  public ThriftFlumeConfigData clone() {
+    return new ThriftFlumeConfigData(this);
   }
 
   public long getTimestamp() {
     return this.timestamp;
   }
 
-  public FlumeConfigData setTimestamp(long timestamp) {
+  public ThriftFlumeConfigData setTimestamp(long timestamp) {
     this.timestamp = timestamp;
     setTimestampIsSet(true);
     return this;
@@ -204,7 +204,7 @@ public class FlumeConfigData implements TBase<FlumeConfigData._Fields>, java.io.
     return this.sourceConfig;
   }
 
-  public FlumeConfigData setSourceConfig(String sourceConfig) {
+  public ThriftFlumeConfigData setSourceConfig(String sourceConfig) {
     this.sourceConfig = sourceConfig;
     return this;
   }
@@ -228,7 +228,7 @@ public class FlumeConfigData implements TBase<FlumeConfigData._Fields>, java.io.
     return this.sinkConfig;
   }
 
-  public FlumeConfigData setSinkConfig(String sinkConfig) {
+  public ThriftFlumeConfigData setSinkConfig(String sinkConfig) {
     this.sinkConfig = sinkConfig;
     return this;
   }
@@ -252,7 +252,7 @@ public class FlumeConfigData implements TBase<FlumeConfigData._Fields>, java.io.
     return this.sourceVersion;
   }
 
-  public FlumeConfigData setSourceVersion(long sourceVersion) {
+  public ThriftFlumeConfigData setSourceVersion(long sourceVersion) {
     this.sourceVersion = sourceVersion;
     setSourceVersionIsSet(true);
     return this;
@@ -275,7 +275,7 @@ public class FlumeConfigData implements TBase<FlumeConfigData._Fields>, java.io.
     return this.sinkVersion;
   }
 
-  public FlumeConfigData setSinkVersion(long sinkVersion) {
+  public ThriftFlumeConfigData setSinkVersion(long sinkVersion) {
     this.sinkVersion = sinkVersion;
     setSinkVersionIsSet(true);
     return this;
@@ -298,7 +298,7 @@ public class FlumeConfigData implements TBase<FlumeConfigData._Fields>, java.io.
     return this.flowID;
   }
 
-  public FlumeConfigData setFlowID(String flowID) {
+  public ThriftFlumeConfigData setFlowID(String flowID) {
     this.flowID = flowID;
     return this;
   }
@@ -430,12 +430,12 @@ public class FlumeConfigData implements TBase<FlumeConfigData._Fields>, java.io.
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof FlumeConfigData)
-      return this.equals((FlumeConfigData)that);
+    if (that instanceof ThriftFlumeConfigData)
+      return this.equals((ThriftFlumeConfigData)that);
     return false;
   }
 
-  public boolean equals(FlumeConfigData that) {
+  public boolean equals(ThriftFlumeConfigData that) {
     if (that == null)
       return false;
 
@@ -501,13 +501,13 @@ public class FlumeConfigData implements TBase<FlumeConfigData._Fields>, java.io.
     return 0;
   }
 
-  public int compareTo(FlumeConfigData other) {
+  public int compareTo(ThriftFlumeConfigData other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    FlumeConfigData typedOther = (FlumeConfigData)other;
+    ThriftFlumeConfigData typedOther = (ThriftFlumeConfigData)other;
 
     lastComparison = Boolean.valueOf(isSetTimestamp()).compareTo(isSetTimestamp());
     if (lastComparison != 0) {
@@ -663,7 +663,7 @@ public class FlumeConfigData implements TBase<FlumeConfigData._Fields>, java.io.
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("FlumeConfigData(");
+    StringBuilder sb = new StringBuilder("ThriftFlumeConfigData(");
     boolean first = true;
 
     sb.append("timestamp:");

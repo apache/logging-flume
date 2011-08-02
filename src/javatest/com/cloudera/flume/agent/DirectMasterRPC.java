@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.handlers.endtoend.AckListener;
 import com.cloudera.flume.handlers.endtoend.CollectorAckListener;
 import com.cloudera.flume.master.FlumeMaster;
@@ -69,7 +69,7 @@ public class DirectMasterRPC implements MasterRPC {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
     // Do nohting.
   }
 

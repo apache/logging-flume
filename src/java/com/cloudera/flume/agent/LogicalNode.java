@@ -28,9 +28,9 @@ import org.apache.log4j.Logger;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
 import com.cloudera.flume.core.Driver;
 import com.cloudera.flume.core.DriverListener;
 import com.cloudera.flume.core.EventSink;

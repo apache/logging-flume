@@ -146,6 +146,7 @@ public class FlumeConfiguration extends Configuration {
   public static final String MASTER_HTTP_PORT = "flume.master.http.port";
   public static final String MASTER_HEARTBEAT_PORT = "flume.master.heartbeat.port";
   public static final String MASTER_HEARTBEAT_SERVERS = "flume.master.heartbeat.servers";
+  public static final String MASTER_HEARBEAT_RPC = "flume.master.heartbeat.rpc";
 
   public static final String CONFIG_HEARTBEAT_PERIOD = "flume.config.heartbeat.period";
   public static final String MASTER_HEARTBEAT_MAX_MISSED = "flume.config.heartbeat.missed.max";
@@ -208,6 +209,10 @@ public class FlumeConfiguration extends Configuration {
 
   public static final String PLUGIN_CLASSES = "flume.plugin.classes";
 
+  // Options for RPC type
+  public static final String RPC_TYPE_THRIFT = "THRIFT";
+  public static final String RPC_TYPE_AVRO = "AVRO";
+  
   /**
    * Returns true if there is more than one server in MASTER_SERVERS.
    */
@@ -655,6 +660,19 @@ public class FlumeConfiguration extends Configuration {
     return Integer.parseInt(server[1].trim());
   }
 
+  
+  public String getMasterHeartbeatRPC() {
+    String[] validRPCProtocols = {RPC_TYPE_AVRO, RPC_TYPE_THRIFT};
+    String entered = get(MASTER_HEARBEAT_RPC, RPC_TYPE_THRIFT).toUpperCase();
+    for (String prot: validRPCProtocols) {
+      if (entered.equals(prot)) {
+        return prot;
+      }
+    }
+    // default
+    return RPC_TYPE_THRIFT;
+  }
+  
   public int getMasterGossipPeriodMs() {
     return getInt(MASTER_GOSSIP_PERIOD_MS, 1000);
   }

@@ -686,7 +686,15 @@ public class FlumeNodeStatus implements TBase<FlumeNodeStatus._Fields>, java.io.
     if (this.state == null) {
       sb.append("null");
     } else {
+      String state_name = state.name();
+      if (state_name != null) {
+        sb.append(state_name);
+        sb.append(" (");
+      }
       sb.append(this.state);
+      if (state_name != null) {
+        sb.append(")");
+      }
     }
     first = false;
     if (!first) sb.append(", ");

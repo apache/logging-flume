@@ -28,7 +28,7 @@ import org.antlr.runtime.tree.CommonTree;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumePatterns;
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.master.ConfigurationManager;
 import com.cloudera.flume.master.StatusManager;
 import com.cloudera.flume.master.StatusManager.NodeStatus;

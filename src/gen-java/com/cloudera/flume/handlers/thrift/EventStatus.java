@@ -9,11 +9,10 @@ package com.cloudera.flume.handlers.thrift;
 import java.util.Map;
 import java.util.HashMap;
 import org.apache.thrift.TEnum;
-
-public enum EventStatus implements TEnum {
-  ACK(0),
-  COMMITED(1),
-  ERR(2);
+public enum EventStatus implements TEnum{
+    ACK(0),
+    COMMITED(1),
+    ERR(2);
 
   private static final Map<Integer, EventStatus> BY_VALUE = new HashMap<Integer,EventStatus>() {{
     for(EventStatus val : EventStatus.values()) {

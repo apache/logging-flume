@@ -33,7 +33,7 @@ import org.junit.Test;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.PatternMatch;
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.master.ConfigManager;
 import com.cloudera.flume.master.ConfigurationManager;
 import com.cloudera.flume.master.StatusManager;

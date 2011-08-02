@@ -25,7 +25,7 @@ import java.io.IOException;
 import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeSpecException;
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfigData;
 
 /**
  * This test case implements a simple sink translator that adds a pass through

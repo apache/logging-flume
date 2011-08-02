@@ -29,7 +29,7 @@ public class FlumeClientServer {
 
     public boolean heartbeat(String logicalNode, String physicalNode, String host, FlumeNodeState s, long timestamp) throws TException;
 
-    public FlumeConfigData getConfig(String sourceId) throws TException;
+    public ThriftFlumeConfigData getConfig(String sourceId) throws TException;
 
     public List<String> getLogicalNodes(String physNode) throws TException;
 
@@ -105,7 +105,7 @@ public class FlumeClientServer {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "heartbeat failed: unknown result");
     }
 
-    public FlumeConfigData getConfig(String sourceId) throws TException
+    public ThriftFlumeConfigData getConfig(String sourceId) throws TException
     {
       send_getConfig(sourceId);
       return recv_getConfig();
@@ -121,7 +121,7 @@ public class FlumeClientServer {
       oprot_.getTransport().flush();
     }
 
-    public FlumeConfigData recv_getConfig() throws TException
+    public ThriftFlumeConfigData recv_getConfig() throws TException
     {
       TMessage msg = iprot_.readMessageBegin();
       if (msg.type == TMessageType.EXCEPTION) {
@@ -1018,7 +1018,15 @@ public class FlumeClientServer {
       if (this.s == null) {
         sb.append("null");
       } else {
+        String s_name = s.name();
+        if (s_name != null) {
+          sb.append(s_name);
+          sb.append(" (");
+        }
         sb.append(this.s);
+        if (s_name != null) {
+          sb.append(")");
+        }
       }
       first = false;
       if (!first) sb.append(", ");
@@ -1604,7 +1612,7 @@ public class FlumeClientServer {
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
 
-    public FlumeConfigData success;
+    public ThriftFlumeConfigData success;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
@@ -1665,7 +1673,7 @@ public class FlumeClientServer {
 
     public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
       put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, FlumeConfigData.class)));
+          new StructMetaData(TType.STRUCT, ThriftFlumeConfigData.class)));
     }});
 
     static {
@@ -1676,7 +1684,7 @@ public class FlumeClientServer {
     }
 
     public getConfig_result(
-      FlumeConfigData success)
+      ThriftFlumeConfigData success)
     {
       this();
       this.success = success;
@@ -1687,7 +1695,7 @@ public class FlumeClientServer {
      */
     public getConfig_result(getConfig_result other) {
       if (other.isSetSuccess()) {
-        this.success = new FlumeConfigData(other.success);
+        this.success = new ThriftFlumeConfigData(other.success);
       }
     }
 
@@ -1700,11 +1708,11 @@ public class FlumeClientServer {
       return new getConfig_result(this);
     }
 
-    public FlumeConfigData getSuccess() {
+    public ThriftFlumeConfigData getSuccess() {
       return this.success;
     }
 
-    public getConfig_result setSuccess(FlumeConfigData success) {
+    public getConfig_result setSuccess(ThriftFlumeConfigData success) {
       this.success = success;
       return this;
     }
@@ -1730,7 +1738,7 @@ public class FlumeClientServer {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((FlumeConfigData)value);
+          setSuccess((ThriftFlumeConfigData)value);
         }
         break;
 
@@ -1832,7 +1840,7 @@ public class FlumeClientServer {
           switch (fieldId) {
             case SUCCESS:
               if (field.type == TType.STRUCT) {
-                this.success = new FlumeConfigData();
+                this.success = new ThriftFlumeConfigData();
                 this.success.read(iprot);
               } else { 
                 TProtocolUtil.skip(iprot, field.type);

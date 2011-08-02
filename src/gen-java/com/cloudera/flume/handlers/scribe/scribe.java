@@ -729,7 +729,15 @@ public class scribe {
       if (this.success == null) {
         sb.append("null");
       } else {
+        String success_name = success.name();
+        if (success_name != null) {
+          sb.append(success_name);
+          sb.append(" (");
+        }
         sb.append(this.success);
+        if (success_name != null) {
+          sb.append(")");
+        }
       }
       first = false;
       sb.append(")");

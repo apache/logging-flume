@@ -27,8 +27,7 @@ import org.apache.log4j.Logger;
 import org.apache.thrift.transport.TTransportException;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
-import com.cloudera.flume.conf.thrift.FlumeClientServer;
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.handlers.endtoend.AckListener;
 import com.cloudera.util.FixedPeriodBackoff;
 import com.cloudera.util.Pair;
@@ -37,42 +36,49 @@ import com.cloudera.util.RetryHarness;
 import com.cloudera.flume.reporter.ReportEvent;
 
 /**
- * This class adds failover to other masters
+ * This wraps a SingleMasterRPC and provides failover from one master to another.
  */
-public class ThriftMultiMasterRPC extends ThriftMasterRPC implements MasterRPC {
-  final static Logger LOG = Logger.getLogger(ThriftMasterRPC.class.getName());
+public class MultiMasterRPC implements MasterRPC {
+  final static Logger LOG = Logger.getLogger(MultiMasterRPC.class.getName());
   final protected int MAX_RETRIES;
   final protected int RETRY_PAUSE_MS;
-
-  /**
-   * Reads the set of master addresses from the configuration. If randomize is
-   * set, it will shuffle the list.
-   */
-  public ThriftMultiMasterRPC(FlumeConfiguration conf, boolean randomize) {
-    this(conf, randomize, conf.getAgentMultimasterMaxRetries(), conf
-        .getAgentMultimasterRetryBackoff());
-  }
-
+  final String rpcProtocol;
+  protected MasterRPC masterRPC;
+  protected final List<Pair<String, Integer>> masterAddresses;
+  
+  // Index of next master to try - wraps round.
+  protected int nextMaster = 0;
+  protected String curHost;
+  protected int curPort = 0;
+  
   /**
    * Reads the set of master addresses from the configuration. If randomize is
    * set, it will shuffle the list. When a failure is detected, the entire set
    * of other masters will be tried maxRetries times, with a pause of
    * retryPauseMS between sweeps.
    */
-  public ThriftMultiMasterRPC(FlumeConfiguration conf, boolean randomize,
+  public MultiMasterRPC(FlumeConfiguration conf, boolean randomize,
       int maxRetries, int retryPauseMS) {
-    super(conf);
     masterAddresses = conf.getMasterHeartbeatServersList();
     if (randomize) {
       Collections.shuffle(masterAddresses);
     }
+    Pair<String, Integer> masterAddr = 
+      conf.getMasterHeartbeatServersList().get(0);
     this.MAX_RETRIES = maxRetries;
     this.RETRY_PAUSE_MS = retryPauseMS;
+    this.rpcProtocol = conf.getMasterHeartbeatRPC();
   }
-
-  protected String curHost;
-  protected int curPort = 0;
-
+  
+  /**
+   * Reads the set of master addresses from the configuration. If randomize is
+   * set, it will shuffle the list.
+   */
+  public MultiMasterRPC(FlumeConfiguration conf, boolean randomize) {
+    this(conf, randomize, conf.getAgentMultimasterMaxRetries(), conf
+        .getAgentMultimasterRetryBackoff());
+  }
+  
   /**
    * Will return null if not connected
    */
@@ -87,12 +93,7 @@ public class ThriftMultiMasterRPC extends ThriftMasterRPC implements MasterRPC {
     return curPort;
   }
 
-  final List<Pair<String, Integer>> masterAddresses;
-
-  // Index of next master to try - wraps round.
-  int nextMaster = 0;
-
-  protected synchronized FlumeClientServer.Iface findServer()
+  protected synchronized MasterRPC findServer()
       throws IOException {
     List<String> failedMasters = new ArrayList<String>();
     for (int i = 0; i < masterAddresses.size(); ++i) {
@@ -104,11 +105,20 @@ public class ThriftMultiMasterRPC extends ThriftMasterRPC implements MasterRPC {
         // We don't know for sure what state the connection is in at this
         // point, so to be safe force a close.
         close();
-        FlumeClientServer.Iface iface = open(host.getLeft(), host.getRight());
+        MasterRPC out = null;
+        if (FlumeConfiguration.RPC_TYPE_THRIFT.equals(rpcProtocol)) {
+          out = new ThriftMasterRPC(host.getLeft(), host.getRight());
+        } else if (FlumeConfiguration.RPC_TYPE_AVRO.equals(rpcProtocol)) {
+          out = new AvroMasterRPC(host.getLeft(), host.getRight());
+        } else {
+          LOG.error("No valid RPC protocl in configurations.");
+          continue;
+        }
         curHost = host.getLeft();
         curPort = host.getRight();
+        this.masterRPC = out;
+        return out;
 
-        return iface;
       } catch (Exception e) {
         failedMasters.add(host.getLeft() + ":" + host.getRight());
         LOG.debug("Couldn't connect to master at " + host.getLeft() + ":"
@@ -119,14 +129,20 @@ public class ThriftMultiMasterRPC extends ThriftMasterRPC implements MasterRPC {
         + masterAddresses.size() + ": " + failedMasters + ")");
   }
 
-  protected synchronized FlumeClientServer.Iface ensureConnected()
+  protected synchronized MasterRPC ensureConnected()
       throws TTransportException, IOException {
-    return (masterClient != null) ? masterClient : findServer();
+    return (masterRPC != null) ? masterRPC : findServer();
   }
 
   public synchronized void close() {
     // multiple close is ok.
-    super.close();
+    if (this.masterRPC != null) {
+      try {
+        this.masterRPC.close();
+      } catch (IOException e) {
+        LOG.warn("Failed to close connection with RPC master" + curHost);
+      }
+    }
     curHost = null;
     curPort = 0;
   }
@@ -158,10 +174,10 @@ public class ThriftMultiMasterRPC extends ThriftMasterRPC implements MasterRPC {
     public boolean doTry() {
       /**
        * Getting the locking efficient here is difficult because of subtle race
-       * conditions. Since all access to ThriftMasterRPC is synchronized, we can
+       * conditions. Since all access to MasterRPC is synchronized, we can
        * afford to serialize access to this block.
        */
-      synchronized (ThriftMultiMasterRPC.this) {
+      synchronized (MultiMasterRPC.this) {
         try {
           result = doRPC();
           return true;
@@ -189,7 +205,7 @@ public class ThriftMultiMasterRPC extends ThriftMasterRPC implements MasterRPC {
   public FlumeConfigData getConfig(final LogicalNode n) throws IOException {
     RPCRetryable<FlumeConfigData> retry = new RPCRetryable<FlumeConfigData>() {
       public FlumeConfigData doRPC() throws IOException {
-        return ThriftMultiMasterRPC.super.getConfig(n);
+        return masterRPC.getConfig(n);
       }
     };
 
@@ -209,7 +225,25 @@ public class ThriftMultiMasterRPC extends ThriftMasterRPC implements MasterRPC {
   public boolean checkAck(final String ackid) throws IOException {
     RPCRetryable<Boolean> retry = new RPCRetryable<Boolean>() {
       public Boolean doRPC() throws IOException {
-        return ThriftMultiMasterRPC.super.checkAck(ackid);
+        return masterRPC.checkAck(ackid);
+      }
+    };
+
+    RetryHarness harness = new RetryHarness(retry, new FixedPeriodBackoff(
+        RETRY_PAUSE_MS, MAX_RETRIES), true);
+    try {
+      harness.attempt();
+      return retry.getResult();
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
+  }
+  
+  public List<String> getLogicalNodes(final String physicalNode) 
+  throws IOException {
+    RPCRetryable<List<String>> retry = new RPCRetryable<List<String>>() {
+      public List<String> doRPC() throws IOException {
+        return masterRPC.getLogicalNodes(physicalNode);
       }
     };
 
@@ -226,7 +260,7 @@ public class ThriftMultiMasterRPC extends ThriftMasterRPC implements MasterRPC {
   public boolean heartbeat(final LogicalNode n) throws IOException {
     RPCRetryable<Boolean> retry = new RPCRetryable<Boolean>() {
       public Boolean doRPC() throws IOException {
-        return ThriftMultiMasterRPC.super.heartbeat(n);
+        return masterRPC.heartbeat(n);
       }
     };
 
@@ -240,11 +274,10 @@ public class ThriftMultiMasterRPC extends ThriftMasterRPC implements MasterRPC {
     }
   }
 
-  @Override
   public void acknowledge(final String group) throws IOException {
     RPCRetryable<Void> retry = new RPCRetryable<Void>() {
       public Void doRPC() throws IOException {
-        ThriftMultiMasterRPC.super.acknowledge(group);
+        masterRPC.acknowledge(group);
         return result; // Have to return something, but no-one will ever check
         // it
       }
@@ -259,12 +292,11 @@ public class ThriftMultiMasterRPC extends ThriftMasterRPC implements MasterRPC {
     }
   }
 
-  @Override
   public void putReports(final Map<String, ReportEvent> reports)
       throws IOException {
     RPCRetryable<Void> retry = new RPCRetryable<Void>() {
       public Void doRPC() throws IOException {
-        ThriftMultiMasterRPC.super.putReports(reports);
+        masterRPC.putReports(reports);
         return result;
       }
     };
@@ -278,8 +310,7 @@ public class ThriftMultiMasterRPC extends ThriftMasterRPC implements MasterRPC {
     }
   }
 
-  @Override
   public AckListener createAckListener() {
-    return super.createAckListener();
+    return masterRPC.createAckListener();
   }
 }

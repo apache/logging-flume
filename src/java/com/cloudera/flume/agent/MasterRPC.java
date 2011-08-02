@@ -22,22 +22,23 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.handlers.endtoend.AckListener;
 import com.cloudera.flume.reporter.ReportEvent;
 
 /**
- * This is a wrapper that manages connections between the flume node and the
- * master. It attempts to encapsulates any thrift related RPC stuff to enable
- * easier substitution with another node-master rpc mechanism (such as Avro or
- * ZK). Also is useful for Mocking out for use in unit tests.
+ * This interface manages function calls between a Flume node and some set of
+ * masters. Implementing classes should translate these calls into
+ * rpc package-specific methods. Any method which throws an 
+ * IOException is interpreted as having lost connection to all
+ * available masters.
  */
 public interface MasterRPC {
-
-  public void open() throws IOException;
-
+  /**
+   * Explicitly close any connection to the server.
+   */
   public void close() throws IOException;
-
+  
   /**
    * This is a hook to allow acks to be sent to the master. This generally will
    * happen from a collector node.

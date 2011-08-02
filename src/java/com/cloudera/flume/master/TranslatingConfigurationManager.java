@@ -30,7 +30,7 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 
 import com.cloudera.flume.conf.FlumeSpecException;
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Multimap;

@@ -680,7 +680,15 @@ public class ThriftFlumeEvent implements TBase<ThriftFlumeEvent._Fields>, java.i
     if (this.priority == null) {
       sb.append("null");
     } else {
+      String priority_name = priority.name();
+      if (priority_name != null) {
+        sb.append(priority_name);
+        sb.append(" (");
+      }
       sb.append(this.priority);
+      if (priority_name != null) {
+        sb.append(")");
+      }
     }
     first = false;
     if (!first) sb.append(", ");

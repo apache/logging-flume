@@ -27,10 +27,11 @@ import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
-import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.thrift.FlumeMasterAdminServer;
 import com.cloudera.flume.conf.thrift.FlumeMasterCommand;
 import com.cloudera.flume.conf.thrift.FlumeNodeStatus;
+import com.cloudera.flume.conf.thrift.ThriftFlumeConfigData;
 import com.cloudera.flume.conf.thrift.FlumeMasterAdminServer.Iface;
 import com.cloudera.flume.util.ThriftServer;
 import com.google.common.base.Preconditions;
@@ -80,7 +81,7 @@ public class MasterAdminServer extends ThriftServer implements Iface {
 
   protected FlumeNodeStatus toThrift(StatusManager.NodeStatus status) {
     long time = System.currentTimeMillis();
-    return new FlumeNodeStatus(MasterClientServer.stateToThrift(status.state),
+    return new FlumeNodeStatus(MasterClientServerThrift.stateToThrift(status.state),
         status.version, status.lastseen, time - status.lastseen, status.host,
         status.physicalNode);
   }
@@ -97,8 +98,14 @@ public class MasterAdminServer extends ThriftServer implements Iface {
   }
 
   @Override
-  public Map<String, FlumeConfigData> getConfigs() throws TException {
-    return master.getSpecMan().getAllConfigs();
+  public Map<String, ThriftFlumeConfigData> getConfigs() throws TException {
+    Map<String, ThriftFlumeConfigData> out = 
+      new HashMap<String, ThriftFlumeConfigData>();
+    Map<String, FlumeConfigData> orig = master.getSpecMan().getAllConfigs();
+    for (String key: orig.keySet()) {
+      out.put(key, MasterClientServerThrift.configToThrift(orig.get(key)));
+    }
+    return out;
   }
 
   /*
