@@ -54,6 +54,7 @@ import com.cloudera.flume.util.SystemInfo;
 import com.cloudera.util.CheckJavaVersion;
 import com.cloudera.util.InternalHttpServer;
 import com.cloudera.util.NetUtils;
+import com.cloudera.util.StatusHttpServer.StackServlet;
 
 /**
  * This is a first cut at a server for distributing configurations to different
@@ -248,18 +249,17 @@ public class FlumeMaster implements Reportable {
     ReportManager.get().add(sysInfo);
 
     if (doHttp) {
-      String webPath = FlumeNode.getWebPath(cfg);
-
       http = new InternalHttpServer();
 
-      /*
-      this.http = new StatusHttpServer("flumeconfig", webPath, "0.0.0.0", cfg
-          .getMasterHttpPort(), false);
-      http.addServlet(jerseyMasterServlet(), "/master/*");
-      */
+      http.addHandler(InternalHttpServer.createLogAppContext());
+      http.addHandler(InternalHttpServer.createServletContext(
+          StackServlet.class, "/stacks", "/*", "stacks"));
+
       http.setBindAddress("0.0.0.0");
       http.setPort(cfg.getMasterHttpPort());
-      http.setWebappDir(new File(FlumeConfiguration.get().getMasterWebappRoot()));
+      String webAppRoot = FlumeConfiguration.get().getMasterWebappRoot();
+      http.setWebappDir(new File(webAppRoot));
+      LOG.info("Webserver root directory: " + webAppRoot);
       http.start();
     }
 
@@ -282,7 +282,7 @@ public class FlumeMaster implements Reportable {
        * Start the Avro/Thrift ReportServer based on the flag set in the
        * configuration file.
        */
-      if (cfg.getReportServerRPC() == cfg.RPC_TYPE_AVRO) {
+      if (cfg.getReportServerRPC() == FlumeConfiguration.RPC_TYPE_AVRO) {
         avroReportServer.serve();
       } else {
         thriftReportServer.serve();
@@ -344,7 +344,7 @@ public class FlumeMaster implements Reportable {
       /*
        * Close the reportserver which started.
        */
-      if (cfg.getReportServerRPC() == cfg.RPC_TYPE_AVRO) {
+      if (cfg.getReportServerRPC() == FlumeConfiguration.RPC_TYPE_AVRO) {
         if (avroReportServer != null) {
           avroReportServer.stop();
           avroReportServer = null;
@@ -481,8 +481,7 @@ public class FlumeMaster implements Reportable {
     FlumeNode.logEnvironment(LOG);
     // Make sure the Java version is not older than 1.6
     if (!CheckJavaVersion.isVersionOk()) {
-      LOG
-          .error("Exiting because of an old Java version or Java version in bad format");
+      LOG.error("Exiting because of an old Java version or Java version in bad format");
       System.exit(-1);
     }
     FlumeConfiguration.hardExitLoadConfig(); // if config file is bad hardexit.

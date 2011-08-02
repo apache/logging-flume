@@ -4,11 +4,16 @@ import java.io.File;
 
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
+import org.mortbay.jetty.handler.ContextHandlerCollection;
 import org.mortbay.jetty.nio.SelectChannelConnector;
+import org.mortbay.jetty.servlet.Context;
+import org.mortbay.jetty.servlet.DefaultServlet;
+import org.mortbay.jetty.servlet.ServletHolder;
 import org.mortbay.jetty.webapp.WebAppContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.util.StatusHttpServer.StackServlet;
 import com.google.common.base.Preconditions;
 
 /**
@@ -89,11 +94,13 @@ public class InternalHttpServer {
   private int port;
   private String bindAddress;
   private boolean scanForApps;
+  private ContextHandlerCollection handlers;
 
   public InternalHttpServer() {
     port = 0;
     bindAddress = "0.0.0.0";
     scanForApps = true;
+    handlers = new ContextHandlerCollection();
   }
 
   public void initialize() {
@@ -106,6 +113,7 @@ public class InternalHttpServer {
       connector.setHost(bindAddress);
 
       server.addConnector(connector);
+      server.addHandler(handlers);
     }
   }
 
@@ -140,11 +148,12 @@ public class InternalHttpServer {
 
     logger.debug("creating context {} -> {}", name, path);
 
+    // WebAppContext is for loading war files.
     WebAppContext handler = new WebAppContext(path.getPath(), "/" + name);
 
     handler.setParentLoaderPriority(true);
 
-    server.addHandler(handler);
+    handlers.addHandler(handler);
 
     return true;
   }
@@ -276,6 +285,38 @@ public class InternalHttpServer {
       super(t);
     }
 
+  }
+
+  public void addHandler(Context ctx) {
+    if (ctx == null) {
+      logger.warn("Attempting to add null webapp context");
+      return;
+    }
+    handlers.addHandler(ctx);
+  }
+
+  public static Context createLogAppContext() {
+    Context ctx = new Context();
+    // logs applet
+    String logDir = System.getProperty("flume.log.dir");
+    if (logDir != null) {
+      ctx.setContextPath("/logs");
+      ctx.setResourceBase(logDir);
+      ctx.addServlet(DefaultServlet.class, "/*");
+      ctx.setDisplayName("logs");
+    }
+    return ctx;
+  }
+
+  public static Context createServletContext(Class<?> sltClz, String contextPath,
+      String pathSpec, String name) {
+    Context ctx = new Context();
+    ServletHolder holder = new ServletHolder(StackServlet.class);
+    ctx.setContextPath("/stacks");
+    ctx.addServlet(holder, "/*");
+    ctx.setDisplayName("stacks");
+
+    return ctx;
   }
 
 }

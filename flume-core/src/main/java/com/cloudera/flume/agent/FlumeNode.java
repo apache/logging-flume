@@ -63,6 +63,7 @@ import com.cloudera.util.FileUtil;
 import com.cloudera.util.InternalHttpServer;
 import com.cloudera.util.NetUtils;
 import com.cloudera.util.Pair;
+import com.cloudera.util.StatusHttpServer.StackServlet;
 import com.google.common.base.Preconditions;
 
 /**
@@ -260,9 +261,15 @@ public class FlumeNode implements Reportable {
       try {
         http = new InternalHttpServer();
 
+        http.addHandler(InternalHttpServer.createLogAppContext());
+
+        http.addHandler(InternalHttpServer.createServletContext(
+            StackServlet.class, "/stacks", "/*", "stacks"));
+
         http.setBindAddress("0.0.0.0");
         http.setPort(conf.getNodeStatusPort());
-        http.setWebappDir(new File(conf.getNodeWebappRoot()));
+        String webAppRoot = FlumeConfiguration.get().getNodeWebappRoot();
+        http.setWebappDir(new File(webAppRoot));
         http.setScanForApps(true);
 
         http.start();
