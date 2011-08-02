@@ -17,7 +17,7 @@
  * under the License.
  */
 
-/**
+/*
  * fb303.thrift
  */
 
