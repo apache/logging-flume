@@ -34,7 +34,7 @@ import com.google.common.base.Preconditions;
  * The constructor can allow null sinks as arguments, but append/close/open
  * assumes non null.
  * 
- * The decorators have semantics where the act like synchronous functions. When
+ * The decorators have semantics where they act like synchronous functions. When
  * there is no buffering and close is just a synchronous call, this is simple,
  * just call the child close and return after it returns. If any buffering
  * occurs in the decorator, the decorator must flush its contents before

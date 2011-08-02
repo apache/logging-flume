@@ -56,7 +56,7 @@ public interface EventSink extends Reportable {
    * If the data durable, close is allowed to exit if it will be recovered when
    * opened again.
    * 
-   * Close will block until 1) all event appended to this sink have been flushed
+   * Close will block until 1) all events appended to this sink have been flushed
    * and until 2) a subsequent open call should succeed (shared resource
    * situation).
    */

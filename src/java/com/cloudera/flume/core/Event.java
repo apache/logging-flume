@@ -91,7 +91,7 @@ abstract public class Event {
    * Constructs the union of this event and another. The body of this event is
    * preserved, but all attributes in e are renamed with the supplied prefix to
    * try to avoid name collisions. In the event of a collision, attributes from
-   * this even are preserved.
+   * this event are preserved.
    */
   abstract public void hierarchicalMerge(String prefix, Event e);
 

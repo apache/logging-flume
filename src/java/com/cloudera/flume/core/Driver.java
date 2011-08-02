@@ -22,7 +22,7 @@ import java.io.IOException;
 import com.cloudera.flume.master.StatusManager.NodeState;
 
 /**
- * This is an edge that connect a source to a sink. This is an abstract class
+ * This is an edge that connects a source to a sink. This is an abstract class
  * because we can have many different properties for the connection between
  * them.
  * 
@@ -54,7 +54,7 @@ abstract public class Driver {
   abstract public void stop() throws IOException;
 
   /**
-   * Signals driver to do a abrubt shutdown. This does not guarantee that any
+   * Signals driver to do a abrupt shutdown. This does not guarantee that any
    * internal buffers will be flushed. This does not block.
    */
   abstract public void cancel();

@@ -204,7 +204,7 @@ public class LogicalNode implements Reportable {
         }
 
         nodeMsg = "Error: Connector on " + nodeName + " closed " + conn;
-        LOG.error("Driver on " + nodeName + " closed " + conn + " becaues of "
+        LOG.error("Driver on " + nodeName + " closed " + conn + " because of "
             + ex.getMessage(), ex);
 
         state.state = NodeState.ERROR;

@@ -28,7 +28,7 @@ import com.google.common.base.Preconditions;
 /**
  * This provides a synchronous interface to getting events. An state/event-based
  * architecture will likely be more efficient than a thread based one because
- * there are many source of information and only one output
+ * there are many sources of information and only one output.
  */
 public interface EventSource extends Reportable {
 
