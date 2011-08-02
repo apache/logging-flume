@@ -11,7 +11,7 @@
   <properties>
     <!-- NB: The version of the thrift compiler must match that of the dependency 
       on the jar file below. -->
-    <thrift.executable>/usr/local/bin/thrift</thrift.executable>
+    <thrift.executable>${env.THRIFT_HOME}/bin/thrift</thrift.executable>
 
     <!-- Set default encoding to UTF-8 to remove maven complaints -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
