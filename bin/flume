@@ -120,6 +120,17 @@ if [ "$cygwin" == false ] ; then
       CLASSPATH+=":${FLUME_CLASSPATH}"
   fi
 
+  # put hadoop conf dir in classpath to include Hadoop
+  # core-site.xml/hdfs-site.xml
+  if [ -n "${HADOOP_CONF_DIR}" ]; then
+      CLASSPATH+=":${HADOOP_CONF_DIR}" 
+  elif [ -n "${HADOOP_HOME}" ] ; then
+      CLASSPATH+=":${HADOOP_HOME}/conf"
+  elif [ -e "/usr/lib/hadoop/conf" ] ; then
+      # if neither is present see if the CDH dir exists
+      CLASSPATH+=":/usr/lib/hadoop-0.20/conf";
+  fi  # otherwise give up
+
   # try to load the hadoop core jars
   HADOOP_CORE_FOUND=false
   while true; do
