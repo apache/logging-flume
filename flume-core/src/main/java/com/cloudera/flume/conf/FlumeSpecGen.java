@@ -154,17 +154,6 @@ public class FlumeSpecGen {
       return "< " + mainSink + " ? " + backupSink + " >";
     }
 
-    case LET: {
-      List<CommonTree> backupNodes = (List<CommonTree>) t.getChildren();
-      Preconditions.checkArgument(backupNodes.size() == 3);
-      CommonTree name = backupNodes.get(0);
-      CommonTree sub = backupNodes.get(1);
-      CommonTree body = backupNodes.get(2);
-      String argSink = genEventSink(sub);
-      String bodySink = genEventSink(body);
-      return "let " + name.getText() + " := " + argSink + " in " + bodySink;
-    }
-
     case ROLL: {
       List<CommonTree> rollNodes = (List<CommonTree>) t.getChildren();
       Preconditions.checkArgument(rollNodes.size() == 2);

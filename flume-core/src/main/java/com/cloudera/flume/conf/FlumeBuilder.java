@@ -37,7 +37,6 @@ import org.slf4j.LoggerFactory;
 import com.cloudera.flume.collector.CollectorSink;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.core.BackOffFailOverSink;
-import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSinkDecorator;
 import com.cloudera.flume.core.EventSource;
@@ -91,7 +90,7 @@ public class FlumeBuilder {
     DEC, HEX, OCT, STRING, BOOL, FLOAT, // literals
     SINK, SOURCE, // sink or source
     KWARG, // kwarg support
-    MULTI, DECO, BACKUP, LET, ROLL, GEN, FAILCHAIN, // compound sinks
+    MULTI, DECO, BACKUP, ROLL, GEN, FAILCHAIN, // compound sinks
     NODE, // combination of sink and source
   };
 
@@ -509,66 +508,6 @@ public class FlumeBuilder {
       }
     }
 
-    case LET: {
-      List<CommonTree> letNodes = (List<CommonTree>) t.getChildren();
-      Preconditions.checkArgument(letNodes.size() == 3);
-      String argName = letNodes.get(0).getText();
-      CommonTree arg = letNodes.get(1);
-      CommonTree body = letNodes.get(2);
-      try {
-        EventSink argSink = buildEventSink(context, arg, sinkFactory);
-
-        // TODO (jon) This isn't exactly right. 'let' currently does
-        // "substitution on parse", which means when there are multiple
-        // instances of the let subexpression, it will get opened twice (which
-        // is now illegal). This hack makes things work by relaxing open's
-        // semantics so that multiple opens are ignored.
-
-        // Another approach is to have "substitution on open". Let would work
-        // differently than here. We would have LetDecorator that internally
-        // keeps the subexpression and then body. The references to the
-        // subexpression in the body would get replaced with a reference. On
-        // open, the subexpression would be opened, and the body as well. As the
-        // body is traversed, if the reference would not be opened, but would
-        // substitute the (already) open subexpression in its place.
-
-        EventSink argSinkRef = new EventSinkDecorator<EventSink>(argSink) {
-          boolean open = false;
-
-          @Override
-          public void open() throws IOException, InterruptedException {
-            if (open) {
-              return; // Do nothing because already open
-            }
-            open = true;
-            sink.open();
-          }
-
-          @Override
-          public void append(Event e) throws IOException, InterruptedException {
-            Preconditions.checkState(open);
-            sink.append(e);
-          }
-
-          @Override
-          public void close() throws IOException, InterruptedException {
-            open = false;
-            sink.close();
-          }
-
-        };
-
-        // add arg to context
-
-        LinkedSinkFactory linkedFactory = new LinkedSinkFactory(sinkFactory,
-            argName, argSinkRef);
-        EventSink bodySink = buildEventSink(context, body, linkedFactory);
-        return bodySink;
-      } catch (FlumeSpecException ife) {
-        throw ife;
-      }
-    }
-
     case ROLL: {
       List<CommonTree> rollArgs = (List<CommonTree>) t.getChildren();
       try {
@@ -583,7 +522,6 @@ public class FlumeBuilder {
       } catch (IllegalArgumentException iae) {
         throw new FlumeSpecException(iae.getMessage());
       }
-
     }
 
     case GEN: {
