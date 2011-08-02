@@ -93,11 +93,16 @@ public class EventImpl extends EventBaseImpl {
   public EventImpl(byte[] s, long timestamp, Priority pri, long nanoTime,
       String host, Map<String, byte[]> fields) {
     super(fields);
-    Preconditions.checkNotNull(s);
-    Preconditions.checkArgument(s.length <= MAX_BODY_SIZE);
+    Preconditions.checkNotNull(s,
+        "Failed when attempting to create event with null body");
+    Preconditions.checkArgument(s.length <= MAX_BODY_SIZE, "Failed when "
+        + "attempting to create event with body with length (" + s.length
+        + ") > max body size (" + MAX_BODY_SIZE + ").  You may want to "
+        + "increase flume.event.max.size.bytes in your flume-site.xml file");
     // this string construction took ~5% of exec time!
     // , "byte length is " + s.length + " which is not < " + MAX_BODY_SIZE);
-    Preconditions.checkNotNull(pri);
+    Preconditions.checkNotNull(pri, "Failed when atttempt to "
+        + "create event with null priority");
     this.body = s;
     this.timestamp = timestamp;
     this.pri = pri;
@@ -166,8 +171,8 @@ public class EventImpl extends EventBaseImpl {
    * the list.
    */
   public static Event select(Event e, String... attrs) {
-    Event e2 = new EventImpl(e.getBody(), e.getTimestamp(), e.getPriority(), e
-        .getNanos(), e.getHost());
+    Event e2 = new EventImpl(e.getBody(), e.getTimestamp(), e.getPriority(),
+        e.getNanos(), e.getHost());
     for (String a : attrs) {
       byte[] data = e.get(a);
       if (data == null) {
@@ -184,8 +189,8 @@ public class EventImpl extends EventBaseImpl {
    * *except* for those attributes specified by the list.
    */
   public static Event unselect(Event e, String... attrs) {
-    Event e2 = new EventImpl(e.getBody(), e.getTimestamp(), e.getPriority(), e
-        .getNanos(), e.getHost());
+    Event e2 = new EventImpl(e.getBody(), e.getTimestamp(), e.getPriority(),
+        e.getNanos(), e.getHost());
     List<String> as = Arrays.asList(attrs);
     for (Entry<String, byte[]> ent : e.getAttrs().entrySet()) {
       String a = ent.getKey();
