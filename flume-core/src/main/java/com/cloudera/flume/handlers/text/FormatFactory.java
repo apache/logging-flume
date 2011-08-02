@@ -34,6 +34,7 @@ import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.handlers.avro.AvroDataFileOutputFormat;
 import com.cloudera.flume.handlers.avro.AvroJsonOutputFormat;
 import com.cloudera.flume.handlers.avro.AvroNativeFileOutputFormat;
+import com.cloudera.flume.handlers.seqfile.SequenceFileOutputFormat;
 import com.cloudera.flume.handlers.text.output.DebugOutputFormat;
 import com.cloudera.flume.handlers.text.output.JsonOutputFormat;
 import com.cloudera.flume.handlers.text.output.Log4jOutputFormat;
@@ -93,6 +94,7 @@ public class FormatFactory {
       add(AvroJsonOutputFormat.builder());
       add(AvroDataFileOutputFormat.builder());
       add(AvroNativeFileOutputFormat.builder());
+      add(SequenceFileOutputFormat.builder());
     }
   };
 

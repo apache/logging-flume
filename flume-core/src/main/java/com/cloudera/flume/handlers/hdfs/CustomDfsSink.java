@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.hadoop.conf.Configurable;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.compress.CompressionCodec;
@@ -103,6 +104,35 @@ public class CustomDfsSink extends EventSink.Base {
     FileSystem hdfs;
 
     String codecName = conf.getCollectorDfsCompressCodec();
+    CompressionCodec codec = getCodec(conf, codecName);
+
+    if (codec == null) {
+      dstPath = new Path(path);
+      hdfs = dstPath.getFileSystem(conf);
+      writer = hdfs.create(dstPath);
+      LOG.info("Creating HDFS file: " + dstPath.toString());
+      return;
+    }
+
+    Compressor cmp = codec.createCompressor();
+    dstPath = new Path(path + codec.getDefaultExtension());
+    hdfs = dstPath.getFileSystem(conf);
+    writer = hdfs.create(dstPath);
+    try {
+      writer = codec.createOutputStream(writer, cmp);
+    } catch (NullPointerException npe) {
+      // tries to find "native" version of codec, if that fails, then tries to
+      // find java version. If there is no java version, the createOutputStream
+      // exits via NPE. We capture this and convert it into a IOE with a more
+      // useful error message.
+      LOG.error("Unable to load compression codec " + codec);
+      throw new IOException("Unable to load compression codec " + codec);
+    }
+    LOG.info("Creating " + codec + " compressed HDFS file: "
+        + dstPath.toString());
+  }
+  
+  public static CompressionCodec getCodec(Configuration conf, String codecName) {
     List<Class<? extends CompressionCodec>> codecs = CompressionCodecFactory
         .getCodecClasses(FlumeConfiguration.get());
     //Wish we could base this on DefaultCodec but appears not all codec's extend DefaultCodec(Lzo)
@@ -125,36 +155,15 @@ public class CustomDfsSink extends EventSink.Base {
 
     if (codec == null) {
       if (!codecName.equalsIgnoreCase("None")) {
-        LOG.warn("Unsupported compression codec " + codecName
-            + ".  Please choose from: " + codecStrs);
+        throw new IllegalArgumentException("Unsupported compression codec "
+            + codecName + ".  Please choose from: " + codecStrs);
       }
-      dstPath = new Path(path);
-      hdfs = dstPath.getFileSystem(conf);
-      writer = hdfs.create(dstPath);
-      LOG.info("Creating HDFS file: " + dstPath.toString());
-      return;
-    }
-    //Must check instanceof codec as BZip2Codec doesn't inherit Configurable
-    if(codec instanceof Configurable){
+    } else if(codec instanceof Configurable) {
+      //Must check instanceof codec as BZip2Codec doesn't inherit Configurable
       //Must set the configuration for Configurable objects that may or do use native libs
       ((Configurable)codec).setConf(conf);
     }
-    Compressor cmp = codec.createCompressor();
-    dstPath = new Path(path + codec.getDefaultExtension());
-    hdfs = dstPath.getFileSystem(conf);
-    writer = hdfs.create(dstPath);
-    try {
-      writer = codec.createOutputStream(writer, cmp);
-    } catch (NullPointerException npe) {
-      // tries to find "native" version of codec, if that fails, then tries to
-      // find java version. If there is no java version, the createOutputStream
-      // exits via NPE. We capture this and convert it into a IOE with a more
-      // useful error message.
-      LOG.error("Unable to load compression codec " + codec);
-      throw new IOException("Unable to load compression codec " + codec);
-    }
-    LOG.info("Creating " + codec + " compressed HDFS file: "
-        + dstPath.toString());
+    return codec;
   }
 
   public static SinkBuilder builder() {
