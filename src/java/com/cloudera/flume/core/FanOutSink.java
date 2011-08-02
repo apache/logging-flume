@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.util.MultipleIOException;
 
@@ -118,8 +117,11 @@ public class FanOutSink<S extends EventSink> extends EventSink.Base {
 
     for (S snk : sinks) {
       try {
-        snk.append(e);
-        super.append(e);
+        // Make a copy of the event for each branch of the fan out. This makes
+        // the events independently modifiable down each fanout path.
+        Event e2 = new EventImpl(e);
+        snk.append(e2);
+        super.append(e2);
       } catch (IOException ioe) {
         exs.add(ioe);
       }

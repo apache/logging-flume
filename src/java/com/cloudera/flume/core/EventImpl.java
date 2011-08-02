@@ -44,8 +44,9 @@ public class EventImpl extends EventBaseImpl {
   Priority pri;
   long nanos;
   String host;
-  
-  final static long MAX_BODY_SIZE = FlumeConfiguration.get().getEventMaxSizeBytes();
+
+  final static long MAX_BODY_SIZE = FlumeConfiguration.get()
+      .getEventMaxSizeBytes();
 
   /**
    * Reflection based tools (like avro) require a null constructor
@@ -105,7 +106,8 @@ public class EventImpl extends EventBaseImpl {
   }
 
   /**
-   * Returns reference to mutable body of event
+   * Returns reference to mutable body of event. NOTE: the contents of the
+   * returned byte array should not be modified.
    */
   public byte[] getBody() {
     return body;
