@@ -31,7 +31,7 @@ import com.google.common.base.Preconditions;
 /**
  * This wraps a Avro generated AvroFlumeEvent with a Flume Event interface.
  */
-class AvroEventAdaptor extends Event {
+public class AvroEventAdaptor extends Event {
   AvroFlumeEvent evt = null;
 
   AvroEventAdaptor(AvroFlumeEvent evt) {

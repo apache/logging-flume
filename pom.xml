@@ -22,6 +22,7 @@
     <module>flume-config-web</module>
     <module>flume-node-web</module>
     <module>flume-distribution</module>
+    <module>flume-log4j-appender</module>
   </modules>
 
   <inceptionYear>2009</inceptionYear>

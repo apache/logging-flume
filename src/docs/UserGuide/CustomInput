@@ -71,6 +71,86 @@ WARNING: these features are incomplete.
 
 === Logging via log4j Directly
 
+Flume includes specific integration support for Apache Log4j that allows end
+user applications to log directly to a Flume agent with no code modification.
+This support comes in the form of a log4j appender and can be configured in an
+application's +log4j.properties+ or +log4j.xml+ file as you would with any of
+the built-in appenders. The appender uses Flume's +avroSource()+ and converts
+each log4j +LoggingEvent+ into a Flume Avro event that can be natively handled
+by Flume.
+
+To configure log4j to log to Flume:
+
+. Ensure the proper jar files are on the application's classpath.
+. Configure the +com.cloudera.flume.log4j.appender.FlumeLog4jAvroAppender+
+  appender in the log4j configuration file.
+
+To use the Flume Avro appender, you must have the following jars on your
+application's classpath:
+
+- +flume-log4j-appender-_version_.jar+
+- +flume-core-_version_.jar+
+
+Avro jar files and its dependencies are also required.
+
+The simplest way to ensure all dependencies are properly included in your
+application's classpath is to use a build system such as Maven that handles
+transitive dependencies for you. Flume's log4j appender is available as a Maven
+project and will properly include Avro dependencies.
+
+The Flume Avro appender has a number of options users can set to affect its
+behavior. The only parameter that absolutely must be set is the port on which
+the Flume avroSource is listening. The appender assumes the Flume agent is
+running locally and that we can communicate via the hostname +localhost+. Users
+can also control the number of times to attempt reconnection before a logging
+call fails.
+
+.Parameters
+
++hostname+ :: The hostname or IP to which we should attempt to send events.
+(default: +localhost+)
+
++port+ :: The port on which Flume's avroSource is configured to listen.
+(required)
+
++reconnectAttempts+ :: The maximum number of times we should attempt to connect
+to the +avroSource()+ before throwing an exception. A setting of 0 (zero) means to
+try forever. (default: 10)
+
+.Example log4j.properties
+--------------------------------------
+log4j.debug = true
+log4j.rootLogger = INFO, flume
+
+log4j.appender.flume = com.cloudera.flume.log4j.appender.FlumeLog4jAvroAppender
+log4j.appender.flume.layout = org.apache.log4j.TTCCLayout
+log4j.appender.flume.port = 12345
+log4j.appender.flume.hostname = localhost
+log4j.appender.flume.reconnectAttempts = 10
+--------------------------------------
+
+.Example Flume configuration
+--------------------------------------
+my-app : avroSource(12345) | agentE2ESink("my-app-col", 12346)
+my-app-col : collectorSource(12346) | collectorSink("hdfs://...", "my-app-")
+--------------------------------------
+
+Note how the port referenced in the log4j.properties example matches that of
+the +avroSource()+ in the Flume configuration example.
+
+.Notes
+
+The +FlumeLog4jAvroAppender+ uses no buffering internally. This is because
+buffering would potentially create a case where, even if a Flume node is
+configured as end-to-end durable, events in the appender's internal buffer
+could be lost in the event of a failure.
+
+By setting the +reconnectAttempts+ parameter to zero (i.e. retry forever) you
+can ensure the end user application blocks should the Flume agent become
+unavailable. This is meant to satisfy users who have a zero data loss
+requirement where it's better to stop service than to not be able to log that
+it occurred.
+
 //// 
 WARNING: These instructions are out of date and currently untested.
 
