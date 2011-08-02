@@ -422,7 +422,9 @@ abstract public class TranslatingConfigurationManager implements
    */
   @Override
   synchronized public void addLogicalNode(String physNode, String logicNode) {
-    parentMan.addLogicalNode(physNode, logicNode);
+    if (!getLogicalNodeMap().containsValue(logicNode)) {
+      parentMan.addLogicalNode(physNode, logicNode);
+    }
     try {
       updateAll();
     } catch (IOException e) {
