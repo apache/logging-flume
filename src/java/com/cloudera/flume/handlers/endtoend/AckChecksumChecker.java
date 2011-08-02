@@ -19,10 +19,8 @@ package com.cloudera.flume.handlers.endtoend;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.CRC32;
@@ -69,9 +67,6 @@ public class AckChecksumChecker<S extends EventSink> extends
   // TODO (jon) this is very inefficient right now.
   Map<String, Long> partial = new HashMap<String, Long>();
 
-  // Just need to keep the tags of the finished ones
-  List<String> done = new ArrayList<String>();
-
   final AckListener listener;
   long unstarted = 0; // number of events that didn't have a start event.
 
@@ -110,7 +105,7 @@ public class AckChecksumChecker<S extends EventSink> extends
   }
 
   @Override
-  public void append(Event e) throws IOException, InterruptedException  {
+  public void append(Event e) throws IOException, InterruptedException {
     byte[] btyp = e.get(AckChecksumInjector.ATTR_ACK_TYPE);
 
     if (btyp == null) {
@@ -160,7 +155,6 @@ public class AckChecksumChecker<S extends EventSink> extends
       LOG.info("Checksum succeeded " + Long.toHexString(chksum));
       listener.end(k);
       ackSuccesses.incrementAndGet();
-      done.add(k);
       partial.remove(k);
       LOG.info("moved from partial to complete " + k);
       return;
@@ -190,6 +184,14 @@ public class AckChecksumChecker<S extends EventSink> extends
       long checksum = partial.get(k);
       checksum ^= chkVal;
       partial.put(k, checksum);
+    }
+  }
+
+  @Override
+  public void close() throws IOException, InterruptedException {
+    super.close();
+    if (partial.size() != 0) {
+      LOG.warn("partial acks abandoned: " + partial);
     }
   }
 

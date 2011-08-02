@@ -18,8 +18,11 @@
 package com.cloudera.flume.collector;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
@@ -48,8 +51,6 @@ import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.util.BackoffPolicy;
 import com.cloudera.util.CumulativeCappedExponentialBackoff;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 
 /**
  * This collector sink is the high level specification a user would use.
@@ -65,18 +66,24 @@ public class CollectorSink extends EventSink.Base {
 
   final EventSink snk;
   AckAccumulator accum = new AckAccumulator();
+  final AckListener ackDest;
 
-  // RollTag, AckTag
-  Multimap<String, String> rollAckMap = HashMultimap.<String, String> create();
+  // This is a container for acks that should be ready for delivery when the
+  // hdfs sink is closed/flushed
+  Set<String> rollAckSet = new HashSet<String>();
 
-  CollectorSink(String path, String filename, long millis)
+  // References package exposed for testing
+  final RollSink roller;
+
+  CollectorSink(String path, String filename, long millis, AckListener ackDest)
       throws FlumeSpecException {
-    this(path, filename, millis, new ProcessTagger(), 250);
+    this(path, filename, millis, new ProcessTagger(), 250, ackDest);
   }
 
   CollectorSink(final String logdir, final String filename, final long millis,
-      final Tagger tagger, long checkmillis) {
-    EventSink s = new RollSink(new Context(), "collectorSink", new TimeTrigger(
+      final Tagger tagger, long checkmillis, AckListener ackDest) {
+    this.ackDest = ackDest;
+    this.roller = new RollSink(new Context(), "collectorSink", new TimeTrigger(
         tagger, millis), checkmillis) {
       @Override
       public EventSink newSink(Context ctx) throws IOException {
@@ -103,7 +110,7 @@ public class CollectorSink extends EventSink.Base {
     // { ackChecksumChecker => insistentAppend => stubbornAppend =>
     // insistentOpen => mask("rolltag") => roll(xx) { rollDetect =>
     // escapedCusomtDfs } }
-    EventSink tmp = new MaskDecorator(s, "rolltag");
+    EventSink tmp = new MaskDecorator<EventSink>(roller, "rolltag");
     tmp = new InsistentOpenDecorator<EventSink>(tmp, backoff1);
     tmp = new StubbornAppendSink<EventSink>(tmp);
     tmp = new InsistentAppendDecorator<EventSink>(tmp, backoff2);
@@ -128,23 +135,34 @@ public class CollectorSink extends EventSink.Base {
 
     public void open() throws IOException, InterruptedException {
       // set the collector's current tag to curRollTAg.
+      LOG.debug("opening roll detect deco {}", tag);
       curRollTag = tag;
       super.open();
+      LOG.debug("opened  roll detect deco {}", tag);
     }
 
     @Override
     public void close() throws IOException, InterruptedException {
+      LOG.debug("closing roll detect deco {}", tag);
       super.close();
+      flushRollAcks();
+      LOG.debug("closed  roll detect deco {}", tag);
+    }
 
-      AckListener master = FlumeNode.getInstance().getCollectorAckListener();
-      Collection<String> acktags = rollAckMap.get(curRollTag);
-      LOG.debug("Roll closed, pushing acks for " + curRollTag + " :: "
-          + acktags);
+    void flushRollAcks() throws IOException {
+      AckListener master = ackDest;
+      Collection<String> acktags;
+      synchronized (rollAckSet) {
+        acktags = new ArrayList<String>(rollAckSet);
+        rollAckSet.clear();
+        LOG.debug("Roll closed, pushing acks for " + tag + " :: " + acktags);
+      }
 
       for (String at : acktags) {
         master.end(at);
       }
     }
+
   };
 
   /**
@@ -155,9 +173,11 @@ public class CollectorSink extends EventSink.Base {
 
     @Override
     public void end(String group) throws IOException {
-      LOG.debug("Adding to acktag " + group + " to rolltag " + curRollTag);
-      rollAckMap.put(curRollTag, group);
-      LOG.debug("Current rolltag acktag mapping: " + rollAckMap);
+      synchronized (rollAckSet) {
+        LOG.debug("Adding to acktag {} to rolltag {}", group, curRollTag);
+        rollAckSet.add(group);
+        LOG.debug("Current rolltag acktag mapping: {}", rollAckSet);
+      }
     }
 
     @Override
@@ -224,7 +244,8 @@ public class CollectorSink extends EventSink.Base {
           millis = Long.parseLong(argv[2]);
         }
         try {
-          EventSink snk = new CollectorSink(logdir, prefix, millis);
+          EventSink snk = new CollectorSink(logdir, prefix, millis, FlumeNode
+              .getInstance().getCollectorAckListener());
           return snk;
         } catch (FlumeSpecException e) {
           LOG.error("CollectorSink spec error " + e, e);
@@ -234,5 +255,4 @@ public class CollectorSink extends EventSink.Base {
       }
     };
   }
-
 }
