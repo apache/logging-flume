@@ -101,7 +101,7 @@ These directives configure Apache to write log files in
 using the "common" log format.
 
 You can use Flume's +tailDir+ source to read all files without
-modifing the Apache settings:
+modifying the Apache settings:
 
 ----
 tailDir("/var/log/apache2/", "foo_access_log.*")
@@ -132,7 +132,7 @@ create a managed symlink in +/usr/bin/+ for the java executable.
 
 Using piped logs can be more efficient, but is riskier because Flume
 can deliver messages without saving on disk.  Doing this, however,
-increases the probabiltiy of event loss.  From a security point of
+increases the probability of event loss.  From a security point of
 view, this Flume node instance runs as Apache's user which is often
 +root+ according to the Apache manual.
 
@@ -143,7 +143,7 @@ disk-failover level.
 The prior examples use Flume nodes in one-shot mode which runs without
 contacting a master.  Unfortunately, it means that one-shot mode
 cannot directly use the automatic chains or the end-to-end (E2E)
-reliablity mode.  This is because the automatic chains are generated
+reliability mode.  This is because the automatic chains are generated
 by the master and because E2E mode currently delivers acknowledgements
 through the master.  
 
