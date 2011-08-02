@@ -83,6 +83,14 @@ configuration values placed in flume-site.xml.  -->
     </description>
   </property>
 
+  <property>
+    <name>flume.node.wal.output.buffered</name>
+    <value>true</value>
+    <description>When true, the WAL subsystem will buffer writes to disk.
+      Setting to false will improve durability at the cost of performance.
+    </description>
+  </property>
+
   <!-- ================================================== -->
   <!-- Agent ============================================ -->
   <!-- ================================================== -->

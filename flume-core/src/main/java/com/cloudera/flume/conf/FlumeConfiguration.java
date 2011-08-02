@@ -160,6 +160,7 @@ public class FlumeConfiguration extends Configuration {
   public static final String AGENT_MEMTHRESHOLD = "flume.agent.mem.threshold";
   public static final String AGENT_MULTIMASTER_MAXRETRIES = "flume.agent.multimaster.maxretries";
   public static final String AGENT_MULTIMASTER_RETRYBACKOFF = "flume.agent.multimaster.retrybackoff";
+  public static final String WAL_OUTPUT_BUFFER = "flume.node.wal.output.buffered";
 
   // Flow options
   public static final String DEFAULT_FLOW_NAME = "flume.flow.default.name";
@@ -1060,6 +1061,13 @@ public class FlumeConfiguration extends Configuration {
    */
   public long getNodeCloseTimeout() {
     return getLong(NODE_CLOSE_TIMEOUT, 30000);
+  }
+
+  /**
+   * Whether or not the WAL should buffer writes to disk. Defaults to true.
+   */
+  public boolean getWALOutputBuffering() {
+    return getBoolean(WAL_OUTPUT_BUFFER, true);
   }
 
 }

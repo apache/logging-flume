@@ -21,9 +21,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.FlushingSequenceFileWriter;
+import org.apache.hadoop.io.RawSequenceFileWriter;
 import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,10 +70,22 @@ public class SeqfileEventSink extends EventSink.Base {
           + f.getAbsoluteFile().getParentFile() + " for writing");
     }
 
-    Configuration conf = FlumeConfiguration.get();
+    FlumeConfiguration conf = FlumeConfiguration.get();
+    FileSystem fs = FileSystem.getLocal(conf);
+
     try {
-      writer = FlushingSequenceFileWriter.createWriter(conf, f,
-          WriteableEventKey.class, WriteableEvent.class);
+
+      if (conf.getWALOutputBuffering()) {
+        writer = RawSequenceFileWriter.createWriter(fs, conf,
+            new Path(f.getAbsolutePath()), WriteableEventKey.class,
+            WriteableEvent.class, CompressionType.NONE);
+
+      } else {
+        writer = FlushingSequenceFileWriter.createWriter(conf, f,
+            WriteableEventKey.class, WriteableEvent.class);
+
+      }
+
     } catch (FileNotFoundException fnfe) {
       LOG.error("Possible permissions problem when creating " + f, fnfe);
       throw fnfe;
@@ -79,7 +94,7 @@ public class SeqfileEventSink extends EventSink.Base {
 
   /**
    * @throws IOException
-   * 
+   *
    */
   public void close() throws IOException {
     LOG.debug("closing " + f);
