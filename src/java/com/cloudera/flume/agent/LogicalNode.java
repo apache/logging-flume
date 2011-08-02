@@ -52,16 +52,27 @@ import com.cloudera.util.NetUtils;
  * 
  * Here is how a configuration is loaded, and where errors are handled:
  * 
- * Configuration is sent to node via loadConfig. Configuration for a source and
- * a sink and instantiates is extracted. Fast fail by throwing exceptions any
- * parse or instantiation failures.
+ * A call to checkConfig triggers a logicalNode update check based on info
+ * provided by FlumeConfigData for the logical node. It is assumed that there
+ * are not multiple concurrent checkConfig calls.
  * 
- * Lazily open the source and sinks. This defers real open errors into the main
- * driver thread.
+ * If the config needs to be upadted, the logical node updates itself via
+ * loadConfig. If there is a previous configuration the driver, its source and
+ * its sink is first closed. Configuration for a source and a sink are
+ * instantiated and then instantiated into a new Driver. Any
+ * parsing/instantiation failures exit by throwing exceptions.
  * 
- * Instantiate a Connector that pulls events out of the sources and into the
+ * Currently a separate thread is used to reconfigure a node. A previous patch
+ * made the logicalNode lazily open the source and sinks. This defers real open
+ * errors into the main driver thread. This actually differs any open exceptions
+ * into the driver thread which is actually a simplifies error handling.
+ * 
+ * An instantiated driver that pulls events out of the sources and into the
  * sink. Run this until an unhandled exception occurs or the source exits with
  * null signaling that it has been completely drained.
+ * 
+ * TODO (jon) This class is not consistently synchronized currently. Another
+ * look at this code may be necessary.
  */
 public class LogicalNode implements Reportable {
   final static Logger LOG = Logger.getLogger(LogicalNode.class.getName());
@@ -338,7 +349,7 @@ public class LogicalNode implements Reportable {
     }
   }
 
-  synchronized public ReportEvent getReport() {
+  public synchronized ReportEvent getReport() {
     ReportEvent rpt = new ReportEvent(nodeName);
     rpt.setStringMetric("nodename", nodeName);
     rpt.setStringMetric("version", new Date(lastGoodCfg.timestamp).toString());

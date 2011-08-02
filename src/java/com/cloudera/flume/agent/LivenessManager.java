@@ -124,12 +124,18 @@ public class LivenessManager {
     for (LogicalNode nd : nodesman.getNodes()) {
       boolean needsCfg = master.heartbeat(nd);
       if (needsCfg) {
-        FlumeConfigData data = master.getConfig(nd);
+        final FlumeConfigData data = master.getConfig(nd);
         if (data == null) {
           LOG.debug("Logical Node '" + nd.getName()
               + "' not configured on master");
         }
-        nd.checkConfig(data);
+        final LogicalNode node = nd;
+        // TODO This is quite gross, but prevents heartbeat from blocking
+        new Thread() {
+          public void run() {
+            node.checkConfig(data);
+          }
+        }.start();
       }
     }
   }
