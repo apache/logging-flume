@@ -9,8 +9,82 @@ installations. There is no upgrade path yet to preserve both node maps
 and configurations, but one is planned for the 0.9.2 release.
 
 
-Flume 0.9.1 Release Notes
-=========================   
+Flume 0.9.1 Update 1 (CDH3b3) Release Notes
+===========================================   
+
+This release is a bugfix update to the 0.9.1 release.
+
+The only new features added to this release are:
+* Support for writing to kerberized HDFS.
+* Some minor fixes that prevent some user errors
+* Some cosmetic fixes to the web interface.
+
+Bug fixes:
+* Critical bug fixes having to do with node hangs or situations where
+  agents do not properly recover from failures. 
+
+Many documentation updates including:
+* A "cookbook" of example use case tutorials 
+* Documentation corrections 
+* More details on plugin behavior
+
+Compatiblity Changes: 
+* When run from the command line, Flume now defaults to storing the
+  agent data in /tmp/flume-${user.name} instead of /tmp/flume. When
+  upgrading an existing installation, if you have not configured an
+  alternate path, please rename /tmp/flume to /tmp/flume-flume
+
+Known bugs (includes 0.9.1 issues):
+* Tail is updated to potentially fix a race condition but races are
+  still possible (FLUME-218).  Another implementation is pending for a
+  0.9.2 release (FLUME-252).
+
+Flume 0.9.1 Release notes
+=========================
+
+This release improves and adds several key features including:
+* gzip HDFS output file compression 
+* tailDir source 
+* Exposed internal configuration and extension information via web
+  pages
+* Automated eclipse project generation via ant
+
+Documentation:
+* Added documentation to source repository 
+* Example plugins and documentation on plugins.
+* Numerous typographic corrections.
+
+There were several critical fixes in this release as well.
+* Fixed support for data coming from scribe
+* Fixed syslog source underflow problem 
+* Fixed issues with hangs when changing or decommissioning certain
+  node configurations 
+* Prevent certain user errors 
+
+Compatability changes:
+* We no longer specifiy a -Xmx memory setting for the JVM.  By default
+  the JVM will set this value to 128MB.  This value may need to be
+  increased on nodes. (FLUME-72)
+
+Now Stable:
+* Fully-Distributed Mode
+* Sink/Source/Decorator Plugins
+* Automatic versions of failover.
+* Logical Naming translations.
+
+Highlighted known bugs: 
+* Multiple Flume Masters does not work with automatic failover chains
+  and automatic flow isolation. (FLUME-114, FLUME-150)
+* There are several known performance bugs (FLUME-264, FLUME-192).
+* One event is lost in BE mode and two events are lost in DFO mode
+  when recovering from collector outage.  These losses are technically
+  allowed but can probably be improved. (FLUME-257)
+* Tail has a race condition that results in event duplication
+  (FLUME-218) and there are issues with non ascii characters
+  (FLUME-205).
+
+Flume 0.9.0 (CDH3b2) Release Notes
+==================================   
 
 This release of Flume implements the core framework and has
 implementations of most of the major features of the Flume system
