@@ -975,6 +975,8 @@ to call at top-level: ant deploy-contrib compile-core-test
                 output="${build.dir.eclipse-main-classes}" />
         <source path="${aho.src.dir}"
                 output="${build.dir.eclipse-main-classes}" />
+        <source path="${avro.gen.dir}"
+                output="${build.dir.eclipse-main-classes}" />
         <source path="${thrift.gen.dir}"
                 output="${build.dir.eclipse-main-classes}"
                 excluding="com/cloudera/flume/conf/RuntimeRecognitionException.java" />
