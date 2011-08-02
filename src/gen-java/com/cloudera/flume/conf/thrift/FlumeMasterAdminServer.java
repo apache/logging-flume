@@ -42,6 +42,8 @@ public class FlumeMasterAdminServer {
 
     public boolean hasCmdId(long cmdid) throws TException;
 
+    public CommandStatusThrift getCmdStatus(long cmdid) throws TException;
+
     public Map<String,List<String>> getMappings(String physicalNode) throws TException;
 
   }
@@ -59,6 +61,8 @@ public class FlumeMasterAdminServer {
     public void getConfigs(AsyncMethodCallback<AsyncClient.getConfigs_call> resultHandler) throws TException;
 
     public void hasCmdId(long cmdid, AsyncMethodCallback<AsyncClient.hasCmdId_call> resultHandler) throws TException;
+
+    public void getCmdStatus(long cmdid, AsyncMethodCallback<AsyncClient.getCmdStatus_call> resultHandler) throws TException;
 
     public void getMappings(String physicalNode, AsyncMethodCallback<AsyncClient.getMappings_call> resultHandler) throws TException;
 
@@ -315,6 +319,42 @@ public class FlumeMasterAdminServer {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "hasCmdId failed: unknown result");
     }
 
+    public CommandStatusThrift getCmdStatus(long cmdid) throws TException
+    {
+      send_getCmdStatus(cmdid);
+      return recv_getCmdStatus();
+    }
+
+    public void send_getCmdStatus(long cmdid) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("getCmdStatus", TMessageType.CALL, ++seqid_));
+      getCmdStatus_args args = new getCmdStatus_args();
+      args.setCmdid(cmdid);
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public CommandStatusThrift recv_getCmdStatus() throws TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "getCmdStatus failed: out of sequence response");
+      }
+      getCmdStatus_result result = new getCmdStatus_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      throw new TApplicationException(TApplicationException.MISSING_RESULT, "getCmdStatus failed: unknown result");
+    }
+
     public Map<String,List<String>> getMappings(String physicalNode) throws TException
     {
       send_getMappings(physicalNode);
@@ -549,6 +589,37 @@ public class FlumeMasterAdminServer {
       }
     }
 
+    public void getCmdStatus(long cmdid, AsyncMethodCallback<getCmdStatus_call> resultHandler) throws TException {
+      checkReady();
+      getCmdStatus_call method_call = new getCmdStatus_call(cmdid, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class getCmdStatus_call extends TAsyncMethodCall {
+      private long cmdid;
+      public getCmdStatus_call(long cmdid, AsyncMethodCallback<getCmdStatus_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.cmdid = cmdid;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("getCmdStatus", TMessageType.CALL, 0));
+        getCmdStatus_args args = new getCmdStatus_args();
+        args.setCmdid(cmdid);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public CommandStatusThrift getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getCmdStatus();
+      }
+    }
+
     public void getMappings(String physicalNode, AsyncMethodCallback<getMappings_call> resultHandler) throws TException {
       checkReady();
       getMappings_call method_call = new getMappings_call(physicalNode, resultHandler, this, protocolFactory, transport);
@@ -593,6 +664,7 @@ public class FlumeMasterAdminServer {
       processMap_.put("getNodeStatuses", new getNodeStatuses());
       processMap_.put("getConfigs", new getConfigs());
       processMap_.put("hasCmdId", new hasCmdId());
+      processMap_.put("getCmdStatus", new getCmdStatus());
       processMap_.put("getMappings", new getMappings());
     }
 
@@ -774,6 +846,32 @@ public class FlumeMasterAdminServer {
         result.success = iface_.hasCmdId(args.cmdid);
         result.setSuccessIsSet(true);
         oprot.writeMessageBegin(new TMessage("hasCmdId", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class getCmdStatus implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        getCmdStatus_args args = new getCmdStatus_args();
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("getCmdStatus", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        iprot.readMessageEnd();
+        getCmdStatus_result result = new getCmdStatus_result();
+        result.success = iface_.getCmdStatus(args.cmdid);
+        oprot.writeMessageBegin(new TMessage("getCmdStatus", TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -4159,6 +4257,582 @@ public class FlumeMasterAdminServer {
 
       sb.append("success:");
       sb.append(this.success);
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class getCmdStatus_args implements TBase<getCmdStatus_args, getCmdStatus_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("getCmdStatus_args");
+
+    private static final TField CMDID_FIELD_DESC = new TField("cmdid", TType.I64, (short)1);
+
+    public long cmdid;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      CMDID((short)1, "cmdid");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // CMDID
+            return CMDID;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __CMDID_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.CMDID, new FieldMetaData("cmdid", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(getCmdStatus_args.class, metaDataMap);
+    }
+
+    public getCmdStatus_args() {
+    }
+
+    public getCmdStatus_args(
+      long cmdid)
+    {
+      this();
+      this.cmdid = cmdid;
+      setCmdidIsSet(true);
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getCmdStatus_args(getCmdStatus_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.cmdid = other.cmdid;
+    }
+
+    public getCmdStatus_args deepCopy() {
+      return new getCmdStatus_args(this);
+    }
+
+    @Deprecated
+    public getCmdStatus_args clone() {
+      return new getCmdStatus_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setCmdidIsSet(false);
+      this.cmdid = 0;
+    }
+
+    public long getCmdid() {
+      return this.cmdid;
+    }
+
+    public getCmdStatus_args setCmdid(long cmdid) {
+      this.cmdid = cmdid;
+      setCmdidIsSet(true);
+      return this;
+    }
+
+    public void unsetCmdid() {
+      __isset_bit_vector.clear(__CMDID_ISSET_ID);
+    }
+
+    /** Returns true if field cmdid is set (has been asigned a value) and false otherwise */
+    public boolean isSetCmdid() {
+      return __isset_bit_vector.get(__CMDID_ISSET_ID);
+    }
+
+    public void setCmdidIsSet(boolean value) {
+      __isset_bit_vector.set(__CMDID_ISSET_ID, value);
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case CMDID:
+        if (value == null) {
+          unsetCmdid();
+        } else {
+          setCmdid((Long)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case CMDID:
+        return new Long(getCmdid());
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case CMDID:
+        return isSetCmdid();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getCmdStatus_args)
+        return this.equals((getCmdStatus_args)that);
+      return false;
+    }
+
+    public boolean equals(getCmdStatus_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_cmdid = true;
+      boolean that_present_cmdid = true;
+      if (this_present_cmdid || that_present_cmdid) {
+        if (!(this_present_cmdid && that_present_cmdid))
+          return false;
+        if (this.cmdid != that.cmdid)
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(getCmdStatus_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getCmdStatus_args typedOther = (getCmdStatus_args)other;
+
+      lastComparison = Boolean.valueOf(isSetCmdid()).compareTo(typedOther.isSetCmdid());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetCmdid()) {        lastComparison = TBaseHelper.compareTo(this.cmdid, typedOther.cmdid);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // CMDID
+            if (field.type == TType.I64) {
+              this.cmdid = iprot.readI64();
+              setCmdidIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(CMDID_FIELD_DESC);
+      oprot.writeI64(this.cmdid);
+      oprot.writeFieldEnd();
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getCmdStatus_args(");
+      boolean first = true;
+
+      sb.append("cmdid:");
+      sb.append(this.cmdid);
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class getCmdStatus_result implements TBase<getCmdStatus_result, getCmdStatus_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("getCmdStatus_result");
+
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
+
+    public CommandStatusThrift success;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      SUCCESS((short)0, "success");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, CommandStatusThrift.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(getCmdStatus_result.class, metaDataMap);
+    }
+
+    public getCmdStatus_result() {
+    }
+
+    public getCmdStatus_result(
+      CommandStatusThrift success)
+    {
+      this();
+      this.success = success;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getCmdStatus_result(getCmdStatus_result other) {
+      if (other.isSetSuccess()) {
+        this.success = new CommandStatusThrift(other.success);
+      }
+    }
+
+    public getCmdStatus_result deepCopy() {
+      return new getCmdStatus_result(this);
+    }
+
+    @Deprecated
+    public getCmdStatus_result clone() {
+      return new getCmdStatus_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+    }
+
+    public CommandStatusThrift getSuccess() {
+      return this.success;
+    }
+
+    public getCmdStatus_result setSuccess(CommandStatusThrift success) {
+      this.success = success;
+      return this;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((CommandStatusThrift)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getCmdStatus_result)
+        return this.equals((getCmdStatus_result)that);
+      return false;
+    }
+
+    public boolean equals(getCmdStatus_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(getCmdStatus_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getCmdStatus_result typedOther = (getCmdStatus_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.STRUCT) {
+              this.success = new CommandStatusThrift();
+              this.success.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        this.success.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getCmdStatus_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
