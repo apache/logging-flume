@@ -20,8 +20,11 @@ package com.cloudera.flume.core.extractors;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import org.junit.Test;
+
+import antlr.collections.List;
 
 import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.Event;
@@ -55,6 +58,28 @@ public class TestExtractors {
     assertEquals("1:2:3.4foobar5", Attributes.readString(e1, "full"));
     assertEquals("", Attributes.readString(e1, "empty"));
     assertEquals("", Attributes.readString(e1, "outofrange"));
+  }
+
+  @Test
+  public void testRegexAllExtractor() throws IOException, InterruptedException {
+    MemorySinkSource mem = new MemorySinkSource();
+    mem.open();
+    ArrayList<String> names = new ArrayList<String>();
+    names.add("d1");
+    names.add("");
+    names.add("d2");
+    
+    RegexAllExtractor re = new RegexAllExtractor(mem, "(\\d):(\\d):(\\d)",names);
+
+    re.open();
+    re.append(new EventImpl("1:2:3.4foobar5".getBytes()));
+    re.close();
+
+    mem.close();
+    mem.open();
+    Event e1 = mem.next();
+    assertEquals("1", Attributes.readString(e1, "d1"));
+    assertEquals("3", Attributes.readString(e1, "d2"));
   }
 
   @Test

@@ -397,6 +397,10 @@ expression _regex_, extracts the _idx_ th capture group, and writes this value
 to the _attr_ attribute.  The regex must use java-style escaping.  Thus a 
 regexs that want to use the +\d+ macro need to be specified as "\\d".
 
+regexAll("_regex_", "_name_" [, "_name_"]*)+ :: Applies the regular expression
+_regex_ to the event body, and assignes all pattern groups found to each provided 
+_name_.
+
 +split("_regex_",idx,"_attr_")+ :: The split decorator uses the
 regular expression _regex_ to split the body into tokens (not
 including the splitter value). The _idx_ is then written as the value
