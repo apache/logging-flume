@@ -636,6 +636,7 @@ to call at top-level: ant deploy-contrib compile-core-test
         <include name="conf/**" />
         <include name="DEVNOTES" />
         <include name="eclipse/**" />
+        <include name="ivy.xml" />
         <include name="lib/**" />
         <include name="libbuild/**" />
         <include name="libtest/**" />
