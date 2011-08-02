@@ -160,19 +160,23 @@ public class TestFailChainTranslator {
     collectors.add("collector2");
     collectors.add("collector3");
 
-    // autoBEChain substituted
+    // autoE2EChain substituted
     CommonTree failchain = FailoverConfigurationManager.substE2EChains(
         "autoE2EChain", collectors);
     String failChainSink = FlumeSpecGen.genEventSink(failchain);
     LOG.info(failChainSink);
-    assertEquals(232, failChainSink.length()); // output is 232 chars long
+    // output is 161 chars long (translation checked in
+    // TestMasterAutoUpdatesE2E)
+    assertEquals(161, failChainSink.length());
 
-    // many autoBEChain substitutions.
+    // many autoE2EChain substitutions.
     CommonTree failchain2 = FailoverConfigurationManager.substE2EChains(
         "[ autoE2EChain, { lazyOpen => autoE2EChain } ]", collectors);
     String failChainSink2 = FlumeSpecGen.genEventSink(failchain2);
     LOG.info(failChainSink2);
-    assertEquals(463, failChainSink2.length()); // output is 463 chars long
+    // output is 278 chars long (translation checked in
+    // TestMasterAutoUpdatesE2E)
+    assertEquals(278, failChainSink2.length());
 
     // no change
     CommonTree nothing = FailoverConfigurationManager.substE2EChains("null",
@@ -195,14 +199,18 @@ public class TestFailChainTranslator {
         "autoE2EChain", collectors);
     String failChainSink = FlumeSpecGen.genEventSink(failchain);
     LOG.info(failChainSink);
-    assertEquals(232, failChainSink.length()); // output is 232 chars long
+    // output is 232 chars long (translation checked in
+    // TestMasterAutoUpdatesE2E)
+    assertEquals(161, failChainSink.length());
 
     // many autoE2EChain substitutions.
     CommonTree failchain2 = FailoverConfigurationManager.substE2EChainsSimple(
         "[ autoE2EChain, { lazyOpen => autoE2EChain } ]", collectors);
     String failChainSink2 = FlumeSpecGen.genEventSink(failchain2);
     LOG.info(failChainSink2);
-    assertEquals(486, failChainSink2.length()); // output is 486 chars long
+    // output is 344 chars long (translation checked in
+    // TestMasterAutoUpdatesE2E)
+    assertEquals(344, failChainSink2.length());
 
     // no change
     CommonTree nothing = FailoverConfigurationManager.substE2EChainsSimple(

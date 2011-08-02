@@ -159,9 +159,10 @@ public class TestMasterAutoUpdatesE2E {
     Map<String, FlumeConfigData> xcfgs = flumeMaster.getSpecMan()
         .getTranslatedConfigs();
     FlumeConfigData agentFcd = xcfgs.get("agent");
-    String ans1 = "{ ackedWriteAhead => < { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node4\\\" )\" ) } } ?"
-        + " < { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node2\\\" )\" ) } } ?"
-        + " { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node1\\\" )\" ) } } > > }";
+    String ans1 = "{ ackedWriteAhead => { stubbornAppend => { insistentOpen => "
+        + "< fail( \"logicalSink( \\\"node4\\\" )\" ) ?"
+        + " < fail( \"logicalSink( \\\"node2\\\" )\" ) ?"
+        + " fail( \"logicalSink( \\\"node1\\\" )\" ) > > } } }";
     assertEquals(agentFcd.sinkConfig, ans1);
   }
 
@@ -182,9 +183,10 @@ public class TestMasterAutoUpdatesE2E {
     Map<String, FlumeConfigData> xcfgs2 = flumeMaster.getSpecMan()
         .getTranslatedConfigs();
     FlumeConfigData agentFcd2 = xcfgs2.get("agent");
-    String ans2 = "{ ackedWriteAhead => < { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node4\\\" )\" ) } } ?"
-        + " < { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node1\\\" )\" ) } } ?"
-        + " { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node3\\\" )\" ) } } > > }";
+    String ans2 = "{ ackedWriteAhead => { stubbornAppend => { insistentOpen => "
+        + "< fail( \"logicalSink( \\\"node4\\\" )\" ) ?"
+        + " < fail( \"logicalSink( \\\"node1\\\" )\" ) ?"
+        + " fail( \"logicalSink( \\\"node3\\\" )\" ) > > } } }";
     assertEquals(agentFcd2.sinkConfig, ans2);
   }
 
@@ -205,9 +207,10 @@ public class TestMasterAutoUpdatesE2E {
         .getTranslatedConfigs();
     FlumeConfigData agentFcd2 = xcfgs2.get("agent");
     // This is wrong -- there should be a different logicalSink replacing node2
-    String ans2 = "{ ackedWriteAhead => < { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node4\\\" )\" ) } } ?"
-        + " < { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node1\\\" )\" ) } } ?"
-        + " { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node3\\\" )\" ) } } > > }";
+    String ans2 = "{ ackedWriteAhead => { stubbornAppend => { insistentOpen => "
+        + "< fail( \"logicalSink( \\\"node4\\\" )\" ) ?"
+        + " < fail( \"logicalSink( \\\"node1\\\" )\" ) ?"
+        + " fail( \"logicalSink( \\\"node3\\\" )\" ) > > } } }";
     assertEquals(agentFcd2.sinkConfig, ans2);
   }
 
@@ -229,9 +232,10 @@ public class TestMasterAutoUpdatesE2E {
     Map<String, FlumeConfigData> xcfgs2 = flumeMaster.getSpecMan()
         .getTranslatedConfigs();
     FlumeConfigData agentFcd2 = xcfgs2.get("agent");
-    String ans2 = "{ ackedWriteAhead => < { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"nodeNew\\\" )\" ) } } ?"
-        + " < { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node4\\\" )\" ) } } ?"
-        + " { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node2\\\" )\" ) } } > > }";
+    String ans2 = "{ ackedWriteAhead => { stubbornAppend => { insistentOpen =>"
+        + " < fail( \"logicalSink( \\\"nodeNew\\\" )\" ) ?"
+        + " < fail( \"logicalSink( \\\"node4\\\" )\" ) ?"
+        + " fail( \"logicalSink( \\\"node2\\\" )\" ) > > } } }";
     assertEquals(agentFcd2.sinkConfig, ans2);
 
   }
@@ -275,15 +279,9 @@ public class TestMasterAutoUpdatesE2E {
         .getTranslatedConfigs();
     FlumeConfigData agentFcd2 = xcfgs2.get("agent");
     // This is wrong -- there should be a different logicalSink replacing node2
-    String ans2 = "{ ackedWriteAhead => < { lazyOpen => { stubbornAppend => rpcSink( \""
-        + host
-        + "\", 35856 ) } } ?"
-        + " < { lazyOpen => { stubbornAppend => rpcSink( \""
-        + host
-        + "\", 35854 ) } } ?"
-        + " { lazyOpen => { stubbornAppend => rpcSink( \""
-        + host
-        + "\", 35853 ) } } > > }";
+    String ans2 = "{ ackedWriteAhead => { stubbornAppend => { insistentOpen =>"
+        + " < rpcSink( \"" + host + "\", 35856 ) ?" + " < rpcSink( \"" + host
+        + "\", 35854 ) ?" + " rpcSink( \"" + host + "\", 35853 ) > > } } }";
     assertEquals(ans2, agentFcd2.sinkConfig);
   }
 
@@ -326,9 +324,10 @@ public class TestMasterAutoUpdatesE2E {
     Map<String, FlumeConfigData> xcfgs2 = flumeMaster.getSpecMan()
         .getTranslatedConfigs();
     FlumeConfigData agentFcd2 = xcfgs2.get("agent");
-    String ans2 = "{ ackedWriteAhead => < { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node4\\\" )\" ) } } ?"
-        + " < { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node2\\\" )\" ) } } ?"
-        + " { lazyOpen => { stubbornAppend => fail( \"logicalSink( \\\"node1\\\" )\" ) } } > > }";
+    String ans2 = "{ ackedWriteAhead => { stubbornAppend => { insistentOpen =>"
+        + " < fail( \"logicalSink( \\\"node4\\\" )\" ) ?"
+        + " < fail( \"logicalSink( \\\"node2\\\" )\" ) ?"
+        + " fail( \"logicalSink( \\\"node1\\\" )\" ) > > } } }";
 
     assertEquals(ans2, agentFcd2.sinkConfig);
 

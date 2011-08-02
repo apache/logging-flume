@@ -119,6 +119,17 @@ public class FailoverConfigurationManager extends
   /**
    * Takes a full sink specification and substitutes 'autoBEChain' with an
    * expanded best effort failover chain.
+   * 
+   * 'autoBEChain' gets translated to
+   * 
+   * < < logicalSink(arg1) ? <... ? null > > >
+   * 
+   * Basically this will try to to send data to logicalsink(arg1), and failing
+   * that to logicalsink(arg2) etc. If all logicalSinks fail it will fall back
+   * to a null sink which drops messages. The failover sink by default has a
+   * timed backoff policy and will reattempt opening and sending to the
+   * different sink in the failover chains.
+   * 
    */
   static CommonTree substBEChains(String sink, List<String> collectors)
       throws RecognitionException, FlumeSpecException {
@@ -170,6 +181,22 @@ public class FailoverConfigurationManager extends
    * use more resources (more ports used up on this node and the downstream node
    * because of no sharing). Unfortunately 'let's end up being very tricky to
    * use in the cases where failures occur, and need more thought.
+   * 
+   * 'autoDFOChain' becomes:
+   * 
+   * < < logicalSink(arg1) ? ... > ? { diskFailover => { insistentAppend => {
+   * stubbornAppend => { insistentOpen => < logicalSink(arg1) ? ... > } } } } >
+   * 
+   * This pipeline writes attempts to send data to each of the logical node
+   * arg1, then then to logical node arg2, etc. If the logical nodes all fail,
+   * we go to the diskFailover, which writes data to the local log. The subsink
+   * of the diskFailover has a subservient DriverThread that will attempt to
+   * send data to logical sink arg1, and then to logical sink arg2, etc.. If all
+   * fail of these fail, the stubbornAppend causes the entire failover chain to
+   * be closed and then reopened. The insistentOpen insistentOpen ensures that
+   * they are tried again after an backing off. Stubborn append gives up after a
+   * second failure -- the insistentAppend wrapping it ensures that it will
+   * continue retrying while the sink is open.
    */
   static CommonTree substDFOChainsNoLet(String sink, List<String> collectors)
       throws RecognitionException, FlumeSpecException {
@@ -220,7 +247,11 @@ public class FailoverConfigurationManager extends
   /**
    * Takes a full sink specification and substitutes 'autoDFOChain' with an
    * expanded disk failover mode failover chain.
+   * 
+   * This version is deprecated because it uses 'let' expressions. 'let'
+   * expressions semantics are not clear in the face of failures.
    */
+  @Deprecated
   static CommonTree substDFOChains(String sink, List<String> collectors)
       throws RecognitionException, FlumeSpecException {
     PatternMatch dfoPat = recursive(var("dfo", FlumePatterns.sink(AUTO_DFO)));
@@ -265,7 +296,12 @@ public class FailoverConfigurationManager extends
   /**
    * Takes a full sink specification and substitutes 'autoE2EChain' with an
    * expanded wal+end2end ack chain.
+   * 
+   * This version at one point was different from substE2EChainSimple's
+   * implementation but they have not convernged. This one should likely be
+   * removed in the future.
    */
+  @Deprecated
   static CommonTree substE2EChains(String sink, List<String> collectors)
       throws RecognitionException, FlumeSpecException {
 
@@ -283,8 +319,7 @@ public class FailoverConfigurationManager extends
       CommonTree beTree = e2eMatches.get("e2e");
 
       // generate
-      CommonTree beFailChain = buildFailChainAST(
-          "{ lazyOpen => { stubbornAppend => logicalSink(\"%s\") } }  ",
+      CommonTree beFailChain = buildFailChainAST("logicalSink(\"%s\") ",
           collectors);
 
       // Check if beFailChain is null
@@ -307,7 +342,8 @@ public class FailoverConfigurationManager extends
     }
 
     // wrap the sink with the ackedWriteAhead
-    CommonTree wrapper = FlumeBuilder.parseSink("{ ackedWriteAhead => null}");
+    CommonTree wrapper = FlumeBuilder
+        .parseSink("{ ackedWriteAhead => { stubbornAppend => { insistentOpen => null } } }");
     PatternMatch nullPath = recursive(var("x", FlumePatterns.sink("null")));
     CommonTree replace = nullPath.match(wrapper).get("x");
     int idx = replace.getChildIndex();
@@ -319,6 +355,18 @@ public class FailoverConfigurationManager extends
    * Takes a full sink specification and substitutes 'autoE2EChain' with an
    * expanded wal+end2end ack chain. It just replaces the sink and does not
    * attempt any sandwiching of decorators
+   * 
+   * 'autoE2EChain' becomes:
+   * 
+   * { ackedWriteAhead => { stubbornAppend => { insistentOpen => <
+   * logicalSink(arg1) ? ... > } } }
+   * 
+   * This pipeline writes data to the WAL adding ack tags. In the WAL's subsink
+   * in a subservient DriverThread will attempt to send data to logical sink
+   * arg1, and then to logicla sink arg2, etc.. If all fail, stubbornAppend
+   * causes the entire failover chain to be closed and then reopened. If all the
+   * elements of the failover chain still fail, the insistentOpen ensures that
+   * they are tried again after an backing off.
    */
   static CommonTree substE2EChainsSimple(String sink, List<String> collectors)
       throws RecognitionException, FlumeSpecException {
@@ -337,8 +385,7 @@ public class FailoverConfigurationManager extends
       CommonTree e2eTree = e2eMatches.get("e2e");
 
       // generate
-      CommonTree e2eFailChain = buildFailChainAST(
-          "{ lazyOpen => { stubbornAppend => logicalSink(\"%s\") } }  ",
+      CommonTree e2eFailChain = buildFailChainAST("logicalSink(\"%s\") ",
           collectors);
 
       // Check if beFailChain is null
@@ -347,8 +394,8 @@ public class FailoverConfigurationManager extends
       }
 
       // now lets wrap the beFailChain with the ackedWriteAhead
-      String translated = "{ ackedWriteAhead => "
-          + FlumeSpecGen.genEventSink(e2eFailChain) + " }";
+      String translated = "{ ackedWriteAhead => { stubbornAppend => { insistentOpen => "
+          + FlumeSpecGen.genEventSink(e2eFailChain) + " } } }";
       CommonTree wrapper = FlumeBuilder.parseSink(translated);
 
       // subst

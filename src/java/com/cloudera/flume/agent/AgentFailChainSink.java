@@ -63,24 +63,23 @@ public class AgentFailChainSink extends EventSink.Base {
 
     switch (rel) {
     case E2E: {
-      String chains =
-          AgentFailChainSink.genE2EChain(thriftlist.toArray(new String[0]));
+      String chains = AgentFailChainSink.genE2EChain(thriftlist
+          .toArray(new String[0]));
       LOG.info("Setting failover chain to  " + chains);
       snk = new CompositeSink(context, chains);
 
       break;
     }
     case DFO: {
-      String chains =
-          AgentFailChainSink.genDfoChain(thriftlist.toArray(new String[0]));
+      String chains = AgentFailChainSink.genDfoChain(thriftlist
+          .toArray(new String[0]));
       LOG.info("Setting failover chain to  " + chains);
       snk = new CompositeSink(context, chains);
       break;
     }
     case BE: {
-      String chains =
-          AgentFailChainSink.genBestEffortChain(thriftlist
-              .toArray(new String[0]));
+      String chains = AgentFailChainSink.genBestEffortChain(thriftlist
+          .toArray(new String[0]));
       LOG.info("Setting failover chain to  " + chains);
       snk = new CompositeSink(context, chains);
       break;
@@ -122,8 +121,8 @@ public class AgentFailChainSink extends EventSink.Base {
     String body = "{ lazyOpen => { stubbornAppend => %s } }  ";
 
     // what happens when there are no collectors?
-    String spec =
-        FailoverChainManager.genAvailableSinkSpec(body, Arrays.asList(chain));
+    String spec = FailoverChainManager.genAvailableSinkSpec(body, Arrays
+        .asList(chain));
     LOG.info("Setting best effort failover chain to  " + spec);
     return spec;
   }
@@ -134,12 +133,13 @@ public class AgentFailChainSink extends EventSink.Base {
    * TODO (jon) this needs to be live tested.
    */
   public static String genE2EChain(String... chain) {
-    String body = "{ lazyOpen => { stubbornAppend => %s } }  ";
+    String body = " %s ";
 
     // what happens when there are no collectors?
-    String spec =
-        FailoverChainManager.genAvailableSinkSpec(body, Arrays.asList(chain));
-    spec = "{ ackedWriteAhead => " + spec + "}";
+    String spec = FailoverChainManager.genAvailableSinkSpec(body, Arrays
+        .asList(chain));
+    spec = "{ ackedWriteAhead => { stubbornAppend => { insistentOpen => "
+        + spec + " } } }";
     LOG.info("Setting e2e failover chain to  " + spec);
     return spec;
   }
@@ -154,8 +154,7 @@ public class AgentFailChainSink extends EventSink.Base {
     StringBuilder sb = new StringBuilder();
     String primaries = genBestEffortChain(chain);
     sb.append("let primary := " + primaries);
-    String body =
-        "< primary ? {diskFailover => { insistentOpen =>  primary} } >";
+    String body = "< primary ? {diskFailover => { insistentOpen =>  primary} } >";
 
     LOG.info("Setting dfo failover chain to  " + body);
     sb.append(" in ");
@@ -171,16 +170,15 @@ public class AgentFailChainSink extends EventSink.Base {
     ArrayList<String> thriftified = new ArrayList<String>();
 
     if (list == null || list.size() == 0) {
-      String sink =
-          String.format("tsink(\"%s\",%d)", FlumeConfiguration.get()
-              .getCollectorHost(), FlumeConfiguration.get().getCollectorPort());
+      String sink = String.format("tsink(\"%s\",%d)", FlumeConfiguration.get()
+          .getCollectorHost(), FlumeConfiguration.get().getCollectorPort());
       thriftified.add(sink);
       return thriftified;
     }
 
     for (String socket : list) {
-      Pair<String, Integer> sock =
-          NetUtils.parseHostPortPair(socket, defaultPort);
+      Pair<String, Integer> sock = NetUtils.parseHostPortPair(socket,
+          defaultPort);
       String collector = sock.getLeft();
       int port = sock.getRight();
       // This needs to be a physical address/node, not a logical node.
