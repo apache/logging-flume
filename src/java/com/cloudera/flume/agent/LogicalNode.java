@@ -158,14 +158,14 @@ public class LogicalNode implements Reportable {
     newSrc = new LazyOpenSource<EventSource>(newSrc);
 
     openSourceSink(newSrc, newSnk);
-    loadNode(newSrc, newSnk);
+    loadNode();
   }
 
   /**
    * This stops any existing connection (source=>sink pumper), and then creates
    * a new one with the specified *already opened* source and sink arguments.
    */
-  private void loadNode(EventSource newSrc, EventSink newSnk)
+  private void loadNode()
       throws IOException {
 
     if (driver != null) {
