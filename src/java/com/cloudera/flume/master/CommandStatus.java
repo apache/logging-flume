@@ -18,6 +18,8 @@
 
 package com.cloudera.flume.master;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
 import com.google.common.base.Preconditions;
 
 /**
@@ -33,13 +35,14 @@ import com.google.common.base.Preconditions;
  * extra information about how/why the transition happened. This is useful for
  * conveying failure reason.
  */
+@XmlRootElement
 public class CommandStatus {
   public static enum State {
     QUEUED, EXECING, SUCCEEDED, FAILED
   };
 
-  final long cmdId; // uniq id for command. Used to check status of a command.
-  final Command cmd;
+  long cmdId; // uniq id for command. Used to check status of a command.
+  Command cmd;
 
   State curState;
   String message; // this for extra information like why something failed.
@@ -49,6 +52,12 @@ public class CommandStatus {
     this.cmd = cmd;
     curState = state;
     message = msg;
+  }
+
+  /**
+   * Empty constructor for rpc/jaxb
+   */
+  public CommandStatus() {
   }
 
   static CommandStatus createCommandStatus(long cmdId, Command cmd) {

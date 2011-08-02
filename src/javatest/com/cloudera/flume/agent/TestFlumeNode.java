@@ -354,12 +354,16 @@ public class TestFlumeNode {
     FlumeNode.loadOutputFormatPlugins();
 
     try {
-      Assert.assertNotNull(FlumeBuilder.buildSink(new Context(), "console(\"raw\")"));
-      Assert.assertNotNull(FlumeBuilder.buildSink(new Context(), "console(\"avrojson\")"));
-      Assert.assertNotNull(FlumeBuilder.buildSink(new Context(), "console(\"avrodata\")"));
-      Assert.assertNotNull(FlumeBuilder.buildSink(new Context(), "console(\"syslog\")"));
-      Assert.assertNotNull(FlumeBuilder.buildSink(new Context(), "console(\"log4j\")"));
-
+      Assert.assertNotNull(FlumeBuilder.buildSink(new Context(),
+          "console(\"raw\")"));
+      Assert.assertNotNull(FlumeBuilder.buildSink(new Context(),
+          "console(\"avrojson\")"));
+      Assert.assertNotNull(FlumeBuilder.buildSink(new Context(),
+          "console(\"avrodata\")"));
+      Assert.assertNotNull(FlumeBuilder.buildSink(new Context(),
+          "console(\"syslog\")"));
+      Assert.assertNotNull(FlumeBuilder.buildSink(new Context(),
+          "console(\"log4j\")"));
       Assert.assertNotNull(FlumeBuilder.buildSink(new Context(), "console()"));
     } catch (FlumeSpecException e) {
       LOG

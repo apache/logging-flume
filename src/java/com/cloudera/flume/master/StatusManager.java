@@ -25,6 +25,8 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,12 +45,17 @@ public class StatusManager implements Reportable {
 
   static final Logger LOG = LoggerFactory.getLogger(StatusManager.class);
 
+  @XmlRootElement
   public static class NodeStatus {
     public NodeState state;
     public long version;
     public long lastseen;
     public String host;
     public String physicalNode;
+
+    public NodeStatus() {
+
+    }
 
     public NodeStatus(NodeState state, long version, long lastseen,
         String host, String physicalNode) {

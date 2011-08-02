@@ -25,6 +25,8 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Set;
 
+import javax.ws.rs.core.Application;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -49,6 +51,8 @@ import com.cloudera.flume.util.SystemInfo;
 import com.cloudera.util.CheckJavaVersion;
 import com.cloudera.util.NetUtils;
 import com.cloudera.util.StatusHttpServer;
+import com.sun.jersey.api.core.DefaultResourceConfig;
+import com.sun.jersey.spi.container.servlet.ServletContainer;
 
 /**
  * This is a first cut at a server for distributing configurations to different
@@ -152,6 +156,23 @@ public class FlumeMaster implements Reportable {
 
   /**
    * Completely generic and pluggable Flume master constructor. Used for test
+   * cases. Webserver is by default on.
+   */
+  public FlumeMaster(CommandManager cmd, ConfigurationManager cfgMan,
+      StatusManager stat, MasterAckManager ack, FlumeConfiguration cfg,
+      boolean doHttp) {
+    instance = this;
+    this.doHttp = doHttp;
+    this.cmdman = cmd;
+    this.specman = cfgMan;
+    this.statman = stat;
+    this.ackman = ack;
+    this.cfg = cfg;
+    this.uniqueMasterName = "flume-master-" + cfg.getMasterServerId();
+  }
+
+  /**
+   * Completely generic and pluggable Flume master constructor. Used for test
    * cases. Webserver is by default off.
    */
   public FlumeMaster(CommandManager cmd, ConfigurationManager cfgMan,
@@ -205,6 +226,15 @@ public class FlumeMaster implements Reportable {
     return cmdman.submit(cmd);
   }
 
+  ServletContainer jerseyMasterServlet() {
+    Application app = new DefaultResourceConfig(FlumeMasterResource.class,
+        StatusManagerResource.class, ConfigManagerResource.class,
+        CommandManagerResource.class);
+    ServletContainer sc = new ServletContainer(app);
+
+    return sc;
+  }
+
   public void serve() throws IOException {
     if (cfg.getMasterStore().equals(ZK_CFG_STORE)) {
       try {
@@ -220,6 +250,7 @@ public class FlumeMaster implements Reportable {
       String webPath = FlumeNode.getWebPath(cfg);
       this.http = new StatusHttpServer("flumeconfig", webPath, "0.0.0.0", cfg
           .getMasterHttpPort(), false);
+      http.addServlet(jerseyMasterServlet(), "/master/*");
       http.start();
     }
 

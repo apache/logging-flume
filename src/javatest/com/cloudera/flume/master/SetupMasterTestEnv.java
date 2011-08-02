@@ -49,7 +49,8 @@ public class SetupMasterTestEnv {
         tmpdir.getAbsolutePath());
     FlumeConfiguration.get().set(FlumeConfiguration.MASTER_STORE, "memory");
     flumeMaster = new FlumeMaster(new CommandManager(), new ConfigManager(),
-        new StatusManager(), new MasterAckManager(), FlumeConfiguration.get());
+        new StatusManager(), new MasterAckManager(), FlumeConfiguration.get(),
+        true /* do http */);
     flumeMaster.serve();
   }
 

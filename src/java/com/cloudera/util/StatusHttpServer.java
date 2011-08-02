@@ -24,6 +24,7 @@ import java.io.PrintWriter;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 
+import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -35,6 +36,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.security.SslSocketConnector;
+import org.mortbay.jetty.servlet.ServletHolder;
 import org.mortbay.jetty.webapp.WebAppContext;
 import org.mortbay.util.MultiException;
 
@@ -121,6 +123,10 @@ public class StatusHttpServer {
     } else {
       context.addServlet(servletClass, pathSpec);
     }
+  }
+
+  public void addServlet(Servlet servlet, String pathSpec) {
+    webAppContext.addServlet(new ServletHolder(servlet), pathSpec);
   }
 
   /**
