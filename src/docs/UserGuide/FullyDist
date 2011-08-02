@@ -354,14 +354,14 @@ agentC : src | autoE2EChain ;
 agentD : src | autoE2EChain ; 
 agentE : src | autoE2EChain ; 
 agentF : src | autoE2EChain ; 
-collectorA : collectorSource | collectorSink("hdfs://...", "src"); 
-collectorB : collectorSource | collectorSink("hdfs://...", "src"); 
-collectorC : collectorSource | collectorSink("hdfs://...", "src"); 
+collectorA : autoCollectorSource | collectorSink("hdfs://...", "src"); 
+collectorB : autoCollectorSource | collectorSink("hdfs://...", "src"); 
+collectorC : autoCollectorSource | collectorSink("hdfs://...", "src"); 
 ----
 
 The Master updates the configuration of the agents based on the current collectors in the system.  When new collectors are added to the system, the Master updates the failover chains of agents to rebalance.
 
-NOTE: If the Master has no nodes with +collectorSource+ as its source, the agent's automatic chains will report an +fail("...")+ chain which and wait for +collectorSource+ s to be specified.  If the nodes are not mapped, they will report a different +fail+ sink notifying you that the node is unmapped (isn't associated with a host/port).
+NOTE: If the Master has no nodes with +autoCollectorSource+ as its source, the agent's automatic chains will report a +fail("...")+ chain which will wait for +autoCollectorSource+ s to be specified.  If the nodes are not mapped, they will report a different +fail+ sink notifying you that the node is unmapped (isn't associated with a host/port).
 
 TIP: You can see the translation of the auto*Chain configuration in the node configuration table under the translated configuration column.  This is a little declarative specification of the failure recovery behavior of the sink.  More details on this are in the Advanced section of this guide, and in future revisions the translations for the agents and other chains will also be presented.
 
