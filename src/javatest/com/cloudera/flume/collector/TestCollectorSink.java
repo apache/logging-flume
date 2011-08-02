@@ -20,7 +20,6 @@ package com.cloudera.flume.collector;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 
 import java.io.File;
@@ -41,13 +40,14 @@ import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.agent.durability.NaiveFileWALDeco;
 import com.cloudera.flume.agent.durability.WALManager;
 import com.cloudera.flume.conf.Context;
+import com.cloudera.flume.conf.FlumeArgException;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.LogicalNodeContext;
+import com.cloudera.flume.conf.ReportTestingContext;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
-import com.cloudera.flume.core.EventSinkDecorator;
 import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.core.EventUtil;
 import com.cloudera.flume.handlers.debug.LazyOpenDecorator;
@@ -58,8 +58,11 @@ import com.cloudera.flume.handlers.endtoend.AckChecksumInjector;
 import com.cloudera.flume.handlers.endtoend.AckListener;
 import com.cloudera.flume.handlers.hdfs.CustomDfsSink;
 import com.cloudera.flume.handlers.hdfs.EscapedCustomDfsSink;
+import com.cloudera.flume.handlers.rolling.ProcessTagger;
 import com.cloudera.flume.handlers.rolling.RollSink;
 import com.cloudera.flume.handlers.rolling.Tagger;
+import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.util.BenchmarkHarness;
 import com.cloudera.util.Clock;
 import com.cloudera.util.FileUtil;
@@ -107,15 +110,28 @@ public class TestCollectorSink {
     // millis
     String src3 = "collectorSink(\"file:///tmp/test\", \"testfilename\", 1000)";
     FlumeBuilder.buildSink(new Context(), src3);
+  }
 
-    try {
-      // too many arguments
-      String src4 = "collectorSink(\"file:///tmp/test\", \"bkjlasdf\", 1000, 1000)";
-      FlumeBuilder.buildSink(new Context(), src4);
-    } catch (Exception e) {
-      return;
-    }
-    fail("unexpected fall through");
+  @Test(expected = FlumeArgException.class)
+  public void testBuilderFail() throws FlumeSpecException {
+    // too many arguments
+    String src4 = "collectorSink(\"file:///tmp/test\", \"bkjlasdf\", 1000, 1000)";
+    FlumeBuilder.buildSink(new Context(), src4);
+  }
+
+  /**
+   * play evil games with escape characters, and check that that old syntax
+   * works with old semantics.
+   */
+  @Test
+  public void testBuilderHandleEvilSlashes() throws FlumeSpecException {
+
+    String src4 = "collectorSink(\"file://C:\\tmp\\test\", \"file\", 1000)";
+    CollectorSink snk = (CollectorSink) FlumeBuilder.buildSink(new Context(),
+        src4);
+    assertEquals(
+        "escapedCustomDfs(\"file://C:\\tmp\\test\",\"file%{rolltag}\" )",
+        snk.roller.getRollSpec());
   }
 
   @Test
@@ -134,9 +150,11 @@ public class TestCollectorSink {
    * Test that file paths are correctly constructed from dir + path + tag
    * 
    * @throws InterruptedException
+   * @throws FlumeSpecException
    */
   @Test
-  public void testCorrectFilename() throws IOException, InterruptedException {
+  public void testCorrectFilename() throws IOException, InterruptedException,
+      FlumeSpecException {
     CollectorSink sink = new CollectorSink(new Context(),
         "file:///tmp/flume-test-correct-filename", "actual-file-", 10000,
         new Tagger() {
@@ -211,20 +229,7 @@ public class TestCollectorSink {
         + "\",\"\")";
     CollectorSink coll = (CollectorSink) FlumeBuilder.buildSink(new Context(),
         snkspec);
-    AckChecksumChecker<EventSink> chk = (AckChecksumChecker<EventSink>) coll
-        .getSink();
-    // insistent append
-    EventSinkDecorator deco = (EventSinkDecorator<EventSink>) chk.getSink();
-    // -> stubborn append
-    deco = (EventSinkDecorator<EventSink>) deco.getSink();
-
-    // stubborn append -> insistent
-    deco = (EventSinkDecorator<EventSink>) deco.getSink();
-
-    // insistent append -> mask
-    deco = (EventSinkDecorator<EventSink>) deco.getSink();
-
-    RollSink roll = (RollSink) deco.getSink();
+    RollSink roll = coll.roller;
 
     // normally inside wal
     NaiveFileWALDeco.AckChecksumRegisterer<EventSink> snk = new NaiveFileWALDeco.AckChecksumRegisterer(
@@ -600,13 +605,15 @@ public class TestCollectorSink {
           startCount++;
         }
 
-      };
+      }
+      ;
 
       TestAckListener fakeMasterRpc = new TestAckListener();
 
       // massive roll millis because the test will force fast and frequent rolls
       CollectorSink cs = new CollectorSink(LogicalNodeContext.testingContext(),
-          "file:///" + dir.getAbsolutePath(), "test", 1000000, fakeMasterRpc) {
+          "file:///" + dir.getAbsolutePath(), "test", 1000000,
+          new ProcessTagger(), 250, fakeMasterRpc) {
         @Override
         public void append(Event e) throws IOException, InterruptedException {
           LOG.info("Pre  append: "
@@ -656,5 +663,20 @@ public class TestCollectorSink {
     } finally {
       FileUtil.rmr(dir);
     }
+  }
+
+  @Test
+  public void testMultipleSinks() throws FlumeSpecException, IOException,
+      InterruptedException {
+    String spec = "collector(5000) { [ counter(\"foo\"), counter(\"bar\") ] }";
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(
+        LogicalNodeContext.testingContext()), spec);
+    snk.open();
+    snk.append(new EventImpl("this is a test".getBytes()));
+    snk.close();
+    ReportEvent rpta = ReportManager.get().getReportable("foo").getMetrics();
+    assertEquals(1, (long) rpta.getLongMetric("foo"));
+    ReportEvent rptb = ReportManager.get().getReportable("bar").getMetrics();
+    assertEquals(1, (long) rptb.getLongMetric("bar"));
   }
 }

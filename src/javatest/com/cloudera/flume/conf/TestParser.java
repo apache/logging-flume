@@ -227,6 +227,16 @@ public class TestParser implements ExampleData {
   }
 
   @Test
+  public void testGenSinks() throws RecognitionException {
+    String s2 = "collector() { null }";
+    Object o2 = FlumeBuilder.parseSink(s2);
+    LOG.info(s2);
+    LOG.info(toTree(o2));
+    assertEquals("(GEN collector (DECO (SINK null)))", toTree(o2));
+
+  }
+
+  @Test
   public void testBuilder() throws RecognitionException {
     LOG.info("== nodes ==");
 
@@ -326,7 +336,6 @@ public class TestParser implements ExampleData {
     assertEquals("(ROLL (DECO (SINK null)) (DEC 100))", toTree(o));
   }
 
-
   @Test
   public void testCombo() throws RecognitionException {
     LOG.info("== Combo ==");
@@ -424,6 +433,18 @@ public class TestParser implements ExampleData {
     } catch (RuntimeException e) {
       // we are ok.
     }
+
+  }
+
+  @Test
+  public void testGenCollector() throws FlumeSpecException,
+      RecognitionException {
+    String s = "collector() { customDfsSink(\"file:///tmp/foo\",\"foo\") }";
+    Object o = FlumeBuilder.parseSink(s);
+    LOG.info(toTree(o));
+    assertEquals(
+        "(GEN collector (DECO (SINK customDfsSink (STRING \"file:///tmp/foo\") (STRING \"foo\"))))",
+        toTree(o));
 
   }
 

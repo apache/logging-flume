@@ -28,6 +28,7 @@ tokens {
   SINK;
   BACKUP;
   ROLL;
+  GEN;
   DECO;
   SOURCE;
   MULTI;
@@ -120,6 +121,7 @@ simpleSink	:	'[' multiSink ']'  	-> ^(MULTI multiSink)
 		|	'{' decoratedSink '}'	-> ^(DECO decoratedSink)
 		|	'<' failoverSink '>'	-> ^(BACKUP failoverSink)
         |   rollSink                -> rollSink
+        |   genCollectorSink        -> genCollectorSink
 		; 
  			
 
@@ -128,6 +130,9 @@ multiSink       :  simpleSink (',' simpleSink)* 	-> simpleSink* ;
 failoverSink    :  simpleSink ('?' simpleSink)+	-> simpleSink+;	
 rollSink        :  'roll' args '{' simpleSink '}'
                                   -> ^(ROLL simpleSink args);
+genCollectorSink       :  'collector' args '{' simpleSink '}'
+                                  -> ^(GEN 'collector' simpleSink args?);
+
 
 args    : '(' ( arglist (',' kwarglist)?  ) ')' -> arglist kwarglist?
         | '(' kwarglist ')' -> kwarglist? 

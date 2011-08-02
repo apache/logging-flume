@@ -197,6 +197,24 @@ public class FlumeSpecGen {
       return "failchain" + argSink + " { " + bodySink + " }";
 
     }
+
+    case GEN: {
+      List<CommonTree> genNodes = (List<CommonTree>) t.getChildren();
+      Preconditions.checkArgument(genNodes.size() >= 2);
+      String genType = genNodes.get(0).getText();
+      CommonTree body = genNodes.get(1);
+      String bodySink = genEventSink(body);
+
+      List<String> rargs = new ArrayList<String>();
+      for (int i = 2; i < genNodes.size(); i++) {
+        CommonTree arg = genNodes.get(i);
+        rargs.add(genArg(arg));
+      }
+      String argSink = genArgs(rargs, "(", ",", ")");
+
+      return genType + argSink + " { " + bodySink + " }";
+
+    }
       // TODO (jon) handle pattern match splitter
 
     default:

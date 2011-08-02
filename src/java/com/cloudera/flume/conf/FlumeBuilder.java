@@ -34,6 +34,8 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.flume.collector.CollectorSink;
+import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.core.BackOffFailOverSink;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
@@ -89,7 +91,7 @@ public class FlumeBuilder {
     DEC, HEX, OCT, STRING, BOOL, FLOAT, // literals
     SINK, SOURCE, // sink or source
     KWARG, // kwarg support
-    MULTI, DECO, BACKUP, LET, ROLL, FAILCHAIN, // compound sinks
+    MULTI, DECO, BACKUP, LET, ROLL, GEN, FAILCHAIN, // compound sinks
     NODE, // combination of sink and source
   };
 
@@ -430,7 +432,7 @@ public class FlumeBuilder {
       SinkFactory sinkFactory) throws FlumeSpecException {
     ASTNODE type = ASTNODE.valueOf(t.getText()); // convert to enum
     switch (type) {
-    case SINK:
+    case SINK: {
 
       Context ctx = new Context(context);
       Pair<String, List<String>> idargs = handleArgs(t, ctx);
@@ -445,7 +447,7 @@ public class FlumeBuilder {
             + FlumeSpecGen.genEventSink(t));
       }
       return snk;
-
+    }
     case MULTI: {
       List<CommonTree> elems = (List<CommonTree>) t.getChildren();
       List<EventSink> snks = new ArrayList<EventSink>();
@@ -578,6 +580,37 @@ public class FlumeBuilder {
         // TODO (jon) replace the hard coded 250 with a parameterizable value
         RollSink roller = new RollSink(context, body, period, 250);
         return roller;
+      } catch (IllegalArgumentException iae) {
+        throw new FlumeSpecException(iae.getMessage());
+      }
+
+    }
+
+    case GEN: {
+      List<CommonTree> collArgs = (List<CommonTree>) t.getChildren();
+      try {
+        Preconditions.checkArgument(collArgs.size() >= 2, "bad parse tree! "
+            + t.toStringTree() + " generator takes at least 2 arguments");
+        String genType = collArgs.get(0).getText();
+        if (!"collector".equals(genType)) {
+          throw new FlumeSpecException(
+              "currently only handle 'collector' gen sinks");
+        }
+        CommonTree ctbody = collArgs.remove(1); // remove subsink.
+        String body = FlumeSpecGen.genEventSink(ctbody);
+
+        Context ctx = new Context(context);
+        Pair<String, List<String>> idArgs = handleArgs(t, ctx);
+        String sourceType = idArgs.getLeft();
+        List<String> args = idArgs.getRight();
+        args.add(0, body);
+
+        // TODO replace with Generator Sink lookup
+        Preconditions.checkArgument("collector".equals(sourceType));
+        SinkBuilder builder = CollectorSink.builder();
+
+        return builder.build(ctx, args.toArray(new String[0]));
+
       } catch (IllegalArgumentException iae) {
         throw new FlumeSpecException(iae.getMessage());
       }

@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.ExampleData;
+import com.cloudera.flume.collector.CollectorSink;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.handlers.rolling.RollSink;
 
@@ -253,5 +254,30 @@ public class TestFlumeBuilder implements ExampleData {
     FlumeBuilder.getSinkNames().contains("agentSink");
     FlumeBuilder.getDecoratorNames().contains("regex");
     FlumeBuilder.getSourceNames().contains("collectorSource");
+  }
+
+  @Test
+  public void testGenCollector() throws FlumeSpecException {
+    EventSink snk = FlumeBuilder.buildSink(LogicalNodeContext.testingContext(),
+        "collector() { customDfsSink(\"file:///tmp/foo\",\"foo\") }");
+    assertTrue(snk instanceof CollectorSink);
+  }
+
+  @Test
+  public void testGenCollectorArgs() throws FlumeSpecException {
+    EventSink snk = FlumeBuilder
+        .buildSink(LogicalNodeContext.testingContext(),
+            "collector(foo=\"bar\") { customDfsSink(\"file:///tmp/foo\",\"foo\") }");
+    assertTrue(snk instanceof CollectorSink);
+
+    snk = FlumeBuilder
+        .buildSink(LogicalNodeContext.testingContext(),
+            "collector(3,foo=\"bar\") { customDfsSink(\"file:///tmp/foo\",\"foo\") }");
+    assertTrue(snk instanceof CollectorSink);
+
+    snk = FlumeBuilder.buildSink(LogicalNodeContext.testingContext(),
+        "collector(3) { customDfsSink(\"file:///tmp/foo\",\"foo\") }");
+    assertTrue(snk instanceof CollectorSink);
+
   }
 }

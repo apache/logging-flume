@@ -25,7 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.hadoop.fs.Path;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +34,7 @@ import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
+import com.cloudera.flume.core.CompositeSink;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSinkDecorator;
@@ -43,7 +44,6 @@ import com.cloudera.flume.handlers.debug.InsistentOpenDecorator;
 import com.cloudera.flume.handlers.debug.StubbornAppendSink;
 import com.cloudera.flume.handlers.endtoend.AckChecksumChecker;
 import com.cloudera.flume.handlers.endtoend.AckListener;
-import com.cloudera.flume.handlers.hdfs.EscapedCustomDfsSink;
 import com.cloudera.flume.handlers.rolling.ProcessTagger;
 import com.cloudera.flume.handlers.rolling.RollSink;
 import com.cloudera.flume.handlers.rolling.Tagger;
@@ -55,13 +55,11 @@ import com.cloudera.util.CumulativeCappedExponentialBackoff;
 import com.google.common.base.Preconditions;
 
 /**
- * This collector sink is the high level specification a user would use.
- * 
- * Currently is is just a DFSEventSink that uses some default values from the
- * flume configuration file and is overridable by the user.
- * 
- * TODO (jon) this default output needs to be replaced with a combo of henry's
- * new tagged output writer and the custom format dfs writer..
+ * This collector sink is the high level specification a user would use. The
+ * subsink spec allows for specifying batching, gunzip, multiple sinks or
+ * whatever else a user would want to specify. The key feature with any sub sink
+ * specified of this is that it is part of a roller, and that any accrued acks
+ * are send when this roller closes the subsink.
  */
 public class CollectorSink extends EventSink.Base {
   static final Logger LOG = LoggerFactory.getLogger(CollectorSink.class);
@@ -69,6 +67,7 @@ public class CollectorSink extends EventSink.Base {
   final EventSink snk;
   AckAccumulator accum = new AckAccumulator();
   final AckListener ackDest;
+  final String snkSpec;
 
   // This is a container for acks that should be ready for delivery when the
   // hdfs sink is closed/flushed
@@ -77,23 +76,29 @@ public class CollectorSink extends EventSink.Base {
   // References package exposed for testing
   final RollSink roller;
 
-  CollectorSink(Context ctx, String path, String filename, long millis,
-      AckListener ackDest) throws FlumeSpecException {
-    this(ctx, path, filename, millis, new ProcessTagger(), 250, ackDest);
+  CollectorSink(Context ctx, String snkSpec, long millis, AckListener ackDest)
+      throws FlumeSpecException {
+    this(ctx, snkSpec, millis, new ProcessTagger(), 250, ackDest);
   }
 
-  CollectorSink(Context ctx, final String logdir, final String filename,
-      final long millis, final Tagger tagger, long checkmillis,
-      AckListener ackDest) {
+  CollectorSink(Context ctx, final String snkSpec, final long millis,
+      final Tagger tagger, long checkmillis, AckListener ackDest) {
     this.ackDest = ackDest;
-    this.roller = new RollSink(ctx, "collectorSink", new TimeTrigger(tagger,
-        millis), checkmillis) {
+    this.snkSpec = snkSpec;
+    roller = new RollSink(ctx, snkSpec, new TimeTrigger(tagger, millis),
+        checkmillis) {
+      // this is wraps the normal roll sink with an extra roll detection
+      // decorator that triggers ack delivery on close.
       @Override
       public EventSink newSink(Context ctx) throws IOException {
         String tag = tagger.newTag();
-        String path = logdir + Path.SEPARATOR_CHAR;
-        EventSink dfs = new EscapedCustomDfsSink(path, filename + tag);
-        return new RollDetectDeco(dfs, tag);
+        EventSink drain;
+        try {
+          drain = new CompositeSink(ctx, snkSpec);
+        } catch (FlumeSpecException e) {
+          throw new IOException("Unable to instantiate '" + snkSpec + "'", e);
+        }
+        return new RollDetectDeco(drain, tag);
       }
     };
 
@@ -112,12 +117,23 @@ public class CollectorSink extends EventSink.Base {
 
     // { ackChecksumChecker => insistentAppend => stubbornAppend =>
     // insistentOpen => mask("rolltag") => roll(xx) { rollDetect =>
-    // escapedCusomtDfs } }
+    // subsink } }
     EventSink tmp = new MaskDecorator<EventSink>(roller, "rolltag");
     tmp = new InsistentOpenDecorator<EventSink>(tmp, backoff1);
     tmp = new StubbornAppendSink<EventSink>(tmp);
     tmp = new InsistentAppendDecorator<EventSink>(tmp, backoff2);
     snk = new AckChecksumChecker<EventSink>(tmp, accum);
+  }
+
+  /**
+   * This is a compatibility mode for older version of the tests
+   */
+  CollectorSink(Context ctx, String path, String filename, long millis,
+      final Tagger tagger, long checkmillis, AckListener ackDest)
+      throws FlumeSpecException {
+    this(ctx, "escapedCustomDfs(\"" + StringEscapeUtils.escapeJava(path)
+        + "\",\"" + StringEscapeUtils.escapeJava(filename) + "%{rolltag}"
+        + "\" )", millis, tagger, checkmillis, ackDest);
   }
 
   String curRollTag;
@@ -165,7 +181,6 @@ public class CollectorSink extends EventSink.Base {
         master.end(at);
       }
     }
-
   };
 
   /**
@@ -246,6 +261,31 @@ public class CollectorSink extends EventSink.Base {
     return new SinkBuilder() {
       @Override
       public EventSink build(Context context, String... argv) {
+        Preconditions.checkArgument(argv.length <= 2 && argv.length >= 0,
+            "usage: collector[(rollmillis)] { subsink }");
+        String snkSpec = argv[0];
+
+        long millis = FlumeConfiguration.get().getCollectorRollMillis();
+        if (argv.length >= 2) {
+          millis = Long.parseLong(argv[1]);
+        }
+        try {
+          EventSink deco = new CollectorSink(context, snkSpec, millis,
+              FlumeNode.getInstance().getCollectorAckListener());
+          return deco;
+        } catch (FlumeSpecException e) {
+          LOG.error("CollectorDecorator spec error " + e, e);
+          throw new IllegalArgumentException(
+              "usage: collector[(rollmillis)] { subsink }" + e);
+        }
+      }
+    };
+  }
+
+  public static SinkBuilder hdfsBuilder() {
+    return new SinkBuilder() {
+      @Override
+      public EventSink build(Context context, String... argv) {
         Preconditions.checkArgument(argv.length <= 3 && argv.length >= 2,
             "usage: collectorSink[(dfsdir,path[,rollmillis])]");
         String logdir = FlumeConfiguration.get().getCollectorDfsDir(); // default
@@ -262,7 +302,8 @@ public class CollectorSink extends EventSink.Base {
         }
         try {
           EventSink snk = new CollectorSink(context, logdir, prefix, millis,
-              FlumeNode.getInstance().getCollectorAckListener());
+              new ProcessTagger(), 250, FlumeNode.getInstance()
+                  .getCollectorAckListener());
           return snk;
         } catch (FlumeSpecException e) {
           LOG.error("CollectorSink spec error " + e, e);

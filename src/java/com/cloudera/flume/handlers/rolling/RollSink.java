@@ -266,6 +266,10 @@ public class RollSink extends EventSink.Base {
     return ReportUtil.subReports(curSink);
   }
 
+  public String getRollSpec() {
+    return fspec;
+  }
+
   @Deprecated
   @Override
   synchronized public ReportEvent getReport() {
