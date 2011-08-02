@@ -48,9 +48,16 @@ abstract public class Driver {
   abstract public void start() throws IOException;
 
   /**
-   * Signals driver to stop. this does not block.
+   * Signals driver to do a stop that attempts to flush any internal buffers.
+   * This does not block.
    */
   abstract public void stop() throws IOException;
+
+  /**
+   * Signals driver to do a abrubt shutdown. This does not guarantee that any
+   * internal buffers will be flushed. This does not block.
+   */
+  abstract public void cancel();
 
   /**
    * This causes the driver to block until it is "done".
@@ -59,7 +66,7 @@ abstract public class Driver {
 
   /**
    * return true if the driver has completed within specified ms. If it has not
-   * completed by the specified time, it returns false.
+   * completed by the specified time, it returns false. 0 ms means wait forever
    */
   abstract public boolean join(long ms) throws InterruptedException;
 

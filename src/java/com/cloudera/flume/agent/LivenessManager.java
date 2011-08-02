@@ -131,7 +131,7 @@ public class LivenessManager {
         }
         final LogicalNode node = nd;
         // TODO This is quite gross, but prevents heartbeat from blocking
-        new Thread() {
+        new Thread("SpawningLogicalNode " + nd.getName()) {
           public void run() {
             node.checkConfig(data);
           }

@@ -26,6 +26,7 @@ import org.apache.log4j.Logger;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.SinkFactory.SinkDecoBuilder;
+import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
 import com.cloudera.flume.core.EventSinkDecorator;
 import com.cloudera.flume.reporter.ReportEvent;
@@ -60,6 +61,8 @@ public class InsistentOpenDecorator<S extends EventSink> extends
   long openSuccesses; // # of times we successfully opened
   long openRetries; // # of times we tried to reopen
   long openGiveups; // # of times we gave up on waiting
+
+  volatile boolean opening = false;
 
   public InsistentOpenDecorator(S s, BackoffPolicy backoff) {
     super(s);
@@ -99,33 +102,64 @@ public class InsistentOpenDecorator<S extends EventSink> extends
   synchronized public void open() throws IOException {
     List<IOException> exns = new ArrayList<IOException>();
     int attemptRetries = 0;
+
+    opening = true;
     openRequests++;
-    while (!backoff.isFailed()) {
+    while (!backoff.isFailed() && opening) {
       try {
         openAttempts++;
         super.open();
         openSuccesses++;
         backoff.reset(); // reset backoff counter;
         LOG.info("Opened " + sink.getName() + " on try " + attemptRetries);
+        opening = false;
         return;
-      } catch (IOException e) {
+      } catch (Exception e) {
+
+        if (Thread.currentThread().isInterrupted()) {
+          throw new IOException("Open has been interrupted");
+        }
+
+        if (!opening) {
+          throw new IOException("Unable to open and then close requested");
+        }
         long waitTime = backoff.sleepIncrement();
         LOG.info("open attempt " + attemptRetries + " failed, backoff ("
             + waitTime + "ms): " + e.getMessage());
         LOG.debug(e.getMessage(), e);
-        exns.add(e);
+        exns.add((e instanceof IOException) ? (IOException) e
+            : new IOException(e));
         backoff.backoff();
+
         try {
+          // this is a blocking sleep and we don't want to hold the lock here.
           backoff.waitUntilRetryOk();
         } catch (InterruptedException e1) {
+          // got an interrupted signal, bail out!
+          exns.add(new IOException(e1));
+          throw MultipleIOException.createIOException(exns);
         }
+
         attemptRetries++;
         openRetries++;
       }
     }
     openGiveups++;
+    opening = false;
+
     // failed to start
     throw MultipleIOException.createIOException(exns);
+  }
+
+  @Override
+  synchronized public void append(Event e) throws IOException {
+    super.append(e);
+  }
+
+  @Override
+  synchronized public void close() throws IOException {
+    opening = false;
+    super.close();
   }
 
   public static SinkDecoBuilder builder() {
@@ -157,7 +191,7 @@ public class InsistentOpenDecorator<S extends EventSink> extends
         }
 
         return new InsistentOpenDecorator<EventSink>(null,
-            new CappedExponentialBackoff(maxMs, initMs));
+            new CappedExponentialBackoff(initMs, maxMs));
       }
 
     };
@@ -169,8 +203,9 @@ public class InsistentOpenDecorator<S extends EventSink> extends
   }
 
   @Override
-  public synchronized ReportEvent getReport() {
+  synchronized public ReportEvent getReport() {
     ReportEvent rpt = super.getReport();
+
     // parameters
     rpt.hierarchicalMerge(backoff.getName(), backoff.getReport());
 
@@ -180,6 +215,7 @@ public class InsistentOpenDecorator<S extends EventSink> extends
     rpt.setLongMetric(A_SUCCESSES, openSuccesses);
     rpt.setLongMetric(A_RETRIES, openRetries);
     rpt.setLongMetric(A_GIVEUPS, openGiveups);
+
     return rpt;
   }
 }

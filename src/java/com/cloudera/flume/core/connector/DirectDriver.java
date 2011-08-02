@@ -95,15 +95,17 @@ public class DirectDriver extends Driver {
         // Catches all exceptions or throwables. This is a separate thread
         error = e1;
         stopped = true;
-        state = NodeState.ERROR;
+
         LOG.error("Driving src/sink failed! " + DirectDriver.this + " because "
             + e1.getMessage());
         fireError(e1);
+        state = NodeState.ERROR;
         return;
       }
-      state = NodeState.IDLE;
+
       LOG.debug("Driver completed: " + DirectDriver.this);
       fireStop();
+      state = NodeState.IDLE;
     }
   }
 
@@ -142,6 +144,13 @@ public class DirectDriver extends Driver {
     thd.stopped = true;
   }
 
+  /**
+   * Start the mean shutdown.
+   */
+  public void cancel() {
+    thd.interrupt();
+  }
+
   @Override
   public void join() throws InterruptedException {
     join(0);
@@ -151,7 +160,7 @@ public class DirectDriver extends Driver {
   public boolean join(long ms) throws InterruptedException {
     final PumperThread t = thd;
     t.join(ms);
-    return t.isAlive();
+    return !t.isAlive();
   }
 
   public Exception getError() {

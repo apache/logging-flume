@@ -172,7 +172,7 @@ public class LogicalNode implements Reportable {
       // stop the existing connector.
       driver.stop();
       try {
-        driver.join(Long.MAX_VALUE);
+        driver.join();
       } catch (InterruptedException e) {
         LOG.error("Previous driver took too long to close!", e);
       }
@@ -199,7 +199,8 @@ public class LogicalNode implements Reportable {
         }
 
         nodeMsg = "Error: Connector on " + nodeName + " closed " + conn;
-        LOG.info("Error: Connector  on " + nodeName + " closed " + conn);
+        LOG.error("Driver on " + nodeName + " closed " + conn + " becaues of "
+            + ex.getMessage(), ex);
 
         state.state = NodeState.ERROR;
       }
@@ -402,7 +403,8 @@ public class LogicalNode implements Reportable {
       src.close();
       snk.close();
       try {
-        driver.join(Long.MAX_VALUE);
+        driver.cancel(); // signal driver to finish
+        driver.join();
       } catch (InterruptedException e) {
         LOG.error("Unexpected interruption when closing logical node");
       }

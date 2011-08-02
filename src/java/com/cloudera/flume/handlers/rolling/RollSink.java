@@ -20,7 +20,6 @@ package com.cloudera.flume.handlers.rolling;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
@@ -93,35 +92,16 @@ public class RollSink extends EventSink.Base {
   class TriggerThread extends Thread {
     final CountDownLatch doneLatch = new CountDownLatch(1);
     final CountDownLatch startedLatch = new CountDownLatch(1);
-    volatile boolean timeoutThreadDone = false;
 
     TriggerThread() {
       super("Roll-TriggerThread-" + nextThreadNum());
     }
 
-    public synchronized void doShutdown() {
-      timeoutThreadDone = true;
-      interrupt();
-      try {
-
-        // This doesn't have to be too long -- close is responsible for
-        // flushing.
-        if (!doneLatch.await(checkLatencyMs, TimeUnit.MILLISECONDS)) {
-          LOG.warn("Batch timeout thread did not exit in a timely fashion");
-        }
-      } catch (InterruptedException e) {
-        LOG
-            .warn("Interrupted while waiting for batch timeout thread to finish");
-      }
-    }
-
-    public synchronized void doStart() {
-      timeoutThreadDone = false;
+    void doStart() {
       this.start();
+
       try {
-        if (!startedLatch.await(checkLatencyMs, TimeUnit.MILLISECONDS)) {
-          LOG.warn("Batch timeout thread did not start in a timely fashion");
-        }
+        startedLatch.await();
       } catch (InterruptedException e) {
         LOG.warn("Interrupted while waiting for batch timeout thread to start");
       }
@@ -129,30 +109,28 @@ public class RollSink extends EventSink.Base {
 
     public void run() {
       startedLatch.countDown();
-      while (!timeoutThreadDone) {
+      while (!isInterrupted()) {
+        // TODO there should probably be a lcok on Roll sink but until we handle
+        // interruptions throughout the code, we cannot because this causes a
+        // deadlock
+        if (trigger.isTriggered()) {
+          trigger.reset();
 
-        synchronized (RollSink.this) {
-          // We don't know if something got committed between
-          // looking at the time and getting here so we have to
-          // make sure no-one changes lastBatchTime underneath our feet
-          if (trigger.isTriggered()) {
-            rotate();
-            trigger.reset();
-            continue;
-          }
+          LOG.debug("Rotate started by triggerthread... ");
+          rotate();
+          LOG.debug("Rotate stopped by triggerthread... ");
+          continue;
         }
 
         try {
           Clock.sleep(checkLatencyMs);
         } catch (InterruptedException e) {
           LOG.warn("TriggerThread interrupted");
-          timeoutThreadDone = true;
           doneLatch.countDown();
           return;
         }
       }
       LOG.info("TriggerThread shutdown");
-      timeoutThreadDone = true;
       doneLatch.countDown();
     }
   };
@@ -170,27 +148,24 @@ public class RollSink extends EventSink.Base {
 
   // This is a large synchronized section. Won't fix until it becomes a problem.
   @Override
-  synchronized public void append(Event e) throws IOException {
-    if (curSink == null) {
-      try {
-        curSink = newSink(ctx);
-        curSink.open();
-      } catch (IOException e1) {
-        LOG.warn("Failure when attempting to open initial sink", e1);
-      }
-    }
+  public void append(Event e) throws IOException {
+    Preconditions.checkState(curSink != null,
+        "Attempted to append when rollsink not open");
 
     if (trigger.isTriggered()) {
-      rotate();
       trigger.reset();
+      LOG.debug("Rotate started by append... ");
+      rotate();
+      LOG.debug("... rotate completed by append.");
     }
-
     String tag = trigger.getTagger().getTag();
-    e.set(A_ROLL_TAG, tag.getBytes());
 
-    curSink.append(e);
-    trigger.append(e);
-    super.append(e);
+    e.set(A_ROLL_TAG, tag.getBytes());
+    synchronized (this) {
+      curSink.append(e);
+      trigger.append(e);
+      super.append(e);
+    }
   }
 
   synchronized public boolean rotate() {
@@ -218,29 +193,46 @@ public class RollSink extends EventSink.Base {
   }
 
   @Override
-  synchronized public void close() throws IOException {
+  public void close() throws IOException {
     LOG.info("closing RollSink '" + fspec + "'");
 
+    // TODO triggerThread can race with an open call, but we really need to
+    // avoid having the await while locked!
     if (triggerThread != null) {
-      triggerThread.doShutdown();
+      try {
+        triggerThread.interrupt();
+        triggerThread.doneLatch.await();
+      } catch (InterruptedException e) {
+        LOG
+            .warn("Interrupted while waiting for batch timeout thread to finish");
+      }
     }
 
-    if (curSink == null) {
-      LOG.info("double close '" + fspec + "'");
-      return;
+    synchronized (this) {
+      if (curSink == null) {
+        LOG.info("double close '" + fspec + "'");
+        return;
+      }
+      curSink.close();
+      curSink = null;
     }
-    curSink.close();
-    curSink = null;
   }
 
   @Override
-  public void open() throws IOException {
+  synchronized public void open() throws IOException {
+    Preconditions.checkState(curSink == null,
+        "Attempting to open already open RollSink '" + fspec + "'");
     LOG.info("opening RollSink  '" + fspec + "'");
     trigger.getTagger().newTag();
-
     triggerThread = new TriggerThread();
     triggerThread.doStart();
-    // Do nothing, auto opens on append.
+
+    try {
+      curSink = newSink(ctx);
+      curSink.open();
+    } catch (IOException e1) {
+      LOG.warn("Failure when attempting to open initial sink", e1);
+    }
   }
 
   @Override

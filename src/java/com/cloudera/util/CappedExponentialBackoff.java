@@ -109,6 +109,9 @@ public class CappedExponentialBackoff implements BackoffPolicy {
    */
   @Override
   public void waitUntilRetryOk() throws InterruptedException {
-    Thread.sleep(retryTime - Clock.unixTime());
+    long sleeptime = retryTime - Clock.unixTime();
+    if (sleeptime <= 0)
+      return;
+    Thread.sleep(sleeptime);
   }
 }

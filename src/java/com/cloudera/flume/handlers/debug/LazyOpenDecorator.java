@@ -53,23 +53,24 @@ public class LazyOpenDecorator<S extends EventSink> extends
   }
 
   @Override
-  synchronized public void open() {
+  public void open() {
+    Preconditions.checkState(!logicallyOpen,
+        "Attempting to open already open LazyOpenDeco");
     logicallyOpen = true;
   }
 
   @Override
   public void append(Event e) throws IOException {
-    synchronized (this) {
-      if (logicallyOpen && !actuallyOpen) {
-        super.open();
-        actuallyOpen = true;
-      }
+    if (logicallyOpen && !actuallyOpen) {
+      super.open();
+      actuallyOpen = true;
     }
+
     super.append(e);
   }
 
   @Override
-  synchronized public void close() throws IOException {
+  public void close() throws IOException {
     if (actuallyOpen) {
       super.close();
     }
@@ -80,7 +81,6 @@ public class LazyOpenDecorator<S extends EventSink> extends
 
     actuallyOpen = false;
     logicallyOpen = false;
-
   }
 
   public static SinkDecoBuilder builder() {

@@ -56,11 +56,16 @@ public class InsistentAppendDecorator<S extends EventSink> extends
   final public static String A_RETRIES = "appendRetries";
   final public static String A_GIVEUPS = "appendGiveups";
 
-  long appendRequests; // # of times append was called
-  long appendAttempts; // # of of times
-  long appendSuccesses; // # of times we successfully appended
-  long appendRetries; // # of times we tried to reappend
-  long appendGiveups; // # of times we gave up on waiting
+  long appendRequests = 0; // # of times append was called
+  long appendAttempts = 0; // # of of times
+  long appendSuccesses = 0; // # of times we successfully appended
+  long appendRetries = 0; // # of times we tried to reappend
+  long appendGiveups = 0; // # of times we gave up on waitingf
+
+  public InsistentAppendDecorator(S s, BackoffPolicy bop) {
+    super(s);
+    this.backoff = bop;
+  }
 
   /**
    * Creates a deco that has subsink s, and after failure initially waits for
@@ -72,9 +77,6 @@ public class InsistentAppendDecorator<S extends EventSink> extends
     super(s);
     this.backoff = new CumulativeCappedExponentialBackoff(initial, sleepCap,
         cumulativeCap);
-    this.appendSuccesses = 0;
-    this.appendRetries = 0;
-
   }
 
   /**
@@ -85,10 +87,12 @@ public class InsistentAppendDecorator<S extends EventSink> extends
   public InsistentAppendDecorator(S s, long initial, long sleepCap) {
     super(s);
     this.backoff = new CappedExponentialBackoff(initial, sleepCap);
-    this.appendSuccesses = 0;
-    this.appendRetries = 0;
   }
 
+  /**
+   * We have to be careful with this append method -- it has the potential to
+   * block forever!
+   */
   @Override
   synchronized public void append(Event evt) throws IOException {
     List<IOException> exns = new ArrayList<IOException>();
@@ -101,38 +105,40 @@ public class InsistentAppendDecorator<S extends EventSink> extends
         appendSuccesses++;
         backoff.reset(); // reset backoff counter;
         return;
-      } catch (IOException e) {
-        long waitTime = backoff.sleepIncrement();
-        LOG.info("append attempt " + attemptRetries + " failed, backoff ("
-            + waitTime + "ms): " + e.getMessage());
-        LOG.debug(e.getMessage(), e);
-        exns.add(e);
-        backoff.backoff();
-        try {
-          backoff.waitUntilRetryOk();
-        } catch (InterruptedException e1) {
-        }
-        attemptRetries++;
-        appendRetries++;
       } catch (Exception e) {
         // this is an unexpected exception
         long waitTime = backoff.sleepIncrement();
         LOG.info("append attempt " + attemptRetries + " failed, backoff ("
             + waitTime + "ms): " + e.getMessage());
         LOG.debug(e.getMessage(), e);
-        exns.add(new IOException(e));
+        exns.add((e instanceof IOException) ? (IOException) e
+            : new IOException(e));
         backoff.backoff();
         try {
           backoff.waitUntilRetryOk();
         } catch (InterruptedException e1) {
+          // got an interrupted signal, bail out!
+          exns.add(new IOException(e1));
+          throw MultipleIOException.createIOException(exns);
+        } finally {
+          attemptRetries++;
+          appendRetries++;
         }
-        attemptRetries++;
-        appendRetries++;
       }
     }
     appendGiveups++;
     // failed to start
     throw MultipleIOException.createIOException(exns);
+  }
+
+  @Override
+  synchronized public void close() throws IOException {
+    super.close();
+  }
+
+  @Override
+  synchronized public void open() throws IOException {
+    super.open();
   }
 
   public static SinkDecoBuilder builder() {
@@ -178,7 +184,7 @@ public class InsistentAppendDecorator<S extends EventSink> extends
   }
 
   @Override
-  public synchronized ReportEvent getReport() {
+  synchronized public ReportEvent getReport() {
     ReportEvent rpt = super.getReport();
     // parameters
     rpt.hierarchicalMerge(backoff.getName(), backoff.getReport());
@@ -189,6 +195,7 @@ public class InsistentAppendDecorator<S extends EventSink> extends
     rpt.setLongMetric(A_SUCCESSES, appendSuccesses);
     rpt.setLongMetric(A_RETRIES, appendRetries);
     rpt.setLongMetric(A_GIVEUPS, appendGiveups);
+
     return rpt;
   }
 }

@@ -18,12 +18,15 @@
 package com.cloudera.flume.handlers.debug;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
@@ -127,6 +130,48 @@ public class TestInsistentOpen {
       return; // success
     }
     fail("Ehr? Somehow the failwhale succeeded!");
+  }
 
+  /**
+   * Tests to a thread cancel that forces a InterruptedException throw. Normally
+   * an insistentOpen will never return if the subsink's open always fails.
+   * interrupt forces an InterruptedException which the insistent open
+   * translates into a IOException.
+   * 
+   * (Ideally it should propagate the InterruptedException, but I think that
+   * change is pervasive and will wait for the next major version)
+   */
+  @Test
+  public void testInsistentOpenCancel() throws IOException,
+      InterruptedException {
+    // TODO(henry): this test relies on real clocks, and shouldn't. See below.
+    EventSink fail4eva = mock(EventSink.Base.class);
+    // two exceptions then some success
+    doThrow(new IOException("mock")).when(fail4eva).open();
+    doReturn(new ReportEvent("stub")).when(fail4eva).getReport();
+
+    final CountDownLatch done = new CountDownLatch(1);
+
+    // max 5s, backoff initially at 10ms
+    BackoffPolicy bop = new CappedExponentialBackoff(10, 5000);
+    final InsistentOpenDecorator<EventSink> sink = new InsistentOpenDecorator<EventSink>(
+        fail4eva, bop);
+
+    Thread t = new Thread() {
+      @Override
+      public void run() {
+        try {
+          sink.open();
+        } catch (IOException e) {
+          // insistent translates interruptions into io exceptions
+          done.countDown();
+        }
+      }
+    };
+    t.start();
+    Clock.sleep(1000); // let the insistent open try a few times.
+    t.interrupt(); // signal an interruption
+
+    assertTrue("Timed out", done.await(1000, TimeUnit.MILLISECONDS));
   }
 }
