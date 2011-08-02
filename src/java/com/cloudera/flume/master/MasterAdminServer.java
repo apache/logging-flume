@@ -79,8 +79,10 @@ public class MasterAdminServer extends ThriftServer implements Iface {
   }
 
   protected FlumeNodeStatus toThrift(StatusManager.NodeStatus status) {
+    long time = System.currentTimeMillis();
     return new FlumeNodeStatus(MasterClientServer.stateToThrift(status.state),
-        status.version, status.lastseen, status.host, status.physicalNode);
+        status.version, status.lastseen, time - status.lastseen, status.host,
+        status.physicalNode);
   }
 
   @Override

@@ -32,6 +32,7 @@ struct FlumeNodeStatus {
   1: flumeconfig.FlumeNodeState state,
   2: i64 version,
   3: i64 lastseen,
+  6: i64 lastSeenDeltaMillis,
   4: string host,
   5: string physicalNode,
 }
