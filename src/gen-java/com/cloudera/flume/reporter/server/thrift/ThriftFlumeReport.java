@@ -3,7 +3,7 @@
  *
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  */
-package com.cloudera.flume.reporter.server;
+package com.cloudera.flume.reporter.server.thrift;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -23,8 +23,8 @@ import org.apache.thrift.*;
 import org.apache.thrift.meta_data.*;
 import org.apache.thrift.protocol.*;
 
-public class FlumeReport implements TBase<FlumeReport._Fields>, java.io.Serializable, Cloneable {
-  private static final TStruct STRUCT_DESC = new TStruct("FlumeReport");
+public class ThriftFlumeReport implements TBase<ThriftFlumeReport._Fields>, java.io.Serializable, Cloneable {
+  private static final TStruct STRUCT_DESC = new TStruct("ThriftFlumeReport");
 
   private static final TField STRING_METRICS_FIELD_DESC = new TField("stringMetrics", TType.MAP, (short)3);
   private static final TField LONG_METRICS_FIELD_DESC = new TField("longMetrics", TType.MAP, (short)4);
@@ -109,13 +109,13 @@ public class FlumeReport implements TBase<FlumeReport._Fields>, java.io.Serializ
   }});
 
   static {
-    FieldMetaData.addStructMetaDataMap(FlumeReport.class, metaDataMap);
+    FieldMetaData.addStructMetaDataMap(ThriftFlumeReport.class, metaDataMap);
   }
 
-  public FlumeReport() {
+  public ThriftFlumeReport() {
   }
 
-  public FlumeReport(
+  public ThriftFlumeReport(
     Map<String,String> stringMetrics,
     Map<String,Long> longMetrics,
     Map<String,Double> doubleMetrics)
@@ -129,7 +129,7 @@ public class FlumeReport implements TBase<FlumeReport._Fields>, java.io.Serializ
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public FlumeReport(FlumeReport other) {
+  public ThriftFlumeReport(ThriftFlumeReport other) {
     if (other.isSetStringMetrics()) {
       Map<String,String> __this__stringMetrics = new HashMap<String,String>();
       for (Map.Entry<String, String> other_element : other.stringMetrics.entrySet()) {
@@ -177,13 +177,13 @@ public class FlumeReport implements TBase<FlumeReport._Fields>, java.io.Serializ
     }
   }
 
-  public FlumeReport deepCopy() {
-    return new FlumeReport(this);
+  public ThriftFlumeReport deepCopy() {
+    return new ThriftFlumeReport(this);
   }
 
   @Deprecated
-  public FlumeReport clone() {
-    return new FlumeReport(this);
+  public ThriftFlumeReport clone() {
+    return new ThriftFlumeReport(this);
   }
 
   public int getStringMetricsSize() {
@@ -201,7 +201,7 @@ public class FlumeReport implements TBase<FlumeReport._Fields>, java.io.Serializ
     return this.stringMetrics;
   }
 
-  public FlumeReport setStringMetrics(Map<String,String> stringMetrics) {
+  public ThriftFlumeReport setStringMetrics(Map<String,String> stringMetrics) {
     this.stringMetrics = stringMetrics;
     return this;
   }
@@ -236,7 +236,7 @@ public class FlumeReport implements TBase<FlumeReport._Fields>, java.io.Serializ
     return this.longMetrics;
   }
 
-  public FlumeReport setLongMetrics(Map<String,Long> longMetrics) {
+  public ThriftFlumeReport setLongMetrics(Map<String,Long> longMetrics) {
     this.longMetrics = longMetrics;
     return this;
   }
@@ -271,7 +271,7 @@ public class FlumeReport implements TBase<FlumeReport._Fields>, java.io.Serializ
     return this.doubleMetrics;
   }
 
-  public FlumeReport setDoubleMetrics(Map<String,Double> doubleMetrics) {
+  public ThriftFlumeReport setDoubleMetrics(Map<String,Double> doubleMetrics) {
     this.doubleMetrics = doubleMetrics;
     return this;
   }
@@ -364,12 +364,12 @@ public class FlumeReport implements TBase<FlumeReport._Fields>, java.io.Serializ
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof FlumeReport)
-      return this.equals((FlumeReport)that);
+    if (that instanceof ThriftFlumeReport)
+      return this.equals((ThriftFlumeReport)that);
     return false;
   }
 
-  public boolean equals(FlumeReport that) {
+  public boolean equals(ThriftFlumeReport that) {
     if (that == null)
       return false;
 
@@ -538,7 +538,7 @@ public class FlumeReport implements TBase<FlumeReport._Fields>, java.io.Serializ
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("FlumeReport(");
+    StringBuilder sb = new StringBuilder("ThriftFlumeReport(");
     boolean first = true;
 
     sb.append("stringMetrics:");

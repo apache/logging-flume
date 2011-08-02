@@ -49,13 +49,13 @@ public class TestThriftAdminServer extends TestCase {
       this.start(new FlumeMasterAdminServer.Processor(this), 56789,
           "MyThriftServer");
     }
-    
+
     @Override
     public Map<String, FlumeNodeStatusThrift> getNodeStatuses()
         throws TException {
       return new HashMap<String, FlumeNodeStatusThrift>();
     }
-    
+
     @Override
     public boolean isFailure(long cmdid) throws TException {
       return true;
@@ -82,7 +82,8 @@ public class TestThriftAdminServer extends TestCase {
     }
 
     @Override
-    public Map<String, List<String>> getMappings(String physicalNode) throws TException {
+    public Map<String, List<String>> getMappings(String physicalNode)
+        throws TException {
       return new HashMap<String, List<String>>();
     }
   }
@@ -93,8 +94,7 @@ public class TestThriftAdminServer extends TestCase {
 
     AdminRPC client = new AdminRPCThrift("localhost", 56789);
     LOG.info("Connected to test master");
-    
-    
+
     long submit = client.submit(new Command(""));
     assertEquals("Expected response was 42, got " + submit, submit, 42);
 
@@ -108,7 +108,8 @@ public class TestThriftAdminServer extends TestCase {
     assertEquals("Expected response was 0, got " + cfgs.size(), cfgs.size(), 0);
 
     Map<String, List<String>> mappings = client.getMappings(null);
-    assertEquals("Expected response was 0 got " + mappings.size(), mappings.size(), 0);
+    assertEquals("Expected response was 0 got " + mappings.size(), mappings
+        .size(), 0);
 
     server.stop();
   }

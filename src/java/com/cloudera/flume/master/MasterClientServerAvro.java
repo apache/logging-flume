@@ -32,10 +32,10 @@ import org.apache.avro.ipc.Server;
 
 import com.cloudera.flume.conf.avro.AvroFlumeConfigData;
 import com.cloudera.flume.conf.avro.FlumeNodeState;
-import com.cloudera.flume.conf.avro.FlumeReportAvro;
+import com.cloudera.flume.reporter.server.avro.AvroFlumeReport;
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
-import com.cloudera.flume.conf.avro.FlumeReportAvroServer;
+import com.cloudera.flume.conf.avro.AvroFlumeClientServer;
 import com.cloudera.flume.master.StatusManager.NodeState;
 import com.cloudera.flume.reporter.ReportEvent;
 
@@ -45,7 +45,7 @@ import com.google.common.base.Preconditions;
  * Avro implementation of a Master server. Performs type conversion and
  * delegates to a MasterClientServer.
  */
-public class MasterClientServerAvro implements FlumeReportAvroServer, RPCServer {
+public class MasterClientServerAvro implements AvroFlumeClientServer, RPCServer {
   Logger LOG = Logger.getLogger(MasterClientServer.class);
   final protected int port;
   protected MasterClientServer delegate;
@@ -97,12 +97,12 @@ public class MasterClientServerAvro implements FlumeReportAvroServer, RPCServer 
     return delegate.checkAck(ackid.toString());
   }
 
-  public java.lang.Void putReports(Map<CharSequence, FlumeReportAvro> reports)
+  public java.lang.Void putReports(Map<CharSequence, AvroFlumeReport> reports)
       throws AvroRemoteException {
     Preconditions.checkNotNull(reports,
         "putReports called with null report map");
     Map<String, ReportEvent> reportsMap = new HashMap<String, ReportEvent>();
-    for (Entry<CharSequence, FlumeReportAvro> r : reports.entrySet()) {
+    for (Entry<CharSequence, AvroFlumeReport> r : reports.entrySet()) {
       Map<String, Long> longMetrics = new HashMap<String, Long>();
       Map<String, Double> doubleMetrics = new HashMap<String, Double>();
       Map<String, String> stringMetrics = new HashMap<String, String>();
@@ -130,7 +130,7 @@ public class MasterClientServerAvro implements FlumeReportAvroServer, RPCServer 
             .format(
                 "Starting blocking thread pool server for control server on port %d...",
                 port));
-    SpecificResponder res = new SpecificResponder(FlumeReportAvroServer.class,
+    SpecificResponder res = new SpecificResponder(AvroFlumeClientServer.class,
         this);
     this.server = new HttpServer(res, port);
     this.server.start();

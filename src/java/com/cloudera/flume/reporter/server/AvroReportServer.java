@@ -15,89 +15,86 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.cloudera.flume.reporter.server;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.avro.ipc.AvroRemoteException;
+import org.apache.avro.ipc.HttpServer;
+import org.apache.avro.specific.SpecificResponder;
 import org.apache.log4j.Logger;
-import org.apache.thrift.TException;
-import org.apache.thrift.TProcessor;
-import org.apache.thrift.transport.TTransportException;
-
 import com.cloudera.flume.conf.FlumeConfiguration;
-import com.cloudera.flume.conf.avro.FlumeReportAvro;
 import com.cloudera.flume.core.Attributes;
 import com.cloudera.flume.core.Attributes.Type;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.Reportable;
-import com.cloudera.flume.util.ThriftServer;
+import com.cloudera.flume.reporter.server.avro.AvroFlumeReportServer;
+import com.cloudera.flume.reporter.server.avro.AvroFlumeReport;
 import com.google.common.base.Preconditions;
 
 /**
- * Serves reports over Thrift
+ * Serves reports over Avro.
  */
-public class ReportServer extends ThriftServer implements
-    FlumeReportServer.Iface {
-  final static protected Logger LOG = Logger.getLogger(ReportServer.class);
+public class AvroReportServer implements AvroFlumeReportServer {
+  final static protected Logger LOG = Logger.getLogger(AvroReportServer.class);
+  private HttpServer http;
+  int port;
 
   /**
    * Reads the port to start on from cfg, property REPORT_SERVER_PORT.
    */
-  public ReportServer(FlumeConfiguration cfg) {
+  public AvroReportServer(FlumeConfiguration cfg) {
     this.port = cfg.getReportServerPort();
   }
 
   /**
    * Constructs a ReportServer to start on supplied port
    */
-  public ReportServer(int port) {
+  public AvroReportServer(int port) {
     this.port = port;
   }
 
   /**
-   * Turn a ReportEvent into a serializable object
+   * Avro interface: returns a serializable report with given name or null if
+   * report doesn't exist
    */
-  static public FlumeReport reportToThrift(ReportEvent report) {
-    Preconditions.checkNotNull(report, "reportToThrift: report is null");
-    Map<String, String> stringMap = new HashMap<String, String>(report
-        .getAllStringMetrics());
-    Map<String, Double> doubleMap = new HashMap<String, Double>(report
-        .getAllDoubleMetrics());
-    Map<String, Long> longMap = new HashMap<String, Long>(report
-        .getAllLongMetrics());
-    for (String k : report.getAttrs().keySet()) {
-      Type t = Attributes.getType(k);
+  @Override
+  public Map<CharSequence, AvroFlumeReport> getAllReports()
+      throws AvroRemoteException {
+    Map<CharSequence, AvroFlumeReport> retMap = new HashMap<CharSequence, AvroFlumeReport>();
 
-      // If there's nothing in the Attributes table, guess at String
-      // When the Attributes table goes away this won't be necessary.
-      if (t == null) {
-        t = Type.STRING;
-      }
-      switch (t) {
-      case DOUBLE:
-        doubleMap.put(k, Attributes.readDouble(report, k));
-        break;
-      case STRING:
-        stringMap.put(k, Attributes.readString(report, k));
-        break;
-      case LONG:
-        longMap.put(k, Attributes.readLong(report, k));
-        break;
-      default:
-        LOG.warn("Unknown type " + t);
-      }
+    ReportManager reportManager = ReportManager.get();
+    Map<String, Reportable> reports = reportManager.getReportables();
+
+    for (Entry<String, Reportable> e : reports.entrySet()) {
+      AvroFlumeReport report = reportToAvro(e.getValue().getReport());
+      retMap.put(e.getKey(), report);
     }
-    return new FlumeReport(stringMap, longMap, doubleMap);
+    return retMap;
+  }
+
+  /**
+   * Avro interface: returns a map of reports in serializable form
+   */
+  @Override
+  public AvroFlumeReport getReportByName(CharSequence reportName)
+      throws AvroRemoteException {
+    ReportManager reportManager = ReportManager.get();
+    Map<String, Reportable> reports = reportManager.getReportables();
+    if (reports.containsKey(reportName.toString())) {
+      return reportToAvro(reports.get(reportName.toString()).getReport());
+    }
+    return null;
   }
 
   /**
    * Turn a ReportEvent into a serializable object
    */
-  static public FlumeReportAvro reportToAvro(ReportEvent report) {
+  static public AvroFlumeReport reportToAvro(ReportEvent report) {
     Preconditions.checkNotNull(report, "reportToThrift: report is null");
     Map<String, String> stringMap = new HashMap<String, String>(report
         .getAllStringMetrics());
@@ -128,7 +125,7 @@ public class ReportServer extends ThriftServer implements
       }
     }
 
-    FlumeReportAvro out = new FlumeReportAvro();
+    AvroFlumeReport out = new AvroFlumeReport();
     Map<CharSequence, CharSequence> stringMapUtf = new HashMap<CharSequence, CharSequence>();
     for (String s : stringMap.keySet()) {
       stringMapUtf.put(s, stringMap.get(s));
@@ -152,53 +149,19 @@ public class ReportServer extends ThriftServer implements
   }
 
   /**
-   * Thrift interface: returns a serializable report with given name or null if
-   * report doesn't exist
+   * Starts the Avro Report Server
    */
-  @Override
-  public FlumeReport getReportByName(String reportName) throws TException {
-    ReportManager reportManager = ReportManager.get();
-    Map<String, Reportable> reports = reportManager.getReportables();
-    if (reports.containsKey(reportName)) {
-      return reportToThrift(reports.get(reportName).getReport());
-    }
-
-    return null;
+  public void serve() throws IOException {
+    SpecificResponder res = new SpecificResponder(AvroFlumeReportServer.class,
+        this);
+    this.http = new HttpServer(res, port);
+    this.http.start();
   }
 
   /**
-   * Thrift interface: returns a map of reports in serializable form
-   */
-  @Override
-  public Map<String, FlumeReport> getAllReports() throws TException {
-    Map<String, FlumeReport> retMap = new HashMap<String, FlumeReport>();
-
-    ReportManager reportManager = ReportManager.get();
-    Map<String, Reportable> reports = reportManager.getReportables();
-
-    for (Entry<String, Reportable> e : reports.entrySet()) {
-      FlumeReport report = reportToThrift(e.getValue().getReport());
-      retMap.put(e.getKey(), report);
-    }
-    return retMap;
-  }
-
-  /**
-   * Starts the Thrift server
-   */
-  public void serve() throws TTransportException {
-    LOG.info("Starting ReportServer...");
-    TProcessor processor = new FlumeReportServer.Processor(this);
-    this.start(processor, port, "Flume Report Server");
-    LOG.info("ReportServer started on port " + port);
-  }
-
-  /**
-   * Stops the Thrift server
+   * Stops the Avro Report server
    */
   public void stop() {
-    LOG.info("Stopping ReportServer...");
-    super.stop();
-    LOG.info("ReportServer stopped");
+    http.close();
   }
 }

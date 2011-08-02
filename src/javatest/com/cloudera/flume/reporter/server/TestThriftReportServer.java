@@ -39,29 +39,29 @@ import com.cloudera.flume.core.Attributes.Type;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.Reportable;
-import com.cloudera.flume.reporter.server.FlumeReport;
-import com.cloudera.flume.reporter.server.FlumeReportServer;
-
+import com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport;
+import com.cloudera.flume.reporter.server.thrift.ThriftFlumeReportServer;
 
 /**
  * Test cases for the Thrift-based report server
  */
-public class TestReportServer {
-  protected final static Logger LOG = Logger.getLogger(TestReportServer.class);
-  ReportServer reportServer;
+public class TestThriftReportServer {
+  protected final static Logger LOG = Logger
+      .getLogger(TestThriftReportServer.class);
+  ThriftReportServer reportServer;
   final static int PORT = 23456;
 
   /**
-   * Create a new ReportServer and add a single report to it
+   * Create a new ThriftReportServer and add a single report to it
    */
   @Before
   public void startReportServer() throws TTransportException {
     final ReportEvent reportEvent = new ReportEvent("test");
-    
-    reportServer = new ReportServer(PORT);
+
+    reportServer = new ThriftReportServer(PORT);
     reportServer.serve();
-    
-    Attributes.setDouble(reportEvent, "doubleAttr", 0.5);
+
+    reportEvent.setDoubleMetric("doubleAttr", .5);
     Attributes.register("doubleAttr", Type.DOUBLE);
     Reportable reportable = new Reportable() {
       @Override
@@ -89,16 +89,17 @@ public class TestReportServer {
     TProtocol protocol = new TBinaryProtocol(transport);
     transport.open();
 
-    FlumeReportServer.Client client = new FlumeReportServer.Client(protocol);
-    Map<String, FlumeReport> ret = client.getAllReports();
+    ThriftFlumeReportServer.Client client = new ThriftFlumeReportServer.Client(
+        protocol);
+    Map<String, ThriftFlumeReport> ret = client.getAllReports();
     assertTrue(ret.size() == 1);
-    FlumeReport rep = ret.get("reportable1");
-    
+    ThriftFlumeReport rep = ret.get("reportable1");
+
     assertNotNull("Report 'reportable1' not found", rep);
     assertTrue("Expected exactly one double metric",
         rep.getDoubleMetricsSize() == 1);
-    assertTrue("Expected double metric to be equal to 0.5",
-        rep.getDoubleMetrics().get("doubleAttr") == 0.5);
+    assertTrue("Expected double metric to be equal to 0.5", rep
+        .getDoubleMetrics().get("doubleAttr") == 0.5);
   }
 
   @Test
@@ -106,15 +107,16 @@ public class TestReportServer {
     TTransport transport = new TSocket("localhost", PORT);
     TProtocol protocol = new TBinaryProtocol(transport);
     transport.open();
-    FlumeReportServer.Client client = new FlumeReportServer.Client(protocol);
-    
-    FlumeReport rep = client.getReportByName("reportable1");
+    ThriftFlumeReportServer.Client client = new ThriftFlumeReportServer.Client(
+        protocol);
+
+    ThriftFlumeReport rep = client.getReportByName("reportable1");
 
     assertNotNull("Report 'repotable1' not found", rep);
     assertTrue("Expected exactly one double metric",
         rep.getDoubleMetricsSize() == 1);
-    assertTrue("Expected double metric to be equal to 0.5",
-        rep.getDoubleMetrics().get("doubleAttr") == 0.5);
+    assertTrue("Expected double metric to be equal to 0.5", rep
+        .getDoubleMetrics().get("doubleAttr") == 0.5);
   }
 
   /**
@@ -122,9 +124,13 @@ public class TestReportServer {
    */
   @Test
   public void testOpenClose() throws TException {
+    // stop the current reportserver, which is opened at the default PORT
+    reportServer.stop();
+
     for (int i = 0; i < 20; ++i) {
-      reportServer = new ReportServer(PORT + 1);
+      reportServer = new ThriftReportServer(PORT + i);
       reportServer.serve();
+      reportServer.stop();
     }
   }
 }

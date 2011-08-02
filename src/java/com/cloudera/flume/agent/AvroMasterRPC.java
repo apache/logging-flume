@@ -34,14 +34,14 @@ import org.apache.log4j.Logger;
 
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.avro.AvroFlumeConfigData;
-import com.cloudera.flume.conf.avro.FlumeReportAvro;
-import com.cloudera.flume.conf.avro.FlumeReportAvroServer;
+import com.cloudera.flume.reporter.server.avro.AvroFlumeReport;
+import com.cloudera.flume.conf.avro.AvroFlumeClientServer;
 import com.cloudera.flume.handlers.endtoend.CollectorAckListener;
 import com.cloudera.flume.handlers.endtoend.AckListener;
 import com.cloudera.flume.master.MasterClientServerAvro;
 import com.cloudera.flume.master.StatusManager.NodeStatus;
 import com.cloudera.flume.reporter.ReportEvent;
-import com.cloudera.flume.reporter.server.ReportServer;
+import com.cloudera.flume.reporter.server.AvroReportServer;
 import com.google.common.base.Preconditions;
 
 /**
@@ -65,7 +65,7 @@ public class AvroMasterRPC implements MasterRPC {
   /**
    * Avro RPC masterClient.
    */
-  protected FlumeReportAvroServer masterClient;
+  protected AvroFlumeClientServer masterClient;
 
   /**
    * Avro HTTP Transceiver.
@@ -81,8 +81,8 @@ public class AvroMasterRPC implements MasterRPC {
     this.masterPort = masterPort;
     URL url = new URL("http", masterHostname, masterPort, "/");
     trans = new HttpTransceiver(url);
-    this.masterClient = (FlumeReportAvroServer) SpecificRequestor.getClient(
-        FlumeReportAvroServer.class, trans);
+    this.masterClient = (AvroFlumeClientServer) SpecificRequestor.getClient(
+        AvroFlumeClientServer.class, trans);
     LOG.info("Connected to master at " + masterHostname + ":" + masterPort);
   }
 
@@ -208,9 +208,9 @@ public class AvroMasterRPC implements MasterRPC {
       throws IOException {
     try {
       ensureInitialized();
-      Map<CharSequence, FlumeReportAvro> flumeReports = new HashMap<CharSequence, FlumeReportAvro>();
+      Map<CharSequence, AvroFlumeReport> flumeReports = new HashMap<CharSequence, AvroFlumeReport>();
       for (Entry<String, ReportEvent> e : reports.entrySet()) {
-        flumeReports.put(e.getKey(), ReportServer.reportToAvro(e.getValue()));
+        flumeReports.put(e.getKey(), AvroReportServer.reportToAvro(e.getValue()));
 
       }
       masterClient.putReports(flumeReports);

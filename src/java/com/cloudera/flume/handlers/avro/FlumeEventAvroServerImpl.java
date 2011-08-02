@@ -53,9 +53,7 @@ public class FlumeEventAvroServerImpl implements FlumeEventAvroServer {
   /**
    * Stops the FlumeEventAvroServer, called only from the server.
    */
-  public Void close() throws AvroRemoteException {
+  public void close() throws AvroRemoteException {
     http.close();
-    return null;
   }
-
 }

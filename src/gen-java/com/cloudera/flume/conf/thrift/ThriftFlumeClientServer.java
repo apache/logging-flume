@@ -23,7 +23,7 @@ import org.apache.thrift.*;
 import org.apache.thrift.meta_data.*;
 import org.apache.thrift.protocol.*;
 
-public class FlumeClientServer {
+public class ThriftFlumeClientServer {
 
   public interface Iface {
 
@@ -39,7 +39,7 @@ public class FlumeClientServer {
 
     public boolean checkAck(String ackid) throws TException;
 
-    public void putReports(Map<String,com.cloudera.flume.reporter.server.FlumeReport> reports) throws TException;
+    public void putReports(Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> reports) throws TException;
 
   }
 
@@ -269,13 +269,13 @@ public class FlumeClientServer {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "checkAck failed: unknown result");
     }
 
-    public void putReports(Map<String,com.cloudera.flume.reporter.server.FlumeReport> reports) throws TException
+    public void putReports(Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> reports) throws TException
     {
       send_putReports(reports);
       recv_putReports();
     }
 
-    public void send_putReports(Map<String,com.cloudera.flume.reporter.server.FlumeReport> reports) throws TException
+    public void send_putReports(Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> reports) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("putReports", TMessageType.CALL, seqid_));
       putReports_args args = new putReports_args();
@@ -4179,7 +4179,7 @@ public class FlumeClientServer {
 
     private static final TField REPORTS_FIELD_DESC = new TField("reports", TType.MAP, (short)1);
 
-    public Map<String,com.cloudera.flume.reporter.server.FlumeReport> reports;
+    public Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> reports;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
@@ -4242,7 +4242,7 @@ public class FlumeClientServer {
       put(_Fields.REPORTS, new FieldMetaData("reports", TFieldRequirementType.DEFAULT, 
           new MapMetaData(TType.MAP, 
               new FieldValueMetaData(TType.STRING), 
-              new StructMetaData(TType.STRUCT, com.cloudera.flume.reporter.server.FlumeReport.class))));
+              new StructMetaData(TType.STRUCT, com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport.class))));
     }});
 
     static {
@@ -4253,7 +4253,7 @@ public class FlumeClientServer {
     }
 
     public putReports_args(
-      Map<String,com.cloudera.flume.reporter.server.FlumeReport> reports)
+      Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> reports)
     {
       this();
       this.reports = reports;
@@ -4264,15 +4264,15 @@ public class FlumeClientServer {
      */
     public putReports_args(putReports_args other) {
       if (other.isSetReports()) {
-        Map<String,com.cloudera.flume.reporter.server.FlumeReport> __this__reports = new HashMap<String,com.cloudera.flume.reporter.server.FlumeReport>();
-        for (Map.Entry<String, com.cloudera.flume.reporter.server.FlumeReport> other_element : other.reports.entrySet()) {
+        Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> __this__reports = new HashMap<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport>();
+        for (Map.Entry<String, com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> other_element : other.reports.entrySet()) {
 
           String other_element_key = other_element.getKey();
-          com.cloudera.flume.reporter.server.FlumeReport other_element_value = other_element.getValue();
+          com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport other_element_value = other_element.getValue();
 
           String __this__reports_copy_key = other_element_key;
 
-          com.cloudera.flume.reporter.server.FlumeReport __this__reports_copy_value = new com.cloudera.flume.reporter.server.FlumeReport(other_element_value);
+          com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport __this__reports_copy_value = new com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport(other_element_value);
 
           __this__reports.put(__this__reports_copy_key, __this__reports_copy_value);
         }
@@ -4293,18 +4293,18 @@ public class FlumeClientServer {
       return (this.reports == null) ? 0 : this.reports.size();
     }
 
-    public void putToReports(String key, com.cloudera.flume.reporter.server.FlumeReport val) {
+    public void putToReports(String key, com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport val) {
       if (this.reports == null) {
-        this.reports = new HashMap<String,com.cloudera.flume.reporter.server.FlumeReport>();
+        this.reports = new HashMap<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport>();
       }
       this.reports.put(key, val);
     }
 
-    public Map<String,com.cloudera.flume.reporter.server.FlumeReport> getReports() {
+    public Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> getReports() {
       return this.reports;
     }
 
-    public putReports_args setReports(Map<String,com.cloudera.flume.reporter.server.FlumeReport> reports) {
+    public putReports_args setReports(Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> reports) {
       this.reports = reports;
       return this;
     }
@@ -4330,7 +4330,7 @@ public class FlumeClientServer {
         if (value == null) {
           unsetReports();
         } else {
-          setReports((Map<String,com.cloudera.flume.reporter.server.FlumeReport>)value);
+          setReports((Map<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport>)value);
         }
         break;
 
@@ -4415,13 +4415,13 @@ public class FlumeClientServer {
               if (field.type == TType.MAP) {
                 {
                   TMap _map9 = iprot.readMapBegin();
-                  this.reports = new HashMap<String,com.cloudera.flume.reporter.server.FlumeReport>(2*_map9.size);
+                  this.reports = new HashMap<String,com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport>(2*_map9.size);
                   for (int _i10 = 0; _i10 < _map9.size; ++_i10)
                   {
                     String _key11;
-                    com.cloudera.flume.reporter.server.FlumeReport _val12;
+                    com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport _val12;
                     _key11 = iprot.readString();
-                    _val12 = new com.cloudera.flume.reporter.server.FlumeReport();
+                    _val12 = new com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport();
                     _val12.read(iprot);
                     this.reports.put(_key11, _val12);
                   }
@@ -4449,7 +4449,7 @@ public class FlumeClientServer {
         oprot.writeFieldBegin(REPORTS_FIELD_DESC);
         {
           oprot.writeMapBegin(new TMap(TType.STRING, TType.STRUCT, this.reports.size()));
-          for (Map.Entry<String, com.cloudera.flume.reporter.server.FlumeReport> _iter13 : this.reports.entrySet())
+          for (Map.Entry<String, com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport> _iter13 : this.reports.entrySet())
           {
             oprot.writeString(_iter13.getKey());
             _iter13.getValue().write(oprot);

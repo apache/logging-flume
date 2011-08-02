@@ -54,7 +54,7 @@ struct ThriftFlumeConfigData {
 // TODO (jon) right now sourceId is a name selected by client, 
 // likely to be some naming consistency issues.
 
-service FlumeClientServer {
+service ThriftFlumeClientServer {
   // This will get removed from the service
   // returns true if the sourceId's configuration has changed												 
   bool heartbeat(1:string logicalNode, 4:string physicalNode, 5:string host, 2:FlumeNodeState s, 3:i64 timestamp),
@@ -74,6 +74,6 @@ service FlumeClientServer {
   bool checkAck(1:string ackid),
 
   // For nodes to send reports to the master
-  void putReports(1:map<string, flumereportserver.FlumeReport> reports)
+  void putReports(1:map<string, flumereportserver.ThriftFlumeReport> reports)
 }
 

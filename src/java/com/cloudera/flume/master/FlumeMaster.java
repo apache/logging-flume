@@ -42,7 +42,8 @@ import com.cloudera.flume.master.logical.LogicalConfigurationManager;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.Reportable;
-import com.cloudera.flume.reporter.server.ReportServer;
+import com.cloudera.flume.reporter.server.AvroReportServer;
+import com.cloudera.flume.reporter.server.ThriftReportServer;
 import com.cloudera.flume.util.FlumeVMInfo;
 import com.cloudera.flume.util.SystemInfo;
 import com.cloudera.util.CheckJavaVersion;
@@ -70,8 +71,13 @@ public class FlumeMaster implements Reportable {
 
   MasterAdminServer configServer;
   MasterClientServer controlServer;
-  ReportServer reportServer;
-
+  /*
+   * We create instances of both AvroReportServer and ThriftReportServer, and
+   * start the one defined by the flag flume.report.server.rpc.type in the
+   * configuration file.
+   */
+  ThriftReportServer thriftReportServer = null;
+  AvroReportServer avroReportServer = null;
   StatusHttpServer http = null;
 
   final boolean doHttp;
@@ -219,14 +225,28 @@ public class FlumeMaster implements Reportable {
 
     controlServer = new MasterClientServer(this, FlumeConfiguration.get());
     configServer = new MasterAdminServer(this, FlumeConfiguration.get());
-    reportServer = new ReportServer(FlumeConfiguration.get()
+    /*
+     * We instantiate both kinds of report servers below, but no resources are
+     * allocated till we call serve() on them.
+     */
+    avroReportServer = new AvroReportServer(FlumeConfiguration.get()
+        .getReportServerPort());
+    thriftReportServer = new ThriftReportServer(FlumeConfiguration.get()
         .getReportServerPort());
 
     ReportManager.get().add(this);
     try {
       controlServer.serve();
       configServer.serve();
-      reportServer.serve();
+      /*
+       * Start the Avro/Thrift ReportServer based on the flag set in the
+       * configuration file.
+       */
+      if (cfg.getReportServerRPC() == cfg.RPC_TYPE_AVRO) {
+        avroReportServer.serve();
+      } else {
+        thriftReportServer.serve();
+      }
     } catch (TTransportException e1) {
       throw new IOException("Error starting control or config server", e1);
     }
@@ -281,12 +301,20 @@ public class FlumeMaster implements Reportable {
         controlServer.stop();
         controlServer = null;
       }
-
-      if (reportServer != null) {
-        reportServer.stop();
-        reportServer = null;
+      /*
+       * Close the reportserver which started.
+       */
+      if (cfg.getReportServerRPC() == cfg.RPC_TYPE_AVRO) {
+        if (avroReportServer != null) {
+          avroReportServer.stop();
+          avroReportServer = null;
+        }
+      } else {
+        if (thriftReportServer != null) {
+          thriftReportServer.stop();
+          thriftReportServer = null;
+        }
       }
-
       specman.stop();
 
       reaper.interrupt();
@@ -384,7 +412,7 @@ public class FlumeMaster implements Reportable {
     // Make sure the Java version is not older than 1.6
     if (!CheckJavaVersion.isVersionOk()) {
       LOG
-          .error("Exiting because of an old Java version or Java version in bad format") ;
+          .error("Exiting because of an old Java version or Java version in bad format");
       System.exit(-1);
     }
     FlumeConfiguration.hardExitLoadConfig(); // if config file is bad hardexit.

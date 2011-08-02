@@ -29,14 +29,14 @@ import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
-import com.cloudera.flume.conf.thrift.FlumeClientServer;
+import com.cloudera.flume.conf.thrift.ThriftFlumeClientServer;
 import com.cloudera.flume.conf.thrift.ThriftFlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.thrift.FlumeNodeState;
-import com.cloudera.flume.conf.thrift.FlumeClientServer.Iface;
+import com.cloudera.flume.conf.thrift.ThriftFlumeClientServer.Iface;
 import com.cloudera.flume.master.StatusManager.NodeState;
 import com.cloudera.flume.reporter.ReportEvent;
-import com.cloudera.flume.reporter.server.FlumeReport;
+import com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport;
 import com.cloudera.flume.util.ThriftServer;
 import com.google.common.base.Preconditions;
 
@@ -45,7 +45,7 @@ import com.google.common.base.Preconditions;
  * delegates to a MasterClientServer.
  */
 public class MasterClientServerThrift extends ThriftServer implements
-    FlumeClientServer.Iface, RPCServer {
+    ThriftFlumeClientServer.Iface, RPCServer {
   Logger LOG = Logger.getLogger(MasterClientServer.class);
   final protected int port;
   protected MasterClientServer delegate;
@@ -83,11 +83,11 @@ public class MasterClientServerThrift extends ThriftServer implements
     return delegate.checkAck(ackid);
   }
 
-  public void putReports(Map<String, FlumeReport> reports) throws TException {
+  public void putReports(Map<String, ThriftFlumeReport> reports) throws TException {
     Preconditions.checkNotNull(reports,
         "putReports called with null report map");
     Map<String, ReportEvent> reportsMap = new HashMap<String, ReportEvent>();
-    for (final Entry<String, FlumeReport> r : reports.entrySet()) {
+    for (final Entry<String, ThriftFlumeReport> r : reports.entrySet()) {
       ReportEvent event = new ReportEvent(r.getValue().longMetrics, r
           .getValue().stringMetrics, r.getValue().doubleMetrics);
       reportsMap.put(r.getKey(), event);
@@ -103,7 +103,7 @@ public class MasterClientServerThrift extends ThriftServer implements
                 "Starting blocking thread pool server for control server on port %d...",
                 port));
     try {
-      this.start(new FlumeClientServer.Processor((Iface) this), port,
+      this.start(new ThriftFlumeClientServer.Processor((Iface) this), port,
           "MasterClientServer");
     } catch (TTransportException e) {
       throw new IOException(e.getMessage());

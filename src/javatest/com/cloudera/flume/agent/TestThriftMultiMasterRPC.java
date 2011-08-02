@@ -29,13 +29,13 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 import com.cloudera.flume.conf.FlumeConfiguration;
-import com.cloudera.flume.conf.thrift.FlumeClientServer;
+import com.cloudera.flume.conf.thrift.ThriftFlumeClientServer;
 import com.cloudera.flume.conf.thrift.ThriftFlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.thrift.FlumeNodeState;
-import com.cloudera.flume.conf.thrift.FlumeClientServer.Iface;
+import com.cloudera.flume.conf.thrift.ThriftFlumeClientServer.Iface;
 import com.cloudera.flume.master.MasterClientServerThrift;
-import com.cloudera.flume.reporter.server.FlumeReport;
+import com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport;
 import com.cloudera.flume.util.ThriftServer;
 
 /**
@@ -56,7 +56,7 @@ public class TestThriftMultiMasterRPC {
 
     public void serve(int port) throws TTransportException {
       LOG.info("Starting dummy server");
-      this.start(new FlumeClientServer.Processor(this), port, "MyThriftServer"
+      this.start(new ThriftFlumeClientServer.Processor(this), port, "MyThriftServer"
           + port);
     }
 
@@ -92,7 +92,7 @@ public class TestThriftMultiMasterRPC {
     }
 
     @Override
-    public void putReports(Map<String, FlumeReport> reports) throws TException {
+    public void putReports(Map<String, ThriftFlumeReport> reports) throws TException {
 
     }
 

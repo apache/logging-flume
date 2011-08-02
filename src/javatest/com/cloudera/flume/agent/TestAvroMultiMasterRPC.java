@@ -35,8 +35,8 @@ import org.mortbay.log.Log;
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.avro.AvroFlumeConfigData;
-import com.cloudera.flume.conf.avro.FlumeReportAvro;
-import com.cloudera.flume.conf.avro.FlumeReportAvroServer;
+import com.cloudera.flume.reporter.server.avro.AvroFlumeReport;
+import com.cloudera.flume.conf.avro.AvroFlumeClientServer;
 import com.cloudera.flume.conf.avro.FlumeNodeState;
 import com.cloudera.flume.master.MasterClientServerAvro;
 
@@ -46,7 +46,7 @@ public class TestAvroMultiMasterRPC {
   /**
    * Mock AvroServer.
    */
-  public class MockAvroServer implements FlumeReportAvroServer {
+  public class MockAvroServer implements AvroFlumeClientServer {
     boolean first = true;
     protected Server server;
 
@@ -65,7 +65,7 @@ public class TestAvroMultiMasterRPC {
                   "Starting blocking thread pool server for control server on port %d...",
                   port));
       SpecificResponder res = new SpecificResponder(
-          FlumeReportAvroServer.class, this);
+          AvroFlumeClientServer.class, this);
       this.server = new HttpServer(res, port);
       this.server.start();
     }
@@ -107,7 +107,7 @@ public class TestAvroMultiMasterRPC {
     }
 
     @Override
-    public Void putReports(Map<CharSequence, FlumeReportAvro> reports)
+    public Void putReports(Map<CharSequence, AvroFlumeReport> reports)
         throws AvroRemoteException {
       return null;
     }

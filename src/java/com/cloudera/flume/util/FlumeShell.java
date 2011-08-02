@@ -54,8 +54,8 @@ import com.cloudera.flume.conf.FlumeConfiguration;
 
 import com.cloudera.flume.master.Command;
 import com.cloudera.flume.master.StatusManager;
-import com.cloudera.flume.reporter.server.FlumeReport;
-import com.cloudera.flume.reporter.server.FlumeReportServer;
+import com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport;
+import com.cloudera.flume.reporter.server.thrift.ThriftFlumeReportServer;
 import com.cloudera.flume.shell.CommandBuilder;
 import com.cloudera.util.CheckJavaVersion;
 
@@ -176,7 +176,7 @@ public class FlumeShell {
   }
 
   protected AdminRPC client = null;
-  protected FlumeReportServer.Client reportClient = null;
+  protected ThriftFlumeReportServer.Client reportClient = null;
   public static final long CMD_WAIT_TIME_MS = 10 * 1000;
 
   protected static class FlumeCompletor implements Completor {
@@ -551,7 +551,7 @@ public class FlumeShell {
     }
 
     if (cmd.getCommand().equals("getreports")) {
-      Map<String, FlumeReport> reports;
+      Map<String, ThriftFlumeReport> reports;
       try {
         reports = reportClient.getAllReports();
       } catch (TException e) {
@@ -561,7 +561,7 @@ public class FlumeShell {
       }
       System.out.println("Master knows about " + reports.size() + " reports");
 
-      for (Entry<String, FlumeReport> e : reports.entrySet()) {
+      for (Entry<String, ThriftFlumeReport> e : reports.entrySet()) {
         System.out.println("\t" + e.getKey() + " --> "
             + e.getValue().toString());
       }
@@ -850,12 +850,12 @@ public class FlumeShell {
             : "(disconnected)") + "] ";
   }
 
-  private FlumeReportServer.Client connectReportClient(String host, int port)
+  private ThriftFlumeReportServer.Client connectReportClient(String host, int port)
       throws TTransportException {
     TTransport masterTransport = new TSocket(host, port);
     TProtocol protocol = new TBinaryProtocol(masterTransport);
     masterTransport.open();
-    return new FlumeReportServer.Client(protocol);
+    return new ThriftFlumeReportServer.Client(protocol);
   }
 
   protected void connect(String host, int aPort, int rPort) throws IOException,

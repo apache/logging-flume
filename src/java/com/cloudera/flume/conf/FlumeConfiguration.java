@@ -157,7 +157,7 @@ public class FlumeConfiguration extends Configuration {
   public static final String NODE_CLOSE_TIMEOUT = "flume.node.close.timeout";
   public static final String CONFIG_ADMIN_PORT = "flume.config.admin.port";
   public static final String REPORT_SERVER_PORT = "flume.report.server.port";
-
+  public static final String REPORT_SERVER_RPC_TYPE = "flume.report.server.rpc.type";
   public static final String MASTER_SAVEFILE = "flume.master.savefile";
   public static final String MASTER_SAVEFILE_AUTOLOAD = "flume.master.savefile.autoload";
 
@@ -662,6 +662,25 @@ public class FlumeConfiguration extends Configuration {
     return getInt(REPORT_SERVER_PORT, DEFAULT_REPORT_SERVER_PORT);
   }
 
+
+  /**
+   * This returns the type of RPC mechanism (Thrift or Avro) chosen for the
+   * FlumeReportServer.
+   */
+  public String getReportServerRPC() {
+    String[] validRPCProtocols = { RPC_TYPE_AVRO, RPC_TYPE_THRIFT };
+    String entered = get(REPORT_SERVER_RPC_TYPE, RPC_TYPE_THRIFT).toUpperCase();
+    for (String prot : validRPCProtocols) {
+      if (entered.equals(prot)) {
+        return prot;
+      }
+    }
+    // defaulting to Thrift with a polite warning
+    LOG.warn("flume.report.server.rpc.type incorrectly defined, should be either"
+        + " \"THRIFT\" or \"AVRO\".  Defaulting to \"THRIFT\"");
+    return RPC_TYPE_THRIFT;
+  }
+  
   /**
    * If MASTER_HEARTBEAT_PORT is set, we use that as our heartbeat port. If not,
    * we look at the list of server:port pairs in MASTER_HEARTBEAT_SERVERS, in

@@ -15,18 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-# A simple Report server using Thrift
-namespace java com.cloudera.flume.reporter.server.thrift
+// A simple report server using Avro
 
-struct ThriftFlumeReport {
-  3: map<string, string> stringMetrics,
-  4: map<string, i64> longMetrics,
-  5: map<string, double> doubleMetrics
-}
+@namespace("com.cloudera.flume.reporter.server.avro")
 
-service ThriftFlumeReportServer {
+protocol AvroFlumeReportServer{
+import schema "avroflumereport.avsc";
   // returns a serializable report with given name or null if report doesn't exist
-  map<string, ThriftFlumeReport> getAllReports(),
+  map<AvroFlumeReport> getAllReports();
   // returns a map of reports in serializable form
-  ThriftFlumeReport getReportByName(1: string reportName),
+  AvroFlumeReport getReportByName(string reportName);
 }

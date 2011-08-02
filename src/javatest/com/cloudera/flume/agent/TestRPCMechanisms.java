@@ -39,17 +39,17 @@ import static org.junit.Assert.assertNotNull;
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.avro.AvroFlumeConfigData;
-import com.cloudera.flume.conf.avro.FlumeReportAvro;
-import com.cloudera.flume.conf.avro.FlumeReportAvroServer;
+import com.cloudera.flume.reporter.server.avro.AvroFlumeReport;
+import com.cloudera.flume.conf.avro.AvroFlumeClientServer;
 import com.cloudera.flume.conf.avro.FlumeNodeState;
-import com.cloudera.flume.conf.thrift.FlumeClientServer;
+import com.cloudera.flume.conf.thrift.ThriftFlumeClientServer;
 import com.cloudera.flume.conf.thrift.ThriftFlumeConfigData;
-import com.cloudera.flume.conf.thrift.FlumeClientServer.Iface;
+import com.cloudera.flume.conf.thrift.ThriftFlumeClientServer.Iface;
 import com.cloudera.flume.master.MasterClientServerAvro;
 import com.cloudera.flume.master.MasterClientServerThrift;
 import com.cloudera.flume.master.StatusManager;
 import com.cloudera.flume.reporter.ReportEvent;
-import com.cloudera.flume.reporter.server.FlumeReport;
+import com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport;
 import com.cloudera.flume.util.ThriftServer;
 
 /**
@@ -62,7 +62,7 @@ public class TestRPCMechanisms {
   /**
    * Mock AvroServer.
    */
-  public class MockAvroServer implements FlumeReportAvroServer {
+  public class MockAvroServer implements AvroFlumeClientServer {
     protected Server server;
 
     public MockAvroServer() {
@@ -80,7 +80,7 @@ public class TestRPCMechanisms {
               "Starting blocking thread pool server for control server on port %d...",
               port));
       SpecificResponder res = new SpecificResponder(
-          FlumeReportAvroServer.class, this);
+          AvroFlumeClientServer.class, this);
       this.server = new HttpServer(res, port);
       this.server.start();
     }
@@ -132,11 +132,11 @@ public class TestRPCMechanisms {
     }
 
     @Override
-    public Void putReports(Map<CharSequence, FlumeReportAvro> reports)
+    public Void putReports(Map<CharSequence, AvroFlumeReport> reports)
         throws AvroRemoteException {
       Log.info("putReports called at server on " + this.server.getPort());
       assertEquals(1, reports.size());
-      FlumeReportAvro report = reports.get("reportKey");
+      AvroFlumeReport report = reports.get("reportKey");
       assertNotNull(report);
       Map<CharSequence, Long> longMetrics = report.longMetrics;
       assertEquals(2, longMetrics.size());
@@ -172,7 +172,7 @@ public class TestRPCMechanisms {
    * Mock ThriftServer.
    */
   public class MockThriftServer extends ThriftServer implements
-  FlumeClientServer.Iface {
+  ThriftFlumeClientServer.Iface {
 
     @Override
     public void acknowledge(String ackid) throws TException {
@@ -217,10 +217,10 @@ public class TestRPCMechanisms {
     }
 
     @Override
-    public void putReports(Map<String, FlumeReport> reports) throws TException {
+    public void putReports(Map<String, ThriftFlumeReport> reports) throws TException {
       Log.info("putReports called at server on " + this.port);
       assertEquals(1, reports.size());
-      FlumeReport report = reports.get("reportKey");
+      ThriftFlumeReport report = reports.get("reportKey");
       assertNotNull(report);
 
       Map<String, Long> longMetrics = report.longMetrics;
@@ -256,7 +256,7 @@ public class TestRPCMechanisms {
               "Starting blocking thread pool server for control server on port %d...",
               port));
       try {
-        this.start(new FlumeClientServer.Processor((Iface) this), port,
+        this.start(new ThriftFlumeClientServer.Processor((Iface) this), port,
         "MasterClientServer");
       } catch (TTransportException e) {
         throw new IOException(e.getMessage());

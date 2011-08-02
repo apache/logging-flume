@@ -250,6 +250,14 @@ configuration values placed in flume-site.xml.  -->
     <description>The time (in milliseconds) that a Flume Master server
       waits between rounds of gossip.</description>
   </property>
+
+  <property>
+    <name>flume.report.server.rpc.type</name>
+    <value>THRIFT</value>
+    <description> 
+	This specifies the RPC(THRIFT/AVRO) framework to be used for the ReportServer. The default is THRIFT.
+    </description>
+  </property>
   
   <!-- ================================================== -->
   <!-- Master ZooKeeper store =========================== -->

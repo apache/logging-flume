@@ -33,16 +33,16 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
-import com.cloudera.flume.conf.thrift.FlumeClientServer;
+import com.cloudera.flume.conf.thrift.ThriftFlumeClientServer;
 import com.cloudera.flume.conf.FlumeConfigData;
-import com.cloudera.flume.conf.thrift.FlumeClientServer.Client;
+import com.cloudera.flume.conf.thrift.ThriftFlumeClientServer.Client;
 import com.cloudera.flume.handlers.endtoend.AckListener;
 import com.cloudera.flume.handlers.endtoend.CollectorAckListener;
 import com.cloudera.flume.master.MasterClientServerThrift;
 import com.cloudera.flume.master.StatusManager.NodeStatus;
 import com.cloudera.flume.reporter.ReportEvent;
-import com.cloudera.flume.reporter.server.FlumeReport;
-import com.cloudera.flume.reporter.server.ReportServer;
+import com.cloudera.flume.reporter.server.thrift.ThriftFlumeReport;
+import com.cloudera.flume.reporter.server.ThriftReportServer;
 import com.google.common.base.Preconditions;
 
 /**
@@ -55,7 +55,7 @@ public class ThriftMasterRPC implements MasterRPC {
   // master config and connections
   protected String masterHostname; // network name of the master
   protected int masterPort; // master's heartbeat tcp port
-  protected FlumeClientServer.Iface masterClient;// master thrift rpc client
+  protected ThriftFlumeClientServer.Iface masterClient;// master thrift rpc client
 
   /**
    * Create a ThriftMasterRPC that speaks to Thrift server on
@@ -87,7 +87,7 @@ public class ThriftMasterRPC implements MasterRPC {
   public synchronized void close() {
     // multiple close is ok.
     if (masterClient != null) {
-      TTransport masterTransport = ((FlumeClientServer.Client) masterClient)
+      TTransport masterTransport = ((ThriftFlumeClientServer.Client) masterClient)
           .getOutputProtocol().getTransport();
       masterTransport.close();
       LOG.info("Connection from node to master closed");
@@ -192,9 +192,9 @@ public class ThriftMasterRPC implements MasterRPC {
       throws IOException {
     try {
       ensureConnected();
-      Map<String, FlumeReport> flumeReports = new HashMap<String, FlumeReport>();
+      Map<String, ThriftFlumeReport> flumeReports = new HashMap<String, ThriftFlumeReport>();
       for (Entry<String, ReportEvent> e : reports.entrySet()) {
-        flumeReports.put(e.getKey(), ReportServer.reportToThrift(e.getValue()));
+        flumeReports.put(e.getKey(), ThriftReportServer.reportToThrift(e.getValue()));
       }
       masterClient.putReports(flumeReports);
     } catch (TException e) {
