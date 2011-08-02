@@ -30,12 +30,15 @@ to call at top-level: ant deploy-contrib compile-core-test
   <property name="name" value="flume"/>
   <property name="version" value="0.9.1-dev"/>
   <property name="final.name" value="${name}-${version}"/>
+  <property name="year" value="2009-2010"/>
 
   <property name="build.dir" value="${basedir}/build"/>
   <property name="build.src" value="${build.dir}/src"/>
   <property name="build.classes" value="${build.dir}/classes"/>
   <property name="build.encoding" value="ISO-8859-1"/>
   <property name="build.test" value="${build.dir}/test"/>
+  <property name="build.docs" value="${build.dir}/docs" />
+  <property name="build.javadoc" value="${build.docs}/api" />
 
   <property name="build.perf" value="${build.dir}/perf"/>
   <property name="perf.src.dir" value="${basedir}/src/javaperf"/>
@@ -98,6 +101,9 @@ to call at top-level: ant deploy-contrib compile-core-test
   <property name="build.dir.eclipse" value=".eclipse"/>
   <property name="build.dir.eclipse-main-classes" value="${build.dir.eclipse}/classes-main"/>
   <property name="build.dir.eclipse-test-classes" value="${build.dir.eclipse}/classes-test"/>
+
+  <!-- javadoc properties  -->
+  <property name="javadoc.link.java" value="http://java.sun.com/j2se/1.6.0/docs/api/" />
 
   <path id="libs.classpath">
     <pathelement location="${conf.dir}"/>
@@ -960,6 +966,27 @@ to call at top-level: ant deploy-contrib compile-core-test
     <echo message="Cleaning generated files and stuff"/>
     <delete dir="${build.dir}" />
     <delete dir="${thrift.gen.dir}" />
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- Documentation                                                      -->
+  <!-- ================================================================== -->
+  <target name="javadoc" depends="jar, jar-test" description="Create documentation">
+    <mkdir dir="${build.javadoc}" />
+    <javadoc packagenames="com.cloudera.*" destdir="${build.javadoc}" author="true" 
+	 version="true" use="true" windowtitle="${name} ${version} API" 
+	 doctitle="${final.name} API" bottom="Copyright &amp;copy; ${year} Cloudera, Inc.">
+      <packageset dir="${core.src.dir}" />
+      <packageset dir="${aho.src.dir}" />
+      <packageset dir="${test.src.dir}" />
+      <packageset dir="${perf.src.dir}" />
+      <link href="${javadoc.link.java}" />
+      <classpath>
+        <path refid="test.classpath" />
+        <pathelement path="${output.jarfile}" />
+      </classpath>
+        <group title="flume" packages="com.cloudera.flume*" />
+    </javadoc>
   </target>
 
 </project>
