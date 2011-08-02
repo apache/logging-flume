@@ -1,0 +1,838 @@
+<?xml version="1.0"?>
+
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<!--
+Before you can run these subtargets directly, you need
+to call at top-level: ant deploy-contrib compile-core-test
+-->
+<project name="flume" default="tar" xmlns:ivy="antlib:org.apache.ivy.ant">
+  <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+    <classpath>
+      <pathelement location="${basedir}/libbuild/ant-contrib-1.0b3.jar"/>
+    </classpath>
+  </taskdef>
+  <property name="name" value="flume"/>
+  <property name="version" value="0.3.0"/>
+  <property name="final.name" value="${name}-${version}"/>
+
+  <property name="build.dir" value="${basedir}/build"/>
+  <property name="build.src" value="${build.dir}/src"/>
+  <property name="build.classes" value="${build.dir}/classes"/>
+  <property name="build.encoding" value="ISO-8859-1"/>
+  <property name="build.test" value="${build.dir}/test"/>
+
+  <property name="build.perf" value="${build.dir}/perf"/>
+  <property name="perf.src.dir" value="${basedir}/src/javaperf"/>
+  <property name="perf.build.dir" value="${build.dir}/perf"/>
+  <property name="perf.output" value="yes"/>
+
+  <property environment="env"/>
+  <property name="src.dir" value="${basedir}/src/"/>  	
+  <property name="core.src.dir" value="${src.dir}/java"/>
+  <property name="antlr.src.dir" value="${src.dir}/antlr"/>
+  <property name="aho.src.dir" value="${src.dir}/ahocorasick"/>
+  <property name="test.src.dir" value="${src.dir}/javatest"/>
+  <property name="perf.src.dir" value="${src.dir}/javaperf"/>
+  <property name="conf.dir" value="${basedir}/conf"/>
+  <property name="data.dir" value="${src.dir}/data"/>  	
+  <property name="perf.data.dir" value="${src.dir}/javaperf/data"/>  	
+
+  <property name="build.webapps" value="${build.dir}/webapps"/>
+  <property name="src.webapps" value="${basedir}/src/webapps"/>
+
+  <property name="thrift.src.dir" value="${src.dir}/thrift"/>
+  <property name="thrift.gen.dir" value="${basedir}/src/gen-java"/>
+  <property name="thrift.event.package" value="com/cloudera/flume/handlers/thrift"/> 
+  <property name="thrift.config.package" value="com/cloudera/flume/conf/thrift"/> 
+  <property name="thrift.admin.package" value="com/cloudera/flume/conf/thrift"/> 
+  <property name="thrift.scribe.package" value="com/cloudera/flume/handlers/scribe"/>
+  <property name="test.src.dir" value="${basedir}/src/javatest"/>
+  <property name="test.build.dir" value="${build.dir}/test"/>
+  <property name="test.generated.dir" value="${test.build.dir}/src"/>
+  <property name="test.build.data" value="${test.build.dir}/data"/>
+  <property name="test.log.dir" value="${test.build.dir}/logs"/>
+  <property name="test.build.classes" value="${test.build.dir}/classes"/>
+  <property name="test.include" value="Test*"/>
+  <property name="test.classpath.id" value="test.classpath"/>
+  <property name="test.output" value="no"/>
+  <property name="test.timeout" value="900000"/>
+  <property name="test.junit.output.format" value="plain"/>
+  
+  <property name="lib.dir" value="${basedir}/lib"/>
+  <property name="test.lib.dir" value="${basedir}/libtest"/>
+  <property name="build.lib.dir" value="${basedir}/libbuild"/>
+
+
+  <property name="javac.debug" value="on"/>
+  <property name="javac.optimize" value="on"/>
+  <property name="javac.deprecation" value="off"/>
+  <property name="javac.version" value="1.5"/>
+  <property name="javac.args" value=""/>
+  <property name="javac.args.warnings" value="-Xlint:unchecked"/>
+
+  <property name="ivy.version" value="2.1.0"/>
+  <property name="ivy.url"
+            value="http://repo2.maven.org/maven2/org/apache/ivy/ivy" />
+  <property name="ivy.home" value="${user.home}/.ant" />
+  <!-- for now ivy.lib and ivy.test.lib stay at legacy location -->
+  <property name="ivy.lib" value="${lib.dir}"/>
+  <property name="ivy.test.lib" value="${test.lib.dir}"/>
+
+
+  <!-- the normal classpath -->
+  <path id="classpath">
+    <pathelement location="${build.classes}"/>
+    <fileset dir="${lib.dir}">
+      <include name="**/*.jar" />
+      <exclude name="**/excluded/" />
+    </fileset>
+    <fileset dir="${build.lib.dir}">
+      <include name="**/*.jar" />
+      <exclude name="**/excluded/" />
+    </fileset>
+    <pathelement location="${conf.dir}"/>
+  </path>
+
+  <!-- the unit test classpath: uses test.src.dir for configuration -->
+  <path id="test.classpath">
+    <pathelement location="${test.build.classes}" />
+    <pathelement location="${test.src.dir}"/>
+    <pathelement location="${build.dir}"/>
+    <fileset dir="${test.lib.dir}">
+      <include name="**/*.jar" />
+      <exclude name="**/excluded/" />
+    </fileset>
+    <path refid="classpath"/>
+  </path>
+
+
+  <target name="init">
+    <mkdir dir="${build.dir}"/>
+    <mkdir dir="${build.dir}/flume"/>
+    <mkdir dir="${build.classes}"/>
+    <mkdir dir="${test.build.dir}"/>
+    <mkdir dir="${test.build.classes}"/>
+
+    <mkdir dir="${basedir}/libtest"/>
+
+    <condition property="ivy.jar.exists">
+      <available file="${lib.dir}/ivy-${ivy.version}.jar"/>
+    </condition>
+
+    <mkdir dir="${perf.build.dir}"/>
+
+    <mkdir dir="${build.webapps}/flumeconfig/WEB-INF"/>
+    <mkdir dir="${build.webapps}/flumeagent/WEB-INF"/>
+
+    <mkdir dir="${build.dir}/test/src/data"/>
+    <copy todir="${build.dir}/test/src/data">
+      <fileset dir="${data.dir}" includes="**/*"/>
+    </copy>
+
+    <!-- copy all of the jsp and static files -->
+    <copy todir="${build.webapps}">
+      <fileset dir="${src.webapps}">
+        <exclude name="**/*.jsp" />
+      </fileset>
+    </copy>
+
+
+  </target>
+
+  <target name="ivy-download" unless="ivy.jar.exists" depends="init">
+    <delete dir="${lib.dir}"
+            includes="ivy-*.jar" excludes="ivy-${ivy.version}.jar"/>
+    <get src="${ivy.url}/${ivy.version}/ivy-${ivy.version}.jar"
+         dest="${lib.dir}/ivy-${ivy.version}.jar" usetimestamp="true"/>
+  </target>
+
+  <target name="ivy-taskdef" unless="ivy.initialized">
+    <taskdef resource="org/apache/ivy/ant/antlib.xml"
+             uri="antlib:org.apache.ivy.ant" classpathref="classpath"/>
+    <!-- ensure that ivy taskdef is only run once, otw ant will error -->
+    <property name="ivy.initialized" value="true"/>
+  </target>
+
+  <target name="ivy-init" depends="ivy-download,ivy-taskdef"/>
+
+  <target name="ivy-retrieve" depends="init,ivy-init">
+    <ivy:retrieve type="jar" conf="default"
+                  pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
+  </target>
+
+  <target name="ivy-retrieve-test" depends="init,ivy-init">
+    <ivy:retrieve type="jar" conf="test"
+                  pattern="${ivy.test.lib}/[artifact]-[revision].[ext]"/>
+  </target>
+
+  <target name="ivy-retrieve-findbugs" depends="init,ivy-init">
+    <ivy:retrieve type="jar" conf="findbugs"
+                  pattern="${ivy.test.lib}/[artifact]-[revision].[ext]"/>
+  </target>
+
+  <target name="ivy-retrieve-coverage" depends="init,ivy-init">
+    <ivy:retrieve type="jar" conf="coverage"
+                  pattern="${ivy.test.lib}/[artifact]-[revision].[ext]"/>
+  </target>
+
+  <target name="ivy-retrieve-releaseaudit" depends="init,ivy-init">
+    <ivy:retrieve type="jar" conf="releaseaudit"
+                  pattern="${ivy.test.lib}/[artifact]-[revision].[ext]"/>
+    <ivy:cachepath pathid="releaseaudit-classpath" conf="releaseaudit"/>
+  </target>
+
+  <target name="compile-aho" depends="init,ivy-retrieve-test">
+    <javac 
+     encoding="${build.encoding}" 
+     srcdir="${aho.src.dir}"
+     includes="org/**/*.java"
+     destdir="${build.classes}"
+     debug="${javac.debug}"
+     optimize="${javac.optimize}"
+     target="${javac.version}"
+     source="${javac.version}"
+     deprecation="${javac.deprecation}">
+      <compilerarg line="${javac.args} ${javac.args.warnings}" />
+      <classpath refid="test.classpath"/>
+    </javac>   
+  	
+  </target>
+
+
+  <!-- ================================================================== -->
+  <!-- Build antlr stuff for specs                                        -->
+  <!-- ================================================================== -->
+  <fileset id="antlr.files" dir="${src.dir}/antlr">
+    <include name="**/FlumeDeploy.g"/> 
+  </fileset>
+
+  <!-- Determine if antlr generated java is up to date -->
+  <target name="antlr-init">
+    <dependset>
+      <srcfileset refid="antlr.files"/> 
+      <targetfileset dir = "${antlr.src.dir}/com/cloudera/flume/conf/">
+        <include name="**/flume/conf/*.java"/>
+	<include name="src/java/com/cloudera/flume/conf/RuntimeRecognitionException.java"/>
+      </targetfileset>
+    </dependset>
+    <uptodate property="antlr.uptodate"
+       srcfile="${antlr.src.dir}/com/cloudera/flume/conf/FlumeDeploy.g"
+       targetfile="${basedir}/src/gen-java/com/cloudera/flume/conf/FlumeDeployLexer.java"
+               />
+  </target>
+
+  <!-- Generate antlr java -->
+  <target name="antlr-gen" depends="antlr-init" unless="antlr.uptodate">
+    <pathconvert property="antlr.file.list" refid="antlr.files"
+               pathsep=" " dirsep="/">
+    </pathconvert>
+    <echo message="Running antlr parser generator on ${antlr.files}"/>
+
+    <!-- TODO(jon) consider replacing this with a java-specific task
+    or antlr-specific task -->
+    <exec executable="java" dir="${basedir}" failonerror="true">
+      <arg line="-cp lib/antlr-3.1.3.jar org.antlr.Tool ${antlr.file.list} -o ${basedir}/src/gen-java/com/cloudera/flume/conf"/>
+    </exec>
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- Build antlr stuff for shell                                        -->
+  <!-- ================================================================== -->
+
+  <fileset id="antlr.shell.files" dir="${src.dir}/antlr">
+    <include name="**/FlumeShell.g"/> 
+  </fileset>
+  <!-- Determine if antlr generated java is up to date -->
+  <target name="antlr-shell-init">
+    <dependset>
+      <srcfileset refid="antlr.shell.files"/> 
+      <targetfileset dir = "${antlr.src.dir}/com/cloudera/flume/shell/antlr/">
+        <include name="**/shell/antlr/*.java"/>
+      </targetfileset>
+    </dependset>
+    <uptodate property="antlr.shell.uptodate"
+       srcfile="${antlr.src.dir}/FlumeShell.g"
+       targetfile="${basedir}/src/gen-java/com/cloudera/flume/shell/antlr/FlumeShellParser.java"
+               />
+  </target>
+
+  <!-- Generate antlr java -->
+  <target name="antlr-shell-gen" depends="antlr-shell-init" unless="antlr.shell.uptodate">
+    <pathconvert property="antlr.shell.file.list" refid="antlr.shell.files"
+               pathsep=" " dirsep="/">
+    </pathconvert>
+    <echo message="Running antlr parser generator on ${antlr.shell.file.list}"/>
+
+    <!-- TODO(jon) consider replacing this with a java-specific task
+    or antlr-specific task -->
+    <exec executable="java" dir="${basedir}" failonerror="true">
+<arg line="-cp lib/antlr-3.1.3.jar org.antlr.Tool ${antlr.shell.file.list} -o ${basedir}/src/gen-java/com/cloudera/flume/shell/antlr"/>
+    </exec>
+  </target>
+
+  <!-- ========================== -->
+  <!-- thrift  -->
+  <!-- ========================== -->
+  <target name="call-thrift">
+		<echo message="Running thrift on ${thriftfile}"/>
+    <exec executable="thrift" dir="${basedir}" failonerror="true">
+      <arg line="--strict --gen java -o src ${thriftfile}"/>
+    </exec>
+  </target>
+
+  <fileset id="thrift.files" dir="${thrift.src.dir}">
+		<include name="**/*.thrift"/>
+  </fileset>
+
+  <!-- Determine if thrift generated java is up to date -->
+  <target name="thrift-init">
+    <dependset>
+      <srcfileset refid="thrift.files"/>
+      <targetfileset dir = "${thrift.gen.dir}/${thrift.scribe.package}">
+        <include name="**/*.java"/>
+      </targetfileset>
+    </dependset>
+    <available file="${thrift.gen.dir}/${thrift.scribe.package}/scribe.java"
+               property="thrift.uptodate"/> 
+  </target>
+
+  <!-- Generate thrift java -->
+  <target name="thrift-gen" depends="thrift-init" unless="thrift.uptodate">
+    <pathconvert property="thrift.file.list" refid="thrift.files"
+               pathsep=" " dirsep="/">
+    </pathconvert>
+    <echo message="Running thrift generator on ${thrift.file.list}"/>
+    <foreach target="call-thrift" param="thriftfile">
+      <fileset refid="thrift.files"/>
+    </foreach>
+  </target>
+
+  <target name="compile-gen" depends="init, thrift-gen, antlr-gen, antlr-shell-gen">
+    <!-- dependendecy for antlr parsers -->
+    <copy file="${basedir}/src/java/com/cloudera/flume/conf/RuntimeRecognitionException.java" tofile="${basedir}/src/gen-java/com/cloudera/flume/conf/RuntimeRecognitionException.java" />
+    <javac 
+     encoding="${build.encoding}" 
+     srcdir="${thrift.gen.dir}"
+     includes="com/**/*.java"
+     destdir="${build.classes}"
+     debug="${javac.debug}"
+     optimize="${javac.optimize}"
+     target="${javac.version}"
+     source="${javac.version}"
+     deprecation="${javac.deprecation}">
+      <compilerarg line="${javac.args} ${javac.args.warnings}" />
+      <classpath refid="classpath"/>
+    </javac>
+  </target>
+
+
+  <!-- ================================================================== -->
+  <!-- Build core                                                         -->
+  <!-- ================================================================== -->
+
+  <target name="compile-core" depends="init,ivy-retrieve,compile-aho,compile-gen">
+    <!-- generate package-info annotation file. This has to be done here
+      so that the timestamp of package-info.java is newer than the timestamp
+      of the output directory -->
+    <exec executable="sh">
+       <arg line="src/saveVersion.sh ${version}"/>
+      <!--  <env key="HADOOP_REVISION" value="${cloudera.hash}" /> -->
+    </exec>
+
+    <!-- Compile Java files (excluding JSPs) checking warnings -->
+    <javac 
+     encoding="${build.encoding}" 
+     srcdir="${core.src.dir};${thrift.gen.dir}"
+     includes="com/cloudera/**/*.java"
+     destdir="${build.classes}"
+     debug="${javac.debug}"
+     optimize="${javac.optimize}"
+     target="${javac.version}"
+     source="${javac.version}"
+     deprecation="${javac.deprecation}">
+      <compilerarg line="${javac.args} ${javac.args.warnings}" />
+      <classpath refid="classpath"/>
+    </javac>   
+    <javac 
+     encoding="${build.encoding}" 
+     srcdir="${core.src.dir};${thrift.gen.dir}"
+     includes="org/apache/**/*.java"
+     destdir="${build.classes}"
+     debug="${javac.debug}"
+     optimize="${javac.optimize}"
+     target="${javac.version}"
+     source="${javac.version}"
+     deprecation="${javac.deprecation}">
+      <compilerarg line="${javac.args} ${javac.args.warnings}" />
+      <classpath refid="classpath"/>
+    </javac>   
+  	
+    <copy todir="${build.classes}">
+      <fileset dir="${core.src.dir}" includes="**/*.properties"/>
+    </copy>
+  </target>
+
+
+  <target name="findbugs" depends="ivy-retrieve-findbugs, jar">
+    <taskdef name="findbugs" classname="edu.umd.cs.findbugs.anttask.FindBugsTask"
+             classpath="libtest/findbugs-ant-1.3.9.jar" />
+
+    <property name="findbugs.exclude.file" value="findbugsExclude.xml" />
+    <findbugs output="xml"
+              outputFile="flume-findbugs.xml"
+              jvmargs="-Xmx1024m"
+              excludeFilter="${findbugs.exclude.file}">
+      <classpath>
+        <fileset dir="libtest/">
+          <include name="**/*.jar"/>
+        </fileset>
+      </classpath>
+      <pluginList/>
+      <auxClasspath refid="classpath"/>
+      <sourcePath path="${basedir}/src/java" />
+      <class location="${build.dir}/${final.name}-core.jar"/>
+    </findbugs>
+  </target>
+
+  <target name="instrument" depends="compile-core, compile-core-test,ivy-retrieve-coverage">
+    <taskdef classpath="libtest/cobertura.jar" resource="tasks.properties">
+      <classpath>
+        <fileset dir="libtest/">
+          <include name="**/*.jar"/>
+        </fileset>
+        <fileset dir="lib/">
+          <include name="**/*.jar"/>
+        </fileset>
+      </classpath>
+    </taskdef>
+
+    <cobertura-instrument todir="build/instrumented-classes">
+      <fileset dir="build/">
+        <include name="**/*.class"/>
+	<exclude name="**/Test*.class"/>
+	<exclude name="**/com/cloudera/flume/conf/thrift/*.class"/>
+	<exclude name="**/com/cloudera/flume/conf/FlumeDeploy*.class"/>
+	<exclude name="**/com/cloudera/flume/handlers/thrift/ThriftFlumeEvent*.class"/>
+	<exclude name="**/com/cloudera/flume/handlers/thrift/RawEvent*.class"/>
+	<exclude name="**/com/cloudera/flume/handlers/thrift/Priority*.class"/>
+	<exclude name="**/com/cloudera/flume/handlers/thrift/EventStatus*.class"/>
+	<exclude name="**/com/cloudera/flume/handlers/scribe/FacebookService*.class"/>
+	<exclude name="**/com/cloudera/flume/handlers/scribe/fb_status*.class"/>
+	<exclude name="**/com/cloudera/flume/handlers/scribe/LogEntry*.class"/>
+	<exclude name="**/com/cloudera/flume/handlers/scribe/ResultCode*.class"/>
+	<exclude name="**/com/cloudera/flume/handlers/scribe/scribe*.class"/>
+	<exclude name="**/org/apache/jsp/*.class"/>
+      </fileset>
+    </cobertura-instrument>
+  </target>
+  <target name="cover-test" depends="instrument">
+    <junit
+        printsummary="yes" showoutput="${test.output}"
+        haltonfailure="no" fork="yes" maxmemory="512m"
+        errorProperty="tests.failed" failureProperty="tests.failed"
+        timeout="${test.timeout}"
+        dir="${test.build.dir}">
+      <classpath location="libtest/cobertura.jar"/>
+      <classpath location="build/instrumented-classes"/>
+      
+      <!-- uncomment this if you want to attach a debugger -->
+      <!--
+          <jvmarg line="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=2601" />
+      -->
+      <sysproperty key="java.library.path" value="${lib.dir}" />
+      <sysproperty key="test.build.data" value="${build.test}/data"/>
+      <sysproperty key="build.test" value="${build.test}"/>
+      <sysproperty key="contrib.name" value="${name}"/>
+      <sysproperty key="net.sourceforge.cobertura.datafile"
+                   file="cobertura.ser" />
+            
+      <!-- we want more log4j output when running unit tests -->
+      <sysproperty key="hadoop.root.logger"
+                   value="INFO,console" /> 
+      <!-- TODO (jon) Why does o.a.h.conf.Configuration throw exception 
+           when in DEBUG mode? --> 
+      
+      <!-- requires fork=yes for:
+           relative File paths to use the specified user.dir
+           classpath to use build/contrib/*.jar
+      -->
+      <sysproperty key="user.dir" value="${build.test}/data"/>
+      
+      <!-- Setting the user.dir property is actually meaningless as it
+           is read-only in the Linux Sun JDK. Provide an alternate sysprop
+           to specify where generated code should go.
+      -->
+      <sysproperty key="flume.src.dir" value="${build.test}/data"/>
+      
+      <sysproperty key="fs.default.name" value="${fs.default.name}"/>
+      <sysproperty key="hadoop.test.localoutputfile" value="${hadoop.test.localoutputfile}"/>
+      <sysproperty key="hadoop.log.dir" value="${hadoop.log.dir}"/>
+      
+      <!-- tools.jar from Sun JDK also required to invoke javac. -->
+      <classpath>
+        <path refid="test.classpath"/>
+        <pathelement path="${env.JAVA_HOME}/lib/tools.jar" />
+      </classpath>
+      <batchtest todir="${build.test}" unless="testcase">
+        <fileset dir="${test.src.dir}"
+                 includes="**/Test*.java" excludes="**/${test.exclude}.java" />
+      </batchtest>
+      <batchtest todir="${build.test}" if="testcase">
+        <fileset dir="${test.src.dir}" includes="**/${testcase}.java"/>
+      </batchtest>
+    </junit>
+  </target>
+  
+  <target name="coverage-report" depends="cover-test">
+		<!-- Remove format="xml" for the html browsable report -->
+    <cobertura-report format="xml" srcdir="src/java/" destdir="build/cobertura"/>
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- Perform audit activities on the release                            -->
+  <!-- ================================================================== -->
+  <target name="releaseaudit" depends="tar,rats-taskdef" description="Release Audit activities">
+    <untar compression="gzip"
+           src="${build.dir}/flume-${version}.tar.gz" dest="${build.dir}"/>
+
+    <rat:report xmlns:rat="antlib:org.apache.rat.anttasks">
+      <fileset dir="${build.dir}/flume-${version}">
+        <exclude name="**/.gitignore"/>
+        <exclude name="src/gen-java/"/>
+        <exclude name="src/data/"/>
+	<exclude name="eclipse/"/>
+      </fileset>
+    </rat:report>
+  </target>
+  
+  <target name="rats-taskdef" depends="ivy-retrieve-releaseaudit">
+    <typedef format="xml" resource="org/apache/rat/anttasks/antlib.xml" uri="antlib:org.apache.rat.anttasks"
+             classpathref="releaseaudit-classpath"/>
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- Build jsps (precompile them)                                       -->
+  <!-- ================================================================== -->
+  <target name="compile-jsps" depends="compile-core">
+     <taskdef classname="org.apache.jasper.JspC" name="jsp-compile" >
+        <classpath refid="test.classpath"/>
+     </taskdef>
+
+    <jsp-compile
+     uriroot="${src.webapps}/flumeconfig"
+     outputdir="${build.src}"
+     package="org.apache.jsp"
+     webxml="${build.webapps}/flumeconfig/WEB-INF/web.xml">
+    </jsp-compile>
+
+    <jsp-compile
+     uriroot="${src.webapps}/flumeagent"
+     outputdir="${build.src}"
+     package="org.apache.jsp"
+     webxml="${build.webapps}/flumeagent/WEB-INF/web.xml">
+    </jsp-compile>
+
+    <javac 
+     encoding="${build.encoding}" 
+     srcdir="${build.src}"
+     includes="org/**/*.java"
+     destdir="${build.classes}"
+     debug="${javac.debug}"
+     optimize="${javac.optimize}"
+     target="${javac.version}"
+     source="${javac.version}"
+     deprecation="${javac.deprecation}">
+      <compilerarg line="${javac.args} ${javac.args.warnings}" />
+      <classpath refid="classpath"/>
+    </javac>   
+
+
+    <!-- Compile Java files (excluding JSPs) checking warnings -->
+    <!--
+    <javac 
+     encoding="${build.encoding}" 
+     srcdir="${mapred.src.dir};${build.src}" 
+     includes="org/apache/hadoop/**/*.java"
+     destdir="${build.classes}"
+     debug="${javac.debug}"
+     optimize="${javac.optimize}"
+     target="${javac.version}"
+     source="${javac.version}"
+     deprecation="${javac.deprecation}">
+      <compilerarg line="${javac.args} ${javac.args.warnings}" />
+      <classpath refid="classpath"/>
+    </javac>   
+    
+    <copy todir="${build.classes}">
+      <fileset dir="${mapred.src.dir}" includes="**/*.properties"/>
+      <fileset dir="${mapred.src.dir}" includes="mapred-default.xml"/>
+    </copy>
+-->
+
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- Make flume.jar                                                     -->
+  <!-- ================================================================== -->
+  <target name="jar" depends="compile-core,compile-jsps" description="Make flume.jar">
+    <jar jarfile="${build.dir}/${final.name}-core.jar"
+         basedir="${build.classes}">
+      <manifest>
+        <section name="com/cloudera/">
+          <attribute name="Implementation-Title" value="Flume"/>
+          <attribute name="Implementation-Version" value="${version}"/>
+          <attribute name="Implementation-Vendor" value="Cloudera Inc."/>
+        </section>
+      </manifest>
+      <fileset file="${conf.dir}/flume-default.xml"/>
+<!-- TODO     <zipfileset dir="${build.webapps}" prefix="webapps"/> --> 
+    </jar>
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- Make flume-test.jar                                                -->
+  <!-- ================================================================== -->
+  <target name="jar-test" depends="jar,compile-core-perf,compile-core-test" description="Make flume-test.jar">
+    <jar jarfile="${build.dir}/${final.name}-test.jar"
+         basedir="${test.build.classes}">
+      <manifest>
+        <section name="com/cloudera/">
+          <attribute name="Implementation-Title" value="Flume"/>
+          <attribute name="Implementation-Version" value="${version}"/>
+          <attribute name="Implementation-Vendor" value="Cloudera Inc."/>
+        </section>
+      </manifest>
+    </jar>
+  </target>  
+
+  <!-- ================================================================== -->
+  <!-- Make flume.tgz                                                     -->
+  <!-- ================================================================== -->
+  <target name="tar" depends="jar,jar-test" description="Make flume.tar">
+    <tar compression="gzip" destfile="${build.dir}/flume-${version}.tar.gz">
+      <tarfileset dir="." mode="644" prefix="flume-${version}">
+        <include name="build.xml" />
+        <include name="build/*.jar" />
+        <include name="build/webapps" />
+        <include name="cloudera/**" />
+        <include name="conf/**" />
+        <include name="DEVNOTES" />
+        <include name="eclipse/**" />
+        <include name="lib/**" />
+        <include name="libbuild/**" />
+        <include name="libtest/**" />
+        <include name="src/**" />
+        <include name="Makefile" />
+        <include name="properties/**" />
+        <include name="src/**" />
+	<exclude name="findbugsExclude.xml" />
+	<exclude name="libtest/findbugs-ant.jar" />
+	<exclude name="libtest/findbugs.jar" />
+      </tarfileset>
+      <tarfileset dir="." mode="755" prefix="flume-${version}">
+ 	<exclude name="bin/flume-env.sh" />
+	<exclude name="bin/flume_extra" />
+	<exclude name="bin/flume_test" />
+	<include name="bin/**"/>
+      </tarfileset>
+    </tar>
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- Compile test code                                                  --> 
+  <!-- ================================================================== -->
+  <target name="compile-core-test" depends="init,compile-core,ivy-retrieve-test">
+    <javac 
+     encoding="${build.encoding}" 
+     srcdir="${test.src.dir}"
+     includes="**/*.java"
+     destdir="${test.build.classes}"
+     debug="${javac.debug}"
+     optimize="${javac.optimize}"
+     target="${javac.version}"
+     source="${javac.version}"
+     deprecation="${javac.deprecation}">
+      <compilerarg line="${javac.args}" />
+      <classpath refid="test.classpath"/>
+    </javac>
+ </target>
+
+  <!-- ================================================================== -->
+  <!-- Compile perf benchmark code                                        --> 
+  <!-- ================================================================== -->
+  <target name="compile-core-perf" depends="init,compile-core,compile-core-test">
+    <javac 
+     encoding="${build.encoding}" 
+     srcdir="${perf.src.dir}"
+     includes="com/cloudera/**/*.java"
+     destdir="${test.build.classes}"
+     debug="${javac.debug}"
+     optimize="${javac.optimize}"
+     target="${javac.version}"
+     source="${javac.version}"
+     deprecation="${javac.deprecation}">
+      <compilerarg line="${javac.args}" />
+      <classpath refid="test.classpath"/>
+    </javac>
+ </target> 
+
+  <!-- ================================================================== -->
+  <!-- Run unit tests                                                     -->
+  <!-- ================================================================== -->
+  <target name="test" depends="compile-core,compile-core-test" >
+    <echo message="testing: ${name}"/>
+    <junit
+      printsummary="yes" showoutput="${test.output}"
+      haltonfailure="no" fork="yes" maxmemory="1024m"
+      errorProperty="tests.failed" failureProperty="tests.failed"
+      timeout="${test.timeout}"
+      dir="${test.build.dir}">
+
+      <!-- uncomment this if you want to attach a debugger -->
+      <!--
+      <jvmarg line="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=2601" />
+      -->
+      <env key="FLUME_HOME" value="${basedir}" />
+      <sysproperty key="java.library.path" value="${lib.dir}" />
+      <sysproperty key="test.build.data" value="${build.test}/data"/>
+      <sysproperty key="build.test" value="${build.test}"/>
+      <sysproperty key="contrib.name" value="${name}"/>
+
+      <!-- we want more log4j output when running unit tests -->
+      <sysproperty key="hadoop.root.logger"
+        value="INFO,console" /> 
+      <!-- TODO (jon) Why does o.a.h.conf.Configuration throw exception 
+	   when in DEBUG mode? --> 
+
+      <!-- requires fork=yes for:
+        relative File paths to use the specified user.dir
+        classpath to use build/contrib/*.jar
+      -->
+      <sysproperty key="user.dir" value="${build.test}/data"/>
+
+      <!-- Setting the user.dir property is actually meaningless as it
+          is read-only in the Linux Sun JDK. Provide an alternate sysprop
+          to specify where generated code should go.
+      -->
+      <sysproperty key="flume.src.dir" value="${build.test}/data"/>
+
+      <sysproperty key="fs.default.name" value="${fs.default.name}"/>
+      <sysproperty key="hadoop.test.localoutputfile" value="${hadoop.test.localoutputfile}"/>
+      <sysproperty key="hadoop.log.dir" value="${hadoop.log.dir}"/>
+
+      <!-- tools.jar from Sun JDK also required to invoke javac. -->
+      <classpath>
+        <path refid="test.classpath"/>
+        <pathelement path="${env.JAVA_HOME}/lib/tools.jar" />
+      </classpath>
+      <formatter type="${test.junit.output.format}" />
+      <batchtest todir="${build.test}" unless="testcase">
+        <fileset dir="${test.src.dir}"
+                 includes="**/Test*.java" excludes="**/${test.exclude}.java" />
+      </batchtest>
+      <batchtest todir="${build.test}" if="testcase">
+        <fileset dir="${test.src.dir}" includes="**/${testcase}.java"/>
+      </batchtest>
+    </junit>
+    <fail if="tests.failed">Tests failed!</fail>
+  </target>
+
+
+  <!-- ================================================================== -->
+  <!-- Run performance microbenchmarks                                    -->
+  <!-- These have similar settings to unit tests but use > -Xmx500m       -->
+  <!-- ================================================================== -->
+  <target name="perf" depends="compile-core,compile-core-test,compile-core-perf" >
+    <echo message="performance testing: ${name}"/>
+    <junit
+      printsummary="yes" showoutput="${perf.output}"
+      haltonfailure="no" fork="yes" maxmemory="2048m"
+      errorProperty="test.failed" failureProperty="test.failed"
+      timeout="${test.timeout}"
+      dir="${perf.build.dir}">
+
+      <!-- uncomment this if you want to attach a debugger -->
+      <!--
+      <jvmarg line="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=2601" />
+      -->
+
+      <sysproperty key="test.build.data" value="${build.test}/data"/>
+      <sysproperty key="build.perf" value="${build.perf}"/>
+      <sysproperty key="contrib.name" value="${name}"/>
+
+      <!--
+           Added property needed to use the .class files for compilation
+           instead of depending on hadoop-*-core.jar
+      -->
+      <sysproperty key="hadoop.alt.classpath"
+        value="${hadoop.root}/build/classes" />
+
+      <!-- we want more log4j output when running unit tests -->
+      <sysproperty key="hadoop.root.logger"
+        value="DEBUG,console" />
+
+      <!-- requires fork=yes for:
+        relative File paths to use the specified user.dir
+        classpath to use build/contrib/*.jar
+      -->
+      <sysproperty key="user.dir" value="${build.test}/data"/>
+
+      <!-- Setting the user.dir property is actually meaningless as it
+          is read-only in the Linux Sun JDK. Provide an alternate sysprop
+          to specify where generated code should go.
+      -->
+      <sysproperty key="flume.src.dir" value="${build.test}/data"/>
+
+      <sysproperty key="fs.default.name" value="${fs.default.name}"/>
+      <sysproperty key="hadoop.test.localoutputfile" value="${hadoop.test.localoutputfile}"/>
+      <sysproperty key="hadoop.log.dir" value="${hadoop.log.dir}"/>
+
+      <!-- tools.jar from Sun JDK also required to invoke javac. -->
+      <classpath>
+        <path refid="test.classpath"/>
+        <pathelement path="${env.JAVA_HOME}/lib/tools.jar" />
+      </classpath>
+      <formatter type="${test.junit.output.format}" />
+      <batchtest todir="${build.perf}" unless="testcase">
+        <fileset dir="${perf.src.dir}"
+                 includes="**/Perf*.java" excludes="**/${test.exclude}.java" />
+      </batchtest>
+      <batchtest todir="${build.perf}" if="testcase">
+        <fileset dir="${perf.src.dir}" includes="**/${testcase}.java"/>
+      </batchtest>
+    </junit>
+    <fail if="tests.failed">Perf Tests failed!</fail>
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- clean -->
+  <!-- ================================================================== -->
+  <target name="clean">
+    <echo message="Cleaning generated files and stuff"/>
+    <delete dir="${build.dir}" />
+  </target>
+
+
+  <target name="reallyclean">
+    <echo message="Cleaning generated files and stuff"/>
+    <delete dir="${build.dir}" />
+    <delete dir="${thrift.gen.dir}" />
+  </target>
+
+</project>

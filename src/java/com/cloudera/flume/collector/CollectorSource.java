@@ -1,0 +1,85 @@
+/**
+ * Licensed to Cloudera, Inc. under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  Cloudera, Inc. licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.cloudera.flume.collector;
+
+import java.io.IOException;
+
+import org.apache.log4j.Logger;
+
+import com.cloudera.flume.conf.FlumeConfiguration;
+import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
+import com.cloudera.flume.core.Event;
+import com.cloudera.flume.core.EventSource;
+import com.cloudera.flume.handlers.thrift.ThriftEventSource;
+import com.google.common.base.Preconditions;
+
+/**
+ * This is the default collector source in a agent/collector architecture.
+ * 
+ * This is purposely setup as a layer of indirection between the actual
+ * implementation details to may user configuration simpler. It has a default
+ * options that come from flume-*.xml configuration file.
+ * 
+ * The actual implementation may change in the future (for example, thrift may
+ * be replaced with avro) but user configurations would not need to change.
+ * 
+ * TODO (jon) auto version negotiation? (With agent sink)
+ */
+public class CollectorSource extends EventSource.Base {
+  final static Logger LOG = Logger.getLogger(CollectorSource.class.getName());
+
+  EventSource src;
+
+  public CollectorSource(int port) {
+    src = new ThriftEventSource(port);
+  }
+
+  @Override
+  public void close() throws IOException {
+    LOG.info("closed");
+    src.close();
+  }
+
+  @Override
+  public void open() throws IOException {
+    LOG.info("opened");
+    src.open();
+  }
+
+  @Override
+  public Event next() throws IOException {
+    return src.next();
+  }
+
+  public static SourceBuilder builder() {
+    return new SourceBuilder() {
+      @Override
+      public EventSource build(String... argv) {
+        // accept 0 or 1 argument.
+        Preconditions.checkArgument(argv.length <= 1,
+            "usage: collectorSource[(port={"
+                + FlumeConfiguration.COLLECTOR_EVENT_PORT + "})]");
+
+        int port = FlumeConfiguration.get().getCollectorPort(); // default
+        if (argv.length >= 1)
+          port = Integer.parseInt(argv[0]); // override
+        return new CollectorSource(port);
+      }
+    };
+  }
+}

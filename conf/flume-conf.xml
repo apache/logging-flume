@@ -1,0 +1,253 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl"  href="configuration.xsl"?>
+
+<!--
+ Licensed to Cloudera, Inc. under one
+ or more contributor license agreements.  See the NOTICE file
+ distributed with this work for additional information
+ regarding copyright ownership.  Cloudera, Inc. licenses this file
+ to you under the Apache License, Version 2.0 (the
+ "License"); you may not use this file except in compliance
+ with the License.  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+
+<!-- This configuration file shows the default arguments for all of
+the statically configured flume options.  The default setup is a
+psuedo-distributed configuration where all masters and nodes live on
+localhost. This file should generally not be modified.
+
+The values in this file should be overridden by site specific
+configuration values placed in flume-site.xml.  -->
+<configuration>
+ 
+  <!-- ================================================== -->
+  <!-- Watchdog ========================================= -->
+  <!-- ================================================== -->
+  <property>
+    <name>watchdog.restarts.max</name>
+    <value>5</value>
+    <description>The watchdog launches a sub process and restarts if
+    it exits unexpectedly or with failure.  This value is the maximum
+    number of times per minute the watchdog can attempt to restart the
+    subprocess.</description>
+  </property>
+
+	<!-- ================================================== -->
+  <!-- Node Common ====================================== -->
+  <!-- ================================================== -->
+  <property>
+    <name>flume.config.heartbeat.period</name>
+    <value>5000</value>
+    <description>This is the period in ms between heartbeats.
+    </description>
+  </property>
+
+  <property>
+    <name>flume.node.status.port</name>
+    <value>35862</value>
+    <description>The port for a Flume node's HTTP status server.
+    </description>
+  </property>
+
+  <property>
+    <name>flume.node.heartbeat.backoff.ceiling</name>
+    <value>50000</value>
+    <description>This is the maximum amount of time (in milliseconds)
+    a node will wait after backing off between attempts to heartbeat
+    with the master.
+    </description>
+  </property>
+
+  <property>
+    <name>flume.node.http.autofindport</name>
+    <value>true</value>
+    <description>If true, node will look for a free port starting at
+    flume.node.status.port to start HTTP server on.
+    </description>
+  </property>
+
+  <!-- ================================================== -->
+  <!-- Agent ============================================ -->
+  <!-- ================================================== -->
+
+  <property>
+    <name>flume.agent.logdir</name>
+    <value>/tmp/flume/agent</value>
+    <description> This is the directory that write-ahead logging data
+      or disk-failover data is collected from applications gets
+      written to. The agent watches this directory.
+    </description>
+  </property>
+   
+  <property>
+    <name>flume.agent.logdir.maxage</name>
+    <value>10000</value>
+    <description> number of milliseconds before a log file is
+    considered closed and ready to forward.
+    </description>
+  </property>
+    
+  <property>
+    <name>flume.agent.logdir.retransmit</name>
+    <value>60000</value>
+    <description>The time (in  milliseconds) before a sent event is assumed
+    lost and needs to be retried in end-to-end reliability mode.
+    </description>
+  </property> 
+  
+  <property>
+    <name>flume.agent.failover.backoff.initial</name>
+    <value>1000</value>
+    <description>This is the number of milliseconds to backoff when
+    initially trying to reopen a previously failed primary sink.  If
+    the backoff time has not elapsed, the secondary sink is used.
+    </description>
+  </property>
+  
+  <property>
+    <name>flume.agent.failover.backoff.max</name>
+    <value>60000</value>
+    <description>This is the maximum length of time in milliseconds
+    that a failover of the primary is allowed back off until a attempt
+    to re-open the primary is attempted.
+    </description>
+  </property>
+  
+
+  <!-- ================================================== -->
+  <!-- Collector ======================================== -->
+  <!-- ================================================== -->
+  <property>
+    <name>flume.collector.event.host</name>
+    <value>localhost</value>
+    <description>This is the host name of the default
+    collector.
+    </description>
+  </property>
+
+  <property>
+    <name>flume.collector.port</name>
+    <value>35853</value>
+    <description>This default tcp port that a Flume collector node
+    listens on to receive events.
+    </description>
+  </property>
+
+  <property>
+    <name>flume.collector.dfs.dir</name>
+    <value>file:///tmp/flume/collected</value>
+    <description>This is a dfs directory that is the the final resting
+    place for logs to be stored in.  This defaults to a local dir in
+    /tmp but can be hadoop URI path that such as hdfs://namenode/path/
+    </description>
+  </property>  
+
+  <property>
+    <name>flume.collector.roll.millis</name>
+    <value>30000</value>
+    <description>The time (in milliseconds)
+    between when hdfs files are closed and a new file is opened
+    (rolled).
+    </description>
+  </property>  
+
+
+  <property>
+    <name>flume.collector.output.format</name>
+    <value>avrojson</value>
+    <description>The output format for the data written by a Flume 
+    collector node.  There are several formats available:
+      syslog - outputs events in a syslog-like format
+      log4j - outputs events in a pattern similar to Hadoop's log4j pattern 
+      avrojson - this outputs data as json encoded by avro
+      avrodata - this outputs data as a avro binary encoded data
+      debug - used only for debugging
+			raw - output only the event body, no metadata
+    </description>
+  </property>  
+
+  <!-- ================================================== -->
+  <!-- Master =========================================== -->
+  <!-- ================================================== -->
+
+	<property>
+		<name>flume.master.servers</name>
+		<value>localhost</value>
+		<description>A comma-separated list of hostnames, one for each
+		machine in the Flume Master.
+		</description>
+	</property>
+	
+	<property>
+		<name>flume.master.store</name>
+		<value>zookeeper</value>
+		<description>How the Flume Master stores node configurations. Must
+		be either 'zookeeper' or 'memory'.</description>
+	</property>
+
+	<property>
+		<name>flume.master.serverid</name>
+		<value>0</value>
+		<description>The unique identifier for a machine in a Flume Master
+		ensemble. Must be different on every machine.</description>
+	</property>
+
+	<property>
+		<name>flume.master.http.port</name>
+		<value>35871</value>
+		<description>The port on which a Flume Master machine starts its
+		HTTP server.
+		</description>
+	</property>
+
+  <property>
+    <name>flume.master.heartbeat.missed.max</name>
+    <value>10</value>
+    <description>This is the maximum amount of heartbeats a node can
+    miss before it is considered lost.
+    </description>
+  </property>
+
+  <property>
+    <name>flume.master.savefile</name>
+    <value>conf/current.flume</value>
+    <description>Node configurations can be saved to this file, and
+    reloaded at startup.
+    </description>
+  </property>
+
+  <property>
+    <name>flume.master.savefile.autoload</name>
+    <value>false</value>
+    <description>If true, node configurations will be loaded at
+    startup from flume.config.savefile.
+    </description>
+  </property>
+
+	<property>
+		<name>flume.master.gossip.period</name>
+		<value>1000</value>
+    <description>The time (in milliseconds) that a Flume Master server
+    waits between rounds of gossip.</description>
+	</property>
+
+  <!-- ================================================== -->
+  <!-- Master ZooKeeper store =========================== -->
+  <!-- ================================================== -->
+
+	<property>
+		<name>flume.master.zk.logdir</name>
+		<value>/tmp/flume-zk</value>
+		<description>The base directory in which the ZBCS stores data.</description>
+	</property>
+
+</configuration>

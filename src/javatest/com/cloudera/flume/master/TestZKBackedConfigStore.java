@@ -1,0 +1,402 @@
+/**
+ * Licensed to Cloudera, Inc. under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  Cloudera, Inc. licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.cloudera.flume.master;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.log4j.Logger;
+import org.apache.zookeeper.KeeperException;
+import org.junit.Test;
+
+import com.cloudera.flume.agent.LogicalNode;
+import com.cloudera.flume.conf.FlumeConfiguration;
+import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.util.FileUtil;
+
+public class TestZKBackedConfigStore {
+  protected static Logger LOG = Logger.getLogger(TestZKBackedConfigStore.class);
+
+  /**
+   * Test that set and get work correctly, and that recovery after restart works
+   * correctly.
+   */
+  @Test
+  public void testZKBackedConfigStore() throws IOException,
+      InterruptedException {
+    for (int i = 0; i < 10; ++i) {
+      LOG.info("Opening ZK, attempt " + i);
+      File tmp = FileUtil.mktempdir();
+      FlumeConfiguration cfg = FlumeConfiguration.createTestableConfiguration();
+      cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
+      cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181");
+      ZooKeeperService.getAndInit(cfg);
+
+      ZooKeeperConfigStore store = new ZooKeeperConfigStore();
+      store.init();
+      ConfigManager manager = new ConfigManager(store);
+      manager.setConfig("foo", "my-test-flow", "bar", "baz");
+      FlumeConfigData data = manager.getConfig("foo");
+      assertEquals(data.getSinkConfig(), "baz");
+      assertEquals(data.getSourceConfig(), "bar");
+      store.shutdown();
+
+      store = new ZooKeeperConfigStore();
+      store.init();
+      manager = new ConfigManager(store);
+      data = manager.getConfig("foo");
+      assertEquals(data.getSinkConfig(), "baz");
+      assertEquals(data.getSourceConfig(), "bar");
+
+      Map<String, FlumeConfigData> cfgs = new HashMap<String, FlumeConfigData>();
+      String defaultFlowName = cfg.getDefaultFlowName();
+      cfgs.put("bulk1", new FlumeConfigData(0, "s1", "sk1",
+          LogicalNode.VERSION_INFIMUM, LogicalNode.VERSION_INFIMUM,
+          "my-test-flow"));
+      cfgs.put("bulk2", new FlumeConfigData(0, "s2", "sk2",
+          LogicalNode.VERSION_INFIMUM, LogicalNode.VERSION_INFIMUM,
+          defaultFlowName));
+      store.bulkSetConfig(cfgs);
+
+      data = manager.getConfig("bulk1");
+      assertEquals(data.getSinkConfig(), "sk1");
+      assertEquals(data.getSourceConfig(), "s1");
+      assertEquals(data.getFlowID(), "my-test-flow");
+
+      data = manager.getConfig("bulk2");
+      assertEquals(data.getSinkConfig(), "sk2");
+      assertEquals(data.getSourceConfig(), "s2");
+
+      cfgs.put("bulk1", new FlumeConfigData(0, "s3", "sk3",
+          LogicalNode.VERSION_INFIMUM, LogicalNode.VERSION_INFIMUM,
+          defaultFlowName));
+      cfgs.remove("bulk2");
+      store.bulkSetConfig(cfgs);
+
+      // Check that unchanged configs persist
+      data = manager.getConfig("bulk2");
+      assertEquals(data.getSinkConfig(), "sk2");
+      assertEquals(data.getSourceConfig(), "s2");
+      assertEquals(data.getFlowID(), defaultFlowName);
+      store.shutdown();
+
+      ZooKeeperService.get().shutdown();
+      FileUtil.rmr(tmp);
+    }
+  }
+
+  /**
+   * Test that set and get work correctly, and that recovery after restart works
+   * correctly.
+   * 
+   * TODO add mechanism to close a ZooKeeperConfigStore to release resources.
+   * (picking different ports right now to make test pass)
+   */
+  @Test
+  public void testZKBackedConfigStoreNodes() throws IOException,
+      InterruptedException {
+    File tmp = FileUtil.mktempdir();
+    FlumeConfiguration cfg = FlumeConfiguration.createTestableConfiguration();
+    cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
+    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181");
+    ZooKeeperService.getAndInit(cfg);
+
+    ZooKeeperConfigStore store = new ZooKeeperConfigStore();
+    store.init();
+
+    ConfigManager manager = new ConfigManager(store);
+    manager.addLogicalNode("physical", "logical1");
+    manager.addLogicalNode("physical", "logical2");
+    manager.addLogicalNode("physical", "logical3");
+    manager.addLogicalNode("p2", "l2");
+    manager.addLogicalNode("p3", "l3");
+
+    List<String> lns = manager.getLogicalNode("physical");
+    assertTrue(lns.contains("logical1"));
+    assertTrue(lns.contains("logical2"));
+    assertTrue(lns.contains("logical3"));
+
+    assertTrue(manager.getLogicalNode("p2").contains("l2"));
+    assertTrue(manager.getLogicalNode("p3").contains("l3"));
+    store.shutdown();
+
+    store = new ZooKeeperConfigStore();
+    store.init();
+    manager = new ConfigManager(store);
+
+    lns = manager.getLogicalNode("physical");
+    assertTrue(lns.contains("logical1"));
+    assertTrue(lns.contains("logical2"));
+    assertTrue(lns.contains("logical3"));
+
+    assertTrue(manager.getLogicalNode("p2").contains("l2"));
+    assertTrue(manager.getLogicalNode("p3").contains("l3"));
+    store.shutdown();
+
+    ZooKeeperService.get().shutdown();
+
+    FileUtil.rmr(tmp);
+  }
+
+  /**
+   * Test that watches are fired correctly for logical nodes
+   */
+  @Test
+  public void testZBCSLogicalWatches() throws IOException, InterruptedException {
+    FlumeConfiguration cfg = FlumeConfiguration.createTestableConfiguration();
+    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181");
+    File tmp = FileUtil.mktempdir();
+    cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
+    cfg.setBoolean(FlumeConfiguration.MASTER_ZK_USE_EXTERNAL, false);
+    ZooKeeperService.getAndInit(cfg);
+
+    ZooKeeperConfigStore store = new ZooKeeperConfigStore();
+    store.init();
+    ZooKeeperConfigStore store2 = new ZooKeeperConfigStore();
+    store2.init();
+    ConfigManager manager1 = new ConfigManager(store);
+    ConfigManager manager2 = new ConfigManager(store2);
+    manager1.addLogicalNode("logical-watch", "logical1");
+
+    // There is no convenient way to avoid this sleep
+    Thread.sleep(2000);
+
+    // Check that the watch has happened and that the new value
+    // will be correctly read
+    assertEquals("logical1", manager2.getLogicalNode("logical-watch").get(0));
+    store.shutdown();
+    store2.shutdown();
+    ZooKeeperService.get().shutdown();
+    FileUtil.rmr(tmp);
+  }
+
+  /**
+   * Test disconnection
+   */
+  @Test
+  public void testZBCSLoseZKCnxn() throws IOException, InterruptedException {
+    File tmp = FileUtil.mktempdir();
+    FlumeConfiguration cfg = FlumeConfiguration.createTestableConfiguration();
+    cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
+    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181");
+    ZooKeeperService.getAndInit(cfg);
+
+    ZooKeeperConfigStore store = new ZooKeeperConfigStore();
+    store.init();
+    store.setConfig("foo", "my-test-flow", "fab", "fat");
+
+    ZooKeeperService.get().shutdown();
+    Thread.sleep(30 * 1000);
+    IOException ex = null;
+
+    try {
+      store.setConfig("foo", cfg.getDefaultFlowName(), "bar", "baz");
+    } catch (IOException e) {
+      ex = e;
+    }
+    assertNotNull("Expected IOException not thrown - still connected to ZK?",
+        ex);
+    store.shutdown();
+    FileUtil.rmr(tmp);
+  }
+
+  final CountDownLatch latch = new CountDownLatch(3);
+
+  /**
+   * Initialises a single server of a ZK ensemble. Must be threaded so that all
+   * servers can come up at once.
+   */
+  protected class ZKThread extends Thread {
+    protected final int serverid;
+    final File tmp;
+    final FlumeConfiguration cfg = FlumeConfiguration
+        .createTestableConfiguration();
+    final ZooKeeperService zkService = new ZooKeeperService();
+
+    public ZKThread(int serverid) throws IOException {
+      super("ZKThread-" + serverid);
+      this.serverid = serverid;
+      tmp = FileUtil.mktempdir();
+    }
+
+    public void run() {
+      cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS,
+          "localhost:2181:3181,localhost:2182:3182,localhost:2183:3183");
+      cfg.set(FlumeConfiguration.MASTER_SERVERS,
+          "localhost,localhost,localhost");
+      cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
+
+      cfg.setInt(FlumeConfiguration.MASTER_SERVER_ID, serverid);
+      try {
+        zkService.init(cfg);
+      } catch (Exception e) {
+        LOG.error("Exception when starting ZK " + serverid, e);
+
+        // Not counting down the latch will cause the calling test to timeout
+        return;
+      }
+      latch.countDown();
+    }
+
+    public ZooKeeperService getService() {
+      return zkService;
+    }
+
+    public void shutdown() throws IOException {
+      zkService.shutdown();
+      FileUtil.rmr(tmp);
+    }
+  }
+
+  /**
+   * Test good behaviour when servers fail.
+   */
+  @Test
+  public void testEnsembleFailure() throws IOException, InterruptedException {
+    ZKThread zk1 = new ZKThread(0);
+    ZKThread zk2 = new ZKThread(1);
+    ZKThread zk3 = new ZKThread(2);
+
+    zk1.start();
+    zk2.start();
+    zk3.start();
+
+    if (!latch.await(10, TimeUnit.SECONDS)) {
+      fail("ZooKeeper did not come up!");
+    }
+
+    ZooKeeperConfigStore store = new ZooKeeperConfigStore(zk1.getService());
+    store.init();
+
+    String defaultFlowName = FlumeConfiguration.get().getDefaultFlowName();
+    store.setConfig("foo", defaultFlowName, "bar", "baz");
+
+    zk1.shutdown();
+
+    store.setConfig("foo2", defaultFlowName, "baz", "bar");
+
+    zk2.shutdown();
+    zk3.shutdown();
+    store.shutdown();
+  }
+
+  /**
+   * Test to make sure unmapping logical nodes from physical nodes and survives
+   * a zk restart.
+   */
+  @Test
+  public void testUnmapAllNodes() throws IOException, InterruptedException {
+
+    File tmp = FileUtil.mktempdir();
+    FlumeConfiguration cfg = FlumeConfiguration.createTestableConfiguration();
+    cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
+    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181");
+    cfg.setInt(FlumeConfiguration.MASTER_SERVER_ID, 0);
+    ZooKeeperService.getAndInit(cfg);
+    ZooKeeperConfigStore store = new ZooKeeperConfigStore();
+    store.init();
+
+    ConfigManager manager = new ConfigManager(store);
+    manager.addLogicalNode("physical", "logical1");
+    manager.addLogicalNode("physical", "logical2");
+    manager.addLogicalNode("physical", "logical3");
+    manager.addLogicalNode("p2", "l2");
+    manager.addLogicalNode("p3", "l3");
+
+    manager.unmapAllLogicalNodes();
+
+    List<String> lns = manager.getLogicalNode("physical");
+    assertFalse(lns.contains("logical1"));
+    assertFalse(lns.contains("logical2"));
+    assertFalse(lns.contains("logical3"));
+
+    assertFalse(manager.getLogicalNode("p2").contains("l2"));
+    assertFalse(manager.getLogicalNode("p3").contains("l3"));
+
+    store.shutdown();
+    store = new ZooKeeperConfigStore();
+    store.init();
+    manager = new ConfigManager(store);
+
+    lns = manager.getLogicalNode("physical");
+    assertFalse(lns.contains("logical1"));
+    assertFalse(lns.contains("logical2"));
+    assertFalse(lns.contains("logical3"));
+
+    assertFalse(manager.getLogicalNode("p2").contains("l2"));
+    assertFalse(manager.getLogicalNode("p3").contains("l3"));
+    store.shutdown();
+    ZooKeeperService.get().shutdown();
+    FileUtil.rmr(tmp);
+  }
+
+  /**
+   * Test that the version is correctly incremented
+   */
+  @Test
+  public void testVersionIncrement() throws IOException, InterruptedException,
+      KeeperException {
+    File tmp = FileUtil.mktempdir();
+    FlumeConfiguration cfg = FlumeConfiguration.createTestableConfiguration();
+    cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
+    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181");
+    cfg.setInt(FlumeConfiguration.MASTER_SERVER_ID, 0);
+
+    ZooKeeperService zk = new ZooKeeperService();
+    zk.init(cfg);
+
+    ZooKeeperConfigStore store = new ZooKeeperConfigStore(zk);
+    store.init();
+    String defaultFlowName = cfg.getDefaultFlowName();
+    store.setConfig("foo", defaultFlowName, "bar", "baz");
+    store.setConfig("foo2", defaultFlowName, "bar", "baz");
+    store.setConfig("foo3", defaultFlowName, "bar", "baz");
+
+    ZKClient client = zk.createClient();
+    client.init();
+    List<String> children = client.getChildren(ZooKeeperConfigStore.CFGS_PATH,
+        false);
+    assertEquals("Expected 3 configs", 3, children.size());
+
+    // Note children not necessarily returned in creation order
+    Collections.sort(children);
+
+    assertEquals("Expected config to be numbered 0", 0L, ZKClient
+        .extractSuffix("cfg-", children.get(0)));
+    assertEquals("Expected config to be numbered 1", 1L, ZKClient
+        .extractSuffix("cfg-", children.get(1)));
+    assertEquals("Expected config to be numbered 2", 2L, ZKClient
+        .extractSuffix("cfg-", children.get(2)));
+    store.shutdown();
+    client.close();
+    zk.shutdown();
+    FileUtil.rmr(tmp);
+  }
+}

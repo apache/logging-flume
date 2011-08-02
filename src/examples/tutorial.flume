@@ -1,0 +1,119 @@
+// Licensed to Cloudera, Inc. under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  Cloudera, Inc. licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// This is a quick tutorial on flume's specification language.
+
+// Basic syntax:
+// <node name 1> : <source spec> | <sink spec> ;
+
+
+// Simple example -- tails syslog file and sends to collector's console
+collector : tsource | console ;
+node1 : tail("/var/log/syslog") | tsink("collector");
+
+
+// Simple example2 -- node2 listens on tcp 5140 syslog(-ng) data.
+collector : tsource | console ;
+node1 : syslogTcp(5140) | tsink("collector");
+
+// Simple eample 3 -- many tailers writing to aggregated syslog-many file
+collector : tsource | text("syslog-many");
+node1 : tail("/var/log/syslog") : tsink("collector");
+node2 : tail("/var/log/syslog") : tsink("collector");
+node3 : tail("/var/log/syslog") : tsink("collector");
+node4 : tail("/var/log/syslog") : tsink("collector");
+
+// Fan out.
+report1 : tsource | counter("counts") ;
+collector : tsource | text("syslog-many");
+node1 : tail("/var/log/syslog") : [ tsink("collector"), tsink("report1") ];
+
+// Fan in.
+collector : tsource | text("syslog-userlog");
+// TODO -- allow parallel source/sinks on a node.
+node1 : [tail("/var/log/syslog"), tail("/var/log/user.log")] | tsink("collector;
+
+// Fail over, store and forward
+collector : tsource | text("syslog-many");
+// TODO -- add forwarding checker.
+node1 : < tsink("collector") ? seqfile("/var/flume/store") > 
+
+
+// Decorators 
+report1 : tsource | counter("counts") ;
+collector : tsource | text("syslog-many");
+node1 : tail("/var/log/syslog") :  { intervalSampler(10) -> tsink("report1") } ;
+node2 : tail("/var/log/syslog") :  { reservoirSampler(10) -> tsink("report1") } ;
+node3 : tail("/var/log/syslog") :  { flakeyAppend(.10) -> tsink("report1") } ;
+
+//// Sources 
+/**
+
+tsource([port=])	flume thrift source
+text(file)		read a text file, one event per line
+seqfile(file)		read a hadoop sequence file, one event per record
+tail(file)		tail a file name, works through file rotations.
+syslogUdp([port])	listen for syslog Udp packets, defaults to udp 514
+syslogTcp([port])	listen for syslog Tcp connections, defaults to tcp 514
+syslogUdp([port])	listen for syslog a single tcp connetion, default is tcp  514
+pcap([nic, [filter]])	listen on nic, for packets that satisfy filter (Tcpdump format)
+pcapfile(file)		dump contents of a .pcap formatted file.
+ampqPoll(exchange, routing)	amqp via polling (pull)
+amqpSub(exchange, routing)	amqp via subscription (push)
+**/
+
+// // Sinks
+/**
+null			Drops incoming events
+seqfile(file)		Writes events to local file in seqfile format
+dfs(file)		Writes events to hadoop path uri in seqfile format
+tsink(host,port)	Writes events to network via thrift to host:port
+trawsink(host,port)	Alternate thrift sink to host:port (hadoop serialization)
+tacksink(host,port)	Alternate thrift sink to host:port (stop-and-wait acks)
+console			Write to stdout
+text(file)		Writes to a file, newline between events
+amqp(exchange, routing)	AMQP sink [experiemental]
+**/
+
+// // Reporting Sinks
+/**
+counter(name)			Counts events appended
+counterHistory(name)			Counts events appended
+multigrep(name, str1[, str2...]	Histogram of greps for multple strings
+multigrepspec(name, specfile)	Histogram of greps from spec file.
+regexhisto(name, regex, idx)	Histogram of capture group idx from regex
+regexhistospec(name, specfile)	Histogram of specified regexes
+**/
+
+// // Sink Decorators
+/**
+intervalSampler(n)	Take every nth event
+probSampler(prob)	Take each element with probability prob
+reservoirSampler(k)	Take at most k elements with equal probability
+inistentOpen(max)	Periodically attempt to open until max millis has expired
+flakeyAppend(prob)	Appends fail with probability prob by throwing IOExceptimon
+mult(n)			Send each appended message n times. (excludes benchmarks)
+benchinject		Injects start/end benchmark events into the stream
+benchreport(name)	Extracts inject benchmark start/end events and reports   
+inmem			Buffers events until flush/close and then flushes.
+batch(bsize,maxwait)	Batches bsize event into a single event
+unbatch			Unbatches batched events, and pass through all others.
+gzip			gzips events
+gunzip			gunzips gzip'ed events and pass through all others.
+delay(xxx)
+latch(xxX)
+**/
+

@@ -1,0 +1,369 @@
+/**
+ * Licensed to Cloudera, Inc. under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  Cloudera, Inc. licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.cloudera.flume.agent;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Date;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.apache.log4j.Logger;
+
+import com.cloudera.flume.conf.Context;
+import com.cloudera.flume.conf.FlumeBuilder;
+import com.cloudera.flume.conf.FlumeConfiguration;
+import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.thrift.FlumeConfigData;
+import com.cloudera.flume.core.ConnectorListener;
+import com.cloudera.flume.core.Driver;
+import com.cloudera.flume.core.EventSink;
+import com.cloudera.flume.core.EventSource;
+import com.cloudera.flume.core.connector.DirectDriver;
+import com.cloudera.flume.master.StatusManager.NodeState;
+import com.cloudera.flume.master.StatusManager.NodeStatus;
+import com.cloudera.flume.reporter.ReportEvent;
+import com.cloudera.flume.reporter.Reportable;
+import com.cloudera.util.NetUtils;
+
+/**
+ * This is a logical node. This contains state about a node, it does not have
+ * any specific RPC mechanism associated with it.
+ * 
+ * TODO (jon) this is a slight lie, FlumeConfigData is a thrift generate struct.
+ * 
+ * Here is how a configuration is loaded, and where errors are handled:
+ * 
+ * Configuration is sent to node via loadConfig. Configuration for a source and
+ * a sink and instantiates is extracted. Fast fail by throwing exceptions any
+ * parse or instantiation failures.
+ * 
+ * Open the source and sinks. Fast fail by throwing exception here as well.
+ * 
+ * Save the configuration as the lastGoodCfg. From this point on, if there are
+ * failures in the source, or if there are unhandled sink exceptions. this is
+ * the lastGoodConfig is instantiated again.
+ * 
+ * Instantiate a Connector that pulls events out of the sources and into the
+ * sink. Run this until an unhandled exception occurs or the source is
+ * completely drained.
+ */
+public class LogicalNode implements Reportable {
+  final static Logger LOG = Logger.getLogger(LogicalNode.class.getName());
+
+  private FlumeConfigData lastGoodCfg;
+  private Driver connector; // the connector that pumps data from src to snk
+  private EventSink snk; // current sink and source instances.
+  private EventSource src;
+  private NodeStatus state;
+  private String nodeName;
+  private String nodeMsg;
+
+  private Context ctx;
+
+  // Largest value that is smaller than all legitimate versions
+  public static final long VERSION_INFIMUM = -1;
+
+  // metrics
+  private AtomicLong reconfigures = new AtomicLong(0);
+
+  public static final String A_RECONFIGURES = "reconfigures";
+
+  /**
+   * Creates a logical node that will accept any configuration
+   */
+  public LogicalNode(Context ctx, String name) {
+    this.nodeName = name;
+    this.ctx = ctx;
+
+    // Note: version and lastSeen aren't kept up-to-date on the logical node.
+    // The master fills them in when it receives a NodeStatus heartbeat.
+    state = new NodeStatus(NodeState.HELLO, 0, 0, NetUtils.localhost(),
+        FlumeNode.getInstance().getPhysicalNodeName());
+    // Set version to -1 so that all non-negative versions will be 'later'
+    lastGoodCfg = new FlumeConfigData(0, "null", "null", VERSION_INFIMUM,
+        VERSION_INFIMUM, FlumeConfiguration.get().getDefaultFlowName());
+  }
+
+  // TODO (jon) make private
+  void openSourceSink(EventSource newSrc, EventSink newSnk) throws IOException {
+    if (newSnk != null) {
+      if (snk != null) {
+        try {
+          snk.close();
+        } catch (Exception e) {
+          nodeMsg = "old sink close failed (this smells funny) "
+              + e.getMessage();
+          LOG.warn("old sink close failed (this smells funny)" + e, e);
+        }
+      }
+      snk = newSnk;
+      snk.open();
+    }
+
+    if (newSrc != null) {
+      if (src != null) {
+        try {
+          src.close();
+        } catch (Exception e) {
+          nodeMsg = "old src close failed (but I don't care if it does) "
+              + e.getMessage();
+          LOG.warn(nodeMsg, e);
+        }
+      }
+      src = newSrc;
+      src.open();
+    }
+  }
+
+  /**
+   * This opens the specified source and sink. If this is successful, it then
+   * sets these as the node's source and sink, and starts a thread that pumps
+   * source values into the sink.
+   */
+  synchronized void openLoadNode(EventSource newSrc, EventSink newSnk)
+      throws IOException {
+    openSourceSink(newSrc, newSnk);
+    loadNode(newSrc, newSnk);
+  }
+
+  /**
+   * This stops any existing connection (source=>sink pumper), and then creates
+   * a new one with the specified *already opened* source and sink arguments.
+   */
+  // TODO (jon) make private
+  synchronized void loadNode(EventSource newSrc, EventSink newSnk)
+      throws IOException {
+
+    if (connector != null) {
+      // stop the existing connector.
+      connector.stop();
+    }
+
+    // this will be replaceable with multi-threaded queueing versions or other
+    // mechanisms
+    connector = new DirectDriver("logicalNode " + nodeName, src, snk);
+    connector.registerListener(new ConnectorListener() {
+      @Override
+      public void fireError(Driver conn, Exception ex) {
+        LOG.info("Connector " + nodeName + "exited with error", ex);
+
+        try {
+          conn.getSource().close();
+          conn.getSink().close();
+        } catch (IOException e) {
+          LOG.error("Error closing" + nodeName, e);
+        }
+
+        nodeMsg = "Error: Connector on " + nodeName + " closed " + conn;
+        LOG.info("Error: Connector  on " + nodeName + " closed " + conn);
+
+        // restart connection. (with proper decorators on a sink, this only
+        // happens when the source.next() fails)
+
+        LOG.warn("reloading last successful config: " + lastGoodCfg);
+        try {
+          // TODO (jon) write test case to verify that this doesn't cause
+          // deadlock.
+          loadConfig(lastGoodCfg);
+        } catch (Exception e) {
+          state.state = NodeState.ERROR;
+          LOG.error("reloading " + nodeName + " failed ", e);
+          nodeMsg = "reloading " + nodeName + " failed ";
+        }
+
+      }
+
+      @Override
+      public void fireStarted(Driver c) {
+        LOG.info("Connector started: " + c);
+        nodeMsg = "Connector started: " + c;
+      }
+
+      @Override
+      public void fireStopped(Driver c) {
+
+        try {
+          c.getSource().close();
+        } catch (IOException e) {
+          LOG.error(nodeName + ": error closing (ignoring))", e);
+        }
+
+        try {
+          c.getSink().close();
+        } catch (IOException e) {
+          LOG.error(nodeName + ": error closing (ignoring))", e);
+        }
+
+        LOG.info(nodeName + ": Connector stopped: " + c);
+        nodeMsg = nodeName + ": Connector stopped: " + c;
+        state.state = NodeState.IDLE;
+      }
+
+    });
+    this.state.state = NodeState.ACTIVE;
+    connector.start();
+    reconfigures.incrementAndGet();
+  }
+
+  public void loadConfig(FlumeConfigData cfg) throws IOException,
+      RuntimeException, FlumeSpecException {
+
+    // got a newer configuration
+    LOG.debug("Attempt to load config " + cfg);
+    EventSink newSnk;
+    EventSource newSrc;
+    try {
+      String errMsg = null;
+      if (cfg.sinkConfig == null || cfg.sinkConfig.length() == 0) {
+        errMsg = this.getName() + " - empty sink";
+      }
+
+      if (cfg.sourceConfig == null || cfg.sourceConfig.length() == 0) {
+        errMsg = this.getName() + " - empty source";
+      }
+
+      if (errMsg != null) {
+        LOG.info(errMsg);
+        return; // Do nothing.
+      }
+
+      // TODO (jon) ERROR isn't quite right here -- the connection is in ERROR
+      // but the previous connection is ok. Need to just add states to the
+      // connections, and have each node maintain a list of connections.
+
+      newSnk = FlumeBuilder.buildSink(ctx, cfg.sinkConfig);
+      if (newSnk == null) {
+        LOG.error("failed to create sink config: " + cfg.sinkConfig);
+        state.state = NodeState.ERROR;
+        return;
+      }
+
+      newSrc = FlumeBuilder.buildSource(cfg.sourceConfig);
+      if (newSrc == null) {
+        newSnk.close(); // close the open sink.
+        LOG.error("failed to create sink config: " + cfg.sourceConfig);
+        state.state = NodeState.ERROR;
+        return;
+      }
+
+    } catch (RuntimeException e) {
+      LOG
+          .error("Runtime ex: " + new File(".").getAbsolutePath() + " " + cfg,
+              e);
+      state.state = NodeState.ERROR;
+      throw e;
+    } catch (FlumeSpecException e) {
+      LOG.error(
+          "FlumeSpecExn : " + new File(".").getAbsolutePath() + " " + cfg, e);
+      state.state = NodeState.ERROR;
+      throw e;
+    }
+
+    openSourceSink(newSrc, newSnk);
+
+    // We have successfully opened the source and sinks for the config. We can
+    // mark this as the last good / successful config (which we try to reload if
+    // the source fails)
+    this.lastGoodCfg = cfg;
+
+    loadNode(newSrc, newSnk);
+
+    LOG.info("Node config sucessfully set to " + cfg);
+  }
+
+  /**
+   * Takes a FlumeConfigData and attempts load/config the node.
+   * 
+   * True if successful, false if failed
+   */
+  public boolean checkConfig(FlumeConfigData data) {
+
+    if (data == null) {
+      return false;
+    }
+
+    // check if config is too old or the same as current
+    if (data.getSourceVersion() <= lastGoodCfg.getSourceVersion()) {
+      if (data.getSourceVersion() < lastGoodCfg.getSourceVersion()) {
+        // retrieved configuration is older!?
+        LOG.warn("reject because config older than the current. ");
+        return false;
+      }
+
+      LOG.debug("do nothing: retrieved config ("
+          + new Date(data.getSourceVersion()) + ") same as current ("
+          + new Date(lastGoodCfg.getSourceVersion()) + "). ");
+      return false;
+    }
+
+    try {
+      loadConfig(data);
+    } catch (Exception e) {
+      // Catch the exception to prevent backoff
+      LOG.warn("Configuration " + data + " failed to load!", e);
+      return false;
+    }
+    return true;
+  }
+
+  synchronized public ReportEvent getReport() {
+    ReportEvent rpt = new ReportEvent(nodeName);
+    rpt.setStringMetric("nodename", nodeName);
+    rpt.setStringMetric("version", new Date(lastGoodCfg.timestamp).toString());
+    rpt.setStringMetric("state", state.state.toString());
+    rpt.setStringMetric("hostname", state.host);
+    rpt.setStringMetric("sourceConfig", (lastGoodCfg.sourceConfig == null) ? ""
+        : lastGoodCfg.sourceConfig);
+    rpt.setStringMetric("sinkConfig", (lastGoodCfg.sinkConfig == null) ? ""
+        : lastGoodCfg.sinkConfig);
+    rpt.setStringMetric("message", nodeMsg);
+    rpt.setLongMetric(A_RECONFIGURES, reconfigures.get());
+    rpt.setStringMetric("physicalnode", state.physicalNode);
+
+    if (snk != null) {
+      rpt.hierarchicalMerge("LogicalNode", snk.getReport());
+    }
+
+    return rpt;
+  }
+
+  public String getName() {
+    return nodeName;
+  }
+
+  public long getConfigVersion() {
+    if (lastGoodCfg == null)
+      return 0;
+    return lastGoodCfg.getTimestamp();
+  }
+
+  public NodeStatus getStatus() {
+    return state;
+  }
+
+  public void close() throws IOException {
+    if (connector != null) {
+      // stop the existing connector.
+      nodeMsg = nodeName + "closing";
+      connector.stop();
+    }
+
+  }
+
+}

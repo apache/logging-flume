@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src/java"/>
+	<classpathentry kind="src" path="src/javatest"/>
+	<classpathentry kind="src" path="src/javatest-torture"/>
+	<classpathentry kind="src" path="src/ahocorasick"/>
+	<classpathentry kind="src" path="src/javaperf"/>
+	<classpathentry excluding="com/cloudera/flume/conf/RuntimeRecognitionException.java" kind="src" path="src/gen-java"/>
+	<classpathentry kind="src" path="plugins/rabbitmq/src/java"/>
+	<classpathentry kind="src" path="plugins/rabbitmq/src/javatest"/>
+	<classpathentry kind="src" path="plugins/pcap/src/java"/>
+	<classpathentry kind="src" path="plugins/pcap/src/javatest"/>
+	<classpathentry kind="lib" path="lib/commons-cli-1.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-io-1.2.jar"/>
+	<classpathentry kind="lib" path="lib/commons-logging-1.0.4.jar"/>
+	<classpathentry kind="lib" path="lib/log4j-1.2.15.jar" sourcepath="/log4j 1.2.15/src/main/java"/>
+	<classpathentry kind="lib" path="lib/commons-lang-2.4.jar"/>
+	<classpathentry kind="lib" path="lib/google-collect-1.0-rc2.jar"/>
+	<classpathentry kind="lib" path="lib/libthrift.jar"/>
+	<classpathentry kind="lib" path="lib/jetty-5.1.4.jar"/>
+	<classpathentry kind="lib" path="lib/servlet-api.jar"/>
+	<classpathentry kind="lib" path="lib/commons-el.jar"/>
+	<classpathentry kind="lib" path="lib/jasper-compiler.jar"/>
+	<classpathentry kind="lib" path="lib/jasper-runtime.jar"/>
+	<classpathentry kind="lib" path="lib/jsp-api.jar"/>
+	<classpathentry kind="lib" path="lib/automaton.jar"/>
+	<classpathentry kind="lib" path="lib/antlr-3.1.3.jar"/>
+	<classpathentry kind="lib" path="lib/irclib.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-api-1.5.8.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-simple-1.5.8.jar"/>
+	<classpathentry kind="lib" path="lib/avro-1.3.0.jar"/>
+	<classpathentry kind="lib" path="lib/paranamer-2.1.jar"/>
+	<classpathentry kind="lib" path="lib/jackson-core-asl-1.4.0.jar"/>
+	<classpathentry kind="lib" path="lib/jackson-mapper-asl-1.4.0.jar"/>
+	<classpathentry kind="lib" path="lib/jline-0.9.94.jar"/>
+	<classpathentry kind="lib" path="libtest/junit-4.8.1.jar"/>
+	<classpathentry kind="lib" path="libtest/asm-3.0.jar"/>
+	<classpathentry kind="lib" path="libtest/asm-tree-3.0.jar"/>
+	<classpathentry kind="lib" path="plugins/pcap/lib/Jpcap.dll"/>
+	<classpathentry kind="lib" path="plugins/pcap/lib/jpcap.jar"/>
+	<classpathentry kind="lib" path="plugins/pcap/lib/libjpcap.so"/>
+	<classpathentry kind="lib" path="plugins/rabbitmq/lib/rabbitmq-client.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/hadoop-0.20.1+133-core.jar" sourcepath="/apache-hadoop/src/core"/>
+	<classpathentry kind="lib" path="/usr/lib/jvm/java-6-sun/lib/dt.jar"/>
+	<classpathentry kind="lib" path="/usr/lib/jvm/java-6-sun/lib/tools.jar"/>
+	<classpathentry kind="lib" path="lib/zookeeper-3.3.2-dev.jar"/>
+	<classpathentry kind="lib" path="libbuild/ant-launcher-1.7.1.jar"/>
+	<classpathentry kind="lib" path="libtest/mockito-all-1.8.1.jar"/>
+	<classpathentry kind="lib" path="libbuild/ant-1.7.1.jar"/>
+	<classpathentry kind="output" path="build_eclipse"/>
+</classpath>

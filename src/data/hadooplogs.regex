@@ -1,0 +1,5 @@
+hadoop_worker:x:1:^(\S+?)\s
+hadoop_event_level:x:2:^(\S+?\s+){4}(\S+?)\s+
+hadoop_event_source:x:2:^(\S+?\s+){5}(\S+?:)\s+
+hadoop_nullptr:x:1:(NullPointerException)
+hadoop_heartbeaterr:x:1:from (\S+?:\S+?):

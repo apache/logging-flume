@@ -1,0 +1,5 @@
+foo.com ? 09/02/27 13:56:54 INFO metrics.RpcMetrics: Initializing RPC Metrics with hostName=NameNode, port=9000
+foo.com ? 09/02/27 13:57:12 INFO mapred.JobTracker: Lost tracker 'tracker_10.21.199.2:localhost.localdomain/127.0.0.1:35044'
+foo.com ? 09/02/27 13:57:12 INFO ipc.Server: IPC Server handler 2 on 9001, call heartbeat(org.apache.hadoop.mapred.TaskTrackerStatus@3bc486f2, true, true, 3438) from 10.21.199.2:44385: error: java.io.IOException: java.lang.NullPointerException
+foo.com ? 09/02/27 13:57:15 INFO ipc.Server: IPC Server handler 1 on 9001, call heartbeat(org.apache.hadoop.mapred.TaskTrackerStatus@611cfa21, true, true, 3488) from 10.21.199.6:47659: error: java.io.IOException: java.lang.NullPointerException
+foo.com ? 09/02/27 13:57:15 INFO mapred.JobTracker: Lost tracker 'tracker_10.21.199.4:localhost.localdomain/127.0.0.1:48049'

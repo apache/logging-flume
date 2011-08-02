@@ -1,0 +1,2 @@
+apache_get_file:x:1:GET (.*) HTTP
+apache_get_hour:x:1:\[\d+/\w+/\d+:(\d+):\d+:\d+ .+\]
