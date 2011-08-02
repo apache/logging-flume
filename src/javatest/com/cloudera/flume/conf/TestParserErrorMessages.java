@@ -35,11 +35,11 @@ public class TestParserErrorMessages {
   @Test
   public void testBadLexer() {
     try {
-      FlumeBuilder.buildSink(new Context(), "n@ot");
+      FlumeBuilder.buildSink(new Context(), "no@t");
     } catch (FlumeSpecException e) {
       LOG.info(e.getMessage());
       // this is a friendlier exception
-      assertEquals("Lexer error at char '@' at line 1 char 1", e.getMessage());
+      assertEquals("Lexer error at char '@' at line 1 char 2", e.getMessage());
     }
   }
 
@@ -126,7 +126,8 @@ public class TestParserErrorMessages {
     } catch (FlumeSpecException e) {
       LOG.info(e.getMessage());
       // this is a friendlier exception
-      assertEquals("Lexer error at char '0' at line 1 char 24", e.getMessage());
+      assertEquals("Lexer error at token '=>' at line 1 char 24", e
+          .getMessage());
     }
 
   }

@@ -53,8 +53,14 @@ public class RuntimeRecognitionException extends RuntimeException {
   public String getMessage() {
     if (re instanceof NoViableAltException) {
       NoViableAltException nvae = (NoViableAltException) re;
-      String c = StringEscapeUtils.escapeJava("" + (char) nvae.c);
-      return "Lexer error at char '" + c + "' at line " + nvae.line + " char "
+      if (nvae.token == null) {
+        String c = StringEscapeUtils.escapeJava("" + (char) nvae.c);
+        return "Lexer error at char '" + c + "' at line " + nvae.line
+            + " char " + nvae.charPositionInLine;
+      }
+
+      String c = StringEscapeUtils.escapeJava(nvae.token.getText());
+      return "Lexer error at token '" + c + "' at line " + nvae.line + " char "
           + nvae.charPositionInLine;
     }
 
