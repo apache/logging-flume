@@ -22,6 +22,7 @@ import static com.cloudera.flume.master.TestMasterJersey.curl;
 
 import java.io.IOException;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,6 +63,7 @@ public class TestStatusHttpServer {
    * on failure.
    */
   @Test
+  @Ignore
   public void testAutoFindPort() throws IOException, Exception {
     // Set directory of webapps to build-specific dir
     FlumeConfiguration.get().set(FlumeConfiguration.WEBAPPS_PATH,

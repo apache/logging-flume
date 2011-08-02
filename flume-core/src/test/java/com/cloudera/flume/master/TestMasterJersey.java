@@ -28,6 +28,7 @@ import java.net.URLConnection;
 
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,6 +70,7 @@ public class TestMasterJersey extends SetupMasterTestEnv {
     return sb.toString();
   }
 
+  @Ignore
   @Test
   public void testMaster() throws IOException, InterruptedException,
       FlumeSpecException, JSONException {
@@ -118,11 +120,12 @@ public class TestMasterJersey extends SetupMasterTestEnv {
 
   /**
    * Test json interface for getting ack information.
-   * 
+   *
    * @throws IOException
    * @throws InterruptedException
    * @throws FlumeSpecException
    */
+  @Ignore
   @Test
   public void testMasterAckManager() throws IOException, InterruptedException,
       FlumeSpecException {
