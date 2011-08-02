@@ -44,7 +44,6 @@ public class MasterReportPusher {
   final ReportManager rptMan;
   final MasterRPC masterRPC;
   final PusherThread pusherThread = new PusherThread();
-  final String prefix;
 
   volatile boolean shutdown = false;
 
@@ -53,9 +52,8 @@ public class MasterReportPusher {
    * from the supplied configuration, reports from rptMan and push them via
    * masterRPC.
    */
-  public MasterReportPusher(String prefix, FlumeConfiguration cfg, ReportManager rptMan,
+  public MasterReportPusher(FlumeConfiguration cfg, ReportManager rptMan,
       MasterRPC masterRPC) {
-    this.prefix = prefix;
     this.cfg = cfg;
     this.rptMan = rptMan;
     this.masterRPC = masterRPC;
@@ -91,7 +89,7 @@ public class MasterReportPusher {
     void queryReportMan(Map<String, ReportEvent> reports) {
       Map<String, Reportable> reportables = rptMan.getReportables();
       for (Entry<String, Reportable> e : reportables.entrySet()) {
-        reports.put(prefix + e.getKey(), e.getValue().getReport());
+        reports.put(e.getKey(), e.getValue().getReport());
       }
     }
     

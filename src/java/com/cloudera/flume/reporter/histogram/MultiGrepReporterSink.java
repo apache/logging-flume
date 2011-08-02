@@ -158,7 +158,6 @@ public class MultiGrepReporterSink<T> extends EventSink.Base {
           return sinks.iterator().next();
 
         EventSink snk = new MultiReporter(fname, sinks);
-        ReportManager.get().add(snk); // auto register with local reportManager
         return snk;
       }
     };
@@ -174,7 +173,6 @@ public class MultiGrepReporterSink<T> extends EventSink.Base {
         String name = argv[0];
         String[] strings = Arrays.copyOfRange(argv, 1, argv.length);
         EventSink snk = MultiGrepReporterSink.build(name, strings);
-        ReportManager.get().add(snk); // auto register with local reportManager
         return snk;
       }
     };

@@ -39,7 +39,7 @@ public class FlumeVMInfo implements Reportable {
   }
 
   public FlumeVMInfo(String name) {
-    this.name = name + "-JVMInfo";
+    this.name = name + "jvm-Info";
   }
 
   @Override

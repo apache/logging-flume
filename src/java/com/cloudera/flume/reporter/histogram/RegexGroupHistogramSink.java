@@ -88,7 +88,6 @@ public class RegexGroupHistogramSink extends HistogramSink {
           return sinks.iterator().next();
 
         EventSink snk = new MultiReporter(fname, sinks);
-        ReportManager.get().add(snk); // auto register with local reportManager
         return snk;
       }
     };
@@ -107,7 +106,6 @@ public class RegexGroupHistogramSink extends HistogramSink {
         Pattern pat = Pattern.compile(regex);
 
         EventSink snk = new RegexGroupHistogramSink(name, pat, idx);
-        ReportManager.get().add(snk); // auto register with local reportManager
         return snk;
 
       }

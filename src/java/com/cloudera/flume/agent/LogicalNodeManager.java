@@ -85,7 +85,6 @@ public class LogicalNodeManager implements Reportable {
       LOG.info("creating new logical node " + name);
       nd = new LogicalNode(ctx, name);
       threads.put(nd.getName(), nd);
-      ReportManager.get().add(nd);
     }
     long ver = Clock.unixTime();
     FlumeConfigData fcd = new FlumeConfigData(ver, src, snk, ver, ver,
@@ -102,7 +101,6 @@ public class LogicalNodeManager implements Reportable {
       LOG.info("creating new logical node " + name);
       nd = new LogicalNode(ctx, name);
       threads.put(nd.getName(), nd);
-      ReportManager.get().add(nd);
     }
 
     nd.openLoadNode(src, snk);

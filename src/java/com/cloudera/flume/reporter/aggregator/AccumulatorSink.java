@@ -96,7 +96,6 @@ public class AccumulatorSink extends EventSink.Base {
           throw new IllegalArgumentException("need only a name argument");
         }
         EventSink snk = new AccumulatorSink(argv[0]);
-        ReportManager.get().add(snk); // register self with ReportManager
         return snk;
       }
 

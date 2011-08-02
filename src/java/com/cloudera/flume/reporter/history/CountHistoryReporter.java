@@ -76,7 +76,6 @@ public class CountHistoryReporter extends ScheduledHistoryReporter<CounterSink> 
           period = Integer.parseInt(argv[1]);
         }
         EventSink snk = new CountHistoryReporter(name, period);
-        ReportManager.get().add(snk); // auto register with local reportManager
         return snk;
       }
     };

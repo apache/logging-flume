@@ -78,6 +78,8 @@ public class FlumeMaster implements Reportable {
   final ConfigurationManager specman;
   final StatusManager statman;
   final MasterAckManager ackman;
+  
+  final String uniqueMasterName;
 
   Thread reaper;
 
@@ -114,6 +116,9 @@ public class FlumeMaster implements Reportable {
   public FlumeMaster(FlumeConfiguration cfg, boolean doHttp) {
     this.cfg = cfg;
     instance = this;
+    
+    this.uniqueMasterName = "flume-master-" + cfg.getMasterServerId();
+    
     this.doHttp = doHttp;
     this.cmdman = new CommandManager();
     ConfigStore cfgStore = createConfigStore(FlumeConfiguration.get());
@@ -150,6 +155,7 @@ public class FlumeMaster implements Reportable {
     this.statman = stat;
     this.ackman = ack;
     this.cfg = cfg;
+    this.uniqueMasterName = "flume-master-" + cfg.getMasterServerId();
   }
 
   /**
@@ -199,8 +205,8 @@ public class FlumeMaster implements Reportable {
         throw new IOException("Unexpected interrupt when starting ZooKeeper", e);
       }
     }
-    ReportManager.get().add(new FlumeVMInfo(null));
-    ReportManager.get().add(new SystemInfo());
+    ReportManager.get().add(new FlumeVMInfo(this.uniqueMasterName + "."));
+    ReportManager.get().add(new SystemInfo(this.uniqueMasterName + "."));
 
     if (doHttp) {
       String webPath = FlumeNode.getWebPath(cfg);
@@ -348,7 +354,7 @@ public class FlumeMaster implements Reportable {
 
   @Override
   public String getName() {
-    return "FlumeMaster";
+    return this.uniqueMasterName;
   }
 
   @Override

@@ -95,7 +95,6 @@ public class CounterSink extends EventSink.Base {
         }
 
         EventSink snk = new CounterSink(argv[0]);
-        ReportManager.get().add(snk); // register self with ReportManager
         return snk;
       }
 

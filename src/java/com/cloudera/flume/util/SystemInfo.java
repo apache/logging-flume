@@ -22,6 +22,7 @@ import java.lang.management.OperatingSystemMXBean;
 
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.Reportable;
+import com.cloudera.util.NetUtils;
 
 /**
  * This is a quick and dirty first cut reporter that gets system resource info.
@@ -29,9 +30,15 @@ import com.cloudera.flume.reporter.Reportable;
  */
 public class SystemInfo implements Reportable {
 
+  String name = "System";
+  
   @Override
   public String getName() {
-    return "System";
+    return this.name;
+  }
+  
+  public SystemInfo(String name) {
+    this.name = name + "system-info";
   }
 
   @Override
@@ -46,6 +53,7 @@ public class SystemInfo implements Reportable {
     rpt.setLongMetric("os.cpus", os.getAvailableProcessors());
     // load in last minute
     rpt.setDoubleMetric("os.load", os.getSystemLoadAverage());
+    rpt.setStringMetric("hostname", NetUtils.localhost());
 
     // os (not in java)
     // iotop

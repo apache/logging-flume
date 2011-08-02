@@ -72,6 +72,8 @@ import com.google.common.base.Preconditions;
  */
 public class FlumeNode implements Reportable {
   final static Logger LOG = Logger.getLogger(FlumeNode.class.getName());
+  final static String PHYSICAL_NODE_REPORT_PREFIX = "pn-";
+  static final String R_NUM_LOGICAL_NODES = "Logical nodes";
 
   // hook for jsp/web display
   private static FlumeNode instance;
@@ -120,14 +122,13 @@ public class FlumeNode implements Reportable {
     this.collectorAck = colAck;
     this.liveMan = liveman;
 
-    this.vmInfo = new FlumeVMInfo(name);
+    this.vmInfo = new FlumeVMInfo(PHYSICAL_NODE_REPORT_PREFIX
+        + this.physicalNodeName + ".");
 
-    this.reportPusher = new MasterReportPusher(this.physicalNodeName,
-        FlumeConfiguration.get(), ReportManager.get(), rpcMan);
-
-    ReportManager.get().add(vmInfo);
-    this.sysInfo = new SystemInfo();
-    ReportManager.get().add(sysInfo);
+    this.reportPusher = new MasterReportPusher(FlumeConfiguration.get(),
+        ReportManager.get(), rpcMan);
+    this.sysInfo = new SystemInfo(PHYSICAL_NODE_REPORT_PREFIX
+        + this.physicalNodeName + ".");
   }
 
   public FlumeNode(FlumeConfiguration conf, String nodeName, MasterRPC rpc,
@@ -150,11 +151,13 @@ public class FlumeNode implements Reportable {
       this.liveMan = new LivenessManager(nodesMan, rpcMan,
           new FlumeNodeWALNotifier(this.walMans));
 
-    this.reportPusher = new MasterReportPusher(this.physicalNodeName, conf,
-        ReportManager.get(), rpcMan);
+    this.reportPusher = new MasterReportPusher(conf, ReportManager.get(),
+        rpcMan);
 
-    this.vmInfo = new FlumeVMInfo(nodeName);
-    this.sysInfo = new SystemInfo();
+    this.vmInfo = new FlumeVMInfo(PHYSICAL_NODE_REPORT_PREFIX
+        + this.getPhysicalNodeName() + ".");
+    this.sysInfo = new SystemInfo(PHYSICAL_NODE_REPORT_PREFIX
+        + this.getPhysicalNodeName() + ".");
   }
 
   public FlumeNode(MasterRPC rpc, boolean startHttp, boolean oneshot) {
@@ -210,10 +213,11 @@ public class FlumeNode implements Reportable {
   }
 
   synchronized public void start() {
+    FlumeConfiguration conf = FlumeConfiguration.get();
     ReportManager.get().add(vmInfo);
     ReportManager.get().add(sysInfo);
+    ReportManager.get().add(this);
 
-    FlumeConfiguration conf = FlumeConfiguration.get();
     if (startHttp) {
       try {
         String webPath = getWebPath(conf);
@@ -533,12 +537,14 @@ public class FlumeNode implements Reportable {
 
   @Override
   public String getName() {
-    return "FlumeNode";
+    return PHYSICAL_NODE_REPORT_PREFIX + this.getPhysicalNodeName();
   }
 
   @Override
   public ReportEvent getReport() {
     ReportEvent node = new ReportEvent(getName());
+    node.setLongMetric(R_NUM_LOGICAL_NODES, this.getLogicalNodeManager()
+        .getNodes().size());
     node.hierarchicalMerge(nodesMan.getName(), nodesMan.getReport());
     if (getAckChecker() != null) {
       node.hierarchicalMerge(getAckChecker().getName(), getAckChecker()
