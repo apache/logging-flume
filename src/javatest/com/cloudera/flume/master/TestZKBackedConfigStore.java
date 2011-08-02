@@ -64,7 +64,7 @@ public class TestZKBackedConfigStore {
       File tmp = FileUtil.mktempdir();
       FlumeConfiguration cfg = FlumeConfiguration.createTestableConfiguration();
       cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
-      cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181");
+      cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181:4181");
       ZooKeeperService.getAndInit(cfg);
 
       ZooKeeperConfigStore store = new ZooKeeperConfigStore();
@@ -133,7 +133,7 @@ public class TestZKBackedConfigStore {
     File tmp = FileUtil.mktempdir();
     FlumeConfiguration cfg = FlumeConfiguration.createTestableConfiguration();
     cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
-    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181");
+    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181:4181");
     ZooKeeperService.getAndInit(cfg);
 
     ZooKeeperConfigStore store = new ZooKeeperConfigStore();
@@ -179,7 +179,7 @@ public class TestZKBackedConfigStore {
   @Test
   public void testZBCSLogicalWatches() throws IOException, InterruptedException {
     FlumeConfiguration cfg = FlumeConfiguration.createTestableConfiguration();
-    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181");
+    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181:4181");
     File tmp = FileUtil.mktempdir();
     cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
     cfg.setBoolean(FlumeConfiguration.MASTER_ZK_USE_EXTERNAL, false);
@@ -213,7 +213,7 @@ public class TestZKBackedConfigStore {
     File tmp = FileUtil.mktempdir();
     FlumeConfiguration cfg = FlumeConfiguration.createTestableConfiguration();
     cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
-    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181");
+    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181:4181");
     ZooKeeperService.getAndInit(cfg);
 
     ZooKeeperConfigStore store = new ZooKeeperConfigStore();
@@ -256,7 +256,7 @@ public class TestZKBackedConfigStore {
 
     public void run() {
       cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS,
-          "localhost:2181:3181,localhost:2182:3182,localhost:2183:3183");
+          "localhost:2181:3181:4181,localhost:2182:3182:4182,localhost:2183:3183:4183");
       cfg.set(FlumeConfiguration.MASTER_SERVERS,
           "localhost,localhost,localhost");
       cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
@@ -325,7 +325,7 @@ public class TestZKBackedConfigStore {
     File tmp = FileUtil.mktempdir();
     FlumeConfiguration cfg = FlumeConfiguration.createTestableConfiguration();
     cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
-    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181");
+    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181:4181");
     cfg.setInt(FlumeConfiguration.MASTER_SERVER_ID, 0);
     ZooKeeperService.getAndInit(cfg);
     ZooKeeperConfigStore store = new ZooKeeperConfigStore();
@@ -374,7 +374,7 @@ public class TestZKBackedConfigStore {
     File tmp = FileUtil.mktempdir();
     FlumeConfiguration cfg = FlumeConfiguration.createTestableConfiguration();
     cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
-    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181");
+    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181:4181");
     cfg.setInt(FlumeConfiguration.MASTER_SERVER_ID, 0);
 
     ZooKeeperService zk = new ZooKeeperService();
@@ -419,7 +419,7 @@ public class TestZKBackedConfigStore {
     File tmp = FileUtil.mktempdir();
     FlumeConfiguration cfg = FlumeConfiguration.createTestableConfiguration();
     cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
-    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181");
+    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181:4181");
     cfg.setInt(FlumeConfiguration.MASTER_SERVER_ID, 0);
 
     ZooKeeperService zk = new ZooKeeperService();
@@ -471,7 +471,7 @@ public class TestZKBackedConfigStore {
     File tmp = FileUtil.mktempdir();
     FlumeConfiguration cfg = FlumeConfiguration.createTestableConfiguration();
     cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
-    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181");
+    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181:4181");
     cfg.setInt(FlumeConfiguration.MASTER_SERVER_ID, 0);
 
     ZooKeeperService zk = new ZooKeeperService();

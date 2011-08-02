@@ -267,7 +267,7 @@ public class ZKInProcessServer {
     properties.setProperty("tickTime", "2000");
     properties.setProperty("initLimit", "10");
     properties.setProperty("syncLimit", "5");
-    properties.setProperty("electionAlg", "0");
+    properties.setProperty("electionAlg", "3");
     properties.setProperty("maxClientCnxns", "0");
     createDirs(logdir + "/server-0", logdir + "/logs-0", 0);
     try {
@@ -294,7 +294,7 @@ public class ZKInProcessServer {
         + conf.getMasterServerId());
     properties.setProperty("clientPort", Integer.valueOf(
         conf.getMasterZKClientPort()).toString());
-    properties.setProperty("electionAlg", Integer.valueOf(0).toString());
+    properties.setProperty("electionAlg", Integer.valueOf(3).toString());
     properties.setProperty("maxClientCnxns", "0");
 
     // Now set the server properties
@@ -302,10 +302,11 @@ public class ZKInProcessServer {
     int count = 0;
     for (String l : hosts) {
       String[] kv = l.split(":");
-      Preconditions.checkState(kv.length == 3);
-      // kv[0] is the hostname, kv[2] is the serverport, kv[1] is the (unused)
-      // client port
-      properties.setProperty("server." + count, kv[0] + ":" + kv[2]);
+      Preconditions.checkState(kv.length == 4);
+      // kv[0] is the hostname, kv[2] is the quorumport,
+      // kv[3] is the electionport kv[1] is the (unused) client port
+      properties.setProperty("server." + count,
+          kv[0] + ":" + kv[2] + ":" + kv[3]);
       ++count;
     }
     int serverid = conf.getMasterServerId();

@@ -74,10 +74,10 @@ public class TestZKClient {
     properties.setProperty("syncLimit", "5");
     properties.setProperty("maxClientCnxns", "0");
     ZKInProcessServer[] zks = new ZKInProcessServer[3];
-    properties.setProperty("server.0", "localhost:3181");
-    properties.setProperty("server.1", "localhost:3182");
-    properties.setProperty("server.2", "localhost:3183");
-    properties.setProperty("electionAlg", new Integer(0).toString());
+    properties.setProperty("server.0", "localhost:3181:4181");
+    properties.setProperty("server.1", "localhost:3182:4182");
+    properties.setProperty("server.2", "localhost:3183:4183");
+    properties.setProperty("electionAlg", new Integer(3).toString());
 
     for (int i = 0; i < 3; ++i) {
       LOG.info("Starting server " + i);

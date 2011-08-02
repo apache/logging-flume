@@ -48,7 +48,7 @@ public class TestZooKeeperService {
   public void testLifecycle() throws IOException, InterruptedException, KeeperException {
     FlumeConfiguration cfg = FlumeConfiguration.get();
     File tmp = FileUtil.mktempdir();
-    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181");
+    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181:4181");
     cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
     ZooKeeperService svc = new ZooKeeperService();
     svc.init(cfg);
@@ -74,7 +74,7 @@ public class TestZooKeeperService {
   public void testMultipleClients() throws IOException, InterruptedException, KeeperException {
     FlumeConfiguration cfg = FlumeConfiguration.get();
     File tmp = FileUtil.mktempdir();
-    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181");
+    cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS, "localhost:2181:3181:4181");
     cfg.set(FlumeConfiguration.MASTER_ZK_LOGDIR, tmp.getAbsolutePath());
     ZooKeeperService svc = new ZooKeeperService();
     svc.init(cfg);

@@ -464,11 +464,9 @@ Most deployments using the ZBCS can use Flume's default configuration. However, 
 
 Log Directory - +flume.master.zk.logdir+ :: To ensure reliability and the ability to restore its state in the event of a failure, ZBCS continually logs all updates it sees to the directory in +flume.master.zk.logdir+. This directory must be writable by the user as which Flume is running, and will be created if it doesn't exist at start-up time. WARNING: Do not delete this directory, or any files inside it. If deleted, all your configuration information will be lost.
 
-ZBCS Server Port - +flume.master.zk.serverport+ :: Each machine in the distributed Flume Master communicates with every other on the port set by +flume.master.zk.serverport+. The default is 3181. Note that this controls both the port on which the ZBCS listens, and on which it looks for other machines in the ensemble. 
+ZBCS Server Ports :: Each machine in the distributed Flume Master communicates with every other on the TCP ports set by +flume.master.zk.server.quorum.port+ and +flume.master.zk.server.election.port+. The defaults are 3182 and 3183 respectively. Note that these settings control both the port on which the ZBCS listens, and on which it looks for other machines in the ensemble. 
 
-ZBCS Client Port - +flume.master.zk.clientport+ ::
-
-The Flume Master process communicates with ZooKeeper (either on the same machine, or remotely on another Master server) via a client TCP port, which is set by +flume.master.zk.clientport+. The default is 2181.
+ZBCS Client Port - +flume.master.zk.client.port+ :: The Flume Master process communicates with ZooKeeper (either on the same machine, or remotely on another Master server) via a client TCP port, which is set by +flume.master.zk.client.port+. The default is 3181.
 
 ==== Gossip in Distributed Mode
 
@@ -537,7 +535,7 @@ node [shape=none]
 nodes ->masters [label="flume.master.config.port", fontsize=10];   
 masters -> masters [label="flume.master.gossip.port", fontsize=10];   
 masters -> zookeeper [label="flume.master.zk.client.port", fontsize=10];   
-zookeeper -> zookeeper [label="flume.master.zk.server.port", fontsize=10];
+zookeeper -> zookeeper [label="flume.master.zk.server.{quorum,election}.port", fontsize=10];
 
   node [shape=Mrecord]   
 edge [style="bold", weight=10]   
@@ -604,6 +602,23 @@ The nodes connect over the port +flume.master.heartbeat.port+ on each machine in
 
 If a Master server fails, nodes will automatically fail over to the next randomly selected Master server that they can establish a connection to.
 
+=== External ZooKeeper Cluster
+
+In some cases you may want a ZBCS that relies on an externally managed ZooKeeper service. The most common example of this is where multiple services which rely on ZooKeeper are being used (Flume and Hbase for example). In the following example zkServer{A,B,C}:2181 should be replaced with the hostname/port of the ZooKeeper servers which make up your ensemble.
+
+.`conf/flume-site.xml` 
+[source,xml] 
+-------------------------------------- 
+<property>
+  <name>flume.master.zk.use.external</name>
+  <value>true</value>
+</property>
+
+<property>
+  <name>flume.master.zk.servers</name>
+  <value>zkServerA:2181,zkServerB:2181,zkServerC:2181</value>
+</property>
+-------------------------------------- 
 
 === Section Summary 
 

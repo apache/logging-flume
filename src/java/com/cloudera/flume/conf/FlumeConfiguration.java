@@ -97,6 +97,10 @@ public class FlumeConfiguration extends Configuration {
   static public final int DEFAULT_HTTP_PORT = 35871;
   static public final int DEFAULT_REPORT_SERVER_PORT = 45678;
 
+  public static final int DEFAULT_ZK_CLIENT_PORT = 3181;
+  public static final int DEFAULT_ZK_SERVER_QUORUM_PORT = 3182;  
+  public static final int DEFAULT_ZK_SERVER_ELECTION_PORT = 3183;
+
   // Default sink / source variables
   static public final int DEFAULT_SCRIBE_SOURCE_PORT = 1463;
 
@@ -180,7 +184,10 @@ public class FlumeConfiguration extends Configuration {
   // ZooKeeper bits and pieces
   public static final String MASTER_ZK_LOGDIR = "flume.master.zk.logdir";
   public static final String MASTER_ZK_CLIENT_PORT = "flume.master.zk.client.port";
-  public static final String MASTER_ZK_SERVER_PORT = "flume.master.zk.server.port";
+  public static final String MASTER_ZK_SERVER_QUORUM_PORT =
+    "flume.master.zk.server.quorum.port";
+  public static final String MASTER_ZK_SERVER_ELECTION_PORT =
+    "flume.master.zk.server.election.port";
   public static final String MASTER_ZK_SERVERS = "flume.master.zk.servers";
   public static final String MASTER_ZK_USE_EXTERNAL = "flume.master.zk.use.external";
 
@@ -231,12 +238,14 @@ public class FlumeConfiguration extends Configuration {
 
     String[] hosts = getMasterServers().split(",");
     int clientport = getMasterZKClientPort();
-    int serverport = getMasterZKServerPort();
+    int quorumport = getMasterZKServerQuorumPort();
+    int electionport = getMasterZKServerElectionPort();
     List<String> l = Arrays.asList(hosts);
     Iterator<String> iter = l.iterator();
     StringBuilder builder = new StringBuilder();
     while (iter.hasNext()) {
-      builder.append(iter.next() + ":" + clientport + ":" + serverport);
+      builder.append(iter.next() + ":" + clientport + ":" + quorumport
+          + ":" + electionport);
       if (iter.hasNext()) {
         builder.append(',');
       }
@@ -273,7 +282,7 @@ public class FlumeConfiguration extends Configuration {
    * If MASTER_ZK_SERVERS is set, then we return the clientport in that string
    * corresponding to our serverid.
    * 
-   * Otherwise return 2181, the default.
+   * Otherwise return DEFAULT_ZK_CLIENT_PORT.
    * 
    */
   public int getMasterZKClientPort() {
@@ -287,7 +296,7 @@ public class FlumeConfiguration extends Configuration {
     // itself...
     String servers = get(MASTER_ZK_SERVERS, null);
     if (servers == null) {
-      return 2181;
+      return DEFAULT_ZK_CLIENT_PORT;
     }
 
     // MASTER_ZK_SERVERS is set - split it and guess at our client port
@@ -297,34 +306,34 @@ public class FlumeConfiguration extends Configuration {
         "Serverid is out of range: " + serverid);
 
     String[] server = serverList.get(serverid).split(":");
-    Preconditions.checkState(server.length == 3, "Server spec "
+    Preconditions.checkState(server.length == 4, "Server spec "
         + serverList.get(serverid) + " is ill-formed");
     return Integer.parseInt(server[1].trim());
   }
 
   /**
-   * The server port that the in-process ZK starts on.
+   * The server quorum port that the in-process ZK starts on.
    * 
    * If it is set, return that.
    * 
-   * If MASTER_ZK_SERVERS is set, then we return the clientport in that string
+   * If MASTER_ZK_SERVERS is set, then we return the quorumport in that string
    * corresponding to our serverid.
    * 
-   * Otherwise return 3181, the default.
+   * Otherwise return DEFAULT_ZK_SERVER_QUORUM_PORT, the default.
    * 
    */
-  public int getMasterZKServerPort() {
-    String clientport = get(MASTER_ZK_SERVER_PORT, null);
-    if (clientport != null) {
-      return Integer.parseInt(clientport);
+  public int getMasterZKServerQuorumPort() {
+    String quorumport = get(MASTER_ZK_SERVER_QUORUM_PORT, null);
+    if (quorumport != null) {
+      return Integer.parseInt(quorumport);
     }
 
-    // serverport is not set, try and guess from MASTER_ZK_SERVERS if it's set
+    // quorumport is not set, try and guess from MASTER_ZK_SERVERS if it's set
     // We can't call getMasterZKServers because that might call into this method
     // itself...
     String servers = get(MASTER_ZK_SERVERS, null);
     if (servers == null) {
-      return 3181;
+      return DEFAULT_ZK_SERVER_QUORUM_PORT;
     }
 
     // MASTER_ZK_SERVERS is set - split it and guess at our server port
@@ -334,9 +343,46 @@ public class FlumeConfiguration extends Configuration {
         "Serverid is out of range: " + serverid);
 
     String[] server = serverList.get(serverid).split(":");
-    Preconditions.checkState(server.length == 3, "Server spec "
+    Preconditions.checkState(server.length == 4, "Server spec "
         + serverList.get(serverid) + " is ill-formed");
     return Integer.parseInt(server[2].trim());
+  }
+
+  /**
+   * The server election port that the in-process ZK starts on.
+   * 
+   * If it is set, return that.
+   * 
+   * If MASTER_ZK_SERVERS is set, then we return the electionport in that string
+   * corresponding to our serverid.
+   * 
+   * Otherwise return DEFAULT_ZK_SERVER_ELECTION_PORT, the default.
+   * 
+   */
+  public int getMasterZKServerElectionPort() {
+    String electionport = get(MASTER_ZK_SERVER_ELECTION_PORT, null);
+    if (electionport != null) {
+      return Integer.parseInt(electionport);
+    }
+
+    // electionport is not set, try and guess from MASTER_ZK_SERVERS if it's set
+    // We can't call getMasterZKServers because that might call into this method
+    // itself...
+    String servers = get(MASTER_ZK_SERVERS, null);
+    if (servers == null) {
+      return DEFAULT_ZK_SERVER_ELECTION_PORT;
+    }
+
+    // MASTER_ZK_SERVERS is set - split it and guess at our server port
+    List<String> serverList = Arrays.asList(servers.split(","));
+    int serverid = getMasterServerId();
+    Preconditions.checkState(serverid < serverList.size(),
+        "Serverid is out of range: " + serverid);
+
+    String[] server = serverList.get(serverid).split(":");
+    Preconditions.checkState(server.length == 4, "Server spec "
+        + serverList.get(serverid) + " is ill-formed");
+    return Integer.parseInt(server[3].trim());
   }
 
   public boolean getMasterZKUseExternal() {

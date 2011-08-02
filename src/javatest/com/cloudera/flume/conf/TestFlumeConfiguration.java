@@ -74,20 +74,22 @@ public class TestFlumeConfiguration {
   public void testParseZKServers() {
     FlumeConfiguration cfg = new TestableConfiguration();
     cfg.set(FlumeConfiguration.MASTER_SERVERS, "hostA,hostB,hostC");
-    cfg.setInt(FlumeConfiguration.MASTER_ZK_SERVER_PORT, 2181);
-    cfg.setInt(FlumeConfiguration.MASTER_ZK_CLIENT_PORT, 3181);
+    cfg.setInt(FlumeConfiguration.MASTER_ZK_CLIENT_PORT, 4181);
+    cfg.setInt(FlumeConfiguration.MASTER_ZK_SERVER_QUORUM_PORT, 4182);
+    cfg.setInt(FlumeConfiguration.MASTER_ZK_SERVER_ELECTION_PORT, 4183);
 
     String gossipServers = cfg.getMasterZKServers();
 
-    assertEquals("hostA:3181:2181,hostB:3181:2181,hostC:3181:2181",
+    assertEquals("hostA:4181:4182:4183,hostB:4181:4182:4183,hostC:4181:4182:4183",
         gossipServers);
 
-    assertEquals(2181, cfg.getMasterZKServerPort());
-    assertEquals(3181, cfg.getMasterZKClientPort());
+    assertEquals(4181, cfg.getMasterZKClientPort());
+    assertEquals(4182, cfg.getMasterZKServerQuorumPort());
+    assertEquals(4183, cfg.getMasterZKServerElectionPort());
 
     // try with arbitrary spaces
     cfg.set(FlumeConfiguration.MASTER_SERVERS, "   hostA , hostB ,    hostC");
-    assertEquals("hostA:3181:2181,hostB:3181:2181,hostC:3181:2181",
+    assertEquals("hostA:4181:4182:4183,hostB:4181:4182:4183,hostC:4181:4182:4183",
         gossipServers);
 
   }
@@ -96,24 +98,28 @@ public class TestFlumeConfiguration {
   public void testOverrideZKServers() {
     FlumeConfiguration cfg = new TestableConfiguration();
     cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS,
-        "hostA:1234:2345,hostB:1235:2346,hostC:1236:2347");
+        "hostA:1234:2345:3456,hostB:1235:2346:3457,hostC:1236:2347:3458");
     cfg.setInt(FlumeConfiguration.MASTER_SERVER_ID, 1);
 
     assertEquals(1235, cfg.getMasterZKClientPort());
-    assertEquals(2346, cfg.getMasterZKServerPort());
+    assertEquals(2346, cfg.getMasterZKServerQuorumPort());
+    assertEquals(3457, cfg.getMasterZKServerElectionPort());
 
     // try with spaces
     cfg.set(FlumeConfiguration.MASTER_ZK_SERVERS,
-        "  hostA: 1234:2345   ,hostB: 1235:   2346 ,  hostC:1236:2347");
+        "  hostA: 1234:2345:3456   ,hostB: 1235:   2346 : 3457 ,  hostC:1236:2347:3458");
     assertEquals(1235, cfg.getMasterZKClientPort());
-    assertEquals(2346, cfg.getMasterZKServerPort());
+    assertEquals(2346, cfg.getMasterZKServerQuorumPort());
+    assertEquals(3457, cfg.getMasterZKServerElectionPort());
 
     // overriding settings
     cfg.setInt(FlumeConfiguration.MASTER_ZK_CLIENT_PORT, 9999);
-    cfg.setInt(FlumeConfiguration.MASTER_ZK_SERVER_PORT, 9998);
+    cfg.setInt(FlumeConfiguration.MASTER_ZK_SERVER_QUORUM_PORT, 9998);
+    cfg.setInt(FlumeConfiguration.MASTER_ZK_SERVER_ELECTION_PORT, 9997);
 
     assertEquals(9999, cfg.getMasterZKClientPort());
-    assertEquals(9998, cfg.getMasterZKServerPort());
+    assertEquals(9998, cfg.getMasterZKServerQuorumPort());
+    assertEquals(9997, cfg.getMasterZKServerElectionPort());
 
   }
 
@@ -175,6 +181,6 @@ public class TestFlumeConfiguration {
     cfg.set(FlumeConfiguration.MASTER_SERVERS, "foo:12345,bar:1345");
     String zksvrs = cfg.getMasterZKServers();
     assertNotSame("foo:12345:2181:3181,bar:1345:2181:3181", zksvrs);
-    assertEquals("foo:2181:3181,bar:2181:3181", zksvrs);
+    assertEquals("foo:3181:3182:3183,bar:3181:3182:3183", zksvrs);
   }
 }
