@@ -6,6 +6,10 @@ These are 'tacksink' and 'trawsink'. Additionally, the old aliases
 'tsink' and 'tsource' are no longer present. Use the full names
 'thriftSink' and 'thriftSource' instead.
 
+The setting 'flume.collector.dfs.compress.gzip' was deprecated in
+a previous release. It has now been removed. You should use the
+'flume.collector.dfs.compress.codec' setting instead.
+
 Flume 0.9.3
 ===========
 

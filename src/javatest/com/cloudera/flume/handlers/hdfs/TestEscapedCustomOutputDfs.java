@@ -234,7 +234,7 @@ public class TestEscapedCustomOutputDfs {
     String expected = new String(exWriter.toByteArray());
 
     // check the output to make sure it is what we expected.
-    // read the gzip file and verify the contents
+    // read the bzip2 file and verify the contents
     BZip2Codec bz2Codec = new BZip2Codec();
     InputStream bz2in = bz2Codec.createInputStream(new FileInputStream(f
         .getPath() + "/sub-foo.bz2"));
@@ -284,7 +284,7 @@ public class TestEscapedCustomOutputDfs {
     String expected = new String(exWriter.toByteArray());
 
     // check the output to make sure it is what we expected.
-    // read the gzip file and verify the contents
+    // read the bzip2 file and verify the contents
     BZip2Codec bz2Codec = new BZip2Codec();
     InputStream bz2in = bz2Codec.createInputStream(new FileInputStream(f
         .getPath() + "/sub-foo.bz2"));
@@ -295,54 +295,6 @@ public class TestEscapedCustomOutputDfs {
       output.append(new String(buf));
     }
     bz2in.close(); // Must close for windows to delete
-    assertEquals(expected, output.toString());
-
-    assertTrue("temp folder successfully deleted", FileUtil.rmr(f));
-  }
-
-  /**
-   * Test to write few log lines, compress using gzip, write to disk, read back
-   * the compressed file and verify the written lines.
-   * 
-   * @throws IOException
-   * @throws InterruptedException
-   */
-  @Test
-  public void testGzipOutputFormat() throws IOException, InterruptedException {
-    // set the output format.
-    FlumeConfiguration conf = FlumeConfiguration.get();
-    conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, "syslog");
-    conf.set(FlumeConfiguration.COLLECTOR_DFS_COMPRESS_GZIP, "true");
-
-    // build a sink that outputs to that format.
-    File f = FileUtil.mktempdir();
-    SinkBuilder builder = EscapedCustomDfsSink.builder();
-    EventSink snk = builder.build(new Context(), "file:///" + f.getPath()
-        + "/sub-%{service}");
-    Event e = new EventImpl("this is a test message".getBytes());
-    Attributes.setString(e, "service", "foo");
-    snk.open();
-    snk.append(e);
-    snk.close();
-
-    ByteArrayOutputStream exWriter = new ByteArrayOutputStream();
-    SyslogEntryFormat fmt = new SyslogEntryFormat();
-    fmt.format(exWriter, e);
-    exWriter.close();
-    String expected = new String(exWriter.toByteArray());
-
-    // check the output to make sure it is what we expected.
-    // read the gzip file and verify the contents
-
-    GZIPInputStream gzin = new GZIPInputStream(new FileInputStream(f.getPath()
-        + "/sub-foo.gz"));
-    byte[] buf = new byte[1];
-    StringBuilder output = new StringBuilder();
-
-    while ((gzin.read(buf)) > 0) {
-      output.append(new String(buf));
-    }
-    gzin.close();// Must close for windows to delete
     assertEquals(expected, output.toString());
 
     assertTrue("temp folder successfully deleted", FileUtil.rmr(f));
@@ -361,7 +313,6 @@ public class TestEscapedCustomOutputDfs {
     FlumeConfiguration conf = FlumeConfiguration.get();
     conf.set(FlumeConfiguration.COLLECTOR_OUTPUT_FORMAT, "syslog");
     conf.set(FlumeConfiguration.COLLECTOR_DFS_COMPRESS_CODEC, "DefaultCodec");
-    conf.set(FlumeConfiguration.COLLECTOR_DFS_COMPRESS_GZIP, "false");
 
     // build a sink that outputs to that format.
     File f = FileUtil.mktempdir();
@@ -381,7 +332,7 @@ public class TestEscapedCustomOutputDfs {
     String expected = new String(exWriter.toByteArray());
 
     // check the output to make sure it is what we expected.
-    // read the gzip file and verify the contents
+    // read the file and verify the contents
     DefaultCodec defaultCodec = new DefaultCodec();
     defaultCodec.setConf(conf);
     InputStream defaultIn = defaultCodec.createInputStream(new FileInputStream(

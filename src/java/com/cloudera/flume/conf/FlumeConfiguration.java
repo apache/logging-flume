@@ -181,7 +181,6 @@ public class FlumeConfiguration extends Configuration {
   public static final String COLLECTOR_DFS_DIR = "flume.collector.dfs.dir";
   public static final String COLLECTOR_ROLL_MILLIS = "flume.collector.roll.millis";
   public static final String COLLECTOR_OUTPUT_FORMAT = "flume.collector.output.format";
-  public static final String COLLECTOR_DFS_COMPRESS_GZIP = "flume.collector.dfs.compress.gzip";
   public static final String COLLECTOR_DFS_COMPRESS_CODEC = "flume.collector.dfs.compress.codec";
 
   // TODO(henry) move these to flume.master - they now tell the master which
@@ -618,11 +617,6 @@ public class FlumeConfiguration extends Configuration {
 
   public String getCollectorDfsDir() {
     return get(COLLECTOR_DFS_DIR, "file://tmp/flume-${user.name}/collected");
-  }
-
-  @Deprecated
-  public boolean getCollectorDfsCompressGzipStatus() {
-    return getBoolean(COLLECTOR_DFS_COMPRESS_GZIP, false);
   }
 
   public String getCollectorDfsCompressCodec() {

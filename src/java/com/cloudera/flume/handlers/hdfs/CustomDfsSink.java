@@ -102,28 +102,6 @@ public class CustomDfsSink extends EventSink.Base {
     FlumeConfiguration conf = FlumeConfiguration.get();
     FileSystem hdfs;
 
-    // use v0.9.1 compression settings
-    if (conf.getCollectorDfsCompressGzipStatus()) {
-      LOG.warn("Config property "
-          + FlumeConfiguration.COLLECTOR_DFS_COMPRESS_GZIP
-          + " is deprecated, please use "
-          + FlumeConfiguration.COLLECTOR_DFS_COMPRESS_CODEC
-          + " set to GzipCodec instead");
-      CompressionCodec gzipC = new GzipCodec();
-      
-      //See Below for comments on this
-      if(gzipC instanceof Configurable){
-        ((Configurable)gzipC).setConf(conf);
-      }
-      Compressor gzCmp = gzipC.createCompressor();
-      dstPath = new Path(path + gzipC.getDefaultExtension());
-      hdfs = dstPath.getFileSystem(conf);
-      writer = hdfs.create(dstPath);
-      writer = gzipC.createOutputStream(writer, gzCmp);
-      LOG.info("Creating HDFS gzip compressed file: " + dstPath.toString());
-      return;
-    }
-
     String codecName = conf.getCollectorDfsCompressCodec();
     List<Class<? extends CompressionCodec>> codecs = CompressionCodecFactory
         .getCodecClasses(FlumeConfiguration.get());
