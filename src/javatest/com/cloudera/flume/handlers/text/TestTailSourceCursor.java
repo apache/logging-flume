@@ -200,6 +200,7 @@ public class TestTailSourceCursor {
     assertEquals(5, q.size()); // should be 5 in queue.
 
     assertTrue(c.tailBody()); // notice raflen!= filelen, reset
+    assertTrue(c.tailBody()); // open new file
     assertTrue(c.tailBody()); // read
     assertFalse(c.tailBody()); // no more to read
     assertEquals(11, q.size()); // should be 5 in queue.
@@ -238,12 +239,12 @@ public class TestTailSourceCursor {
     assertTrue(c.tailBody()); // finish reading the first file
     assertEquals(5, q.size()); // should be 5 in queue.
 
-    assertTrue(c.tailBody()); // notice raflen!= filelen, reset
+    assertTrue(c.tailBody()); // notice file rotation, reset
     assertTrue(c.tailBody()); // attempt to open file again.
+    assertTrue(c.tailBody()); // read 4 lines from new file
     assertFalse(c.tailBody()); // no more to read
 
-    // This should be 10, but actually results in 5.
-    assertEquals(9, q.size()); // should be 5 in queue.
+    assertEquals(9, q.size()); // should be 5 + 4 in queue.
   }
 
   /**
@@ -311,18 +312,18 @@ public class TestTailSourceCursor {
     assertTrue(c.tailBody()); // finish reading the first file
     assertEquals(5, q.size()); // should be 5 in queue.
 
-    assertFalse(c.tailBody()); // attempt to file again. (not there)
-    assertFalse(c.tailBody()); // attempt to file again. (not there)
+    assertFalse(c.tailBody()); // no more to read
+    assertFalse(c.tailBody()); // no more to read
 
     // wait a second to force a new last modified time.
     f.renameTo(f2); // move the file (should be no problem).
     Clock.sleep(1000);
     appendData(f, 5, 5);
 
-    assertTrue(c.tailBody()); // notice new mod time and reset
+    assertTrue(c.tailBody()); // notice new mod time and reset, file has data to read
     assertTrue(c.tailBody()); // open the new file
     assertTrue(c.tailBody()); // read new file
-    assertFalse(c.tailBody()); // fails this time
+    assertFalse(c.tailBody()); // no more to read
     assertEquals(10, q.size());
   }
 
@@ -407,6 +408,7 @@ public class TestTailSourceCursor {
     assertTrue(null != c.in);
 
     assertTrue(c.tailBody()); // read but since of EOL, buffer (no progress)
+    assertEquals(0, q.size()); // no events since no EOL found
     assertTrue(0 != c.lastChannelSize);
     assertTrue(null != c.in);
 
@@ -459,32 +461,21 @@ public class TestTailSourceCursor {
     raf.setLength(10);
     raf.close();
 
-    // TODO (jon): When a file gets truncated, because we don't have an
-    // inode we don't know if this is a new file or a truncated version of the
-    // original file. This is not a fundamental flaw -- safe assumption here is
-    // that it is a new file and according to our semantics, we are just
-    // duplicating information. NOTE: This is another place where this tail
-    // differs from the semantics of gnu-tail.
-
-    assertTrue(c.tailBody()); // reset changed file
-    assertEquals(0, c.lastChannelPos);
-    assertEquals(null, c.in);
-
-    assertTrue(c.tailBody()); // re-opens length changed file
-    assertTrue(0 != c.lastChannelSize);
+    assertFalse(c.tailBody()); // detect file truncation, no data to read
+    assertEquals(5, q.size()); // should be 5 in queue.
+    assertEquals(10, c.lastChannelPos);
     assertTrue(null != c.in);
 
-    assertTrue(c.tailBody()); // finish reading the file
-    assertTrue(0 != c.lastChannelSize);
-    assertTrue(null != c.in);
+    assertFalse(c.tailBody()); // no data to read
+    assertEquals(5, q.size()); // should be 5 in queue.
 
-    assertFalse(c.tailBody()); // attempt to open file again.
-    assertEquals(6, q.size()); // should be 5 in queue.
+    appendData(f, 5, 5); // appending data after truncation
 
-    c.flush();
-    assertTrue(c.tailBody()); // attempt to open file again.
-    assertEquals(7, q.size()); // should be 5 in queue.
+    assertTrue(c.tailBody()); // reading appended data
+    assertEquals(10, q.size()); // should be 5 + 5 in queue.
 
+    assertFalse(c.tailBody()); // no data to read
+    assertEquals(10, q.size()); // should be 5 + 5 in queue.
   }
 
   /**

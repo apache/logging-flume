@@ -290,14 +290,6 @@ public class TailSource extends EventSource.Base {
 
       // oh! f exists and is a file
       try {
-        if (in != null) {
-          if (lastFileMod == file.lastModified()
-              && lastChannelPos == file.length()) {
-            LOG.debug("Tail '" + file + "': recheck still the same");
-            return false;
-          }
-        }
-
         // let's open the file
         raf = new RandomAccessFile(file, "r");
         lastFileMod = file.lastModified();
@@ -317,7 +309,7 @@ public class TailSource extends EventSource.Base {
       }
     }
 
-    boolean extractLines(ByteBuffer buf, long fmod) throws IOException,
+    boolean extractLines(ByteBuffer buf) throws IOException,
         InterruptedException {
       boolean madeProgress = false;
       int start = buf.position();
@@ -334,10 +326,6 @@ public class TailSource extends EventSource.Base {
           buf.get(); // read '\n'
           buf.mark(); // new mark.
           start = buf.position();
-
-          // this may be racy.
-          lastChannelPos = in.position();
-          lastFileMod = fmod;
 
           Event e = new EventImpl(body);
           e.set(A_TAILSRCFILE, file.getName().getBytes());
@@ -365,98 +353,76 @@ public class TailSource extends EventSource.Base {
           return checkForUpdates();
         }
 
-        // get stats from raf and from f.
+        long chlen = in.size();
+        boolean madeProgress = readAllFromChannel();
+
+        if (madeProgress) {
+          lastChannelSize = lastChannelPos; // this is more safe than in.size()
+          // due to possible race conditions
+          // NOTE: this is racy (but very very small chance): if file was
+          // rotated right before execution of next line with the file of the
+          // same length and this new file is never modified the logic in this
+          // method will never discover the rotation.
+          lastFileMod = file.lastModified();
+          LOG.debug("tail " + file + " : new data found");
+          return true;
+        }
+
+        // this may seem racy but race conds handled properly with
+        // extra checks below
+        long fmod = file.lastModified();
         long flen = file.length(); // length of filename
-        long chlen = in.size(); // length of file.
-        long fmod = file.lastModified(); // ideally this has raf's last
-        // modified.
 
-        lastChannelSize = chlen;
-
-        // cases:
-        if (chlen == flen && lastChannelPos == flen) {
-          if (lastFileMod == fmod) {
-            // // 3) raf len == file len, last read == file len, lastMod same ->
-            // no change
-            LOG.debug("tail " + file + " : no change");
-            return false;
-          } else {
-            // // 4) raf len == file len, last read == file len, lastMod diff ?!
-            // ->
-            // restart file.
-            LOG.debug("tail " + file
-                + " : same file len, but new last mod time" + " -> reset");
-            resetRAF();
-            return true;
-          }
+        // If nothing can be read from channel, then cases:
+        // 1) no change -> return
+        if (flen == lastChannelSize && fmod == lastFileMod) {
+          LOG.debug("tail " + file + " : no change");
+          return false;
         }
 
-        // file has changed
-        LOG.debug("tail " + file + " : file changed");
-        LOG.debug("tail " + file + " : old size, mod time " + lastChannelPos
-            + "," + lastFileMod);
-        LOG.debug("tail " + file + " : new size, " + "mod time " + flen + ","
-            + fmod);
+        // 2) file rotated
+        LOG.debug("tail " + file + " : file rotated?");
+        // a) rotated with file of same length
+        if (flen == lastChannelSize && fmod != lastFileMod) {
+          // this is not trivial situation: it can
+          // be "false positive", so we want to be sure rotation with same
+          // file length really happened by additional checks.
+          // Situation is ultimately rare so doing time consuming/heavy
+          // things is OK here
+          LOG.debug("tail " + file + " : file rotated with new one with " +
+                  "same length?");
+          raf.getFD().sync(); // Alex: not sure this helps at all...
+          Thread.sleep(1000); // sanity interval: more data may be written
+        }
 
-        // // 1) truncated file? -> restart file
-        // file truncated?
-        if (lastChannelPos > flen) {
-          LOG.debug("tail " + file + " : file truncated!?");
-
-          // normally we would check the inode, but since we cannot, we restart
-          // the file.
-          resetRAF();
+        // b) "false positive" for file rotation due to race condition
+        // during fetching file stats: actually more data was added into the
+        // file (and hence it is visible in channel)
+        if (in.size() != chlen) {
+          LOG.debug("tail " + file + " : there's extra data to be read from " +
+                  "file, aborting file rotation handling");
           return true;
         }
 
-        // I make this a rendezvous because this source is being pulled
-        // copy data from current file pointer to EOF to dest.
-        boolean madeProgress = false;
-
-        int rd;
-        while ((rd = in.read(buf)) > 0) {
-          // need char encoder to find line breaks in buf.
-          lastChannelPos += (rd < 0 ? 0 : rd); // rd == -1 if at end of
-          // stream.
-
-          int lastRd = 0;
-          int loops = 0;
-          boolean progress = false;
-          do {
-
-            if (lastRd == -1 && rd == -1) {
-              return madeProgress;
-            }
-
-            buf.flip();
-
-            // extract lines
-            progress = extractLines(buf, fmod);
-            if (progress) {
-              madeProgress = true;
-            }
-
-            lastRd = rd;
-            loops++;
-          } while (progress); // / potential race
-
-          // if the amount read catches up to the size of the file, we can fall
-          // out and let another fileChannel be read. If the last buffer isn't
-          // read, then it remain in the byte buffer.
-
+        // c) again "false positive" for file rotation: file was truncated
+        if (chlen < lastChannelSize) {
+          LOG.debug("tail " + file + " : file was truncated, " +
+                  "aborting file rotation handling");
+          lastChannelSize = chlen;
+          lastChannelPos = chlen;
+          lastFileMod = file.lastModified();
+          in.position(chlen); // setting cursor to the last position of
+          // truncated file
+          return false;
         }
 
-        if (rd == -1 && flen != lastChannelSize) {
-          // we've rotated with a longer file.
-          LOG.debug("tail " + file
-              + " : no progress but raflen != filelen, resetting");
-          resetRAF();
-          return true;
+        LOG.debug("tail " + file + " : file rotated!");
+        resetRAF(); // resetting raf to catch up new file
 
-        }
+        // if file is not empty report true to start reading from it without a
+        // delay
+        return flen > 0;
 
-        // LOG.debug("tail " + file + ": read " + len + " bytes");
-        LOG.debug("tail " + file + ": read " + lastChannelPos + " bytes");
       } catch (IOException e) {
         LOG.debug(e.getMessage(), e);
         in = null;
@@ -476,7 +442,47 @@ public class TailSource extends EventSource.Base {
       }
       return true;
     }
-  };
+
+    private boolean readAllFromChannel() throws IOException, InterruptedException {
+      // I make this a rendezvous because this source is being pulled
+      // copy data from current file pointer to EOF to dest.
+      boolean madeProgress = false;
+
+      int rd;
+      while ((rd = in.read(buf)) > 0) {
+        madeProgress = true;
+
+        // need char encoder to find line breaks in buf.
+        lastChannelPos += (rd < 0 ? 0 : rd); // rd == -1 if at end of
+        // stream.
+
+        int lastRd = 0;
+        boolean progress = false;
+        do {
+
+          if (lastRd == -1 && rd == -1) {
+            return true;
+          }
+
+          buf.flip();
+
+          // extract lines
+          extractLines(buf);
+
+          lastRd = rd;
+        } while (progress); // / potential race
+
+        // if the amount read catches up to the size of the file, we can fall
+        // out and let another fileChannel be read. If the last buffer isn't
+        // read, then it remain in the byte buffer.
+
+      }
+
+      LOG.debug("tail " + file + ": last read position " + lastChannelPos + ", madeProgress: " + madeProgress);
+
+      return madeProgress;
+    }
+  }
 
   /**
    * This is the main driver thread that runs through the file cursor list
