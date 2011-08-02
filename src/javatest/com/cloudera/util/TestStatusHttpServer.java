@@ -18,9 +18,13 @@
 
 package com.cloudera.util;
 
+import static com.cloudera.flume.master.TestMasterJersey.curl;
+
 import java.io.IOException;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.FlumeNode;
 import com.cloudera.flume.conf.FlumeConfiguration;
@@ -30,13 +34,15 @@ import com.cloudera.flume.conf.FlumeConfiguration;
  * Things are sane.
  */
 public class TestStatusHttpServer {
+  public static final Logger LOG = LoggerFactory
+      .getLogger(TestStatusHttpServer.class);
 
   @Test
   public void testOpenClose() throws IOException, Exception {
     // Set directory of webapps to build-specific dir
-    FlumeConfiguration.get().set(FlumeConfiguration.WEBAPPS_PATH, 
+    FlumeConfiguration.get().set(FlumeConfiguration.WEBAPPS_PATH,
         "build/webapps");
-    
+
     FlumeConfiguration conf = FlumeConfiguration.get();
     String webPath = FlumeNode.getWebPath(conf);
     int port = FlumeConfiguration.get().getNodeStatusPort();
@@ -47,5 +53,36 @@ public class TestStatusHttpServer {
       http.start();
       http.stop();
     }
+  }
+
+  /**
+   * This tests to make sure that auto find port works. Two http servers are
+   * assigned to the same port -- the second one should detect the conflict and
+   * then pick the next port to bind and serve from. curl will throw exception
+   * on failure.
+   */
+  @Test
+  public void testAutoFindPort() throws IOException, Exception {
+    // Set directory of webapps to build-specific dir
+    FlumeConfiguration.get().set(FlumeConfiguration.WEBAPPS_PATH,
+        "build/webapps");
+
+    FlumeConfiguration conf = FlumeConfiguration.get();
+    String webPath = FlumeNode.getWebPath(conf);
+    int port = FlumeConfiguration.get().getNodeStatusPort();
+    StatusHttpServer http = new StatusHttpServer("flumeagent", webPath,
+        "0.0.0.0", port, true);
+    http.start();
+
+    StatusHttpServer http2 = new StatusHttpServer("flumeagent", webPath,
+        "0.0.0.0", port, true);
+    http2.start();
+
+    String s1 = curl("http://localhost:35862");
+    LOG.info("http1:" + s1);
+    String s2 = curl("http://localhost:35863");
+    LOG.info("http2:" + s2);
+    http.stop();
+    http2.stop();
   }
 }

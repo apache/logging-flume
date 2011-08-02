@@ -38,7 +38,6 @@ import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.security.SslSocketConnector;
 import org.mortbay.jetty.servlet.ServletHolder;
 import org.mortbay.jetty.webapp.WebAppContext;
-import org.mortbay.util.MultiException;
 
 import com.google.common.base.Preconditions;
 
@@ -184,25 +183,17 @@ public class StatusHttpServer {
         try {
           webServer.start();
           break;
-        } catch (MultiException ex) {
+        } catch (BindException ex) {
           // if the multi exception contains ONLY a bind exception,
           // then try the next port number.
-          boolean needNewPort = false;
-          if (ex.size() == 1) {
-            Throwable sub = ex.getThrowable(0);
-            if (sub instanceof BindException) {
-              if (!findPort)
-                throw (BindException) sub; // java.net.BindException
-              needNewPort = true;
-            }
-          }
-          if (!needNewPort)
+          if (!findPort) {
             throw ex;
+          }
+          // pick another port
+          webServer.stop();
           channelConnector.setPort(channelConnector.getPort() + 1);
         }
       }
-    } catch (IOException ie) {
-      throw ie;
     } catch (Exception e) {
       IOException ie = new IOException("Problem starting http server");
       ie.initCause(e);
