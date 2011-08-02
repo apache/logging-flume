@@ -20,6 +20,7 @@ package com.cloudera.util;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.BindException;
 import java.net.InetSocketAddress;
 
 import javax.servlet.ServletException;
@@ -30,16 +31,16 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.util.ReflectionUtils;
-import org.mortbay.http.SocketListener;
-import org.mortbay.http.SslListener;
 import org.mortbay.jetty.Server;
-import org.mortbay.jetty.servlet.WebApplicationContext;
+import org.mortbay.jetty.nio.SelectChannelConnector;
+import org.mortbay.jetty.security.SslSocketConnector;
+import org.mortbay.jetty.webapp.WebAppContext;
 import org.mortbay.util.MultiException;
 
 import com.google.common.base.Preconditions;
 
-// jon: This is a shamelessly hacked version of the Http status server from the jobtracker, 
-// simplified for my needs.  Originally from apache licensed hadoop 0.18.3, o.a.h.mapred.StatusHttpServer
+// jon: This is a shamelessly hacked version of the Http status server from the jobtracker,
+// simplified for my needs. Originally from apache licensed hadoop 0.18.3, o.a.h.mapred.StatusHttpServer
 
 /**
  * Create a Jetty embedded server to answer http requests. The primary goal is
@@ -50,10 +51,10 @@ import com.google.common.base.Preconditions;
  */
 public class StatusHttpServer {
   private Server webServer;
-  private SocketListener listener;
-  private SslListener sslListener;
+  private SelectChannelConnector channelConnector;
+  private SslSocketConnector sslConnector;
   private boolean findPort;
-  private WebApplicationContext webAppContext;
+  private WebAppContext webAppContext;
   private static final Log LOG = LogFactory.getLog(StatusHttpServer.class
       .getName());
 
@@ -73,18 +74,18 @@ public class StatusHttpServer {
       int port, boolean findPort) throws IOException {
     webServer = new org.mortbay.jetty.Server();
     this.findPort = findPort;
-    listener = new SocketListener();
-    listener.setPort(port);
-    listener.setHost(bindAddress);
-    webServer.addListener(listener);
+    channelConnector = new SelectChannelConnector();
+    channelConnector.setPort(port);
+    channelConnector.setHost(bindAddress);
+    webServer.addConnector(channelConnector);
 
     String appDir = webAppsPath;
     // set up the context for "/" jsp files
     String webapp = appDir + "/" + name;
     LOG.info("starting web app in directory: " + webapp);
-    webAppContext = webServer.addWebApplication("/", webapp);
+    webAppContext = new WebAppContext(webapp, "/");
+    webServer.setHandler(webAppContext);
     addServlet("stacks", "/stacks", StackServlet.class);
-
   }
 
   /**
@@ -113,29 +114,12 @@ public class StatusHttpServer {
   public <T extends HttpServlet> void addServlet(String name, String pathSpec,
       Class<T> servletClass) {
 
-    WebApplicationContext context = webAppContext;
-    try {
-      if (name == null) {
-        context.addServlet(pathSpec, servletClass.getName());
-      } else {
-        context.addServlet(name, pathSpec, servletClass.getName());
-      }
-    } catch (ClassNotFoundException ex) {
-      throw makeRuntimeException("Problem instantiating class", ex);
-    } catch (InstantiationException ex) {
-      throw makeRuntimeException("Problem instantiating class", ex);
-    } catch (IllegalAccessException ex) {
-      throw makeRuntimeException("Problem instantiating class", ex);
+    WebAppContext context = webAppContext;
+    if (name == null) {
+      context.addServlet(pathSpec, servletClass.getName());
+    } else {
+      context.addServlet(servletClass, pathSpec);
     }
-  }
-
-  private static RuntimeException makeRuntimeException(String msg,
-      Throwable cause) {
-    RuntimeException result = new RuntimeException(msg);
-    if (cause != null) {
-      result.initCause(cause);
-    }
-    return result;
   }
 
   /**
@@ -155,12 +139,7 @@ public class StatusHttpServer {
    * @return the port
    */
   public int getPort() {
-    return listener.getPort();
-  }
-
-  public void setThreads(int min, int max) {
-    listener.setMinThreads(min);
-    listener.setMaxThreads(max);
+    return channelConnector.getPort();
   }
 
   /**
@@ -177,16 +156,16 @@ public class StatusHttpServer {
    */
   public void addSslListener(InetSocketAddress addr, String keystore,
       String storPass, String keyPass) throws IOException {
-    if (sslListener != null || webServer.isStarted()) {
+    if (sslConnector != null || webServer.isStarted()) {
       throw new IOException("Failed to add ssl listener");
     }
-    sslListener = new SslListener();
-    sslListener.setHost(addr.getHostName());
-    sslListener.setPort(addr.getPort());
-    sslListener.setKeystore(keystore);
-    sslListener.setPassword(storPass);
-    sslListener.setKeyPassword(keyPass);
-    webServer.addListener(sslListener);
+    sslConnector = new SslSocketConnector();
+    sslConnector.setHost(addr.getHostName());
+    sslConnector.setPort(addr.getPort());
+    sslConnector.setKeystore(keystore);
+    sslConnector.setPassword(storPass);
+    sslConnector.setKeyPassword(keyPass);
+    webServer.addConnector(sslConnector);
   }
 
   /**
@@ -196,8 +175,6 @@ public class StatusHttpServer {
     try {
       while (true) {
         try {
-          LOG.info("Status server available at http://" + NetUtils.localhost()
-              + ":" + listener.getPort());
           webServer.start();
           break;
         } catch (MultiException ex) {
@@ -205,16 +182,16 @@ public class StatusHttpServer {
           // then try the next port number.
           boolean needNewPort = false;
           if (ex.size() == 1) {
-            Exception sub = ex.getException(0);
-            if (sub instanceof java.net.BindException) {
+            Throwable sub = ex.getThrowable(0);
+            if (sub instanceof BindException) {
               if (!findPort)
-                throw sub; // java.net.BindException
+                throw (BindException)sub; // java.net.BindException
               needNewPort = true;
             }
           }
           if (!needNewPort)
             throw ex;
-          listener.setPort(listener.getPort() + 1);
+          channelConnector.setPort(channelConnector.getPort() + 1);
         }
       }
     } catch (IOException ie) {
@@ -229,7 +206,7 @@ public class StatusHttpServer {
   /**
    * stop the server
    */
-  public void stop() throws InterruptedException {
+  public void stop() throws Exception {
     webServer.stop();
   }
 

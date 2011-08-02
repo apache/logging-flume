@@ -242,7 +242,8 @@ public class FlumeNode implements Reportable {
     if (this.http != null) {
       try {
         http.stop();
-      } catch (InterruptedException e) {
+      } catch (Exception e) {
+        LOG.error("Exception stopping FlumeNode", e);
       }
     }
 

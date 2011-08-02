@@ -259,7 +259,11 @@ public class FlumeMaster implements Reportable {
   public void shutdown() {
     try {
       if (http != null) {
-        http.stop();
+        try {
+          http.stop();
+        } catch (Exception e) {
+          LOG.error("Error stopping FlumeMaster", e);
+        }
         http = null;
       }
 
@@ -290,10 +294,6 @@ public class FlumeMaster implements Reportable {
       if (cfg.getMasterStore().equals(ZK_CFG_STORE)) {
         ZooKeeperService.get().shutdown();
       }
-
-    } catch (InterruptedException e) {
-      LOG.warn("Interrupted when shutting down master... " + e.getMessage());
-      LOG.debug(e, e);
     } catch (IOException e) {
       LOG.error("Exception when shutting down master! " + e.getMessage());
       LOG.debug(e, e);

@@ -32,7 +32,7 @@ import com.cloudera.flume.conf.FlumeConfiguration;
 public class TestStatusHttpServer {
 
   @Test
-  public void testOpenClose() throws IOException, InterruptedException {
+  public void testOpenClose() throws IOException, Exception {
     // Set directory of webapps to build-specific dir
     FlumeConfiguration.get().set(FlumeConfiguration.WEBAPPS_PATH, 
         "build/webapps");
