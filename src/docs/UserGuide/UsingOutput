@@ -241,7 +241,7 @@ HDFS.  Compressed files are automatically suffixed with an extension
 and follow the same naming format + directory structure as regular log
 files.
 
-If GZipCodec is selected, ".gz" is appended to the file name, if
+If GzipCodec is selected, ".gz" is appended to the file name, if
 BZip2Codec is selected, ".bz2" is appended.
 
 ----
@@ -249,7 +249,7 @@ BZip2Codec is selected, ".bz2" is appended.
     <name>flume.collector.dfs.compress.codec</name>
     <value>None</value>
     <description>Writes formatted data compressed in specified codec to
-    dfs. Value is None, GZipCodec, DefaultCodec (deflate), BZip2Codec,
+    dfs. Value is None, GzipCodec, DefaultCodec (deflate), BZip2Codec,
     or any other Codec Hadoop is aware of </description>
   </property>
 ----
