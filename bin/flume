@@ -164,11 +164,6 @@ if [ "$cygwin" == false ] ; then
 
   CLASSPATH="${CLASSPATH}:$JAVA_HOME/lib/tools.jar"
 
-  if [ "$FLUME_DEVMODE" == true ] ; then
-    # allow Jetty to compile servlets in dev mode
-      append_jars_onto_classpath "$CMDPATH/libbuild"
-  fi
-
   if [ -z "$ZOOKEEPER_HOME" ]; then
     export ZOOKEEPER_HOME="/usr/lib/zookeeper"
   fi
@@ -187,11 +182,6 @@ else
 
   append_jars_onto_classpath "$CMDPATH/lib"
   append_jars_onto_classpath "$CMDPATH/libtest"
-
-  if [ "$FLUME_DEVMODE" == true ] ; then
-    # allow Jetty to compile servlets in dev mode
-    append_jars_onto_classpath "$CMDPATH/libbuild"
-  fi
 
 fi
 

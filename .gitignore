@@ -1,9 +1,5 @@
 # Lines that start with '#' are comments.
 *~
-src/java/com/cloudera/flume/package-info.java
-src/gen-java/com/cloudera/flume/conf/RuntimeRecognitionException.java
-build/
-build_eclipse/
 *.diff
 *#
 .classpath
@@ -12,11 +8,8 @@ build_eclipse/
 bin/flume-env.sh
 conf/flume-site.xml
 bin/.settings
-libtest/
-lib/ivy-*.jar
-src/avro-gen-java
-src/avro/*.avpr
-/docs/
 .eclipse
 pmd_report.html
-target
+*/bin
+/plugins/*/bin
+/plugins/*/target
