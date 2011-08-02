@@ -131,7 +131,23 @@ public class CustomDfsSink extends EventSink.Base {
     LOG.info("Creating " + codec + " compressed HDFS file: "
         + dstPath.toString());
   }
-  
+
+  private static boolean codecMatches(Class<? extends CompressionCodec> cls,
+      String codecName) {
+    String simpleName = cls.getSimpleName();
+    if (cls.getName().equals(codecName)
+        || simpleName.equalsIgnoreCase(codecName)) {
+      return true;
+    }
+    if (simpleName.endsWith("Codec")) {
+      String prefix = simpleName.substring(0, simpleName.length() - "Codec".length());
+      if (prefix.equalsIgnoreCase(codecName)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public static CompressionCodec getCodec(Configuration conf, String codecName) {
     List<Class<? extends CompressionCodec>> codecs = CompressionCodecFactory
         .getCodecClasses(FlumeConfiguration.get());
@@ -142,13 +158,13 @@ public class CustomDfsSink extends EventSink.Base {
     for (Class<? extends CompressionCodec> cls : codecs) {
       codecStrs.add(cls.getSimpleName());
 
-      if (cls.getSimpleName().equalsIgnoreCase(codecName)) {
+      if (codecMatches(cls, codecName)) {
         try {
           codec = cls.newInstance();
         } catch (InstantiationException e) {
-          LOG.error("Unable to instantiate " + codec + " class");
+          LOG.error("Unable to instantiate " + cls + " class");
         } catch (IllegalAccessException e) {
-          LOG.error("Unable to access " + codec + " class");
+          LOG.error("Unable to access " + cls + " class");
         }
       }
     }
