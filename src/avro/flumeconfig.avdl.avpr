@@ -87,6 +87,16 @@
         "items" : "string"
       }
     },
+    "getChokeMap" : {
+      "request" : [ {
+        "name" : "physNode",
+        "type" : "string"
+      } ],
+      "response" : {
+        "type" : "map",
+        "values" : "int"
+      }
+    },
     "acknowledge" : {
       "request" : [ {
         "name" : "ackid",

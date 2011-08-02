@@ -20,6 +20,7 @@ package com.cloudera.flume.agent;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -133,6 +134,13 @@ public class DirectMasterRPC implements MasterRPC {
     // the master. But if they are using DirectMasterRPC then they're sharing
     // the same ReportManager and you don't want to overwrite existing
     // reportables.
+  }
+
+  @Override
+  public HashMap<String, Integer> getChokeMap(String physNode)
+      throws IOException {
+    return new HashMap<String, Integer>(master.getSpecMan().getChokeMap(
+        physNode));
   }
 
 }

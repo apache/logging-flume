@@ -223,4 +223,15 @@ public class MasterClientServerAvro implements FlumeReportAvroServer, RPCServer 
     out.flowID = in.flowID.toString();
     return out;
   }
+
+  @Override
+  public Map<CharSequence, Integer> getChokeMap(CharSequence physNode)
+      throws AvroRemoteException {
+    Map<String, Integer> chokeMap = delegate.getChokeMap(physNode.toString());
+    Map<CharSequence, Integer> newMap = new HashMap<CharSequence, Integer>();
+    for (String s : chokeMap.keySet()) {
+      newMap.put(s, chokeMap.get(s));
+    }
+    return newMap;
+  }
 }

@@ -83,6 +83,12 @@ public interface ConfigurationManager extends Reportable {
   public List<String> getLogicalNode(String physNode);
 
   /**
+   * Gets an unmodifiable list of all of the chokeIds associated with the
+   * specified physical node
+   */
+  public Map<String, Integer> getChokeMap(String physNode);
+
+  /**
    * Associates a new logical node to the specified physical node. If no
    * physical node exists, it is created as well.
    *
@@ -143,5 +149,10 @@ public interface ConfigurationManager extends Reportable {
    * Unmaps all logical nodes in a single operation.
    */
   public void unmapAllLogicalNodes() throws IOException;
+
+  /**
+   * Adds a new choke with the given limit for the corresponding physicalNode.
+   */
+  public void addChokeLimit(String physNode, String chokeID, int limit);
 
 }

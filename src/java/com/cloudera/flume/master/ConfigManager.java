@@ -262,6 +262,14 @@ public class ConfigManager implements ConfigurationManager {
     return cfgStore.getLogicalNodes(physNode);
   }
 
+  /**
+   *@inheritDoc
+   */
+  @Override
+  synchronized public Map<String, Integer> getChokeMap(String physNode) {
+    return cfgStore.getChokeMap(physNode);
+  }
+
   @Override
   synchronized public boolean addLogicalNode(String physNode, String logicNode) {
     if (!logicalToPhysical.containsKey(logicNode)) {
@@ -273,7 +281,6 @@ public class ConfigManager implements ConfigurationManager {
       LOG.warn("Logical node " + logicNode
         + " is already assigned to physical node "
         + logicalToPhysical.get(logicNode) + ". Unmap it first.");
-
       return false;
     }
   }
@@ -411,4 +418,14 @@ public class ConfigManager implements ConfigurationManager {
       logicalToPhysical.put(e.getValue(), e.getKey());
     }
   }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  synchronized public void addChokeLimit(String physNode, String chokeID,
+      int limit) {
+    cfgStore.addChokeLimit(physNode, chokeID, limit);
+  }
+
 }

@@ -119,6 +119,7 @@ public class AvroMasterRPC implements MasterRPC {
       List<CharSequence> res = masterClient.getLogicalNodes(physNode);
       ArrayList<String> out = new ArrayList<String>((int) res.size());
       for (CharSequence r : res) {
+
         out.add(r.toString());
       }
       return out;
@@ -127,7 +128,24 @@ public class AvroMasterRPC implements MasterRPC {
       throw new IOException(e.getMessage());
     }
   }
+ 
+  public synchronized HashMap<String, Integer> getChokeMap (String physNode)
+  throws IOException {
+    try {
+      ensureInitialized();
+      Map<CharSequence, Integer> chokeMap = masterClient
+          .getChokeMap(physNode);
+      HashMap<String, Integer> newMap = new HashMap<String, Integer>();
+      for (CharSequence s : chokeMap.keySet()) {
+        newMap.put(s.toString(), chokeMap.get(s));
+      }
+      return newMap;
+    } catch (AvroRemoteException e) {
+      LOG.debug("RPC error on " + toString(), e);
+      throw new IOException(e.getMessage());
+    }
 
+  }
   public synchronized FlumeConfigData getConfig(LogicalNode n)
       throws IOException {
     try {
@@ -194,6 +212,7 @@ public class AvroMasterRPC implements MasterRPC {
       Map<CharSequence, FlumeReportAvro> flumeReports = new HashMap<CharSequence, FlumeReportAvro>();
       for (Entry<String, ReportEvent> e : reports.entrySet()) {
         flumeReports.put(e.getKey(), ReportServer.reportToAvro(e.getValue()));
+
       }
       masterClient.putReports(flumeReports);
     } catch (AvroRemoteException e) {

@@ -20,6 +20,8 @@ package com.cloudera.flume.master.commands;
 
 import java.io.IOException;
 
+import org.apache.log4j.Logger;
+
 import com.cloudera.flume.master.Command;
 import com.cloudera.flume.master.Execable;
 import com.cloudera.flume.master.FlumeMaster;
@@ -27,20 +29,11 @@ import com.cloudera.flume.master.MasterExecException;
 import com.google.common.base.Preconditions;
 
 /**
- * Form and command generator for unmapping a logical node from a physical node.
+ * This implements the "setChokeLimit" command
  */
-public class UnmapLogicalNodeForm {
-
-  String physicalNode;
+public class SetChokeLimitForm {
+  final static Logger LOG = Logger.getLogger(SetChokeLimitForm.class);
   String logicalNode;
-
-  public String getPhysicalNode() {
-    return physicalNode;
-  }
-
-  public void setPhysicalNode(String physicalNode) {
-    this.physicalNode = physicalNode;
-  }
 
   public String getLogicalNode() {
     return logicalNode;
@@ -54,8 +47,8 @@ public class UnmapLogicalNodeForm {
    * Convert this bean into a command.
    */
   public Command toCommand() {
-    String[] args = { physicalNode, logicalNode };
-    return new Command("unmap", args);
+    String[] args = { "physicalnode", "chokeID", "limit" };
+    return new Command("setChokeLimit", args);
   }
 
   /**
@@ -63,27 +56,36 @@ public class UnmapLogicalNodeForm {
    */
   public static Execable buildExecable() {
     return new Execable() {
+      // TODO(Vibhor): Once the PhysicalNodeThrottling patch is in, change the
+      // preconditions here and add the ability to get the physicalNode
+      // throttling limit.
       @Override
       public void exec(String[] args) throws MasterExecException, IOException {
-        Preconditions.checkArgument(args.length == 2, "Usage: physicalNode logicalNode");
-        String physical = args[0];
-        String logical = args[1];
-        FlumeMaster.getInstance().getSpecMan().unmapLogicalNode(physical,
-            logical);
-      }
-    };
-  }
+        // first check the length of the arguments
+        Preconditions.checkArgument(args.length > 2,
+            "Usage: setChokeLimit physicalNode chokeID limit");
 
-  /**
-   * Build an execable that will unmap all Logical nodes.
-   */
+        String physicalNodeName = args[0];
+        // issue a polite warning if the physicalnode does not exist yet
+        if (FlumeMaster.getInstance().getSpecMan().getLogicalNode(
+            physicalNodeName).isEmpty()) {
+          LOG.warn("PhysicalNode: " + physicalNodeName + " not present yet!");
+        }
 
-  public static Execable buildUnmapAllExecable() {
-    return new Execable() {
-      @Override
-      public void exec(String[] args) throws IOException {
-        Preconditions.checkArgument(args.length == 0);
-        FlumeMaster.getInstance().getSpecMan().unmapAllLogicalNodes();
+        int limit = 0;
+        String chokerName = args[1];
+        try {
+          limit = Integer.parseInt(args[2]);
+        } catch (NumberFormatException e) {
+          LOG.error("Limit not given in the right format");
+          throw new MasterExecException("Limit not given in the right format",
+              e);
+        }
+
+        Preconditions.checkState(limit >= 0, "Limit has to be at least 0");
+        // only works in memory!! not in zookeeper.
+        FlumeMaster.getInstance().getSpecMan().addChokeLimit(physicalNodeName,
+            chokerName, limit);
       }
     };
   }

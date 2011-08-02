@@ -110,6 +110,10 @@ public class LivenessManager {
         }
       }
     }
+    // Update the Chokeinformation for the ChokeManager
+
+    FlumeNode.getInstance().getChokeManager().updateChokeLimitMap(
+        master.getChokeMap(physNode));
 
     nodesman.decommissionAllBut(lns);
   }

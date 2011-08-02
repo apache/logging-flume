@@ -548,4 +548,21 @@ public class ZooKeeperConfigStore extends ConfigStore implements Watcher {
 
     saveNodeMaps(NODEMAPS_PATH);
   }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void addChokeLimit(String physNode, String chokeID, int limit) {
+    // TODO(Vibhor): Have to add this Zookeeper stuff
+    LOG.error("addChoke at ZooKeeper not supported yet");
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Map<String, Integer> getChokeMap(String physNode) {
+    // TODO(Vibhor): Have to add this Zookeeper stuff
+    LOG.error("addChoke at ZooKeeper not supported yet");
+    throw new UnsupportedOperationException();
+  }
 }

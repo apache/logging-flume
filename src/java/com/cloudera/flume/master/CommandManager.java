@@ -36,6 +36,7 @@ import com.cloudera.flume.master.commands.CreateLogicalNodeForm;
 import com.cloudera.flume.master.commands.DecommissionLogicalNodeForm;
 import com.cloudera.flume.master.commands.RefreshAllCommand;
 import com.cloudera.flume.master.commands.RefreshCommand;
+import com.cloudera.flume.master.commands.SetChokeLimitForm;
 import com.cloudera.flume.master.commands.UnconfigCommand;
 import com.cloudera.flume.master.commands.UnmapLogicalNodeForm;
 import com.cloudera.flume.master.commands.UpdateAllCommand;
@@ -102,7 +103,10 @@ public class CommandManager implements Reportable {
       { "map", CreateLogicalNodeForm.buildExecable() },
       { "decommission", DecommissionLogicalNodeForm.buildExecable() },
       { "unmap", UnmapLogicalNodeForm.buildExecable() },
-      { "unmapAll", UnmapLogicalNodeForm.buildUnmapAllExecable() }, };
+      { "unmapAll", UnmapLogicalNodeForm.buildUnmapAllExecable() },
+      { "setChokeLimit", SetChokeLimitForm.buildExecable() }
+  
+  };
 
   public CommandManager() {
     this(cmdArrays);

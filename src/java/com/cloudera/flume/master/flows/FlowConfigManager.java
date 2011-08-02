@@ -119,6 +119,16 @@ abstract public class FlowConfigManager implements ConfigurationManager {
 
   /**
    * {@inheritDoc}
+   */
+  @Override
+  synchronized public void addChokeLimit(String physNode, String chokeID,
+      int limit) {
+    parent.addChokeLimit(physNode, chokeID, limit);
+
+  }
+
+  /**
+   * {@inheritDoc}
    * 
    * This actually takes all the specified configs, buckets them by flowid, and
    * then uses bulk config updates on the corresponding flow configmanagers.
@@ -165,6 +175,14 @@ abstract public class FlowConfigManager implements ConfigurationManager {
   @Override
   synchronized public List<String> getLogicalNode(String physNode) {
     return parent.getLogicalNode(physNode);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  synchronized public Map<String, Integer> getChokeMap(String physNode) {
+    return parent.getChokeMap(physNode);
   }
 
   @Override
@@ -236,7 +254,8 @@ abstract public class FlowConfigManager implements ConfigurationManager {
   }
 
   @Override
-  synchronized public void removeLogicalNode(String logicNode) throws IOException {
+  synchronized public void removeLogicalNode(String logicNode)
+      throws IOException {
     String oldflow = getFlowId(logicNode);
     parent.removeLogicalNode(logicNode);
     ConfigurationManager flowCfg = flows.get(oldflow);

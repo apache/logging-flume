@@ -37,6 +37,7 @@ import com.cloudera.flume.handlers.debug.NoNlSynthSource;
 import com.cloudera.flume.handlers.debug.NullSource;
 import com.cloudera.flume.handlers.debug.StdinSource;
 import com.cloudera.flume.handlers.debug.SynthSource;
+import com.cloudera.flume.handlers.debug.SynthSourceRndSize;
 import com.cloudera.flume.handlers.debug.TextFileSource;
 import com.cloudera.flume.handlers.exec.ExecEventSource;
 import com.cloudera.flume.handlers.hdfs.SeqfileEventSource;
@@ -85,6 +86,7 @@ public class SourceFactoryImpl extends SourceFactory {
       { "synth", SynthSource.builder() },
       { "nonlsynth", NoNlSynthSource.builder() },
       { "asciisynth", NoNlASCIISynthSource.builder() },
+      { "synthrndsize", SynthSourceRndSize.builder() },
       { "scribe", ScribeEventSource.builder() },
       { "report", PollingSource.reporterPollBuilder() },
 

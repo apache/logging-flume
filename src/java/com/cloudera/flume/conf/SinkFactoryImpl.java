@@ -46,6 +46,7 @@ import com.cloudera.flume.handlers.debug.BenchmarkInjectDecorator;
 import com.cloudera.flume.handlers.debug.BenchmarkReportDecorator;
 import com.cloudera.flume.handlers.debug.BloomCheckDecorator;
 import com.cloudera.flume.handlers.debug.BloomGeneratorDeco;
+import com.cloudera.flume.handlers.debug.ChokeDecorator;
 import com.cloudera.flume.handlers.debug.ConsoleEventSink;
 import com.cloudera.flume.handlers.debug.DelayDecorator;
 import com.cloudera.flume.handlers.debug.FlakeyEventSink;
@@ -198,7 +199,10 @@ public class SinkFactoryImpl extends SinkFactory {
       { "bloomGen", BloomGeneratorDeco.builder() },
       { "bloomCheck", BloomCheckDecorator.builder() },
       { "mult", MultiplierDecorator.builder() },
-      { "delay", DelayDecorator.builder() }, };
+      { "delay", DelayDecorator.builder() }, 
+      { "choke", ChokeDecorator.builder() },
+  
+  };
 
   Map<String, SinkBuilder> sinks = new HashMap<String, SinkBuilder>();
   Map<String, SinkDecoBuilder> decos = new HashMap<String, SinkDecoBuilder>();

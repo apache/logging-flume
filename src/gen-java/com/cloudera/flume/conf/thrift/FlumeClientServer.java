@@ -33,6 +33,8 @@ public class FlumeClientServer {
 
     public List<String> getLogicalNodes(String physNode) throws TException;
 
+    public Map<String,Integer> getChokeMap(String physNode) throws TException;
+
     public void acknowledge(String ackid) throws TException;
 
     public boolean checkAck(String ackid) throws TException;
@@ -171,6 +173,39 @@ public class FlumeClientServer {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "getLogicalNodes failed: unknown result");
     }
 
+    public Map<String,Integer> getChokeMap(String physNode) throws TException
+    {
+      send_getChokeMap(physNode);
+      return recv_getChokeMap();
+    }
+
+    public void send_getChokeMap(String physNode) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("getChokeMap", TMessageType.CALL, seqid_));
+      getChokeMap_args args = new getChokeMap_args();
+      args.physNode = physNode;
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public Map<String,Integer> recv_getChokeMap() throws TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      getChokeMap_result result = new getChokeMap_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      throw new TApplicationException(TApplicationException.MISSING_RESULT, "getChokeMap failed: unknown result");
+    }
+
     public void acknowledge(String ackid) throws TException
     {
       send_acknowledge(ackid);
@@ -273,6 +308,7 @@ public class FlumeClientServer {
       processMap_.put("heartbeat", new heartbeat());
       processMap_.put("getConfig", new getConfig());
       processMap_.put("getLogicalNodes", new getLogicalNodes());
+      processMap_.put("getChokeMap", new getChokeMap());
       processMap_.put("acknowledge", new acknowledge());
       processMap_.put("checkAck", new checkAck());
       processMap_.put("putReports", new putReports());
@@ -345,6 +381,22 @@ public class FlumeClientServer {
         getLogicalNodes_result result = new getLogicalNodes_result();
         result.success = iface_.getLogicalNodes(args.physNode);
         oprot.writeMessageBegin(new TMessage("getLogicalNodes", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class getChokeMap implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        getChokeMap_args args = new getChokeMap_args();
+        args.read(iprot);
+        iprot.readMessageEnd();
+        getChokeMap_result result = new getChokeMap_result();
+        result.success = iface_.getChokeMap(args.physNode);
+        oprot.writeMessageBegin(new TMessage("getChokeMap", TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -2492,6 +2544,597 @@ public class FlumeClientServer {
 
   }
 
+  public static class getChokeMap_args implements TBase<getChokeMap_args._Fields>, java.io.Serializable, Cloneable, Comparable<getChokeMap_args>   {
+    private static final TStruct STRUCT_DESC = new TStruct("getChokeMap_args");
+
+    private static final TField PHYS_NODE_FIELD_DESC = new TField("physNode", TType.STRING, (short)1);
+
+    public String physNode;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      PHYS_NODE((short)1, "physNode");
+
+      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byId.put((int)field._thriftId, field);
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        return byId.get(fieldId);
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+      put(_Fields.PHYS_NODE, new FieldMetaData("physNode", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(getChokeMap_args.class, metaDataMap);
+    }
+
+    public getChokeMap_args() {
+    }
+
+    public getChokeMap_args(
+      String physNode)
+    {
+      this();
+      this.physNode = physNode;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getChokeMap_args(getChokeMap_args other) {
+      if (other.isSetPhysNode()) {
+        this.physNode = other.physNode;
+      }
+    }
+
+    public getChokeMap_args deepCopy() {
+      return new getChokeMap_args(this);
+    }
+
+    @Deprecated
+    public getChokeMap_args clone() {
+      return new getChokeMap_args(this);
+    }
+
+    public String getPhysNode() {
+      return this.physNode;
+    }
+
+    public getChokeMap_args setPhysNode(String physNode) {
+      this.physNode = physNode;
+      return this;
+    }
+
+    public void unsetPhysNode() {
+      this.physNode = null;
+    }
+
+    /** Returns true if field physNode is set (has been asigned a value) and false otherwise */
+    public boolean isSetPhysNode() {
+      return this.physNode != null;
+    }
+
+    public void setPhysNodeIsSet(boolean value) {
+      if (!value) {
+        this.physNode = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case PHYS_NODE:
+        if (value == null) {
+          unsetPhysNode();
+        } else {
+          setPhysNode((String)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case PHYS_NODE:
+        return getPhysNode();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case PHYS_NODE:
+        return isSetPhysNode();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getChokeMap_args)
+        return this.equals((getChokeMap_args)that);
+      return false;
+    }
+
+    public boolean equals(getChokeMap_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_physNode = true && this.isSetPhysNode();
+      boolean that_present_physNode = true && that.isSetPhysNode();
+      if (this_present_physNode || that_present_physNode) {
+        if (!(this_present_physNode && that_present_physNode))
+          return false;
+        if (!this.physNode.equals(that.physNode))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(getChokeMap_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getChokeMap_args typedOther = (getChokeMap_args)other;
+
+      lastComparison = Boolean.valueOf(isSetPhysNode()).compareTo(isSetPhysNode());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(physNode, typedOther.physNode);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        _Fields fieldId = _Fields.findByThriftId(field.id);
+        if (fieldId == null) {
+          TProtocolUtil.skip(iprot, field.type);
+        } else {
+          switch (fieldId) {
+            case PHYS_NODE:
+              if (field.type == TType.STRING) {
+                this.physNode = iprot.readString();
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+          }
+          iprot.readFieldEnd();
+        }
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      if (this.physNode != null) {
+        oprot.writeFieldBegin(PHYS_NODE_FIELD_DESC);
+        oprot.writeString(this.physNode);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getChokeMap_args(");
+      boolean first = true;
+
+      sb.append("physNode:");
+      if (this.physNode == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.physNode);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class getChokeMap_result implements TBase<getChokeMap_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("getChokeMap_result");
+
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.MAP, (short)0);
+
+    public Map<String,Integer> success;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      SUCCESS((short)0, "success");
+
+      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byId.put((int)field._thriftId, field);
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        return byId.get(fieldId);
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new MapMetaData(TType.MAP, 
+              new FieldValueMetaData(TType.STRING), 
+              new FieldValueMetaData(TType.I32))));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(getChokeMap_result.class, metaDataMap);
+    }
+
+    public getChokeMap_result() {
+    }
+
+    public getChokeMap_result(
+      Map<String,Integer> success)
+    {
+      this();
+      this.success = success;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getChokeMap_result(getChokeMap_result other) {
+      if (other.isSetSuccess()) {
+        Map<String,Integer> __this__success = new HashMap<String,Integer>();
+        for (Map.Entry<String, Integer> other_element : other.success.entrySet()) {
+
+          String other_element_key = other_element.getKey();
+          Integer other_element_value = other_element.getValue();
+
+          String __this__success_copy_key = other_element_key;
+
+          Integer __this__success_copy_value = other_element_value;
+
+          __this__success.put(__this__success_copy_key, __this__success_copy_value);
+        }
+        this.success = __this__success;
+      }
+    }
+
+    public getChokeMap_result deepCopy() {
+      return new getChokeMap_result(this);
+    }
+
+    @Deprecated
+    public getChokeMap_result clone() {
+      return new getChokeMap_result(this);
+    }
+
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
+    }
+
+    public void putToSuccess(String key, int val) {
+      if (this.success == null) {
+        this.success = new HashMap<String,Integer>();
+      }
+      this.success.put(key, val);
+    }
+
+    public Map<String,Integer> getSuccess() {
+      return this.success;
+    }
+
+    public getChokeMap_result setSuccess(Map<String,Integer> success) {
+      this.success = success;
+      return this;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((Map<String,Integer>)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getChokeMap_result)
+        return this.equals((getChokeMap_result)that);
+      return false;
+    }
+
+    public boolean equals(getChokeMap_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        _Fields fieldId = _Fields.findByThriftId(field.id);
+        if (fieldId == null) {
+          TProtocolUtil.skip(iprot, field.type);
+        } else {
+          switch (fieldId) {
+            case SUCCESS:
+              if (field.type == TType.MAP) {
+                {
+                  TMap _map4 = iprot.readMapBegin();
+                  this.success = new HashMap<String,Integer>(2*_map4.size);
+                  for (int _i5 = 0; _i5 < _map4.size; ++_i5)
+                  {
+                    String _key6;
+                    int _val7;
+                    _key6 = iprot.readString();
+                    _val7 = iprot.readI32();
+                    this.success.put(_key6, _val7);
+                  }
+                  iprot.readMapEnd();
+                }
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+          }
+          iprot.readFieldEnd();
+        }
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        {
+          oprot.writeMapBegin(new TMap(TType.STRING, TType.I32, this.success.size()));
+          for (Map.Entry<String, Integer> _iter8 : this.success.entrySet())
+          {
+            oprot.writeString(_iter8.getKey());
+            oprot.writeI32(_iter8.getValue());
+          }
+          oprot.writeMapEnd();
+        }
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getChokeMap_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
   public static class acknowledge_args implements TBase<acknowledge_args._Fields>, java.io.Serializable, Cloneable, Comparable<acknowledge_args>   {
     private static final TStruct STRUCT_DESC = new TStruct("acknowledge_args");
 
@@ -3771,16 +4414,16 @@ public class FlumeClientServer {
             case REPORTS:
               if (field.type == TType.MAP) {
                 {
-                  TMap _map4 = iprot.readMapBegin();
-                  this.reports = new HashMap<String,com.cloudera.flume.reporter.server.FlumeReport>(2*_map4.size);
-                  for (int _i5 = 0; _i5 < _map4.size; ++_i5)
+                  TMap _map9 = iprot.readMapBegin();
+                  this.reports = new HashMap<String,com.cloudera.flume.reporter.server.FlumeReport>(2*_map9.size);
+                  for (int _i10 = 0; _i10 < _map9.size; ++_i10)
                   {
-                    String _key6;
-                    com.cloudera.flume.reporter.server.FlumeReport _val7;
-                    _key6 = iprot.readString();
-                    _val7 = new com.cloudera.flume.reporter.server.FlumeReport();
-                    _val7.read(iprot);
-                    this.reports.put(_key6, _val7);
+                    String _key11;
+                    com.cloudera.flume.reporter.server.FlumeReport _val12;
+                    _key11 = iprot.readString();
+                    _val12 = new com.cloudera.flume.reporter.server.FlumeReport();
+                    _val12.read(iprot);
+                    this.reports.put(_key11, _val12);
                   }
                   iprot.readMapEnd();
                 }
@@ -3806,10 +4449,10 @@ public class FlumeClientServer {
         oprot.writeFieldBegin(REPORTS_FIELD_DESC);
         {
           oprot.writeMapBegin(new TMap(TType.STRING, TType.STRUCT, this.reports.size()));
-          for (Map.Entry<String, com.cloudera.flume.reporter.server.FlumeReport> _iter8 : this.reports.entrySet())
+          for (Map.Entry<String, com.cloudera.flume.reporter.server.FlumeReport> _iter13 : this.reports.entrySet())
           {
-            oprot.writeString(_iter8.getKey());
-            _iter8.getValue().write(oprot);
+            oprot.writeString(_iter13.getKey());
+            _iter13.getValue().write(oprot);
           }
           oprot.writeMapEnd();
         }

@@ -64,6 +64,9 @@ service FlumeClientServer {
 
   list<string> getLogicalNodes(1: string physNode),
   
+  //this returns a map from ChokeIds to their respective limits for the given physicalnode
+  map<string, i32> getChokeMap(1: string physNode),
+  
   // This marks a batch as complete
   void acknowledge(1:string ackid), 
   

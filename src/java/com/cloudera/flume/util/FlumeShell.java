@@ -111,7 +111,8 @@ public class FlumeShell {
     commandMap.put("getnodestatus", new CommandDescription("", true, 0));
     commandMap.put("quit", new CommandDescription("", false, 0));
     commandMap.put("getconfigs", new CommandDescription("", true, 0));
-    commandMap.put("getmappings", new CommandDescription("[physical node]", true, 0));
+    commandMap.put("getmappings", new CommandDescription("[physical node]",
+        true, 0));
     commandMap.put("source", new CommandDescription(
         "load a file and execute flume shell commands in it", false, 1));
 
@@ -138,8 +139,10 @@ public class FlumeShell {
     commandMap.put("exec refreshAll", new CommandDescription("", true, 1));
     commandMap.put("exec noop", new CommandDescription(
         "[delaymillis (no arg means no wait)]", true, 1));
-    commandMap.put("exec spawn", new CommandDescription(
-        "physicalnode logicalnode (synonym for exec map. deprecated.)", true, 3));
+    commandMap.put("exec spawn",
+        new CommandDescription(
+            "physicalnode logicalnode (synonym for exec map. deprecated.)",
+            true, 3));
     commandMap.put("exec map", new CommandDescription(
         "physicalnode logicalnode", true, 3));
     commandMap.put("exec decommission", new CommandDescription("logicalnode",
@@ -147,7 +150,10 @@ public class FlumeShell {
     commandMap.put("exec unmap", new CommandDescription(
         "physicalnode logicalnode", true, 3));
     commandMap.put("exec unmapAll", new CommandDescription("", true, 1));
-
+    // TODO(Vibhor): Change this when we give the user ability to change the
+    // physicalNode throttling limit.
+    commandMap.put("exec setChokeLimit", new CommandDescription(
+        "physicalnode chokeid limit", true, 3));
     // These actually work well and autocomplete the way we want!
     commandMap.put("submit config", new CommandDescription(
         "node 'source' 'sink'", true, 1));
@@ -157,7 +163,8 @@ public class FlumeShell {
     commandMap.put("submit refreshAll", new CommandDescription("", true, 1));
     commandMap.put("submit noop", new CommandDescription("", true, 1));
     commandMap.put("submit spawn", new CommandDescription(
-        "physicalnode logicalnode (synonym for submit map. deprecated.)", true, 3));
+        "physicalnode logicalnode (synonym for submit map. deprecated.)", true,
+        3));
     commandMap.put("submit map", new CommandDescription(
         "physicalnode logicalnode", true, 3));
     commandMap.put("submit decommission", new CommandDescription("logicalnode",
@@ -166,7 +173,6 @@ public class FlumeShell {
         "physicalnode logicalnode", true, 3));
     commandMap.put("submit unmapAll", new CommandDescription("", true, 1));
     commandMap.put("getreports", new CommandDescription("", true, 0));
-
   }
 
   protected AdminRPC client = null;
@@ -581,9 +587,7 @@ public class FlumeShell {
 
       String header = String.format("%s\n\n%-30s --> %s\n",
           "Master has the following mappings" + forPhysicalMessage,
-          "Physical Node",
-          "Logical Node(s)"
-      );
+          "Physical Node", "Logical Node(s)");
 
       if (mappings.size() > 0) {
         System.out.println(header);
@@ -593,7 +597,9 @@ public class FlumeShell {
               entry.getValue()));
         }
       } else {
-        System.out.println("No physical / logic node mappings" + forPhysicalMessage + ". Use spawn to map a logical node to a physical node.");
+        System.out.println("No physical / logic node mappings"
+            + forPhysicalMessage
+            + ". Use spawn to map a logical node to a physical node.");
       }
 
       return 0;

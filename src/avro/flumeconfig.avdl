@@ -53,6 +53,10 @@ protocol FlumeReportAvroServer{
   
   array<string> getLogicalNodes(string physNode);
   
+  //this returns a map from ChokeIds to their respective limits for the given physicalnode
+  map<int> getChokeMap(string physNode);
+  
+  
   // This marks a batch as complete
   void acknowledge(string ackid);
   

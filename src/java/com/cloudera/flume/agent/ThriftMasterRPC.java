@@ -116,9 +116,20 @@ public class ThriftMasterRPC implements MasterRPC {
       LOG.debug("RPC error on " + toString(), e);
       throw new IOException(e.getMessage());
     }
-
   }
 
+
+  public synchronized Map<String, Integer> getChokeMap (String physNode)
+     throws IOException {
+    try {
+      ensureConnected();
+      return (HashMap<String, Integer>) masterClient.getChokeMap(physNode);
+    } catch (TException e) {
+      LOG.debug("RPC error on " + toString(), e);
+      throw new IOException(e.getMessage());
+    }
+  }
+  
   public synchronized FlumeConfigData getConfig(LogicalNode n)
       throws IOException {
     try {

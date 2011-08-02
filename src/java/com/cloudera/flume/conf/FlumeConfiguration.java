@@ -796,6 +796,7 @@ public class FlumeConfiguration extends Configuration {
     return get(WEBAPPS_PATH, "webapps");
   }
 
+
   /**
    * This method loads the configuration, or does a hard exit if loading the
    * configuration fails.

@@ -81,6 +81,10 @@ public class MasterClientServer {
     return master.getSpecMan().getLogicalNode(physNode);
   }
 
+  public Map<String, Integer> getChokeMap(String physNode) {
+    return master.getSpecMan().getChokeMap(physNode);
+  }
+
   public FlumeConfigData getConfig(String host) {
     FlumeConfigData config = master.getSpecMan().getConfig(host);
     if (config != null) {

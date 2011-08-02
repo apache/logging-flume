@@ -41,7 +41,7 @@ import com.cloudera.flume.util.ThriftServer;
 import com.google.common.base.Preconditions;
 
 /**
- * Thrift implementation of a Master server. Performs type conversion and 
+ * Thrift implementation of a Master server. Performs type conversion and
  * delegates to a MasterClientServer.
  */
 public class MasterClientServerThrift extends ThriftServer implements
@@ -50,10 +50,9 @@ public class MasterClientServerThrift extends ThriftServer implements
   final protected int port;
   protected MasterClientServer delegate;
 
-  public MasterClientServerThrift(
-      MasterClientServer delegate) {
+  public MasterClientServerThrift(MasterClientServer delegate) {
     Preconditions.checkArgument(delegate != null,
-    "MasterCleintServer is null in 'ThriftMasterClientServer!");
+        "MasterCleintServer is null in 'ThriftMasterClientServer!");
     this.delegate = delegate;
     this.port = FlumeConfiguration.get().getMasterHeartbeatPort();
   }
@@ -62,14 +61,18 @@ public class MasterClientServerThrift extends ThriftServer implements
     return delegate.getLogicalNodes(physNode);
   }
 
+  public Map<String, Integer> getChokeMap(String physNode) throws TException {
+    return delegate.getChokeMap(physNode);
+  }
+
   public ThriftFlumeConfigData getConfig(String host) throws TException {
     return configToThrift(delegate.getConfig(host));
   }
 
   public boolean heartbeat(String logicalNode, String physicalNode,
       String clienthost, FlumeNodeState s, long version) throws TException {
-    return delegate.heartbeat(logicalNode, physicalNode, 
-        clienthost, stateFromThrift(s), version);
+    return delegate.heartbeat(logicalNode, physicalNode, clienthost,
+        stateFromThrift(s), version);
   }
 
   public void acknowledge(String ackid) throws TException {
@@ -79,17 +82,15 @@ public class MasterClientServerThrift extends ThriftServer implements
   public boolean checkAck(String ackid) throws TException {
     return delegate.checkAck(ackid);
   }
-  
+
   public void putReports(Map<String, FlumeReport> reports) throws TException {
     Preconditions.checkNotNull(reports,
         "putReports called with null report map");
     Map<String, ReportEvent> reportsMap = new HashMap<String, ReportEvent>();
     for (final Entry<String, FlumeReport> r : reports.entrySet()) {
-       ReportEvent event = new ReportEvent(
-           r.getValue().longMetrics, 
-           r.getValue().stringMetrics, 
-           r.getValue().doubleMetrics); 
-       reportsMap.put(r.getKey(), event);
+      ReportEvent event = new ReportEvent(r.getValue().longMetrics, r
+          .getValue().stringMetrics, r.getValue().doubleMetrics);
+      reportsMap.put(r.getKey(), event);
     }
     delegate.putReports(reportsMap);
   }
@@ -137,7 +138,9 @@ public class MasterClientServerThrift extends ThriftServer implements
   }
 
   public static FlumeConfigData configFromThrift(ThriftFlumeConfigData in) {
-    if (in == null) { return null; }
+    if (in == null) {
+      return null;
+    }
     FlumeConfigData out = new FlumeConfigData();
     out.timestamp = in.timestamp;
     out.sourceConfig = in.sourceConfig;
@@ -147,9 +150,11 @@ public class MasterClientServerThrift extends ThriftServer implements
     out.flowID = in.flowID;
     return out;
   }
-  
+
   public static ThriftFlumeConfigData configToThrift(FlumeConfigData in) {
-    if (in == null) { return null; }
+    if (in == null) {
+      return null;
+    }
     ThriftFlumeConfigData out = new ThriftFlumeConfigData();
     out.timestamp = in.timestamp;
     out.sourceConfig = in.sourceConfig;
@@ -159,7 +164,7 @@ public class MasterClientServerThrift extends ThriftServer implements
     out.flowID = in.flowID;
     return out;
   }
-  
+
   /**
    * Converts a flume master StatusManager NodeState enum to a thrift generated
    * NodeStatus enum value.

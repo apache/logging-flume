@@ -103,6 +103,7 @@ public class TestAvroMultiMasterRPC {
     public boolean heartbeat(CharSequence logicalNode,
         CharSequence physicalNode, CharSequence clienthost, FlumeNodeState s,
         long timestamp) throws AvroRemoteException {
+
       return true;
     }
 
@@ -111,6 +112,13 @@ public class TestAvroMultiMasterRPC {
         throws AvroRemoteException {
       return null;
     }
+
+    @Override
+    public Map<CharSequence, Integer> getChokeMap(CharSequence physNode)
+        throws AvroRemoteException {
+      return null;
+    }
+
   }
 
   /**

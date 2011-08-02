@@ -20,6 +20,7 @@ package com.cloudera.flume.agent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,7 +37,8 @@ import com.cloudera.util.RetryHarness;
 import com.cloudera.flume.reporter.ReportEvent;
 
 /**
- * This wraps a SingleMasterRPC and provides failover from one master to another.
+ * This wraps a SingleMasterRPC and provides failover from one master to
+ * another.
  */
 public class MultiMasterRPC implements MasterRPC {
   final static Logger LOG = Logger.getLogger(MultiMasterRPC.class.getName());
@@ -45,12 +47,12 @@ public class MultiMasterRPC implements MasterRPC {
   final String rpcProtocol;
   protected MasterRPC masterRPC;
   protected final List<Pair<String, Integer>> masterAddresses;
-  
+
   // Index of next master to try - wraps round.
   protected int nextMaster = 0;
   protected String curHost;
   protected int curPort = 0;
-  
+
   /**
    * Reads the set of master addresses from the configuration. If randomize is
    * set, it will shuffle the list. When a failure is detected, the entire set
@@ -63,13 +65,13 @@ public class MultiMasterRPC implements MasterRPC {
     if (randomize) {
       Collections.shuffle(masterAddresses);
     }
-    Pair<String, Integer> masterAddr = 
-      conf.getMasterHeartbeatServersList().get(0);
+    Pair<String, Integer> masterAddr = conf.getMasterHeartbeatServersList()
+        .get(0);
     this.MAX_RETRIES = maxRetries;
     this.RETRY_PAUSE_MS = retryPauseMS;
     this.rpcProtocol = conf.getMasterHeartbeatRPC();
   }
-  
+
   /**
    * Reads the set of master addresses from the configuration. If randomize is
    * set, it will shuffle the list.
@@ -78,7 +80,7 @@ public class MultiMasterRPC implements MasterRPC {
     this(conf, randomize, conf.getAgentMultimasterMaxRetries(), conf
         .getAgentMultimasterRetryBackoff());
   }
-  
+
   /**
    * Will return null if not connected
    */
@@ -93,8 +95,7 @@ public class MultiMasterRPC implements MasterRPC {
     return curPort;
   }
 
-  protected synchronized MasterRPC findServer()
-      throws IOException {
+  protected synchronized MasterRPC findServer() throws IOException {
     List<String> failedMasters = new ArrayList<String>();
     for (int i = 0; i < masterAddresses.size(); ++i) {
       Pair<String, Integer> host = masterAddresses.get(nextMaster);
@@ -238,9 +239,9 @@ public class MultiMasterRPC implements MasterRPC {
       throw new IOException(e);
     }
   }
-  
-  public List<String> getLogicalNodes(final String physicalNode) 
-  throws IOException {
+
+  public List<String> getLogicalNodes(final String physicalNode)
+      throws IOException {
     RPCRetryable<List<String>> retry = new RPCRetryable<List<String>>() {
       public List<String> doRPC() throws IOException {
         return masterRPC.getLogicalNodes(physicalNode);
@@ -255,6 +256,30 @@ public class MultiMasterRPC implements MasterRPC {
     } catch (Exception e) {
       throw new IOException(e);
     }
+  }
+
+  /**
+   * This method returns the ChokeId->limit (in KB/sec) map for the given
+   * physical node. This limit puts an approximate upperbound on the number of
+   * bytes which can be shipped accross a choke decorator.
+   */
+  public Map<String, Integer> getChokeMap(final String physicalNode)
+      throws IOException {
+    RPCRetryable<Map<String, Integer>> retry = new RPCRetryable<Map<String, Integer>>() {
+      public Map<String, Integer> doRPC() throws IOException {
+        return masterRPC.getChokeMap(physicalNode);
+      }
+    };
+
+    RetryHarness harness = new RetryHarness(retry, new FixedPeriodBackoff(
+        RETRY_PAUSE_MS, MAX_RETRIES), true);
+    try {
+      harness.attempt();
+      return retry.getResult();
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
+
   }
 
   public boolean heartbeat(final LogicalNode n) throws IOException {
@@ -313,4 +338,5 @@ public class MultiMasterRPC implements MasterRPC {
   public AckListener createAckListener() {
     return masterRPC.createAckListener();
   }
+
 }

@@ -74,6 +74,28 @@ public class MemoryBackedConfigStore extends ConfigStore {
   // physnode to logicalNode
   final ListMultimap<String, String> nodeMap = ArrayListMultimap
       .<String, String> create();
+  // this is the mapping from a physicalnode to the choke mapping inside it.
+  // The choke mapping itself comprises of the chokeID and the limit associated
+  // to it.
+
+  private final HashMap<String, HashMap<String, Integer>> chokeMap = new HashMap<String, HashMap<String, Integer>>();
+
+  /**
+   * This method adds/updates the limit on a particular chokeId on a
+   * physicalnode. The limit is given in KB/sec. If the chokeId passed is "",
+   * then it sets the limit on the physicalnode.
+   */
+  public void addChokeLimit(String physNode, String chokeID, int limit) {
+    if (!chokeMap.containsKey(physNode)) {
+      // initialize it to something
+      chokeMap.put(physNode, new HashMap<String, Integer>());
+      // add the default entry for the PhysicalNode limit
+      chokeMap.get(physNode).put("", limit);
+    }
+    // now add the entry for this choke
+
+    chokeMap.get(physNode).put(chokeID, limit);
+  }
 
   public void addLogicalNode(String physNode, String logicNode) {
     if (nodeMap.containsEntry(physNode, logicNode)) {
@@ -151,5 +173,15 @@ public class MemoryBackedConfigStore extends ConfigStore {
       }
       unmapLogicalNode(e.getKey(), e.getValue());
     }
+  }
+
+  @Override
+  public Map<String, Integer> getChokeMap(String physNode) {
+    if (chokeMap.get(physNode) == null) {
+      // Add the default value (MAX_INT)
+      // Also the key "" corresponds to the PhysicalNodeLimit
+      this.addChokeLimit(physNode, "", Integer.MAX_VALUE);
+    }
+    return chokeMap.get(physNode);
   }
 }

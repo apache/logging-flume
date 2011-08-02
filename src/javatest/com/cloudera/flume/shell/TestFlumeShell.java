@@ -18,9 +18,7 @@
 
 package com.cloudera.flume.shell;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
+import static org.junit.Assert.*;
 import java.io.IOException;
 
 import org.apache.thrift.transport.TTransportException;
@@ -64,6 +62,25 @@ public class TestFlumeShell extends SetupMasterTestEnv {
   }
 
   /**
+   * Start a master, connect to it via the shell, and then issue a setChokeLimit and
+   * make sure the chokeMap at the master is updated.
+   */
+  @Test
+  public void testSetChokeLimit() throws InterruptedException, TTransportException,
+      IOException {
+
+    FlumeShell sh = new FlumeShell();
+
+    sh
+        .executeLine("connect localhost:"
+            + FlumeConfiguration.DEFAULT_ADMIN_PORT);
+    sh.executeLine("exec setChokeLimit physNode choke 786");
+    Clock.sleep(250);
+    assertEquals(786, flumeMaster.getSpecMan().getChokeMap("physNode").get(
+        "choke").intValue());
+  }
+
+  /**
    * Create a master, then connect via shell, and then issue multi
    * configuration.
    */
@@ -85,7 +102,7 @@ public class TestFlumeShell extends SetupMasterTestEnv {
   /**
    * Create a master, connect via shell, create some logical nodes, spawn them,
    * and see if the output looks as expected.
-   *
+   * 
    * @throws InterruptedException
    */
   @Test
@@ -93,9 +110,8 @@ public class TestFlumeShell extends SetupMasterTestEnv {
     FlumeShell sh = new FlumeShell();
     long retval;
 
-    retval = sh
-        .executeLine("connect localhost:"
-            + FlumeConfiguration.DEFAULT_ADMIN_PORT);
+    retval = sh.executeLine("connect localhost:"
+        + FlumeConfiguration.DEFAULT_ADMIN_PORT);
     assertEquals(0, retval);
 
     retval = sh.executeLine("getmappings");
@@ -105,9 +121,11 @@ public class TestFlumeShell extends SetupMasterTestEnv {
 
     Clock.sleep(1000);
 
-    retval = sh.executeLine("exec config foo 'tail(\"/var/log/messages\")' 'console(\"avrojson\")'");
+    retval = sh
+        .executeLine("exec config foo 'tail(\"/var/log/messages\")' 'console(\"avrojson\")'");
     assertEquals(0, retval);
-    retval = sh.executeLine("exec config bar 'tail(\"/var/log/messages2\")' 'console(\"avrojson\")'");
+    retval = sh
+        .executeLine("exec config bar 'tail(\"/var/log/messages2\")' 'console(\"avrojson\")'");
     assertEquals(0, retval);
 
     retval = sh.executeLine("exec spawn localhost foo");
@@ -186,7 +204,7 @@ public class TestFlumeShell extends SetupMasterTestEnv {
   @Test
   public void testNodesDone() throws InterruptedException, TTransportException,
       IOException {
-    assertEquals(0, flumeMaster.getSpecMan().getAllConfigs().size());    
+    assertEquals(0, flumeMaster.getSpecMan().getAllConfigs().size());
 
     String nodename = "bar";
     flumeMaster.getSpecMan().addLogicalNode(nodename, "foo");
@@ -217,10 +235,7 @@ public class TestFlumeShell extends SetupMasterTestEnv {
     NodeState status = flumeMaster.getStatMan().getNodeStatuses().get("foo").state;
     NodeState idle = NodeState.IDLE;
     assertEquals(status, idle);
-//    TODO: uncomment when there is a clean way to get at the reportable
-//    AccumulatorSink cnt = (AccumulatorSink) ReportManager.get().getReportable(
-//        "count");
-//    assertEquals(100, cnt.getCount());
+    // TODO: uncomment when there is a clean way to get at the reportable
     n.stop();
   }
 

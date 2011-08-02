@@ -75,10 +75,10 @@ public class TestRPCMechanisms {
 
     public void serve(int port) throws IOException {
       LOG
-          .info(String
-              .format(
-                  "Starting blocking thread pool server for control server on port %d...",
-                  port));
+      .info(String
+          .format(
+              "Starting blocking thread pool server for control server on port %d...",
+              port));
       SpecificResponder res = new SpecificResponder(
           FlumeReportAvroServer.class, this);
       this.server = new HttpServer(res, port);
@@ -156,9 +156,16 @@ public class TestRPCMechanisms {
           .doubleValue(), 0.0001);
 
       Map<CharSequence, CharSequence> stringMetrics = report.stringMetrics;
+
       assertEquals(2, stringMetrics.size());
       assertEquals("string1", stringMetrics.get("string1").toString());
       assertEquals("string2", stringMetrics.get("string2").toString());
+      return null;
+    }
+
+    @Override
+    public Map<CharSequence, Integer> getChokeMap(CharSequence physNode)
+    throws AvroRemoteException {
       return null;
     }
   }
@@ -167,7 +174,7 @@ public class TestRPCMechanisms {
    * Mock ThriftServer.
    */
   public class MockThriftServer extends ThriftServer implements
-      FlumeClientServer.Iface {
+  FlumeClientServer.Iface {
 
     @Override
     public void acknowledge(String ackid) throws TException {
@@ -246,16 +253,21 @@ public class TestRPCMechanisms {
 
     public void serve() throws IOException {
       LOG
-          .info(String
-              .format(
-                  "Starting blocking thread pool server for control server on port %d...",
-                  port));
+      .info(String
+          .format(
+              "Starting blocking thread pool server for control server on port %d...",
+              port));
       try {
         this.start(new FlumeClientServer.Processor((Iface) this), port,
-            "MasterClientServer");
+        "MasterClientServer");
       } catch (TTransportException e) {
         throw new IOException(e.getMessage());
       }
+    }
+
+    @Override
+    public Map<String, Integer> getChokeMap(String physNode) throws TException {
+      return null;
     }
   }
 
@@ -336,7 +348,7 @@ public class TestRPCMechanisms {
     assertEquals(
         StatusManager.NodeState.CONFIGURING,
         MasterClientServerThrift
-            .stateFromThrift(com.cloudera.flume.conf.thrift.FlumeNodeState.CONFIGURING));
+        .stateFromThrift(com.cloudera.flume.conf.thrift.FlumeNodeState.CONFIGURING));
 
     assertEquals(com.cloudera.flume.conf.thrift.FlumeNodeState.HELLO,
         MasterClientServerThrift.stateToThrift(StatusManager.NodeState.HELLO));
@@ -348,7 +360,7 @@ public class TestRPCMechanisms {
         MasterClientServerThrift.stateToThrift(StatusManager.NodeState.IDLE));
     assertEquals(com.cloudera.flume.conf.thrift.FlumeNodeState.CONFIGURING,
         MasterClientServerThrift
-            .stateToThrift(StatusManager.NodeState.CONFIGURING));
+        .stateToThrift(StatusManager.NodeState.CONFIGURING));
 
     // AVRO NODE STATE
     assertEquals(StatusManager.NodeState.HELLO, MasterClientServerAvro
