@@ -39,6 +39,9 @@ h2. Compiling Flume
 Compiling Flume requires the following tools:
 
 * Java JDK 1.6
-* Apache ant (1.7.1)
+* Apache Maven
 
-To compile Flume, run `ant`.  
+To compile Flume, run `mvn compile`.
+To build a distribution, run `mvn package`.
+
+The final Flume distribution artifact will be in $project/flume-distribution/target/.

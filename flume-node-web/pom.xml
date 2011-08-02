@@ -1,0 +1,71 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <artifactId>flume</artifactId>
+    <groupId>com.cloudera</groupId>
+    <version>0.9.4-SNAPSHOT</version>
+  </parent>
+
+  <name>Flume Node Web</name>
+  <groupId>com.cloudera</groupId>
+  <artifactId>flume-node-web</artifactId>
+  <version>0.9.4-SNAPSHOT</version>
+  <packaging>war</packaging>
+
+  <build>
+    <plugins>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>jspc-maven-plugin</artifactId>
+        <version>1.4.6</version>
+        <executions>
+          <execution>
+            <id>jspc</id>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+            <configuration>
+              <packageName>com.cloudera.flume.node.jsp</packageName>
+              <outputWebXml>${pom.basedir}/target/web.xml</outputWebXml>
+              <source>1.5</source>
+              <target>1.5</target>
+              <showSuccess>true</showSuccess>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-war-plugin</artifactId>
+        <version>2.1.1</version>
+        <configuration>
+          <webXml>${pom.basedir}/target/web.xml</webXml>
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>com.cloudera</groupId>
+      <artifactId>flume-core</artifactId>
+      <version>0.9.4-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+
+</project>

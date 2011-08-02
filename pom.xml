@@ -1,0 +1,517 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.cloudera</groupId>
+  <artifactId>flume</artifactId>
+  <version>0.9.4-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>Flume</name>
+
+  <properties>
+    <!-- NB: The version of the thrift compiler must match that of the dependency 
+      on the jar file below. -->
+    <thrift.executable>/usr/local/thrift-0.6.0/bin/thrift</thrift.executable>
+
+    <!-- Set default encoding to UTF-8 to remove maven complaints -->
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <modules>
+    <module>flume-core</module>
+    <module>flume-config-web</module>
+    <module>flume-node-web</module>
+    <module>flume-distribution</module>
+  </modules>
+
+  <inceptionYear>2009</inceptionYear>
+
+  <issueManagement>
+    <system>JIRA</system>
+    <url>https://issues.cloudera.org/browse/FLUME</url>
+  </issueManagement>
+
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <mailingLists>
+    <mailingList>
+      <archive>https://groups.google.com/a/cloudera.org/group/flume-user/topics</archive>
+      <name>flume-user</name>
+      <post>flume-user@cloudera.org</post>
+      <subscribe>https://groups.google.com/a/cloudera.org/group/flume-user/about</subscribe>
+      <unsubscribe>https://groups.google.com/a/cloudera.org/group/flume-user/about</unsubscribe>
+    </mailingList>
+  </mailingLists>
+
+  <scm>
+    <connection>scm:git:git://github.com/cloudera/flume.git</connection>
+    <developerConnection>scm:git:git@github.com:cloudera/flume.git</developerConnection>
+    <url>https://github.com/cloudera/flume</url>
+  </scm>
+
+  <developers>
+    <developer>
+      <email>jon@cloudera.com</email>
+      <id>jon@cloudera.com</id>
+      <name>Jon Hsieh</name>
+      <organization>Cloudera</organization>
+    </developer>
+    <developer>
+      <email>phunt@cloudera.com</email>
+      <id>phunt@cloudera.com</id>
+      <name>Patrick Hunt</name>
+      <organization>Cloudera</organization>
+    </developer>
+    <developer>
+      <email>henry@cloudera.com</email>
+      <id>henry@cloudera.com</id>
+      <name>Henry Robinson</name>
+      <organization>Cloudera</organization>
+    </developer>
+    <developer>
+      <email>esammer@cloudera.com</email>
+      <id>esammer@cloudera.com</id>
+      <name>E. Sammer</name>
+      <organization>Cloudera</organization>
+    </developer>
+    <developer>
+      <email>bruce.mitchener@gmail.com</email>
+      <id>bruce.mitchener@gmail.com</id>
+      <name>Bruce Mitchener</name>
+      <organization>-</organization>
+    </developer>
+  </developers>
+
+  <contributors>
+    <contributor>
+      <email>akimball83@gmail.com</email>
+      <name>Aaron Kimball</name>
+      <organization>Odiago</organization>
+    </contributor>
+    <contributor>
+      <email>-</email>
+      <name>Abhinay Mehta</name>
+      <organization>-</organization>
+    </contributor>
+    <contributor>
+      <email>baranau.a@gmail.com</email>
+      <name>Alex Baranau</name>
+      <organization>-</organization>
+    </contributor>
+    <contributor>
+      <email>andrew@cloudera.com</email>
+      <name>Andrew Bayer</name>
+      <organization>Cloudera</organization>
+    </contributor>
+    <contributor>
+      <email>aphadke@mozilla.com</email>
+      <name>Anurag Phadke</name>
+      <organization>Mozilla</organization>
+    </contributor>
+    <contributor>
+      <email>rayan@cloudera.com</email>
+      <name>Dani Rayan</name>
+      <organization>Cloudera</organization>
+    </contributor>
+    <contributor>
+      <email>darthur@digitalsmiths.com</email>
+      <name>David Arthur</name>
+      <organization>Digital Smiths</organization>
+    </contributor>
+    <contributor>
+      <email>david.zuelke@bitextender.com</email>
+      <name>David Zuelke</name>
+      <organization>Bit Extender</organization>
+    </contributor>
+    <contributor>
+      <email>dvryaboy@gmail.com</email>
+      <name>Dmitry Ryaboy</name>
+      <organization>Twitter</organization>
+    </contributor>
+    <contributor>
+      <email>jacob.rideout@returnpath.net</email>
+      <name>Jacob Rideout</name>
+      <organization>ReturnPath</organization>
+    </contributor>
+    <contributor>
+      <email>tlipcon@cloudera.com</email>
+      <name>Todd Lipcon</name>
+      <organization>Cloudera</organization>
+    </contributor>
+    <contributor>
+      <email>vibhor@cloudera.com</email>
+      <name>Vibhor Bhatt</name>
+      <organization>Cloudera</organization>
+    </contributor>
+    <contributor>
+      <email>newalex@cloudera.com</email>
+      <name>Alex Newman</name>
+      <organization>Cloudera</organization>
+    </contributor>
+    <contributor>
+      <email>patrick@cloudera.com</email>
+      <name>Patrick Angeles</name>
+      <organization>Cloudera</organization>
+    </contributor>
+    <contributor>
+      <email>pwendell@cloudera.com</email>
+      <name>Patrick Wendell</name>
+      <organization>Cloudera</organization>
+    </contributor>
+  </contributors>
+
+  <organization>
+    <name>Cloudera</name>
+    <url>http://www.cloudera.com</url>
+  </organization>
+
+  <pluginRepositories>
+
+    <pluginRepository>
+      <id>repo1.maven.org</id>
+      <url>http://repo1.maven.org/maven2</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+
+    <pluginRepository>
+      <id>dtrott</id>
+      <url>http://maven.davidtrott.com/repository</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+
+    <pluginRepository>
+      <id>com.cloudera.repository.public</id>
+      <url>https://repository.cloudera.com/content/groups/public/
+      </url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+
+    <pluginRepository>
+      <id>repository.jboss.org</id>
+      <url>http://repository.jboss.org/nexus/content/groups/public/
+      </url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+
+  </pluginRepositories>
+
+  <repositories>
+
+    <repository>
+      <id>repo1.maven.org</id>
+      <url>http://repo1.maven.org/maven2</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+
+    <repository>
+      <id>com.cloudera.repository.releases</id>
+      <url>https://repository.cloudera.com/content/groups/public/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+
+    <repository>
+      <id>com.cloudera.repository.thirdparty</id>
+      <url>https://repository.cloudera.com/content/repositories/third-party/
+      </url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+
+    <repository>
+      <id>dtrott</id>
+      <url>http://maven.davidtrott.com/repository</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+
+    <repository>
+      <id>repository.jboss.org</id>
+      <url>http://repository.jboss.org/nexus/content/groups/public/
+      </url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+
+  </repositories>
+
+  <build>
+
+    <pluginManagement>
+      <plugins>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>2.3.2</version>
+          <configuration>
+            <source>1.6</source>
+            <target>1.6</target>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.8.1</version>
+          <configuration>
+            <forkMode>always</forkMode>
+            <forkedProcessTimeoutInSeconds>480</forkedProcessTimeoutInSeconds>
+          </configuration>
+        </plugin>
+
+      </plugins>
+
+    </pluginManagement>
+
+  </build>
+
+  <dependencyManagement>
+    <dependencies>
+
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.8.1</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-all</artifactId>
+        <version>1.8.1</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>findbugs</artifactId>
+        <version>1.3.9</version>
+        <scope>test</scope>
+        <exclusions>
+          <!-- The Xerces version getting pulled in from this dies with enabling 
+            XInclude support. Excluding for now. -esammer -->
+          <exclusion>
+            <groupId>xerces</groupId>
+            <artifactId>xercesImpl</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>net.sourceforge.cobertura</groupId>
+        <artifactId>cobertura</artifactId>
+        <version>1.9.4.1</version>
+        <scope>test</scope>
+      </dependency>
+
+      <!-- Dependencies: compile -->
+
+      <dependency>
+        <groupId>commons-lang</groupId>
+        <artifactId>commons-lang</artifactId>
+        <version>2.5</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-collections</groupId>
+        <artifactId>commons-collections</artifactId>
+        <version>3.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-codec</groupId>
+        <artifactId>commons-codec</artifactId>
+        <version>1.3</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-cli</groupId>
+        <artifactId>commons-cli</artifactId>
+        <version>1.2</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>r07</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.antlr</groupId>
+        <artifactId>antlr</artifactId>
+        <version>3.2</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.antlr</groupId>
+        <artifactId>stringtemplate</artifactId>
+        <version>3.2</version>
+      </dependency>
+
+      <dependency>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
+        <version>1.2.15</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.sun.jdmk</groupId>
+            <artifactId>jmxtools</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jmx</groupId>
+            <artifactId>jmxri</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>1.5.11</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-log4j12</artifactId>
+        <version>1.5.11</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-core</artifactId>
+        <version>1.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-server</artifactId>
+        <version>1.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-json</artifactId>
+        <version>1.4</version>
+      </dependency>
+
+      <!-- FIXME: Using a Cloudera-packaged version of thrift 0.5.0 because 
+        it can't be found in a public repo. -esammer -->
+      <dependency>
+        <groupId>org.apache.thrift</groupId>
+        <artifactId>libthrift</artifactId>
+        <version>0.6.0-cdh</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.avro</groupId>
+        <artifactId>avro</artifactId>
+        <version>1.5.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.avro</groupId>
+        <artifactId>avro-compiler</artifactId>
+        <version>1.5.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.avro</groupId>
+        <artifactId>avro-ipc</artifactId>
+        <version>1.5.0</version>
+      </dependency>
+
+      <!-- FIXME: This should be removed when we migrate the IRC source / 
+        sink to an external plugin rather than being part of the main tree. -esammer -->
+      <dependency>
+        <groupId>org.schwering.irc</groupId>
+        <artifactId>irclib</artifactId>
+        <version>1.0.0</version>
+      </dependency>
+
+      <!-- FIXME: Is this used? Can't find references to it except in tests. 
+        -esammer -->
+      <dependency>
+        <groupId>dk.brics.automaton</groupId>
+        <artifactId>automaton</artifactId>
+        <version>1.0.0</version>
+      </dependency>
+
+      <!-- Dependencies: compile - CDH components -->
+
+      <dependency>
+        <groupId>com.cloudera.zookeeper</groupId>
+        <artifactId>zookeeper</artifactId>
+        <version>3.3.1-10</version>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.jms</groupId>
+            <artifactId>jms</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jdmk</groupId>
+            <artifactId>jmxtools</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jmx</groupId>
+            <artifactId>jmxri</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-core</artifactId>
+        <version>0.20.2-CDH3B4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.arabidopsis.ahocorasick</groupId>
+        <artifactId>ahocorasick</artifactId>
+        <version>2.x</version>
+      </dependency>
+
+    </dependencies>
+  </dependencyManagement>
+
+</project>

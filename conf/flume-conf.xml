@@ -75,6 +75,14 @@ configuration values placed in flume-site.xml.  -->
     </description>
   </property>
 
+  <property>
+    <name>flume.node.webapp.root</name>
+    <value>webapps/flumeagent.war</value>
+    <description>The webapp root for the node web application. This can
+      be either a war file or a directory of war files / exploded wars.
+    </description>
+  </property>
+
   <!-- ================================================== -->
   <!-- Agent ============================================ -->
   <!-- ================================================== -->
@@ -262,6 +270,13 @@ configuration values placed in flume-site.xml.  -->
     </description>
   </property>
 
+  <property>
+    <name>flume.master.webapp.root</name>
+    <value>webapps/flumemaster.war</value>
+    <description>The webapp root for the master web application. This can
+      be either a war file or a directory of war files / exploded wars.
+    </description>
+  </property>
 
   <property>
     <name>flume.event.rpc</name>
