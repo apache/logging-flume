@@ -20,11 +20,15 @@ package com.cloudera.flume.collector;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -43,9 +47,12 @@ import com.cloudera.flume.agent.durability.WALManager;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeArgException;
 import com.cloudera.flume.conf.FlumeBuilder;
+import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.conf.ReportTestingContext;
+import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
+import com.cloudera.flume.conf.SinkFactoryImpl;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
 import com.cloudera.flume.core.EventSink;
@@ -62,6 +69,8 @@ import com.cloudera.flume.handlers.hdfs.EscapedCustomDfsSink;
 import com.cloudera.flume.handlers.rolling.ProcessTagger;
 import com.cloudera.flume.handlers.rolling.RollSink;
 import com.cloudera.flume.handlers.rolling.Tagger;
+import com.cloudera.flume.handlers.thrift.Priority;
+import com.cloudera.flume.handlers.thrift.ThriftFlumeEvent;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.util.BenchmarkHarness;
@@ -752,4 +761,100 @@ public class TestCollectorSink {
     ReportEvent rptb = ReportManager.get().getReportable("bar").getMetrics();
     assertEquals(1, (long) rptb.getLongMetric("bar"));
   }
+
+  /**
+   * This test verifies that a runtime exception (such as NPE, ArrayOutOfBounds,
+   * IllegalStateException)on an open of a subsink inside a collector does not
+   * hang a logical node
+   *
+   * @throws IOException
+   * @throws InterruptedException
+   * @throws FlumeSpecException
+   */
+  @Test(expected = RuntimeException.class)
+  public void testOpenRuntimeExceptionSink() throws IOException,
+      InterruptedException, FlumeSpecException {
+    final EventSink snk = mock(EventSink.class);
+    doThrow(new RuntimeException("Forced unexpected open error")).when(snk)
+        .open();
+    SinkBuilder sb = new SinkBuilder() {
+      @Override
+      public EventSink build(Context context, String... argv) {
+        return snk;
+      }
+    };
+    SinkFactoryImpl sf = new SinkFactoryImpl();
+    sf.setSink("cnf", sb);
+    FlumeBuilder.setSinkFactory(sf);
+
+    final EventSink coll = FlumeBuilder.buildSink(
+        LogicalNodeContext.testingContext(), "collector(5000) { cnf }");
+    coll.open();
+    coll.close();
+  }
+
+  /**
+   * This test verifies that a runtime exception (such as NPE, ArrayOutOfBounds,
+   * IllegalStateException) on an open of a subsink inside a collector does not
+   * hang a logical node
+   *
+   * @throws IOException
+   * @throws InterruptedException
+   * @throws FlumeSpecException
+   */
+  @Test(expected = RuntimeException.class)
+  public void testAppendRuntimeExceptionSink() throws IOException,
+      InterruptedException, FlumeSpecException {
+    final EventSink snk = mock(EventSink.class);
+    doThrow(new RuntimeException("Force unexpected append error")).when(snk)
+        .append((Event) anyObject());
+    SinkBuilder sb = new SinkBuilder() {
+      @Override
+      public EventSink build(Context context, String... argv) {
+        return snk;
+      }
+    };
+    SinkFactoryImpl sf = new SinkFactoryImpl();
+    sf.setSink("rte", sb);
+    FlumeBuilder.setSinkFactory(sf);
+
+    final EventSink coll = FlumeBuilder.buildSink(
+        LogicalNodeContext.testingContext(), "collector(5000) { rte }");
+    coll.open();
+    coll.append(new EventImpl("foo".getBytes()));
+    coll.close();
+  }
+
+  /**
+   * This test verifies that a runtime exception (such as NPE, ArrayOutOfBounds,
+   * IllegalStateException) on an close of a subsink inside a collector does not
+   * hang a logical node
+   *
+   * @throws IOException
+   * @throws InterruptedException
+   * @throws FlumeSpecException
+   */
+  @Test(expected = RuntimeException.class)
+  public void testCloseRuntimeExceptionSink() throws IOException,
+      InterruptedException, FlumeSpecException {
+    final EventSink snk = mock(EventSink.class);
+    doThrow(new RuntimeException("Force unexpected append error")).when(snk)
+        .close();
+    SinkBuilder sb = new SinkBuilder() {
+      @Override
+      public EventSink build(Context context, String... argv) {
+        return snk;
+      }
+    };
+    SinkFactoryImpl sf = new SinkFactoryImpl();
+    sf.setSink("closeRte", sb);
+    FlumeBuilder.setSinkFactory(sf);
+
+    final EventSink coll = FlumeBuilder.buildSink(
+        LogicalNodeContext.testingContext(), "collector(5000) { closeRte }");
+    coll.open();
+    coll.append(new EventImpl("foo".getBytes()));
+    coll.close();
+  }
+
 }

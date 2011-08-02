@@ -78,7 +78,7 @@ public class StubbornAppendSink<S extends EventSink> extends
       super.close(); // close
       throw ie;
 
-    } catch (Exception ex) {
+    } catch (IOException ex) {
       LOG.info("append failed on event '{}' with error: {}", e, ex.getMessage());
 
       appendFails.incrementAndGet();
@@ -89,6 +89,12 @@ public class StubbornAppendSink<S extends EventSink> extends
       appendSuccesses.incrementAndGet();
       // another exception may have been thrown at close/open/append
       appendRecovers.incrementAndGet();
+    } catch (RuntimeException ex) {
+      LOG.info("append failed on event '{}' with error: {}", e, ex.getMessage());
+
+      appendFails.incrementAndGet();
+      super.close(); // close
+      throw ex;
     }
   }
 

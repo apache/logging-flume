@@ -113,7 +113,7 @@ public class InsistentAppendDecorator<S extends EventSink> extends
         return;
       } catch (InterruptedException ie) {
         throw ie;
-      } catch (Exception e) {
+      } catch (IOException e) {
         // this is an unexpected exception
         long waitTime = backoff.sleepIncrement();
         LOG.info("append attempt " + attemptRetries + " failed, backoff ("
@@ -131,6 +131,12 @@ public class InsistentAppendDecorator<S extends EventSink> extends
           attemptRetries++;
           appendRetries++;
         }
+      } catch (RuntimeException e) {
+        // this is an unexpected exception
+        LOG.info("Failed due to unexpected runtime exception "
+            + "during append attempt", e);
+        appendGiveups++;
+        throw e;
       }
     }
     appendGiveups++;

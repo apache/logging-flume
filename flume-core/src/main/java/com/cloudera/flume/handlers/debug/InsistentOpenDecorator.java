@@ -119,7 +119,7 @@ public class InsistentOpenDecorator<S extends EventSink> extends
       } catch (InterruptedException ie) {
         // Not open so no need to close
         throw ie;
-      } catch (Exception e) {
+      } catch (IOException e) {
 
         if (!opening) {
           throw new IOException("Unable to open and then close requested");
@@ -137,11 +137,19 @@ public class InsistentOpenDecorator<S extends EventSink> extends
           backoff.waitUntilRetryOk();
         } catch (InterruptedException e1) {
           // got an interrupted signal, bail out!
+          opening = false;
+          openGiveups++;
           throw e1;
         }
 
         attemptRetries++;
         openRetries++;
+      } catch (RuntimeException rte) {
+        LOG.error("Failed due to unexpected runtime exception in open retryer",
+            rte);
+        openGiveups++;
+        opening = false;
+        throw rte;
       }
     }
     openGiveups++;
@@ -234,8 +242,8 @@ public class InsistentOpenDecorator<S extends EventSink> extends
     ReportEvent rpt = super.getReport();
 
     // parameters
-    rpt.hierarchicalMerge("backoffPolicy." + backoff.getName(), backoff
-        .getMetrics());
+    rpt.hierarchicalMerge("backoffPolicy." + backoff.getName(),
+        backoff.getMetrics());
 
     // counters
     rpt.setLongMetric(A_REQUESTS, openRequests);
