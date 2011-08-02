@@ -5,7 +5,7 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
 
-  <id>project</id>
+  <id>bin</id>
 
   <formats>
     <format>dir</format>
@@ -19,37 +19,15 @@
     <moduleSet>
       <useAllReactorProjects>true</useAllReactorProjects>
 
-      <sources>
-        <outputDirectory>/</outputDirectory>
-        <includes />
-	<excludes>
-	  <!-- maven build stuff -->
-	  <exclude>**/target/**</exclude>
-	  <!-- default eclipse junk -->
-	  <exclude>**/bin/**</exclude>
-	  <exclude>**/.settings/**</exclude>
-	  <exclude>**/.project</exclude>
-	  <exclude>**/.classpath</exclude>
-	  <exclude>**/.gitignore</exclude>
-	</excludes>
-      </sources>
-
       <binaries>
-        <outputDirectory>/</outputDirectory>
+        <outputDirectory>lib</outputDirectory>
         <unpack>false</unpack>
         <includes />
 
         <dependencySets>
           <dependencySet>
-	    <scope>provided</scope>
-            <outputDirectory>/</outputDirectory>
-	    <useProjectArtifact>false</useProjectArtifact>
-          </dependencySet>
-
-          <dependencySet>
-	    <scope>runtime</scope>
             <outputDirectory>lib</outputDirectory>
-	    <useProjectArtifact>false</useProjectArtifact>
+            <includes />
           </dependencySet>
         </dependencySets>
       </binaries>
@@ -114,10 +92,6 @@
       <outputDirectory>contrib</outputDirectory>
       <directory>../contrib</directory>
       <includes />
-      <excludes>
-	<exclude>**/gen-cpp/*</exclude>
-	<exclude>**/gen-cpp</exclude>
-      </excludes>
     </fileSet>
 
     <!-- Copy docs directory -->
@@ -127,7 +101,7 @@
       <includes />
     </fileSet>
 
-    <!-- Copy the man pages -->
+    <!-- copy the man pages -->
     <fileSet>
       <outputDirectory>docs/man</outputDirectory>
       <directory>../docs/man</directory>
@@ -143,51 +117,8 @@
         <include>LICENSE</include>
         <include>NOTICE</include>
         <include>README</include>
-        <include>pom.xml</include>
-        <include>pmd.xml</include>
         <include>RELEASENOTES</include>
       </includes>
-    </fileSet>
-
-    <!-- Copy flume sources -->
-    <fileSet>
-      <outputDirectory>/</outputDirectory>
-      <directory>../</directory>
-      <includes>
-	<include>flume-config-web/**</include>
-	<include>flume-distribution/**</include>
-	<include>flume-docs/**</include>
-	<include>flume-log4j-appender/**</include>
-	<include>flume-node-web/**</include>
-	<include>flume-windows-dist/**</include>
-      </includes>
-      <excludes>
-	<exclude>**/target/**</exclude>
-	<exclude>**/target</exclude>
-	<!-- default eclipse junk -->
-	<exclude>**/bin/**</exclude>
-	<exclude>**/.settings/**</exclude>
-	<exclude>**/.project</exclude>
-	<exclude>**/.classpath</exclude>
-	<exclude>**/.gitignore</exclude>
-      </excludes>
-    </fileSet>
-
-    <!-- Copy flume plugin sources -->
-    <fileSet>
-      <outputDirectory>plugins</outputDirectory>
-      <directory>../plugins/</directory>
-      <includes/>
-      <excludes>
-	<exclude>**/target/**</exclude>
-	<exclude>**/target/</exclude>
-	<!-- default eclipse junk -->
-	<exclude>**/bin/**</exclude>
-	<exclude>**/.settings/**</exclude>
-	<exclude>**/.project</exclude>
-	<exclude>**/.classpath</exclude>
-	<exclude>**/.gitignore</exclude>
-      </excludes>
     </fileSet>
 
   </fileSets>

@@ -35,7 +35,8 @@
           </dependency>
         </dependencies>
       </plugin>
-
+      <!-- this breaks if not in git repo.  commented out until resolved -->
+      <!--
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>cloudera-buildnumber-maven-plugin</artifactId>
@@ -53,7 +54,7 @@
           </execution>
         </executions>
       </plugin>
-
+      --> 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
