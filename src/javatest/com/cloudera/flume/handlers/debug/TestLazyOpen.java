@@ -17,11 +17,13 @@
  */
 package com.cloudera.flume.handlers.debug;
 
+import static org.junit.Assert.*;
+
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import org.apache.log4j.Logger;
+import org.junit.Test;
 
-import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.ReportTestingContext;
@@ -34,9 +36,12 @@ import com.cloudera.flume.reporter.aggregator.CounterSink;
 /**
  * Demonstrates that lazy open defers until append happens to actually open.
  */
-public class TestLazyOpen extends TestCase {
+public class TestLazyOpen {
+  final public static Logger LOG = Logger.getLogger(TestLazyOpen.class);
+
   static class OpenInstanceCountingSink extends EventSink.Base {
-    static int opened = 0;
+    int opened = 0;
+    int closed = 0;
 
     @Override
     public void append(Event e) throws IOException {
@@ -44,38 +49,59 @@ public class TestLazyOpen extends TestCase {
 
     @Override
     public void close() throws IOException {
+      closed++;
+      LOG.info("actually closed");
     }
 
     @Override
     public void open() throws IOException {
       opened++;
-      System.out.println("actually open happened now");
+      LOG.info("actually open happened now");
     }
-
   }
 
+  @Test
   public void testLazyOpen() throws IOException {
     OpenInstanceCountingSink snk = new OpenInstanceCountingSink();
 
     LazyOpenDecorator<EventSink> lazy = new LazyOpenDecorator<EventSink>(snk);
     lazy.open();
-    System.out.println("lazy decorator opened");
-    assertEquals(0, OpenInstanceCountingSink.opened);
+    LOG.info("lazy decorator opened");
+    assertEquals(0, snk.opened);
 
-    System.out.println("appending");
+    LOG.info("appending");
     Event e = new EventImpl("foo".getBytes());
     lazy.append(e);
-    assertEquals(1, OpenInstanceCountingSink.opened);
-    System.out.println("done");
+    assertEquals(1, snk.opened);
+    LOG.info("done");
+  }
+
+  @Test
+  public void testLazyClosed() throws IOException {
+    OpenInstanceCountingSink snk = new OpenInstanceCountingSink();
+
+    LazyOpenDecorator<EventSink> lazy = new LazyOpenDecorator<EventSink>(snk);
+    lazy.open();
+    lazy.close();
+    LOG.info("lazy decorator opened");
+    assertEquals(0, snk.closed);
+
+    LOG.info("appending");
+    Event e = new EventImpl("foo".getBytes());
+    lazy.open();
+    lazy.append(e);
+    lazy.close();
+    assertEquals(1, snk.opened);
+    LOG.info("done");
   }
 
   /**
    * Tests the lazy open through another mechanism, and tests the builder
    */
+  @Test
   public void testLazyOpenBuild() throws IOException, FlumeSpecException {
-    EventSink snk =
-        FlumeBuilder.buildSink(new ReportTestingContext(),
-            "{ lazyOpen => counter(\"count\") } ");
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(),
+        "{ lazyOpen => counter(\"count\") } ");
     CounterSink cnt = (CounterSink) ReportManager.get().getReportable("count");
 
     boolean ok = false;

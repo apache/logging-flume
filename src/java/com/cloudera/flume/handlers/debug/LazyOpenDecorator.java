@@ -19,6 +19,8 @@ package com.cloudera.flume.handlers.debug;
 
 import java.io.IOException;
 
+import org.apache.log4j.Logger;
+
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.SinkFactory.SinkDecoBuilder;
 import com.cloudera.flume.core.Event;
@@ -34,7 +36,16 @@ import com.google.common.base.Preconditions;
  */
 public class LazyOpenDecorator<S extends EventSink> extends
     EventSinkDecorator<S> {
+  final public static Logger LOG = Logger.getLogger(LazyOpenDecorator.class);
+
+  /**
+   * open has been called on this sink
+   */
   boolean logicallyOpen = false;
+
+  /**
+   * open has been called on subsink
+   */
   boolean actuallyOpen = false;
 
   public LazyOpenDecorator(S s) {
@@ -59,9 +70,16 @@ public class LazyOpenDecorator<S extends EventSink> extends
 
   @Override
   synchronized public void close() throws IOException {
+    if (actuallyOpen) {
+      super.close();
+    }
+
+    if (!logicallyOpen) {
+      LOG.warn("Closing a lazy sink that was not logically opened");
+    }
+
     actuallyOpen = false;
     logicallyOpen = false;
-    super.close();
 
   }
 
