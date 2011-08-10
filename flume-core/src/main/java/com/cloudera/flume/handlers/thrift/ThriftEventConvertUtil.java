@@ -150,7 +150,7 @@ class ThriftEventConvertUtil {
 
   private static Map<String, byte[]> getAttrs(ThriftFlumeEvent evt) {
     if (evt.fields == null) {
-      return Collections.<String, byte[]> emptyMap();
+      return new HashMap<String, byte[]>();
     }
     Map<String, ByteBuffer> tempMap = Collections.unmodifiableMap(evt.fields);
     Map<String, byte[]> returnMap = new HashMap<String, byte[]>();
@@ -158,7 +158,7 @@ class ThriftEventConvertUtil {
       ByteBuffer buf = tempMap.get(key);
       returnMap.put(key, buf.array());
     }
-    return Collections.unmodifiableMap(returnMap);
+    return returnMap;
   }
 
 }

@@ -29,6 +29,8 @@ import org.junit.Test;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventImpl;
+import com.cloudera.flume.handlers.avro.AvroEventConvertUtil;
+import com.cloudera.flume.handlers.avro.AvroFlumeEvent;
 
 public class TestThriftEventConvertUtil {
 
@@ -102,4 +104,18 @@ public class TestThriftEventConvertUtil {
     EventImpl.select(e);
   }
 
+  /**
+   * Test to make sure when a thrift event is converted into a flume event,
+   * the event can be extended with new attributes.
+   */
+  @Test
+  public void testAddAttr() {
+    ThriftFlumeEvent tfe = ThriftEventConvertUtil.toThriftEvent(testEvent);
+    Event e = ThriftEventConvertUtil.toFlumeEvent(tfe);
+    e.set("test", "data".getBytes());
+
+    ThriftFlumeEvent tfeNull = new ThriftFlumeEvent();
+    Event e2 = ThriftEventConvertUtil.toFlumeEvent(tfeNull);
+    e2.set("test", "data".getBytes());
+  }
 }

@@ -112,4 +112,19 @@ public class TestAvroEventConvertUtil {
     EventImpl.select(e);
   }
 
+  /**
+   * Test to make sure when a avro event is converted into a flume event,
+   * the event can be extended with new attributes.
+   */
+  @Test
+  public void testAddAttr() {
+    AvroFlumeEvent afe = AvroEventConvertUtil.toAvroEvent(testEvent);
+    Event e = AvroEventConvertUtil.toFlumeEvent(afe);
+    e.set("test", "data".getBytes());
+
+    AvroFlumeEvent afeNull = new AvroFlumeEvent();
+    Event e2 = AvroEventConvertUtil.toFlumeEvent(afeNull);
+    e2.set("test", "data".getBytes());
+  }
+
 }

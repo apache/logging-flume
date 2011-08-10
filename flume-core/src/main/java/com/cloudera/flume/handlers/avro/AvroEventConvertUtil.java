@@ -143,7 +143,7 @@ public class AvroEventConvertUtil {
   private static Map<String, byte[]> getAttrs(
       Map<CharSequence, ByteBuffer> fields) {
     if (fields == null) {
-      return Collections.<String, byte[]> emptyMap();
+      return new HashMap<String, byte[]>();
     }
     HashMap<String, byte[]> tempMap = new HashMap<String, byte[]>();
     for (CharSequence u : fields.keySet()) {
