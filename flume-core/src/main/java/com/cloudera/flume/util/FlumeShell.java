@@ -134,6 +134,11 @@ public class FlumeShell {
         "node 'source' 'sink'", true, 1));
     commandMap.put("exec multiconfig",
         new CommandDescription("'spec'", true, 1));
+    commandMap.put("exec purge",
+        new CommandDescription("logicalnode", true, 1));
+    commandMap.put("exec purgeAll",
+        new CommandDescription("", true, 0));
+
     commandMap.put("exec refresh", new CommandDescription("'spec'", true, 1));
     commandMap.put("exec refreshAll", new CommandDescription("", true, 1));
     commandMap.put("exec noop", new CommandDescription(
