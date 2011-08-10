@@ -65,7 +65,7 @@ public class TestExtractors {
     mem.open();
     ArrayList<String> names = new ArrayList<String>();
     names.add("d1");
-    names.add("");
+    names.add(new String(""));
     names.add("d2");
 
     RegexAllExtractor re = new RegexAllExtractor(mem, "(\\d):(\\d):(\\d)",
@@ -79,6 +79,7 @@ public class TestExtractors {
     mem.open();
     Event e1 = mem.next();
     assertEquals("1", Attributes.readString(e1, "d1"));
+    assertEquals(null, Attributes.readString(e1, ""));
     assertEquals("3", Attributes.readString(e1, "d2"));
   }
 

@@ -91,7 +91,7 @@ public class RegexAllExtractor extends EventSinkDecorator<EventSink> {
         //Try/Catch so that we don't require there be the same number of names as patterns.
         try {
           //Ignore blank names. These are most likely sub patterns we don't care about keeping.
-          if(names.get(grp-1) != ""){
+          if (!"".equals(names.get(grp-1))) {
             Attributes.setString(e, names.get(grp-1), val);
           }
         } catch (IndexOutOfBoundsException ioobe) {
