@@ -1005,7 +1005,8 @@ public class FlumeConfiguration extends Configuration {
     if (home == null) {
       home = ".";
     }
-    return home + File.separator + get(WEBAPP_ROOT_MASTER, null);
+    return home + File.separator + get(WEBAPP_ROOT_MASTER,
+      "webapps/flumemaster.war");
   }
 
   /**
@@ -1016,7 +1017,8 @@ public class FlumeConfiguration extends Configuration {
     if (home == null) {
       home = ".";
     }
-    return home + File.separator + get(WEBAPP_ROOT_NODE, null);
+    return home + File.separator + get(WEBAPP_ROOT_NODE,
+        "webapps/flumeagent.war");
   }
 
   /**
