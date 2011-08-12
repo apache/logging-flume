@@ -1,6 +1,5 @@
 package org.apache.flume.core;
 
-import org.apache.flume.core.ChannelDriver.ChannelDriverThread;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;
@@ -98,30 +97,7 @@ public class LogicalNode implements LifecycleAware {
             .error("Interrupted while waiting for driver to start. Shutting down.");
         lifecycleState = LifecycleState.ERROR;
 
-        driver.setShouldStop(true);
-
-        /*
-         * We refuse to return with outstanding resources so we go into a cycle
-         * where we interrupt the driver thread and block on it. If we're
-         * interrupted again while waiting for it, we warn, but we still refuse
-         * to give up on it. Sorry, caller; we don't know what the source or
-         * sink is doing so we have to give them time!
-         */
-        while (driver.isAlive()) {
-          logger.debug("Interrupting driver");
-
-          driver.interrupt();
-
-          logger.debug("Waiting for driver to stop");
-          try {
-            driver.join();
-          } catch (InterruptedException e1) {
-            logger
-                .warn(
-                    "Interrupted while waiting for driver to stop. This almost certainly means something awful is happening in the source or sink. Report this error. Interrupting it again!",
-                    e1);
-          }
-        }
+        stop(context);
 
         return;
       }
@@ -141,22 +117,12 @@ public class LogicalNode implements LifecycleAware {
     while (driver.isAlive()) {
       logger.debug("Waiting for driver to stop");
 
+      /* If we're interrupted during a stop, we just fail. */
       try {
         driver.join();
       } catch (InterruptedException e) {
-        logger
-            .error("Interrupted while waiting for driver to stop. Interrupting it.");
+        logger.error("Interrupted while waiting for driver thread to stop", e);
         lifecycleState = LifecycleState.ERROR;
-
-        /*
-         * We refuse to return with outstanding resources so we go into a cycle
-         * where we interrupt the driver thread and block on it. If we're
-         * interrupted again while waiting for it, we warn, but we still refuse
-         * to give up on it. Sorry, caller; we don't know what the source or
-         * sink is doing so we have to give them time!
-         */
-        logger.debug("Interrupting driver");
-        driver.interrupt();
       }
     }
 
