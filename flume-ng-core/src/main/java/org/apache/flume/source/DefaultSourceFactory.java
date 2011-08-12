@@ -24,7 +24,7 @@ public class DefaultSourceFactory implements SourceFactory {
 
   @Override
   public boolean register(String name, Class<? extends EventSource> sourceClass) {
-    logger.info("Register source class:{}", sourceClass);
+    logger.info("Register source name:{} class:{}", name, sourceClass);
 
     if (sourceRegistry.containsKey(name)) {
       return false;
@@ -50,7 +50,7 @@ public class DefaultSourceFactory implements SourceFactory {
   public EventSource create(String name) throws InstantiationException {
     Preconditions.checkNotNull(name);
 
-    logger.info("Creating instance of source {}", name);
+    logger.debug("Creating instance of source {}", name);
 
     if (!sourceRegistry.containsKey(name)) {
       return null;

@@ -24,7 +24,7 @@ public class DefaultSinkFactory implements SinkFactory {
 
   @Override
   public boolean register(String name, Class<? extends EventSink> sinkClass) {
-    logger.info("Register sink class:{}", sinkClass);
+    logger.info("Register sink name:{} class:{}", name, sinkClass);
 
     if (sinkRegistry.containsKey(name)) {
       return false;
@@ -50,7 +50,7 @@ public class DefaultSinkFactory implements SinkFactory {
   public EventSink create(String name) throws InstantiationException {
     Preconditions.checkNotNull(name);
 
-    logger.info("Creating instance of source {}", name);
+    logger.debug("Creating instance of source {}", name);
 
     if (!sinkRegistry.containsKey(name)) {
       return null;
