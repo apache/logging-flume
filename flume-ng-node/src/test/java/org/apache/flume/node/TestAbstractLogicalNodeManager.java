@@ -35,9 +35,8 @@ public class TestAbstractLogicalNodeManager {
         for (LogicalNode node : getNodes()) {
           node.stop(context);
 
-          boolean reached = LifecycleController
-              .waitForOneOf(node, new LifecycleState[] { LifecycleState.STOP,
-                  LifecycleState.ERROR });
+          boolean reached = LifecycleController.waitForOneOf(node,
+              LifecycleState.STOP_OR_ERROR);
 
           if (!reached) {
             logger.error(
@@ -60,9 +59,8 @@ public class TestAbstractLogicalNodeManager {
         for (LogicalNode node : getNodes()) {
           node.start(context);
 
-          boolean reached = LifecycleController
-              .waitForOneOf(node, new LifecycleState[] { LifecycleState.START,
-                  LifecycleState.ERROR });
+          boolean reached = LifecycleController.waitForOneOf(node,
+              LifecycleState.START_OR_ERROR);
 
           if (!reached) {
             logger.error(
@@ -92,14 +90,14 @@ public class TestAbstractLogicalNodeManager {
 
     nodeManager.start(context);
     boolean reached = LifecycleController.waitForOneOf(nodeManager,
-        new LifecycleState[] { LifecycleState.START, LifecycleState.ERROR });
+        LifecycleState.START_OR_ERROR);
 
     Assert.assertTrue(reached);
     Assert.assertEquals(LifecycleState.START, nodeManager.getLifecycleState());
 
     nodeManager.stop(context);
     reached = LifecycleController.waitForOneOf(nodeManager,
-        new LifecycleState[] { LifecycleState.STOP, LifecycleState.ERROR });
+        LifecycleState.STOP_OR_ERROR);
 
     Assert.assertTrue(reached);
     Assert.assertEquals(LifecycleState.STOP, nodeManager.getLifecycleState());
@@ -119,14 +117,14 @@ public class TestAbstractLogicalNodeManager {
 
     nodeManager.start(context);
     boolean reached = LifecycleController.waitForOneOf(nodeManager,
-        new LifecycleState[] { LifecycleState.START, LifecycleState.ERROR });
+        LifecycleState.START_OR_ERROR);
 
     Assert.assertTrue(reached);
     Assert.assertEquals(LifecycleState.START, nodeManager.getLifecycleState());
 
     nodeManager.stop(context);
     reached = LifecycleController.waitForOneOf(nodeManager,
-        new LifecycleState[] { LifecycleState.STOP, LifecycleState.ERROR });
+        LifecycleState.STOP_OR_ERROR);
 
     Assert.assertTrue(reached);
     Assert.assertEquals(LifecycleState.STOP, nodeManager.getLifecycleState());
@@ -148,7 +146,7 @@ public class TestAbstractLogicalNodeManager {
 
       nodeManager.start(context);
       boolean reached = LifecycleController.waitForOneOf(nodeManager,
-          new LifecycleState[] { LifecycleState.START, LifecycleState.ERROR });
+          LifecycleState.START_OR_ERROR);
 
       Assert.assertTrue(reached);
       Assert
@@ -156,7 +154,7 @@ public class TestAbstractLogicalNodeManager {
 
       nodeManager.stop(context);
       reached = LifecycleController.waitForOneOf(nodeManager,
-          new LifecycleState[] { LifecycleState.STOP, LifecycleState.ERROR });
+          LifecycleState.STOP_OR_ERROR);
 
       Assert.assertTrue(reached);
       Assert.assertEquals(LifecycleState.STOP, nodeManager.getLifecycleState());
