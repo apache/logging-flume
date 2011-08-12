@@ -51,28 +51,6 @@ public class TestLogicalNode {
   }
 
   @Test
-  public void testInterruptStart() throws LifecycleException,
-      InterruptedException {
-    Context context = new Context();
-
-    Thread.currentThread().interrupt();
-    node.start(context);
-    boolean reached = LifecycleController.waitForOneOf(node,
-        new LifecycleState[] { LifecycleState.START, LifecycleState.ERROR },
-        5000);
-
-    Assert.assertTrue("Matched a lifecycle state", reached);
-    Assert.assertEquals(LifecycleState.START, node.getLifecycleState());
-
-    node.stop(context);
-    reached = LifecycleController.waitForOneOf(node, new LifecycleState[] {
-        LifecycleState.STOP, LifecycleState.ERROR }, 5000);
-
-    Assert.assertTrue("Matched a lifecycle state", reached);
-    Assert.assertEquals(LifecycleState.STOP, node.getLifecycleState());
-  }
-
-  @Test
   public void testMultipleNodes() throws LifecycleException,
       InterruptedException {
 
