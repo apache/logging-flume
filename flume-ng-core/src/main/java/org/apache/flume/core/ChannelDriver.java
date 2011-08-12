@@ -199,7 +199,7 @@ public class ChannelDriver implements LifecycleAware {
    * itself.
    * </p>
    */
-  private static class ChannelDriverThread extends Thread {
+  public static class ChannelDriverThread extends Thread {
 
     private EventSource source;
     private EventSink sink;
@@ -246,7 +246,7 @@ public class ChannelDriver implements LifecycleAware {
       try {
         sink.open(context);
       } catch (InterruptedException e) {
-        logger.debug("Interrupted while opening sink. Exception follows.", e);
+        logger.error("Interrupted while opening sink. Exception follows.", e);
         lastException = e;
         lifecycleState = LifecycleState.ERROR;
         shouldStop = true;
@@ -273,7 +273,6 @@ public class ChannelDriver implements LifecycleAware {
         } catch (InterruptedException e1) {
           logger
               .error("Interrupted while trying to close the sink (because we were interrupted while trying to open the source)");
-          Thread.currentThread().interrupt();
         } catch (LifecycleException e1) {
           logger
               .error(
@@ -293,7 +292,6 @@ public class ChannelDriver implements LifecycleAware {
         } catch (InterruptedException e1) {
           logger
               .error("Interrupted while trying to close the sink (because we were cleaning up from a lifecycle exception from opening the source.)");
-          Thread.currentThread().interrupt();
         } catch (LifecycleException e1) {
           logger
               .error(
