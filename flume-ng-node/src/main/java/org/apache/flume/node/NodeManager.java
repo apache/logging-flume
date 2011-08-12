@@ -15,4 +15,6 @@ public interface NodeManager extends LifecycleAware {
 
   public void setNodes(Set<LogicalNode> nodes);
 
+  public LogicalNode getNode(String name);
+
 }

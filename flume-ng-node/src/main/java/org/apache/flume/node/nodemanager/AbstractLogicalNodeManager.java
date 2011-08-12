@@ -31,8 +31,19 @@ abstract public class AbstractLogicalNodeManager implements NodeManager {
   }
 
   @Override
+  public LogicalNode getNode(String name) {
+    for (LogicalNode node : getNodes()) {
+      if (node.getName().equals(name)) {
+        return node;
+      }
+    }
+
+    return null;
+  }
+
+  @Override
   public Set<LogicalNode> getNodes() {
-    return new HashSet<LogicalNode>(nodes);
+    return nodes;
   }
 
   @Override
