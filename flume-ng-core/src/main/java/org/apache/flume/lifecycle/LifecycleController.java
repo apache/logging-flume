@@ -10,31 +10,22 @@ public class LifecycleController {
   private static final long shortestSleepDuration = 50;
   private static final int maxNumberOfChecks = 5;
 
-  /*
-   * public static boolean waitForState(LifecycleAware delegate, LifecycleState
-   * state, long timeout) throws InterruptedException {
-   * 
-   * logger.debug("Waiting for state {} for delegate:{} up to {}ms", new
-   * Object[] { state, delegate, timeout });
-   * 
-   * long sleepInterval = Math.max(shortestSleepDuration, timeout /
-   * maxNumberOfChecks); long deadLine = System.currentTimeMillis() + timeout;
-   * 
-   * do { if (delegate.getLifecycleState().equals(state)) { return true; }
-   * 
-   * logger.debug("Still want state:{} sleeping:{}ms", state, sleepInterval);
-   * Thread.sleep(sleepInterval); } while (System.currentTimeMillis() <
-   * deadLine);
-   * 
-   * logger.debug("Didn't see state within timeout {}ms", timeout);
-   * 
-   * return false; }
-   */
+  public static boolean waitForState(LifecycleAware delegate,
+      LifecycleState state) throws InterruptedException {
+
+    return waitForState(delegate, state, 0);
+  }
 
   public static boolean waitForState(LifecycleAware delegate,
       LifecycleState state, long timeout) throws InterruptedException {
 
     return waitForOneOf(delegate, new LifecycleState[] { state }, timeout);
+  }
+
+  public static boolean waitForOneOf(LifecycleAware delegate,
+      LifecycleState[] states) throws InterruptedException {
+
+    return waitForOneOf(delegate, states, 0);
   }
 
   public static boolean waitForOneOf(LifecycleAware delegate,
@@ -57,7 +48,7 @@ public class LifecycleController {
       logger.debug("Still want one of states:{} sleeping:{}ms", states,
           sleepInterval);
       Thread.sleep(sleepInterval);
-    } while (System.currentTimeMillis() < deadLine);
+    } while (timeout == 0 || System.currentTimeMillis() < deadLine);
 
     logger.debug("Didn't see state within timeout {}ms", timeout);
 
