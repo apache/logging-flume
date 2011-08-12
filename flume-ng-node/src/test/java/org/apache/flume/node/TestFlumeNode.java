@@ -1,7 +1,7 @@
 package org.apache.flume.node;
 
-import org.apache.flume.core.Context;
-import org.apache.flume.core.LogicalNode;
+import org.apache.flume.Context;
+import org.apache.flume.LogicalNode;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;

@@ -5,8 +5,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.flume.core.Context;
-import org.apache.flume.core.LogicalNode;
+import org.apache.flume.Context;
+import org.apache.flume.LogicalNode;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;

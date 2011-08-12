@@ -3,7 +3,7 @@ package org.apache.flume.node.nodemanager;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.flume.core.LogicalNode;
+import org.apache.flume.LogicalNode;
 import org.apache.flume.node.NodeManager;
 
 import com.google.common.base.Preconditions;

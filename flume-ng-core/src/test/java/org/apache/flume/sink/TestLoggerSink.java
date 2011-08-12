@@ -1,8 +1,8 @@
 package org.apache.flume.sink;
 
-import org.apache.flume.core.Context;
-import org.apache.flume.core.EventDeliveryException;
-import org.apache.flume.core.util.EventBuilder;
+import org.apache.flume.Context;
+import org.apache.flume.EventDeliveryException;
+import org.apache.flume.event.EventBuilder;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.junit.Before;
 import org.junit.Test;

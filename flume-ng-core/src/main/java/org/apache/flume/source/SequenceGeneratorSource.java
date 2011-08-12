@@ -1,9 +1,9 @@
 package org.apache.flume.source;
 
-import org.apache.flume.core.Context;
-import org.apache.flume.core.Event;
-import org.apache.flume.core.EventDeliveryException;
-import org.apache.flume.core.SimpleEvent;
+import org.apache.flume.Context;
+import org.apache.flume.Event;
+import org.apache.flume.EventDeliveryException;
+import org.apache.flume.event.SimpleEvent;
 
 public class SequenceGeneratorSource extends AbstractEventSource {
 

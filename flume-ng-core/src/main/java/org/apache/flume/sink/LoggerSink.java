@@ -1,8 +1,8 @@
 package org.apache.flume.sink;
 
-import org.apache.flume.core.Context;
-import org.apache.flume.core.Event;
-import org.apache.flume.core.EventDeliveryException;
+import org.apache.flume.Context;
+import org.apache.flume.Event;
+import org.apache.flume.EventDeliveryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

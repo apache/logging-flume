@@ -2,7 +2,7 @@ package org.apache.flume.lifecycle;
 
 import junit.framework.Assert;
 
-import org.apache.flume.core.Context;
+import org.apache.flume.Context;
 import org.junit.Test;
 
 public class TestLifecycleController {

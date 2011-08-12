@@ -1,4 +1,4 @@
-package org.apache.flume.core;
+package org.apache.flume;
 
 public class EventDeliveryException extends Exception {
 

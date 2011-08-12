@@ -2,7 +2,7 @@ package org.apache.flume.node;
 
 import java.util.Set;
 
-import org.apache.flume.core.LogicalNode;
+import org.apache.flume.LogicalNode;
 import org.apache.flume.lifecycle.LifecycleAware;
 
 public interface NodeManager extends LifecycleAware {

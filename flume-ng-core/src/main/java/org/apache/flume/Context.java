@@ -1,4 +1,4 @@
-package org.apache.flume.core;
+package org.apache.flume;
 
 import java.util.HashMap;
 import java.util.Map;

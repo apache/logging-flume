@@ -1,5 +1,6 @@
-package org.apache.flume.core;
+package org.apache.flume;
 
+import org.apache.flume.Context;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

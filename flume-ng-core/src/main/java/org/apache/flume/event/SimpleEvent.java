@@ -1,7 +1,9 @@
-package org.apache.flume.core;
+package org.apache.flume.event;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.apache.flume.Event;
 
 public class SimpleEvent<T> implements Event<T> {
 

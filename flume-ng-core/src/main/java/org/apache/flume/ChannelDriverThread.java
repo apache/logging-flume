@@ -1,4 +1,4 @@
-package org.apache.flume.core;
+package org.apache.flume;
 
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleException;

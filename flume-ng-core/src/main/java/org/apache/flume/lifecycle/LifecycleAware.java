@@ -1,6 +1,6 @@
 package org.apache.flume.lifecycle;
 
-import org.apache.flume.core.Context;
+import org.apache.flume.Context;
 
 /**
  * <p>

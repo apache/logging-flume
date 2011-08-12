@@ -1,6 +1,6 @@
 package org.apache.flume.node.nodemanager;
 
-import org.apache.flume.core.Context;
+import org.apache.flume.Context;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;
 

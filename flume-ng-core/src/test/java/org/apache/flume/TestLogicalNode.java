@@ -1,8 +1,10 @@
-package org.apache.flume.core;
+package org.apache.flume;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.flume.Context;
+import org.apache.flume.LogicalNode;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;

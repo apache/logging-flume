@@ -1,9 +1,9 @@
 package org.apache.flume.source;
 
-import org.apache.flume.core.Context;
-import org.apache.flume.core.Event;
-import org.apache.flume.core.EventSource;
-import org.apache.flume.core.EventDeliveryException;
+import org.apache.flume.Context;
+import org.apache.flume.Event;
+import org.apache.flume.EventDeliveryException;
+import org.apache.flume.EventSource;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.junit.Assert;
 import org.junit.Before;

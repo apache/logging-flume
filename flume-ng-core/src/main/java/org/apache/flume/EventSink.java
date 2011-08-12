@@ -1,14 +1,14 @@
-package org.apache.flume.core;
+package org.apache.flume;
 
 import org.apache.flume.lifecycle.LifecycleException;
 
-public interface EventSource {
+public interface EventSink {
 
   public void open(Context context) throws InterruptedException,
       LifecycleException;
 
-  public Event<?> next(Context context) throws InterruptedException,
-      EventDeliveryException;
+  public void append(Context context, Event<?> event)
+      throws InterruptedException, EventDeliveryException;
 
   public void close(Context context) throws InterruptedException,
       LifecycleException;

@@ -1,10 +1,9 @@
-package org.apache.flume.core.util;
+package org.apache.flume.event;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.flume.core.Event;
-import org.apache.flume.core.SimpleEvent;
+import org.apache.flume.Event;
 
 public class EventBuilder {
 

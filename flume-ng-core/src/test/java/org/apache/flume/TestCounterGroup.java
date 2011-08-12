@@ -1,9 +1,10 @@
-package org.apache.flume.core;
+package org.apache.flume;
 
 import java.util.concurrent.atomic.AtomicLong;
 
 import junit.framework.Assert;
 
+import org.apache.flume.CounterGroup;
 import org.junit.Before;
 import org.junit.Test;
 
