@@ -51,10 +51,13 @@ public class NodeStatusMonitor implements Runnable {
     }
 
     if (!node.getLifecycleState().equals(status.state)) {
-      logger.debug(
-          "Detected state change: node:{} - {} (lastSeen:{}) -> {}",
-          new Object[] { node.getName(), status.state, status.lastSeen,
-              node.getLifecycleState() });
+      if (logger.isDebugEnabled()) {
+        logger.debug(
+            "Detected state change: node:{} - {} (lastSeen:{}) -> {}",
+            new Object[] { node.getName(), status.state, status.lastSeen,
+                node.getLifecycleState() });
+      }
+
       status.lastStateChange = now;
     }
 

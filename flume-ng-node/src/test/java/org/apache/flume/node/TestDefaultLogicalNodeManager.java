@@ -1,5 +1,8 @@
 package org.apache.flume.node;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.flume.Context;
 import org.apache.flume.LogicalNode;
 import org.apache.flume.lifecycle.LifecycleController;
@@ -42,18 +45,55 @@ public class TestDefaultLogicalNodeManager {
 
     Context context = new Context();
 
-    LogicalNode node = new LogicalNode();
+    nodeManager.start(context);
+    Assert.assertTrue("Node manager didn't reach START or ERROR",
+        LifecycleController.waitForOneOf(nodeManager,
+            LifecycleState.START_OR_ERROR, 5000));
 
-    node.setName("test node");
-    node.setSource(new SequenceGeneratorSource());
-    node.setSink(new NullSink());
+    for (int i = 0; i < 3; i++) {
+      LogicalNode node = new LogicalNode();
 
-    nodeManager.add(node);
+      node.setName("test-node-" + i);
+      node.setSource(new SequenceGeneratorSource());
+      node.setSink(new NullSink());
+
+      nodeManager.add(node);
+    }
+
+    Thread.sleep(5000);
+
+    nodeManager.stop(context);
+    Assert.assertTrue("Node manager didn't reach STOP or ERROR",
+        LifecycleController.waitForOneOf(nodeManager,
+            LifecycleState.STOP_OR_ERROR, 5000));
+  }
+
+  @Test
+  public void testNodeStartStops() throws LifecycleException,
+      InterruptedException {
+
+    Set<LogicalNode> testNodes = new HashSet<LogicalNode>();
+
+    for (int i = 0; i < 30; i++) {
+      LogicalNode node = new LogicalNode();
+
+      node.setName("test-node-" + i);
+      node.setSource(new SequenceGeneratorSource());
+      node.setSink(new NullSink());
+
+      testNodes.add(node);
+    }
+
+    Context context = new Context();
 
     nodeManager.start(context);
     Assert.assertTrue("Node manager didn't reach START or ERROR",
         LifecycleController.waitForOneOf(nodeManager,
             LifecycleState.START_OR_ERROR, 5000));
+
+    for (LogicalNode node : testNodes) {
+      nodeManager.add(node);
+    }
 
     Thread.sleep(5000);
 
