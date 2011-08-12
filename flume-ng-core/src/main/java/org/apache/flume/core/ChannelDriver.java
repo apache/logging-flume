@@ -145,13 +145,13 @@ public class ChannelDriver implements LifecycleAware {
       try {
         sink.open(context);
       } catch (InterruptedException e) {
-        logger.debug("Interrupted while opening source / sink.", e);
+        logger.debug("Interrupted while opening sink. Exception follows.", e);
         lastException = e;
         lifecycleState = LifecycleState.ERROR;
         shouldStop = true;
         return;
       } catch (LifecycleException e) {
-        logger.error("Failed to open source / sink. Exception follows.", e);
+        logger.error("Failed to open sink. Exception follows.", e);
         lastException = e;
         lifecycleState = LifecycleState.ERROR;
         shouldStop = true;
@@ -161,16 +161,41 @@ public class ChannelDriver implements LifecycleAware {
       try {
         source.open(context);
       } catch (InterruptedException e) {
-        logger.debug("Interrupted while opening source:{}", source, e);
+        logger.debug("Interrupted while opening source. Exception follows.", e);
         lastException = e;
         lifecycleState = LifecycleState.ERROR;
         shouldStop = true;
+
+        /* FIXME: This is gross. Factor this out. */
+        try {
+          sink.close(context);
+        } catch (InterruptedException e1) {
+          Thread.currentThread().interrupt();
+        } catch (LifecycleException e1) {
+          logger
+              .error(
+                  "While cleaning up after \"{}\" failed to close the sink down - {}",
+                  e.getMessage(), e.toString());
+        }
+
         return;
       } catch (LifecycleException e) {
-        logger.error("Failed to open source:{} Exception follows.", source, e);
+        logger.error("Failed to open source. Exception follows.", e);
         lastException = e;
         lifecycleState = LifecycleState.ERROR;
         shouldStop = true;
+
+        try {
+          sink.close(context);
+        } catch (InterruptedException e1) {
+          Thread.currentThread().interrupt();
+        } catch (LifecycleException e1) {
+          logger
+              .error(
+                  "While cleaning up after \"{}\" failed to close the sink down - {}",
+                  e.getMessage(), e.toString());
+        }
+
         return;
       }
 
@@ -192,7 +217,8 @@ public class ChannelDriver implements LifecycleAware {
           lifecycleState = LifecycleState.ERROR;
           shouldStop = true;
         } catch (MessageDeliveryException e) {
-          logger.debug("Unable to deliver event:{} (may be null)", event);
+          logger.debug("Unable to deliver event:{} (may be null) - Reason:{}",
+              event, e.getMessage());
           discardedEvents++;
           /* FIXME: Handle dead messages. */
         }
@@ -203,11 +229,11 @@ public class ChannelDriver implements LifecycleAware {
       try {
         source.close(context);
       } catch (InterruptedException e) {
-        logger.debug("Interrupted while closing source:{}.", source, e);
+        logger.debug("Interrupted while closing source. Exception follows.", e);
         lastException = e;
         lifecycleState = LifecycleState.ERROR;
       } catch (LifecycleException e) {
-        logger.error("Failed to close source:{} Exception follows.", source, e);
+        logger.error("Failed to close source. Exception follows.", e);
         lastException = e;
         lifecycleState = LifecycleState.ERROR;
       }
@@ -215,11 +241,11 @@ public class ChannelDriver implements LifecycleAware {
       try {
         sink.close(context);
       } catch (InterruptedException e) {
-        logger.debug("Interrupted while closing sink:{}.", sink, e);
+        logger.debug("Interrupted while closing sink. Exception follows.", e);
         lastException = e;
         lifecycleState = LifecycleState.ERROR;
       } catch (LifecycleException e) {
-        logger.error("Failed to close sink:{} Exception follows.", sink, e);
+        logger.error("Failed to close sink. Exception follows.", e);
         lastException = e;
         lifecycleState = LifecycleState.ERROR;
       }
