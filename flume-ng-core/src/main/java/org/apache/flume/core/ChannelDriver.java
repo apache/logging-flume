@@ -122,6 +122,17 @@ public class ChannelDriver implements LifecycleAware {
       Preconditions.checkState(source != null, "Source can not be null");
       Preconditions.checkState(sink != null, "Sink can not be null");
 
+      try {
+        sink.open(context);
+        source.open(context);
+      } catch (InterruptedException e) {
+        logger.debug("Interrupted while opening source / sink.", e);
+        shouldStop = true;
+      } catch (LifecycleException e) {
+        logger.error("Failed to open source / sink. Exception follows.", e);
+        shouldStop = true;
+      }
+
       while (!shouldStop) {
         Event<?> event = null;
 
@@ -144,6 +155,17 @@ public class ChannelDriver implements LifecycleAware {
         }
 
         totalEvents++;
+      }
+
+      try {
+        source.close(context);
+        sink.close(context);
+      } catch (InterruptedException e) {
+        logger.debug(
+            "Interrupted while closing source / sink. Just going to continue.",
+            e);
+      } catch (LifecycleException e) {
+        logger.error("Failed to open source / sink. Exception follows.", e);
       }
 
       logger.debug("Channel driver thread exiting cleanly");
