@@ -2,8 +2,8 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.cloudera</groupId>
-  <artifactId>flume</artifactId>
+  <groupId>org.apache.flume</groupId>
+  <artifactId>flume-parent</artifactId>
   <version>0.9.5-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Flume</name>
@@ -66,10 +66,9 @@
       </activation>
       <modules>
         <module>flume-core</module>
-	<module>flume-microbenchmarks</module>
+        <module>flume-microbenchmarks</module>
       </modules>
     </profile>
-
 
     <!-- windows package build, docs not generated -->
     <profile>
@@ -81,6 +80,17 @@
         <module>flume-core</module>
         <module>flume-node-web</module>
         <module>flume-windows-dist</module>
+      </modules>
+    </profile>
+
+    <profile>
+      <id>ng</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <modules>
+        <module>flume-ng-core</module>
+        <module>flume-ng-node</module>
       </modules>
     </profile>
 
