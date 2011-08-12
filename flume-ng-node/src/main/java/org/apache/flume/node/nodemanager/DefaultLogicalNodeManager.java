@@ -111,7 +111,9 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
 
     for (LogicalNode node : getNodes()) {
       try {
-        node.stop(context);
+        if (node.getLifecycleState().equals(LifecycleState.START)) {
+          node.stop(context);
+        }
       } catch (LifecycleException e) {
         logger.error("Failed to stop logical node:{}", node);
       } catch (InterruptedException e) {
