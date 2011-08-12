@@ -1,5 +1,7 @@
 package org.apache.flume.lifecycle;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,8 +33,10 @@ public class LifecycleController {
   public static boolean waitForOneOf(LifecycleAware delegate,
       LifecycleState[] states, long timeout) throws InterruptedException {
 
-    logger.debug("Waiting for state {} for delegate:{} up to {}ms",
-        new Object[] { states, delegate, timeout });
+    if (logger.isDebugEnabled()) {
+      logger.debug("Waiting for state {} for delegate:{} up to {}ms",
+          new Object[] { states, delegate, timeout });
+    }
 
     long sleepInterval = Math.max(shortestSleepDuration, timeout
         / maxNumberOfChecks);
@@ -53,6 +57,14 @@ public class LifecycleController {
     logger.debug("Didn't see state within timeout {}ms", timeout);
 
     return false;
+  }
+
+  public static void stopAll(List<LifecycleAware> services)
+      throws InterruptedException {
+
+    for (LifecycleAware service : services) {
+      waitForOneOf(service, LifecycleState.STOP_OR_ERROR);
+    }
   }
 
 }

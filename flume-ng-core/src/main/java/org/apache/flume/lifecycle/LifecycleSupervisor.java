@@ -1,5 +1,6 @@
 package org.apache.flume.lifecycle;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,7 +28,7 @@ public class LifecycleSupervisor implements LifecycleAware {
     lifecycleState = LifecycleState.IDLE;
     supervisedProcesses = new HashMap<LifecycleAware, Supervisoree>();
     monitorService = Executors.newScheduledThreadPool(
-        3,
+        5,
         new ThreadFactoryBuilder().setNameFormat(
             "lifecycleSupervisor-" + Thread.currentThread().getId() + "-%d")
             .build());
@@ -42,87 +43,21 @@ public class LifecycleSupervisor implements LifecycleAware {
 
     /* FIXME: Teasing this apart into manageable chunks. */
 
-    Runnable monitorCheckRunnable = new Runnable() {
+    synchronized (supervisedProcesses) {
+      logger.debug("Checking status of all processes");
 
-      @Override
-      public void run() {
-        synchronized (supervisedProcesses) {
-          logger.debug("Checking status of all processes");
+      for (Entry<LifecycleAware, Supervisoree> entry : supervisedProcesses
+          .entrySet()) {
 
-          for (Entry<LifecycleAware, Supervisoree> entry : supervisedProcesses
-              .entrySet()) {
+        MonitorRunnable monitorCheckRunnable = new MonitorRunnable();
 
-            LifecycleAware lifecycleAware = entry.getKey();
-            Supervisoree supervisoree = entry.getValue();
+        monitorCheckRunnable.lifecycleAware = entry.getKey();
+        monitorCheckRunnable.supervisoree = entry.getValue();
 
-            logger.debug("checking process:{} supervisoree:{}", lifecycleAware,
-                supervisoree);
-
-            long now = System.currentTimeMillis();
-
-            if (supervisoree.status.firstSeen == null) {
-              logger.debug("first time seeing {}", lifecycleAware);
-
-              supervisoree.status.firstSeen = now;
-            }
-
-            supervisoree.status.lastSeen = now;
-            supervisoree.status.lastSeenState = lifecycleAware
-                .getLifecycleState();
-
-            if (!lifecycleAware.getLifecycleState().equals(
-                supervisoree.status.desiredState)) {
-
-              logger.debug("Want to transition {} from {} to {} (failures:{})",
-                  new Object[] { lifecycleAware,
-                      supervisoree.status.lastSeenState,
-                      supervisoree.status.desiredState,
-                      supervisoree.status.failures });
-
-              Context context = new Context();
-
-              switch (supervisoree.status.desiredState) {
-              case START:
-                try {
-                  lifecycleAware.start(context);
-                } catch (Exception e) {
-                  logger.error("Unable to start " + lifecycleAware
-                      + " - Exception follows.", e);
-                  supervisoree.status.failures++;
-                }
-                break;
-              case STOP:
-                try {
-                  lifecycleAware.stop(context);
-                } catch (Exception e) {
-                  logger.error("Unable to stop " + lifecycleAware
-                      + " - Exception follows.", e);
-                  supervisoree.status.failures++;
-                }
-                break;
-              default:
-                logger.warn("I refuse to acknowledge {} as a desired state",
-                    supervisoree.status.desiredState);
-              }
-
-              if (!supervisoree.policy.isValid(lifecycleAware,
-                  supervisoree.status)) {
-                logger
-                    .error(
-                        "Policy {} of {} has been violated - supervisor should exit!",
-                        supervisoree.policy, lifecycleAware);
-              }
-            }
-          }
-
-          logger.debug("Status check complete");
-        }
+        monitorService.scheduleAtFixedRate(monitorCheckRunnable, 0, 3,
+            TimeUnit.SECONDS);
       }
-
-    };
-
-    monitorService.scheduleAtFixedRate(monitorCheckRunnable, 0, 3,
-        TimeUnit.SECONDS);
+    }
 
     lifecycleState = LifecycleState.START;
 
@@ -159,6 +94,18 @@ public class LifecycleSupervisor implements LifecycleAware {
     logger.debug("Lifecycle supervisor stopped");
   }
 
+  public void fail() {
+    try {
+      LifecycleController.stopAll(new ArrayList<LifecycleAware>(
+          supervisedProcesses.keySet()));
+    } catch (InterruptedException e) {
+      logger
+          .warn("Interrupted while stopping all outstanding supervised processes");
+    }
+
+    lifecycleState = LifecycleState.ERROR;
+  }
+
   public synchronized void supervise(LifecycleAware lifecycleAware,
       SupervisorPolicy policy, LifecycleState desiredState) {
 
@@ -168,12 +115,86 @@ public class LifecycleSupervisor implements LifecycleAware {
     process.policy = policy;
     process.status.desiredState = desiredState;
 
+    MonitorRunnable monitorRunnable = new MonitorRunnable();
+    monitorRunnable.lifecycleAware = lifecycleAware;
+    monitorRunnable.supervisoree = process;
+
     supervisedProcesses.put(lifecycleAware, process);
+    monitorService.scheduleAtFixedRate(monitorRunnable, 0, 3, TimeUnit.SECONDS);
   }
 
   @Override
   public LifecycleState getLifecycleState() {
     return lifecycleState;
+  }
+
+  public static class MonitorRunnable implements Runnable {
+
+    public LifecycleAware lifecycleAware;
+    public Supervisoree supervisoree;
+
+    @Override
+    public void run() {
+      logger.debug("checking process:{} supervisoree:{}", lifecycleAware,
+          supervisoree);
+
+      long now = System.currentTimeMillis();
+
+      if (supervisoree.status.firstSeen == null) {
+        logger.debug("first time seeing {}", lifecycleAware);
+
+        supervisoree.status.firstSeen = now;
+      }
+
+      supervisoree.status.lastSeen = now;
+      supervisoree.status.lastSeenState = lifecycleAware.getLifecycleState();
+
+      if (!lifecycleAware.getLifecycleState().equals(
+          supervisoree.status.desiredState)) {
+
+        logger
+            .debug("Want to transition {} from {} to {} (failures:{})",
+                new Object[] { lifecycleAware,
+                    supervisoree.status.lastSeenState,
+                    supervisoree.status.desiredState,
+                    supervisoree.status.failures });
+
+        Context context = new Context();
+
+        switch (supervisoree.status.desiredState) {
+        case START:
+          try {
+            lifecycleAware.start(context);
+          } catch (Exception e) {
+            logger.error("Unable to start " + lifecycleAware
+                + " - Exception follows.", e);
+            supervisoree.status.failures++;
+          }
+          break;
+        case STOP:
+          try {
+            lifecycleAware.stop(context);
+          } catch (Exception e) {
+            logger.error("Unable to stop " + lifecycleAware
+                + " - Exception follows.", e);
+            supervisoree.status.failures++;
+          }
+          break;
+        default:
+          logger.warn("I refuse to acknowledge {} as a desired state",
+              supervisoree.status.desiredState);
+        }
+
+        if (!supervisoree.policy.isValid(lifecycleAware, supervisoree.status)) {
+          logger.error(
+              "Policy {} of {} has been violated - supervisor should exit!",
+              supervisoree.policy, lifecycleAware);
+        }
+      }
+
+      logger.debug("Status check complete");
+    }
+
   }
 
   public static class Status {
