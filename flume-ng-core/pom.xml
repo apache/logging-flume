@@ -14,6 +14,33 @@
   <version>0.9.5-SNAPSHOT</version>
   <name>Flume NG Core</name>
 
+  <properties>
+    <thrift.executable>/usr/local/thrift-0.6.0/bin/thrift</thrift.executable>
+  </properties>
+
+  <build>
+    <plugins>
+
+      <plugin>
+        <groupId>org.apache.thrift.tools</groupId>
+        <artifactId>maven-thrift-plugin</artifactId>
+        <version>0.1.10</version>
+        <configuration>
+          <thriftExecutable>${thrift.executable}</thriftExecutable>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>compile</goal>
+              <goal>testCompile</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
+
   <dependencies>
 
     <dependency>
@@ -24,6 +51,17 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.thrift</groupId>
+      <artifactId>libthrift</artifactId>
+    </dependency>
+
+    <!-- Unstated thrift dependency for generated code. -->
+    <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
     </dependency>
 
     <dependency>
