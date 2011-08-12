@@ -35,9 +35,9 @@ public class ChannelDriver implements LifecycleAware {
     driverThread.setSource(source);
     driverThread.setSink(sink);
 
-    driverThread.start();
-
     lifecycleState = LifecycleState.START;
+
+    driverThread.start();
   }
 
   @Override
@@ -53,12 +53,26 @@ public class ChannelDriver implements LifecycleAware {
         driverThread.join(1000);
       } catch (InterruptedException e) {
         logger
-            .debug("Interrupted while waiting for driver thread to shutdown. Interrupting it and stopping.");
+            .debug("Interrupted while waiting for driver thread to shutdown. Interrupting it.");
         driverThread.interrupt();
       }
     }
 
-    lifecycleState = LifecycleState.STOP;
+    /*
+     * FIXME: We repurpose LifecycleState for the driver thread, but we don't
+     * actually use all phases of the lifecycle because we don't have a hook to
+     * know when the thread has successfully stopped. This means we treat a
+     * START state to mean successful exit and ERROR to mean something bad.
+     * You've been warned.
+     */
+    LifecycleState driverThreadResult = driverThread.getLifecycleState();
+
+    if (!driverThreadResult.equals(LifecycleState.START)
+        || driverThread.getLastException() != null) {
+      lifecycleState = LifecycleState.ERROR;
+    } else {
+      lifecycleState = LifecycleState.STOP;
+    }
   }
 
   @Override
@@ -97,6 +111,9 @@ public class ChannelDriver implements LifecycleAware {
     private EventSink sink;
     private Context context;
 
+    private LifecycleState lifecycleState;
+    private Exception lastException;
+
     private long totalEvents;
     private long discardedEvents;
     private long nullEvents;
@@ -112,6 +129,7 @@ public class ChannelDriver implements LifecycleAware {
       nullEvents = 0;
       successfulEvents = 0;
 
+      lifecycleState = LifecycleState.IDLE;
       shouldStop = false;
     }
 
@@ -122,15 +140,38 @@ public class ChannelDriver implements LifecycleAware {
       Preconditions.checkState(source != null, "Source can not be null");
       Preconditions.checkState(sink != null, "Sink can not be null");
 
+      lifecycleState = LifecycleState.START;
+
       try {
         sink.open(context);
-        source.open(context);
       } catch (InterruptedException e) {
         logger.debug("Interrupted while opening source / sink.", e);
+        lastException = e;
+        lifecycleState = LifecycleState.ERROR;
         shouldStop = true;
+        return;
       } catch (LifecycleException e) {
         logger.error("Failed to open source / sink. Exception follows.", e);
+        lastException = e;
+        lifecycleState = LifecycleState.ERROR;
         shouldStop = true;
+        return;
+      }
+
+      try {
+        source.open(context);
+      } catch (InterruptedException e) {
+        logger.debug("Interrupted while opening source:{}", source, e);
+        lastException = e;
+        lifecycleState = LifecycleState.ERROR;
+        shouldStop = true;
+        return;
+      } catch (LifecycleException e) {
+        logger.error("Failed to open source:{} Exception follows.", source, e);
+        lastException = e;
+        lifecycleState = LifecycleState.ERROR;
+        shouldStop = true;
+        return;
       }
 
       while (!shouldStop) {
@@ -147,6 +188,8 @@ public class ChannelDriver implements LifecycleAware {
           }
         } catch (InterruptedException e) {
           logger.debug("Received an interrupt while moving events - stopping");
+          lastException = e;
+          lifecycleState = LifecycleState.ERROR;
           shouldStop = true;
         } catch (MessageDeliveryException e) {
           logger.debug("Unable to deliver event:{} (may be null)", event);
@@ -159,19 +202,33 @@ public class ChannelDriver implements LifecycleAware {
 
       try {
         source.close(context);
-        sink.close(context);
       } catch (InterruptedException e) {
-        logger.debug(
-            "Interrupted while closing source / sink. Just going to continue.",
-            e);
+        logger.debug("Interrupted while closing source:{}.", source, e);
+        lastException = e;
+        lifecycleState = LifecycleState.ERROR;
       } catch (LifecycleException e) {
-        logger.error("Failed to open source / sink. Exception follows.", e);
+        logger.error("Failed to close source:{} Exception follows.", source, e);
+        lastException = e;
+        lifecycleState = LifecycleState.ERROR;
       }
 
-      logger.debug("Channel driver thread exiting cleanly");
+      try {
+        sink.close(context);
+      } catch (InterruptedException e) {
+        logger.debug("Interrupted while closing sink:{}.", sink, e);
+        lastException = e;
+        lifecycleState = LifecycleState.ERROR;
+      } catch (LifecycleException e) {
+        logger.error("Failed to close sink:{} Exception follows.", sink, e);
+        lastException = e;
+        lifecycleState = LifecycleState.ERROR;
+      }
+
+      logger.debug("Channel driver thread exiting with state:{}",
+          lifecycleState);
       logger
           .info(
-              "Event metrics - totalEvents:{} successfulEvents:{} nullEvents:{} discardedEvents:{}",
+              "Logical node ended. Event metrics - totalEvents:{} successfulEvents:{} nullEvents:{} discardedEvents:{}",
               new Object[] { totalEvents, successfulEvents, nullEvents,
                   discardedEvents });
     }
@@ -186,6 +243,14 @@ public class ChannelDriver implements LifecycleAware {
 
     public void setShouldStop(boolean shouldStop) {
       this.shouldStop = shouldStop;
+    }
+
+    public LifecycleState getLifecycleState() {
+      return lifecycleState;
+    }
+
+    public Exception getLastException() {
+      return lastException;
     }
 
   }
