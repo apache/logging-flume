@@ -27,7 +27,9 @@ public class LogicalNode implements LifecycleAware {
   }
 
   @Override
-  public void start(Context context) throws LifecycleException {
+  public void start(Context context) throws LifecycleException,
+      InterruptedException {
+
     logger.info("Starting logical node:{}", this);
 
     Preconditions.checkState(name != null, "Logical node name can not be null");
@@ -55,7 +57,7 @@ public class LogicalNode implements LifecycleAware {
 
     try {
       complete = LifecycleController.waitForOneOf(driver, new LifecycleState[] {
-          LifecycleState.STOP, LifecycleState.ERROR }, 10000);
+          LifecycleState.STOP, LifecycleState.ERROR });
     } catch (InterruptedException e) {
       logger.debug("Interrupted while waiting for the driver to stop.");
       complete = false;
