@@ -1,5 +1,6 @@
 package org.apache.flume.core;
 
+import org.apache.flume.core.ChannelDriver.ChannelDriverThread;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;
@@ -11,16 +12,16 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TestChannelDriver {
+public class TestChannelDriverThread {
 
   private static final Logger logger = LoggerFactory
-      .getLogger(TestChannelDriver.class);
+      .getLogger(TestChannelDriverThread.class);
 
-  private ChannelDriver driver;
+  private ChannelDriverThread driver;
 
   @Before
   public void setUp() {
-    driver = new ChannelDriver("test-channel-driver");
+    driver = new ChannelDriverThread("test-channel-driver");
   }
 
   @Test
@@ -97,7 +98,7 @@ public class TestChannelDriver {
 
     Context context = new Context();
 
-    driver.start(context);
+    driver.start();
 
     LifecycleController.waitForOneOf(driver, new LifecycleState[] {
         LifecycleState.START, LifecycleState.ERROR }, 5000);
@@ -220,10 +221,10 @@ public class TestChannelDriver {
 
     Assert.assertEquals(Long.valueOf(1), sourceCounters.get("open"));
     Assert.assertEquals(Long.valueOf(1), sourceCounters.get("close"));
-    Assert.assertTrue(sourceCounters.get("next") > 0);
+    Assert.assertEquals(Long.valueOf(0), sourceCounters.get("next"));
     Assert.assertEquals(Long.valueOf(1), sinkCounters.get("open"));
     Assert.assertEquals(Long.valueOf(1), sinkCounters.get("close"));
-    Assert.assertTrue(sinkCounters.get("append") > 0);
+    Assert.assertEquals(Long.valueOf(0), sinkCounters.get("append"));
     Assert.assertEquals(
         "Source next() events didn't match sink append() events",
         sourceCounters.get("next"), sinkCounters.get("append"));
