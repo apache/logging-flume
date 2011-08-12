@@ -1,4 +1,4 @@
-package org.apache.flume.node;
+package org.apache.flume.node.nodemanager;
 
 import org.apache.flume.core.Context;
 import org.apache.flume.lifecycle.LifecycleException;
