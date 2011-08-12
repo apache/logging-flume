@@ -166,6 +166,13 @@ public class ChannelDriver implements LifecycleAware {
 
       lifecycleState = LifecycleState.START;
 
+      /*
+       * Developer note: We purposefully separate source and sink open and close
+       * try / catch blocks so we can provide slightly better error messaging
+       * and recovery. Please resist the urge to combine them. The ordering of
+       * sink open, source open, source close, sink close is deliberate as well.
+       */
+
       try {
         sink.open(context);
       } catch (InterruptedException e) {
