@@ -78,7 +78,7 @@ public class LogicalNode implements LifecycleAware {
         "Logical node source can not be null");
     Preconditions.checkState(sink != null, "Logical node sink can not be null");
 
-    driver = new ChannelDriverThread(name + "-channelDriver");
+    driver = new ChannelDriverThread("logicalNode-" + name + "-driver");
 
     driver.setSource(source);
     driver.setSink(sink);
