@@ -1,7 +1,7 @@
 package org.apache.flume.sink;
 
 import org.apache.flume.core.Context;
-import org.apache.flume.core.MessageDeliveryException;
+import org.apache.flume.core.EventDeliveryException;
 import org.apache.flume.core.util.EventBuilder;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.junit.Before;
@@ -21,7 +21,7 @@ public class TestLoggerSink {
    */
   @Test
   public void testAppend() throws InterruptedException, LifecycleException,
-      MessageDeliveryException {
+      EventDeliveryException {
 
     Context context = new Context();
 

@@ -3,7 +3,7 @@ package org.apache.flume.source;
 import org.apache.flume.core.Context;
 import org.apache.flume.core.Event;
 import org.apache.flume.core.EventSource;
-import org.apache.flume.core.MessageDeliveryException;
+import org.apache.flume.core.EventDeliveryException;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.junit.Assert;
 import org.junit.Before;
@@ -20,7 +20,7 @@ public class TestSequenceGeneratorSource {
 
   @Test
   public void testNext() throws InterruptedException, LifecycleException,
-      MessageDeliveryException {
+      EventDeliveryException {
 
     Context context = new Context();
 
