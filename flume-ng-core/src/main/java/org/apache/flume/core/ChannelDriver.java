@@ -27,7 +27,9 @@ public class ChannelDriver implements LifecycleAware {
   }
 
   @Override
-  public void start(Context context) throws LifecycleException {
+  public void start(Context context) throws LifecycleException,
+      InterruptedException {
+
     logger.debug("Channel driver starting:{}", this);
 
     driverThread = new ChannelDriverThread(name);
@@ -35,9 +37,35 @@ public class ChannelDriver implements LifecycleAware {
     driverThread.setSource(source);
     driverThread.setSink(sink);
 
-    lifecycleState = LifecycleState.START;
-
     driverThread.start();
+
+    /*
+     * FIXME: We can't use LifecycleController because the driver thread isn't
+     * technically LifecycleAware.
+     */
+    while (!driverThread.getLifecycleState().equals(LifecycleState.START)
+        && !driverThread.getLifecycleState().equals(LifecycleState.ERROR)) {
+
+      logger.debug("Waiting for driver thread to start");
+
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        logger
+            .error(
+                "Interrupted while waiting for the driver thread to start. Likely a code error. Please report this to the developers. Exception follow.",
+                e);
+
+        lifecycleState = LifecycleState.ERROR;
+
+        driverThread.setShouldStop(true);
+        driverThread.join();
+
+        return;
+      }
+    }
+
+    lifecycleState = LifecycleState.START;
   }
 
   @Override
@@ -111,8 +139,8 @@ public class ChannelDriver implements LifecycleAware {
     private EventSink sink;
     private Context context;
 
-    private LifecycleState lifecycleState;
-    private Exception lastException;
+    volatile private LifecycleState lifecycleState;
+    volatile private Exception lastException;
 
     private long totalEvents;
     private long discardedEvents;
