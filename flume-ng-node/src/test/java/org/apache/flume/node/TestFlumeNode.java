@@ -28,15 +28,14 @@ public class TestFlumeNode {
 
     node.start(context);
     boolean reached = LifecycleController.waitForOneOf(node,
-        new LifecycleState[] { LifecycleState.START, LifecycleState.ERROR },
-        5000);
+        LifecycleState.START_OR_ERROR, 5000);
 
     Assert.assertTrue("Matched a known state", reached);
     Assert.assertEquals(LifecycleState.START, node.getLifecycleState());
 
     node.stop(context);
-    reached = LifecycleController.waitForOneOf(node, new LifecycleState[] {
-        LifecycleState.STOP, LifecycleState.ERROR }, 5000);
+    reached = LifecycleController.waitForOneOf(node,
+        LifecycleState.STOP_OR_ERROR, 5000);
 
     Assert.assertTrue("Matched a known state", reached);
     Assert.assertEquals(LifecycleState.STOP, node.getLifecycleState());
@@ -48,8 +47,7 @@ public class TestFlumeNode {
 
     node.start(context);
     boolean reached = LifecycleController.waitForOneOf(node,
-        new LifecycleState[] { LifecycleState.START, LifecycleState.ERROR },
-        5000);
+        LifecycleState.START_OR_ERROR, 5000);
 
     Assert.assertTrue("Matched a known state", reached);
     Assert.assertEquals(LifecycleState.START, node.getLifecycleState());
@@ -59,8 +57,8 @@ public class TestFlumeNode {
     node.getNodeManager().add(n1);
 
     node.stop(context);
-    reached = LifecycleController.waitForOneOf(node, new LifecycleState[] {
-        LifecycleState.STOP, LifecycleState.ERROR }, 5000);
+    reached = LifecycleController.waitForOneOf(node,
+        LifecycleState.STOP_OR_ERROR, 5000);
 
     Assert.assertTrue("Matched a known state", reached);
     Assert.assertEquals(LifecycleState.STOP, node.getLifecycleState());
