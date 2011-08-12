@@ -5,6 +5,7 @@ import org.apache.flume.core.LogicalNode;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;
+import org.apache.flume.node.nodemanager.AbstractLogicalNodeManager;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
