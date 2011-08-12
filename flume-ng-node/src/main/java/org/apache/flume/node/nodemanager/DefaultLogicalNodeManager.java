@@ -1,5 +1,6 @@
 package org.apache.flume.node.nodemanager;
 
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -16,6 +17,8 @@ import org.apache.flume.node.NodeConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
     implements NodeConfigurationAware {
 
@@ -25,6 +28,7 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
   private SourceFactory sourceFactory;
   private SinkFactory sinkFactory;
 
+  private ExecutorService commandProcessorService;
   private ScheduledExecutorService monitorService;
   private LifecycleState lifecycleState;
 
@@ -83,7 +87,14 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
 
     statusMonitor.setNodeManager(this);
 
-    monitorService = Executors.newScheduledThreadPool(1);
+    commandProcessorService = Executors
+        .newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat(
+            "nodeManager-commandProcessor-%d").build());
+    monitorService = Executors.newScheduledThreadPool(
+        1,
+        new ThreadFactoryBuilder().setNameFormat(
+            "nodeManager-monitorService-%d").build());
+
     monitorService.scheduleAtFixedRate(statusMonitor, 0, 3, TimeUnit.SECONDS);
 
     for (LogicalNode node : getNodes()) {
@@ -129,6 +140,13 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
     while (!monitorService.isTerminated()) {
       logger.debug("Waiting for node status monitor to shutdown");
       monitorService.awaitTermination(1, TimeUnit.SECONDS);
+    }
+
+    commandProcessorService.shutdown();
+
+    while (!commandProcessorService.isTerminated()) {
+      logger.debug("Waiting for command processor to shutdown");
+      commandProcessorService.awaitTermination(1, TimeUnit.SECONDS);
     }
 
     logger.debug("Node manager stopped");
