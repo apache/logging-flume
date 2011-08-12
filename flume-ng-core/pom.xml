@@ -4,8 +4,8 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <artifactId>flume</artifactId>
-    <groupId>com.cloudera</groupId>
+    <artifactId>flume-parent</artifactId>
+    <groupId>org.apache.flume</groupId>
     <version>0.9.5-SNAPSHOT</version>
   </parent>
 
