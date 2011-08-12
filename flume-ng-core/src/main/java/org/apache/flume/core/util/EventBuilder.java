@@ -11,6 +11,8 @@ public class EventBuilder {
   public static <T> Event<T> withBody(T body) {
     Event<T> event = new SimpleEvent<T>();
 
+    event.setBody(body);
+
     return event;
   }
 

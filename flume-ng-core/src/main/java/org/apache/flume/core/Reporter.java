@@ -10,7 +10,7 @@ public class Reporter {
   private long timeStamp;
 
   public Reporter() {
-    timeStamp = 0;
+    timeStamp = System.currentTimeMillis();
   }
 
   public synchronized long progress() {

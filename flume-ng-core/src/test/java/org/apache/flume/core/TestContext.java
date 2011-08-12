@@ -15,13 +15,17 @@ public class TestContext {
 
   @Test
   public void testPutGet() {
-    Assert.assertEquals("Context is empty", 0, context.getParameters()
-        .size());
+    Assert.assertEquals("Context is empty", 0, context.getParameters().size());
 
     context.put("test", "test");
 
     Assert.assertEquals("Context contains test value", "test",
         context.get("test", String.class));
+  }
+
+  @Test
+  public void testReporter() {
+    Assert.assertNotNull(context.getReporter());
   }
 
 }
