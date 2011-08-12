@@ -15,12 +15,12 @@ public class NodeStatusMonitor implements Runnable {
   private static final Logger logger = LoggerFactory
       .getLogger(NodeStatusMonitor.class);
 
-  private Map<String, Status> stati;
+  private Map<String, Status> statuses;
 
   private NodeManager nodeManager;
 
   public NodeStatusMonitor() {
-    stati = new HashMap<String, Status>();
+    statuses = new HashMap<String, Status>();
   }
 
   @Override
@@ -31,7 +31,7 @@ public class NodeStatusMonitor implements Runnable {
   public void updateStatus() {
     Set<LogicalNode> nodes = nodeManager.getNodes();
 
-    logger.debug("Checking stati of all nodes");
+    logger.debug("Checking statuses of all nodes");
 
     for (LogicalNode node : nodes) {
       updateStatus(node);
@@ -39,10 +39,10 @@ public class NodeStatusMonitor implements Runnable {
   }
 
   public void updateStatus(LogicalNode node) {
-    logger.debug("Checking stati of node:{}", node);
+    logger.debug("Checking statuses of node:{}", node);
 
     Long now = System.currentTimeMillis();
-    Status status = stati.get(node.getName());
+    Status status = statuses.get(node.getName());
 
     if (status == null) {
       status = new Status();
@@ -61,12 +61,12 @@ public class NodeStatusMonitor implements Runnable {
     status.lastSeen = now;
     status.state = node.getLifecycleState();
 
-    stati.put(node.getName(), status);
+    statuses.put(node.getName(), status);
   }
 
   @Override
   public String toString() {
-    return "{ stati:" + stati + " nodeManager:" + nodeManager + " }";
+    return "{ statuses:" + statuses + " nodeManager:" + nodeManager + " }";
   }
 
   public NodeManager getNodeManager() {
