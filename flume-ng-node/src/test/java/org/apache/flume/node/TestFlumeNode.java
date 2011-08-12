@@ -85,10 +85,6 @@ public class TestFlumeNode {
       return lifecycleState;
     }
 
-    @Override
-    public void transitionTo(LifecycleState state) {
-    }
-
   }
 
 }

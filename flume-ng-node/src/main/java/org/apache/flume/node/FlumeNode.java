@@ -19,7 +19,9 @@ public class FlumeNode implements LifecycleAware {
   private NodeConfigurationClient configurationClient;
 
   @Override
-  public void start(Context context) throws LifecycleException {
+  public void start(Context context) throws LifecycleException,
+      InterruptedException {
+
     Preconditions.checkState(name != null, "Node name can not be null");
     Preconditions.checkState(nodeManager != null,
         "Node manager can not be null");
@@ -32,7 +34,9 @@ public class FlumeNode implements LifecycleAware {
   }
 
   @Override
-  public void stop(Context context) throws LifecycleException {
+  public void stop(Context context) throws LifecycleException,
+      InterruptedException {
+
     logger.info("Flume node stopping - {}", name);
 
     nodeManager.stop(context);
@@ -64,25 +68,6 @@ public class FlumeNode implements LifecycleAware {
   @Override
   public LifecycleState getLifecycleState() {
     return lifecycleState;
-  }
-
-  @Override
-  public void transitionTo(LifecycleState state) {
-    switch (state) {
-    case START:
-      Preconditions.checkState(lifecycleState.equals(LifecycleState.IDLE),
-          "Unable to transition from " + lifecycleState + " to " + state);
-      break;
-    case STOP:
-      Preconditions.checkState(lifecycleState.equals(LifecycleState.START),
-          "Unable to transition from " + lifecycleState + " to " + state);
-      break;
-    case ERROR:
-      break;
-    default:
-      throw new IllegalStateException("Unable to transition from "
-          + lifecycleState + " to " + state);
-    }
   }
 
 }

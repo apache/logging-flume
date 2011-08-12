@@ -80,10 +80,6 @@ public class LogicalNode implements LifecycleAware {
   }
 
   @Override
-  public void transitionTo(LifecycleState state) {
-  }
-
-  @Override
   public String toString() {
     return "{ name:" + name + " source:" + source + " sink:" + sink
         + " lifecycleState:" + lifecycleState + " }";

@@ -98,10 +98,6 @@ public class TestLifecycleController {
       return state;
     }
 
-    @Override
-    public void transitionTo(LifecycleState state) {
-    }
-
     public long getSleepTime() {
       return sleepTime;
     }

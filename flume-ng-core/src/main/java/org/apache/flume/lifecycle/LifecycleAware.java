@@ -12,6 +12,4 @@ public interface LifecycleAware {
 
   public LifecycleState getLifecycleState();
 
-  public void transitionTo(LifecycleState state);
-
 }

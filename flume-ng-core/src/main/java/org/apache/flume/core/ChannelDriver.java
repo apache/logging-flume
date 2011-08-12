@@ -109,10 +109,6 @@ public class ChannelDriver implements LifecycleAware {
   }
 
   @Override
-  public void transitionTo(LifecycleState state) {
-  }
-
-  @Override
   public String toString() {
     return "{ source:" + source + " sink:" + sink + " }";
   }

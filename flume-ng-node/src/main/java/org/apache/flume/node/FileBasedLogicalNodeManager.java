@@ -29,9 +29,4 @@ public class FileBasedLogicalNodeManager extends AbstractLogicalNodeManager {
     return lifecycleState;
   }
 
-  @Override
-  public void transitionTo(LifecycleState state) {
-    // Not sure if this make sense.
-  }
-
 }
