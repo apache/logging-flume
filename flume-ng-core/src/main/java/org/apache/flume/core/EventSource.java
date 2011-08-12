@@ -8,7 +8,7 @@ public interface EventSource {
       LifecycleException;
 
   public Event<?> next(Context context) throws InterruptedException,
-      MessageDeliveryException;
+      EventDeliveryException;
 
   public void close(Context context) throws InterruptedException,
       LifecycleException;

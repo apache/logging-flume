@@ -8,7 +8,7 @@ public interface EventSink {
       LifecycleException;
 
   public void append(Context context, Event<?> event)
-      throws InterruptedException, MessageDeliveryException;
+      throws InterruptedException, EventDeliveryException;
 
   public void close(Context context) throws InterruptedException,
       LifecycleException;
