@@ -3,7 +3,7 @@ package org.apache.flume.sink;
 import org.apache.flume.core.Context;
 import org.apache.flume.core.Event;
 import org.apache.flume.core.EventSink;
-import org.apache.flume.core.MessageDeliveryException;
+import org.apache.flume.core.EventDeliveryException;
 import org.apache.flume.lifecycle.LifecycleException;
 
 abstract public class AbstractEventSink implements EventSink {
@@ -16,7 +16,7 @@ abstract public class AbstractEventSink implements EventSink {
 
   @Override
   abstract public void append(Context context, Event<?> event)
-      throws InterruptedException, MessageDeliveryException;
+      throws InterruptedException, EventDeliveryException;
 
   @Override
   public void close(Context context) throws InterruptedException,

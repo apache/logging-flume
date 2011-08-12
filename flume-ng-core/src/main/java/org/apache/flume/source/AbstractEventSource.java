@@ -3,7 +3,7 @@ package org.apache.flume.source;
 import org.apache.flume.core.Context;
 import org.apache.flume.core.Event;
 import org.apache.flume.core.EventSource;
-import org.apache.flume.core.MessageDeliveryException;
+import org.apache.flume.core.EventDeliveryException;
 
 abstract public class AbstractEventSource implements EventSource {
 
@@ -14,7 +14,7 @@ abstract public class AbstractEventSource implements EventSource {
 
   @Override
   abstract public Event<?> next(Context context) throws InterruptedException,
-      MessageDeliveryException;
+      EventDeliveryException;
 
   @Override
   public void close(Context context) throws InterruptedException {
