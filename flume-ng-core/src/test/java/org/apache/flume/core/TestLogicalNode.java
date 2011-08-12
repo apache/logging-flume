@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;
-import org.apache.flume.sink.LoggerSink;
 import org.apache.flume.sink.NullSink;
 import org.apache.flume.source.SequenceGeneratorSource;
 import org.junit.Assert;
@@ -28,13 +27,35 @@ public class TestLogicalNode {
 
     node.setName("test-node-n1");
     node.setSource(new SequenceGeneratorSource());
-    node.setSink(new LoggerSink());
+    node.setSink(new NullSink());
   }
 
   @Test
   public void testLifecycle() throws LifecycleException, InterruptedException {
     Context context = new Context();
 
+    node.start(context);
+    boolean reached = LifecycleController.waitForOneOf(node,
+        new LifecycleState[] { LifecycleState.START, LifecycleState.ERROR },
+        5000);
+
+    Assert.assertTrue("Matched a lifecycle state", reached);
+    Assert.assertEquals(LifecycleState.START, node.getLifecycleState());
+
+    node.stop(context);
+    reached = LifecycleController.waitForOneOf(node, new LifecycleState[] {
+        LifecycleState.STOP, LifecycleState.ERROR }, 5000);
+
+    Assert.assertTrue("Matched a lifecycle state", reached);
+    Assert.assertEquals(LifecycleState.STOP, node.getLifecycleState());
+  }
+
+  @Test
+  public void testInterruptStart() throws LifecycleException,
+      InterruptedException {
+    Context context = new Context();
+
+    Thread.currentThread().interrupt();
     node.start(context);
     boolean reached = LifecycleController.waitForOneOf(node,
         new LifecycleState[] { LifecycleState.START, LifecycleState.ERROR },
