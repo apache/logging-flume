@@ -1,6 +1,5 @@
 package org.apache.flume.lifecycle;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -35,28 +34,22 @@ public class LifecycleSupervisor implements LifecycleAware {
   }
 
   @Override
-  public void start(Context context) throws LifecycleException,
+  public synchronized void start(Context context) throws LifecycleException,
       InterruptedException {
 
     logger.info("Starting lifecycle supervisor {}", Thread.currentThread()
         .getId());
 
-    /* FIXME: Teasing this apart into manageable chunks. */
+    for (Entry<LifecycleAware, Supervisoree> entry : supervisedProcesses
+        .entrySet()) {
 
-    synchronized (supervisedProcesses) {
-      logger.debug("Checking status of all processes");
+      MonitorRunnable monitorCheckRunnable = new MonitorRunnable();
 
-      for (Entry<LifecycleAware, Supervisoree> entry : supervisedProcesses
-          .entrySet()) {
+      monitorCheckRunnable.lifecycleAware = entry.getKey();
+      monitorCheckRunnable.supervisoree = entry.getValue();
 
-        MonitorRunnable monitorCheckRunnable = new MonitorRunnable();
-
-        monitorCheckRunnable.lifecycleAware = entry.getKey();
-        monitorCheckRunnable.supervisoree = entry.getValue();
-
-        monitorService.scheduleAtFixedRate(monitorCheckRunnable, 0, 3,
-            TimeUnit.SECONDS);
-      }
+      monitorService.scheduleAtFixedRate(monitorCheckRunnable, 0, 3,
+          TimeUnit.SECONDS);
     }
 
     lifecycleState = LifecycleState.START;
@@ -65,44 +58,43 @@ public class LifecycleSupervisor implements LifecycleAware {
   }
 
   @Override
-  public void stop(Context context) throws LifecycleException,
+  public synchronized void stop(Context context) throws LifecycleException,
       InterruptedException {
 
     logger.info("Stopping lifecycle supervisor {}", Thread.currentThread()
         .getId());
 
-    monitorService.shutdown();
+    if (monitorService != null) {
+      monitorService.shutdown();
 
-    while (!monitorService.isTerminated()) {
-      monitorService.awaitTermination(500, TimeUnit.MILLISECONDS);
+      while (!monitorService.isTerminated()) {
+        monitorService.awaitTermination(500, TimeUnit.MILLISECONDS);
+      }
     }
 
-    synchronized (supervisedProcesses) {
-      for (final Entry<LifecycleAware, Supervisoree> entry : supervisedProcesses
-          .entrySet()) {
+    for (final Entry<LifecycleAware, Supervisoree> entry : supervisedProcesses
+        .entrySet()) {
 
-        if (entry.getKey().getLifecycleState().equals(LifecycleState.START)) {
-          entry.getKey().stop(context);
-          LifecycleController.waitForOneOf(entry.getKey(),
-              LifecycleState.STOP_OR_ERROR, 5000);
+      if (entry.getKey().getLifecycleState().equals(LifecycleState.START)) {
+
+        entry.getKey().stop(context);
+
+        if (!LifecycleController.waitForOneOf(entry.getKey(),
+            LifecycleState.STOP_OR_ERROR, 5000)) {
+          fail();
         }
       }
     }
 
-    lifecycleState = LifecycleState.STOP;
+    /* If we've failed, preserve the error state. */
+    if (lifecycleState.equals(LifecycleState.START)) {
+      lifecycleState = LifecycleState.STOP;
+    }
 
     logger.debug("Lifecycle supervisor stopped");
   }
 
-  public void fail() {
-    try {
-      LifecycleController.stopAll(new ArrayList<LifecycleAware>(
-          supervisedProcesses.keySet()));
-    } catch (InterruptedException e) {
-      logger
-          .warn("Interrupted while stopping all outstanding supervised processes");
-    }
-
+  public synchronized void fail() {
     lifecycleState = LifecycleState.ERROR;
   }
 
@@ -124,7 +116,7 @@ public class LifecycleSupervisor implements LifecycleAware {
   }
 
   @Override
-  public LifecycleState getLifecycleState() {
+  public synchronized LifecycleState getLifecycleState() {
     return lifecycleState;
   }
 
