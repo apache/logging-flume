@@ -1,8 +1,5 @@
 package org.apache.flume.node.nodemanager;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
-
 import org.apache.flume.Context;
 import org.apache.flume.EventSink;
 import org.apache.flume.EventSource;
@@ -14,7 +11,6 @@ import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.lifecycle.LifecycleSupervisor;
 import org.apache.flume.lifecycle.LifecycleSupervisor.SupervisorPolicy;
 import org.apache.flume.node.NodeConfiguration;
-import org.apache.flume.node.NodeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,8 +26,6 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
   private SinkFactory sinkFactory;
 
   private LifecycleSupervisor nodeSupervisor;
-  private ExecutorService commandProcessorService;
-  private ScheduledExecutorService monitorService;
   private LifecycleState lifecycleState;
 
   public DefaultLogicalNodeManager() {
@@ -101,8 +95,6 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
         "You can not remove nodes from a manager that hasn't been started");
 
     if (super.remove(node)) {
-      stopNode(node);
-
       nodeSupervisor.setDesiredState(node, LifecycleState.STOP);
       nodeSupervisor.unsupervise(node);
 
@@ -112,47 +104,11 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
     return false;
   }
 
-  public void startNode(LogicalNode node) {
-    NodeStartCommand task = new NodeStartCommand();
-
-    task.context = new Context();
-    task.node = node;
-    task.nodeManager = this;
-
-    commandProcessorService.submit(task);
-  }
-
-  public void stopNode(LogicalNode node) {
-    NodeRemoveCommand task = new NodeRemoveCommand();
-
-    task.context = new Context();
-    task.node = node;
-    task.nodeManager = this;
-
-    commandProcessorService.submit(task);
-  }
-
   @Override
   public void start(Context context) throws LifecycleException,
       InterruptedException {
 
     logger.info("Node manager starting");
-
-    /*
-     * NodeStatusMonitor statusMonitor = new NodeStatusMonitor();
-     * 
-     * statusMonitor.setNodeManager(this);
-     * 
-     * commandProcessorService = Executors .newCachedThreadPool(new
-     * ThreadFactoryBuilder().setNameFormat(
-     * "nodeManager-commandProcessor-%d").build()); monitorService =
-     * Executors.newScheduledThreadPool( 1, new
-     * ThreadFactoryBuilder().setNameFormat(
-     * "nodeManager-monitorService-%d").build());
-     * 
-     * monitorService.scheduleAtFixedRate(statusMonitor, 0, 3,
-     * TimeUnit.SECONDS);
-     */
 
     nodeSupervisor.start(context);
 
@@ -167,22 +123,6 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
 
     logger.info("Node manager stopping");
 
-    /*
-     * for (LogicalNode node : getNodes()) { stopNode(node); }
-     * 
-     * monitorService.shutdown();
-     * 
-     * while (!monitorService.isTerminated()) {
-     * logger.debug("Waiting for node status monitor to shutdown");
-     * monitorService.awaitTermination(1, TimeUnit.SECONDS); }
-     * 
-     * commandProcessorService.shutdown();
-     * 
-     * while (!commandProcessorService.isTerminated()) {
-     * logger.debug("Waiting for command processor to shutdown");
-     * commandProcessorService.awaitTermination(1, TimeUnit.SECONDS); }
-     */
-
     nodeSupervisor.stop(context);
 
     logger.debug("Node manager stopped");
@@ -193,56 +133,6 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
   @Override
   public LifecycleState getLifecycleState() {
     return lifecycleState;
-  }
-
-  public static class NodeStartCommand implements Runnable {
-
-    public Context context;
-    public LogicalNode node;
-    public NodeManager nodeManager;
-
-    @Override
-    public void run() {
-      if (node.getLifecycleState().equals(LifecycleState.START)) {
-        logger.warn("Ignoring an attempt to start a running node:{}", node);
-        return;
-      }
-
-      try {
-        node.start(context);
-      } catch (LifecycleException e) {
-        logger.error("Failed to start node:" + node + " Exception follows.", e);
-      } catch (InterruptedException e) {
-        logger.info("Interrupted while starting node:" + node
-            + " Almost certainly shutting down (or a serious bug)");
-      }
-    }
-
-  }
-
-  public static class NodeRemoveCommand implements Runnable {
-
-    public Context context;
-    public LogicalNode node;
-    public NodeManager nodeManager;
-
-    @Override
-    public void run() {
-      if (!node.getLifecycleState().equals(LifecycleState.START)) {
-        logger.warn("Ignoring an attempt to stop a non-running node:{}", node);
-        return;
-      }
-
-      try {
-        node.stop(context);
-      } catch (LifecycleException e) {
-        logger.error("Failed to stop node:" + node + " Exception follows.", e);
-      } catch (InterruptedException e) {
-        logger.info("Interrupted while starting node:" + node
-            + " Almost certainly shutting down (or a serious bug)");
-      }
-    }
-
   }
 
 }
