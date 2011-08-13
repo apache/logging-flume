@@ -166,11 +166,6 @@ public class LifecycleSupervisor implements LifecycleAware {
       logger.debug("checking process:{} supervisoree:{}", lifecycleAware,
           supervisoree);
 
-      if (supervisoree.status.discard) {
-        logger.debug("Halting monitoring on {}", supervisoree);
-        return;
-      }
-
       long now = System.currentTimeMillis();
 
       if (supervisoree.status.firstSeen == null) {
@@ -225,7 +220,11 @@ public class LifecycleSupervisor implements LifecycleAware {
         }
       }
 
-      monitorService.schedule(this, 3, TimeUnit.SECONDS);
+      if (!supervisoree.status.discard) {
+        monitorService.schedule(this, 3, TimeUnit.SECONDS);
+      } else {
+        logger.debug("Halting monitoring on {}", supervisoree);
+      }
 
       logger.debug("Status check complete");
     }
