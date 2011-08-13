@@ -11,6 +11,7 @@ import org.apache.flume.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public class LifecycleSupervisor implements LifecycleAware {
@@ -101,6 +102,14 @@ public class LifecycleSupervisor implements LifecycleAware {
   public synchronized void supervise(LifecycleAware lifecycleAware,
       SupervisorPolicy policy, LifecycleState desiredState) {
 
+    Preconditions.checkState(!supervisedProcesses.containsKey(lifecycleAware),
+        "Refusing to supervise " + lifecycleAware + " more than once");
+
+    if (logger.isDebugEnabled()) {
+      logger.debug("Supervising service:{} policy:{} desiredState:{}",
+          new Object[] { lifecycleAware, policy, desiredState });
+    }
+
     Supervisoree process = new Supervisoree();
     process.status = new Status();
 
@@ -110,9 +119,35 @@ public class LifecycleSupervisor implements LifecycleAware {
     MonitorRunnable monitorRunnable = new MonitorRunnable();
     monitorRunnable.lifecycleAware = lifecycleAware;
     monitorRunnable.supervisoree = process;
+    monitorRunnable.monitorService = monitorService;
 
     supervisedProcesses.put(lifecycleAware, process);
-    monitorService.scheduleAtFixedRate(monitorRunnable, 0, 3, TimeUnit.SECONDS);
+    monitorService.schedule(monitorRunnable, 0, TimeUnit.SECONDS);
+  }
+
+  public synchronized void unsupervise(LifecycleAware lifecycleAware) {
+
+    Preconditions.checkState(supervisedProcesses.containsKey(lifecycleAware),
+        "Unaware of " + lifecycleAware + " - can not unsupervise");
+
+    logger.debug("Unsupervising service:{}", lifecycleAware);
+
+    Supervisoree supervisoree = supervisedProcesses.get(lifecycleAware);
+    supervisoree.status.discard = true;
+  }
+
+  public synchronized void setDesiredState(LifecycleAware lifecycleAware,
+      LifecycleState desiredState) {
+
+    Preconditions.checkState(supervisedProcesses.containsKey(lifecycleAware),
+        "Unaware of " + lifecycleAware + " - can not set desired state to "
+            + desiredState);
+
+    logger.debug("Setting desiredState:{} on service:{}", desiredState,
+        lifecycleAware);
+
+    Supervisoree supervisoree = supervisedProcesses.get(lifecycleAware);
+    supervisoree.status.desiredState = desiredState;
   }
 
   @Override
@@ -122,6 +157,7 @@ public class LifecycleSupervisor implements LifecycleAware {
 
   public static class MonitorRunnable implements Runnable {
 
+    public ScheduledExecutorService monitorService;
     public LifecycleAware lifecycleAware;
     public Supervisoree supervisoree;
 
@@ -129,6 +165,11 @@ public class LifecycleSupervisor implements LifecycleAware {
     public void run() {
       logger.debug("checking process:{} supervisoree:{}", lifecycleAware,
           supervisoree);
+
+      if (supervisoree.status.discard) {
+        logger.debug("Halting monitoring on {}", supervisoree);
+        return;
+      }
 
       long now = System.currentTimeMillis();
 
@@ -184,6 +225,8 @@ public class LifecycleSupervisor implements LifecycleAware {
         }
       }
 
+      monitorService.schedule(this, 3, TimeUnit.SECONDS);
+
       logger.debug("Status check complete");
     }
 
@@ -195,12 +238,13 @@ public class LifecycleSupervisor implements LifecycleAware {
     public LifecycleState lastSeenState;
     public LifecycleState desiredState;
     public int failures;
+    public boolean discard;
 
     @Override
     public String toString() {
       return "{ lastSeen:" + lastSeen + " lastSeenState:" + lastSeenState
           + " desiredState:" + desiredState + " firstSeen:" + firstSeen
-          + " failures:" + failures + " }";
+          + " failures:" + failures + " discard:" + discard + " }";
     }
 
   }
