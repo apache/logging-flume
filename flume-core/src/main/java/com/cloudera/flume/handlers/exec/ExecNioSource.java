@@ -66,8 +66,7 @@ public class ExecNioSource extends EventSource.Base {
   private final AtomicBoolean errFinished = new AtomicBoolean(false);
   private final AtomicBoolean outFinished = new AtomicBoolean(false);
 
-  private final BlockingQueue<Event> eventQueue = new LinkedBlockingQueue<Event>(
-      1000);
+  private final BlockingQueue<Event> eventQueue;
 
   private static Logger LOG = LoggerFactory.getLogger(ExecNioSource.class);
 
@@ -101,7 +100,9 @@ public class ExecNioSource extends EventSource.Base {
    *          milliseconds to wait after exec exists before restarting if
    *          restart is true.
    */
-  ExecNioSource(String command, boolean aggregate, boolean restart, int period) {
+  ExecNioSource(String command, int qSz, boolean aggregate, boolean restart,
+      int period) {
+    eventQueue = new LinkedBlockingQueue<Event>(qSz);
     this.command = command;
     this.inAggregateMode = aggregate;
     this.restart = restart;
@@ -531,6 +532,7 @@ public class ExecNioSource extends EventSource.Base {
       boolean aggregate = false;
       boolean restart = false;
       int period = 0;
+      int qSz = FlumeConfiguration.get().getExecQueueSize();
       if (argv.length >= 2) {
         aggregate = Boolean.parseBoolean(argv[1]);
       }
@@ -540,7 +542,7 @@ public class ExecNioSource extends EventSource.Base {
       if (argv.length >= 4) {
         period = Integer.parseInt(argv[3]);
       }
-      return new ExecNioSource(command, aggregate, restart, period);
+      return new ExecNioSource(command, qSz, aggregate, restart, period);
     }
   }
 
@@ -560,7 +562,8 @@ public class ExecNioSource extends EventSource.Base {
         boolean aggregate = true;
         boolean restart = true;
         int period = Integer.parseInt(argv[1]);
-        return new ExecNioSource(command, aggregate, restart, period);
+        int qSz = FlumeConfiguration.get().getExecQueueSize();
+        return new ExecNioSource(command, qSz, aggregate, restart, period);
       }
     };
   }
@@ -581,12 +584,22 @@ public class ExecNioSource extends EventSource.Base {
         boolean aggregate = false;
         boolean restart = false;
         int period = 0;
-        return new ExecNioSource(command, aggregate, restart, period);
+        int qSz = FlumeConfiguration.get().getExecQueueSize();
+
+        return new ExecNioSource(command, qSz, aggregate, restart, period);
       }
     };
   }
 
   public static SourceBuilder builder() {
     return new Builder();
+  }
+
+  /**
+   * Exposed for testing only
+   * @return
+   */
+  BlockingQueue<Event> getEventQueue() {
+    return eventQueue;
   }
 }

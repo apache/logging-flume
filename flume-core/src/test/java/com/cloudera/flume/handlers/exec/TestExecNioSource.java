@@ -42,6 +42,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.flume.conf.Context;
+import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.core.Event;
@@ -599,6 +601,14 @@ public class TestExecNioSource {
     assertTrue(Arrays.equals("baz".getBytes(), e.getBody()));
 
     source.close();
+  }
+
+  @Test
+  public void testExecQueueSize() throws FlumeSpecException {
+    FlumeConfiguration.get().setInt(FlumeConfiguration.EXEC_QUEUESIZE, 1);
+    ExecNioSource src = (ExecNioSource) FlumeBuilder
+        .buildSource(new Context(), "exec(\"foo\")");
+    assertEquals(1, src.getEventQueue().remainingCapacity());
   }
 
 }

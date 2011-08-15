@@ -326,5 +326,17 @@ configuration values placed in flume-site.xml.  -->
     client times out a connection</description>
   </property>
 
-  
+  <!-- ================================================== -->
+  <!-- Exec Source settings ============================= -->
+  <!-- ================================================== -->
+  <property>
+    <name>flume.exec.queuesize</name>
+    <value>1000</value>
+    <description>Max number of events queued up in execsource.  This
+    gives the user some control of over the amount of memory used by
+    the source.  If the max size is reached, the exec source wil
+    block.
+    </description>
+  </property>
+
 </configuration>
