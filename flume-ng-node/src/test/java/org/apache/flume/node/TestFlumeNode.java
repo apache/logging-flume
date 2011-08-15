@@ -69,6 +69,10 @@ public class TestFlumeNode {
 
     private LifecycleState lifecycleState;
 
+    public EmptyLogicalNodeManager() {
+      lifecycleState = LifecycleState.IDLE;
+    }
+
     @Override
     public void start(Context context) throws LifecycleException {
       lifecycleState = LifecycleState.START;
