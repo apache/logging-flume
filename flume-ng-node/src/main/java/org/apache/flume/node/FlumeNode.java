@@ -4,6 +4,8 @@ import org.apache.flume.Context;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;
+import org.apache.flume.lifecycle.LifecycleSupervisor;
+import org.apache.flume.lifecycle.LifecycleSupervisor.SupervisorPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +19,11 @@ public class FlumeNode implements LifecycleAware {
   private LifecycleState lifecycleState;
   private NodeManager nodeManager;
   private NodeConfigurationClient configurationClient;
+  private LifecycleSupervisor supervisor;
+
+  public FlumeNode() {
+    supervisor = new LifecycleSupervisor();
+  }
 
   @Override
   public void start(Context context) throws LifecycleException,
@@ -26,9 +33,12 @@ public class FlumeNode implements LifecycleAware {
     Preconditions.checkState(nodeManager != null,
         "Node manager can not be null");
 
+    supervisor.start(context);
+
     logger.info("Flume node starting - {}", name);
 
-    nodeManager.start(context);
+    supervisor.supervise(nodeManager,
+        new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
 
     lifecycleState = LifecycleState.START;
   }
@@ -39,7 +49,7 @@ public class FlumeNode implements LifecycleAware {
 
     logger.info("Flume node stopping - {}", name);
 
-    nodeManager.stop(context);
+    supervisor.stop(context);
 
     lifecycleState = LifecycleState.STOP;
   }
