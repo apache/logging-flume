@@ -46,6 +46,26 @@ public class TestEvent {
   }
 
   /**
+   * Test full escaping - the replacement of %{...} strings by their
+   * corresponding attributes.
+   */
+  @Test
+  public void testEscapingOfEventProperties() {
+    String body = "abcde";
+    Event e = new EventImpl(body.getBytes());
+    String test = "/one/%{nanos}/two/%{timestamp}/three/%{body}/four/%{hostname}/five/%{host}/six/%{priority}";
+
+    assertEquals("Tag replacement of tag(s) failed!",
+            "/one/" + e.getNanos() +
+            "/two/" + e.getTimestamp() +
+            "/three/" + body +
+            "/four/" + e.getHost() +
+            "/five/" + e.getHost() +
+            "/six/" + e.getPriority(),
+            e.escapeString(test));
+  }
+
+  /**
    * Test replacement of %{...} strings with dots or dashes (FLUME-160)
    */
   @Test

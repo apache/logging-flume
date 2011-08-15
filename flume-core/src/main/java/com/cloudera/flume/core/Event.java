@@ -275,7 +275,10 @@ abstract public class Event {
       return getHost();
     }
     if (tag.equals("nanos")) {
-      return "" + getNanos();
+      return String.valueOf(getNanos());
+    }
+    if (tag.equals("timestamp")) {
+      return String.valueOf(getTimestamp());
     }
     if (tag.equals("priority")) {
       return getPriority().toString();

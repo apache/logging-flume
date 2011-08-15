@@ -111,6 +111,7 @@ was during the 18:00 hour, the event would be written into that directory.
 .Event data escape sequences
 [horizontal] %\{host\} ::  host
 %\{nanos\} :: nanos
+%\{timestamp\} :: timestamp
 %\{priority\} :: priority string
 %\{body\} :: body
 %% :: a '%' character.
