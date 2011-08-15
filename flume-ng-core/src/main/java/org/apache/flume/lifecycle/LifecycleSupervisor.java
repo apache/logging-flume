@@ -79,11 +79,6 @@ public class LifecycleSupervisor implements LifecycleAware {
       if (entry.getKey().getLifecycleState().equals(LifecycleState.START)) {
 
         entry.getKey().stop(context);
-
-        if (!LifecycleController.waitForOneOf(entry.getKey(),
-            LifecycleState.STOP_OR_ERROR, 5000)) {
-          fail();
-        }
       }
     }
 
