@@ -76,6 +76,10 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
 
   @Override
   public boolean add(LogicalNode node) {
+    /*
+     * FIXME: This type of overriding worries me. There should be a better
+     * separation of addition of nodes and management. (i.e. state vs. function)
+     */
     Preconditions.checkState(getLifecycleState().equals(LifecycleState.START),
         "You can not add nodes to a manager that hasn't been started");
 
@@ -91,6 +95,10 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
 
   @Override
   public boolean remove(LogicalNode node) {
+    /*
+     * FIXME: This type of overriding worries me. There should be a better
+     * separation of addition of nodes and management. (i.e. state vs. function)
+     */
     Preconditions.checkState(getLifecycleState().equals(LifecycleState.START),
         "You can not remove nodes from a manager that hasn't been started");
 
