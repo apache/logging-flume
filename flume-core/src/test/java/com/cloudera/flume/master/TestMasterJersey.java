@@ -17,14 +17,11 @@
  */
 package com.cloudera.flume.master;
 
+import static com.cloudera.util.HttpServerTestUtils.curl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
 
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -42,33 +39,6 @@ import com.cloudera.flume.conf.FlumeSpecException;
 public class TestMasterJersey extends SetupMasterTestEnv {
   public static final Logger LOG = LoggerFactory
       .getLogger(TestMasterJersey.class);
-
-  /**
-   * Gra b a url's contents. Since most are json, this should be small.
-   * 
-   * @param urlString
-   * @return
-   * @throws IOException
-   */
-  public static String curl(String urlString) throws IOException {
-    URL url = new URL(urlString);
-    URLConnection urlConn = url.openConnection();
-    urlConn.setDoInput(true);
-    urlConn.setUseCaches(false);
-
-    int len = urlConn.getContentLength();
-    String type = urlConn.getContentType();
-    LOG.info("pulled " + urlString + "[ type=" + type + " len=" + len + "]");
-    InputStreamReader isr = new InputStreamReader(urlConn.getInputStream());
-    BufferedReader br = new BufferedReader(isr);
-    StringBuilder sb = new StringBuilder();
-    String s;
-    while ((s = br.readLine()) != null) {
-      sb.append(s);
-      sb.append('\n');
-    }
-    return sb.toString();
-  }
 
   @Ignore
   @Test
