@@ -126,6 +126,7 @@ public class LogicalNode implements LifecycleAware {
       } catch (InterruptedException e) {
         logger.error("Interrupted while waiting for driver thread to stop", e);
         lifecycleState = LifecycleState.ERROR;
+        break;
       }
     }
 
