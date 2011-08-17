@@ -18,7 +18,7 @@ public class AccountingTransceiver extends Transceiver {
   }
 
   @Override
-  public String getRemoteName() {
+  public String getRemoteName() throws IOException {
     return xcvr.getRemoteName();
   }
 
