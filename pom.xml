@@ -45,7 +45,7 @@
     <profile>
       <id>dev</id>
       <activation>
-        <activeByDefault>true</activeByDefault>
+        <activeByDefault>false</activeByDefault>
       </activation>
       <modules>
         <module>flume-core</module>
@@ -86,11 +86,12 @@
     <profile>
       <id>ng</id>
       <activation>
-        <activeByDefault>false</activeByDefault>
+        <activeByDefault>true</activeByDefault>
       </activation>
       <modules>
         <module>flume-ng-core</module>
         <module>flume-ng-node</module>
+        <module>flume-ng-dist</module>
       </modules>
     </profile>
 
