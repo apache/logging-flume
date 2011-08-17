@@ -169,6 +169,10 @@ public class ChannelDriverThread extends Thread {
     logger.info("Logical node ended. Event metrics - {}", counterGroup);
   }
 
+  public void interrupt() {
+    Thread.currentThread().interrupt();
+  }
+
   public void fail(Exception lastException, boolean shouldStop) {
     this.lastException = lastException;
     this.shouldStop = shouldStop;
