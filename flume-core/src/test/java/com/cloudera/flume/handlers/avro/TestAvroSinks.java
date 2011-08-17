@@ -216,7 +216,9 @@ public class TestAvroSinks implements ExampleData {
     tes.close();
     assertEquals(25 * threads, cnt.getCount());
     ReportEvent rpt = tes.getMetrics();
-    assertEquals(2500 * threads, sendByteSum.get());
+    assertTrue("Wire bytes " + sendByteSum.get() +
+        " should exceed total message length",
+        sendByteSum.get() >= 2500 * threads);
     assertEquals(2500 * threads, rpt.getLongMetric(AvroEventSource.A_BYTES_IN)
         .longValue());
     assertEquals(25 * threads, rpt.getLongMetric(AvroEventSource.A_DEQUEUED)

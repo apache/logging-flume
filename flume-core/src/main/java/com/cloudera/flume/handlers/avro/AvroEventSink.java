@@ -105,7 +105,7 @@ public class AvroEventSink extends EventSink.Base {
   public void close() throws IOException {
     if (transport != null) {
       transport.close();
-      transport = null;
+      // we don't null out the transport, so getSentBytes can be called
       LOG.info("AvroEventSink on port " + port + " closed");
     } else {
       LOG.warn("Trying to close AvroEventSink, which was closed already");
