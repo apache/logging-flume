@@ -1,5 +1,9 @@
 package org.apache.flume;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;
@@ -7,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * <p>
@@ -60,8 +65,9 @@ public class LogicalNode implements LifecycleAware {
   private EventSink sink;
 
   private ChannelDriverThread driver;
+  private ScheduledExecutorService driverMonitorService;
 
-  private LifecycleState lifecycleState;
+  private volatile LifecycleState lifecycleState;
 
   public LogicalNode() {
     lifecycleState = LifecycleState.IDLE;
@@ -71,6 +77,8 @@ public class LogicalNode implements LifecycleAware {
   public void start(Context context) throws LifecycleException,
       InterruptedException {
 
+    lifecycleState = LifecycleState.IDLE;
+
     logger.info("Starting logical node:{}", this);
 
     Preconditions.checkState(name != null, "Logical node name can not be null");
@@ -79,6 +87,10 @@ public class LogicalNode implements LifecycleAware {
     Preconditions.checkState(sink != null, "Logical node sink can not be null");
 
     driver = new ChannelDriverThread("logicalNode-" + name + "-driver");
+    driverMonitorService = Executors.newScheduledThreadPool(
+        1,
+        new ThreadFactoryBuilder().setNameFormat(
+            "logicalNode-" + name + "-driverMonitor-%d").build());
 
     driver.setSource(source);
     driver.setSink(sink);
@@ -104,6 +116,18 @@ public class LogicalNode implements LifecycleAware {
     }
 
     lifecycleState = driver.getLifecycleState();
+
+    /* Once the driver is started, watch it for changes. */
+    driverMonitorService.scheduleAtFixedRate(new Runnable() {
+
+      @Override
+      public void run() {
+        if (driver.getLifecycleState().equals(LifecycleState.ERROR)) {
+          lifecycleState = LifecycleState.ERROR;
+        }
+      }
+
+    }, 0, 3, TimeUnit.SECONDS);
   }
 
   @Override
@@ -115,17 +139,32 @@ public class LogicalNode implements LifecycleAware {
 
     logger.info("Stopping logical node:{}", this);
 
-    driver.setShouldStop(true);
+    if (driver.getLifecycleState().equals(LifecycleState.START)) {
+      driver.setShouldStop(true);
 
-    while (driver.isAlive()) {
-      logger.debug("Waiting for driver to stop");
+      while (driver.isAlive()) {
+        logger.debug("Waiting for driver to stop");
 
-      /* If we're interrupted during a stop, we just fail. */
+        /* If we're interrupted during a stop, we just fail. */
+        try {
+          driver.join();
+        } catch (InterruptedException e) {
+          logger
+              .error("Interrupted while waiting for driver thread to stop", e);
+          lifecycleState = LifecycleState.ERROR;
+          break;
+        }
+      }
+    }
+
+    driverMonitorService.shutdown();
+
+    while (!driverMonitorService.isTerminated()) {
       try {
-        driver.join();
+        driverMonitorService.awaitTermination(1, TimeUnit.SECONDS);
       } catch (InterruptedException e) {
-        logger.error("Interrupted while waiting for driver thread to stop", e);
-        lifecycleState = LifecycleState.ERROR;
+        logger
+            .debug("Interrupted while waiting for driver monitor service to shutdown - just exiting");
         break;
       }
     }
@@ -137,6 +176,8 @@ public class LogicalNode implements LifecycleAware {
     if (!lifecycleState.equals(LifecycleState.ERROR)) {
       lifecycleState = LifecycleState.STOP;
     }
+
+    logger.debug("Logical node {} stopped with state:{}", name, lifecycleState);
   }
 
   @Override
