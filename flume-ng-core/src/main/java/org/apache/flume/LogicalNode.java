@@ -150,7 +150,7 @@ public class LogicalNode implements LifecycleAware {
         driver.interrupt();
       } catch (InterruptedException e) {
         logger
-            .debug("Timed out while waiting for driver to finish (normal source / sink are blocking)");
+            .debug("Timed out while waiting for driver to finish (normal if source / sink are blocking)");
       }
     }
 
