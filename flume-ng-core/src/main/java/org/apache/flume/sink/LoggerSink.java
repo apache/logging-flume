@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 public class LoggerSink extends AbstractEventSink {
 
   private static final Logger logger = LoggerFactory
-      .getLogger(TestLoggerSink.class);
+      .getLogger(LoggerSink.class);
 
   @Override
   public void append(Context context, Event<?> event)
