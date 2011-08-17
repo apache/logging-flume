@@ -142,18 +142,15 @@ public class LogicalNode implements LifecycleAware {
     if (driver.getLifecycleState().equals(LifecycleState.START)) {
       driver.setShouldStop(true);
 
-      while (driver.isAlive()) {
-        logger.debug("Waiting for driver to stop");
+      logger.debug("Waiting for driver to stop");
 
-        /* If we're interrupted during a stop, we just fail. */
-        try {
-          driver.join();
-        } catch (InterruptedException e) {
-          logger
-              .error("Interrupted while waiting for driver thread to stop", e);
-          lifecycleState = LifecycleState.ERROR;
-          break;
-        }
+      /* If we can't stop within N seconds, we just interrupt and give up. */
+      try {
+        driver.join(10000);
+        driver.interrupt();
+      } catch (InterruptedException e) {
+        logger
+            .debug("Timed out while waiting for driver to finish (normal source / sink are blocking)");
       }
     }
 
