@@ -4,7 +4,7 @@ import org.junit.Test;
 
 public class TestFlumeNodeApplication {
 
-  @Test
+  @Test(timeout = 5000)
   public void testApplication() {
     String[] args = new String[] {};
 
