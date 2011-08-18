@@ -12,7 +12,7 @@ public class LoggerSink extends AbstractEventSink {
       .getLogger(LoggerSink.class);
 
   @Override
-  public void append(Context context, Event<?> event)
+  public void append(Context context, Event event)
       throws InterruptedException, EventDeliveryException {
 
     logger.info("event:{}", event);

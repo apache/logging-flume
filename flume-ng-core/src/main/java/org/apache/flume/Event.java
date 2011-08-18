@@ -2,14 +2,14 @@ package org.apache.flume;
 
 import java.util.Map;
 
-public interface Event<T> {
+public interface Event {
 
   public Map<String, String> getHeaders();
 
   public void setHeaders(Map<String, String> headers);
 
-  public T getBody();
+  public byte[] getBody();
 
-  public void setBody(T body);
+  public void setBody(byte[] body);
 
 }

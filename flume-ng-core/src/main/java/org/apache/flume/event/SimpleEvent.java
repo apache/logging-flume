@@ -5,10 +5,10 @@ import java.util.Map;
 
 import org.apache.flume.Event;
 
-public class SimpleEvent<T> implements Event<T> {
+public class SimpleEvent implements Event {
 
   private Map<String, String> headers;
-  private T body;
+  private byte[] body;
 
   public SimpleEvent() {
     headers = new HashMap<String, String>();
@@ -26,12 +26,12 @@ public class SimpleEvent<T> implements Event<T> {
   }
 
   @Override
-  public T getBody() {
+  public byte[] getBody() {
     return body;
   }
 
   @Override
-  public void setBody(T body) {
+  public void setBody(byte[] body) {
     this.body = body;
   }
 

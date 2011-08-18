@@ -27,8 +27,8 @@ public class TestSequenceGeneratorSource {
     source.open(context);
 
     for (long i = 0; i < 100; i++) {
-      Event<?> next = source.next(context);
-      long value = (Long) next.getBody();
+      Event next = source.next(context);
+      long value = Long.parseLong(new String(next.getBody()));
 
       Assert.assertEquals(i, value);
     }

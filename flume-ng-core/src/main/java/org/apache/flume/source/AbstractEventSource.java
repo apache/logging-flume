@@ -13,7 +13,7 @@ abstract public class AbstractEventSource implements EventSource {
   }
 
   @Override
-  abstract public Event<?> next(Context context) throws InterruptedException,
+  abstract public Event next(Context context) throws InterruptedException,
       EventDeliveryException;
 
   @Override

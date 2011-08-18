@@ -50,10 +50,10 @@ public class NetcatSource extends AbstractEventSource {
   }
 
   @Override
-  public Event<?> next(Context context) throws InterruptedException,
+  public Event next(Context context) throws InterruptedException,
       EventDeliveryException {
 
-    Event<?> event = null;
+    Event event = null;
 
     counterGroup.incrementAndGet("next.calls");
 
@@ -78,7 +78,7 @@ public class NetcatSource extends AbstractEventSource {
 
       logger.debug("end of message");
 
-      event = EventBuilder.withBody(builder.toString());
+      event = EventBuilder.withBody(builder.toString().getBytes());
 
       channel.close();
 

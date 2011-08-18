@@ -121,7 +121,7 @@ public class ChannelDriverThread extends Thread {
     }
 
     while (!shouldStop) {
-      Event<?> event = null;
+      Event event = null;
 
       try {
         event = source.next(context);

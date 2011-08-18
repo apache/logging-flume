@@ -10,12 +10,12 @@ public class SequenceGeneratorSource extends AbstractEventSource {
   private long sequence;
 
   @Override
-  public Event<?> next(Context context) throws InterruptedException,
+  public Event next(Context context) throws InterruptedException,
       EventDeliveryException {
 
-    Event<Long> event = new SimpleEvent<Long>();
+    Event event = new SimpleEvent();
 
-    event.setBody(sequence++);
+    event.setBody(Long.valueOf(sequence++).toString().getBytes());
 
     return event;
   }

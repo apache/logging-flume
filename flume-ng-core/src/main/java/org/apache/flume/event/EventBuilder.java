@@ -7,16 +7,16 @@ import org.apache.flume.Event;
 
 public class EventBuilder {
 
-  public static <T> Event<T> withBody(T body) {
-    Event<T> event = new SimpleEvent<T>();
+  public static Event withBody(byte[] body) {
+    Event event = new SimpleEvent();
 
     event.setBody(body);
 
     return event;
   }
 
-  public static <T> Event<T> withBody(T body, Map<String, String> headers) {
-    Event<T> event = new SimpleEvent<T>();
+  public static Event withBody(byte[] body, Map<String, String> headers) {
+    Event event = new SimpleEvent();
 
     event.setBody(body);
     event.setHeaders(new HashMap<String, String>(headers));

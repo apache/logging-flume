@@ -7,7 +7,7 @@ import org.apache.flume.EventDeliveryException;
 public class FlakeySequenceGeneratorSource extends SequenceGeneratorSource {
 
   @Override
-  public Event<?> next(Context context) throws InterruptedException,
+  public Event next(Context context) throws InterruptedException,
       EventDeliveryException {
 
     if (Math.round(Math.random()) == 1) {

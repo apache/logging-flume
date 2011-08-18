@@ -15,7 +15,7 @@ abstract public class AbstractEventSink implements EventSink {
   }
 
   @Override
-  abstract public void append(Context context, Event<?> event)
+  abstract public void append(Context context, Event event)
       throws InterruptedException, EventDeliveryException;
 
   @Override

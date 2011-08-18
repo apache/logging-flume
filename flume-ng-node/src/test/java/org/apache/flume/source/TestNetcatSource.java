@@ -64,10 +64,10 @@ public class TestNetcatSource {
     for (int i = 0; i < 100; i++) {
       executor.submit(clientRequestRunnable);
 
-      Event<?> event = source.next(context);
+      Event event = source.next(context);
 
       Assert.assertNotNull(event);
-      Assert.assertEquals("Test message", event.getBody());
+      Assert.assertEquals("Test message".getBytes(), event.getBody());
     }
 
     executor.shutdown();

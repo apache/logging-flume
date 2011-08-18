@@ -28,7 +28,7 @@ public class TestLoggerSink {
     sink.open(context);
 
     for (int i = 0; i < 10; i++) {
-      sink.append(context, EventBuilder.withBody("Test " + i));
+      sink.append(context, EventBuilder.withBody(("Test " + i).getBytes()));
     }
 
     sink.close(context);
