@@ -67,7 +67,7 @@ public class TestNetcatSource {
       Event event = source.next(context);
 
       Assert.assertNotNull(event);
-      Assert.assertEquals("Test message".getBytes(), event.getBody());
+      Assert.assertArrayEquals("Test message".getBytes(), event.getBody());
     }
 
     executor.shutdown();
