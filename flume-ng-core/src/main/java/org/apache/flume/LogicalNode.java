@@ -134,9 +134,6 @@ public class LogicalNode implements LifecycleAware {
   public void stop(Context context) throws LifecycleException,
       InterruptedException {
 
-    Preconditions.checkState(LifecycleState.START.equals(lifecycleState),
-        "It is illegal to stop something that isn't running");
-
     logger.info("Stopping logical node:{}", this);
 
     if (driver.getLifecycleState().equals(LifecycleState.START)) {
