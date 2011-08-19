@@ -20,6 +20,7 @@ import org.apache.flume.node.nodemanager.DefaultLogicalNodeManager;
 import org.apache.flume.sink.DefaultSinkFactory;
 import org.apache.flume.sink.LoggerSink;
 import org.apache.flume.sink.NullSink;
+import org.apache.flume.sink.RollingFileSink;
 import org.apache.flume.source.DefaultSourceFactory;
 import org.apache.flume.source.NetcatSource;
 import org.apache.flume.source.SequenceGeneratorSource;
@@ -65,6 +66,7 @@ public class Application {
 
     sinkFactory.register("null", NullSink.class);
     sinkFactory.register("logger", LoggerSink.class);
+    sinkFactory.register("file-roll", RollingFileSink.class);
   }
 
   public void parseOptions() throws ParseException {
@@ -117,11 +119,10 @@ public class Application {
         try {
           node.stop(context);
         } catch (LifecycleException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
+          logger.error("Unable to stop node. Exception follows.", e);
         } catch (InterruptedException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
+          logger
+              .error("Interrupted while stopping node. Exception follows.", e);
         }
       }
 
