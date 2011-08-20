@@ -101,16 +101,31 @@ public class NaiveFileWALManager implements WALManager {
 
   private volatile boolean shuttingDown = false;
 
+  private Object lock = new Object();
+
   /**
    * Simple record for keeping the state of tag.
    */
   static class WALData {
     State s;
     String tag;
+    int sentCount = 0;
 
     WALData(String tag) {
       this.s = State.WRITING;
       this.tag = tag;
+    }
+
+    void incrementSentCount() {
+      sentCount++;
+    }
+
+    int getSentCount() {
+      return sentCount;
+    }
+
+    public String toString() {
+      return "WALData { " + tag + " state:" + s + " sent:" + sentCount + "}";
     }
 
     static WALData recovered(String tag) {
@@ -148,35 +163,37 @@ public class NaiveFileWALManager implements WALManager {
     this.baseDir = baseDir;
   }
 
-  synchronized public void open() throws IOException {
-    // make the dirs if they do not exist
-    if (!FileUtil.makeDirs(importDir)) {
-      throw new IOException("Unable to create import dir: " + importDir);
-    }
-    if (!FileUtil.makeDirs(writingDir)) {
-      throw new IOException("Unable to create writing dir: " + writingDir);
-    }
-    if (!FileUtil.makeDirs(loggedDir)) {
-      throw new IOException("Unable to create logged dir: " + loggedDir);
-    }
-    if (!FileUtil.makeDirs(sendingDir)) {
-      throw new IOException("Unable to create sending dir: " + sendingDir);
-    }
-    if (!FileUtil.makeDirs(sentDir)) {
-      throw new IOException("Unable to create import dir: " + sentDir);
-    }
-    if (!FileUtil.makeDirs(doneDir)) {
-      throw new IOException("Unable to create writing dir: " + doneDir);
-    }
-    if (!FileUtil.makeDirs(errorDir)) {
-      throw new IOException("Unable to create logged dir: " + errorDir);
-    }
+  public void open() throws IOException {
+    synchronized (lock) {
+      // make the dirs if they do not exist
+      if (!FileUtil.makeDirs(importDir)) {
+        throw new IOException("Unable to create import dir: " + importDir);
+      }
+      if (!FileUtil.makeDirs(writingDir)) {
+        throw new IOException("Unable to create writing dir: " + writingDir);
+      }
+      if (!FileUtil.makeDirs(loggedDir)) {
+        throw new IOException("Unable to create logged dir: " + loggedDir);
+      }
+      if (!FileUtil.makeDirs(sendingDir)) {
+        throw new IOException("Unable to create sending dir: " + sendingDir);
+      }
+      if (!FileUtil.makeDirs(sentDir)) {
+        throw new IOException("Unable to create import dir: " + sentDir);
+      }
+      if (!FileUtil.makeDirs(doneDir)) {
+        throw new IOException("Unable to create writing dir: " + doneDir);
+      }
+      if (!FileUtil.makeDirs(errorDir)) {
+        throw new IOException("Unable to create logged dir: " + errorDir);
+      }
 
-    if (shuttingDown) {
-      LOG.warn("Strange, shutting down but now reopening");
+      if (shuttingDown) {
+        LOG.warn("Strange, shutting down but now reopening");
+      }
+      shuttingDown = false;
+      LOG.info("NaiveFileWALManager is now open");
     }
-    shuttingDown = false;
-    LOG.info("NaiveFileWALManager is now open");
   }
 
   public Collection<String> getWritingTags() {
@@ -200,12 +217,14 @@ public class NaiveFileWALManager implements WALManager {
    * 
    * This is not a blocking close.
    */
-  synchronized public void stopDrains() throws IOException {
-    if (shuttingDown) {
-      LOG.warn("Already shutting down, but getting another shutting down notice, odd");
+  public void stopDrains() throws IOException {
+    synchronized (lock) {
+      if (shuttingDown) {
+        LOG.warn("Already shutting down, but getting another shutting down notice, odd");
+      }
+      shuttingDown = true;
+      LOG.info("NaiveFileWALManager shutting down");
     }
-    shuttingDown = true;
-    LOG.info("NaiveFileWALManager shutting down");
   }
 
   /**
@@ -393,121 +412,126 @@ public class NaiveFileWALManager implements WALManager {
    * restart from there. Optimizations can recover at finer grain and be more
    * performant.
    */
-  synchronized public void recover() throws IOException {
-
-    // move all writing into the logged dir.
-    for (String f : writingDir.list()) {
-      try {
-        recoverLog(writingDir, f);
-      } catch (InterruptedException e) {
-        LOG.error("Interupted when trying to recover WAL log {}", f, e);
-        throw new IOException("Unable to recover " + writingDir + f);
+  public void recover() throws IOException {
+    synchronized (lock) {
+      // move all writing into the logged dir.
+      for (String f : writingDir.list()) {
+        try {
+          recoverLog(writingDir, f);
+        } catch (InterruptedException e) {
+          LOG.error("Interupted when trying to recover WAL log {}", f, e);
+          throw new IOException("Unable to recover " + writingDir + f);
+        }
       }
-    }
 
-    // move all sending into the logged dir
-    for (String f : sendingDir.list()) {
-      try {
-        recoverLog(sendingDir, f);
-      } catch (InterruptedException e) {
-        LOG.error("Interupted when trying to recover WAL log {}", f, e);
-        throw new IOException("Unable to recover " + sendingDir + f);
+      // move all sending into the logged dir
+      for (String f : sendingDir.list()) {
+        try {
+          recoverLog(sendingDir, f);
+        } catch (InterruptedException e) {
+          LOG.error("Interupted when trying to recover WAL log {}", f, e);
+          throw new IOException("Unable to recover " + sendingDir + f);
+        }
       }
-    }
 
-    // move all sent into the logged dir.
-    for (String f : sentDir.list()) {
-      try {
-        recoverLog(sentDir, f);
-      } catch (InterruptedException e) {
-        LOG.error("Interupted when trying to recover WAL log {}", f, e);
-        throw new IOException("Unable to recover " + sentDir + f);
+      // move all sent into the logged dir.
+      for (String f : sentDir.list()) {
+        try {
+          recoverLog(sentDir, f);
+        } catch (InterruptedException e) {
+          LOG.error("Interupted when trying to recover WAL log {}", f, e);
+          throw new IOException("Unable to recover " + sentDir + f);
+        }
       }
-    }
 
-    // add all logged to loggedQ and table
-    for (String f : loggedDir.list()) {
-      // File log = new File(loggedDir, f);
-      WALData data = WALData.recovered(f);
-      table.put(f, data);
-      loggedQ.add(f);
-      recoverCount.incrementAndGet();
-      LOG.debug("Recover loaded {}", f);
-    }
+      // add all logged to loggedQ and table
+      for (String f : loggedDir.list()) {
+        // File log = new File(loggedDir, f);
+        WALData data = WALData.recovered(f);
+        table.put(f, data);
+        loggedQ.add(f);
+        recoverCount.incrementAndGet();
+        LOG.debug("Recover loaded {}", f);
+      }
 
-    // carry on now on your merry way.
+      // carry on now on your merry way.
+    }
   }
 
   /**
    * This gets a new sink when rolling, and is called when rolling to a new
    * file.
    */
-  synchronized public EventSink newAckWritingSink(final Tagger tagger,
-      AckListener al) throws IOException {
-    File dir = getDir(State.WRITING);
-    final String tag = tagger.newTag();
+  public EventSink newAckWritingSink(final Tagger tagger, AckListener al)
+      throws IOException {
+    synchronized (lock) {
+      File dir = getDir(State.WRITING);
+      final String tag = tagger.newTag();
 
-    EventSink bareSink = new SeqfileEventSink(
-        new File(dir, tag).getAbsoluteFile());
-    EventSink curSink = new AckChecksumInjector<EventSink>(bareSink,
-        tag.getBytes(), al);
+      EventSink bareSink = new SeqfileEventSink(
+          new File(dir, tag).getAbsoluteFile());
+      EventSink curSink = new AckChecksumInjector<EventSink>(bareSink,
+          tag.getBytes(), al);
 
-    writingQ.add(tag);
-    WALData data = new WALData(tag);
-    table.put(tag, data);
-    writingCount.incrementAndGet();
+      writingQ.add(tag);
+      WALData data = new WALData(tag);
+      table.put(tag, data);
+      writingCount.incrementAndGet();
 
-    return new EventSinkDecorator<EventSink>(curSink) {
-      @Override
-      public void append(Event e) throws IOException, InterruptedException {
-        getSink().append(e);
-      }
-
-      @Override
-      public void close() throws IOException, InterruptedException {
-        super.close();
-        synchronized (NaiveFileWALManager.this) {
-          if (!writingQ.contains(tag)) {
-            LOG.warn("Already changed tag {} out of WRITING state", tag);
-            return;
-          }
-          LOG.info("File lives in {}", getFile(tag));
-
-          changeState(tag, State.WRITING, State.LOGGED);
-          loggedCount.incrementAndGet();
+      return new EventSinkDecorator<EventSink>(curSink) {
+        @Override
+        public void append(Event e) throws IOException, InterruptedException {
+          getSink().append(e);
         }
-      }
-    };
+
+        @Override
+        public void close() throws IOException, InterruptedException {
+          super.close();
+          synchronized (lock) {
+            if (!writingQ.contains(tag)) {
+              LOG.warn("Already changed tag {} out of WRITING state", tag);
+              return;
+            }
+            LOG.info("File lives in {}", getFile(tag));
+
+            changeState(tag, State.WRITING, State.LOGGED);
+            loggedCount.incrementAndGet();
+          }
+        }
+      };
+    }
   }
 
   /**
    * Returns a new sink when the roller asks for a new one.
    */
-  synchronized public EventSink newWritingSink(final Tagger tagger)
-      throws IOException {
-    File dir = getDir(State.WRITING);
-    final String tag = tagger.newTag();
-    EventSink curSink = new SeqfileEventSink(
-        new File(dir, tag).getAbsoluteFile());
-    writingQ.add(tag);
-    WALData data = new WALData(tag);
-    table.put(tag, data);
+  public EventSink newWritingSink(final Tagger tagger) throws IOException {
+    synchronized (lock) {
+      File dir = getDir(State.WRITING);
+      final String tag = tagger.newTag();
+      EventSink curSink = new SeqfileEventSink(
+          new File(dir, tag).getAbsoluteFile());
+      writingQ.add(tag);
+      WALData data = new WALData(tag);
+      table.put(tag, data);
 
-    return new EventSinkDecorator<EventSink>(curSink) {
-      @Override
-      public void append(Event e) throws IOException, InterruptedException {
-        LOG.debug("Appending event: {}", e); // performance sensitive
-        getSink().append(e);
+      return new EventSinkDecorator<EventSink>(curSink) {
+        @Override
+        public void append(Event e) throws IOException, InterruptedException {
+          LOG.debug("Appending event: {}", e); // performance sensitive
+          getSink().append(e);
 
-      }
+        }
 
-      @Override
-      public void close() throws IOException, InterruptedException {
-        super.close();
-        changeState(tag, State.WRITING, State.LOGGED);
-
-      }
-    };
+        @Override
+        public void close() throws IOException, InterruptedException {
+          synchronized (lock) {
+            super.close();
+            changeState(tag, State.WRITING, State.LOGGED);
+          }
+        }
+      };
+    }
   }
 
   @Override
@@ -563,6 +587,12 @@ public class NaiveFileWALManager implements WALManager {
     }
   }
 
+  /**
+   * This needs to be called from a lock protected call site
+   * 
+   * @param tag
+   * @return
+   */
   private File getFile(String tag) {
     Preconditions.checkNotNull(tag, "Attempted to get file for empty tag");
     WALData data = table.get(tag);
@@ -580,66 +610,73 @@ public class NaiveFileWALManager implements WALManager {
    * This can throw both IOExceptions and runtime exceptions due to
    * Preconditions failures.
    */
-  synchronized void changeState(String tag, State oldState, State newState)
+  void changeState(String tag, State oldState, State newState)
       throws IOException {
-    WALData data = table.get(tag);
-    Preconditions.checkArgument(data != null, "Tag " + tag + " has no data");
-    Preconditions.checkArgument(tag.equals(data.tag),
-        "Data associated with tag didn't match tag " + tag);
+    synchronized (lock) {
+      WALData data = table.get(tag);
+      Preconditions.checkArgument(data != null, "Tag " + tag + " has no data");
+      Preconditions.checkArgument(tag.equals(data.tag),
+          "Data associated with tag didn't match tag " + tag);
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Change " + data.s + "/" + oldState + " to " + newState + " : "
-          + tag);
-    }
-
-    // null allows any previous state.
-    if (oldState == null) {
-      oldState = data.s;
-    }
-
-    Preconditions.checkState(data.s == oldState, "Expected state to be "
-        + oldState + " but was " + data.s);
-
-    if (oldState == State.ERROR) {
-      throw new IllegalStateException("Cannot move from error state");
-    }
-
-    /*
-     * This uses java's File.rename and File.delete method. According to the
-     * link below, Solaris (I assume POSIX/linux) does atomic rename but Windows
-     * does not guarantee it.
-     * http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4017593 To be truly
-     * correct, I need to check the return value (will likely fail in unix if
-     * moving from one volume to another instead of just within same volume)
-     */
-
-    // move files to other directories to making state change durable.
-    File orig = getFile(tag);
-    File newf = new File(getDir(newState), tag);
-    boolean success = orig.renameTo(newf);
-    if (!success) {
-      throw new IOException("Move  " + orig + " -> " + newf + "failed!");
-    }
-
-    // E2EACKED is terminal state just delete it.
-    // TODO (jon) add option to keep logged files
-    if (newState == State.E2EACKED) {
-      LOG.debug("Deleting WAL file: {}", newf.getAbsoluteFile());
-      boolean res = newf.delete();
-      if (!res) {
-        LOG.warn("Failed to delete complete WAL file: {}",
-            newf.getAbsoluteFile());
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Change " + data.s + "/" + oldState + " to " + newState
+            + " : " + tag);
       }
-    }
 
-    // is successful, update queues.
-    LOG.debug("old state is {}", oldState);
-    getQueue(oldState).remove(tag);
-    BlockingQueue<String> q = getQueue(newState);
-    if (q != null) {
-      q.add(tag);
+      // null allows any previous state.
+      if (oldState == null) {
+        oldState = data.s;
+      }
+
+      if (oldState == State.SENT && newState == State.LOGGED) {
+        data.incrementSentCount();
+      }
+
+      Preconditions.checkState(data.s == oldState, "Expected state to be "
+          + oldState + " but was " + data.s);
+
+      if (oldState == State.ERROR) {
+        throw new IllegalStateException("Cannot move from error state");
+      }
+
+      /*
+       * This uses java's File.rename and File.delete method. According to the
+       * link below, Solaris (I assume POSIX/linux) does atomic rename but
+       * Windows does not guarantee it.
+       * http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4017593 To be truly
+       * correct, I need to check the return value (will likely fail in unix if
+       * moving from one volume to another instead of just within same volume)
+       */
+
+      // move files to other directories to making state change durable.
+      File orig = getFile(tag);
+      File newf = new File(getDir(newState), tag);
+      boolean success = orig.renameTo(newf);
+      if (!success) {
+        throw new IOException("Move  " + orig + " -> " + newf + "failed!");
+      }
+
+      // E2EACKED is terminal state just delete it.
+      // TODO (jon) add option to keep logged files
+      if (newState == State.E2EACKED) {
+        LOG.debug("Deleting WAL file: {}", newf.getAbsoluteFile());
+        boolean res = newf.delete();
+        if (!res) {
+          LOG.warn("Failed to delete complete WAL file: {}",
+              newf.getAbsoluteFile());
+        }
+        table.remove(tag);
+      }
+
+      // is successful, update queues.
+      LOG.debug("old state is {}", oldState);
+      getQueue(oldState).remove(tag);
+      BlockingQueue<String> q = getQueue(newState);
+      if (q != null) {
+        q.add(tag);
+      }
+      data.s = newState;
     }
-    data.s = newState;
   }
 
   /**
@@ -731,7 +768,7 @@ public class NaiveFileWALManager implements WALManager {
         // exit condition is when closed is flagged and the queue is empty.
 
         if (sendingTag == null) {
-          synchronized (this) {
+          synchronized (lock) {
             if (shuttingDown && loggedQ.isEmpty() && sendingQ.isEmpty())
               return null;
           }
@@ -739,7 +776,7 @@ public class NaiveFileWALManager implements WALManager {
       }
     } catch (InterruptedException e) {
       LOG.error("interrupted", e);
-      synchronized (this) {
+      synchronized (lock) {
         if (!shuttingDown) {
           LOG.warn("!!! Caught interrupted exception but not closed so rethrowing interrupted. loggedQ:"
               + loggedQ.size() + " sendingQ:" + sendingQ.size());
@@ -757,78 +794,99 @@ public class NaiveFileWALManager implements WALManager {
         }
       }
     }
-    LOG.info("opening log file {}", sendingTag);
-    changeState(sendingTag, State.LOGGED, State.SENDING);
-    sendingCount.incrementAndGet();
-    File curFile = getFile(sendingTag);
-    EventSource curSource = new SeqfileEventSource(curFile.getAbsolutePath());
-    return new StateChangeDeco(curSource, sendingTag);
+    synchronized (lock) {
+      LOG.info("opening log file {}", sendingTag);
+      changeState(sendingTag, State.LOGGED, State.SENDING);
+      sendingCount.incrementAndGet();
+      File curFile = getFile(sendingTag);
+      EventSource curSource = new SeqfileEventSource(curFile.getAbsolutePath());
+      return new StateChangeDeco(curSource, sendingTag);
+    }
   }
 
   /**
    * Convert a tag from Sent to end-to-end acked.
    */
-  synchronized public void toAcked(String tag) throws IOException {
-    changeState(tag, State.SENT, State.E2EACKED);
-    ackedCount.incrementAndGet();
+  public void toAcked(String tag) throws IOException {
+    synchronized (lock) {
+      WALData wd = getWalData(tag);
+      if (wd.s == State.LOGGED && wd.getSentCount() > 0) {
+        changeState(tag, State.LOGGED, State.E2EACKED);
+        ackedCount.incrementAndGet();
+
+      } else if (wd.s == State.SENT) {
+        changeState(tag, State.SENT, State.E2EACKED);
+        ackedCount.incrementAndGet();
+      }
+
+    }
   }
 
   /**
    * Change something that is sent and not acknowledged to logged state so that
    * the normal mechanisms will eventually retry sending it.
    */
-  synchronized public void retry(String tag) throws IOException {
-    // Yuck. This is like a CAS right now.
-    WALData data = table.get(tag);
-    if (data == null) {
-      // wrong WALManager
-      return;
-    }
-    if (data != null) {
-      switch (data.s) {
-      case SENDING: {
-        // This is possible if a connection goes down. If we are currently
-        // sending this group, we should continue trying to send (no need to
-        // restarting it by demoting to LOGGED)
-        LOG.info("Attempt to retry chunk in SENDING state.  Data is being sent so "
-            + "there is no need for state transition.");
-        break;
-      }
-      case LOGGED: {
-        // This is likely the most common case where we retry events spooled to
-        // disk
-        LOG.info("Attempt to retry chunk in LOGGED state.  There is no need "
-            + "for state transition.");
-        break;
-      }
-      case SENT: {
-        // This is possible if the collector goes down or if endpoint (HDFS)
-        // goes down. Here we demote the chunk back to LOGGED state.
-        changeState(tag, State.SENT, State.LOGGED);
-        retryCount.incrementAndGet();
-        break;
-      }
-      case E2EACKED: {
-        // This is possible but very unlikely. If a group is in this state it is
-        // about to be deleted and thus doesn't need a state transition.
-        LOG.debug("Attemp to retry chunk in E2EACKED state. There is no "
-            + "need to retry because data is acked.");
-        break;
-      }
 
-      case ERROR: // should never happen
-        LOG.info("Attempt to retry chunk in ERROR state.  Data in ERROR "
-            + "state stays in ERROR state so no transition.");
-        break;
-
-      case IMPORT: // should never happen
-      case WRITING: // should never happen
-      default: {
-        String msg = "Attempting to retry from a state " + data.s
-            + " which is a state do not ever retry from.";
-        LOG.error(msg);
-        throw new IllegalStateException(msg);
+  public void retry(String tag) throws IOException {
+    synchronized (lock) {
+      // Yuck. This is like a CAS right now.
+      WALData data = table.get(tag);
+      if (data == null) {
+        // wrong WALManager
+        return;
       }
+      if (data != null) {
+        switch (data.s) {
+        case SENDING: {
+          // This is possible if a connection goes down. If we are currently
+          // sending this group, we should continue trying to send (no need to
+          // restarting it by demoting to LOGGED)
+          LOG.info("Attempt to retry chunk '" + tag
+              + "' in SENDING state.  Data is being sent so "
+              + "there is no need for state transition.");
+          break;
+        }
+        case LOGGED: {
+          // This is likely the most common case where we retry events spooled
+          // to
+          // disk
+          LOG.info("Attempt to retry chunk '" + tag
+              + "'  in LOGGED state.  There is no need "
+              + "for state transition.");
+          break;
+        }
+        case SENT: {
+          // This is possible if the collector goes down or if endpoint (HDFS)
+          // goes down. Here we demote the chunk back to LOGGED state.
+          changeState(tag, State.SENT, State.LOGGED);
+          retryCount.incrementAndGet();
+          break;
+        }
+        case E2EACKED: {
+          // This is possible but very unlikely. If a group is in this state it
+          // is
+          // about to be deleted and thus doesn't need a state transition.
+          LOG.debug("Attempt to retry chunk  '" + tag
+              + "' in E2EACKED state. There is no "
+              + "need to retry because data is acked.");
+          break;
+        }
+
+        case ERROR: // should never happen
+          LOG.info("Attempt to retry chunk '" + tag
+              + "' from ERROR state.  Data in ERROR "
+              + "state stays in ERROR state so no transition.");
+          break;
+
+        case IMPORT: // should never happen
+        case WRITING: // should never happen
+        default: {
+          String msg = "Attempt to retry from a state " + data.s
+              + " which is a state do not ever retry from.";
+          LOG.error(msg);
+          throw new IllegalStateException(msg);
+        }
+        }
       }
     }
   }
@@ -848,7 +906,7 @@ public class NaiveFileWALManager implements WALManager {
 
       // add to logging queue
       WALData data = WALData.recovered(fn);
-      synchronized (this) {
+      synchronized (lock) {
         table.put(fn, data);
         loggedQ.add(fn);
         importedCount.incrementAndGet();
@@ -862,7 +920,7 @@ public class NaiveFileWALManager implements WALManager {
   }
 
   @Override
-  synchronized public ReportEvent getMetrics() {
+  public ReportEvent getMetrics() {
     ReportEvent rpt = new ReportEvent(getName());
 
     // historical counts
@@ -893,9 +951,16 @@ public class NaiveFileWALManager implements WALManager {
   }
 
   @Override
-  synchronized public boolean isEmpty() {
-    return writingQ.isEmpty() && loggedQ.isEmpty() && sendingQ.isEmpty()
-        && sentQ.isEmpty();
+  public boolean isEmpty() {
+    synchronized (lock) {
+      return writingQ.isEmpty() && loggedQ.isEmpty() && sendingQ.isEmpty()
+          && sentQ.isEmpty();
+    }
+  }
+
+  // Exposed for testing
+  WALData getWalData(String tag) {
+    return table.get(tag);
   }
 
 }
