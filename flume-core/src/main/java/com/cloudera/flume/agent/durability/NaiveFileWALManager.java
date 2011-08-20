@@ -785,13 +785,52 @@ public class NaiveFileWALManager implements WALManager {
       return;
     }
     if (data != null) {
-      if (data.s == State.SENDING || data.s == State.LOGGED) {
-        LOG.warn("There was a race that happend with SENT vs SENDING states");
-        return;
+      switch (data.s) {
+      case SENDING: {
+        // This is possible if a connection goes down. If we are currently
+        // sending this group, we should continue trying to send (no need to
+        // restarting it by demoting to LOGGED)
+        LOG.info("Attempt to retry chunk in SENDING state.  Data is being sent so "
+            + "there is no need for state transition.");
+        break;
+      }
+      case LOGGED: {
+        // This is likely the most common case where we retry events spooled to
+        // disk
+        LOG.info("Attempt to retry chunk in LOGGED state.  There is no need "
+            + "for state transition.");
+        break;
+      }
+      case SENT: {
+        // This is possible if the collector goes down or if endpoint (HDFS)
+        // goes down. Here we demote the chunk back to LOGGED state.
+        changeState(tag, State.SENT, State.LOGGED);
+        retryCount.incrementAndGet();
+        break;
+      }
+      case E2EACKED: {
+        // This is possible but very unlikely. If a group is in this state it is
+        // about to be deleted and thus doesn't need a state transition.
+        LOG.debug("Attemp to retry chunk in E2EACKED state. There is no "
+            + "need to retry because data is acked.");
+        break;
+      }
+
+      case ERROR: // should never happen
+        LOG.info("Attempt to retry chunk in ERROR state.  Data in ERROR "
+            + "state stays in ERROR state so no transition.");
+        break;
+
+      case IMPORT: // should never happen
+      case WRITING: // should never happen
+      default: {
+        String msg = "Attempting to retry from a state " + data.s
+            + " which is a state do not ever retry from.";
+        LOG.error(msg);
+        throw new IllegalStateException(msg);
+      }
       }
     }
-    changeState(tag, State.SENT, State.LOGGED);
-    retryCount.incrementAndGet();
   }
 
   @Override
