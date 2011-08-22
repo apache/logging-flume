@@ -6,7 +6,6 @@ import java.io.IOException;
 import junit.framework.Assert;
 
 import org.apache.flume.Event;
-import org.apache.flume.durability.FileBasedWALManager.FileBasedWALWriter;
 import org.apache.flume.event.SimpleEvent;
 import org.apache.flume.formatter.output.TextDelimitedOutputFormatter;
 import org.junit.After;

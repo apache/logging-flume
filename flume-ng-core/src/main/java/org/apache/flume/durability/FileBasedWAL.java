@@ -3,7 +3,6 @@ package org.apache.flume.durability;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.flume.durability.FileBasedWALManager.FileBasedWALWriter;
 import org.apache.flume.formatter.output.EventFormatter;
 import org.apache.flume.formatter.output.TextDelimitedOutputFormatter;
 import org.slf4j.Logger;
