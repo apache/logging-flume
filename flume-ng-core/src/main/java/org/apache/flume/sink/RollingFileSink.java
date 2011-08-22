@@ -89,6 +89,7 @@ public class RollingFileSink extends AbstractEventSink {
         logger.debug("Closing file {}", pathController.getCurrentFile());
 
         try {
+          outputStream.flush();
           outputStream.close();
           shouldRotate = false;
         } catch (IOException e) {
