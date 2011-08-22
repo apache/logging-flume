@@ -1,6 +1,9 @@
 package org.apache.flume.sink;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -48,7 +51,7 @@ public class TestRollingFileSink {
 
   @Test
   public void testAppend() throws InterruptedException, LifecycleException,
-      EventDeliveryException {
+      EventDeliveryException, IOException {
 
     Context context = new Context();
 
@@ -68,7 +71,19 @@ public class TestRollingFileSink {
     sink.close(context);
 
     for (String file : sink.getDirectory().list()) {
-      logger.debug("Produced file:{}", file);
+      BufferedReader reader = new BufferedReader(new FileReader(new File(
+          sink.getDirectory(), file)));
+
+      String lastLine = null;
+      String currentLine = null;
+
+      while ((currentLine = reader.readLine()) != null) {
+        lastLine = currentLine;
+      }
+
+      logger.debug("Produced file:{} lastLine:{}", file, lastLine);
+
+      reader.close();
     }
   }
 }
