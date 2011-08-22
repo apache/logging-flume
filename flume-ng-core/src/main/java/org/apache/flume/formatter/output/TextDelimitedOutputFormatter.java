@@ -2,10 +2,13 @@ package org.apache.flume.formatter.output;
 
 import org.apache.flume.Event;
 
-public class TextDelimitedOutputFormatter {
+public class TextDelimitedOutputFormatter implements EventFormatter {
 
+  @Override
   public byte[] format(Event event) {
-    return (new String(event.getBody()) + "\n").getBytes();
+    String body = event.getBody().length > 0 ? new String(event.getBody()) : "";
+
+    return (body + "\n").getBytes();
   }
 
 }
