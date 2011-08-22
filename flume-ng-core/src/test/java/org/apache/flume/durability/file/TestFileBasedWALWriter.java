@@ -1,4 +1,4 @@
-package org.apache.flume.durability;
+package org.apache.flume.durability.file;
 
 import java.io.File;
 import java.io.IOException;
@@ -6,6 +6,7 @@ import java.io.IOException;
 import junit.framework.Assert;
 
 import org.apache.flume.Event;
+import org.apache.flume.durability.file.FileBasedWALWriter;
 import org.apache.flume.event.SimpleEvent;
 import org.apache.flume.formatter.output.TextDelimitedOutputFormatter;
 import org.junit.After;

@@ -1,8 +1,10 @@
-package org.apache.flume.durability;
+package org.apache.flume.durability.file;
 
 import java.io.File;
 
-public class FileBasedWALManager {
+import org.apache.flume.durability.WALManager;
+
+public class FileBasedWALManager implements WALManager {
 
   private File directory;
 

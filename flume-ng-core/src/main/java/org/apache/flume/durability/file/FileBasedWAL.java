@@ -1,8 +1,9 @@
-package org.apache.flume.durability;
+package org.apache.flume.durability.file;
 
 import java.io.File;
 import java.io.IOException;
 
+import org.apache.flume.durability.WAL;
 import org.apache.flume.formatter.output.EventFormatter;
 import org.apache.flume.formatter.output.TextDelimitedOutputFormatter;
 import org.slf4j.Logger;
@@ -10,7 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
-public class FileBasedWAL {
+public class FileBasedWAL implements WAL {
 
   private static final Logger logger = LoggerFactory
       .getLogger(FileBasedWAL.class);

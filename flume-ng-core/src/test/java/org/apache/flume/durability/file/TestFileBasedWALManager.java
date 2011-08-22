@@ -1,9 +1,11 @@
-package org.apache.flume.durability;
+package org.apache.flume.durability.file;
 
 import java.io.File;
 
 import junit.framework.Assert;
 
+import org.apache.flume.durability.file.FileBasedWAL;
+import org.apache.flume.durability.file.FileBasedWALManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
