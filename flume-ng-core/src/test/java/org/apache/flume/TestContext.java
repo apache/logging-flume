@@ -1,6 +1,5 @@
 package org.apache.flume;
 
-import org.apache.flume.Context;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,11 +21,6 @@ public class TestContext {
 
     Assert.assertEquals("Context contains test value", "test",
         context.get("test", String.class));
-  }
-
-  @Test
-  public void testReporter() {
-    Assert.assertNotNull(context.getReporter());
   }
 
 }
