@@ -13,18 +13,28 @@ import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
+import org.apache.flume.conf.Configurable;
+import org.apache.flume.durability.WALManager;
+import org.apache.flume.durability.WALWriter;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.lifecycle.LifecycleException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class NetcatSource extends AbstractEventSource {
+import com.google.common.base.Preconditions;
+
+public class NetcatSource extends AbstractEventSource implements Configurable {
 
   private static final Logger logger = LoggerFactory
       .getLogger(NetcatSource.class);
 
   private int port;
+  private String nodeName;
   private ServerSocketChannel serverSocket;
   private CounterGroup counterGroup;
+
+  private WALManager walManager;
+  private WALWriter walWriter;
 
   public NetcatSource() {
     port = 0;
@@ -32,7 +42,19 @@ public class NetcatSource extends AbstractEventSource {
   }
 
   @Override
-  public void open(Context context) {
+  public void configure(Context context) {
+    String nodeName = context.get("logicalNode.name", String.class);
+    Integer port = context.get("source.port", Integer.class);
+
+    Preconditions.checkArgument(nodeName != null, "Node name may not be null");
+    Preconditions.checkArgument(port != null, "Source port may not be null");
+
+    this.nodeName = nodeName;
+    this.port = port;
+  }
+
+  @Override
+  public void open(Context context) throws LifecycleException {
     counterGroup.incrementAndGet("open.attempts");
 
     try {
@@ -46,6 +68,17 @@ public class NetcatSource extends AbstractEventSource {
     } catch (IOException e) {
       counterGroup.incrementAndGet("open.errors");
       logger.error("Unable to bind to socket. Exception follows.", e);
+    }
+
+    if (walManager != null) {
+      logger.debug("Event durability features enabled. Using WALManager:{}",
+          walManager);
+      try {
+        walWriter = walManager.getWAL(nodeName).getWriter();
+      } catch (IOException e) {
+        throw new LifecycleException(
+            "Unable to get WAL writer. Exception follows.", e);
+      }
     }
   }
 
@@ -80,6 +113,11 @@ public class NetcatSource extends AbstractEventSource {
 
       event = EventBuilder.withBody(builder.toString().getBytes());
 
+      if (walWriter != null) {
+        walWriter.write(event);
+        walWriter.flush();
+      }
+
       channel.close();
 
       counterGroup.incrementAndGet("events.success");
@@ -94,12 +132,23 @@ public class NetcatSource extends AbstractEventSource {
   }
 
   @Override
-  public void close(Context context) {
+  public void close(Context context) throws LifecycleException {
     if (serverSocket != null) {
       try {
         serverSocket.close();
       } catch (IOException e) {
         logger.error("Unable to close socket. Exception follows.", e);
+      }
+    }
+
+    if (walWriter != null) {
+      try {
+        walWriter.flush();
+        walWriter.close();
+      } catch (IOException e) {
+        throw new LifecycleException(
+            "Unable to flush WAL on close - POTENTIAL DATA LOSS! Exception follows.",
+            e);
       }
     }
   }
@@ -110,6 +159,14 @@ public class NetcatSource extends AbstractEventSource {
 
   public void setPort(int port) {
     this.port = port;
+  }
+
+  public WALManager getWALManager() {
+    return walManager;
+  }
+
+  public void setWALManager(WALManager walManager) {
+    this.walManager = walManager;
   }
 
 }
