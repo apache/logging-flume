@@ -13,6 +13,7 @@ import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
+import org.apache.flume.formatter.output.EventFormatter;
 import org.apache.flume.formatter.output.PathManager;
 import org.apache.flume.formatter.output.TextDelimitedOutputFormatter;
 import org.apache.flume.lifecycle.LifecycleException;
@@ -35,7 +36,7 @@ public class RollingFileSink extends AbstractEventSink {
   private CounterGroup counterGroup;
 
   private PathManager pathController;
-  private TextDelimitedOutputFormatter formatter;
+  private EventFormatter formatter;
   private volatile boolean shouldRotate;
 
   public RollingFileSink() {
@@ -176,11 +177,11 @@ public class RollingFileSink extends AbstractEventSink {
     this.rollInterval = rollInterval;
   }
 
-  public TextDelimitedOutputFormatter getFormatter() {
+  public EventFormatter getFormatter() {
     return formatter;
   }
 
-  public void setFormatter(TextDelimitedOutputFormatter formatter) {
+  public void setFormatter(EventFormatter formatter) {
     this.formatter = formatter;
   }
 
