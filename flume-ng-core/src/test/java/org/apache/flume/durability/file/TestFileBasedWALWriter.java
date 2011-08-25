@@ -3,13 +3,12 @@ package org.apache.flume.durability.file;
 import java.io.File;
 import java.io.IOException;
 
-import junit.framework.Assert;
-
+import org.apache.commons.io.FileUtils;
 import org.apache.flume.Event;
-import org.apache.flume.durability.file.FileBasedWALWriter;
 import org.apache.flume.event.SimpleEvent;
 import org.apache.flume.formatter.output.TextDelimitedOutputFormatter;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,15 +25,10 @@ public class TestFileBasedWALWriter {
   }
 
   @After
-  public void tearDown() {
-    if (testDirectory.exists()) {
-      for (File entry : testDirectory.listFiles()) {
-        entry.delete();
-      }
+  public void tearDown() throws IOException {
+    FileUtils.deleteDirectory(testDirectory);
 
-      testDirectory.delete();
-    }
-
+    /* Do not die if we can't delete this. Parallel tests could be using it. */
     testDirectory.getParentFile().delete();
   }
 
@@ -47,7 +41,7 @@ public class TestFileBasedWALWriter {
     event.setBody("Test event".getBytes());
 
     writer.setFormatter(new TextDelimitedOutputFormatter());
-    writer.setFile(new File(testDirectory, "test.wal"));
+    writer.setDirectory(testDirectory);
 
     writer.open();
     writer.write(event);

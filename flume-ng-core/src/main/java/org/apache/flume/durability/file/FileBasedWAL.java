@@ -90,7 +90,7 @@ public class FileBasedWAL implements WAL {
     FileBasedWALWriter writer = new FileBasedWALWriter();
 
     writer.setFormatter(formatter);
-    writer.setFile(openDirectory);
+    writer.setDirectory(openDirectory);
 
     if (!isInitialized) {
       initialize();

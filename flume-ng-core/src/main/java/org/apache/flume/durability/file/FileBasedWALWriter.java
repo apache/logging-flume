@@ -80,7 +80,7 @@ public class FileBasedWALWriter implements WALWriter {
     return directory;
   }
 
-  public void setFile(File file) {
+  public void setDirectory(File file) {
     this.directory = file;
   }
 
