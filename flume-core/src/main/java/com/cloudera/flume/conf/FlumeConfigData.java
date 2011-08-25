@@ -17,6 +17,8 @@
  */
 package com.cloudera.flume.conf;
 
+import java.util.Date;
+
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
@@ -60,9 +62,12 @@ public class FlumeConfigData {
     this.flowID = fcd.flowID;
   }
 
-  /** Empty constructor. **/
+  /** Empty constructor for RPC **/
   public FlumeConfigData() {
+  }
 
+  public static FlumeConfigData testingFlumeConfigData(String src, String snk) {
+    return new FlumeConfigData(0, src, snk, 0, 0, null);
   }
 
   public long getTimestamp() {
@@ -111,5 +116,12 @@ public class FlumeConfigData {
 
   public void setFlowID(String flowID) {
     this.flowID = flowID;
+  }
+
+  public String toString() {
+    return String.format("FlumeConfigData: {srcVer:'%s' snkVer:'%s'  ts='%s' "
+        + "flowId:'%s' source:'%s' sink:'%s' }", new Date(sourceVersion),
+        new Date(sinkVersion), new Date(timestamp), flowID, sourceConfig,
+        sinkConfig);
   }
 }

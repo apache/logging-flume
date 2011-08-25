@@ -137,6 +137,7 @@ public class LogicalNode implements Reportable {
    * source values into the sink. This will block until the previous driver has
    * shutdown but will return as the new driver is starting.
    */
+  @Deprecated
   synchronized void loadNodeDriver(EventSource newSrc, EventSink newSnk)
       throws IOException, InterruptedException {
     ensureClosedSourceSink(newSrc, newSnk);
@@ -190,7 +191,7 @@ public class LogicalNode implements Reportable {
   }
 
   public void loadConfig(FlumeConfigData cfg) throws IOException,
-      RuntimeException, FlumeSpecException {
+      RuntimeException, FlumeSpecException, InterruptedException {
 
     // got a newer configuration
     LOG.debug("Attempt to load config " + cfg);
@@ -245,19 +246,14 @@ public class LogicalNode implements Reportable {
       throw e;
     }
 
-    try {
-      loadNodeDriver(newSrc, newSnk);
+    loadNodeDriver(newSrc, newSnk);
 
-      // We have successfully opened the source and sinks for the config. We can
-      // mark this as the last good / successful config. It does not mean that
-      // this configuration will open without errors!
-      this.lastGoodCfg = cfg;
+    // We have successfully opened the source and sinks for the config. We can
+    // mark this as the last good / successful config. It does not mean that
+    // this configuration will open without errors!
+    this.lastGoodCfg = cfg;
 
-      LOG.info("Node config successfully set to " + cfg);
-    } catch (InterruptedException e) {
-      // TODO figure out what to do on interruption
-      LOG.error("Load Config interrupted", e);
-    }
+    LOG.info("Node config successfully set to " + cfg);
   }
 
   /**

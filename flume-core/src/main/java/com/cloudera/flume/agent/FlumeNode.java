@@ -44,8 +44,8 @@ import com.cloudera.flume.agent.durability.NaiveFileWALManager;
 import com.cloudera.flume.agent.durability.WALManager;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
-import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.handlers.debug.ChokeManager;
 import com.cloudera.flume.handlers.endtoend.AckListener;
@@ -509,12 +509,14 @@ public class FlumeNode implements Reportable {
       LOG.info("Loading spec from command line: '" + spec + "'");
 
       try {
-        // TODO the first one should be physical node name
+        // node name is the default logical and physical name.
         Context ctx = new LogicalNodeContext(nodename, nodename);
         Map<String, Pair<String, String>> cfgs = FlumeBuilder.parseConf(ctx,
             spec);
         Pair<String, String> node = cfgs.get(nodename);
-        flume.nodesMan.spawn(nodename, node.getLeft(), node.getRight());
+        FlumeConfigData fcd = new FlumeConfigData(0, node.getLeft(),
+            node.getRight(), 0, 0, null);
+        flume.nodesMan.spawn(ctx, nodename, fcd);
       } catch (Exception e) {
         LOG.warn("Caught exception loading node:" + e.getMessage());
         LOG.debug("Exception: ", e);
@@ -524,12 +526,12 @@ public class FlumeNode implements Reportable {
       }
 
     } else {
-      // default to null configurations.
       try {
-        flume.nodesMan.spawn(nodename, "null", "null");
-      } catch (FlumeSpecException e) {
-        LOG.error("This should never happen", e);
-      } catch (IOException e) {
+        // default to null configurations.
+        Context ctx = new LogicalNodeContext(nodename, nodename);
+        FlumeConfigData fcd = new FlumeConfigData(0, "null", "null", 0, 0, null);
+        flume.nodesMan.spawn(ctx, nodename, fcd);
+      } catch (Exception e) {
         LOG.error("Caught exception loading node", e);
       }
     }

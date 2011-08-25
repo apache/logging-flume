@@ -33,6 +33,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.thrift.transport.TTransportException;
 import org.junit.Ignore;
@@ -42,8 +43,13 @@ import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.agent.DirectMasterRPC;
 import com.cloudera.flume.agent.FlumeNode;
+import com.cloudera.flume.conf.Context;
+import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
+import com.cloudera.flume.conf.SourceFactory.SourceBuilder;
+import com.cloudera.flume.conf.SourceFactoryImpl;
+import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.master.ConfigurationManager;
 import com.cloudera.flume.master.SetupMasterTestEnv;
 import com.cloudera.flume.master.StatusManager.NodeState;
@@ -514,4 +520,48 @@ public class TestFlumeShell extends SetupMasterTestEnv {
     assertNull(flumeMaster.getStatMan().getStatus("foo"));
     assertNull(flumeMaster.getStatMan().getStatus("foo"));
   }
+
+  /**
+   * Create a master, connect via shell, and issue and map a config with a
+   * single instance of a source that increments a value ever open. Then load
+   * configuration. Verify that it came up exactly once.
+   */
+  @Test
+  public void testNoDoubleDriverOpen() throws InterruptedException,
+      TTransportException, IOException {
+    assertEquals(0, flumeMaster.getSpecMan().getAllConfigs().size());
+    final AtomicInteger i = new AtomicInteger();
+    SourceFactoryImpl sfi = new SourceFactoryImpl();
+    sfi.setSource("openCount", new SourceBuilder() {
+      @Override
+      public EventSource build(Context context, String... argv) {
+        return new EventSource.Base() {
+          public void open() throws InterruptedException {
+            i.incrementAndGet();
+          }
+        };
+      }
+
+    });
+    FlumeBuilder.setSourceFactory(sfi);
+
+    String nodename = "foo";
+    FlumeConfiguration conf = FlumeConfiguration.createTestableConfiguration();
+
+    FlumeShell sh = new FlumeShell();
+    sh.executeLine("connect localhost: "
+        + FlumeConfiguration.DEFAULT_ADMIN_PORT);
+    sh.executeLine("exec map foo bar");
+    sh.executeLine("exec config bar 'openCount' 'null' ");
+
+    FlumeNode n = new FlumeNode(conf, nodename,
+        new DirectMasterRPC(flumeMaster), false, false);
+    n.start();
+    Clock.sleep(1000); // if double open, one thread will get port, the other
+                       // will fail
+    n.stop();
+    // the magic count should only be 1
+    assertEquals(1, i.get());
+  }
+
 }

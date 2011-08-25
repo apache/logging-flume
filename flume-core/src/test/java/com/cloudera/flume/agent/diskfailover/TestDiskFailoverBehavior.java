@@ -68,7 +68,7 @@ public class TestDiskFailoverBehavior {
   }
 
   LogicalNode setupAgent(long count, String agentSink) throws IOException,
-      RuntimeException, FlumeSpecException {
+      RuntimeException, FlumeSpecException, InterruptedException {
     LogicalNode agent = new LogicalNode(
         new LogicalNodeContext("phys", "agent"), "agent");
     FlumeConfigData fcd = new FlumeConfigData(0, "asciisynth(" + count + ")",
@@ -78,7 +78,7 @@ public class TestDiskFailoverBehavior {
   }
 
   LogicalNode setupColl(long port, String name, String acc) throws IOException,
-      RuntimeException, FlumeSpecException {
+      RuntimeException, FlumeSpecException, InterruptedException {
     Context ctx = new LogicalNodeContext(new ReportTestingContext(), "phys",
         name);
     LogicalNode coll = new LogicalNode(ctx, name);

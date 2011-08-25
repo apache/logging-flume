@@ -26,6 +26,7 @@ import java.util.List;
 import org.junit.Test;
 
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.LogicalNodeContext;
 import com.google.common.collect.Lists;
 
 /**
@@ -37,9 +38,9 @@ public class TestLogicalNodeManager {
   public void testSpawnDecomission() throws IOException, FlumeSpecException,
       InterruptedException {
     LogicalNodeManager lnm = new LogicalNodeManager("local");
-    lnm.spawn("foo1", "null", "null");
-    lnm.spawn("foo2", "null", "null");
-    lnm.spawn("foo3", "null", "null");
+    lnm.spawn(LogicalNodeContext.testingContext(), "foo1", null);
+    lnm.spawn(LogicalNodeContext.testingContext(),"foo2", null);
+    lnm.spawn(LogicalNodeContext.testingContext(),"foo3", null);
 
     assertEquals(3, lnm.getNodes().size());
 
@@ -59,9 +60,9 @@ public class TestLogicalNodeManager {
   public void testSpawnDecomissionAllBut() throws IOException,
       FlumeSpecException, InterruptedException {
     LogicalNodeManager lnm = new LogicalNodeManager("local");
-    lnm.spawn("foo1", "null", "null");
-    lnm.spawn("foo2", "null", "null");
-    lnm.spawn("foo3", "null", "null");
+    lnm.spawn(LogicalNodeContext.testingContext(),"foo1", null);
+    lnm.spawn(LogicalNodeContext.testingContext(),"foo2", null);
+    lnm.spawn(LogicalNodeContext.testingContext(),"foo3", null);
 
     assertEquals(3, lnm.getNodes().size());
 

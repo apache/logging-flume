@@ -32,15 +32,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
-import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.conf.ReportTestingContext;
-import com.cloudera.flume.core.CompositeSink;
-import com.cloudera.flume.core.EventSink;
-import com.cloudera.flume.core.EventSource;
 import com.cloudera.flume.reporter.ReportEvent;
 import com.cloudera.flume.reporter.ReportManager;
 import com.cloudera.flume.reporter.Reportable;
@@ -67,21 +63,14 @@ public class LogicalNodeManager implements Reportable {
 
   /**
    * Give a logical node name, and src and a sink spec, generate a new logical
-   * node.
-   */
-  synchronized public void spawn(String name, String src, String snk)
-      throws IOException, FlumeSpecException {
-    Context ctx = new LogicalNodeContext(physicalNode, name);
-    spawn(ctx, name, FlumeBuilder.buildSource(ctx, src), new CompositeSink(ctx,
-        snk));
-  }
-
-  /**
-   * Give a logical node name, and src and a sink spec, generate a new logical
    * node. This gives assumes the current version and is ONLY used for testing.
+   * 
+   * @throws InterruptedException
+   * @throws RuntimeException
    */
   synchronized public void testingSpawn(String name, String src, String snk)
-      throws IOException, FlumeSpecException {
+      throws IOException, FlumeSpecException, RuntimeException,
+      InterruptedException {
     LogicalNode nd = threads.get(name);
     if (nd == null) {
       Context ctx = new ReportTestingContext(new LogicalNodeContext(
@@ -98,9 +87,8 @@ public class LogicalNodeManager implements Reportable {
 
   }
 
-  // TODO (jon) make private
-  synchronized void spawn(Context ctx, String name, EventSource src,
-      EventSink snk) throws IOException {
+  public synchronized void spawn(Context ctx, String name, FlumeConfigData fcd)
+      throws IOException, RuntimeException, FlumeSpecException, InterruptedException {
     LogicalNode nd = threads.get(name);
     if (nd == null) {
       LOG.info("creating new logical node " + name);
@@ -108,13 +96,12 @@ public class LogicalNodeManager implements Reportable {
       threads.put(nd.getName(), nd);
     }
 
-    try {
-      nd.loadNodeDriver(src, snk);
-    } catch (InterruptedException e) {
-      // TODO verify this is reasonable behavior
-      LOG.error("spawn was interrupted", e);
+    if (fcd == null) {
+      fcd = new FlumeConfigData(0, "null", "null", 0, 0, null);
     }
 
+    LOG.info("Loading node name with " + fcd);
+    nd.loadConfig(fcd);
   }
 
   /**

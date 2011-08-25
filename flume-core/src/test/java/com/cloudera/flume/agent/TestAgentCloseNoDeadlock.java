@@ -27,7 +27,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.flume.conf.FlumeConfigData;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.LogicalNodeContext;
 
 /**
  * These test cases verify that closing an agent eventually exits instead of
@@ -57,7 +59,8 @@ public class TestAgentCloseNoDeadlock {
         try {
           go.await();
           while (heartstop.getCount() > 0) {
-            lnm.spawn("foo1", "asciisynth(1)", sink);
+            lnm.spawn(LogicalNodeContext.testingContext(), "foo1",
+                FlumeConfigData.testingFlumeConfigData("asciisynth(1)", sink));
             heartstop.countDown();
           }
         } catch (Exception e) {
@@ -84,8 +87,8 @@ public class TestAgentCloseNoDeadlock {
     }.start();
 
     go.countDown();
-    assertTrue("heartbeat thread blocked", heartstop.await(200,
-        TimeUnit.SECONDS));
+    assertTrue("heartbeat thread blocked",
+        heartstop.await(200, TimeUnit.SECONDS));
   }
 
   /**
