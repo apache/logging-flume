@@ -50,17 +50,18 @@ public class RollingFileSink extends AbstractEventSink implements Configurable {
 
   @Override
   public void configure(Context context) {
-    File directory = context.get("sink.directory", File.class);
-    Long rollInterval = context.get("sink.rollInterval", Long.class);
+    String directory = context.get("sink.directory", String.class);
+    String rollInterval = context.get("sink.rollInterval", String.class);
 
     Preconditions.checkArgument(directory != null, "Directory may not be null");
 
     if (rollInterval == null) {
-      rollInterval = defaultRollInterval;
+      this.rollInterval = defaultRollInterval;
+    } else {
+      this.rollInterval = Long.parseLong(rollInterval);
     }
 
-    this.rollInterval = rollInterval;
-    this.directory = directory;
+    this.directory = new File(directory);
   }
 
   @Override
