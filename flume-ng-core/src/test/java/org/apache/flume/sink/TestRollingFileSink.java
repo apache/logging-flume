@@ -8,6 +8,7 @@ import java.io.IOException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
+import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.SimpleEvent;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.junit.After;
@@ -32,8 +33,6 @@ public class TestRollingFileSink {
     sink = new RollingFileSink();
 
     tmpDir.mkdirs();
-
-    sink.setDirectory(tmpDir);
   }
 
   @After
@@ -45,6 +44,10 @@ public class TestRollingFileSink {
   public void testLifecycle() throws InterruptedException, LifecycleException {
     Context context = new Context();
 
+    context.put("sink.directory", tmpDir);
+
+    Configurables.configure(sink, context);
+
     sink.open(context);
     sink.close(context);
   }
@@ -55,7 +58,10 @@ public class TestRollingFileSink {
 
     Context context = new Context();
 
-    sink.setRollInterval(1);
+    context.put("sink.directory", tmpDir);
+    context.put("sink.rollInterval", 1L);
+
+    Configurables.configure(sink, context);
 
     sink.open(context);
 

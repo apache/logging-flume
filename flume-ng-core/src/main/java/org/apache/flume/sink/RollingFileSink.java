@@ -13,6 +13,7 @@ import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
+import org.apache.flume.conf.Configurable;
 import org.apache.flume.formatter.output.EventFormatter;
 import org.apache.flume.formatter.output.PathManager;
 import org.apache.flume.formatter.output.TextDelimitedOutputFormatter;
@@ -20,9 +21,10 @@ import org.apache.flume.lifecycle.LifecycleException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-public class RollingFileSink extends AbstractEventSink {
+public class RollingFileSink extends AbstractEventSink implements Configurable {
 
   private static final Logger logger = LoggerFactory
       .getLogger(RollingFileSink.class);
@@ -44,7 +46,21 @@ public class RollingFileSink extends AbstractEventSink {
     counterGroup = new CounterGroup();
     pathController = new PathManager();
     shouldRotate = false;
-    rollInterval = defaultRollInterval;
+  }
+
+  @Override
+  public void configure(Context context) {
+    File directory = context.get("sink.directory", File.class);
+    Long rollInterval = context.get("sink.rollInterval", Long.class);
+
+    Preconditions.checkArgument(directory != null, "Directory may not be null");
+
+    if (rollInterval == null) {
+      rollInterval = defaultRollInterval;
+    }
+
+    this.rollInterval = rollInterval;
+    this.directory = directory;
   }
 
   @Override
