@@ -17,7 +17,7 @@
  */
 package com.cloudera.flume.agent;
 
-import static com.cloudera.flume.master.TestMasterJersey.curl;
+import static com.cloudera.util.HttpServerTestUtils.curl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 

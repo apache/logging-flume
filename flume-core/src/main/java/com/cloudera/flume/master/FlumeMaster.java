@@ -35,6 +35,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.thrift.transport.TTransportException;
+import org.mortbay.jetty.handler.ContextHandlerCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,8 +54,8 @@ import com.cloudera.flume.util.FlumeVMInfo;
 import com.cloudera.flume.util.SystemInfo;
 import com.cloudera.util.CheckJavaVersion;
 import com.cloudera.util.InternalHttpServer;
+import com.cloudera.util.InternalHttpServer.ContextCreator;
 import com.cloudera.util.NetUtils;
-import com.cloudera.util.StatusHttpServer.StackServlet;
 
 /**
  * This is a first cut at a server for distributing configurations to different
@@ -249,18 +250,19 @@ public class FlumeMaster implements Reportable {
     ReportManager.get().add(sysInfo);
 
     if (doHttp) {
-      http = new InternalHttpServer();
-
-      http.addHandler(InternalHttpServer.createLogAppContext());
-      http.addHandler(InternalHttpServer.createServletContext(
-          StackServlet.class, "/stacks", "/*", "stacks"));
-
-      http.setBindAddress("0.0.0.0");
-      http.setPort(cfg.getMasterHttpPort());
-      String webAppRoot = FlumeConfiguration.get().getMasterWebappRoot();
-      http.setWebappDir(new File(webAppRoot));
+      String bindAddress = "0.0.0.0";
+      int port = cfg.getMasterHttpPort();
+      final String webAppRoot = FlumeConfiguration.get().getMasterWebappRoot();
       LOG.info("Webserver root directory: " + webAppRoot);
-      http.start();
+      ContextCreator cc = new ContextCreator() {
+        @Override
+        public void addContexts(ContextHandlerCollection handlers) {
+          handlers.addHandler(InternalHttpServer.createLogAppContext());
+          handlers.addHandler(InternalHttpServer.createStackSevletContext());
+          InternalHttpServer.addHandlersFromPaths(handlers, new File(webAppRoot));
+        }
+      };
+      http = InternalHttpServer.startHttpServer(cc, bindAddress, port);
     }
 
     controlServer = new MasterClientServer(this, FlumeConfiguration.get());

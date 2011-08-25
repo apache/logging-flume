@@ -34,6 +34,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.mortbay.jetty.handler.ContextHandlerCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,9 +62,9 @@ import com.cloudera.flume.util.SystemInfo;
 import com.cloudera.util.CheckJavaVersion;
 import com.cloudera.util.FileUtil;
 import com.cloudera.util.InternalHttpServer;
+import com.cloudera.util.InternalHttpServer.ContextCreator;
 import com.cloudera.util.NetUtils;
 import com.cloudera.util.Pair;
-import com.cloudera.util.StatusHttpServer.StackServlet;
 import com.google.common.base.Preconditions;
 
 /**
@@ -258,24 +259,20 @@ public class FlumeNode implements Reportable {
     ReportManager.get().add(this);
 
     if (startHttp) {
-      try {
-        http = new InternalHttpServer();
-
-        http.addHandler(InternalHttpServer.createLogAppContext());
-
-        http.addHandler(InternalHttpServer.createServletContext(
-            StackServlet.class, "/stacks", "/*", "stacks"));
-
-        http.setBindAddress("0.0.0.0");
-        http.setPort(conf.getNodeStatusPort());
-        String webAppRoot = FlumeConfiguration.get().getNodeWebappRoot();
-        http.setWebappDir(new File(webAppRoot));
-        http.setScanForApps(true);
-
-        http.start();
-      } catch (Throwable t) {
-        LOG.error("Unexpected exception/error thrown! " + t.getMessage(), t);
-      }
+      int nodePort = conf.getNodeStatusPort();
+      String bindAddress = "0.0.0.0";
+      ContextCreator cc = new ContextCreator() {
+        @Override
+        public void addContexts(ContextHandlerCollection handlers) {
+          handlers.addHandler(InternalHttpServer.createLogAppContext());
+          handlers.addHandler(InternalHttpServer.createStackSevletContext());
+          String webAppRoot = FlumeConfiguration.get().getNodeWebappRoot();
+          InternalHttpServer.addHandlersFromPaths(handlers,
+              new File(webAppRoot));
+        }
+      };
+      http = InternalHttpServer.startFindPortHttpServer(cc, bindAddress,
+          nodePort);
     }
 
     if (reportPusher != null) {
@@ -371,9 +368,9 @@ public class FlumeNode implements Reportable {
 
   /**
    * This function checks the agent logs dir to make sure that the process has
-   * the ability to the directory if necessary, that the path if it does exist is
-   * a directory, and that it can in fact create files inside of the directory.
-   * If it fails any of these, it throws an exception.
+   * the ability to the directory if necessary, that the path if it does exist
+   * is a directory, and that it can in fact create files inside of the
+   * directory. If it fails any of these, it throws an exception.
    * 
    * Finally, it checks to see if the path is in /tmp and warns the user that
    * this may not be the best idea.
