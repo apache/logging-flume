@@ -44,7 +44,7 @@ public class TestRollingFileSink {
   public void testLifecycle() throws InterruptedException, LifecycleException {
     Context context = new Context();
 
-    context.put("sink.directory", tmpDir);
+    context.put("sink.directory", tmpDir.getPath());
 
     Configurables.configure(sink, context);
 
@@ -58,8 +58,8 @@ public class TestRollingFileSink {
 
     Context context = new Context();
 
-    context.put("sink.directory", tmpDir);
-    context.put("sink.rollInterval", 1L);
+    context.put("sink.directory", tmpDir.getPath());
+    context.put("sink.rollInterval", "1");
 
     Configurables.configure(sink, context);
 
