@@ -44,13 +44,13 @@ public class NetcatSource extends AbstractEventSource implements Configurable {
   @Override
   public void configure(Context context) {
     String nodeName = context.get("logicalNode.name", String.class);
-    Integer port = context.get("source.port", Integer.class);
+    String port = context.get("source.port", String.class);
 
     Preconditions.checkArgument(nodeName != null, "Node name may not be null");
     Preconditions.checkArgument(port != null, "Source port may not be null");
 
     this.nodeName = nodeName;
-    this.port = port;
+    this.port = Integer.parseInt(port);
   }
 
   @Override
