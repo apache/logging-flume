@@ -390,7 +390,7 @@ public class FlumeBuilder {
     String name;
     Object[] args;
 
-    FunctionSpec(String name, Object... args) {
+    public FunctionSpec(String name, Object... args) {
       this.name = name;
       this.args = args;
     }

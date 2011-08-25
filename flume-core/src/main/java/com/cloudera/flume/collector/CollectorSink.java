@@ -296,7 +296,6 @@ public class CollectorSink extends EventSink.Base {
         String logdir = FlumeConfiguration.get().getCollectorDfsDir(); // default
         long millis = FlumeConfiguration.get().getCollectorRollMillis();
         String prefix = "";
-        Object format = null;
         if (argv.length >= 1) {
           logdir = argv[0].toString();
         }
@@ -306,6 +305,14 @@ public class CollectorSink extends EventSink.Base {
         if (argv.length >= 3) {
           // TODO eventually Long instead of String
           millis = Long.parseLong(argv[2].toString());
+        }
+
+        // try to get format from context
+        Object format = context.getObj("format", Object.class);
+        if (format == null) {
+          // used to be strings but now must be a func spec
+          String formatString = FlumeConfiguration.get().getDefaultOutputFormat();
+          format = new FunctionSpec(formatString);
         }
         if (argv.length >= 4) {
           // shove format in to context to pass down.

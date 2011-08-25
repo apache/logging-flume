@@ -31,6 +31,7 @@ import com.cloudera.flume.conf.FlumeBuilder.FunctionSpec;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.SinkBuilderUtil;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
@@ -164,20 +165,19 @@ public class EscapedCustomDfsSink extends EventSink.Base {
           filename = args[1].toString();
         }
 
-        Object format = FlumeConfiguration.get().getDefaultOutputFormat();
+        Object formatArg = null;
         if (args.length >= 3) {
-          format = args[2];
+          formatArg = args[2];
         }
 
-        OutputFormat o;
+        OutputFormat o = null;
         try {
-          o = FlumeBuilder.createFormat(FormatFactory.get(), format);
+          o = SinkBuilderUtil.resolveOutputFormat(context, formatArg);
         } catch (FlumeSpecException e) {
-          LOG.warn("Illegal format type " + format + ".", e);
-          o = null;
+          LOG.warn("Illegal format type " + formatArg + ".", e);
         }
-        Preconditions.checkArgument(o != null, "Illegal format type " + format
-            + ".");
+        Preconditions.checkArgument(o != null, "Illegal format type "
+            + formatArg + ".");
 
         return new EscapedCustomDfsSink(args[0].toString(), filename, o);
       }

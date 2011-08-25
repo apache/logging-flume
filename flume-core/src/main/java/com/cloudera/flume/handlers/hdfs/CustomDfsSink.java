@@ -37,6 +37,7 @@ import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
 import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
+import com.cloudera.flume.conf.SinkBuilderUtil;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
 import com.cloudera.flume.core.Event;
 import com.cloudera.flume.core.EventSink;
@@ -199,15 +200,22 @@ public class CustomDfsSink extends EventSink.Base {
               "usage: customdfs(\"[(hdfs|file|s3n|...)://namenode[:port]]/path\", format)");
         }
 
-        Object format = (args.length == 1) ? null : args[1];
-        OutputFormat fmt;
-        try {
-          fmt = FlumeBuilder.createFormat(FormatFactory.get(), format);
-        } catch (FlumeSpecException e) {
-          LOG.error("failed to load format " + format, e);
-          throw new IllegalArgumentException("failed to load format " + format);
+        Object formatArg = null;
+        if (args.length >= 2) {
+          formatArg = args[1];
         }
-        return new CustomDfsSink(args[0].toString(), fmt);
+
+        OutputFormat o = null;
+        try {
+          o = SinkBuilderUtil.resolveOutputFormat(context, formatArg);
+        } catch (FlumeSpecException e) {
+          LOG.warn("Illegal format type " + formatArg + ".", e);
+          throw new IllegalArgumentException("failed to load format", e);
+        }
+        Preconditions.checkArgument(o != null, "Illegal format type "
+            + formatArg + ".");
+
+        return new CustomDfsSink(args[0].toString(), o);
       }
 
       @Deprecated
