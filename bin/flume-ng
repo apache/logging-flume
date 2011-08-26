@@ -52,6 +52,10 @@ run_node() {
 
   final_cp="${final_cp}${FLUME_CLASSPATH}"
 
+  [ -n "$JAVA" ] || error "Unable to find java executable. Is it in your PATH?" 1
+  [ -n "$FLUME_CLASSPATH" ] || error "Flume classpath is not set! Use flume-env.sh or --classpath <cp>." 1
+  [ -n "$opt_conf" ] || warn "No configuration directory set! Use --conf <dir> to override." 1
+
   $JAVA $JAVA_OPTS -cp $final_cp $FLUME_NODE_CLASS
 }
 
