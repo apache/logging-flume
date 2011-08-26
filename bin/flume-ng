@@ -56,7 +56,7 @@ run_node() {
   [ -n "$FLUME_CLASSPATH" ] || error "Flume classpath is not set! Use flume-env.sh or --classpath <cp>." 1
   [ -n "$opt_conf" ] || warn "No configuration directory set! Use --conf <dir> to override." 1
 
-  $JAVA $JAVA_OPTS -cp $final_cp $FLUME_NODE_CLASS
+  $JAVA $JAVA_OPTS -cp $final_cp $FLUME_NODE_CLASS $*
 }
 
 validate_env() {
@@ -108,7 +108,7 @@ while [ -n "$*" ] ; do
       shift
       ;;
     *)
-      warn "Unknown option '$arg'"
+      args="$args $arg"
       ;;
   esac
 done
@@ -116,6 +116,6 @@ done
 if [ -n "$opt_help" ] ; then
   display_help
 elif [ -n "$opt_node" ] ; then
-  run_node
+  run_node $args
 fi
 
