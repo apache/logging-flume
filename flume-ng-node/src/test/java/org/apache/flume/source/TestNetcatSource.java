@@ -40,7 +40,7 @@ public class TestNetcatSource {
 
     /* FIXME: Use a random port for testing. */
     context.put("logicalNode.name", "test");
-    context.put("source.port", 41414);
+    context.put("source.port", "41414");
 
     Configurables.configure(source, context);
 
@@ -90,9 +90,6 @@ public class TestNetcatSource {
   public void testDurability() throws InterruptedException, LifecycleException,
       EventDeliveryException, IOException {
 
-    /* FIXME: Use a random port for testing. */
-    ((NetcatSource) source).setPort(41414);
-
     FileBasedWALManager walManager = new FileBasedWALManager();
 
     walManager.setDirectory(new File("/tmp/flume-ncs-tests", "wal-test"));
@@ -104,7 +101,7 @@ public class TestNetcatSource {
     Context context = new Context();
 
     context.put("logicalNode.name", "test");
-    context.put("source.port", 41414);
+    context.put("source.port", "41414");
 
     Configurables.configure(source, context);
 
