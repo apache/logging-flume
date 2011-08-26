@@ -52,6 +52,7 @@ public class DefaultSourceFactory implements SourceFactory {
 
     logger.debug("Creating instance of source {}", name);
 
+    /* FIXME: Is returning null really a good idea? Should we just panic? */
     if (!sourceRegistry.containsKey(name)) {
       return null;
     }
