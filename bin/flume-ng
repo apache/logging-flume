@@ -1,0 +1,117 @@
+#!/bin/sh
+
+JAVA=`type -p java`
+JAVA_OPTS=""
+
+FLUME_NODE_CLASS="org.apache.flume.node.Application"
+FLUME_CLASSPATH=""
+
+warn() {
+  local msg=$1
+
+  echo "Warning: $msg"
+}
+
+error() {
+  local msg=$1
+  local exit_code=$2
+
+  echo "Error: $msg"
+
+  if [ -n "$exit_code" ] ; then
+    exit $exit_code
+  fi
+}
+
+display_help() {
+  cat <<EOF
+usage: $0 [help | node] [--no-env]
+
+commands:
+  help                display this help text
+  node                run a Flume node
+
+options:
+  --conf,-c <conf>    use configs in <conf> directory
+  --no-env,-E         do not source the flume-env.sh file
+  --classpath,-C <cp> override the classpath completely
+  --data,-d <dir>     store internal flume data in <dir>
+
+  Note that the conf directory is always included in the classpath.
+
+EOF
+
+}
+
+run_node() {
+  local final_cp
+
+  if [ -n "$opt_conf" ] ; then
+    final_cp="$opt_conf:"
+  fi
+
+  final_cp="${final_cp}${FLUME_CLASSPATH}"
+
+  $JAVA $JAVA_OPTS -cp $final_cp $FLUME_NODE_CLASS
+}
+
+validate_env() {
+  [ -z "$CLASSPATH" ] || warn "You have CLASSPATH set to $CLASSPATH - you better know what you're doing!"
+}
+
+opt_help=
+opt_no_env=
+opt_conf=
+opt_datadir=
+
+mode=$1
+shift
+
+case "$mode" in
+  help)
+    opt_help=1
+    ;;
+  node)
+    opt_node=1
+    ;;
+  *)
+    error "Unknown or unspecified command '$mode'"
+    opt_help=1
+    ;;
+esac
+
+while [ -n "$*" ] ; do
+  arg=$1
+  shift
+
+  case "$arg" in
+    --no-env|-E)
+      opt_no_env=1
+      ;;
+    --conf|-c)
+      [ -n "$1" ] || error "Option --conf requires an argument" 1
+      opt_conf=$1
+      shift
+      ;;
+    --classpath|-C)
+      [ -n "$1" ] || error "Option --classpath requires an argument" 1
+      FLUME_CLASSPATH=$1
+      shift
+      ;;
+    --data|-d)
+      [ -n "$1" ] || error "Option --data requires an argument" 1
+      opt_datadir=$1
+      shift
+      ;;
+    *)
+      warn "Unknown option '$arg'"
+      ;;
+  esac
+done
+
+if [ -n "$opt_help" ] ; then
+  display_help
+elif [ -n "$opt_node" ] ; then
+  run_node
+fi
+
