@@ -14,14 +14,13 @@ import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.conf.Configurables;
 import org.apache.flume.durability.WALManager;
 import org.apache.flume.durability.WALWriter;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Preconditions;
 
 public class NetcatSource extends AbstractEventSource implements Configurable {
 
@@ -43,14 +42,11 @@ public class NetcatSource extends AbstractEventSource implements Configurable {
 
   @Override
   public void configure(Context context) {
-    String nodeName = context.get("logicalNode.name", String.class);
-    String port = context.get("source.port", String.class);
+    Configurables.ensureRequiredNonNull(context, "logicalNode.name",
+        "source.port");
 
-    Preconditions.checkArgument(nodeName != null, "Node name may not be null");
-    Preconditions.checkArgument(port != null, "Source port may not be null");
-
-    this.nodeName = nodeName;
-    this.port = Integer.parseInt(port);
+    nodeName = context.get("logicalNode.name", String.class);
+    port = Integer.parseInt(context.get("source.port", String.class));
   }
 
   @Override
