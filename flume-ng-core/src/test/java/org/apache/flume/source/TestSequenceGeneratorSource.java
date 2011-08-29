@@ -4,6 +4,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.EventSource;
+import org.apache.flume.conf.Configurables;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.junit.Assert;
 import org.junit.Before;
@@ -23,6 +24,10 @@ public class TestSequenceGeneratorSource {
       EventDeliveryException {
 
     Context context = new Context();
+
+    context.put("logicalNode.name", "test");
+
+    Configurables.configure(source, context);
 
     source.open(context);
 
