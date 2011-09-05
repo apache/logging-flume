@@ -2,10 +2,7 @@ package org.apache.flume.lifecycle;
 
 import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
-import org.apache.flume.LogicalNode;
 import org.apache.flume.lifecycle.LifecycleSupervisor.SupervisorPolicy;
-import org.apache.flume.sink.NullSink;
-import org.apache.flume.source.SequenceGeneratorSource;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,20 +37,14 @@ public class TestLifecycleSupervisor {
      * LifecycleState.START);
      */
 
-    LogicalNode node = new LogicalNode();
-    node.setName("node1");
-    node.setSource(new SequenceGeneratorSource());
-    node.setSink(new NullSink());
+    CountingLifecycleAware node = new CountingLifecycleAware();
 
     SupervisorPolicy policy = new SupervisorPolicy.OnceOnlyPolicy();
     supervisor.supervise(node, policy, LifecycleState.START);
 
     Thread.sleep(10000);
 
-    node = new LogicalNode();
-    node.setName("node2");
-    node.setSource(new SequenceGeneratorSource());
-    node.setSink(new NullSink());
+    node = new CountingLifecycleAware();
 
     policy = new SupervisorPolicy.OnceOnlyPolicy();
     supervisor.supervise(node, policy, LifecycleState.START);
@@ -71,7 +62,23 @@ public class TestLifecycleSupervisor {
     supervisor.start(context);
 
     /* Attempt to supervise a known-to-fail config. */
-    LogicalNode node = new LogicalNode();
+    LifecycleAware node = new LifecycleAware() {
+
+      @Override
+      public void stop(Context context) {
+      }
+
+      @Override
+      public void start(Context context) {
+        throw new NullPointerException("Boom!");
+      }
+
+      @Override
+      public LifecycleState getLifecycleState() {
+        return LifecycleState.IDLE;
+      }
+    };
+
     SupervisorPolicy policy = new SupervisorPolicy.OnceOnlyPolicy();
     supervisor.supervise(node, policy, LifecycleState.START);
 
@@ -90,11 +97,7 @@ public class TestLifecycleSupervisor {
 
     LifecycleSupervisor supervisor2 = new LifecycleSupervisor();
 
-    /* Attempt to supervise a known-to-fail config. */
-    LogicalNode node = new LogicalNode();
-    node.setName("node1");
-    node.setSource(new SequenceGeneratorSource());
-    node.setSink(new NullSink());
+    CountingLifecycleAware node = new CountingLifecycleAware();
 
     SupervisorPolicy policy = new SupervisorPolicy.OnceOnlyPolicy();
     supervisor2.supervise(node, policy, LifecycleState.START);
@@ -165,8 +168,7 @@ public class TestLifecycleSupervisor {
     }
 
     @Override
-    public void start(Context context) throws LifecycleException,
-        InterruptedException {
+    public void start(Context context) {
 
       counterGroup.incrementAndGet("start");
 
@@ -174,8 +176,7 @@ public class TestLifecycleSupervisor {
     }
 
     @Override
-    public void stop(Context context) throws LifecycleException,
-        InterruptedException {
+    public void stop(Context context) {
 
       counterGroup.incrementAndGet("stop");
 
