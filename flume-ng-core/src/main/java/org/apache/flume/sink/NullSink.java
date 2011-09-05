@@ -1,16 +1,33 @@
 package org.apache.flume.sink;
 
-import org.apache.flume.Context;
+import org.apache.flume.Channel;
 import org.apache.flume.Event;
-import org.apache.flume.EventDeliveryException;
+import org.apache.flume.PollableSink;
+import org.apache.flume.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class NullSink extends AbstractEventSink {
+public class NullSink extends AbstractEventSink implements PollableSink {
+
+  private static final Logger logger = LoggerFactory.getLogger(NullSink.class);
 
   @Override
-  public void append(Context context, Event event)
-      throws InterruptedException, EventDeliveryException {
+  public void process() {
+    Channel channel = getChannel();
+    Transaction transaction = channel.getTransaction();
 
-    /* We purposefully do absolutely nothing. */
+    try {
+      transaction.begin();
+
+      Event event = channel.take();
+      /* We purposefully do nothing useful. */
+
+      channel.release(event);
+      transaction.commit();
+    } catch (Exception e) {
+      logger.error("Failed to deliver event. Exception follows.", e);
+      transaction.rollback();
+    }
 
   }
 

@@ -35,8 +35,7 @@ public class LifecycleSupervisor implements LifecycleAware {
   }
 
   @Override
-  public synchronized void start(Context context) throws LifecycleException,
-      InterruptedException {
+  public synchronized void start(Context context) {
 
     logger.info("Starting lifecycle supervisor {}", Thread.currentThread()
         .getId());
@@ -59,8 +58,7 @@ public class LifecycleSupervisor implements LifecycleAware {
   }
 
   @Override
-  public synchronized void stop(Context context) throws LifecycleException,
-      InterruptedException {
+  public synchronized void stop(Context context) {
 
     logger.info("Stopping lifecycle supervisor {}", Thread.currentThread()
         .getId());
@@ -69,7 +67,12 @@ public class LifecycleSupervisor implements LifecycleAware {
       monitorService.shutdown();
 
       while (!monitorService.isTerminated()) {
-        monitorService.awaitTermination(500, TimeUnit.MILLISECONDS);
+        try {
+          monitorService.awaitTermination(500, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+          logger.debug("Interrupted while waiting for monitor service to stop");
+          monitorService.shutdownNow();
+        }
       }
     }
 

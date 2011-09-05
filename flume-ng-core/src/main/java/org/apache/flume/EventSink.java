@@ -1,16 +1,11 @@
 package org.apache.flume;
 
-import org.apache.flume.lifecycle.LifecycleException;
+import org.apache.flume.lifecycle.LifecycleAware;
 
-public interface EventSink {
+public interface EventSink extends LifecycleAware {
 
-  public void open(Context context) throws InterruptedException,
-      LifecycleException;
+  public void setChannel(Channel channel);
 
-  public void append(Context context, Event event) throws InterruptedException,
-      EventDeliveryException;
-
-  public void close(Context context) throws InterruptedException,
-      LifecycleException;
+  public Channel getChannel();
 
 }

@@ -9,22 +9,25 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
+import org.apache.flume.PollableSink;
+import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.formatter.output.EventFormatter;
 import org.apache.flume.formatter.output.PathManager;
 import org.apache.flume.formatter.output.TextDelimitedOutputFormatter;
-import org.apache.flume.lifecycle.LifecycleException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-public class RollingFileSink extends AbstractEventSink implements Configurable {
+public class RollingFileSink extends AbstractEventSink implements PollableSink,
+    Configurable {
 
   private static final Logger logger = LoggerFactory
       .getLogger(RollingFileSink.class);
@@ -65,10 +68,9 @@ public class RollingFileSink extends AbstractEventSink implements Configurable {
   }
 
   @Override
-  public void open(Context context) throws InterruptedException,
-      LifecycleException {
+  public void start(Context context) {
 
-    super.open(context);
+    super.start(context);
 
     pathController.setBaseDirectory(directory);
 
@@ -97,9 +99,7 @@ public class RollingFileSink extends AbstractEventSink implements Configurable {
   }
 
   @Override
-  public void append(Context context, Event event) throws InterruptedException,
-      EventDeliveryException {
-
+  public void process() throws EventDeliveryException {
     if (shouldRotate) {
       logger.debug("Time to rotate {}", pathController.getCurrentFile());
 
@@ -133,7 +133,14 @@ public class RollingFileSink extends AbstractEventSink implements Configurable {
       }
     }
 
+    Channel channel = getChannel();
+    Transaction transaction = channel.getTransaction();
+    Event event = null;
+
     try {
+      transaction.begin();
+      event = channel.take();
+
       byte[] bytes = formatter.format(event);
 
       /*
@@ -149,16 +156,18 @@ public class RollingFileSink extends AbstractEventSink implements Configurable {
        * events. For now, we're super-conservative and flush on each write.
        */
       outputStream.flush();
-    } catch (IOException e) {
-      throw new EventDeliveryException("Failed to write event:" + event, e);
+
+      channel.release(event);
+      transaction.commit();
+    } catch (Exception e) {
+      transaction.rollback();
     }
   }
 
   @Override
-  public void close(Context context) throws InterruptedException,
-      LifecycleException {
+  public void stop(Context context) {
 
-    super.close(context);
+    super.stop(context);
 
     if (outputStream != null) {
       logger.debug("Closing file {}", pathController.getCurrentFile());
@@ -167,14 +176,21 @@ public class RollingFileSink extends AbstractEventSink implements Configurable {
         outputStream.flush();
         outputStream.close();
       } catch (IOException e) {
-        throw new LifecycleException("Unable to close output stream", e);
+        logger.error("Unable to close output stream. Exception follows.", e);
       }
     }
 
     rollService.shutdown();
 
     while (!rollService.isTerminated()) {
-      rollService.awaitTermination(1, TimeUnit.SECONDS);
+      try {
+        rollService.awaitTermination(1, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        logger
+            .debug(
+                "Interrupted while waiting for roll service to stop. Please report this.",
+                e);
+      }
     }
   }
 

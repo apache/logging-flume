@@ -1,27 +1,43 @@
 package org.apache.flume.sink;
 
+import org.apache.flume.Channel;
 import org.apache.flume.Context;
-import org.apache.flume.Event;
-import org.apache.flume.EventDeliveryException;
 import org.apache.flume.EventSink;
-import org.apache.flume.lifecycle.LifecycleException;
+import org.apache.flume.lifecycle.LifecycleAware;
+import org.apache.flume.lifecycle.LifecycleState;
 
-abstract public class AbstractEventSink implements EventSink {
+abstract public class AbstractEventSink implements EventSink, LifecycleAware {
 
-  @Override
-  public void open(Context context) throws InterruptedException,
-      LifecycleException {
-    // Empty implementation by default.
+  private Channel channel;
+
+  private LifecycleState lifecycleState;
+
+  public AbstractEventSink() {
+    lifecycleState = LifecycleState.IDLE;
   }
 
   @Override
-  abstract public void append(Context context, Event event)
-      throws InterruptedException, EventDeliveryException;
+  public synchronized void start(Context context) {
+    lifecycleState = LifecycleState.START;
+  }
 
   @Override
-  public void close(Context context) throws InterruptedException,
-      LifecycleException {
-    // Empty implementation by default.
+  public synchronized void stop(Context context) {
+    lifecycleState = LifecycleState.STOP;
+  }
+
+  public synchronized Channel getChannel() {
+    return channel;
+  }
+
+  @Override
+  public synchronized void setChannel(Channel channel) {
+    this.channel = channel;
+  }
+
+  @Override
+  public synchronized LifecycleState getLifecycleState() {
+    return lifecycleState;
   }
 
 }

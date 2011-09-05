@@ -3,13 +3,9 @@ package org.apache.flume;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.flume.Context;
-import org.apache.flume.LogicalNode;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;
-import org.apache.flume.sink.NullSink;
-import org.apache.flume.source.SequenceGeneratorSource;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,8 +24,8 @@ public class TestLogicalNode {
     node = new LogicalNode();
 
     node.setName("test-node-n1");
-    node.setSource(new SequenceGeneratorSource());
-    node.setSink(new NullSink());
+    node.setSourceRunner(new EmptySourceRunner());
+    node.setSinkRunner(new EmptySinkRunner());
   }
 
   @Test
@@ -70,8 +66,8 @@ public class TestLogicalNode {
           LogicalNode node = new LogicalNode();
 
           node.setName("test-node-" + j);
-          node.setSource(new SequenceGeneratorSource());
-          node.setSink(new NullSink());
+          node.setSourceRunner(new EmptySourceRunner());
+          node.setSinkRunner(new EmptySinkRunner());
 
           try {
             node.start(context);
@@ -94,8 +90,6 @@ public class TestLogicalNode {
             Assert.assertEquals(LifecycleState.STOP, node.getLifecycleState());
 
             successfulThread.incrementAndGet();
-          } catch (LifecycleException e) {
-            logger.debug("Exception follows", e);
           } catch (InterruptedException e) {
             logger.debug("Exception follows", e);
           }
@@ -110,4 +104,47 @@ public class TestLogicalNode {
 
     Assert.assertEquals(10, successfulThread.get());
   }
+
+  public static class EmptySourceRunner implements SourceRunner {
+
+    private LifecycleState lifecycleState = LifecycleState.IDLE;
+
+    @Override
+    public void start(Context context) {
+      lifecycleState = LifecycleState.START;
+    }
+
+    @Override
+    public void stop(Context context) {
+      lifecycleState = LifecycleState.STOP;
+    }
+
+    @Override
+    public LifecycleState getLifecycleState() {
+      return lifecycleState;
+    }
+
+  }
+
+  public static class EmptySinkRunner implements SinkRunner {
+
+    private LifecycleState lifecycleState = LifecycleState.IDLE;
+
+    @Override
+    public void start(Context context) {
+      lifecycleState = LifecycleState.START;
+    }
+
+    @Override
+    public void stop(Context context) {
+      lifecycleState = LifecycleState.STOP;
+    }
+
+    @Override
+    public LifecycleState getLifecycleState() {
+      return lifecycleState;
+    }
+
+  }
+
 }

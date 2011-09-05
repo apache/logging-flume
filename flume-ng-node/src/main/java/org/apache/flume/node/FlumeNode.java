@@ -2,7 +2,6 @@ package org.apache.flume.node;
 
 import org.apache.flume.Context;
 import org.apache.flume.lifecycle.LifecycleAware;
-import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.lifecycle.LifecycleSupervisor;
 import org.apache.flume.lifecycle.LifecycleSupervisor.SupervisorPolicy;
@@ -26,8 +25,7 @@ public class FlumeNode implements LifecycleAware {
   }
 
   @Override
-  public void start(Context context) throws LifecycleException,
-      InterruptedException {
+  public void start(Context context) {
 
     Preconditions.checkState(name != null, "Node name can not be null");
     Preconditions.checkState(nodeManager != null,
@@ -44,8 +42,7 @@ public class FlumeNode implements LifecycleAware {
   }
 
   @Override
-  public void stop(Context context) throws LifecycleException,
-      InterruptedException {
+  public void stop(Context context) {
 
     logger.info("Flume node stopping - {}", name);
 

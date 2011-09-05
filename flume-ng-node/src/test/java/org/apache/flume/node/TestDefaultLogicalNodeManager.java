@@ -5,12 +5,12 @@ import java.util.Set;
 
 import org.apache.flume.Context;
 import org.apache.flume.LogicalNode;
+import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.node.nodemanager.DefaultLogicalNodeManager;
-import org.apache.flume.sink.NullSink;
-import org.apache.flume.source.FlakeySequenceGeneratorSource;
+import org.apache.flume.source.PollableSourceRunner;
 import org.apache.flume.source.SequenceGeneratorSource;
 import org.junit.Assert;
 import org.junit.Before;
@@ -54,9 +54,14 @@ public class TestDefaultLogicalNodeManager {
     for (int i = 0; i < 3; i++) {
       LogicalNode node = new LogicalNode();
 
+      SequenceGeneratorSource source = new SequenceGeneratorSource();
+      source.setChannel(new MemoryChannel());
+
+      PollableSourceRunner sourceChannelAdapter = new PollableSourceRunner();
+      sourceChannelAdapter.setSource(source);
+
       node.setName("test-node-" + i);
-      node.setSource(new SequenceGeneratorSource());
-      node.setSink(new NullSink());
+      node.setSourceRunner(sourceChannelAdapter);
 
       nodeManager.add(node);
     }
@@ -78,9 +83,14 @@ public class TestDefaultLogicalNodeManager {
     for (int i = 0; i < 30; i++) {
       LogicalNode node = new LogicalNode();
 
+      SequenceGeneratorSource source = new SequenceGeneratorSource();
+      source.setChannel(new MemoryChannel());
+
+      PollableSourceRunner sourceChannelAdapter = new PollableSourceRunner();
+      sourceChannelAdapter.setSource(source);
+
       node.setName("test-node-" + i);
-      node.setSource(new SequenceGeneratorSource());
-      node.setSink(new NullSink());
+      node.setSourceRunner(sourceChannelAdapter);
 
       testNodes.add(node);
     }
@@ -112,9 +122,14 @@ public class TestDefaultLogicalNodeManager {
     for (int i = 0; i < 30; i++) {
       LogicalNode node = new LogicalNode();
 
+      SequenceGeneratorSource source = new SequenceGeneratorSource();
+      source.setChannel(new MemoryChannel());
+
+      PollableSourceRunner sourceChannelAdapter = new PollableSourceRunner();
+      sourceChannelAdapter.setSource(source);
+
       node.setName("test-node-" + i);
-      node.setSource(new FlakeySequenceGeneratorSource());
-      node.setSink(new NullSink());
+      node.setSourceRunner(sourceChannelAdapter);
 
       testNodes.add(node);
     }

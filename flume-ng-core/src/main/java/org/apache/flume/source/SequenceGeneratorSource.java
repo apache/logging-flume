@@ -1,84 +1,33 @@
 package org.apache.flume.source;
 
-import java.io.IOException;
-
-import org.apache.flume.Context;
-import org.apache.flume.Event;
+import org.apache.flume.Channel;
 import org.apache.flume.EventDeliveryException;
-import org.apache.flume.conf.Configurable;
-import org.apache.flume.conf.Configurables;
-import org.apache.flume.durability.WAL;
-import org.apache.flume.durability.WALManager;
-import org.apache.flume.durability.WALWriter;
-import org.apache.flume.event.SimpleEvent;
-import org.apache.flume.lifecycle.LifecycleException;
+import org.apache.flume.PollableSource;
+import org.apache.flume.Transaction;
+import org.apache.flume.event.EventBuilder;
 
-public class SequenceGeneratorSource extends AbstractEventSource implements
-    Configurable {
-
-  private String nodeName;
+public class SequenceGeneratorSource extends AbstractSource implements
+    PollableSource {
 
   private long sequence;
-  private WALManager walManager;
-  private WALWriter walWriter;
+
+  public SequenceGeneratorSource() {
+    sequence = 0;
+  }
 
   @Override
-  public void open(Context context) throws LifecycleException {
-    if (walManager != null) {
-      WAL wal = walManager.getWAL(nodeName);
-      try {
-        walWriter = wal.getWriter();
-      } catch (IOException e) {
-        throw new LifecycleException(e);
-      }
+  public void process() throws InterruptedException, EventDeliveryException {
+    Channel channel = getChannel();
+    Transaction transaction = channel.getTransaction();
+
+    try {
+      transaction.begin();
+      channel.put(EventBuilder.withBody(String.valueOf(sequence++).getBytes()));
+      transaction.commit();
+    } catch (Exception e) {
+      transaction.rollback();
     }
-  }
-
-  @Override
-  public void close(Context context) throws LifecycleException {
-    if (walWriter != null) {
-      try {
-        walWriter.close();
-      } catch (IOException e) {
-        throw new LifecycleException(e);
-      }
-    }
-  }
-
-  @Override
-  public Event next(Context context) throws InterruptedException,
-      EventDeliveryException {
-
-    Event event = new SimpleEvent();
-
-    event.setBody(Long.valueOf(sequence++).toString().getBytes());
-
-    if (walWriter != null) {
-      try {
-        walWriter.write(event);
-        walWriter.flush();
-      } catch (IOException e) {
-        throw new EventDeliveryException("Unable to write event to WAL via "
-            + walWriter + ". Exception follows.", e);
-      }
-    }
-
-    return event;
-  }
-
-  @Override
-  public void configure(Context context) {
-    Configurables.ensureRequiredNonNull(context, "logicalNode.name");
-
-    nodeName = context.get("logicalNode.name", String.class);
-  }
-
-  public WALManager getWALManager() {
-    return walManager;
-  }
-
-  public void setWALManager(WALManager walManager) {
-    this.walManager = walManager;
+    /* FIXME: Add finally { transaction.close() } */
   }
 
 }

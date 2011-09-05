@@ -74,12 +74,12 @@ public class TestFlumeNode {
     }
 
     @Override
-    public void start(Context context) throws LifecycleException {
+    public void start(Context context) {
       lifecycleState = LifecycleState.START;
     }
 
     @Override
-    public void stop(Context context) throws LifecycleException {
+    public void stop(Context context) {
       lifecycleState = LifecycleState.STOP;
     }
 

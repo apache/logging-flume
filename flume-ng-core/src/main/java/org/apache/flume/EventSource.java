@@ -1,16 +1,11 @@
 package org.apache.flume;
 
-import org.apache.flume.lifecycle.LifecycleException;
+import org.apache.flume.lifecycle.LifecycleAware;
 
-public interface EventSource {
+public interface EventSource extends LifecycleAware {
 
-  public void open(Context context) throws InterruptedException,
-      LifecycleException;
+  public void setChannel(Channel channel);
 
-  public Event next(Context context) throws InterruptedException,
-      EventDeliveryException;
-
-  public void close(Context context) throws InterruptedException,
-      LifecycleException;
+  public Channel getChannel();
 
 }

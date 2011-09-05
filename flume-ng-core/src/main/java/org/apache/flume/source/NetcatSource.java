@@ -2,42 +2,53 @@ package org.apache.flume.source;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.CharBuffer;
 import java.nio.channels.Channels;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
-import org.apache.flume.EventDeliveryException;
+import org.apache.flume.EventDrivenSource;
+import org.apache.flume.EventSource;
+import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.Configurables;
-import org.apache.flume.durability.WALManager;
-import org.apache.flume.durability.WALWriter;
 import org.apache.flume.event.EventBuilder;
-import org.apache.flume.lifecycle.LifecycleException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class NetcatSource extends AbstractEventSource implements Configurable {
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
+public class NetcatSource extends AbstractSource implements Configurable,
+    EventDrivenSource {
 
   private static final Logger logger = LoggerFactory
       .getLogger(NetcatSource.class);
 
   private int port;
-  private String nodeName;
-  private ServerSocketChannel serverSocket;
-  private CounterGroup counterGroup;
 
-  private WALManager walManager;
-  private WALWriter walWriter;
+  private CounterGroup counterGroup;
+  private ServerSocketChannel serverSocket;
+  private AtomicBoolean acceptThreadShouldStop;
+  private Thread acceptThread;
+  private ExecutorService handlerService;
 
   public NetcatSource() {
+    super();
+
     port = 0;
     counterGroup = new CounterGroup();
+    acceptThreadShouldStop = new AtomicBoolean();
   }
 
   @Override
@@ -45,13 +56,20 @@ public class NetcatSource extends AbstractEventSource implements Configurable {
     Configurables.ensureRequiredNonNull(context, "logicalNode.name",
         "source.port");
 
-    nodeName = context.get("logicalNode.name", String.class);
     port = Integer.parseInt(context.get("source.port", String.class));
   }
 
   @Override
-  public void open(Context context) throws LifecycleException {
+  public void start(Context context) {
+
+    logger.info("Source starting");
+
+    super.start(context);
+
     counterGroup.incrementAndGet("open.attempts");
+
+    handlerService = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
+        .setNameFormat("netcat-handler-%d").build());
 
     try {
       SocketAddress bindPoint = new InetSocketAddress(port);
@@ -64,105 +82,178 @@ public class NetcatSource extends AbstractEventSource implements Configurable {
     } catch (IOException e) {
       counterGroup.incrementAndGet("open.errors");
       logger.error("Unable to bind to socket. Exception follows.", e);
+      return;
     }
 
-    if (walManager != null) {
-      logger.debug("Event durability features enabled. Using WALManager:{}",
-          walManager);
-      try {
-        walWriter = walManager.getWAL(nodeName).getWriter();
-      } catch (IOException e) {
-        throw new LifecycleException(
-            "Unable to get WAL writer. Exception follows.", e);
-      }
-    }
+    AcceptHandler acceptRunnable = new AcceptHandler();
+
+    acceptRunnable.counterGroup = counterGroup;
+    acceptRunnable.handlerService = handlerService;
+    acceptRunnable.shouldStop = acceptThreadShouldStop;
+    acceptRunnable.source = this;
+    acceptRunnable.serverSocket = serverSocket;
+
+    acceptThread = new Thread(acceptRunnable);
+
+    acceptThread.start();
+
+    logger.debug("Source started");
   }
 
   @Override
-  public Event next(Context context) throws InterruptedException,
-      EventDeliveryException {
+  public void stop(Context context) {
+    logger.info("Source stopping");
 
-    Event event = null;
+    super.stop(context);
 
-    counterGroup.incrementAndGet("next.calls");
+    acceptThreadShouldStop.set(true);
 
-    try {
-      SocketChannel channel = serverSocket.accept();
+    if (acceptThread != null) {
+      logger.debug("Stopping accept handler thread");
 
-      logger.debug("Received a connection:{}", channel);
-
-      Reader reader = Channels.newReader(channel, "utf-8");
-      CharBuffer buffer = CharBuffer.allocate(512);
-      StringBuilder builder = new StringBuilder();
-
-      while (reader.read(buffer) != -1) {
-        buffer.flip();
-        logger.debug("read {} characters", buffer.remaining());
-        builder.append(buffer.array(), buffer.position(), buffer.length());
+      while (acceptThread.isAlive()) {
+        try {
+          logger.debug("Waiting for accept handler to finish");
+          acceptThread.interrupt();
+          acceptThread.join(500);
+        } catch (InterruptedException e) {
+          logger
+              .debug("Interrupted while waiting for accept handler to finish");
+          Thread.currentThread().interrupt();
+        }
       }
 
-      if (builder.charAt(builder.length() - 1) == '\n') {
-        builder.deleteCharAt(builder.length() - 1);
-      }
-
-      logger.debug("end of message");
-
-      event = EventBuilder.withBody(builder.toString().getBytes());
-
-      if (walWriter != null) {
-        walWriter.write(event);
-        walWriter.flush();
-      }
-
-      channel.close();
-
-      counterGroup.incrementAndGet("events.success");
-    } catch (IOException e) {
-      counterGroup.incrementAndGet("events.failed");
-
-      throw new EventDeliveryException("Unable to process event due to "
-          + e.getMessage(), e);
+      logger.debug("Stopped accept handler thread");
     }
 
-    return event;
-  }
-
-  @Override
-  public void close(Context context) throws LifecycleException {
     if (serverSocket != null) {
       try {
         serverSocket.close();
       } catch (IOException e) {
         logger.error("Unable to close socket. Exception follows.", e);
+        return;
       }
     }
 
-    if (walWriter != null) {
+    if (handlerService != null) {
+      handlerService.shutdown();
+
+      while (!handlerService.isTerminated()) {
+        logger.debug("Waiting for handler service to stop");
+        try {
+          handlerService.awaitTermination(500, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+          logger
+              .debug("Interrupted while waiting for netcat handler service to stop");
+          handlerService.shutdownNow();
+          Thread.currentThread().interrupt();
+        }
+      }
+
+      logger.debug("Handler service stopped");
+    }
+
+    logger.debug("Source stopped. Event metrics:{}", counterGroup);
+  }
+
+  public static class AcceptHandler implements Runnable {
+
+    private ServerSocketChannel serverSocket;
+    private CounterGroup counterGroup;
+    private ExecutorService handlerService;
+    private EventDrivenSource source;
+
+    private AtomicBoolean shouldStop;
+
+    @Override
+    public void run() {
+      logger.debug("Starting accept handler");
+
+      while (!shouldStop.get()) {
+        try {
+          SocketChannel socketChannel = serverSocket.accept();
+
+          NetcatSocketHandler request = new NetcatSocketHandler();
+
+          request.socketChannel = socketChannel;
+          request.counterGroup = counterGroup;
+          request.source = source;
+
+          handlerService.submit(request);
+
+          counterGroup.incrementAndGet("accept.succeeded");
+        } catch (ClosedByInterruptException e) {
+          // Parent is canceling us.
+        } catch (IOException e) {
+          logger.error("Unable to accept connection. Exception follows.", e);
+          counterGroup.incrementAndGet("accept.failed");
+        }
+      }
+
+      logger.debug("Accept handler exiting");
+    }
+  }
+
+  public static class NetcatSocketHandler implements Runnable {
+
+    private EventSource source;
+
+    private CounterGroup counterGroup;
+    private SocketChannel socketChannel;
+
+    @Override
+    public void run() {
+      Event event = null;
+
       try {
-        walWriter.flush();
-        walWriter.close();
+        Reader reader = Channels.newReader(socketChannel, "utf-8");
+        Writer writer = Channels.newWriter(socketChannel, "utf-8");
+        CharBuffer buffer = CharBuffer.allocate(512);
+        StringBuilder builder = new StringBuilder();
+
+        while (reader.read(buffer) != -1) {
+          buffer.flip();
+
+          logger.debug("read {} characters", buffer.remaining());
+
+          counterGroup.addAndGet("characters.received",
+              Long.valueOf(buffer.limit()));
+
+          builder.append(buffer.array(), buffer.position(), buffer.length());
+        }
+
+        if (builder.charAt(builder.length() - 1) == '\n') {
+          builder.deleteCharAt(builder.length() - 1);
+        }
+
+        event = EventBuilder.withBody(builder.toString().getBytes());
+        Exception ex = null;
+
+        Transaction tx = source.getChannel().getTransaction();
+
+        try {
+          tx.begin();
+          source.getChannel().put(event);
+          tx.commit();
+        } catch (Exception e) {
+          ex = e;
+          tx.rollback();
+        }
+        // TODO: Add finally { tx.close() }.
+
+        if (ex == null) {
+          writer.append("OK\n");
+        } else {
+          writer.append("FAILED: " + ex.getMessage() + "\n");
+        }
+
+        socketChannel.close();
+
+        counterGroup.incrementAndGet("events.success");
       } catch (IOException e) {
-        throw new LifecycleException(
-            "Unable to flush WAL on close - POTENTIAL DATA LOSS! Exception follows.",
-            e);
+        counterGroup.incrementAndGet("events.failed");
       }
     }
-  }
-
-  public int getPort() {
-    return port;
-  }
-
-  public void setPort(int port) {
-    this.port = port;
-  }
-
-  public WALManager getWALManager() {
-    return walManager;
-  }
-
-  public void setWALManager(WALManager walManager) {
-    this.walManager = walManager;
   }
 
 }

@@ -77,8 +77,7 @@ public interface LifecycleAware {
    * @throws LifecycleException
    * @throws InterruptedException
    */
-  public void start(Context context) throws LifecycleException,
-      InterruptedException;
+  public void start(Context context);
 
   /**
    * <p>
@@ -93,8 +92,7 @@ public interface LifecycleAware {
    * @throws LifecycleException
    * @throws InterruptedException
    */
-  public void stop(Context context) throws LifecycleException,
-      InterruptedException;
+  public void stop(Context context);
 
   /**
    * <p>

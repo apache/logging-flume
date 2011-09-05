@@ -11,12 +11,19 @@ import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.flume.Channel;
 import org.apache.flume.Context;
+import org.apache.flume.EventDrivenSource;
+import org.apache.flume.EventDrivenSourceRunner;
 import org.apache.flume.EventSink;
 import org.apache.flume.EventSource;
 import org.apache.flume.LogicalNode;
+import org.apache.flume.PollableSink;
+import org.apache.flume.PollableSource;
 import org.apache.flume.SinkFactory;
 import org.apache.flume.SourceFactory;
+import org.apache.flume.SourceRunner;
+import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
@@ -25,9 +32,11 @@ import org.apache.flume.node.nodemanager.DefaultLogicalNodeManager;
 import org.apache.flume.sink.DefaultSinkFactory;
 import org.apache.flume.sink.LoggerSink;
 import org.apache.flume.sink.NullSink;
+import org.apache.flume.sink.PollableSinkRunner;
 import org.apache.flume.sink.RollingFileSink;
 import org.apache.flume.source.DefaultSourceFactory;
 import org.apache.flume.source.NetcatSource;
+import org.apache.flume.source.PollableSourceRunner;
 import org.apache.flume.source.SequenceGeneratorSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -145,14 +154,7 @@ public class Application {
 
       @Override
       public void run() {
-        try {
-          node.stop(context);
-        } catch (LifecycleException e) {
-          logger.error("Unable to stop node. Exception follows.", e);
-        } catch (InterruptedException e) {
-          logger
-              .error("Interrupted while stopping node. Exception follows.", e);
-        }
+        node.stop(context);
       }
 
     });
@@ -165,15 +167,41 @@ public class Application {
         EventSource source = sourceFactory.create(nodeConf
             .getSourceDefinition());
         EventSink sink = sinkFactory.create(nodeConf.getSinkDefinition());
+        Channel channel = new MemoryChannel();
 
         Configurables.configure(source, contexts.get(nodeConf.getName()));
         Configurables.configure(sink, contexts.get(nodeConf.getName()));
 
+        source.setChannel(channel);
+        sink.setChannel(channel);
+
         LogicalNode logicalNode = new LogicalNode();
 
         logicalNode.setName(nodeConf.getName());
-        logicalNode.setSource(source);
-        logicalNode.setSink(sink);
+
+        SourceRunner sourceRunner = null;
+
+        if (source instanceof PollableSource) {
+          sourceRunner = new PollableSourceRunner();
+          ((PollableSourceRunner) sourceRunner)
+              .setSource((PollableSource) source);
+        } else if (source instanceof EventDrivenSource) {
+          sourceRunner = new EventDrivenSourceRunner();
+          ((EventDrivenSourceRunner) sourceRunner)
+              .setSource((EventDrivenSource) source);
+        }
+
+        PollableSinkRunner sinkRunner = new PollableSinkRunner();
+
+        if (sink instanceof PollableSink) {
+          sinkRunner.setSink((PollableSink) sink);
+        } else {
+          throw new LifecycleException(
+              "Unable to handle non-PollableSinks at this time:" + sink);
+        }
+
+        logicalNode.setSourceRunner(sourceRunner);
+        logicalNode.setSinkRunner(sinkRunner);
 
         nodeManager.add(logicalNode);
       }

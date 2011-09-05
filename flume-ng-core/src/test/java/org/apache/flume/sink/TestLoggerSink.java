@@ -1,7 +1,11 @@
 package org.apache.flume.sink;
 
+import org.apache.flume.Channel;
 import org.apache.flume.Context;
+import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
+import org.apache.flume.channel.MemoryChannel;
+import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.junit.Before;
@@ -23,15 +27,21 @@ public class TestLoggerSink {
   public void testAppend() throws InterruptedException, LifecycleException,
       EventDeliveryException {
 
+    Channel channel = new MemoryChannel();
     Context context = new Context();
+    Configurables.configure(sink, context);
 
-    sink.open(context);
+    sink.setChannel(channel);
+    sink.start(context);
 
     for (int i = 0; i < 10; i++) {
-      sink.append(context, EventBuilder.withBody(("Test " + i).getBytes()));
+      Event event = EventBuilder.withBody(("Test " + i).getBytes());
+
+      channel.put(event);
+      sink.process();
     }
 
-    sink.close(context);
+    sink.stop(context);
   }
 
 }

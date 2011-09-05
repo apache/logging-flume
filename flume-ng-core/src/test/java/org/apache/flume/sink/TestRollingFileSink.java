@@ -5,9 +5,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
+import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.SimpleEvent;
 import org.apache.flume.lifecycle.LifecycleException;
@@ -48,8 +50,8 @@ public class TestRollingFileSink {
 
     Configurables.configure(sink, context);
 
-    sink.open(context);
-    sink.close(context);
+    sink.start(context);
+    sink.stop(context);
   }
 
   @Test
@@ -63,18 +65,23 @@ public class TestRollingFileSink {
 
     Configurables.configure(sink, context);
 
-    sink.open(context);
+    Channel channel = new MemoryChannel();
+
+    sink.setChannel(channel);
+    sink.start(context);
 
     for (int i = 0; i < 10; i++) {
       Event event = new SimpleEvent();
 
       event.setBody(("Test event " + i).getBytes());
-      sink.append(context, event);
+
+      channel.put(event);
+      sink.process();
 
       Thread.sleep(500);
     }
 
-    sink.close(context);
+    sink.stop(context);
 
     for (String file : sink.getDirectory().list()) {
       BufferedReader reader = new BufferedReader(new FileReader(new File(

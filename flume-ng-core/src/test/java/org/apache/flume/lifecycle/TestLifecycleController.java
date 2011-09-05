@@ -72,22 +72,22 @@ public class TestLifecycleController {
     }
 
     @Override
-    public void start(Context context) throws LifecycleException {
+    public void start(Context context) {
       try {
         Thread.sleep(sleepTime);
       } catch (InterruptedException e) {
-        throw new LifecycleException(e);
+        // Do nothing.
       }
 
       state = LifecycleState.START;
     }
 
     @Override
-    public void stop(Context context) throws LifecycleException {
+    public void stop(Context context) {
       try {
         Thread.sleep(sleepTime);
       } catch (InterruptedException e) {
-        throw new LifecycleException(e);
+        // Do nothing
       }
 
       state = LifecycleState.STOP;

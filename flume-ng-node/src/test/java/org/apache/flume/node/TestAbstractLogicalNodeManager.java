@@ -4,11 +4,14 @@ import junit.framework.Assert;
 
 import org.apache.flume.Context;
 import org.apache.flume.LogicalNode;
+import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.node.nodemanager.AbstractLogicalNodeManager;
 import org.apache.flume.sink.NullSink;
+import org.apache.flume.sink.PollableSinkRunner;
+import org.apache.flume.source.PollableSourceRunner;
 import org.apache.flume.source.SequenceGeneratorSource;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,14 +32,19 @@ public class TestAbstractLogicalNodeManager {
       private LifecycleState lifecycleState = LifecycleState.IDLE;
 
       @Override
-      public void stop(Context context) throws LifecycleException,
-          InterruptedException {
+      public void stop(Context context) {
 
         for (LogicalNode node : getNodes()) {
           node.stop(context);
 
-          boolean reached = LifecycleController.waitForOneOf(node,
-              LifecycleState.STOP_OR_ERROR);
+          boolean reached = false;
+
+          try {
+            reached = LifecycleController.waitForOneOf(node,
+                LifecycleState.STOP_OR_ERROR);
+          } catch (InterruptedException e) {
+            // Do nothing.
+          }
 
           if (!reached) {
             logger.error(
@@ -53,14 +61,19 @@ public class TestAbstractLogicalNodeManager {
       }
 
       @Override
-      public void start(Context context) throws LifecycleException,
-          InterruptedException {
+      public void start(Context context) {
 
         for (LogicalNode node : getNodes()) {
           node.start(context);
 
-          boolean reached = LifecycleController.waitForOneOf(node,
-              LifecycleState.START_OR_ERROR);
+          boolean reached = false;
+
+          try {
+            reached = LifecycleController.waitForOneOf(node,
+                LifecycleState.START_OR_ERROR);
+          } catch (InterruptedException e) {
+            // Do nothing.
+          }
 
           if (!reached) {
             logger.error(
@@ -110,8 +123,15 @@ public class TestAbstractLogicalNodeManager {
 
     LogicalNode node = new LogicalNode();
     node.setName("test");
-    node.setSource(new SequenceGeneratorSource());
-    node.setSink(new NullSink());
+
+    PollableSourceRunner sourceRunner = new PollableSourceRunner();
+    sourceRunner.setSource(new SequenceGeneratorSource());
+
+    PollableSinkRunner sinkRunner = new PollableSinkRunner();
+    sinkRunner.setSink(new NullSink());
+
+    node.setSourceRunner(sourceRunner);
+    node.setSinkRunner(sinkRunner);
 
     nodeManager.add(node);
 
@@ -135,9 +155,19 @@ public class TestAbstractLogicalNodeManager {
       InterruptedException {
 
     LogicalNode node = new LogicalNode();
+
+    SequenceGeneratorSource source = new SequenceGeneratorSource();
+    source.setChannel(new MemoryChannel());
+
+    PollableSourceRunner sourceRunner = new PollableSourceRunner();
+    sourceRunner.setSource(source);
+
+    PollableSinkRunner sinkRunner = new PollableSinkRunner();
+    sinkRunner.setSink(new NullSink());
+
     node.setName("test");
-    node.setSource(new SequenceGeneratorSource());
-    node.setSink(new NullSink());
+    node.setSourceRunner(sourceRunner);
+    node.setSinkRunner(sinkRunner);
 
     nodeManager.add(node);
 

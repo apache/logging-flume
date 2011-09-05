@@ -4,13 +4,15 @@ import org.apache.flume.Context;
 import org.apache.flume.EventSink;
 import org.apache.flume.EventSource;
 import org.apache.flume.LogicalNode;
+import org.apache.flume.PollableSource;
 import org.apache.flume.SinkFactory;
+import org.apache.flume.SourceRunner;
 import org.apache.flume.SourceFactory;
-import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.lifecycle.LifecycleSupervisor;
 import org.apache.flume.lifecycle.LifecycleSupervisor.SupervisorPolicy;
 import org.apache.flume.node.NodeConfiguration;
+import org.apache.flume.source.PollableSourceRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,9 +69,10 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
 
     LogicalNode newLogicalNode = new LogicalNode();
 
-    newLogicalNode.setName(nodeConfiguration.getName());
-    newLogicalNode.setSource(source);
-    newLogicalNode.setSink(sink);
+    if (source instanceof PollableSource) {
+      SourceRunner channelAdapter = new PollableSourceRunner();
+      newLogicalNode.setSourceRunner(channelAdapter);
+    }
 
     add(newLogicalNode);
   }
@@ -113,8 +116,7 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
   }
 
   @Override
-  public void start(Context context) throws LifecycleException,
-      InterruptedException {
+  public void start(Context context) {
 
     logger.info("Node manager starting");
 
@@ -126,8 +128,7 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
   }
 
   @Override
-  public void stop(Context context) throws LifecycleException,
-      InterruptedException {
+  public void stop(Context context) {
 
     logger.info("Node manager stopping");
 

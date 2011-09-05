@@ -1,0 +1,41 @@
+package org.apache.flume.source;
+
+import org.apache.flume.Channel;
+import org.apache.flume.Context;
+import org.apache.flume.EventSource;
+import org.apache.flume.lifecycle.LifecycleState;
+
+abstract public class AbstractSource implements EventSource {
+
+  private Channel channel;
+
+  private LifecycleState lifecycleState;
+
+  public AbstractSource() {
+    lifecycleState = LifecycleState.IDLE;
+  }
+
+  @Override
+  public void start(Context context) {
+    lifecycleState = LifecycleState.START;
+  }
+
+  @Override
+  public void stop(Context context) {
+    lifecycleState = LifecycleState.STOP;
+  }
+
+  public Channel getChannel() {
+    return channel;
+  }
+
+  public void setChannel(Channel channel) {
+    this.channel = channel;
+  }
+
+  @Override
+  public LifecycleState getLifecycleState() {
+    return lifecycleState;
+  }
+
+}
