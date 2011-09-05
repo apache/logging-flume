@@ -1,7 +1,7 @@
 #!/bin/sh
 
 JAVA=`type -p java`
-JAVA_OPTS=""
+JAVA_OPTS="-Xmx20"
 
 FLUME_NODE_CLASS="org.apache.flume.node.Application"
 FLUME_CLASSPATH=""
