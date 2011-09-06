@@ -1,6 +1,5 @@
 package org.apache.flume.lifecycle;
 
-import org.apache.flume.Context;
 
 /**
  * <p>
@@ -12,8 +11,8 @@ import org.apache.flume.Context;
  * starting, stopping, and reporting their current state. Additionally, this
  * interface creates a standard method of communicating failure to perform a
  * lifecycle operation to the caller (i.e. via {@link LifecycleException}). It
- * is never considered valid to call {@link #start(Context)} or
- * {@link #stop(Context)} more than once or to call them in the wrong order.
+ * is never considered valid to call {@link #start()} or
+ * {@link #stop()} more than once or to call them in the wrong order.
  * While this is not strictly enforced, it may be in the future.
  * </p>
  * <p>
@@ -73,11 +72,10 @@ public interface LifecycleAware {
    * the return value of {@link #getLifecycleState()} accordingly.
    * </p>
    * 
-   * @param context
    * @throws LifecycleException
    * @throws InterruptedException
    */
-  public void start(Context context);
+  public void start();
 
   /**
    * <p>
@@ -88,11 +86,10 @@ public interface LifecycleAware {
    * the return value of {@link #getLifecycleState()} accordingly.
    * </p>
    * 
-   * @param context
    * @throws LifecycleException
    * @throws InterruptedException
    */
-  public void stop(Context context);
+  public void stop();
 
   /**
    * <p>

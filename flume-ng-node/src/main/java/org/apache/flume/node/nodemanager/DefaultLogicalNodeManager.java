@@ -1,13 +1,12 @@
 package org.apache.flume.node.nodemanager;
 
-import org.apache.flume.Context;
 import org.apache.flume.EventSink;
 import org.apache.flume.EventSource;
 import org.apache.flume.LogicalNode;
 import org.apache.flume.PollableSource;
 import org.apache.flume.SinkFactory;
-import org.apache.flume.SourceRunner;
 import org.apache.flume.SourceFactory;
+import org.apache.flume.SourceRunner;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.lifecycle.LifecycleSupervisor;
 import org.apache.flume.lifecycle.LifecycleSupervisor.SupervisorPolicy;
@@ -116,11 +115,11 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
   }
 
   @Override
-  public void start(Context context) {
+  public void start() {
 
     logger.info("Node manager starting");
 
-    nodeSupervisor.start(context);
+    nodeSupervisor.start();
 
     logger.debug("Node manager started");
 
@@ -128,11 +127,11 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
   }
 
   @Override
-  public void stop(Context context) {
+  public void stop() {
 
     logger.info("Node manager stopping");
 
-    nodeSupervisor.stop(context);
+    nodeSupervisor.stop();
 
     logger.debug("Node manager stopped");
 

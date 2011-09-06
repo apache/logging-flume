@@ -16,19 +16,19 @@ public class LogicalNode implements LifecycleAware {
   }
 
   @Override
-  public void start(Context context) {
+  public void start() {
 
-    sourceRunner.start(context);
-    sinkRunner.start(context);
+    sourceRunner.start();
+    sinkRunner.start();
 
     lifecycleState = LifecycleState.START;
   }
 
   @Override
-  public void stop(Context context) {
+  public void stop() {
 
-    sourceRunner.stop(context);
-    sinkRunner.stop(context);
+    sourceRunner.stop();
+    sinkRunner.stop();
 
     lifecycleState = LifecycleState.STOP;
   }

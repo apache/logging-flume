@@ -50,8 +50,8 @@ public class TestRollingFileSink {
 
     Configurables.configure(sink, context);
 
-    sink.start(context);
-    sink.stop(context);
+    sink.start();
+    sink.stop();
   }
 
   @Test
@@ -68,7 +68,7 @@ public class TestRollingFileSink {
     Channel channel = new MemoryChannel();
 
     sink.setChannel(channel);
-    sink.start(context);
+    sink.start();
 
     for (int i = 0; i < 10; i++) {
       Event event = new SimpleEvent();
@@ -81,7 +81,7 @@ public class TestRollingFileSink {
       Thread.sleep(500);
     }
 
-    sink.stop(context);
+    sink.stop();
 
     for (String file : sink.getDirectory().list()) {
       BufferedReader reader = new BufferedReader(new FileReader(new File(

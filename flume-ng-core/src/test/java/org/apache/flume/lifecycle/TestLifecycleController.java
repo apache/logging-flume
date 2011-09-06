@@ -2,7 +2,6 @@ package org.apache.flume.lifecycle;
 
 import junit.framework.Assert;
 
-import org.apache.flume.Context;
 import org.junit.Test;
 
 public class TestLifecycleController {
@@ -11,12 +10,11 @@ public class TestLifecycleController {
   public void testWaitForState() throws LifecycleException,
       InterruptedException {
 
-    Context context = new Context();
     LifecycleAware delegate = new SleeperLifecycleDelegate();
 
     Assert.assertTrue(delegate.getLifecycleState().equals(LifecycleState.IDLE));
 
-    delegate.start(context);
+    delegate.start();
 
     boolean reached = LifecycleController.waitForState(delegate,
         LifecycleState.START, 2000);
@@ -24,7 +22,7 @@ public class TestLifecycleController {
     Assert.assertEquals(true, reached);
     Assert.assertEquals(LifecycleState.START, delegate.getLifecycleState());
 
-    delegate.stop(context);
+    delegate.stop();
 
     reached = LifecycleController.waitForState(delegate, LifecycleState.STOP,
         2000);
@@ -32,7 +30,7 @@ public class TestLifecycleController {
     Assert.assertEquals(true, reached);
     Assert.assertEquals(LifecycleState.STOP, delegate.getLifecycleState());
 
-    delegate.start(context);
+    delegate.start();
 
     reached = LifecycleController.waitForState(delegate, LifecycleState.IDLE,
         500);
@@ -46,12 +44,11 @@ public class TestLifecycleController {
   public void testWaitForOneOf() throws LifecycleException,
       InterruptedException {
 
-    Context context = new Context();
     LifecycleAware delegate = new SleeperLifecycleDelegate();
 
     Assert.assertEquals(LifecycleState.IDLE, delegate.getLifecycleState());
 
-    delegate.start(context);
+    delegate.start();
 
     boolean reached = LifecycleController.waitForOneOf(delegate,
         new LifecycleState[] { LifecycleState.STOP, LifecycleState.START },
@@ -72,7 +69,7 @@ public class TestLifecycleController {
     }
 
     @Override
-    public void start(Context context) {
+    public void start() {
       try {
         Thread.sleep(sleepTime);
       } catch (InterruptedException e) {
@@ -83,7 +80,7 @@ public class TestLifecycleController {
     }
 
     @Override
-    public void stop(Context context) {
+    public void stop() {
       try {
         Thread.sleep(sleepTime);
       } catch (InterruptedException e) {

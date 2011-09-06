@@ -47,7 +47,7 @@ public class TestNetcatSource {
 
     Configurables.configure(source, context);
 
-    source.start(context);
+    source.start();
 
     /* FIXME: Ensure proper send / received semantics. */
 
@@ -88,7 +88,7 @@ public class TestNetcatSource {
       executor.awaitTermination(500, TimeUnit.MILLISECONDS);
     }
 
-    source.stop(context);
+    source.stop();
   }
 
 }

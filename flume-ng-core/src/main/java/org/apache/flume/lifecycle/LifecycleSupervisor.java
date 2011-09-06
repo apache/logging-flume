@@ -7,7 +7,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.flume.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +34,7 @@ public class LifecycleSupervisor implements LifecycleAware {
   }
 
   @Override
-  public synchronized void start(Context context) {
+  public synchronized void start() {
 
     logger.info("Starting lifecycle supervisor {}", Thread.currentThread()
         .getId());
@@ -58,7 +57,7 @@ public class LifecycleSupervisor implements LifecycleAware {
   }
 
   @Override
-  public synchronized void stop(Context context) {
+  public synchronized void stop() {
 
     logger.info("Stopping lifecycle supervisor {}", Thread.currentThread()
         .getId());
@@ -80,7 +79,7 @@ public class LifecycleSupervisor implements LifecycleAware {
         .entrySet()) {
 
       if (entry.getKey().getLifecycleState().equals(LifecycleState.START)) {
-        entry.getKey().stop(context);
+        entry.getKey().stop();
       }
     }
 
@@ -184,12 +183,10 @@ public class LifecycleSupervisor implements LifecycleAware {
                     supervisoree.status.desiredState,
                     supervisoree.status.failures });
 
-        Context context = new Context();
-
         switch (supervisoree.status.desiredState) {
         case START:
           try {
-            lifecycleAware.start(context);
+            lifecycleAware.start();
           } catch (Exception e) {
             logger.error("Unable to start " + lifecycleAware
                 + " - Exception follows.", e);
@@ -198,7 +195,7 @@ public class LifecycleSupervisor implements LifecycleAware {
           break;
         case STOP:
           try {
-            lifecycleAware.stop(context);
+            lifecycleAware.stop();
           } catch (Exception e) {
             logger.error("Unable to stop " + lifecycleAware
                 + " - Exception follows.", e);

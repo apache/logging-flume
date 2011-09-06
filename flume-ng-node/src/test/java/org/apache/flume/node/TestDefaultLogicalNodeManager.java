@@ -3,7 +3,6 @@ package org.apache.flume.node;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.flume.Context;
 import org.apache.flume.LogicalNode;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.lifecycle.LifecycleController;
@@ -27,14 +26,12 @@ public class TestDefaultLogicalNodeManager {
 
   @Test
   public void testLifecycle() throws LifecycleException, InterruptedException {
-    Context context = new Context();
-
-    nodeManager.start(context);
+    nodeManager.start();
     Assert.assertTrue("Node manager didn't reach START or ERROR",
         LifecycleController.waitForOneOf(nodeManager,
             LifecycleState.START_OR_ERROR, 5000));
 
-    nodeManager.stop(context);
+    nodeManager.stop();
     Assert.assertTrue("Node manager didn't reach STOP or ERROR",
         LifecycleController.waitForOneOf(nodeManager,
             LifecycleState.STOP_OR_ERROR, 5000));
@@ -44,9 +41,7 @@ public class TestDefaultLogicalNodeManager {
   public void testLifecycleWithNodes() throws LifecycleException,
       InterruptedException {
 
-    Context context = new Context();
-
-    nodeManager.start(context);
+    nodeManager.start();
     Assert.assertTrue("Node manager didn't reach START or ERROR",
         LifecycleController.waitForOneOf(nodeManager,
             LifecycleState.START_OR_ERROR, 5000));
@@ -68,7 +63,7 @@ public class TestDefaultLogicalNodeManager {
 
     Thread.sleep(5000);
 
-    nodeManager.stop(context);
+    nodeManager.stop();
     Assert.assertTrue("Node manager didn't reach STOP or ERROR",
         LifecycleController.waitForOneOf(nodeManager,
             LifecycleState.STOP_OR_ERROR, 5000));
@@ -95,9 +90,7 @@ public class TestDefaultLogicalNodeManager {
       testNodes.add(node);
     }
 
-    Context context = new Context();
-
-    nodeManager.start(context);
+    nodeManager.start();
     Assert.assertTrue("Node manager didn't reach START or ERROR",
         LifecycleController.waitForOneOf(nodeManager,
             LifecycleState.START_OR_ERROR, 5000));
@@ -108,7 +101,7 @@ public class TestDefaultLogicalNodeManager {
 
     Thread.sleep(5000);
 
-    nodeManager.stop(context);
+    nodeManager.stop();
     Assert.assertTrue("Node manager didn't reach STOP or ERROR",
         LifecycleController.waitForOneOf(nodeManager,
             LifecycleState.STOP_OR_ERROR, 5000));
@@ -134,9 +127,7 @@ public class TestDefaultLogicalNodeManager {
       testNodes.add(node);
     }
 
-    Context context = new Context();
-
-    nodeManager.start(context);
+    nodeManager.start();
     Assert.assertTrue("Node manager didn't reach START or ERROR",
         LifecycleController.waitForOneOf(nodeManager,
             LifecycleState.START_OR_ERROR, 5000));
@@ -147,7 +138,7 @@ public class TestDefaultLogicalNodeManager {
 
     Thread.sleep(5000);
 
-    nodeManager.stop(context);
+    nodeManager.stop();
     Assert.assertTrue("Node manager didn't reach STOP or ERROR",
         LifecycleController.waitForOneOf(nodeManager,
             LifecycleState.STOP_OR_ERROR, 5000));

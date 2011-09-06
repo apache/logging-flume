@@ -3,7 +3,6 @@ package org.apache.flume.source;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.flume.Channel;
-import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.PollableSource;
@@ -55,12 +54,12 @@ public class TestPollableSourceRunner {
       }
 
       @Override
-      public void start(Context context) {
+      public void start() {
         // Unused.
       }
 
       @Override
-      public void stop(Context context) {
+      public void stop() {
         // Unused.
       }
 
@@ -72,14 +71,12 @@ public class TestPollableSourceRunner {
 
     };
 
-    Context context = new Context();
-
     sourceRunner.setSource(source);
-    sourceRunner.start(context);
+    sourceRunner.start();
 
     latch.await();
 
-    sourceRunner.stop(context);
+    sourceRunner.stop();
   }
 
 }

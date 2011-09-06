@@ -1,7 +1,6 @@
 package org.apache.flume.source;
 
 import org.apache.flume.Channel;
-import org.apache.flume.Context;
 import org.apache.flume.EventSource;
 import org.apache.flume.lifecycle.LifecycleState;
 
@@ -16,12 +15,12 @@ abstract public class AbstractSource implements EventSource {
   }
 
   @Override
-  public void start(Context context) {
+  public void start() {
     lifecycleState = LifecycleState.START;
   }
 
   @Override
-  public void stop(Context context) {
+  public void stop() {
     lifecycleState = LifecycleState.STOP;
   }
 

@@ -60,11 +60,11 @@ public class NetcatSource extends AbstractSource implements Configurable,
   }
 
   @Override
-  public void start(Context context) {
+  public void start() {
 
     logger.info("Source starting");
 
-    super.start(context);
+    super.start();
 
     counterGroup.incrementAndGet("open.attempts");
 
@@ -101,10 +101,10 @@ public class NetcatSource extends AbstractSource implements Configurable,
   }
 
   @Override
-  public void stop(Context context) {
+  public void stop() {
     logger.info("Source stopping");
 
-    super.stop(context);
+    super.stop();
 
     acceptThreadShouldStop.set(true);
 

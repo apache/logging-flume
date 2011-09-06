@@ -2,7 +2,6 @@ package org.apache.flume.source;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.PollableSource;
 import org.apache.flume.SourceRunner;
@@ -30,9 +29,9 @@ public class PollableSourceRunner implements SourceRunner {
   }
 
   @Override
-  public void start(Context context) {
+  public void start() {
 
-    source.start(context);
+    source.start();
 
     runner = new PollingRunner();
 
@@ -47,7 +46,7 @@ public class PollableSourceRunner implements SourceRunner {
   }
 
   @Override
-  public void stop(Context context) {
+  public void stop() {
 
     runner.shouldStop.set(true);
 
@@ -62,7 +61,7 @@ public class PollableSourceRunner implements SourceRunner {
       Thread.currentThread().interrupt();
     }
 
-    source.stop(context);
+    source.stop();
 
     lifecycleState = LifecycleState.STOP;
   }

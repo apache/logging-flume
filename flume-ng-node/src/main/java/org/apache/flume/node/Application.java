@@ -143,7 +143,6 @@ public class Application {
   public void run() throws LifecycleException, InterruptedException,
       InstantiationException {
 
-    final Context context = new Context();
     final FlumeNode node = new FlumeNode();
     NodeManager nodeManager = new DefaultLogicalNodeManager();
 
@@ -154,12 +153,12 @@ public class Application {
 
       @Override
       public void run() {
-        node.stop(context);
+        node.stop();
       }
 
     });
 
-    node.start(context);
+    node.start();
     LifecycleController.waitForOneOf(node, LifecycleState.START_OR_ERROR);
 
     if (node.getLifecycleState().equals(LifecycleState.START)) {

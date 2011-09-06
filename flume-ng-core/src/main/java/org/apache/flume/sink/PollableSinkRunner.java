@@ -2,7 +2,6 @@ package org.apache.flume.sink;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.PollableSink;
@@ -30,7 +29,7 @@ public class PollableSinkRunner implements SinkRunner, LifecycleAware {
   }
 
   @Override
-  public void start(Context context) {
+  public void start() {
     runner = new PollingRunner();
 
     runner.sink = sink;
@@ -44,7 +43,7 @@ public class PollableSinkRunner implements SinkRunner, LifecycleAware {
   }
 
   @Override
-  public void stop(Context context) {
+  public void stop() {
 
     if (runnerThread != null) {
       runner.shouldStop.set(true);

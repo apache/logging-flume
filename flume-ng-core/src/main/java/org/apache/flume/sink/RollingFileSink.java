@@ -68,9 +68,9 @@ public class RollingFileSink extends AbstractEventSink implements PollableSink,
   }
 
   @Override
-  public void start(Context context) {
+  public void start() {
 
-    super.start(context);
+    super.start();
 
     pathController.setBaseDirectory(directory);
 
@@ -165,9 +165,9 @@ public class RollingFileSink extends AbstractEventSink implements PollableSink,
   }
 
   @Override
-  public void stop(Context context) {
+  public void stop() {
 
-    super.stop(context);
+    super.stop();
 
     if (outputStream != null) {
       logger.debug("Closing file {}", pathController.getCurrentFile());

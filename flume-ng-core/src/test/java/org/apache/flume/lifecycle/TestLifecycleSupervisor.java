@@ -1,6 +1,5 @@
 package org.apache.flume.lifecycle;
 
-import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.lifecycle.LifecycleSupervisor.SupervisorPolicy;
 import org.junit.Assert;
@@ -18,17 +17,13 @@ public class TestLifecycleSupervisor {
 
   @Test
   public void testLifecycle() throws LifecycleException, InterruptedException {
-    Context context = new Context();
-
-    supervisor.start(context);
-    supervisor.stop(context);
+    supervisor.start();
+    supervisor.stop();
   }
 
   @Test
   public void testSupervise() throws LifecycleException, InterruptedException {
-    Context context = new Context();
-
-    supervisor.start(context);
+    supervisor.start();
 
     /* Attempt to supervise a known-to-fail config. */
     /*
@@ -51,25 +46,24 @@ public class TestLifecycleSupervisor {
 
     Thread.sleep(5000);
 
-    supervisor.stop(context);
+    supervisor.stop();
   }
 
   @Test
   public void testSuperviseBroken() throws LifecycleException,
       InterruptedException {
-    Context context = new Context();
 
-    supervisor.start(context);
+    supervisor.start();
 
     /* Attempt to supervise a known-to-fail config. */
     LifecycleAware node = new LifecycleAware() {
 
       @Override
-      public void stop(Context context) {
+      public void stop() {
       }
 
       @Override
-      public void start(Context context) {
+      public void start() {
         throw new NullPointerException("Boom!");
       }
 
@@ -84,16 +78,14 @@ public class TestLifecycleSupervisor {
 
     Thread.sleep(5000);
 
-    supervisor.stop(context);
+    supervisor.stop();
   }
 
   @Test
   public void testSuperviseSupervisor() throws LifecycleException,
       InterruptedException {
 
-    Context context = new Context();
-
-    supervisor.start(context);
+    supervisor.start();
 
     LifecycleSupervisor supervisor2 = new LifecycleSupervisor();
 
@@ -107,15 +99,14 @@ public class TestLifecycleSupervisor {
 
     Thread.sleep(10000);
 
-    supervisor.stop(context);
+    supervisor.stop();
   }
 
   @Test
   public void testUnsuperviseServce() throws LifecycleException,
       InterruptedException {
-    Context context = new Context();
 
-    supervisor.start(context);
+    supervisor.start();
 
     LifecycleAware service = new CountingLifecycleAware();
     SupervisorPolicy policy = new SupervisorPolicy.OnceOnlyPolicy();
@@ -123,16 +114,14 @@ public class TestLifecycleSupervisor {
     supervisor.supervise(service, policy, LifecycleState.START);
     supervisor.unsupervise(service);
 
-    service.stop(context);
+    service.stop();
 
-    supervisor.stop(context);
+    supervisor.stop();
   }
 
   @Test
   public void testStopServce() throws LifecycleException, InterruptedException {
-    Context context = new Context();
-
-    supervisor.start(context);
+    supervisor.start();
 
     CountingLifecycleAware service = new CountingLifecycleAware();
     SupervisorPolicy policy = new SupervisorPolicy.OnceOnlyPolicy();
@@ -154,7 +143,7 @@ public class TestLifecycleSupervisor {
     Assert.assertEquals(Long.valueOf(1), service.counterGroup.get("start"));
     Assert.assertEquals(Long.valueOf(1), service.counterGroup.get("stop"));
 
-    supervisor.stop(context);
+    supervisor.stop();
   }
 
   public static class CountingLifecycleAware implements LifecycleAware {
@@ -168,7 +157,7 @@ public class TestLifecycleSupervisor {
     }
 
     @Override
-    public void start(Context context) {
+    public void start() {
 
       counterGroup.incrementAndGet("start");
 
@@ -176,7 +165,7 @@ public class TestLifecycleSupervisor {
     }
 
     @Override
-    public void stop(Context context) {
+    public void stop() {
 
       counterGroup.incrementAndGet("stop");
 

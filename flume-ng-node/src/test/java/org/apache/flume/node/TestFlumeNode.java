@@ -1,6 +1,5 @@
 package org.apache.flume.node;
 
-import org.apache.flume.Context;
 import org.apache.flume.LogicalNode;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
@@ -24,16 +23,14 @@ public class TestFlumeNode {
 
   @Test
   public void testLifecycle() throws InterruptedException, LifecycleException {
-    Context context = new Context();
-
-    node.start(context);
+    node.start();
     boolean reached = LifecycleController.waitForOneOf(node,
         LifecycleState.START_OR_ERROR, 5000);
 
     Assert.assertTrue("Matched a known state", reached);
     Assert.assertEquals(LifecycleState.START, node.getLifecycleState());
 
-    node.stop(context);
+    node.stop();
     reached = LifecycleController.waitForOneOf(node,
         LifecycleState.STOP_OR_ERROR, 5000);
 
@@ -43,9 +40,7 @@ public class TestFlumeNode {
 
   @Test
   public void testAddNodes() throws InterruptedException, LifecycleException {
-    Context context = new Context();
-
-    node.start(context);
+    node.start();
     boolean reached = LifecycleController.waitForOneOf(node,
         LifecycleState.START_OR_ERROR, 5000);
 
@@ -56,7 +51,7 @@ public class TestFlumeNode {
 
     node.getNodeManager().add(n1);
 
-    node.stop(context);
+    node.stop();
     reached = LifecycleController.waitForOneOf(node,
         LifecycleState.STOP_OR_ERROR, 5000);
 
@@ -74,12 +69,12 @@ public class TestFlumeNode {
     }
 
     @Override
-    public void start(Context context) {
+    public void start() {
       lifecycleState = LifecycleState.START;
     }
 
     @Override
-    public void stop(Context context) {
+    public void stop() {
       lifecycleState = LifecycleState.STOP;
     }
 

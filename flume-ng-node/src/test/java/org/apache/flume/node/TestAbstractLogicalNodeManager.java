@@ -2,7 +2,6 @@ package org.apache.flume.node;
 
 import junit.framework.Assert;
 
-import org.apache.flume.Context;
 import org.apache.flume.LogicalNode;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.lifecycle.LifecycleController;
@@ -32,10 +31,10 @@ public class TestAbstractLogicalNodeManager {
       private LifecycleState lifecycleState = LifecycleState.IDLE;
 
       @Override
-      public void stop(Context context) {
+      public void stop() {
 
         for (LogicalNode node : getNodes()) {
-          node.stop(context);
+          node.stop();
 
           boolean reached = false;
 
@@ -61,10 +60,10 @@ public class TestAbstractLogicalNodeManager {
       }
 
       @Override
-      public void start(Context context) {
+      public void start() {
 
         for (LogicalNode node : getNodes()) {
-          node.start(context);
+          node.start();
 
           boolean reached = false;
 
@@ -99,16 +98,15 @@ public class TestAbstractLogicalNodeManager {
   @Test
   public void testEmptyLifecycle() throws LifecycleException,
       InterruptedException {
-    Context context = new Context();
 
-    nodeManager.start(context);
+    nodeManager.start();
     boolean reached = LifecycleController.waitForOneOf(nodeManager,
         LifecycleState.START_OR_ERROR);
 
     Assert.assertTrue(reached);
     Assert.assertEquals(LifecycleState.START, nodeManager.getLifecycleState());
 
-    nodeManager.stop(context);
+    nodeManager.stop();
     reached = LifecycleController.waitForOneOf(nodeManager,
         LifecycleState.STOP_OR_ERROR);
 
@@ -118,8 +116,6 @@ public class TestAbstractLogicalNodeManager {
 
   @Test
   public void testLifecycle() throws LifecycleException, InterruptedException {
-
-    Context context = new Context();
 
     LogicalNode node = new LogicalNode();
     node.setName("test");
@@ -135,14 +131,14 @@ public class TestAbstractLogicalNodeManager {
 
     nodeManager.add(node);
 
-    nodeManager.start(context);
+    nodeManager.start();
     boolean reached = LifecycleController.waitForOneOf(nodeManager,
         LifecycleState.START_OR_ERROR);
 
     Assert.assertTrue(reached);
     Assert.assertEquals(LifecycleState.START, nodeManager.getLifecycleState());
 
-    nodeManager.stop(context);
+    nodeManager.stop();
     reached = LifecycleController.waitForOneOf(nodeManager,
         LifecycleState.STOP_OR_ERROR);
 
@@ -172,9 +168,7 @@ public class TestAbstractLogicalNodeManager {
     nodeManager.add(node);
 
     for (int i = 0; i < 10; i++) {
-      Context context = new Context();
-
-      nodeManager.start(context);
+      nodeManager.start();
       boolean reached = LifecycleController.waitForOneOf(nodeManager,
           LifecycleState.START_OR_ERROR);
 
@@ -182,7 +176,7 @@ public class TestAbstractLogicalNodeManager {
       Assert
           .assertEquals(LifecycleState.START, nodeManager.getLifecycleState());
 
-      nodeManager.stop(context);
+      nodeManager.stop();
       reached = LifecycleController.waitForOneOf(nodeManager,
           LifecycleState.STOP_OR_ERROR);
 

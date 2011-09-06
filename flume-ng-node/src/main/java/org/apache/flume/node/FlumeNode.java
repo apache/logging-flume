@@ -1,6 +1,5 @@
 package org.apache.flume.node;
 
-import org.apache.flume.Context;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.lifecycle.LifecycleSupervisor;
@@ -25,13 +24,13 @@ public class FlumeNode implements LifecycleAware {
   }
 
   @Override
-  public void start(Context context) {
+  public void start() {
 
     Preconditions.checkState(name != null, "Node name can not be null");
     Preconditions.checkState(nodeManager != null,
         "Node manager can not be null");
 
-    supervisor.start(context);
+    supervisor.start();
 
     logger.info("Flume node starting - {}", name);
 
@@ -42,11 +41,11 @@ public class FlumeNode implements LifecycleAware {
   }
 
   @Override
-  public void stop(Context context) {
+  public void stop() {
 
     logger.info("Flume node stopping - {}", name);
 
-    supervisor.stop(context);
+    supervisor.stop();
 
     lifecycleState = LifecycleState.STOP;
   }

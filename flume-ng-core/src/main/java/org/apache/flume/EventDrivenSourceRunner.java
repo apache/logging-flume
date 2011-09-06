@@ -13,14 +13,14 @@ public class EventDrivenSourceRunner implements SourceRunner {
   }
 
   @Override
-  public void start(Context context) {
-    source.start(context);
+  public void start() {
+    source.start();
     lifecycleState = LifecycleState.START;
   }
 
   @Override
-  public void stop(Context context) {
-    source.stop(context);
+  public void stop() {
+    source.stop();
     lifecycleState = LifecycleState.STOP;
   }
 

@@ -30,9 +30,7 @@ public class TestLogicalNode {
 
   @Test
   public void testLifecycle() throws LifecycleException, InterruptedException {
-    Context context = new Context();
-
-    node.start(context);
+    node.start();
     boolean reached = LifecycleController.waitForOneOf(node,
         new LifecycleState[] { LifecycleState.START, LifecycleState.ERROR },
         5000);
@@ -40,7 +38,7 @@ public class TestLogicalNode {
     Assert.assertTrue("Matched a lifecycle state", reached);
     Assert.assertEquals(LifecycleState.START, node.getLifecycleState());
 
-    node.stop(context);
+    node.stop();
     reached = LifecycleController.waitForOneOf(node, new LifecycleState[] {
         LifecycleState.STOP, LifecycleState.ERROR }, 5000);
 
@@ -62,7 +60,6 @@ public class TestLogicalNode {
 
         @Override
         public void run() {
-          Context context = new Context();
           LogicalNode node = new LogicalNode();
 
           node.setName("test-node-" + j);
@@ -70,7 +67,7 @@ public class TestLogicalNode {
           node.setSinkRunner(new EmptySinkRunner());
 
           try {
-            node.start(context);
+            node.start();
 
             boolean reached = LifecycleController.waitForOneOf(node,
                 new LifecycleState[] { LifecycleState.START,
@@ -81,7 +78,7 @@ public class TestLogicalNode {
 
             Thread.sleep(500);
 
-            node.stop(context);
+            node.stop();
             reached = LifecycleController.waitForOneOf(node,
                 new LifecycleState[] { LifecycleState.STOP,
                     LifecycleState.ERROR }, 5000);
@@ -110,12 +107,12 @@ public class TestLogicalNode {
     private LifecycleState lifecycleState = LifecycleState.IDLE;
 
     @Override
-    public void start(Context context) {
+    public void start() {
       lifecycleState = LifecycleState.START;
     }
 
     @Override
-    public void stop(Context context) {
+    public void stop() {
       lifecycleState = LifecycleState.STOP;
     }
 
@@ -131,12 +128,12 @@ public class TestLogicalNode {
     private LifecycleState lifecycleState = LifecycleState.IDLE;
 
     @Override
-    public void start(Context context) {
+    public void start() {
       lifecycleState = LifecycleState.START;
     }
 
     @Override
-    public void stop(Context context) {
+    public void stop() {
       lifecycleState = LifecycleState.STOP;
     }
 

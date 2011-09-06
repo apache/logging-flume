@@ -32,7 +32,7 @@ public class TestLoggerSink {
     Configurables.configure(sink, context);
 
     sink.setChannel(channel);
-    sink.start(context);
+    sink.start();
 
     for (int i = 0; i < 10; i++) {
       Event event = EventBuilder.withBody(("Test " + i).getBytes());
@@ -41,7 +41,7 @@ public class TestLoggerSink {
       sink.process();
     }
 
-    sink.stop(context);
+    sink.stop();
   }
 
 }

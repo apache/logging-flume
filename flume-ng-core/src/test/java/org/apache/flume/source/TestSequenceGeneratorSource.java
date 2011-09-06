@@ -55,7 +55,7 @@ public class TestSequenceGeneratorSource {
     Configurables.configure(source, context);
 
     source.setChannel(channel);
-    source.start(context);
+    source.start();
 
     for (long i = 0; i < 100; i++) {
       source.process();
@@ -65,7 +65,7 @@ public class TestSequenceGeneratorSource {
           new String(event.getBody()).getBytes());
     }
 
-    source.stop(context);
+    source.stop();
   }
 
 }
