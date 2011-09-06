@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.flume.EventSource;
+import org.apache.flume.Source;
 import org.apache.flume.SourceFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,14 +16,14 @@ public class DefaultSourceFactory implements SourceFactory {
   private static final Logger logger = LoggerFactory
       .getLogger(DefaultSourceFactory.class);
 
-  public Map<String, Class<? extends EventSource>> sourceRegistry;
+  public Map<String, Class<? extends Source>> sourceRegistry;
 
   public DefaultSourceFactory() {
-    sourceRegistry = new HashMap<String, Class<? extends EventSource>>();
+    sourceRegistry = new HashMap<String, Class<? extends Source>>();
   }
 
   @Override
-  public boolean register(String name, Class<? extends EventSource> sourceClass) {
+  public boolean register(String name, Class<? extends Source> sourceClass) {
     logger.info("Register source name:{} class:{}", name, sourceClass);
 
     if (sourceRegistry.containsKey(name)) {
@@ -47,7 +47,7 @@ public class DefaultSourceFactory implements SourceFactory {
   }
 
   @Override
-  public EventSource create(String name) throws InstantiationException {
+  public Source create(String name) throws InstantiationException {
     Preconditions.checkNotNull(name);
 
     logger.debug("Creating instance of source {}", name);
@@ -57,7 +57,7 @@ public class DefaultSourceFactory implements SourceFactory {
       return null;
     }
 
-    EventSource source = null;
+    Source source = null;
 
     try {
       source = sourceRegistry.get(name).newInstance();
@@ -74,12 +74,12 @@ public class DefaultSourceFactory implements SourceFactory {
     return "{ sinkRegistry:" + sourceRegistry + " }";
   }
 
-  public Map<String, Class<? extends EventSource>> getSourceRegistry() {
+  public Map<String, Class<? extends Source>> getSourceRegistry() {
     return sourceRegistry;
   }
 
   public void setSourceRegistry(
-      Map<String, Class<? extends EventSource>> sourceRegistry) {
+      Map<String, Class<? extends Source>> sourceRegistry) {
     this.sourceRegistry = sourceRegistry;
   }
 

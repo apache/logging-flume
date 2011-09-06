@@ -1,6 +1,6 @@
 package org.apache.flume;
 
-public interface PollableSource extends EventSource {
+public interface PollableSource extends Source {
 
   /*
    * FIXME: Arvind removed InterruptedException from the interface in his

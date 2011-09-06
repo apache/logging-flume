@@ -1,10 +1,10 @@
 package org.apache.flume.source;
 
 import org.apache.flume.Channel;
-import org.apache.flume.EventSource;
+import org.apache.flume.Source;
 import org.apache.flume.lifecycle.LifecycleState;
 
-abstract public class AbstractSource implements EventSource {
+abstract public class AbstractSource implements Source {
 
   private Channel channel;
 

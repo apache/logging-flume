@@ -1,5 +1,5 @@
 package org.apache.flume;
 
-public interface EventDrivenSource extends EventSource {
+public interface EventDrivenSource extends Source {
 
 }

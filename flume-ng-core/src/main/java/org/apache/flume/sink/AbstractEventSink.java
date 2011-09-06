@@ -1,11 +1,11 @@
 package org.apache.flume.sink;
 
 import org.apache.flume.Channel;
-import org.apache.flume.EventSink;
+import org.apache.flume.Sink;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
 
-abstract public class AbstractEventSink implements EventSink, LifecycleAware {
+abstract public class AbstractEventSink implements Sink, LifecycleAware {
 
   private Channel channel;
 

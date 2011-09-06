@@ -1,6 +1,6 @@
 package org.apache.flume.source;
 
-import org.apache.flume.EventSource;
+import org.apache.flume.Source;
 import org.apache.flume.SourceFactory;
 import org.junit.Assert;
 import org.junit.Before;
@@ -38,7 +38,7 @@ public class TestDefaultSourceFactory {
     Assert
         .assertEquals("seq", sourceFactory.getSourceNames().iterator().next());
 
-    EventSource source = sourceFactory.create("seq");
+    Source source = sourceFactory.create("seq");
 
     Assert.assertNotNull("Factory returned a null source", source);
     Assert.assertTrue("Source isn't an instance of SequenceGeneratorSource",

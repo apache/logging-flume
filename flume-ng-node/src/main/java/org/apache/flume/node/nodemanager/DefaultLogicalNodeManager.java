@@ -1,7 +1,7 @@
 package org.apache.flume.node.nodemanager;
 
-import org.apache.flume.EventSink;
-import org.apache.flume.EventSource;
+import org.apache.flume.Sink;
+import org.apache.flume.Source;
 import org.apache.flume.LogicalNode;
 import org.apache.flume.PollableSource;
 import org.apache.flume.SinkFactory;
@@ -43,8 +43,8 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
      * caller to know our config.
      */
 
-    EventSource source = null;
-    EventSink sink = null;
+    Source source = null;
+    Sink sink = null;
 
     try {
       source = sourceFactory.create(nodeConfiguration.getSourceDefinition());

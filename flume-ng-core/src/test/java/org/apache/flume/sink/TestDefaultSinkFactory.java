@@ -1,6 +1,6 @@
 package org.apache.flume.sink;
 
-import org.apache.flume.EventSink;
+import org.apache.flume.Sink;
 import org.apache.flume.SinkFactory;
 import org.junit.Assert;
 import org.junit.Before;
@@ -36,7 +36,7 @@ public class TestDefaultSinkFactory {
 
     Assert.assertEquals("null", sinkFactory.getSinkNames().iterator().next());
 
-    EventSink sink = sinkFactory.create("null");
+    Sink sink = sinkFactory.create("null");
 
     Assert.assertNotNull("Factory returned a null sink", sink);
     Assert.assertTrue("Source isn't an instance of NullSink",

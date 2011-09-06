@@ -19,7 +19,7 @@ import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
-import org.apache.flume.EventSource;
+import org.apache.flume.Source;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.Configurables;
@@ -196,7 +196,7 @@ public class NetcatSource extends AbstractSource implements Configurable,
 
   public static class NetcatSocketHandler implements Runnable {
 
-    private EventSource source;
+    private Source source;
 
     private CounterGroup counterGroup;
     private SocketChannel socketChannel;

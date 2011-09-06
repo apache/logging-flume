@@ -15,8 +15,8 @@ import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.EventDrivenSourceRunner;
-import org.apache.flume.EventSink;
-import org.apache.flume.EventSource;
+import org.apache.flume.Sink;
+import org.apache.flume.Source;
 import org.apache.flume.LogicalNode;
 import org.apache.flume.PollableSink;
 import org.apache.flume.PollableSource;
@@ -163,9 +163,9 @@ public class Application {
 
     if (node.getLifecycleState().equals(LifecycleState.START)) {
       for (NodeConfiguration nodeConf : nodeConfigs) {
-        EventSource source = sourceFactory.create(nodeConf
+        Source source = sourceFactory.create(nodeConf
             .getSourceDefinition());
-        EventSink sink = sinkFactory.create(nodeConf.getSinkDefinition());
+        Sink sink = sinkFactory.create(nodeConf.getSinkDefinition());
         Channel channel = new MemoryChannel();
 
         Configurables.configure(source, contexts.get(nodeConf.getName()));
