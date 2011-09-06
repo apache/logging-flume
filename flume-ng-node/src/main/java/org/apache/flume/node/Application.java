@@ -13,13 +13,11 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
-import org.apache.flume.EventDrivenSource;
-import org.apache.flume.Sink;
-import org.apache.flume.Source;
 import org.apache.flume.LogicalNode;
-import org.apache.flume.PollableSink;
-import org.apache.flume.PollableSource;
+import org.apache.flume.Sink;
 import org.apache.flume.SinkFactory;
+import org.apache.flume.SinkRunner;
+import org.apache.flume.Source;
 import org.apache.flume.SourceFactory;
 import org.apache.flume.SourceRunner;
 import org.apache.flume.channel.MemoryChannel;
@@ -31,12 +29,9 @@ import org.apache.flume.node.nodemanager.DefaultLogicalNodeManager;
 import org.apache.flume.sink.DefaultSinkFactory;
 import org.apache.flume.sink.LoggerSink;
 import org.apache.flume.sink.NullSink;
-import org.apache.flume.sink.PollableSinkRunner;
 import org.apache.flume.sink.RollingFileSink;
 import org.apache.flume.source.DefaultSourceFactory;
-import org.apache.flume.source.EventDrivenSourceRunner;
 import org.apache.flume.source.NetcatSource;
-import org.apache.flume.source.PollableSourceRunner;
 import org.apache.flume.source.SequenceGeneratorSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -163,8 +158,7 @@ public class Application {
 
     if (node.getLifecycleState().equals(LifecycleState.START)) {
       for (NodeConfiguration nodeConf : nodeConfigs) {
-        Source source = sourceFactory.create(nodeConf
-            .getSourceDefinition());
+        Source source = sourceFactory.create(nodeConf.getSourceDefinition());
         Sink sink = sinkFactory.create(nodeConf.getSinkDefinition());
         Channel channel = new MemoryChannel();
 
@@ -178,26 +172,8 @@ public class Application {
 
         logicalNode.setName(nodeConf.getName());
 
-        SourceRunner sourceRunner = null;
-
-        if (source instanceof PollableSource) {
-          sourceRunner = new PollableSourceRunner();
-          ((PollableSourceRunner) sourceRunner)
-              .setSource((PollableSource) source);
-        } else if (source instanceof EventDrivenSource) {
-          sourceRunner = new EventDrivenSourceRunner();
-          ((EventDrivenSourceRunner) sourceRunner)
-              .setSource((EventDrivenSource) source);
-        }
-
-        PollableSinkRunner sinkRunner = new PollableSinkRunner();
-
-        if (sink instanceof PollableSink) {
-          sinkRunner.setSink((PollableSink) sink);
-        } else {
-          throw new LifecycleException(
-              "Unable to handle non-PollableSinks at this time:" + sink);
-        }
+        SourceRunner sourceRunner = SourceRunner.forSource(source);
+        SinkRunner sinkRunner = SinkRunner.forSink(sink);
 
         logicalNode.setSourceRunner(sourceRunner);
         logicalNode.setSinkRunner(sinkRunner);

@@ -102,7 +102,7 @@ public class TestLogicalNode {
     Assert.assertEquals(10, successfulThread.get());
   }
 
-  public static class EmptySourceRunner implements SourceRunner {
+  public static class EmptySourceRunner extends SourceRunner {
 
     private LifecycleState lifecycleState = LifecycleState.IDLE;
 
@@ -123,7 +123,7 @@ public class TestLogicalNode {
 
   }
 
-  public static class EmptySinkRunner implements SinkRunner {
+  public static class EmptySinkRunner extends SinkRunner {
 
     private LifecycleState lifecycleState = LifecycleState.IDLE;
 

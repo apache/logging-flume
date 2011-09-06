@@ -6,12 +6,11 @@ import org.apache.flume.CounterGroup;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.PollableSink;
 import org.apache.flume.SinkRunner;
-import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PollableSinkRunner implements SinkRunner, LifecycleAware {
+public class PollableSinkRunner extends SinkRunner {
 
   private static final Logger logger = LoggerFactory
       .getLogger(PollableSinkRunner.class);

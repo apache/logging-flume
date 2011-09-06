@@ -4,7 +4,7 @@ import org.apache.flume.EventDrivenSource;
 import org.apache.flume.SourceRunner;
 import org.apache.flume.lifecycle.LifecycleState;
 
-public class EventDrivenSourceRunner implements SourceRunner {
+public class EventDrivenSourceRunner extends SourceRunner {
 
   private EventDrivenSource source;
 
