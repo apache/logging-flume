@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-public class RollingFileSink extends AbstractEventSink implements PollableSink,
+public class RollingFileSink extends AbstractSink implements PollableSink,
     Configurable {
 
   private static final Logger logger = LoggerFactory

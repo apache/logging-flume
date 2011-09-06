@@ -5,13 +5,13 @@ import org.apache.flume.Sink;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
 
-abstract public class AbstractEventSink implements Sink, LifecycleAware {
+abstract public class AbstractSink implements Sink, LifecycleAware {
 
   private Channel channel;
 
   private LifecycleState lifecycleState;
 
-  public AbstractEventSink() {
+  public AbstractSink() {
     lifecycleState = LifecycleState.IDLE;
   }
 

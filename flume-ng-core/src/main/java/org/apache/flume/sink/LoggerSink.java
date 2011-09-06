@@ -7,7 +7,7 @@ import org.apache.flume.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LoggerSink extends AbstractEventSink implements PollableSink {
+public class LoggerSink extends AbstractSink implements PollableSink {
 
   private static final Logger logger = LoggerFactory
       .getLogger(LoggerSink.class);
