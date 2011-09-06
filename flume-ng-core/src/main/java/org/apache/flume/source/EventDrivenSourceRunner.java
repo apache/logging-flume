@@ -1,5 +1,7 @@
-package org.apache.flume;
+package org.apache.flume.source;
 
+import org.apache.flume.EventDrivenSource;
+import org.apache.flume.SourceRunner;
 import org.apache.flume.lifecycle.LifecycleState;
 
 public class EventDrivenSourceRunner implements SourceRunner {
