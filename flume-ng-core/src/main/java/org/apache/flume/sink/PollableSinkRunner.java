@@ -29,6 +29,9 @@ public class PollableSinkRunner extends SinkRunner {
 
   @Override
   public void start() {
+
+    sink.start();
+
     runner = new PollingRunner();
 
     runner.sink = sink;
@@ -43,6 +46,8 @@ public class PollableSinkRunner extends SinkRunner {
 
   @Override
   public void stop() {
+
+    sink.stop();
 
     if (runnerThread != null) {
       runner.shouldStop.set(true);
