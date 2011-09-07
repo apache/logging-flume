@@ -11,4 +11,4 @@ bin/.settings
 .eclipse
 pmd_report.html
 */bin
-*/target
+target

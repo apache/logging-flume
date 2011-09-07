@@ -15,37 +15,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.sink;
+package org.apache.flume.channel.jdbc;
 
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.Event;
-import org.apache.flume.EventDeliveryException;
-import org.apache.flume.PollableSink;
 import org.apache.flume.Transaction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class LoggerSink extends AbstractSink implements PollableSink {
-
-  private static final Logger logger = LoggerFactory
-      .getLogger(LoggerSink.class);
+/**
+ * <p>A JDBC based channel implementation.</p>
+ */
+public class JdbcChannel implements Channel {
 
   @Override
-  public void process() throws EventDeliveryException {
-    Channel channel = getChannel();
-    Transaction transaction = channel.getTransaction();
-    Event event = null;
+  public void put(Event event) throws ChannelException {
+    // TODO Auto-generated method stub
 
-    try {
-      transaction.begin();
-      event = channel.take();
-      logger.info("Event: " + event);
-      transaction.commit();
-    } catch (Exception ex) {
-      transaction.rollback();
-      throw new EventDeliveryException("Failed to log event: " + event, ex);
-    } finally {
-      transaction.close();
-    }
+  }
+
+  @Override
+  public Event take() throws ChannelException {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public Transaction getTransaction() {
+    // TODO Auto-generated method stub
+    return null;
   }
 }
