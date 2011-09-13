@@ -23,6 +23,7 @@ import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.HttpTransceiver;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
@@ -222,6 +223,10 @@ public class FlumeLog4jAvroAppender extends AppenderSkeleton {
         }
 
         Throwable cause = e.getCause();
+
+        if (cause instanceof AvroRemoteException) {
+          cause = cause.getCause();
+        }
 
         /*
          * We're only interested in attempting to recover from connection
