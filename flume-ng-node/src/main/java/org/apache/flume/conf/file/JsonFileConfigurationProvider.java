@@ -18,8 +18,8 @@ import org.apache.flume.SinkRunner;
 import org.apache.flume.Source;
 import org.apache.flume.SourceFactory;
 import org.apache.flume.SourceRunner;
-import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
+import org.apache.flume.node.ConfigurationProvider;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-public class JsonFileConfigurationProvider implements LifecycleAware {
+public class JsonFileConfigurationProvider implements ConfigurationProvider {
 
   private static final Logger logger = LoggerFactory
       .getLogger(JsonFileConfigurationProvider.class);
@@ -168,7 +168,6 @@ public class JsonFileConfigurationProvider implements LifecycleAware {
         conf.getChannels().put((String) channelDef.get("name"), channel);
       }
     }
-
   }
 
   private synchronized void load() {
