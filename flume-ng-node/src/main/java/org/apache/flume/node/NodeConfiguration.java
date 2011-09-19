@@ -1,13 +1,17 @@
 package org.apache.flume.node;
 
+import java.util.Map;
+
+import org.apache.flume.Channel;
+import org.apache.flume.SinkRunner;
+import org.apache.flume.SourceRunner;
+
 public interface NodeConfiguration {
 
-  public long getVersion();
+  public Map<String, SourceRunner> getSourceRunners();
 
-  public String getName();
+  public Map<String, SinkRunner> getSinkRunners();
 
-  public String getSourceDefinition();
-
-  public String getSinkDefinition();
+  public Map<String, Channel> getChannels();
 
 }

@@ -1,10 +1,6 @@
 package org.apache.flume.node;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -12,19 +8,11 @@ import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.flume.Channel;
 import org.apache.flume.ChannelFactory;
-import org.apache.flume.Context;
-import org.apache.flume.LogicalNode;
-import org.apache.flume.Sink;
 import org.apache.flume.SinkFactory;
-import org.apache.flume.SinkRunner;
-import org.apache.flume.Source;
 import org.apache.flume.SourceFactory;
-import org.apache.flume.SourceRunner;
 import org.apache.flume.channel.DefaultChannelFactory;
 import org.apache.flume.channel.MemoryChannel;
-import org.apache.flume.conf.Configurables;
 import org.apache.flume.conf.file.JsonFileConfigurationProvider;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
@@ -48,8 +36,6 @@ public class Application {
       .getLogger(Application.class);
 
   private String[] args;
-  private Set<NodeConfiguration> nodeConfigs;
-  private Map<String, Context> contexts;
   private File configurationFile;
 
   private SourceFactory sourceFactory;
@@ -74,11 +60,9 @@ public class Application {
   }
 
   public Application() {
-    nodeConfigs = new HashSet<NodeConfiguration>();
     sourceFactory = new DefaultSourceFactory();
     sinkFactory = new DefaultSinkFactory();
     channelFactory = new DefaultChannelFactory();
-    contexts = new HashMap<String, Context>();
   }
 
   public void loadPlugins() {
@@ -106,47 +90,7 @@ public class Application {
 
     CommandLine commandLine = parser.parse(options, args);
 
-    if (commandLine.hasOption("node")) {
-      String[] values = commandLine.getOptionValues("node");
-
-      for (String value : values) {
-        String[] parts = value.split(":");
-
-        if (parts.length < 3) {
-          throw new ParseException(
-              "Node definition must be in the format <name>:<source>:<sink>:<context params>");
-        }
-
-        DefaultNodeConfiguration nodeConfiguration = new DefaultNodeConfiguration();
-
-        nodeConfiguration.setName(parts[0]);
-        nodeConfiguration.setSourceDefinition(parts[1]);
-        nodeConfiguration.setSinkDefinition(parts[2]);
-
-        Context context = new Context();
-
-        if (parts.length >= 4) {
-          logger.debug("Parsing context parameters:{}", parts[3]);
-
-          String[] contextParts = parts[3].split("\\|");
-
-          for (String contextPart : contextParts) {
-            logger.debug("parsing kv pair:{}", contextPart);
-
-            String[] strings = contextPart.split("=");
-            context.put(strings[0], strings[1]);
-          }
-
-        }
-
-        logger.debug("Created nodeConfig:{} context:{}", nodeConfiguration,
-            context);
-
-        contexts.put(nodeConfiguration.getName(), context);
-
-        nodeConfigs.add(nodeConfiguration);
-      }
-    } else if (commandLine.hasOption('f')) {
+    if (commandLine.hasOption('f')) {
       configurationFile = new File(commandLine.getOptionValue('f'));
     }
   }
@@ -155,7 +99,7 @@ public class Application {
       InstantiationException {
 
     final FlumeNode node = new FlumeNode();
-    NodeManager nodeManager = new DefaultLogicalNodeManager();
+    DefaultLogicalNodeManager nodeManager = new DefaultLogicalNodeManager();
     JsonFileConfigurationProvider configurationProvider = new JsonFileConfigurationProvider();
 
     configurationProvider.setChannelFactory(channelFactory);
@@ -165,6 +109,7 @@ public class Application {
     Preconditions.checkState(configurationFile != null,
         "Configuration file not specified");
 
+    configurationProvider.setConfigurationAware(nodeManager);
     configurationProvider.setFile(configurationFile);
 
     node.setName("node");
@@ -183,31 +128,30 @@ public class Application {
     node.start();
     LifecycleController.waitForOneOf(node, LifecycleState.START_OR_ERROR);
 
-    if (node.getLifecycleState().equals(LifecycleState.START)) {
-      for (NodeConfiguration nodeConf : nodeConfigs) {
-        Source source = sourceFactory.create(nodeConf.getSourceDefinition());
-        Sink sink = sinkFactory.create(nodeConf.getSinkDefinition());
-        Channel channel = new MemoryChannel();
-
-        Configurables.configure(source, contexts.get(nodeConf.getName()));
-        Configurables.configure(sink, contexts.get(nodeConf.getName()));
-
-        source.setChannel(channel);
-        sink.setChannel(channel);
-
-        LogicalNode logicalNode = new LogicalNode();
-
-        logicalNode.setName(nodeConf.getName());
-
-        SourceRunner sourceRunner = SourceRunner.forSource(source);
-        SinkRunner sinkRunner = SinkRunner.forSink(sink);
-
-        logicalNode.setSourceRunner(sourceRunner);
-        logicalNode.setSinkRunner(sinkRunner);
-
-        nodeManager.add(logicalNode);
-      }
-    }
+    /*
+     * if (node.getLifecycleState().equals(LifecycleState.START)) { for
+     * (NodeConfiguration nodeConf : nodeConfigs) { Source source =
+     * sourceFactory.create(nodeConf.getSourceDefinition()); Sink sink =
+     * sinkFactory.create(nodeConf.getSinkDefinition()); Channel channel = new
+     * MemoryChannel();
+     * 
+     * Configurables.configure(source, contexts.get(nodeConf.getName()));
+     * Configurables.configure(sink, contexts.get(nodeConf.getName()));
+     * 
+     * source.setChannel(channel); sink.setChannel(channel);
+     * 
+     * LogicalNode logicalNode = new LogicalNode();
+     * 
+     * logicalNode.setName(nodeConf.getName());
+     * 
+     * SourceRunner sourceRunner = SourceRunner.forSource(source); SinkRunner
+     * sinkRunner = SinkRunner.forSink(sink);
+     * 
+     * logicalNode.setSourceRunner(sourceRunner);
+     * logicalNode.setSinkRunner(sinkRunner);
+     * 
+     * nodeManager.add(logicalNode); } }
+     */
 
     LifecycleController.waitForOneOf(node, LifecycleState.STOP_OR_ERROR);
   }

@@ -20,6 +20,7 @@ import org.apache.flume.SourceFactory;
 import org.apache.flume.SourceRunner;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.node.ConfigurationProvider;
+import org.apache.flume.node.nodemanager.NodeConfigurationAware;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
@@ -37,6 +38,7 @@ public class JsonFileConfigurationProvider implements ConfigurationProvider {
   private ChannelFactory channelFactory;
   private SourceFactory sourceFactory;
   private SinkFactory sinkFactory;
+  private NodeConfigurationAware configurationAware;
 
   private LifecycleState lifecycleState;
   private ScheduledExecutorService executorService;
@@ -98,7 +100,7 @@ public class JsonFileConfigurationProvider implements ConfigurationProvider {
     logger.debug("JSON configuration provider stopped");
   }
 
-  private void loadSources(JsonFlumeConfiguration conf,
+  private void loadSources(SimpleNodeConfiguration conf,
       List<Map<String, Object>> defs) throws InstantiationException {
 
     logger.debug("Loading sources");
@@ -127,7 +129,7 @@ public class JsonFileConfigurationProvider implements ConfigurationProvider {
     }
   }
 
-  private void loadSinks(JsonFlumeConfiguration conf,
+  private void loadSinks(SimpleNodeConfiguration conf,
       List<Map<String, Object>> defs) throws InstantiationException {
 
     logger.debug("Loading sinks");
@@ -153,7 +155,7 @@ public class JsonFileConfigurationProvider implements ConfigurationProvider {
     }
   }
 
-  private void loadChannels(JsonFlumeConfiguration conf,
+  private void loadChannels(SimpleNodeConfiguration conf,
       List<Map<String, Object>> defs) throws InstantiationException {
 
     logger.debug("Loading channels");
@@ -171,7 +173,7 @@ public class JsonFileConfigurationProvider implements ConfigurationProvider {
   }
 
   private synchronized void load() {
-    JsonFlumeConfiguration flumeConf = new JsonFlumeConfiguration();
+    SimpleNodeConfiguration flumeConf = new SimpleNodeConfiguration();
     ObjectMapper mapper = new ObjectMapper();
 
     try {
@@ -194,6 +196,8 @@ public class JsonFileConfigurationProvider implements ConfigurationProvider {
       }
 
       logger.debug("Loaded conf:{}", flumeConf);
+
+      configurationAware.onNodeConfigurationChanged(flumeConf);
     } catch (JsonParseException e) {
       logger.error("Unable to parse json file:" + file + " Exception follows.",
           e);
@@ -242,6 +246,14 @@ public class JsonFileConfigurationProvider implements ConfigurationProvider {
 
   public void setSinkFactory(SinkFactory sinkFactory) {
     this.sinkFactory = sinkFactory;
+  }
+
+  public NodeConfigurationAware getConfigurationAware() {
+    return configurationAware;
+  }
+
+  public void setConfigurationAware(NodeConfigurationAware configurationAware) {
+    this.configurationAware = configurationAware;
   }
 
   public class FileWatcherRunnable implements Runnable {

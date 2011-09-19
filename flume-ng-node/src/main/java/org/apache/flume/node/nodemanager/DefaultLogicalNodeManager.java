@@ -1,17 +1,14 @@
 package org.apache.flume.node.nodemanager;
 
-import org.apache.flume.Sink;
-import org.apache.flume.Source;
+import java.util.Map.Entry;
+
 import org.apache.flume.LogicalNode;
-import org.apache.flume.PollableSource;
-import org.apache.flume.SinkFactory;
-import org.apache.flume.SourceFactory;
+import org.apache.flume.SinkRunner;
 import org.apache.flume.SourceRunner;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.lifecycle.LifecycleSupervisor;
 import org.apache.flume.lifecycle.LifecycleSupervisor.SupervisorPolicy;
 import org.apache.flume.node.NodeConfiguration;
-import org.apache.flume.source.PollableSourceRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,9 +19,6 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
 
   private static final Logger logger = LoggerFactory
       .getLogger(DefaultLogicalNodeManager.class);
-
-  private SourceFactory sourceFactory;
-  private SinkFactory sinkFactory;
 
   private LifecycleSupervisor nodeSupervisor;
   private LifecycleState lifecycleState;
@@ -38,42 +32,19 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
   public void onNodeConfigurationChanged(NodeConfiguration nodeConfiguration) {
     logger.info("Node configuration change:{}", nodeConfiguration);
 
-    /*
-     * FIXME: Decide if nodeConfiguration is worth applying. We can't trust the
-     * caller to know our config.
-     */
+    for (Entry<String, SinkRunner> entry : nodeConfiguration.getSinkRunners()
+        .entrySet()) {
 
-    Source source = null;
-    Sink sink = null;
-
-    try {
-      source = sourceFactory.create(nodeConfiguration.getSourceDefinition());
-    } catch (InstantiationException e) {
-      logger
-          .error(
-              "Failed to apply configuration:{} because of source failure:{} - retaining old configuration",
-              nodeConfiguration, e.getMessage());
-      return;
+      nodeSupervisor.supervise(entry.getValue(),
+          new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
     }
 
-    try {
-      sink = sinkFactory.create(nodeConfiguration.getSinkDefinition());
-    } catch (InstantiationException e) {
-      logger
-          .error(
-              "Failed to apply configuration:{} because of sink failure:{} - retaining old configuration",
-              nodeConfiguration, e.getMessage());
-      return;
+    for (Entry<String, SourceRunner> entry : nodeConfiguration
+        .getSourceRunners().entrySet()) {
+
+      nodeSupervisor.supervise(entry.getValue(),
+          new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
     }
-
-    LogicalNode newLogicalNode = new LogicalNode();
-
-    if (source instanceof PollableSource) {
-      SourceRunner channelAdapter = new PollableSourceRunner();
-      newLogicalNode.setSourceRunner(channelAdapter);
-    }
-
-    add(newLogicalNode);
   }
 
   @Override

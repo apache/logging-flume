@@ -6,14 +6,15 @@ import java.util.Map;
 import org.apache.flume.Channel;
 import org.apache.flume.SinkRunner;
 import org.apache.flume.SourceRunner;
+import org.apache.flume.node.NodeConfiguration;
 
-public class JsonFlumeConfiguration {
+public class SimpleNodeConfiguration implements NodeConfiguration {
 
   private Map<String, Channel> channels;
   private Map<String, SourceRunner> sourceRunners;
   private Map<String, SinkRunner> sinkRunners;
 
-  public JsonFlumeConfiguration() {
+  public SimpleNodeConfiguration() {
     channels = new HashMap<String, Channel>();
     sourceRunners = new HashMap<String, SourceRunner>();
     sinkRunners = new HashMap<String, SinkRunner>();
@@ -25,6 +26,7 @@ public class JsonFlumeConfiguration {
         + " channels:" + channels + " }";
   }
 
+  @Override
   public Map<String, Channel> getChannels() {
     return channels;
   }
@@ -33,6 +35,7 @@ public class JsonFlumeConfiguration {
     this.channels = channels;
   }
 
+  @Override
   public Map<String, SourceRunner> getSourceRunners() {
     return sourceRunners;
   }
@@ -41,6 +44,7 @@ public class JsonFlumeConfiguration {
     this.sourceRunners = sourceRunners;
   }
 
+  @Override
   public Map<String, SinkRunner> getSinkRunners() {
     return sinkRunners;
   }
