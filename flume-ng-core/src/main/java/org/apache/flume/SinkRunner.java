@@ -5,6 +5,8 @@ import org.apache.flume.sink.PollableSinkRunner;
 
 abstract public class SinkRunner implements LifecycleAware {
 
+  private Sink sink;
+
   public static SinkRunner forSink(Sink sink) {
     SinkRunner runner = null;
 
@@ -17,6 +19,14 @@ abstract public class SinkRunner implements LifecycleAware {
     }
 
     return runner;
+  }
+
+  public Sink getSink() {
+    return sink;
+  }
+
+  public void setSink(Sink sink) {
+    this.sink = sink;
   }
 
 }

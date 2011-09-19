@@ -15,8 +15,6 @@ public class PollableSinkRunner extends SinkRunner {
   private static final Logger logger = LoggerFactory
       .getLogger(PollableSinkRunner.class);
 
-  private PollableSink sink;
-
   private CounterGroup counterGroup;
   private PollingRunner runner;
   private Thread runnerThread;
@@ -29,6 +27,7 @@ public class PollableSinkRunner extends SinkRunner {
 
   @Override
   public void start() {
+    PollableSink sink = (PollableSink) getSink();
 
     sink.start();
 
@@ -47,7 +46,7 @@ public class PollableSinkRunner extends SinkRunner {
   @Override
   public void stop() {
 
-    sink.stop();
+    getSink().stop();
 
     if (runnerThread != null) {
       runner.shouldStop.set(true);
@@ -72,14 +71,6 @@ public class PollableSinkRunner extends SinkRunner {
   @Override
   public LifecycleState getLifecycleState() {
     return lifecycleState;
-  }
-
-  public PollableSink getSink() {
-    return sink;
-  }
-
-  public void setSink(PollableSink sink) {
-    this.sink = sink;
   }
 
   public static class PollingRunner implements Runnable {

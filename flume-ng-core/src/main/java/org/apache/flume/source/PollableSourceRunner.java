@@ -15,7 +15,6 @@ public class PollableSourceRunner extends SourceRunner {
       .getLogger(PollableSourceRunner.class);
 
   private AtomicBoolean shouldStop;
-  private PollableSource source;
 
   private CounterGroup counterGroup;
   private PollingRunner runner;
@@ -30,6 +29,7 @@ public class PollableSourceRunner extends SourceRunner {
 
   @Override
   public void start() {
+    PollableSource source = (PollableSource) getSource();
 
     source.start();
 
@@ -61,17 +61,9 @@ public class PollableSourceRunner extends SourceRunner {
       Thread.currentThread().interrupt();
     }
 
-    source.stop();
+    getSource().stop();
 
     lifecycleState = LifecycleState.STOP;
-  }
-
-  public PollableSource getSource() {
-    return source;
-  }
-
-  public void setSource(PollableSource source) {
-    this.source = source;
   }
 
   public LifecycleState getLifecycleState() {

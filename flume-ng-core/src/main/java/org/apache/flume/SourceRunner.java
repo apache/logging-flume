@@ -6,6 +6,8 @@ import org.apache.flume.source.PollableSourceRunner;
 
 abstract public class SourceRunner implements LifecycleAware {
 
+  private Source source;
+
   public static SourceRunner forSource(Source source) {
     SourceRunner runner = null;
 
@@ -21,6 +23,14 @@ abstract public class SourceRunner implements LifecycleAware {
     }
 
     return runner;
+  }
+
+  public Source getSource() {
+    return source;
+  }
+
+  public void setSource(Source source) {
+    this.source = source;
   }
 
 }
