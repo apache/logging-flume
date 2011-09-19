@@ -45,7 +45,7 @@ public class NullSink extends AbstractSink implements PollableSink {
     try {
       transaction.begin();
       event = channel.take();
-      logger.debug("Consumed the event: " + event);
+      //logger.debug("Consumed the event: " + event);
       transaction.commit();
     } catch (Exception ex) {
       transaction.rollback();
