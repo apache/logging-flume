@@ -54,7 +54,7 @@
 
     "sinks": [
       {
-        "type": "logger",
+        "type": "null",
         "channel": "ch1"
       }
     ],
