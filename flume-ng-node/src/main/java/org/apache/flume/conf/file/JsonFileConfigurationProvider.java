@@ -53,7 +53,7 @@ public class JsonFileConfigurationProvider implements LifecycleAware {
   }
 
   @Override
-  public synchronized void start() {
+  public void start() {
     logger.info("JSON configuration provider starting");
 
     Preconditions.checkState(file != null,
@@ -78,7 +78,7 @@ public class JsonFileConfigurationProvider implements LifecycleAware {
   }
 
   @Override
-  public synchronized void stop() {
+  public void stop() {
     logger.info("JSON configuration provider stopping");
 
     executorService.shutdown();

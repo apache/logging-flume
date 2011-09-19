@@ -54,8 +54,6 @@ public class TestJsonFileConfigurationProvider {
     provider.setFile(testFile);
 
     provider.start();
-
-    Thread.sleep(1000);
     provider.stop();
 
     logger.debug("provider:{}", provider);
