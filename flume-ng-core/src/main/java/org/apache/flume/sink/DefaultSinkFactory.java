@@ -50,7 +50,7 @@ public class DefaultSinkFactory implements SinkFactory {
   public Sink create(String name) throws InstantiationException {
     Preconditions.checkNotNull(name);
 
-    logger.debug("Creating instance of source {}", name);
+    logger.debug("Creating instance of sink {}", name);
 
     if (!sinkRegistry.containsKey(name)) {
       return null;
