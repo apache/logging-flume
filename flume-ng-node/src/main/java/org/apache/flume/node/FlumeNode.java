@@ -16,7 +16,7 @@ public class FlumeNode implements LifecycleAware {
   private String name;
   private LifecycleState lifecycleState;
   private NodeManager nodeManager;
-  private NodeConfigurationClient configurationClient;
+  private ConfigurationProvider configurationProvider;
   private LifecycleSupervisor supervisor;
 
   public FlumeNode() {
@@ -36,6 +36,8 @@ public class FlumeNode implements LifecycleAware {
 
     supervisor.supervise(nodeManager,
         new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
+    supervisor.supervise(configurationProvider,
+        new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
 
     lifecycleState = LifecycleState.START;
   }
@@ -52,7 +54,8 @@ public class FlumeNode implements LifecycleAware {
 
   @Override
   public String toString() {
-    return "{ name:" + name + " nodeManager:" + nodeManager + " }";
+    return "{ name:" + name + " nodeManager:" + nodeManager
+        + " configurationProvider:" + configurationProvider + " }";
   }
 
   public String getName() {
@@ -69,6 +72,15 @@ public class FlumeNode implements LifecycleAware {
 
   public void setNodeManager(NodeManager nodeManager) {
     this.nodeManager = nodeManager;
+  }
+
+  public ConfigurationProvider getConfigurationProvider() {
+    return configurationProvider;
+  }
+
+  public void setConfigurationProvider(
+      ConfigurationProvider configurationProvider) {
+    this.configurationProvider = configurationProvider;
   }
 
   @Override

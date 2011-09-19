@@ -1,5 +1,6 @@
 package org.apache.flume.node;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -12,6 +13,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelFactory;
 import org.apache.flume.Context;
 import org.apache.flume.LogicalNode;
 import org.apache.flume.Sink;
@@ -20,8 +22,10 @@ import org.apache.flume.SinkRunner;
 import org.apache.flume.Source;
 import org.apache.flume.SourceFactory;
 import org.apache.flume.SourceRunner;
+import org.apache.flume.channel.DefaultChannelFactory;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
+import org.apache.flume.conf.file.JsonFileConfigurationProvider;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;
@@ -36,6 +40,8 @@ import org.apache.flume.source.SequenceGeneratorSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
+
 public class Application {
 
   private static final Logger logger = LoggerFactory
@@ -44,9 +50,11 @@ public class Application {
   private String[] args;
   private Set<NodeConfiguration> nodeConfigs;
   private Map<String, Context> contexts;
+  private File configurationFile;
 
   private SourceFactory sourceFactory;
   private SinkFactory sinkFactory;
+  private ChannelFactory channelFactory;
 
   public static void main(String[] args) {
     Application application = new Application();
@@ -69,10 +77,13 @@ public class Application {
     nodeConfigs = new HashSet<NodeConfiguration>();
     sourceFactory = new DefaultSourceFactory();
     sinkFactory = new DefaultSinkFactory();
+    channelFactory = new DefaultChannelFactory();
     contexts = new HashMap<String, Context>();
   }
 
   public void loadPlugins() {
+    channelFactory.register("memory", MemoryChannel.class);
+
     sourceFactory.register("seq", SequenceGeneratorSource.class);
     sourceFactory.register("netcat", NetcatSource.class);
 
@@ -86,6 +97,9 @@ public class Application {
 
     Option option = new Option("n", "node", true, "creates a logical node");
     option.setValueSeparator(',');
+    options.addOption(option);
+
+    option = new Option("f", "conf-file", true, "specify a conf file");
     options.addOption(option);
 
     CommandLineParser parser = new GnuParser();
@@ -132,6 +146,8 @@ public class Application {
 
         nodeConfigs.add(nodeConfiguration);
       }
+    } else if (commandLine.hasOption('f')) {
+      configurationFile = new File(commandLine.getOptionValue('f'));
     }
   }
 
@@ -140,9 +156,20 @@ public class Application {
 
     final FlumeNode node = new FlumeNode();
     NodeManager nodeManager = new DefaultLogicalNodeManager();
+    JsonFileConfigurationProvider configurationProvider = new JsonFileConfigurationProvider();
+
+    configurationProvider.setChannelFactory(channelFactory);
+    configurationProvider.setSourceFactory(sourceFactory);
+    configurationProvider.setSinkFactory(sinkFactory);
+
+    Preconditions.checkState(configurationFile != null,
+        "Configuration file not specified");
+
+    configurationProvider.setFile(configurationFile);
 
     node.setName("node");
     node.setNodeManager(nodeManager);
+    node.setConfigurationProvider(configurationProvider);
 
     Runtime.getRuntime().addShutdownHook(new Thread("node-shutdownHook") {
 
