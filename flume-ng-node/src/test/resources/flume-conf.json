@@ -1,0 +1,70 @@
+{
+  "host1": {
+
+    "sources": [
+      {
+        "name": "source1",
+        "type": "seq",
+        "channel": "ch1"
+      },
+      {
+        "name": "source2",
+        "type": "seq",
+        "channel": "ch2"
+      }
+    ],
+
+    "sinks": [
+      {
+        "name": "sink1",
+        "type": "null",
+        "channel": "ch1"
+      },
+      {
+        "name": "sink2",
+        "type": "null",
+        "channel": "ch2"
+      }
+    ],
+
+    "channels": [
+      {
+        "name": "ch1",
+        "type": "memory",
+        "capacity": 100
+      },
+      {
+        "name": "ch2",
+        "type": "memory",
+        "capacity": 10
+      }
+    ]
+
+  },
+
+  "host2": {
+
+    "sources": [
+      {
+        "type": "netcat",
+        "port": 41414,
+        "channel": "ch1"
+      }
+    ],
+
+    "sinks": [
+      {
+        "type": "logger",
+        "channel": "ch1"
+      }
+    ],
+
+    "channels": [
+      {
+        "type": "memory"
+      }
+    ]
+
+  }
+
+}
