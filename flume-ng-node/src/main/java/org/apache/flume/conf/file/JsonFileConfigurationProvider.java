@@ -103,17 +103,26 @@ public class JsonFileConfigurationProvider implements LifecycleAware {
 
     logger.debug("Loading sources");
 
-    for (Map<String, Object> source : defs) {
-      logger.debug("source:{}", source);
+    for (Map<String, Object> sourceDef : defs) {
+      logger.debug("source:{}", sourceDef);
 
-      if (source.containsKey("type")) {
-        Source s = sourceFactory.create((String) source.get("type"));
+      if (sourceDef.containsKey("type")) {
+        Source source = sourceFactory.create((String) sourceDef.get("type"));
+        Channel channel = conf.getChannels().get(sourceDef.get("channel"));
 
-        // s.setChannel(knownChannels.get(source.get("channel")));
-        conf.getSourceRunners().add(SourceRunner.forSource(s));
+        if (channel != null) {
+          source.setChannel(channel);
+        } else {
+          logger.warn(
+              "No channel named {} - source:{} is likely non-functional.",
+              source, sourceDef.get("channel"));
+        }
+
+        conf.getSourceRunners().put((String) sourceDef.get("name"),
+            SourceRunner.forSource(source));
       } else {
         throw new IllegalArgumentException("Illegal source definition:"
-            + source + " - Missing type.");
+            + sourceDef + " - Missing type.");
       }
     }
   }
@@ -123,13 +132,23 @@ public class JsonFileConfigurationProvider implements LifecycleAware {
 
     logger.debug("Loading sinks");
 
-    for (Map<String, Object> sink : defs) {
-      logger.debug("sink:{}", sink);
+    for (Map<String, Object> sinkDef : defs) {
+      logger.debug("sink:{}", sinkDef);
 
-      if (sink.containsKey("type")) {
-        Sink s = sinkFactory.create((String) sink.get("type"));
-        // s.setChannel(knownChannels.get(source.get("channel")));
-        conf.getSinkRunners().add(SinkRunner.forSink(s));
+      if (sinkDef.containsKey("type")) {
+        Sink sink = sinkFactory.create((String) sinkDef.get("type"));
+        Channel channel = conf.getChannels().get(sinkDef.get("channel"));
+
+        if (channel != null) {
+          sink.setChannel(channel);
+        } else {
+          logger.warn(
+              "No channel named {} - sink:{} is likely non-functional.", sink,
+              sinkDef.get("channel"));
+        }
+
+        conf.getSinkRunners().put((String) sinkDef.get("name"),
+            SinkRunner.forSink(sink));
       }
     }
   }
@@ -146,7 +165,7 @@ public class JsonFileConfigurationProvider implements LifecycleAware {
         Channel channel = channelFactory
             .create((String) channelDef.get("type"));
 
-        conf.getChannels().add(channel);
+        conf.getChannels().put((String) channelDef.get("name"), channel);
       }
     }
 
@@ -166,9 +185,13 @@ public class JsonFileConfigurationProvider implements LifecycleAware {
 
         logger.debug("host:{}", hostDef);
 
+        /*
+         * NB: Because load{Sources,Sinks} wire up dependencies (i.e. channels),
+         * loadChannels must always be executed first.
+         */
+        loadChannels(flumeConf, hostDef.getValue().get("channels"));
         loadSources(flumeConf, hostDef.getValue().get("sources"));
         loadSinks(flumeConf, hostDef.getValue().get("sinks"));
-        loadChannels(flumeConf, hostDef.getValue().get("channels"));
       }
 
       logger.debug("Loaded conf:{}", flumeConf);

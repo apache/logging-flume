@@ -1,7 +1,7 @@
 package org.apache.flume.conf.file;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.flume.Channel;
 import org.apache.flume.SinkRunner;
@@ -9,14 +9,14 @@ import org.apache.flume.SourceRunner;
 
 public class JsonFlumeConfiguration {
 
-  private Set<Channel> channels;
-  private Set<SourceRunner> sourceRunners;
-  private Set<SinkRunner> sinkRunners;
+  private Map<String, Channel> channels;
+  private Map<String, SourceRunner> sourceRunners;
+  private Map<String, SinkRunner> sinkRunners;
 
   public JsonFlumeConfiguration() {
-    channels = new HashSet<Channel>();
-    sourceRunners = new HashSet<SourceRunner>();
-    sinkRunners = new HashSet<SinkRunner>();
+    channels = new HashMap<String, Channel>();
+    sourceRunners = new HashMap<String, SourceRunner>();
+    sinkRunners = new HashMap<String, SinkRunner>();
   }
 
   @Override
@@ -25,27 +25,27 @@ public class JsonFlumeConfiguration {
         + " channels:" + channels + " }";
   }
 
-  public Set<Channel> getChannels() {
+  public Map<String, Channel> getChannels() {
     return channels;
   }
 
-  public void setChannels(Set<Channel> channels) {
+  public void setChannels(Map<String, Channel> channels) {
     this.channels = channels;
   }
 
-  public Set<SourceRunner> getSourceRunners() {
+  public Map<String, SourceRunner> getSourceRunners() {
     return sourceRunners;
   }
 
-  public void setSourceRunners(Set<SourceRunner> sourceRunners) {
+  public void setSourceRunners(Map<String, SourceRunner> sourceRunners) {
     this.sourceRunners = sourceRunners;
   }
 
-  public Set<SinkRunner> getSinkRunners() {
+  public Map<String, SinkRunner> getSinkRunners() {
     return sinkRunners;
   }
 
-  public void setSinkRunners(Set<SinkRunner> sinkRunners) {
+  public void setSinkRunners(Map<String, SinkRunner> sinkRunners) {
     this.sinkRunners = sinkRunners;
   }
 
