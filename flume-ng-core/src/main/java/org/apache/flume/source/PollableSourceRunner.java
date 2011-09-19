@@ -66,6 +66,12 @@ public class PollableSourceRunner extends SourceRunner {
     lifecycleState = LifecycleState.STOP;
   }
 
+  @Override
+  public String toString() {
+    return "PollableSourceRunner: { source:" + getSource() + " counterGroup:"
+        + counterGroup + " }";
+  }
+
   public LifecycleState getLifecycleState() {
     return lifecycleState;
   }

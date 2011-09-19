@@ -69,6 +69,12 @@ public class PollableSinkRunner extends SinkRunner {
   }
 
   @Override
+  public String toString() {
+    return "PollableSinkRunner: { sink:" + getSink() + " counterGroup:"
+        + counterGroup + " }";
+  }
+
+  @Override
   public LifecycleState getLifecycleState() {
     return lifecycleState;
   }

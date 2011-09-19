@@ -24,6 +24,11 @@ public class EventDrivenSourceRunner extends SourceRunner {
   }
 
   @Override
+  public String toString() {
+    return "EventDrivenSourceRunner: { source:" + getSource() + " }";
+  }
+
+  @Override
   public LifecycleState getLifecycleState() {
     return lifecycleState;
   }
