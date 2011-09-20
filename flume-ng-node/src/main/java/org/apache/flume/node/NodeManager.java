@@ -2,19 +2,16 @@ package org.apache.flume.node;
 
 import java.util.Set;
 
-import org.apache.flume.LogicalNode;
 import org.apache.flume.lifecycle.LifecycleAware;
 
 public interface NodeManager extends LifecycleAware {
 
-  public boolean add(LogicalNode node);
+  public boolean add(LifecycleAware node);
 
-  public boolean remove(LogicalNode node);
+  public boolean remove(LifecycleAware node);
 
-  public Set<LogicalNode> getNodes();
+  public Set<LifecycleAware> getNodes();
 
-  public void setNodes(Set<LogicalNode> nodes);
-
-  public LogicalNode getNode(String name);
+  public void setNodes(Set<LifecycleAware> nodes);
 
 }

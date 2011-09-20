@@ -3,8 +3,8 @@ package org.apache.flume.node;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.flume.LogicalNode;
 import org.apache.flume.channel.MemoryChannel;
+import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;
@@ -47,18 +47,13 @@ public class TestDefaultLogicalNodeManager {
             LifecycleState.START_OR_ERROR, 5000));
 
     for (int i = 0; i < 3; i++) {
-      LogicalNode node = new LogicalNode();
-
       SequenceGeneratorSource source = new SequenceGeneratorSource();
       source.setChannel(new MemoryChannel());
 
-      PollableSourceRunner sourceChannelAdapter = new PollableSourceRunner();
-      sourceChannelAdapter.setSource(source);
+      PollableSourceRunner sourceRunner = new PollableSourceRunner();
+      sourceRunner.setSource(source);
 
-      node.setName("test-node-" + i);
-      node.setSourceRunner(sourceChannelAdapter);
-
-      nodeManager.add(node);
+      nodeManager.add(sourceRunner);
     }
 
     Thread.sleep(5000);
@@ -73,21 +68,16 @@ public class TestDefaultLogicalNodeManager {
   public void testNodeStartStops() throws LifecycleException,
       InterruptedException {
 
-    Set<LogicalNode> testNodes = new HashSet<LogicalNode>();
+    Set<LifecycleAware> testNodes = new HashSet<LifecycleAware>();
 
     for (int i = 0; i < 30; i++) {
-      LogicalNode node = new LogicalNode();
-
       SequenceGeneratorSource source = new SequenceGeneratorSource();
       source.setChannel(new MemoryChannel());
 
-      PollableSourceRunner sourceChannelAdapter = new PollableSourceRunner();
-      sourceChannelAdapter.setSource(source);
+      PollableSourceRunner sourceRunner = new PollableSourceRunner();
+      sourceRunner.setSource(source);
 
-      node.setName("test-node-" + i);
-      node.setSourceRunner(sourceChannelAdapter);
-
-      testNodes.add(node);
+      testNodes.add(sourceRunner);
     }
 
     nodeManager.start();
@@ -95,7 +85,7 @@ public class TestDefaultLogicalNodeManager {
         LifecycleController.waitForOneOf(nodeManager,
             LifecycleState.START_OR_ERROR, 5000));
 
-    for (LogicalNode node : testNodes) {
+    for (LifecycleAware node : testNodes) {
       nodeManager.add(node);
     }
 
@@ -110,21 +100,16 @@ public class TestDefaultLogicalNodeManager {
   @Test
   public void testErrorNode() throws LifecycleException, InterruptedException {
 
-    Set<LogicalNode> testNodes = new HashSet<LogicalNode>();
+    Set<LifecycleAware> testNodes = new HashSet<LifecycleAware>();
 
     for (int i = 0; i < 30; i++) {
-      LogicalNode node = new LogicalNode();
-
       SequenceGeneratorSource source = new SequenceGeneratorSource();
       source.setChannel(new MemoryChannel());
 
-      PollableSourceRunner sourceChannelAdapter = new PollableSourceRunner();
-      sourceChannelAdapter.setSource(source);
+      PollableSourceRunner sourceRunner = new PollableSourceRunner();
+      sourceRunner.setSource(source);
 
-      node.setName("test-node-" + i);
-      node.setSourceRunner(sourceChannelAdapter);
-
-      testNodes.add(node);
+      testNodes.add(sourceRunner);
     }
 
     nodeManager.start();
@@ -132,7 +117,7 @@ public class TestDefaultLogicalNodeManager {
         LifecycleController.waitForOneOf(nodeManager,
             LifecycleState.START_OR_ERROR, 5000));
 
-    for (LogicalNode node : testNodes) {
+    for (LifecycleAware node : testNodes) {
       nodeManager.add(node);
     }
 

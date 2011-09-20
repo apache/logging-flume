@@ -1,9 +1,7 @@
 package org.apache.flume.node;
 
-import junit.framework.Assert;
-
-import org.apache.flume.LogicalNode;
 import org.apache.flume.channel.MemoryChannel;
+import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;
@@ -12,6 +10,7 @@ import org.apache.flume.sink.NullSink;
 import org.apache.flume.sink.PollableSinkRunner;
 import org.apache.flume.source.PollableSourceRunner;
 import org.apache.flume.source.SequenceGeneratorSource;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -33,7 +32,7 @@ public class TestAbstractLogicalNodeManager {
       @Override
       public void stop() {
 
-        for (LogicalNode node : getNodes()) {
+        for (LifecycleAware node : getNodes()) {
           node.stop();
 
           boolean reached = false;
@@ -62,7 +61,7 @@ public class TestAbstractLogicalNodeManager {
       @Override
       public void start() {
 
-        for (LogicalNode node : getNodes()) {
+        for (LifecycleAware node : getNodes()) {
           node.start();
 
           boolean reached = false;
@@ -117,19 +116,14 @@ public class TestAbstractLogicalNodeManager {
   @Test
   public void testLifecycle() throws LifecycleException, InterruptedException {
 
-    LogicalNode node = new LogicalNode();
-    node.setName("test");
-
     PollableSourceRunner sourceRunner = new PollableSourceRunner();
     sourceRunner.setSource(new SequenceGeneratorSource());
 
     PollableSinkRunner sinkRunner = new PollableSinkRunner();
     sinkRunner.setSink(new NullSink());
 
-    node.setSourceRunner(sourceRunner);
-    node.setSinkRunner(sinkRunner);
-
-    nodeManager.add(node);
+    nodeManager.add(sourceRunner);
+    nodeManager.add(sinkRunner);
 
     nodeManager.start();
     boolean reached = LifecycleController.waitForOneOf(nodeManager,
@@ -150,8 +144,6 @@ public class TestAbstractLogicalNodeManager {
   public void testRapidLifecycleFlapping() throws LifecycleException,
       InterruptedException {
 
-    LogicalNode node = new LogicalNode();
-
     SequenceGeneratorSource source = new SequenceGeneratorSource();
     source.setChannel(new MemoryChannel());
 
@@ -161,11 +153,8 @@ public class TestAbstractLogicalNodeManager {
     PollableSinkRunner sinkRunner = new PollableSinkRunner();
     sinkRunner.setSink(new NullSink());
 
-    node.setName("test");
-    node.setSourceRunner(sourceRunner);
-    node.setSinkRunner(sinkRunner);
-
-    nodeManager.add(node);
+    nodeManager.add(sourceRunner);
+    nodeManager.add(sinkRunner);
 
     for (int i = 0; i < 10; i++) {
       nodeManager.start();

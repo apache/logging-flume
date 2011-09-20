@@ -2,9 +2,9 @@ package org.apache.flume.node.nodemanager;
 
 import java.util.Map.Entry;
 
-import org.apache.flume.LogicalNode;
 import org.apache.flume.SinkRunner;
 import org.apache.flume.SourceRunner;
+import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.lifecycle.LifecycleSupervisor;
 import org.apache.flume.lifecycle.LifecycleSupervisor.SupervisorPolicy;
@@ -48,7 +48,7 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
   }
 
   @Override
-  public boolean add(LogicalNode node) {
+  public boolean add(LifecycleAware node) {
     /*
      * FIXME: This type of overriding worries me. There should be a better
      * separation of addition of nodes and management. (i.e. state vs. function)
@@ -67,7 +67,7 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
   }
 
   @Override
-  public boolean remove(LogicalNode node) {
+  public boolean remove(LifecycleAware node) {
     /*
      * FIXME: This type of overriding worries me. There should be a better
      * separation of addition of nodes and management. (i.e. state vs. function)

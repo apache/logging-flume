@@ -3,54 +3,43 @@ package org.apache.flume.node.nodemanager;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.flume.LogicalNode;
+import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.node.NodeManager;
 
 import com.google.common.base.Preconditions;
 
 abstract public class AbstractLogicalNodeManager implements NodeManager {
 
-  private Set<LogicalNode> nodes;
+  private Set<LifecycleAware> nodes;
 
   public AbstractLogicalNodeManager() {
-    nodes = new HashSet<LogicalNode>();
+    nodes = new HashSet<LifecycleAware>();
   }
 
   @Override
-  public boolean add(LogicalNode node) {
+  public boolean add(LifecycleAware node) {
     Preconditions.checkNotNull(node);
 
     return nodes.add(node);
   }
 
   @Override
-  public boolean remove(LogicalNode node) {
+  public boolean remove(LifecycleAware node) {
     Preconditions.checkNotNull(node);
 
     return nodes.remove(node);
   }
 
   @Override
-  public LogicalNode getNode(String name) {
-    for (LogicalNode node : getNodes()) {
-      if (node.getName().equals(name)) {
-        return node;
-      }
-    }
-
-    return null;
-  }
-
-  @Override
-  public Set<LogicalNode> getNodes() {
+  public Set<LifecycleAware> getNodes() {
     return nodes;
   }
 
   @Override
-  public void setNodes(Set<LogicalNode> nodes) {
+  public void setNodes(Set<LifecycleAware> nodes) {
     Preconditions.checkNotNull(nodes);
 
-    this.nodes = new HashSet<LogicalNode>(nodes);
+    this.nodes = new HashSet<LifecycleAware>(nodes);
   }
 
   @Override

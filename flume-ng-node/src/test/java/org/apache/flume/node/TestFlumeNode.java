@@ -1,10 +1,11 @@
 package org.apache.flume.node;
 
-import org.apache.flume.LogicalNode;
+import org.apache.flume.SourceRunner;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.node.nodemanager.AbstractLogicalNodeManager;
+import org.apache.flume.source.SequenceGeneratorSource;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -50,7 +51,7 @@ public class TestFlumeNode {
     Assert.assertTrue("Matched a known state", reached);
     Assert.assertEquals(LifecycleState.START, node.getLifecycleState());
 
-    LogicalNode n1 = new LogicalNode();
+    SourceRunner n1 = SourceRunner.forSource(new SequenceGeneratorSource());
 
     node.getNodeManager().add(n1);
 
