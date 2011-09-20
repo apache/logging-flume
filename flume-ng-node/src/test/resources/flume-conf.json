@@ -46,6 +46,7 @@
 
     "sources": [
       {
+        "name": "netcat 1",
         "type": "netcat",
         "port": 41414,
         "channel": "ch1"
