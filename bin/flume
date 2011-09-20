@@ -103,6 +103,14 @@ JOPTS="$JOPTS -Dflume.root.logger=${FLUME_ROOT_LOGGER:-INFO,console} "
 JOPTS="$JOPTS -Dzookeeper.root.logger=${ZOOKEEPER_ROOT_LOGGER:-ERROR,console} "
 JOPTS="$JOPTS -Dwatchdog.root.logger=${WATCHDOG_ROOT_LOGGER:-INFO,console} "
 
+function append_path() {
+  if [ -z "$1" ]; then
+    echo $2
+  else
+    echo $1:$2
+  fi
+}
+
 if [ "$cygwin" == false ] ; then
   # unix and "unix-like" setup
   # pick user override, or check for dev env, or check for install
@@ -131,7 +139,8 @@ if [ "$cygwin" == false ] ; then
       CLASSPATH="${CLASSPATH}:${HADOOP_HOME}/conf"
   elif [ -e "/usr/lib/hadoop/conf" ] ; then
       # if neither is present see if the CDH dir exists
-      CLASSPATH="${CLASSPATH}:/usr/lib/hadoop-0.20/conf";
+      CLASSPATH="${CLASSPATH}:/usr/lib/hadoop/conf";
+      HADOOP_HOME="/usr/lib/hadoop"
   fi  # otherwise give up
 
   # try to load the hadoop core jars
@@ -157,8 +166,6 @@ if [ "$cygwin" == false ] ; then
       break
   done
 
-  JOPTS="$JOPTS -Djava.library.path=$CMDPATH/lib:$LD_LIBRARY_PATH:$JAVA_LIBRARY_PATH"
-
   append_jars_onto_classpath "$CMDPATH/lib"
   append_jars_onto_classpath "$CMDPATH/libtest"
 
@@ -173,6 +180,17 @@ if [ "$cygwin" == false ] ; then
   CLASSPATH="$CLASSPATH:$CMDPATH/build/classes"
   append_jars_onto_classpath "$CMDPATH/build"
   append_jars_onto_classpath "${FLUME_HOME}"
+
+  # attempt to add native library paths.
+  JAVA_PLATFORM=`CLASSPATH=${CLASSPATH} java org.apache.hadoop.util.PlatformName | sed -e "s/ /_/g"`
+  if [ -d "${HADOOP_HOME}/lib/native" ]; then
+      if [ -d "${HADOOP_HOME}/lib/native/${JAVA_PLATFORM}" ]; then
+	  JAVA_LIBRARY_PATH=$(append_path "${JAVA_LIBRARY_PATH}" "${HADOOP_HOME}/lib/native/${JAVA_PLATFORM}")
+      fi
+  fi
+
+
+  JOPTS="$JOPTS -Djava.library.path=$CMDPATH/lib:$LD_LIBRARY_PATH:$JAVA_LIBRARY_PATH"
 
 else
   # windows with cygwin
