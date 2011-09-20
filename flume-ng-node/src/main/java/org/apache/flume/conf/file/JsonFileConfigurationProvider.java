@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelFactory;
+import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Sink;
 import org.apache.flume.SinkFactory;
@@ -18,6 +19,7 @@ import org.apache.flume.SinkRunner;
 import org.apache.flume.Source;
 import org.apache.flume.SourceFactory;
 import org.apache.flume.SourceRunner;
+import org.apache.flume.conf.Configurables;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.node.ConfigurationProvider;
 import org.apache.flume.node.nodemanager.NodeConfigurationAware;
@@ -112,6 +114,11 @@ public class JsonFileConfigurationProvider implements ConfigurationProvider {
         Source source = sourceFactory.create((String) sourceDef.get("type"));
         Channel channel = conf.getChannels().get(sourceDef.get("channel"));
 
+        Context context = new Context();
+        context.setParameters(sourceDef);
+
+        Configurables.configure(source, context);
+
         if (channel != null) {
           source.setChannel(channel);
         } else {
@@ -141,6 +148,9 @@ public class JsonFileConfigurationProvider implements ConfigurationProvider {
         Sink sink = sinkFactory.create((String) sinkDef.get("type"));
         Channel channel = conf.getChannels().get(sinkDef.get("channel"));
 
+        Context context = new Context();
+        context.setParameters(sinkDef);
+
         if (channel != null) {
           sink.setChannel(channel);
         } else {
@@ -166,6 +176,9 @@ public class JsonFileConfigurationProvider implements ConfigurationProvider {
       if (channelDef.containsKey("type")) {
         Channel channel = channelFactory
             .create((String) channelDef.get("type"));
+
+        Context context = new Context();
+        context.setParameters(channelDef);
 
         conf.getChannels().put((String) channelDef.get("name"), channel);
       }
@@ -278,7 +291,12 @@ public class JsonFileConfigurationProvider implements ConfigurationProvider {
 
         lastChange = lastModified;
 
-        load();
+        try {
+          load();
+        } catch (Exception e) {
+          logger.error("Failed to load configuration data. Exception follows.",
+              e);
+        }
       }
     }
   }
