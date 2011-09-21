@@ -29,6 +29,7 @@ public class TestLoggerSink {
 
     Channel channel = new MemoryChannel();
     Context context = new Context();
+    Configurables.configure(channel, context);
     Configurables.configure(sink, context);
 
     sink.setChannel(channel);

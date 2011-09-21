@@ -31,6 +31,7 @@ public class TestSequenceGeneratorSource {
     context.put("logicalNode.name", "test");
 
     Configurables.configure(source, context);
+    Configurables.configure(channel, context);
 
     source.setChannel(channel);
 
@@ -53,6 +54,7 @@ public class TestSequenceGeneratorSource {
     context.put("logicalNode.name", "test");
 
     Configurables.configure(source, context);
+    Configurables.configure(channel, context);
 
     source.setChannel(channel);
     source.start();

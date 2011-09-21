@@ -66,6 +66,7 @@ public class TestRollingFileSink {
     Configurables.configure(sink, context);
 
     Channel channel = new MemoryChannel();
+    Configurables.configure(channel, context);
 
     sink.setChannel(channel);
     sink.start();
