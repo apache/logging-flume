@@ -151,6 +151,8 @@ public class JsonFileConfigurationProvider implements ConfigurationProvider {
         Context context = new Context();
         context.setParameters(sinkDef);
 
+        Configurables.configure(sink, context);
+
         if (channel != null) {
           sink.setChannel(channel);
         } else {
@@ -179,6 +181,8 @@ public class JsonFileConfigurationProvider implements ConfigurationProvider {
 
         Context context = new Context();
         context.setParameters(channelDef);
+
+        Configurables.configure(channel, context);
 
         conf.getChannels().put((String) channelDef.get("name"), channel);
       }
