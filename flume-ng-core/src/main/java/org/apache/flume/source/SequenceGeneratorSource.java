@@ -16,7 +16,7 @@ public class SequenceGeneratorSource extends AbstractSource implements
   }
 
   @Override
-  public void process() throws InterruptedException, EventDeliveryException {
+  public Status process() throws EventDeliveryException {
     Channel channel = getChannel();
     Transaction transaction = channel.getTransaction();
 
@@ -26,8 +26,11 @@ public class SequenceGeneratorSource extends AbstractSource implements
       transaction.commit();
     } catch (Exception e) {
       transaction.rollback();
+    } finally {
+      transaction.close();
     }
-    /* FIXME: Add finally { transaction.close() } */
+
+    return Status.READY;
   }
 
 }

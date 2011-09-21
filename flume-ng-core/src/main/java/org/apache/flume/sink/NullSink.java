@@ -37,7 +37,7 @@ public class NullSink extends AbstractSink implements PollableSink {
   }
 
   @Override
-  public void process() throws EventDeliveryException {
+  public Status process() throws EventDeliveryException {
     Channel channel = getChannel();
     Transaction transaction = channel.getTransaction();
     Event event = null;
@@ -45,8 +45,15 @@ public class NullSink extends AbstractSink implements PollableSink {
     try {
       transaction.begin();
       event = channel.take();
-      //logger.debug("Consumed the event: " + event);
       transaction.commit();
+
+      if (event != null) {
+        // logger.debug("Consumed the event: " + event);
+        counterGroup.incrementAndGet("events.successful");
+        return Status.READY;
+      } else {
+        return Status.BACKOFF;
+      }
     } catch (Exception ex) {
       transaction.rollback();
       counterGroup.incrementAndGet("events.failed");
@@ -55,7 +62,6 @@ public class NullSink extends AbstractSink implements PollableSink {
     } finally {
       transaction.close();
     }
-    counterGroup.incrementAndGet("events.successful");
   }
 
   @Override

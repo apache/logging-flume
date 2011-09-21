@@ -5,13 +5,18 @@ import org.apache.flume.EventDeliveryException;
 public class FlakeySequenceGeneratorSource extends SequenceGeneratorSource {
 
   @Override
-  public void process() throws EventDeliveryException, InterruptedException {
+  public Status process() throws EventDeliveryException {
 
     if (Math.round(Math.random()) == 1) {
-      Thread.sleep(1000);
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        // Do nothing.
+      }
+
       throw new EventDeliveryException("I'm broken!");
     } else {
-      super.process();
+      return super.process();
     }
   }
 

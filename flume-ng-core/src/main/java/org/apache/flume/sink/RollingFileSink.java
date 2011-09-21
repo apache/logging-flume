@@ -116,7 +116,7 @@ public class RollingFileSink extends AbstractSink implements PollableSink,
   }
 
   @Override
-  public void process() throws EventDeliveryException {
+  public Status process() throws EventDeliveryException {
     if (shouldRotate) {
       logger.debug("Time to rotate {}", pathController.getCurrentFile());
 
@@ -158,23 +158,31 @@ public class RollingFileSink extends AbstractSink implements PollableSink,
       transaction.begin();
       event = channel.take();
 
-      byte[] bytes = formatter.format(event);
+      if (event != null) {
+        byte[] bytes = formatter.format(event);
 
-      outputStream.write(bytes);
+        outputStream.write(bytes);
 
-      /*
-       * FIXME: Feature: Rotate on size and time by checking bytes written and
-       * setting shouldRotate = true if we're past a threshold.
-       */
-      counterGroup.addAndGet("sink.bytesWritten", (long) bytes.length);
+        /*
+         * FIXME: Feature: Rotate on size and time by checking bytes written and
+         * setting shouldRotate = true if we're past a threshold.
+         */
+        counterGroup.addAndGet("sink.bytesWritten", (long) bytes.length);
 
-      /*
-       * FIXME: Feature: Control flush interval based on time or number of
-       * events. For now, we're super-conservative and flush on each write.
-       */
-      outputStream.flush();
+        /*
+         * FIXME: Feature: Control flush interval based on time or number of
+         * events. For now, we're super-conservative and flush on each write.
+         */
+        outputStream.flush();
 
-      transaction.commit();
+        transaction.commit();
+
+        return Status.READY;
+      } else {
+        transaction.rollback();
+
+        return Status.BACKOFF;
+      }
     } catch (Exception ex) {
       transaction.rollback();
       throw new EventDeliveryException("Failed to process event: " + event, ex);

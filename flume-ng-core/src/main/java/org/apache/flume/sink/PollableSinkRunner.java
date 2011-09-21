@@ -91,7 +91,11 @@ public class PollableSinkRunner extends SinkRunner {
 
       while (!shouldStop.get()) {
         try {
-          sink.process();
+          if (sink.process().equals(PollableSink.Status.BACKOFF)) {
+            counterGroup.incrementAndGet("runner.backoffs");
+            /* Should this be configurable? */
+            Thread.sleep(500);
+          }
         } catch (InterruptedException e) {
           logger.debug("Interrupted while processing an event. Exiting.");
           counterGroup.incrementAndGet("runner.interruptions");
@@ -101,7 +105,7 @@ public class PollableSinkRunner extends SinkRunner {
         }
       }
 
-      logger.debug("Polling sink runner exiting");
+      logger.debug("Polling runner exiting. Metrics:{}", counterGroup);
     }
 
   }

@@ -87,12 +87,19 @@ public class PollableSourceRunner extends SourceRunner {
       logger.debug("Polling runner starting. Source:{}", source);
 
       while (!shouldStop.get()) {
+        counterGroup.incrementAndGet("runner.polls");
+
         try {
-          source.process();
-          counterGroup.incrementAndGet("events.successful");
+          if (source.process().equals(PollableSource.Status.BACKOFF)) {
+            counterGroup.incrementAndGet("runner.backoffs");
+            Thread.sleep(500);
+          }
+
+        } catch (InterruptedException e) {
+          logger.info("Source runner interrupted. Exiting");
         } catch (Exception e) {
           logger.error("Unable to process event. Exception follows.", e);
-          counterGroup.incrementAndGet("events.failed");
+          counterGroup.incrementAndGet("runner.failures");
         }
       }
 
