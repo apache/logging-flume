@@ -66,7 +66,7 @@ if [ "$FLUME_NICENESS" = "" ]; then
 fi 
 
 if [ "$FLUME_PID_DIR" = "" ]; then
-  FLUME_PID_DIR=/var/run/flume
+  export FLUME_PID_DIR=/var/run/flume
 fi
 
 if [ "$FLUME_IDENT_STRING" = "" ]; then
@@ -89,14 +89,15 @@ case $startStop in
       if kill -0 `cat $pid` > /dev/null 2>&1; then
         echo $command running as process `cat $pid`.  Stop it first.
         exit 1
+      else # must be a stale PID file
+        rm -f $pid
       fi
     fi
 
     flume_rotate_log $log
-    echo starting $command, logging to $log
+    echo starting $command, logging to $FLUME_LOG_DIR/$FLUME_LOGFILE
     cd "$FLUME_HOME"
     nohup  nice -n ${FLUME_NICENESS} "${FLUME_HOME}"/bin/flume $command "$@" > "$log" 2>&1 < /dev/null &
-    echo $! > $pid
     sleep 1; head "$log"
     ;;
           

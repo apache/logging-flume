@@ -24,6 +24,13 @@
 # TODO (jon) This assumes CLASSPATH has $JAVA_HOME/lib/tools.jar in it
 # (jetty requires this to compile jsps.  In future will precompile
 # jsps to make this requirement go away.)
+#
+# This scripts honors the folling env variables:
+#   FLUME_PID_DIR      -- subdirectory where PID files 
+#                            flume-$FLUME_IDENT_STRING-master.pid
+#                         will be deposited
+#   FLUME_IDENT_STRING -- a unique qualifier for the process owning the PID
+#                         typically a user name running the process
 
 function usage {
   echo "usage: flume command [args...]"
@@ -58,7 +65,8 @@ CMDPATH=`dirname $CMDPATH`
 
 FLUME=$CMDPATH/bin/flume
 
-MASTERPID=${FLUME_PID_DIR:="/tmp"}/flumemaster.pid
+MASTERPID=${FLUME_PID_DIR:="/tmp"}/flume-$FLUME_IDENT_STRING-master.pid
+NODEPID=${FLUME_PID_DIR:="/tmp"}/flume-$FLUME_IDENT_STRING-node.pid
 
 CMD="$1"
 if [ -z "$CMD" ]; then
@@ -234,8 +242,8 @@ WATCHDOG_CLASS=com.cloudera.flume.watchdog.FlumeWatchdog
 MASTER_WATCHDOG="java ${JOPTS} -Dpid=$$ -Dpidfile=$MASTERPID $WATCHDOG_CLASS"
 MASTERI_WATCHDOG="java ${JOPTS} -Dpid=$$ -Dpidfile=$MASTERPID  $WATCHDOG_CLASS"
 
-NODE_WATCHDOG="java ${JOPTS} -Dpid=$$ -Dpidfile=${FLUME_PID_DIR}/flumenode-$$.pid $WATCHDOG_CLASS"
-NODEI_WATCHDOG="java ${JOPTS} -Dfwdstdin=true -Dpid=$$ -Dpidfile=${FLUME_PID_DIR}/flumenode-$$.pid $WATCHDOG_CLASS"
+NODE_WATCHDOG="java ${JOPTS} -Dpid=$$ -Dpidfile=$NODEPID $WATCHDOG_CLASS"
+NODEI_WATCHDOG="java ${JOPTS} -Dfwdstdin=true -Dpid=$$ -Dpidfile=$NODEPID $WATCHDOG_CLASS"
 
 if [ -n "$FLUME_VERBOSE" ]; then
     if [ -n "$FLUME_VERBOSE_JAVA" ]; then
