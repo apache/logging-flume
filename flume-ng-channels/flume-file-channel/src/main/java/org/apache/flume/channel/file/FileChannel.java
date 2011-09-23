@@ -17,6 +17,12 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
+/**
+ * <p>
+ * A durable {@link Channel} implementation that uses the local file system for
+ * its storage.
+ * </p>
+ */
 public class FileChannel implements Channel {
 
   private static final Logger logger = LoggerFactory
@@ -75,6 +81,7 @@ public class FileChannel implements Channel {
   @Override
   public synchronized Transaction getTransaction() {
     if (!isInitialized) {
+      /* This is a catch-all to ensure we initialize file system storage once. */
       initialize();
     }
 
@@ -84,6 +91,12 @@ public class FileChannel implements Channel {
       currentOutputFile = null;
     }
 
+    /*
+     * If there's no current transaction (which is stored in a threadlocal) OR
+     * its current state is CLOSED - which indicates the transaction is in a
+     * final state and unusable - we create a new transaction with the current
+     * output file and set the thread-local transaction holder to it.
+     */
     if (tx == null || tx.state.equals(FileBackedTransaction.State.CLOSED)) {
       FileBackedTransaction transaction = new FileBackedTransaction();
 
@@ -124,6 +137,11 @@ public class FileChannel implements Channel {
     return isInitialized;
   }
 
+  /**
+   * <p>
+   * An implementation of {@link Transaction} for {@link FileChannel}s.
+   * </p>
+   */
   public static class FileBackedTransaction implements Transaction {
 
     private List<Event> events;
@@ -217,6 +235,21 @@ public class FileChannel implements Channel {
       state = State.CLOSED;
     }
 
+    /**
+     * <p>
+     * The state of the {@link Transaction} to which it belongs.
+     * </p>
+     * <dl>
+     * <dt>NEW</dt>
+     * <dd>A newly created transaction that has not yet begun.</dd>
+     * <dt>OPEN</dt>
+     * <dd>A transaction that is open. It is permissible to commit or rollback.</dd>
+     * <dt>COMPLETED</dt>
+     * <dd>This transaction has been committed or rolled back. It is illegal to
+     * perform any further operations beyond closing it.</dd>
+     * <dt>CLOSED</dt>
+     * <dd>A closed transaction. No further operations are permitted.</dd>
+     */
     private static enum State {
       NEW, OPEN, COMPLETED, CLOSED
     }
