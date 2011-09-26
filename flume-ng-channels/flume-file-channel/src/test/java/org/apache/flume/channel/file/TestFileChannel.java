@@ -115,7 +115,7 @@ public class TestFileChannel {
           logger.error("Barrier broken", e);
           Assert.fail();
         }
-        // Purposefully serialize to force things to occur in different threads.
+
         return (FileBackedTransaction) tx;
       }
 
