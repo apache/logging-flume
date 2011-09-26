@@ -2,10 +2,18 @@ package org.apache.flume.channel.file;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
+import org.apache.flume.channel.file.FileChannel.FileBackedTransaction;
 import org.apache.flume.event.EventBuilder;
 import org.junit.Assert;
 import org.junit.Before;
@@ -63,6 +71,66 @@ public class TestFileChannel {
 
     tx2.close();
     Assert.assertFalse(tx2.equals(channel.getTransaction()));
+  }
+
+  /**
+   * <p>
+   * Ensure two threads calling {@link FileChannel#getTransaction()} get
+   * different transactions back.
+   * </p>
+   * 
+   */
+  @Test
+  public void testConcurrentGetTransaction() throws IOException,
+      InterruptedException, ExecutionException {
+    File tmpDir = new File("/tmp/flume-fc-test-" + System.currentTimeMillis());
+    FileUtils.forceDeleteOnExit(tmpDir);
+    final CyclicBarrier latch = new CyclicBarrier(2);
+
+    channel.setDirectory(tmpDir);
+
+    Callable<FileBackedTransaction> getTransRunnable = new Callable<FileBackedTransaction>() {
+
+      @Override
+      public FileBackedTransaction call() {
+        Transaction tx = null;
+
+        try {
+          /*
+           * Wait for all threads to pile up to prevent thread reuse in the
+           * pool.
+           */
+          latch.await();
+          tx = channel.getTransaction();
+          /*
+           * This await isn't strictly necessary but it guarantees both threads
+           * entered and exited getTransaction() in lock step which simplifies
+           * debugging.
+           */
+          latch.await();
+        } catch (InterruptedException e) {
+          logger.error("Interrupted while waiting for threads", e);
+          Assert.fail();
+        } catch (BrokenBarrierException e) {
+          logger.error("Barrier broken", e);
+          Assert.fail();
+        }
+        // Purposefully serialize to force things to occur in different threads.
+        return (FileBackedTransaction) tx;
+      }
+
+    };
+
+    ExecutorService pool = Executors.newFixedThreadPool(2);
+
+    Future<FileBackedTransaction> f1 = pool.submit(getTransRunnable);
+    Future<FileBackedTransaction> f2 = pool.submit(getTransRunnable);
+
+    FileBackedTransaction t1 = f1.get();
+    FileBackedTransaction t2 = f2.get();
+
+    Assert.assertNotSame("Transactions from different threads are different",
+        t1, t2);
   }
 
   @Test

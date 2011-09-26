@@ -145,6 +145,8 @@ public class FileChannel implements Channel {
    */
   public static class FileBackedTransaction implements Transaction {
 
+    private String transactionId;
+
     private List<Event> readEvents;
     private List<Event> writeEvents;
 
@@ -158,6 +160,9 @@ public class FileChannel implements Channel {
     private boolean writeInitialized;
 
     public FileBackedTransaction() {
+      transactionId = Thread.currentThread().getId() + "-"
+          + System.currentTimeMillis();
+
       state = State.NEW;
       readInitialized = false;
       writeInitialized = false;
@@ -317,8 +322,9 @@ public class FileChannel implements Channel {
 
     @Override
     public String toString() {
-      StringBuilder builder = new StringBuilder("FileTransaction: { state:")
-          .append(state);
+      StringBuilder builder = new StringBuilder(
+          "FileTransaction: { transactionId:").append(transactionId)
+          .append(" state:").append(state);
 
       if (readInitialized) {
         builder.append(" read-enabled: { readBuffer:")
@@ -327,7 +333,8 @@ public class FileChannel implements Channel {
 
       if (writeInitialized) {
         builder.append(" write-enabled: { writeBuffer:")
-            .append(writeEvents.size()).append(" }");
+            .append(writeEvents.size()).append(" currentOutputFile:")
+            .append(currentOutputFile).append(" }");
       }
 
       builder.append(" }");
