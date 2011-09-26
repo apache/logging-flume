@@ -1,6 +1,7 @@
 package org.apache.flume;
 
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class CounterGroup {
@@ -22,6 +23,16 @@ public class CounterGroup {
 
   public synchronized Long addAndGet(String name, Long delta) {
     return getCounter(name).addAndGet(delta);
+  }
+
+  public synchronized void add(CounterGroup counterGroup) {
+    synchronized (counterGroup) {
+      for (Entry<String, AtomicLong> entry : counterGroup.getCounters()
+          .entrySet()) {
+
+        addAndGet(entry.getKey(), entry.getValue().get());
+      }
+    }
   }
 
   public synchronized AtomicLong getCounter(String name) {
