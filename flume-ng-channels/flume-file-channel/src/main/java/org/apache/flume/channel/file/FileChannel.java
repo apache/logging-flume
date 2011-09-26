@@ -68,14 +68,15 @@ public class FileChannel implements Channel {
     Preconditions.checkState(currentTransaction.get() != null,
         "No transaction currently in progress");
 
-    FileBackedTransaction tx = currentTransaction.get();
-
-    tx.events.add(event);
+    currentTransaction.get().put(event);
   }
 
   @Override
   public Event take() throws ChannelException {
-    return null;
+    Preconditions.checkState(currentTransaction.get() != null,
+        "No transaction currently in progress");
+
+    return currentTransaction.get().take();
   }
 
   @Override
@@ -144,18 +145,65 @@ public class FileChannel implements Channel {
    */
   public static class FileBackedTransaction implements Transaction {
 
-    private List<Event> events;
+    private List<Event> readEvents;
+    private List<Event> writeEvents;
 
     private File currentOutputFile;
 
-    private FileOutputStream outputStream;
     private FileInputStream inputStream;
+    private FileOutputStream outputStream;
 
     private State state;
+    private boolean readInitialized;
+    private boolean writeInitialized;
 
     public FileBackedTransaction() {
-      events = new LinkedList<Event>();
       state = State.NEW;
+      readInitialized = false;
+      writeInitialized = false;
+    }
+
+    /**
+     * <p>
+     * Initializes the input (i.e. {@code take()}) support in this transaction.
+     * </p>
+     * <p>
+     * Any transaction may support reads, writes, or a combination thereof. In
+     * order to consume the least amount of resources possible, initialization
+     * of resources are deferred until the first read ({@code take()} or write (
+     * {@code put()}) is performed.
+     * </p>
+     * <p>
+     */
+    private void initializeInput() {
+      readEvents = new LinkedList<Event>();
+
+      readInitialized = true;
+    }
+
+    /**
+     * <p>
+     * Initializes the output (i.e. {@code put()}) support in this transaction.
+     * </p>
+     * <p>
+     * Any transaction may support reads, writes, or a combination thereof. In
+     * order to consume the least amount of resources possible, initialization
+     * of resources are deferred until the first read ({@code take()} or write (
+     * {@code put()}) is performed.
+     * </p>
+     * <p>
+     */
+    private void initializeOutput() {
+      writeEvents = new LinkedList<Event>();
+
+      try {
+        outputStream = new FileOutputStream(currentOutputFile, true);
+      } catch (FileNotFoundException e) {
+        throw new ChannelException("Unable to open new output file:"
+            + currentOutputFile, e);
+      }
+
+      writeInitialized = true;
     }
 
     @Override
@@ -167,13 +215,6 @@ public class FileChannel implements Channel {
 
       logger.debug("Beginning a new transaction");
 
-      try {
-        outputStream = new FileOutputStream(currentOutputFile, true);
-      } catch (FileNotFoundException e) {
-        throw new ChannelException("Unable to open new output file:"
-            + currentOutputFile, e);
-      }
-
       state = State.OPEN;
     }
 
@@ -183,21 +224,31 @@ public class FileChannel implements Channel {
           "Attempt to commit a transaction that isn't open (state:" + state
               + ")");
 
-      logger.debug("Commiting current transaction (size:{})", events.size());
+      logger.debug("Committing current transaction");
 
-      try {
-        for (Event event : events) {
-          // TODO: Serialize event properly (avro?)
-          outputStream.write((event.toString() + "\n").getBytes());
-          outputStream.flush();
+      if (writeInitialized) {
+        logger.debug("Flushing {} writes", writeEvents.size());
+
+        try {
+          for (Event event : writeEvents) {
+            // TODO: Serialize event properly (avro?)
+            outputStream.write((event.toString() + "\n").getBytes());
+            outputStream.flush();
+          }
+
+          // TODO: Write checksum.
+          outputStream.write("---\n".getBytes());
+
+          writeEvents.clear();
+        } catch (IOException e) {
+          throw new ChannelException("Unable to write to output file", e);
         }
+      }
 
-        // TODO: Write checksum.
-        outputStream.write("---\n".getBytes());
+      if (readInitialized) {
+        logger.debug("Freeing {} consumed events", readEvents.size());
 
-        events.clear();
-      } catch (IOException e) {
-        throw new ChannelException("Unable to write to output file", e);
+        // TODO: Implement me!
       }
 
       state = State.COMPLETED;
@@ -209,9 +260,15 @@ public class FileChannel implements Channel {
           "Attempt to rollback a transaction that isn't open (state:" + state
               + ")");
 
-      logger.debug("Rolling back current transaction (size:{})", events.size());
+      logger.debug("Rolling back current transaction");
 
-      events.clear();
+      if (writeInitialized) {
+        writeEvents.clear();
+      }
+
+      if (readInitialized) {
+        readEvents.clear();
+      }
 
       state = State.COMPLETED;
     }
@@ -224,15 +281,58 @@ public class FileChannel implements Channel {
               "Attempt to close a transaction that isn't completed - you must either commit or rollback (state:"
                   + state + ")");
 
-      logger.debug("Closing current transaction");
+      logger.debug("Closing current transaction:{}", this);
 
-      try {
-        outputStream.close();
-      } catch (IOException e) {
-        throw new ChannelException("Unable to close current output file", e);
+      if (writeInitialized) {
+        try {
+          outputStream.close();
+        } catch (IOException e) {
+          throw new ChannelException("Unable to close current output file", e);
+        }
+      }
+
+      if (readInitialized) {
+        // TODO: Implement me!
       }
 
       state = State.CLOSED;
+    }
+
+    private void put(Event event) {
+      if (!writeInitialized) {
+        initializeOutput();
+      }
+
+      writeEvents.add(event);
+    }
+
+    private Event take() {
+      if (!readInitialized) {
+        initializeInput();
+      }
+
+      // TODO: Implement me!
+      return null;
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder builder = new StringBuilder("FileTransaction: { state:")
+          .append(state);
+
+      if (readInitialized) {
+        builder.append(" read-enabled: { readBuffer:")
+            .append(readEvents.size()).append(" }");
+      }
+
+      if (writeInitialized) {
+        builder.append(" write-enabled: { writeBuffer:")
+            .append(writeEvents.size()).append(" }");
+      }
+
+      builder.append(" }");
+
+      return builder.toString();
     }
 
     /**
