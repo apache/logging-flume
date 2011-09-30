@@ -65,7 +65,7 @@ public class TestDiskFailoverDeco {
     EventSink msnk = mock(EventSink.class);
     doNothing().when(msnk).open();
     doNothing().when(msnk).close();
-    doNothing().doThrow(new IOException("foo")).doNothing().when(msnk)
+    doNothing().doThrow(new InterruptedException("foo")).doNothing().when(msnk)
         .append(Mockito.<Event> anyObject());
     doReturn(new ReportEvent("blah")).when(msnk).getMetrics();
 
@@ -88,13 +88,13 @@ public class TestDiskFailoverDeco {
     try {
       EventUtil.dumpAll(msrc, snk);
       snk.close();
-    } catch (IOException ioe) {
-      // expected the IO exception from the underlying sink to percolate up to
+    } catch (InterruptedException ioe) {
+      // expected the InterruptedException exception from the underlying sink to percolate up to
       // this append.
 
       return;
     }
-    fail("Expected IO exception to percolate to this thread");
+    fail("Expected InterruptedException exception to percolate to this thread");
 
     // TODO (jon) sometimes a IllegalStateException is thrown, sometimes not.
     // Inconsistency is bad.

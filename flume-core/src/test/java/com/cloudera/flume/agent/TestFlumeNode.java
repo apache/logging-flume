@@ -112,14 +112,14 @@ public class TestFlumeNode {
       }
 
       @Override
-      public Event next() throws IOException {
+      public Event next() throws IOException, InterruptedException {
         int i = count.incrementAndGet();
         if (i > 100) {
           return null; // close naturally
         }
 
         // "fail"
-        throw new IOException("ayiii!");
+        throw new InterruptedException("ayiii!");
       }
 
       @Override

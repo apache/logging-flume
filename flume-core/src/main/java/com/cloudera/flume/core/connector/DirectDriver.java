@@ -101,18 +101,59 @@ public class DirectDriver extends Driver {
 
       LOG.debug("Starting driver " + DirectDriver.this);
       try {
+      Event e = null;
+
         while (!stopped) {
-          Event e = source.next();
+          try {
+            e = source.next();
+          } catch(InterruptedException eIn) {
+            // If we are interrupted then its time to go down. re-throw the exception.
+            // Details are logged by the outer catch block
+            throw eIn;
+          } catch (Exception eI) {
+            // If this is a chained or converted Interrupt then throw it back
+            if (eI.getCause() instanceof InterruptedException)
+              throw eI;
+
+            // If there's an exception, try to reopen the source
+            // if the open or close still raises an exception, then bail out
+            LOG.warn("Exception in source: " + source.getName(), eI);
+            LOG.warn("Retrying after Error in source: " + source.getName());
+            source.close();
+            source.open();
+            LOG.info(" Source Retry successful");
+            e = source.next(); // try to get the next event again
+          }
+
           if (e == null)
             break;
           nextCount++;
 
-          sink.append(e);
+          try {
+              sink.append(e);
+            } catch(InterruptedException eIn) {
+              // If we are interrupted then its time to go down. re-throw the exception.
+              // Details are logged by the outer catch block
+              throw eIn;
+            } catch (Exception eI) {
+              // If this is a chained or converted Interrupt then throw it back
+              if (eI.getCause() instanceof InterruptedException)
+                throw eI;
+
+              // If there's an exception, try to reopen the source
+              // if the open or close still raises an exception, then bail out
+              LOG.warn("Exception in sink: " + sink.getName(), eI);
+              LOG.warn("Retrying after Error in source: " + sink.getName());
+              sink.close();
+              sink.open();
+              LOG.info("Sink Retry successful");
+              sink.append(e); // try to sink the event again
+            }
           appendCount++;
         }
       } catch (Exception e1) {
         // Catches all exceptions or throwables. This is a separate thread
-        LOG.error("Closing down due to exception during append calls", e1);
+        LOG.error("Closing down due to exception during append calls");
         errorCleanup(PumperThread.this.getName(), e1);
         return;
       }
