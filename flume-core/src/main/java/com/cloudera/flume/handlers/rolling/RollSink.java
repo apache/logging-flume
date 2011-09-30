@@ -148,15 +148,15 @@ public class RollSink extends EventSink.Base {
             Clock.sleep(checkLatencyMs);
           } catch (InterruptedException e) {
             LOG.debug("TriggerThread interrupted");
-            doneLatch.countDown();
             return;
           }
         }
       } catch (InterruptedException e) {
         LOG.error("RollSink interrupted", e);
-      }
+      } finally {
       LOG.debug("TriggerThread shutdown");
       doneLatch.countDown();
+      }
     }
   };
 

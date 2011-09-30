@@ -389,4 +389,53 @@ public class TestRollSink {
     // See above for why there are 4 triggers:
     assertEquals(4, (long) rpt.getLongMetric(RollSink.A_ROLLS));
   }
+
+  /**
+   * This verifies that when roller's trigger aborts, the sink closes correctly
+   */
+  @Test(timeout=30000)
+  public void testTriggerAborted() throws IOException,
+      InterruptedException {
+
+    Tagger tagger = new ProcessTagger() {
+      @Override
+      public String getTag() {
+        return "-testtag";
+      }
+
+      @Override
+      public String newTag() {
+        // throw exception from the Trigger Thread
+        if (Thread.currentThread().getName().contains("Roll-TriggerThread"))
+          throw new RuntimeException("testExp");
+        return "-testtag";
+      }
+    };
+
+    final File f = FileUtil.mktempdir();
+    RollSink snk = new RollSink(new Context(), "test", new TimeTrigger(tagger,
+        10000), 250) {
+      @Override
+      protected EventSink newSink(Context ctx) throws IOException {
+        return new EscapedCustomDfsSink("file:///" + f.getPath(),
+            "sub-%{service}%{rolltag}");
+      }
+    };
+
+    Event e = new EventImpl("this is a test message".getBytes());
+    Attributes.setString(e, "service", "foo");
+    snk.open();
+    snk.append(e);
+    // wait for the trigger thread to abort down
+    while (snk.triggerThread.isAlive()) {
+      Clock.sleep(100);
+    }
+    snk.close();
+    // verify that the trigger thread did the cleanup
+    assertTrue(snk.triggerThread.doneLatch.getCount() == 0);
+    File fo = new File(f.getPath() + "/sub-foo-testtag");
+    assertTrue(fo.exists());
+    FileUtil.rmr(f);
+  }
+
 }
