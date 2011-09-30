@@ -90,7 +90,7 @@ public class TestRollSink {
         10000), 250) {
       @Override
       protected EventSink newSink(Context ctx) throws IOException {
-        return new EscapedCustomDfsSink("file:///" + f.getPath(),
+        return new EscapedCustomDfsSink(ctx, "file:///" + f.getPath(),
             "sub-%{service}%{rolltag}");
       }
     };
@@ -417,7 +417,7 @@ public class TestRollSink {
         10000), 250) {
       @Override
       protected EventSink newSink(Context ctx) throws IOException {
-        return new EscapedCustomDfsSink("file:///" + f.getPath(),
+        return new EscapedCustomDfsSink(ctx, "file:///" + f.getPath(),
             "sub-%{service}%{rolltag}");
       }
     };

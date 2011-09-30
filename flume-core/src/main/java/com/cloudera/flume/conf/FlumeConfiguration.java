@@ -32,6 +32,7 @@ import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.flume.conf.FlumeBuilder.FunctionSpec;
 import com.cloudera.util.Pair;
 import com.google.common.base.Preconditions;
 
@@ -948,6 +949,21 @@ public class FlumeConfiguration extends Configuration {
     return get(COLLECTOR_OUTPUT_FORMAT, "avrojson");
   }
 
+  public FunctionSpec getDefaultOutputFormatSpec() {
+    // Look at FormatFactory for possible values.
+    String defaultFormat = "avrojson";
+    String fmt = get(COLLECTOR_OUTPUT_FORMAT, defaultFormat);
+    Object fmtSpec = null;
+    try {
+      fmtSpec = FlumeBuilder.buildSimpleArg(FlumeBuilder.parseArg(fmt));
+    } catch (Exception e) {
+      LOG.warn("Problem parsing output format '" + fmt + "'; defaulting to "
+          + defaultFormat);
+      fmtSpec = new FunctionSpec(defaultFormat);
+    }
+    return (FunctionSpec)fmtSpec;
+  }
+
   public String getGangliaServers() {
     // gmond's default multicast ip and port
     return get(GANGLIA_SERVERS, "239.2.11.71:8649");
@@ -1013,8 +1029,8 @@ public class FlumeConfiguration extends Configuration {
     if (home == null) {
       home = ".";
     }
-    return home + File.separator + get(WEBAPP_ROOT_MASTER,
-      "webapps/flumemaster.war");
+    return home + File.separator
+        + get(WEBAPP_ROOT_MASTER, "webapps/flumemaster.war");
   }
 
   /**
@@ -1025,8 +1041,8 @@ public class FlumeConfiguration extends Configuration {
     if (home == null) {
       home = ".";
     }
-    return home + File.separator + get(WEBAPP_ROOT_NODE,
-        "webapps/flumeagent.war");
+    return home + File.separator
+        + get(WEBAPP_ROOT_NODE, "webapps/flumeagent.war");
   }
 
   /**

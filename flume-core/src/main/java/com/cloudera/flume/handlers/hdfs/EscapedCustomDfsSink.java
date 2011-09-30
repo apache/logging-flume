@@ -55,7 +55,8 @@ import com.google.common.base.Preconditions;
 public class EscapedCustomDfsSink extends EventSink.Base {
   static final Logger LOG = LoggerFactory.getLogger(EscapedCustomDfsSink.class);
   final String path;
-  OutputFormat format;
+  FunctionSpec formatSpec;
+  Context ctx;
 
   CustomDfsSink writer = null;
 
@@ -71,11 +72,13 @@ public class EscapedCustomDfsSink extends EventSink.Base {
   private String filename = "";
   protected String absolutePath = "";
 
-  public EscapedCustomDfsSink(String path, String filename, OutputFormat o) {
+  public EscapedCustomDfsSink(Context ctx, String path, String filename,
+      FunctionSpec fs) {
+    this.ctx = ctx;
     this.path = path;
     this.filename = filename;
     shouldSub = Event.containsTag(path) || Event.containsTag(filename);
-    this.format = o;
+    this.formatSpec = fs;
     absolutePath = path;
     if (filename != null && filename.length() > 0) {
       if (!absolutePath.endsWith(Path.SEPARATOR)) {
@@ -95,12 +98,21 @@ public class EscapedCustomDfsSink extends EventSink.Base {
     }
   }
 
-  public EscapedCustomDfsSink(String path, String filename) {
-    this(path, filename, getDefaultOutputFormat());
+  public EscapedCustomDfsSink(Context ctx, String path, String filename) {
+    this(ctx, path, filename, SinkBuilderUtil.getDefaultOutputFormatSpec());
   }
 
   protected CustomDfsSink openWriter(String p) throws IOException {
     LOG.info("Opening " + p);
+    // We need to instantiate a new outputFormat for each CustomDfsSink.
+    OutputFormat format;
+    try {
+      format = SinkBuilderUtil.resolveOutputFormat(ctx, formatSpec);
+    } catch (FlumeSpecException e) {
+      format = getDefaultOutputFormat();
+      LOG.warn("Had problem creating format " + formatSpec
+          + "; reverting to default:" + format);
+    }
     CustomDfsSink w = new CustomDfsSink(p, format);
     w.open();
     return w;
@@ -179,7 +191,14 @@ public class EscapedCustomDfsSink extends EventSink.Base {
         Preconditions.checkArgument(o != null, "Illegal format type "
             + formatArg + ".");
 
-        return new EscapedCustomDfsSink(args[0].toString(), filename, o);
+        // handle legacy string format arguments 
+        // TODO only support FunctionSpec in the future
+        if (formatArg instanceof String) {
+          formatArg = new FunctionSpec((String) formatArg);
+        }
+        FunctionSpec formatFunc = (FunctionSpec) formatArg;
+        return new EscapedCustomDfsSink(context, args[0].toString(), filename,
+            formatFunc);
       }
 
       @Deprecated

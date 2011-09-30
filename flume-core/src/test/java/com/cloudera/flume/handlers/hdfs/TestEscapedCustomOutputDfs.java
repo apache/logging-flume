@@ -204,4 +204,33 @@ public class TestEscapedCustomOutputDfs {
     FlumeBuilder.buildSink(new Context(), src);
   }
 
+  /**
+   * Some output formats cache an output stream and each hdfs file thus needs to
+   * make sure it has its own copy of the outputStream.
+   * 
+   * @throws IOException
+   * @throws FlumeSpecException
+   * @throws InterruptedException
+   */
+  @Test
+  public void testNoOutputFormatSharingProblem() throws IOException,
+      FlumeSpecException, InterruptedException {
+    File f = FileUtil.mktempdir("newFileOutputFormatPer");
+    String snk = "escapedFormatDfs(\"file://" + f.getAbsoluteFile()
+        + "\", \"%{nanos}\", seqfile)";
+
+    Event e1 = new EventImpl("e1".getBytes());
+    Event e2 = new EventImpl("e2".getBytes());
+
+    EventSink evtSnk = FlumeBuilder.buildSink(new Context(), snk);
+
+    try {
+      evtSnk.open();
+      evtSnk.append(e1);
+      evtSnk.append(e2);
+      evtSnk.close();
+    } finally {
+      FileUtil.rmr(f);
+    }
+  }
 }

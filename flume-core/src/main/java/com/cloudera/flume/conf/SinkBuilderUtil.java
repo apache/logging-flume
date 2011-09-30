@@ -73,4 +73,8 @@ public class SinkBuilderUtil {
     }
     return FlumeBuilder.createFormat(FormatFactory.get(), format);
   }
+
+  public static FunctionSpec getDefaultOutputFormatSpec() {
+    return FlumeConfiguration.get().getDefaultOutputFormatSpec();
+  }
 }
