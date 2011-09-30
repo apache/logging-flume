@@ -108,4 +108,16 @@ public class MemoryChannel implements Channel, Configurable {
     public void close() {
     }
   }
+
+  @Override
+  public void shutdown() {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public String getName() {
+    // TODO Auto-generated method stub
+    return null;
+  }
 }

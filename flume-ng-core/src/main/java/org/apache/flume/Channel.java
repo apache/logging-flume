@@ -33,6 +33,10 @@ package org.apache.flume;
  * extent of transaction support varies for different channel implementations
  * ranging from strong to best-effort semantics.
  * </p>
+ * <p>
+ * Channels are associated with unique names that can be used for separating
+ * configuration and working namespaces.
+ * </p>
  *
  * @see org.apache.flume.EventSource
  * @see org.apache.flume.EventSink
@@ -69,4 +73,16 @@ public interface Channel {
    * @return the transaction instance associated with this channel.
    */
   public Transaction getTransaction();
+
+  /**
+   * Instructs the channel to release any resources held in preparation of
+   * shutting down.
+   */
+  public void shutdown();
+
+  /**
+   * @return the channel name.
+   * @return
+   */
+  public String getName();
 }

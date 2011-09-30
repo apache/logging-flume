@@ -17,15 +17,34 @@
  */
 package org.apache.flume.channel.jdbc;
 
+import java.util.Properties;
+
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
+import org.apache.log4j.Logger;
 
 /**
  * <p>A JDBC based channel implementation.</p>
  */
 public class JdbcChannel implements Channel {
+
+  private static final Logger LOG = Logger.getLogger(JdbcChannel.class);
+
+  private final JdbcChannelProvider provider;
+  private final String name;
+
+  /**
+   * Instantiates a new JDBC Channel with the given properties.
+   * @param configuration
+   */
+  public JdbcChannel(String name, Properties configuration) {
+    provider = JdbcChannelProviderFactory.getProvider(configuration);
+    this.name = name;
+
+    LOG.info("JDBC Channel initialied: " + name);
+  }
 
   @Override
   public void put(Event event) throws ChannelException {
@@ -42,6 +61,17 @@ public class JdbcChannel implements Channel {
   @Override
   public Transaction getTransaction() {
     // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public void shutdown() {
+    // TODO Auto-generated method stub
+  }
+
+  @Override
+  public String getName() {
+    // FIXME
     return null;
   }
 }

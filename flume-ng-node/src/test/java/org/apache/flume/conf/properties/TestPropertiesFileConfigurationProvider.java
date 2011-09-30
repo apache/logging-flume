@@ -15,18 +15,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume;
+package org.apache.flume.conf.properties;
 
-import java.util.Set;
+import java.io.File;
 
-public interface ChannelFactory {
+import org.apache.flume.conf.file.TestJsonFileConfigurationProvider;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-  public boolean register(String name, Class<? extends Channel> channelClass);
+public class TestPropertiesFileConfigurationProvider {
 
-  public boolean unregister(String name);
+  private static final File TESTFILE = new File(
+      TestJsonFileConfigurationProvider.class.getClassLoader()
+          .getResource("flume-conf.properties").getFile());
 
-  public Channel create(String name) throws InstantiationException;
+  private static final Logger LOGGER = LoggerFactory
+      .getLogger(TestPropertiesFileConfigurationProvider.class);
 
-  public Set<String> getChannelNames();
+  @Test
+  public void testPropertyRead() throws Exception {
+    PropertiesFileConfigurationProvider provider =
+        new PropertiesFileConfigurationProvider();
+
+    provider.setFile(TESTFILE);
+    provider.load();
+  }
 
 }

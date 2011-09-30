@@ -15,18 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume;
+package org.apache.flume.channel.jdbc;
 
-import java.util.Set;
+import java.util.Properties;
 
-public interface ChannelFactory {
+/**
+ * Service provider interface for JDBC channel providers.
+ */
+public interface JdbcChannelProvider {
 
-  public boolean register(String name, Class<? extends Channel> channelClass);
+  /**
+   * Initializes the channel provider. This method must be called before
+   * the channel can be used in any way.
+   * @param properties the configuration for the system
+   */
+  public void initialize(Properties properties);
 
-  public boolean unregister(String name);
-
-  public Channel create(String name) throws InstantiationException;
-
-  public Set<String> getChannelNames();
-
+  /**
+   * Deinitializes the channel provider. Once this method is called, the
+   * channel provider cannot be used and must be discarded.
+   */
+  public void close();
 }

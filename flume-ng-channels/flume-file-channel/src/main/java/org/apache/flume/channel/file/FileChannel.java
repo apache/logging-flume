@@ -138,6 +138,18 @@ public class FileChannel implements Channel {
     return isInitialized;
   }
 
+  @Override
+  public void shutdown() {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public String getName() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
   /**
    * <p>
    * An implementation of {@link Transaction} for {@link FileChannel}s.
@@ -362,5 +374,4 @@ public class FileChannel implements Channel {
     }
 
   }
-
 }
