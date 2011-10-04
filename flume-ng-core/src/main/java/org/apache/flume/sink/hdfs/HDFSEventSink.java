@@ -70,16 +70,20 @@ public class HDFSEventSink extends AbstractSink implements PollableSink,
   private String fileType;
   private String path;
   private int maxOpenFiles;
-  String writeFormat;
+  private String writeFormat;
 
   /*
    * Extended Java LinkedHashMap for open file handle LRU queue We want to clear
    * the oldest file handle if there are too many open ones
    */
-  private class writerLinkedHashMap extends LinkedHashMap<String, BucketWriter> {
+  private class WriterLinkedHashMap extends LinkedHashMap<String, BucketWriter> {
     private static final long serialVersionUID = 1L;
 
     protected boolean removeEldestEntry(Entry<String, BucketWriter> eldest) {
+      /*
+       * FIXME: We probably shouldn't shared state this way. Make this class
+       * private static and explicitly expose maxOpenFiles.
+       */
       if (super.size() > maxOpenFiles) {
         // If we have more that max open files, then close the last one and
         // return true
@@ -95,7 +99,7 @@ public class HDFSEventSink extends AbstractSink implements PollableSink,
     }
   }
 
-  final writerLinkedHashMap sfWriters = new writerLinkedHashMap();
+  final WriterLinkedHashMap sfWriters = new WriterLinkedHashMap();
 
   // Used to short-circuit around doing regex matches when we know there are
   // no templates to be replaced.
@@ -122,6 +126,7 @@ public class HDFSEventSink extends AbstractSink implements PollableSink,
 
     if (fileName == null)
       fileName = defaultFileName;
+    // FIXME: Not transportable.
     this.path = new String(dirpath + "/" + fileName);
 
     if (rollInterval == null) {

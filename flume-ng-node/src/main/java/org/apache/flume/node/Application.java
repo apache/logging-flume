@@ -22,6 +22,7 @@ import org.apache.flume.sink.DefaultSinkFactory;
 import org.apache.flume.sink.LoggerSink;
 import org.apache.flume.sink.NullSink;
 import org.apache.flume.sink.RollingFileSink;
+import org.apache.flume.sink.hdfs.HDFSEventSink;
 import org.apache.flume.source.DefaultSourceFactory;
 import org.apache.flume.source.NetcatSource;
 import org.apache.flume.source.SequenceGeneratorSource;
@@ -74,6 +75,7 @@ public class Application {
     sinkFactory.register("null", NullSink.class);
     sinkFactory.register("logger", LoggerSink.class);
     sinkFactory.register("file-roll", RollingFileSink.class);
+    sinkFactory.register("hdfs", HDFSEventSink.class);
   }
 
   public void parseOptions() throws ParseException {
