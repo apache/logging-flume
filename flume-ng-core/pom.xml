@@ -81,6 +81,12 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- FIXME: There should be no dependency on Hadoop in Flume core. -->
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-core</artifactId>
+    </dependency>
+
   </dependencies>
 
 </project>
