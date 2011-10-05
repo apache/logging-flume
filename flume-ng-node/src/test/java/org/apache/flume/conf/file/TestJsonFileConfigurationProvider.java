@@ -91,6 +91,9 @@ public class TestJsonFileConfigurationProvider {
     provider.setConfigurationAware(delegate);
 
     provider.start();
+
+    Thread.sleep(100L);
+
     provider.stop();
 
     latch.await(5, TimeUnit.SECONDS);
