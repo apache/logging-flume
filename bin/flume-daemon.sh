@@ -70,7 +70,7 @@ if [ "$FLUME_PID_DIR" = "" ]; then
 fi
 
 if [ "$FLUME_IDENT_STRING" = "" ]; then
-  export FLUME_IDENT_STRING="$USER"
+  export FLUME_IDENT_STRING="`id -nu`"
 fi
 
 # some variables
