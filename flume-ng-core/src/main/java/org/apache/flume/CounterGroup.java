@@ -35,6 +35,10 @@ public class CounterGroup {
     }
   }
 
+  public synchronized void set(String name, Long value) {
+    getCounter(name).set(value);
+  }
+
   public synchronized AtomicLong getCounter(String name) {
     if (!counters.containsKey(name)) {
       counters.put(name, new AtomicLong());
