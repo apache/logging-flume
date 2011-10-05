@@ -9,10 +9,27 @@ import org.apache.flume.lifecycle.LifecycleState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * <p>
+ * An implementation of {@link SourceRunner} that can drive a
+ * {@link PollableSource}.
+ * </p>
+ * <p>
+ * A {@link PollableSourceRunner} wraps a {@link PollableSource} in the required
+ * run loop in order for it to operate. Internally, metrics and counters are
+ * kept such that a source that returns a {@link PollableSource.Status} of
+ * {@code BACKOFF} causes the run loop to do exactly that. There's a maximum
+ * backoff period of 500ms. A source that returns {@code READY} is immediately
+ * invoked. Note that {@code BACKOFF} is merely a hint to the runner; it need
+ * not be strictly adhered to.
+ * </p>
+ */
 public class PollableSourceRunner extends SourceRunner {
 
   private static final Logger logger = LoggerFactory
       .getLogger(PollableSourceRunner.class);
+  private static final long backoffSleepIncrement = 100;
+  private static final long maxBackoffSleep = 500;
 
   private AtomicBoolean shouldStop;
 
@@ -92,9 +109,13 @@ public class PollableSourceRunner extends SourceRunner {
         try {
           if (source.process().equals(PollableSource.Status.BACKOFF)) {
             counterGroup.incrementAndGet("runner.backoffs");
-            Thread.sleep(500);
-          }
 
+            Thread.sleep(Math.min(
+                counterGroup.incrementAndGet("runner.backoffs.consecutive")
+                    * backoffSleepIncrement, maxBackoffSleep));
+          } else {
+            counterGroup.set("runner.backoffs.consecutive", 0L);
+          }
         } catch (InterruptedException e) {
           logger.info("Source runner interrupted. Exiting");
         } catch (Exception e) {
