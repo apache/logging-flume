@@ -23,6 +23,7 @@ import org.apache.flume.sink.LoggerSink;
 import org.apache.flume.sink.NullSink;
 import org.apache.flume.sink.RollingFileSink;
 import org.apache.flume.sink.hdfs.HDFSEventSink;
+import org.apache.flume.source.AvroSource;
 import org.apache.flume.source.DefaultSourceFactory;
 import org.apache.flume.source.ExecSource;
 import org.apache.flume.source.NetcatSource;
@@ -73,6 +74,7 @@ public class Application {
     sourceFactory.register("seq", SequenceGeneratorSource.class);
     sourceFactory.register("netcat", NetcatSource.class);
     sourceFactory.register("exec", ExecSource.class);
+    sourceFactory.register("avro", AvroSource.class);
 
     sinkFactory.register("null", NullSink.class);
     sinkFactory.register("logger", LoggerSink.class);

@@ -1,9 +1,10 @@
 #!/bin/sh
 
 JAVA=`type -p java`
-JAVA_OPTS="-Xmx20"
+JAVA_OPTS="-Xmx20m"
 
 FLUME_NODE_CLASS="org.apache.flume.node.Application"
+FLUME_AVRO_CLIENT_CLASS="org.apache.flume.client.avro.AvroCLIClient"
 FLUME_CLASSPATH=""
 
 warn() {
@@ -30,14 +31,24 @@ usage: $0 [help | node] [--no-env]
 commands:
   help                display this help text
   node                run a Flume node
+  avro-client         run an avro Flume client
 
-options:
+global options
+
   --conf,-c <conf>    use configs in <conf> directory
   --no-env,-E         do not source the flume-env.sh file
   --classpath,-C <cp> override the classpath completely
+
+node options
+
   --data,-d <dir>     store internal flume data in <dir>
 
-  Note that the conf directory is always included in the classpath.
+avro-client options
+
+  --host,-H <host>  hostname to which events will be sent
+  --port,-p <port>  port of the avro source
+
+Note that the conf directory is always included in the classpath.
 
 EOF
 
@@ -56,7 +67,27 @@ run_node() {
   [ -n "$FLUME_CLASSPATH" ] || error "Flume classpath is not set! Use flume-env.sh or --classpath <cp>." 1
   [ -n "$opt_conf" ] || warn "No configuration directory set! Use --conf <dir> to override." 1
 
-  $JAVA $JAVA_OPTS -cp $final_cp $FLUME_NODE_CLASS $*
+  FLUME_APPLICATION_CLASS=$FLUME_NODE_CLASS
+
+  $JAVA $JAVA_OPTS -cp $final_cp $FLUME_APPLICATION_CLASS $*
+}
+
+run_avro_client() {
+  local final_cp
+
+  if [ -n "$opt_conf" ] ; then
+    final_cp="$opt_conf:"
+  fi
+
+  final_cp="${final_cp}${FLUME_CLASSPATH}"
+
+  [ -n "$JAVA" ] || error "Unable to find java executable. Is it in your PATH?" 1
+  [ -n "$FLUME_CLASSPATH" ] || error "Flume classpath is not set! Use flume-env.sh or --classpath <cp>." 1
+  [ -n "$opt_conf" ] || warn "No configuration directory set! Use --conf <dir> to override." 1
+
+  FLUME_APPLICATION_CLASS=$FLUME_AVRO_CLIENT_CLASS
+
+  $JAVA $JAVA_OPTS -cp $final_cp $FLUME_APPLICATION_CLASS $*
 }
 
 validate_env() {
@@ -77,6 +108,9 @@ case "$mode" in
     ;;
   node)
     opt_node=1
+    ;;
+  avro-client)
+    opt_avro_client=1
     ;;
   *)
     error "Unknown or unspecified command '$mode'"
@@ -117,5 +151,7 @@ if [ -n "$opt_help" ] ; then
   display_help
 elif [ -n "$opt_node" ] ; then
   run_node $args
+elif [ -n "$opt_avro_client" ] ; then
+  run_avro_client $args
 fi
 
