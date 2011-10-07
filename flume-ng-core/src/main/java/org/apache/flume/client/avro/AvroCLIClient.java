@@ -60,7 +60,18 @@ public class AvroCLIClient {
     CommandLineParser parser = new GnuParser();
     CommandLine commandLine = parser.parse(options, args);
 
+    if (!commandLine.hasOption("port")) {
+      throw new ParseException(
+          "You must specify a port to connect to with --port");
+    }
+
     port = Integer.parseInt(commandLine.getOptionValue("port"));
+
+    if (!commandLine.hasOption("")) {
+      throw new ParseException(
+          "You must specify a hostname to connet to with --host");
+    }
+
     hostname = commandLine.getOptionValue("host");
     fileName = commandLine.getOptionValue("filename");
   }
@@ -94,6 +105,10 @@ public class AvroCLIClient {
 
       Status status = client.append(avroEvent);
       sent++;
+
+      if (!status.equals(Status.OK)) {
+        logger.error("Unable to send event:{} status:{}", avroEvent, status);
+      }
 
       long now = System.currentTimeMillis();
 
