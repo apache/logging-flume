@@ -13,6 +13,7 @@ import org.apache.avro.ipc.specific.SpecificResponder;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
+import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.Transaction;
@@ -34,6 +35,11 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   private String bindAddress;
 
   private Server server;
+  private CounterGroup counterGroup;
+
+  public AvroSource() {
+    counterGroup = new CounterGroup();
+  }
 
   @Override
   public void configure(Context context) {
@@ -71,7 +77,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
 
     super.stop();
 
-    logger.debug("Avro source stopped");
+    logger.debug("Avro source stopped. Metrics:{}", counterGroup);
   }
 
   @Override
@@ -82,6 +88,8 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   @Override
   public Status append(AvroFlumeEvent avroEvent) throws AvroRemoteException {
     logger.debug("Received avro event:{}", avroEvent);
+
+    counterGroup.incrementAndGet("rpc.received");
 
     Channel channel = getChannel();
     Transaction transaction = channel.getTransaction();
@@ -99,6 +107,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
 
       Event event = EventBuilder.withBody(avroEvent.body.array(), headers);
       channel.put(event);
+      counterGroup.incrementAndGet("rpc.events");
 
       transaction.commit();
     } catch (ChannelException e) {
@@ -107,6 +116,8 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     } finally {
       transaction.close();
     }
+
+    counterGroup.incrementAndGet("rpc.successful");
 
     return Status.OK;
   }
