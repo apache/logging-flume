@@ -2,6 +2,7 @@ package org.apache.flume.source;
 
 import java.net.InetSocketAddress;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -108,6 +109,43 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
       Event event = EventBuilder.withBody(avroEvent.body.array(), headers);
       channel.put(event);
       counterGroup.incrementAndGet("rpc.events");
+
+      transaction.commit();
+    } catch (ChannelException e) {
+      transaction.rollback();
+      return Status.FAILED;
+    } finally {
+      transaction.close();
+    }
+
+    counterGroup.incrementAndGet("rpc.successful");
+
+    return Status.OK;
+  }
+
+  @Override
+  public Status appendBatch(List<AvroFlumeEvent> events) {
+    counterGroup.incrementAndGet("rpc.received.batch");
+
+    Channel channel = getChannel();
+    Transaction transaction = channel.getTransaction();
+
+    try {
+      transaction.begin();
+
+      for (AvroFlumeEvent avroEvent : events) {
+        Map<String, String> headers = new HashMap<String, String>();
+
+        for (Entry<CharSequence, CharSequence> entry : avroEvent.headers
+            .entrySet()) {
+
+          headers.put(entry.getKey().toString(), entry.getValue().toString());
+        }
+
+        Event event = EventBuilder.withBody(avroEvent.body.array(), headers);
+        channel.put(event);
+        counterGroup.incrementAndGet("rpc.events");
+      }
 
       transaction.commit();
     } catch (ChannelException e) {

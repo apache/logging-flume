@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.apache.avro.ipc.NettyTransceiver;
 import org.apache.avro.ipc.Transceiver;
@@ -67,7 +69,7 @@ public class AvroCLIClient {
 
     port = Integer.parseInt(commandLine.getOptionValue("port"));
 
-    if (!commandLine.hasOption("")) {
+    if (!commandLine.hasOption("host")) {
       throw new ParseException(
           "You must specify a hostname to connet to with --host");
     }
@@ -83,6 +85,7 @@ public class AvroCLIClient {
     AvroSourceProtocol client = SpecificRequestor.getClient(
         AvroSourceProtocol.class, transceiver);
     BufferedReader reader = null;
+    List<AvroFlumeEvent> eventBuffer = new ArrayList<AvroFlumeEvent>();
 
     if (fileName != null) {
       reader = new BufferedReader(new FileReader(new File(fileName)));
@@ -97,27 +100,44 @@ public class AvroCLIClient {
     while ((line = reader.readLine()) != null) {
       // logger.debug("read:{}", line);
 
+      if (eventBuffer.size() >= 1000) {
+        Status status = client.appendBatch(eventBuffer);
+
+        if (!status.equals(Status.OK)) {
+          logger.error("Unable to send batch size:{} status:{}",
+              eventBuffer.size(), status);
+        }
+
+        eventBuffer.clear();
+      }
+
       AvroFlumeEvent avroEvent = new AvroFlumeEvent();
 
       avroEvent.headers = new HashMap<CharSequence, CharSequence>();
       avroEvent.body = ByteBuffer.wrap(line.getBytes());
+
+      eventBuffer.add(avroEvent);
+
       sentBytes += avroEvent.body.capacity();
-
-      Status status = client.append(avroEvent);
       sent++;
-
-      if (!status.equals(Status.OK)) {
-        logger.error("Unable to send event:{} status:{}", avroEvent, status);
-      }
 
       long now = System.currentTimeMillis();
 
       if (now >= lastCheck + 5000) {
-        logger.debug("Sent {} bytes, {} events", sentBytes, sent);
+        logger.debug("Packed {} bytes, {} events", sentBytes, sent);
         lastCheck = now;
       }
+    }
 
-      // logger.debug("Sent:{} Status:{}", ++sent, status);
+    if (eventBuffer.size() > 0) {
+      Status status = client.appendBatch(eventBuffer);
+
+      if (!status.equals(Status.OK)) {
+        logger.error("Unable to send batch size:{} status:{}",
+            eventBuffer.size(), status);
+      }
+
+      eventBuffer.clear();
     }
 
     logger.debug("Finished");

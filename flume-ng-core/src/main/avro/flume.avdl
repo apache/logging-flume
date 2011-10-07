@@ -31,4 +31,6 @@ protocol AvroSourceProtocol {
 
   Status append( AvroFlumeEvent event );
 
+  Status appendBatch( array<AvroFlumeEvent> events );
+
 }
