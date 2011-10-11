@@ -18,6 +18,7 @@ import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.node.nodemanager.DefaultLogicalNodeManager;
+import org.apache.flume.sink.AvroSink;
 import org.apache.flume.sink.DefaultSinkFactory;
 import org.apache.flume.sink.LoggerSink;
 import org.apache.flume.sink.NullSink;
@@ -80,6 +81,7 @@ public class Application {
     sinkFactory.register("logger", LoggerSink.class);
     sinkFactory.register("file-roll", RollingFileSink.class);
     sinkFactory.register("hdfs", HDFSEventSink.class);
+    sinkFactory.register("avro", AvroSink.class);
   }
 
   public void parseOptions() throws ParseException {
