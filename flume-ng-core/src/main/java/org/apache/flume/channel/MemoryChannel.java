@@ -30,6 +30,53 @@ import org.apache.flume.conf.Configurable;
 
 import com.google.common.base.Preconditions;
 
+/**
+ * <p>
+ * A capacity-capped {@link Channel} implementation that supports in-memory
+ * buffering and delivery of events.
+ * </p>
+ * <p>
+ * This channel is appropriate for
+ * <q>best effort</q> delivery of events where high throughput is favored over
+ * data durability. To be clear, <b>this channel offers absolutely no guarantee
+ * of event delivery</b> in the face of (any) component failure.
+ * </p>
+ * <p>
+ * TODO: Discuss guarantees, corner cases re: potential data loss (e.g. consumer
+ * begins a tx, takes events, and gets SIGKILL before rollback).
+ * </p>
+ * <p>
+ * <b>Configuration options</b>
+ * </p>
+ * <table>
+ * <tr>
+ * <th>Parameter</th>
+ * <th>Description</th>
+ * <th>Unit / Type</th>
+ * <th>Default</th>
+ * </tr>
+ * <tr>
+ * <td><tt>capacity</tt></td>
+ * <td>The in-memory capacity of this channel. Store up to <tt>capacity</tt>
+ * events before refusing new events.</td>
+ * <td>events / int</td>
+ * <td>50</td>
+ * </tr>
+ * <tr>
+ * <td><tt>keep-alive</tt></td>
+ * <td>The amount of time (seconds) to wait for an event before returning
+ * <tt>null</tt> on {@link #take()}.</td>
+ * <td>seconds / int</td>
+ * <td>3</td>
+ * </tr>
+ * </table>
+ * <p>
+ * <b>Metrics</b>
+ * </p>
+ * <p>
+ * TODO
+ * </p>
+ */
 public class MemoryChannel implements Channel, Configurable {
 
   private static final Integer defaultCapacity = 50;
