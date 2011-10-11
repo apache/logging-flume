@@ -19,6 +19,7 @@ package org.apache.flume.channel;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
@@ -32,15 +33,22 @@ import com.google.common.base.Preconditions;
 public class MemoryChannel implements Channel, Configurable {
 
   private static final Integer defaultCapacity = 50;
+  private static final Integer defaultKeepAlive = 3;
 
   private BlockingQueue<Event> queue;
+  private Integer keepAlive;
 
   @Override
   public void configure(Context context) {
     Integer capacity = context.get("capacity", Integer.class);
+    keepAlive = context.get("keep-alive", Integer.class);
 
     if (capacity == null) {
       capacity = defaultCapacity;
+    }
+
+    if (keepAlive == null) {
+      keepAlive = defaultKeepAlive;
     }
 
     queue = new ArrayBlockingQueue<Event>(capacity);
@@ -64,7 +72,7 @@ public class MemoryChannel implements Channel, Configurable {
         "No queue defined (Did you forget to configure me?");
 
     try {
-      return queue.take();
+      return queue.poll(keepAlive, TimeUnit.SECONDS);
     } catch (InterruptedException ex) {
       throw new ChannelException("Failed to take()", ex);
     }
