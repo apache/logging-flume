@@ -226,7 +226,8 @@ public class MultiOpMemChannel implements Channel, Configurable {
     StampedEvent undoEvent;
     StampedEvent currentEvent;
 
-    while ((undoEvent = myTxn.getUndoPutList().removeLast()) != null) {
+    while ((myTxn.getUndoPutList().isEmpty()) == false) {
+      undoEvent = myTxn.getUndoPutList().removeLast();
       currentEvent = queue.removeLast();
       Preconditions.checkNotNull(currentEvent, "Rollback error");
       Preconditions.checkArgument(currentEvent == undoEvent ,
@@ -267,8 +268,9 @@ public class MultiOpMemChannel implements Channel, Configurable {
    */
   protected void undoTake(MemTransaction myTxn) {
     StampedEvent e;
- 
-    while ((e = myTxn.getUndoTakeList().removeLast()) != null) {
+
+    while (myTxn.getUndoTakeList().isEmpty() == false) {
+      e = myTxn.getUndoTakeList().removeLast();
       queue.addFirst(e);
     }
   }

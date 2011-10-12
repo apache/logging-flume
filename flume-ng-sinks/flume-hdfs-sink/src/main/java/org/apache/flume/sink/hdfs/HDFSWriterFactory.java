@@ -20,7 +20,7 @@ package org.apache.flume.sink.hdfs;
 
 import java.io.IOException;
 
-abstract class HDFSWriterFactory {
+public class HDFSWriterFactory {
   static final String SequenceFileType = "SequenceFile";
   static final String DataStreamType = "DataStream";
   static final String CompStreamType = "CompressedStream";
@@ -29,7 +29,7 @@ abstract class HDFSWriterFactory {
 
   }
 
-  public static HDFSWriter getWriter(String fileType) throws IOException {
+  public HDFSWriter getWriter(String fileType) throws IOException {
     if (fileType == SequenceFileType) {
       return new HDFSSequenceFile();
     } else if (fileType == DataStreamType) {

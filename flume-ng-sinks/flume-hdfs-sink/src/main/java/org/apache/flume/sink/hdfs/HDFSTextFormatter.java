@@ -47,7 +47,9 @@ public class HDFSTextFormatter implements FlumeFormatter {
 
   @Override
   public byte[] getBytes(Event e) {
-    return makeText(e).getBytes();
+    Text record = makeText(e);
+    record.append("\n".getBytes(), 0, 1);
+    return record.getBytes();
   }
 
 }

@@ -105,9 +105,11 @@ public class BucketWriter {
   }
 
   // close the file, ignore the IOException
+  // ideally the underlying writer should discard unwritten data
   public void abort() {
     try {
       close();
+      open();
     } catch (IOException eIO) {
       // Ignore it
     }
@@ -167,11 +169,11 @@ public class BucketWriter {
     if ((rollInterval > 0)
         && (rollInterval < (System.currentTimeMillis() - lastProcessTime) / 1000))
       doRotate = true;
-    if ((rollCount > 0) && (rollCount < eventCounter)) {
+    if ((rollCount > 0) && (rollCount <= eventCounter)) {
       eventCounter = 0;
       doRotate = true;
     }
-    if ((rollSize > 0) && (rollSize < processSize)) {
+    if ((rollSize > 0) && (rollSize <= processSize)) {
       processSize = 0;
       doRotate = true;
     }

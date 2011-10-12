@@ -71,6 +71,7 @@ public class HDFSEventSink extends AbstractSink implements PollableSink,
   private String path;
   private int maxOpenFiles;
   private String writeFormat;
+  private HDFSWriterFactory myWriterFactory; 
 
   /*
    * Extended Java LinkedHashMap for open file handle LRU queue We want to clear
@@ -106,7 +107,11 @@ public class HDFSEventSink extends AbstractSink implements PollableSink,
   // private boolean shouldSub = false;
 
   public HDFSEventSink() {
-
+    myWriterFactory = new HDFSWriterFactory();
+  }
+  
+  public HDFSEventSink(HDFSWriterFactory newWriterFactory) {
+    myWriterFactory = newWriterFactory;
   }
 
   // read configuration and setup thresholds
@@ -267,7 +272,7 @@ public class HDFSEventSink extends AbstractSink implements PollableSink,
 
         // we haven't seen this file yet, so open it and cache the handle
         if (bw == null) {
-          HDFSWriter writer = HDFSWriterFactory.getWriter(fileType);
+          HDFSWriter writer = myWriterFactory.getWriter(fileType);
           FlumeFormatter formatter = HDFSFormatterFactory
               .getFormatter(writeFormat);
           bw = new BucketWriter(rollInterval, rollSize, rollCount, batchSize);
@@ -296,7 +301,7 @@ public class HDFSEventSink extends AbstractSink implements PollableSink,
       return Status.READY;
     } catch (IOException eIO) {
       transaction.rollback();
-      LOG.error("HDFS IO error", eIO);
+      LOG.warn("HDFS IO error", eIO);
       return Status.BACKOFF;
     } catch (Exception e) {
       transaction.rollback();
