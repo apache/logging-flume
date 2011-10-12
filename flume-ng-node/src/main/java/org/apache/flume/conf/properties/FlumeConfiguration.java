@@ -166,7 +166,7 @@ public class FlumeConfiguration {
     private final Map<String, ComponentConfiguration> channelConfigMap;
 
 
-    public AgentConfiguration(String agentName) {
+    private AgentConfiguration(String agentName) {
       this.agentName = agentName;
       sourceConfigMap = new HashMap<String, ComponentConfiguration>();
       sinkConfigMap = new HashMap<String, ComponentConfiguration>();
@@ -524,7 +524,7 @@ public class FlumeConfiguration {
 
      private final Map<String, String> configuration;
 
-     public ComponentConfiguration(String componentName, boolean hasRunner) {
+     private ComponentConfiguration(String componentName, boolean hasRunner) {
        this.componentName = componentName;
        this.hasRunner = hasRunner;
        if (hasRunner) {
@@ -607,7 +607,7 @@ public class FlumeConfiguration {
     private final String componentName;
     private final String configKey;
 
-    public ComponentNameAndConfigKey(String name, String configKey) {
+    private ComponentNameAndConfigKey(String name, String configKey) {
       this.componentName = name;
       this.configKey = configKey;
     }

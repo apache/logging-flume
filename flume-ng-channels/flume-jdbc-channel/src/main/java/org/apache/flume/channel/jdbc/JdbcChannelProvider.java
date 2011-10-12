@@ -19,6 +19,9 @@ package org.apache.flume.channel.jdbc;
 
 import java.util.Properties;
 
+import org.apache.flume.Event;
+import org.apache.flume.Transaction;
+
 /**
  * Service provider interface for JDBC channel providers.
  */
@@ -36,4 +39,26 @@ public interface JdbcChannelProvider {
    * channel provider cannot be used and must be discarded.
    */
   public void close();
+
+  /**
+   * Writes the event to the persistent store.
+   * @param channelName
+   * @param event
+   */
+  public void persistEvent(String channelName, Event event);
+
+
+  /**
+   * Removes the next event for the named channel from the underlying
+   * persistent store.
+   * @param channelName
+   * @return
+   */
+  public Event removeEvent(String channelName);
+
+  /**
+   * @return the transaction associated with the current thread.
+   */
+  public Transaction getTransaction();
+
 }

@@ -24,11 +24,8 @@ public final class ConfigurationConstants {
 
   public static final String PREFIX = "org.apache.flume.channel.jdbc.";
 
-  public static final String CONFIG_DRIVER_CLASS =
+  public static final String CONFIG_JDBC_DRIVER_CLASS =
       PREFIX + "driver.class";
-
-  public static final String CONFIG_DATABASE_TYPE =
-      PREFIX + "db.type";
 
   public static final String CONFIG_USERNAME =
       PREFIX + "db.username";
@@ -40,10 +37,19 @@ public final class ConfigurationConstants {
       PREFIX + "driver.url";
 
   public static final String CONFIG_JDBC_PROPERTIES_FILE =
-      PREFIX + "properties.file";
+      PREFIX + "connection.properties.file";
+
+  public static final String CONFIG_DATABASE_TYPE =
+      PREFIX + "db.type";
 
   public static final String CONFIG_CREATE_SCHEMA =
       PREFIX + "create.schema";
+
+  public static final String CONFIG_TX_ISOLATION_LEVEL =
+      PREFIX + "transaction.isolation";
+
+  public static final String CONFIG_MAX_CONNECTION =
+      PREFIX + "maximum.connections";
 
   private ConfigurationConstants() {
     // Disable object creation

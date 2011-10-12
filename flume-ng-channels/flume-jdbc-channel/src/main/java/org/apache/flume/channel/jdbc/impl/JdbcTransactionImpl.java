@@ -1,0 +1,145 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.flume.channel.jdbc.impl;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+
+import org.apache.flume.Transaction;
+import org.apache.flume.channel.jdbc.JdbcChannelException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
+public class JdbcTransactionImpl implements Transaction {
+
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(JdbcTransactionImpl.class);
+
+  private Connection connection;
+  private JdbcTransactionFactory txFactory;
+  boolean active = true;
+  int count = 0;
+
+  boolean rollback = false;
+
+  protected JdbcTransactionImpl(Connection conn,
+      JdbcTransactionFactory factory) {
+    connection = conn;
+    txFactory = factory;
+
+    try {
+      connection.clearWarnings();
+    } catch (SQLException ex) {
+      LOGGER.error("Error while clearing warnings: " + ex.getErrorCode(), ex);
+    }
+  }
+
+  @Override
+  public void begin() {
+    if (!active) {
+      throw new JdbcChannelException("Inactive transaction");
+    }
+    count++;
+    LOGGER.debug("Tx count-begin: " + count + ", rollback: " + rollback);
+  }
+
+  @Override
+  public void commit() {
+    if (!active) {
+      throw new JdbcChannelException("Inactive transaction");
+    }
+    if (rollback) {
+      throw new JdbcChannelException(
+          "Cannot commit transaction marked for rollback");
+    }
+    LOGGER.debug("Tx count-commit: " + count + ", rollback: " + rollback);
+  }
+
+  @Override
+  public void rollback() {
+    if (!active) {
+      throw new JdbcChannelException("Inactive transaction");
+    }
+    rollback = true;
+    LOGGER.debug("Tx count-rollback: " + count + ", rollback: " + rollback);
+  }
+
+  @Override
+  public void close() {
+    if (!active) {
+      throw new JdbcChannelException("Inactive transaction");
+    }
+    count--;
+    LOGGER.debug("Tx count-close: " + count + ", rollback: " + rollback);
+    if (count == 0) {
+      active = false;
+      try {
+        if (rollback) {
+          LOGGER.info("Attempting transaction roll-back");
+          connection.rollback();
+        } else {
+          LOGGER.info("Attempting transaction commit");
+          connection.commit();
+        }
+      } catch (SQLException ex) {
+        throw new JdbcChannelException("Unable to finalize transaction", ex);
+      } finally {
+        if (connection != null) {
+          // Log Warnings
+          try {
+            SQLWarning warning = connection.getWarnings();
+            if (warning != null) {
+              StringBuilder sb = new StringBuilder("Connection warnigns: ");
+              boolean first = true;
+              while (warning != null) {
+                if (first) {
+                  first = false;
+                } else {
+                  sb.append("; ");
+                }
+                sb.append("[").append(warning.getErrorCode()).append("] ");
+                sb.append(warning.getMessage());
+              }
+              LOGGER.warn(sb.toString());
+            }
+          } catch (SQLException ex) {
+            LOGGER.error("Error while retrieving warnigns: "
+                                + ex.getErrorCode(), ex);
+          }
+
+          // Close Connection
+          try {
+            connection.close();
+          } catch (SQLException ex) {
+            LOGGER.error(
+                "Unable to close connection: " + ex.getErrorCode(), ex);
+          }
+        }
+
+        // Clean up thread local
+        txFactory.remove();
+
+        // Destroy local state
+        connection = null;
+        txFactory = null;
+      }
+    }
+  }
+}

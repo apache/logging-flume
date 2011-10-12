@@ -43,25 +43,22 @@ public class JdbcChannel implements Channel {
     provider = JdbcChannelProviderFactory.getProvider(configuration);
     this.name = name;
 
-    LOG.info("JDBC Channel initialied: " + name);
+    LOG.info("JDBC Channel initialized: " + name);
   }
 
   @Override
   public void put(Event event) throws ChannelException {
-    // TODO Auto-generated method stub
-
+    getProvider().persistEvent(getName(), event);
   }
 
   @Override
   public Event take() throws ChannelException {
-    // TODO Auto-generated method stub
-    return null;
+    return getProvider().removeEvent(getName());
   }
 
   @Override
   public Transaction getTransaction() {
-    // TODO Auto-generated method stub
-    return null;
+    return getProvider().getTransaction();
   }
 
   @Override
@@ -71,7 +68,10 @@ public class JdbcChannel implements Channel {
 
   @Override
   public String getName() {
-    // FIXME
-    return null;
+    return name;
+  }
+
+  private JdbcChannelProvider getProvider() {
+    return provider;
   }
 }

@@ -17,51 +17,36 @@
  */
 package org.apache.flume.channel.jdbc;
 
-public enum DatabaseType {
-  /** All other databases */
-  OTHER("OTHER", null),
+import java.sql.Connection;
 
-  /** Apache Derby */
-  DERBY("DERBY", "values(1)"),
+public enum TransactionIsolation {
 
-  /** MySQL */
-  MYSQL("MYSQL", "select 1"),
-
-  /** PostgreSQL */
-  POSTGRESQL("POSTGRESQL", null),
-
-  /** Oracle */
-  ORACLE("ORACLE", null);
+  READ_UNCOMMITTED("READ_UNCOMMITTED", Connection.TRANSACTION_READ_UNCOMMITTED),
+  READ_COMMITTED("READ_COMMITTED", Connection.TRANSACTION_READ_COMMITTED),
+  REPEATABLE_READ("REPEATABLE_READ", Connection.TRANSACTION_REPEATABLE_READ),
+  SERIALIZABLE("SERIALIZABLE", Connection.TRANSACTION_SERIALIZABLE);
 
   private final String name;
-  private final String validationQuery;
+  private final int code;
 
-  private DatabaseType(String name, String validationQuery) {
+  private TransactionIsolation(String name, int code) {
     this.name = name;
-    this.validationQuery = validationQuery;
+    this.code = code;
   }
 
-  public String toString() {
-    return getName();
+  public int getCode() {
+    return code;
   }
 
   public String getName() {
     return name;
   }
 
-  public String getValidationQuery() {
-    return validationQuery;
+  public String toString() {
+    return getName();
   }
 
-  public static DatabaseType getByName(String dbName) {
-    DatabaseType type = null;
-    try {
-      type = DatabaseType.valueOf(dbName.trim().toUpperCase());
-    } catch (IllegalArgumentException ex) {
-      type = DatabaseType.OTHER;
-    }
-
-    return type;
+  public static TransactionIsolation getByName(String name) {
+    return valueOf(name.trim().toUpperCase());
   }
-
 }
