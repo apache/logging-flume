@@ -44,6 +44,7 @@ package org.apache.flume;
  */
 public interface Transaction {
 
+public enum TransactionState {Started, Committed, RolledBack, Closed };
   /**
    * <p>Starts a transaction boundary for the current channel operation. If a
    * transaction is already in progress, this method will join that transaction
