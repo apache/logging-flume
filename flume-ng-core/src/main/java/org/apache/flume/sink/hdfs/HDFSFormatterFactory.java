@@ -30,11 +30,14 @@ public class HDFSFormatterFactory {
 
   static final String hdfsWritableFormat = "Writable";
   static final String hdfsAvroFormat = "Avro";
+  static final String hdfsTextFormat = "Text";
 
   static FlumeFormatter getFormatter(String formatType) throws IOException {
-    if (formatType == hdfsWritableFormat)
+    if (formatType == hdfsWritableFormat) {
       return new HDFSWritableFormatter();
-    else
+    } else if (formatType == hdfsTextFormat) {
+      return new HDFSTextFormatter();
+    } else
       throw new IOException("Incorrect formatter type");
   }
 
