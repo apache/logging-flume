@@ -107,6 +107,7 @@ limitations under the License.
       </activation>
       <modules>
         <module>flume-ng-core</module>
+        <module>flume-ng-sinks</module>
         <module>flume-ng-node</module>
         <module>flume-ng-dist</module>
         <module>flume-ng-channels</module>
