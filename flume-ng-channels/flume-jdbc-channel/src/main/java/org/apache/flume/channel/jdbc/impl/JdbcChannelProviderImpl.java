@@ -171,8 +171,23 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
 
   @Override
   public void persistEvent(String channelName, Event event) {
-    // TODO Auto-generated method stub
+    PersistableEvent persistableEvent = new PersistableEvent(event);
+    Transaction tx = null;
+    try {
+      tx = getTransaction();
+      tx.begin();
 
+      // Persist the persistableEvent
+
+      tx.commit();
+    } catch (Exception ex) {
+      tx.rollback();
+      throw new JdbcChannelException("Failed to persist event", ex);
+    } finally {
+      if (tx != null) {
+        tx.close();
+      }
+    }
   }
 
   @Override

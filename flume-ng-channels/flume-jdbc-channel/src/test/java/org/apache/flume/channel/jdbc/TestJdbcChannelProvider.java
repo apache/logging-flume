@@ -4,8 +4,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
+import junit.framework.Assert;
+
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.jdbc.impl.JdbcChannelProviderImpl;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -18,6 +21,7 @@ public class TestJdbcChannelProvider {
 
   private Properties derbyProps = new Properties();
   private File derbyDbDir;
+  private JdbcChannelProviderImpl provider;
 
   @Before
   public void setUp() throws IOException {
@@ -52,16 +56,39 @@ public class TestJdbcChannelProvider {
 
   @Test
   public void testDerbySetup() {
-    JdbcChannelProviderImpl jdbcProviderImpl =
-        new JdbcChannelProviderImpl();
+    provider = new JdbcChannelProviderImpl();
 
-    jdbcProviderImpl.initialize(derbyProps);
+    provider.initialize(derbyProps);
 
-    Transaction tx = jdbcProviderImpl.getTransaction();
-    tx.begin();
-    tx.begin();
-    tx.close();
-    tx.close();
-    jdbcProviderImpl.close();
+    Transaction tx1 = provider.getTransaction();
+    tx1.begin();
+
+    Transaction tx2 = provider.getTransaction();
+
+    Assert.assertSame(tx1, tx2);
+    tx2.begin();
+    tx2.close();
+    tx1.close();
+
+    Transaction tx3 = provider.getTransaction();
+    Assert.assertNotSame(tx1, tx3);
+
+    tx3.begin();
+    tx3.close();
+
+    provider.close();
+    provider = null;
+  }
+
+  @After
+  public void tearDown() throws IOException {
+    if (provider != null) {
+      try {
+        provider.close();
+      } catch (Exception ex) {
+        LOGGER.error("Unable to close provider", ex);
+      }
+    }
+    provider = null;
   }
 }

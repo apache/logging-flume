@@ -34,10 +34,6 @@ public class JdbcTransactionFactory extends ThreadLocal<JdbcTransactionImpl> {
 
   @Override
   protected JdbcTransactionImpl initialValue() {
-    try {
-      return new JdbcTransactionImpl(dataSource.getConnection(), this);
-    } catch (SQLException ex) {
-      throw new JdbcChannelException("Unable to create connection", ex);
-    }
+    return new JdbcTransactionImpl(dataSource, this);
   }
 }

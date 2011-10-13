@@ -51,6 +51,43 @@ public final class ConfigurationConstants {
   public static final String CONFIG_MAX_CONNECTION =
       PREFIX + "maximum.connections";
 
+  // Built in constants for JDBC Channel implementation
+
+  /**
+   * The length for payload bytes that will stored inline. Payloads larger
+   * than this length will spill into BLOB.
+   */
+  public static int PAYLOAD_LENGTH_THRESHOLD = 16384; // 16kb
+
+  /**
+   * The length of header name in bytes that will be stored inline. Header
+   * names longer than this number will spill over into CLOB.
+   */
+  public static int HEADER_NAME_LENGTH_THRESHOLD = 251;
+
+  /**
+   * The length of header value in bytes that will be stored inline. Header
+   * values longer than this number will spill over into CLOB.
+   */
+  public static int HEADER_VALUE_LENGTH_THRESHOLD = 251;
+
+  /**
+   * The maximum length of channel name.
+   */
+  public static int CHANNEL_NAME_MAX_LENGTH = 64;
+
+  /**
+   * The maximum spill size for header names. Together with the value of
+   * HEADER_NAME_LENGTH_THRESHOLD this adds up to 32kb.
+   */
+  public static int HEADER_NAME_SPILL_MAX_LENGTH = 32517;
+
+  /**
+   * The maximum spill size for header values. Together with the value of
+   * HEADER_VALUE_LENGTH_THRESHOLD, this adds up to 32kb.
+   */
+  public static int HEADER_VALUE_SPILL_MAX_LENGTH = 32517;
+
   private ConfigurationConstants() {
     // Disable object creation
   }

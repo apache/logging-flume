@@ -21,6 +21,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 
+import javax.sql.DataSource;
+
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.jdbc.JdbcChannelException;
 import org.slf4j.Logger;
@@ -32,6 +34,7 @@ public class JdbcTransactionImpl implements Transaction {
   private static final Logger LOGGER =
       LoggerFactory.getLogger(JdbcTransactionImpl.class);
 
+  private final DataSource dataSource;
   private Connection connection;
   private JdbcTransactionFactory txFactory;
   boolean active = true;
@@ -39,22 +42,30 @@ public class JdbcTransactionImpl implements Transaction {
 
   boolean rollback = false;
 
-  protected JdbcTransactionImpl(Connection conn,
+  protected JdbcTransactionImpl(DataSource dataSource,
       JdbcTransactionFactory factory) {
-    connection = conn;
+    this.dataSource = dataSource;
     txFactory = factory;
-
-    try {
-      connection.clearWarnings();
-    } catch (SQLException ex) {
-      LOGGER.error("Error while clearing warnings: " + ex.getErrorCode(), ex);
-    }
   }
 
   @Override
   public void begin() {
     if (!active) {
       throw new JdbcChannelException("Inactive transaction");
+    }
+    if (count == 0) {
+      // Lease a connection now
+      try {
+        connection = dataSource.getConnection();
+      } catch (SQLException ex) {
+        throw new JdbcChannelException("Unable to lease connection", ex);
+      }
+      // Clear any prior warnings on the connection
+      try {
+        connection.clearWarnings();
+      } catch (SQLException ex) {
+        LOGGER.error("Error while clearing warnings: " + ex.getErrorCode(), ex);
+      }
     }
     count++;
     LOGGER.debug("Tx count-begin: " + count + ", rollback: " + rollback);
@@ -77,6 +88,7 @@ public class JdbcTransactionImpl implements Transaction {
     if (!active) {
       throw new JdbcChannelException("Inactive transaction");
     }
+    LOGGER.warn("Marking transaction for rollback");
     rollback = true;
     LOGGER.debug("Tx count-rollback: " + count + ", rollback: " + rollback);
   }
