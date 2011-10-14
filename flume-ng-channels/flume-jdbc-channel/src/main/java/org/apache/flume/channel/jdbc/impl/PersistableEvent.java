@@ -29,20 +29,22 @@ import org.apache.flume.channel.jdbc.ConfigurationConstants;
 public class PersistableEvent {
 
   private long eventId;
-  private byte[] payload;
-  private byte[] spill;
+  private final String channel;
+  private byte[] basePayload;
+  private byte[] spillPayload;
   private List<HeaderEntry> headers;
 
-  public PersistableEvent(Event event) {
+  public PersistableEvent(String channel, Event event) {
+    this.channel = channel;
 
     byte[] givenPayload = event.getBody();
     if (givenPayload.length < ConfigurationConstants.PAYLOAD_LENGTH_THRESHOLD) {
-      payload = Arrays.copyOf(givenPayload, givenPayload.length);
-      spill = null;
+      basePayload = Arrays.copyOf(givenPayload, givenPayload.length);
+      spillPayload = null;
     } else {
-      payload = Arrays.copyOfRange(givenPayload, 0,
+      basePayload = Arrays.copyOfRange(givenPayload, 0,
           ConfigurationConstants.PAYLOAD_LENGTH_THRESHOLD);
-      spill = Arrays.copyOfRange(givenPayload,
+      spillPayload = Arrays.copyOfRange(givenPayload,
           ConfigurationConstants.PAYLOAD_LENGTH_THRESHOLD, givenPayload.length);
     }
 
@@ -59,12 +61,13 @@ public class PersistableEvent {
 
   public byte[] getPayload() {
     byte[] result = null;
-    if (spill == null) {
-      result = Arrays.copyOf(payload, payload.length);
+    if (spillPayload == null) {
+      result = Arrays.copyOf(basePayload, basePayload.length);
     } else {
-      result = new byte[payload.length + spill.length];
-      System.arraycopy(payload, 0, result, 0, payload.length);
-      System.arraycopy(spill, 0, result, payload.length, spill.length);
+      result = new byte[basePayload.length + spillPayload.length];
+      System.arraycopy(basePayload, 0, result, 0, basePayload.length);
+      System.arraycopy(spillPayload, 0, result,
+          basePayload.length, spillPayload.length);
     }
 
     return result;
@@ -75,35 +78,73 @@ public class PersistableEvent {
     if (headers != null) {
       headerMap =  new HashMap<String, String>();
       for (HeaderEntry entry :  headers) {
-        headerMap.put(entry.getName(), entry.getValue());
+        headerMap.put(entry.getNameString(), entry.getValueString());
       }
     }
 
     return headerMap;
   }
 
-  public static class HeaderEntry {
+  public String getChannelName() {
+    return channel;
+  }
 
-    private SpillableString nameString;
-    private SpillableString valueString;
+  public byte[] getBasePayload() {
+    return this.basePayload;
+  }
+
+  public byte[] getSpillPayload() {
+    return this.spillPayload;
+  }
+
+  protected void setEventId(long eventId) {
+    this.eventId = eventId;
+  }
+
+  public List<HeaderEntry> getHeaderEntries() {
+    return headers;
+  }
+
+  protected static class HeaderEntry {
+
+    private long headerId = -1L;
+    private SpillableString name;
+    private SpillableString value;
 
     public HeaderEntry(String name, String value) {
-      nameString = new SpillableString(name,
+      this.name = new SpillableString(name,
           ConfigurationConstants.HEADER_NAME_LENGTH_THRESHOLD);
-      valueString = new SpillableString(value,
+      this.value = new SpillableString(value,
           ConfigurationConstants.HEADER_VALUE_LENGTH_THRESHOLD);
     }
 
-    public String getName() {
-      return nameString.getString();
+    public String getNameString() {
+      return name.getString();
     }
 
-    public String getValue() {
-      return valueString.getString();
+    public SpillableString getName() {
+      return name;
     }
+
+    public String getValueString() {
+      return value.getString();
+    }
+
+    public SpillableString getValue() {
+      return value;
+    }
+
+    protected void setId(long headerId) {
+      this.headerId = headerId;
+    }
+
+    public long getId() {
+      return headerId;
+    }
+
   }
 
-  private static class SpillableString {
+  protected static class SpillableString {
 
     private String base;
     private String spill;
@@ -143,6 +184,10 @@ public class PersistableEvent {
         return base;
       }
       return base + spill;
+    }
+
+    public boolean hasSpill() {
+      return spill != null;
     }
   }
 }

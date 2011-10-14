@@ -17,7 +17,7 @@
  */
 package org.apache.flume.channel.jdbc.impl;
 
-import javax.sql.DataSource;
+import java.sql.Connection;
 
 /**
  * <p>A handler for creating and validating database schema for use by
@@ -42,4 +42,14 @@ public interface SchemaHandler {
    * @param connection the connection to create schema for.
    */
   public void createSchemaObjects();
+
+  /**
+   * Inserts the given persistent event into the database. The connection that
+   * is passed into the handler has an ongoing transaction and therefore the
+   * SchemaHandler implementation must not close the connection.
+   *
+   * @param pe the event to persist
+   * @param connection the connection to use
+   */
+  public void persistEvent(PersistableEvent pe, Connection connection);
 }

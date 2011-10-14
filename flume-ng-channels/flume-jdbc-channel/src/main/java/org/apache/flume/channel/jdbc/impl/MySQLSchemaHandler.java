@@ -1,5 +1,7 @@
 package org.apache.flume.channel.jdbc.impl;
 
+import java.sql.Connection;
+
 import javax.sql.DataSource;
 
 public class MySQLSchemaHandler implements SchemaHandler {
@@ -24,6 +26,12 @@ public class MySQLSchemaHandler implements SchemaHandler {
 
   @Override
   public void createSchemaObjects() {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void persistEvent(PersistableEvent pe, Connection connection) {
     // TODO Auto-generated method stub
 
   }

@@ -170,14 +170,15 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
   }
 
   @Override
-  public void persistEvent(String channelName, Event event) {
-    PersistableEvent persistableEvent = new PersistableEvent(event);
-    Transaction tx = null;
+  public void persistEvent(String channel, Event event) {
+    PersistableEvent persistableEvent = new PersistableEvent(channel, event);
+    JdbcTransactionImpl tx = null;
     try {
       tx = getTransaction();
       tx.begin();
 
       // Persist the persistableEvent
+      schemaHandler.persistEvent(persistableEvent, tx.getConnection());
 
       tx.commit();
     } catch (Exception ex) {
@@ -197,7 +198,7 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
   }
 
   @Override
-  public Transaction getTransaction() {
+  public JdbcTransactionImpl getTransaction() {
     return txFactory.get();
   }
 

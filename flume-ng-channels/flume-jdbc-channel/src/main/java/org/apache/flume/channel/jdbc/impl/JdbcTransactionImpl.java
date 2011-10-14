@@ -154,4 +154,11 @@ public class JdbcTransactionImpl implements Transaction {
       }
     }
   }
+
+  protected Connection getConnection() {
+    if (!active) {
+      throw new JdbcChannelException("Inactive transaction");
+    }
+    return connection;
+  }
 }
