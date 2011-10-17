@@ -19,6 +19,7 @@ import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.PollableSink;
+import org.apache.flume.Sink;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.source.avro.AvroFlumeEvent;
@@ -28,6 +29,69 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
+/**
+ * <p>
+ * A {@link Sink} implementation that can send events to an Avro server (such as
+ * Flume's <tt>AvroSource</tt>).
+ * </p>
+ * <p>
+ * This sink forms one half of Flume's tiered collection support. Events sent to
+ * this sink are turned into {@link AvroFlumeEvent}s and sent to the configured
+ * hostname / port pair using Avro's {@link NettyTransceiver}. The intent is
+ * that the destination is an instance of Flume's <tt>AvroSource</tt> which
+ * allows Flume to nodes to forward to other Flume nodes forming a tiered
+ * collection infrastructure. Of course, nothing prevents one from using this
+ * sink to speak to other custom built infrastructure that implements the same
+ * Avro protocol (specifically {@link AvroSourceProtocol}).
+ * </p>
+ * <p>
+ * Events are taken from the configured {@link Channel} in batches of the
+ * configured <tt>batch-size</tt>. The batch size has no theoretical limits
+ * although all events in the batch <b>must</b> fit in memory. Generally, larger
+ * batches are far more efficient, but introduce a slight delay (measured in
+ * millis) in delivery. The batch behavior is such that underruns (i.e. batches
+ * smaller than the configured batch size) are possible. This is a compromise
+ * made to maintain low latency of event delivery. If the channel returns a null
+ * event, meaning it is empty, the batch is immediately sent, regardless of
+ * size. Batch underruns are tracked in the metrics. Empty batches do not incur
+ * an RPC roundtrip.
+ * </p>
+ * <p>
+ * <b>Configuration options</b>
+ * </p>
+ * <table>
+ * <tr>
+ * <th>Parameter</th>
+ * <th>Description</th>
+ * <th>Unit / Type</th>
+ * <th>Default</th>
+ * </tr>
+ * <tr>
+ * <td><tt>hostname</tt></td>
+ * <td>The hostname to which events should be sent.</td>
+ * <td>Hostname or IP / String</td>
+ * <td>none (required)</td>
+ * </tr>
+ * <tr>
+ * <td><tt>port</tt></td>
+ * <td>The port to which events should be sent on <tt>hostname</tt>.</td>
+ * <td>TCP port / int</td>
+ * <td>none (required)</td>
+ * </tr>
+ * <tr>
+ * <td><tt>batch-size</tt></td>
+ * <td>The maximum number of events to send per RPC.</td>
+ * <td>events / int</td>
+ * <td>100</td>
+ * </tr>
+ * </table>
+ * <p>
+ * <b>Metrics</b>
+ * </p>
+ * <p>
+ * TODO
+ * </p>
+ */
 public class AvroSink extends AbstractSink implements PollableSink,
     Configurable {
 

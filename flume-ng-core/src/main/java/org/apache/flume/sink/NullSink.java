@@ -22,10 +22,29 @@ import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.PollableSink;
+import org.apache.flume.Sink;
 import org.apache.flume.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * <p>
+ * A {@link Sink} implementation that simply discards all events it receives. A
+ * <tt>/dev/null</tt> for Flume.
+ * </p>
+ * <p>
+ * <b>Configuration options</b>
+ * </p>
+ * <p>
+ * <i>This sink has no configuration parameters.</i>
+ * </p>
+ * <p>
+ * <b>Metrics</b>
+ * </p>
+ * <p>
+ * TODO
+ * </p>
+ */
 public class NullSink extends AbstractSink implements PollableSink {
 
   private static final Logger logger = LoggerFactory.getLogger(NullSink.class);

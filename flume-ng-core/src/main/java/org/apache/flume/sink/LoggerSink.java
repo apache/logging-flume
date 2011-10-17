@@ -21,10 +21,33 @@ import org.apache.flume.Channel;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.PollableSink;
+import org.apache.flume.Sink;
 import org.apache.flume.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * <p>
+ * A {@link Sink} implementation that logs all events received at the INFO level
+ * to the <tt>org.apache.flume.sink.LoggerSink</tt> logger.
+ * </p>
+ * <p>
+ * <b>WARNING:</b> Logging events can potentially introduce performance
+ * degradation.
+ * </p>
+ * <p>
+ * <b>Configuration options</b>
+ * </p>
+ * <p>
+ * <i>This sink has no configuration parameters.</i>
+ * </p>
+ * <p>
+ * <b>Metrics</b>
+ * </p>
+ * <p>
+ * TODO
+ * </p>
+ */
 public class LoggerSink extends AbstractSink implements PollableSink {
 
   private static final Logger logger = LoggerFactory
@@ -41,8 +64,11 @@ public class LoggerSink extends AbstractSink implements PollableSink {
       event = channel.take();
 
       if (event != null) {
-        logger.info("Event: " + event);
-        transaction.commit();
+        if (logger.isInfoEnabled()) {
+          logger.info("Event: " + event);
+          transaction.commit();
+        }
+
         return Status.READY;
       } else {
         transaction.rollback();
