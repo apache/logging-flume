@@ -30,7 +30,6 @@ import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.MemoryChannel;
-import org.apache.flume.channel.MultiOpMemChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.SimpleEvent;
 import org.apache.flume.lifecycle.LifecycleException;
@@ -146,12 +145,11 @@ public class TestHDFSEventSink extends TestCase {
     sink.setChannel(channel);
     sink.start();
 
-    Transaction txn = channel.getTransaction();
-
     Calendar eventDate = Calendar.getInstance();
 
     // push the event batches into channel
     for (i = 1; i < 4; i++) {
+      Transaction txn = channel.getTransaction();
       txn.begin();
       for (j = 1; j <= txnMax; j++) {
         Event event = new SimpleEvent();
@@ -166,6 +164,7 @@ public class TestHDFSEventSink extends TestCase {
         totalEvents++;
       }
       txn.commit();
+      txn.close();
 
       // execute sink to process the events
       sink.process();
@@ -235,7 +234,7 @@ public class TestHDFSEventSink extends TestCase {
 
     Configurables.configure(sink, context);
 
-    Channel channel = new MultiOpMemChannel();
+    Channel channel = new MemoryChannel();
     Configurables.configure(channel, context);
 
     sink.setChannel(channel);
@@ -335,12 +334,11 @@ public class TestHDFSEventSink extends TestCase {
     sink.setChannel(channel);
     sink.start();
 
-    Transaction txn = channel.getTransaction();
-
     Calendar eventDate = Calendar.getInstance();
 
     // push the event batches into channel
     for (int i = 1; i < 4; i++) {
+      Transaction txn = channel.getTransaction();
       txn.begin();
       for (int j = 1; j <= txnMax; j++) {
         Event event = new SimpleEvent();
@@ -354,6 +352,7 @@ public class TestHDFSEventSink extends TestCase {
         channel.put(event);
       }
       txn.commit();
+      txn.close();
 
       // execute sink to process the events
       sink.process();
@@ -414,7 +413,7 @@ public class TestHDFSEventSink extends TestCase {
 
     Configurables.configure(sink, context);
 
-    Channel channel = new MultiOpMemChannel();
+    Channel channel = new MemoryChannel();
     Configurables.configure(channel, context);
 
     sink.setChannel(channel);

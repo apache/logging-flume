@@ -9,7 +9,7 @@ import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
-import org.apache.flume.channel.MemoryChannel;
+import org.apache.flume.channel.PseudoTxnMemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.SimpleEvent;
 import org.apache.flume.lifecycle.LifecycleException;
@@ -65,7 +65,7 @@ public class TestRollingFileSink {
 
     Configurables.configure(sink, context);
 
-    Channel channel = new MemoryChannel();
+    Channel channel = new PseudoTxnMemoryChannel();
     Configurables.configure(channel, context);
 
     sink.setChannel(channel);

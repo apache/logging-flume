@@ -4,7 +4,7 @@ import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
-import org.apache.flume.channel.MemoryChannel;
+import org.apache.flume.channel.PseudoTxnMemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.lifecycle.LifecycleException;
@@ -27,7 +27,7 @@ public class TestLoggerSink {
   public void testAppend() throws InterruptedException, LifecycleException,
       EventDeliveryException {
 
-    Channel channel = new MemoryChannel();
+    Channel channel = new PseudoTxnMemoryChannel();
     Context context = new Context();
     Configurables.configure(channel, context);
     Configurables.configure(sink, context);

@@ -13,6 +13,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.PollableSink;
+import org.apache.flume.Transaction;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
@@ -83,9 +84,14 @@ public class TestAvroSink {
     Assert.assertTrue(LifecycleController.waitForOneOf(sink,
         LifecycleState.START_OR_ERROR, 5000));
 
+    Transaction transaction = channel.getTransaction();
+
+    transaction.begin();
     for (int i = 0; i < 10; i++) {
       channel.put(event);
     }
+    transaction.commit();
+    transaction.close();
 
     for (int i = 0; i < 5; i++) {
       PollableSink.Status status = sink.process();

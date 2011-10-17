@@ -10,6 +10,7 @@ import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.Transaction;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.lifecycle.LifecycleController;
@@ -120,11 +121,17 @@ public class TestAvroSource {
     Status status = client.append(avroEvent);
 
     Assert.assertEquals(Status.OK, status);
+ 
+    Transaction transaction = channel.getTransaction();
+    transaction.begin();
 
     Event event = channel.take();
     Assert.assertNotNull(event);
     Assert.assertEquals("Channel contained our event", "Hello avro",
         new String(event.getBody()));
+    transaction.commit();
+    transaction.close();
+
 
     logger.debug("Round trip event:{}", event);
 

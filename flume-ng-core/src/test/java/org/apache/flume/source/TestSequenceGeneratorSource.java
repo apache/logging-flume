@@ -5,7 +5,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.PollableSource;
-import org.apache.flume.channel.MemoryChannel;
+import org.apache.flume.channel.PseudoTxnMemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.junit.Assert;
@@ -25,7 +25,7 @@ public class TestSequenceGeneratorSource {
   public void testProcess() throws InterruptedException, LifecycleException,
       EventDeliveryException {
 
-    Channel channel = new MemoryChannel();
+    Channel channel = new PseudoTxnMemoryChannel();
     Context context = new Context();
 
     context.put("logicalNode.name", "test");
@@ -48,7 +48,7 @@ public class TestSequenceGeneratorSource {
   public void testLifecycle() throws InterruptedException,
       EventDeliveryException {
 
-    Channel channel = new MemoryChannel();
+    Channel channel = new PseudoTxnMemoryChannel();
     Context context = new Context();
 
     context.put("logicalNode.name", "test");

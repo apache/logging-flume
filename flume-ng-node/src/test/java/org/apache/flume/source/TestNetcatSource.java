@@ -14,6 +14,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.EventDrivenSource;
+import org.apache.flume.Transaction;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.lifecycle.LifecycleException;
@@ -78,6 +79,9 @@ public class TestNetcatSource {
 
     };
 
+    Transaction tx = source.getChannel().getTransaction();
+    tx.begin();
+
     for (int i = 0; i < 100; i++) {
       executor.submit(clientRequestRunnable);
 
@@ -87,6 +91,8 @@ public class TestNetcatSource {
       Assert.assertArrayEquals("Test message".getBytes(), event.getBody());
     }
 
+    tx.commit();
+    tx.close();
     executor.shutdown();
 
     while (!executor.isTerminated()) {

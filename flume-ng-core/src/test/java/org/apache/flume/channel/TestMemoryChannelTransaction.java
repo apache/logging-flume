@@ -16,7 +16,7 @@ public class TestMemoryChannelTransaction {
 
   @Before
   public void setUp() {
-    channel = new MultiOpMemChannel();
+    channel = new MemoryChannel();
   }
 
   @Test
