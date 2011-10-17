@@ -178,7 +178,7 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
       tx.begin();
 
       // Persist the persistableEvent
-      schemaHandler.persistEvent(persistableEvent, tx.getConnection());
+      schemaHandler.storeEvent(persistableEvent, tx.getConnection());
 
       tx.commit();
     } catch (Exception ex) {
@@ -193,8 +193,26 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
 
   @Override
   public Event removeEvent(String channelName) {
-    // TODO Auto-generated method stub
-    return null;
+    PersistableEvent result = null;
+    JdbcTransactionImpl tx = null;
+    try {
+      tx = getTransaction();
+      tx.begin();
+
+      // Retrieve the persistableEvent
+      result = schemaHandler.fetchAndDeleteEvent(
+          channelName, tx.getConnection());
+
+      tx.commit();
+    } catch (Exception ex) {
+      tx.rollback();
+      throw new JdbcChannelException("Failed to persist event", ex);
+    } finally {
+      if (tx != null) {
+        tx.close();
+      }
+    }
+    return result;
   }
 
   @Override

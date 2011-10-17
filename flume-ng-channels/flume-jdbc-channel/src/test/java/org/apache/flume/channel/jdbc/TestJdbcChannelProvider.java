@@ -23,11 +23,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.jdbc.impl.JdbcChannelProviderImpl;
+import org.apache.flume.channel.jdbc.impl.PersistableEvent;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -122,12 +123,37 @@ public class TestJdbcChannelProvider {
     m1.put(MockEventUtils.generateHeaderString(nameLimit + 2), "b");
     m1.put(MockEventUtils.generateHeaderString(nameLimit + 21), "c");
 
-    Event event = new MockEvent(s1, m1);
+    Event event1 = new MockEvent(s1, m1);
 
-    provider.persistEvent("test", event);
+    provider.persistEvent("test", event1);
+
+    Event event2 = provider.removeEvent("test");
+
+    assertEquals(event1, event2);
 
     provider.close();
     provider = null;
+  }
+
+  private void assertEquals(Event e1, Event e2) {
+    byte[] pl1 = e1.getBody();
+    byte[] pl2 = e2.getBody();
+
+    Assert.assertArrayEquals(pl1, pl2);
+    Map<String, String> h1 = e1.getHeaders();
+    Map<String, String> h2 = e2.getHeaders();
+    if (h1 == null || h1.size() == 0) {
+      Assert.assertTrue(h2 == null || h2.size() == 0);
+    } else {
+      Assert.assertTrue(h1.size() == h2.size());
+      for (String key : h1.keySet()) {
+        Assert.assertTrue(h2.containsKey(key));
+        String v1 = h1.get(key);
+        String v2 = h2.remove(key);
+        Assert.assertEquals(v1, v2);
+      }
+      Assert.assertTrue(h2.size() == 0);
+    }
   }
 
   @After

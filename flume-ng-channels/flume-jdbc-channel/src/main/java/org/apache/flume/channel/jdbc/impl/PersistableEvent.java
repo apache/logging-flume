@@ -25,8 +25,9 @@ import java.util.Map;
 
 import org.apache.flume.Event;
 import org.apache.flume.channel.jdbc.ConfigurationConstants;
+import org.apache.flume.channel.jdbc.JdbcChannelException;
 
-public class PersistableEvent {
+public class PersistableEvent implements Event {
 
   private long eventId;
   private final String channel;
@@ -59,30 +60,13 @@ public class PersistableEvent {
     }
   }
 
-  public byte[] getPayload() {
-    byte[] result = null;
-    if (spillPayload == null) {
-      result = Arrays.copyOf(basePayload, basePayload.length);
-    } else {
-      result = new byte[basePayload.length + spillPayload.length];
-      System.arraycopy(basePayload, 0, result, 0, basePayload.length);
-      System.arraycopy(spillPayload, 0, result,
-          basePayload.length, spillPayload.length);
-    }
-
-    return result;
-  }
-
-  public Map<String, String> getHeaders() {
-    Map<String, String> headerMap = null;
-    if (headers != null) {
-      headerMap =  new HashMap<String, String>();
-      for (HeaderEntry entry :  headers) {
-        headerMap.put(entry.getNameString(), entry.getValueString());
-      }
-    }
-
-    return headerMap;
+  private PersistableEvent(long eventId, String channel, byte[] basePayload,
+      byte[] spillPayload, List<HeaderEntry> headers) {
+    this.eventId = eventId;
+    this.channel = channel;
+    this.basePayload = basePayload;
+    this.spillPayload = spillPayload;
+    this.headers = headers;
   }
 
   public String getChannelName() {
@@ -116,6 +100,13 @@ public class PersistableEvent {
           ConfigurationConstants.HEADER_NAME_LENGTH_THRESHOLD);
       this.value = new SpillableString(value,
           ConfigurationConstants.HEADER_VALUE_LENGTH_THRESHOLD);
+    }
+
+    private HeaderEntry(long headerId, String baseName, String spillName,
+        String baseValue, String spillValue) {
+      this.headerId = headerId;
+      this.name = new SpillableString(baseName, spillName);
+      this.value = new SpillableString(baseValue, spillValue);
     }
 
     public String getNameString() {
@@ -171,6 +162,11 @@ public class PersistableEvent {
       }
     }
 
+    private SpillableString(String base, String spill) {
+      this.base = base;
+      this.spill = spill;
+    }
+
     public String getBase() {
       return base;
     }
@@ -190,4 +186,177 @@ public class PersistableEvent {
       return spill != null;
     }
   }
+
+  @Override
+  public void setHeaders(Map<String, String> headers) {
+    throw new UnsupportedOperationException("Cannot update headers of "
+        + "persistable event");
+  }
+
+  @Override
+  public byte[] getBody() {
+    byte[] result = null;
+    if (spillPayload == null) {
+      result = Arrays.copyOf(basePayload, basePayload.length);
+    } else {
+      result = new byte[basePayload.length + spillPayload.length];
+      System.arraycopy(basePayload, 0, result, 0, basePayload.length);
+      System.arraycopy(spillPayload, 0, result,
+          basePayload.length, spillPayload.length);
+    }
+
+    return result;
+  }
+
+  @Override
+  public void setBody(byte[] body) {
+    throw new UnsupportedOperationException("Cannot update payload of "
+        + "persistable event");
+  }
+
+  @Override
+  public Map<String, String> getHeaders() {
+    Map<String, String> headerMap = null;
+    if (headers != null) {
+      headerMap =  new HashMap<String, String>();
+      for (HeaderEntry entry :  headers) {
+        headerMap.put(entry.getNameString(), entry.getValueString());
+      }
+    }
+
+    return headerMap;
+  }
+
+  public static class Builder {
+
+    private long bEventId;
+    private String bChannelName;
+    private byte[] bBasePayload;
+    private byte[] bSpillPayload;
+    private Map<Long, HeaderPart> bHeaderParts;
+
+    public Builder(String channelName, long eventId) {
+      bChannelName = channelName;
+      bEventId = eventId;
+    }
+
+    public Builder setEventId(long eventId) {
+      bEventId = eventId;
+      return this;
+    }
+
+    public Builder setChannel(String channel) {
+      bChannelName = channel;
+      return this;
+    }
+
+    public Builder setBasePayload(byte[] basePayload) {
+      bBasePayload = basePayload;
+      return this;
+    }
+
+    public Builder setSpillPayload(byte[] spillPayload) {
+      bSpillPayload = spillPayload;
+      return this;
+    }
+
+    public Builder setHeader(long headerId, String baseName, String baseValue) {
+      if (bHeaderParts == null) {
+        bHeaderParts = new HashMap<Long, HeaderPart>();
+      }
+      HeaderPart hp = new HeaderPart(baseName, baseValue);
+      if (bHeaderParts.put(headerId, hp) != null) {
+        throw new JdbcChannelException("Duplicate header found: "
+            + "headerId: " + headerId + ", baseName: " + baseName + ", "
+            + "baseValue: " + baseValue);
+      }
+
+      return this;
+    }
+
+    public Builder setHeaderNameSpill(long headerId, String nameSpill) {
+      HeaderPart hp = bHeaderParts.get(headerId);
+      if (hp == null) {
+        throw new JdbcChannelException("Header not found for spill: "
+            + headerId);
+      }
+
+      hp.setSpillName(nameSpill);
+
+      return this;
+    }
+
+    public Builder setHeaderValueSpill(long headerId, String valueSpill) {
+      HeaderPart hp = bHeaderParts.get(headerId);
+      if (hp == null) {
+        throw new JdbcChannelException("Header not found for spill: "
+            + headerId);
+      }
+
+      hp.setSpillValue(valueSpill);
+
+      return this;
+    }
+
+    public PersistableEvent build() {
+      List<HeaderEntry> bHeaders = new ArrayList<HeaderEntry>();
+      for (long headerId : bHeaderParts.keySet()) {
+        HeaderPart part = bHeaderParts.get(headerId);
+        bHeaders.add(part.getEntry(headerId));
+      }
+
+      PersistableEvent pe = new PersistableEvent(bEventId, bChannelName,
+          bBasePayload, bSpillPayload, bHeaders);
+
+      bEventId = 0L;
+      bChannelName = null;
+      bBasePayload = null;
+      bSpillPayload = null;
+      bHeaderParts.clear();
+
+      return pe;
+    }
+  }
+
+  private static class HeaderPart {
+    private final String hBaseName;
+    private final String hBaseValue;
+    private String hSpillName;
+    private String hSpillValue;
+
+    HeaderPart(String baseName, String baseValue) {
+      hBaseName = baseName;
+      hBaseValue = baseValue;
+    }
+
+    String getBaseName() {
+      return hBaseName;
+    }
+
+    String getBaseValue() {
+      return hBaseValue;
+    }
+
+    String getSpillName() {
+      return hSpillName;
+    }
+
+    String getSpillValue() {
+      return hSpillValue;
+    }
+
+    void setSpillName(String spillName) {
+      hSpillName = spillName;
+    }
+
+    void setSpillValue(String spillValue) {
+      hSpillValue = spillValue;
+    }
+
+    HeaderEntry getEntry(long headerId) {
+      return new HeaderEntry(headerId, hBaseName,
+          hSpillName, hBaseValue, hSpillValue);
+    }
+  }
+
 }

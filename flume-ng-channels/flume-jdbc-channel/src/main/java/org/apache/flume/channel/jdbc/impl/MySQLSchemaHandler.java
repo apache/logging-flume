@@ -31,9 +31,16 @@ public class MySQLSchemaHandler implements SchemaHandler {
   }
 
   @Override
-  public void persistEvent(PersistableEvent pe, Connection connection) {
+  public void storeEvent(PersistableEvent pe, Connection connection) {
     // TODO Auto-generated method stub
 
+  }
+
+  @Override
+  public PersistableEvent fetchAndDeleteEvent(String channel,
+      Connection connection) {
+    // TODO Auto-generated method stub
+    return null;
   }
 
 }

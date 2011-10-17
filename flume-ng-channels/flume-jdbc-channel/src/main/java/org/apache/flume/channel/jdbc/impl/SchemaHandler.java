@@ -51,5 +51,17 @@ public interface SchemaHandler {
    * @param pe the event to persist
    * @param connection the connection to use
    */
-  public void persistEvent(PersistableEvent pe, Connection connection);
+  public void storeEvent(PersistableEvent pe, Connection connection);
+
+  /**
+   * Retrieves the next persistent event from the database. The connection that
+   * is passed into the handler has an ongoing transaction and therefore the
+   * SchemaHandler implementation must not close the connection.
+   *
+   * @param channel the channel name from which event will be retrieved
+   * @param connection the connection to use
+   * @return the next persistent event if available or null
+   */
+  public PersistableEvent fetchAndDeleteEvent(
+      String channel, Connection connection);
 }

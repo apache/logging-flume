@@ -19,20 +19,12 @@ package org.apache.flume.channel.jdbc;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
-import org.apache.flume.Event;
 import org.apache.flume.channel.jdbc.impl.PersistableEvent;
 import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TestPersistentEvent {
-  private static final Logger LOGGER =
-      LoggerFactory.getLogger(TestPersistentEvent.class);
-
-
 
   @Test
   public void testMarshalling() {
@@ -106,7 +98,7 @@ public class TestPersistentEvent {
   private void runTest(byte[] payload, Map<String, String> headers) {
     PersistableEvent pe = new PersistableEvent("test",
         new MockEvent(payload, headers));
-    Assert.assertArrayEquals(payload, pe.getPayload());
+    Assert.assertArrayEquals(payload, pe.getBody());
     Map<String, String> h = pe.getHeaders();
     if (h == null) {
       Assert.assertTrue(headers == null || headers.size() == 0);
