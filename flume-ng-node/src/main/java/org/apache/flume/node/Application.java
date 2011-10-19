@@ -5,6 +5,7 @@ import java.io.File;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
@@ -41,6 +42,7 @@ public class Application {
 
   private String[] args;
   private File configurationFile;
+  private String nodeName;
 
   private SourceFactory sourceFactory;
   private SinkFactory sinkFactory;
@@ -53,8 +55,10 @@ public class Application {
 
     try {
       application.loadPlugins();
-      application.parseOptions();
-      application.run();
+
+      if (application.parseOptions()) {
+        application.run();
+      }
     } catch (ParseException e) {
       logger.error(e.getMessage());
     } catch (Exception e) {
@@ -84,23 +88,36 @@ public class Application {
     sinkFactory.register("avro", AvroSink.class);
   }
 
-  public void parseOptions() throws ParseException {
+  public boolean parseOptions() throws ParseException {
     Options options = new Options();
 
-    Option option = new Option("n", "node", true, "creates a logical node");
-    option.setValueSeparator(',');
+    Option option = new Option("n", "name", true, "the name of this node");
     options.addOption(option);
 
     option = new Option("f", "conf-file", true, "specify a conf file");
     options.addOption(option);
 
-    CommandLineParser parser = new GnuParser();
+    option = new Option("h", "help", false, "display help text");
+    options.addOption(option);
 
+    CommandLineParser parser = new GnuParser();
     CommandLine commandLine = parser.parse(options, args);
 
     if (commandLine.hasOption('f')) {
       configurationFile = new File(commandLine.getOptionValue('f'));
     }
+
+    if (commandLine.hasOption('n')) {
+      nodeName = commandLine.getOptionValue('n');
+    }
+
+    if (commandLine.hasOption('h')) {
+      new HelpFormatter().printHelp("flume-ng node", options, true);
+
+      return false;
+    }
+
+    return true;
   }
 
   public void run() throws LifecycleException, InterruptedException,
@@ -116,11 +133,12 @@ public class Application {
 
     Preconditions.checkState(configurationFile != null,
         "Configuration file not specified");
+    Preconditions.checkState(nodeName != null, "Node name not specified");
 
     configurationProvider.setConfigurationAware(nodeManager);
     configurationProvider.setFile(configurationFile);
 
-    node.setName("node");
+    node.setName(nodeName);
     node.setNodeManager(nodeManager);
     node.setConfigurationProvider(configurationProvider);
 
@@ -135,32 +153,6 @@ public class Application {
 
     node.start();
     LifecycleController.waitForOneOf(node, LifecycleState.START_OR_ERROR);
-
-    /*
-     * if (node.getLifecycleState().equals(LifecycleState.START)) { for
-     * (NodeConfiguration nodeConf : nodeConfigs) { Source source =
-     * sourceFactory.create(nodeConf.getSourceDefinition()); Sink sink =
-     * sinkFactory.create(nodeConf.getSinkDefinition()); Channel channel = new
-     * MemoryChannel();
-     * 
-     * Configurables.configure(source, contexts.get(nodeConf.getName()));
-     * Configurables.configure(sink, contexts.get(nodeConf.getName()));
-     * 
-     * source.setChannel(channel); sink.setChannel(channel);
-     * 
-     * LogicalNode logicalNode = new LogicalNode();
-     * 
-     * logicalNode.setName(nodeConf.getName());
-     * 
-     * SourceRunner sourceRunner = SourceRunner.forSource(source); SinkRunner
-     * sinkRunner = SinkRunner.forSink(sink);
-     * 
-     * logicalNode.setSourceRunner(sourceRunner);
-     * logicalNode.setSinkRunner(sinkRunner);
-     * 
-     * nodeManager.add(logicalNode); } }
-     */
-
     LifecycleController.waitForOneOf(node, LifecycleState.STOP_OR_ERROR);
   }
 
