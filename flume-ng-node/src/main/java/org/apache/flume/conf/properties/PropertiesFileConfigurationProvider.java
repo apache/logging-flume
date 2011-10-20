@@ -126,7 +126,7 @@ import org.slf4j.LoggerFactory;
  * #
  * 
  * host1.sources = avroSource thriftSource
- * host1.channel = jdbcChannel
+ * host1.channels = jdbcChannel
  * host1.sinks = hdfsSink
  * 
  * # avroSource configuration
