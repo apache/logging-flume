@@ -81,6 +81,7 @@ public class MemoryChannel implements Channel, Configurable {
     private LinkedList<StampedEvent> undoTakeList;
     private LinkedList<StampedEvent> undoPutList;
     private TransactionState txnState;
+    private int refCount;
 
     public MemTransaction() {
       txnState = TransactionState.Closed;
@@ -93,6 +94,9 @@ public class MemoryChannel implements Channel, Configurable {
      *  set transaction state to Started
      */
     public void begin() {
+      if (++refCount > 1) {
+        return;
+      }
       undoTakeList = new LinkedList<StampedEvent>();
       undoPutList = new LinkedList<StampedEvent>();
       putStamp = 0;
@@ -109,6 +113,10 @@ public class MemoryChannel implements Channel, Configurable {
     public void commit() {
       Preconditions.checkArgument(txnState == TransactionState.Started,
           "transaction not started");
+      if (--refCount > 0) {
+        return;
+      }
+
       // if the txn put any events, then update the channel's stamp and
       // signal for availability of committed data in the queue
       if (putStamp != 0) {
@@ -134,6 +142,7 @@ public class MemoryChannel implements Channel, Configurable {
       undoPut(this);
       undoTake(this);
       txnState = TransactionState.RolledBack;
+      refCount = 0;
     }
 
     @Override
@@ -148,6 +157,10 @@ public class MemoryChannel implements Channel, Configurable {
       }
       txnState = TransactionState.Closed;
       forgetTransaction(this);
+    }
+
+    public TransactionState getState() {
+      return txnState;
     }
 
     protected int lastTakeStamp() {
@@ -215,10 +228,12 @@ public class MemoryChannel implements Channel, Configurable {
       capacity = Integer.parseInt(strCapacity);
     }
 
-    keepAlive = context.get("keep-alive", Integer.class);
+    String strKeepAlive = context.get("keep-alive", String.class);
 
-    if (keepAlive == null) {
+    if (strKeepAlive == null) {
       keepAlive = defaultKeepAlive;
+    } else {
+      keepAlive = Integer.parseInt(strKeepAlive);
     }
 
     queue = new LinkedBlockingDeque<StampedEvent>(capacity);
