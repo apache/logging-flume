@@ -54,6 +54,65 @@ public class TestDerbySchemaHandlerQueries {
             + "VARCHAR(32517), FOREIGN KEY (FLV_HEADER) REFERENCES "
             + "FLUME.FL_HEADER (FLH_ID))";
 
+  public static final String EXPECTED_COLUMN_LOOKUP_QUERY
+      = "SELECT COLUMNNAME from SYS.SYSCOLUMNS where REFERENCEID = "
+          + "(SELECT TABLEID FROM SYS.SYSTABLES WHERE TABLENAME = ? AND "
+          + "SCHEMAID = (SELECT SCHEMAID FROM SYS.SYSSCHEMAS WHERE "
+          + "SCHEMANAME = ? ))";
+
+  public static final String EXPECTED_STMT_INSERT_EVENT_BASE
+      = "INSERT INTO FLUME.FL_EVENT (FLE_PAYLOAD, FLE_CHANNEL, FLE_SPILL) "
+          + "VALUES ( ?, ?, ?)";
+
+  public static final String EXPECTED_STMT_INSERT_EVENT_SPILL
+      = "INSERT INTO FLUME.FL_PLSPILL (FLP_EVENT, FLP_SPILL) VALUES ( ?, ?)";
+
+  public static final String EXPECTED_STMT_INSERT_HEADER_BASE
+      = "INSERT INTO FLUME.FL_HEADER (FLH_EVENT, FLH_NAME, FLH_VALUE, "
+          + "FLH_NMSPILL, FLH_VLSPILL) VALUES ( ?, ?, ?, ?, ?)";
+
+
+  public static final String EXPECTED_STMT_INSERT_HEADER_NAME_SPILL
+      = "INSERT INTO FLUME.FL_NMSPILL (FLN_HEADER, FLN_SPILL) VALUES ( ?, ?)";
+
+  public static final String EXPECTED_STMT_INSERT_HEADER_VALUE_SPILL
+      = "INSERT INTO FLUME.FL_VLSPILL (FLV_HEADER, FLV_SPILL) VALUES ( ?, ?)";
+
+  public static final String EXPECTED_STMT_FETCH_PAYLOAD_BASE
+      = "SELECT FLE_ID, FLE_PAYLOAD, FLE_SPILL FROM FLUME.FL_EVENT WHERE "
+          + "FLE_ID = (SELECT MIN(FLE_ID) FROM FLUME.FL_EVENT WHERE "
+          + "FLE_CHANNEL = ?)";
+
+
+  public static final String EXPECTED_STMT_FETCH_PAYLOAD_SPILL
+      = "SELECT FLP_SPILL FROM FLUME.FL_PLSPILL WHERE FLP_EVENT = ?";
+
+  public static final String EXPECTED_STMT_FETCH_HEADER_BASE
+      = "SELECT FLH_ID, FLH_NAME, FLH_VALUE, FLH_NMSPILL, FLH_VLSPILL FROM "
+          + "FLUME.FL_HEADER WHERE FLH_EVENT = ?";
+
+  public static final String EXPECTED_STMT_FETCH_HEADER_NAME_SPILL
+      = "SELECT FLN_SPILL FROM FLUME.FL_NMSPILL WHERE FLN_HEADER = ?";
+
+  public static final String EXPECTED_STMT_FETCH_HEADER_VALUE_SPILL
+      = "SELECT FLV_SPILL FROM FLUME.FL_VLSPILL WHERE FLV_HEADER = ?";
+
+  public static final String EXPECTED_STMT_DELETE_HEADER_VALUE_SPILL
+      = "DELETE FROM FLUME.FL_VLSPILL WHERE FLV_HEADER = ?";
+
+  public static final String EXPECTED_STMT_DELETE_HEADER_NAME_SPILL
+      = "DELETE FROM FLUME.FL_NMSPILL WHERE FLN_HEADER = ?";
+
+  public static final String EXPECTED_STMT_DELETE_EVENT_SPILL
+      = "DELETE FROM FLUME.FL_PLSPILL WHERE FLP_EVENT = ?";
+
+  public static final String EXPECTED_STMT_DELETE_HEADER_BASE
+      = "DELETE FROM FLUME.FL_HEADER WHERE FLH_EVENT = ?";
+
+  public static final String EXPECTED_STMT_DELETE_EVENT_BASE
+      = "DELETE FROM FLUME.FL_EVENT WHERE FLE_ID = ?";
+
+
   @Test
   public void testCreateQueries() {
 
@@ -74,6 +133,55 @@ public class TestDerbySchemaHandlerQueries {
 
     Assert.assertEquals(DerbySchemaHandler.QUERY_CREATE_TABLE_FL_VLSPILL,
         EXPECTED_QUERY_CREATE_TABLE_FL_VLSPILL);
+
+
+    Assert.assertEquals(DerbySchemaHandler.COLUMN_LOOKUP_QUERY,
+        EXPECTED_COLUMN_LOOKUP_QUERY);
+
+    Assert.assertEquals(DerbySchemaHandler.STMT_INSERT_EVENT_BASE,
+        EXPECTED_STMT_INSERT_EVENT_BASE);
+
+    Assert.assertEquals(DerbySchemaHandler.STMT_INSERT_EVENT_SPILL,
+        EXPECTED_STMT_INSERT_EVENT_SPILL);
+
+    Assert.assertEquals(DerbySchemaHandler.STMT_INSERT_HEADER_BASE,
+        EXPECTED_STMT_INSERT_HEADER_BASE);
+
+    Assert.assertEquals(DerbySchemaHandler.STMT_INSERT_HEADER_NAME_SPILL,
+        EXPECTED_STMT_INSERT_HEADER_NAME_SPILL);
+
+    Assert.assertEquals(DerbySchemaHandler.STMT_INSERT_HEADER_VALUE_SPILL,
+        EXPECTED_STMT_INSERT_HEADER_VALUE_SPILL);
+
+    Assert.assertEquals(DerbySchemaHandler.STMT_FETCH_PAYLOAD_BASE,
+        EXPECTED_STMT_FETCH_PAYLOAD_BASE);
+
+    Assert.assertEquals(DerbySchemaHandler.STMT_FETCH_PAYLOAD_SPILL,
+        EXPECTED_STMT_FETCH_PAYLOAD_SPILL);
+
+    Assert.assertEquals(DerbySchemaHandler.STMT_FETCH_HEADER_BASE,
+        EXPECTED_STMT_FETCH_HEADER_BASE);
+
+    Assert.assertEquals(DerbySchemaHandler.STMT_FETCH_HEADER_NAME_SPILL,
+        EXPECTED_STMT_FETCH_HEADER_NAME_SPILL);
+
+    Assert.assertEquals(DerbySchemaHandler.STMT_FETCH_HEADER_VALUE_SPILL,
+        EXPECTED_STMT_FETCH_HEADER_VALUE_SPILL);
+
+    Assert.assertEquals(DerbySchemaHandler.STMT_DELETE_HEADER_VALUE_SPILL,
+        EXPECTED_STMT_DELETE_HEADER_VALUE_SPILL);
+
+    Assert.assertEquals(DerbySchemaHandler.STMT_DELETE_HEADER_NAME_SPILL,
+        EXPECTED_STMT_DELETE_HEADER_NAME_SPILL);
+
+    Assert.assertEquals(DerbySchemaHandler.STMT_DELETE_EVENT_SPILL,
+        EXPECTED_STMT_DELETE_EVENT_SPILL);
+
+    Assert.assertEquals(DerbySchemaHandler.STMT_DELETE_HEADER_BASE,
+        EXPECTED_STMT_DELETE_HEADER_BASE);
+
+    Assert.assertEquals(DerbySchemaHandler.STMT_DELETE_EVENT_BASE,
+        EXPECTED_STMT_DELETE_EVENT_BASE);
 
   }
 

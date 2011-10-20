@@ -302,11 +302,11 @@ public class DerbySchemaHandler implements SchemaHandler {
   @Override
   public boolean schemaExists() {
     Connection connection = null;
-    ResultSet rset = null;
+    Statement stmt = null;
     try {
       connection = dataSource.getConnection();
-      Statement stmt = connection.createStatement();
-      rset = stmt.executeQuery(QUREY_SYSCHEMA_FLUME);
+      stmt = connection.createStatement();
+      ResultSet  rset = stmt.executeQuery(QUREY_SYSCHEMA_FLUME);
       if (!rset.next()) {
         LOGGER.warn("Schema for FLUME does not exist");
         return false;
@@ -324,11 +324,11 @@ public class DerbySchemaHandler implements SchemaHandler {
       }
       throw new JdbcChannelException("Unable to query schema", ex);
     } finally {
-      if (rset != null) {
+      if (stmt != null) {
         try {
-          rset.close();
+          stmt.close();
         } catch (SQLException ex) {
-          LOGGER.error("Unable to close result set", ex);
+          LOGGER.error("Unable to close schema lookup stmt", ex);
         }
       }
       if (connection != null) {
@@ -547,7 +547,6 @@ public class DerbySchemaHandler implements SchemaHandler {
         List<HeaderEntry> headerWithNameSpill = new ArrayList<HeaderEntry>();
         List<HeaderEntry> headerWithValueSpill = new ArrayList<HeaderEntry>();
 
-
         baseHeaderStmt = connection.prepareStatement(STMT_INSERT_HEADER_BASE,
                                 Statement.RETURN_GENERATED_KEYS);
         Iterator<HeaderEntry> it = headers.iterator();
@@ -728,6 +727,10 @@ public class DerbySchemaHandler implements SchemaHandler {
 
         spillEventFetchStmt.setLong(1, eventId);
         ResultSet rsetSpillEvent = spillEventFetchStmt.executeQuery();
+        if (!rsetSpillEvent.next()) {
+          throw new JdbcChannelException("Payload spill expected but not "
+              + "found for event: " + eventId);
+        }
         Blob payloadSpillBlob = rsetSpillEvent.getBlob(1);
         payloadInputStream = payloadSpillBlob.getBinaryStream();
         ByteArrayOutputStream spillStream = new ByteArrayOutputStream();

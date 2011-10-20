@@ -25,10 +25,13 @@ public class MockEvent implements Event {
 
   private final byte[] payload;
   private final Map<String, String> headers;
+  private final String channel;
 
-  public MockEvent(byte[] payload, Map<String, String> headers) {
+  public MockEvent(byte[] payload, Map<String, String> headers, String channel)
+  {
     this.payload = payload;
     this.headers = headers;
+    this.channel = channel;
   }
 
   @Override
@@ -49,6 +52,10 @@ public class MockEvent implements Event {
   @Override
   public void setBody(byte[] body) {
 
+  }
+
+  public String getChannel() {
+    return channel;
   }
 
 }

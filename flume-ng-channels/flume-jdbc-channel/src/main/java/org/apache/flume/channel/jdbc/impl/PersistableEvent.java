@@ -300,9 +300,11 @@ public class PersistableEvent implements Event {
 
     public PersistableEvent build() {
       List<HeaderEntry> bHeaders = new ArrayList<HeaderEntry>();
-      for (long headerId : bHeaderParts.keySet()) {
-        HeaderPart part = bHeaderParts.get(headerId);
-        bHeaders.add(part.getEntry(headerId));
+      if (bHeaderParts != null) {
+        for (long headerId : bHeaderParts.keySet()) {
+          HeaderPart part = bHeaderParts.get(headerId);
+          bHeaders.add(part.getEntry(headerId));
+        }
       }
 
       PersistableEvent pe = new PersistableEvent(bEventId, bChannelName,
@@ -312,7 +314,7 @@ public class PersistableEvent implements Event {
       bChannelName = null;
       bBasePayload = null;
       bSpillPayload = null;
-      bHeaderParts.clear();
+      bHeaderParts = null;
 
       return pe;
     }

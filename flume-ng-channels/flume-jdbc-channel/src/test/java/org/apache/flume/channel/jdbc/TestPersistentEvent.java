@@ -97,7 +97,7 @@ public class TestPersistentEvent {
 
   private void runTest(byte[] payload, Map<String, String> headers) {
     PersistableEvent pe = new PersistableEvent("test",
-        new MockEvent(payload, headers));
+        new MockEvent(payload, headers, null));
     Assert.assertArrayEquals(payload, pe.getBody());
     Map<String, String> h = pe.getHeaders();
     if (h == null) {

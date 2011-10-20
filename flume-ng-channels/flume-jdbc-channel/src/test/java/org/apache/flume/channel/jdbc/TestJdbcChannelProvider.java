@@ -19,17 +19,20 @@ package org.apache.flume.channel.jdbc;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-
-import org.junit.Assert;
+import java.util.Set;
 
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.jdbc.impl.JdbcChannelProviderImpl;
-import org.apache.flume.channel.jdbc.impl.PersistableEvent;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -101,35 +104,50 @@ public class TestJdbcChannelProvider {
     provider = null;
   }
 
+  /**
+   * creaes 1000 events split over 5 channels, stores them
+   */
   @Test
   public void testPeristingEvents() {
     provider = new JdbcChannelProviderImpl();
     provider.initialize(derbyProps);
 
-    int nameLimit = ConfigurationConstants.HEADER_NAME_LENGTH_THRESHOLD;
-    int th = ConfigurationConstants.PAYLOAD_LENGTH_THRESHOLD;
+    Map<String, List<MockEvent>> eventMap =
+        new HashMap<String, List<MockEvent>>();
 
-    byte[] s1 = MockEventUtils.generatePayload(th - 1);
-    Map<String, String> m1 = new HashMap<String, String>();
-    m1.put(MockEventUtils.generateHeaderString(1), "one");
-    m1.put(MockEventUtils.generateHeaderString(2), "twotwo");
-    m1.put(MockEventUtils.generateHeaderString(3), "three");
-    m1.put(MockEventUtils.generateHeaderString(100), "ahundred");
-    m1.put(MockEventUtils.generateHeaderString(nameLimit - 21), "w");
-    m1.put(MockEventUtils.generateHeaderString(nameLimit - 2), "x");
-    m1.put(MockEventUtils.generateHeaderString(nameLimit - 1), "y");
-    m1.put(MockEventUtils.generateHeaderString(nameLimit), "z");
-    m1.put(MockEventUtils.generateHeaderString(nameLimit + 1), "a");
-    m1.put(MockEventUtils.generateHeaderString(nameLimit + 2), "b");
-    m1.put(MockEventUtils.generateHeaderString(nameLimit + 21), "c");
+    Set<MockEvent> events = new HashSet<MockEvent>();
+    for (int i = 1; i < 1001; i++) {
+      events.add(MockEventUtils.generateMockEvent(i, i, i, 61%i, 5));
+    }
 
-    Event event1 = new MockEvent(s1, m1);
+    Iterator<MockEvent> meIt = events.iterator();
+    while (meIt.hasNext()) {
+      MockEvent me = meIt.next();
+      String chName = me.getChannel();
+      List<MockEvent> eventList = eventMap.get(chName);
+      if (eventList == null) {
+        eventList = new ArrayList<MockEvent>();
+        eventMap.put(chName, eventList);
+      }
+      eventList.add(me);
+      provider.persistEvent(me.getChannel(), me);
+    }
 
-    provider.persistEvent("test", event1);
+    // Now retrieve the events and they should be in the persistence order
 
-    Event event2 = provider.removeEvent("test");
+    for (String chName : eventMap.keySet()) {
+      List<MockEvent> meList = eventMap.get(chName);
+      Iterator<MockEvent> it = meList.iterator();
+      while (it.hasNext()) {
+        MockEvent me = it.next();
+        Event event = provider.removeEvent(chName);
+        assertEquals(me, event);
+      }
 
-    assertEquals(event1, event2);
+      // Now the there should be no more events for this channel
+      Event nullEvent = provider.removeEvent(chName);
+      Assert.assertNull(nullEvent);
+    }
 
     provider.close();
     provider = null;
