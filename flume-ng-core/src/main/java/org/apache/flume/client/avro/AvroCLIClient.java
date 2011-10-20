@@ -110,9 +110,6 @@ public class AvroCLIClient {
       long lastCheck = System.currentTimeMillis();
       long sentBytes = 0;
 
-      logger.debug("Starting read. avroClient:{} tranceiver:{}", client,
-          transceiver);
-
       while ((line = reader.readLine()) != null) {
         // logger.debug("read:{}", line);
 
