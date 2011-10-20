@@ -52,7 +52,7 @@ public class TestAvroSource {
       try {
         Context context = new Context();
 
-        context.put("port", selectedPort = 41414 + i);
+        context.put("port", String.valueOf(selectedPort = 41414 + i));
         context.put("bind", "0.0.0.0");
 
         Configurables.configure(source, context);
@@ -88,7 +88,7 @@ public class TestAvroSource {
       try {
         Context context = new Context();
 
-        context.put("port", selectedPort = 41414 + i);
+        context.put("port", String.valueOf(selectedPort = 41414 + i));
         context.put("bind", "0.0.0.0");
 
         Configurables.configure(source, context);
@@ -121,7 +121,7 @@ public class TestAvroSource {
     Status status = client.append(avroEvent);
 
     Assert.assertEquals(Status.OK, status);
- 
+
     Transaction transaction = channel.getTransaction();
     transaction.begin();
 
@@ -131,7 +131,6 @@ public class TestAvroSource {
         new String(event.getBody()));
     transaction.commit();
     transaction.close();
-
 
     logger.debug("Round trip event:{}", event);
 

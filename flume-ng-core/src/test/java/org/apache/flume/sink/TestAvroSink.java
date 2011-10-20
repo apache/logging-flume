@@ -46,8 +46,8 @@ public class TestAvroSink {
     Context context = new Context();
 
     context.put("hostname", "localhost");
-    context.put("port", 41414);
-    context.put("batch-size", 2);
+    context.put("port", "41414");
+    context.put("batch-size", "2");
 
     sink.setChannel(channel);
 

@@ -22,8 +22,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Calendar;
 
-import junit.framework.Assert;
-
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -33,7 +31,6 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.SimpleEvent;
 import org.apache.flume.lifecycle.LifecycleException;
-import org.apache.flume.sink.hdfs.HDFSEventSink;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
@@ -43,20 +40,19 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.SequenceFile;
-import org.apache.flume.sink.hdfs.HDFSBadWriterFactory;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import junit.framework.TestCase;
-import junit.framework.TestResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TestHDFSEventSink extends TestCase {
+public class TestHDFSEventSink {
 
   private HDFSEventSink sink;
   private String testPath;
-  private static final Logger LOG = LoggerFactory.getLogger(HDFSEventSink.class);
+  private static final Logger LOG = LoggerFactory
+      .getLogger(HDFSEventSink.class);
 
   private void dirCleanup() {
     Configuration conf = new Configuration();
@@ -78,8 +74,9 @@ public class TestHDFSEventSink extends TestCase {
      * Hadoop config points at file:/// rather than hdfs://. We need to find a
      * better way of testing HDFS related functionality.
      */
-    testPath = "file:///tmp/fluem-test." + Calendar.getInstance().getTimeInMillis() 
-        + "." + Thread.currentThread().getId();
+    testPath = "file:///tmp/fluem-test."
+        + Calendar.getInstance().getTimeInMillis() + "."
+        + Thread.currentThread().getId();
 
     sink = new HDFSEventSink();
     dirCleanup();
@@ -87,7 +84,7 @@ public class TestHDFSEventSink extends TestCase {
 
   @After
   public void tearDown() {
-    if( System.getenv("hdfs_keepFiles") == null)
+    if (System.getenv("hdfs_keepFiles") == null)
       dirCleanup();
   }
 
@@ -103,6 +100,8 @@ public class TestHDFSEventSink extends TestCase {
      */
     Configurables.configure(sink, context);
 
+    sink.setChannel(new MemoryChannel());
+
     sink.start();
     sink.stop();
   }
@@ -117,7 +116,7 @@ public class TestHDFSEventSink extends TestCase {
     final String fileName = "FlumeData";
     String newPath = testPath + "/singleTextBucket";
     int totalEvents = 0;
-    int i=1,j=1;
+    int i = 1, j = 1;
 
     // clear the test directory
     Configuration conf = new Configuration();
@@ -128,13 +127,13 @@ public class TestHDFSEventSink extends TestCase {
 
     Context context = new Context();
 
-//    context.put("hdfs.path", testPath + "/%Y-%m-%d/%H");
+    // context.put("hdfs.path", testPath + "/%Y-%m-%d/%H");
     context.put("hdfs.path", newPath);
     context.put("hdfs.filePrefix", fileName);
     context.put("hdfs.txnEventMax", String.valueOf(txnMax));
     context.put("hdfs.rollCount", String.valueOf(rollCount));
     context.put("hdfs.batchSize", String.valueOf(batchSize));
-    context.put("hdfs.writeFormat","Text");
+    context.put("hdfs.writeFormat", "Text");
     context.put("hdfs.fileType", "DataStream");
 
     Configurables.configure(sink, context);
@@ -178,35 +177,35 @@ public class TestHDFSEventSink extends TestCase {
 
     // check that the roll happened correctly for the given data
     // Note that we'll end up with one last file with only header
-    Assert.assertEquals((totalEvents/rollCount) + 1, fList.length);
+    Assert.assertEquals((totalEvents / rollCount) + 1, fList.length);
 
     try {
       i = j = 1;
       for (int cnt = 0; cnt < fList.length - 1; cnt++) {
-        Path filePath = new Path(newPath + "/" + fileName +"." + cnt);
+        Path filePath = new Path(newPath + "/" + fileName + "." + cnt);
         FSDataInputStream input = fs.open(filePath);
         BufferedReader d = new BufferedReader(new InputStreamReader(input));
         String line;
 
-        while ((line =  d.readLine()) != null) {
+        while ((line = d.readLine()) != null) {
           Assert.assertEquals(line, ("Test." + i + "." + j));
-          if ( ++j > txnMax) {
+          if (++j > txnMax) {
             j = 1;
             i++;
           }
         }
-        input.close(); 
-       }
+        input.close();
+      }
     } catch (IOException ioe) {
       System.err.println("IOException during operation: " + ioe.toString());
-      return; 
-    } 
-    Assert.assertEquals(i, 4);    
+      return;
+    }
+    Assert.assertEquals(i, 4);
   }
 
   @Test
-  public void testSimpleAppend() throws InterruptedException, LifecycleException,
-      EventDeliveryException, IOException {
+  public void testSimpleAppend() throws InterruptedException,
+      LifecycleException, EventDeliveryException, IOException {
 
     final long txnMax = 25;
     final String fileName = "FlumeData";
@@ -215,7 +214,7 @@ public class TestHDFSEventSink extends TestCase {
     final int numBatches = 4;
     String newPath = testPath + "/singleBucket";
     int totalEvents = 0;
-    int i=1,j=1;
+    int i = 1, j = 1;
 
     // clear the test directory
     Configuration conf = new Configuration();
@@ -255,7 +254,7 @@ public class TestHDFSEventSink extends TestCase {
 
         event.setBody(("Test." + i + "." + j).getBytes());
         channel.put(event);
-        totalEvents ++;
+        totalEvents++;
       }
       txn.commit();
       txn.close();
@@ -266,40 +265,39 @@ public class TestHDFSEventSink extends TestCase {
 
     sink.stop();
 
-
     // loop through all the files generated and check their contains
     FileStatus[] dirStat = fs.listStatus(dirPath);
     Path fList[] = FileUtil.stat2Paths(dirStat);
 
     // check that the roll happened correctly for the given data
     // Note that we'll end up with one last file with only header
-    Assert.assertEquals((totalEvents/rollCount) + 1, fList.length);
+    Assert.assertEquals((totalEvents / rollCount) + 1, fList.length);
 
     try {
       i = j = 1;
       for (int cnt = 0; cnt < fList.length - 1; cnt++) {
-        Path filePath = new Path(newPath + "/" + fileName +"." + cnt);
+        Path filePath = new Path(newPath + "/" + fileName + "." + cnt);
         SequenceFile.Reader reader = new SequenceFile.Reader(fs, filePath, conf);
-        LongWritable key = new LongWritable(); 
+        LongWritable key = new LongWritable();
         BytesWritable value = new BytesWritable();
         BytesWritable expValue;
 
         while (reader.next(key, value)) {
-          expValue =  new BytesWritable(("Test." + i + "." + j).getBytes());
+          expValue = new BytesWritable(("Test." + i + "." + j).getBytes());
           Assert.assertEquals(expValue, value);
-          if ( ++j > txnMax) {
+          if (++j > txnMax) {
             j = 1;
             i++;
           }
         }
-        reader.close(); 
-       } 
+        reader.close();
+      }
     } catch (IOException ioe) {
       System.err.println("IOException during operation: " + ioe.toString());
-      System.exit(1); 
-    } 
-    Assert.assertEquals(i, 4);    
-    
+      System.exit(1);
+    }
+    Assert.assertEquals(i, 4);
+
   }
 
   @Test
@@ -377,11 +375,10 @@ public class TestHDFSEventSink extends TestCase {
      */
   }
 
-
   // inject fault and make sure that the txn is rolled back and retried
   @Test
-  public void testBadSimpleAppend() throws InterruptedException, LifecycleException,
-      EventDeliveryException, IOException {
+  public void testBadSimpleAppend() throws InterruptedException,
+      LifecycleException, EventDeliveryException, IOException {
 
     final long txnMax = 25;
     final String fileName = "FlumeData";
@@ -390,7 +387,7 @@ public class TestHDFSEventSink extends TestCase {
     final int numBatches = 4;
     String newPath = testPath + "/singleBucket";
     int totalEvents = 0;
-    int i=1,j=1;
+    int i = 1, j = 1;
 
     HDFSBadWriterFactory badWriterFactory = new HDFSBadWriterFactory();
     sink = new HDFSEventSink(badWriterFactory);
@@ -438,7 +435,7 @@ public class TestHDFSEventSink extends TestCase {
           event.getHeaders().put("fault-once", "");
         }
         channel.put(event);
-        totalEvents ++;
+        totalEvents++;
       }
       txn.commit();
       txn.close();

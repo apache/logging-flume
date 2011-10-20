@@ -9,6 +9,7 @@ import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
+import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.PseudoTxnMemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.SimpleEvent;
@@ -33,6 +34,8 @@ public class TestRollingFileSink {
         + Thread.currentThread().getId());
 
     sink = new RollingFileSink();
+
+    sink.setChannel(new MemoryChannel());
 
     tmpDir.mkdirs();
   }

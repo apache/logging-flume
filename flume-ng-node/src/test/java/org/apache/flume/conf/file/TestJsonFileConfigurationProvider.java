@@ -53,6 +53,7 @@ public class TestJsonFileConfigurationProvider {
 
     provider = new JsonFileConfigurationProvider();
 
+    provider.setNodeName("localhost");
     provider.setChannelFactory(channelFactory);
     provider.setSourceFactory(sourceFactory);
     provider.setSinkFactory(sinkFactory);

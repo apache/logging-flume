@@ -1,14 +1,19 @@
 package org.apache.flume.node;
 
+import org.apache.flume.Channel;
+import org.apache.flume.Context;
+import org.apache.flume.Sink;
+import org.apache.flume.SinkRunner;
+import org.apache.flume.Source;
+import org.apache.flume.SourceRunner;
 import org.apache.flume.channel.MemoryChannel;
+import org.apache.flume.conf.Configurables;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.node.nodemanager.AbstractLogicalNodeManager;
 import org.apache.flume.sink.NullSink;
-import org.apache.flume.sink.PollableSinkRunner;
-import org.apache.flume.source.PollableSourceRunner;
 import org.apache.flume.source.SequenceGeneratorSource;
 import org.junit.Assert;
 import org.junit.Before;
@@ -116,14 +121,17 @@ public class TestAbstractLogicalNodeManager {
   @Test
   public void testLifecycle() throws LifecycleException, InterruptedException {
 
-    PollableSourceRunner sourceRunner = new PollableSourceRunner();
-    sourceRunner.setSource(new SequenceGeneratorSource());
+    Channel channel = new MemoryChannel();
+    Configurables.configure(channel, new Context());
 
-    PollableSinkRunner sinkRunner = new PollableSinkRunner();
-    sinkRunner.setSink(new NullSink());
+    Source generatorSource = new SequenceGeneratorSource();
+    generatorSource.setChannel(channel);
 
-    nodeManager.add(sourceRunner);
-    nodeManager.add(sinkRunner);
+    Sink nullSink = new NullSink();
+    nullSink.setChannel(channel);
+
+    nodeManager.add(SourceRunner.forSource(generatorSource));
+    nodeManager.add(SinkRunner.forSink(nullSink));
 
     nodeManager.start();
     boolean reached = LifecycleController.waitForOneOf(nodeManager,
@@ -144,17 +152,17 @@ public class TestAbstractLogicalNodeManager {
   public void testRapidLifecycleFlapping() throws LifecycleException,
       InterruptedException {
 
-    SequenceGeneratorSource source = new SequenceGeneratorSource();
-    source.setChannel(new MemoryChannel());
+    Channel channel = new MemoryChannel();
+    Configurables.configure(channel, new Context());
 
-    PollableSourceRunner sourceRunner = new PollableSourceRunner();
-    sourceRunner.setSource(source);
+    Source source = new SequenceGeneratorSource();
+    source.setChannel(channel);
 
-    PollableSinkRunner sinkRunner = new PollableSinkRunner();
-    sinkRunner.setSink(new NullSink());
+    Sink sink = new NullSink();
+    sink.setChannel(channel);
 
-    nodeManager.add(sourceRunner);
-    nodeManager.add(sinkRunner);
+    nodeManager.add(SourceRunner.forSource(source));
+    nodeManager.add(SinkRunner.forSink(sink));
 
     for (int i = 0; i < 10; i++) {
       nodeManager.start();

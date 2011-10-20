@@ -33,7 +33,7 @@ public class TestNetcatSource {
     source = new NetcatSource();
 
     Context context = new Context();
-    context.put("capacity", 50);
+    context.put("capacity", "50");
 
     Configurables.configure(channel, context);
 
@@ -49,7 +49,7 @@ public class TestNetcatSource {
 
     /* FIXME: Use a random port for testing. */
     context.put("name", "test");
-    context.put("port", 41414);
+    context.put("port", "41414");
 
     Configurables.configure(source, context);
 

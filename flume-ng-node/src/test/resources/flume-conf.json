@@ -31,12 +31,12 @@
       {
         "name": "ch1",
         "type": "memory",
-        "capacity": 100
+        "capacity": "100"
       },
       {
         "name": "ch2",
         "type": "memory",
-        "capacity": 10
+        "capacity": "10"
       }
     ]
 
@@ -48,7 +48,7 @@
       {
         "name": "netcat 1",
         "type": "netcat",
-        "port": 41414,
+        "port": "41414",
         "channel": "ch1"
       }
     ],
