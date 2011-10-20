@@ -17,6 +17,7 @@ import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.flume.source.avro.AvroFlumeEvent;
@@ -40,8 +41,9 @@ public class AvroCLIClient {
     AvroCLIClient client = new AvroCLIClient();
 
     try {
-      client.parseCommandLine(args);
-      client.run();
+      if (client.parseCommandLine(args)) {
+        client.run();
+      }
     } catch (ParseException e) {
       logger.error("Unable to parse command line options - {}", e.getMessage());
     } catch (IOException e) {
@@ -52,15 +54,22 @@ public class AvroCLIClient {
     logger.debug("Exiting");
   }
 
-  private void parseCommandLine(String[] args) throws ParseException {
+  private boolean parseCommandLine(String[] args) throws ParseException {
     Options options = new Options();
 
     options.addOption("p", "port", true, "port of the avro source")
         .addOption("H", "host", true, "hostname of the avro source")
-        .addOption("F", "filename", true, "file to stream to avro source");
+        .addOption("F", "filename", true, "file to stream to avro source")
+        .addOption("h", "help", false, "display help text");
 
     CommandLineParser parser = new GnuParser();
     CommandLine commandLine = parser.parse(options, args);
+
+    if (commandLine.hasOption('h')) {
+      new HelpFormatter().printHelp("flume-ng avro-client", options, true);
+
+      return false;
+    }
 
     if (!commandLine.hasOption("port")) {
       throw new ParseException(
@@ -76,31 +85,67 @@ public class AvroCLIClient {
 
     hostname = commandLine.getOptionValue("host");
     fileName = commandLine.getOptionValue("filename");
+
+    return true;
   }
 
   private void run() throws IOException {
 
-    Transceiver transceiver = new NettyTransceiver(new InetSocketAddress(
-        hostname, port));
-    AvroSourceProtocol client = SpecificRequestor.getClient(
-        AvroSourceProtocol.class, transceiver);
+    Transceiver transceiver = null;
     BufferedReader reader = null;
-    List<AvroFlumeEvent> eventBuffer = new ArrayList<AvroFlumeEvent>();
 
-    if (fileName != null) {
-      reader = new BufferedReader(new FileReader(new File(fileName)));
-    } else {
-      reader = new BufferedReader(new InputStreamReader(System.in));
-    }
+    try {
+      transceiver = new NettyTransceiver(new InetSocketAddress(hostname, port));
+      AvroSourceProtocol client = SpecificRequestor.getClient(
+          AvroSourceProtocol.class, transceiver);
+      List<AvroFlumeEvent> eventBuffer = new ArrayList<AvroFlumeEvent>();
 
-    String line = null;
-    long lastCheck = System.currentTimeMillis();
-    long sentBytes = 0;
+      if (fileName != null) {
+        reader = new BufferedReader(new FileReader(new File(fileName)));
+      } else {
+        reader = new BufferedReader(new InputStreamReader(System.in));
+      }
 
-    while ((line = reader.readLine()) != null) {
-      // logger.debug("read:{}", line);
+      String line = null;
+      long lastCheck = System.currentTimeMillis();
+      long sentBytes = 0;
 
-      if (eventBuffer.size() >= 1000) {
+      logger.debug("Starting read. avroClient:{} tranceiver:{}", client,
+          transceiver);
+
+      while ((line = reader.readLine()) != null) {
+        // logger.debug("read:{}", line);
+
+        if (eventBuffer.size() >= 1000) {
+          Status status = client.appendBatch(eventBuffer);
+
+          if (!status.equals(Status.OK)) {
+            logger.error("Unable to send batch size:{} status:{}",
+                eventBuffer.size(), status);
+          }
+
+          eventBuffer.clear();
+        }
+
+        AvroFlumeEvent avroEvent = new AvroFlumeEvent();
+
+        avroEvent.headers = new HashMap<CharSequence, CharSequence>();
+        avroEvent.body = ByteBuffer.wrap(line.getBytes());
+
+        eventBuffer.add(avroEvent);
+
+        sentBytes += avroEvent.body.capacity();
+        sent++;
+
+        long now = System.currentTimeMillis();
+
+        if (now >= lastCheck + 5000) {
+          logger.debug("Packed {} bytes, {} events", sentBytes, sent);
+          lastCheck = now;
+        }
+      }
+
+      if (eventBuffer.size() > 0) {
         Status status = client.appendBatch(eventBuffer);
 
         if (!status.equals(Status.OK)) {
@@ -111,38 +156,17 @@ public class AvroCLIClient {
         eventBuffer.clear();
       }
 
-      AvroFlumeEvent avroEvent = new AvroFlumeEvent();
-
-      avroEvent.headers = new HashMap<CharSequence, CharSequence>();
-      avroEvent.body = ByteBuffer.wrap(line.getBytes());
-
-      eventBuffer.add(avroEvent);
-
-      sentBytes += avroEvent.body.capacity();
-      sent++;
-
-      long now = System.currentTimeMillis();
-
-      if (now >= lastCheck + 5000) {
-        logger.debug("Packed {} bytes, {} events", sentBytes, sent);
-        lastCheck = now;
-      }
-    }
-
-    if (eventBuffer.size() > 0) {
-      Status status = client.appendBatch(eventBuffer);
-
-      if (!status.equals(Status.OK)) {
-        logger.error("Unable to send batch size:{} status:{}",
-            eventBuffer.size(), status);
+      logger.debug("Finished");
+    } finally {
+      if (reader != null) {
+        logger.debug("Closing reader");
+        reader.close();
       }
 
-      eventBuffer.clear();
+      if (transceiver != null) {
+        logger.debug("Closing tranceiver");
+        transceiver.close();
+      }
     }
-
-    logger.debug("Finished");
-
-    reader.close();
-    transceiver.close();
   }
 }
