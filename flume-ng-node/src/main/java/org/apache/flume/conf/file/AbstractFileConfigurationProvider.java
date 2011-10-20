@@ -35,8 +35,8 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-public abstract class AbstractFileConfigurationProvider
-      implements ConfigurationProvider {
+public abstract class AbstractFileConfigurationProvider implements
+    ConfigurationProvider {
 
   private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -44,6 +44,7 @@ public abstract class AbstractFileConfigurationProvider
   private ChannelFactory channelFactory;
   private SourceFactory sourceFactory;
   private SinkFactory sinkFactory;
+  private String nodeName;
   private NodeConfigurationAware configurationAware;
 
   private LifecycleState lifecycleState;
@@ -58,7 +59,7 @@ public abstract class AbstractFileConfigurationProvider
   @Override
   public String toString() {
     return "{ file:" + file + " counterGroup:" + counterGroup + "  provider:"
-            + getClass().getCanonicalName() + " }";
+        + getClass().getCanonicalName() + " nodeName:" + nodeName + " }";
   }
 
   @Override
@@ -111,6 +112,15 @@ public abstract class AbstractFileConfigurationProvider
 
   // Synchronized wrapper to call the load function
   private synchronized void doLoad() {
+    Preconditions
+        .checkState(nodeName != null,
+            "No node name specified - Unable to determine what part of the config to load");
+    Preconditions.checkState(channelFactory != null,
+        "No channel factory configured");
+    Preconditions.checkState(sourceFactory != null,
+        "No source factory configured");
+    Preconditions.checkState(sinkFactory != null, "No sink factory configured");
+
     load();
   }
 
@@ -157,6 +167,14 @@ public abstract class AbstractFileConfigurationProvider
 
   public void setConfigurationAware(NodeConfigurationAware configurationAware) {
     this.configurationAware = configurationAware;
+  }
+
+  public String getNodeName() {
+    return nodeName;
+  }
+
+  public void setNodeName(String nodeName) {
+    this.nodeName = nodeName;
   }
 
   public class FileWatcherRunnable implements Runnable {

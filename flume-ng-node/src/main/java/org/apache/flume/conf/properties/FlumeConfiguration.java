@@ -17,6 +17,7 @@
  */
 package org.apache.flume.conf.properties;
 
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,20 +36,20 @@ import org.slf4j.LoggerFactory;
  * configuration namespace required by the PropertiesFileConfgurationProvider.
  * This class is instantiated with a properties object which is parsed to
  * construct the hierarchy in memory. Once the entire set of properties have
- * been parsed and populated, a validation routine is run that identifies
- * and removes invalid components.
+ * been parsed and populated, a validation routine is run that identifies and
+ * removes invalid components.
  * </p>
- *
+ * 
  * @see org.apache.flume.conf.properties.PropertiesFileConfigurationProvider
- *
+ * 
  */
 public class FlumeConfiguration {
 
-  private static final Logger LOGGER =
-      LoggerFactory.getLogger(FlumeConfiguration.class);
+  private static final Logger logger = LoggerFactory
+      .getLogger(FlumeConfiguration.class);
 
-  private static final String NEWLINE =
-      System.getProperty("line.separator", "\n");
+  private static final String NEWLINE = System.getProperty("line.separator",
+      "\n");
   private static final String INDENTSTEP = "  ";
 
   private static final String SOURCES = "sources";
@@ -76,13 +77,13 @@ public class FlumeConfiguration {
 
     // Construct the in-memory component hierarchy
     Enumeration<?> propertyNames = properties.propertyNames();
+
     while (propertyNames.hasMoreElements()) {
       String name = (String) propertyNames.nextElement();
       String value = properties.getProperty(name);
 
       if (!addRawProperty(name, value)) {
-        LOGGER.warn("Configuration property ignored: "
-            + name + " = " + value);
+        logger.warn("Configuration property ignored: " + name + " = " + value);
       }
     }
 
@@ -90,19 +91,26 @@ public class FlumeConfiguration {
     validateConfiguration();
   }
 
+  public AgentConfiguration getConfigurationFor(String hostname) {
+    return agentConfigMap.get(hostname);
+  }
+
   private void validateConfiguration() {
     Iterator<String> it = agentConfigMap.keySet().iterator();
+
     while (it.hasNext()) {
       String agentName = it.next();
       AgentConfiguration aconf = agentConfigMap.get(agentName);
+
       if (!aconf.isValid()) {
-        LOGGER.warn("Agent configuration invalid for agent '"
-                  + agentName + "'. It will be removed.");
+        logger.warn("Agent configuration invalid for agent '" + agentName
+            + "'. It will be removed.");
+
         it.remove();
       }
     }
 
-    LOGGER.info("Post-validation flume configuration contains configuation "
+    logger.info("Post-validation flume configuration contains configuation "
         + " for agents: " + agentConfigMap.keySet());
   }
 
@@ -135,7 +143,7 @@ public class FlumeConfiguration {
       return false;
     }
 
-    String configKey = name.substring(index+1);
+    String configKey = name.substring(index + 1);
 
     // Configuration key must be specified for every property
     if (configKey.length() == 0) {
@@ -143,16 +151,16 @@ public class FlumeConfiguration {
     }
 
     AgentConfiguration aconf = agentConfigMap.get(agentName);
+
     if (aconf == null) {
       aconf = new AgentConfiguration(agentName);
       agentConfigMap.put(agentName, aconf);
     }
+
     // Each configuration key must begin with one of the three prefixes:
     // sources, sinks, or channels.
-
     return aconf.addProperty(configKey, value);
   }
-
 
   public static class AgentConfiguration {
 
@@ -165,12 +173,24 @@ public class FlumeConfiguration {
     private final Map<String, ComponentConfiguration> sinkConfigMap;
     private final Map<String, ComponentConfiguration> channelConfigMap;
 
-
     private AgentConfiguration(String agentName) {
       this.agentName = agentName;
+
       sourceConfigMap = new HashMap<String, ComponentConfiguration>();
       sinkConfigMap = new HashMap<String, ComponentConfiguration>();
       channelConfigMap = new HashMap<String, ComponentConfiguration>();
+    }
+
+    public Collection<ComponentConfiguration> getChannels() {
+      return channelConfigMap.values();
+    }
+
+    public Collection<ComponentConfiguration> getSources() {
+      return sourceConfigMap.values();
+    }
+
+    public Collection<ComponentConfiguration> getSinks() {
+      return sinkConfigMap.values();
     }
 
     /**
@@ -185,21 +205,23 @@ public class FlumeConfiguration {
      * components are not available, the configuration itself will be considered
      * invalid.
      * </p>
+     * 
      * @return true if the configuration is valid, false otherwise
      */
     private boolean isValid() {
-      LOGGER.debug("Starting validation of configuration for agent: "
+      logger.debug("Starting validation of configuration for agent: "
           + agentName + ", initial-configuration: " + this);
 
       // Make sure that at least one channel is specified
       if (channels == null || channels.trim().length() == 0) {
-        LOGGER.warn("Agent configuration for '" + agentName
+        logger.warn("Agent configuration for '" + agentName
             + "' does not contain any channels. Marking it as invalid.");
         return false;
       }
 
       Set<String> channelSet = new HashSet<String>();
       StringTokenizer channelTok = new StringTokenizer(channels, " \t");
+
       while (channelTok.hasMoreTokens()) {
         channelSet.add(channelTok.nextToken());
       }
@@ -207,7 +229,7 @@ public class FlumeConfiguration {
       validateComponent(channelSet, channelConfigMap, CLASS_CHANNEL, ATTR_TYPE);
 
       if (channelSet.size() == 0) {
-        LOGGER.warn("Agent configuration for '" + agentName
+        logger.warn("Agent configuration for '" + agentName
             + "' does not contain any valid channels. Marking it as invalid.");
 
         return false;
@@ -219,25 +241,30 @@ public class FlumeConfiguration {
 
       if (sources != null && sources.trim().length() > 0) {
         StringTokenizer sourceTok = new StringTokenizer(sources, " \t");
+
         while (sourceTok.hasMoreTokens()) {
           sourceSet.add(sourceTok.nextToken());
         }
 
         // Filter out any sources that have invalid channels
         Iterator<String> srcIt = sourceConfigMap.keySet().iterator();
+
         while (srcIt.hasNext()) {
           String nextSource = srcIt.next();
           ComponentConfiguration sourceConfig = sourceConfigMap.get(nextSource);
           Set<String> srcChannelSet = new HashSet<String>();
+
           if (sourceConfig.hasAttribute(ATTR_CHANNELS)) {
             String srcChannels = sourceConfig.getAttribute(ATTR_CHANNELS);
             StringTokenizer srcChTok = new StringTokenizer(srcChannels, " \t");
+
             while (srcChTok.hasMoreTokens()) {
               String nextSrcCh = srcChTok.nextToken();
+
               if (channelSet.contains(nextSrcCh)) {
                 srcChannelSet.add(nextSrcCh);
               } else {
-                LOGGER.warn("Agent configuration for '" + agentName
+                logger.warn("Agent configuration for '" + agentName
                     + "' source '" + sourceConfig.getComponentName()
                     + "' contains invalid channel: '" + nextSrcCh
                     + "'. Will be removed.");
@@ -246,8 +273,8 @@ public class FlumeConfiguration {
           }
 
           if (srcChannelSet.size() == 0) {
-            LOGGER.warn("Agent configuration for '" + agentName
-                + "' source '" + sourceConfig.getComponentName()
+            logger.warn("Agent configuration for '" + agentName + "' source '"
+                + sourceConfig.getComponentName()
                 + "' has no valid channels. Removing.");
 
             srcIt.remove();
@@ -256,44 +283,50 @@ public class FlumeConfiguration {
 
           // Override the source configuration to reset channels
           StringBuilder validSrcChannelBuilder = new StringBuilder("");
+
           for (String validSrcCh : srcChannelSet) {
             validSrcChannelBuilder.append(" ").append(validSrcCh);
           }
 
-          sourceConfig.setAttribute(ATTR_CHANNELS,
-              validSrcChannelBuilder.toString().trim());
+          sourceConfig.setAttribute(ATTR_CHANNELS, validSrcChannelBuilder
+              .toString().trim());
         }
       }
 
-      validateComponent(sourceSet, sourceConfigMap, CLASS_SOURCE,
-          ATTR_TYPE, ATTR_CHANNELS);
+      validateComponent(sourceSet, sourceConfigMap, CLASS_SOURCE, ATTR_TYPE,
+          ATTR_CHANNELS);
 
       Set<String> sinkSet = new HashSet<String>();
+
       if (sinks != null && sinks.trim().length() > 0) {
         StringTokenizer sinkTok = new StringTokenizer(sinks, " \t");
+
         while (sinkTok.hasMoreTokens()) {
           sinkSet.add(sinkTok.nextToken());
         }
 
         // Filter out any sinks that have invalid channel
         Iterator<String> sinkIt = sinkConfigMap.keySet().iterator();
+
         while (sinkIt.hasNext()) {
           String nextSink = sinkIt.next();
           ComponentConfiguration sinkConfig = sinkConfigMap.get(nextSink);
+
           if (sinkConfig.hasAttribute(ATTR_CHANNEL)) {
             String sinkCh = sinkConfig.getAttribute(ATTR_CHANNEL);
+
             if (!channelSet.contains(sinkCh)) {
-              LOGGER.warn("Agent configuration for '" + agentName
-                  + "' sink '" + sinkConfig.getComponentName()
-                  + "' has invalid channel '" + sinkCh
-                  + "' specified. Removing.");
+              logger.warn("Agent configuration for '" + agentName + "' sink '"
+                  + sinkConfig.getComponentName() + "' has invalid channel '"
+                  + sinkCh + "' specified. Removing.");
               sinkIt.remove();
               continue;
             }
           } else {
-            LOGGER.warn("Agent configuration for '" + agentName
-                  + "' sink '" + sinkConfig.getComponentName()
-                  + "' has no channels. Removing.");
+            logger.warn("Agent configuration for '" + agentName + "' sink '"
+                + sinkConfig.getComponentName()
+                + "' has no channels. Removing.");
+
             sinkIt.remove();
             continue;
           }
@@ -305,7 +338,7 @@ public class FlumeConfiguration {
 
       // If no sources or sinks are present, then this is invalid
       if (sourceSet.size() == 0 && sinkSet.size() == 0) {
-        LOGGER.warn("Agent configuration for '" + agentName
+        logger.warn("Agent configuration for '" + agentName
             + "' has no sources or sinks. Will be marked invalid.");
         return false;
       }
@@ -323,7 +356,9 @@ public class FlumeConfiguration {
       if (entries.size() == 0) {
         return null;
       }
+
       StringBuilder sb = new StringBuilder("");
+
       for (String entry : entries) {
         sb.append(" ").append(entry);
       }
@@ -332,30 +367,37 @@ public class FlumeConfiguration {
     }
 
     /**
-     * <p>Utility method to iterate over the component configuration to
-     * validate them based on the criteria as follows:
+     * <p>
+     * Utility method to iterate over the component configuration to validate
+     * them based on the criteria as follows:
      * <ol>
-     * <li>Each component in the configuredMap must be present in the
-     * given activeSet</li>
-     * <li>Each component in activeSet must be configured in the
-     * configuredMap</li>
+     * <li>Each component in the configuredMap must be present in the given
+     * activeSet</li>
+     * <li>Each component in activeSet must be configured in the configuredMap</li>
      * <li>Each component must have requiredAttributes set correctly.</li>
      * </ol>
-     * @param activeSet the active set of components
-     * @param configuredMap the components picked from configuration
-     * @param componentClass the component class - source, sink, etc
-     * @param requiredAttributes the required attributes for the component
+     * 
+     * @param activeSet
+     *          the active set of components
+     * @param configuredMap
+     *          the components picked from configuration
+     * @param componentClass
+     *          the component class - source, sink, etc
+     * @param requiredAttributes
+     *          the required attributes for the component
      */
     private void validateComponent(Set<String> activeSet,
         Map<String, ComponentConfiguration> configuredMap,
         String componentClass, String... requiredAttributes) {
 
       Iterator<String> it = configuredMap.keySet().iterator();
+
       while (it.hasNext()) {
         String componentName = it.next();
+
         if (!activeSet.contains(componentName)) {
-          LOGGER.warn("Agent configuration for '" + agentName
-              + "': " + componentClass + " '" + componentName
+          logger.warn("Agent configuration for '" + agentName + "': "
+              + componentClass + " '" + componentName
               + "' not in active list. Removing.");
 
           it.remove();
@@ -365,19 +407,21 @@ public class FlumeConfiguration {
         // Every component must have a required attribute
         ComponentConfiguration config = configuredMap.get(componentName);
         boolean missingRequiredAttributes = false;
+
         for (String attrName : requiredAttributes) {
           if (!config.hasAttribute(attrName)) {
-            LOGGER.warn("Agent configuration for '" + agentName
-                + "': " + componentClass + " '" + componentName
-                + "' does not have '" + attrName + "' specified.");
+            logger.warn("Agent configuration for '" + agentName + "': "
+                + componentClass + " '" + componentName + "' does not have '"
+                + attrName + "' specified.");
             missingRequiredAttributes = true;
           }
         }
 
         if (missingRequiredAttributes) {
-          LOGGER.warn("Agent configuration for '" + agentName
-                + "': " + componentClass + " '" + componentName
-                + "' has some required attributes missing. Removing.");
+          logger.warn("Agent configuration for '" + agentName + "': "
+              + componentClass + " '" + componentName
+              + "' has some required attributes missing. Removing.");
+
           it.remove();
           continue;
         }
@@ -385,17 +429,19 @@ public class FlumeConfiguration {
 
       // Remove the active channels that are not configured
       Iterator<String> activeIt = activeSet.iterator();
+
       while (activeIt.hasNext()) {
         String componentName = activeIt.next();
+
         if (!configuredMap.containsKey(componentName)) {
-          LOGGER.warn("Agent configuration for '" + agentName
-              + "': " + componentClass + " '" + componentName
+          logger.warn("Agent configuration for '" + agentName + "': "
+              + componentClass + " '" + componentName
               + "' is not configured. Removing.");
+
           activeIt.remove();
         }
       }
     }
-
 
     @Override
     public String toString() {
@@ -404,6 +450,7 @@ public class FlumeConfiguration {
       sb.append(sourceConfigMap).append(NEWLINE).append("CHANNELS: ");
       sb.append(channelConfigMap).append(NEWLINE).append("SINKS: ");
       sb.append(sinkConfigMap);
+
       return sb.toString();
     }
 
@@ -414,8 +461,8 @@ public class FlumeConfiguration {
           sources = value;
           return true;
         } else {
-          LOGGER.warn("Duplicate source list specified for agent: "
-              + agentName);
+          logger
+              .warn("Duplicate source list specified for agent: " + agentName);
           return false;
         }
       }
@@ -426,25 +473,27 @@ public class FlumeConfiguration {
           sinks = value;
           return true;
         } else {
-          LOGGER.warn("Duplicate sink list specfied for agent: "
-              + agentName);
+          logger.warn("Duplicate sink list specfied for agent: " + agentName);
           return false;
         }
       }
 
       // Check for channels
       if (key.equals(CHANNELS)) {
-        if(channels == null) {
+        if (channels == null) {
           channels = value;
+
           return true;
         } else {
-          LOGGER.warn("Duplicate channel list specified for agent: "
+          logger.warn("Duplicate channel list specified for agent: "
               + agentName);
+
           return false;
         }
       }
 
       ComponentNameAndConfigKey cnck = parseConfigKey(key, SOURCES_PREFIX);
+
       if (cnck != null) {
         // it is a source
         String name = cnck.getComponentName();
@@ -459,6 +508,7 @@ public class FlumeConfiguration {
       }
 
       cnck = parseConfigKey(key, CHANNELS_PREFIX);
+
       if (cnck != null) {
         // it is a channel
         String name = cnck.getComponentName();
@@ -473,6 +523,7 @@ public class FlumeConfiguration {
       }
 
       cnck = parseConfigKey(key, SINKS_PREFIX);
+
       if (cnck != null) {
         // it is a sink
         String name = cnck.getComponentName();
@@ -486,12 +537,11 @@ public class FlumeConfiguration {
         return sinkConf.addProperty(cnck.getConfigKey(), value);
       }
 
-      LOGGER.warn("Invalid property specified: " + key);
+      logger.warn("Invalid property specified: " + key);
       return false;
     }
 
-    private ComponentNameAndConfigKey parseConfigKey(
-        String key, String prefix) {
+    private ComponentNameAndConfigKey parseConfigKey(String key, String prefix) {
       // key must start with prefix
       if (!key.startsWith(prefix)) {
         return null;
@@ -500,6 +550,7 @@ public class FlumeConfiguration {
       // key must have a component name part after the prefix of the format:
       // <prefix><component-name>.<config-key>
       int index = key.indexOf('.', prefix.length() + 1);
+
       if (index == -1) {
         return null;
       }
@@ -516,94 +567,108 @@ public class FlumeConfiguration {
     }
   }
 
-
   public static class ComponentConfiguration {
-     private final String componentName;
-     private final boolean hasRunner;
-     private final ComponentConfiguration runnerConfig;
 
-     private final Map<String, String> configuration;
+    private final String componentName;
+    private final boolean hasRunner;
+    private final ComponentConfiguration runnerConfig;
 
-     private ComponentConfiguration(String componentName, boolean hasRunner) {
-       this.componentName = componentName;
-       this.hasRunner = hasRunner;
-       if (hasRunner) {
-         runnerConfig = new ComponentConfiguration(RUNNER, false);
-       } else {
-         runnerConfig = null;
-       }
-       this.configuration = new HashMap<String, String>();
-     }
+    private final Map<String, String> configuration;
 
-     @Override
-     public String toString() {
-       return toString(0);
-     }
+    private ComponentConfiguration(String componentName, boolean hasRunner) {
+      this.componentName = componentName;
+      this.hasRunner = hasRunner;
 
-     public String getComponentName() {
-       return componentName;
-     }
+      if (hasRunner) {
+        runnerConfig = new ComponentConfiguration(RUNNER, false);
+      } else {
+        runnerConfig = null;
+      }
 
-     private boolean hasAttribute(String attributeName) {
-       return configuration.containsKey(attributeName);
-     }
+      this.configuration = new HashMap<String, String>();
+    }
 
-     private String getAttribute(String attriubteName) {
-       return configuration.get(attriubteName);
-     }
+    @Override
+    public String toString() {
+      return toString(0);
+    }
 
-     private void setAttribute(String attributeName, String value) {
-       configuration.put(attributeName, value);
-     }
+    public String getComponentName() {
+      return componentName;
+    }
 
-     private String toString(int indentCount) {
-       StringBuilder indentSb = new StringBuilder("");
-       for (int i = 0; i<indentCount; i++) {
-         indentSb.append(INDENTSTEP);
-       }
-       String indent = indentSb.toString();
-       StringBuilder sb = new StringBuilder(indent);
-       sb.append("ComponentConfiguration[").append(componentName).append("]");
-       sb.append(NEWLINE).append(indent).append(INDENTSTEP).append("CONFIG: ");
-       sb.append(configuration);
-       sb.append(NEWLINE).append(indent).append(INDENTSTEP);
-       if (hasRunner) {
-         sb.append("RUNNER: ").append(runnerConfig.toString(indentCount+1));
-       }
-       sb.append(NEWLINE);
-       return sb.toString();
-     }
+    private boolean hasAttribute(String attributeName) {
+      return configuration.containsKey(attributeName);
+    }
 
-     private boolean addProperty(String key, String value) {
-       // see if the key belongs to the runner
-       if (hasRunner && key.startsWith(RUNNER_PREFIX)) {
-         String subKey = key.substring(RUNNER_PREFIX.length());
-         if (subKey.length() == 0) {
-           LOGGER.warn("Invalid key specified: " + key);
-           return false;
-         }
-         return runnerConfig.addProperty(subKey, value);
-       }
+    private String getAttribute(String attriubteName) {
+      return configuration.get(attriubteName);
+    }
 
-       // do not allow properties of the name "runner"
-       if (hasRunner && key.equals(RUNNER)) {
-         LOGGER.warn("Cannot have property named: "
-                 + key + " for component: " + componentName);
-         return false;
-       }
+    private void setAttribute(String attributeName, String value) {
+      configuration.put(attributeName, value);
+    }
 
-       if (!configuration.containsKey(key)) {
-         configuration.put(key, value);
-         return true;
-       }
+    private String toString(int indentCount) {
+      StringBuilder indentSb = new StringBuilder("");
 
-       LOGGER.warn("Duplicate property '" + key + "' specified for " +
-               componentName);
-       return false;
-     }
+      for (int i = 0; i < indentCount; i++) {
+        indentSb.append(INDENTSTEP);
+      }
+
+      String indent = indentSb.toString();
+      StringBuilder sb = new StringBuilder(indent);
+
+      sb.append("ComponentConfiguration[").append(componentName).append("]");
+      sb.append(NEWLINE).append(indent).append(INDENTSTEP).append("CONFIG: ");
+      sb.append(configuration);
+      sb.append(NEWLINE).append(indent).append(INDENTSTEP);
+
+      if (hasRunner) {
+        sb.append("RUNNER: ").append(runnerConfig.toString(indentCount + 1));
+      }
+
+      sb.append(NEWLINE);
+
+      return sb.toString();
+    }
+
+    private boolean addProperty(String key, String value) {
+      // see if the key belongs to the runner
+      if (hasRunner && key.startsWith(RUNNER_PREFIX)) {
+        String subKey = key.substring(RUNNER_PREFIX.length());
+        if (subKey.length() == 0) {
+          logger.warn("Invalid key specified: " + key);
+          return false;
+        }
+        return runnerConfig.addProperty(subKey, value);
+      }
+
+      // do not allow properties of the name "runner"
+      if (hasRunner && key.equals(RUNNER)) {
+        logger.warn("Cannot have property named: " + key + " for component: "
+            + componentName);
+        return false;
+      }
+
+      if (!configuration.containsKey(key)) {
+        configuration.put(key, value);
+        return true;
+      }
+
+      logger.warn("Duplicate property '" + key + "' specified for "
+          + componentName);
+      return false;
+    }
+
+    public Map<String, String> getConfiguration() {
+      return configuration;
+    }
+
   }
 
   public static class ComponentNameAndConfigKey {
+
     private final String componentName;
     private final String configKey;
 

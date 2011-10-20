@@ -4,6 +4,8 @@ import org.apache.flume.Channel;
 import org.apache.flume.Source;
 import org.apache.flume.lifecycle.LifecycleState;
 
+import com.google.common.base.Preconditions;
+
 abstract public class AbstractSource implements Source {
 
   private Channel channel;
@@ -16,6 +18,8 @@ abstract public class AbstractSource implements Source {
 
   @Override
   public void start() {
+    Preconditions.checkState(channel != null, "No channel configured");
+
     lifecycleState = LifecycleState.START;
   }
 

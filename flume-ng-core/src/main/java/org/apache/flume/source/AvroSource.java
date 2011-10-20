@@ -44,7 +44,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
 
   @Override
   public void configure(Context context) {
-    port = context.get("port", Integer.class);
+    port = Integer.parseInt(context.get("port", String.class));
     bindAddress = context.get("bind", String.class);
   }
 

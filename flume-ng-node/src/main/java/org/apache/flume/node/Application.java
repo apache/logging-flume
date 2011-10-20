@@ -14,7 +14,8 @@ import org.apache.flume.SinkFactory;
 import org.apache.flume.SourceFactory;
 import org.apache.flume.channel.DefaultChannelFactory;
 import org.apache.flume.channel.MemoryChannel;
-import org.apache.flume.conf.file.JsonFileConfigurationProvider;
+import org.apache.flume.conf.file.AbstractFileConfigurationProvider;
+import org.apache.flume.conf.properties.PropertiesFileConfigurationProvider;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;
@@ -125,18 +126,19 @@ public class Application {
 
     final FlumeNode node = new FlumeNode();
     DefaultLogicalNodeManager nodeManager = new DefaultLogicalNodeManager();
-    JsonFileConfigurationProvider configurationProvider = new JsonFileConfigurationProvider();
+    AbstractFileConfigurationProvider configurationProvider = new PropertiesFileConfigurationProvider();
 
     configurationProvider.setChannelFactory(channelFactory);
     configurationProvider.setSourceFactory(sourceFactory);
     configurationProvider.setSinkFactory(sinkFactory);
 
+    configurationProvider.setNodeName(nodeName);
+    configurationProvider.setConfigurationAware(nodeManager);
+    configurationProvider.setFile(configurationFile);
+
     Preconditions.checkState(configurationFile != null,
         "Configuration file not specified");
     Preconditions.checkState(nodeName != null, "Node name not specified");
-
-    configurationProvider.setConfigurationAware(nodeManager);
-    configurationProvider.setFile(configurationFile);
 
     node.setName(nodeName);
     node.setNodeManager(nodeManager);

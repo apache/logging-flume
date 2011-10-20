@@ -19,7 +19,10 @@ package org.apache.flume.conf.properties;
 
 import java.io.File;
 
+import org.apache.flume.channel.DefaultChannelFactory;
 import org.apache.flume.conf.file.TestJsonFileConfigurationProvider;
+import org.apache.flume.sink.DefaultSinkFactory;
+import org.apache.flume.source.DefaultSourceFactory;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,8 +38,11 @@ public class TestPropertiesFileConfigurationProvider {
 
   @Test
   public void testPropertyRead() throws Exception {
-    PropertiesFileConfigurationProvider provider =
-        new PropertiesFileConfigurationProvider();
+    PropertiesFileConfigurationProvider provider = new PropertiesFileConfigurationProvider();
+
+    provider.setChannelFactory(new DefaultChannelFactory());
+    provider.setSourceFactory(new DefaultSourceFactory());
+    provider.setSinkFactory(new DefaultSinkFactory());
 
     provider.setFile(TESTFILE);
     provider.load();

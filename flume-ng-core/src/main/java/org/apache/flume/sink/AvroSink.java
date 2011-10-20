@@ -113,8 +113,8 @@ public class AvroSink extends AbstractSink implements PollableSink,
   @Override
   public void configure(Context context) {
     hostname = context.get("hostname", String.class);
-    port = context.get("port", Integer.class);
-    batchSize = context.get("batch-size", Integer.class);
+    port = Integer.parseInt(context.get("port", String.class));
+    batchSize = Integer.parseInt(context.get("batch-size", String.class));
 
     if (batchSize == null) {
       batchSize = defaultBatchSize;

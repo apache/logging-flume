@@ -5,6 +5,8 @@ import org.apache.flume.Sink;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
 
+import com.google.common.base.Preconditions;
+
 abstract public class AbstractSink implements Sink, LifecycleAware {
 
   private Channel channel;
@@ -17,6 +19,8 @@ abstract public class AbstractSink implements Sink, LifecycleAware {
 
   @Override
   public synchronized void start() {
+    Preconditions.checkState(channel != null, "No channel configured");
+
     lifecycleState = LifecycleState.START;
   }
 
