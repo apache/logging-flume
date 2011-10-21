@@ -13,6 +13,7 @@ import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
+import org.apache.flume.Source;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
@@ -21,6 +22,72 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
+/**
+ * <p>
+ * A {@link Source} implementation that executes a Unix process and turns each
+ * line of text into an event.
+ * </p>
+ * <p>
+ * This source runs a given Unix command on start up and expects that process to
+ * continuously produce data on standard out (stderr is simply discarded). If
+ * the process exits for any reason, the source also exits and will produce no
+ * further data. This means configurations such as <tt>cat [named pipe]</tt> or
+ * <tt>tail -F [file]</tt> are going to produce the desired results where as
+ * <tt>date</tt> will probably not - the former two commands produce streams of
+ * data where as the latter produces a single event and exits.
+ * </p>
+ * <p>
+ * The <tt>ExecSource</tt> is meant for situations where one must integrate with
+ * existing systems without modifying code. It is a compatibility gateway built
+ * to allow simple, stop-gap integration and doesn't necessarily offer all of
+ * the benefits or guarantees of native integration with Flume. If one has the
+ * option of using the <tt>AvroSource</tt>, for instance, that would be greatly
+ * preferred to this source as it (and similarly implemented sources) can
+ * maintain the transactional guarantees that exec can not.
+ * </p>
+ * <p>
+ * <i>Why doesn't <tt>ExecSource</tt> offer transactional guarantees?</i>
+ * </p>
+ * <p>
+ * The problem with <tt>ExecSource</tt> and other asynchronous sources is that
+ * the source can not guarantee that if there is a failure to put the event into
+ * the {@link Channel} the client knows about it. As a for instance, one of the
+ * most commonly requested features is the <tt>tail -F [file]</tt>-like use case
+ * where an application writes to a log file on disk and Flume tails the file,
+ * sending each line as an event. While this is possible, there's an obvious
+ * problem; what happens if the channel fills up and Flume can't send an event?
+ * Flume has no way of indicating to the application writing the log file that
+ * it needs to retain the log or that the event hasn't been sent, for some
+ * reason. If this doesn't make sense, you need only know this: <b>Your
+ * application can never guarantee data has been received when using a
+ * unidirectional asynchronous interface such as ExecSource!</b> As an extension
+ * of this warning - and to be completely clear - there is absolutely zero
+ * guarantee of event delivery when using this source. You have been warned.
+ * </p>
+ * <p>
+ * <b>Configuration options</b>
+ * </p>
+ * <table>
+ * <tr>
+ * <th>Parameter</th>
+ * <th>Description</th>
+ * <th>Unit / Type</th>
+ * <th>Default</th>
+ * </tr>
+ * <tr>
+ * <td><tt>command</tt></td>
+ * <td>The command to execute</td>
+ * <td>String</td>
+ * <td>none (required)</td>
+ * </tr>
+ * </table>
+ * <p>
+ * <b>Metrics</b>
+ * </p>
+ * <p>
+ * TODO
+ * </p>
+ */
 public class ExecSource extends AbstractSource implements EventDrivenSource,
     Configurable {
 

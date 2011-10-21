@@ -29,12 +29,59 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+/**
+ * <p>
+ * A netcat-like source that listens on a given port and turns each line of text
+ * into an event.
+ * </p>
+ * <p>
+ * This source, primarily built for testing and exceedingly simple systems, acts
+ * like <tt>nc -k -l [host] [port]</tt>. In other words, it opens a specified
+ * port and listens for data. The expectation is that the supplied data is
+ * newline separated text. Each line of text is turned into a Flume event and
+ * sent via the connected channel.
+ * </p>
+ * <p>
+ * Most testing has been done by using the <tt>nc</tt> client but other,
+ * similarly implemented, clients should work just fine.
+ * </p>
+ * <p>
+ * <b>Configuration options</b>
+ * </p>
+ * <table>
+ * <tr>
+ * <th>Parameter</th>
+ * <th>Description</th>
+ * <th>Unit / Type</th>
+ * <th>Default</th>
+ * </tr>
+ * <tr>
+ * <td><tt>bind</tt></td>
+ * <td>The hostname or IP to which the source will bind.</td>
+ * <td>Hostname or IP / String</td>
+ * <td>none (required)</td>
+ * </tr>
+ * <tr>
+ * <td><tt>port</tt></td>
+ * <td>The port to which the source will bind and listen for events.</td>
+ * <td>TCP port / int</td>
+ * <td>none (required)</td>
+ * </tr>
+ * </table>
+ * <p>
+ * <b>Metrics</b>
+ * </p>
+ * <p>
+ * TODO
+ * </p>
+ */
 public class NetcatSource extends AbstractSource implements Configurable,
     EventDrivenSource {
 
   private static final Logger logger = LoggerFactory
       .getLogger(NetcatSource.class);
 
+  private String hostName;
   private int port;
 
   private CounterGroup counterGroup;
@@ -53,8 +100,9 @@ public class NetcatSource extends AbstractSource implements Configurable,
 
   @Override
   public void configure(Context context) {
-    Configurables.ensureRequiredNonNull(context, "name", "port");
+    Configurables.ensureRequiredNonNull(context, "bind", "port");
 
+    hostName = context.get("bind", String.class);
     port = Integer.parseInt(context.get("port", String.class));
   }
 
@@ -71,7 +119,7 @@ public class NetcatSource extends AbstractSource implements Configurable,
         .setNameFormat("netcat-handler-%d").build());
 
     try {
-      SocketAddress bindPoint = new InetSocketAddress(port);
+      SocketAddress bindPoint = new InetSocketAddress(hostName, port);
 
       serverSocket = ServerSocketChannel.open();
       serverSocket.socket().setReuseAddress(true);

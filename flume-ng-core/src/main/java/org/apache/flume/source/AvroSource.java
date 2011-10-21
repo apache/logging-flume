@@ -17,6 +17,7 @@ import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
+import org.apache.flume.Source;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
@@ -26,6 +27,55 @@ import org.apache.flume.source.avro.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * <p>
+ * A {@link Source} implementation that receives Avro events from clients that
+ * implement {@link AvroSourceProtocol}.
+ * </p>
+ * <p>
+ * This source forms one half of Flume's tiered collection support. Internally,
+ * this source uses Avro's <tt>NettyTransceiver</tt> to listen for, and handle
+ * events. It can be paired with the builtin <tt>AvroSink</tt> to create tiered
+ * collection topologies. Of course, nothing prevents one from using this source
+ * to receive data from other custom built infrastructure that uses the same
+ * Avro protocol (specifically {@link AvroSourceProtocol}).
+ * </p>
+ * <p>
+ * Events may be received from the client either singly or in batches.Generally,
+ * larger batches are far more efficient, but introduce a slight delay (measured
+ * in millis) in delivery. A batch submitted to the configured {@link Channel}
+ * atomically (i.e. either all events make it into the channel or none).
+ * </p>
+ * <p>
+ * <b>Configuration options</b>
+ * </p>
+ * <table>
+ * <tr>
+ * <th>Parameter</th>
+ * <th>Description</th>
+ * <th>Unit / Type</th>
+ * <th>Default</th>
+ * </tr>
+ * <tr>
+ * <td><tt>bind</tt></td>
+ * <td>The hostname or IP to which the source will bind.</td>
+ * <td>Hostname or IP / String</td>
+ * <td>none (required)</td>
+ * </tr>
+ * <tr>
+ * <td><tt>port</tt></td>
+ * <td>The port to which the source will bind and listen for events.</td>
+ * <td>TCP port / int</td>
+ * <td>none (required)</td>
+ * </tr>
+ * </table>
+ * <p>
+ * <b>Metrics</b>
+ * </p>
+ * <p>
+ * TODO
+ * </p>
+ */
 public class AvroSource extends AbstractSource implements EventDrivenSource,
     Configurable, AvroSourceProtocol {
 

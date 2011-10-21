@@ -48,7 +48,7 @@ public class TestNetcatSource {
     Context context = new Context();
 
     /* FIXME: Use a random port for testing. */
-    context.put("name", "test");
+    context.put("bind", "0.0.0.0");
     context.put("port", "41414");
 
     Configurables.configure(source, context);
