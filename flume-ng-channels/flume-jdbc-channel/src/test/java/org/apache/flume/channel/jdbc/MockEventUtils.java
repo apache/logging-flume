@@ -106,6 +106,10 @@ public final class MockEventUtils {
     return new MockEvent(payload, headers, channel);
   }
 
+  public static int generateSleepInterval(int upperBound) {
+    return Math.abs(RANDOM.nextInt(upperBound));
+  }
+
   private MockEventUtils() {
     // Disable explicit object creation
   }
