@@ -190,9 +190,11 @@ public class PropertiesFileConfigurationProvider extends
         LOGGER.warn("No configuration found for this host:{}", getNodeName());
       }
     } catch (IOException ex) {
-      LOGGER.error("Unable to load file: " + propertiesFile, ex);
+      LOGGER.error("Unable to load file:" + propertiesFile
+          + " (I/O failure) - Exception follows.", ex);
     } catch (InstantiationException ex) {
-      LOGGER.error("Unable to load file:{}", propertiesFile, ex);
+      LOGGER.error("Unable to load file:" + propertiesFile
+          + " (failed to instantiate component) - Exception follows.", ex);
     } finally {
       if (reader != null) {
         try {
