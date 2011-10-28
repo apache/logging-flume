@@ -35,8 +35,8 @@ import org.apache.commons.dbcp.PoolingDataSource;
 import org.apache.commons.pool.KeyedObjectPoolFactory;
 import org.apache.commons.pool.impl.GenericKeyedObjectPoolFactory;
 import org.apache.commons.pool.impl.GenericObjectPool;
+import org.apache.flume.Context;
 import org.apache.flume.Event;
-import org.apache.flume.Transaction;
 import org.apache.flume.channel.jdbc.ConfigurationConstants;
 import org.apache.flume.channel.jdbc.DatabaseType;
 import org.apache.flume.channel.jdbc.JdbcChannelException;
@@ -85,18 +85,18 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
   private String driverClassName;
 
   @Override
-  public void initialize(Properties properties) {
+  public void initialize(Context context) {
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Initializing JDBC Channel provider with props: "
-          + properties);
+          + context);
     }
 
-    initializeDataSource(properties);
-    initializeSchema(properties);
+    initializeDataSource(context);
+    initializeSchema(context);
   }
 
-  private void initializeSchema(Properties properties) {
-    String createSchemaFlag = properties.getProperty(
+  private void initializeSchema(Context context) {
+    String createSchemaFlag = context.getString(
         ConfigurationConstants.CONFIG_CREATE_SCHEMA, "true");
 
     boolean createSchema = Boolean.valueOf(createSchemaFlag);
@@ -225,23 +225,21 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
    * Initializes the datasource and the underlying connection pool.
    * @param properties
    */
-  private void initializeDataSource(Properties properties) {
-    driverClassName = properties.getProperty(
+  private void initializeDataSource(Context context) {
+    driverClassName = context.getString(
         ConfigurationConstants.CONFIG_JDBC_DRIVER_CLASS);
 
-    connectUrl = properties.getProperty(ConfigurationConstants.CONFIG_URL);
+    connectUrl = context.getString(ConfigurationConstants.CONFIG_URL);
 
 
-    String userName =
-        properties.getProperty(ConfigurationConstants.CONFIG_USERNAME);
+    String userName = context.getString(ConfigurationConstants.CONFIG_USERNAME);
 
-    String password =
-        properties.getProperty(ConfigurationConstants.CONFIG_PASSWORD);
+    String password = context.getString(ConfigurationConstants.CONFIG_PASSWORD);
 
-    String jdbcPropertiesFile = properties.getProperty(
+    String jdbcPropertiesFile = context.getString(
         ConfigurationConstants.CONFIG_JDBC_PROPERTIES_FILE);
 
-    String dbTypeName = properties.getProperty(
+    String dbTypeName = context.getString(
         ConfigurationConstants.CONFIG_DATABASE_TYPE);
 
     // If connect URL is not specified, use embedded Derby
@@ -379,7 +377,7 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
     }
 
     // Transaction Isolation
-    String txIsolation = properties.getProperty(
+    String txIsolation = context.getString(
         ConfigurationConstants.CONFIG_TX_ISOLATION_LEVEL,
         TransactionIsolation.READ_COMMITTED.getName());
 
@@ -394,7 +392,7 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
 
     connectionPool = new GenericObjectPool();
 
-    String maxActiveConnections = properties.getProperty(
+    String maxActiveConnections = context.getString(
         ConfigurationConstants.CONFIG_MAX_CONNECTION, "10");
 
     int maxActive = 10;

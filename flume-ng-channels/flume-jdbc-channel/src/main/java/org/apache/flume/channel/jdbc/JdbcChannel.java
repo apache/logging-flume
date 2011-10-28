@@ -17,33 +17,28 @@
  */
 package org.apache.flume.channel.jdbc;
 
-import java.util.Properties;
-
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
+import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
+import org.apache.flume.conf.Configurable;
 import org.apache.log4j.Logger;
 
 /**
  * <p>A JDBC based channel implementation.</p>
  */
-public class JdbcChannel implements Channel {
+public class JdbcChannel implements Channel, Configurable {
 
   private static final Logger LOG = Logger.getLogger(JdbcChannel.class);
 
-  private final JdbcChannelProvider provider;
-  private final String name;
+  private JdbcChannelProvider provider;
+  private String name;
 
   /**
-   * Instantiates a new JDBC Channel with the given properties.
-   * @param configuration
+   * Instantiates a new JDBC Channel.
    */
-  public JdbcChannel(String name, Properties configuration) {
-    provider = JdbcChannelProviderFactory.getProvider(configuration);
-    this.name = name;
-
-    LOG.info("JDBC Channel initialized: " + name);
+  public JdbcChannel() {
   }
 
   @Override
@@ -63,7 +58,9 @@ public class JdbcChannel implements Channel {
 
   @Override
   public void shutdown() {
-    // TODO Auto-generated method stub
+    JdbcChannelProviderFactory.releaseProvider(name);
+    provider = null;
+    name = null;
   }
 
   @Override
@@ -73,5 +70,15 @@ public class JdbcChannel implements Channel {
 
   private JdbcChannelProvider getProvider() {
     return provider;
+  }
+
+  @Override
+  public void configure(Context context) {
+    // FIXME - allow name to be specified via the context
+    this.name = "jdbc";
+
+    provider = JdbcChannelProviderFactory.getProvider(context, name);
+
+    LOG.info("JDBC Channel initialized: " + name);
   }
 }

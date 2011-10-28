@@ -17,8 +17,7 @@
  */
 package org.apache.flume.channel.jdbc;
 
-import java.util.Properties;
-
+import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
 
@@ -32,7 +31,7 @@ public interface JdbcChannelProvider {
    * the channel can be used in any way.
    * @param properties the configuration for the system
    */
-  public void initialize(Properties properties);
+  public void initialize(Context context);
 
   /**
    * Deinitializes the channel provider. Once this method is called, the

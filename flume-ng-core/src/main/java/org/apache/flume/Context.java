@@ -23,6 +23,23 @@ public class Context {
     return null;
   }
 
+  public <T> T get(String key, Class<? extends T> clazz, T defaultValue) {
+    T result = get(key, clazz);
+    if (result == null) {
+      result = defaultValue;
+    }
+
+    return result;
+  }
+
+  public String getString(String key) {
+    return get(key, String.class);
+  }
+
+  public String getString(String key, String defaultValue) {
+    return get(key, String.class, defaultValue);
+  }
+
   @Override
   public String toString() {
     return "{ parameters:" + parameters + " }";
@@ -36,4 +53,7 @@ public class Context {
     this.parameters = parameters;
   }
 
+  public void clear() {
+    parameters.clear();
+  }
 }

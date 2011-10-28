@@ -32,8 +32,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.jdbc.impl.JdbcChannelProviderImpl;
@@ -49,20 +49,20 @@ public class TestJdbcChannelProvider {
   private static final Logger LOGGER =
       LoggerFactory.getLogger(TestJdbcChannelProvider.class);
 
-  private Properties derbyProps = new Properties();
+  private Context derbyCtx = new Context();
   private File derbyDbDir;
   private JdbcChannelProviderImpl provider;
 
   @Before
   public void setUp() throws IOException {
-    derbyProps.clear();
-    derbyProps.put(ConfigurationConstants.CONFIG_CREATE_SCHEMA, "true");
-    derbyProps.put(ConfigurationConstants.CONFIG_DATABASE_TYPE, "DERBY");
-    derbyProps.put(ConfigurationConstants.CONFIG_JDBC_DRIVER_CLASS,
+    derbyCtx.clear();
+    derbyCtx.put(ConfigurationConstants.CONFIG_CREATE_SCHEMA, "true");
+    derbyCtx.put(ConfigurationConstants.CONFIG_DATABASE_TYPE, "DERBY");
+    derbyCtx.put(ConfigurationConstants.CONFIG_JDBC_DRIVER_CLASS,
         "org.apache.derby.jdbc.EmbeddedDriver");
 
-    derbyProps.put(ConfigurationConstants.CONFIG_PASSWORD, "");
-    derbyProps.put(ConfigurationConstants.CONFIG_USERNAME, "sa");
+    derbyCtx.put(ConfigurationConstants.CONFIG_PASSWORD, "");
+    derbyCtx.put(ConfigurationConstants.CONFIG_USERNAME, "sa");
 
     File tmpDir = new File("target/test");
     tmpDir.mkdirs();
@@ -78,17 +78,17 @@ public class TestJdbcChannelProvider {
       derbyDbDir.mkdirs();
     }
 
-    derbyProps.put(ConfigurationConstants.CONFIG_URL,
+    derbyCtx.put(ConfigurationConstants.CONFIG_URL,
         "jdbc:derby:" + derbyDbDir.getCanonicalPath() + "/db;create=true");
 
-    LOGGER.info("Derby Properties: " + derbyProps);
+    LOGGER.info("Derby Properties: " + derbyCtx);
   }
 
   @Test
   public void testDerbySetup() {
     provider = new JdbcChannelProviderImpl();
 
-    provider.initialize(derbyProps);
+    provider.initialize(derbyCtx);
 
     Transaction tx1 = provider.getTransaction();
     tx1.begin();
@@ -117,7 +117,7 @@ public class TestJdbcChannelProvider {
   @Test
   public void testEventWithSimulatedSourceAndSinks() throws Exception {
     provider = new JdbcChannelProviderImpl();
-    provider.initialize(derbyProps);
+    provider.initialize(derbyCtx);
 
     Map<String, List<MockEvent>> eventMap =
         new HashMap<String, List<MockEvent>>();
@@ -173,7 +173,7 @@ public class TestJdbcChannelProvider {
   @Test
   public void testPeristingEvents() {
     provider = new JdbcChannelProviderImpl();
-    provider.initialize(derbyProps);
+    provider.initialize(derbyCtx);
 
     Map<String, List<MockEvent>> eventMap =
         new HashMap<String, List<MockEvent>>();
