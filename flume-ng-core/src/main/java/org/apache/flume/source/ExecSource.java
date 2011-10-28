@@ -9,6 +9,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
@@ -171,29 +172,39 @@ public class ExecSource extends AbstractSource implements EventDrivenSource,
 
     @Override
     public void run() {
+      
+      Transaction transaction = null;
       try {
         String[] commandArgs = command.split("\\s+");
         Process process = new ProcessBuilder(commandArgs).start();
         BufferedReader reader = new BufferedReader(new InputStreamReader(
             process.getInputStream()));
+        transaction = channel.getTransaction();
 
         String line = null;
 
         while ((line = reader.readLine()) != null) {
           counterGroup.incrementAndGet("exec.lines.read");
 
-          Transaction transaction = channel.getTransaction();
-
-          transaction.begin();
-          Event event = EventBuilder.withBody(line.getBytes());
-          channel.put(event);
-          transaction.commit();
+          try {
+            transaction.begin();
+            Event event = EventBuilder.withBody(line.getBytes());
+            channel.put(event);
+            transaction.commit();
+          } catch (ChannelException e) {
+            transaction.rollback();
+            throw e;
+          } 
         }
 
         reader.close();
       } catch (IOException e) {
         logger.error("Failed while running command:{} - Exception follows.",
             command, e);
+      } finally {
+        if (transaction != null) {
+          transaction.close();
+        }
       }
     }
 
