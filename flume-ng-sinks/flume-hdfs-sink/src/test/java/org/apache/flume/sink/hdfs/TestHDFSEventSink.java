@@ -74,7 +74,7 @@ public class TestHDFSEventSink {
      * Hadoop config points at file:/// rather than hdfs://. We need to find a
      * better way of testing HDFS related functionality.
      */
-    testPath = "file:///tmp/fluem-test."
+    testPath = "file:///tmp/flume-test."
         + Calendar.getInstance().getTimeInMillis() + "."
         + Thread.currentThread().getId();
 
