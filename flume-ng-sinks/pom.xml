@@ -32,6 +32,15 @@ limitations under the License.
   <name>Flume NG Sinks</name>
   <packaging>pom</packaging>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
   <modules>
     <module>flume-hdfs-sink</module>
   </modules>

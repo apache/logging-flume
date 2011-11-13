@@ -369,6 +369,13 @@ limitations under the License.
 
   <build>
 
+    <plugins>
+      <plugin>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
+      </plugin>
+    </plugins>
+
     <pluginManagement>
       <plugins>
 
@@ -398,6 +405,27 @@ limitations under the License.
               <exclude>${test.exclude.pattern}</exclude>
             </excludes>
           </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.rat</groupId>
+          <artifactId>apache-rat-plugin</artifactId>
+          <version>0.7</version>
+          <executions>
+            <execution>
+              <id>verify.rat</id>
+              <phase>verify</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+              <configuration>
+                <excludes>
+                  <exclude>.git/</exclude>
+                  <exclude>.gitignore</exclude>
+                </excludes>
+              </configuration>
+            </execution>
+          </executions>
         </plugin>
 
       </plugins>

@@ -31,6 +31,15 @@ limitations under the License.
   <version>0.9.5-SNAPSHOT</version>
   <name>Flume NG HDFS </name>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
   <dependencies>
 
     <dependency>
