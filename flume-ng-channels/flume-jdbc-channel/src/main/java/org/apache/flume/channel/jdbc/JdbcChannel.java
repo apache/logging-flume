@@ -23,14 +23,14 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
-import org.apache.log4j.Logger;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * <p>A JDBC based channel implementation.</p>
  */
 public class JdbcChannel implements Channel, Configurable {
 
-  private static final Logger LOG = Logger.getLogger(JdbcChannel.class);
+  private static final Logger LOG = LoggerFactory.getLogger(JdbcChannel.class);
 
   private JdbcChannelProvider provider;
   private String name;
