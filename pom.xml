@@ -147,6 +147,12 @@
       <name>Bruce Mitchener</name>
       <organization>-</organization>
     </developer>
+    <developer>
+      <email>mlai@apache.org</email>
+      <id>mlai@apache.org</id>
+      <name>Mingjie Lai</name>
+      <organization>Trend Micro</organization>
+    </developer>
   </developers>
 
   <contributors>
