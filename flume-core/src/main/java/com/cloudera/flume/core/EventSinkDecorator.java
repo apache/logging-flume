@@ -64,8 +64,12 @@ public class EventSinkDecorator<S extends EventSink> extends EventSink.Base {
   @Override
   public void close() throws IOException, InterruptedException {
     Preconditions.checkNotNull(sink);
-    sink.close();
-    isOpen.set(false);
+    try {
+      sink.close();
+    } finally {
+      // mark it closed regardless the downstream close exception
+      isOpen.set(false);
+    }
   }
 
   @Override

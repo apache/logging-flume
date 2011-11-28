@@ -329,8 +329,12 @@ public class RollSink extends EventSink.Base {
         return;
       }
       curSink.close();
-      curSink = null;
     } finally {
+      /* If the downstream sink throws an exception while closing, then its state
+       * is unknown. We want to play safe and remove its reference.from the roller
+       * so that the flow can continue.
+       */
+      curSink = null;
       lock.writeLock().unlock();
     }
   }

@@ -22,13 +22,18 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -917,4 +922,98 @@ public class TestCollectorSink {
       FileUtil.rmr(f);
     }
   }
+
+  /**
+   * This test verifies that when both append and close throw an exception
+   * the retry mechanism (stubborn append) reopens the sink and continues
+   * to flow event to the sink correctly
+   */
+  @SuppressWarnings("rawtypes")
+  @Test(timeout=5000)
+  public void testAppendCloseIOExceptionSink() throws IOException,
+      InterruptedException, FlumeSpecException {
+    final EventSink snk = mock(EventSink.class);
+    final List<String> result = new LinkedList<String> ();
+
+    // mock append that throws IOException on first invocation and
+    // then sets an attribute on second time
+    doThrow(new IOException("Force unexpected append error")).
+      doAnswer(new Answer () {
+        @Override
+        public Object answer(InvocationOnMock aInvocation)
+            throws Throwable {
+          result.add("success"); // append executed by retry sinks
+          return null;
+        }}).
+        when(snk).append((Event) anyObject());
+
+    doThrow(new IOException("Force unexpected close error")).doNothing().
+        when(snk).close();
+
+    doNothing().when(snk).open();
+    SinkBuilder sb = new SinkBuilder() {
+      @Override
+      public EventSink build(Context context, String... argv) {
+        return snk;
+      }
+    };
+    SinkFactoryImpl sf = new SinkFactoryImpl();
+    sf.setSink("mIOSink", sb);
+    FlumeBuilder.setSinkFactory(sf);
+
+    final EventSink coll = FlumeBuilder.buildSink(
+        LogicalNodeContext.testingContext(), "collector(5000) { mIOSink }");
+    coll.open();
+    coll.append(new EventImpl("foo".getBytes()));
+    coll.close();
+    assertEquals(result.get(0), "success");
+  }
+
+  /**
+  *
+  * This test verifies that when both append and close throw multiple
+  * consecutive exceptions, the retry mechanism (insistent append)
+  * reopens the sink and continues to flow event to the sink correctly
+  */
+ @SuppressWarnings("rawtypes")
+ @Test
+ public void testMultiAppendCloseIOExceptionSink() throws IOException,
+     InterruptedException, FlumeSpecException {
+   final EventSink snk = mock(EventSink.class);
+   final List<String> result = new LinkedList<String> ();
+
+   // mock append that throws IOException on first two invocation and
+   // then sets an attribute on third time
+   doThrow(new IOException("Force unexpected append error")).
+     doThrow(new IOException("Force unexpected append error")).
+     doAnswer(new Answer () {
+       @Override
+       public Object answer(InvocationOnMock aInvocation)
+           throws Throwable {
+         result.add("success"); // append executed by retry sinks
+         return null;
+       }}).
+       when(snk).append((Event) anyObject());
+
+   doThrow(new IOException("Force unexpected close error")).
+     doNothing().when(snk).close();
+
+   doNothing().when(snk).open();
+   SinkBuilder sb = new SinkBuilder() {
+     @Override
+     public EventSink build(Context context, String... argv) {
+       return snk;
+     }
+   };
+   SinkFactoryImpl sf = new SinkFactoryImpl();
+   sf.setSink("mIOSink", sb);
+   FlumeBuilder.setSinkFactory(sf);
+
+   final EventSink coll = FlumeBuilder.buildSink(
+       LogicalNodeContext.testingContext(), "collector(5000) { mIOSink }");
+   coll.open();
+   coll.append(new EventImpl("foo".getBytes()));
+   coll.close();
+   assertEquals(result.get(0), "success");
+ }
 }

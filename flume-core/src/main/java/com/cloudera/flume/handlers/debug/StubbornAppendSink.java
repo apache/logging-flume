@@ -82,8 +82,12 @@ public class StubbornAppendSink<S extends EventSink> extends
       LOG.info("append failed on event '{}' with error: {}", e, ex.getMessage());
 
       appendFails.incrementAndGet();
-      super.close(); // close
-
+      try {
+        super.close(); // close
+      } catch (IOException eI) {
+        // Ignore the IOexception in close and continue to reopen
+        LOG.error("Error in closing Stubborn Append Sink" , eI);
+      }
       open(); // attempt to reopen
       super.append(e); // resend
       appendSuccesses.incrementAndGet();
