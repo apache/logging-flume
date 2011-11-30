@@ -39,9 +39,10 @@ public interface SchemaHandler {
 
   /**
    * Creates the schema.
-   * @param connection the connection to create schema for.
+   * @param createIndex a flag which indicates if indexes must be created during
+   *        the creation of the schema.
    */
-  public void createSchemaObjects();
+  public void createSchemaObjects(boolean createIndex);
 
   /**
    * Inserts the given persistent event into the database. The connection that

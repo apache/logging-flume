@@ -45,6 +45,9 @@ public final class ConfigurationConstants {
   public static final String CONFIG_CREATE_SCHEMA =
       PREFIX + "create.schema";
 
+  public static final String CONFIG_CREATE_INDEX =
+      PREFIX + "create.index";
+
   public static final String CONFIG_TX_ISOLATION_LEVEL =
       PREFIX + "transaction.isolation";
 

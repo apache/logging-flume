@@ -43,7 +43,7 @@ public class MySQLSchemaHandler implements SchemaHandler {
   }
 
   @Override
-  public void createSchemaObjects() {
+  public void createSchemaObjects(boolean createIndex) {
     // TODO Auto-generated method stub
 
   }

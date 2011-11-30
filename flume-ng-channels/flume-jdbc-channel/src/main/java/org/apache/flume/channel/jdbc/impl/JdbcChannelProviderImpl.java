@@ -112,8 +112,16 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
             + "schema and try again.");
       }
 
+      String createIndexFlag = context.getString(
+          ConfigurationConstants.CONFIG_CREATE_INDEX, "true");
+
+      boolean createIndex = Boolean.valueOf(createIndexFlag);
+      if (!createIndex) {
+        LOGGER.info("Index creation is disabled, indexes will not be created.");
+      }
+
       // Now create schema
-      schemaHandler.createSchemaObjects();
+      schemaHandler.createSchemaObjects(createIndex);
     }
 
     // Validate all schema objects are as expected

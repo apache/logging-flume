@@ -140,12 +140,18 @@ public class DerbySchemaHandler implements SchemaHandler {
   private static final String COLUMN_FLE_PAYLOAD = "FLE_PAYLOAD";
   private static final String COLUMN_FLE_CHANNEL = "FLE_CHANNEL";
   private static final String COLUMN_FLE_SPILL = "FLE_SPILL";
+  private static final String INDEX_FLE_CHANNEL_NAME = "IDX_FLE_CHANNEL";
+  private static final String INDEX_FLE_CHANNEL = SCHEMA_FLUME + "."
+      + INDEX_FLE_CHANNEL_NAME;
 
   private static final String TABLE_FL_PLSPILL_NAME = "FL_PLSPILL";
   private static final String TABLE_FL_PLSPILL = SCHEMA_FLUME + "."
       + TABLE_FL_PLSPILL_NAME;
   private static final String COLUMN_FLP_EVENT = "FLP_EVENT";
   private static final String COLUMN_FLP_SPILL = "FLP_SPILL";
+  private static final String INDEX_FLP_EVENT_NAME = "IDX_FLP_EVENT";
+  private static final String INDEX_FLP_EVENT = SCHEMA_FLUME + "."
+      + INDEX_FLP_EVENT_NAME;
 
   private static final String TABLE_FL_HEADER_NAME = "FL_HEADER";
   private static final String TABLE_FL_HEADER = SCHEMA_FLUME + "."
@@ -156,18 +162,27 @@ public class DerbySchemaHandler implements SchemaHandler {
   private static final String COLUMN_FLH_VALUE = "FLH_VALUE";
   private static final String COLUMN_FLH_NMSPILL = "FLH_NMSPILL";
   private static final String COLUMN_FLH_VLSPILL = "FLH_VLSPILL";
+  private static final String INDEX_FLH_EVENT_NAME = "IDX_FLH_EVENT";
+  private static final String INDEX_FLH_EVENT = SCHEMA_FLUME + "."
+      + INDEX_FLH_EVENT_NAME;
 
   private static final String TABLE_FL_NMSPILL_NAME = "FL_NMSPILL";
   private static final String TABLE_FL_NMSPILL = SCHEMA_FLUME + "."
       + TABLE_FL_NMSPILL_NAME;
   private static final String COLUMN_FLN_HEADER = "FLN_HEADER";
   private static final String COLUMN_FLN_SPILL = "FLN_SPILL";
+  private static final String INDEX_FLN_HEADER_NAME = "IDX_FLN_HEADER";
+  private static final String INDEX_FLN_HEADER = SCHEMA_FLUME + "."
+      + INDEX_FLN_HEADER_NAME;
 
   private static final String TABLE_FL_VLSPILL_NAME = "FL_VLSPILL";
   private static final String TABLE_FL_VLSPILL = SCHEMA_FLUME + "."
       + TABLE_FL_VLSPILL_NAME;
   private static final String COLUMN_FLV_HEADER = "FLV_HEADER";
   private static final String COLUMN_FLV_SPILL = "FLV_SPILL";
+  private static final String INDEX_FLV_HEADER_NAME = "IDX_FLV_HEADER";
+  private static final String INDEX_FLV_HEADER = SCHEMA_FLUME + "."
+      + INDEX_FLV_HEADER_NAME;
 
   public static final String QUERY_CREATE_SCHEMA_FLUME
       = "CREATE SCHEMA " + SCHEMA_FLUME;
@@ -183,12 +198,20 @@ public class DerbySchemaHandler implements SchemaHandler {
         + ConfigurationConstants.CHANNEL_NAME_MAX_LENGTH + "), "
         + COLUMN_FLE_SPILL + " BOOLEAN)";
 
+  public static final String QUERY_CREATE_INDEX_FLE_CHANNEL
+      = "CREATE INDEX " + INDEX_FLE_CHANNEL + " ON " + TABLE_FL_EVENT
+        + " (" + COLUMN_FLE_CHANNEL + ")";
+
   public static final String QUERY_CREATE_TABLE_FL_PLSPILL
       = "CREATE TABLE " + TABLE_FL_PLSPILL + " ( "
         + COLUMN_FLP_EVENT + " BIGINT, "
         + COLUMN_FLP_SPILL + " BLOB, "
         + "FOREIGN KEY (" + COLUMN_FLP_EVENT + ") REFERENCES "
         + TABLE_FL_EVENT + " (" + COLUMN_FLE_ID + "))";
+
+  public static final String QUERY_CREATE_INDEX_FLP_EVENT
+      = "CREATE INDEX " + INDEX_FLP_EVENT + " ON " + TABLE_FL_PLSPILL
+        + " (" + COLUMN_FLP_EVENT + ")";
 
   public static final String QUERY_CREATE_TABLE_FL_HEADER
       = "CREATE TABLE " + TABLE_FL_HEADER + " ( "
@@ -204,6 +227,10 @@ public class DerbySchemaHandler implements SchemaHandler {
         + "FOREIGN KEY (" + COLUMN_FLH_EVENT + ") REFERENCES "
         + TABLE_FL_EVENT + " (" + COLUMN_FLE_ID + "))";
 
+  public static final String QUERY_CREATE_INDEX_FLH_EVENT
+      = "CREATE INDEX " + INDEX_FLH_EVENT + " ON " + TABLE_FL_HEADER
+         + " (" + COLUMN_FLH_EVENT + ")";
+
   public static final String QUERY_CREATE_TABLE_FL_NMSPILL
       = "CREATE TABLE " + TABLE_FL_NMSPILL + " ( "
         + COLUMN_FLN_HEADER + " BIGINT, "
@@ -212,6 +239,10 @@ public class DerbySchemaHandler implements SchemaHandler {
         + "FOREIGN KEY (" + COLUMN_FLN_HEADER + ") REFERENCES "
         + TABLE_FL_HEADER + " (" + COLUMN_FLH_ID + "))";
 
+  public static final String QUERY_CREATE_INDEX_FLN_HEADER
+      = "CREATE INDEX " + INDEX_FLN_HEADER + " ON " + TABLE_FL_NMSPILL
+         + " (" + COLUMN_FLN_HEADER + ")";
+
   public static final String QUERY_CREATE_TABLE_FL_VLSPILL
       = "CREATE TABLE " + TABLE_FL_VLSPILL + " ( "
         + COLUMN_FLV_HEADER + " BIGINT, "
@@ -219,6 +250,10 @@ public class DerbySchemaHandler implements SchemaHandler {
         + ConfigurationConstants.HEADER_VALUE_SPILL_MAX_LENGTH + "), "
         + "FOREIGN KEY (" + COLUMN_FLV_HEADER + ") REFERENCES "
         + TABLE_FL_HEADER + " (" + COLUMN_FLH_ID + "))";
+
+  public static final String QUERY_CREATE_INDEX_FLV_HEADER
+      = "CREATE INDEX " + INDEX_FLV_HEADER + " ON " + TABLE_FL_VLSPILL
+         + " (" + COLUMN_FLV_HEADER + ")";
 
   public static final String COLUMN_LOOKUP_QUERY
       = "SELECT COLUMNNAME from SYS.SYSCOLUMNS where REFERENCEID = "
@@ -344,13 +379,21 @@ public class DerbySchemaHandler implements SchemaHandler {
   }
 
   @Override
-  public void createSchemaObjects() {
+  public void createSchemaObjects(boolean createIndex) {
     runQuery(QUERY_CREATE_SCHEMA_FLUME);
     runQuery(QUERY_CREATE_TABLE_FL_EVENT);
     runQuery(QUERY_CREATE_TABLE_FL_PLSPILL);
     runQuery(QUERY_CREATE_TABLE_FL_HEADER);
     runQuery(QUERY_CREATE_TABLE_FL_NMSPILL);
     runQuery(QUERY_CREATE_TABLE_FL_VLSPILL);
+
+    if (createIndex) {
+      runQuery(QUERY_CREATE_INDEX_FLE_CHANNEL);
+      runQuery(QUERY_CREATE_INDEX_FLH_EVENT);
+      runQuery(QUERY_CREATE_INDEX_FLP_EVENT);
+      runQuery(QUERY_CREATE_INDEX_FLN_HEADER);
+      runQuery(QUERY_CREATE_INDEX_FLV_HEADER);
+    }
   }
 
   @Override
