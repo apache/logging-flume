@@ -75,6 +75,9 @@ public class TestDerbySchemaHandlerQueries {
           + "SCHEMAID = (SELECT SCHEMAID FROM SYS.SYSSCHEMAS WHERE "
           + "SCHEMANAME = ? ))";
 
+  public static final String EXPECTED_QUERY_CHANNEL_SIZE
+      = "SELECT COUNT(*) FROM FLUME.FL_EVENT";
+
   public static final String EXPECTED_STMT_INSERT_EVENT_BASE
       = "INSERT INTO FLUME.FL_EVENT (FLE_PAYLOAD, FLE_CHANNEL, FLE_SPILL) "
           + "VALUES ( ?, ?, ?)";
@@ -166,6 +169,9 @@ public class TestDerbySchemaHandlerQueries {
 
     Assert.assertEquals(DerbySchemaHandler.COLUMN_LOOKUP_QUERY,
         EXPECTED_COLUMN_LOOKUP_QUERY);
+
+    Assert.assertEquals(DerbySchemaHandler.QUERY_CHANNEL_SIZE,
+        EXPECTED_QUERY_CHANNEL_SIZE);
 
     Assert.assertEquals(DerbySchemaHandler.STMT_INSERT_EVENT_BASE,
         EXPECTED_STMT_INSERT_EVENT_BASE);

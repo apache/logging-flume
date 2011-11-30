@@ -51,7 +51,6 @@ public class MySQLSchemaHandler implements SchemaHandler {
   @Override
   public void storeEvent(PersistableEvent pe, Connection connection) {
     // TODO Auto-generated method stub
-
   }
 
   @Override
@@ -61,4 +60,9 @@ public class MySQLSchemaHandler implements SchemaHandler {
     return null;
   }
 
+  @Override
+  public long getChannelSize(Connection connection) {
+    // TODO Auto-generated method stub
+    return 0;
+  }
 }

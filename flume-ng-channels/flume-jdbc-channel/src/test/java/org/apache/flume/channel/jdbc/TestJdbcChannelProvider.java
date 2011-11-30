@@ -85,6 +85,44 @@ public class TestJdbcChannelProvider {
   }
 
   @Test
+  public void testDerbyChannelCapacity() {
+    provider = new JdbcChannelProviderImpl();
+
+    derbyCtx.put(ConfigurationConstants.CONFIG_MAX_CAPACITY, "10");
+
+    provider.initialize(derbyCtx);
+
+    Set<MockEvent> events = new HashSet<MockEvent>();
+    for (int i = 1; i < 12; i++) {
+      events.add(MockEventUtils.generateMockEvent(i, i, i, 61%i, 1));
+    }
+
+    Iterator<MockEvent> meIt = events.iterator();
+    int count = 0;
+    while (meIt.hasNext()) {
+      count++;
+      MockEvent me = meIt.next();
+      String chName = me.getChannel();
+      try {
+        provider.persistEvent(chName, me);
+        if (count == 11) {
+          Assert.fail();
+        }
+      } catch (JdbcChannelException ex) {
+        // This is expected if the count is 10
+        Assert.assertEquals(11, count);
+      }
+
+      // Now should be able to remove one event and add this one
+      Event e = provider.removeEvent(chName);
+      Assert.assertNotNull(e);
+
+      // The current event should safely persist now
+      provider.persistEvent(chName, me);
+    }
+  }
+
+  @Test
   public void testDerbySetup() {
     provider = new JdbcChannelProviderImpl();
 
@@ -111,7 +149,7 @@ public class TestJdbcChannelProvider {
   }
 
   /**
-   * Creates 1000 events split over 10 channels, stores them via multiple
+   * Creates 120 events split over 10 channels, stores them via multiple
    * simulated sources and consumes them via multiple simulated channels.
    */
   @Test
@@ -122,7 +160,7 @@ public class TestJdbcChannelProvider {
     Map<String, List<MockEvent>> eventMap =
         new HashMap<String, List<MockEvent>>();
 
-    for (int i = 1; i < 1001; i++) {
+    for (int i = 1; i < 121; i++) {
       MockEvent me = MockEventUtils.generateMockEvent(i, i, i, 61%i, 10);
       List<MockEvent> meList = eventMap.get(me.getChannel());
       if (meList == null) {
@@ -155,20 +193,20 @@ public class TestJdbcChannelProvider {
       srcCount += srcOutput.get();
     }
 
-    Assert.assertEquals(1000, srcCount);
+    Assert.assertEquals(120, srcCount);
 
     int sinkCount = 0;
     for (Future<Integer> sinkOutput : sinkResults) {
       sinkCount += sinkOutput.get();
     }
 
-    Assert.assertEquals(1000, sinkCount);
+    Assert.assertEquals(120, sinkCount);
 
   }
 
 
   /**
-   * creates 1000 events split over 5 channels, stores them
+   * creates 80 events split over 5 channels, stores them
    */
   @Test
   public void testPeristingEvents() {
@@ -179,7 +217,7 @@ public class TestJdbcChannelProvider {
         new HashMap<String, List<MockEvent>>();
 
     Set<MockEvent> events = new HashSet<MockEvent>();
-    for (int i = 1; i < 1001; i++) {
+    for (int i = 1; i < 81; i++) {
       events.add(MockEventUtils.generateMockEvent(i, i, i, 61%i, 5));
     }
 

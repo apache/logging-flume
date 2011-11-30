@@ -74,7 +74,10 @@ public final class MockEventUtils {
       int headerNameMargin,	int headerValueMargin, int numHeaders,
       int numChannels) {
 
-    int chIndex = Math.abs(RANDOM.nextInt())%numChannels;
+    int chIndex = 0;
+    if (numChannels > 1) {
+      chIndex = Math.abs(RANDOM.nextInt())%numChannels;
+    }
     String channel = "test-"+chIndex;
 
     StringBuilder sb = new StringBuilder("New Event[payload size:");

@@ -65,4 +65,14 @@ public interface SchemaHandler {
    */
   public PersistableEvent fetchAndDeleteEvent(
       String channel, Connection connection);
+
+  /**
+   * Returns the current size of the channel using the connection specified that
+   * must have an active transaction ongoing. This allows the provider impl to
+   * enforce channel capacity limits when persisting events.
+   * @return the current size of the channel.
+   * @param connection
+   * @return
+   */
+  public long getChannelSize(Connection connection);
 }

@@ -261,6 +261,9 @@ public class DerbySchemaHandler implements SchemaHandler {
          + "SCHEMAID = (SELECT SCHEMAID FROM SYS.SYSSCHEMAS WHERE "
          + "SCHEMANAME = ? ))";
 
+  public static final String QUERY_CHANNEL_SIZE
+      = "SELECT COUNT(*) FROM " + TABLE_FL_EVENT;
+
   public static final String STMT_INSERT_EVENT_BASE
       = "INSERT INTO " + TABLE_FL_EVENT + " ("
           + COLUMN_FLE_PAYLOAD + ", " + COLUMN_FLE_CHANNEL + ", "
@@ -1012,5 +1015,42 @@ public class DerbySchemaHandler implements SchemaHandler {
     }
 
     return peBuilder.build();
+  }
+
+  @Override
+  public long getChannelSize(Connection connection) {
+    long size = 0L;
+    Statement stmt = null;
+    try {
+      stmt = connection.createStatement();
+      stmt.execute(QUERY_CHANNEL_SIZE);
+      ResultSet rset = stmt.getResultSet();
+      if (!rset.next()) {
+        throw new JdbcChannelException("Failed to determine channel size: "
+              + "Query (" + QUERY_CHANNEL_SIZE
+              + ") did not produce any results");
+      }
+
+      size = rset.getLong(1);
+      connection.commit();
+    } catch (SQLException ex) {
+      try {
+        connection.rollback();
+      } catch (SQLException ex2) {
+        LOGGER.error("Unable to rollback transaction", ex2);
+      }
+      throw new JdbcChannelException("Unable to run query: "
+          + QUERY_CHANNEL_SIZE, ex);
+    } finally {
+      if (stmt != null) {
+        try {
+          stmt.close();
+        } catch (SQLException ex) {
+          LOGGER.error("Unable to close statement", ex);
+        }
+      }
+    }
+
+    return size;
   }
 }

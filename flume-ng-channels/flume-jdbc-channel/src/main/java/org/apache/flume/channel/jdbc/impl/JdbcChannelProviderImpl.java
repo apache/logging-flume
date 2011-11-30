@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Enumeration;
@@ -84,6 +85,9 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
   /** Driver Class Name */
   private String driverClassName;
 
+  /** Capacity Counter if one is needed */
+  private long maxCapacity = 0L;
+
   @Override
   public void initialize(Context context) {
     if (LOGGER.isDebugEnabled()) {
@@ -93,6 +97,27 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
 
     initializeDataSource(context);
     initializeSchema(context);
+    initializeChannelState(context);
+  }
+
+  private void initializeChannelState(Context context) {
+    String maxCapacityStr = context.getString(
+        ConfigurationConstants.CONFIG_MAX_CAPACITY, "0");
+
+    long maxCapacitySpecified = 0;
+    try {
+      maxCapacitySpecified = Long.parseLong(maxCapacityStr);
+    } catch (NumberFormatException nfe) {
+      LOGGER.warn("Invalid value specified for maximum channel capacity: "
+          + maxCapacityStr, nfe);
+    }
+
+    if (maxCapacitySpecified > 0) {
+      this.maxCapacity = maxCapacitySpecified;
+      LOGGER.debug("Maximum channel capacity: " + maxCapacity);
+    } else {
+      LOGGER.warn("JDBC channel will operate without a capacity limit.");
+    }
   }
 
   private void initializeSchema(Context context) {
@@ -184,6 +209,16 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
     try {
       tx = getTransaction();
       tx.begin();
+      Connection conn = tx.getConnection();
+
+      if (maxCapacity > 0) {
+        long currentSize = schemaHandler.getChannelSize(conn);
+        if (currentSize >= maxCapacity) {
+          throw new JdbcChannelException("Channel capacity reached: "
+              + "maxCapacity: " + maxCapacity + ", currentSize: "
+              + currentSize);
+        }
+      }
 
       // Persist the persistableEvent
       schemaHandler.storeEvent(persistableEvent, tx.getConnection());

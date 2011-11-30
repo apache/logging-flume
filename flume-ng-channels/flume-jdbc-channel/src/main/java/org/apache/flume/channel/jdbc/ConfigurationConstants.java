@@ -54,10 +54,13 @@ public final class ConfigurationConstants {
   public static final String CONFIG_MAX_CONNECTION =
       PREFIX + "maximum.connections";
 
+  public static final String CONFIG_MAX_CAPACITY =
+      PREFIX + "maximum.capacity";
+
   // Built in constants for JDBC Channel implementation
 
   /**
-   * The length for payload bytes that will stored inline. Payloads larger
+   * The length for payload bytes that will be stored inline. Payloads larger
    * than this length will spill into BLOB.
    */
   public static int PAYLOAD_LENGTH_THRESHOLD = 16384; // 16kb
