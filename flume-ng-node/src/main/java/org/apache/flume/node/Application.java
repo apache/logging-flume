@@ -20,6 +20,7 @@
 package org.apache.flume.node;
 
 import java.io.File;
+import java.io.IOException;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -29,6 +30,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.flume.ChannelFactory;
+import org.apache.flume.Constants;
 import org.apache.flume.SinkFactory;
 import org.apache.flume.SourceFactory;
 import org.apache.flume.channel.DefaultChannelFactory;
@@ -127,6 +129,20 @@ public class Application {
 
     if (commandLine.hasOption('f')) {
       configurationFile = new File(commandLine.getOptionValue('f'));
+
+      if (!configurationFile.exists()) {
+        // If command line invocation, then need to fail fast
+        if (System.getProperty(Constants.SYSPROP_CALLED_FROM_SERVICE) == null) {
+          String path = configurationFile.getPath();
+          try {
+            path = configurationFile.getCanonicalPath();
+          } catch (IOException ex) {
+            logger.error("Failed to read canonical path for file: " + path, ex);
+          }
+          throw new ParseException(
+              "The specified configuration file does not exist: " + path);
+        }
+      }
     }
 
     if (commandLine.hasOption('n')) {
