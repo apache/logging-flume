@@ -304,8 +304,9 @@ public class NetcatSource extends AbstractSource implements Configurable,
         } catch (Exception e) {
           ex = e;
           tx.rollback();
+        } finally {
+          tx.close();
         }
-        // TODO: Add finally { tx.close() }.
 
         if (ex == null) {
           writer.append("OK\n");

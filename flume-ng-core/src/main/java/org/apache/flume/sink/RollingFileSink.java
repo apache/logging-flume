@@ -153,6 +153,7 @@ public class RollingFileSink extends AbstractSink implements PollableSink,
     Channel channel = getChannel();
     Transaction transaction = channel.getTransaction();
     Event event = null;
+    Status result = Status.READY;
 
     try {
       transaction.begin();
@@ -174,21 +175,19 @@ public class RollingFileSink extends AbstractSink implements PollableSink,
          * events. For now, we're super-conservative and flush on each write.
          */
         outputStream.flush();
-
-        transaction.commit();
-
-        return Status.READY;
       } else {
-        transaction.rollback();
-
-        return Status.BACKOFF;
+        // No events found, request back-off semantics from runner
+        result = Status.BACKOFF;
       }
+      transaction.commit();
     } catch (Exception ex) {
       transaction.rollback();
       throw new EventDeliveryException("Failed to process event: " + event, ex);
     } finally {
       transaction.close();
     }
+
+    return result;
   }
 
   @Override

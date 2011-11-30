@@ -55,6 +55,7 @@ public class LoggerSink extends AbstractSink implements PollableSink {
 
   @Override
   public Status process() throws EventDeliveryException {
+    Status result = Status.READY;
     Channel channel = getChannel();
     Transaction transaction = channel.getTransaction();
     Event event = null;
@@ -68,17 +69,18 @@ public class LoggerSink extends AbstractSink implements PollableSink {
           logger.info("Event: " + event);
           transaction.commit();
         }
-
-        return Status.READY;
       } else {
-        transaction.rollback();
-        return Status.BACKOFF;
+        // No event found, request back-off semantics from the sink runner
+        result = Status.BACKOFF;
       }
+      transaction.commit();
     } catch (Exception ex) {
       transaction.rollback();
       throw new EventDeliveryException("Failed to log event: " + event, ex);
     } finally {
       transaction.close();
     }
+
+    return result;
   }
 }
