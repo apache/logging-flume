@@ -67,23 +67,23 @@ public class TestRollRollTags {
     assertEquals("second", Attributes.readString(e2, "duped"));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testRollRollConflict() throws IOException, FlumeSpecException,
       InterruptedException {
     EventSink snk = new CompositeSink(new Context(),
         "{value(\"rolltag\",\"foofoo\") =>   roll(10000) {null} } ");
     Event e = new EventImpl("foo".getBytes());
     snk.open();
-    snk.append(e); // should bork.
+    snk.append(e); // should not bork.
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testRollRollBork() throws IOException, FlumeSpecException, InterruptedException {
     EventSink snk = new CompositeSink(new Context(),
         "roll(10000) { roll(10000) { null } } ");
     Event e = new EventImpl("foo".getBytes());
     snk.open();
-    snk.append(e); // should bork.
+    snk.append(e); // should not bork.
   }
 
   @Test

@@ -307,10 +307,13 @@ public class TestRollSink {
         try {
           roll.open();
           roll.append(e1); // append blocks.
-        } catch (InterruptedException e) {
+        } catch (RuntimeException eR) {
           latch.countDown();
           LOG.error("Exited with expected Exception");
           return;
+        } catch (InterruptedException e) {
+          latch.countDown();
+          LOG.error("Exited with expected Exception");
         } catch (IOException e) {
           LOG.info("Got the unexpected IOException exit", e);
           e.printStackTrace();

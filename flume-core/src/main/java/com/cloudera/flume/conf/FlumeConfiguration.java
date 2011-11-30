@@ -183,6 +183,7 @@ public class FlumeConfiguration extends Configuration {
   public final static String COLLECTOR_EVENT_PORT = "flume.collector.event.port";
   public static final String COLLECTOR_DFS_DIR = "flume.collector.dfs.dir";
   public static final String COLLECTOR_ROLL_MILLIS = "flume.collector.roll.millis";
+  public static final String COLLECTOR_ROLL_TIMEOUT = "flume.collector.roll.timeout";
   public static final String COLLECTOR_OUTPUT_FORMAT = "flume.collector.output.format";
   public static final String COLLECTOR_DFS_COMPRESS_CODEC = "flume.collector.dfs.compress.codec";
 
@@ -639,6 +640,10 @@ public class FlumeConfiguration extends Configuration {
 
   public long getCollectorRollMillis() {
     return getLong(COLLECTOR_ROLL_MILLIS, 30000);
+  }
+
+  public long getCollectorRollTimeout() {
+    return getLong(COLLECTOR_ROLL_TIMEOUT, 1000);
   }
 
   /**

@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeBuilder;
+import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.FlumeBuilder.FunctionSpec;
 import com.cloudera.flume.conf.SinkFactory.SinkBuilder;
@@ -68,11 +69,14 @@ public class RollSink extends EventSink.Base {
   private static int threadInitNumber = 0;
   final long checkLatencyMs; // default 4x a second
   private Context ctx; // roll context
+  private long timeOut; // lock wait timeout
+  private boolean forceInterrupt = true;
 
   // reporting attributes and counters
   public final static String A_ROLLS = "rolls";
   public final static String A_ROLLFAILS = "rollfails";
   public final static String A_ROLLSPEC = "rollspec";
+  public final static String A_ROLL_ABORTED_APPENDS = "rollCanceledAppends";
   public final String A_ROLL_TAG; // TODO (jon) parameterize this.
   public final static String DEFAULT_ROLL_TAG = "rolltag";
 
@@ -80,6 +84,7 @@ public class RollSink extends EventSink.Base {
 
   final AtomicLong rolls = new AtomicLong();
   final AtomicLong rollfails = new AtomicLong();
+  final AtomicLong rollCaneledAppends = new AtomicLong();
 
   public RollSink(Context ctx, String spec, long maxAge, long checkMs) {
     this.ctx = ctx;
@@ -87,6 +92,7 @@ public class RollSink extends EventSink.Base {
     this.fspec = spec;
     this.trigger = new TimeTrigger(new ProcessTagger(), maxAge);
     this.checkLatencyMs = checkMs;
+    setTimeOut(FlumeConfiguration.get().getCollectorRollTimeout());
     LOG.info("Created RollSink: maxAge=" + maxAge + "ms trigger=[" + trigger
         + "] checkPeriodMs = " + checkLatencyMs + " spec='" + fspec + "'");
   }
@@ -97,6 +103,7 @@ public class RollSink extends EventSink.Base {
     this.fspec = spec;
     this.trigger = trigger;
     this.checkLatencyMs = checkMs;
+    setTimeOut(FlumeConfiguration.get().getCollectorRollTimeout());
     LOG.info("Created RollSink: trigger=[" + trigger + "] checkPeriodMs = "
         + checkLatencyMs + " spec='" + fspec + "'");
   }
@@ -205,12 +212,10 @@ public class RollSink extends EventSink.Base {
         throw new RuntimeException(e1.getCause());
       }
     } catch (CancellationException ce) {
-      Thread.currentThread().interrupt();
-      throw new InterruptedException(
+      throw new RuntimeException(
           "Blocked append interrupted by rotation event");
     } catch (InterruptedException ex) {
       LOG.warn("Unexpected Exception " + ex.getMessage(), ex);
-      Thread.currentThread().interrupt();
       throw (InterruptedException) ex;
     }
   }
@@ -228,7 +233,18 @@ public class RollSink extends EventSink.Base {
     }
     String tag = trigger.getTagger().getTag();
 
-    e.set(A_ROLL_TAG, tag.getBytes());
+    /* Note that if the directdriver is re-trying this event due to error in
+     * last append, then the event will already have the roll tag
+     * In that case, we want to continue using such event
+     */
+    try {
+      e.set(A_ROLL_TAG, tag.getBytes());
+    } catch (IllegalArgumentException eI) {
+      // if there's a previous rolltag then use it, else rethrow the exception
+      if (e.get(A_ROLL_TAG) == null)
+        throw eI;
+    }
+
     lock.readLock().lock();
     try {
       curSink.append(e);
@@ -264,10 +280,18 @@ public class RollSink extends EventSink.Base {
   }
 
   public boolean rotate() throws InterruptedException {
-    while (!lock.writeLock().tryLock(1000, TimeUnit.MILLISECONDS)) {
+    while (!lock.writeLock().tryLock(timeOut, TimeUnit.MILLISECONDS)) {
       // interrupt the future on the other.
       if (future != null) {
+        if (forceInterrupt == false) {
+          /* If the node is configured not to interrupt an append,
+           * then bail out. The next append or roll will take care
+           * rotating the file.
+           */
+          return false;
+        }
         future.cancel(true);
+        rollCaneledAppends.incrementAndGet();
       }
 
       // NOTE: there is no guarantee that this cancel actually succeeds.
@@ -293,7 +317,7 @@ public class RollSink extends EventSink.Base {
     LOG.info("closing RollSink '" + fspec + "'");
 
     // attempt to get the lock, and if we cannot, issue a cancel
-    while (!lock.writeLock().tryLock(1000, TimeUnit.MILLISECONDS)) {
+    while (!lock.writeLock().tryLock(timeOut, TimeUnit.MILLISECONDS)) {
       // interrupt the future on the other.
       if (future != null) {
         future.cancel(true);
@@ -380,6 +404,7 @@ public class RollSink extends EventSink.Base {
     rpt.setLongMetric(A_ROLLS, rolls.get());
     rpt.setLongMetric(A_ROLLFAILS, rollfails.get());
     rpt.setStringMetric(A_ROLLSPEC, fspec);
+    rpt.setLongMetric(A_ROLL_ABORTED_APPENDS, rollCaneledAppends.get());
     return rpt;
   }
 
@@ -441,6 +466,13 @@ public class RollSink extends EventSink.Base {
       }
     }
     return rt;
+  }
+
+  public void setTimeOut (long timeout) {
+    this.timeOut = timeout;
+    if (timeout == 0) {
+      forceInterrupt = false;
+    }
   }
 
   /**
