@@ -17,6 +17,7 @@
  */
 package org.apache.flume;
 
+import java.util.Map;
 import java.util.Set;
 
 public interface ChannelFactory {
@@ -27,6 +28,7 @@ public interface ChannelFactory {
 
   public Channel create(String name) throws InstantiationException;
 
-  public Set<String> getChannelNames();
+  public Channel createFanout(String chList, Map<String, Channel> chMap) throws InstantiationException;
 
+  public Set<String> getChannelNames();
 }

@@ -23,6 +23,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.StringTokenizer;
 
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
@@ -30,6 +31,7 @@ import org.apache.flume.Sink;
 import org.apache.flume.SinkRunner;
 import org.apache.flume.Source;
 import org.apache.flume.SourceRunner;
+import org.apache.flume.channel.FanoutChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.conf.file.AbstractFileConfigurationProvider;
 import org.apache.flume.conf.file.SimpleNodeConfiguration;
@@ -241,8 +243,14 @@ public class PropertiesFileConfigurationProvider extends
 
       Configurables.configure(source, context);
 
-      source.setChannel(conf.getChannels().get(
-          comp.getConfiguration().get("channels")));
+      if (comp.getConfiguration().get("channels").contains(",")) {
+        // then create a fanout if there are channel for this source
+        source.setChannel(getChannelFactory().createFanout(
+            comp.getConfiguration().get("channels"),conf.getChannels()));
+      } else {
+        source.setChannel(conf.getChannels().get(
+            comp.getConfiguration().get("channels")));        
+      }
       conf.getSourceRunners().put(comp.getComponentName(),
           SourceRunner.forSource(source));
     }

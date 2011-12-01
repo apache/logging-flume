@@ -22,6 +22,7 @@ package org.apache.flume.channel;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelFactory;
@@ -99,6 +100,19 @@ public class DefaultChannelFactory implements ChannelFactory {
   public void setChannelRegistry(
       Map<String, Class<? extends Channel>> channelRegistry) {
     this.channelRegistry = channelRegistry;
+  }
+
+  // build a fanout channel from the list of channel names and map of <name,channels>
+  @Override
+  public Channel createFanout(String chList, Map<String, Channel> chMap)
+      throws InstantiationException {
+
+    FanoutChannel fnc = (FanoutChannel)create("fanout");
+    StringTokenizer tk = new StringTokenizer(chList, ",");
+    while (tk.hasMoreTokens()) {
+      fnc.addFanout(chMap.get(tk.nextToken()));
+    }
+    return fnc;
   }
 
 }

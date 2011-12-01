@@ -34,6 +34,7 @@ import org.apache.flume.Constants;
 import org.apache.flume.SinkFactory;
 import org.apache.flume.SourceFactory;
 import org.apache.flume.channel.DefaultChannelFactory;
+import org.apache.flume.channel.FanoutChannel;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.jdbc.JdbcChannel;
 import org.apache.flume.conf.file.AbstractFileConfigurationProvider;
@@ -99,6 +100,7 @@ public class Application {
   public void loadPlugins() {
     channelFactory.register("memory", MemoryChannel.class);
     channelFactory.register("jdbc", JdbcChannel.class);
+    channelFactory.register("fanout", FanoutChannel.class);
 
     sourceFactory.register("seq", SequenceGeneratorSource.class);
     sourceFactory.register("netcat", NetcatSource.class);

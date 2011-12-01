@@ -255,7 +255,8 @@ public class MemoryChannel implements Channel, Configurable {
 
       int myStamp = currentStamp.getAndIncrement();
       StampedEvent stampedEvent = new StampedEvent(myStamp, event);
-      queue.put(stampedEvent);
+      if (queue.offer(stampedEvent,keepAlive, TimeUnit.SECONDS) == false)
+        throw new ChannelException("put(" + event + ") timed out");
       myTxn.logPut(stampedEvent, myStamp);
 
     } catch (InterruptedException ex) {
