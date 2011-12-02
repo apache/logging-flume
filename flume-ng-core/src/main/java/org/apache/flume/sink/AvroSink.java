@@ -143,29 +143,50 @@ public class AvroSink extends AbstractSink implements PollableSink,
     Preconditions.checkState(port != null, "No port specified");
   }
 
+  private void createConnection() throws IOException {
+    if (transceiver == null) {
+      logger.debug("Creating new tranceiver connection to hostname:{} port:{}",
+          hostname, port);
+      transceiver = new NettyTransceiver(new InetSocketAddress(hostname, port));
+    }
+
+    if (client == null) {
+      logger.debug("Creating Avro client with tranceiver:{}", transceiver);
+      client = SpecificRequestor.getClient(AvroSourceProtocol.class,
+          transceiver);
+    }
+  }
+
+  private void destroyConnection() {
+    if (transceiver != null) {
+      logger.debug("Destroying tranceiver:{}", transceiver);
+      try {
+        transceiver.close();
+      } catch (IOException e) {
+        logger
+            .error(
+                "Attempt to clean up avro tranceiver after client error failed. Exception follows.",
+                e);
+      }
+
+      transceiver = null;
+    }
+
+    client = null;
+  }
+
   @Override
   public void start() {
     logger.info("Avro sink starting");
 
     try {
-      transceiver = new NettyTransceiver(new InetSocketAddress(hostname, port));
-      client = SpecificRequestor.getClient(AvroSourceProtocol.class,
-          transceiver);
+      createConnection();
     } catch (Exception e) {
       logger.error("Unable to create avro client using hostname:" + hostname
           + " port:" + port + ". Exception follows.", e);
 
       /* Try to prevent leaking resources. */
-      if (transceiver != null) {
-        try {
-          transceiver.close();
-        } catch (IOException e1) {
-          logger
-              .error(
-                  "Attempt to clean up avro tranceiver after client error failed. Exception follows.",
-                  e1);
-        }
-      }
+      destroyConnection();
 
       /* FIXME: Mark ourselves as failed. */
       return;
@@ -180,12 +201,7 @@ public class AvroSink extends AbstractSink implements PollableSink,
   public void stop() {
     logger.info("Avro sink stopping");
 
-    try {
-      transceiver.close();
-    } catch (IOException e) {
-      logger.error(
-          "Unable to shut down avro tranceiver - Possible resource leak!", e);
-    }
+    destroyConnection();
 
     super.stop();
 
@@ -200,6 +216,7 @@ public class AvroSink extends AbstractSink implements PollableSink,
 
     try {
       transaction.begin();
+      createConnection();
 
       List<AvroFlumeEvent> batch = new LinkedList<AvroFlumeEvent>();
 
@@ -243,6 +260,12 @@ public class AvroSink extends AbstractSink implements PollableSink,
       transaction.rollback();
       logger.error("Unable to send event batch. Exception follows.", e);
       status = Status.BACKOFF;
+    } catch (Exception e) {
+      transaction.rollback();
+      logger.error(
+          "Unable to communicate with Avro server. Exception follows.", e);
+      status = Status.BACKOFF;
+      destroyConnection();
     } finally {
       transaction.close();
     }

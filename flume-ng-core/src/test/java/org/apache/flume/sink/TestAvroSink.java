@@ -126,6 +126,51 @@ public class TestAvroSink {
     server.close();
   }
 
+  @Test
+  public void testFailedConnect() throws InterruptedException,
+      EventDeliveryException {
+
+    Event event = EventBuilder.withBody("test event 1".getBytes(),
+        new HashMap<String, String>());
+    Server server = createServer();
+
+    server.start();
+    sink.start();
+    Assert.assertTrue(LifecycleController.waitForOneOf(sink,
+        LifecycleState.START_OR_ERROR, 5000));
+
+    server.close();
+
+    Transaction transaction = channel.getTransaction();
+
+    transaction.begin();
+    for (int i = 0; i < 10; i++) {
+      channel.put(event);
+    }
+    transaction.commit();
+    transaction.close();
+
+    for (int i = 0; i < 5; i++) {
+      PollableSink.Status status = sink.process();
+      Assert.assertEquals(PollableSink.Status.BACKOFF, status);
+    }
+
+    server = createServer();
+    server.start();
+
+    for (int i = 0; i < 5; i++) {
+      PollableSink.Status status = sink.process();
+      Assert.assertEquals(PollableSink.Status.READY, status);
+    }
+
+    Assert.assertEquals(PollableSink.Status.BACKOFF, sink.process());
+
+    sink.stop();
+    Assert.assertTrue(LifecycleController.waitForOneOf(sink,
+        LifecycleState.STOP_OR_ERROR, 5000));
+    server.close();
+  }
+
   private Server createServer() {
     Server server = new NettyServer(new SpecificResponder(
         AvroSourceProtocol.class, new MockAvroServer()), new InetSocketAddress(
