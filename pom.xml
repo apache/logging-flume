@@ -422,6 +422,10 @@ limitations under the License.
                 <excludes>
                   <exclude>.git/</exclude>
                   <exclude>.gitignore</exclude>
+                  <!-- ASF jenkins box puts the Maven repo in our root directory. -->
+                  <exclude>.repository/</exclude>
+                  <exclude>**/*.diff</exclude>
+                  <exclude>**/*.patch</exclude>
                 </excludes>
               </configuration>
             </execution>
