@@ -67,7 +67,6 @@ public class LoggerSink extends AbstractSink implements PollableSink {
       if (event != null) {
         if (logger.isInfoEnabled()) {
           logger.info("Event: " + event);
-          transaction.commit();
         }
       } else {
         // No event found, request back-off semantics from the sink runner
