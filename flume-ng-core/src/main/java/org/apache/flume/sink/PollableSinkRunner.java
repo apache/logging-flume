@@ -33,6 +33,8 @@ public class PollableSinkRunner extends SinkRunner {
 
   private static final Logger logger = LoggerFactory
       .getLogger(PollableSinkRunner.class);
+  private static final long backoffSleepIncrement = 1000;
+  private static final long maxBackoffSleep = 5000;
 
   private CounterGroup counterGroup;
   private PollingRunner runner;
@@ -112,8 +114,12 @@ public class PollableSinkRunner extends SinkRunner {
         try {
           if (sink.process().equals(PollableSink.Status.BACKOFF)) {
             counterGroup.incrementAndGet("runner.backoffs");
-            /* Should this be configurable? */
-            Thread.sleep(500);
+
+            Thread.sleep(Math.min(
+                counterGroup.incrementAndGet("runner.backoffs.consecutive")
+                    * backoffSleepIncrement, maxBackoffSleep));
+          } else {
+            counterGroup.set("runner.backoffs.consecutive", 0L);
           }
         } catch (InterruptedException e) {
           logger.debug("Interrupted while processing an event. Exiting.");

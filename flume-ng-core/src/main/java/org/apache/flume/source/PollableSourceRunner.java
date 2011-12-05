@@ -47,8 +47,8 @@ public class PollableSourceRunner extends SourceRunner {
 
   private static final Logger logger = LoggerFactory
       .getLogger(PollableSourceRunner.class);
-  private static final long backoffSleepIncrement = 100;
-  private static final long maxBackoffSleep = 500;
+  private static final long backoffSleepIncrement = 1000;
+  private static final long maxBackoffSleep = 5000;
 
   private AtomicBoolean shouldStop;
 
