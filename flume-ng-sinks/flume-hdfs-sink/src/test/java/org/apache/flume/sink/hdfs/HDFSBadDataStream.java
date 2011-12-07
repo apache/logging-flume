@@ -33,6 +33,13 @@ public class HDFSBadDataStream extends HDFSDataStream {
 
       if (e.getHeaders().containsKey("fault")) {
         throw new IOException("Injected fault");
+      } else if (e.getHeaders().containsKey("slow")) {
+        long waitTime = Long.parseLong(e.getHeaders().get("slow"));
+        try {
+          Thread.sleep(waitTime);
+        } catch (InterruptedException eT) {
+          throw new IOException("append interrupted", eT);
+        }
       }
       super.append(e, fmt);
     }
