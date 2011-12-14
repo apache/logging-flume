@@ -28,7 +28,6 @@ limitations under the License.
 
   <groupId>org.apache.flume.flume-ng-sinks</groupId>
   <artifactId>flume-hdfs-sink</artifactId>
-  <version>0.9.5-SNAPSHOT</version>
   <name>Flume NG HDFS </name>
 
   <build>
@@ -45,7 +44,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-ng-core</artifactId>
-      <version>0.9.5-SNAPSHOT</version>
+      <version>${project.version}</version>
     </dependency>
 
     <dependency>

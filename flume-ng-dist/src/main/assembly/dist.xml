@@ -17,8 +17,6 @@
  under the License.
 -->
 
-<?xml version="1.0" encoding="UTF-8"?>
-
 <assembly
   xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -27,97 +25,86 @@
   <id>project</id>
 
   <formats>
-    <format>dir</format>
+    <!-- FIXME: This will become tar.gz or tar.bz2 after testing. -->
+    <format>tar.gz</format>
+    <format>zip</format>
   </formats>
-  <includeBaseDirectory>true</includeBaseDirectory>
+
   <baseDirectory>flume-${project.version}</baseDirectory>
 
   <moduleSets>
 
-    <!-- Copy flume core jar to lib -->
     <moduleSet>
       <useAllReactorProjects>true</useAllReactorProjects>
 
-      <sources>
-        <outputDirectory>/</outputDirectory>
-        <includes />
-        <excludes>
-          <!-- maven build stuff -->
-          <exclude>**/target/**</exclude>
-          <!-- default eclipse junk -->
-          <exclude>**/bin/**</exclude>
-          <exclude>**/.settings/**</exclude>
-          <exclude>**/.project</exclude>
-          <exclude>**/.classpath</exclude>
-          <exclude>**/.gitignore</exclude>
-        </excludes>
-      </sources>
+      <includes>
+        <include>org.apache.flume:flume-ng-core</include>
+        <include>org.apache.flume:flume-ng-node</include>
+        <include>org.apache.flume:flume-ng-dist</include>
+        <include>org.apache.flume:flume-ng-channels</include>
+        <include>org.apache.flume:flume-ng-sinks</include>
+      </includes>
 
       <binaries>
-        <outputDirectory>/</outputDirectory>
         <unpack>false</unpack>
-        <includes />
+        <outputDirectory>lib</outputDirectory>
 
         <dependencySets>
           <dependencySet>
-            <scope>provided</scope>
-            <outputDirectory>/</outputDirectory>
             <useProjectArtifact>false</useProjectArtifact>
-          </dependencySet>
-
-          <dependencySet>
-            <scope>runtime</scope>
             <outputDirectory>lib</outputDirectory>
-            <useProjectArtifact>false</useProjectArtifact>
           </dependencySet>
         </dependencySets>
       </binaries>
 
-      <includes>
-        <include>org.apache.flume:flume-ng-core</include>
-      </includes>
+      <sources>
+        <includeModuleDirectory>true</includeModuleDirectory>
+        <excludeSubModuleDirectories>false</excludeSubModuleDirectories>
+
+        <fileSets>
+          <fileSet>
+            <excludes>
+              <exclude>target/**</exclude>
+              <exclude>*/target/**</exclude>
+              <exclude>.classpath</exclude>
+              <exclude>*/.classpath</exclude>
+              <exclude>.project</exclude>
+              <exclude>*/.project</exclude>
+              <exclude>.settings/**</exclude>
+              <exclude>*/.settings/**</exclude>
+            </excludes>
+          </fileSet>
+        </fileSets>
+      </sources>
+
     </moduleSet>
 
   </moduleSets>
 
-  <fileSets>
-
-    <!-- Copy miscellaneous top level files -->
+   <fileSets>
     <fileSet>
       <directory>../</directory>
+
+      <excludes>
+        <exclude>flume-ng-core/**</exclude>
+        <exclude>flume-ng-node/**</exclude>
+        <exclude>flume-ng-channels/**</exclude>
+        <exclude>flume-ng-sinks/**</exclude>
+        <exclude>flume-ng-dist/**</exclude>
+        <exclude>target/**</exclude>
+        <exclude>lib/**</exclude>
+      </excludes>
+
       <includes>
-        <include>CHANGELOG.html</include>
         <include>DEVNOTES</include>
+        <include>README</include>
         <include>LICENSE</include>
         <include>NOTICE</include>
-        <include>README</include>
+        <include>bin/**</include>
+        <include>conf/**</include>
         <include>pom.xml</include>
-        <include>pmd.xml</include>
-        <include>RELEASENOTES</include>
       </includes>
     </fileSet>
-
-    <!-- Copy flume sources -->
-    <fileSet>
-      <outputDirectory>/</outputDirectory>
-      <directory>../</directory>
-      <includes>
-        <include>flume-ng-core/**</include>
-        <include>flume-ng-node/**</include>
-        <include>flume-ng-dist/**</include>
-      </includes>
-      <excludes>
-        <exclude>**/target/**</exclude>
-        <exclude>**/target</exclude>
-        <!-- default eclipse junk -->
-        <exclude>**/bin/**</exclude>
-        <exclude>**/.settings/**</exclude>
-        <exclude>**/.project</exclude>
-        <exclude>**/.classpath</exclude>
-        <exclude>**/.gitignore</exclude>
-      </excludes>
-    </fileSet>
-
   </fileSets>
 
 </assembly>

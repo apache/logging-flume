@@ -28,9 +28,7 @@
     <version>0.9.5-SNAPSHOT</version>
   </parent>
 
-  <groupId>org.apache.flume</groupId>
   <artifactId>flume-ng-node</artifactId>
-  <version>0.9.5-SNAPSHOT</version>
   <name>Flume NG Node</name>
 
   <build>

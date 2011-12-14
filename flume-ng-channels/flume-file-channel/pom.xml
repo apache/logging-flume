@@ -27,9 +27,8 @@
     <version>0.9.5-SNAPSHOT</version>
   </parent>
 
-  <groupId>org.apache.flume</groupId>
+  <groupId>org.apache.flume.flume-ng-channels</groupId>
   <artifactId>flume-file-channel</artifactId>
-  <version>0.9.5-SNAPSHOT</version>
   <name>Flume NG file-based channel</name>
 
   <build>
@@ -46,7 +45,7 @@
     <dependency>
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-ng-core</artifactId>
-      <version>0.9.5-SNAPSHOT</version>
+      <version>${project.version}</version>
     </dependency>
 
     <dependency>

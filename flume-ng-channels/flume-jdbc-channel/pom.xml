@@ -28,7 +28,6 @@ limitations under the License.
 
   <groupId>org.apache.flume.flume-ng-channels</groupId>
   <artifactId>flume-jdbc-channel</artifactId>
-  <version>0.9.5-SNAPSHOT</version>
   <name>Flume NG JDBC channel</name>
 
   <build>
