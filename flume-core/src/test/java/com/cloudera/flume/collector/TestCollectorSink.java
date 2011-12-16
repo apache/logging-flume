@@ -51,6 +51,7 @@ import com.cloudera.flume.agent.durability.WALManager;
 import com.cloudera.flume.conf.Context;
 import com.cloudera.flume.conf.FlumeArgException;
 import com.cloudera.flume.conf.FlumeBuilder;
+import com.cloudera.flume.conf.FlumeConfiguration;
 import com.cloudera.flume.conf.FlumeSpecException;
 import com.cloudera.flume.conf.LogicalNodeContext;
 import com.cloudera.flume.conf.ReportTestingContext;
@@ -1016,4 +1017,66 @@ public class TestCollectorSink {
    coll.close();
    assertEquals(result.get(0), "success");
  }
+
+ /*
+  * This test verifies that the acks are cleared when a close
+  * throws an IOException
+  */
+ @Test
+ public void testAcksOnCloseError() throws IOException,
+     InterruptedException, FlumeSpecException {
+   final EventSink snk = mock(EventSink.class);
+
+   doNothing().when(snk).append((Event) anyObject());
+
+   doThrow(new IOException("Force close error")).
+       doNothing().
+       doNothing().
+       when(snk).close();
+
+   doNothing().when(snk).open();
+   SinkBuilder sb = new SinkBuilder() {
+     @Override
+     public EventSink build(Context context, String... argv) {
+       return snk;
+     }
+   };
+   SinkFactoryImpl sf = new SinkFactoryImpl();
+   sf.setSink("mIOSink", sb);
+   FlumeBuilder.setSinkFactory(sf);
+
+   final EventSink coll = FlumeBuilder.buildSink(
+       LogicalNodeContext.testingContext(), "collector(1000) { mIOSink }");
+
+   // mem source with acks injected
+   EventSource ackedmem = setupAckRoll();
+
+   coll.open();
+
+   //send first batch
+   coll.append(ackedmem.next()); // ack beg
+   coll.append(ackedmem.next()); // data
+   coll.append(ackedmem.next()); // ack end
+
+   // wait for a roll that results in IOException
+   Clock.sleep(1100);
+   // failed roll should throw away the acks
+   assertEquals(((CollectorSink)coll).rollAckSet.size(), 0);
+
+   //send second batch
+   coll.append(ackedmem.next()); // ack beg
+   coll.append(ackedmem.next()); // data
+   coll.append(ackedmem.next()); // ack end
+
+   // now we should have one ack from the last batch
+   assertEquals(((CollectorSink)coll).rollAckSet.size(), 1);
+
+   // wait for a roll that should succeed
+   Clock.sleep(1100);
+   // successful roll should clear the acks
+   assertEquals(((CollectorSink)coll).rollAckSet.size(), 0);
+
+   coll.close();
+ }
+
 }

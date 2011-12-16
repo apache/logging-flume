@@ -71,6 +71,7 @@ public class CollectorSink extends EventSink.Base {
   AckAccumulator accum = new AckAccumulator();
   final AckListener ackDest;
   final String snkSpec;
+  final boolean cleanupOnClose;
 
   // This is a container for acks that should be ready for delivery when the
   // hdfs sink is closed/flushed
@@ -88,6 +89,7 @@ public class CollectorSink extends EventSink.Base {
       final Tagger tagger, long checkmillis, AckListener ackDest) {
     this.ackDest = ackDest;
     this.snkSpec = snkSpec;
+    cleanupOnClose = FlumeConfiguration.get().getCollectorCloseErrorCleanup();
     roller = new RollSink(ctx, snkSpec, new TimeTrigger(tagger, millis),
         checkmillis) {
       // this is wraps the normal roll sink with an extra roll detection
@@ -167,13 +169,28 @@ public class CollectorSink extends EventSink.Base {
 
     @Override
     public void close() throws IOException, InterruptedException {
-      LOG.debug("closing roll detect deco {}", tag);
-      super.close();
-      flushRollAcks();
-      LOG.debug("closed  roll detect deco {}", tag);
+      try {
+        LOG.debug("closing roll detect deco {}", tag);
+        super.close();
+        clearRollAcks(true);
+        LOG.debug("closed  roll detect deco {}", tag);
+      } catch (IOException eI) {
+        /* For most sinks, if the close due to IO error then the events
+         * are not saved and need to be resent. We need to clear these
+         * acks since these events are lost. Otherwise the next successful
+         * would flush those and agent won't resend the data.
+         * If the sink can ignore the error, then
+         * flume.collector.close.cleanup needs to be set to false.
+         */
+        LOG.debug("Error in close, clearing roll acks {}", tag);
+        if (cleanupOnClose == true) {
+          clearRollAcks(false);
+        }
+        throw eI;
+      }
     }
 
-    void flushRollAcks() throws IOException {
+    private void clearRollAcks(boolean flushAcks) throws IOException {
       AckListener master = ackDest;
       Collection<String> acktags;
       synchronized (rollAckSet) {
@@ -182,8 +199,10 @@ public class CollectorSink extends EventSink.Base {
         LOG.debug("Roll closed, pushing acks for " + tag + " :: " + acktags);
       }
 
-      for (String at : acktags) {
-        master.end(at);
+      if (flushAcks == true) {
+        for (String at : acktags) {
+          master.end(at);
+        }
       }
     }
   };

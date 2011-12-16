@@ -186,6 +186,7 @@ public class FlumeConfiguration extends Configuration {
   public static final String COLLECTOR_ROLL_TIMEOUT = "flume.collector.roll.timeout";
   public static final String COLLECTOR_OUTPUT_FORMAT = "flume.collector.output.format";
   public static final String COLLECTOR_DFS_COMPRESS_CODEC = "flume.collector.dfs.compress.codec";
+  public static final String COLLECTOR_CLOSE_ERROR_CLEANUP = "flume.collector.close.cleanup";
 
   // TODO(henry) move these to flume.master - they now tell the master which
   // interface / port to start up on
@@ -610,6 +611,10 @@ public class FlumeConfiguration extends Configuration {
   public int getCollectorPort() {
     // FLUME = 35863 (flume on the telephone)
     return getInt(COLLECTOR_EVENT_PORT, 35853);
+  }
+
+  public boolean getCollectorCloseErrorCleanup() {
+    return getBoolean(COLLECTOR_CLOSE_ERROR_CLEANUP, true);
   }
 
   /**
