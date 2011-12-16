@@ -25,6 +25,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Enumeration;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.sql.DataSource;
@@ -95,9 +96,24 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
           + context);
     }
 
+    initializeSystemProperties(context);
     initializeDataSource(context);
     initializeSchema(context);
     initializeChannelState(context);
+  }
+
+  private void initializeSystemProperties(Context context) {
+    Map<String, Object> sysProps = context.getSubProperties(
+        ConfigurationConstants.CONFIG_JDBC_SYSPRO_PREFIX);
+
+    for (String key: sysProps.keySet()) {
+      Object object = sysProps.get(key);
+      String value = "";
+      if (object != null) {
+        value = object.toString();
+      }
+      System.setProperty(key, value);
+    }
   }
 
   private void initializeChannelState(Context context) {

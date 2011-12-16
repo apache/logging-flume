@@ -24,6 +24,9 @@ public final class ConfigurationConstants {
 
   public static final String PREFIX = "org.apache.flume.channel.jdbc.";
 
+  public static final String CONFIG_JDBC_SYSPRO_PREFIX =
+      PREFIX + "sysprop.";
+
   public static final String CONFIG_JDBC_DRIVER_CLASS =
       PREFIX + "driver.class";
 

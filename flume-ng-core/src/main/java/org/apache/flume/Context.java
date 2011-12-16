@@ -30,6 +30,19 @@ public class Context {
     parameters = new HashMap<String, Object>();
   }
 
+  public Map<String, Object> getSubProperties(String prefix) {
+    Map<String, Object> result = new HashMap<String, Object>();
+
+    for (String key : parameters.keySet()) {
+      if (key.startsWith(prefix)) {
+        String name = key.substring(prefix.length());
+        result.put(name, parameters.get(key));
+      }
+    }
+
+    return result;
+  }
+
   public void put(String key, Object value) {
     parameters.put(key, value);
   }
