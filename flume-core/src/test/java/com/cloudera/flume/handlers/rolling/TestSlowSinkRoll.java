@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.log4j.Level;
 import org.codehaus.jettison.json.JSONException;
@@ -151,8 +152,9 @@ public class TestSlowSinkRoll {
   @Test
   public void testSlowSinkRoll() throws IOException, InterruptedException {
     final File f = FileUtil.mktempdir();
+    final AtomicBoolean firstPass = new AtomicBoolean(true);
 
-    RollSink snk = new RollSink(new Context(), "test", 2000, 250) {
+    RollSink snk = new RollSink(new Context(), "test", 1000, 250) {
       @Override
       protected EventSink newSink(Context ctx) throws IOException {
         return new EscapedCustomDfsSink(ctx, "file:///" + f.getPath(),
@@ -160,7 +162,10 @@ public class TestSlowSinkRoll {
           @Override
           public void append(final Event e) throws IOException, InterruptedException {
             super.append(e);
-            Clock.sleep(1500);
+            if (firstPass.get()) {
+              firstPass.set(false);
+              Clock.sleep(3000);
+            }
           }
         };
       }
@@ -169,7 +174,7 @@ public class TestSlowSinkRoll {
     DummySource source = new DummySource(4);
     DirectDriver driver = new DirectDriver(source, snk);
     driver.start();
-    Clock.sleep(12200);
+    Clock.sleep(6000);
     driver.stop();
     assertTrue(snk.getMetrics().getLongMetric(RollSink.A_ROLL_ABORTED_APPENDS) > Long.valueOf(0));
   }
