@@ -262,7 +262,12 @@ public class PropertiesFileConfigurationProvider extends
     for (ComponentConfiguration comp : agentConf.getSinks()) {
       Context context = new Context();
 
-      Sink sink = getSinkFactory().create(comp.getConfiguration().get("type"));
+      String type = comp.getConfiguration().get("type");
+      Sink sink = getSinkFactory().create(type);
+      if(sink == null) {
+        throw new InstantiationException("Can't instantiate sink with type " + type + " (it's probably " +
+          "unknown type)");
+      }
 
       for (Entry<String, String> entry : comp.getConfiguration().entrySet()) {
         context.put(entry.getKey(), entry.getValue());
