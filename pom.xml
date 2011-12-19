@@ -51,6 +51,7 @@ limitations under the License.
         <module>flume-ng-node</module>
         <module>flume-ng-dist</module>
         <module>flume-ng-channels</module>
+        <module>wal</module>
       </modules>
     </profile>
 
@@ -320,6 +321,14 @@ limitations under the License.
       <plugins>
 
         <plugin>
+          <groupId>org.apache.avro</groupId>
+          <artifactId>avro-maven-plugin</artifactId>
+          <version>1.6.1</version>
+          <configuration>
+          </configuration>
+        </plugin>
+
+        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>2.3.2</version>
@@ -536,19 +545,19 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro</artifactId>
-        <version>1.5.1</version>
+        <version>1.6.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro-compiler</artifactId>
-        <version>1.5.1</version>
+        <version>1.6.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro-ipc</artifactId>
-        <version>1.5.1</version>
+        <version>1.6.1</version>
       </dependency>
 
       <!-- FIXME: This should be removed when we migrate the IRC source / 
@@ -613,11 +622,11 @@ limitations under the License.
         <version>1.4</version>
       </dependency>
 
-     <dependency>
-       <groupId>org.apache.derby</groupId>
-       <artifactId>derby</artifactId>
-       <version>10.8.1.2</version>
-     </dependency>
+      <dependency>
+        <groupId>org.apache.derby</groupId>
+        <artifactId>derby</artifactId>
+        <version>10.8.1.2</version>
+      </dependency>
 
     </dependencies>
   </dependencyManagement>

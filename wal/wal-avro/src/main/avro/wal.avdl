@@ -1,0 +1,9 @@
+@namespace("org.apache.wal.avro")
+
+protocol AvroWALProtocol {
+
+  record AvroWALEntry {
+    long timeStamp;
+  }
+
+}
