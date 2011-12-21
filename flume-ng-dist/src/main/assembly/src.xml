@@ -22,7 +22,7 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
 
-  <id>dist</id>
+  <id>src</id>
 
   <formats>
     <!-- FIXME: This will become tar.gz or tar.bz2 after testing. -->
@@ -44,18 +44,6 @@
         <include>org.apache.flume:flume-ng-channels</include>
         <include>org.apache.flume:flume-ng-sinks</include>
       </includes>
-
-      <binaries>
-        <unpack>false</unpack>
-        <outputDirectory>lib</outputDirectory>
-
-        <dependencySets>
-          <dependencySet>
-            <useProjectArtifact>false</useProjectArtifact>
-            <outputDirectory>lib</outputDirectory>
-          </dependencySet>
-        </dependencySets>
-      </binaries>
 
       <sources>
         <includeModuleDirectory>true</includeModuleDirectory>
