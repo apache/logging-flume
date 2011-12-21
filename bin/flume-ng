@@ -80,15 +80,22 @@ run_node() {
     final_cp="$opt_conf:"
   fi
 
+  # If the user hasn't overridden the classpath, build it from the lib
+  # directory.
+  if [ -z "${FLUME_CLASSPATH}" ] ; then
+    FLUME_CLASSPATH="${FLUME_HOME}/lib/*"
+  else
+    warn "FLUME_CLASSPATH set to ${FLUME_CLASSPATH} - Hope you know what you're doing."
+  fi
+
   final_cp="${final_cp}${FLUME_CLASSPATH}"
 
   [ -n "$JAVA" ] || error "Unable to find java executable. Is it in your PATH?" 1
-  [ -n "$FLUME_CLASSPATH" ] || error "Flume classpath is not set! Use flume-env.sh or --classpath <cp>." 1
   [ -n "$opt_conf" ] || warn "No configuration directory set! Use --conf <dir> to override." 1
 
   FLUME_APPLICATION_CLASS=$FLUME_NODE_CLASS
 
-  $JAVA $JAVA_OPTS -cp $final_cp $FLUME_APPLICATION_CLASS $*
+  $JAVA $JAVA_OPTS -cp "$final_cp" "$FLUME_APPLICATION_CLASS" $*
 }
 
 run_avro_client() {
@@ -96,6 +103,14 @@ run_avro_client() {
 
   if [ -n "$opt_conf" ] ; then
     final_cp="$opt_conf:"
+  fi
+
+  # If the user hasn't overridden the classpath, build it from the lib
+  # directory.
+  if [ -z "${FLUME_CLASSPATH}" ] ; then
+    FLUME_CLASSPATH="${FLUME_HOME}/lib/*"
+  else
+    warn "FLUME_CLASSPATH set to ${FLUME_CLASSPATH} - Hope you know what you're doing."
   fi
 
   final_cp="${final_cp}${FLUME_CLASSPATH}"
@@ -106,7 +121,7 @@ run_avro_client() {
 
   FLUME_APPLICATION_CLASS=$FLUME_AVRO_CLIENT_CLASS
 
-  $JAVA $JAVA_OPTS -cp $final_cp $FLUME_APPLICATION_CLASS $*
+  $JAVA $JAVA_OPTS -cp "$final_cp" "$FLUME_APPLICATION_CLASS" $*
 }
 
 validate_env() {
@@ -165,6 +180,11 @@ while [ -n "$*" ] ; do
       ;;
   esac
 done
+
+if [ -z "${FLUME_HOME}" ] ; then
+  FLUME_HOME=`dirname $0`
+  FLUME_HOME="${FLUME_HOME}/../"
+fi
 
 if [ -n "$opt_help" ] ; then
   display_help
