@@ -38,22 +38,65 @@ limitations under the License.
     <test.include.pattern>**/Test*.java</test.include.pattern>
   </properties>
 
-  <profiles>
 
+  <modules>
+    <module>flume-ng-core</module>
+    <module>flume-ng-sinks</module>
+    <module>flume-ng-node</module>
+    <module>flume-ng-dist</module>
+    <module>flume-ng-channels</module>
+  </modules>
+
+  <profiles>
     <profile>
-      <id>ng</id>
+      <id>hadoop-0.20.205.0</id>
       <activation>
-        <activeByDefault>true</activeByDefault>
+        <property>
+          <name>!hadoop.profile</name>
+        </property>
       </activation>
-      <modules>
-        <module>flume-ng-core</module>
-        <module>flume-ng-sinks</module>
-        <module>flume-ng-node</module>
-        <module>flume-ng-dist</module>
-        <module>flume-ng-channels</module>
-      </modules>
+      <properties>
+        <hadoop.version>0.20.205.0</hadoop.version>
+        <hadoop.common.artifact.id>hadoop-core</hadoop.common.artifact.id>
+      </properties>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>${hadoop.common.artifact.id}</artifactId>
+            <version>${hadoop.version}</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
     </profile>
 
+    <profile>
+      <id>hadoop-0.23</id>
+      <activation>
+        <property>
+          <name>hadoop.profile</name>
+          <value>23</value>
+        </property>
+      </activation>
+      <properties>
+        <hadoop.version>0.23.1-SNAPSHOT</hadoop.version>
+        <hadoop.common.artifact.id>hadoop-common</hadoop.common.artifact.id>
+      </properties>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>${hadoop.common.artifact.id}</artifactId>
+            <version>${hadoop.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-auth</artifactId>
+            <version>${hadoop.version}</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+    </profile>
   </profiles>
 
   <inceptionYear>2009</inceptionYear>
@@ -450,6 +493,18 @@ limitations under the License.
       </dependency>
 
       <dependency>
+        <groupId>commons-logging</groupId>
+        <artifactId>commons-logging</artifactId>
+        <version>1.1.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-configuration</groupId>
+        <artifactId>commons-configuration</artifactId>
+        <version>1.6</version>
+      </dependency>
+
+      <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>r07</version>
@@ -504,6 +559,12 @@ limitations under the License.
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-log4j12</artifactId>
+        <version>1.5.11</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-jcl</artifactId>
         <version>1.5.11</version>
       </dependency>
 
@@ -591,8 +652,8 @@ limitations under the License.
 
       <dependency>
         <groupId>org.apache.hadoop</groupId>
-        <artifactId>hadoop-core</artifactId>
-        <version>0.20.2-CDH3B4</version>
+        <artifactId>hadoop-common</artifactId>
+        <version>${hadoop.version}</version>
       </dependency>
 
       <dependency>

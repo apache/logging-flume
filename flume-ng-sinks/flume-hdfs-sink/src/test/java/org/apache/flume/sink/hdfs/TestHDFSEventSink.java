@@ -192,7 +192,7 @@ public class TestHDFSEventSink {
         String line;
 
         while ((line = d.readLine()) != null) {
-          Assert.assertEquals(line, ("Test." + i + "." + j));
+          Assert.assertEquals(("Test." + i + "." + j), line);
           if (++j > txnMax) {
             j = 1;
             i++;

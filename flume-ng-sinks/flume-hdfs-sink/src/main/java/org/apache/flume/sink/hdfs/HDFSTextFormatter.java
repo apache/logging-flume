@@ -19,6 +19,8 @@
 
 package org.apache.flume.sink.hdfs;
 
+import java.util.Arrays;
+
 import org.apache.flume.Event;
 import org.apache.flume.sink.FlumeFormatter;
 //import org.apache.hadoop.io.BytesWritable;
@@ -68,7 +70,8 @@ public class HDFSTextFormatter implements FlumeFormatter {
   public byte[] getBytes(Event e) {
     Text record = makeText(e);
     record.append("\n".getBytes(), 0, 1);
-    return record.getBytes();
+    byte[] rawBytes = record.getBytes();
+    return Arrays.copyOf(rawBytes, record.getLength());
   }
 
 }
