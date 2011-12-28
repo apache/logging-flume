@@ -122,8 +122,11 @@ public class MemoryChannel implements Channel, Configurable {
       if (putStamp != 0) {
         lastCommitStamp.set(putStamp);
         lock.lock();
-        hasData.signal();
-        lock.unlock();
+        try {
+          hasData.signal();
+        } finally {
+          lock.unlock();
+        }
       }
       txnState = TransactionState.Committed;
       undoPutList.clear();
@@ -298,8 +301,11 @@ public class MemoryChannel implements Channel, Configurable {
       // wait for some committed data be there in the queue
       if ((timeout > 0) && (myTxn.lastTakeStamp() == lastCommitStamp.get())) {
         lock.lock();
-        hasData.await(timeout, TimeUnit.SECONDS);
-        lock.unlock();
+        try {
+          hasData.await(timeout, TimeUnit.SECONDS);
+        } finally {
+          lock.unlock();
+        }
         timeout = 0; // don't wait any further
       }
 
