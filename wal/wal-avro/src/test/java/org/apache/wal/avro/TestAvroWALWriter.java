@@ -1,22 +1,14 @@
 package org.apache.wal.avro;
 
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-
-import junit.framework.Assert;
 
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
-import org.apache.avro.io.Encoder;
-import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.avro.specific.SpecificDatumWriter;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -38,21 +30,8 @@ public class TestAvroWALWriter {
 
     testDirectory.mkdirs();
 
-    MappedByteBuffer indexBuffer = Files.map(new File(testDirectory,
-        "write-index"), FileChannel.MapMode.READ_WRITE, 8);
-    FileOutputStream walOutputStream = new FileOutputStream(new File(
-        testDirectory, "wal"), true);
-    Encoder encoder = EncoderFactory.get().directBinaryEncoder(walOutputStream,
-        null);
-    SpecificDatumWriter<AvroWALEntry> avroWriter = new SpecificDatumWriter<AvroWALEntry>(
-        AvroWALEntry.class);
-
     writer = new AvroWALWriter();
-
-    writer.setEncoder(encoder);
-    writer.setIndexBuffer(indexBuffer);
-    writer.setWalOutputStream(walOutputStream);
-    writer.setWriter(avroWriter);
+    writer.setDirectory(testDirectory);
   }
 
   @SuppressWarnings("deprecation")
@@ -63,36 +42,56 @@ public class TestAvroWALWriter {
 
   @Test
   public void testWrite() throws IOException {
+    writer.open();
+
     BinaryDecoder decoder = DecoderFactory.get().directBinaryDecoder(
-        new FileInputStream(new File(testDirectory, "wal")), null);
+        new FileInputStream(writer.getCurrentFile()), null);
     SpecificDatumReader<AvroWALEntry> reader = new SpecificDatumReader<AvroWALEntry>(
         AvroWALEntry.class);
 
-    writer.open();
-
-    for (int i = 0; i < 205; i++) {
+    for (int i = 1; i <= 205; i++) {
       AvroWALEntryAdapter entry = new AvroWALEntryAdapter(new AvroWALEntry());
 
       entry.getEntry().setTimeStamp(System.currentTimeMillis());
 
       writer.write(entry);
+      writer.mark();
 
-      if (i % 10 == 0) {
-        writer.reset();
-      } else {
-        writer.mark();
+      AvroWALEntry lastEntry = reader.read(null, decoder);
+      logger.debug("read:{}", lastEntry);
+      Assert.assertEquals(entry.getEntry(), lastEntry);
+
+      if (i % 100 == 0) {
+        logger.debug("Openning a new reader based on writer:{}", writer);
+
+        decoder = DecoderFactory.get().directBinaryDecoder(
+            new FileInputStream(writer.getCurrentFile()), null);
       }
-
-      try {
-        AvroWALEntry lastEntry = reader.read(null, decoder);
-        logger.debug("read:{}", lastEntry);
-      } catch (EOFException e) {
-        Assert.assertTrue(i % 10 == 0);
-      }
-
     }
 
-    writer.mark();
     writer.close();
   }
+
+  @Test
+  public void testBatchWrite() {
+    writer.open();
+
+    File file = writer.getCurrentFile();
+
+    for (int i = 0; i < 150; i++) {
+      AvroWALEntryAdapter entry = new AvroWALEntryAdapter(new AvroWALEntry());
+
+      entry.getEntry().setTimeStamp(System.currentTimeMillis());
+
+      writer.write(entry);
+    }
+
+    Assert.assertEquals(file, writer.getCurrentFile());
+
+    writer.mark();
+    Assert.assertFalse(file.equals(writer.getCurrentFile()));
+
+    writer.close();
+  }
+
 }

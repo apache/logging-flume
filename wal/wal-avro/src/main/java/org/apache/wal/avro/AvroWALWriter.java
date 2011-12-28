@@ -1,50 +1,81 @@
 package org.apache.wal.avro;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.Arrays;
 
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.wal.WALEntry;
+import org.apache.wal.WALException;
 import org.apache.wal.WALWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Closeables;
-import com.google.common.io.Files;
 
 public class AvroWALWriter implements WALWriter {
 
-  private static final short writeIndexVersion = 1;
   private static final Logger logger = LoggerFactory
       .getLogger(AvroWALWriter.class);
+  private static final int defaultEventLimit = 100;
 
   private File directory;
+  private int eventLimit;
 
   private FileOutputStream walOutputStream;
-  private MappedByteBuffer indexBuffer;
   private Encoder encoder;
   private SpecificDatumWriter<AvroWALEntry> writer;
 
-  private ByteArrayOutputStream indexOutputStream;
-  private Encoder indexEncoder;
-  private SpecificDatumWriter<AvroWALIndex> indexWriter;
+  private WALIndex index;
 
+  private int eventCount;
+  private int eventBatchCount;
   private File currentFile;
   private long currentPosition;
   private FileChannel outputChannel;
 
+  public AvroWALWriter() {
+    eventLimit = defaultEventLimit;
+    eventCount = 0;
+    eventBatchCount = 0;
+  }
+
   @Override
   public void open() {
     logger.info("Opening write ahead log in:{}", directory);
+
+    openIndex();
+    openWALFile();
+
+    writer = new SpecificDatumWriter<AvroWALEntry>(AvroWALEntry.class);
+  }
+
+  private void openIndex() {
+    logger.info("Opening write ahead log index in directory:{}", directory);
+
+    index = new WALIndex();
+
+    index.setDirectory(directory);
+
+    try {
+      index.open();
+    } catch (FileNotFoundException e) {
+      throw new WALException("Failed to open WAL index. Exception follows.", e);
+    } catch (IOException e) {
+      throw new WALException("Failed to open WAL index. Exception follows.", e);
+    }
+
+    logger.debug("Opened write ahead log index:{}", index);
+  }
+
+  private void openWALFile() {
+    logger.info("Opening WAL file");
 
     currentFile = new File(directory, System.currentTimeMillis() + ".wal");
 
@@ -52,56 +83,24 @@ public class AvroWALWriter implements WALWriter {
       walOutputStream = new FileOutputStream(currentFile, true);
       outputChannel = walOutputStream.getChannel();
       currentPosition = outputChannel.position();
+      encoder = EncoderFactory.get().directBinaryEncoder(walOutputStream, null);
 
-      indexOutputStream = new ByteArrayOutputStream(1024);
-      indexEncoder = EncoderFactory.get().jsonEncoder(AvroWALIndex.SCHEMA$,
-          indexOutputStream);
-      indexWriter = new SpecificDatumWriter<AvroWALIndex>(AvroWALIndex.class);
-
-      indexBuffer = Files.map(new File(directory, "write.idx"),
-          FileChannel.MapMode.READ_WRITE, 8 * 1024);
-
-      updateWriteIndex(currentPosition, currentFile.getPath());
+      index.updateIndex(currentFile.getPath(), 0);
     } catch (FileNotFoundException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new WALException(
+          "Failed to open WAL (missing parent directory?). Exception follows.",
+          e);
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new WALException("Failed to open WAL. Exception follows.", e);
     }
-
-    encoder = EncoderFactory.get().directBinaryEncoder(walOutputStream, null);
-    writer = new SpecificDatumWriter<AvroWALEntry>(AvroWALEntry.class);
 
     logger.debug("Opened write ahead log:{} currentPosition:{}", currentFile,
         currentPosition);
   }
 
-  private void updateWriteIndex(long currentPosition, String path) {
-    logger.debug("Updating write index to position:{} path:{}",
-        currentPosition, path);
-
-    AvroWALIndex index = AvroWALIndex
-        .newBuilder()
-        .setVersion(writeIndexVersion)
-        .setEntries(
-            Arrays.asList(AvroWALIndexEntry.newBuilder()
-                .setPath(currentFile.getPath()).setPosition(currentPosition)
-                .build())).build();
-
-    indexOutputStream.reset();
-
-    try {
-      indexWriter.write(index, indexEncoder);
-      indexEncoder.flush();
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-
-    indexBuffer.put(indexOutputStream.toByteArray());
-    indexBuffer.force();
-    indexBuffer.flip();
+  private void closeWALFile() {
+    Closeables.closeQuietly(outputChannel);
+    Closeables.closeQuietly(walOutputStream);
   }
 
   @Override
@@ -114,13 +113,14 @@ public class AvroWALWriter implements WALWriter {
       encoder.flush();
       outputChannel.force(true);
       currentPosition = outputChannel.position();
+      eventBatchCount++;
 
       if (logger.isDebugEnabled()) {
         logger.debug("Wrote entry:{} markPosition:{} currentPosition:{}",
-            new Object[] { entry, indexBuffer.getLong(0), currentPosition });
+            new Object[] { entry, index.getPosition(), currentPosition });
       }
     } catch (IOException e) {
-      logger.error("Failed to write WAL entry. Exception follows.", e);
+      throw new WALException("Failed to write WAL entry. Exception follows.", e);
     }
   }
 
@@ -133,62 +133,76 @@ public class AvroWALWriter implements WALWriter {
 
   @Override
   public void mark() {
-    updateWriteIndex(currentPosition, currentFile.getPath());
+    logger.debug("Marking currentFile:{} currentPosition:{}", currentFile,
+        currentPosition);
+
+    index.updateIndex(currentFile.getPath(), currentPosition);
+
+    eventCount += eventBatchCount;
+    eventBatchCount = 0;
+
+    /*
+     * Checkpoint logic:
+     * 
+     * Since we flush the log on each write and we just updated the index table,
+     * we can simply close / open the WAL and reset our counters.
+     */
+    if (eventCount >= eventLimit) {
+      logger.info("Checkpoint write ahead log:{}", this);
+
+      closeWALFile();
+      openWALFile();
+
+      eventCount = 0;
+
+      logger.debug("Checkpoint finished");
+    }
   }
 
   @Override
   public void reset() {
+    logger.debug("Resetting WAL position from:{} to:{}", currentPosition,
+        index.getPosition());
+
     try {
-      outputChannel.truncate(indexBuffer.getLong(0));
+      outputChannel.truncate(index.getPosition());
       /*
        * Changes to the file size affect the metadata so we need to force that
        * out as well and pay the price of the second IO.
        */
       outputChannel.force(true);
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new WALException(
+          "Unable to reset WAL to last committed position. Exception follows.",
+          e);
     }
+  }
+
+  public File getDirectory() {
+    return directory;
+  }
+
+  public void setDirectory(File directory) {
+    this.directory = directory;
   }
 
   public long getCurrentPosition() {
     return currentPosition;
   }
 
+  public File getCurrentFile() {
+    return currentFile;
+  }
+
   public long getMarkPosition() {
-    return indexBuffer.getLong(0);
+    return index.getPosition();
   }
 
-  public FileOutputStream getWalOutputStream() {
-    return walOutputStream;
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(getClass()).add("currentFile", currentFile)
+        .add("currentPosition", currentPosition).add("index", index)
+        .add("eventCount", eventCount).add("eventBatchCount", eventBatchCount)
+        .add("eventLimit", eventLimit).add("directory", directory).toString();
   }
-
-  public void setWalOutputStream(FileOutputStream walOutputStream) {
-    this.walOutputStream = walOutputStream;
-  }
-
-  public MappedByteBuffer getIndexBuffer() {
-    return indexBuffer;
-  }
-
-  public void setIndexBuffer(MappedByteBuffer indexBuffer) {
-    this.indexBuffer = indexBuffer;
-  }
-
-  public Encoder getEncoder() {
-    return encoder;
-  }
-
-  public void setEncoder(Encoder encoder) {
-    this.encoder = encoder;
-  }
-
-  public SpecificDatumWriter<AvroWALEntry> getWriter() {
-    return writer;
-  }
-
-  public void setWriter(SpecificDatumWriter<AvroWALEntry> writer) {
-    this.writer = writer;
-  }
-
 }
