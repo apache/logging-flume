@@ -32,6 +32,13 @@ public class TestAvroWALWriter {
 
     writer = new AvroWALWriter();
     writer.setDirectory(testDirectory);
+
+    WALIndex index = new WALIndex();
+
+    index.setDirectory(testDirectory);
+    index.open();
+
+    writer.setIndex(index);
   }
 
   @SuppressWarnings("deprecation")

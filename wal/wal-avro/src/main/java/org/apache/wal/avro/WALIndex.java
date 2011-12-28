@@ -14,47 +14,80 @@ import com.google.common.io.Files;
 
 public class WALIndex {
 
-  private static final String indexFileName = "wal-idx";
+  private static final String writeIndexFileName = "write.idx";
+  private static final String readIndexFileName = "read.idx";
+
   private static final Logger logger = LoggerFactory.getLogger(WALIndex.class);
 
   private File directory;
 
-  private String file;
-  private long position;
+  private File writeIndexFile;
+  private MappedByteBuffer writeIndexBuffer;
+  private File readIndexFile;
+  private MappedByteBuffer readIndexBuffer;
 
-  private File indexFile;
-  private MappedByteBuffer indexBuffer;
+  private String writeFile;
+  private long writePosition;
+  private String readFile;
+  private long readPosition;
 
-  public synchronized void open() throws FileNotFoundException, IOException {
-    indexFile = new File(directory, indexFileName);
-
-    logger.info("Opening WAL index table file:{}", indexFile);
-
-    indexBuffer = Files.map(indexFile, FileChannel.MapMode.READ_WRITE,
-        16 * 1024);
-
-    position = indexBuffer.getLong();
-    int fileNameLength = indexBuffer.getInt();
-
-    if (fileNameLength > 0) {
-      byte[] buffer = new byte[fileNameLength];
-      indexBuffer.get(buffer);
-      file = new String(buffer);
-    }
-
-    logger.debug("Loaded position:{} fileNameLength:{} file:{}", new Object[] {
-        position, fileNameLength, file });
-
-    indexBuffer.position(0);
+  public WALIndex() {
   }
 
-  public synchronized void updateIndex(String file, long position) {
-    indexBuffer.putLong(position).putInt(file.length()).put(file.getBytes());
-    indexBuffer.force();
-    indexBuffer.position(0);
+  public synchronized void open() throws FileNotFoundException, IOException {
+    writeIndexFile = new File(directory, writeIndexFileName);
+    readIndexFile = new File(directory, readIndexFileName);
 
-    this.file = file;
-    this.position = position;
+    logger.info("Opening WAL index table writeFile:{}", writeIndexFile);
+
+    writeIndexBuffer = Files.map(writeIndexFile,
+        FileChannel.MapMode.READ_WRITE, 4 * 1024);
+    readIndexBuffer = Files.map(readIndexFile, FileChannel.MapMode.READ_WRITE,
+        4 * 1024);
+
+    writePosition = writeIndexBuffer.getLong();
+    int writeFileNameLength = writeIndexBuffer.getInt();
+
+    if (writeFileNameLength > 0) {
+      byte[] buffer = new byte[writeFileNameLength];
+      writeIndexBuffer.get(buffer);
+      writeFile = new String(buffer);
+    }
+
+    writeIndexBuffer.position(0);
+
+    readPosition = readIndexBuffer.getLong();
+    int readFileNameLength = readIndexBuffer.getInt();
+
+    if (readFileNameLength > 0) {
+      byte[] buffer = new byte[readFileNameLength];
+      readIndexBuffer.get(buffer);
+      readFile = new String(buffer);
+    }
+
+    readIndexBuffer.position(0);
+
+    logger.debug("Loaded index:{}", this);
+  }
+
+  public synchronized void updateWriteIndex(String file, long position) {
+    writeIndexBuffer.putLong(position).putInt(file.length())
+        .put(file.getBytes());
+    writeIndexBuffer.force();
+    writeIndexBuffer.position(0);
+
+    this.writeFile = file;
+    this.writePosition = position;
+  }
+
+  public synchronized void updateReadIndex(String file, long position) {
+    readIndexBuffer.putLong(position).putInt(file.length())
+        .put(file.getBytes());
+    readIndexBuffer.force();
+    readIndexBuffer.position(0);
+
+    this.readFile = file;
+    this.readPosition = position;
   }
 
   public synchronized File getDirectory() {
@@ -65,30 +98,44 @@ public class WALIndex {
     this.directory = directory;
   }
 
-  public synchronized File getIndexFile() {
-    return indexFile;
+  public String getWriteFile() {
+    return writeFile;
   }
 
-  public String getFile() {
-    return file;
+  public void setWriteFile(String file) {
+    this.writeFile = file;
   }
 
-  public void setFile(String file) {
-    this.file = file;
+  public long getWritePosition() {
+    return writePosition;
   }
 
-  public long getPosition() {
-    return position;
+  public void setWritePosition(long position) {
+    this.writePosition = position;
   }
 
-  public void setPosition(long position) {
-    this.position = position;
+  public String getReadFile() {
+    return readFile;
+  }
+
+  public void setReadFile(String readFile) {
+    this.readFile = readFile;
+  }
+
+  public long getReadPosition() {
+    return readPosition;
+  }
+
+  public void setReadPosition(long readPosition) {
+    this.readPosition = readPosition;
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(getClass()).add("file", file)
-        .add("position", position).add("directory", directory)
-        .add("indexFile", indexFile).toString();
+    return Objects.toStringHelper(getClass()).add("writeFile", writeFile)
+        .add("writePosition", writePosition).add("readFile", readFile)
+        .add("readPosition", readPosition).add("directory", directory)
+        .add("writeIndexFile", writeIndexFile)
+        .add("readIndexFile", readIndexFile).toString();
   }
 }

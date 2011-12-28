@@ -50,28 +50,9 @@ public class AvroWALWriter implements WALWriter {
   public void open() {
     logger.info("Opening write ahead log in:{}", directory);
 
-    openIndex();
     openWALFile();
 
     writer = new SpecificDatumWriter<AvroWALEntry>(AvroWALEntry.class);
-  }
-
-  private void openIndex() {
-    logger.info("Opening write ahead log index in directory:{}", directory);
-
-    index = new WALIndex();
-
-    index.setDirectory(directory);
-
-    try {
-      index.open();
-    } catch (FileNotFoundException e) {
-      throw new WALException("Failed to open WAL index. Exception follows.", e);
-    } catch (IOException e) {
-      throw new WALException("Failed to open WAL index. Exception follows.", e);
-    }
-
-    logger.debug("Opened write ahead log index:{}", index);
   }
 
   private void openWALFile() {
@@ -85,7 +66,7 @@ public class AvroWALWriter implements WALWriter {
       currentPosition = outputChannel.position();
       encoder = EncoderFactory.get().directBinaryEncoder(walOutputStream, null);
 
-      index.updateIndex(currentFile.getPath(), 0);
+      index.updateWriteIndex(currentFile.getPath(), 0);
     } catch (FileNotFoundException e) {
       throw new WALException(
           "Failed to open WAL (missing parent directory?). Exception follows.",
@@ -117,7 +98,7 @@ public class AvroWALWriter implements WALWriter {
 
       if (logger.isDebugEnabled()) {
         logger.debug("Wrote entry:{} markPosition:{} currentPosition:{}",
-            new Object[] { entry, index.getPosition(), currentPosition });
+            new Object[] { entry, index.getWritePosition(), currentPosition });
       }
     } catch (IOException e) {
       throw new WALException("Failed to write WAL entry. Exception follows.", e);
@@ -128,7 +109,7 @@ public class AvroWALWriter implements WALWriter {
   public void close() {
     logger.info("Closing write ahead log at:{}", currentFile);
 
-    Closeables.closeQuietly(outputChannel);
+    closeWALFile();
   }
 
   @Override
@@ -136,7 +117,7 @@ public class AvroWALWriter implements WALWriter {
     logger.debug("Marking currentFile:{} currentPosition:{}", currentFile,
         currentPosition);
 
-    index.updateIndex(currentFile.getPath(), currentPosition);
+    index.updateWriteIndex(currentFile.getPath(), currentPosition);
 
     eventCount += eventBatchCount;
     eventBatchCount = 0;
@@ -162,10 +143,10 @@ public class AvroWALWriter implements WALWriter {
   @Override
   public void reset() {
     logger.debug("Resetting WAL position from:{} to:{}", currentPosition,
-        index.getPosition());
+        index.getWritePosition());
 
     try {
-      outputChannel.truncate(index.getPosition());
+      outputChannel.truncate(index.getWritePosition());
       /*
        * Changes to the file size affect the metadata so we need to force that
        * out as well and pay the price of the second IO.
@@ -195,7 +176,15 @@ public class AvroWALWriter implements WALWriter {
   }
 
   public long getMarkPosition() {
-    return index.getPosition();
+    return index.getWritePosition();
+  }
+
+  public WALIndex getIndex() {
+    return index;
+  }
+
+  public void setIndex(WALIndex index) {
+    this.index = index;
   }
 
   @Override

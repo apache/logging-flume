@@ -1,17 +1,9 @@
 package org.apache.wal.avro;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
 
-import org.apache.avro.io.DecoderFactory;
-import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.wal.WALEntry;
-import org.apache.wal.avro.AvroWALEntry;
-import org.apache.wal.avro.AvroWALEntryAdapter;
-import org.apache.wal.avro.AvroWALReader;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -36,21 +28,18 @@ public class TestAvroWALReader {
 
     testDirectory.mkdirs();
 
+    Files.copy(new File(Resources.getResource("test-wal").getPath()), new File(
+        testDirectory, "1.wal"));
+
     reader = new AvroWALReader();
 
-    FileInputStream walInputStream = new FileInputStream(new File(Resources
-        .getResource("test-wal").getFile()));
+    WALIndex index = new WALIndex();
 
-    MappedByteBuffer indexBuffer = Files.map(new File(testDirectory, "index"),
-        FileChannel.MapMode.READ_WRITE, 8);
-    indexBuffer.putLong(0, 0);
+    index.setDirectory(testDirectory);
+    index.open();
 
-    reader.setDecoder(DecoderFactory.get().directBinaryDecoder(walInputStream,
-        null));
-    reader.setAvroReader(new SpecificDatumReader<AvroWALEntry>(
-        AvroWALEntry.SCHEMA$));
-    reader.setWalInputStream(walInputStream);
-    reader.setIndexBuffer(indexBuffer);
+    reader.setDirectory(testDirectory);
+    reader.setIndex(index);
   }
 
   @SuppressWarnings("deprecation")
@@ -61,6 +50,8 @@ public class TestAvroWALReader {
 
   @Test
   public void testNext() {
+    reader.open();
+
     for (int i = 0; i < 184; i++) {
       WALEntry entry = reader.next();
 
@@ -72,6 +63,12 @@ public class TestAvroWALReader {
 
       reader.mark();
     }
+
+    WALEntry e1 = reader.next();
+    Assert.assertNull(e1);
+
+    e1 = reader.next();
+    Assert.assertNull(e1);
   }
 
 }

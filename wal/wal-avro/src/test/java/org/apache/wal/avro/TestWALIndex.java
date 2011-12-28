@@ -35,41 +35,71 @@ public class TestWALIndex {
   }
 
   @Test
-  public void testUpdate() throws FileNotFoundException, IOException {
+  public void testUpdateWrite() throws FileNotFoundException, IOException {
     index.open();
-    Assert.assertNull(index.getFile());
-    Assert.assertEquals(0, index.getPosition());
+    Assert.assertNull(index.getWriteFile());
+    Assert.assertEquals(0, index.getWritePosition());
 
-    index.updateIndex("foo", 0);
-    Assert.assertEquals("foo", index.getFile());
-    Assert.assertEquals(0, index.getPosition());
+    index.updateWriteIndex("foo", 0);
+    Assert.assertEquals("foo", index.getWriteFile());
+    Assert.assertEquals(0, index.getWritePosition());
 
-    index.updateIndex("foo", 1);
-    Assert.assertEquals("foo", index.getFile());
-    Assert.assertEquals(1, index.getPosition());
+    index.updateWriteIndex("foo", 1);
+    Assert.assertEquals("foo", index.getWriteFile());
+    Assert.assertEquals(1, index.getWritePosition());
 
-    index.updateIndex("foo", 2);
-    Assert.assertEquals("foo", index.getFile());
-    Assert.assertEquals(2, index.getPosition());
+    index.updateWriteIndex("foo", 2);
+    Assert.assertEquals("foo", index.getWriteFile());
+    Assert.assertEquals(2, index.getWritePosition());
 
-    index.updateIndex("bar", 0);
-    Assert.assertEquals("bar", index.getFile());
-    Assert.assertEquals(0, index.getPosition());
+    index.updateWriteIndex("bar", 0);
+    Assert.assertEquals("bar", index.getWriteFile());
+    Assert.assertEquals(0, index.getWritePosition());
+  }
+
+  @Test
+  public void testUpdateRead() throws FileNotFoundException, IOException {
+    index.open();
+    Assert.assertNull(index.getReadFile());
+    Assert.assertEquals(0, index.getReadPosition());
+
+    index.updateReadIndex("foo", 0);
+    Assert.assertEquals("foo", index.getReadFile());
+    Assert.assertEquals(0, index.getReadPosition());
+
+    index.updateReadIndex("foo", 1);
+    Assert.assertEquals("foo", index.getReadFile());
+    Assert.assertEquals(1, index.getReadPosition());
+
+    index.updateReadIndex("foo", 2);
+    Assert.assertEquals("foo", index.getReadFile());
+    Assert.assertEquals(2, index.getReadPosition());
+
+    index.updateReadIndex("bar", 0);
+    Assert.assertEquals("bar", index.getReadFile());
+    Assert.assertEquals(0, index.getReadPosition());
   }
 
   @Test
   public void testExistingIndex() throws FileNotFoundException, IOException {
     index.open();
-    Assert.assertNull(index.getFile());
-    Assert.assertEquals(0, index.getPosition());
+    Assert.assertNull(index.getWriteFile());
+    Assert.assertEquals(0, index.getWritePosition());
+    Assert.assertNull(index.getReadFile());
+    Assert.assertEquals(0, index.getReadPosition());
 
-    index.updateIndex("test", 128);
-    Assert.assertEquals("test", index.getFile());
-    Assert.assertEquals(128, index.getPosition());
+    index.updateWriteIndex("test1", 1);
+    index.updateReadIndex("test2", 2);
+    Assert.assertEquals("test1", index.getWriteFile());
+    Assert.assertEquals(1, index.getWritePosition());
+    Assert.assertEquals("test2", index.getReadFile());
+    Assert.assertEquals(2, index.getReadPosition());
 
     index.open();
-    Assert.assertEquals("test", index.getFile());
-    Assert.assertEquals(128, index.getPosition());
+    Assert.assertEquals("test1", index.getWriteFile());
+    Assert.assertEquals(1, index.getWritePosition());
+    Assert.assertEquals("test2", index.getReadFile());
+    Assert.assertEquals(2, index.getReadPosition());
   }
 
 }
