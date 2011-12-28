@@ -23,7 +23,7 @@ limitations under the License.
   <artifactId>flume-parent</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Flume</name>
+  <name>Apache Flume</name>
 
   <properties>
     <!-- Set default encoding to UTF-8 to remove maven complaints -->
@@ -101,7 +101,7 @@ limitations under the License.
 
   <issueManagement>
     <system>JIRA</system>
-    <url>https://issues.cloudera.org/browse/FLUME</url>
+    <url>https://issues.apache.org/jira/browse/FLUME</url>
   </issueManagement>
 
   <licenses>
@@ -113,19 +113,31 @@ limitations under the License.
 
   <mailingLists>
     <mailingList>
-      <archive>https://groups.google.com/a/cloudera.org/group/flume-user/topics</archive>
+      <archive>http://mail-archives.apache.org/mod_mbox/incubator-flume-user/</archive>
       <name>flume-user</name>
-      <post>flume-user@cloudera.org</post>
-      <subscribe>https://groups.google.com/a/cloudera.org/group/flume-user/about</subscribe>
-      <unsubscribe>https://groups.google.com/a/cloudera.org/group/flume-user/about</unsubscribe>
+      <post>flume-user@incubator.apache.org</post>
+      <subscribe>flume-user-subscribe@incubator.apache.org</subscribe>
+      <unsubscribe>flume-user-unsubscribe@incubator.apache.org</unsubscribe>
+    </mailingList>
+    <mailingList>
+      <archive>http://mail-archives.apache.org/mod_mbox/incubator-flume-dev/</archive>
+      <name>flume-dev</name>
+      <post>flume-dev@incubator.apache.org</post>
+      <subscribe>flume-dev-subscribe@incubator.apache.org</subscribe>
+      <unsubscribe>flume-dev-unsubscribe@incubator.apache.org</unsubscribe>
     </mailingList>
   </mailingLists>
 
   <scm>
-    <connection>scm:git:git://github.com/cloudera/flume.git</connection>
-    <developerConnection>scm:git:git@github.com:cloudera/flume.git</developerConnection>
-    <url>https://github.com/cloudera/flume</url>
+    <url>https://svn.apache.org/repos/asf/incubator/flume/</url>
+    <developerConnection>https://svn.apache.org/repos/asf/incubator/flume/</developerConnection>
+    <connection>scm:svn:https://svn.apache.org/repos/asf/incubator/flume</connection>
   </scm>
+
+  <ciManagement>
+    <system>jenkins</system>
+    <url>https://builds.apache.org/job/flume-728/</url>
+  </ciManagement>
 
   <developers>
     <developer>
