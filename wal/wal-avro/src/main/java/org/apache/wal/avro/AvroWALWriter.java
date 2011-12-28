@@ -1,11 +1,16 @@
 package org.apache.wal.avro;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
 
 import org.apache.avro.io.Encoder;
+import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.wal.WALEntry;
 import org.apache.wal.WALWriter;
@@ -13,32 +18,90 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
+import com.google.common.io.Closeables;
+import com.google.common.io.Files;
 
 public class AvroWALWriter implements WALWriter {
 
+  private static final short writeIndexVersion = 1;
   private static final Logger logger = LoggerFactory
       .getLogger(AvroWALWriter.class);
+
+  private File directory;
 
   private FileOutputStream walOutputStream;
   private MappedByteBuffer indexBuffer;
   private Encoder encoder;
   private SpecificDatumWriter<AvroWALEntry> writer;
 
+  private ByteArrayOutputStream indexOutputStream;
+  private Encoder indexEncoder;
+  private SpecificDatumWriter<AvroWALIndex> indexWriter;
+
+  private File currentFile;
   private long currentPosition;
   private FileChannel outputChannel;
 
   @Override
   public void open() {
-    outputChannel = walOutputStream.getChannel();
+    logger.info("Opening write ahead log in:{}", directory);
+
+    currentFile = new File(directory, System.currentTimeMillis() + ".wal");
 
     try {
-      indexBuffer.putLong(0, outputChannel.position());
+      walOutputStream = new FileOutputStream(currentFile, true);
+      outputChannel = walOutputStream.getChannel();
+      currentPosition = outputChannel.position();
+
+      indexOutputStream = new ByteArrayOutputStream(1024);
+      indexEncoder = EncoderFactory.get().jsonEncoder(AvroWALIndex.SCHEMA$,
+          indexOutputStream);
+      indexWriter = new SpecificDatumWriter<AvroWALIndex>(AvroWALIndex.class);
+
+      indexBuffer = Files.map(new File(directory, "write.idx"),
+          FileChannel.MapMode.READ_WRITE, 8 * 1024);
+
+      updateWriteIndex(currentPosition, currentFile.getPath());
+    } catch (FileNotFoundException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
 
+    encoder = EncoderFactory.get().directBinaryEncoder(walOutputStream, null);
+    writer = new SpecificDatumWriter<AvroWALEntry>(AvroWALEntry.class);
+
+    logger.debug("Opened write ahead log:{} currentPosition:{}", currentFile,
+        currentPosition);
+  }
+
+  private void updateWriteIndex(long currentPosition, String path) {
+    logger.debug("Updating write index to position:{} path:{}",
+        currentPosition, path);
+
+    AvroWALIndex index = AvroWALIndex
+        .newBuilder()
+        .setVersion(writeIndexVersion)
+        .setEntries(
+            Arrays.asList(AvroWALIndexEntry.newBuilder()
+                .setPath(currentFile.getPath()).setPosition(currentPosition)
+                .build())).build();
+
+    indexOutputStream.reset();
+
+    try {
+      indexWriter.write(index, indexEncoder);
+      indexEncoder.flush();
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+
+    indexBuffer.put(indexOutputStream.toByteArray());
     indexBuffer.force();
+    indexBuffer.flip();
   }
 
   @Override
@@ -49,7 +112,7 @@ public class AvroWALWriter implements WALWriter {
     try {
       writer.write(((AvroWALEntryAdapter) entry).getEntry(), encoder);
       encoder.flush();
-      outputChannel.force(false);
+      outputChannel.force(true);
       currentPosition = outputChannel.position();
 
       if (logger.isDebugEnabled()) {
@@ -63,12 +126,14 @@ public class AvroWALWriter implements WALWriter {
 
   @Override
   public void close() {
+    logger.info("Closing write ahead log at:{}", currentFile);
+
+    Closeables.closeQuietly(outputChannel);
   }
 
   @Override
   public void mark() {
-    indexBuffer.putLong(0, currentPosition);
-    indexBuffer.force();
+    updateWriteIndex(currentPosition, currentFile.getPath());
   }
 
   @Override

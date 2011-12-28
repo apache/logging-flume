@@ -6,4 +6,14 @@ protocol AvroWALProtocol {
     long timeStamp;
   }
 
+  record AvroWALIndexEntry {
+    long position;
+    string path;
+  }
+
+  record AvroWALIndex {
+    int version;
+    array<AvroWALIndexEntry> entries;
+  }
+
 }

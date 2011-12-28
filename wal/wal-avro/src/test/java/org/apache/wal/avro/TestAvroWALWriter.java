@@ -16,9 +16,6 @@ import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
-import org.apache.wal.avro.AvroWALEntry;
-import org.apache.wal.avro.AvroWALEntryAdapter;
-import org.apache.wal.avro.AvroWALWriter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -76,7 +73,7 @@ public class TestAvroWALWriter {
     for (int i = 0; i < 205; i++) {
       AvroWALEntryAdapter entry = new AvroWALEntryAdapter(new AvroWALEntry());
 
-      entry.getEntry().timeStamp = System.currentTimeMillis();
+      entry.getEntry().setTimeStamp(System.currentTimeMillis());
 
       writer.write(entry);
 
