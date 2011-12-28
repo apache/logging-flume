@@ -26,10 +26,6 @@ limitations under the License.
   <name>Flume</name>
 
   <properties>
-    <!-- NB: The version of the thrift compiler must match that of the dependency 
-      on the jar file below. -->
-    <thrift.executable>${env.THRIFT_HOME}/bin/thrift</thrift.executable>
-
     <!-- Set default encoding to UTF-8 to remove maven complaints -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -584,14 +580,6 @@ limitations under the License.
         <groupId>com.sun.jersey</groupId>
         <artifactId>jersey-json</artifactId>
         <version>1.4</version>
-      </dependency>
-
-      <!-- FIXME: Using a Cloudera-packaged version of thrift 0.5.0 because 
-        it can't be found in a public repo. -esammer -->
-      <dependency>
-        <groupId>org.apache.thrift</groupId>
-        <artifactId>libthrift</artifactId>
-        <version>0.6.0-cdh</version>
       </dependency>
 
       <dependency>
