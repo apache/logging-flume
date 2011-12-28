@@ -111,8 +111,18 @@ public class TestWAL {
       private MockWAL wal;
 
       @Override
+      public void open() {
+
+      }
+
+      @Override
       public WALEntry next() {
         return wal.next();
+      }
+
+      @Override
+      public void close() {
+
       }
 
       @Override

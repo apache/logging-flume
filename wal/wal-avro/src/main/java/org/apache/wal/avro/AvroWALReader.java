@@ -45,6 +45,7 @@ public class AvroWALReader implements WALReader {
     reader = new SpecificDatumReader<AvroWALEntry>(AvroWALEntry.class);
   }
 
+  @Override
   public void open() {
     logger.info("Opening write ahead log reader for directory:{}", directory);
 
@@ -59,6 +60,11 @@ public class AvroWALReader implements WALReader {
     }
 
     logger.debug("Opened write ahead log reader:{}", this);
+  }
+
+  @Override
+  public void close() {
+    closeWALFile();
   }
 
   private boolean ensureWALFile() {
@@ -170,14 +176,15 @@ public class AvroWALReader implements WALReader {
     if (ensureWALFile()) {
       while (entry == null) {
         try {
-          entry = new AvroWALEntryAdapter(reader.read(null, decoder));
-          currentPosition = inputChannel.position();
+          if (dataAvailable()) {
+            entry = new AvroWALEntryAdapter(reader.read(null, decoder));
+            currentPosition = inputChannel.position();
 
-          if (logger.isDebugEnabled()) {
-            logger
-                .debug("Read entry:{} markPosition:{} currentPosition:{}",
-                    new Object[] { entry, index.getReadPosition(),
-                        currentPosition });
+            if (logger.isDebugEnabled()) {
+              logger.debug("Read entry:{} markPosition:{} currentPosition:{}",
+                  new Object[] { entry, index.getReadPosition(),
+                      currentPosition });
+            }
           }
         } catch (EOFException e) {
           /*
@@ -201,9 +208,21 @@ public class AvroWALReader implements WALReader {
     return entry;
   }
 
+  private boolean dataAvailable() {
+    synchronized (index) {
+      if (!currentFile.getPath().equals(index.getWriteFile())
+          || currentPosition < index.getWritePosition()) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+
   @Override
   public void mark() {
-    logger.debug("Updating currentPosition to:{}", currentPosition);
+    logger.debug("Marking currentFile:{} currentPosition:{}", currentFile,
+        currentPosition);
 
     index.updateReadIndex(currentFile.getPath(), currentPosition);
   }

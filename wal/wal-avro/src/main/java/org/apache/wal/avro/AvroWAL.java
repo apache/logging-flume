@@ -3,63 +3,61 @@ package org.apache.wal.avro;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
 import java.util.Map;
 
 import org.apache.wal.WAL;
+import org.apache.wal.WALException;
 import org.apache.wal.WALReader;
 import org.apache.wal.WALWriter;
-
-import com.google.common.io.Closeables;
-import com.google.common.io.Files;
 
 public class AvroWAL implements WAL {
 
   private File directory;
 
-  private RandomAccessFile walRAF;
-
-  private MappedByteBuffer indexBuffer;
+  private WALIndex index;
 
   @Override
   public void configure(Map<String, String> properties) {
-    // TODO Auto-generated method stub
+    index = new WALIndex();
 
+    directory = new File(properties.get("directory"));
+
+    index.setDirectory(directory);
   }
 
   @Override
   public void open() {
     try {
-      indexBuffer = (MappedByteBuffer) Files.map(new File(directory, "index"),
-          FileChannel.MapMode.READ_WRITE, 8);
-
-      walRAF = new RandomAccessFile(new File(directory, "data.wal"), "rwd");
+      index.open();
     } catch (FileNotFoundException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new WALException("Unable to open WAL index. Exception follows.", e);
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new WALException("Unable to open WAL index. Exception follows.", e);
     }
   }
 
   @Override
   public void close() {
-    Closeables.closeQuietly(walRAF);
   }
 
   @Override
   public WALReader getReader() {
-    // TODO Auto-generated method stub
-    return null;
+    AvroWALReader reader = new AvroWALReader();
+
+    reader.setDirectory(directory);
+    reader.setIndex(index);
+
+    return reader;
   }
 
   @Override
   public WALWriter getWriter() {
-    // TODO Auto-generated method stub
-    return null;
+    AvroWALWriter writer = new AvroWALWriter();
+
+    writer.setDirectory(directory);
+    writer.setIndex(index);
+
+    return writer;
   }
 
 }

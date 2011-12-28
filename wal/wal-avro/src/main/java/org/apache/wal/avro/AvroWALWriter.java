@@ -23,7 +23,7 @@ public class AvroWALWriter implements WALWriter {
 
   private static final Logger logger = LoggerFactory
       .getLogger(AvroWALWriter.class);
-  private static final int defaultEventLimit = 100;
+  private static final int defaultEventLimit = 100000;
 
   private File directory;
   private int eventLimit;
