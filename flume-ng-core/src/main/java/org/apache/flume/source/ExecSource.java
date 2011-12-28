@@ -192,19 +192,18 @@ public class ExecSource extends AbstractSource implements EventDrivenSource,
     @Override
     public void run() {
       
-      Transaction transaction = null;
       try {
         String[] commandArgs = command.split("\\s+");
         Process process = new ProcessBuilder(commandArgs).start();
         BufferedReader reader = new BufferedReader(new InputStreamReader(
             process.getInputStream()));
-        transaction = channel.getTransaction();
 
         String line = null;
 
         while ((line = reader.readLine()) != null) {
           counterGroup.incrementAndGet("exec.lines.read");
 
+          Transaction transaction = channel.getTransaction();
           try {
             transaction.begin();
             Event event = EventBuilder.withBody(line.getBytes());
@@ -213,17 +212,18 @@ public class ExecSource extends AbstractSource implements EventDrivenSource,
           } catch (ChannelException e) {
             transaction.rollback();
             throw e;
+          } catch (Exception e) {
+            transaction.rollback();
+            throw e;
           } 
+          finally {
+            transaction.close();
+          }
         }
 
         reader.close();
-      } catch (IOException e) {
-        logger.error("Failed while running command:{} - Exception follows.",
-            command, e);
-      } finally {
-        if (transaction != null) {
-          transaction.close();
-        }
+      } catch (Exception e) {
+        logger.error("Failed while running command:" + command + " - Exception follows.", e);
       }
     }
 
