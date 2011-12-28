@@ -32,8 +32,6 @@ limitations under the License.
     <!-- defaults for flaky test and focused test exclusions -->
     <test.exclude.pattern>$</test.exclude.pattern> <!-- junk pattern -->
     <test.include.pattern>**/Test*.java</test.include.pattern>
-
-    <version.avro>1.6.1</version.avro>
   </properties>
 
 
@@ -368,7 +366,7 @@ limitations under the License.
         <plugin>
           <groupId>org.apachce.avro</groupId>
           <artifactId>avro-maven-plugin</artifactId>
-          <version>${version.avro}</version>
+          <version>1.6.1</version>
         </plugin>
 
         <plugin>
@@ -463,19 +461,19 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro</artifactId>
-        <version>${version.avro}</version>
+        <version>1.6.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro-compiler</artifactId>
-        <version>${version.avro}</version>
+        <version>1.6.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro-ipc</artifactId>
-        <version>${version.avro}</version>
+        <version>1.6.1</version>
       </dependency>
 
       <dependency>
