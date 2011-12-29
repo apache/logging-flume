@@ -1,4 +1,4 @@
-Release Notes - Flume - Version v1.0.0 - 20111227
+Release Notes - Flume - Version v1.0.0 - 20111229
 
 ** Bug
     * [FLUME-831] - flume-jdbc-channel project has unnecessary direct dependency on log4j API
@@ -18,6 +18,14 @@ Release Notes - Flume - Version v1.0.0 - 20111227
     * [FLUME-903] - Update project metadata in main pom
     * [FLUME-904] - Update plugin and dependency repos referenced in the main pom
     * [FLUME-905] - ExecSource silently fails after first transaction with channel
+    * [FLUME-906] - Maven Avro plugin missing an entry in plugin dep management
+    * [FLUME-907] - Maven assembly missing CHANGELOG and other misc files
+    * [FLUME-908] - Clean out old bin and conf contents
+    * [FLUME-909] -  org.apache.flume.node.TestAbstractLogicalNodeManager is failing on some machines
+    * [FLUME-910] - Typo in maven avro plugin groupId in plugin dep management
+    * [FLUME-911] - README should reference Apache Flume rather than just Flume
+    * [FLUME-912] - DEVNOTES contains outdated info
+    * [FLUME-913] - slf4j-log4j binding is excluded from the dist assembly due to test scope
 
 ** Improvement
     * [FLUME-867] - Pollable source and sink runners should reduce poll interval after several BACKOFFs
