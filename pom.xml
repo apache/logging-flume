@@ -364,7 +364,7 @@ limitations under the License.
         </plugin>
 
         <plugin>
-          <groupId>org.apachce.avro</groupId>
+          <groupId>org.apache.avro</groupId>
           <artifactId>avro-maven-plugin</artifactId>
           <version>1.6.1</version>
         </plugin>
