@@ -22,12 +22,12 @@ limitations under the License.
   <parent>
     <artifactId>flume-parent</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0-incubating</version>
   </parent>
 
   <groupId>org.apache.flume</groupId>
   <artifactId>flume-ng-core</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.0-incubating</version>
   <name>Flume NG Core</name>
 
   <build>

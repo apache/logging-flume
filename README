@@ -9,7 +9,8 @@ management. It uses a simple extensible data model that allows for online
 analytic application.
 
 The Flume-NG is refactoring of the first generation Flume to solve certain
-known issues and limitations of the original design.
+known issues and limitations of the original design. This is considered a
+preview release; bugs should be expected.
 
 Apache Flume is open-sourced under the Apache Software Foundation License v2.0.
 
