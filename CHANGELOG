@@ -1,8 +1,11 @@
-Release Notes - Flume - Version v1.0.0 - 20111229
+Release Notes - Flume - Version v1.0.0 - 20111230
 
 ** Bug
+    * [FLUME-830] - flume uber jar is missing files from flume-file-channel project
     * [FLUME-831] - flume-jdbc-channel project has unnecessary direct dependency on log4j API
     * [FLUME-833] - Audit Direct Library Deps for Flume NG
+    * [FLUME-835] - Issues during clean build of Flume NG
+    * [FLUME-850] - Upgrade the version of Hadoop we use for HDFS sink
     * [FLUME-858] - HDFSWriterFactory is using operation == for string comparison
     * [FLUME-863] - Use of unknown sink type leads to NullPointerException
     * [FLUME-868] - RAT checks fail on builds.apache.org due to local maven repo
@@ -26,10 +29,16 @@ Release Notes - Flume - Version v1.0.0 - 20111229
     * [FLUME-911] - README should reference Apache Flume rather than just Flume
     * [FLUME-912] - DEVNOTES contains outdated info
     * [FLUME-913] - slf4j-log4j binding is excluded from the dist assembly due to test scope
+    * [FLUME-915] - Incorrect license information in various files
+    * [FLUME-916] - DISCLAIMER file has an incorrect URL
 
 ** Improvement
+    * [FLUME-846] - Bump Avro version to 1.6.x
     * [FLUME-867] - Pollable source and sink runners should reduce poll interval after several BACKOFFs
     * [FLUME-871] - HDFS sink needs to handle blocked/hung append operation
+
+** Question
+    * [FLUME-856] - Move data across hosts
 
 ** Task
     * [FLUME-876] - Update README, NOTICE, LICENSE, and DEVNOTES files
