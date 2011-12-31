@@ -5,11 +5,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.io.Files;
 
 public class WALIndex {
@@ -26,68 +28,95 @@ public class WALIndex {
   private File readIndexFile;
   private MappedByteBuffer readIndexBuffer;
 
+  private ReentrantLock readLock;
+  private ReentrantLock writeLock;
+
   private String writeFile;
   private long writePosition;
   private String readFile;
   private long readPosition;
 
   public WALIndex() {
+    readLock = new ReentrantLock();
+    writeLock = new ReentrantLock();
   }
 
   public synchronized void open() throws FileNotFoundException, IOException {
-    writeIndexFile = new File(directory, writeIndexFileName);
-    readIndexFile = new File(directory, readIndexFileName);
 
-    logger.info("Opening WAL index table writeFile:{}", writeIndexFile);
+    try {
+      writeLock.lock();
+      writeIndexFile = new File(directory, writeIndexFileName);
 
-    writeIndexBuffer = Files.map(writeIndexFile,
-        FileChannel.MapMode.READ_WRITE, 4 * 1024);
-    readIndexBuffer = Files.map(readIndexFile, FileChannel.MapMode.READ_WRITE,
-        4 * 1024);
+      logger.info("Opening WAL index table writeFile:{}", writeIndexFile);
 
-    writePosition = writeIndexBuffer.getLong();
-    int writeFileNameLength = writeIndexBuffer.getInt();
+      writeIndexBuffer = Files.map(writeIndexFile,
+          FileChannel.MapMode.READ_WRITE, 4 * 1024);
 
-    if (writeFileNameLength > 0) {
-      byte[] buffer = new byte[writeFileNameLength];
-      writeIndexBuffer.get(buffer);
-      writeFile = new String(buffer);
+      writePosition = writeIndexBuffer.getLong();
+      int writeFileNameLength = writeIndexBuffer.getInt();
+
+      if (writeFileNameLength > 0) {
+        byte[] buffer = new byte[writeFileNameLength];
+        writeIndexBuffer.get(buffer);
+        writeFile = new String(buffer);
+      }
+      writeIndexBuffer.position(0);
+    } finally {
+      writeLock.unlock();
     }
 
-    writeIndexBuffer.position(0);
+    try {
+      readLock.lock();
+      readIndexFile = new File(directory, readIndexFileName);
 
-    readPosition = readIndexBuffer.getLong();
-    int readFileNameLength = readIndexBuffer.getInt();
+      readIndexBuffer = Files.map(readIndexFile,
+          FileChannel.MapMode.READ_WRITE, 4 * 1024);
 
-    if (readFileNameLength > 0) {
-      byte[] buffer = new byte[readFileNameLength];
-      readIndexBuffer.get(buffer);
-      readFile = new String(buffer);
+      readPosition = readIndexBuffer.getLong();
+      int readFileNameLength = readIndexBuffer.getInt();
+
+      if (readFileNameLength > 0) {
+        byte[] buffer = new byte[readFileNameLength];
+        readIndexBuffer.get(buffer);
+        readFile = new String(buffer);
+      }
+
+      readIndexBuffer.position(0);
+    } finally {
+      readLock.unlock();
     }
-
-    readIndexBuffer.position(0);
 
     logger.debug("Loaded index:{}", this);
   }
 
-  public synchronized void updateWriteIndex(String file, long position) {
-    writeIndexBuffer.putLong(position).putInt(file.length())
-        .put(file.getBytes());
-    writeIndexBuffer.force();
-    writeIndexBuffer.position(0);
+  public void updateWriteIndex(String file, long position) {
+    try {
+      writeLock.lock();
+      writeIndexBuffer.putLong(position).putInt(file.length())
+          .put(file.getBytes());
+      writeIndexBuffer.force();
+      writeIndexBuffer.position(0);
 
-    this.writeFile = file;
-    this.writePosition = position;
+      this.writeFile = file;
+      this.writePosition = position;
+    } finally {
+      writeLock.unlock();
+    }
   }
 
-  public synchronized void updateReadIndex(String file, long position) {
-    readIndexBuffer.putLong(position).putInt(file.length())
-        .put(file.getBytes());
-    readIndexBuffer.force();
-    readIndexBuffer.position(0);
+  public void updateReadIndex(String file, long position) {
+    try {
+      readLock.lock();
+      readIndexBuffer.putLong(position).putInt(file.length())
+          .put(file.getBytes());
+      readIndexBuffer.force();
+      readIndexBuffer.position(0);
 
-    this.readFile = file;
-    this.readPosition = position;
+      this.readFile = file;
+      this.readPosition = position;
+    } finally {
+      readLock.unlock();
+    }
   }
 
   public synchronized File getDirectory() {
@@ -99,43 +128,64 @@ public class WALIndex {
   }
 
   public String getWriteFile() {
-    return writeFile;
-  }
-
-  public void setWriteFile(String file) {
-    this.writeFile = file;
+    try {
+      writeLock.lock();
+      return writeFile;
+    } finally {
+      writeLock.unlock();
+    }
   }
 
   public long getWritePosition() {
-    return writePosition;
-  }
-
-  public void setWritePosition(long position) {
-    this.writePosition = position;
+    try {
+      writeLock.lock();
+      return writePosition;
+    } finally {
+      writeLock.unlock();
+    }
   }
 
   public String getReadFile() {
-    return readFile;
-  }
-
-  public void setReadFile(String readFile) {
-    this.readFile = readFile;
+    try {
+      readLock.lock();
+      return readFile;
+    } finally {
+      readLock.unlock();
+    }
   }
 
   public long getReadPosition() {
-    return readPosition;
-  }
-
-  public void setReadPosition(long readPosition) {
-    this.readPosition = readPosition;
+    try {
+      readLock.lock();
+      return readPosition;
+    } finally {
+      readLock.unlock();
+    }
   }
 
   @Override
-  public String toString() {
-    return Objects.toStringHelper(getClass()).add("writeFile", writeFile)
-        .add("writePosition", writePosition).add("readFile", readFile)
-        .add("readPosition", readPosition).add("directory", directory)
-        .add("writeIndexFile", writeIndexFile)
-        .add("readIndexFile", readIndexFile).toString();
+  public synchronized String toString() {
+    ToStringHelper stringHelper = Objects.toStringHelper(getClass()).add(
+        "directory", directory);
+
+    try {
+      writeLock.lock();
+      stringHelper.add("writeFile", writeFile)
+          .add("writePosition", writePosition)
+          .add("writeIndexFile", writeIndexFile);
+    } finally {
+      writeLock.unlock();
+    }
+
+    try {
+      readLock.lock();
+      stringHelper.add("readFile", readFile).add("readPosition", readPosition)
+          .add("readIndexFile", readIndexFile);
+    } finally {
+      readLock.unlock();
+    }
+
+    return stringHelper.toString();
   }
+
 }
