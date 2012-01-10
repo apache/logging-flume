@@ -18,10 +18,16 @@ limitations under the License.
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
+  <parent>
+    <groupId>org.apache</groupId>
+    <artifactId>apache</artifactId>
+    <version>9</version>
+  </parent>
+
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.flume</groupId>
   <artifactId>flume-parent</artifactId>
-  <version>1.0.0-incubating</version>
+  <version>1.1.0-incubating-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Apache Flume</name>
 
@@ -269,7 +275,6 @@ limitations under the License.
   </pluginRepositories>
 
   <repositories>
-
     <repository>
       <id>repo1.maven.org</id>
       <url>http://repo1.maven.org/maven2</url>
@@ -291,6 +296,14 @@ limitations under the License.
     </repository>
 
   </repositories>
+
+  <distributionManagement>
+    <repository>
+      <id>apache.staging.https</id>
+      <name>Apache Staging Repository</name>
+      <url>https://repository.apache.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement>
 
   <build>
 
@@ -511,6 +524,38 @@ limitations under the License.
         <artifactId>jackson-mapper-asl</artifactId>
         <version>1.9.3</version>
       </dependency>
+
+      <!-- internal module dependencies -->
+
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-ng-core</artifactId>
+      <version>1.1.0-incubating-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-ng-node</artifactId>
+      <version>1.1.0-incubating-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.flume.flume-ng-channels</groupId>
+      <artifactId>flume-file-channel</artifactId>
+      <version>1.1.0-incubating-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.flume.flume-ng-channels</groupId>
+      <artifactId>flume-jdbc-channel</artifactId>
+      <version>1.1.0-incubating-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.flume.flume-ng-sinks</groupId>
+      <artifactId>flume-hdfs-sink</artifactId>
+      <version>1.1.0-incubating-SNAPSHOT</version>
+    </dependency>
 
     </dependencies>
   </dependencyManagement>
