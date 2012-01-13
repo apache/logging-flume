@@ -85,6 +85,10 @@ public class PersistableEvent implements Event {
     this.eventId = eventId;
   }
 
+  protected long getEventId() {
+    return this.eventId;
+  }
+
   public List<HeaderEntry> getHeaderEntries() {
     return headers;
   }

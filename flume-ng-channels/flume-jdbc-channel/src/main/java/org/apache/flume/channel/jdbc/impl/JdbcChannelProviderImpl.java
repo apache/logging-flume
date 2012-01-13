@@ -248,6 +248,8 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
         tx.close();
       }
     }
+
+    LOGGER.info("Persistend event: " + persistableEvent.getEventId());
   }
 
   @Override
@@ -271,6 +273,13 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
         tx.close();
       }
     }
+
+    if (result != null) {
+      LOGGER.info("Removed event: " + ((PersistableEvent) result).getEventId());
+    } else {
+      LOGGER.info("No event found for removal");
+    }
+
     return result;
   }
 

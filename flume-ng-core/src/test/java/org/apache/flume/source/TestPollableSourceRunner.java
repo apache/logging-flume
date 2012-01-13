@@ -19,6 +19,7 @@
 
 package org.apache.flume.source;
 
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.flume.Channel;
@@ -57,14 +58,16 @@ public class TestPollableSourceRunner {
 
     PollableSource source = new PollableSource() {
 
+      private String name;
+
       @Override
-      public Channel getChannel() {
+      public List<Channel> getChannels() {
         // Doesn't matter.
         return null;
       }
 
       @Override
-      public void setChannel(Channel channel) {
+      public void setChannels(List<Channel> channel) {
         // Doesn't matter.
       }
 
@@ -108,6 +111,16 @@ public class TestPollableSourceRunner {
       public LifecycleState getLifecycleState() {
         // Unused.
         return null;
+      }
+
+      @Override
+      public void setName(String name) {
+        this.name = name;
+      }
+
+      @Override
+      public String getName() {
+        return name;
       }
 
     };

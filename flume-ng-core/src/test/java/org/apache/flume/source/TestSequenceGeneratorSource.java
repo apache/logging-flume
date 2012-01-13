@@ -16,8 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.flume.source;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
@@ -52,7 +54,10 @@ public class TestSequenceGeneratorSource {
     Configurables.configure(source, context);
     Configurables.configure(channel, context);
 
-    source.setChannel(channel);
+    List<Channel> channels = new ArrayList<Channel>();
+    channels.add(channel);
+
+    source.setChannels(channels);
 
     for (long i = 0; i < 100; i++) {
       source.process();
@@ -75,7 +80,10 @@ public class TestSequenceGeneratorSource {
     Configurables.configure(source, context);
     Configurables.configure(channel, context);
 
-    source.setChannel(channel);
+    List<Channel> channels = new ArrayList<Channel>();
+    channels.add(channel);
+
+    source.setChannels(channels);
     source.start();
 
     for (long i = 0; i < 100; i++) {

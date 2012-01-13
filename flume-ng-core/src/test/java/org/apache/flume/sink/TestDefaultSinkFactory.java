@@ -19,6 +19,8 @@
 
 package org.apache.flume.sink;
 
+import java.util.Map;
+
 import org.apache.flume.Sink;
 import org.apache.flume.SinkFactory;
 import org.junit.Assert;
@@ -35,54 +37,55 @@ public class TestDefaultSinkFactory {
   }
 
   @Test
-  public void testRegister() {
-    Assert.assertEquals(0, sinkFactory.getSinkNames().size());
+  public void testDuplicateCreate() {
 
-    sinkFactory.register("null", NullSink.class);
 
-    Assert.assertEquals(1, sinkFactory.getSinkNames().size());
+    Sink avroSink1 = sinkFactory.create("avroSink1", "avro");
+    Sink avroSink2 = sinkFactory.create("avroSink2", "avro");
 
-    Assert.assertEquals("null", sinkFactory.getSinkNames().iterator().next());
+    Assert.assertNotNull(avroSink1);
+    Assert.assertNotNull(avroSink2);
+    Assert.assertNotSame(avroSink1, avroSink2);
+    Assert.assertTrue(avroSink1 instanceof AvroSink);
+    Assert.assertTrue(avroSink2 instanceof AvroSink);
+
+    Sink s1 = sinkFactory.create("avroSink1", "avro");
+    Sink s2 = sinkFactory.create("avroSink2", "avro");
+
+    Assert.assertSame(avroSink1, s1);
+    Assert.assertSame(avroSink2, s2);
+  }
+
+  private void verifySinkCreation(String name, String type, Class<?> typeClass)
+    throws Exception {
+    Sink sink = sinkFactory.create(name, type);
+    Assert.assertNotNull(sink);
+    Assert.assertTrue(typeClass.isInstance(sink));
   }
 
   @Test
-  public void testCreate() throws InstantiationException {
-    Assert.assertEquals(0, sinkFactory.getSinkNames().size());
-
-    sinkFactory.register("null", NullSink.class);
-
-    Assert.assertEquals(1, sinkFactory.getSinkNames().size());
-
-    Assert.assertEquals("null", sinkFactory.getSinkNames().iterator().next());
-
-    Sink sink = sinkFactory.create("null");
-
-    Assert.assertNotNull("Factory returned a null sink", sink);
-    Assert.assertTrue("Source isn't an instance of NullSink",
-        sink instanceof NullSink);
-
-    sink = sinkFactory.create("i do not exist");
-
-    Assert.assertNull("Factory returned a sink it shouldn't have", sink);
+  public void testSinkCreation() throws Exception {
+    verifySinkCreation("null-sink", "null", NullSink.class);
+    verifySinkCreation("logger-sink", "logger", LoggerSink.class);
+    verifySinkCreation("file-roll-sink", "file_roll", RollingFileSink.class);
+    verifySinkCreation("avro-sink", "avro", AvroSink.class);
   }
 
+
   @Test
-  public void testUnregister() {
-    Assert.assertEquals(0, sinkFactory.getSinkNames().size());
+  public void testSinkRegistry() {
+    Sink s1 = sinkFactory.create("s1", "avro");
+    Map<Class<?>, Map<String, Sink>> sr =
+        ((DefaultSinkFactory) sinkFactory).getRegistryClone();
 
-    Assert.assertTrue("Registering a source returned false",
-        sinkFactory.register("null", NullSink.class));
+    Assert.assertEquals(1, sr.size());
+    Map<String, Sink> sinkMap = sr.get(AvroSink.class);
+    Assert.assertNotNull(sinkMap);
+    Assert.assertEquals(1, sinkMap.size());
 
-    Assert.assertEquals(1, sinkFactory.getSinkNames().size());
-
-    Assert.assertEquals("null", sinkFactory.getSinkNames().iterator().next());
-
-    Assert.assertFalse("Unregistering an unknown sink returned true",
-        sinkFactory.unregister("i do not exist"));
-    Assert.assertTrue("Unregistering a sink returned false",
-        sinkFactory.unregister("null"));
-
-    Assert.assertEquals(0, sinkFactory.getSinkNames().size());
+    Sink sink = sinkMap.get("s1");
+    Assert.assertNotNull(sink);
+    Assert.assertSame(s1, sink);
   }
 
 }

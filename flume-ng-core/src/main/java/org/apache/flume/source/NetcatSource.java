@@ -29,11 +29,13 @@ import java.nio.channels.Channels;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
@@ -295,17 +297,20 @@ public class NetcatSource extends AbstractSource implements Configurable,
         event = EventBuilder.withBody(builder.toString().getBytes());
         Exception ex = null;
 
-        Transaction tx = source.getChannel().getTransaction();
+        List<Channel> channels = source.getChannels();
 
-        try {
-          tx.begin();
-          source.getChannel().put(event);
-          tx.commit();
-        } catch (Exception e) {
-          ex = e;
-          tx.rollback();
-        } finally {
-          tx.close();
+        for (Channel channel : channels) {
+          Transaction tx = channel.getTransaction();
+          try {
+            tx.begin();
+            channel.put(event);
+            tx.commit();
+          } catch (Exception e) {
+            ex = e;
+            tx.rollback();
+          } finally {
+            tx.close();
+          }
         }
 
         if (ex == null) {

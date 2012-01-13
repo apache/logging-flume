@@ -78,8 +78,6 @@ public class Application {
     application.setArgs(args);
 
     try {
-      application.loadPlugins();
-
       if (application.parseOptions()) {
         application.run();
       }
@@ -95,23 +93,6 @@ public class Application {
     sourceFactory = new DefaultSourceFactory();
     sinkFactory = new DefaultSinkFactory();
     channelFactory = new DefaultChannelFactory();
-  }
-
-  public void loadPlugins() {
-    channelFactory.register("memory", MemoryChannel.class);
-    channelFactory.register("jdbc", JdbcChannel.class);
-    channelFactory.register("fanout", FanoutChannel.class);
-
-    sourceFactory.register("seq", SequenceGeneratorSource.class);
-    sourceFactory.register("netcat", NetcatSource.class);
-    sourceFactory.register("exec", ExecSource.class);
-    sourceFactory.register("avro", AvroSource.class);
-
-    sinkFactory.register("null", NullSink.class);
-    sinkFactory.register("logger", LoggerSink.class);
-    sinkFactory.register("file-roll", RollingFileSink.class);
-    sinkFactory.register("hdfs", HDFSEventSink.class);
-    sinkFactory.register("avro", AvroSink.class);
   }
 
   public boolean parseOptions() throws ParseException {
@@ -165,7 +146,8 @@ public class Application {
 
     final FlumeNode node = new FlumeNode();
     DefaultLogicalNodeManager nodeManager = new DefaultLogicalNodeManager();
-    AbstractFileConfigurationProvider configurationProvider = new PropertiesFileConfigurationProvider();
+    AbstractFileConfigurationProvider configurationProvider =
+        new PropertiesFileConfigurationProvider();
 
     configurationProvider.setChannelFactory(channelFactory);
     configurationProvider.setSourceFactory(sourceFactory);

@@ -24,6 +24,8 @@ import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.nio.channels.Channels;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -55,8 +57,9 @@ public class TestNetcatSource {
     context.put("capacity", "50");
 
     Configurables.configure(channel, context);
-
-    source.setChannel(channel);
+    List<Channel> channels = new ArrayList<Channel>();
+    channels.add(channel);
+    source.setChannels(channels);
   }
 
   @Test
@@ -98,7 +101,7 @@ public class TestNetcatSource {
 
     };
 
-    Transaction tx = source.getChannel().getTransaction();
+    Transaction tx = source.getChannels().get(0).getTransaction();
     tx.begin();
 
     for (int i = 0; i < 100; i++) {

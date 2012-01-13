@@ -42,9 +42,9 @@ import com.google.common.base.Preconditions;
  * common queue. Channel has a marker for the last committed event in order to
  * avoid sink reading uncommitted data. The transactions keep track of the
  * actions to perform undo when rolled back.
- * 
+ *
  */
-public class MemoryChannel implements Channel, Configurable {
+public class MemoryChannel extends AbstractChannel {
 
   private static final Integer defaultCapacity = 50;
   private static final Integer defaultKeepAlive = 3;
@@ -88,8 +88,8 @@ public class MemoryChannel implements Channel, Configurable {
     }
 
     @Override
-    /** 
-     * Start the transaction 
+    /**
+     * Start the transaction
      *  initialize the undo lists, stamps
      *  set transaction state to Started
      */
@@ -107,7 +107,7 @@ public class MemoryChannel implements Channel, Configurable {
     @Override
     /**
      * Commit the transaction
-     *  If there was an event added by this transaction, then set the 
+     *  If there was an event added by this transaction, then set the
      *  commit stamp set transaction state to Committed
      */
     public void commit() {
@@ -149,7 +149,7 @@ public class MemoryChannel implements Channel, Configurable {
     }
 
     @Override
-    /** 
+    /**
      * Close the transaction
      *  if the transaction is still open, then roll it back
      *  set transaction state to Closed
@@ -243,7 +243,7 @@ public class MemoryChannel implements Channel, Configurable {
   }
 
   @Override
-  /** 
+  /**
    * Add the given event to the end of the queue
    * save the event in the undoPut queue for possible rollback
    * save the stamp of this put for commit
@@ -270,7 +270,7 @@ public class MemoryChannel implements Channel, Configurable {
   /**
    * undo of put for all the events in the undoPut queue, remove those from the
    * event queue
-   * 
+   *
    * @param myTxn
    */
   protected void undoPut(MemTransaction myTxn) {
@@ -326,7 +326,7 @@ public class MemoryChannel implements Channel, Configurable {
   /**
    * undo of take operation for each event in the undoTake list, add it back to
    * the event queue
-   * 
+   *
    * @param myTxn
    */
   protected void undoTake(MemTransaction myTxn) {
@@ -357,7 +357,7 @@ public class MemoryChannel implements Channel, Configurable {
 
   /**
    * Remove the given transaction from the list of open transactions
-   * 
+   *
    * @param myTxn
    */
   protected void forgetTransaction(MemTransaction myTxn) {
@@ -373,17 +373,5 @@ public class MemoryChannel implements Channel, Configurable {
     } catch (NullPointerException eN) {
       return null;
     }
-  }
-
-  @Override
-  public void shutdown() {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public String getName() {
-    // TODO Auto-generated method stub
-    return null;
   }
 }

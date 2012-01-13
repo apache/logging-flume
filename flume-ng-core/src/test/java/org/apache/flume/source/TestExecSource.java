@@ -22,6 +22,8 @@ package org.apache.flume.source;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.Channel;
@@ -56,7 +58,10 @@ public class TestExecSource {
     Configurables.configure(source, context);
     Configurables.configure(channel, context);
 
-    source.setChannel(channel);
+    List<Channel> channels = new ArrayList<Channel>();
+    channels.add(channel);
+
+    source.setChannels(channels);
     source.start();
     Transaction transaction = channel.getTransaction();
 

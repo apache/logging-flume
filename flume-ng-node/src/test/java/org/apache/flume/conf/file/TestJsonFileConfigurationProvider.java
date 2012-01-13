@@ -40,6 +40,7 @@ import org.apache.flume.sink.NullSink;
 import org.apache.flume.source.DefaultSourceFactory;
 import org.apache.flume.source.NetcatSource;
 import org.apache.flume.source.SequenceGeneratorSource;
+import org.apache.flume.source.SourceType;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,14 +62,6 @@ public class TestJsonFileConfigurationProvider {
     ChannelFactory channelFactory = new DefaultChannelFactory();
     SourceFactory sourceFactory = new DefaultSourceFactory();
     SinkFactory sinkFactory = new DefaultSinkFactory();
-
-    channelFactory.register("memory", MemoryChannel.class);
-
-    sourceFactory.register("seq", SequenceGeneratorSource.class);
-    sourceFactory.register("netcat", NetcatSource.class);
-
-    sinkFactory.register("null", NullSink.class);
-    sinkFactory.register("logger", LoggerSink.class);
 
     provider = new JsonFileConfigurationProvider();
 

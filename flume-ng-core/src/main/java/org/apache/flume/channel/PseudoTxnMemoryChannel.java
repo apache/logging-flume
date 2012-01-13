@@ -77,7 +77,7 @@ import com.google.common.base.Preconditions;
  * TODO
  * </p>
  */
-public class PseudoTxnMemoryChannel implements Channel, Configurable {
+public class PseudoTxnMemoryChannel extends AbstractChannel {
 
   private static final Integer defaultCapacity = 50;
   private static final Integer defaultKeepAlive = 3;
@@ -162,17 +162,5 @@ public class PseudoTxnMemoryChannel implements Channel, Configurable {
     @Override
     public void close() {
     }
-  }
-
-  @Override
-  public void shutdown() {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public String getName() {
-    // TODO Auto-generated method stub
-    return null;
   }
 }

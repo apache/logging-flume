@@ -23,20 +23,22 @@ import java.util.LinkedList;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
+import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
+import org.apache.flume.lifecycle.LifecycleState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FanoutChannel implements Channel {
+public class FanoutChannel extends AbstractChannel {
   private final Logger logger = LoggerFactory
       .getLogger(FanoutChannel.class);
 
   /**
    * A wrapper transaction that does the operation on all channels.
    * Note that there's no two phase commit. If one of the channels
-   * throws an exception, we still execute the operations for the 
-   * rest. All the failed commits are rolled back at the end to 
+   * throws an exception, we still execute the operations for the
+   * rest. All the failed commits are rolled back at the end to
    * maintain consistent transaction state.
    * Note that the currently commit and rollback are not throwing
    * exceptions * even if one of the underlying transactions fail.
@@ -156,15 +158,11 @@ public class FanoutChannel implements Channel {
   }
 
   @Override
-  public void shutdown() {
+  public void stop() {
     for (Channel ch : channelList) {
-      ch.shutdown();
+      ch.stop();
     }
-  }
 
-  @Override
-  public String getName() {
-    return "SourceFanout";
+    super.stop();
   }
-
 }

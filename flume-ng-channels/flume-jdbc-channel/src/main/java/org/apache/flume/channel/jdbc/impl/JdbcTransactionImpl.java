@@ -107,7 +107,7 @@ public class JdbcTransactionImpl implements Transaction {
           LOGGER.info("Attempting transaction roll-back");
           connection.rollback();
         } else {
-          LOGGER.info("Attempting transaction commit");
+          LOGGER.debug("Attempting transaction commit");
           connection.commit();
         }
       } catch (SQLException ex) {

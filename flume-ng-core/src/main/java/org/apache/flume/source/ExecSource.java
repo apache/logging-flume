@@ -20,8 +20,8 @@
 package org.apache.flume.source;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -130,7 +130,7 @@ public class ExecSource extends AbstractSource implements EventDrivenSource,
     ExecRunnable runner = new ExecRunnable();
 
     runner.command = command;
-    runner.channel = getChannel();
+    runner.channels = getChannels();
     runner.counterGroup = counterGroup;
 
     // FIXME: Use a callback-like executor / future to signal us upon failure.
@@ -163,8 +163,8 @@ public class ExecSource extends AbstractSource implements EventDrivenSource,
       try {
         executor.awaitTermination(500, TimeUnit.MILLISECONDS);
       } catch (InterruptedException e) {
-        logger
-            .debug("Interrupted while waiting for exec executor service to stop. Just exiting.");
+        logger.debug("Interrupted while waiting for exec executor service "
+            + "to stop. Just exiting.");
         Thread.currentThread().interrupt();
       }
     }
@@ -186,12 +186,12 @@ public class ExecSource extends AbstractSource implements EventDrivenSource,
   private static class ExecRunnable implements Runnable {
 
     private String command;
-    private Channel channel;
+    private List<Channel> channels;
     private CounterGroup counterGroup;
 
     @Override
     public void run() {
-      
+
       try {
         String[] commandArgs = command.split("\\s+");
         Process process = new ProcessBuilder(commandArgs).start();
@@ -203,21 +203,23 @@ public class ExecSource extends AbstractSource implements EventDrivenSource,
         while ((line = reader.readLine()) != null) {
           counterGroup.incrementAndGet("exec.lines.read");
 
-          Transaction transaction = channel.getTransaction();
-          try {
-            transaction.begin();
-            Event event = EventBuilder.withBody(line.getBytes());
-            channel.put(event);
-            transaction.commit();
-          } catch (ChannelException e) {
-            transaction.rollback();
-            throw e;
-          } catch (Exception e) {
-            transaction.rollback();
-            throw e;
-          } 
-          finally {
-            transaction.close();
+          for (Channel channel : channels) {
+            Transaction transaction = channel.getTransaction();
+            try {
+              transaction.begin();
+              Event event = EventBuilder.withBody(line.getBytes());
+              channel.put(event);
+              transaction.commit();
+            } catch (ChannelException e) {
+              transaction.rollback();
+              throw e;
+            } catch (Exception e) {
+              transaction.rollback();
+              throw e;
+            }
+            finally {
+              transaction.close();
+            }
           }
         }
 

@@ -16,51 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-package org.apache.flume.sink;
+package org.apache.flume.channel;
 
 import org.apache.flume.Channel;
-import org.apache.flume.Sink;
+import org.apache.flume.Context;
+import org.apache.flume.conf.Configurable;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
 
-import com.google.common.base.Preconditions;
+public abstract class AbstractChannel
+    implements Channel, LifecycleAware, Configurable {
 
-abstract public class AbstractSink implements Sink, LifecycleAware {
-
-  private Channel channel;
   private String name;
 
   private LifecycleState lifecycleState;
 
-  public AbstractSink() {
+  public AbstractChannel() {
     lifecycleState = LifecycleState.IDLE;
-  }
-
-  @Override
-  public synchronized void start() {
-    Preconditions.checkState(channel != null, "No channel configured");
-
-    lifecycleState = LifecycleState.START;
-  }
-
-  @Override
-  public synchronized void stop() {
-    lifecycleState = LifecycleState.STOP;
-  }
-
-  public synchronized Channel getChannel() {
-    return channel;
-  }
-
-  @Override
-  public synchronized void setChannel(Channel channel) {
-    this.channel = channel;
-  }
-
-  @Override
-  public synchronized LifecycleState getLifecycleState() {
-    return lifecycleState;
   }
 
   @Override
@@ -69,8 +41,27 @@ abstract public class AbstractSink implements Sink, LifecycleAware {
   }
 
   @Override
+  public synchronized void start() {
+    lifecycleState = LifecycleState.START;
+  }
+
+  @Override
+  public synchronized void stop() {
+    lifecycleState = LifecycleState.STOP;
+  }
+
+  @Override
+  public synchronized LifecycleState getLifecycleState() {
+    return lifecycleState;
+  }
+
+  @Override
   public synchronized String getName() {
     return name;
   }
 
+  @Override
+  public void configure(Context context) {
+
+  }
 }

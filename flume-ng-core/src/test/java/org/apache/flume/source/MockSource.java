@@ -16,61 +16,50 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.flume.source;
 
-package org.apache.flume.sink;
+import java.util.List;
 
 import org.apache.flume.Channel;
-import org.apache.flume.Sink;
-import org.apache.flume.lifecycle.LifecycleAware;
+import org.apache.flume.Source;
 import org.apache.flume.lifecycle.LifecycleState;
 
-import com.google.common.base.Preconditions;
+public class MockSource implements Source {
 
-abstract public class AbstractSink implements Sink, LifecycleAware {
-
-  private Channel channel;
   private String name;
 
-  private LifecycleState lifecycleState;
-
-  public AbstractSink() {
-    lifecycleState = LifecycleState.IDLE;
+  public MockSource() {
   }
 
   @Override
-  public synchronized void start() {
-    Preconditions.checkState(channel != null, "No channel configured");
-
-    lifecycleState = LifecycleState.START;
+  public void start() {
   }
 
   @Override
-  public synchronized void stop() {
-    lifecycleState = LifecycleState.STOP;
-  }
-
-  public synchronized Channel getChannel() {
-    return channel;
+  public void stop() {
   }
 
   @Override
-  public synchronized void setChannel(Channel channel) {
-    this.channel = channel;
+  public LifecycleState getLifecycleState() {
+    return null;
   }
 
   @Override
-  public synchronized LifecycleState getLifecycleState() {
-    return lifecycleState;
+  public void setChannels(List<Channel> channels) {
   }
 
   @Override
-  public synchronized void setName(String name) {
+  public List<Channel> getChannels() {
+    return null;
+  }
+
+  @Override
+  public void setName(String name) {
     this.name = name;
   }
 
   @Override
-  public synchronized String getName() {
+  public String getName() {
     return name;
   }
-
 }

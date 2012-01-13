@@ -44,22 +44,23 @@ public class SequenceGeneratorSource extends AbstractSource implements
 
   @Override
   public Status process() throws EventDeliveryException {
-    Channel channel = getChannel();
-    Transaction transaction = channel.getTransaction();
 
-    try {
-      transaction.begin();
-      channel.put(EventBuilder.withBody(String.valueOf(sequence++).getBytes()));
-      transaction.commit();
+    for (Channel channel : getChannels()) {
+      Transaction transaction = channel.getTransaction();
 
-      counterGroup.incrementAndGet("events.successful");
-    } catch (Exception e) {
-      transaction.rollback();
-      counterGroup.incrementAndGet("events.failed");
-    } finally {
-      transaction.close();
+      try {
+        transaction.begin();
+        channel.put(EventBuilder.withBody(String.valueOf(sequence++).getBytes()));
+        transaction.commit();
+
+        counterGroup.incrementAndGet("events.successful");
+      } catch (Exception e) {
+        transaction.rollback();
+        counterGroup.incrementAndGet("events.failed");
+      } finally {
+        transaction.close();
+      }
     }
-
     return Status.READY;
   }
 

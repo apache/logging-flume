@@ -17,11 +17,23 @@
  */
 package org.apache.flume;
 
+/**
+ * Base class of all flume exceptions.
+ */
+public class FlumeException extends RuntimeException {
 
-public interface ChannelFactory {
+  private static final long serialVersionUID = 1L;
 
-  public Channel create(String name, String type) throws FlumeException;
+  public FlumeException(String msg) {
+    super(msg);
+  }
 
-  public boolean unregister(Channel channel);
+  public FlumeException(String msg, Throwable th) {
+    super(msg, th);
+  }
+
+  public FlumeException(Throwable th) {
+    super(th);
+  }
 
 }

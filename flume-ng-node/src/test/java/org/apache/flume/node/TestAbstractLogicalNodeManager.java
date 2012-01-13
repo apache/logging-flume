@@ -19,6 +19,9 @@
 
 package org.apache.flume.node;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Sink;
@@ -144,7 +147,9 @@ public class TestAbstractLogicalNodeManager {
     Configurables.configure(channel, new Context());
 
     Source generatorSource = new SequenceGeneratorSource();
-    generatorSource.setChannel(channel);
+    List<Channel> channels = new ArrayList<Channel>();
+    channels.add(channel);
+    generatorSource.setChannels(channels);
 
     Sink nullSink = new NullSink();
     nullSink.setChannel(channel);
@@ -175,7 +180,9 @@ public class TestAbstractLogicalNodeManager {
     Configurables.configure(channel, new Context());
 
     Source source = new SequenceGeneratorSource();
-    source.setChannel(channel);
+    List<Channel> channels = new ArrayList<Channel>();
+    channels.add(channel);
+    source.setChannels(channels);
 
     Sink sink = new NullSink();
     sink.setChannel(channel);

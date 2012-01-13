@@ -31,6 +31,7 @@ import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
+import org.apache.flume.channel.AbstractChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +43,7 @@ import com.google.common.base.Preconditions;
  * its storage.
  * </p>
  */
-public class FileChannel implements Channel {
+public class FileChannel extends AbstractChannel {
 
   private static final Logger logger = LoggerFactory
       .getLogger(FileChannel.class);
@@ -155,12 +156,6 @@ public class FileChannel implements Channel {
 
   public boolean isInitialized() {
     return isInitialized;
-  }
-
-  @Override
-  public void shutdown() {
-    // TODO Auto-generated method stub
-
   }
 
   @Override

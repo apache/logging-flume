@@ -21,7 +21,7 @@ package org.apache.flume;
 
 import org.apache.flume.lifecycle.LifecycleAware;
 
-public interface Sink extends LifecycleAware {
+public interface Sink extends LifecycleAware, NamedComponent {
 
   public void setChannel(Channel channel);
 

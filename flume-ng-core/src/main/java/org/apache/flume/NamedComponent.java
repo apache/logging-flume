@@ -16,16 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.flume;
 
-import java.util.List;
+public interface NamedComponent {
 
-import org.apache.flume.lifecycle.LifecycleAware;
+  public void setName(String name);
 
-public interface Source extends LifecycleAware, NamedComponent {
+  public String getName();
 
-  public void setChannels(List<Channel> channels);
-
-  public List<Channel> getChannels();
 }

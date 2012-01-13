@@ -161,48 +161,14 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
 
     counterGroup.incrementAndGet("rpc.received");
 
-    Channel channel = getChannel();
-    Transaction transaction = channel.getTransaction();
+    List<Channel> channels = getChannels();
 
-    try {
-      transaction.begin();
+    for (Channel channel : channels) {
+      Transaction transaction = channel.getTransaction();
 
-      Map<String, String> headers = new HashMap<String, String>();
+      try {
+        transaction.begin();
 
-      for (Entry<CharSequence, CharSequence> entry : avroEvent.headers
-          .entrySet()) {
-
-        headers.put(entry.getKey().toString(), entry.getValue().toString());
-      }
-
-      Event event = EventBuilder.withBody(avroEvent.body.array(), headers);
-      channel.put(event);
-      counterGroup.incrementAndGet("rpc.events");
-
-      transaction.commit();
-    } catch (ChannelException e) {
-      transaction.rollback();
-      return Status.FAILED;
-    } finally {
-      transaction.close();
-    }
-
-    counterGroup.incrementAndGet("rpc.successful");
-
-    return Status.OK;
-  }
-
-  @Override
-  public Status appendBatch(List<AvroFlumeEvent> events) {
-    counterGroup.incrementAndGet("rpc.received.batch");
-
-    Channel channel = getChannel();
-    Transaction transaction = channel.getTransaction();
-
-    try {
-      transaction.begin();
-
-      for (AvroFlumeEvent avroEvent : events) {
         Map<String, String> headers = new HashMap<String, String>();
 
         for (Entry<CharSequence, CharSequence> entry : avroEvent.headers
@@ -214,14 +180,54 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
         Event event = EventBuilder.withBody(avroEvent.body.array(), headers);
         channel.put(event);
         counterGroup.incrementAndGet("rpc.events");
-      }
 
-      transaction.commit();
-    } catch (ChannelException e) {
-      transaction.rollback();
-      return Status.FAILED;
-    } finally {
-      transaction.close();
+        transaction.commit();
+      } catch (ChannelException e) {
+        transaction.rollback();
+        return Status.FAILED;
+      } finally {
+        transaction.close();
+      }
+    }
+
+    counterGroup.incrementAndGet("rpc.successful");
+
+    return Status.OK;
+  }
+
+  @Override
+  public Status appendBatch(List<AvroFlumeEvent> events) {
+    counterGroup.incrementAndGet("rpc.received.batch");
+
+    List<Channel> channels = getChannels();
+
+    for (Channel channel : channels) {
+      Transaction transaction = channel.getTransaction();
+
+      try {
+        transaction.begin();
+
+        for (AvroFlumeEvent avroEvent : events) {
+          Map<String, String> headers = new HashMap<String, String>();
+
+          for (Entry<CharSequence, CharSequence> entry : avroEvent.headers
+              .entrySet()) {
+
+            headers.put(entry.getKey().toString(), entry.getValue().toString());
+          }
+
+          Event event = EventBuilder.withBody(avroEvent.body.array(), headers);
+          channel.put(event);
+          counterGroup.incrementAndGet("rpc.events");
+        }
+
+        transaction.commit();
+      } catch (ChannelException e) {
+        transaction.rollback();
+        return Status.FAILED;
+      } finally {
+        transaction.close();
+      }
     }
 
     counterGroup.incrementAndGet("rpc.successful");

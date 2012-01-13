@@ -17,6 +17,8 @@
  */
 package org.apache.flume;
 
+import org.apache.flume.lifecycle.LifecycleAware;
+
 /**
  * <p>
  * A channel connects a <tt>Source</tt> to a <tt>Sink</tt>. The source
@@ -42,7 +44,7 @@ package org.apache.flume;
  * @see org.apache.flume.EventSink
  * @see org.apache.flume.Transaction
  */
-public interface Channel {
+public interface Channel extends LifecycleAware, NamedComponent {
 
   /**
    * <p>Puts the given event in the channel.</p>
@@ -73,16 +75,4 @@ public interface Channel {
    * @return the transaction instance associated with this channel.
    */
   public Transaction getTransaction();
-
-  /**
-   * Instructs the channel to release any resources held in preparation of
-   * shutting down.
-   */
-  public void shutdown();
-
-  /**
-   * @return the channel name.
-   * @return
-   */
-  public String getName();
 }

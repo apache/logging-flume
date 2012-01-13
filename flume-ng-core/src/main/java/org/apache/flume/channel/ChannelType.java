@@ -16,16 +16,42 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.flume.channel;
 
-package org.apache.flume;
+/**
+ * Enumeration of built in channel types available in the system.
+ */
+public enum ChannelType {
 
-import java.util.List;
+  /**
+   * Place holder for custom channels not part of this enumeration.
+   */
+  OTHER(null),
 
-import org.apache.flume.lifecycle.LifecycleAware;
+  /**
+   * Memory channel
+   * @see MemoryChannel
+   */
+  MEMORY(MemoryChannel.class.getName()),
 
-public interface Source extends LifecycleAware, NamedComponent {
+  /**
+   * Fan-out channel
+   * @see FanoutChannel
+   */
+  FAN_OUT(FanoutChannel.class.getName()),
 
-  public void setChannels(List<Channel> channels);
+  /**
+   * JDBC channel provided by org.apache.flume.channel.jdbc.JdbcChannel
+   */
+  JDBC("org.apache.flume.channel.jdbc.JdbcChannel");
 
-  public List<Channel> getChannels();
+  private final String channelClassName;
+
+  private ChannelType(String channelClassName) {
+    this.channelClassName = channelClassName;
+  }
+
+  public String getChannelClassName() {
+    return channelClassName;
+  }
 }

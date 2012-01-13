@@ -19,9 +19,12 @@
 
 package org.apache.flume.node;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import org.apache.flume.Channel;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleController;
@@ -67,7 +70,9 @@ public class TestDefaultLogicalNodeManager {
 
     for (int i = 0; i < 3; i++) {
       SequenceGeneratorSource source = new SequenceGeneratorSource();
-      source.setChannel(new MemoryChannel());
+      List<Channel> channels = new ArrayList<Channel>();
+      channels.add(new MemoryChannel());
+      source.setChannels(channels);
 
       PollableSourceRunner sourceRunner = new PollableSourceRunner();
       sourceRunner.setSource(source);
@@ -91,7 +96,9 @@ public class TestDefaultLogicalNodeManager {
 
     for (int i = 0; i < 30; i++) {
       SequenceGeneratorSource source = new SequenceGeneratorSource();
-      source.setChannel(new MemoryChannel());
+      List<Channel> channels = new ArrayList<Channel>();
+      channels.add(new MemoryChannel());
+      source.setChannels(channels);
 
       PollableSourceRunner sourceRunner = new PollableSourceRunner();
       sourceRunner.setSource(source);
@@ -123,7 +130,9 @@ public class TestDefaultLogicalNodeManager {
 
     for (int i = 0; i < 30; i++) {
       SequenceGeneratorSource source = new SequenceGeneratorSource();
-      source.setChannel(new MemoryChannel());
+      List<Channel> channels = new ArrayList<Channel>();
+      channels.add(new MemoryChannel());
+      source.setChannels(channels);
 
       PollableSourceRunner sourceRunner = new PollableSourceRunner();
       sourceRunner.setSource(source);

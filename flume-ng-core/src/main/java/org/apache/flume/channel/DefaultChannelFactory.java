@@ -21,11 +21,10 @@ package org.apache.flume.channel;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelFactory;
+import org.apache.flume.FlumeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,83 +35,93 @@ public class DefaultChannelFactory implements ChannelFactory {
   private static final Logger logger = LoggerFactory
       .getLogger(DefaultChannelFactory.class);
 
-  private Map<String, Class<? extends Channel>> channelRegistry;
+  private Map<Class<?>, Map<String, Channel>> channels;
 
   public DefaultChannelFactory() {
-    channelRegistry = new HashMap<String, Class<? extends Channel>>();
+    channels = new HashMap<Class<?>, Map<String, Channel>>();
   }
 
   @Override
-  public boolean register(String name, Class<? extends Channel> channelClass) {
-    logger.info("Register channel name:{} class:{}", name, channelClass);
+  public boolean unregister(Channel channel) {
+    Preconditions.checkNotNull(channel);
+    logger.info("Unregister channel {}", channel);
+    boolean removed = false;
 
-    if (channelRegistry.containsKey(name)) {
-      return false;
+    Map<String, Channel> channelMap = channels.get(channel.getClass());
+    if (channelMap != null) {
+      removed = (channelMap.remove(channel.getName()) != null);
+
+      if (channelMap.size() == 0) {
+        channels.remove(channel.getClass());
+      }
     }
 
-    channelRegistry.put(name, channelClass);
-    return true;
+    return removed;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  public boolean unregister(String name) {
-    logger.info("Unregister channel class:{}", name);
-
-    return channelRegistry.remove(name) != null;
-  }
-
-  @Override
-  public Set<String> getChannelNames() {
-    return channelRegistry.keySet();
-  }
-
-  @Override
-  public Channel create(String name) throws InstantiationException {
+  public Channel create(String name, String type) throws FlumeException {
     Preconditions.checkNotNull(name);
+    Preconditions.checkNotNull(type);
+    logger.debug("Creating instance of channel {} type {}", name, type);
 
-    logger.debug("Creating instance of channel {}", name);
+    String channelClassName = type;
 
-    if (!channelRegistry.containsKey(name)) {
-      return null;
+    ChannelType channelType = ChannelType.OTHER;
+    try {
+      channelType = ChannelType.valueOf(type.toUpperCase());
+    } catch (IllegalArgumentException ex) {
+      logger.debug("Channel type {} is a custom type", type);
     }
 
-    Channel channel = null;
+    if (!channelType.equals(ChannelType.OTHER)) {
+      channelClassName = channelType.getChannelClassName();
+    }
 
+    Class<? extends Channel> channelClass = null;
     try {
-      channel = channelRegistry.get(name).newInstance();
-    } catch (IllegalAccessException e) {
-      throw new InstantiationException("Unable to create channel " + name
-          + " due to " + e.getMessage());
+      channelClass = (Class<? extends Channel>) Class.forName(channelClassName);
+    } catch (Exception ex) {
+      throw new FlumeException("Unable to load channel type: " + type
+          + ", class: " + channelClassName, ex);
+    }
+
+    Map<String, Channel> channelMap = channels.get(channelClass);
+    if (channelMap == null) {
+      channelMap = new HashMap<String, Channel>();
+      channels.put(channelClass, channelMap);
+    }
+
+    Channel channel = channelMap.get(name);
+
+    if (channel == null) {
+      try {
+        channel = channelClass.newInstance();
+        channel.setName(name);
+        channelMap.put(name, channel);
+      } catch (Exception ex) {
+        // Clean up channel map
+        channels.remove(channelClass);
+        throw new FlumeException("Unable to create channel: " + name
+            + ", type: " + type + ", class: " + channelClassName, ex);
+      }
     }
 
     return channel;
   }
 
-  @Override
-  public String toString() {
-    return "{ channelRegistry:" + channelRegistry + " }";
-  }
+  public Map<Class<?>, Map<String, Channel>> getRegistryClone() {
+    Map<Class<?>, Map<String, Channel>> result =
+        new HashMap<Class<?>, Map<String, Channel>>();
 
-  public Map<String, Class<? extends Channel>> getChannelRegistry() {
-    return channelRegistry;
-  }
-
-  public void setChannelRegistry(
-      Map<String, Class<? extends Channel>> channelRegistry) {
-    this.channelRegistry = channelRegistry;
-  }
-
-  // build a fanout channel from the list of channel names and map of <name,channels>
-  @Override
-  public Channel createFanout(String chList, Map<String, Channel> chMap)
-      throws InstantiationException {
-
-    FanoutChannel fnc = (FanoutChannel)create("fanout");
-    StringTokenizer tk = new StringTokenizer(chList, ",");
-    while (tk.hasMoreTokens()) {
-      fnc.addFanout(chMap.get(tk.nextToken()));
+    for (Class<?> klass : channels.keySet()) {
+      Map<String, Channel> channelMap = channels.get(klass);
+      Map<String, Channel> resultChannelMap = new HashMap<String, Channel>();
+      resultChannelMap.putAll(channelMap);
+      result.put(klass, resultChannelMap);
     }
-    return fnc;
-  }
 
+    return result;
+  }
 }

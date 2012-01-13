@@ -21,9 +21,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.StringTokenizer;
 
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
@@ -31,7 +33,6 @@ import org.apache.flume.Sink;
 import org.apache.flume.SinkRunner;
 import org.apache.flume.Source;
 import org.apache.flume.SourceRunner;
-import org.apache.flume.channel.FanoutChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.conf.file.AbstractFileConfigurationProvider;
 import org.apache.flume.conf.file.SimpleNodeConfiguration;
@@ -74,10 +75,10 @@ import org.slf4j.LoggerFactory;
  * <tt>&lt;agent name&gt;.sources.&lt;source name&gt;.runner.type = avro</tt>.
  * This namespace can also be used to configure other configuration of the
  * source runner as needed. For example:
- * <tt>&lt;agent name&gt;.sources.&lt;source name&gt;.runner.port = 10101</tt></li>
- * <li>For each channel named in the <tt>&lt;agent name&gt;.channels</tt>, there
- * must be a non-empty <tt>type</tt> attribute specified from the valid set of
- * channel types. For example:
+ * <tt>&lt;agent name&gt;.sources.&lt;source name&gt;.runner.port = 10101</tt>
+ * </li><li>For each channel named in the <tt>&lt;agent name&gt;.channels</tt>,
+ * there must be a non-empty <tt>type</tt> attribute specified from the valid
+ * set of channel types. For example:
  * <tt>&lt;agent name&gt;.channels.&lt;channel name&gt;.type = mem</tt></li>
  * <li>For each sink named in the <tt>&lt;agent name&gt;.sinks</tt>, there must
  * be a non-empty <tt>type</tt> attribute specified from the valid set of sink
@@ -98,7 +99,7 @@ import org.slf4j.LoggerFactory;
  * <tt>&lt;agent name&gt;.sinks.&lt;sink name&gt;.runner.polling.interval =
  * 60</tt></li>
  * </ul>
- * 
+ *
  * Apart from the above required configuration values, each source, sink or
  * channel can have its own set of arbitrary configuration as required by the
  * implementation. Each of these configuration values are expressed by fully
@@ -120,36 +121,36 @@ import org.slf4j.LoggerFactory;
  * </p>
  * <p>
  * Example configuration file:
- * 
+ *
  * <pre>
  * #
  * # Flume Configuration
  * # This file contains configuration for one Agent identified as host1.
  * #
- * 
+ *
  * host1.sources = avroSource thriftSource
  * host1.channels = jdbcChannel
  * host1.sinks = hdfsSink
- * 
+ *
  * # avroSource configuration
  * host1.sources.avroSource.type = org.apache.flume.source.AvroSource
  * host1.sources.avroSource.runner.type = avro
  * host1.sources.avroSource.runner.port = 11001
  * host1.sources.avroSource.channels = jdbcChannel
- * 
+ *
  * # thriftSource configuration
  * host1.sources.thriftSource.type = org.apache.flume.source.ThriftSource
  * host1.sources.thriftSource.runner.type = thrift
  * host1.sources.thriftSource.runner.port = 12001
  * host1.sources.thriftSource.channels = jdbcChannel
- * 
+ *
  * # jdbcChannel configuration
  * host1.channels.jdbcChannel.type = jdbc
  * host1.channels.jdbcChannel.jdbc.driver = com.mysql.jdbc.Driver
  * host1.channels.jdbcChannel.jdbc.connect.url = http://localhost/flumedb
  * host1.channels.jdbcChannel.jdbc.username = flume
  * host1.channels.jdbcChannel.jdbc.password = flume
- * 
+ *
  * # hdfsSink configuration
  * host1.sinks.hdfsSink.type = hdfs
  * host1.sinks.hdfsSink.namenode = hdfs://localhost/
@@ -157,9 +158,9 @@ import org.slf4j.LoggerFactory;
  * host1.sinks.hdfsSink.runner.type = polling
  * host1.sinks.hdfsSink.runner.polling.interval = 60
  * </pre>
- * 
+ *
  * </p>
- * 
+ *
  * @see java.util.Properties#load(java.io.Reader)
  */
 public class PropertiesFileConfigurationProvider extends
@@ -209,13 +210,13 @@ public class PropertiesFileConfigurationProvider extends
     }
   }
 
-  private void loadChannels(AgentConfiguration agentConf, NodeConfiguration conf)
-      throws InstantiationException {
+  private void loadChannels(AgentConfiguration agentConf,
+      NodeConfiguration conf) throws InstantiationException {
 
     for (ComponentConfiguration comp : agentConf.getChannels()) {
       Context context = new Context();
 
-      Channel channel = getChannelFactory().create(
+      Channel channel = getChannelFactory().create(comp.getComponentName(),
           comp.getConfiguration().get("type"));
 
       for (Entry<String, String> entry : comp.getConfiguration().entrySet()) {
@@ -234,8 +235,10 @@ public class PropertiesFileConfigurationProvider extends
     for (ComponentConfiguration comp : agentConf.getSources()) {
       Context context = new Context();
 
-      Source source = getSourceFactory().create(
-          comp.getConfiguration().get("type"));
+      Map<String, String> componentConfig = comp.getConfiguration();
+
+      Source source = getSourceFactory().create(comp.getComponentName(),
+          componentConfig.get("type"));
 
       for (Entry<String, String> entry : comp.getConfiguration().entrySet()) {
         context.put(entry.getKey(), entry.getValue());
@@ -243,14 +246,14 @@ public class PropertiesFileConfigurationProvider extends
 
       Configurables.configure(source, context);
 
-      if (comp.getConfiguration().get("channels").contains(",")) {
-        // then create a fanout if there are channel for this source
-        source.setChannel(getChannelFactory().createFanout(
-            comp.getConfiguration().get("channels"),conf.getChannels()));
-      } else {
-        source.setChannel(conf.getChannels().get(
-            comp.getConfiguration().get("channels")));        
+      String channelNames = comp.getConfiguration().get("channels");
+      List<Channel> channels = new ArrayList<Channel>();
+
+      for (String chName : channelNames.split(" ")) {
+        channels.add(conf.getChannels().get(chName));
       }
+
+      source.setChannels(channels);
       conf.getSourceRunners().put(comp.getComponentName(),
           SourceRunner.forSource(source));
     }
@@ -261,13 +264,11 @@ public class PropertiesFileConfigurationProvider extends
 
     for (ComponentConfiguration comp : agentConf.getSinks()) {
       Context context = new Context();
+      Map<String, String> componentConfig = comp.getConfiguration();
 
-      String type = comp.getConfiguration().get("type");
-      Sink sink = getSinkFactory().create(type);
-      if(sink == null) {
-        throw new InstantiationException("Can't instantiate sink with type " + type + " (it's probably " +
-          "unknown type)");
-      }
+
+      Sink sink = getSinkFactory().create(comp.getComponentName(),
+          componentConfig.get("type"));
 
       for (Entry<String, String> entry : comp.getConfiguration().entrySet()) {
         context.put(entry.getKey(), entry.getValue());
@@ -276,7 +277,7 @@ public class PropertiesFileConfigurationProvider extends
       Configurables.configure(sink, context);
 
       sink.setChannel(conf.getChannels().get(
-          comp.getConfiguration().get("channel")));
+          componentConfig.get("channel")));
       conf.getSinkRunners().put(comp.getComponentName(),
           SinkRunner.forSink(sink));
     }

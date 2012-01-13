@@ -22,7 +22,9 @@ package org.apache.flume.source;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.apache.avro.ipc.NettyTransceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
@@ -60,7 +62,10 @@ public class TestAvroSource {
 
     Configurables.configure(channel, new Context());
 
-    source.setChannel(channel);
+    List<Channel> channels = new ArrayList<Channel>();
+    channels.add(channel);
+
+    source.setChannels(channels);
   }
 
   @Test

@@ -19,6 +19,7 @@ package org.apache.flume.conf.file;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -51,16 +52,27 @@ public class JsonFileConfigurationProvider
 
       if (sourceDef.containsKey("type")) {
         Source source =
-            getSourceFactory().create((String) sourceDef.get("type"));
-        Channel channel = conf.getChannels().get(sourceDef.get("channel"));
+            getSourceFactory().create(
+                (String) sourceDef.get("name"),
+                (String) sourceDef.get("type"));
+
+        //String channelList = sourceDef.
+
+        List<String> channelNames = (List<String>) sourceDef.get("channels");
+
+        List<Channel> channels = new ArrayList<Channel>();
+
+        for (String chName : channelNames) {
+          channels.add(conf.getChannels().get(chName));
+        }
 
         Context context = new Context();
         context.setParameters(sourceDef);
 
         Configurables.configure(source, context);
 
-        if (channel != null) {
-          source.setChannel(channel);
+        if (channels.size() > 0) {
+          source.setChannels(channels);
         } else {
           logger.warn(
               "No channel named {} - source:{} is likely non-functional.",
@@ -86,7 +98,9 @@ public class JsonFileConfigurationProvider
 
       if (sinkDef.containsKey("type")) {
         Sink sink =
-            getSinkFactory().create((String) sinkDef.get("type"));
+            getSinkFactory().create(
+                (String) sinkDef.get("name"),
+                (String) sinkDef.get("type"));
         Channel channel = conf.getChannels().get(sinkDef.get("channel"));
 
         Context context = new Context();
@@ -117,8 +131,9 @@ public class JsonFileConfigurationProvider
       logger.debug("channel:{}", channelDef);
 
       if (channelDef.containsKey("type")) {
-        Channel channel = getChannelFactory()
-            .create((String) channelDef.get("type"));
+        Channel channel = getChannelFactory().create(
+                (String) channelDef.get("name"),
+                (String) channelDef.get("type"));
 
         Context context = new Context();
         context.setParameters(channelDef);
