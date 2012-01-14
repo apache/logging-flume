@@ -95,7 +95,7 @@ run_node() {
 
   FLUME_APPLICATION_CLASS=$FLUME_NODE_CLASS
 
-  $JAVA $JAVA_OPTS -cp "$final_cp" "$FLUME_APPLICATION_CLASS" $*
+  exec $JAVA $JAVA_OPTS -cp "$final_cp" "$FLUME_APPLICATION_CLASS" $*
 }
 
 run_avro_client() {
@@ -121,7 +121,7 @@ run_avro_client() {
 
   FLUME_APPLICATION_CLASS=$FLUME_AVRO_CLIENT_CLASS
 
-  $JAVA $JAVA_OPTS -cp "$final_cp" "$FLUME_APPLICATION_CLASS" $*
+  exec $JAVA $JAVA_OPTS -cp "$final_cp" "$FLUME_APPLICATION_CLASS" $*
 }
 
 validate_env() {
