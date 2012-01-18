@@ -353,4 +353,28 @@ public class TestNaiveFileWALDeco {
     b.build(LogicalNodeContext.testingContext(), "foo", "bar");
   }
 
+  /**
+   * force the 1500ms delay in open, make sure that the events
+   * passed successfully to sink.
+   */
+  @Test
+  public void testSlowOpenSubsink() throws FlumeSpecException,
+      IOException, InterruptedException {
+    FlumeTestHarness.setupLocalWriteDir();
+    EventSink snk = FlumeBuilder.buildSink(new ReportTestingContext(
+        LogicalNodeContext.testingContext()),
+        "{ ackedWriteAhead => { ackChecker => { delay(1500, \"delayOpen\") => counter(\"count\") } } }");
+    EventSource src =  MemorySinkSource.cannedData("foo foo foo ", 5);
+    snk.open();
+    src.open();
+    EventUtil.dumpAll(src, snk);
+    src.close();
+    snk.close();
+
+    CounterSink cnt = (CounterSink) ReportManager.get().getReportable("count");
+
+    assertEquals(5, cnt.getCount());
+    FlumeTestHarness.cleanupLocalWriteDir();
+  }
+
 }

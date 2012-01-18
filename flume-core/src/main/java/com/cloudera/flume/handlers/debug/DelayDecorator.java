@@ -33,10 +33,24 @@ import com.google.common.base.Preconditions;
 public class DelayDecorator<S extends EventSink> extends EventSinkDecorator<S> {
 
   final int millis;
+  final boolean delayOpen;
 
-  public DelayDecorator(S s, int millis) {
+  public DelayDecorator(S s, int millis, boolean delayOpen) {
     super(s);
     this.millis = millis;
+    this.delayOpen = delayOpen;
+  }
+
+  @Override
+  public void open() throws IOException, InterruptedException {
+    if (delayOpen) {
+      try {
+        Thread.sleep(millis);
+      } catch (InterruptedException e1) {
+        throw e1;
+      }
+    }
+    super.open();
   }
 
   @Override
@@ -57,11 +71,15 @@ public class DelayDecorator<S extends EventSink> extends EventSinkDecorator<S> {
       public EventSinkDecorator<EventSink> build(Context context,
           String... argv) {
         Preconditions
-            .checkArgument(argv.length <= 2, "usage: delay(init=1000)");
+            .checkArgument(argv.length <= 3, "usage: delay(init=1000 [,delayOpen])");
         int delaymillis = 1000;
+        boolean delayOpen = false;
         if (argv.length >= 1)
           delaymillis = Integer.parseInt(argv[0]);
-        return new DelayDecorator<EventSink>(null, delaymillis);
+        if (argv.length >= 2) {
+          delayOpen = true;
+        }
+        return new DelayDecorator<EventSink>(null, delaymillis, delayOpen);
       }
 
     };

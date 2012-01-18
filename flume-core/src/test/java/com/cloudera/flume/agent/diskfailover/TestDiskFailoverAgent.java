@@ -207,11 +207,10 @@ public class TestDiskFailoverAgent {
     master.getSpecMan().addLogicalNode(NetUtils.localhost(), lnode);
     liveMan.heartbeatChecks();
 
-    // TODO It we only wait for opening state, this test can hang
     LogicalNode n = node.getLogicalNodeManager().get(lnode);
     Driver d = n.getDriver();
     assertTrue("Attempting to start driver timed out",
-        d.waitForAtLeastState(DriverState.ACTIVE, 10000));
+        d.waitForAtLeastState(DriverState.OPENING, 10000));
 
     // update config node to something that will be interrupted.
     LOG.info("!!! decommissioning node on master");
@@ -253,11 +252,10 @@ public class TestDiskFailoverAgent {
     master.getSpecMan().addLogicalNode(NetUtils.localhost(), lnode);
     liveMan.heartbeatChecks();
 
-    // TODO It we only wait for opening state, this test can hang
     LogicalNode n = node.getLogicalNodeManager().get(lnode);
     Driver d = n.getDriver();
     assertTrue("Attempting to start driver timed out",
-        d.waitForAtLeastState(DriverState.ACTIVE, 15000));
+        d.waitForAtLeastState(DriverState.OPENING, 15000));
 
     // update config node to something that will be interrupted.
     LOG.info("!!! decommissioning node on master");
