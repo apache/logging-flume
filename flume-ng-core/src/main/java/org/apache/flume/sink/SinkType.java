@@ -54,6 +54,11 @@ public enum SinkType {
   HDFS("org.apache.flume.sink.hdfs.HDFSEventSink"),
 
   /**
+   * IRC Sink provided by org.apache.flume.sink.irc.IRCSink
+   */ 
+  IRC("org.apache.flume.sink.irc.IRCSink"),
+
+  /**
    * Avro sink
    * @see AvroSink
    */
