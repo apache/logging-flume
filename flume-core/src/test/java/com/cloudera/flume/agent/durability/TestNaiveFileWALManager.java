@@ -20,6 +20,7 @@ package com.cloudera.flume.agent.durability;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -45,6 +46,16 @@ public class TestNaiveFileWALManager {
   // has 5 good entries.
   final static String WAL_OK = "data/hadoop_logs_5.hdfs";
   public static Logger LOG = Logger.getLogger(TestNaiveFileWALManager.class);
+  // exclude CRC files from the listing
+  private FilenameFilter crcFilter = new FilenameFilter() {
+    @Override
+    public boolean accept(File dir, String name) {
+      if (name.endsWith(".crc")) {
+        return false;
+    }
+    return true;
+    }
+  };
 
   @Before
   public void setUp() {
@@ -163,15 +174,15 @@ public class TestNaiveFileWALManager {
     wal.recover();
 
     // check to make sure wal file is gone
-    // assertTrue(new File(tmp, "import").list().length == 0);
-    assertEquals(0, new File(tmp, "writing").list().length);
-    assertEquals(0, new File(tmp, "sending").list().length);
-    assertEquals(0, new File(tmp, "sent").list().length);
-    assertEquals(0, new File(tmp, "done").list().length);
+    // assertTrue(new File(tmp, "import").list(crcFilter).length == 0);
+    assertEquals(0, new File(tmp, "writing").list(crcFilter).length);
+    assertEquals(0, new File(tmp, "sending").list(crcFilter).length);
+    assertEquals(0, new File(tmp, "sent").list(crcFilter).length);
+    assertEquals(0, new File(tmp, "done").list(crcFilter).length);
     // pre-existing error, and writing didn't have proper ack wrappers
-    assertEquals(4, new File(tmp, "error").list().length);
+    assertEquals(4, new File(tmp, "error").list(crcFilter).length);
     // logged, writing, sending, sent
-    assertEquals(4, new File(tmp, "logged").list().length);
+    assertEquals(4, new File(tmp, "logged").list(crcFilter).length);
 
     FlumeTestHarness.cleanupLocalWriteDir();
   }
@@ -205,13 +216,13 @@ public class TestNaiveFileWALManager {
     wal.recover();
 
     // check to make sure wal file is gone
-    // assertTrue(new File(tmp, "import").list().length == 0);
-    assertEquals(0, new File(tmp, "writing").list().length);
-    assertEquals(0, new File(tmp, "sending").list().length);
-    assertEquals(0, new File(tmp, "sent").list().length);
-    assertEquals(0, new File(tmp, "done").list().length);
-    assertEquals(1, new File(tmp, "error").list().length);
-    assertEquals(1, new File(tmp, "logged").list().length);
+    // assertTrue(new File(tmp, "import").list(crcFilter).length == 0);
+    assertEquals(0, new File(tmp, "writing").list(crcFilter).length);
+    assertEquals(0, new File(tmp, "sending").list(crcFilter).length);
+    assertEquals(0, new File(tmp, "sent").list(crcFilter).length);
+    assertEquals(0, new File(tmp, "done").list(crcFilter).length);
+    assertEquals(1, new File(tmp, "error").list(crcFilter).length);
+    assertEquals(1, new File(tmp, "logged").list(crcFilter).length);
 
     FlumeTestHarness.cleanupLocalWriteDir();
   }
@@ -247,13 +258,13 @@ public class TestNaiveFileWALManager {
     wal.recover();
 
     // check to make sure wal file is gone
-    // assertTrue(new File(tmp, "import").list().length == 0);
-    assertEquals(0, new File(tmp, "writing").list().length);
-    assertEquals(0, new File(tmp, "sending").list().length);
-    assertEquals(0, new File(tmp, "sent").list().length);
-    assertEquals(0, new File(tmp, "done").list().length);
-    assertEquals(1, new File(tmp, "error").list().length);
-    assertEquals(1, new File(tmp, "logged").list().length);
+    // assertTrue(new File(tmp, "import").list(crcFilter).length == 0);
+    assertEquals(0, new File(tmp, "writing").list(crcFilter).length);
+    assertEquals(0, new File(tmp, "sending").list(crcFilter).length);
+    assertEquals(0, new File(tmp, "sent").list(crcFilter).length);
+    assertEquals(0, new File(tmp, "done").list(crcFilter).length);
+    assertEquals(1, new File(tmp, "error").list(crcFilter).length);
+    assertEquals(1, new File(tmp, "logged").list(crcFilter).length);
 
     FlumeTestHarness.cleanupLocalWriteDir();
 
@@ -282,13 +293,13 @@ public class TestNaiveFileWALManager {
     wal.recover();
 
     // check to make sure wal file is gone
-    // assertTrue(new File(tmp, "import").list().length == 0);
-    assertEquals(0, new File(tmp, "writing").list().length);
-    assertEquals(0, new File(tmp, "sending").list().length);
-    assertEquals(0, new File(tmp, "sent").list().length);
-    assertEquals(0, new File(tmp, "done").list().length);
-    assertEquals(1, new File(tmp, "error").list().length);
-    assertEquals(1, new File(tmp, "logged").list().length);
+    // assertTrue(new File(tmp, "import").list(crcFilter).length == 0);
+    assertEquals(0, new File(tmp, "writing").list(crcFilter).length);
+    assertEquals(0, new File(tmp, "sending").list(crcFilter).length);
+    assertEquals(0, new File(tmp, "sent").list(crcFilter).length);
+    assertEquals(0, new File(tmp, "done").list(crcFilter).length);
+    assertEquals(1, new File(tmp, "error").list(crcFilter).length);
+    assertEquals(1, new File(tmp, "logged").list(crcFilter).length);
 
     FlumeTestHarness.cleanupLocalWriteDir();
 
@@ -327,13 +338,13 @@ public class TestNaiveFileWALManager {
     wal.recover();
 
     // check to make sure wal file is gone
-    // assertTrue(new File(tmp, "import").list().length == 0);
-    assertEquals(0, new File(tmp, "writing").list().length);
-    assertEquals(0, new File(tmp, "sending").list().length);
-    assertEquals(0, new File(tmp, "sent").list().length);
-    assertEquals(0, new File(tmp, "done").list().length);
-    assertEquals(1, new File(tmp, "error").list().length);
-    assertEquals(1, new File(tmp, "logged").list().length);
+    // assertTrue(new File(tmp, "import").list(crcFilter).length == 0);
+    assertEquals(0, new File(tmp, "writing").list(crcFilter).length);
+    assertEquals(0, new File(tmp, "sending").list(crcFilter).length);
+    assertEquals(0, new File(tmp, "sent").list(crcFilter).length);
+    assertEquals(0, new File(tmp, "done").list(crcFilter).length);
+    assertEquals(1, new File(tmp, "error").list(crcFilter).length);
+    assertEquals(1, new File(tmp, "logged").list(crcFilter).length);
 
     FlumeTestHarness.cleanupLocalWriteDir();
 

@@ -15,6 +15,27 @@
   <properties>
     <build.revision>NOT AVAILABLE</build.revision>
   </properties>
+
+  <profiles>
+    <profile>
+      <id>hadoop-0.23</id>
+      <activation>
+        <property>
+          <name>hadoop.profile</name>
+          <value>23</value>
+        </property>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+          <scope>provided</scope>
+        </dependency>
+        </dependencies>
+    </profile>
+  </profiles>
+
   <build>
     <plugins>
 
@@ -64,6 +85,10 @@
                   </filterset>
                 </copy>
               </target>
+	            <excludes>
+               <exclude>${FlushingSeqFile}</exclude>
+               <exclude>${RawSeqFile}</exclude>
+	            </excludes>
             </configuration>
           </execution>
         </executions>
@@ -299,7 +324,8 @@
 
     <dependency>
       <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-core</artifactId>
+      <artifactId>${hadoop.common.artifact.id}</artifactId>
+      <version>${hadoop.version}</version>
     </dependency>
 
     <dependency>

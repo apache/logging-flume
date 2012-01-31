@@ -30,6 +30,8 @@ import com.google.common.base.Preconditions;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.io.SequenceFile;
@@ -37,6 +39,8 @@ import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.SequenceFile.Writer;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.DefaultCodec;
+import org.apache.hadoop.mapred.JobConf;
+import static org.apache.hadoop.mapred.SequenceFileOutputFormat.getOutputCompressionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,8 +62,8 @@ public class SequenceFileOutputFormat extends AbstractOutputFormat {
   private Writer writer;
   
   public SequenceFileOutputFormat() {
-    this(SequenceFile.getCompressionType(FlumeConfiguration.get()),
-        new DefaultCodec());
+    this(getOutputCompressionType(new JobConf(FlumeConfiguration.get())),
+         new DefaultCodec());
   }
   
   public SequenceFileOutputFormat(CompressionType compressionType,
@@ -105,7 +109,7 @@ public class SequenceFileOutputFormat extends AbstractOutputFormat {
         if (args.length > 0) {
           codecName = args[0];
           FlumeConfiguration conf = FlumeConfiguration.get();
-          CompressionType compressionType = SequenceFile.getCompressionType(conf);
+          CompressionType compressionType = getOutputCompressionType(new JobConf(conf));
           CompressionCodec codec = CustomDfsSink.getCodec(conf, codecName);
           format = new SequenceFileOutputFormat(compressionType, codec);
         } else {
@@ -124,4 +128,5 @@ public class SequenceFileOutputFormat extends AbstractOutputFormat {
 
     };
   }
+
 }

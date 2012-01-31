@@ -27,6 +27,10 @@
     <profile>
       <id>full-build</id>
       <activation>
+        <property>
+          <name>full-build.profile</name>
+          <value>yes</value>
+        </property>
         <activeByDefault>false</activeByDefault>
       </activation>
       <modules>
@@ -45,6 +49,9 @@
     <profile>
       <id>dev</id>
       <activation>
+        <property>
+          <name>!full-build.profile</name>
+        </property>
         <activeByDefault>true</activeByDefault>
       </activation>
       <modules>
@@ -82,6 +89,67 @@
         <module>flume-node-web</module>
         <module>flume-windows-dist</module>
       </modules>
+    </profile>
+
+    <profile>
+      <id>hadoop-0.20.2-CDH3B4</id>
+      <activation>
+        <property>
+          <name>!hadoop.profile</name>
+        </property>
+      <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <hadoop.version>0.20.2-CDH3B4</hadoop.version>
+        <hadoop.common.artifact.id>hadoop-core</hadoop.common.artifact.id>
+        <FlushingSeqFile>bar.java</FlushingSeqFile>
+        <RawSeqFile>foo.java</RawSeqFile>
+      </properties>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>${hadoop.common.artifact.id}</artifactId>
+            <version>${hadoop.version}</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+    </profile>
+
+    <profile>
+      <id>hadoop-0.23</id>
+      <activation>
+        <property>
+          <name>hadoop.profile</name>
+          <value>23</value>
+        </property>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <properties>
+        <hadoop.version>0.23.1-SNAPSHOT</hadoop.version>
+        <hadoop.common.artifact.id>hadoop-common</hadoop.common.artifact.id>
+        <FlushingSeqFile>**/FlushingSequenceFileWriter.java</FlushingSeqFile>
+        <RawSeqFile>**/RawSequenceFileWriter.java</RawSeqFile>
+      </properties>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>${hadoop.common.artifact.id}</artifactId>
+            <version>${hadoop.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-auth</artifactId>
+            <version>${hadoop.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+            <version>${hadoop.version}</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
     </profile>
 
   </profiles>
@@ -341,6 +409,15 @@
       </snapshots>
     </repository>
 
+    <repository>
+      <id>apache.staging.https</id>
+      <name>Apache Staging Repository</name>
+      <url>https://repository.apache.org/content/repositories/snapshots/</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+
   </repositories>
 
   <build>
@@ -355,6 +432,10 @@
           <configuration>
             <source>1.6</source>
             <target>1.6</target>
+	          <excludes>
+              <exclude>${FlushingSeqFile}</exclude>
+              <exclude>${RawSeqFile}</exclude>
+	          </excludes>
           </configuration>
         </plugin>
 
@@ -585,12 +666,6 @@
             <artifactId>jmxri</artifactId>
           </exclusion>
         </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.hadoop</groupId>
-        <artifactId>hadoop-core</artifactId>
-        <version>0.20.2-CDH3B4</version>
       </dependency>
 
       <dependency>

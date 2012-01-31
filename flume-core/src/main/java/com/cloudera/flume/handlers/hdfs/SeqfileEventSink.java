@@ -17,14 +17,17 @@
  */
 package com.cloudera.flume.handlers.hdfs;
 
+import static org.apache.hadoop.util.VersionInfo.getVersion;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.FlushingSequenceFileWriter;
-import org.apache.hadoop.io.RawSequenceFileWriter;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.slf4j.Logger;
@@ -60,6 +63,7 @@ public class SeqfileEventSink extends EventSink.Base {
   /*
    * This is assumed to be open
    */
+  @SuppressWarnings({ "rawtypes", "unchecked"})
   public void open() throws IOException {
     LOG.debug("opening " + f);
 
@@ -74,21 +78,47 @@ public class SeqfileEventSink extends EventSink.Base {
     FileSystem fs = FileSystem.getLocal(conf);
 
     try {
+      Method mGetWriter;
+      Class seqClass;
 
-      if (conf.getWALOutputBuffering()) {
-        writer = RawSequenceFileWriter.createWriter(fs, conf,
-            new Path(f.getAbsolutePath()), WriteableEventKey.class,
-            WriteableEvent.class, CompressionType.NONE);
+      // The sequence file wrappers which are not compiling with 0.23
+      // and not needed with newer HDFS
+      String tmpVer = getVersion().substring(0, 4);
+      if (tmpVer.compareToIgnoreCase("0.23") < 0) {
+        if (conf.getWALOutputBuffering()) {
+          seqClass = Class.forName("org.apache.hadoop.io.RawSequenceFileWriter");
+          mGetWriter = seqClass.getMethod("createWriter", FileSystem.class,
+              Configuration.class, Path.class, Class.class, Class.class,
+              CompressionType.class);
+          writer = (SequenceFile.Writer) mGetWriter.invoke(null, fs, conf,
+              new Path(f.getAbsolutePath()), WriteableEventKey.class,
+              WriteableEvent.class, CompressionType.NONE);
+        } else {
+          seqClass = Class.forName("org.apache.hadoop.io.FlushingSequenceFileWriter");
+          mGetWriter = seqClass.getMethod("createWriter", FileSystem.class,
+              Configuration.class, File.class, Class.class, Class.class);
+          writer = (SequenceFile.Writer) mGetWriter.invoke(null, conf, f,
+              WriteableEventKey.class, WriteableEvent.class);
+          }
 
       } else {
-        writer = FlushingSequenceFileWriter.createWriter(conf, f,
-            WriteableEventKey.class, WriteableEvent.class);
-
+        writer = SequenceFile.createWriter(fs, conf,
+            new Path(f.getAbsolutePath()), WriteableEventKey.class,
+            WriteableEvent.class, CompressionType.NONE);
       }
-
     } catch (FileNotFoundException fnfe) {
       LOG.error("Possible permissions problem when creating " + f, fnfe);
       throw fnfe;
+    } catch (ClassNotFoundException eC) {
+      throw new RuntimeException(eC);
+    } catch (InvocationTargetException eI) {
+      throw new RuntimeException(eI);
+    } catch (IllegalAccessException el) {
+      throw new RuntimeException(el);
+    } catch (NoSuchMethodException eN) {
+      throw new RuntimeException(eN);
+    } catch (SecurityException eS) {
+      throw new RuntimeException(eS);
     }
   }
 

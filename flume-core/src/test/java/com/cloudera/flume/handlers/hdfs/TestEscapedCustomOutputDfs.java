@@ -139,8 +139,10 @@ public class TestEscapedCustomOutputDfs {
    */
   @Test
   public void testGZipCodec() throws IOException, InterruptedException {
+    GzipCodec codec = new GzipCodec();
+    codec.setConf(FlumeConfiguration.get());
     checkOutputFormat("syslog", new SyslogEntryFormat(), "GzipCodec",
-        new GzipCodec());
+        codec);
   }
 
   /**

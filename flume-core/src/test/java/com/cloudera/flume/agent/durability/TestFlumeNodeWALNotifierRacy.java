@@ -239,7 +239,7 @@ public class TestFlumeNodeWALNotifierRacy {
    * @throws IOException
    * @throws InterruptedException
    */
-  @Test(timeout = 100000)
+  @Test(timeout = 300000)
   public void testRetryWriting() throws IOException, InterruptedException {
     final int count = 10000;
     retryWritingRacynessRun(count);
