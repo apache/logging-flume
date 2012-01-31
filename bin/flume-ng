@@ -19,12 +19,25 @@
 # under the License.
 #
 
-JAVA=`type -p java`
 JAVA_OPTS="-Xmx20m"
+
 
 FLUME_NODE_CLASS="org.apache.flume.node.Application"
 FLUME_AVRO_CLIENT_CLASS="org.apache.flume.client.avro.AvroCLIClient"
 FLUME_CLASSPATH=""
+
+if [ -f "${FLUME_CONF_DIR}/flume-env.sh" ]; then
+    source "$FLUME_CONF_DIR/flume-env.sh"
+fi
+
+if [ -z "${JAVA_HOME}" ] ; then
+    echo "Warning: JAVA_HOME not set !"
+    JAVA_DEFAULT=`type -p java`
+    [ -n "$JAVA_DEFAULT" ] || error "Unable to find java executable. Is it in your PATH?" 1
+    JAVA_BIN=`dirname $JAVA_DEFAULT`
+    JAVA_HOME=`dirname $JAVA_BIN`
+
+fi
 
 warn() {
   local msg=$1
@@ -90,12 +103,12 @@ run_node() {
 
   final_cp="${final_cp}${FLUME_CLASSPATH}"
 
-  [ -n "$JAVA" ] || error "Unable to find java executable. Is it in your PATH?" 1
+  [ -n "$JAVA_HOME" ] || error "JAVA_HOME not set. " 1
   [ -n "$opt_conf" ] || warn "No configuration directory set! Use --conf <dir> to override." 1
 
   FLUME_APPLICATION_CLASS=$FLUME_NODE_CLASS
 
-  exec $JAVA $JAVA_OPTS -cp "$final_cp" "$FLUME_APPLICATION_CLASS" $*
+  exec $JAVA_HOME/bin/java $JAVA_OPTS -cp "$final_cp" "$FLUME_APPLICATION_CLASS" $*
 }
 
 run_avro_client() {
@@ -115,13 +128,13 @@ run_avro_client() {
 
   final_cp="${final_cp}${FLUME_CLASSPATH}"
 
-  [ -n "$JAVA" ] || error "Unable to find java executable. Is it in your PATH?" 1
+  [ -n "$JAVA_HOME" ] || error "JAVA_HOME not set. " 1
   [ -n "$FLUME_CLASSPATH" ] || error "Flume classpath is not set! Use flume-env.sh or --classpath <cp>." 1
   [ -n "$opt_conf" ] || warn "No configuration directory set! Use --conf <dir> to override." 1
 
   FLUME_APPLICATION_CLASS=$FLUME_AVRO_CLIENT_CLASS
 
-  exec $JAVA $JAVA_OPTS -cp "$final_cp" "$FLUME_APPLICATION_CLASS" $*
+  exec $JAVA_HOME/bin/java $JAVA_OPTS -cp "$final_cp" "$FLUME_APPLICATION_CLASS" $*
 }
 
 validate_env() {
