@@ -20,7 +20,6 @@ package org.apache.flume.conf.properties;
 import java.io.File;
 
 import org.apache.flume.channel.DefaultChannelFactory;
-import org.apache.flume.conf.file.TestJsonFileConfigurationProvider;
 import org.apache.flume.sink.DefaultSinkFactory;
 import org.apache.flume.source.DefaultSourceFactory;
 import org.junit.Test;
@@ -30,7 +29,7 @@ import org.slf4j.LoggerFactory;
 public class TestPropertiesFileConfigurationProvider {
 
   private static final File TESTFILE = new File(
-      TestJsonFileConfigurationProvider.class.getClassLoader()
+      TestPropertiesFileConfigurationProvider.class.getClassLoader()
           .getResource("flume-conf.properties").getFile());
 
   private static final Logger LOGGER = LoggerFactory

@@ -35,12 +35,6 @@ public enum ChannelType {
   MEMORY(MemoryChannel.class.getName()),
 
   /**
-   * Fan-out channel
-   * @see FanoutChannel
-   */
-  FAN_OUT(FanoutChannel.class.getName()),
-
-  /**
    * JDBC channel provided by org.apache.flume.channel.jdbc.JdbcChannel
    */
   JDBC("org.apache.flume.channel.jdbc.JdbcChannel");
