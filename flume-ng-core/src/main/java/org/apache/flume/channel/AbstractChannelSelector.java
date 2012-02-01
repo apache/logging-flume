@@ -16,48 +16,36 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.flume.source;
+package org.apache.flume.channel;
 
-import org.apache.flume.Source;
-import org.apache.flume.channel.ChannelProcessor;
-import org.apache.flume.lifecycle.LifecycleState;
+import java.util.List;
 
-public class MockSource implements Source {
+import org.apache.flume.Channel;
+import org.apache.flume.ChannelSelector;
 
+public abstract class AbstractChannelSelector implements ChannelSelector {
+
+  private List<Channel> channels;
   private String name;
 
-  public MockSource() {
+  @Override
+  public List<Channel> getAllChannels() {
+    return channels;
   }
 
   @Override
-  public void start() {
+  public void setChannels(List<Channel> channels) {
+    this.channels = channels;
   }
 
   @Override
-  public void stop() {
-  }
-
-  @Override
-  public LifecycleState getLifecycleState() {
-    return null;
-  }
-
-  @Override
-  public void setChannelProcessor(ChannelProcessor cp) {
-  }
-
-  @Override
-  public void setName(String name) {
+  public synchronized void setName(String name) {
     this.name = name;
   }
 
   @Override
-  public String getName() {
+  public synchronized String getName() {
     return name;
   }
 
-  @Override
-  public ChannelProcessor getChannelProcessor() {
-    return null;
-  }
 }

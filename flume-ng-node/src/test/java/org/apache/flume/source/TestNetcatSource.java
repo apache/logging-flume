@@ -31,12 +31,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.Transaction;
+import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
+import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.junit.Assert;
@@ -59,7 +62,10 @@ public class TestNetcatSource {
     Configurables.configure(channel, context);
     List<Channel> channels = new ArrayList<Channel>();
     channels.add(channel);
-    source.setChannels(channels);
+    ChannelSelector rcs = new ReplicatingChannelSelector();
+    rcs.setChannels(channels);
+
+    source.setChannelProcessor(new ChannelProcessor(rcs));
   }
 
   @Test
@@ -101,7 +107,8 @@ public class TestNetcatSource {
 
     };
 
-    Transaction tx = source.getChannels().get(0).getTransaction();
+    ChannelSelector seclector = source.getChannelProcessor().getSelector();
+    Transaction tx = seclector.getAllChannels().get(0).getTransaction();
     tx.begin();
 
     for (int i = 0; i < 100; i++) {

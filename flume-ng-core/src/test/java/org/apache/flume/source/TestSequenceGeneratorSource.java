@@ -22,11 +22,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.PollableSource;
+import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.PseudoTxnMemoryChannel;
+import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.junit.Assert;
@@ -57,7 +60,10 @@ public class TestSequenceGeneratorSource {
     List<Channel> channels = new ArrayList<Channel>();
     channels.add(channel);
 
-    source.setChannels(channels);
+    ChannelSelector rcs = new ReplicatingChannelSelector();
+    rcs.setChannels(channels);
+
+    source.setChannelProcessor(new ChannelProcessor(rcs));
 
     for (long i = 0; i < 100; i++) {
       source.process();
@@ -83,7 +89,11 @@ public class TestSequenceGeneratorSource {
     List<Channel> channels = new ArrayList<Channel>();
     channels.add(channel);
 
-    source.setChannels(channels);
+    ChannelSelector rcs = new ReplicatingChannelSelector();
+    rcs.setChannels(channels);
+
+    source.setChannelProcessor(new ChannelProcessor(rcs));
+
     source.start();
 
     for (long i = 0; i < 100; i++) {

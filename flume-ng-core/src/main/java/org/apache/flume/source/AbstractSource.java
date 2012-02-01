@@ -19,30 +19,27 @@
 
 package org.apache.flume.source;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.flume.Channel;
 import org.apache.flume.Source;
+import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.lifecycle.LifecycleState;
 
 import com.google.common.base.Preconditions;
 
 abstract public class AbstractSource implements Source {
 
-  private List<Channel> channels;
+  private ChannelProcessor channelProcessor;
   private String name;
 
   private LifecycleState lifecycleState;
 
   public AbstractSource() {
-    channels = new ArrayList<Channel>();
     lifecycleState = LifecycleState.IDLE;
   }
 
   @Override
   public synchronized void start() {
-    Preconditions.checkState(channels != null, "No channel configured");
+    Preconditions.checkState(channelProcessor != null,
+        "No channel processor configured");
 
     lifecycleState = LifecycleState.START;
   }
@@ -53,14 +50,13 @@ abstract public class AbstractSource implements Source {
   }
 
   @Override
-  public synchronized List<Channel> getChannels() {
-    return channels;
+  public synchronized void setChannelProcessor(ChannelProcessor cp) {
+    channelProcessor = cp;
   }
 
   @Override
-  public synchronized void setChannels(List<Channel> channels) {
-    this.channels.clear();
-    this.channels.addAll(channels);
+  public synchronized ChannelProcessor getChannelProcessor() {
+    return channelProcessor;
   }
 
   @Override

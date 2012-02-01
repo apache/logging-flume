@@ -19,13 +19,13 @@
 
 package org.apache.flume;
 
-import java.util.List;
-
+import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.lifecycle.LifecycleAware;
 
 public interface Source extends LifecycleAware, NamedComponent {
 
-  public void setChannels(List<Channel> channels);
+  public void setChannelProcessor(ChannelProcessor channelProcessor);
 
-  public List<Channel> getChannels();
+  public ChannelProcessor getChannelProcessor();
+
 }

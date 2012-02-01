@@ -16,48 +16,35 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.flume.source;
+package org.apache.flume.channel;
 
-import org.apache.flume.Source;
-import org.apache.flume.channel.ChannelProcessor;
-import org.apache.flume.lifecycle.LifecycleState;
+import java.util.Collections;
+import java.util.List;
 
-public class MockSource implements Source {
+import org.apache.flume.Channel;
+import org.apache.flume.Context;
+import org.apache.flume.Event;
 
-  private String name;
+/**
+ * Replicating channel selector. This selector allows the event to be placed
+ * in all the channels that the source is configured with.
+ */
+public class ReplicatingChannelSelector extends AbstractChannelSelector {
 
-  public MockSource() {
+  private final List<Channel> emptyList = Collections.emptyList();
+
+  @Override
+  public List<Channel> getRequiredChannels(Event event) {
+    return getAllChannels();
   }
 
   @Override
-  public void start() {
+  public List<Channel> getOptionalChannels(Event event) {
+    return emptyList;
   }
 
   @Override
-  public void stop() {
-  }
-
-  @Override
-  public LifecycleState getLifecycleState() {
-    return null;
-  }
-
-  @Override
-  public void setChannelProcessor(ChannelProcessor cp) {
-  }
-
-  @Override
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  @Override
-  public String getName() {
-    return name;
-  }
-
-  @Override
-  public ChannelProcessor getChannelProcessor() {
-    return null;
+  public void configure(Context context) {
+    // No configuration necessary
   }
 }

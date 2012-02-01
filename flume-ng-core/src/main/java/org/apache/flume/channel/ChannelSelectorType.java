@@ -16,48 +16,35 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.flume.source;
+package org.apache.flume.channel;
 
-import org.apache.flume.Source;
-import org.apache.flume.channel.ChannelProcessor;
-import org.apache.flume.lifecycle.LifecycleState;
+/**
+ * Enumeration of built in channel selector types available in the system.
+ */
+public enum ChannelSelectorType {
 
-public class MockSource implements Source {
+  /**
+   * Place holder for custom channel selectors not part of this enumeration.
+   */
+  OTHER(null),
 
-  private String name;
+  /**
+   * Replicating channel selector.
+   */
+  REPLICATING(ReplicatingChannelSelector.class.getName()),
 
-  public MockSource() {
+  /**
+   * Multiplexing channel selector.
+   */
+  MULTIPLEXING(MultiplexingChannelSelector.class.getName());
+
+  private final String channelSelectorClassName;
+
+  private ChannelSelectorType(String channelSelectorClassName) {
+    this.channelSelectorClassName = channelSelectorClassName;
   }
 
-  @Override
-  public void start() {
-  }
-
-  @Override
-  public void stop() {
-  }
-
-  @Override
-  public LifecycleState getLifecycleState() {
-    return null;
-  }
-
-  @Override
-  public void setChannelProcessor(ChannelProcessor cp) {
-  }
-
-  @Override
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  @Override
-  public String getName() {
-    return name;
-  }
-
-  @Override
-  public ChannelProcessor getChannelProcessor() {
-    return null;
+  public String getChannelSelectorClassName() {
+    return channelSelectorClassName;
   }
 }

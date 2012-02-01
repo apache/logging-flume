@@ -23,12 +23,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Sink;
 import org.apache.flume.SinkRunner;
 import org.apache.flume.Source;
 import org.apache.flume.SourceRunner;
+import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
+import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleController;
@@ -149,7 +152,11 @@ public class TestAbstractLogicalNodeManager {
     Source generatorSource = new SequenceGeneratorSource();
     List<Channel> channels = new ArrayList<Channel>();
     channels.add(channel);
-    generatorSource.setChannels(channels);
+
+    ChannelSelector rcs = new ReplicatingChannelSelector();
+    rcs.setChannels(channels);
+
+    generatorSource.setChannelProcessor(new ChannelProcessor(rcs));
 
     Sink nullSink = new NullSink();
     nullSink.setChannel(channel);
@@ -182,7 +189,10 @@ public class TestAbstractLogicalNodeManager {
     Source source = new SequenceGeneratorSource();
     List<Channel> channels = new ArrayList<Channel>();
     channels.add(channel);
-    source.setChannels(channels);
+    ChannelSelector rcs = new ReplicatingChannelSelector();
+    rcs.setChannels(channels);
+
+    source.setChannelProcessor(new ChannelProcessor(rcs));
 
     Sink sink = new NullSink();
     sink.setChannel(channel);

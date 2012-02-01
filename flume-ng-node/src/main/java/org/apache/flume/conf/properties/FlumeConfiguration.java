@@ -39,9 +39,9 @@ import org.slf4j.LoggerFactory;
  * been parsed and populated, a validation routine is run that identifies and
  * removes invalid components.
  * </p>
- * 
+ *
  * @see org.apache.flume.conf.properties.PropertiesFileConfigurationProvider
- * 
+ *
  */
 public class FlumeConfiguration {
 
@@ -205,7 +205,7 @@ public class FlumeConfiguration {
      * components are not available, the configuration itself will be considered
      * invalid.
      * </p>
-     * 
+     *
      * @return true if the configuration is valid, false otherwise
      */
     private boolean isValid() {
@@ -376,7 +376,7 @@ public class FlumeConfiguration {
      * <li>Each component in activeSet must be configured in the configuredMap</li>
      * <li>Each component must have requiredAttributes set correctly.</li>
      * </ol>
-     * 
+     *
      * @param activeSet
      *          the active set of components
      * @param configuredMap
@@ -665,6 +665,19 @@ public class FlumeConfiguration {
       return configuration;
     }
 
+    public Map<String, String> getSubconfiguration(String namespace) {
+      Map<String, String> result = new HashMap<String, String>();
+      String prefix = namespace + ".";
+
+      for (String property : configuration.keySet()) {
+        if (property.startsWith(prefix)) {
+          result.put(property.substring(prefix.length()),
+              configuration.get(property));
+        }
+      }
+
+      return result;
+    }
   }
 
   public static class ComponentNameAndConfigKey {

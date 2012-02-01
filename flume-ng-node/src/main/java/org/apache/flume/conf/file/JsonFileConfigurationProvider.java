@@ -25,11 +25,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Sink;
 import org.apache.flume.SinkRunner;
 import org.apache.flume.Source;
 import org.apache.flume.SourceRunner;
+import org.apache.flume.channel.ChannelProcessor;
+import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -72,7 +75,10 @@ public class JsonFileConfigurationProvider
         Configurables.configure(source, context);
 
         if (channels.size() > 0) {
-          source.setChannels(channels);
+          // Hardcoding the replicating channel selector
+          ChannelSelector rcs = new ReplicatingChannelSelector();
+          rcs.setChannels(channels);
+          source.setChannelProcessor(new ChannelProcessor(rcs));
         } else {
           logger.warn(
               "No channel named {} - source:{} is likely non-functional.",

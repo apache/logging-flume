@@ -28,6 +28,7 @@ import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.PollableSource;
 import org.apache.flume.Transaction;
+import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
@@ -59,17 +60,6 @@ public class TestPollableSourceRunner {
     PollableSource source = new PollableSource() {
 
       private String name;
-
-      @Override
-      public List<Channel> getChannels() {
-        // Doesn't matter.
-        return null;
-      }
-
-      @Override
-      public void setChannels(List<Channel> channel) {
-        // Doesn't matter.
-      }
 
       @Override
       public Status process() throws EventDeliveryException {
@@ -121,6 +111,17 @@ public class TestPollableSourceRunner {
       @Override
       public String getName() {
         return name;
+      }
+
+      @Override
+      public void setChannelProcessor(ChannelProcessor channelProcessor) {
+        // Not used
+      }
+
+      @Override
+      public ChannelProcessor getChannelProcessor() {
+        // Not used
+        return null;
       }
 
     };

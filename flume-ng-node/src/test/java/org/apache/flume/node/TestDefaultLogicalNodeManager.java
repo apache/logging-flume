@@ -25,7 +25,10 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelSelector;
+import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
+import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
@@ -72,7 +75,10 @@ public class TestDefaultLogicalNodeManager {
       SequenceGeneratorSource source = new SequenceGeneratorSource();
       List<Channel> channels = new ArrayList<Channel>();
       channels.add(new MemoryChannel());
-      source.setChannels(channels);
+      ChannelSelector rcs = new ReplicatingChannelSelector();
+      rcs.setChannels(channels);
+
+      source.setChannelProcessor(new ChannelProcessor(rcs));
 
       PollableSourceRunner sourceRunner = new PollableSourceRunner();
       sourceRunner.setSource(source);
@@ -98,7 +104,10 @@ public class TestDefaultLogicalNodeManager {
       SequenceGeneratorSource source = new SequenceGeneratorSource();
       List<Channel> channels = new ArrayList<Channel>();
       channels.add(new MemoryChannel());
-      source.setChannels(channels);
+      ChannelSelector rcs = new ReplicatingChannelSelector();
+      rcs.setChannels(channels);
+
+      source.setChannelProcessor(new ChannelProcessor(rcs));
 
       PollableSourceRunner sourceRunner = new PollableSourceRunner();
       sourceRunner.setSource(source);
@@ -132,7 +141,10 @@ public class TestDefaultLogicalNodeManager {
       SequenceGeneratorSource source = new SequenceGeneratorSource();
       List<Channel> channels = new ArrayList<Channel>();
       channels.add(new MemoryChannel());
-      source.setChannels(channels);
+      ChannelSelector rcs = new ReplicatingChannelSelector();
+      rcs.setChannels(channels);
+
+      source.setChannelProcessor(new ChannelProcessor(rcs));
 
       PollableSourceRunner sourceRunner = new PollableSourceRunner();
       sourceRunner.setSource(source);

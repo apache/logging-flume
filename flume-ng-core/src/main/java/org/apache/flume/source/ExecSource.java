@@ -20,8 +20,8 @@
 package org.apache.flume.source;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -35,6 +35,7 @@ import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.Source;
 import org.apache.flume.Transaction;
+import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
 import org.slf4j.Logger;
@@ -130,7 +131,7 @@ public class ExecSource extends AbstractSource implements EventDrivenSource,
     ExecRunnable runner = new ExecRunnable();
 
     runner.command = command;
-    runner.channels = getChannels();
+    runner.channelProcessor = getChannelProcessor();
     runner.counterGroup = counterGroup;
 
     // FIXME: Use a callback-like executor / future to signal us upon failure.
@@ -186,49 +187,38 @@ public class ExecSource extends AbstractSource implements EventDrivenSource,
   private static class ExecRunnable implements Runnable {
 
     private String command;
-    private List<Channel> channels;
+    private ChannelProcessor channelProcessor;
     private CounterGroup counterGroup;
 
     @Override
     public void run() {
-
+      BufferedReader reader = null;
       try {
         String[] commandArgs = command.split("\\s+");
         Process process = new ProcessBuilder(commandArgs).start();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(
-            process.getInputStream()));
+        reader = new BufferedReader(
+            new InputStreamReader(process.getInputStream()));
 
         String line = null;
 
         while ((line = reader.readLine()) != null) {
           counterGroup.incrementAndGet("exec.lines.read");
-
-          for (Channel channel : channels) {
-            Transaction transaction = channel.getTransaction();
-            try {
-              transaction.begin();
-              Event event = EventBuilder.withBody(line.getBytes());
-              channel.put(event);
-              transaction.commit();
-            } catch (ChannelException e) {
-              transaction.rollback();
-              throw e;
-            } catch (Exception e) {
-              transaction.rollback();
-              throw e;
-            }
-            finally {
-              transaction.close();
-            }
-          }
+          channelProcessor.processEvent(EventBuilder.withBody(line.getBytes()));
         }
 
-        reader.close();
       } catch (Exception e) {
-        logger.error("Failed while running command:" + command + " - Exception follows.", e);
+        logger.error("Failed while running command:" + command
+                      + " - Exception follows.", e);
+      } finally {
+        if (reader != null) {
+          try {
+            reader.close();
+          } catch (IOException ex) {
+            logger.error("Failed to close reader for exec source", ex);
+          }
+        }
       }
     }
-
   }
 
 }

@@ -19,11 +19,10 @@
 
 package org.apache.flume.source;
 
-import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.PollableSource;
-import org.apache.flume.Transaction;
 import org.apache.flume.event.EventBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,22 +44,14 @@ public class SequenceGeneratorSource extends AbstractSource implements
   @Override
   public Status process() throws EventDeliveryException {
 
-    for (Channel channel : getChannels()) {
-      Transaction transaction = channel.getTransaction();
-
-      try {
-        transaction.begin();
-        channel.put(EventBuilder.withBody(String.valueOf(sequence++).getBytes()));
-        transaction.commit();
-
-        counterGroup.incrementAndGet("events.successful");
-      } catch (Exception e) {
-        transaction.rollback();
-        counterGroup.incrementAndGet("events.failed");
-      } finally {
-        transaction.close();
-      }
+    try {
+      getChannelProcessor().processEvent(
+          EventBuilder.withBody(String.valueOf(sequence++).getBytes()));
+      counterGroup.incrementAndGet("events.successful");
+    } catch (ChannelException ex) {
+      counterGroup.incrementAndGet("events.failed");
     }
+
     return Status.READY;
   }
 

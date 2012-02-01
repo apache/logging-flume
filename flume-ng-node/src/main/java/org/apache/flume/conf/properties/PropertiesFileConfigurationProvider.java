@@ -28,11 +28,14 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Sink;
 import org.apache.flume.SinkRunner;
 import org.apache.flume.Source;
 import org.apache.flume.SourceRunner;
+import org.apache.flume.channel.ChannelProcessor;
+import org.apache.flume.channel.ChannelSelectorFactory;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.conf.file.AbstractFileConfigurationProvider;
 import org.apache.flume.conf.file.SimpleNodeConfiguration;
@@ -76,6 +79,11 @@ import org.slf4j.LoggerFactory;
  * This namespace can also be used to configure other configuration of the
  * source runner as needed. For example:
  * <tt>&lt;agent name&gt;.sources.&lt;source name&gt;.runner.port = 10101</tt>
+ * </li>
+ * <li>For each source named in <tt>&lt;sources&gt;.sources</tt> there can
+ * be an optional <tt>selector.type</tt> specified that identifies the type
+ * of channel selector associated with the source. If not specified, the
+ * default replicating channel selector is used.
  * </li><li>For each channel named in the <tt>&lt;agent name&gt;.channels</tt>,
  * there must be a non-empty <tt>type</tt> attribute specified from the valid
  * set of channel types. For example:
@@ -137,6 +145,7 @@ import org.slf4j.LoggerFactory;
  * host1.sources.avroSource.runner.type = avro
  * host1.sources.avroSource.runner.port = 11001
  * host1.sources.avroSource.channels = jdbcChannel
+ * host1.sources.avroSource.selector.type = replicating
  *
  * # thriftSource configuration
  * host1.sources.thriftSource.type = org.apache.flume.source.ThriftSource
@@ -253,7 +262,14 @@ public class PropertiesFileConfigurationProvider extends
         channels.add(conf.getChannels().get(chName));
       }
 
-      source.setChannels(channels);
+      Map<String,String> selectorConfig = comp.getSubconfiguration("selector");
+
+      ChannelSelector selector = ChannelSelectorFactory.create(
+          channels, selectorConfig);
+
+      ChannelProcessor channelProcessor = new ChannelProcessor(selector);
+
+      source.setChannelProcessor(channelProcessor);
       conf.getSourceRunners().put(comp.getComponentName(),
           SourceRunner.forSource(source));
     }
