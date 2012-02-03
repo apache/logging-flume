@@ -31,7 +31,7 @@ import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
-import org.apache.flume.PollableSink;
+import org.apache.flume.Sink;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
@@ -113,11 +113,11 @@ public class TestAvroSink {
     transaction.close();
 
     for (int i = 0; i < 5; i++) {
-      PollableSink.Status status = sink.process();
-      Assert.assertEquals(PollableSink.Status.READY, status);
+      Sink.Status status = sink.process();
+      Assert.assertEquals(Sink.Status.READY, status);
     }
 
-    Assert.assertEquals(PollableSink.Status.BACKOFF, sink.process());
+    Assert.assertEquals(Sink.Status.BACKOFF, sink.process());
 
     sink.stop();
     Assert.assertTrue(LifecycleController.waitForOneOf(sink,
@@ -151,19 +151,19 @@ public class TestAvroSink {
     transaction.close();
 
     for (int i = 0; i < 5; i++) {
-      PollableSink.Status status = sink.process();
-      Assert.assertEquals(PollableSink.Status.BACKOFF, status);
+      Sink.Status status = sink.process();
+      Assert.assertEquals(Sink.Status.BACKOFF, status);
     }
 
     server = createServer();
     server.start();
 
     for (int i = 0; i < 5; i++) {
-      PollableSink.Status status = sink.process();
-      Assert.assertEquals(PollableSink.Status.READY, status);
+      Sink.Status status = sink.process();
+      Assert.assertEquals(Sink.Status.READY, status);
     }
 
-    Assert.assertEquals(PollableSink.Status.BACKOFF, sink.process());
+    Assert.assertEquals(Sink.Status.BACKOFF, sink.process());
 
     sink.stop();
     Assert.assertTrue(LifecycleController.waitForOneOf(sink,

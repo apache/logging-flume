@@ -162,7 +162,7 @@ public class TestAbstractLogicalNodeManager {
     nullSink.setChannel(channel);
 
     nodeManager.add(SourceRunner.forSource(generatorSource));
-    nodeManager.add(SinkRunner.forSink(nullSink));
+    nodeManager.add(new SinkRunner(nullSink));
 
     nodeManager.start();
     boolean reached = LifecycleController.waitForOneOf(nodeManager,
@@ -198,7 +198,7 @@ public class TestAbstractLogicalNodeManager {
     sink.setChannel(channel);
 
     nodeManager.add(SourceRunner.forSource(source));
-    nodeManager.add(SinkRunner.forSink(sink));
+    nodeManager.add(new SinkRunner(sink));
 
     for (int i = 0; i < 10; i++) {
       nodeManager.start();

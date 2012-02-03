@@ -37,7 +37,6 @@ import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
-import org.apache.flume.PollableSink;
 import org.apache.flume.Sink;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
@@ -111,8 +110,7 @@ import com.google.common.base.Preconditions;
  * TODO
  * </p>
  */
-public class AvroSink extends AbstractSink implements PollableSink,
-    Configurable {
+public class AvroSink extends AbstractSink implements Configurable {
 
   private static final Logger logger = LoggerFactory.getLogger(AvroSink.class);
   private static final Integer defaultBatchSize = 100;

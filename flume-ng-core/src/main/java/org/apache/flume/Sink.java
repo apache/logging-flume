@@ -27,4 +27,9 @@ public interface Sink extends LifecycleAware, NamedComponent {
 
   public Channel getChannel();
 
+  public Status process() throws EventDeliveryException;
+
+  public static enum Status {
+    READY, BACKOFF
+  }
 }

@@ -295,7 +295,7 @@ public class PropertiesFileConfigurationProvider extends
       sink.setChannel(conf.getChannels().get(
           componentConfig.get("channel")));
       conf.getSinkRunners().put(comp.getComponentName(),
-          SinkRunner.forSink(sink));
+          new SinkRunner(sink));
     }
   }
 

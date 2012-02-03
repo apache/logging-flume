@@ -21,7 +21,6 @@ import org.apache.flume.Channel;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
-import org.apache.flume.PollableSink;
 import org.apache.flume.Sink;
 import org.apache.flume.Transaction;
 import org.slf4j.Logger;
@@ -45,7 +44,7 @@ import org.slf4j.LoggerFactory;
  * TODO
  * </p>
  */
-public class NullSink extends AbstractSink implements PollableSink {
+public class NullSink extends AbstractSink {
 
   private static final Logger logger = LoggerFactory.getLogger(NullSink.class);
 
