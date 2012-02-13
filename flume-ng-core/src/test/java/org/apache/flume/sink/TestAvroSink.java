@@ -139,7 +139,9 @@ public class TestAvroSink {
     Assert.assertTrue(LifecycleController.waitForOneOf(sink,
         LifecycleState.START_OR_ERROR, 5000));
 
+    Thread.sleep(500L); // let socket startup
     server.close();
+    Thread.sleep(500L); // sleep a little to allow close occur
 
     Transaction transaction = channel.getTransaction();
 
