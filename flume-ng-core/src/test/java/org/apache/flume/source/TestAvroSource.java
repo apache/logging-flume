@@ -145,8 +145,8 @@ public class TestAvroSource {
 
     AvroFlumeEvent avroEvent = new AvroFlumeEvent();
 
-    avroEvent.headers = new HashMap<CharSequence, CharSequence>();
-    avroEvent.body = ByteBuffer.wrap("Hello avro".getBytes());
+    avroEvent.setHeaders(new HashMap<CharSequence, CharSequence>());
+    avroEvent.setBody(ByteBuffer.wrap("Hello avro".getBytes()));
 
     Status status = client.append(avroEvent);
 

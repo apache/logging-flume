@@ -32,6 +32,7 @@ public class TestPropertiesFileConfigurationProvider {
       TestPropertiesFileConfigurationProvider.class.getClassLoader()
           .getResource("flume-conf.properties").getFile());
 
+  @SuppressWarnings("unused")
   private static final Logger LOGGER = LoggerFactory
       .getLogger(TestPropertiesFileConfigurationProvider.class);
 

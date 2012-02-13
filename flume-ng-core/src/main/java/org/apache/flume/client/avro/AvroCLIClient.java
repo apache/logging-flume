@@ -145,12 +145,12 @@ public class AvroCLIClient {
 
         AvroFlumeEvent avroEvent = new AvroFlumeEvent();
 
-        avroEvent.headers = new HashMap<CharSequence, CharSequence>();
-        avroEvent.body = ByteBuffer.wrap(line.getBytes());
+        avroEvent.setHeaders(new HashMap<CharSequence, CharSequence>());
+        avroEvent.setBody(ByteBuffer.wrap(line.getBytes()));
 
         eventBuffer.add(avroEvent);
 
-        sentBytes += avroEvent.body.capacity();
+        sentBytes += avroEvent.getBody().capacity();
         sent++;
 
         long now = System.currentTimeMillis();

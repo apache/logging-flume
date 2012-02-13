@@ -38,6 +38,7 @@ public class MultiplexingChannelSelector extends AbstractChannelSelector {
       "flume.selector.header";
   public static final String CONFIG_PREFIX_MAPPING = "mapping";
 
+  @SuppressWarnings("unused")
   private static final Logger LOG = LoggerFactory
       .getLogger(MultiplexingChannelSelector.class);
 

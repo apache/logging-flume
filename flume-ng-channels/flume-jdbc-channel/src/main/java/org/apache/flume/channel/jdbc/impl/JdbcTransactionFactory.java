@@ -17,11 +17,7 @@
  */
 package org.apache.flume.channel.jdbc.impl;
 
-import java.sql.SQLException;
-
 import javax.sql.DataSource;
-
-import org.apache.flume.channel.jdbc.JdbcChannelException;
 
 public class JdbcTransactionFactory extends ThreadLocal<JdbcTransactionImpl> {
 

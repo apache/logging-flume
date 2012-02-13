@@ -53,6 +53,7 @@ import org.slf4j.LoggerFactory;
 
 public class TestLegacyAvroSource {
 
+  @SuppressWarnings("unused")
   private static final Logger logger = LoggerFactory
       .getLogger(TestLegacyAvroSource.class);
 

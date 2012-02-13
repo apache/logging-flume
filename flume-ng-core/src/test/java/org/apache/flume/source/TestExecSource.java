@@ -74,7 +74,6 @@ public class TestExecSource {
 
     transaction.begin();
     Event event;
-    int numEvents = 0;
 
     FileOutputStream outputStream = new FileOutputStream(
         "/tmp/flume-execsource." + Thread.currentThread().getId());
@@ -82,7 +81,6 @@ public class TestExecSource {
     while ((event = channel.take()) != null) {
       outputStream.write(event.getBody());
       outputStream.write('\n');
-      numEvents++;
     }
 
     outputStream.close();

@@ -324,6 +324,7 @@ public class PersistableEvent implements Event {
     }
   }
 
+  @SuppressWarnings("unused")
   private static class HeaderPart {
     private final String hBaseName;
     private final String hBaseValue;

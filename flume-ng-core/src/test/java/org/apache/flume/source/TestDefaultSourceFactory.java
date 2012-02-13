@@ -21,10 +21,8 @@ package org.apache.flume.source;
 
 import java.util.Map;
 
-import org.apache.flume.Channel;
 import org.apache.flume.Source;
 import org.apache.flume.SourceFactory;
-import org.apache.flume.lifecycle.LifecycleState;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

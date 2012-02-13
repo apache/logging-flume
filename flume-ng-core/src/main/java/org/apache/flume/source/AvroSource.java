@@ -38,7 +38,6 @@ import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.Source;
-import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.source.avro.AvroFlumeEvent;
@@ -164,13 +163,13 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
 
     Map<String, String> headers = new HashMap<String, String>();
 
-    for (Entry<CharSequence, CharSequence> entry : avroEvent.headers
+    for (Entry<CharSequence, CharSequence> entry : avroEvent.getHeaders()
         .entrySet()) {
 
       headers.put(entry.getKey().toString(), entry.getValue().toString());
     }
 
-    Event event = EventBuilder.withBody(avroEvent.body.array(), headers);
+    Event event = EventBuilder.withBody(avroEvent.getBody().array(), headers);
 
     try {
       getChannelProcessor().processEvent(event);
@@ -192,13 +191,13 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     for (AvroFlumeEvent avroEvent : events) {
       Map<String, String> headers = new HashMap<String, String>();
 
-      for (Entry<CharSequence, CharSequence> entry : avroEvent.headers
+      for (Entry<CharSequence, CharSequence> entry : avroEvent.getHeaders()
           .entrySet()) {
 
         headers.put(entry.getKey().toString(), entry.getValue().toString());
       }
 
-      Event event = EventBuilder.withBody(avroEvent.body.array(), headers);
+      Event event = EventBuilder.withBody(avroEvent.getBody().array(), headers);
       counterGroup.incrementAndGet("rpc.events");
 
       batch.add(event);

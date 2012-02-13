@@ -19,7 +19,6 @@
 
 package org.apache.flume.source;
 
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.flume.Channel;

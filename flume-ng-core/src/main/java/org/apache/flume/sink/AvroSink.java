@@ -22,9 +22,9 @@ package org.apache.flume.sink;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.avro.AvroRemoteException;
@@ -46,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 
 /**
  * <p>
@@ -228,13 +229,13 @@ public class AvroSink extends AbstractSink implements Configurable {
 
         AvroFlumeEvent avroEvent = new AvroFlumeEvent();
 
-        avroEvent.body = ByteBuffer.wrap(event.getBody());
-        avroEvent.headers = new HashMap<CharSequence, CharSequence>();
+        avroEvent.setBody(ByteBuffer.wrap(event.getBody()));
+        Map<CharSequence, CharSequence> headers = Maps.newHashMap();
 
         for (Entry<String, String> entry : event.getHeaders().entrySet()) {
-          avroEvent.headers.put(entry.getKey(), entry.getValue());
+          headers.put(entry.getKey(), entry.getValue());
         }
-
+        avroEvent.setHeaders(headers);
         batch.add(avroEvent);
       }
 

@@ -21,6 +21,8 @@ import org.apache.flume.ChannelException;
 
 public class JdbcChannelException extends ChannelException {
 
+  private static final long serialVersionUID = -5566109526732929679L;
+
   public JdbcChannelException(String message) {
     super(message);
   }
