@@ -34,7 +34,7 @@ public class ChannelException extends RuntimeException {
   /**
    * @param ex the causal exception
    */
-  public ChannelException(Exception ex) {
+  public ChannelException(Throwable ex) {
     super(ex);
   }
 
@@ -42,7 +42,7 @@ public class ChannelException extends RuntimeException {
    * @param message the exception message
    * @param ex the causal exception
    */
-  public ChannelException(String message, Exception ex) {
+  public ChannelException(String message, Throwable ex) {
     super(message, ex);
   }
 
