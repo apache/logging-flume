@@ -50,6 +50,7 @@ public class TestMultiplexingChannelSelector {
     config.put("mapping.foo", "ch1 ch2");
     config.put("mapping.bar", "ch2 ch3");
     config.put("mapping.xyz", "ch1 ch2 ch3");
+    config.put("default", "ch1 ch3");
 
     selector = ChannelSelectorFactory.create(channels, config);
   }
@@ -96,6 +97,8 @@ public class TestMultiplexingChannelSelector {
     Assert.assertTrue(optCh3.size() == 0);
   }
 
+  //If the header information cannot map the event to any of the channels
+  //it should always be mapped to the default channel(s).
   @Test
   public void testNoSelection() throws Exception {
     Assert.assertTrue(selector instanceof MultiplexingChannelSelector);
@@ -104,8 +107,9 @@ public class TestMultiplexingChannelSelector {
 
     List<Channel> reqCh1 = selector.getRequiredChannels(noHeaderEvent);
     List<Channel> optCh1 = selector.getOptionalChannels(noHeaderEvent);
-
-    Assert.assertTrue(reqCh1.size() == 0);
+    Assert.assertEquals(2, reqCh1.size());
+    Assert.assertTrue(reqCh1.get(0).getName().equals("ch1"));
+    Assert.assertTrue(reqCh1.get(1).getName().equals("ch3"));
     Assert.assertTrue(optCh1.size() == 0);
 
     Map<String, String> header2 = new HashMap<String, String>();
@@ -115,8 +119,9 @@ public class TestMultiplexingChannelSelector {
 
     List<Channel> reqCh2 = selector.getRequiredChannels(invalidHeaderEvent);
     List<Channel> optCh2 = selector.getOptionalChannels(invalidHeaderEvent);
-
-    Assert.assertTrue(reqCh2.size() == 0);
+    Assert.assertEquals(2, reqCh2.size());
+    Assert.assertTrue(reqCh2.get(0).getName().equals("ch1"));
+    Assert.assertTrue(reqCh2.get(1).getName().equals("ch3"));
     Assert.assertTrue(optCh2.size() == 0);
 
     Map<String, String> header3 = new HashMap<String, String>();
@@ -126,8 +131,9 @@ public class TestMultiplexingChannelSelector {
 
     List<Channel> reqCh3 = selector.getRequiredChannels(unmatchedHeaderEvent);
     List<Channel> optCh3 = selector.getOptionalChannels(unmatchedHeaderEvent);
-
-    Assert.assertTrue(reqCh3.size() == 0);
+    Assert.assertEquals(2, reqCh3.size());
+    Assert.assertTrue(reqCh3.get(0).getName().equals("ch1"));
+    Assert.assertTrue(reqCh3.get(1).getName().equals("ch3"));
     Assert.assertTrue(optCh3.size() == 0);
 
 
