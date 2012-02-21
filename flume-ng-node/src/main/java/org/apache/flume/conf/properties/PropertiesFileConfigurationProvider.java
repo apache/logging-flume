@@ -22,15 +22,18 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.StringTokenizer;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Sink;
+import org.apache.flume.SinkProcessor;
 import org.apache.flume.SinkRunner;
 import org.apache.flume.Source;
 import org.apache.flume.SourceRunner;
@@ -42,6 +45,8 @@ import org.apache.flume.conf.file.SimpleNodeConfiguration;
 import org.apache.flume.conf.properties.FlumeConfiguration.AgentConfiguration;
 import org.apache.flume.conf.properties.FlumeConfiguration.ComponentConfiguration;
 import org.apache.flume.node.NodeConfiguration;
+import org.apache.flume.sink.DefaultSinkProcessor;
+import org.apache.flume.sink.SinkGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,6 +111,17 @@ import org.slf4j.LoggerFactory;
  * runner as needed. For example:
  * <tt>&lt;agent name&gt;.sinks.&lt;sink name&gt;.runner.polling.interval =
  * 60</tt></li>
+ * <li>A fourth optional list <tt>&lt;agent name&gt;.sinkgroups</tt>
+ * may be added to each agent, consisting of unique space separated names 
+ * for groups</li>
+ * <li>Each sinkgroup must specify sinks, containing a list of all sinks 
+ * belonging to it. These cannot be shared by multiple groups.
+ * Further, one can set a processor and behavioral parameters to determine
+ * how sink selection is made via <tt>&lt;agent name&gt;.sinkgroups.&lt;
+ * group name&lt.processor</tt>. For further detail refer to inividual processor
+ * documentation</li>
+ * <li>Sinks not assigned to a group will be assigned to default single sink
+ * groups.</li>
  * </ul>
  *
  * Apart from the above required configuration values, each source, sink or
@@ -173,7 +189,7 @@ import org.slf4j.LoggerFactory;
  * @see java.util.Properties#load(java.io.Reader)
  */
 public class PropertiesFileConfigurationProvider extends
-    AbstractFileConfigurationProvider {
+AbstractFileConfigurationProvider {
 
   private static final Logger LOGGER = LoggerFactory
       .getLogger(PropertiesFileConfigurationProvider.class);
@@ -278,6 +294,7 @@ public class PropertiesFileConfigurationProvider extends
   private void loadSinks(AgentConfiguration agentConf, NodeConfiguration conf)
       throws InstantiationException {
 
+    Map<String, Sink> sinks = new HashMap<String, Sink>();
     for (ComponentConfiguration comp : agentConf.getSinks()) {
       Context context = new Context();
       Map<String, String> componentConfig = comp.getConfiguration();
@@ -294,8 +311,61 @@ public class PropertiesFileConfigurationProvider extends
 
       sink.setChannel(conf.getChannels().get(
           componentConfig.get("channel")));
+      sinks.put(comp.getComponentName(), sink);
+    }
+
+    loadSinkGroups(agentConf, sinks, conf);
+  }
+
+  private void loadSinkGroups(AgentConfiguration agentConf,
+      Map<String, Sink> sinks, NodeConfiguration conf)
+          throws InstantiationException {
+    Map<String, String> usedSinks = new HashMap<String, String>();
+    for (ComponentConfiguration comp : agentConf.getSinkGroups()) {
+      Context context = new Context();
+      String groupName = comp.getComponentName();
+      Map<String, String> groupConf = comp.getConfiguration();
+      for (Entry<String, String> ent : groupConf.entrySet()) {
+        context.put(ent.getKey(), ent.getValue());
+      }
+      String groupSinkList = groupConf.get("sinks");
+      StringTokenizer sinkTokenizer = new StringTokenizer(groupSinkList, " \t");
+      List<Sink> groupSinks = new ArrayList<Sink>();
+      while(sinkTokenizer.hasMoreTokens()) {
+        String sinkName = sinkTokenizer.nextToken();
+        Sink s = sinks.remove(sinkName);
+        if(s == null) {
+          String sinkUser = usedSinks.get(sinkName);
+          if(sinkUser != null) {
+            throw new InstantiationException(String.format(
+                "Sink %s of group %s already " +
+                "in use by group %s", sinkName, groupName, sinkUser));
+          } else {
+            throw new InstantiationException(String.format(
+                "Sink %s of group %s does "
+                    + "not exist or is not properly configured", sinkName,
+                groupName));
+          }
+        }
+        groupSinks.add(s);
+        usedSinks.put(sinkName, groupName);
+      }
+      SinkGroup group = new SinkGroup(groupSinks);
+      Configurables.configure(group, context);
       conf.getSinkRunners().put(comp.getComponentName(),
-          new SinkRunner(sink));
+          new SinkRunner(group.getProcessor()));
+    }
+    // add any unasigned sinks to solo collectors
+    for(Entry<String, Sink> entry : sinks.entrySet()) {
+      if (!usedSinks.containsValue(entry.getKey())) {
+        SinkProcessor pr = new DefaultSinkProcessor();
+        List<Sink> sinkMap = new ArrayList<Sink>();
+        sinkMap.add(entry.getValue());
+        pr.setSinks(sinkMap);
+        Configurables.configure(pr, new Context());
+        conf.getSinkRunners().put(entry.getKey(),
+            new SinkRunner(pr));
+      }
     }
   }
 

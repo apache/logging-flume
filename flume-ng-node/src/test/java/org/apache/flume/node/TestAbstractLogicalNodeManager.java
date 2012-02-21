@@ -26,6 +26,7 @@ import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Sink;
+import org.apache.flume.SinkProcessor;
 import org.apache.flume.SinkRunner;
 import org.apache.flume.Source;
 import org.apache.flume.SourceRunner;
@@ -38,6 +39,7 @@ import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.node.nodemanager.AbstractLogicalNodeManager;
+import org.apache.flume.sink.DefaultSinkProcessor;
 import org.apache.flume.sink.NullSink;
 import org.apache.flume.source.SequenceGeneratorSource;
 import org.junit.Assert;
@@ -126,7 +128,7 @@ public class TestAbstractLogicalNodeManager {
 
   @Test
   public void testEmptyLifecycle() throws LifecycleException,
-      InterruptedException {
+  InterruptedException {
 
     nodeManager.start();
     boolean reached = LifecycleController.waitForOneOf(nodeManager,
@@ -162,7 +164,11 @@ public class TestAbstractLogicalNodeManager {
     nullSink.setChannel(channel);
 
     nodeManager.add(SourceRunner.forSource(generatorSource));
-    nodeManager.add(new SinkRunner(nullSink));
+    SinkProcessor processor = new DefaultSinkProcessor();
+    List<Sink> sinks = new ArrayList<Sink>();
+    sinks.add(nullSink);
+    processor.setSinks(sinks);
+    nodeManager.add(new SinkRunner(processor));
 
     nodeManager.start();
     boolean reached = LifecycleController.waitForOneOf(nodeManager,
@@ -181,7 +187,7 @@ public class TestAbstractLogicalNodeManager {
 
   @Test
   public void testRapidLifecycleFlapping() throws LifecycleException,
-      InterruptedException {
+  InterruptedException {
 
     Channel channel = new MemoryChannel();
     Configurables.configure(channel, new Context());
@@ -198,7 +204,11 @@ public class TestAbstractLogicalNodeManager {
     sink.setChannel(channel);
 
     nodeManager.add(SourceRunner.forSource(source));
-    nodeManager.add(new SinkRunner(sink));
+    SinkProcessor processor = new DefaultSinkProcessor();
+    List<Sink> sinks = new ArrayList<Sink>();
+    sinks.add(sink);
+    processor.setSinks(sinks);
+    nodeManager.add(new SinkRunner(processor));
 
     for (int i = 0; i < 10; i++) {
       nodeManager.start();
@@ -207,7 +217,7 @@ public class TestAbstractLogicalNodeManager {
 
       Assert.assertTrue(reached);
       Assert
-          .assertEquals(LifecycleState.START, nodeManager.getLifecycleState());
+      .assertEquals(LifecycleState.START, nodeManager.getLifecycleState());
 
       nodeManager.stop();
       reached = LifecycleController.waitForOneOf(nodeManager,

@@ -30,6 +30,8 @@ import java.util.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
+
 /**
  * <p>
  * FlumeConfiguration is an in memory representation of the hierarchical
@@ -56,16 +58,20 @@ public class FlumeConfiguration {
   private static final String SOURCES_PREFIX = SOURCES + ".";
   private static final String SINKS = "sinks";
   private static final String SINKS_PREFIX = SINKS + ".";
+  private static final String SINKGROUPS = "sinkgroups";
+  private static final String SINKGROUPS_PREFIX = SINKGROUPS + ".";
   private static final String CHANNELS = "channels";
   private static final String CHANNELS_PREFIX = CHANNELS + ".";
   private static final String RUNNER = "runner";
   private static final String RUNNER_PREFIX = RUNNER + ".";
   private static final String ATTR_TYPE = "type";
+  private static final String ATTR_SINKS = "sinks";
   private static final String ATTR_CHANNEL = "channel";
   private static final String ATTR_CHANNELS = "channels";
   private static final String CLASS_CHANNEL = "channel";
   private static final String CLASS_SOURCE = "source";
   private static final String CLASS_SINK = "sink";
+  private static final String CLASS_SINKGROUP = "sinkgroup";
 
   private final Map<String, AgentConfiguration> agentConfigMap;
 
@@ -168,10 +174,12 @@ public class FlumeConfiguration {
     private String sources;
     private String sinks;
     private String channels;
+    private String sinkgroups;
 
     private final Map<String, ComponentConfiguration> sourceConfigMap;
     private final Map<String, ComponentConfiguration> sinkConfigMap;
     private final Map<String, ComponentConfiguration> channelConfigMap;
+    private final Map<String, ComponentConfiguration> sinkgroupConfigMap;
 
     private AgentConfiguration(String agentName) {
       this.agentName = agentName;
@@ -179,6 +187,7 @@ public class FlumeConfiguration {
       sourceConfigMap = new HashMap<String, ComponentConfiguration>();
       sinkConfigMap = new HashMap<String, ComponentConfiguration>();
       channelConfigMap = new HashMap<String, ComponentConfiguration>();
+      sinkgroupConfigMap = new HashMap<String, ComponentConfiguration>();
     }
 
     public Collection<ComponentConfiguration> getChannels() {
@@ -191,6 +200,10 @@ public class FlumeConfiguration {
 
     public Collection<ComponentConfiguration> getSinks() {
       return sinkConfigMap.values();
+    }
+
+    public Collection<ComponentConfiguration> getSinkGroups() {
+      return sinkgroupConfigMap.values();
     }
 
     /**
@@ -219,13 +232,7 @@ public class FlumeConfiguration {
         return false;
       }
 
-      Set<String> channelSet = new HashSet<String>();
-      StringTokenizer channelTok = new StringTokenizer(channels, " \t");
-
-      while (channelTok.hasMoreTokens()) {
-        channelSet.add(channelTok.nextToken());
-      }
-
+      Set<String> channelSet = stringToSet(channels, " \t");
       validateComponent(channelSet, channelConfigMap, CLASS_CHANNEL, ATTR_TYPE);
 
       if (channelSet.size() == 0) {
@@ -235,17 +242,32 @@ public class FlumeConfiguration {
         return false;
       }
 
-      // At least one channel is configured correctly
-      // Validate sources
-      Set<String> sourceSet = new HashSet<String>();
+      Set<String> sourceSet = validateSources(channelSet);
+      Set<String> sinkSet = validateSinks(channelSet);
+      Set<String> sinkgroupSet = validateGroups(sinkSet);
 
-      if (sources != null && sources.trim().length() > 0) {
-        StringTokenizer sourceTok = new StringTokenizer(sources, " \t");
+      // If no sources or sinks are present, then this is invalid
+      if (sourceSet.size() == 0 && sinkSet.size() == 0) {
+        logger.warn("Agent configuration for '" + agentName
+            + "' has no sources or sinks. Will be marked invalid.");
+        return false;
+      }
 
-        while (sourceTok.hasMoreTokens()) {
-          sourceSet.add(sourceTok.nextToken());
-        }
+      // Now rewrite the sources/sinks/channels
 
+      this.sources = getSpaceDelimitedList(sourceSet);
+      this.channels = getSpaceDelimitedList(channelSet);
+      this.sinks = getSpaceDelimitedList(sinkSet);
+      this.sinkgroups = getSpaceDelimitedList(sinkgroupSet);
+
+      return true;
+    }
+
+    private Set<String> validateSources(Set<String> channelSet) {
+      Preconditions.checkArgument(channelSet != null && channelSet.size() > 0);
+      Set<String> sourceSet = stringToSet(sources, " \t");
+
+      if (sourceSet != null && sourceSet.size() > 0) {
         // Filter out any sources that have invalid channels
         Iterator<String> srcIt = sourceConfigMap.keySet().iterator();
 
@@ -295,16 +317,14 @@ public class FlumeConfiguration {
 
       validateComponent(sourceSet, sourceConfigMap, CLASS_SOURCE, ATTR_TYPE,
           ATTR_CHANNELS);
+      return sourceSet;
+    }
 
-      Set<String> sinkSet = new HashSet<String>();
+    private Set<String> validateSinks(Set<String> channelSet) {
+      Preconditions.checkArgument(channelSet != null && channelSet.size() > 0);
+      Set<String> sinkSet = stringToSet(sinks, " \t");
 
-      if (sinks != null && sinks.trim().length() > 0) {
-        StringTokenizer sinkTok = new StringTokenizer(sinks, " \t");
-
-        while (sinkTok.hasMoreTokens()) {
-          sinkSet.add(sinkTok.nextToken());
-        }
-
+      if (sinkSet != null && sinkSet.size() > 0) {
         // Filter out any sinks that have invalid channel
         Iterator<String> sinkIt = sinkConfigMap.keySet().iterator();
 
@@ -335,21 +355,89 @@ public class FlumeConfiguration {
 
       validateComponent(sinkSet, sinkConfigMap, CLASS_SINK, ATTR_TYPE,
           ATTR_CHANNEL);
+      return sinkSet;
+    }
 
-      // If no sources or sinks are present, then this is invalid
-      if (sourceSet.size() == 0 && sinkSet.size() == 0) {
-        logger.warn("Agent configuration for '" + agentName
-            + "' has no sources or sinks. Will be marked invalid.");
-        return false;
+    /**
+     * Validates that each group has at least one sink, blocking other groups
+     * from acquiring it
+     * 
+     * @param sinkSet
+     *          Set of valid sinks
+     * @return Set of valid sinkgroups
+     */
+    private Set<String> validateGroups(Set<String> sinkSet) {
+      Set<String> sinkgroupSet = stringToSet(sinkgroups, " \t");
+      if(sinkgroupSet != null && sinkgroupSet.size() > 0) {
+        Iterator<String> groupIt = sinkgroupConfigMap.keySet().iterator();
+        Map<String, String> usedSinks = new HashMap<String, String>();
+        while (groupIt.hasNext()) {
+          String nextGroup = groupIt.next();
+          ComponentConfiguration groupConf = sinkgroupConfigMap.get(nextGroup);
+
+          if ( ! groupConf.hasAttribute(ATTR_SINKS)) {
+            logger.warn("Agent configuration for '" + agentName
+                + "' sinkGroup '" + groupConf.getComponentName()
+                + "' has no configured sinks. Removing.");
+            groupIt.remove();
+            continue;
+          }
+          Set<String> groupSinks = validGroupSinks(sinkSet, usedSinks,
+              groupConf);
+          if (groupSinks == null || groupSinks.isEmpty()) {
+            logger.warn("Agent configuration for '" + agentName
+                + "' sinkGroup '" + groupConf.getComponentName()
+                + "' has no valid sinks. Removing.");
+            groupIt.remove();
+          } else {
+            groupConf.setAttribute(ATTR_SINKS,
+                this.getSpaceDelimitedList(groupSinks));
+          }
+
+        }
       }
+      validateComponent(sinkgroupSet, sinkgroupConfigMap, CLASS_SINKGROUP,
+          ATTR_SINKS);
+      return sinkgroupSet;
+    }
 
-      // Now rewrite the sources/sinks/channels
-
-      this.sources = getSpaceDelimitedList(sourceSet);
-      this.channels = getSpaceDelimitedList(channelSet);
-      this.sinks = getSpaceDelimitedList(sinkSet);
-
-      return true;
+    /**
+     * Check availability of sinks for group
+     * 
+     * @param sinkSet
+     *          [in]Existing valid sinks
+     * @param usedSinks
+     *          [in/out]Sinks already in use by other groups
+     * @param groupConf
+     *          [in]sinkgroup configuration
+     * @return List of sinks available and reserved for group
+     */
+    private Set<String> validGroupSinks(Set<String> sinkSet,
+        Map<String, String> usedSinks, ComponentConfiguration groupConf) {
+      Set<String> groupSinks = stringToSet(groupConf.getAttribute(ATTR_SINKS),
+          " \t");
+      if(groupSinks == null) return null;
+      Iterator<String> sinkIt = groupSinks.iterator();
+      while (sinkIt.hasNext()) {
+        String curSink = sinkIt.next();
+        if(usedSinks.containsKey(curSink)) {
+          logger.warn("Agent configuration for '" + agentName + "' sinkgroup '"
+              + groupConf.getComponentName() + "' sink '" + curSink
+              + "' in use by " + "another group: '" + usedSinks.get(curSink)
+              + "', sink not added");
+          sinkIt.remove();
+          continue;
+        } else if (!sinkSet.contains(curSink)) {
+          logger.warn("Agent configuration for '" + agentName + "' sinkgroup '"
+              + groupConf.getComponentName() + "' sink not found: '" + curSink
+              + "',  sink not added");
+          sinkIt.remove();
+          continue;
+        } else {
+          usedSinks.put(curSink, groupConf.getComponentName());
+        }
+      }
+      return groupSinks;
     }
 
     private String getSpaceDelimitedList(Set<String> entries) {
@@ -364,6 +452,18 @@ public class FlumeConfiguration {
       }
 
       return sb.toString().trim();
+    }
+
+    private Set<String> stringToSet(String target, String delim) {
+      Set<String> out = new HashSet<String>();
+      if(target == null || target.trim().length() == 0) {
+        return out;
+      }
+      StringTokenizer t = new StringTokenizer(target, delim);
+      while(t.hasMoreTokens()) {
+        out.add(t.nextToken());
+      }
+      return out;
     }
 
     /**
@@ -427,7 +527,7 @@ public class FlumeConfiguration {
         }
       }
 
-      // Remove the active channels that are not configured
+      // Remove the active components that are not configured
       Iterator<String> activeIt = activeSet.iterator();
 
       while (activeIt.hasNext()) {
@@ -462,7 +562,7 @@ public class FlumeConfiguration {
           return true;
         } else {
           logger
-              .warn("Duplicate source list specified for agent: " + agentName);
+          .warn("Duplicate source list specified for agent: " + agentName);
           return false;
         }
       }
@@ -488,6 +588,19 @@ public class FlumeConfiguration {
           logger.warn("Duplicate channel list specified for agent: "
               + agentName);
 
+          return false;
+        }
+      }
+
+      // Check for sinkgroups
+      if (key.equals(SINKGROUPS))  {
+        if (sinkgroups == null) {
+          sinkgroups = value;
+
+          return true;
+        } else {
+          logger.warn("Duplicate channel list specfied for agent: "
+              + agentName);
           return false;
         }
       }
@@ -535,6 +648,19 @@ public class FlumeConfiguration {
         }
 
         return sinkConf.addProperty(cnck.getConfigKey(), value);
+      }
+
+      cnck = parseConfigKey(key, SINKGROUPS_PREFIX);
+
+      if (cnck != null) {
+        String name = cnck.getComponentName();
+        ComponentConfiguration groupConf = sinkgroupConfigMap.get(name);
+        if(groupConf == null) {
+          groupConf = new ComponentConfiguration(name, true);
+          sinkgroupConfigMap.put(name, groupConf);
+        }
+
+        return groupConf.addProperty(cnck.getConfigKey(), value);
       }
 
       logger.warn("Invalid property specified: " + key);

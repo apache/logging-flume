@@ -38,35 +38,35 @@ public class SinkRunner implements LifecycleAware {
   private Thread runnerThread;
   private LifecycleState lifecycleState;
 
-  private Sink sink;
+  private SinkProcessor policy;
 
   public SinkRunner() {
     counterGroup = new CounterGroup();
     lifecycleState = LifecycleState.IDLE;
   }
-  
-  public SinkRunner(Sink sink) {
+
+  public SinkRunner(SinkProcessor policy) {
     this();
-    setSink(sink);
+    setSink(policy);
   }
 
-  public Sink getSink() {
-    return sink;
+  public SinkProcessor getPolicy() {
+    return policy;
   }
 
-  public void setSink(Sink sink) {
-    this.sink = sink;
+  public void setSink(SinkProcessor policy) {
+    this.policy = policy;
   }
 
   @Override
   public void start() {
-    Sink sink = getSink();
+    SinkProcessor policy = getPolicy();
 
-    sink.start();
+    policy.start();
 
     runner = new PollingRunner();
 
-    runner.sink = sink;
+    runner.policy = policy;
     runner.counterGroup = counterGroup;
     runner.shouldStop = new AtomicBoolean();
 
@@ -79,7 +79,7 @@ public class SinkRunner implements LifecycleAware {
   @Override
   public void stop() {
 
-    getSink().stop();
+    getPolicy().stop();
 
     if (runnerThread != null) {
       runner.shouldStop.set(true);
@@ -91,9 +91,9 @@ public class SinkRunner implements LifecycleAware {
           runnerThread.join(500);
         } catch (InterruptedException e) {
           logger
-              .debug(
-                  "Interrupted while waiting for runner thread to exit. Exception follows.",
-                  e);
+          .debug(
+              "Interrupted while waiting for runner thread to exit. Exception follows.",
+              e);
         }
       }
     }
@@ -103,7 +103,7 @@ public class SinkRunner implements LifecycleAware {
 
   @Override
   public String toString() {
-    return "SinkRunner: { sink:" + getSink() + " counterGroup:"
+    return "SinkRunner: { policy:" + getPolicy() + " counterGroup:"
         + counterGroup + " }";
   }
 
@@ -114,7 +114,7 @@ public class SinkRunner implements LifecycleAware {
 
   public static class PollingRunner implements Runnable {
 
-    private Sink sink;
+    private SinkProcessor policy;
     private AtomicBoolean shouldStop;
     private CounterGroup counterGroup;
 
@@ -124,12 +124,12 @@ public class SinkRunner implements LifecycleAware {
 
       while (!shouldStop.get()) {
         try {
-          if (sink.process().equals(Sink.Status.BACKOFF)) {
+          if (policy.process().equals(Sink.Status.BACKOFF)) {
             counterGroup.incrementAndGet("runner.backoffs");
 
             Thread.sleep(Math.min(
                 counterGroup.incrementAndGet("runner.backoffs.consecutive")
-                    * backoffSleepIncrement, maxBackoffSleep));
+                * backoffSleepIncrement, maxBackoffSleep));
           } else {
             counterGroup.set("runner.backoffs.consecutive", 0L);
           }
