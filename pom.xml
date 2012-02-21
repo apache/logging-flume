@@ -48,6 +48,7 @@ limitations under the License.
     <module>flume-ng-dist</module>
     <module>flume-ng-channels</module>
     <module>flume-ng-legacy-sources</module>
+    <module>flume-ng-clients</module>
   </modules>
 
   <profiles>
@@ -126,7 +127,7 @@ limitations under the License.
     <profile>
       <id>compileThrift</id>
       <activation>
-       <activeByDefault>false</activeByDefault>
+        <activeByDefault>false</activeByDefault>
       </activation>
       <properties>
         <thrift.executable>${env.THRIFT_HOME}/bin/thrift</thrift.executable>
