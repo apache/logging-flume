@@ -58,6 +58,9 @@ public class TestExecSource {
     Context context = new Context();
 
     context.put("command", "cat /etc/passwd");
+    context.put("keep-alive", "1");
+    context.put("capacity", "1000");
+    context.put("transactionCapacity", "1000");
     Configurables.configure(source, context);
     Configurables.configure(channel, context);
 

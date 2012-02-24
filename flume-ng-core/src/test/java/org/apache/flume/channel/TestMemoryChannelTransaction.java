@@ -25,11 +25,12 @@ import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
 import org.apache.flume.Transaction.TransactionState;
-import org.apache.flume.channel.MemoryChannel.MemTransaction;
+import org.apache.flume.channel.MemoryChannel.MemoryTransaction;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class TestMemoryChannelTransaction {
@@ -49,6 +50,8 @@ public class TestMemoryChannelTransaction {
     int putCounter = 0;
 
     context.put("keep-alive", "1");
+    context.put("capacity", "100");
+    context.put("transactionCapacity", "50");
     Configurables.configure(channel, context);
 
     Transaction transaction = channel.getTransaction();
@@ -152,6 +155,7 @@ public class TestMemoryChannelTransaction {
     transaction.close();
   }
 
+  @Ignore("BasicChannelSemantics doesn't support re-entrant transactions")
   @Test
   public void testReEntTxn() throws InterruptedException,
       EventDeliveryException {
@@ -172,12 +176,8 @@ public class TestMemoryChannelTransaction {
       event = EventBuilder.withBody(("test event" + putCounter).getBytes());
       channel.put(event);
       transaction.commit(); // inner commit
-      Assert.assertEquals(((MemTransaction) transaction).getState(),
-          TransactionState.Started);
     }
     transaction.commit();
-    Assert.assertEquals(((MemTransaction) transaction).getState(),
-        TransactionState.Committed);
     transaction.close();
 
     transaction = channel.getTransaction();
@@ -197,6 +197,7 @@ public class TestMemoryChannelTransaction {
     transaction.close();
   }
 
+  @Ignore("BasicChannelSemantics doesn't support re-entrant transactions")
   @Test
   public void testReEntTxnRollBack() throws InterruptedException,
       EventDeliveryException {
@@ -248,15 +249,11 @@ public class TestMemoryChannelTransaction {
       Assert.assertNotNull("lost an event", event2);
       Assert.assertArrayEquals(event2.getBody(), ("test event" + i).getBytes());
       transaction.commit(); // inner commit
-      Assert.assertEquals(((MemTransaction) transaction).getState(),
-          TransactionState.Started);
     }
     event2 = channel.take();
     Assert.assertNull("extra event found", event2);
 
     transaction.rollback();
-    Assert.assertEquals(((MemTransaction) transaction).getState(),
-        TransactionState.RolledBack);
     transaction.close();
 
     // verify that the events were left in there due to rollback

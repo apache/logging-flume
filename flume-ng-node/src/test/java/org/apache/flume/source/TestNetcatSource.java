@@ -57,7 +57,6 @@ public class TestNetcatSource {
     source = new NetcatSource();
 
     Context context = new Context();
-    context.put("capacity", "50");
 
     Configurables.configure(channel, context);
     List<Channel> channels = new ArrayList<Channel>();
