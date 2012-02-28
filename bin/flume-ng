@@ -20,23 +20,21 @@
 #
 
 JAVA_OPTS="-Xmx20m"
-
-
-FLUME_NODE_CLASS="org.apache.flume.node.Application"
-FLUME_AVRO_CLIENT_CLASS="org.apache.flume.client.avro.AvroCLIClient"
 FLUME_CLASSPATH=""
 
-if [ -f "${FLUME_CONF_DIR}/flume-env.sh" ]; then
+if [ -n "${FLUME_CONF_DIR}" -a -f "${FLUME_CONF_DIR}/flume-env.sh" ]; then
     source "$FLUME_CONF_DIR/flume-env.sh"
 fi
 
+FLUME_NODE_CLASS="org.apache.flume.node.Application"
+FLUME_AVRO_CLIENT_CLASS="org.apache.flume.client.avro.AvroCLIClient"
+
 if [ -z "${JAVA_HOME}" ] ; then
-    echo "Warning: JAVA_HOME not set !"
+    echo "Warning: JAVA_HOME not set!"
     JAVA_DEFAULT=`type -p java`
     [ -n "$JAVA_DEFAULT" ] || error "Unable to find java executable. Is it in your PATH?" 1
     JAVA_BIN=`dirname $JAVA_DEFAULT`
     JAVA_HOME=`dirname $JAVA_BIN`
-
 fi
 
 warn() {
@@ -58,36 +56,37 @@ error() {
 
 display_help() {
   cat <<EOF
-usage: $0 [help | node] [--no-env]
+usage: $0 [COMMAND] [OPTION]...
 
 commands:
-  help                display this help text
-  node                run a Flume node
-  avro-client         run an avro Flume client
+  help                  display this help text
+  node                  run a Flume node
+  avro-client           run an avro Flume client
 
-global options
+global options:
+  --conf,-c <conf>      use configs in <conf> directory
+  --classpath,-C <cp>   override the classpath completely
 
-  --conf,-c <conf>    use configs in <conf> directory
-  --no-env,-E         do not source the flume-env.sh file
-  --classpath,-C <cp> override the classpath completely
+node options:
+  --conf-file,-f        specify a config file (required)
+  --name,-n             the name of this node (required)
+  --help,-h             display help text
 
-node options
+avro-client options:
+  --host,-H <host>      hostname to which events will be sent (required)
+  --port,-p <port>      port of the avro source (required)
+  --filename,-F <file>  text file to stream to avro source [default: std input]
+  --help,-h             display help text
 
-  --data,-d <dir>     store internal flume data in <dir>
-
-avro-client options
-
-  --host,-H <host>  hostname to which events will be sent
-  --port,-p <port>  port of the avro source
-
-Note that the conf directory is always included in the classpath.
+Note that if <conf> directory is specified, then it is always included first
+in the classpath.
 
 EOF
-
 }
 
 run_node() {
   local final_cp
+  local FLUME_APPLICATION_CLASS
 
   if [ -n "$opt_conf" ] ; then
     final_cp="$opt_conf:"
@@ -103,7 +102,6 @@ run_node() {
 
   final_cp="${final_cp}${FLUME_CLASSPATH}"
 
-  [ -n "$JAVA_HOME" ] || error "JAVA_HOME not set. " 1
   [ -n "$opt_conf" ] || warn "No configuration directory set! Use --conf <dir> to override." 1
 
   FLUME_APPLICATION_CLASS=$FLUME_NODE_CLASS
@@ -113,6 +111,7 @@ run_node() {
 
 run_avro_client() {
   local final_cp
+  local FLUME_APPLICATION_CLASS
 
   if [ -n "$opt_conf" ] ; then
     final_cp="$opt_conf:"
@@ -128,8 +127,6 @@ run_avro_client() {
 
   final_cp="${final_cp}${FLUME_CLASSPATH}"
 
-  [ -n "$JAVA_HOME" ] || error "JAVA_HOME not set. " 1
-  [ -n "$FLUME_CLASSPATH" ] || error "Flume classpath is not set! Use flume-env.sh or --classpath <cp>." 1
   [ -n "$opt_conf" ] || warn "No configuration directory set! Use --conf <dir> to override." 1
 
   FLUME_APPLICATION_CLASS=$FLUME_AVRO_CLIENT_CLASS
@@ -137,14 +134,8 @@ run_avro_client() {
   exec $JAVA_HOME/bin/java $JAVA_OPTS -cp "$final_cp" "$FLUME_APPLICATION_CLASS" $*
 }
 
-validate_env() {
-  [ -z "$CLASSPATH" ] || warn "You have CLASSPATH set to $CLASSPATH - you better know what you're doing!"
-}
-
-opt_help=
-opt_no_env=
-opt_conf=
-opt_datadir=
+opt_help=""
+opt_conf=""
 
 mode=$1
 shift
@@ -170,9 +161,6 @@ while [ -n "$*" ] ; do
   shift
 
   case "$arg" in
-    --no-env|-E)
-      opt_no_env=1
-      ;;
     --conf|-c)
       [ -n "$1" ] || error "Option --conf requires an argument" 1
       opt_conf=$1
@@ -181,11 +169,6 @@ while [ -n "$*" ] ; do
     --classpath|-C)
       [ -n "$1" ] || error "Option --classpath requires an argument" 1
       FLUME_CLASSPATH=$1
-      shift
-      ;;
-    --data|-d)
-      [ -n "$1" ] || error "Option --data requires an argument" 1
-      opt_datadir=$1
       shift
       ;;
     *)
