@@ -126,18 +126,18 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   // read configuration and setup thresholds
   @Override
   public void configure(Context context) {
-    String dirpath = context.get("hdfs.path", String.class);
-    String fileName = context.get("hdfs.filePrefix", String.class);
-    String rollInterval = context.get("hdfs.rollInterval", String.class);
-    String rollSize = context.get("hdfs.rollSize", String.class);
-    String rollCount = context.get("hdfs.rollCount", String.class);
-    String batchSize = context.get("hdfs.batchSize", String.class);
-    String txnEventMax = context.get("hdfs.txnEventMax", String.class);
-    String codecName = context.get("hdfs.codeC", String.class);
-    String fileType = context.get("hdfs.fileType", String.class);
-    String maxOpenFiles = context.get("hdfs.maxOpenFiles", String.class);
-    String writeFormat = context.get("hdfs.writeFormat", String.class);
-    String appendTimeout = context.get("hdfs.appendTimeout", String.class);
+    String dirpath = context.getString("hdfs.path");
+    String fileName = context.getString("hdfs.filePrefix");
+    String rollInterval = context.getString("hdfs.rollInterval");
+    String rollSize = context.getString("hdfs.rollSize");
+    String rollCount = context.getString("hdfs.rollCount");
+    String batchSize = context.getString("hdfs.batchSize");
+    String txnEventMax = context.getString("hdfs.txnEventMax");
+    String codecName = context.getString("hdfs.codeC");
+    String fileType = context.getString("hdfs.fileType");
+    String maxOpenFiles = context.getString("hdfs.maxOpenFiles");
+    String writeFormat = context.getString("hdfs.writeFormat");
+    String appendTimeout = context.getString("hdfs.appendTimeout");
 
     if (fileName == null)
       fileName = defaultFileName;

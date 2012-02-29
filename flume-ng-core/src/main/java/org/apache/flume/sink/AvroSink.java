@@ -130,9 +130,9 @@ public class AvroSink extends AbstractSink implements Configurable {
 
   @Override
   public void configure(Context context) {
-    hostname = context.get("hostname", String.class);
-    port = Integer.parseInt(context.get("port", String.class));
-    batchSize = Integer.parseInt(context.get("batch-size", String.class));
+    hostname = context.getString("hostname");
+    port = context.getInteger("port");
+    batchSize = context.getInteger("batch-size");
 
     if (batchSize == null) {
       batchSize = defaultBatchSize;

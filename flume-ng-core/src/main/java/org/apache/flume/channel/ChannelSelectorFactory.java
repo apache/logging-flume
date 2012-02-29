@@ -18,7 +18,6 @@
  */
 package org.apache.flume.channel;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -42,11 +41,8 @@ public class ChannelSelectorFactory {
 
     selector.setChannels(channels);
 
-    Map<String, Object> params = new HashMap<String, Object>();
-    params.putAll(config);
-
     Context context = new Context();
-    context.setParameters(params);
+    context.putAll(config);
 
     Configurables.configure(selector, context);
 

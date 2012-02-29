@@ -70,10 +70,10 @@ public class TestMemoryChannel {
   @Test
   public void testChannelResize() {
     Context context = new Context();
-    Map<String, Object> parms = new HashMap<String, Object>();
+    Map<String, String> parms = new HashMap<String, String>();
     parms.put("capacity", "5");
     parms.put("transactionCapacity", "5");
-    context.setParameters(parms);
+    context.putAll(parms);
     Configurables.configure(channel,  context);
 
     Transaction transaction = channel.getTransaction();
@@ -105,7 +105,7 @@ public class TestMemoryChannel {
      * Reconfigure capacity down and add another event, shouldn't result in exception
      */
     parms.put("capacity", "6");
-    context.setParameters(parms);
+    context.putAll(parms);
     Configurables.configure(channel, context);
     transaction = channel.getTransaction();
     transaction.begin();
@@ -119,7 +119,7 @@ public class TestMemoryChannel {
      */
     parms.put("capacity", "2");
     parms.put("transactionCapacity", "2");
-    context.setParameters(parms);
+    context.putAll(parms);
     Configurables.configure(channel, context);
     for(int i=0; i < 6; i++) {
       transaction = channel.getTransaction();
@@ -133,10 +133,10 @@ public class TestMemoryChannel {
   @Test(expected=ChannelException.class)
   public void testTransactionPutCapacityOverload() {
     Context context = new Context();
-    Map<String, Object> parms = new HashMap<String, Object>();
+    Map<String, String> parms = new HashMap<String, String>();
     parms.put("capacity", "5");
     parms.put("transactionCapacity", "2");
-    context.setParameters(parms);
+    context.putAll(parms);
     Configurables.configure(channel,  context);
 
     Transaction transaction = channel.getTransaction();
@@ -151,10 +151,10 @@ public class TestMemoryChannel {
   @Test(expected=ChannelException.class)
   public void testCapacityOverload() {
     Context context = new Context();
-    Map<String, Object> parms = new HashMap<String, Object>();
+    Map<String, String> parms = new HashMap<String, String>();
     parms.put("capacity", "5");
     parms.put("transactionCapacity", "3");
-    context.setParameters(parms);
+    context.putAll(parms);
     Configurables.configure(channel,  context);
 
     Transaction transaction = channel.getTransaction();
@@ -178,10 +178,10 @@ public class TestMemoryChannel {
   @Test
   public void testBufferEmptyingAfterTakeCommit() {
     Context context = new Context();
-    Map<String, Object> parms = new HashMap<String, Object>();
+    Map<String, String> parms = new HashMap<String, String>();
     parms.put("capacity", "3");
     parms.put("transactionCapacity", "3");
-    context.setParameters(parms);
+    context.putAll(parms);
     Configurables.configure(channel,  context);
 
     Transaction tx = channel.getTransaction();
@@ -210,10 +210,10 @@ public class TestMemoryChannel {
   @Test
   public void testBufferEmptyingAfterRollback() {
     Context context = new Context();
-    Map<String, Object> parms = new HashMap<String, Object>();
+    Map<String, String> parms = new HashMap<String, String>();
     parms.put("capacity", "3");
     parms.put("transactionCapacity", "3");
-    context.setParameters(parms);
+    context.putAll(parms);
     Configurables.configure(channel,  context);
 
     Transaction tx = channel.getTransaction();

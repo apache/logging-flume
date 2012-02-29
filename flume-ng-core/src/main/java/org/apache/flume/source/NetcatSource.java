@@ -121,8 +121,8 @@ public class NetcatSource extends AbstractSource implements Configurable,
   public void configure(Context context) {
     Configurables.ensureRequiredNonNull(context, "bind", "port");
 
-    hostName = context.get("bind", String.class);
-    port = Integer.parseInt(context.get("port", String.class));
+    hostName = context.getString("bind");
+    port = Integer.parseInt(context.getString("port"));
   }
 
   @Override

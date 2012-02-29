@@ -153,13 +153,13 @@ public class TestFailoverSinkProcessor {
     sinks.add(s2);
     sinks.add(s3);
     SinkGroup group = new SinkGroup(sinks);
-    Map<String, Object> params = new HashMap<String, Object>();
+    Map<String, String> params = new HashMap<String, String>();
     params.put("sinks", "s1 s2 s3");
     params.put("processor.type", "failover");
     params.put("processor.priority.s1", "3");
     params.put("processor.priority.s2", "2");
     params.put("processor.priority.s3", "1");
-    context.setParameters(params);
+    context.putAll(params);
     Configurables.configure(group, context);
     SinkRunner runner = new SinkRunner(group.getProcessor());
     runner.start();

@@ -103,16 +103,14 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
   }
 
   private void initializeSystemProperties(Context context) {
-    Map<String, Object> sysProps = context.getSubProperties(
+    Map<String, String> sysProps = context.getSubProperties(
         ConfigurationConstants.CONFIG_JDBC_SYSPRO_PREFIX);
 
     for (String key: sysProps.keySet()) {
-      Object object = sysProps.get(key);
-      String value = "";
-      if (object != null) {
-        value = object.toString();
+      String value = sysProps.get(key);
+      if(key != null && value != null) {
+        System.setProperty(key, value);
       }
-      System.setProperty(key, value);
     }
   }
 

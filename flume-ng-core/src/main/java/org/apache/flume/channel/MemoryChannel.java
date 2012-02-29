@@ -171,7 +171,7 @@ public class MemoryChannel extends BasicChannelSemantics {
     }
     Preconditions.checkState(transCapacity <= capacity);
 
-    String strKeepAlive = context.get("keep-alive", String.class);
+    String strKeepAlive = context.getString("keep-alive");
 
     if (strKeepAlive == null) {
       keepAlive = defaultKeepAlive;

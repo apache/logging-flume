@@ -125,18 +125,18 @@ public class IRCSink extends AbstractSink implements Configurable {
   }
 
   public void configure(Context context) {
-    hostname = context.get("hostname", String.class);
-    String portStr = context.get("port", String.class);
-    nick = context.get("nick", String.class);
-    password = context.get("password", String.class);
-    user = context.get("user", String.class);
-    name = context.get("name", String.class);
-    chan = context.get("chan", String.class);
-    splitLines = Boolean.parseBoolean(context.get("splitlines", String.class));
-    splitChars = context.get("splitchars", String.class);
-    
+    hostname = context.getString("hostname");
+    String portStr = context.getString("port");
+    nick = context.getString("nick");
+    password = context.getString("password");
+    user = context.getString("user");
+    name = context.getString("name");
+    chan = context.getString("chan");
+    splitLines = context.getBoolean("splitlines");
+    splitChars = context.getString("splitchars");
+
     if (portStr != null) {
-      port = Integer.parseInt(portStr);      
+      port = Integer.parseInt(portStr);
     } else {
       port = DEFAULT_PORT;
     }

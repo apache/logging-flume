@@ -37,7 +37,7 @@ public class SinkProcessorFactory {
   @SuppressWarnings("unchecked")
   public static SinkProcessor getProcessor(Context context,
  List<Sink> sinks) {
-    Map<String, Object> params = context.getParameters();
+    Map<String, String> params = context.getParameters();
     SinkProcessor processor;
     String typeStr = (String) params.get(TYPE);
     SinkProcessorType type = SinkProcessorType.DEFAULT;

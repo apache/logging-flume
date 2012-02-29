@@ -116,8 +116,8 @@ public class ThriftLegacySource  extends AbstractSource implements
 
   @Override
   public void configure(Context context) {
-    port = Integer.parseInt(context.get("port", String.class));
-    host = context.get("host", String.class);
+    port = Integer.parseInt(context.getString("port"));
+    host = context.getString("host");
   }
 
   public ThriftLegacySource() {

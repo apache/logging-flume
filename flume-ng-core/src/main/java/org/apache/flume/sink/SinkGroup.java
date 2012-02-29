@@ -41,8 +41,8 @@ public class SinkGroup implements Configurable {
   @Override
   public void configure(Context context) {
     Context processorContext = new Context();
-    Map<String, Object> subparams = context.getSubProperties(PROCESSOR_PREFIX);
-    processorContext.setParameters(subparams);
+    Map<String, String> subparams = context.getSubProperties(PROCESSOR_PREFIX);
+    processorContext.putAll(subparams);
     processor = SinkProcessorFactory.getProcessor(processorContext, sinks);
   }
 

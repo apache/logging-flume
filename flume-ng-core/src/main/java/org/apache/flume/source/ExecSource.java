@@ -175,7 +175,7 @@ public class ExecSource extends AbstractSource implements EventDrivenSource,
 
   @Override
   public void configure(Context context) {
-    command = context.get("command", String.class);
+    command = context.getString("command");
 
     Preconditions.checkState(command != null,
         "The parameter command must be specified");

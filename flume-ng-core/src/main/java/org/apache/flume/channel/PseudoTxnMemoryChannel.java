@@ -86,8 +86,8 @@ public class PseudoTxnMemoryChannel extends AbstractChannel {
 
   @Override
   public void configure(Context context) {
-    Integer capacity = context.get("capacity", Integer.class);
-    keepAlive = context.get("keep-alive", Integer.class);
+    Integer capacity = context.getInteger("capacity");
+    keepAlive = context.getInteger("keep-alive");
 
     if (capacity == null) {
       capacity = defaultCapacity;

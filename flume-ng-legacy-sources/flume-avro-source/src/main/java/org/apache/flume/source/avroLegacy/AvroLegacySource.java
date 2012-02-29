@@ -149,8 +149,8 @@ public class AvroLegacySource extends AbstractSource implements EventDrivenSourc
 
   @Override
   public void configure(Context context) {
-    port = Integer.parseInt(context.get("port", String.class));
-    host = context.get("host", String.class);
+    port = Integer.parseInt(context.getString("port"));
+    host = context.getString("host");
   }
 
 }
