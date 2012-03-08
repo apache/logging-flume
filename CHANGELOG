@@ -1,0 +1,126 @@
+Release Notes - Flume - Version v1.0.0 - 20111230
+
+** Bug
+    * [FLUME-830] - flume uber jar is missing files from flume-file-channel project
+    * [FLUME-831] - flume-jdbc-channel project has unnecessary direct dependency on log4j API
+    * [FLUME-833] - Audit Direct Library Deps for Flume NG
+    * [FLUME-835] - Issues during clean build of Flume NG
+    * [FLUME-850] - Upgrade the version of Hadoop we use for HDFS sink
+    * [FLUME-858] - HDFSWriterFactory is using operation == for string comparison
+    * [FLUME-863] - Use of unknown sink type leads to NullPointerException
+    * [FLUME-868] - RAT checks fail on builds.apache.org due to local maven repo
+    * [FLUME-869] - JDBC channel tests leave derby.log in module directory
+    * [FLUME-870] - LoggerSink contains two calls to Transaction#commit()
+    * [FLUME-880] - HDFSFormatterFactory is using == operator for String objects
+    * [FLUME-887] - Add maven assembly to build a source only artifact
+    * [FLUME-891] - flume-ng script doesn't build the classpath properly
+    * [FLUME-894] - Add log4j as part of the build
+    * [FLUME-898] - Create DISCLAIMER file for Flume project
+    * [FLUME-900] - RELEASENOTES file needs to be ignored by RAT
+    * [FLUME-902] - Remove thrift references in NG build
+    * [FLUME-903] - Update project metadata in main pom
+    * [FLUME-904] - Update plugin and dependency repos referenced in the main pom
+    * [FLUME-905] - ExecSource silently fails after first transaction with channel
+    * [FLUME-906] - Maven Avro plugin missing an entry in plugin dep management
+    * [FLUME-907] - Maven assembly missing CHANGELOG and other misc files
+    * [FLUME-908] - Clean out old bin and conf contents
+    * [FLUME-909] -  org.apache.flume.node.TestAbstractLogicalNodeManager is failing on some machines
+    * [FLUME-910] - Typo in maven avro plugin groupId in plugin dep management
+    * [FLUME-911] - README should reference Apache Flume rather than just Flume
+    * [FLUME-912] - DEVNOTES contains outdated info
+    * [FLUME-913] - slf4j-log4j binding is excluded from the dist assembly due to test scope
+    * [FLUME-915] - Incorrect license information in various files
+    * [FLUME-916] - DISCLAIMER file has an incorrect URL
+
+** Improvement
+    * [FLUME-846] - Bump Avro version to 1.6.x
+    * [FLUME-867] - Pollable source and sink runners should reduce poll interval after several BACKOFFs
+    * [FLUME-871] - HDFS sink needs to handle blocked/hung append operation
+
+** Question
+    * [FLUME-856] - Move data across hosts
+
+** Task
+    * [FLUME-876] - Update README, NOTICE, LICENSE, and DEVNOTES files
+    * [FLUME-878] - Write release-ready Maven assembly descriptor
+    * [FLUME-879] - Document Flume's ASF release process
+    * [FLUME-885] - Set version number of project to 1.0.0-SNAPSHOT for NG branch
+    * [FLUME-899] - Add Release notes
+    * [FLUME-901] - Make Flume NG build and pass tests against Hadoop 0.23 branch
+
+Release Notes - Flume - Version NG alpha 2 - 20111107
+
+** Bug
+    * [FLUME-773] - ExecSource doesn't rollback transactions on errors
+    * [FLUME-805] - HDFS sink should mangle the names of incomplete files till they are closed
+    * [FLUME-815] - Test json config file has missing bind property
+    * [FLUME-816] - TestJdbcChannelProvider throws OOME based on RNG values
+    * [FLUME-817] - JdbcChannel can not be created by DefaultChannelFactory
+    * [FLUME-818] - PropertiesFileConfigurationProvider doesn't properly log exceptions
+    * [FLUME-822] - JDBC channel lock acquisition failure during take()
+    * [FLUME-823] - The properties configuration provider should fail if the configuration file is not found
+    * [FLUME-825] - Need to remove dependency on hadoop core from flume-ng-core project
+    * [FLUME-827] - Avro client conn failure results in 60-second wait before terminating
+    * [FLUME-848] - Typo is TestHDFSEventSink path
+    * [FLUME-861] - AvroSource is failing on ClosedChannelException
+
+** Improvement
+    * [FLUME-819] - JDBC channel plugin is not registered with Flume node
+    * [FLUME-820] - JDBC channel should support capacity specification.
+    * [FLUME-821] - Derby schema handler should create the necessary indexes for fast lookups.
+    * [FLUME-826] - Update libs
+
+** New Feature
+    * [FLUME-775] - Support text output
+    * [FLUME-814] - Add support for multiple channels to sources
+
+** Task
+    * [FLUME-812] - Enable Apache RAT checks during Maven build
+    * [FLUME-866] - Remove old plugins and log4j appender
+
+Release Notes - Flume - Version NG alpha 1 - 20111021
+
+** Sub-task
+    * [FLUME-737] - Port Flume OG sources and sinks to NG interfaces
+    * [FLUME-739] - Create NG node configuration components
+    * [FLUME-747] - Create NG command line launchers and daemon infrastructure
+    * [FLUME-760] - Implement JDBC based channel implementation
+    * [FLUME-761] - Implement HDFS Flume NG sink
+    * [FLUME-777] - Support text output for HDFS sink
+    * [FLUME-795] - Replace the non-transactional memory channel with new transactional memory channel
+
+** Bug
+    * [FLUME-769] - FLUME-728 - TestJsonFileConfigurationProvider fails due to timing issue
+    * [FLUME-784] - MemoryChannel should poll with timeout on take() rather than block indefinitely
+    * [FLUME-788] - Add more test cases to Flume-NG HDFS test
+    * [FLUME-803] - support re-entrant transaction for memory channel
+    * [FLUME-806] - Fix cast exception in MemoryChannel due to config type changes
+    * [FLUME-807] - Fix tests broken by FLUME-802 changes
+    * [FLUME-809] - Fix channel syntax javadoc bug in PropertiesFileConfigurationProvider
+    * [FLUME-811] - Remove logging of avro client that causes errors with proxy object methods
+
+** Epic
+    * [FLUME-728] - Flume NG refactoring
+
+** Improvement
+    * [FLUME-772] - MemoryChannel should push events back into channel on rollback
+    * [FLUME-774] - Move HDFS sink into a separate module
+    * [FLUME-781] - Add error checking to AvroCLICilent
+    * [FLUME-782] - Instrument AvroSource with counters
+    * [FLUME-783] - Add a batch event RPC call to AvroSource
+    * [FLUME-804] - Support help and node name arguments from the command line
+    * [FLUME-810] - Add help command line options to AvroCLIClient
+
+** New Feature
+    * [FLUME-771] - Implement NG Avro source
+    * [FLUME-778] - Implement NG Avro sink
+    * [FLUME-779] - Create an Avro CLI for sending data to the Avro source
+
+** Task
+    * [FLUME-780] - Reduce default log levels for chatty libraries
+    * [FLUME-785] - Write javadoc for builtin channels
+    * [FLUME-786] - Write javadoc for builtin sources
+    * [FLUME-787] - Write javadoc for builtin sinks
+    * [FLUME-801] - Write NG getting started guide
+    * [FLUME-802] - Complete PropertyFileConfigurationProvider implementation
+

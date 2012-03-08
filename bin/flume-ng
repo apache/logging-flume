@@ -1,0 +1,192 @@
+#!/bin/bash
+#
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+JAVA_OPTS="-Xmx20m"
+FLUME_CLASSPATH=""
+
+if [ -n "${FLUME_CONF_DIR}" -a -f "${FLUME_CONF_DIR}/flume-env.sh" ]; then
+    source "$FLUME_CONF_DIR/flume-env.sh"
+fi
+
+FLUME_NODE_CLASS="org.apache.flume.node.Application"
+FLUME_AVRO_CLIENT_CLASS="org.apache.flume.client.avro.AvroCLIClient"
+
+if [ -z "${JAVA_HOME}" ] ; then
+    echo "Warning: JAVA_HOME not set!"
+    JAVA_DEFAULT=`type -p java`
+    [ -n "$JAVA_DEFAULT" ] || error "Unable to find java executable. Is it in your PATH?" 1
+    JAVA_BIN=`dirname $JAVA_DEFAULT`
+    JAVA_HOME=`dirname $JAVA_BIN`
+fi
+
+warn() {
+  local msg=$1
+
+  echo "Warning: $msg"
+}
+
+error() {
+  local msg=$1
+  local exit_code=$2
+
+  echo "Error: $msg"
+
+  if [ -n "$exit_code" ] ; then
+    exit $exit_code
+  fi
+}
+
+display_help() {
+  cat <<EOF
+usage: $0 [COMMAND] [OPTION]...
+
+commands:
+  help                  display this help text
+  node                  run a Flume node
+  avro-client           run an avro Flume client
+
+global options:
+  --conf,-c <conf>      use configs in <conf> directory
+  --classpath,-C <cp>   override the classpath completely
+
+node options:
+  --conf-file,-f        specify a config file (required)
+  --name,-n             the name of this node (required)
+  --help,-h             display help text
+
+avro-client options:
+  --host,-H <host>      hostname to which events will be sent (required)
+  --port,-p <port>      port of the avro source (required)
+  --filename,-F <file>  text file to stream to avro source [default: std input]
+  --help,-h             display help text
+
+Note that if <conf> directory is specified, then it is always included first
+in the classpath.
+
+EOF
+}
+
+run_node() {
+  local final_cp
+  local FLUME_APPLICATION_CLASS
+
+  if [ -n "$opt_conf" ] ; then
+    final_cp="$opt_conf:"
+  fi
+
+  # If the user hasn't overridden the classpath, build it from the lib
+  # directory.
+  if [ -z "${FLUME_CLASSPATH}" ] ; then
+    FLUME_CLASSPATH="${FLUME_HOME}/lib/*"
+  else
+    warn "FLUME_CLASSPATH set to ${FLUME_CLASSPATH} - Hope you know what you're doing."
+  fi
+
+  final_cp="${final_cp}${FLUME_CLASSPATH}"
+
+  [ -n "$opt_conf" ] || warn "No configuration directory set! Use --conf <dir> to override." 1
+
+  FLUME_APPLICATION_CLASS=$FLUME_NODE_CLASS
+
+  exec $JAVA_HOME/bin/java $JAVA_OPTS -cp "$final_cp" "$FLUME_APPLICATION_CLASS" $*
+}
+
+run_avro_client() {
+  local final_cp
+  local FLUME_APPLICATION_CLASS
+
+  if [ -n "$opt_conf" ] ; then
+    final_cp="$opt_conf:"
+  fi
+
+  # If the user hasn't overridden the classpath, build it from the lib
+  # directory.
+  if [ -z "${FLUME_CLASSPATH}" ] ; then
+    FLUME_CLASSPATH="${FLUME_HOME}/lib/*"
+  else
+    warn "FLUME_CLASSPATH set to ${FLUME_CLASSPATH} - Hope you know what you're doing."
+  fi
+
+  final_cp="${final_cp}${FLUME_CLASSPATH}"
+
+  [ -n "$opt_conf" ] || warn "No configuration directory set! Use --conf <dir> to override." 1
+
+  FLUME_APPLICATION_CLASS=$FLUME_AVRO_CLIENT_CLASS
+
+  exec $JAVA_HOME/bin/java $JAVA_OPTS -cp "$final_cp" "$FLUME_APPLICATION_CLASS" $*
+}
+
+opt_help=""
+opt_conf=""
+
+mode=$1
+shift
+
+case "$mode" in
+  help)
+    opt_help=1
+    ;;
+  node)
+    opt_node=1
+    ;;
+  avro-client)
+    opt_avro_client=1
+    ;;
+  *)
+    error "Unknown or unspecified command '$mode'"
+    opt_help=1
+    ;;
+esac
+
+while [ -n "$*" ] ; do
+  arg=$1
+  shift
+
+  case "$arg" in
+    --conf|-c)
+      [ -n "$1" ] || error "Option --conf requires an argument" 1
+      opt_conf=$1
+      shift
+      ;;
+    --classpath|-C)
+      [ -n "$1" ] || error "Option --classpath requires an argument" 1
+      FLUME_CLASSPATH=$1
+      shift
+      ;;
+    *)
+      args="$args $arg"
+      ;;
+  esac
+done
+
+if [ -z "${FLUME_HOME}" ] ; then
+  FLUME_HOME=`dirname $0`
+  FLUME_HOME="${FLUME_HOME}/../"
+fi
+
+if [ -n "$opt_help" ] ; then
+  display_help
+elif [ -n "$opt_node" ] ; then
+  run_node $args
+elif [ -n "$opt_avro_client" ] ; then
+  run_avro_client $args
+fi
+

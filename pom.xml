@@ -1,109 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
+  <parent>
+    <groupId>org.apache</groupId>
+    <artifactId>apache</artifactId>
+    <version>9</version>
+  </parent>
+
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.cloudera</groupId>
-  <artifactId>flume</artifactId>
-  <version>0.9.5-SNAPSHOT</version>
+  <groupId>org.apache.flume</groupId>
+  <artifactId>flume-parent</artifactId>
+  <version>1.1.0-incubating-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Flume</name>
+  <name>Apache Flume</name>
 
   <properties>
-    <!-- NB: The version of the thrift compiler must match that of the dependency 
-      on the jar file below. -->
-    <thrift.executable>${env.THRIFT_HOME}/bin/thrift</thrift.executable>
-
     <!-- Set default encoding to UTF-8 to remove maven complaints -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- defaults for flaky test and focused test exclusions -->
     <test.exclude.pattern>$</test.exclude.pattern> <!-- junk pattern -->
     <test.include.pattern>**/Test*.java</test.include.pattern>
+
   </properties>
 
+  <modules>
+    <module>flume-ng-core</module>
+    <module>flume-ng-sinks</module>
+    <module>flume-ng-node</module>
+    <module>flume-ng-dist</module>
+    <module>flume-ng-channels</module>
+    <module>flume-ng-legacy-sources</module>
+    <module>flume-ng-clients</module>
+  </modules>
+
   <profiles>
-
-    <!-- full build profile, including docs -->
     <profile>
-      <id>full-build</id>
-      <activation>
-        <property>
-          <name>full-build.profile</name>
-          <value>yes</value>
-        </property>
-        <activeByDefault>false</activeByDefault>
-      </activation>
-      <modules>
-        <module>flume-core</module>
-        <module>flume-config-web</module>
-        <module>flume-node-web</module>
-        <module>flume-docs</module>
-        <module>flume-distribution</module>
-        <module>flume-log4j-appender</module>
-        <module>plugins/flume-plugin-helloworld</module>
-        <module>plugins/flume-plugin-hbasesink</module>
-      </modules>
-    </profile>
-
-    <!-- dev profile for testing, docs not generated -->
-    <profile>
-      <id>dev</id>
-      <activation>
-        <property>
-          <name>!full-build.profile</name>
-        </property>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <modules>
-        <module>flume-core</module>
-        <module>flume-config-web</module>
-        <module>flume-node-web</module>
-        <module>flume-distribution</module>
-        <module>flume-log4j-appender</module>
-        <module>plugins/flume-plugin-helloworld</module>
-        <module>plugins/flume-plugin-hbasesink</module>
-      </modules>
-    </profile>
-
-    <!-- perf profile for microbenchmarks -->
-    <profile>
-      <id>perf</id>
-      <activation>
-        <activeByDefault>false</activeByDefault>
-      </activation>
-      <modules>
-        <module>flume-core</module>
-	<module>flume-microbenchmarks</module>
-      </modules>
-    </profile>
-
-
-    <!-- windows package build, docs not generated -->
-    <profile>
-      <id>windows</id>
-      <activation>
-        <activeByDefault>false</activeByDefault>
-      </activation>
-      <modules>
-        <module>flume-core</module>
-        <module>flume-node-web</module>
-        <module>flume-windows-dist</module>
-      </modules>
-    </profile>
-
-    <profile>
-      <id>hadoop-0.20.2-CDH3B4</id>
+      <id>hadoop-0.20.205.0</id>
       <activation>
         <property>
           <name>!hadoop.profile</name>
         </property>
-      <activeByDefault>true</activeByDefault>
       </activation>
       <properties>
-        <hadoop.version>0.20.2-CDH3B4</hadoop.version>
+        <hadoop.version>0.20.205.0</hadoop.version>
         <hadoop.common.artifact.id>hadoop-core</hadoop.common.artifact.id>
-        <FlushingSeqFile>bar.java</FlushingSeqFile>
-        <RawSeqFile>foo.java</RawSeqFile>
+      </properties>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>${hadoop.common.artifact.id}</artifactId>
+            <version>${hadoop.version}</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+    </profile>
+
+    <profile>
+      <id>hadoop-1.0.0</id>
+      <activation>
+        <property>
+          <name>hadoop.profile</name>
+          <value>100</value>
+        </property>
+      </activation>
+      <properties>
+        <hadoop.version>1.0.0</hadoop.version>
+        <hadoop.common.artifact.id>hadoop-core</hadoop.common.artifact.id>
       </properties>
       <dependencyManagement>
         <dependencies>
@@ -123,13 +104,10 @@
           <name>hadoop.profile</name>
           <value>23</value>
         </property>
-        <activeByDefault>false</activeByDefault>
       </activation>
       <properties>
         <hadoop.version>0.23.1-SNAPSHOT</hadoop.version>
         <hadoop.common.artifact.id>hadoop-common</hadoop.common.artifact.id>
-        <FlushingSeqFile>**/FlushingSequenceFileWriter.java</FlushingSeqFile>
-        <RawSeqFile>**/RawSequenceFileWriter.java</RawSeqFile>
       </properties>
       <dependencyManagement>
         <dependencies>
@@ -143,22 +121,25 @@
             <artifactId>hadoop-auth</artifactId>
             <version>${hadoop.version}</version>
           </dependency>
-          <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
-            <version>${hadoop.version}</version>
-          </dependency>
         </dependencies>
       </dependencyManagement>
     </profile>
-
+    <profile>
+      <id>compileThrift</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <properties>
+        <thrift.executable>${env.THRIFT_HOME}/bin/thrift</thrift.executable>
+      </properties>
+    </profile>
   </profiles>
 
   <inceptionYear>2009</inceptionYear>
 
   <issueManagement>
     <system>JIRA</system>
-    <url>https://issues.cloudera.org/browse/FLUME</url>
+    <url>https://issues.apache.org/jira/browse/FLUME</url>
   </issueManagement>
 
   <licenses>
@@ -170,19 +151,31 @@
 
   <mailingLists>
     <mailingList>
-      <archive>https://groups.google.com/a/cloudera.org/group/flume-user/topics</archive>
+      <archive>http://mail-archives.apache.org/mod_mbox/incubator-flume-user/</archive>
       <name>flume-user</name>
-      <post>flume-user@cloudera.org</post>
-      <subscribe>https://groups.google.com/a/cloudera.org/group/flume-user/about</subscribe>
-      <unsubscribe>https://groups.google.com/a/cloudera.org/group/flume-user/about</unsubscribe>
+      <post>flume-user@incubator.apache.org</post>
+      <subscribe>flume-user-subscribe@incubator.apache.org</subscribe>
+      <unsubscribe>flume-user-unsubscribe@incubator.apache.org</unsubscribe>
+    </mailingList>
+    <mailingList>
+      <archive>http://mail-archives.apache.org/mod_mbox/incubator-flume-dev/</archive>
+      <name>flume-dev</name>
+      <post>flume-dev@incubator.apache.org</post>
+      <subscribe>flume-dev-subscribe@incubator.apache.org</subscribe>
+      <unsubscribe>flume-dev-unsubscribe@incubator.apache.org</unsubscribe>
     </mailingList>
   </mailingLists>
 
   <scm>
-    <connection>scm:git:git://github.com/cloudera/flume.git</connection>
-    <developerConnection>scm:git:git@github.com:cloudera/flume.git</developerConnection>
-    <url>https://github.com/cloudera/flume</url>
+    <url>scm:svn:https://svn.apache.org/repos/asf/incubator/flume/</url>
+    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/incubator/flume/</developerConnection>
+    <connection>scm:svn:https://svn.apache.org/repos/asf/incubator/flume</connection>
   </scm>
+
+  <ciManagement>
+    <system>jenkins</system>
+    <url>https://builds.apache.org/job/flume-728/</url>
+  </ciManagement>
 
   <developers>
     <developer>
@@ -214,12 +207,6 @@
       <id>bruce.mitchener@gmail.com</id>
       <name>Bruce Mitchener</name>
       <organization>-</organization>
-    </developer>
-    <developer>
-      <email>mlai@apache.org</email>
-      <id>mlai@apache.org</id>
-      <name>Mingjie Lai</name>
-      <organization>Trend Micro</organization>
     </developer>
   </developers>
 
@@ -302,8 +289,8 @@
   </contributors>
 
   <organization>
-    <name>Cloudera</name>
-    <url>http://www.cloudera.com</url>
+    <name>Apache Software Foundation</name>
+    <url>http://www.apache.org</url>
   </organization>
 
   <pluginRepositories>
@@ -319,42 +306,9 @@
       </snapshots>
     </pluginRepository>
 
-    <pluginRepository>
-      <id>dtrott</id>
-      <url>http://maven.davidtrott.com/repository</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </pluginRepository>
-
-    <pluginRepository>
-      <id>com.cloudera.repository.public</id>
-      <url>https://repository.cloudera.com/content/groups/public/
-      </url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </pluginRepository>
-
-    <pluginRepository>
-      <id>repository.jboss.org</id>
-      <url>http://repository.jboss.org/nexus/content/groups/public/
-      </url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </pluginRepository>
-
   </pluginRepositories>
 
   <repositories>
-
     <repository>
       <id>repo1.maven.org</id>
       <url>http://repo1.maven.org/maven2</url>
@@ -367,40 +321,6 @@
     </repository>
 
     <repository>
-      <id>com.cloudera.repository.releases</id>
-      <url>https://repository.cloudera.com/content/groups/public/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
-      <id>com.cloudera.repository.thirdparty</id>
-      <url>https://repository.cloudera.com/content/repositories/third-party/
-      </url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
-      <id>dtrott</id>
-      <url>http://maven.davidtrott.com/repository</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
       <id>repository.jboss.org</id>
       <url>http://repository.jboss.org/nexus/content/groups/public/
       </url>
@@ -409,18 +329,47 @@
       </snapshots>
     </repository>
 
+  </repositories>
+
+  <distributionManagement>
     <repository>
       <id>apache.staging.https</id>
       <name>Apache Staging Repository</name>
-      <url>https://repository.apache.org/content/repositories/snapshots/</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
+      <url>https://repository.apache.org/service/local/staging/deploy/maven2/</url>
     </repository>
-
-  </repositories>
+  </distributionManagement>
 
   <build>
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.8.1</version>
+        <executions>
+          <execution>
+            <id>javadoc-jar</id>
+            <phase>package</phase>
+            <goals>
+              <goal>aggregate</goal>
+            </goals>
+            <configuration>
+              <!-- switch on dependency-driven aggregation -->
+              <includeDependencySources>true</includeDependencySources>
+
+              <dependencySourceIncludes>
+                <!-- include ONLY flume multi-module dependencies -->
+                <dependencySourceInclude>org.apache.flume:*</dependencySourceInclude>
+              </dependencySourceIncludes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
 
     <pluginManagement>
       <plugins>
@@ -432,29 +381,68 @@
           <configuration>
             <source>1.6</source>
             <target>1.6</target>
-	          <excludes>
-              <exclude>${FlushingSeqFile}</exclude>
-              <exclude>${RawSeqFile}</exclude>
-	          </excludes>
           </configuration>
         </plugin>
 
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.6</version>
+          <version>2.8.1</version>
           <configuration>
             <forkMode>always</forkMode>
             <forkedProcessTimeoutInSeconds>480</forkedProcessTimeoutInSeconds>
             <redirectTestOutputToFile>true</redirectTestOutputToFile>
-	    <includes>
-	      <include>${test.include.pattern}</include>
-	    </includes>
-	    <excludes>
-	      <exclude>**/*$*</exclude>
-	      <exclude>${test.exclude.pattern}</exclude>
-	    </excludes>
+            <includes>
+              <include>${test.include.pattern}</include>
+            </includes>
+            <excludes>
+              <exclude>**/*$*</exclude>
+              <exclude>${test.exclude.pattern}</exclude>
+            </excludes>
           </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.rat</groupId>
+          <artifactId>apache-rat-plugin</artifactId>
+          <version>0.7</version>
+          <executions>
+            <execution>
+              <id>test.rat</id>
+              <phase>test</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+              <configuration>
+                <excludes>
+                  <exclude>.git/</exclude>
+                  <exclude>.gitignore</exclude>
+                  <!-- ASF jenkins box puts the Maven repo in our root directory. -->
+                  <exclude>.repository/</exclude>
+                  <exclude>**/*.diff</exclude>
+                  <exclude>**/*.patch</exclude>
+                </excludes>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>2.2.2</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.avro</groupId>
+          <artifactId>avro-maven-plugin</artifactId>
+          <version>1.6.1</version>
+        </plugin>
+
+        <plugin>
+          <groupId>com.thoughtworks.paranamer</groupId>
+          <artifactId>paranamer-maven-plugin</artifactId>
+          <version>2.3</version>
         </plugin>
 
       </plugins>
@@ -469,58 +457,18 @@
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
-        <version>4.8.1</version>
+        <version>4.10</version>
         <scope>test</scope>
       </dependency>
 
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-all</artifactId>
-        <version>1.8.1</version>
-        <scope>test</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>com.google.code.findbugs</groupId>
-        <artifactId>findbugs</artifactId>
-        <version>1.3.9</version>
-        <scope>test</scope>
-        <exclusions>
-          <!-- The Xerces version getting pulled in from this dies with enabling 
-            XInclude support. Excluding for now. -esammer -->
-          <exclusion>
-            <groupId>xerces</groupId>
-            <artifactId>xercesImpl</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>net.sourceforge.cobertura</groupId>
-        <artifactId>cobertura</artifactId>
-        <version>1.9.4.1</version>
+        <version>1.9.0</version>
         <scope>test</scope>
       </dependency>
 
       <!-- Dependencies: compile -->
-
-      <dependency>
-        <groupId>commons-lang</groupId>
-        <artifactId>commons-lang</artifactId>
-        <version>2.5</version>
-      </dependency>
-
-      <dependency>
-        <groupId>commons-collections</groupId>
-        <artifactId>commons-collections</artifactId>
-        <version>3.1</version>
-      </dependency>
-
-      <dependency>
-        <groupId>commons-codec</groupId>
-        <artifactId>commons-codec</artifactId>
-        <version>1.3</version>
-      </dependency>
 
       <dependency>
         <groupId>commons-cli</groupId>
@@ -529,39 +477,27 @@
       </dependency>
 
       <dependency>
+        <groupId>commons-logging</groupId>
+        <artifactId>commons-logging</artifactId>
+        <version>1.1.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-configuration</groupId>
+        <artifactId>commons-configuration</artifactId>
+        <version>1.6</version>
+      </dependency>
+
+      <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>r07</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.antlr</groupId>
-        <artifactId>antlr</artifactId>
-        <version>3.2</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.antlr</groupId>
-        <artifactId>antlr-runtime</artifactId>
-        <version>3.2</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.antlr</groupId>
-        <artifactId>stringtemplate</artifactId>
-        <version>3.2</version>
-        <exclusions>
-          <exclusion>
-            <groupId>antlr</groupId>
-            <artifactId>antlr</artifactId>
-          </exclusion>
-        </exclusions>
+        <version>10.0.1</version>
       </dependency>
 
       <dependency>
         <groupId>log4j</groupId>
         <artifactId>log4j</artifactId>
-        <version>1.2.15</version>
+        <version>1.2.16</version>
         <exclusions>
           <exclusion>
             <groupId>com.sun.jdmk</groupId>
@@ -577,101 +513,135 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>1.5.11</version>
+        <version>1.6.4</version>
       </dependency>
 
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-log4j12</artifactId>
-        <version>1.5.11</version>
+        <version>1.6.4</version>
       </dependency>
 
       <dependency>
-        <groupId>com.sun.jersey</groupId>
-        <artifactId>jersey-core</artifactId>
-        <version>1.4</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.sun.jersey</groupId>
-        <artifactId>jersey-server</artifactId>
-        <version>1.4</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.sun.jersey</groupId>
-        <artifactId>jersey-json</artifactId>
-        <version>1.4</version>
-      </dependency>
-
-      <!-- FIXME: Using a Cloudera-packaged version of thrift 0.5.0 because 
-        it can't be found in a public repo. -esammer -->
-      <dependency>
-        <groupId>org.apache.thrift</groupId>
-        <artifactId>libthrift</artifactId>
-        <version>0.6.0-cdh</version>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-jcl</artifactId>
+        <version>1.6.4</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro</artifactId>
-        <version>1.5.4</version>
+        <version>1.6.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro-compiler</artifactId>
-        <version>1.5.4</version>
+        <version>1.6.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro-ipc</artifactId>
-        <version>1.5.4</version>
+        <version>1.6.1</version>
       </dependency>
 
-      <!-- FIXME: This should be removed when we migrate the IRC source / 
-        sink to an external plugin rather than being part of the main tree. -esammer -->
       <dependency>
-        <groupId>org.schwering.irc</groupId>
+        <groupId>org.apache.thrift</groupId>
+        <artifactId>libthrift</artifactId>
+        <version>0.6.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-common</artifactId>
+        <version>${hadoop.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>2.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-dbcp</groupId>
+        <artifactId>commons-dbcp</artifactId>
+        <version>1.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.derby</groupId>
+        <artifactId>derby</artifactId>
+        <version>10.8.2.2</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-core-asl</artifactId>
+        <version>1.9.3</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-mapper-asl</artifactId>
+        <version>1.9.3</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.schwering</groupId>
         <artifactId>irclib</artifactId>
-        <version>1.0.0</version>
+        <version>1.10</version>
       </dependency>
 
-      <!-- FIXME: Is this used? Can't find references to it except in tests. 
-        -esammer -->
-      <dependency>
-        <groupId>dk.brics.automaton</groupId>
-        <artifactId>automaton</artifactId>
-        <version>1.0.0</version>
-      </dependency>
-
-      <!-- Dependencies: compile - CDH components -->
+      <!-- internal module dependencies -->
 
       <dependency>
-        <groupId>com.cloudera.zookeeper</groupId>
-        <artifactId>zookeeper</artifactId>
-        <version>3.3.1-10</version>
-        <exclusions>
-          <exclusion>
-            <groupId>javax.jms</groupId>
-            <artifactId>jms</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jdmk</groupId>
-            <artifactId>jmxtools</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jmx</groupId>
-            <artifactId>jmxri</artifactId>
-          </exclusion>
-        </exclusions>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-ng-core</artifactId>
+        <version>1.1.0-incubating-SNAPSHOT</version>
       </dependency>
 
       <dependency>
-        <groupId>org.arabidopsis.ahocorasick</groupId>
-        <artifactId>ahocorasick</artifactId>
-        <version>2.x</version>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-ng-node</artifactId>
+        <version>1.1.0-incubating-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.flume.flume-ng-channels</groupId>
+        <artifactId>flume-file-channel</artifactId>
+        <version>1.1.0-incubating-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.flume.flume-ng-channels</groupId>
+        <artifactId>flume-jdbc-channel</artifactId>
+        <version>1.1.0-incubating-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.flume.flume-ng-sinks</groupId>
+        <artifactId>flume-hdfs-sink</artifactId>
+        <version>1.1.0-incubating-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.flume.flume-ng-sinks</groupId>
+        <artifactId>flume-irc-sink</artifactId>
+        <version>1.1.0-incubating-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
+        <artifactId>flume-thrift-source</artifactId>
+        <version>1.1.0-incubating-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
+        <artifactId>flume-avro-source</artifactId>
+        <version>1.1.0-incubating-SNAPSHOT</version>
       </dependency>
 
     </dependencies>
