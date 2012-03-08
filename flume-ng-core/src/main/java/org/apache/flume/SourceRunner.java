@@ -23,10 +23,24 @@ import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.source.EventDrivenSourceRunner;
 import org.apache.flume.source.PollableSourceRunner;
 
+/**
+ * A source runner controls how a source is driven.
+ *
+ * This is an abstract class used for instantiating derived classes.
+ */
 abstract public class SourceRunner implements LifecycleAware {
 
   private Source source;
 
+  /**
+   * Static factory method to instantiate a source runner implementation that
+   * corresponds to the type of {@link Source} specified.
+   *
+   * @param source The source to run
+   * @return A runner that can run the specified source
+   * @throws IllegalArgumentException if the specified source does not implement
+   * a supported derived interface of {@link SourceRunner}.
+   */
   public static SourceRunner forSource(Source source) {
     SourceRunner runner = null;
 

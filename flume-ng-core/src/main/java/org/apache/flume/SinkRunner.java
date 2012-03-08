@@ -26,6 +26,20 @@ import org.apache.flume.lifecycle.LifecycleAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * <p>
+ * A driver for {@linkplain Sink sinks} that polls them, attempting to
+ * {@linkplain Sink#process() process} events if any are available in the
+ * {@link Channel}.
+ * </p>
+ *
+ * <p>
+ * Note that, unlike {@linkplain Source sources}, all sinks are polled.
+ * </p>
+ *
+ * @see org.apache.flume.Sink
+ * @see org.apache.flume.SourceRunner
+ */
 public class SinkRunner implements LifecycleAware {
 
   private static final Logger logger = LoggerFactory
@@ -112,6 +126,11 @@ public class SinkRunner implements LifecycleAware {
     return lifecycleState;
   }
 
+  /**
+   * {@link Runnable} that {@linkplain SinkProcessor#process() polls} a
+   * {@link SinkProcessor} and manages event delivery notification,
+   * {@link Sink.Status BACKOFF} delay handling, etc.
+   */
   public static class PollingRunner implements Runnable {
 
     private SinkProcessor policy;

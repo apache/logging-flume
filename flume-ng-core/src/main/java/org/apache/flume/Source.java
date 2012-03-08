@@ -22,10 +22,33 @@ package org.apache.flume;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.lifecycle.LifecycleAware;
 
+/**
+ * <p>
+ * A source generates {@plainlink Event events} and calls methods on the
+ * configured {@link ChannelProcessor} to persist those events into the
+ * configured {@linkplain Channel channels}.
+ * </p>
+ *
+ * <p>
+ * Sources are associated with unique {@linkplain NamedComponent names} that can
+ * be used for separating configuration and working namespaces.
+ * </p>
+ *
+ * @see org.apache.flume.Channel
+ * @see org.apache.flume.Sink
+ */
 public interface Source extends LifecycleAware, NamedComponent {
 
+  /**
+   * Specifies which channel processor will handle this source's events.
+   *
+   * @param channelProcessor
+   */
   public void setChannelProcessor(ChannelProcessor channelProcessor);
 
+  /**
+   * Returns the channel processor that will handle this source's events.
+   */
   public ChannelProcessor getChannelProcessor();
 
 }

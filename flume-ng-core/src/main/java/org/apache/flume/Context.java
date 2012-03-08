@@ -26,6 +26,10 @@ import java.util.Map;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
+/**
+ * The context is a key-value store used to pass configuration information
+ * throughout the system.
+ */
 public class Context {
 
   private Map<String, String> parameters;

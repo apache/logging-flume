@@ -21,35 +21,37 @@ import org.apache.flume.lifecycle.LifecycleAware;
 
 /**
  * <p>
- * A channel connects a <tt>Source</tt> to a <tt>Sink</tt>. The source
+ * A channel connects a {@link Source} to a {@link Sink}. The source
  * acts as producer while the sink acts as a consumer of events. The channel
  * itself is the buffer between the two.
  * </p>
  * <p>
- * A channel exposes a <tt>Transaction</tt> interface that can be used by
- * its clients to ensure atomic <tt>put</tt> or <tt>remove</tt>
- * semantics. This is necessary to guarantee single hop reliability in a
- * logical node. For instance, a source will produce an event successfully
- * if and only if it can be committed to the channel. Similarly, a sink will
- * consume an event if and only if its end point can accept the event. The
+ * A channel exposes a {@link Transaction} interface that can be used by
+ * its clients to ensure atomic {@linkplain #put(Event) put} and
+ * {@linkplain #take() take} semantics.
+ * This is necessary to guarantee single hop reliability between agents.
+ * For instance, a source will successfully produce an {@linkplain Event event}
+ * if and only if that event can be committed to the source's associated
+ * channel. Similarly, a sink will consume an event if and
+ * only if its respective endpoint can accept the event. The
  * extent of transaction support varies for different channel implementations
  * ranging from strong to best-effort semantics.
  * </p>
  * <p>
- * Channels are associated with unique names that can be used for separating
- * configuration and working namespaces.
+ * Channels are associated with unique {@linkplain NamedComponent names} that
+ * can be used for separating configuration and working namespaces.
  * </p>
  *
- * @see org.apache.flume.EventSource
- * @see org.apache.flume.EventSink
+ * @see org.apache.flume.Source
+ * @see org.apache.flume.Sink
  * @see org.apache.flume.Transaction
  */
 public interface Channel extends LifecycleAware, NamedComponent {
 
   /**
-   * <p>Puts the given event in the channel.</p>
+   * <p>Puts the given event into the channel.</p>
    * <p><strong>Note</strong>: This method must be invoked within an active
-   * <tt>Transaction</tt> boundary. Failure to do so can lead to unpredictable
+   * {@link Transaction} boundary. Failure to do so can lead to unpredictable
    * results.</p>
    * @param event the event to transport.
    * @throws ChannelException in case this operation fails.
@@ -59,12 +61,12 @@ public interface Channel extends LifecycleAware, NamedComponent {
 
   /**
    * <p>Returns the next event from the channel if available. If the channel
-   * does not have any events available, this method would return <tt>null</tt>.
+   * does not have any events available, this method must return {@code null}.
    * </p>
    * <p><strong>Note</strong>: This method must be invoked within an active
-   * <tt>Transaction</tt> boundary. Failure to do so can lead to unpredictable
+   * {@link Transaction} boundary. Failure to do so can lead to unpredictable
    * results.</p>
-   * @return the next available event or <tt>null</tt> if no events are
+   * @return the next available event or {@code null} if no events are
    * available.
    * @throws ChannelException in case this operation fails.
    * @see org.apache.flume.Transaction#begin()

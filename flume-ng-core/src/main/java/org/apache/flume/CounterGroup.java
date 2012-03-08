@@ -23,6 +23,9 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Used for counting events, collecting metrics, etc.
+ */
 public class CounterGroup {
 
   private String name;

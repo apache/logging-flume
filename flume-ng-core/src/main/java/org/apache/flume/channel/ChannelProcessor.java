@@ -31,6 +31,17 @@ import org.apache.flume.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A channel processor exposes operations to put {@link Event}s into
+ * {@link Channel}s. These operations will propagate a {@link ChannelException}
+ * if any errors occur while attempting to write to {@code required} channels.
+ *
+ * Each channel processor instance is configured with a {@link ChannelSelector}
+ * instance that specifies which channels are
+ * {@linkplain ChannelSelector#getRequiredChannels(Event) required} and which
+ * channels are
+ * {@linkplain ChannelSelector#getOptionalChannels(Event) optional}.
+ */
 public class ChannelProcessor {
 
   private static final Logger LOG = LoggerFactory.getLogger(
@@ -46,6 +57,18 @@ public class ChannelProcessor {
     return selector;
   }
 
+  /**
+   * Attempts to {@linkplain Channel#put(Event) put} the given events into each
+   * configured channel. If any {@code required} channel throws a
+   * {@link ChannelException}, that exception will be propagated.
+   *
+   * <p>Note that if multiple channels are configured, some {@link Transaction}s
+   * may have already been committed while others may be rolled back in the
+   * case of an exception.
+   *
+   * @param events A list of events to put into the configured channels.
+   * @throws ChannelException when a write to a required channel fails.
+   */
   public void processEventBatch(List<Event> events) {
     Map<Channel, List<Event>> reqChannelQueue =
         new LinkedHashMap<Channel, List<Event>>();
@@ -128,6 +151,18 @@ public class ChannelProcessor {
     }
   }
 
+  /**
+   * Attempts to {@linkplain Channel#put(Event) put} the given event into each
+   * configured channel. If any {@code required} channel throws a
+   * {@link ChannelException}, that exception will be propagated.
+   *
+   * <p>Note that if multiple channels are configured, some {@link Transaction}s
+   * may have already been committed while others may be rolled back in the
+   * case of an exception.
+   *
+   * @param event The event to put into the configured channels.
+   * @throws ChannelException when a write to a required channel fails.
+   */
   public void processEvent(Event event) {
 
     // Process required channels

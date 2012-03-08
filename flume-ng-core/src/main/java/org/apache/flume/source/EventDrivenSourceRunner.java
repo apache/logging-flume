@@ -22,6 +22,10 @@ package org.apache.flume.source;
 import org.apache.flume.SourceRunner;
 import org.apache.flume.lifecycle.LifecycleState;
 
+/**
+ * Starts, stops, and manages
+ * {@linkplain EventDrivenSource event-driven sources}.
+ */
 public class EventDrivenSourceRunner extends SourceRunner {
 
   private LifecycleState lifecycleState;

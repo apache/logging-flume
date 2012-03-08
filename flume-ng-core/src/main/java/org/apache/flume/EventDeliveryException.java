@@ -19,6 +19,10 @@
 
 package org.apache.flume;
 
+/**
+ * An event delivery exception is raised whenever an {@link Event} fails to
+ * reach at least one of its intended (next-hop) destinations.
+ */
 public class EventDeliveryException extends Exception {
 
   private static final long serialVersionUID = 1102327497549834945L;

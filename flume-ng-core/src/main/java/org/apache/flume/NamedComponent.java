@@ -18,6 +18,10 @@
  */
 package org.apache.flume;
 
+/**
+ * Enables a component to be tagged with a name so that it can be referred
+ * to uniquely within the configuration system.
+ */
 public interface NamedComponent {
 
   public void setName(String name);
