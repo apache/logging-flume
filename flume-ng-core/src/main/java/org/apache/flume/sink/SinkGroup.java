@@ -26,8 +26,8 @@ import org.apache.flume.SinkProcessor;
 import org.apache.flume.conf.Configurable;
 
 /**
- * Configuration concept for handling multiple sinks working together.
- * 
+ * <p>Configuration concept for handling multiple sinks working together.</p>
+ * @see org.apache.flume.conf.properties.PropertiesFileConfigurationProvider
  */
 public class SinkGroup implements Configurable {
   private static final String PROCESSOR_PREFIX = "processor.";

@@ -34,6 +34,21 @@ public class SinkProcessorFactory {
 
   private static final String TYPE = "type";
 
+  /**
+   * <p>
+   * Creates a sink processor and configures it using the provided context
+   * </p>
+   *
+   * @param context Context limited to that of the processor. Should include type
+   * and any settings relevant to that processor type. Referer to javadoc for
+   * specific sink
+   * @param sinks A non-null, non-empty list of sinks to be assigned to the
+   *  processor
+   * @return A configured SinkProcessor
+   * @see org.apache.flume.SinkProcessorType
+   * @throws FlumeException Runtime exception thrown in the case of an invalid
+   * processor configuration
+   */
   @SuppressWarnings("unchecked")
   public static SinkProcessor getProcessor(Context context,
  List<Sink> sinks) {
