@@ -22,6 +22,7 @@ package org.apache.flume.source;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.flume.CounterGroup;
+import org.apache.flume.EventDeliveryException;
 import org.apache.flume.PollableSource;
 import org.apache.flume.SourceRunner;
 import org.apache.flume.lifecycle.LifecycleState;
@@ -91,9 +92,9 @@ public class PollableSourceRunner extends SourceRunner {
       runnerThread.join();
     } catch (InterruptedException e) {
       logger
-          .warn(
-              "Interrupted while waiting for polling runner to stop. Please report this.",
-              e);
+      .warn(
+          "Interrupted while waiting for polling runner to stop. Please report this.",
+          e);
       Thread.currentThread().interrupt();
     }
 
@@ -108,6 +109,7 @@ public class PollableSourceRunner extends SourceRunner {
         + counterGroup + " }";
   }
 
+  @Override
   public LifecycleState getLifecycleState() {
     return lifecycleState;
   }
@@ -131,15 +133,25 @@ public class PollableSourceRunner extends SourceRunner {
 
             Thread.sleep(Math.min(
                 counterGroup.incrementAndGet("runner.backoffs.consecutive")
-                    * backoffSleepIncrement, maxBackoffSleep));
+                * backoffSleepIncrement, maxBackoffSleep));
           } else {
             counterGroup.set("runner.backoffs.consecutive", 0L);
           }
         } catch (InterruptedException e) {
           logger.info("Source runner interrupted. Exiting");
+          counterGroup.incrementAndGet("runner.interruptions");
+        } catch (EventDeliveryException e) {
+          logger.error("Unable to deliver event. Exception follows.", e);
+          counterGroup.incrementAndGet("runner.deliveryErrors");
         } catch (Exception e) {
-          logger.error("Unable to process event. Exception follows.", e);
-          counterGroup.incrementAndGet("runner.failures");
+          counterGroup.incrementAndGet("runner.errors");
+          logger.error("Unhandled exception, logging and sleeping for " +
+              maxBackoffSleep + "ms", e);
+          try {
+            Thread.sleep(maxBackoffSleep);
+          } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+          }
         }
       }
 

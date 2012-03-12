@@ -21,8 +21,8 @@ package org.apache.flume;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.lifecycle.LifecycleAware;
+import org.apache.flume.lifecycle.LifecycleState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,6 +85,8 @@ public class SinkRunner implements LifecycleAware {
     runner.shouldStop = new AtomicBoolean();
 
     runnerThread = new Thread(runner);
+    runnerThread.setName("SinkRunner-PollingRunner-" +
+        policy.getClass().getSimpleName());
     runnerThread.start();
 
     lifecycleState = LifecycleState.START;
@@ -157,10 +159,18 @@ public class SinkRunner implements LifecycleAware {
           counterGroup.incrementAndGet("runner.interruptions");
         } catch (EventDeliveryException e) {
           logger.error("Unable to deliver event. Exception follows.", e);
+          counterGroup.incrementAndGet("runner.deliveryErrors");
+        } catch (Exception e) {
           counterGroup.incrementAndGet("runner.errors");
+          logger.error("Unhandled exception, logging and sleeping for " +
+              maxBackoffSleep + "ms", e);
+          try {
+            Thread.sleep(maxBackoffSleep);
+          } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+          }
         }
       }
-
       logger.debug("Polling runner exiting. Metrics:{}", counterGroup);
     }
 
