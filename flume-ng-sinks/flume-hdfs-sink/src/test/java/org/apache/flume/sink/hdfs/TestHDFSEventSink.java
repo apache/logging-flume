@@ -113,6 +113,21 @@ public class TestHDFSEventSink {
   }
 
   @Test
+  public void testEmptyChannelResultsInStatusBackoff()
+      throws InterruptedException, LifecycleException, EventDeliveryException {
+    Context context = new Context();
+    Channel channel = new MemoryChannel();
+    context.put("hdfs.path", testPath);
+    context.put("keep-alive", "0");
+    Configurables.configure(sink, context);
+    Configurables.configure(channel, context);
+    sink.setChannel(channel);
+    sink.start();
+    Assert.assertEquals(Status.BACKOFF, sink.process());
+    sink.stop();
+  }
+
+  @Test
   public void testTextAppend() throws InterruptedException, LifecycleException,
       EventDeliveryException, IOException {
 

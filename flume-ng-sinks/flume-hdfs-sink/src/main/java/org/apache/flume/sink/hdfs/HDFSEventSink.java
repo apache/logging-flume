@@ -321,10 +321,13 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
     try {
       transaction.begin();
+      Event event = null;
       for (int txnEventCount = 0; txnEventCount < txnEventMax; txnEventCount++) {
-        Event event = channel.take();
-        if (event == null)
+        event = null;
+        event = channel.take();
+        if (event == null) {
           break;
+        }
 
         // reconstruct the path name by substituting place holders
         String realPath = BucketPath.escapeString(path, event.getHeaders());
@@ -358,6 +361,9 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       }
       batchMap.clear();
       transaction.commit();
+      if(event == null) {
+        return Status.BACKOFF;
+      }
       return Status.READY;
     } catch (IOException eIO) {
       transaction.rollback();
