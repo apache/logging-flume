@@ -119,6 +119,14 @@ public class Context {
   }
   /**
    * Gets value mapped to key, returning null if unmapped.
+   * <p>
+   * Note that this method returns an object as opposed to a
+   * primitive. The configuration key requested may not be mapped
+   * to a value and by returning the primitive object wrapper we can
+   * return null. If the key does not exist the return value of
+   * this method is assigned directly to a primitive, a
+   * {@link NullPointerException} will be thrown.
+   * </p>
    * @param key to be found
    * @return value associated with key or null if unmapped
    */
@@ -140,6 +148,14 @@ public class Context {
   }
   /**
    * Gets value mapped to key, returning null if unmapped.
+   * <p>
+   * Note that this method returns an object as opposed to a
+   * primitive. The configuration key requested may not be mapped
+   * to a value and by returning the primitive object wrapper we can
+   * return null. If the key does not exist the return value of
+   * this method is assigned directly to a primitive, a
+   * {@link NullPointerException} will be thrown.
+   * </p>
    * @param key to be found
    * @return value associated with key or null if unmapped
    */
@@ -161,6 +177,14 @@ public class Context {
   }
   /**
    * Gets value mapped to key, returning null if unmapped.
+   * <p>
+   * Note that this method returns an object as opposed to a
+   * primitive. The configuration key requested may not be mapped
+   * to a value and by returning the primitive object wrapper we can
+   * return null. If the key does not exist the return value of
+   * this method is assigned directly to a primitive, a
+   * {@link NullPointerException} will be thrown.
+   * </p>
    * @param key to be found
    * @return value associated with key or null if unmapped
    */
