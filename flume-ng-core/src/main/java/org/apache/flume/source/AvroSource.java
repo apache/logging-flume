@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Responder;
@@ -154,6 +153,19 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     return "AvroSource: { bindAddress:" + bindAddress + " port:" + port + " }";
   }
 
+  /**
+   * Helper function to convert a map of CharSequence to a map of String.
+   */
+  private static Map<String, String> toStringMap(
+      Map<CharSequence, CharSequence> charSeqMap) {
+    Map<String, String> stringMap =
+        new HashMap<String, String>();
+    for (Map.Entry<CharSequence, CharSequence> entry : charSeqMap.entrySet()) {
+      stringMap.put(entry.getKey().toString(), entry.getValue().toString());
+    }
+    return stringMap;
+  }
+
   @Override
   public Status append(AvroFlumeEvent avroEvent) {
     logger.debug("Received avro event:{}", avroEvent);
@@ -161,7 +173,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     counterGroup.incrementAndGet("rpc.received");
 
     Event event = EventBuilder.withBody(avroEvent.getBody().array(),
-        avroEvent.getHeaders());
+        toStringMap(avroEvent.getHeaders()));
 
     try {
       getChannelProcessor().processEvent(event);
@@ -182,7 +194,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
 
     for (AvroFlumeEvent avroEvent : events) {
       Event event = EventBuilder.withBody(avroEvent.getBody().array(),
-          avroEvent.getHeaders());
+          toStringMap(avroEvent.getHeaders()));
       counterGroup.incrementAndGet("rpc.events");
 
       batch.add(event);
