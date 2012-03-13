@@ -437,10 +437,12 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.avro</groupId>
           <artifactId>avro-maven-plugin</artifactId>
+          <!--
           <configuration>
             <stringType>String</stringType>
           </configuration>
-          <version>1.6.2</version>
+          -->
+          <version>1.6.1</version>
         </plugin>
 
         <plugin>
@@ -535,19 +537,19 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro</artifactId>
-        <version>1.6.2</version>
+        <version>1.6.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro-compiler</artifactId>
-        <version>1.6.2</version>
+        <version>1.6.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro-ipc</artifactId>
-        <version>1.6.2</version>
+        <version>1.6.1</version>
       </dependency>
 
       <dependency>

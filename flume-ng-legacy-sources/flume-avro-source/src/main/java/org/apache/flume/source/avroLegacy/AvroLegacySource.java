@@ -131,7 +131,7 @@ public class AvroLegacySource extends AbstractSource implements
     headers.put(TIMESTAMP, evt.getTimestamp().toString());
     headers.put(PRIORITY, evt.getPriority().toString());
     headers.put(NANOS, evt.getNanos().toString());
-    for (Entry<String, ByteBuffer> entry: evt.getFields().entrySet()) {
+    for (Entry<CharSequence, ByteBuffer> entry : evt.getFields().entrySet()) {
       headers.put(entry.getKey().toString(), entry.getValue().toString());
     }
     headers.put(OG_EVENT, "yes");

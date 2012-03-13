@@ -157,7 +157,7 @@ public class NettyAvroRpcClient implements RpcClient {
     try {
       AvroFlumeEvent avroEvent = new AvroFlumeEvent();
       avroEvent.setBody(ByteBuffer.wrap(event.getBody()));
-      avroEvent.setHeaders(event.getHeaders());
+      avroEvent.setHeaders(toCharSeqMap(event.getHeaders()));
       avroClient.append(avroEvent, callFuture);
     } catch (IOException ex) {
       throw new EventDeliveryException("RPC request IO exception. " +
@@ -196,7 +196,7 @@ public class NettyAvroRpcClient implements RpcClient {
         Event event = iter.next();
         AvroFlumeEvent avroEvent = new AvroFlumeEvent();
         avroEvent.setBody(ByteBuffer.wrap(event.getBody()));
-        avroEvent.setHeaders(event.getHeaders());
+        avroEvent.setHeaders(toCharSeqMap(event.getHeaders()));
         avroEvents.add(avroEvent);
       }
 
@@ -277,6 +277,19 @@ public class NettyAvroRpcClient implements RpcClient {
     } finally {
       stateLock.unlock();
     }
+  }
+
+  /**
+   * Helper function to convert a map of String to a map of CharSequence.
+   */
+  private static Map<CharSequence, CharSequence> toCharSeqMap(
+      Map<String, String> stringMap) {
+    Map<CharSequence, CharSequence> charSeqMap =
+        new HashMap<CharSequence, CharSequence>();
+    for (Map.Entry<String, String> entry : stringMap.entrySet()) {
+      charSeqMap.put(entry.getKey(), entry.getValue());
+    }
+    return charSeqMap;
   }
 
   @Override
