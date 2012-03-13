@@ -24,24 +24,22 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.nio.charset.Charset;
 import java.util.List;
 
-import org.apache.avro.ipc.NettyTransceiver;
-import org.apache.avro.ipc.Transceiver;
-import org.apache.avro.ipc.specific.SpecificRequestor;
+import com.google.common.collect.Lists;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.flume.source.avro.AvroFlumeEvent;
-import org.apache.flume.source.avro.AvroSourceProtocol;
-import org.apache.flume.source.avro.Status;
+import org.apache.flume.Event;
+import org.apache.flume.EventDeliveryException;
+import org.apache.flume.FlumeException;
+import org.apache.flume.api.RpcClient;
+import org.apache.flume.api.RpcClientFactory;
+import org.apache.flume.event.EventBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +47,8 @@ public class AvroCLIClient {
 
   private static final Logger logger = LoggerFactory
       .getLogger(AvroCLIClient.class);
+
+  private static final int BATCH_SIZE = 5;
 
   private String hostname;
   private int port;
@@ -68,6 +68,10 @@ public class AvroCLIClient {
     } catch (IOException e) {
       logger.error("Unable to send data to Flume - {}", e.getMessage());
       logger.debug("Exception follows.", e);
+    } catch (FlumeException e) {
+      logger.error("Unable to open connection to Flume. Exception follows.", e);
+    } catch (EventDeliveryException e) {
+      logger.error("Unable to deliver events to Flume. Exception follows.", e);
     }
 
     logger.debug("Exiting");
@@ -108,16 +112,14 @@ public class AvroCLIClient {
     return true;
   }
 
-  private void run() throws IOException {
+  private void run() throws IOException, FlumeException,
+      EventDeliveryException {
 
-    Transceiver transceiver = null;
     BufferedReader reader = null;
 
+    RpcClient rpcClient = RpcClientFactory.getInstance(hostname, port, BATCH_SIZE);
     try {
-      transceiver = new NettyTransceiver(new InetSocketAddress(hostname, port));
-      AvroSourceProtocol client = SpecificRequestor.getClient(
-          AvroSourceProtocol.class, transceiver);
-      List<AvroFlumeEvent> eventBuffer = new ArrayList<AvroFlumeEvent>();
+      List<Event> eventBuffer = Lists.newArrayList();
 
       if (fileName != null) {
         reader = new BufferedReader(new FileReader(new File(fileName)));
@@ -125,32 +127,24 @@ public class AvroCLIClient {
         reader = new BufferedReader(new InputStreamReader(System.in));
       }
 
-      String line = null;
+      String line;
       long lastCheck = System.currentTimeMillis();
       long sentBytes = 0;
 
+      int batchSize = rpcClient.getBatchSize();
       while ((line = reader.readLine()) != null) {
         // logger.debug("read:{}", line);
 
-        if (eventBuffer.size() >= 1000) {
-          Status status = client.appendBatch(eventBuffer);
-
-          if (!status.equals(Status.OK)) {
-            logger.error("Unable to send batch size:{} status:{}",
-                eventBuffer.size(), status);
-          }
-
+        int size = eventBuffer.size();
+        if (size == batchSize) {
+          rpcClient.appendBatch(eventBuffer);
           eventBuffer.clear();
         }
 
-        AvroFlumeEvent avroEvent = new AvroFlumeEvent();
+        Event event = EventBuilder.withBody(line, Charset.forName("UTF8"));
+        eventBuffer.add(event);
 
-        avroEvent.setHeaders(new HashMap<CharSequence, CharSequence>());
-        avroEvent.setBody(ByteBuffer.wrap(line.getBytes()));
-
-        eventBuffer.add(avroEvent);
-
-        sentBytes += avroEvent.getBody().capacity();
+        sentBytes += event.getBody().length;
         sent++;
 
         long now = System.currentTimeMillis();
@@ -161,15 +155,8 @@ public class AvroCLIClient {
         }
       }
 
-      if (eventBuffer.size() > 0) {
-        Status status = client.appendBatch(eventBuffer);
-
-        if (!status.equals(Status.OK)) {
-          logger.error("Unable to send batch size:{} status:{}",
-              eventBuffer.size(), status);
-        }
-
-        eventBuffer.clear();
+      if (!eventBuffer.isEmpty()) {
+        rpcClient.appendBatch(eventBuffer);
       }
 
       logger.debug("Finished");
@@ -179,10 +166,8 @@ public class AvroCLIClient {
         reader.close();
       }
 
-      if (transceiver != null) {
-        logger.debug("Closing tranceiver");
-        transceiver.close();
-      }
+      logger.debug("Closing RPC client");
+      rpcClient.close();
     }
   }
 }

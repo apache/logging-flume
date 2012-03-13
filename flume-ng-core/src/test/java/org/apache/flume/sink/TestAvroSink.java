@@ -20,6 +20,7 @@
 package org.apache.flume.sink;
 
 import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
 
@@ -92,7 +93,9 @@ public class TestAvroSink {
   }
 
   @Test
-  public void testProcess() throws InterruptedException, EventDeliveryException {
+  public void testProcess() throws InterruptedException,
+      EventDeliveryException {
+
     Event event = EventBuilder.withBody("test event 1".getBytes(),
         new HashMap<String, String>());
     Server server = createServer();
@@ -130,8 +133,8 @@ public class TestAvroSink {
   public void testFailedConnect() throws InterruptedException,
       EventDeliveryException {
 
-    Event event = EventBuilder.withBody("test event 1".getBytes(),
-        new HashMap<String, String>());
+    Event event = EventBuilder.withBody("test event 1",
+        Charset.forName("UTF8"));
     Server server = createServer();
 
     server.start();
@@ -153,8 +156,14 @@ public class TestAvroSink {
     transaction.close();
 
     for (int i = 0; i < 5; i++) {
-      Sink.Status status = sink.process();
-      Assert.assertEquals(Sink.Status.BACKOFF, status);
+      boolean threwException = false;
+      try {
+        sink.process();
+      } catch (EventDeliveryException e) {
+        threwException = true;
+      }
+      Assert.assertTrue("Must throw EventDeliveryException if disconnected",
+          threwException);
     }
 
     server = createServer();

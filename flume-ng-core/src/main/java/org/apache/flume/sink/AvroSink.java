@@ -20,48 +20,41 @@
 package org.apache.flume.sink;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
-import org.apache.avro.AvroRemoteException;
-import org.apache.avro.ipc.NettyTransceiver;
-import org.apache.avro.ipc.Transceiver;
-import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
+import org.apache.flume.FlumeException;
 import org.apache.flume.Sink;
 import org.apache.flume.Transaction;
+import org.apache.flume.api.RpcClient;
+import org.apache.flume.api.RpcClientFactory;
 import org.apache.flume.conf.Configurable;
-import org.apache.flume.source.avro.AvroFlumeEvent;
-import org.apache.flume.source.avro.AvroSourceProtocol;
+import org.apache.flume.source.AvroSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Lists;
 
 /**
  * <p>
- * A {@link Sink} implementation that can send events to an Avro server (such as
- * Flume's <tt>AvroSource</tt>).
+ * A {@link Sink} implementation that can send events to an RPC server (such as
+ * Flume's {@link AvroSource}).
  * </p>
  * <p>
  * This sink forms one half of Flume's tiered collection support. Events sent to
- * this sink are turned into {@link AvroFlumeEvent}s and sent to the configured
- * hostname / port pair using Avro's {@link NettyTransceiver}. The intent is
- * that the destination is an instance of Flume's <tt>AvroSource</tt> which
- * allows Flume to nodes to forward to other Flume nodes forming a tiered
+ * this sink are transported over the network to the hostname / port pair using
+ * the RPC implementation encapsulated in {@link RpcClient}.
+ * The destination is an instance of Flume's {@link AvroSource}, which
+ * allows Flume agents to forward to other Flume agents, forming a tiered
  * collection infrastructure. Of course, nothing prevents one from using this
  * sink to speak to other custom built infrastructure that implements the same
- * Avro protocol (specifically {@link AvroSourceProtocol}).
+ * RPC protocol.
  * </p>
  * <p>
  * Events are taken from the configured {@link Channel} in batches of the
@@ -120,8 +113,7 @@ public class AvroSink extends AbstractSink implements Configurable {
   private Integer port;
   private Integer batchSize;
 
-  private AvroSourceProtocol client;
-  private Transceiver transceiver;
+  private RpcClient client;
   private CounterGroup counterGroup;
 
   public AvroSink() {
@@ -132,8 +124,8 @@ public class AvroSink extends AbstractSink implements Configurable {
   public void configure(Context context) {
     hostname = context.getString("hostname");
     port = context.getInteger("port");
-    batchSize = context.getInteger("batch-size");
 
+    batchSize = context.getInteger("batch-size");
     if (batchSize == null) {
       batchSize = defaultBatchSize;
     }
@@ -142,36 +134,51 @@ public class AvroSink extends AbstractSink implements Configurable {
     Preconditions.checkState(port != null, "No port specified");
   }
 
-  private void createConnection() throws IOException {
-    if (transceiver == null) {
-      logger.debug("Creating new tranceiver connection to hostname:{} port:{}",
-          hostname, port);
-      transceiver = new NettyTransceiver(new InetSocketAddress(hostname, port));
-    }
+  /**
+   * If this function is called successively without calling
+   * {@see #destroyConnection()}, only the first call has any effect.
+   * @throws FlumeException if an RPC client connection could not be opened
+   */
+  private void createConnection() throws FlumeException {
 
     if (client == null) {
-      logger.debug("Creating Avro client with tranceiver:{}", transceiver);
-      client = SpecificRequestor.getClient(AvroSourceProtocol.class,
-          transceiver);
+      logger.debug(
+          "Building RpcClient with hostname:{}, port:{}, batchSize:{}",
+          new Object[] { hostname, port, batchSize });
+
+       client = RpcClientFactory.getInstance(hostname, port, batchSize);
     }
+
   }
 
   private void destroyConnection() {
-    if (transceiver != null) {
-      logger.debug("Destroying tranceiver:{}", transceiver);
+    if (client != null) {
+      logger.debug("Closing avro client:{}", client);
       try {
-        transceiver.close();
-      } catch (IOException e) {
-        logger
-            .error(
-                "Attempt to clean up avro tranceiver after client error failed. Exception follows.",
-                e);
+        client.close();
+      } catch (FlumeException e) {
+        logger.error("Attempt to close avro client failed. Exception follows.",
+            e);
       }
-
-      transceiver = null;
     }
 
     client = null;
+  }
+
+  /**
+   * Ensure the connection exists and is active.
+   * If the connection is not active, destroy it and recreate it.
+   *
+   * @throws FlumeException If there are errors closing or opening the RPC
+   * connection.
+   */
+  private void verifyConnection() throws FlumeException {
+    if (client == null) {
+      createConnection();
+    } else if (!client.isActive()) {
+      destroyConnection();
+      createConnection();
+    }
   }
 
   @Override
@@ -180,9 +187,10 @@ public class AvroSink extends AbstractSink implements Configurable {
 
     try {
       createConnection();
-    } catch (Exception e) {
+    } catch (FlumeException e) {
       logger.error("Unable to create avro client using hostname:" + hostname
-          + " port:" + port + ". Exception follows.", e);
+          + ", port:" + port + ", batchSize: " + batchSize +
+          ". Exception follows.", e);
 
       /* Try to prevent leaking resources. */
       destroyConnection();
@@ -215,9 +223,10 @@ public class AvroSink extends AbstractSink implements Configurable {
 
     try {
       transaction.begin();
-      createConnection();
 
-      List<AvroFlumeEvent> batch = new LinkedList<AvroFlumeEvent>();
+      verifyConnection();
+
+      List<Event> batch = Lists.newLinkedList();
 
       for (int i = 0; i < batchSize; i++) {
         Event event = channel.take();
@@ -227,44 +236,35 @@ public class AvroSink extends AbstractSink implements Configurable {
           break;
         }
 
-        AvroFlumeEvent avroEvent = new AvroFlumeEvent();
-
-        avroEvent.setBody(ByteBuffer.wrap(event.getBody()));
-        Map<CharSequence, CharSequence> headers = Maps.newHashMap();
-
-        for (Entry<String, String> entry : event.getHeaders().entrySet()) {
-          headers.put(entry.getKey(), entry.getValue());
-        }
-        avroEvent.setHeaders(headers);
-        batch.add(avroEvent);
+        batch.add(event);
       }
 
       if (batch.isEmpty()) {
         counterGroup.incrementAndGet("batch.empty");
         status = Status.BACKOFF;
       } else {
-        if (!client.appendBatch(batch).equals(
-            org.apache.flume.source.avro.Status.OK)) {
-          throw new AvroRemoteException("RPC communication returned FAILED");
-        }
+        client.appendBatch(batch);
       }
 
       transaction.commit();
       counterGroup.incrementAndGet("batch.success");
+
     } catch (ChannelException e) {
       transaction.rollback();
       logger.error("Unable to get event from channel. Exception follows.", e);
       status = Status.BACKOFF;
-    } catch (AvroRemoteException e) {
+
+    } catch (EventDeliveryException e) {
       transaction.rollback();
-      logger.error("Unable to send event batch. Exception follows.", e);
-      status = Status.BACKOFF;
-    } catch (Exception e) {
-      transaction.rollback();
-      logger.error(
-          "Unable to communicate with Avro server. Exception follows.", e);
-      status = Status.BACKOFF;
       destroyConnection();
+      throw e;
+
+    } catch (FlumeException e) {
+      transaction.rollback();
+      destroyConnection();
+      throw new EventDeliveryException("RPC connection error. " +
+          "Exception follows.", e);
+
     } finally {
       transaction.close();
     }

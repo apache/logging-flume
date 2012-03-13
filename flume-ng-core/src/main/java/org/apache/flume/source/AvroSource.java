@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Responder;
 import org.apache.avro.ipc.Server;
@@ -156,20 +155,13 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   }
 
   @Override
-  public Status append(AvroFlumeEvent avroEvent) throws AvroRemoteException {
+  public Status append(AvroFlumeEvent avroEvent) {
     logger.debug("Received avro event:{}", avroEvent);
 
     counterGroup.incrementAndGet("rpc.received");
 
-    Map<String, String> headers = new HashMap<String, String>();
-
-    for (Entry<CharSequence, CharSequence> entry : avroEvent.getHeaders()
-        .entrySet()) {
-
-      headers.put(entry.getKey().toString(), entry.getValue().toString());
-    }
-
-    Event event = EventBuilder.withBody(avroEvent.getBody().array(), headers);
+    Event event = EventBuilder.withBody(avroEvent.getBody().array(),
+        avroEvent.getHeaders());
 
     try {
       getChannelProcessor().processEvent(event);
@@ -189,15 +181,8 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     List<Event> batch = new ArrayList<Event>();
 
     for (AvroFlumeEvent avroEvent : events) {
-      Map<String, String> headers = new HashMap<String, String>();
-
-      for (Entry<CharSequence, CharSequence> entry : avroEvent.getHeaders()
-          .entrySet()) {
-
-        headers.put(entry.getKey().toString(), entry.getValue().toString());
-      }
-
-      Event event = EventBuilder.withBody(avroEvent.getBody().array(), headers);
+      Event event = EventBuilder.withBody(avroEvent.getBody().array(),
+          avroEvent.getHeaders());
       counterGroup.incrementAndGet("rpc.events");
 
       batch.add(event);

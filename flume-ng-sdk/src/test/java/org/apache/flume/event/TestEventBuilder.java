@@ -17,13 +17,12 @@
  * under the License.
  */
 
-package org.apache.flume.util;
+package org.apache.flume.event;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.flume.Event;
-import org.apache.flume.event.EventBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -145,7 +145,7 @@ public class TestLegacyAvroSource {
 
     AvroFlumeOGEvent avroEvent =  AvroFlumeOGEvent.newBuilder().setHost("foo").
         setPriority(Priority.INFO).setNanos(0).setTimestamp(1).
-        setFields(new HashMap<CharSequence, ByteBuffer> ()).
+        setFields(new HashMap<String, ByteBuffer> ()).
         setBody(ByteBuffer.wrap("foo".getBytes())).build();
 
     client.append(avroEvent);

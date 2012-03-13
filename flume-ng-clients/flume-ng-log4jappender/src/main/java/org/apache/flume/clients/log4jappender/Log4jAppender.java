@@ -18,28 +18,25 @@
  */
 package org.apache.flume.clients.log4jappender;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.avro.AvroRemoteException;
-import org.apache.avro.ipc.NettyTransceiver;
-import org.apache.avro.ipc.Transceiver;
-import org.apache.avro.ipc.specific.SpecificRequestor;
+import org.apache.flume.Event;
+import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
-import org.apache.flume.source.avro.AvroFlumeEvent;
-import org.apache.flume.source.avro.AvroSourceProtocol;
+import org.apache.flume.api.RpcClient;
+import org.apache.flume.api.RpcClientFactory;
+import org.apache.flume.event.EventBuilder;
+
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.helpers.LogLog;
 import org.apache.log4j.spi.LoggingEvent;
-import org.apache.flume.clients.log4jappender.Log4jAvroHeaders;
+
 /**
  *
  * Appends Log4j Events to an external Flume client which is decribed by
- * the Log4j configuration file. The appender takes two parameters
+ * the Log4j configuration file. The appender takes two required parameters:
  *<p>
  *<strong>Hostname</strong> : This is the hostname of the first hop
  *at which Flume (through an AvroSource) is listening for events.
@@ -65,17 +62,17 @@ public class Log4jAppender extends AppenderSkeleton {
 
   private String hostname;
   private int port;
-  private AvroSourceProtocol protocolClient = null;
-  private Transceiver transceiver = null;
+  private RpcClient rpcClient = null;
 
 
   /**
-   * If this constructor is used programatically, rather than from a log4j conf,
+   * If this constructor is used programmatically rather than from a log4j conf
    * you must set the <tt>port</tt> and <tt>hostname</tt> and then call
    * <tt>activateOptions()</tt> before calling <tt>append()</tt>.
    */
   public Log4jAppender(){
   }
+
   /**
    * Sets the hostname and port. Even if these are passed the
    * <tt>activateOptions()</tt> function must be called before calling
@@ -92,24 +89,27 @@ public class Log4jAppender extends AppenderSkeleton {
   /**
    * Append the LoggingEvent, to send to the first Flume hop.
    * @param event The LoggingEvent to be appended to the flume.
-   * @throws FlumeException if the appender was closed
-   * or the hostname and port were not setup.
+   * @throws FlumeException if the appender was closed,
+   * or the hostname and port were not setup, there was a timeout, or there
+   * was a connection error.
    */
   @Override
   public synchronized void append(LoggingEvent event) throws FlumeException{
-    //If protocolClient is null, it means either this appender object was never
+    //If rpcClient is null, it means either this appender object was never
     //setup by setting hostname and port and then calling activateOptions
     //or this appender object was closed by calling close(), so we throw an
     //exception to show the appender is no longer accessible.
-    if(protocolClient == null){
+    if(rpcClient == null){
       throw new FlumeException("Cannot Append to Appender!" +
           "Appender either closed or not setup correctly!");
     }
 
+    if(!rpcClient.isActive()){
+      reconnect();
+    }
+
     //Client created first time append is called.
-    AvroFlumeEvent avroEvent = new AvroFlumeEvent();
-    Map<CharSequence, CharSequence> hdrs =
-        new HashMap<CharSequence, CharSequence>();
+    Map<String, String> hdrs = new HashMap<String, String>();
     hdrs.put(Log4jAvroHeaders.LOGGER_NAME.toString(), event.getLoggerName());
     hdrs.put(Log4jAvroHeaders.TIMESTAMP.toString(),
         String.valueOf(event.getTimeStamp()));
@@ -120,20 +120,16 @@ public class Log4jAppender extends AppenderSkeleton {
     hdrs.put(Log4jAvroHeaders.LOG_LEVEL.toString(),
         String.valueOf(event.getLevel().toInt()));
     hdrs.put(Log4jAvroHeaders.MESSAGE_ENCODING.toString(), "UTF8");
-    avroEvent.setHeaders(hdrs);
+
+    Event flumeEvent = EventBuilder.withBody(event.getMessage().toString(),
+        Charset.forName("UTF8"), hdrs);
+
     try {
-      avroEvent.setBody(ByteBuffer.wrap(
-          event.getMessage().toString().getBytes("UTF8")));
-      protocolClient.append(avroEvent);
-    } catch (UnsupportedEncodingException e) {
-      String errormsg = "Unable to encode body of event! Event lost! " +
-          e.getMessage();
-      LogLog.error(errormsg);
-      throw new FlumeException(errormsg,e);
-    } catch (AvroRemoteException e) {
-      String errormsg = "Avro Remote Exception: " + e.getMessage();
-      LogLog.error(errormsg);
-      throw new FlumeException(errormsg,e);
+      rpcClient.append(flumeEvent);
+    } catch (EventDeliveryException e) {
+      String msg = "Flume append() failed.";
+      LogLog.error(msg);
+      throw new FlumeException(msg + " Exception follows.", e);
     }
   }
 
@@ -144,26 +140,22 @@ public class Log4jAppender extends AppenderSkeleton {
    * Closes underlying client.
    * If <tt>append()</tt> is called after this function is called,
    * it will throw an exception.
-   * @throws FlumeException if appender was closed once or not setup.
+   * @throws FlumeException if errors occur during close
    */
   @Override
   public synchronized void close() throws FlumeException{
-    //Simply set protocol client to null and let Java do the cleanup
-    //when the client is no longer accessible.
     //Any append calls after this will result in an Exception.
-    try {
-      transceiver.close();
-    } catch (IOException e) {
-      throw new FlumeException("Attempting to close " +
-          "Appender which is already closed or one which was never opened", e);
+    if (rpcClient != null) {
+      rpcClient.close();
+      rpcClient = null;
     }
-    protocolClient = null;
   }
 
   @Override
   public boolean requiresLayout() {
     return false;
   }
+
   /**
    * Set the first flume hop hostname.
    * @param hostname The first hop where the client should connect to.
@@ -171,6 +163,7 @@ public class Log4jAppender extends AppenderSkeleton {
   public void setHostname(String hostname){
     this.hostname = hostname;
   }
+
   /**
    * Set the port on the hostname to connect to.
    * @param port The port to connect on the host.
@@ -188,17 +181,22 @@ public class Log4jAppender extends AppenderSkeleton {
   @Override
   public void activateOptions() throws FlumeException{
     try {
-      transceiver = new NettyTransceiver(
-          new InetSocketAddress(hostname, port));
-      protocolClient = SpecificRequestor.getClient(
-          AvroSourceProtocol.class, transceiver);
-    } catch (IOException e) {
-      String errormsg = "Avro Client creation failed! "+
+      rpcClient = RpcClientFactory.getInstance(hostname, port);
+    } catch (FlumeException e) {
+      String errormsg = "RPC client creation failed! " +
           e.getMessage();
       LogLog.error(errormsg);
-      throw new FlumeException(errormsg,e);
-
+      throw e;
     }
+  }
+
+  /**
+   * Make it easy to reconnect on failure
+   * @throws FlumeException
+   */
+  private void reconnect() throws FlumeException {
+    close();
+    activateOptions();
   }
 }
 

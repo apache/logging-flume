@@ -49,6 +49,7 @@ limitations under the License.
     <module>flume-ng-channels</module>
     <module>flume-ng-legacy-sources</module>
     <module>flume-ng-clients</module>
+    <module>flume-ng-sdk</module>
   </modules>
 
   <profiles>
@@ -436,7 +437,10 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.avro</groupId>
           <artifactId>avro-maven-plugin</artifactId>
-          <version>1.6.1</version>
+          <configuration>
+            <stringType>String</stringType>
+          </configuration>
+          <version>1.6.2</version>
         </plugin>
 
         <plugin>
@@ -531,19 +535,19 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro</artifactId>
-        <version>1.6.1</version>
+        <version>1.6.2</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro-compiler</artifactId>
-        <version>1.6.1</version>
+        <version>1.6.2</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro-ipc</artifactId>
-        <version>1.6.1</version>
+        <version>1.6.2</version>
       </dependency>
 
       <dependency>
@@ -641,6 +645,12 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
         <artifactId>flume-avro-source</artifactId>
+        <version>1.1.0-incubating-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-ng-sdk</artifactId>
         <version>1.1.0-incubating-SNAPSHOT</version>
       </dependency>
 

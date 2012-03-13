@@ -38,14 +38,15 @@ import org.apache.flume.source.AbstractSource;
 
 import com.cloudera.flume.handlers.avro.AvroFlumeOGEvent;
 import com.cloudera.flume.handlers.avro.FlumeOGEventAvroServer;
+import org.apache.avro.AvroRemoteException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.flume.ChannelException;
 
 /**
  * <p>
- * A {@link Source} implementation that receives Avro events from Avro sink of Flume OG
- * </p>
+ * A {@link Source} implementation that receives Avro events from Avro sink of
+ * Flume OG</p>
  * <p>
  * <b>Configuration options</b>
  * </p>
@@ -77,8 +78,8 @@ import org.apache.flume.ChannelException;
  * </p>
  */
 
-public class AvroLegacySource extends AbstractSource implements EventDrivenSource,
-    Configurable, FlumeOGEventAvroServer {
+public class AvroLegacySource extends AbstractSource implements
+    EventDrivenSource, Configurable, FlumeOGEventAvroServer {
 
   static final Logger LOG = LoggerFactory.getLogger(AvroLegacySource.class);
 
@@ -121,7 +122,7 @@ public class AvroLegacySource extends AbstractSource implements EventDrivenSourc
   }
 
   @Override
-  public Void append( AvroFlumeOGEvent evt ) throws org.apache.avro.AvroRemoteException {
+  public Void append( AvroFlumeOGEvent evt ) throws AvroRemoteException {
     counterGroup.incrementAndGet("rpc.received");
     Map<String, String> headers = new HashMap<String, String>();
 
@@ -130,7 +131,7 @@ public class AvroLegacySource extends AbstractSource implements EventDrivenSourc
     headers.put(TIMESTAMP, evt.getTimestamp().toString());
     headers.put(PRIORITY, evt.getPriority().toString());
     headers.put(NANOS, evt.getNanos().toString());
-    for (Entry<CharSequence, ByteBuffer> entry: evt.getFields().entrySet()) {
+    for (Entry<String, ByteBuffer> entry: evt.getFields().entrySet()) {
       headers.put(entry.getKey().toString(), entry.getValue().toString());
     }
     headers.put(OG_EVENT, "yes");
