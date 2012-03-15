@@ -27,7 +27,7 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.flume</groupId>
   <artifactId>flume-parent</artifactId>
-  <version>1.1.0-incubating-SNAPSHOT</version>
+  <version>1.2.0-incubating-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Apache Flume</name>
 
@@ -605,55 +605,55 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-core</artifactId>
-        <version>1.1.0-incubating-SNAPSHOT</version>
+        <version>1.2.0-incubating-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-node</artifactId>
-        <version>1.1.0-incubating-SNAPSHOT</version>
+        <version>1.2.0-incubating-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-channels</groupId>
         <artifactId>flume-file-channel</artifactId>
-        <version>1.1.0-incubating-SNAPSHOT</version>
+        <version>1.2.0-incubating-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-channels</groupId>
         <artifactId>flume-jdbc-channel</artifactId>
-        <version>1.1.0-incubating-SNAPSHOT</version>
+        <version>1.2.0-incubating-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-hdfs-sink</artifactId>
-        <version>1.1.0-incubating-SNAPSHOT</version>
+        <version>1.2.0-incubating-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-irc-sink</artifactId>
-        <version>1.1.0-incubating-SNAPSHOT</version>
+        <version>1.2.0-incubating-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
         <artifactId>flume-thrift-source</artifactId>
-        <version>1.1.0-incubating-SNAPSHOT</version>
+        <version>1.2.0-incubating-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
         <artifactId>flume-avro-source</artifactId>
-        <version>1.1.0-incubating-SNAPSHOT</version>
+        <version>1.2.0-incubating-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-sdk</artifactId>
-        <version>1.1.0-incubating-SNAPSHOT</version>
+        <version>1.2.0-incubating-SNAPSHOT</version>
       </dependency>
 
     </dependencies>
