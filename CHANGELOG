@@ -1,3 +1,4 @@
+
 Release Notes - Flume - Version v1.1.0
 
 ** Sub-task
@@ -13,20 +14,19 @@ Release Notes - Flume - Version v1.1.0
     * [FLUME-957] - Remove unused flume json config file
     * [FLUME-960] - TestAvroSink.testFailedConnect is racy and fails often
     * [FLUME-963] - Add additional tests to TestHDFSEventSink and demystify existing tests
-    * [FLUME-972] - Missing dep when attempting to prepare flume dir for import into Eclipse
-    * [FLUME-987] - LoggerSink prints garbage for body
-    * [FLUME-1003] - The memory channel does not seem to respect the capacity
     * [FLUME-1005] - Several issues with flume-ng script
     * [FLUME-1009] - HDFSEventSink should return BACKOFF when the channel returns null
     * [FLUME-1018] - Context can cause NullPointerException
+    * [FLUME-1027] - Missing log4j library in Flume distribution
+    * [FLUME-1029] - Flume build issue with Avro 1.6.2 and empty local repository
 
 ** Improvement
     * [FLUME-886] - Create Log4j Appender
     * [FLUME-919] - flume-ng script should use exec when spawning the java process
     * [FLUME-922] - Straighten up branches for development
     * [FLUME-925] - Update build infrastructure to follow Apache Maven guidelines
-    * [FLUME-931] - Flume NG TailSource
     * [FLUME-932] - Making flume-ng components pluggage and name aware
+    * [FLUME-934] - hadoop 1.0.0 sink and corresponding profile 
     * [FLUME-935] - Create abstract implementations of basic channel/transaction semantics
     * [FLUME-939] - Load flume-env.sh from flume_conf_dir environment variable / system property as opposed to bin directory 
     * [FLUME-945] - Add the ability to specify a default channel for multiplexing channel selector.
@@ -38,6 +38,7 @@ Release Notes - Flume - Version v1.1.0
     * [FLUME-990] - Hive sink
     * [FLUME-1019] - Document Sink and related interfaces, defining expected behaviors
     * [FLUME-1021] - Document API contracts and expected behavior in additional interfaces, including Source
+    * [FLUME-1030] - Distinguish between temporary and longterm failure to avoid repeated beating on dead components
 
 ** New Feature
     * [FLUME-865] - Implement failover sink 
@@ -46,12 +47,12 @@ Release Notes - Flume - Version v1.1.0
     * [FLUME-930] - Support for multiplexing into different channels from single source.
     * [FLUME-942] - Support event compatibility with Flume 0.9x
     * [FLUME-970] - Create user guide for Flume NG
-    * [FLUME-1015] - S3 sink on flumeNG
 
 ** Task
     * [FLUME-940] - Remove unused code from Flume
     * [FLUME-949] - Collapse PollableSink into Sink interface.
     * [FLUME-977] - Migrate trunk to 0.9.5 branch and move branch flume-728 over to trunk
+    * [FLUME-1028] - Fix jenkins build after addition of submodule
 
 ----
 Release Notes - Flume - Version v1.0.0 - 20111230
