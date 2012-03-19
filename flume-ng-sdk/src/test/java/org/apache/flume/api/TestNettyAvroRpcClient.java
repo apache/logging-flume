@@ -18,8 +18,6 @@ package org.apache.flume.api;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.junit.Test;
 
@@ -34,14 +32,16 @@ import org.apache.flume.api.RpcTestUtils.OKAvroHandler;
 import org.apache.flume.api.RpcTestUtils.ThrowingAvroHandler;
 import org.apache.flume.api.RpcTestUtils.UnknownAvroHandler;
 import org.junit.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 public class TestNettyAvroRpcClient {
 
-  private static final Logger logger =
-      Logger.getLogger(TestNettyAvroRpcClient.class.getName());
+  private static final Logger logger = LoggerFactory
+      .getLogger(TestNettyAvroRpcClient.class);
 
   private static final String localhost = "localhost";
 
@@ -123,7 +123,7 @@ public class TestNettyAvroRpcClient {
       try {
         server.join();
       } catch (InterruptedException ex) {
-        logger.log(Level.WARNING, "Thread interrupted during join()", ex);
+        logger.warn("Thread interrupted during join()", ex);
         Thread.currentThread().interrupt();
       }
       try {
@@ -167,7 +167,7 @@ public class TestNettyAvroRpcClient {
       EventDeliveryException {
 
     RpcTestUtils.handlerSimpleAppendTest(new FailedAvroHandler());
-    logger.severe("Failed: I should never have gotten here!");
+    logger.error("Failed: I should never have gotten here!");
   }
 
   /**
@@ -178,7 +178,7 @@ public class TestNettyAvroRpcClient {
       EventDeliveryException {
 
     RpcTestUtils.handlerSimpleAppendTest(new UnknownAvroHandler());
-    logger.severe("Unknown: I should never have gotten here!");
+    logger.error("Unknown: I should never have gotten here!");
   }
 
   /**
@@ -189,7 +189,7 @@ public class TestNettyAvroRpcClient {
       EventDeliveryException {
 
     RpcTestUtils.handlerSimpleAppendTest(new ThrowingAvroHandler());
-    logger.severe("Throwing: I should never have gotten here!");
+    logger.error("Throwing: I should never have gotten here!");
   }
 
   /**
@@ -200,7 +200,7 @@ public class TestNettyAvroRpcClient {
       EventDeliveryException {
 
     RpcTestUtils.handlerBatchAppendTest(new FailedAvroHandler());
-    logger.severe("Failed: I should never have gotten here!");
+    logger.error("Failed: I should never have gotten here!");
   }
 
   /**
@@ -211,7 +211,7 @@ public class TestNettyAvroRpcClient {
       EventDeliveryException {
 
     RpcTestUtils.handlerBatchAppendTest(new UnknownAvroHandler());
-    logger.severe("Unknown: I should never have gotten here!");
+    logger.error("Unknown: I should never have gotten here!");
   }
 
   /**
@@ -222,7 +222,7 @@ public class TestNettyAvroRpcClient {
       EventDeliveryException {
 
     RpcTestUtils.handlerBatchAppendTest(new ThrowingAvroHandler());
-    logger.severe("Throwing: I should never have gotten here!");
+    logger.error("Throwing: I should never have gotten here!");
   }
 
 }

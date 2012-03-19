@@ -19,8 +19,6 @@ import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import junit.framework.Assert;
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.NettyServer;
@@ -34,14 +32,16 @@ import org.apache.flume.event.EventBuilder;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Helpers for Netty Avro RPC testing
  */
 public class RpcTestUtils {
 
-  private static final Logger logger =
-      Logger.getLogger(TestNettyAvroRpcClient.class.getName());
+  private static final Logger logger = LoggerFactory
+      .getLogger(RpcTestUtils.class);
 
   private static final String localhost = "localhost";
 
@@ -114,7 +114,7 @@ public class RpcTestUtils {
     Server server = new NettyServer(responder,
         new InetSocketAddress(localhost, 0));
     server.start();
-    logger.log(Level.INFO, "Server started on hostname: {0}, port: {1}",
+    logger.info("Server started on hostname: {}, port: {}",
         new Object[] { localhost, Integer.toString(server.getPort()) });
 
     try {
@@ -122,7 +122,7 @@ public class RpcTestUtils {
       Thread.sleep(300L);
 
     } catch (InterruptedException ex) {
-      logger.log(Level.SEVERE, "Thread interrupted. Exception follows.", ex);
+      logger.error("Thread interrupted. Exception follows.", ex);
       Thread.currentThread().interrupt();
     }
 
@@ -138,7 +138,7 @@ public class RpcTestUtils {
       server.close();
       server.join();
     } catch (InterruptedException ex) {
-      logger.log(Level.SEVERE, "Thread interrupted. Exception follows.", ex);
+      logger.error("Thread interrupted. Exception follows.", ex);
       Thread.currentThread().interrupt();
     }
   }
@@ -150,7 +150,7 @@ public class RpcTestUtils {
 
     @Override
     public Status append(AvroFlumeEvent event) throws AvroRemoteException {
-      logger.log(Level.INFO, "OK: Received event from append(): {0}",
+      logger.info("OK: Received event from append(): {}",
           new String(event.getBody().array(), Charset.forName("UTF8")));
       return Status.OK;
     }
@@ -158,7 +158,7 @@ public class RpcTestUtils {
     @Override
     public Status appendBatch(List<AvroFlumeEvent> events) throws
         AvroRemoteException {
-      logger.log(Level.INFO, "OK: Received {0} events from appendBatch()",
+      logger.info("OK: Received {} events from appendBatch()",
           events.size());
       return Status.OK;
     }
@@ -172,7 +172,7 @@ public class RpcTestUtils {
 
     @Override
     public Status append(AvroFlumeEvent event) throws AvroRemoteException {
-      logger.log(Level.INFO, "Failed: Received event from append(): {0}",
+      logger.info("Failed: Received event from append(): {}",
           new String(event.getBody().array(), Charset.forName("UTF8")));
       return Status.FAILED;
     }
@@ -180,7 +180,7 @@ public class RpcTestUtils {
     @Override
     public Status appendBatch(List<AvroFlumeEvent> events) throws
         AvroRemoteException {
-      logger.log(Level.INFO, "Failed: Received {0} events from appendBatch()",
+      logger.info("Failed: Received {} events from appendBatch()",
           events.size());
       return Status.FAILED;
     }
@@ -194,7 +194,7 @@ public class RpcTestUtils {
 
     @Override
     public Status append(AvroFlumeEvent event) throws AvroRemoteException {
-      logger.log(Level.INFO, "Unknown: Received event from append(): {0}",
+      logger.info("Unknown: Received event from append(): {}",
           new String(event.getBody().array(), Charset.forName("UTF8")));
       return Status.UNKNOWN;
     }
@@ -202,7 +202,7 @@ public class RpcTestUtils {
     @Override
     public Status appendBatch(List<AvroFlumeEvent> events) throws
         AvroRemoteException {
-      logger.log(Level.INFO, "Unknown: Received {0} events from appendBatch()",
+      logger.info("Unknown: Received {} events from appendBatch()",
           events.size());
       return Status.UNKNOWN;
     }
@@ -216,7 +216,7 @@ public class RpcTestUtils {
 
     @Override
     public Status append(AvroFlumeEvent event) throws AvroRemoteException {
-      logger.log(Level.INFO, "Throwing: Received event from append(): {0}",
+      logger.info("Throwing: Received event from append(): {}",
           new String(event.getBody().array(), Charset.forName("UTF8")));
       throw new AvroRemoteException("Handler smash!");
     }
@@ -224,7 +224,7 @@ public class RpcTestUtils {
     @Override
     public Status appendBatch(List<AvroFlumeEvent> events) throws
         AvroRemoteException {
-      logger.log(Level.INFO, "Throwing: Received {0} events from appendBatch()",
+      logger.info("Throwing: Received {} events from appendBatch()",
           events.size());
       throw new AvroRemoteException("Handler smash!");
     }
