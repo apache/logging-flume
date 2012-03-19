@@ -25,7 +25,7 @@ limitations under the License.
     <relativePath>..</relativePath>
   </parent>
 
-  <groupId>org.apache.flume</groupId>
+  <groupId>org.apache.flume.flume-ng-clients</groupId>
   <artifactId>flume-ng-log4jappender</artifactId>
   <name>Flume NG Log4j Appender</name>
 
