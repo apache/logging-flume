@@ -64,6 +64,7 @@ public class ThriftLegacySource  extends AbstractSource implements
   private TServerTransport serverTransport;
   private Thread thriftHandlerThread;
 
+  @SuppressWarnings("deprecation")
   private class ThriftFlumeEventServerImpl
         implements ThriftFlumeEventServer.Iface {
     
@@ -124,6 +125,7 @@ public class ThriftLegacySource  extends AbstractSource implements
     counterGroup = new CounterGroup();
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void start() {
     try {

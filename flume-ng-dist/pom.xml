@@ -87,6 +87,14 @@
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
       <artifactId>flume-irc-sink</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
+      <artifactId>flume-thrift-source</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
+      <artifactId>flume-avro-source</artifactId>
+    </dependency>
   </dependencies>
 
 </project>
