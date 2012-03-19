@@ -1,4 +1,4 @@
-Release Notes - Flume - Version v1.1.0
+Release Notes - Flume - Version 1.1.0-incubating
 
 ** Sub-task
     * [FLUME-989] - Factor Flume Avro RPC interfaces out into separate Client SDK
@@ -38,6 +38,7 @@ Release Notes - Flume - Version v1.1.0
     * [FLUME-990] - Hive sink
     * [FLUME-1019] - Document Sink and related interfaces, defining expected behaviors
     * [FLUME-1021] - Document API contracts and expected behavior in additional interfaces, including Source
+    * [FLUME-1032] - Fix / clean up Flume NG build
 
 ** New Feature
     * [FLUME-865] - Implement failover sink 
@@ -54,7 +55,7 @@ Release Notes - Flume - Version v1.1.0
     * [FLUME-1028] - Fix jenkins build after addition of submodule
 
 ----
-Release Notes - Flume - Version v1.0.0 - 20111230
+Release Notes - Flume - Version 1.0.0-incubating
 
 ** Bug
     * [FLUME-830] - flume uber jar is missing files from flume-file-channel project
