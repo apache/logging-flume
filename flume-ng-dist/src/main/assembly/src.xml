@@ -38,11 +38,14 @@
       <useAllReactorProjects>true</useAllReactorProjects>
 
       <includes>
+        <include>org.apache.flume:flume-ng-sdk</include>
         <include>org.apache.flume:flume-ng-core</include>
         <include>org.apache.flume:flume-ng-node</include>
         <include>org.apache.flume:flume-ng-dist</include>
         <include>org.apache.flume:flume-ng-channels</include>
         <include>org.apache.flume:flume-ng-sinks</include>
+        <include>org.apache.flume:flume-ng-legacy-sources</include>
+        <include>org.apache.flume:flume-ng-clients</include>
       </includes>
 
       <sources>
@@ -74,10 +77,13 @@
       <directory>../</directory>
 
       <excludes>
+        <exclude>flume-ng-sdk/**</exclude>
         <exclude>flume-ng-core/**</exclude>
         <exclude>flume-ng-node/**</exclude>
         <exclude>flume-ng-channels/**</exclude>
         <exclude>flume-ng-sinks/**</exclude>
+        <exclude>flume-ng-legacy-sources/**</exclude>
+        <exclude>flume-ng-clients/**</exclude>
         <exclude>flume-ng-dist/**</exclude>
         <exclude>target/**</exclude>
         <exclude>lib/**</exclude>
