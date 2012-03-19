@@ -1,4 +1,4 @@
-Apache Flume 1.0.0-incubating
+Apache Flume 1.1.0-incubating
 
 CONTENTS
 1. What is Apache Flume
@@ -19,21 +19,15 @@ uses a simple extensible data model that allows for online analytic
 application.
 
 2. Status of this release
-This release of Apache Flume is the first release within the Apache
-Incubator, and is labelled and should be considered as an alpha version.
-This means that we do not guarantee any stability, that API and features
-are still likely to change until a final release version.
-This is a 'source-only' release, which means no binary artifacts will
-be distributed as part of the release.
+This release is the second release of Apache Flume within the Apache
+Incubator, and is labelled and should be considered as a beta version.
+As compared to the previous release, it has substantially more features
+and functionality along with bug fixes and other enhancements. However
+it is likely to change until a stable release version.
 
 3. Major changes in this Release
-This section describes the changes between Flume 0.9.x and this version.
-This new codebase of Flume (aka Flume-NG) is refactoring of the first
-generation Flume to solve certain known issues and limitations of the
-original design. It's not backward compatible with previous
-Flume versions (0.9.x) in terms of the configuration as well as plugings.
-More detailed documentation of Flume-NG, please visit
-https://cwiki.apache.org/confluence/display/FLUME/Getting+Started
+Please refer to the CHNAGELONG file for a list of changes that have 
+gone into this release.
 
 4. How to Get Involved
 The Apache Flume project really needs and appreciates any contributions,
