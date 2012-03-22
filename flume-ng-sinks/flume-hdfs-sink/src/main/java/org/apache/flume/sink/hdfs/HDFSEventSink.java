@@ -19,6 +19,7 @@
 package org.apache.flume.sink.hdfs;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -48,6 +49,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,6 +83,8 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private HDFSWriterFactory myWriterFactory;
   private ExecutorService executor;
   private long appendTimeout;
+  private String kerbConfPrincipal;
+  private String kerbKeytabFile;
 
   /*
    * Extended Java LinkedHashMap for open file handle LRU queue We want to clear
@@ -89,6 +93,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private class WriterLinkedHashMap extends LinkedHashMap<String, BucketWriter> {
     private static final long serialVersionUID = 1L;
 
+    @Override
     protected boolean removeEldestEntry(Entry<String, BucketWriter> eldest) {
       /*
        * FIXME: We probably shouldn't shared state this way. Make this class
@@ -141,8 +146,9 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
     if (fileName == null)
       fileName = defaultFileName;
+
     // FIXME: Not transportable.
-    this.path = new String(dirpath + "/" + fileName);
+    this.path = dirpath + "/" + fileName;
 
     if (rollInterval == null) {
       this.rollInterval = defaultRollInterval;
@@ -206,6 +212,20 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     } else {
       this.appendTimeout = Long.parseLong(appendTimeout);
     }
+
+    kerbConfPrincipal = context.getString("hdfs.kerberosPrincipal", "");
+    kerbKeytabFile = context.getString("hdfs.kerberosKeytab", "");
+
+    boolean useSec = isHadoopSecurityEnabled();
+    LOG.info("Hadoop Security enabled: " + useSec);
+
+    if (useSec) {
+      if (tryKerberosLogin()) {
+        LOG.info("Successfully logged in via Kerberos.");
+      } else {
+        LOG.warn("Failed to log in via Kerberos.");
+      }
+    }
   }
 
   private static boolean codecMatches(Class<? extends CompressionCodec> cls,
@@ -268,6 +288,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
    */
   private BucketFlushStatus backgroundAppend(final BucketWriter bw, final Event e) throws IOException, InterruptedException {
     Future<BucketFlushStatus> future = executor.submit(new Callable<BucketFlushStatus>() {
+      @Override
       public BucketFlushStatus call() throws Exception {
         return bw.append(e);
       }
@@ -323,7 +344,6 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       transaction.begin();
       Event event = null;
       for (int txnEventCount = 0; txnEventCount < txnEventMax; txnEventCount++) {
-        event = null;
         event = channel.take();
         if (event == null) {
           break;
@@ -416,6 +436,143 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       }
     }
     super.start();
+  }
+
+  /**
+   * Wraps call to Hadoop UserGroupInformation.isSecurityEnabled()
+   * @return {@code true} if enabled, {@code false} if disabled or unavailable
+   */
+  private boolean isHadoopSecurityEnabled() {
+    /*
+     * UserGroupInformation is in hadoop 0.18
+     * UserGroupInformation.isSecurityEnabled() not in pre security API.
+     *
+     * boolean enabled = UserGroupInformation.isSecurityEnabled();
+     */
+    boolean enabled;
+    try {
+      Class<UserGroupInformation> ugiC = UserGroupInformation.class;
+      // static call, null this obj
+      enabled = (Boolean) ugiC.getMethod("isSecurityEnabled").invoke(null);
+    } catch (NoSuchMethodException e) {
+      LOG.warn("Flume is using Hadoop core "
+          + org.apache.hadoop.util.VersionInfo.getVersion()
+          + " which does not support Security / Authentication: "
+          + e.getMessage());
+      return false;
+    } catch (Exception e) {
+      LOG.error("Unexpected error checking for Hadoop security support. " +
+          "Exception follows.", e);
+      return false;
+    }
+
+    return enabled;
+  }
+
+  /**
+   * Attempt Kerberos login via a keytab if security is enabled in Hadoop.
+   *
+   * This method should only be called if {@link #isHadoopSecurityEnabled()}
+   * returns true. This function assumes that is the case.
+   *
+   * This should be able to support multiple Hadoop clusters as long as the
+   * particular principal is allowed on multiple clusters.
+   *
+   * To preserve compatibility with non-security enhanced HDFS, we use
+   * reflection on various UserGroupInformation and SecurityUtil related method
+   * calls.
+   *
+   * @return {@code true} if and only if login was successful.
+   */
+  private boolean tryKerberosLogin() {
+
+    // attempt to load kerberos information for authenticated hdfs comms.
+    LOG.info("Kerberos login as principal (" + kerbConfPrincipal + ") from " +
+        "keytab file (" + kerbKeytabFile + ")");
+
+    if (kerbConfPrincipal.isEmpty()) {
+      LOG.error("Hadoop running in secure mode, but Flume config doesn't " +
+          "specify a principal to use for Kerberos auth.");
+      return false;
+    }
+
+    if (kerbKeytabFile.isEmpty()) {
+      LOG.error("Hadoop running in secure mode, but Flume config doesn't " +
+          "specify a keytab to use for Kerberos auth.");
+      return false;
+    }
+
+    String principal;
+    try {
+      /*
+       * SecurityUtil not present pre hadoop 20.2
+       *
+       * SecurityUtil.getServerPrincipal not in pre-security Hadoop API
+       *
+       * // resolves _HOST pattern using standard Hadoop search/replace
+       * // via DNS lookup when 2nd argument is empty
+       *
+       * String principal = SecurityUtil.getServerPrincipal(confPrincipal, "");
+       */
+      Class suC = Class.forName("org.apache.hadoop.security.SecurityUtil");
+      Method m = suC.getMethod("getServerPrincipal", String.class, String.class);
+      principal = (String) m.invoke(null, kerbConfPrincipal, "");
+    } catch (Exception e) {
+      LOG.error("Host lookup error resolving kerberos principal (" +
+          kerbConfPrincipal + "). Exception follows.", e);
+      return false;
+    }
+
+    try {
+      /*
+       * UserGroupInformation.loginUserFromKeytab not in pre-security Hadoop API
+       *
+       * // attempts to log user in using resolved principal
+       *
+       * UserGroupInformation.loginUserFromKeytab(principal, kerbKeytabFile);
+       */
+      Class<UserGroupInformation> ugi = UserGroupInformation.class;
+      ugi.getMethod("loginUserFromKeytab", String.class, String.class)
+          .invoke(null, principal, kerbKeytabFile);
+    } catch (Exception e) {
+      LOG.error("Authentication or file read error while attempting to " +
+          "login as kerberos principal (" + principal + ") using keytab (" +
+          kerbKeytabFile + "). Exception follows.", e);
+      return false;
+    }
+
+    try {
+      /*
+       * getLoginUser, getAuthenticationMethod, and isLoginKeytabBased are not
+       * in Hadoop 20.2, only kerberized enhanced version.
+       *
+       * getUserName is in all 0.18.3+
+       *
+       * UserGroupInformation ugi = UserGroupInformation.getLoginUser();
+       * LOG.info("Auth method: " + ugi.getAuthenticationMethod());
+       * LOG.info(" User name: " + ugi.getUserName());
+       * LOG.info(" Using keytab: " +
+       * UserGroupInformation.isLoginKeytabBased());
+       */
+
+      Class<UserGroupInformation> ugiC = UserGroupInformation.class;
+      // static call, null this obj
+      UserGroupInformation ugi = (UserGroupInformation) ugiC.getMethod(
+          "getLoginUser").invoke(null);
+      String authMethod = ugiC.getMethod("getAuthenticationMethod").invoke(ugi)
+          .toString();
+      boolean keytabBased = (Boolean) ugiC.getMethod("isLoginKeytabBased")
+          .invoke(ugi);
+
+      LOG.info("Auth method: " + authMethod);
+      LOG.info(" User name: " + ugi.getUserName());
+      LOG.info(" Using keytab: " + keytabBased);
+    } catch (Exception e) {
+      LOG.error("Flume was unable to dump kerberos login user"
+          + " and authentication method", e);
+    }
+
+    return true;
   }
 
 }

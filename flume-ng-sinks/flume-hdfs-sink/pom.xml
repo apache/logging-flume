@@ -76,6 +76,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>${hadoop.common.artifact.id}</artifactId>
+      <optional>true</optional>
     </dependency>
 
   </dependencies>
@@ -94,10 +95,12 @@ limitations under the License.
         <dependency>
           <groupId>org.apache.hadoop</groupId>
           <artifactId>hadoop-hdfs</artifactId>
+          <optional>true</optional>
         </dependency>
         <dependency>
           <groupId>org.apache.hadoop</groupId>
           <artifactId>hadoop-auth</artifactId>
+          <optional>true</optional>
         </dependency>
       </dependencies>
     </profile>
