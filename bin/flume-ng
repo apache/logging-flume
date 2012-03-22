@@ -215,7 +215,7 @@ if [ -z "${JAVA_HOME}" ] ; then
   else
     JAVA_DEFAULT=`type -p java`
     [ -n "$JAVA_DEFAULT" ] || error "Unable to find java executable. Is it in your PATH?" 1
-    JAVA_HOME=$(dirname $(dirname $JAVA_DEFAULT))
+    JAVA_HOME=$(cd $(dirname $JAVA_DEFAULT)/..; pwd)
   fi
 fi
 
@@ -223,7 +223,7 @@ fi
 
 # figure out where the flume distribution is
 if [ -z "${FLUME_HOME}" ] ; then
-  FLUME_HOME=$(cd $(dirname $(dirname $0)); pwd)
+  FLUME_HOME=$(cd $(dirname $0)/..; pwd)
 fi
 
 # If the user hasn't overridden the classpath, build it from the dist lib dir
