@@ -30,26 +30,30 @@ import org.apache.flume.Sink;
 import org.apache.flume.SinkProcessor;
 import org.apache.flume.Sink.Status;
 import org.apache.flume.lifecycle.LifecycleState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * FailoverSinkProcessor is in no way thread safe and expects to be run via
  * SinkRunner Additionally, setSinks must be called before configure, and
  * additional sinks cannot be added while running
- * 
+ *
  * To configure, set a sink groups processor to "failover" and set priorities
- * for individual sinks:
- * 
+ * for individual sinks, all priorities must be unique:
+ *
  * Ex)
- * 
+ *
  * host1.sinkgroups = group1
- * 
+ *
  * host1.sinkgroups.group1.sinks = sink1 sink2
  * host1.sinkgroups.group1.processor.type = failover
  * host1.sinkgroups.group1.processor.priority.sink1 = 5
  * host1.sinkgroups.group1.processor.priority.sink2 = 10
- * 
+ *
  */
 public class FailoverSinkProcessor implements SinkProcessor {
+  private static final Logger logger = LoggerFactory
+      .getLogger(FailoverSinkProcessor.class);
 
   private static final String PRIORITY_PREFIX = "priority.";
   private Map<String, Sink> sinks;
@@ -94,7 +98,13 @@ public class FailoverSinkProcessor implements SinkProcessor {
       } catch (NullPointerException e) {
         priority = --nextPrio;
       }
-      liveSinks.put(priority, sinks.get(entry.getKey()));
+      if(!liveSinks.containsKey(priority)) {
+        liveSinks.put(priority, sinks.get(entry.getKey()));
+      } else {
+        logger.warn("Sink {} not added to FailverSinkProcessor as priority" +
+        		"duplicates that of sink {}", entry.getKey(),
+        		liveSinks.get(priority));
+      }
     }
     activeSink = liveSinks.get(liveSinks.lastKey());
   }
