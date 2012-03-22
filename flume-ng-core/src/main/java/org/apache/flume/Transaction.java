@@ -17,6 +17,9 @@
  */
 package org.apache.flume;
 
+import org.apache.flume.channel.BasicChannelSemantics;
+import org.apache.flume.channel.BasicTransactionSemantics;
+
 /**
  * <p>Provides the transaction boundary while accessing a channel.</p>
  * <p>A <tt>Transaction</tt> instance is used to encompass channel access
@@ -39,6 +42,11 @@ package org.apache.flume;
  * </code></pre>
  * <p>Depending upon the implementation of the channel, the transaction
  * semantics may be strong, or best-effort only.</p>
+ *
+ * <p>
+ * Transactions must be thread safe. To provide  a guarantee of thread safe
+ * access to Transactions, see {@link BasicChannelSemantics} and
+ * {@link  BasicTransactionSemantics}.
  *
  * @see org.apache.flume.Channel
  */

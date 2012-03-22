@@ -34,6 +34,10 @@ import org.apache.flume.lifecycle.LifecycleAware;
  * be used for separating configuration and working namespaces.
  * </p>
  *
+ * <p>
+ * No guarantees are given regarding thread safe access.
+ * </p>
+ *
  * @see org.apache.flume.Channel
  * @see org.apache.flume.Sink
  */

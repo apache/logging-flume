@@ -35,6 +35,11 @@ import org.apache.flume.lifecycle.LifecycleAware;
  * Sinks are associated with unique names that can be used for separating
  * configuration and working namespaces.
  * </p>
+ * <p>
+ * While the {@link Sink#process()} call is guaranteed to only be accessed
+ * by a single thread, other calls may be concurrently accessed and should
+ * thus be protected.
+ * </p>
  *
  * @see org.apache.flume.Channel
  * @see org.apache.flume.SinkProcessor

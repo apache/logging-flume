@@ -24,8 +24,15 @@ import org.apache.flume.conf.Configurable;
 import org.apache.flume.lifecycle.LifecycleAware;
 
 /**
- * <p>Interface for a device that allows abstraction of the behavior of multiple
- * sinks, always assigned to a SinkRunner</p>
+ * <p>
+ * Interface for a device that allows abstraction of the behavior of multiple
+ * sinks, always assigned to a SinkRunner
+ * </p>
+ * <p>
+ * A sink processors {@link SinkProcessor#process()} method will only be
+ * accessed by a single runner thread. However configuration methods
+ * such as {@link Configurable#configure} may be concurrently accessed.
+ *
  * @see org.apache.flume.Sink
  * @see org.apache.flume.SinkRunner
  * @see org.apache.flume.sink.SinkGroup

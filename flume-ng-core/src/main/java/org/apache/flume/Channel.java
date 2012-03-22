@@ -41,6 +41,11 @@ import org.apache.flume.lifecycle.LifecycleAware;
  * Channels are associated with unique {@linkplain NamedComponent names} that
  * can be used for separating configuration and working namespaces.
  * </p>
+ * <p>
+ * Channels must be thread safe, protecting any internal invariants as no
+ * guarantees are given as to when and by how many sources/sinks they may
+ * be simultaneously accessed by.
+ * </p>
  *
  * @see org.apache.flume.Source
  * @see org.apache.flume.Sink
