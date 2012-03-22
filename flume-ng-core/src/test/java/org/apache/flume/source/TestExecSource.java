@@ -19,11 +19,12 @@
 
 package org.apache.flume.source;
 
+
+import static org.junit.Assert.*;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.Channel;
@@ -41,6 +42,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
+
 public class TestExecSource {
 
   private AbstractSource source;
@@ -52,7 +56,7 @@ public class TestExecSource {
 
   @Test
   public void testProcess() throws InterruptedException, LifecycleException,
-      EventDeliveryException, IOException {
+  EventDeliveryException, IOException {
 
     Channel channel = new MemoryChannel();
     Context context = new Context();
@@ -64,11 +68,8 @@ public class TestExecSource {
     Configurables.configure(source, context);
     Configurables.configure(channel, context);
 
-    List<Channel> channels = new ArrayList<Channel>();
-    channels.add(channel);
-
     ChannelSelector rcs = new ReplicatingChannelSelector();
-    rcs.setChannels(channels);
+    rcs.setChannels(Lists.newArrayList(channel));
 
     source.setChannelProcessor(new ChannelProcessor(rcs));
 
@@ -100,4 +101,46 @@ public class TestExecSource {
     FileUtils.forceDelete(file1);
   }
 
+
+  @Test
+  public void testRestart() throws InterruptedException, LifecycleException,
+  EventDeliveryException, IOException {
+
+    Channel channel = new MemoryChannel();
+    Context context = new Context();
+
+    context.put(ExecSourceConfigurationConstants.CONFIG_RESTART_THROTTLE, "10");
+    context.put(ExecSourceConfigurationConstants.CONFIG_RESTART, "true");
+
+    context.put("command", "echo flume");
+    Configurables.configure(source, context);
+    Configurables.configure(channel, context);
+
+    ChannelSelector rcs = new ReplicatingChannelSelector();
+    rcs.setChannels(Lists.newArrayList(channel));
+
+    source.setChannelProcessor(new ChannelProcessor(rcs));
+
+    source.start();
+    Transaction transaction = channel.getTransaction();
+
+    transaction.begin();
+
+    long start = System.currentTimeMillis();
+
+    for(int i = 0; i < 5; i++) {
+      Event event = channel.take();
+      assertNotNull(event);
+      assertNotNull(event.getBody());
+      assertEquals("flume", new String(event.getBody(), Charsets.UTF_8));
+    }
+
+    // ensure restartThrottle was turned down as expected
+    assertTrue(System.currentTimeMillis() - start < 10000L);
+
+    transaction.commit();
+    transaction.close();
+
+    source.stop();
+  }
 }
