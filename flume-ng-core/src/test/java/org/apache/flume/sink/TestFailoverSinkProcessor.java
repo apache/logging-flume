@@ -125,7 +125,7 @@ public class TestFailoverSinkProcessor {
    * Test failover by feeding events to the channel and verifying at various
    * stages that the number of events consumed by each sink matches expected
    * failover patterns
-   * 
+   *
    * @throws InterruptedException
    */
   @Test
@@ -159,6 +159,7 @@ public class TestFailoverSinkProcessor {
     params.put("processor.priority.s1", "3");
     params.put("processor.priority.s2", "2");
     params.put("processor.priority.s3", "1");
+    params.put("processor.maxpenalty", "10000");
     context.putAll(params);
     Configurables.configure(group, context);
     SinkRunner runner = new SinkRunner(group.getProcessor());
@@ -190,6 +191,10 @@ public class TestFailoverSinkProcessor {
     Assert.assertEquals(new Integer(5), s3.getWritten());
     // test rollover to recovered servers
     s2.setRemaining(20);
+
+    // get us past the retry time for the failed sink
+    Thread.sleep(5000);
+
     for(int i = 0; i < 100; i++) {
       Transaction tx = ch.getTransaction();
       tx.begin();
@@ -200,8 +205,8 @@ public class TestFailoverSinkProcessor {
     Thread.sleep(1000);
 
     Assert.assertEquals(new Integer(10), s1.getWritten());
-    Assert.assertEquals(new Integer(55), s2.getWritten());
-    Assert.assertEquals(new Integer(100), s3.getWritten());
+    Assert.assertEquals(new Integer(70), s2.getWritten());
+    Assert.assertEquals(new Integer(85), s3.getWritten());
 
     runner.stop();
     ch.stop();
