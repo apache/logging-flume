@@ -21,10 +21,8 @@ package org.apache.flume.sink.hdfs;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
@@ -44,7 +42,6 @@ import org.apache.flume.conf.Configurable;
 import org.apache.flume.formatter.output.BucketPath;
 import org.apache.flume.sink.AbstractSink;
 import org.apache.flume.sink.FlumeFormatter;
-import org.apache.flume.sink.hdfs.BucketWriter.BucketFlushStatus;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.compress.CompressionCodec;
@@ -52,6 +49,9 @@ import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 
 public class HDFSEventSink extends AbstractSink implements Configurable {
   private static final Logger LOG = LoggerFactory
@@ -67,13 +67,32 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   static final String defaultFileType = HDFSWriterFactory.SequenceFileType;
   static final int defaultMaxOpenFiles = 5000;
   static final String defaultWriteFormat = HDFSFormatterFactory.hdfsWritableFormat;
+  /**
+   * Default length of time we wait for an append
+   * before closing the file and moving on.
+   */
   static final long defaultAppendTimeout = 1000;
+  /**
+   * Default length of time we for a non-append
+   * before closing the file and moving on. This
+   * includes open/close/flush.
+   */
+  static final long defaultCallTimeout = 5000;
+  /**
+   * Default number of threads available for tasks
+   * such as append/open/close/flush with hdfs.
+   * These tasks are done in a separate thread in
+   * the case that they take too long. In which
+   * case we create a new file and move on.
+   */
+  static final int defaultThreadPoolSize = 10;
 
   private long rollInterval;
   private long rollSize;
   private long rollCount;
   private long txnEventMax;
   private long batchSize;
+  private int threadsPoolSize;
   private CompressionCodec codeC;
   private CompressionType compType;
   private String fileType;
@@ -85,6 +104,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private long appendTimeout;
   private String kerbConfPrincipal;
   private String kerbKeytabFile;
+  private long callTimeout;
 
   /*
    * Extended Java LinkedHashMap for open file handle LRU queue We want to clear
@@ -123,63 +143,38 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   public HDFSEventSink() {
     myWriterFactory = new HDFSWriterFactory();
   }
-  
+
   public HDFSEventSink(HDFSWriterFactory newWriterFactory) {
     myWriterFactory = newWriterFactory;
   }
 
-  // read configuration and setup thresholds
+    // read configuration and setup thresholds
   @Override
   public void configure(Context context) {
-    String dirpath = context.getString("hdfs.path");
-    String fileName = context.getString("hdfs.filePrefix");
-    String rollInterval = context.getString("hdfs.rollInterval");
-    String rollSize = context.getString("hdfs.rollSize");
-    String rollCount = context.getString("hdfs.rollCount");
-    String batchSize = context.getString("hdfs.batchSize");
-    String txnEventMax = context.getString("hdfs.txnEventMax");
-    String codecName = context.getString("hdfs.codeC");
-    String fileType = context.getString("hdfs.fileType");
-    String maxOpenFiles = context.getString("hdfs.maxOpenFiles");
-    String writeFormat = context.getString("hdfs.writeFormat");
-    String appendTimeout = context.getString("hdfs.appendTimeout");
-
-    if (fileName == null)
-      fileName = defaultFileName;
-
+    String dirpath = Preconditions.checkNotNull(
+        context.getString("hdfs.path"), "hdfs.path is required");
+    String fileName = context.getString("hdfs.filePrefix", defaultFileName);
     // FIXME: Not transportable.
-    this.path = dirpath + "/" + fileName;
+    this.path = new String(dirpath + "/" + fileName);
+    rollInterval = context.getLong("hdfs.rollInterval", defaultRollInterval);
+    rollSize = context.getLong("hdfs.rollSize", defaultRollSize);
+    rollCount = context.getLong("hdfs.rollCount", defaultRollCount);
+    batchSize = context.getLong("hdfs.batchSize", defaultBatchSize);
+    txnEventMax = context.getLong("hdfs.txnEventMax", defaultTxnEventMax);
+    String codecName = context.getString("hdfs.codeC");
+    fileType = context.getString("hdfs.fileType", defaultFileType);
+    maxOpenFiles = context.getInteger("hdfs.maxOpenFiles", defaultMaxOpenFiles);
+    writeFormat = context.getString("hdfs.writeFormat", defaultWriteFormat);
+    appendTimeout = context.getLong("hdfs.appendTimeout", defaultAppendTimeout);
+    callTimeout = context.getLong("hdfs.callTimeout", defaultCallTimeout);
+    threadsPoolSize = context.getInteger("hdfs.threadsPoolSize", defaultThreadPoolSize);
+    kerbConfPrincipal = context.getString("hdfs.kerberosPrincipal", "");
+    kerbKeytabFile = context.getString("hdfs.kerberosKeytab", "");
 
-    if (rollInterval == null) {
-      this.rollInterval = defaultRollInterval;
-    } else {
-      this.rollInterval = Long.parseLong(rollInterval);
-    }
-
-    if (rollSize == null) {
-      this.rollSize = defaultRollSize;
-    } else {
-      this.rollSize = Long.parseLong(rollSize);
-    }
-
-    if (rollCount == null) {
-      this.rollCount = defaultRollCount;
-    } else {
-      this.rollCount = Long.parseLong(rollCount);
-    }
-
-    if ((batchSize == null) || batchSize.equals("0")) {
-      this.batchSize = defaultBatchSize;
-    } else {
-      this.batchSize = Long.parseLong(batchSize);
-    }
-
-    if ((txnEventMax == null) || txnEventMax.equals("0")) {
-      this.txnEventMax = defaultTxnEventMax;
-    } else {
-      this.txnEventMax = Long.parseLong(txnEventMax);
-    }
-
+    Preconditions.checkArgument(batchSize > 0,
+        "batchSize must be greater than 0");
+    Preconditions.checkArgument(txnEventMax > 0,
+        "txnEventMax must be greater than 0");
     if (codecName == null) {
       codeC = null;
       compType = CompressionType.NONE;
@@ -188,33 +183,6 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       // TODO : set proper compression type
       compType = CompressionType.BLOCK;
     }
-
-    if (fileType == null) {
-      this.fileType = defaultFileType;
-    } else {
-      this.fileType = fileType;
-    }
-
-    if (maxOpenFiles == null) {
-      this.maxOpenFiles = defaultMaxOpenFiles;
-    } else {
-      this.maxOpenFiles = Integer.parseInt(maxOpenFiles);
-    }
-
-    if (writeFormat == null) {
-      this.writeFormat = defaultWriteFormat;
-    } else {
-      this.writeFormat = writeFormat;
-    }
-
-    if (appendTimeout == null) {
-      this.appendTimeout = defaultAppendTimeout;
-    } else {
-      this.appendTimeout = Long.parseLong(appendTimeout);
-    }
-
-    kerbConfPrincipal = context.getString("hdfs.kerberosPrincipal", "");
-    kerbKeytabFile = context.getString("hdfs.kerberosKeytab", "");
 
     boolean useSec = isHadoopSecurityEnabled();
     LOG.info("Hadoop Security enabled: " + useSec);
@@ -256,7 +224,6 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     codecStrs.add("None");
     for (Class<? extends CompressionCodec> cls : codecs) {
       codecStrs.add(cls.getSimpleName());
-
       if (codecMatches(cls, codecName)) {
         try {
           codec = cls.newInstance();
@@ -282,27 +249,40 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     return codec;
   }
 
-  /* 
-   * Execute the append on a separate thread and wait for the completion for the specified amount of time
-   * In case of timeout, cancel the append and throw an IOException
+  /**
+   * Execute the callable on a separate thread and wait for the completion
+   * for the specified amount of time in milliseconds. In case of timeout
+   * or any other error, log error and return null.
    */
-  private BucketFlushStatus backgroundAppend(final BucketWriter bw, final Event e) throws IOException, InterruptedException {
-    Future<BucketFlushStatus> future = executor.submit(new Callable<BucketFlushStatus>() {
-      @Override
-      public BucketFlushStatus call() throws Exception {
-        return bw.append(e);
-      }
-    });
-
+  private static <T> T callWithTimeoutLogError(final ExecutorService executor, long timeout, String name, final Callable<T> callable) {
     try {
-      if (appendTimeout > 0) {
-        return future.get(appendTimeout, TimeUnit.MILLISECONDS);
+      return callWithTimeout(executor, timeout, callable);
+    } catch (Exception e) {
+      LOG.error("Error calling " + callable, e);
+      if(e instanceof InterruptedException) {
+        Thread.currentThread().interrupt();
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Execute the callable on a separate thread and wait for the completion
+   * for the specified amount of time in milliseconds. In case of timeout
+   * cancel the callable and throw an IOException
+   */
+  private static <T> T callWithTimeout(final ExecutorService executor, long timeout, final Callable<T> callable)
+      throws IOException, InterruptedException {
+    Future<T> future = executor.submit(callable);
+    try {
+      if (timeout > 0) {
+        return future.get(timeout, TimeUnit.MILLISECONDS);
       } else {
         return future.get();
       }
     } catch (TimeoutException eT) {
       future.cancel(true);
-      throw new IOException("Append timed out", eT);
+      throw new IOException("Callable timed out", eT);
     } catch (ExecutionException e1) {
       Throwable cause = e1.getCause();
       if (cause instanceof IOException) {
@@ -311,22 +291,19 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
         throw (InterruptedException) cause;
       } else if (cause instanceof RuntimeException) {
         throw (RuntimeException) cause;
+      } else if (cause instanceof Error) {
+        throw (Error)cause;
       } else {
-        // we have a throwable that is not an exception. (such as a
-        // NoClassDefFoundError)
-        LOG.error("Got a throwable that is not an exception! Bailing out!",
-            e1.getCause());
-        throw new RuntimeException(e1.getCause());
+        throw new RuntimeException(e1);
       }
     } catch (CancellationException ce) {
       throw new InterruptedException(
-          "Blocked append interrupted by rotation event");
+          "Blocked callable interrupted by rotation event");
     } catch (InterruptedException ex) {
       LOG.warn("Unexpected Exception " + ex.getMessage(), ex);
       throw (InterruptedException) ex;
     }
   }
-
   /**
    * Pull events out of channel and send it to HDFS - take at the most
    * txnEventMax, that's the maximum #events to hold in channel for a given
@@ -337,49 +314,64 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   public Status process() throws EventDeliveryException {
     Channel channel = getChannel();
     Transaction transaction = channel.getTransaction();
-    Map<String, BucketWriter> batchMap = new HashMap<String, BucketWriter>();
-    BucketFlushStatus syncedUp;
-
+    String realPath = null;
+    List<BucketWriter> writers = Lists.newArrayList();
     try {
       transaction.begin();
       Event event = null;
       for (int txnEventCount = 0; txnEventCount < txnEventMax; txnEventCount++) {
+        realPath = null;
         event = channel.take();
         if (event == null) {
           break;
         }
 
         // reconstruct the path name by substituting place holders
-        String realPath = BucketPath.escapeString(path, event.getHeaders());
-        BucketWriter bw = sfWriters.get(realPath);
+        realPath = BucketPath.escapeString(path, event.getHeaders());
+        BucketWriter bucketWriter = sfWriters.get(realPath);
 
         // we haven't seen this file yet, so open it and cache the handle
-        if (bw == null) {
-          HDFSWriter writer = myWriterFactory.getWriter(fileType);
-          FlumeFormatter formatter = HDFSFormatterFactory
+        if (bucketWriter == null) {
+          final HDFSWriter writer = myWriterFactory.getWriter(fileType);
+          final FlumeFormatter formatter = HDFSFormatterFactory
               .getFormatter(writeFormat);
-          bw = new BucketWriter(rollInterval, rollSize, rollCount, batchSize);
-          bw.open(realPath, codeC, compType, writer, formatter);
-          sfWriters.put(realPath, bw);
+          bucketWriter = new BucketWriter(rollInterval, rollSize, rollCount, batchSize);
+          final BucketWriter callableWriter = bucketWriter;
+          final String callablePath = realPath;
+          final CompressionCodec callableCodec = codeC;
+          final CompressionType callableCompType = compType;
+          callWithTimeout(executor, callTimeout, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+              synchronized(callableWriter) {
+                callableWriter.open(callablePath, callableCodec, callableCompType, writer, formatter);
+              }
+              return null;
+            }
+          });
+          sfWriters.put(realPath, bucketWriter);
+          writers.add(bucketWriter);
         }
 
         // Write the data to HDFS
-        syncedUp = backgroundAppend(bw, event);
-
-        // keep track of the files in current batch that are not flushed
-        // we need to flush all those at the end of the transaction
-        if (syncedUp == BucketFlushStatus.BatchStarted)
-          batchMap.put(bw.getFilePath(), bw);
-        else if ((batchSize > 1)
-            && (syncedUp == BucketFlushStatus.BatchFlushed))
-          batchMap.remove(bw.getFilePath());
+        final BucketWriter callableWriter = bucketWriter;
+        final Event callableEvent = event;
+        callWithTimeout(executor, appendTimeout, new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            synchronized(callableWriter) {
+              try {
+                callableWriter.append(callableEvent);
+              } catch(IOException ex) {
+                callableWriter.abort(); // close/open
+                callableWriter.append(callableEvent); // retry
+              }
+              return null;
+            }
+          }
+        });
       }
 
-      // flush any pending writes in the given transaction
-      for (Entry<String, BucketWriter> e : batchMap.entrySet()) {
-        e.getValue().flush();
-      }
-      batchMap.clear();
       transaction.commit();
       if(event == null) {
         return Status.BACKOFF;
@@ -392,11 +384,21 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     } catch (Exception e) {
       transaction.rollback();
       LOG.error("process failed", e);
-      throw new EventDeliveryException(e.getMessage());
+      throw new EventDeliveryException(e);
     } finally {
-      // clear any leftover writes in the given transaction
-      for (Entry<String, BucketWriter> e : batchMap.entrySet()) {
-        e.getValue().abort();
+      for (BucketWriter writer : writers) {
+        final BucketWriter callableWriter = writer;
+        LOG.info("Calling abort on " + callableWriter);
+        callWithTimeoutLogError(executor, callTimeout, "Calling abort on "
+        + callableWriter, new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            synchronized(callableWriter) {
+              callableWriter.abort();
+            }
+            return null;
+          }
+        });
       }
       transaction.close();
     }
@@ -404,36 +406,51 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
   @Override
   public void stop() {
-    try {
-      for (Entry<String, BucketWriter> e : sfWriters.entrySet()) {
-        LOG.info("Closing " + e.getKey());
-        e.getValue().close();
-      }
-    } catch (IOException eIO) {
-      LOG.warn("IOException in opening file", eIO);
+    for (Entry<String, BucketWriter> e : sfWriters.entrySet()) {
+      LOG.info("Closing " + e.getKey());
+      final BucketWriter callableWriter = e.getValue();
+      callWithTimeoutLogError(executor, callTimeout, "Closing " + e.getKey(), new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          synchronized(callableWriter) {
+            callableWriter.close();
+          }
+          return null;
+        }
+      });
     }
     executor.shutdown();
     try {
       while (executor.isTerminated() == false) {
-        executor.awaitTermination(defaultAppendTimeout, TimeUnit.MILLISECONDS);
+        executor.awaitTermination(Math.max(defaultCallTimeout, callTimeout),
+            TimeUnit.MILLISECONDS);
       }
     } catch (InterruptedException ex) {
-      LOG.warn("shutdown interrupted" + ex.getMessage(), ex);
+      LOG.warn("shutdown interrupted", ex);
     }
-
     executor = null;
     super.stop();
   }
 
   @Override
   public void start() {
-    executor = Executors.newFixedThreadPool(1);
+    executor = Executors.newFixedThreadPool(threadsPoolSize);
+    // XXX if restarted, the code below reopens the writers from the
+    // previous "process" executions. Is this what we want? Why
+    // not clear this list during close since the appropriate
+    // writers will be opened in "process"?
     for (Entry<String, BucketWriter> e : sfWriters.entrySet()) {
-      try {
-        e.getValue().open();
-      } catch (IOException eIO) {
-        LOG.warn("IOException in opening file", eIO);
-      }
+      final BucketWriter callableWriter = e.getValue();
+      callWithTimeoutLogError(executor, callTimeout, "Calling open on " +
+      callableWriter, new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          synchronized(callableWriter) {
+            callableWriter.open();
+          }
+          return null;
+        }
+      });
     }
     super.start();
   }
@@ -514,7 +531,9 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
        *
        * String principal = SecurityUtil.getServerPrincipal(confPrincipal, "");
        */
+      @SuppressWarnings("rawtypes")
       Class suC = Class.forName("org.apache.hadoop.security.SecurityUtil");
+      @SuppressWarnings("unchecked")
       Method m = suC.getMethod("getServerPrincipal", String.class, String.class);
       principal = (String) m.invoke(null, kerbConfPrincipal, "");
     } catch (Exception e) {
@@ -574,5 +593,4 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
     return true;
   }
-
 }

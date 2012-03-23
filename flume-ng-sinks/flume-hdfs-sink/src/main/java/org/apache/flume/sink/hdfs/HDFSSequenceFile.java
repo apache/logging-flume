@@ -73,6 +73,5 @@ public class HDFSSequenceFile implements HDFSWriter {
   @Override
   public void close() throws IOException {
     writer.close();
-    writer = null;
   }
 }

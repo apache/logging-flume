@@ -19,6 +19,7 @@
 package org.apache.flume.sink.hdfs;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.flume.Event;
 import org.apache.flume.sink.FlumeFormatter;
@@ -27,20 +28,27 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.compress.CompressionCodec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BucketWriter {
 
-  public static enum BucketFlushStatus {
-    BatchStarted, BatchPending, BatchFlushed
-  }
+
+  private static final Logger LOG = LoggerFactory
+      .getLogger(BucketWriter.class);
 
   private static final String IN_USE_EXT = ".tmp";
+  /**
+   * In case of an error writing to HDFS (it hangs) this instance will be
+   * tossed away and we will create a new instance. Gurantee unique files
+   * in this case.
+   */
+  private static final AtomicLong fileExentionCounter = new AtomicLong(0);
   private HDFSWriter writer;
   private FlumeFormatter formatter;
   private long eventCounter;
   private long processSize;
   private long lastProcessTime;
-  private long fileExentionCounter;
   private long batchCounter;
   private String filePath;
   private long rollInterval;
@@ -68,7 +76,6 @@ public class BucketWriter {
     batchSize = bSize;
 
     resetCounters();
-    fileExentionCounter = 0;
     // open();
   }
 
@@ -77,14 +84,17 @@ public class BucketWriter {
       throw new IOException("Invalid file settings");
     }
 
+    long counter = fileExentionCounter.incrementAndGet();
     if (codeC == null) {
-      bucketPath = filePath + "." + fileExentionCounter;
+      bucketPath = filePath + "." + counter;
       writer.open(bucketPath + IN_USE_EXT, formatter);
     } else {
-      bucketPath = filePath + "." + fileExentionCounter
+      bucketPath = filePath + "." + counter
           + codeC.getDefaultExtension();
       writer.open(bucketPath + IN_USE_EXT, codeC, compType, formatter);
     }
+    batchCounter = 0;
+    LOG.info("Creating " + bucketPath + IN_USE_EXT);
   }
 
   public void open(String fPath, HDFSWriter hWriter, FlumeFormatter fmt)
@@ -104,10 +114,10 @@ public class BucketWriter {
 
   // close the file handle
   public void close() throws IOException {
+    LOG.debug("Closing " + bucketPath);
     resetCounters();
     if (writer != null) {
-      writer.close();
-      fileExentionCounter++;
+      writer.close(); // could block
     }
     renameBucket();
   }
@@ -117,44 +127,29 @@ public class BucketWriter {
   public void abort() {
     try {
       close();
+    } catch (IOException ex) {
+      LOG.info("Exception during close on abort", ex);
+    }
+    try {
       open();
-    } catch (IOException eIO) {
-      // Ignore it
+    } catch (IOException ex) {
+      LOG.warn("Exception during opem on abort", ex);
     }
   }
 
   // flush the data
   public void flush() throws IOException {
-    writer.sync();
+    writer.sync(); // could block
     batchCounter = 0;
   }
 
-  // handle the batching, do the real flush if its time
-  public BucketFlushStatus sync() throws IOException {
-    BucketFlushStatus syncStatus;
-
-    if ((batchCounter == batchSize)) {
-      flush();
-      syncStatus = BucketFlushStatus.BatchFlushed;
-    } else {
-      if (batchCounter == 1) {
-        syncStatus = BucketFlushStatus.BatchStarted;
-      } else {
-        syncStatus = BucketFlushStatus.BatchPending;
-      }
-    }
-    return syncStatus;
-  }
-
   // append the data, update stats, handle roll and batching
-  public BucketFlushStatus append(Event e) throws IOException {
-    BucketFlushStatus syncStatus;
-
-    writer.append(e, formatter);
+  public void append(Event e) throws IOException {
+    writer.append(e, formatter); // could block
 
     // update statistics
     processSize += e.getBody().length;
-    lastProcessTime = System.currentTimeMillis() * 1000;
+    lastProcessTime = System.currentTimeMillis();
     eventCounter++;
     batchCounter++;
 
@@ -162,12 +157,10 @@ public class BucketWriter {
     if (shouldRotate()) {
       close();
       open();
-      syncStatus = BucketFlushStatus.BatchFlushed;
-    } else {
-      syncStatus = sync();
+    } else if ((batchCounter == batchSize)) {
+      flush();
     }
 
-    return syncStatus;
   }
 
   // check if time to rotate the file
@@ -199,6 +192,15 @@ public class BucketWriter {
     Path dstPath = new Path(bucketPath);
     FileSystem hdfs = dstPath.getFileSystem(conf);
 
-    hdfs.rename(srcPath, dstPath);
+    if(hdfs.exists(srcPath)) { // could block
+      LOG.info("Renaming " + srcPath + " to " + dstPath);
+      hdfs.rename(srcPath, dstPath); // could block
+    }
+  }
+
+  @Override
+  public String toString() {
+    return "[ " + this.getClass().getSimpleName() + " filePath = " + filePath +
+        ", bucketPath = " + bucketPath + " ]";
   }
 }

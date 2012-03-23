@@ -18,6 +18,8 @@
 package org.apache.flume.sink.hdfs;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -48,6 +50,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -167,7 +171,7 @@ public class TestHDFSEventSink {
 
     Calendar eventDate = Calendar.getInstance();
     List<String> bodies = Lists.newArrayList();
-    
+
     // push the event batches into channel
     for (i = 1; i < 4; i++) {
       Transaction txn = channel.getTransaction();
@@ -242,7 +246,7 @@ public class TestHDFSEventSink {
 
     Calendar eventDate = Calendar.getInstance();
     List<String> bodies = Lists.newArrayList();
-    
+
     // push the event batches into channel
     for (i = 1; i < numBatches; i++) {
       Transaction txn = channel.getTransaction();
@@ -274,9 +278,8 @@ public class TestHDFSEventSink {
     Path fList[] = FileUtil.stat2Paths(dirStat);
 
     // check that the roll happened correctly for the given data
-    // Note that we'll end up with one last file with only header
-    Assert.assertEquals((totalEvents / rollCount) + 1, fList.length);
-    
+    // Note that we'll end up with two files which has have a header
+    Assert.assertEquals((totalEvents / rollCount) + 2, fList.length);
     verifyOutputSequenceFiles(fs, conf, dirPath.toUri().getPath(), fileName, bodies);
   }
 
@@ -409,7 +412,7 @@ public class TestHDFSEventSink {
       }
       txn.commit();
       txn.close();
-      
+
       LOG.info("Process events: " + sink.process());
     }
     LOG.info("Process events to end of transaction max: " + sink.process());
@@ -417,10 +420,10 @@ public class TestHDFSEventSink {
     LOG.info("Process events remaining events: " + sink.process());
     sink.stop();
     verifyOutputSequenceFiles(fs, conf, dirPath.toUri().getPath(), fileName, bodies);
-    
+
   }
-  
-  
+
+
   private List<String> getAllFiles(String input) {
     List<String> output = Lists.newArrayList();
     File dir = new File(input);
@@ -434,7 +437,7 @@ public class TestHDFSEventSink {
     }
     return output;
   }
-  
+
   private void verifyOutputSequenceFiles(FileSystem fs, Configuration conf, String dir, String prefix, List<String> bodies) throws IOException {
     int found = 0;
     int expected = bodies.size();
@@ -453,11 +456,11 @@ public class TestHDFSEventSink {
       }
     }
     assertTrue("Found = " + found + ", Expected = "  +
-        expected + ", Left = " + bodies.size() + " " + bodies, 
+        expected + ", Left = " + bodies.size() + " " + bodies,
           bodies.size() == 0);
 
   }
-  
+
   private void verifyOutputTextFiles(FileSystem fs, Configuration conf, String dir, String prefix, List<String> bodies) throws IOException {
     int found = 0;
     int expected = bodies.size();
@@ -475,13 +478,104 @@ public class TestHDFSEventSink {
       }
     }
     assertTrue("Found = " + found + ", Expected = "  +
-        expected + ", Left = " + bodies.size() + " " + bodies, 
+        expected + ", Left = " + bodies.size() + " " + bodies,
           bodies.size() == 0);
 
   }
 
-  /* 
-   * append using slow sink writer. 
+
+  /**
+   * Ensure that when a write throws an IOException we are
+   * able to continue to progress (via close/open).
+   */
+  @Test
+  public void testCloseReopen() throws InterruptedException,
+      LifecycleException, EventDeliveryException, IOException {
+
+    final long txnMax = 25;
+    final String fileName = "FlumeData";
+    final long rollCount = 5;
+    final long batchSize = 2;
+    final int numBatches = 4;
+    String newPath = testPath + "/singleBucket";
+    int i = 1, j = 1;
+
+    HDFSBadWriterFactory badWriterFactory = new HDFSBadWriterFactory();
+    sink = new HDFSEventSink(badWriterFactory);
+
+    // clear the test directory
+    Configuration conf = new Configuration();
+    FileSystem fs = FileSystem.get(conf);
+    Path dirPath = new Path(newPath);
+    fs.delete(dirPath, true);
+    fs.mkdirs(dirPath);
+
+    Context context = new Context();
+
+    context.put("hdfs.path", newPath);
+    context.put("hdfs.filePrefix", fileName);
+    context.put("hdfs.txnEventMax", String.valueOf(txnMax));
+    context.put("hdfs.rollCount", String.valueOf(rollCount));
+    context.put("hdfs.batchSize", String.valueOf(batchSize));
+    context.put("hdfs.fileType", HDFSBadWriterFactory.BadSequenceFileType);
+
+    Configurables.configure(sink, context);
+
+    Channel channel = mock(Channel.class);
+    final List<Event> events = Lists.newArrayList();
+    doAnswer(new Answer<Void>() {
+      @Override
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        Object[] args = invocation.getArguments();
+        events.add((Event)args[0]);
+        return null;
+      }
+    }).when(channel).put(any(Event.class));
+
+    when(channel.take()).then(new Answer<Event>() {
+      @Override
+      public Event answer(InvocationOnMock invocation) throws Throwable {
+        if(events.isEmpty()) {
+          return null;
+        }
+        return events.remove(0);
+      }
+    });
+    when(channel.getTransaction()).thenReturn(mock(Transaction.class));
+
+    Configurables.configure(channel, context);
+
+    sink.setChannel(channel);
+    sink.start();
+
+    Calendar eventDate = Calendar.getInstance();
+    List<String> bodies = Lists.newArrayList();
+    // push the event batches into channel
+    for (i = 1; i < numBatches; i++) {
+      for (j = 1; j <= txnMax; j++) {
+        Event event = new SimpleEvent();
+        eventDate.clear();
+        eventDate.set(2011, i, i, i, 0); // yy mm dd
+        event.getHeaders().put("timestamp",
+            String.valueOf(eventDate.getTimeInMillis()));
+        event.getHeaders().put("hostname", "Host" + i);
+        String body = "Test." + i + "." + j;
+        event.setBody(body.getBytes());
+        bodies.add(body);
+        // inject fault
+        event.getHeaders().put("fault-until-reopen", "");
+        channel.put(event);
+      }
+      LOG.info("execute sink to process the events: " + sink.process());
+    }
+    LOG.info("clear any events pending due to errors: " + sink.process());
+    sink.stop();
+
+    verifyOutputSequenceFiles(fs, conf, dirPath.toUri().getPath(), fileName, bodies);
+  }
+
+  /*
+   * append using slow sink writer.
    * verify that the process returns backoff due to timeout
    */
   @Test
@@ -544,7 +638,7 @@ public class TestHDFSEventSink {
 
       // execute sink to process the events
       Status satus = sink.process();
-        
+
       // verify that the append returned backoff due to timeotu
       Assert.assertEquals(satus, Status.BACKOFF);
     }
@@ -552,10 +646,10 @@ public class TestHDFSEventSink {
     sink.stop();
   }
 
-  /* 
+  /*
    * append using slow sink writer with specified append timeout
    * verify that the data is written correctly to files
-   */  
+   */
   private void slowAppendTestHelper (long appendTimeout)  throws InterruptedException, IOException,
   LifecycleException, EventDeliveryException, IOException {
     final long txnMax = 2;
@@ -595,7 +689,7 @@ public class TestHDFSEventSink {
     sink.start();
 
     Calendar eventDate = Calendar.getInstance();
-
+    List<String> bodies = Lists.newArrayList();
     // push the event batches into channel
     for (i = 1; i < numBatches; i++) {
       Transaction txn = channel.getTransaction();
@@ -608,7 +702,9 @@ public class TestHDFSEventSink {
             String.valueOf(eventDate.getTimeInMillis()));
         event.getHeaders().put("hostname", "Host" + i);
         event.getHeaders().put("slow", "1500");
-        event.setBody(("Test." + i + "." + j).getBytes());
+        String body = "Test." + i + "." + j;
+        event.setBody(body.getBytes());
+        bodies.add(body);
         channel.put(event);
         totalEvents++;
       }
@@ -626,44 +722,26 @@ public class TestHDFSEventSink {
     Path fList[] = FileUtil.stat2Paths(dirStat);
 
     // check that the roll happened correctly for the given data
-    // Note that we'll end up with one last file with only header
-    Assert.assertEquals((totalEvents / rollCount) + 1, fList.length);
+    // Note that we'll end up with two files with only a head
+    Assert.assertEquals((totalEvents / rollCount) + 2, fList.length);
 
-    i = j = 1;
-    for (int cnt = 0; cnt < fList.length - 1; cnt++) {
-      Path filePath = new Path(newPath + "/" + fileName + "." + cnt);
-      SequenceFile.Reader reader = new SequenceFile.Reader(fs, filePath, conf);
-      LongWritable key = new LongWritable();
-      BytesWritable value = new BytesWritable();
-      BytesWritable expValue;
-
-      while (reader.next(key, value)) {
-        expValue = new BytesWritable(("Test." + i + "." + j).getBytes());
-        Assert.assertEquals(expValue, value);
-        if (++j > txnMax) {
-          j = 1;
-          i++;
-        }
-      }
-      reader.close();
-    }
-    Assert.assertEquals(1, i);
+    verifyOutputSequenceFiles(fs, conf, dirPath.toUri().getPath(), fileName, bodies);
   }
 
-  /* 
+  /*
    * append using slow sink writer with long append timeout
    * verify that the data is written correctly to files
-   */  
+   */
   @Test
   public void testSlowAppendWithLongTimeout() throws InterruptedException,
       LifecycleException, EventDeliveryException, IOException {
-    slowAppendTestHelper(3000);    
+    slowAppendTestHelper(3000);
   }
 
-  /* 
+  /*
    * append using slow sink writer with no timeout to make append
    * synchronous. Verify that the data is written correctly to files
-   */  
+   */
   @Test
   public void testSlowAppendWithoutTimeout() throws InterruptedException,
       LifecycleException, EventDeliveryException, IOException {

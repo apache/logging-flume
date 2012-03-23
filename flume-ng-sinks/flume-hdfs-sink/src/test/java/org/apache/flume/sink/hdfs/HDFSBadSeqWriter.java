@@ -24,8 +24,20 @@ import java.io.IOException;
 
 import org.apache.flume.Event;
 import org.apache.flume.sink.FlumeFormatter;
+import org.apache.hadoop.io.SequenceFile.CompressionType;
+import org.apache.hadoop.io.compress.CompressionCodec;
 
 public class HDFSBadSeqWriter extends HDFSSequenceFile {
+  protected volatile boolean closed, opened;
+  @Override
+  public void open(String filePath, CompressionCodec codeC,
+      CompressionType compType, FlumeFormatter fmt) throws IOException {
+    super.open(filePath, codeC, compType, fmt);
+    if(closed) {
+      opened = true;
+    }
+  }
+
   @Override
   public void append(Event e, FlumeFormatter fmt) throws IOException {
 
@@ -34,6 +46,10 @@ public class HDFSBadSeqWriter extends HDFSSequenceFile {
     } else if (e.getHeaders().containsKey("fault-once")) {
       e.getHeaders().remove("fault-once");
       throw new IOException("Injected fault");
+    } else if (e.getHeaders().containsKey("fault-until-reopen")) {
+      if(!(closed && opened)) {
+        throw new IOException("Injected fault-until-reopen");
+      }
     } else if (e.getHeaders().containsKey("slow")) {
       long waitTime = Long.parseLong(e.getHeaders().get("slow"));
       try {
@@ -46,4 +62,9 @@ public class HDFSBadSeqWriter extends HDFSSequenceFile {
     super.append(e, fmt);
   }
 
+  @Override
+  public void close() throws IOException {
+    closed = true;
+    super.close();
+  }
 }

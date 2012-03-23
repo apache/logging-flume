@@ -29,6 +29,7 @@ public class HDFSBadWriterFactory extends HDFSWriterFactory {
   static final String BadDataStreamType = "DataStream";
   static final String BadCompStreamType = "CompressedStream";
 
+  @Override
   public HDFSWriter getWriter(String fileType) throws IOException {
     if (fileType == BadSequenceFileType) {
       return new HDFSBadSeqWriter();
