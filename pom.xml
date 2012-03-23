@@ -54,37 +54,14 @@ limitations under the License.
 
   <profiles>
     <profile>
-      <id>hadoop-0.20.205.0</id>
+      <id>hadoop-1.0</id>
       <activation>
         <property>
           <name>!hadoop.profile</name>
         </property>
       </activation>
       <properties>
-        <hadoop.version>0.20.205.0</hadoop.version>
-        <hadoop.common.artifact.id>hadoop-core</hadoop.common.artifact.id>
-      </properties>
-      <dependencyManagement>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>${hadoop.common.artifact.id}</artifactId>
-            <version>${hadoop.version}</version>
-          </dependency>
-        </dependencies>
-      </dependencyManagement>
-    </profile>
-
-    <profile>
-      <id>hadoop-1.0.0</id>
-      <activation>
-        <property>
-          <name>hadoop.profile</name>
-          <value>100</value>
-        </property>
-      </activation>
-      <properties>
-        <hadoop.version>1.0.0</hadoop.version>
+        <hadoop.version>1.0.1</hadoop.version>
         <hadoop.common.artifact.id>hadoop-core</hadoop.common.artifact.id>
       </properties>
       <dependencyManagement>
