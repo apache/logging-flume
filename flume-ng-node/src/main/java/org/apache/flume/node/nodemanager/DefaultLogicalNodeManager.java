@@ -56,12 +56,12 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
     if (this.nodeConfiguration != null) {
       logger
           .info("Shutting down old configuration: {}", this.nodeConfiguration);
-      for (Entry<String, SinkRunner> entry : nodeConfiguration.getSinkRunners()
+      for (Entry<String, SinkRunner> entry : this.nodeConfiguration.getSinkRunners()
           .entrySet()) {
         nodeSupervisor.unsupervise(entry.getValue());
       }
 
-      for (Entry<String, SourceRunner> entry : nodeConfiguration
+      for (Entry<String, SourceRunner> entry : this.nodeConfiguration
           .getSourceRunners().entrySet()) {
         nodeSupervisor.unsupervise(entry.getValue());
       }
