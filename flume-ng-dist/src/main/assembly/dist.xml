@@ -25,9 +25,7 @@
   <id>dist</id>
 
   <formats>
-    <!-- FIXME: This will become tar.gz or tar.bz2 after testing. -->
     <format>tar.gz</format>
-    <format>zip</format>
   </formats>
 
   <baseDirectory>flume-${project.version}</baseDirectory>
