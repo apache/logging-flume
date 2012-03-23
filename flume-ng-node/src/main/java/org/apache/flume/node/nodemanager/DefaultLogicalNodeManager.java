@@ -41,16 +41,33 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
 
   private LifecycleSupervisor nodeSupervisor;
   private LifecycleState lifecycleState;
+  private NodeConfiguration nodeConfiguration;
 
   public DefaultLogicalNodeManager() {
     nodeSupervisor = new LifecycleSupervisor();
     lifecycleState = LifecycleState.IDLE;
+    nodeConfiguration = null;
   }
 
   @Override
   public void onNodeConfigurationChanged(NodeConfiguration nodeConfiguration) {
     logger.info("Node configuration change:{}", nodeConfiguration);
 
+    if (this.nodeConfiguration != null) {
+      logger
+          .info("Shutting down old configuration: {}", this.nodeConfiguration);
+      for (Entry<String, SinkRunner> entry : nodeConfiguration.getSinkRunners()
+          .entrySet()) {
+        nodeSupervisor.unsupervise(entry.getValue());
+      }
+
+      for (Entry<String, SourceRunner> entry : nodeConfiguration
+          .getSourceRunners().entrySet()) {
+        nodeSupervisor.unsupervise(entry.getValue());
+      }
+    }
+
+    this.nodeConfiguration = nodeConfiguration;
     for (Entry<String, SinkRunner> entry : nodeConfiguration.getSinkRunners()
         .entrySet()) {
 
@@ -95,7 +112,6 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
         "You can not remove nodes from a manager that hasn't been started");
 
     if (super.remove(node)) {
-      nodeSupervisor.setDesiredState(node, LifecycleState.STOP);
       nodeSupervisor.unsupervise(node);
 
       return true;

@@ -147,8 +147,14 @@ public class LifecycleSupervisor implements LifecycleAware {
 
     logger.debug("Unsupervising service:{}", lifecycleAware);
 
+    synchronized (lifecycleAware) {
     Supervisoree supervisoree = supervisedProcesses.get(lifecycleAware);
     supervisoree.status.discard = true;
+      this.setDesiredState(lifecycleAware, LifecycleState.STOP);
+      logger.info("Stopping component: {}", lifecycleAware);
+      lifecycleAware.stop();
+    }
+    supervisedProcesses.remove(lifecycleAware);
   }
 
   public synchronized void setDesiredState(LifecycleAware lifecycleAware,
@@ -190,6 +196,13 @@ public class LifecycleSupervisor implements LifecycleAware {
       }
 
       supervisoree.status.lastSeen = now;
+      synchronized (lifecycleAware) {
+        if (supervisoree.status.discard) {
+          // Unsupervise has already been called on this.
+          logger.info("Component has already been stopped {}", lifecycleAware);
+          return;
+        }
+
       supervisoree.status.lastSeenState = lifecycleAware.getLifecycleState();
 
       if (!lifecycleAware.getLifecycleState().equals(
@@ -226,11 +239,13 @@ public class LifecycleSupervisor implements LifecycleAware {
               supervisoree.status.desiredState);
         }
 
-        if (!supervisoree.policy.isValid(lifecycleAware, supervisoree.status)) {
+          if (!supervisoree.policy.isValid(
+              lifecycleAware, supervisoree.status)) {
           logger.error(
               "Policy {} of {} has been violated - supervisor should exit!",
               supervisoree.policy, lifecycleAware);
         }
+      }
       }
 
       if (!supervisoree.status.discard) {
@@ -241,7 +256,6 @@ public class LifecycleSupervisor implements LifecycleAware {
 
       logger.debug("Status check complete");
     }
-
   }
 
   public static class Status {

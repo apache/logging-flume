@@ -114,7 +114,7 @@ public class NetcatSource extends AbstractSource implements Configurable,
 
     port = 0;
     counterGroup = new CounterGroup();
-    acceptThreadShouldStop = new AtomicBoolean();
+    acceptThreadShouldStop = new AtomicBoolean(false);
   }
 
   @Override
@@ -152,7 +152,7 @@ public class NetcatSource extends AbstractSource implements Configurable,
     }
 
     AcceptHandler acceptRunnable = new AcceptHandler();
-
+    acceptThreadShouldStop.set(false);
     acceptRunnable.counterGroup = counterGroup;
     acceptRunnable.handlerService = handlerService;
     acceptRunnable.shouldStop = acceptThreadShouldStop;

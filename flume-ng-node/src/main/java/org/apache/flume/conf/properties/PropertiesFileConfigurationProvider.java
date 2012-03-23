@@ -189,7 +189,7 @@ import org.slf4j.LoggerFactory;
  * @see java.util.Properties#load(java.io.Reader)
  */
 public class PropertiesFileConfigurationProvider extends
-AbstractFileConfigurationProvider {
+    AbstractFileConfigurationProvider {
 
   private static final Logger LOGGER = LoggerFactory
       .getLogger(PropertiesFileConfigurationProvider.class);
@@ -203,6 +203,7 @@ AbstractFileConfigurationProvider {
       reader = new BufferedReader(new FileReader(propertiesFile));
       Properties properties = new Properties();
       properties.load(reader);
+      // If there is an old configuration, shut it down.
 
       NodeConfiguration conf = new SimpleNodeConfiguration();
       FlumeConfiguration fconfig = new FlumeConfiguration(properties);
@@ -254,7 +255,8 @@ AbstractFileConfigurationProvider {
     }
   }
 
-  private void loadSources(AgentConfiguration agentConf, NodeConfiguration conf)
+  private void
+      loadSources(AgentConfiguration agentConf, NodeConfiguration conf)
       throws InstantiationException {
 
     for (ComponentConfiguration comp : agentConf.getSources()) {
@@ -278,7 +280,7 @@ AbstractFileConfigurationProvider {
         channels.add(conf.getChannels().get(chName));
       }
 
-      Map<String,String> selectorConfig = comp.getSubconfiguration("selector");
+      Map<String, String> selectorConfig = comp.getSubconfiguration("selector");
 
       ChannelSelector selector = ChannelSelectorFactory.create(
           channels, selectorConfig);
@@ -298,7 +300,6 @@ AbstractFileConfigurationProvider {
     for (ComponentConfiguration comp : agentConf.getSinks()) {
       Context context = new Context();
       Map<String, String> componentConfig = comp.getConfiguration();
-
 
       Sink sink = getSinkFactory().create(comp.getComponentName(),
           componentConfig.get("type"));
@@ -331,12 +332,12 @@ AbstractFileConfigurationProvider {
       String groupSinkList = groupConf.get("sinks");
       StringTokenizer sinkTokenizer = new StringTokenizer(groupSinkList, " \t");
       List<Sink> groupSinks = new ArrayList<Sink>();
-      while(sinkTokenizer.hasMoreTokens()) {
+      while (sinkTokenizer.hasMoreTokens()) {
         String sinkName = sinkTokenizer.nextToken();
         Sink s = sinks.remove(sinkName);
-        if(s == null) {
+        if (s == null) {
           String sinkUser = usedSinks.get(sinkName);
-          if(sinkUser != null) {
+          if (sinkUser != null) {
             throw new InstantiationException(String.format(
                 "Sink %s of group %s already " +
                 "in use by group %s", sinkName, groupName, sinkUser));
@@ -356,7 +357,7 @@ AbstractFileConfigurationProvider {
           new SinkRunner(group.getProcessor()));
     }
     // add any unasigned sinks to solo collectors
-    for(Entry<String, Sink> entry : sinks.entrySet()) {
+    for (Entry<String, Sink> entry : sinks.entrySet()) {
       if (!usedSinks.containsValue(entry.getKey())) {
         SinkProcessor pr = new DefaultSinkProcessor();
         List<Sink> sinkMap = new ArrayList<Sink>();
