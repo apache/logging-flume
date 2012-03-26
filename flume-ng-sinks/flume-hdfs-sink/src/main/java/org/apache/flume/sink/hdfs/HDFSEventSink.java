@@ -66,7 +66,6 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   static final long defaultTxnEventMax = 100;
   static final String defaultFileType = HDFSWriterFactory.SequenceFileType;
   static final int defaultMaxOpenFiles = 5000;
-  static final String defaultWriteFormat = HDFSFormatterFactory.hdfsWritableFormat;
   /**
    * Default length of time we wait for an append
    * before closing the file and moving on.
@@ -164,7 +163,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     String codecName = context.getString("hdfs.codeC");
     fileType = context.getString("hdfs.fileType", defaultFileType);
     maxOpenFiles = context.getInteger("hdfs.maxOpenFiles", defaultMaxOpenFiles);
-    writeFormat = context.getString("hdfs.writeFormat", defaultWriteFormat);
+    writeFormat = context.getString("hdfs.writeFormat");
     appendTimeout = context.getLong("hdfs.appendTimeout", defaultAppendTimeout);
     callTimeout = context.getLong("hdfs.callTimeout", defaultCallTimeout);
     threadsPoolSize = context.getInteger("hdfs.threadsPoolSize", defaultThreadPoolSize);
@@ -182,6 +181,18 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       codeC = getCodec(codecName);
       // TODO : set proper compression type
       compType = CompressionType.BLOCK;
+    }
+
+    if (writeFormat == null) {
+      // Default write formatter is chosen by requested file type
+      if(fileType.equalsIgnoreCase(HDFSWriterFactory.DataStreamType)
+         || fileType.equalsIgnoreCase(HDFSWriterFactory.CompStreamType)) {
+        // Output is written into text files, by default separate events by \n
+        this.writeFormat = HDFSFormatterFactory.hdfsTextFormat;
+      } else {
+        // Output is written into binary files, so use binary writable format
+        this.writeFormat = HDFSFormatterFactory.hdfsWritableFormat;
+      }
     }
 
     boolean useSec = isHadoopSecurityEnabled();
