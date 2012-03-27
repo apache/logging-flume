@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.flume.sink;
 
 import org.apache.flume.Channel;
@@ -22,6 +23,7 @@ import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Sink;
 import org.apache.flume.Transaction;
+import org.apache.flume.event.EventHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +67,7 @@ public class LoggerSink extends AbstractSink {
 
       if (event != null) {
         if (logger.isInfoEnabled()) {
-          logger.info("Event: " + event);
+          logger.info("Event: " + EventHelper.dumpEvent(event));
         }
       } else {
         // No event found, request back-off semantics from the sink runner
@@ -74,7 +76,8 @@ public class LoggerSink extends AbstractSink {
       transaction.commit();
     } catch (Exception ex) {
       transaction.rollback();
-      throw new EventDeliveryException("Failed to log event: " + event, ex);
+      throw new EventDeliveryException("Failed to log event: " +
+          EventHelper.dumpEvent(event), ex);
     } finally {
       transaction.close();
     }

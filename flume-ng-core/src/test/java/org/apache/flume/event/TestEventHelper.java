@@ -18,18 +18,18 @@
  */
 package org.apache.flume.event;
 
-import static org.junit.Assert.*;
-
+import org.junit.Assert;
 import org.junit.Test;
 
-public class TestSimpleEvent {
+public class TestEventHelper {
 
   @Test
-  public void testToString() {
+  public void testPrintable() {
     SimpleEvent event = new SimpleEvent();
     event.setBody("Some text".getBytes());
-    System.out.println(event);
-    assertTrue(event.toString(), event.toString().contains("Some text"));
+    String eventDump = EventHelper.dumpEvent(event);
+    System.out.println(eventDump);
+    Assert.assertTrue(eventDump, eventDump.contains("Some text"));
   }
 
   @Test
@@ -37,6 +37,7 @@ public class TestSimpleEvent {
     SimpleEvent event = new SimpleEvent();
     byte[] body = new byte[5];
     event.setBody(body);
-    assertTrue(event.toString(), event.toString().contains("....."));
+    String eventDump = EventHelper.dumpEvent(event);
+    Assert.assertTrue(eventDump, eventDump.contains("....."));
   }
 }
