@@ -19,17 +19,18 @@
 
 package org.apache.flume.source;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.nio.channels.Channels;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.collect.Lists;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
@@ -45,22 +46,28 @@ import org.apache.flume.lifecycle.LifecycleException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TestNetcatSource {
 
   private Channel channel;
   private EventDrivenSource source;
 
+  private static final Logger logger =
+      LoggerFactory.getLogger(TestNetcatSource.class);
+
   @Before
   public void setUp() {
+    logger.info("Running setup");
+
     channel = new MemoryChannel();
     source = new NetcatSource();
 
     Context context = new Context();
 
     Configurables.configure(channel, context);
-    List<Channel> channels = new ArrayList<Channel>();
-    channels.add(channel);
+    List<Channel> channels = Lists.newArrayList(channel);
     ChannelSelector rcs = new ReplicatingChannelSelector();
     rcs.setChannels(channels);
 
@@ -82,8 +89,6 @@ public class TestNetcatSource {
 
     source.start();
 
-    /* FIXME: Ensure proper send / received semantics. */
-
     Runnable clientRequestRunnable = new Runnable() {
 
       @Override
@@ -93,24 +98,29 @@ public class TestNetcatSource {
               .open(new InetSocketAddress(41414));
 
           Writer writer = Channels.newWriter(clientChannel, "utf-8");
+          BufferedReader reader = new BufferedReader(
+              Channels.newReader(clientChannel, "utf-8"));
 
-          writer.write("Test message");
-
+          writer.write("Test message\n");
           writer.flush();
+
+          String response = reader.readLine();
+          Assert.assertEquals("Server should return OK", "OK", response);
           clientChannel.close();
         } catch (IOException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
+          logger.error("Caught exception: ", e);
         }
       }
 
     };
 
-    ChannelSelector seclector = source.getChannelProcessor().getSelector();
-    Transaction tx = seclector.getAllChannels().get(0).getTransaction();
+    ChannelSelector selector = source.getChannelProcessor().getSelector();
+    Transaction tx = selector.getAllChannels().get(0).getTransaction();
     tx.begin();
 
     for (int i = 0; i < 100; i++) {
+      logger.info("Sending request");
+
       executor.submit(clientRequestRunnable);
 
       Event event = channel.take();

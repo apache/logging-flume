@@ -24,6 +24,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ClosedByInterruptException;
@@ -46,6 +47,7 @@ import org.apache.flume.event.EventBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Charsets;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
@@ -86,6 +88,12 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
  * <td>TCP port / int</td>
  * <td>none (required)</td>
  * </tr>
+ * <tr>
+ * <td><tt>max-line-length</tt></td>
+ * <td>The maximum # of chars a line can be per event (including newline).</td>
+ * <td>Number of UTF-8 characters / int</td>
+ * <td>512</td>
+ * </tr>
  * </table>
  * <p>
  * <b>Metrics</b>
@@ -102,6 +110,7 @@ public class NetcatSource extends AbstractSource implements Configurable,
 
   private String hostName;
   private int port;
+  private int maxLineLength;
 
   private CounterGroup counterGroup;
   private ServerSocketChannel serverSocket;
@@ -119,10 +128,16 @@ public class NetcatSource extends AbstractSource implements Configurable,
 
   @Override
   public void configure(Context context) {
-    Configurables.ensureRequiredNonNull(context, "bind", "port");
+    String hostKey = NetcatSourceConfigurationConstants.CONFIG_HOSTNAME;
+    String portKey = NetcatSourceConfigurationConstants.CONFIG_PORT;
 
-    hostName = context.getString("bind");
-    port = Integer.parseInt(context.getString("port"));
+    Configurables.ensureRequiredNonNull(context, hostKey, portKey);
+
+    hostName = context.getString(hostKey);
+    port = context.getInteger(portKey);
+    maxLineLength = context.getInteger(
+        NetcatSourceConfigurationConstants.CONFIG_MAX_LINE_LENGTH,
+        NetcatSourceConfigurationConstants.DEFAULT_MAX_LINE_LENGTH);
   }
 
   @Override
@@ -151,7 +166,7 @@ public class NetcatSource extends AbstractSource implements Configurable,
       return;
     }
 
-    AcceptHandler acceptRunnable = new AcceptHandler();
+    AcceptHandler acceptRunnable = new AcceptHandler(maxLineLength);
     acceptThreadShouldStop.set(false);
     acceptRunnable.counterGroup = counterGroup;
     acceptRunnable.handlerService = handlerService;
@@ -204,16 +219,19 @@ public class NetcatSource extends AbstractSource implements Configurable,
     if (handlerService != null) {
       handlerService.shutdown();
 
-      while (!handlerService.isTerminated()) {
-        logger.debug("Waiting for handler service to stop");
-        try {
-          handlerService.awaitTermination(500, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-          logger
-              .debug("Interrupted while waiting for netcat handler service to stop");
-          handlerService.shutdownNow();
-          Thread.currentThread().interrupt();
-        }
+      logger.debug("Waiting for handler service to stop");
+
+      // wait 500ms for threads to stop
+      try {
+        handlerService.awaitTermination(500, TimeUnit.MILLISECONDS);
+      } catch (InterruptedException e) {
+        logger
+            .debug("Interrupted while waiting for netcat handler service to stop");
+        Thread.currentThread().interrupt();
+      }
+
+      if (!handlerService.isShutdown()) {
+        handlerService.shutdownNow();
       }
 
       logger.debug("Handler service stopped");
@@ -222,14 +240,19 @@ public class NetcatSource extends AbstractSource implements Configurable,
     logger.debug("Source stopped. Event metrics:{}", counterGroup);
   }
 
-  public static class AcceptHandler implements Runnable {
+  private static class AcceptHandler implements Runnable {
 
     private ServerSocketChannel serverSocket;
     private CounterGroup counterGroup;
     private ExecutorService handlerService;
     private EventDrivenSource source;
-
     private AtomicBoolean shouldStop;
+
+    private final int maxLineLength;
+
+    public AcceptHandler(int maxLineLength) {
+      this.maxLineLength = maxLineLength;
+    }
 
     @Override
     public void run() {
@@ -239,7 +262,7 @@ public class NetcatSource extends AbstractSource implements Configurable,
         try {
           SocketChannel socketChannel = serverSocket.accept();
 
-          NetcatSocketHandler request = new NetcatSocketHandler();
+          NetcatSocketHandler request = new NetcatSocketHandler(maxLineLength);
 
           request.socketChannel = socketChannel;
           request.counterGroup = counterGroup;
@@ -260,59 +283,170 @@ public class NetcatSource extends AbstractSource implements Configurable,
     }
   }
 
-  public static class NetcatSocketHandler implements Runnable {
+  private static class NetcatSocketHandler implements Runnable {
 
     private Source source;
-
     private CounterGroup counterGroup;
     private SocketChannel socketChannel;
 
+    private final int maxLineLength;
+
+    public NetcatSocketHandler(int maxLineLength) {
+      this.maxLineLength = maxLineLength;
+    }
+
     @Override
     public void run() {
+      logger.debug("Starting connection handler");
       Event event = null;
 
       try {
         Reader reader = Channels.newReader(socketChannel, "utf-8");
         Writer writer = Channels.newWriter(socketChannel, "utf-8");
-        CharBuffer buffer = CharBuffer.allocate(512);
-        StringBuilder builder = new StringBuilder();
+        CharBuffer buffer = CharBuffer.allocate(maxLineLength);
+        buffer.flip(); // flip() so fill() sees buffer as initially empty
 
-        while (reader.read(buffer) != -1) {
-          buffer.flip();
+        while (true) {
+          // this method blocks until new data is available in the socket
+          int charsRead = fill(buffer, reader);
+          logger.debug("Chars read = {}", charsRead);
 
-          logger.debug("read {} characters", buffer.remaining());
+          // attempt to process all the events in the buffer
+          int eventsProcessed = processEvents(buffer, writer);
+          logger.debug("Events processed = {}", eventsProcessed);
 
-          counterGroup.addAndGet("characters.received",
-              Long.valueOf(buffer.limit()));
-
-          builder.append(buffer.array(), buffer.position(), buffer.length());
-        }
-
-        if (builder.charAt(builder.length() - 1) == '\n') {
-          builder.deleteCharAt(builder.length() - 1);
-        }
-
-        event = EventBuilder.withBody(builder.toString().getBytes());
-        Exception ex = null;
-
-        try {
-          source.getChannelProcessor().processEvent(event);
-        } catch (ChannelException chEx) {
-          ex = chEx;
-        }
-
-        if (ex == null) {
-          writer.append("OK\n");
-        } else {
-          writer.append("FAILED: " + ex.getMessage() + "\n");
+          if (charsRead == -1) {
+            // if we received EOF before last event processing attempt, then we
+            // have done everything we can
+            break;
+          } else if (charsRead == 0 && eventsProcessed == 0) {
+            if (buffer.remaining() == buffer.capacity()) {
+              // If we get here it means:
+              // 1. Last time we called fill(), no new chars were buffered
+              // 2. After that, we failed to process any events => no newlines
+              // 3. The unread data in the buffer == the size of the buffer
+              // Therefore, we are stuck because the client sent a line longer
+              // than the size of the buffer. Response: Drop the connection.
+              logger.warn("Client sent event exceeding the maximum length");
+              counterGroup.incrementAndGet("events.failed");
+              writer.write("FAILED: Event exceeds the maximum length (" +
+                  buffer.capacity() + " chars, including newline)\n");
+              writer.flush();
+              break;
+            }
+          }
         }
 
         socketChannel.close();
 
-        counterGroup.incrementAndGet("events.success");
+        counterGroup.incrementAndGet("sessions.completed");
       } catch (IOException e) {
-        counterGroup.incrementAndGet("events.failed");
+        counterGroup.incrementAndGet("sessions.broken");
       }
+
+      logger.debug("Connection handler exiting");
     }
+
+    /**
+     * <p>Consume some number of events from the buffer into the system.</p>
+     *
+     * Invariants (pre- and post-conditions): <br/>
+     *   buffer should have position @ beginning of unprocessed data. <br/>
+     *   buffer should have limit @ end of unprocessed data. <br/>
+     *
+     * @param buffer The buffer containing data to process
+     * @param writer The channel back to the client
+     * @return number of events successfully processed
+     * @throws IOException
+     */
+    private int processEvents(CharBuffer buffer, Writer writer)
+        throws IOException {
+
+      int numProcessed = 0;
+
+      boolean foundNewLine = true;
+      while (foundNewLine) {
+        foundNewLine = false;
+
+        int limit = buffer.limit();
+        for (int pos = buffer.position(); pos < limit; pos++) {
+          if (buffer.get(pos) == '\n') {
+
+            // parse event body bytes out of CharBuffer
+            buffer.limit(pos); // temporary limit
+            ByteBuffer bytes = Charsets.UTF_8.encode(buffer);
+            buffer.limit(limit); // restore limit
+
+            // build event object
+            byte[] body = new byte[bytes.remaining()];
+            bytes.get(body);
+            Event event = EventBuilder.withBody(body);
+
+            // process event
+            ChannelException ex = null;
+            try {
+              source.getChannelProcessor().processEvent(event);
+            } catch (ChannelException chEx) {
+              ex = chEx;
+            }
+
+            if (ex == null) {
+              counterGroup.incrementAndGet("events.processed");
+              numProcessed++;
+              writer.write("OK\n");
+            } else {
+              counterGroup.incrementAndGet("events.failed");
+              logger.warn("Error processing event. Exception follows.", ex);
+              writer.write("FAILED: " + ex.getMessage() + "\n");
+            }
+            writer.flush();
+
+            // advance position after data is consumed
+            buffer.position(pos + 1); // skip newline
+            foundNewLine = true;
+
+            break;
+          }
+        }
+
+      }
+
+      return numProcessed;
+    }
+
+    /**
+     * <p>Refill the buffer read from the socket.</p>
+     *
+     * Preconditions: <br/>
+     *   buffer should have position @ beginning of unprocessed data. <br/>
+     *   buffer should have limit @ end of unprocessed data. <br/>
+     *
+     * Postconditions: <br/>
+     *   buffer should have position @ beginning of buffer (pos=0). <br/>
+     *   buffer should have limit @ end of unprocessed data. <br/>
+     *
+     * Note: this method blocks on new data arriving.
+     *
+     * @param buffer The buffer to fill
+     * @param reader The Reader to read the data from
+     * @return number of characters read
+     * @throws IOException
+     */
+    private int fill(CharBuffer buffer, Reader reader)
+        throws IOException {
+
+      // move existing data to the front of the buffer
+      buffer.compact();
+
+      // pull in as much data as we can from the socket
+      int charsRead = reader.read(buffer);
+      counterGroup.addAndGet("characters.received", Long.valueOf(charsRead));
+
+      // flip so the data can be consumed
+      buffer.flip();
+
+      return charsRead;
+    }
+
   }
 }

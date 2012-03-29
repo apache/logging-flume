@@ -41,8 +41,10 @@ public class EventHelper {
 
   public static String dumpEvent(Event event, int maxBytes) {
     StringBuilder buffer = new StringBuilder();
-    if(event == null) {
+    if (event == null || event.getBody() == null) {
       buffer.append("null");
+    } else if (event.getBody().length == 0) {
+      // do nothing... in this case, HexDump.dump() will throw an exception
     } else {
       byte[] body = event.getBody();
       byte[] data = Arrays.copyOf(body, Math.min(body.length, maxBytes));
