@@ -181,7 +181,7 @@ public class Log4jAppender extends AppenderSkeleton {
   @Override
   public void activateOptions() throws FlumeException{
     try {
-      rpcClient = RpcClientFactory.getInstance(hostname, port);
+      rpcClient = RpcClientFactory.getDefaultInstance(hostname, port);
     } catch (FlumeException e) {
       String errormsg = "RPC client creation failed! " +
           e.getMessage();

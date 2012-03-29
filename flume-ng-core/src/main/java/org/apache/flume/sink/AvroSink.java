@@ -146,7 +146,7 @@ public class AvroSink extends AbstractSink implements Configurable {
           "Building RpcClient with hostname:{}, port:{}, batchSize:{}",
           new Object[] { hostname, port, batchSize });
 
-       client = RpcClientFactory.getInstance(hostname, port, batchSize);
+       client = RpcClientFactory.getDefaultInstance(hostname, port, batchSize);
     }
 
   }

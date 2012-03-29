@@ -18,6 +18,8 @@ package org.apache.flume.api;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+
 import org.apache.avro.ipc.Server;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
@@ -41,7 +43,7 @@ public class TestRpcClientFactory {
     RpcClient client = null;
     Server server = RpcTestUtils.startServer(new OKAvroHandler());
     try {
-      client = RpcClientFactory.getInstance(localhost, server.getPort());
+      client = RpcClientFactory.getDefaultInstance(localhost, server.getPort());
       client.append(EventBuilder.withBody("wheee!!!", Charset.forName("UTF8")));
     } finally {
       RpcTestUtils.stopServer(server);
@@ -56,9 +58,32 @@ public class TestRpcClientFactory {
     RpcClient client = null;
     Server server = RpcTestUtils.startServer(new OKAvroHandler());
     try {
-      client = RpcClientFactory.getInstance(localhost, server.getPort(),
+      client = RpcClientFactory.getDefaultInstance(localhost, server.getPort(),
           batchSize);
 
+      List<Event> events = new ArrayList<Event>();
+      for (int i = 0; i < batchSize; i++) {
+        events.add(EventBuilder.withBody("evt: " + i, Charset.forName("UTF8")));
+      }
+      client.appendBatch(events);
+    } finally {
+      RpcTestUtils.stopServer(server);
+      if (client != null) client.close();
+    }
+  }
+
+  @Test
+  public void testPropertiesBatchAppend() throws FlumeException,
+      EventDeliveryException {
+    int batchSize = 7;
+    RpcClient client = null;
+    Server server = RpcTestUtils.startServer(new OKAvroHandler());
+    try {
+      Properties p = new Properties();
+      p.put("hosts", "host1");
+      p.put("hosts.host1", localhost + ":" + String.valueOf(server.getPort()));
+      p.put("batch-size", String.valueOf(batchSize));
+      client = RpcClientFactory.getInstance(p);
       List<Event> events = new ArrayList<Event>();
       for (int i = 0; i < batchSize; i++) {
         events.add(EventBuilder.withBody("evt: " + i, Charset.forName("UTF8")));
@@ -77,7 +102,7 @@ public class TestRpcClientFactory {
     RpcClient client = null;
     Server server = RpcTestUtils.startServer(new OKAvroHandler());
     try {
-      client = RpcClientFactory.getInstance(localhost, server.getPort());
+      client = RpcClientFactory.getDefaultInstance(localhost, server.getPort());
       int batchSize = client.getBatchSize();
       int moreThanBatch = batchSize + 1;
       List<Event> events = new ArrayList<Event>();

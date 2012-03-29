@@ -16,6 +16,7 @@
 package org.apache.flume.api;
 
 import java.util.List;
+
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
@@ -102,5 +103,6 @@ public interface RpcClient {
    * underlying connection is disabled.</p>
    */
   public void close() throws FlumeException;
+
 
 }

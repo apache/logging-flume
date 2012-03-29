@@ -15,6 +15,7 @@
  */
 package org.apache.flume.api;
 
+import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,8 +75,8 @@ public class TestNettyAvroRpcClient {
    */
   @Test(expected=FlumeException.class)
   public void testUnableToConnect() throws FlumeException {
-    NettyAvroRpcClient client = new NettyAvroRpcClient.Builder()
-        .hostname(localhost).port(1).build();
+    NettyAvroRpcClient client = new NettyAvroRpcClient(
+        new InetSocketAddress(localhost, 1), 0);
   }
 
   /**
@@ -91,9 +92,8 @@ public class TestNettyAvroRpcClient {
     NettyAvroRpcClient client = null;
     Server server = RpcTestUtils.startServer(new OKAvroHandler());
     try {
-      client = new NettyAvroRpcClient.Builder()
-          .hostname(localhost).port(server.getPort()).batchSize(batchSize)
-          .build();
+      client = new NettyAvroRpcClient(
+          new InetSocketAddress(localhost, server.getPort()), batchSize);
 
       // send one more than the batch size
       List<Event> events = new ArrayList<Event>();

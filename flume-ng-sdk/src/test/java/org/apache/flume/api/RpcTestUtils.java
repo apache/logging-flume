@@ -99,8 +99,8 @@ public class RpcTestUtils {
    * Helper method for constructing a Netty RPC client that talks to localhost.
    */
   public static NettyAvroRpcClient getStockLocalClient(int port) {
-    NettyAvroRpcClient client = new NettyAvroRpcClient.Builder()
-        .hostname(localhost).port(port).build();
+    NettyAvroRpcClient client =
+       new NettyAvroRpcClient(new InetSocketAddress("localhost", port), 0);
 
     return client;
   }
@@ -108,11 +108,11 @@ public class RpcTestUtils {
   /**
    * Start a NettyServer, wait a moment for it to spin up, and return it.
    */
-  public static Server startServer(AvroSourceProtocol handler) {
+  public static Server startServer(AvroSourceProtocol handler, int port) {
     Responder responder = new SpecificResponder(AvroSourceProtocol.class,
         handler);
     Server server = new NettyServer(responder,
-        new InetSocketAddress(localhost, 0));
+        new InetSocketAddress(localhost, port));
     server.start();
     logger.info("Server started on hostname: {}, port: {}",
         new Object[] { localhost, Integer.toString(server.getPort()) });
@@ -127,6 +127,10 @@ public class RpcTestUtils {
     }
 
     return server;
+  }
+
+  public static Server startServer(AvroSourceProtocol handler) {
+    return startServer(handler, 0);
   }
 
   /**

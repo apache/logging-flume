@@ -117,7 +117,7 @@ public class AvroCLIClient {
 
     BufferedReader reader = null;
 
-    RpcClient rpcClient = RpcClientFactory.getInstance(hostname, port, BATCH_SIZE);
+    RpcClient rpcClient = RpcClientFactory.getDefaultInstance(hostname, port, BATCH_SIZE);
     try {
       List<Event> eventBuffer = Lists.newArrayList();
 

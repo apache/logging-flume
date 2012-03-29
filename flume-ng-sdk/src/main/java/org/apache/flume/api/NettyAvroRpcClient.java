@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Properties;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -41,13 +42,16 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Avro/Netty implementation of {@link RpcClient}.
  * The connections are intended to be opened before clients are given access so
  * that the object cannot ever be in an inconsistent when exposed to users.
  */
-public class NettyAvroRpcClient implements RpcClient {
+public class NettyAvroRpcClient extends AbstractRpcClient
+implements RpcClient {
 
   private final ReentrantLock stateLock = new ReentrantLock();
 
@@ -62,34 +66,43 @@ public class NettyAvroRpcClient implements RpcClient {
    */
   private ConnState connState;
 
-  private final String hostname;
-  private final Integer port;
-  private final Integer batchSize;
+  private InetSocketAddress address;
 
   private Transceiver transceiver;
   private AvroSourceProtocol.Callback avroClient;
+  private static final Logger logger = LoggerFactory
+      .getLogger(NettyAvroRpcClient.class);
 
   /**
-   * This constructor is intended to be called from {@link AvroClientBuilder}.
-   * @param hostname The destination hostname
-   * @param port The destination port
+   * This constructor is intended to be called from {@link RpcClientFactory}.
+   * @param address The InetSocketAddress to connect to
    * @param batchSize Maximum number of Events to accept in appendBatch()
    */
-  private NettyAvroRpcClient(String hostname, Integer port, Integer batchSize) {
-
-    if (hostname == null) throw new NullPointerException("hostname is null");
-    if (port == null) throw new NullPointerException("port is null");
-    if (batchSize == null) throw new NullPointerException("batchSize is null");
-
-    this.hostname = hostname;
-    this.port = port;
+  protected NettyAvroRpcClient(InetSocketAddress address, Integer batchSize)
+      throws FlumeException{
+    if (address == null){
+      logger.error("InetSocketAddress is null, cannot create client.");
+      throw new NullPointerException("InetSocketAddress is null");
+    }
+    this.address = address;
+    if(batchSize == null || batchSize == 0){
+      this.batchSize = DEFAULT_BATCH_SIZE;
+    }
+    else{
     this.batchSize = batchSize;
-
-    setState(ConnState.INIT);
+    }
+    connect();
   }
 
   /**
-   * This method should only be invoked by the Builder
+   * This constructor is intended to be called from {@link RpcClientFactory}.
+   * A call to this constructor should be followed by call to configure().
+   */
+  protected NettyAvroRpcClient(){
+  }
+
+  /**
+   * This method should only be invoked by the build function
    * @throws FlumeException
    */
   private void connect() throws FlumeException {
@@ -104,13 +117,12 @@ public class NettyAvroRpcClient implements RpcClient {
    */
   private void connect(long timeout, TimeUnit tu) throws FlumeException {
     try {
-      transceiver = new NettyTransceiver(new InetSocketAddress(hostname, port),
-          tu.toMillis(timeout));
+      transceiver = new NettyTransceiver(this.address, tu.toMillis(timeout));
       avroClient =
           SpecificRequestor.getClient(AvroSourceProtocol.Callback.class,
           transceiver);
-
     } catch (IOException ex) {
+      logger.error("RPC connection error :" , ex);
       throw new FlumeException("RPC connection error. Exception follows.", ex);
     }
 
@@ -122,17 +134,13 @@ public class NettyAvroRpcClient implements RpcClient {
     try {
       transceiver.close();
     } catch (IOException ex) {
+      logger.error("Error closing transceiver. " , ex);
       throw new FlumeException("Error closing transceiver. Exception follows.",
           ex);
     } finally {
       setState(ConnState.DEAD);
     }
 
-  }
-
-  @Override
-  public int getBatchSize() {
-    return batchSize;
   }
 
   @Override
@@ -160,6 +168,7 @@ public class NettyAvroRpcClient implements RpcClient {
       avroEvent.setHeaders(toCharSeqMap(event.getHeaders()));
       avroClient.append(avroEvent, callFuture);
     } catch (IOException ex) {
+      logger.error("RPC request IO exception. " , ex);
       throw new EventDeliveryException("RPC request IO exception. " +
           "Exception follows.", ex);
     }
@@ -204,6 +213,7 @@ public class NettyAvroRpcClient implements RpcClient {
       try {
         avroClient.appendBatch(avroEvents, callFuture);
       } catch (IOException ex) {
+        logger.error("RPC request IO exception. " , ex);
         throw new EventDeliveryException("RPC request IO exception. " +
             "Exception follows.", ex);
       }
@@ -225,18 +235,23 @@ public class NettyAvroRpcClient implements RpcClient {
     try {
       Status status = callFuture.get(timeout, tu);
       if (status != Status.OK) {
+        logger.error("Status (" + status + ") is not OK");
         throw new EventDeliveryException("Status (" + status + ") is not OK");
       }
     } catch (CancellationException ex) {
+      logger.error("RPC future was cancelled." , ex);
       throw new EventDeliveryException("RPC future was cancelled." +
           " Exception follows.", ex);
     } catch (ExecutionException ex) {
+      logger.error("Exception thrown from remote handler." , ex);
       throw new EventDeliveryException("Exception thrown from remote handler." +
           " Exception follows.", ex);
     } catch (TimeoutException ex) {
+      logger.error("RPC request timed out." , ex);
       throw new EventDeliveryException("RPC request timed out." +
           " Exception follows.", ex);
     } catch (InterruptedException ex) {
+      logger.error("RPC request interrupted." , ex);
       Thread.currentThread().interrupt();
       throw new EventDeliveryException("RPC request interrupted." +
           " Exception follows.", ex);
@@ -255,6 +270,7 @@ public class NettyAvroRpcClient implements RpcClient {
     stateLock.lock();
     try {
       if (connState == ConnState.DEAD && connState != newState) {
+        logger.error("Cannot transition from CLOSED state.");
         throw new IllegalStateException("Cannot transition from CLOSED state.");
       }
       connState = newState;
@@ -271,6 +287,7 @@ public class NettyAvroRpcClient implements RpcClient {
     try {
       ConnState curState = connState;
       if (curState != ConnState.READY) {
+        logger.error("RPC failed, client in an invalid state: " + curState);
         throw new EventDeliveryException("RPC failed, client in an invalid " +
             "state: " + curState);
       }
@@ -306,90 +323,70 @@ public class NettyAvroRpcClient implements RpcClient {
     INIT, READY, DEAD
   }
 
-  /**
-   * <p>Builder class used to construct {@link NettyAvroRpcClient} objects.</p>
-   *
-   * <p><strong>Note:</strong> It is recommended for applications to construct
-   * {@link RpcClient} instances using the {@link RpcClientFactory} class.</p>
-   */
-  protected static class Builder {
-
-    protected static final int DEFAULT_BATCH_SIZE = 100;
-
-    private String hostname;
-    private Integer port;
-    private Integer batchSize;
-
-    public Builder() {
-      batchSize = DEFAULT_BATCH_SIZE;
-    }
 
     /**
-     * Hostname to connect to (required)
-     *
-     * @param hostname
-     * @return {@code this}
+   * <p>
+   * Configure the actual client using the properties.
+   * <tt>properties</tt> should have at least 2 params:
+   * <p><tt>hosts</tt> = <i>alias_for_host</i></p>
+   * <p><tt>alias_for_host</tt> = <i>hostname:port</i>. </p>
+   * Only the first host is added, rest are discarded.</p>
+   * <p>Optionally it can also have a <p>
+   * <tt>batch-size</tt> = <i>batchSize</i>
+   * @param properties The properties to instantiate the client with.
+   * @return
      */
-    public Builder hostname(String hostname) {
-      if (hostname == null) {
-        throw new NullPointerException("hostname is null");
-      }
-
-      this.hostname = hostname;
-      return this;
+  @Override
+  public synchronized void configure(Properties properties)
+      throws FlumeException {
+    stateLock.lock();
+    try{
+      if(connState == ConnState.READY || connState == ConnState.DEAD){
+        logger.error("This client was already configured, " +
+            "cannot reconfigure.");
+        throw new FlumeException("This client was already configured, " +
+            "cannot reconfigure.");
     }
-
-    /**
-     * Port to connect to (required)
-     *
-     * @param port
-     * @return {@code this}
-     */
-    public Builder port(Integer port) {
-      if (port == null) {
-        throw new NullPointerException("port is null");
+    } finally {
+      stateLock.unlock();
       }
-
-      this.port = port;
-      return this;
-    }
-
-    /**
-     * Maximum number of {@linkplain Event events} that can be processed in a
-     * batch operation. (optional)<br>
-     * Default: 100
-     *
-     * @param batchSize
-     * @return {@code this}
-     */
-    public Builder batchSize(Integer batchSize) {
-      if (batchSize == null) {
-        throw new NullPointerException("batch size is null");
+    String strbatchSize = properties.getProperty("batch-size");
+    batchSize = DEFAULT_BATCH_SIZE;
+    if (strbatchSize != null && !strbatchSize.isEmpty()) {
+      try {
+        batchSize = Integer.parseInt(strbatchSize);
+      } catch (NumberFormatException e) {
+        logger.warn("Batchsize is not valid for RpcClient: " + strbatchSize +
+            ".Default value assigned.", e);
       }
-
-      this.batchSize = batchSize;
-      return this;
     }
-
-    /**
-     * Construct the object
-     * @return Active RPC client
-     * @throws FlumeException
-     */
-    public NettyAvroRpcClient build() throws FlumeException {
-      // validate the required fields
-      if (hostname == null) throw new NullPointerException("hostname is null");
-      if (port == null) throw new NullPointerException("port is null");
-      if (batchSize == null) {
-        throw new NullPointerException("batch size is null");
-      }
-
-      NettyAvroRpcClient client =
-          new NettyAvroRpcClient(hostname, port, batchSize);
-      client.connect();
-
-      return client;
+    String hostNames = properties.getProperty(CONFIG_HOSTS);
+    String[] hosts = null;
+    if (hostNames != null && !hostNames.isEmpty()) {
+      hosts = hostNames.split("\\s+");
+    } else {
+      logger.error("Hosts list is invalid: "+ hostNames);
+      throw new FlumeException("Hosts list is invalid: "+ hostNames);
     }
+    String host = properties.getProperty(HOSTS_PREFIX+hosts[0]);
+    if (host == null || host.isEmpty()) {
+      logger.error("Host not found: " + hosts[0]);
+      throw new FlumeException("Host not found: " + hosts[0]);
+    }
+    String[] hostAndPort = host.split(":");
+    if (hostAndPort.length != 2){
+      logger.error("Invalid hostname, " + hosts[0]);
+      throw new FlumeException("Invalid hostname, " + hosts[0]);
+    }
+    Integer port = null;
+    try {
+      port = Integer.parseInt(hostAndPort[1]);
+    } catch (NumberFormatException e) {
+      logger.error("Invalid Port:" + hostAndPort[1], e);
+      throw new FlumeException("Invalid Port:" + hostAndPort[1], e);
+    }
+    this.address = new InetSocketAddress(hostAndPort[0], port);
+    this.connect();
   }
 
 }
