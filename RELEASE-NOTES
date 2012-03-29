@@ -41,5 +41,5 @@ including documentation help, source code and feedback. If you are interested
 in contributing, please visit https://cwiki.apache.org/FLUME/flume-ng.html
 
 5. How to Report Issues
-The Apache Ivy project uses JIRA for issue tracking. Please report any issues
+The Apache Flume project uses JIRA for issue tracking. Please report any issues
 you find at http://issues.apache.org/jira/browse/FLUME
