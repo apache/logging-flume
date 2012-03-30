@@ -50,7 +50,8 @@ public class HDFSSequenceFile implements HDFSWriter {
     Path dstPath = new Path(filePath);
     FileSystem hdfs = dstPath.getFileSystem(conf);
 
-    if (conf.getBoolean("hdfs.append.support", false) == true) {
+    if (conf.getBoolean("hdfs.append.support", false) == true && hdfs.isFile
+            (dstPath)) {
       FSDataOutputStream outStream = hdfs.append(dstPath);
       writer = SequenceFile.createWriter(conf, outStream, fmt.getKeyClass(),
           fmt.getValueClass(), compType, codeC);

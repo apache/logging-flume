@@ -38,7 +38,8 @@ public class HDFSDataStream implements HDFSWriter {
     Path dstPath = new Path(filePath);
     FileSystem hdfs = dstPath.getFileSystem(conf);
 
-    if (conf.getBoolean("hdfs.append.support", false) == true) {
+    if (conf.getBoolean("hdfs.append.support", false) == true && hdfs.isFile
+            (dstPath)) {
       outStream = hdfs.append(dstPath);
     } else {
       outStream = hdfs.create(dstPath);
