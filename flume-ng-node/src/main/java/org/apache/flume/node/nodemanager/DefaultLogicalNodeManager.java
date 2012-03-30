@@ -56,30 +56,44 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
     if (this.nodeConfiguration != null) {
       logger
           .info("Shutting down old configuration: {}", this.nodeConfiguration);
-      for (Entry<String, SinkRunner> entry : this.nodeConfiguration.getSinkRunners()
-          .entrySet()) {
-        nodeSupervisor.unsupervise(entry.getValue());
+      for (Entry<String, SinkRunner> entry :
+        this.nodeConfiguration.getSinkRunners().entrySet()) {
+        try{
+          nodeSupervisor.unsupervise(entry.getValue());
+        } catch (Exception e){
+          logger.error("Error while stopping {}", entry.getValue(), e);
+        }
       }
 
       for (Entry<String, SourceRunner> entry : this.nodeConfiguration
           .getSourceRunners().entrySet()) {
-        nodeSupervisor.unsupervise(entry.getValue());
+        try{
+          nodeSupervisor.unsupervise(entry.getValue());
+        } catch (Exception e){
+          logger.error("Error while stopping {}", entry.getValue(), e);
+        }
       }
     }
 
     this.nodeConfiguration = nodeConfiguration;
     for (Entry<String, SinkRunner> entry : nodeConfiguration.getSinkRunners()
         .entrySet()) {
-
-      nodeSupervisor.supervise(entry.getValue(),
+      try{
+        nodeSupervisor.supervise(entry.getValue(),
           new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
+      } catch (Exception e) {
+        logger.error("Error while starting {}", entry.getValue(), e);
+      }
     }
 
     for (Entry<String, SourceRunner> entry : nodeConfiguration
         .getSourceRunners().entrySet()) {
-
-      nodeSupervisor.supervise(entry.getValue(),
+      try{
+        nodeSupervisor.supervise(entry.getValue(),
           new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
+      } catch (Exception e) {
+        logger.error("Error while starting {}", entry.getValue(), e);
+      }
     }
   }
 
