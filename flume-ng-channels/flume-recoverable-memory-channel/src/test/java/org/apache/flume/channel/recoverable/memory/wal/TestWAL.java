@@ -185,7 +185,7 @@ public class TestWAL {
       t.setDaemon(true);
       t.start();
     }
-    Assert.assertTrue(stopLatch.await(5, TimeUnit.SECONDS));
+    Assert.assertTrue(stopLatch.await(15, TimeUnit.SECONDS));
     Assert.assertEquals(Collections.EMPTY_LIST, errors);
     wal.close();
     wal = new WAL<Text>(dataDir, Text.class);

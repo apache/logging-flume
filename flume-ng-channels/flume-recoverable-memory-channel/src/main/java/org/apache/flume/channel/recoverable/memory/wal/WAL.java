@@ -125,13 +125,12 @@ public class WAL<T extends Writable> implements Closeable {
    * @param clazz
    * @param rollSize
    *          bytes - max size of a single file before we roll
-   * @param isRollRequiredInterval
-   *          ms - how often we check the size of a log
    * @param maxLogsSize
    *          bytes - total amount of logs to keep excluding the current log
    * @param minLogRentionPeriod
    *          ms - minimum amount of time to keep a log
    * @param workerInterval
+   *          ms - how often the background worker checks for old logs
    * @throws IOException
    */
   public WAL(File path, Class<T> clazz, long rollSize,
