@@ -392,10 +392,14 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       transaction.rollback();
       LOG.warn("HDFS IO error", eIO);
       return Status.BACKOFF;
-    } catch (Exception e) {
+    } catch (Throwable th) {
       transaction.rollback();
-      LOG.error("process failed", e);
-      throw new EventDeliveryException(e);
+      LOG.error("process failed", th);
+      if (th instanceof Error) {
+        throw (Error) th;
+      } else {
+        throw new EventDeliveryException(th);
+      }
     } finally {
       for (BucketWriter writer : writers) {
         final BucketWriter callableWriter = writer;
