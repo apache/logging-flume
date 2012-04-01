@@ -86,6 +86,18 @@ public class RpcClientFactory {
   }
 
   /**
+   * Deprecated. Use
+   * {@link getDefaultInstance() getDefaultInstance(String, Integer)} instead.
+   * @throws FlumeException
+   * @deprecated
+   */
+  @Deprecated
+  public static RpcClient getInstance(String hostname, Integer port)
+      throws FlumeException {
+    return getDefaultInstance(hostname, port);
+  }
+
+  /**
    * Returns an instance of {@link RpcClient} connected to the specified
    * {@code hostname} and {@code port}.
    * @throws FlumeException
@@ -94,6 +106,19 @@ public class RpcClientFactory {
       throws FlumeException {
     return getDefaultInstance(hostname, port, 0);
 
+  }
+
+  /**
+   * Deprecated. Use
+   * {@link getDefaultInstance() getDefaultInstance(String, Integer, Integer)}
+   * instead.
+   * @throws FlumeException
+   * @deprecated
+   */
+  @Deprecated
+  public static RpcClient getInstance(String hostname, Integer port,
+      Integer batchSize) throws FlumeException {
+    return getDefaultInstance(hostname, port, batchSize);
   }
 
   /**

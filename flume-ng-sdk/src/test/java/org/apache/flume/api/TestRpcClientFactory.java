@@ -28,6 +28,7 @@ import org.apache.flume.api.RpcTestUtils.OKAvroHandler;
 import org.junit.Test;
 
 import org.apache.flume.event.EventBuilder;
+import org.junit.Assert;
 
 /**
  * Very light testing on the factory. The heavy testing is done on the test
@@ -44,6 +45,37 @@ public class TestRpcClientFactory {
     Server server = RpcTestUtils.startServer(new OKAvroHandler());
     try {
       client = RpcClientFactory.getDefaultInstance(localhost, server.getPort());
+      client.append(EventBuilder.withBody("wheee!!!", Charset.forName("UTF8")));
+    } finally {
+      RpcTestUtils.stopServer(server);
+      if (client != null) client.close();
+    }
+  }
+
+  // testing deprecated API
+  @Test
+  public void testTwoParamDeprecatedAppend() throws FlumeException,
+      EventDeliveryException {
+    RpcClient client = null;
+    Server server = RpcTestUtils.startServer(new OKAvroHandler());
+    try {
+      client = RpcClientFactory.getInstance(localhost, server.getPort());
+      client.append(EventBuilder.withBody("wheee!!!", Charset.forName("UTF8")));
+    } finally {
+      RpcTestUtils.stopServer(server);
+      if (client != null) client.close();
+    }
+  }
+
+  // testing deprecated API
+  @Test
+  public void testThreeParamDeprecatedAppend() throws FlumeException,
+      EventDeliveryException {
+    RpcClient client = null;
+    Server server = RpcTestUtils.startServer(new OKAvroHandler());
+    try {
+      client = RpcClientFactory.getInstance(localhost, server.getPort(), 3);
+      Assert.assertEquals("Batch size was specified", 3, client.getBatchSize());
       client.append(EventBuilder.withBody("wheee!!!", Charset.forName("UTF8")));
     } finally {
       RpcTestUtils.stopServer(server);
