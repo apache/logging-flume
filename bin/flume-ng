@@ -105,6 +105,7 @@ commands:
 global options:
   --conf,-c <conf>      use configs in <conf> directory
   --classpath,-C <cp>   override the classpath for flume jars
+  -Dproperty=value      sets a JDK system property value
 
 node options:
   --conf-file,-f        specify a config file (required)
@@ -185,6 +186,9 @@ while [ -n "$*" ] ; do
       [ -n "$1" ] || error "Option --classpath requires an argument" 1
       FLUME_CLASSPATH=$1
       shift
+      ;;
+    -D*)
+      JAVA_OPTS="${JAVA_OPTS} $arg"
       ;;
     *)
       args="$args $arg"
