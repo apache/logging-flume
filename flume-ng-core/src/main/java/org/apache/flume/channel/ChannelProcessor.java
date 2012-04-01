@@ -179,6 +179,9 @@ public class ChannelProcessor {
       } catch (ChannelException ex) {
         tx.rollback();
         throw ex;
+      } catch (Exception e) {
+        tx.rollback();
+        throw new ChannelException("Unexpected error", e);
       } finally {
         if (tx != null) {
           tx.close();

@@ -265,6 +265,12 @@ public class AvroSink extends AbstractSink implements Configurable {
       throw new EventDeliveryException("RPC connection error. " +
           "Exception follows.", e);
 
+    } catch (Exception e) {
+      transaction.rollback();
+      destroyConnection();
+      throw new EventDeliveryException("Unexpected error. " +
+          "Exception follows.", e);
+
     } finally {
       transaction.close();
     }
