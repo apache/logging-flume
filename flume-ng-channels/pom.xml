@@ -43,5 +43,6 @@ limitations under the License.
   <modules>
     <module>flume-jdbc-channel</module>
     <module>flume-file-channel</module>
+    <module>flume-recoverable-memory-channel</module>
   </modules>
 </project>

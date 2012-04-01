@@ -84,6 +84,10 @@
       <artifactId>flume-jdbc-channel</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.flume.flume-ng-channels</groupId>
+      <artifactId>flume-recoverable-memory-channel</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
       <artifactId>flume-hdfs-sink</artifactId>
     </dependency>

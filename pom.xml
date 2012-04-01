@@ -591,6 +591,12 @@ limitations under the License.
         <version>1.2.0-incubating-SNAPSHOT</version>
       </dependency>
 
+     <dependency>
+       <groupId>org.apache.flume.flume-ng-channels</groupId>
+       <artifactId>flume-recoverable-memory-channel</artifactId>
+       <version>1.2.0-incubating-SNAPSHOT</version>
+     </dependency>
+
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-hdfs-sink</artifactId>

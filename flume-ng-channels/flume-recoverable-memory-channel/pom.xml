@@ -28,8 +28,8 @@
   </parent>
 
   <groupId>org.apache.flume.flume-ng-channels</groupId>
-  <artifactId>flume-file-channel</artifactId>
-  <name>Flume NG file-based channel</name>
+  <artifactId>flume-recoverable-memory-channel</artifactId>
+  <name>Flume NG file backed Memory channel</name>
 
   <build>
     <plugins>
