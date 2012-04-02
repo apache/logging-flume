@@ -97,7 +97,7 @@ public class NullSink extends AbstractSink {
 
     super.stop();
 
-    logger.debug("Null sink stopped. Event metrics:{}", counterGroup);
+    logger.info("Null sink stopped. Event metrics:{}", counterGroup);
   }
 
 }

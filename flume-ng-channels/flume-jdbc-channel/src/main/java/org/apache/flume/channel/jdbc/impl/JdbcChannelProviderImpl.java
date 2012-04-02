@@ -128,7 +128,7 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
 
     if (maxCapacitySpecified > 0) {
       this.maxCapacity = maxCapacitySpecified;
-      LOGGER.debug("Maximum channel capacity: " + maxCapacity);
+      LOGGER.info("Maximum channel capacity: {}", maxCapacity);
     } else {
       LOGGER.warn("JDBC channel will operate without a capacity limit.");
     }
@@ -156,7 +156,7 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
 
       boolean createIndex = Boolean.valueOf(createIndexFlag);
       if (!createIndex) {
-        LOGGER.info("Index creation is disabled, indexes will not be created.");
+        LOGGER.warn("Index creation is disabled, indexes will not be created.");
       }
 
       // Now create schema
@@ -247,7 +247,7 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
       }
     }
 
-    LOGGER.info("Persistend event: " + persistableEvent.getEventId());
+    LOGGER.debug("Persisted event: {}", persistableEvent.getEventId());
   }
 
   @Override
@@ -273,9 +273,9 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
     }
 
     if (result != null) {
-      LOGGER.info("Removed event: " + ((PersistableEvent) result).getEventId());
+      LOGGER.debug("Removed event: {}", ((PersistableEvent) result).getEventId());
     } else {
-      LOGGER.info("No event found for removal");
+      LOGGER.warn("No event found for removal");
     }
 
     return result;
