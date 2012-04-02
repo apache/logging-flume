@@ -23,7 +23,7 @@
 # constants
 ################################
 
-FLUME_NODE_CLASS="org.apache.flume.node.Application"
+FLUME_AGENT_CLASS="org.apache.flume.node.Application"
 FLUME_AVRO_CLIENT_CLASS="org.apache.flume.client.avro.AvroCLIClient"
 
 ################################
@@ -99,7 +99,7 @@ Usage: $0 <command> [options]...
 
 commands:
   help                  display this help text
-  node                  run a Flume node
+  agent                 run a Flume agent
   avro-client           run an avro Flume client
 
 global options:
@@ -107,9 +107,9 @@ global options:
   --classpath,-C <cp>   override the classpath for flume jars
   -Dproperty=value      sets a JDK system property value
 
-node options:
+agent options:
   --conf-file,-f        specify a config file (required)
-  --name,-n             the name of this node (required)
+  --name,-n             the name of this agent (required)
   --help,-h             display help text
 
 avro-client options:
@@ -158,8 +158,12 @@ case "$mode" in
     display_help
     exit 0
     ;;
+  agent)
+    opt_agent=1
+    ;;
   node)
-    opt_node=1
+    opt_agent=1
+    warn "The \"node\" command is deprecated. Please use \"agent\" instead."
     ;;
   avro-client)
     opt_avro_client=1
@@ -246,8 +250,8 @@ if [ -n "$opt_conf" ]; then
 fi
 
 # finally, invoke the appropriate command
-if [ -n "$opt_node" ] ; then
-  run_flume $FLUME_NODE_CLASS $args
+if [ -n "$opt_agent" ] ; then
+  run_flume $FLUME_AGENT_CLASS $args
 elif [ -n "$opt_avro_client" ] ; then
   run_flume $FLUME_AVRO_CLIENT_CLASS $args
 else
