@@ -78,9 +78,9 @@ public class RecoverableMemoryChannel extends BasicChannelSemantics {
       }
     }
     long rollSize = context.getLong(WAL_ROLL_SIZE, WAL.DEFAULT_ROLL_SIZE);
-    long maxLogsSize = context.getLong(WAL_ROLL_SIZE, WAL.DEFAULT_MAX_LOGS_SIZE);
-    long minRententionPeriod = context.getLong(WAL_ROLL_SIZE, WAL.DEFAULT_MIN_LOG_RENTENTION_PERIOD);
-    long workerInterval = context.getLong(WAL_ROLL_SIZE, WAL.DEFAULT_WORKER_INTERVAL);
+    long maxLogsSize = context.getLong(WAL_MAX_LOGS_SIZE, WAL.DEFAULT_MAX_LOGS_SIZE);
+    long minRententionPeriod = context.getLong(WAL_MIN_RENTENTION_PERIOD, WAL.DEFAULT_MIN_LOG_RENTENTION_PERIOD);
+    long workerInterval = context.getLong(WAL_WORKER_INTERVAL, WAL.DEFAULT_WORKER_INTERVAL);
     try {
       wal = new WAL<RecoverableMemoryChannelEvent>(new File(dataDir),
           RecoverableMemoryChannelEvent.class, rollSize, maxLogsSize,
