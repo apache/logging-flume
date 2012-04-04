@@ -48,7 +48,7 @@ public class BucketWriter {
   private FlumeFormatter formatter;
   private long eventCounter;
   private long processSize;
-  private long lastProcessTime;
+  private long lastRollTime;
   private long batchCounter;
   private String filePath;
   private long rollInterval;
@@ -63,7 +63,7 @@ public class BucketWriter {
   private void resetCounters() {
     eventCounter = 0;
     processSize = 0;
-    lastProcessTime = 0;
+    lastRollTime = System.currentTimeMillis();
     batchCounter = 0;
   }
 
@@ -149,7 +149,6 @@ public class BucketWriter {
 
     // update statistics
     processSize += e.getBody().length;
-    lastProcessTime = System.currentTimeMillis();
     eventCounter++;
     batchCounter++;
 
@@ -164,18 +163,22 @@ public class BucketWriter {
   }
 
   // check if time to rotate the file
-  public boolean shouldRotate() {
+  private boolean shouldRotate() {
     boolean doRotate = false;
 
-    if ((rollInterval > 0)
-        && (rollInterval < (System.currentTimeMillis() - lastProcessTime) / 1000))
-      doRotate = true;
-    if ((rollCount > 0) && (rollCount <= eventCounter)) {
-      eventCounter = 0;
+    long elapsed = (System.currentTimeMillis() - lastRollTime) / 1000L;
+    if ((rollInterval > 0) && (rollInterval <= elapsed)) {
+      LOG.debug("rolling: rollTime: {}, elapsed: {}", rollInterval, elapsed);
       doRotate = true;
     }
+
+    if ((rollCount > 0) && (rollCount <= eventCounter)) {
+      LOG.debug("rolling: rollCount: {}, events: {}", rollCount, eventCounter);
+      doRotate = true;
+    }
+
     if ((rollSize > 0) && (rollSize <= processSize)) {
-      processSize = 0;
+      LOG.debug("rolling: rollSize: {}, bytes: {}", rollSize, processSize);
       doRotate = true;
     }
 
