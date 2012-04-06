@@ -51,7 +51,19 @@ public enum SourceType {
    * Avro soruce.
    * @see AvroSource
    */
-  AVRO(AvroSource.class.getName());
+  AVRO(AvroSource.class.getName()),
+
+  /**
+   * SyslogTcpSource
+   * @see SyslogTcpSource
+   */
+  SYSLOGTCP(SyslogTcpSource.class.getName()),
+
+  /**
+   * SyslogTcpSource
+   * @see SyslogTcpSource
+   */
+  SYSLOGUDP(SyslogUDPSource.class.getName());
 
   private final String sourceClassName;
 
