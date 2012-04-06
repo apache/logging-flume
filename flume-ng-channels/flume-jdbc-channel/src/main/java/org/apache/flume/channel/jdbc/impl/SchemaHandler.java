@@ -39,10 +39,13 @@ public interface SchemaHandler {
 
   /**
    * Creates the schema.
+   * @param createForeignKeys a flag which indicates if the foreign key
+   *        constraints should be created where necessary.
    * @param createIndex a flag which indicates if indexes must be created during
    *        the creation of the schema.
    */
-  public void createSchemaObjects(boolean createIndex);
+  public void createSchemaObjects(boolean createForeignKeys,
+      boolean createIndex);
 
   /**
    * Inserts the given persistent event into the database. The connection that

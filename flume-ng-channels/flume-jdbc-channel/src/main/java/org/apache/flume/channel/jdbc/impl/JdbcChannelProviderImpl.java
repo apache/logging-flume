@@ -154,13 +154,23 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
       String createIndexFlag = context.getString(
           ConfigurationConstants.CONFIG_CREATE_INDEX, "true");
 
+      String createForeignKeysFlag = context.getString(
+          ConfigurationConstants.CONFIG_CREATE_FK, "true");
+
       boolean createIndex = Boolean.valueOf(createIndexFlag);
       if (!createIndex) {
         LOGGER.warn("Index creation is disabled, indexes will not be created.");
       }
 
+      boolean createForeignKeys = Boolean.valueOf(createForeignKeysFlag);
+      if (createForeignKeys) {
+        LOGGER.info("Foreign Key Constraints will be enabled.");
+      } else {
+        LOGGER.info("Foreign Key Constratins will be disabled.");
+      }
+
       // Now create schema
-      schemaHandler.createSchemaObjects(createIndex);
+      schemaHandler.createSchemaObjects(createForeignKeys, createIndex);
     }
 
     // Validate all schema objects are as expected
@@ -275,7 +285,7 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
     if (result != null) {
       LOGGER.debug("Removed event: {}", ((PersistableEvent) result).getEventId());
     } else {
-      LOGGER.warn("No event found for removal");
+      LOGGER.debug("No event found for removal");
     }
 
     return result;

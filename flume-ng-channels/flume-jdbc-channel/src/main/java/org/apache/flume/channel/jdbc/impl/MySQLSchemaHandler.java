@@ -43,12 +43,6 @@ public class MySQLSchemaHandler implements SchemaHandler {
   }
 
   @Override
-  public void createSchemaObjects(boolean createIndex) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
   public void storeEvent(PersistableEvent pe, Connection connection) {
     // TODO Auto-generated method stub
   }
@@ -64,5 +58,11 @@ public class MySQLSchemaHandler implements SchemaHandler {
   public long getChannelSize(Connection connection) {
     // TODO Auto-generated method stub
     return 0;
+  }
+
+  @Override
+  public void createSchemaObjects(boolean createForeignKeys, boolean createIndex) {
+    // TODO Auto-generated method stub
+
   }
 }

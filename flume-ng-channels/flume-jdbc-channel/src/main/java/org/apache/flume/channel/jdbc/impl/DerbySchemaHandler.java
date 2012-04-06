@@ -27,6 +27,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -201,18 +202,25 @@ public class DerbySchemaHandler implements SchemaHandler {
       = "CREATE INDEX " + INDEX_FLE_CHANNEL + " ON " + TABLE_FL_EVENT
         + " (" + COLUMN_FLE_CHANNEL + ")";
 
-  public static final String QUERY_CREATE_TABLE_FL_PLSPILL
+  public static final String QUERY_CREATE_TABLE_FL_PLSPILL_FMT
       = "CREATE TABLE " + TABLE_FL_PLSPILL + " ( "
         + COLUMN_FLP_EVENT + " BIGINT, "
-        + COLUMN_FLP_SPILL + " BLOB, "
-        + "FOREIGN KEY (" + COLUMN_FLP_EVENT + ") REFERENCES "
-        + TABLE_FL_EVENT + " (" + COLUMN_FLE_ID + "))";
+        + COLUMN_FLP_SPILL + " BLOB{0})";
+
+  public static final String QUERY_CREATE_TABLE_FL_PLSPILL_FK
+      = MessageFormat.format(QUERY_CREATE_TABLE_FL_PLSPILL_FMT,
+          ", FOREIGN KEY (" + COLUMN_FLP_EVENT + ") REFERENCES "
+              + TABLE_FL_EVENT + " (" + COLUMN_FLE_ID + ")"
+          );
+
+  public static final String QUERY_CREATE_TABLE_FL_PLSPILL_NOFK
+      = MessageFormat.format(QUERY_CREATE_TABLE_FL_PLSPILL_FMT, "");
 
   public static final String QUERY_CREATE_INDEX_FLP_EVENT
       = "CREATE INDEX " + INDEX_FLP_EVENT + " ON " + TABLE_FL_PLSPILL
         + " (" + COLUMN_FLP_EVENT + ")";
 
-  public static final String QUERY_CREATE_TABLE_FL_HEADER
+  public static final String QUERY_CREATE_TABLE_FL_HEADER_FMT
       = "CREATE TABLE " + TABLE_FL_HEADER + " ( "
         + COLUMN_FLH_ID + " BIGINT GENERATED ALWAYS AS IDENTITY "
         + "(START WITH 1, INCREMENT BY 1) PRIMARY KEY, "
@@ -222,33 +230,54 @@ public class DerbySchemaHandler implements SchemaHandler {
         + COLUMN_FLH_VALUE + " VARCHAR("
         + ConfigurationConstants.HEADER_VALUE_LENGTH_THRESHOLD + "), "
         + COLUMN_FLH_NMSPILL + " BOOLEAN, "
-        + COLUMN_FLH_VLSPILL + " BOOLEAN, "
-        + "FOREIGN KEY (" + COLUMN_FLH_EVENT + ") REFERENCES "
-        + TABLE_FL_EVENT + " (" + COLUMN_FLE_ID + "))";
+        + COLUMN_FLH_VLSPILL + " BOOLEAN{0})";
+
+  public static final String QUERY_CREATE_TABLE_FL_HEADER_FK
+      = MessageFormat.format(QUERY_CREATE_TABLE_FL_HEADER_FMT,
+          ", FOREIGN KEY (" + COLUMN_FLH_EVENT + ") REFERENCES "
+              + TABLE_FL_EVENT + " (" + COLUMN_FLE_ID + ")"
+        );
+
+  public static final String QUERY_CREATE_TABLE_FL_HEADER_NOFK
+      = MessageFormat.format(QUERY_CREATE_TABLE_FL_HEADER_FMT, "");
 
   public static final String QUERY_CREATE_INDEX_FLH_EVENT
       = "CREATE INDEX " + INDEX_FLH_EVENT + " ON " + TABLE_FL_HEADER
          + " (" + COLUMN_FLH_EVENT + ")";
 
-  public static final String QUERY_CREATE_TABLE_FL_NMSPILL
+  public static final String QUERY_CREATE_TABLE_FL_NMSPILL_FMT
       = "CREATE TABLE " + TABLE_FL_NMSPILL + " ( "
-        + COLUMN_FLN_HEADER + " BIGINT, "
-        + COLUMN_FLN_SPILL + " VARCHAR("
-        + ConfigurationConstants.HEADER_NAME_SPILL_MAX_LENGTH + "), "
-        + "FOREIGN KEY (" + COLUMN_FLN_HEADER + ") REFERENCES "
-        + TABLE_FL_HEADER + " (" + COLUMN_FLH_ID + "))";
+         + COLUMN_FLN_HEADER + " BIGINT, "
+         + COLUMN_FLN_SPILL + " VARCHAR("
+         + ConfigurationConstants.HEADER_NAME_SPILL_MAX_LENGTH + "){0})";
+
+  public static final String QUERY_CREATE_TABLE_FL_NMSPILL_FK
+      = MessageFormat.format(QUERY_CREATE_TABLE_FL_NMSPILL_FMT,
+          ", FOREIGN KEY (" + COLUMN_FLN_HEADER + ") REFERENCES "
+              + TABLE_FL_HEADER + " (" + COLUMN_FLH_ID + ")"
+        );
+
+  public static final String QUERY_CREATE_TABLE_FL_NMSPILL_NOFK
+      = MessageFormat.format(QUERY_CREATE_TABLE_FL_NMSPILL_FMT, "");
 
   public static final String QUERY_CREATE_INDEX_FLN_HEADER
       = "CREATE INDEX " + INDEX_FLN_HEADER + " ON " + TABLE_FL_NMSPILL
          + " (" + COLUMN_FLN_HEADER + ")";
 
-  public static final String QUERY_CREATE_TABLE_FL_VLSPILL
+  public static final String QUERY_CREATE_TABLE_FL_VLSPILL_FMT
       = "CREATE TABLE " + TABLE_FL_VLSPILL + " ( "
         + COLUMN_FLV_HEADER + " BIGINT, "
         + COLUMN_FLV_SPILL + " VARCHAR("
-        + ConfigurationConstants.HEADER_VALUE_SPILL_MAX_LENGTH + "), "
-        + "FOREIGN KEY (" + COLUMN_FLV_HEADER + ") REFERENCES "
-        + TABLE_FL_HEADER + " (" + COLUMN_FLH_ID + "))";
+        + ConfigurationConstants.HEADER_VALUE_SPILL_MAX_LENGTH + "){0})";
+
+  public static final String QUERY_CREATE_TABLE_FL_VLSPILL_FK
+      = MessageFormat.format(QUERY_CREATE_TABLE_FL_VLSPILL_FMT,
+            ", FOREIGN KEY (" + COLUMN_FLV_HEADER + ") REFERENCES "
+                + TABLE_FL_HEADER + " (" + COLUMN_FLH_ID + ")"
+        );
+
+  public static final String QUERY_CREATE_TABLE_FL_VLSPILL_NOFK
+      = MessageFormat.format(QUERY_CREATE_TABLE_FL_VLSPILL_FMT, "");
 
   public static final String QUERY_CREATE_INDEX_FLV_HEADER
       = "CREATE INDEX " + INDEX_FLV_HEADER + " ON " + TABLE_FL_VLSPILL
@@ -381,13 +410,22 @@ public class DerbySchemaHandler implements SchemaHandler {
   }
 
   @Override
-  public void createSchemaObjects(boolean createIndex) {
+  public void createSchemaObjects(boolean createForeignKeys,
+      boolean createIndex) {
     runQuery(QUERY_CREATE_SCHEMA_FLUME);
     runQuery(QUERY_CREATE_TABLE_FL_EVENT);
-    runQuery(QUERY_CREATE_TABLE_FL_PLSPILL);
-    runQuery(QUERY_CREATE_TABLE_FL_HEADER);
-    runQuery(QUERY_CREATE_TABLE_FL_NMSPILL);
-    runQuery(QUERY_CREATE_TABLE_FL_VLSPILL);
+
+    if (createForeignKeys) {
+      runQuery(QUERY_CREATE_TABLE_FL_PLSPILL_FK);
+      runQuery(QUERY_CREATE_TABLE_FL_HEADER_FK);
+      runQuery(QUERY_CREATE_TABLE_FL_NMSPILL_FK);
+      runQuery(QUERY_CREATE_TABLE_FL_VLSPILL_FK);
+    } else {
+      runQuery(QUERY_CREATE_TABLE_FL_PLSPILL_NOFK);
+      runQuery(QUERY_CREATE_TABLE_FL_HEADER_NOFK);
+      runQuery(QUERY_CREATE_TABLE_FL_NMSPILL_NOFK);
+      runQuery(QUERY_CREATE_TABLE_FL_VLSPILL_NOFK);
+    }
 
     if (createIndex) {
       runQuery(QUERY_CREATE_INDEX_FLE_CHANNEL);
