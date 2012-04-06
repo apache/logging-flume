@@ -98,6 +98,84 @@ public class TestHDFSEventSink {
       dirCleanup();
   }
 
+
+  @Test
+  public void testTextBatchAppend() throws InterruptedException, LifecycleException,
+      EventDeliveryException, IOException {
+
+    final long txnMax = 2;
+    final long rollCount = 10;
+    final long batchSize = 2;
+    final String fileName = "FlumeData";
+    String newPath = testPath + "/singleTextBucket";
+    int totalEvents = 0;
+    int i = 1, j = 1;
+
+    // clear the test directory
+    Configuration conf = new Configuration();
+    FileSystem fs = FileSystem.get(conf);
+    Path dirPath = new Path(newPath);
+    fs.delete(dirPath, true);
+    fs.mkdirs(dirPath);
+
+    Context context = new Context();
+
+    // context.put("hdfs.path", testPath + "/%Y-%m-%d/%H");
+    context.put("hdfs.path", newPath);
+    context.put("hdfs.filePrefix", fileName);
+    context.put("hdfs.txnEventMax", String.valueOf(txnMax));
+    context.put("hdfs.rollCount", String.valueOf(rollCount));
+    context.put("hdfs.rollInterval", "0");
+    context.put("hdfs.rollSize", "0");
+    context.put("hdfs.batchSize", String.valueOf(batchSize));
+    context.put("hdfs.writeFormat", "Text");
+    context.put("hdfs.fileType", "DataStream");
+
+    Configurables.configure(sink, context);
+
+    Channel channel = new MemoryChannel();
+    Configurables.configure(channel, context);
+
+    sink.setChannel(channel);
+    sink.start();
+
+    Calendar eventDate = Calendar.getInstance();
+    List<String> bodies = Lists.newArrayList();
+
+    // push the event batches into channel to roll twice
+    for (i = 1; i <= rollCount*2/txnMax; i++) {
+      Transaction txn = channel.getTransaction();
+      txn.begin();
+      for (j = 1; j <= txnMax; j++) {
+        Event event = new SimpleEvent();
+        eventDate.clear();
+        eventDate.set(2011, i, i, i, 0); // yy mm dd
+        String body = "Test." + i + "." + j;
+        event.setBody(body.getBytes());
+        bodies.add(body);
+        channel.put(event);
+        totalEvents++;
+      }
+      txn.commit();
+      txn.close();
+
+      // execute sink to process the events
+      sink.process();
+    }
+
+    sink.stop();
+
+    // loop through all the files generated and check their contains
+    FileStatus[] dirStat = fs.listStatus(dirPath);
+    Path fList[] = FileUtil.stat2Paths(dirStat);
+
+    // check that the roll happened correctly for the given data
+    // Note that we'll end up with one last file with only header
+    Assert.assertEquals((totalEvents / rollCount) + 1, fList.length);
+    // check the contents of the all files
+    verifyOutputTextFiles(fs, conf, dirPath.toUri().getPath(), fileName, bodies);
+  }
+
   @Test
   public void testLifecycle() throws InterruptedException, LifecycleException {
     Context context = new Context();
@@ -279,7 +357,7 @@ public class TestHDFSEventSink {
 
     // check that the roll happened correctly for the given data
     // Note that we'll end up with two files which has have a header
-    Assert.assertEquals((totalEvents / rollCount) + 2, fList.length);
+    Assert.assertEquals((totalEvents / rollCount) + 1, fList.length);
     verifyOutputSequenceFiles(fs, conf, dirPath.toUri().getPath(), fileName, bodies);
   }
 
@@ -619,7 +697,7 @@ public class TestHDFSEventSink {
     Calendar eventDate = Calendar.getInstance();
 
     // push the event batches into channel
-    for (i = 1; i < numBatches; i++) {
+    for (i = 0; i < numBatches; i++) {
       Transaction txn = channel.getTransaction();
       txn.begin();
       for (j = 1; j <= txnMax; j++) {
@@ -691,7 +769,7 @@ public class TestHDFSEventSink {
     Calendar eventDate = Calendar.getInstance();
     List<String> bodies = Lists.newArrayList();
     // push the event batches into channel
-    for (i = 1; i < numBatches; i++) {
+    for (i = 0; i < numBatches; i++) {
       Transaction txn = channel.getTransaction();
       txn.begin();
       for (j = 1; j <= txnMax; j++) {
@@ -723,7 +801,7 @@ public class TestHDFSEventSink {
 
     // check that the roll happened correctly for the given data
     // Note that we'll end up with two files with only a head
-    Assert.assertEquals((totalEvents / rollCount) + 2, fList.length);
+    Assert.assertEquals((totalEvents / rollCount) +1 , fList.length);
 
     verifyOutputSequenceFiles(fs, conf, dirPath.toUri().getPath(), fileName, bodies);
   }
@@ -747,5 +825,4 @@ public class TestHDFSEventSink {
       LifecycleException, EventDeliveryException, IOException {
     slowAppendTestHelper(0);
   }
-
 }

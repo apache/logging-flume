@@ -43,7 +43,7 @@ public class BucketWriter {
    * tossed away and we will create a new instance. Gurantee unique files
    * in this case.
    */
-  private static final AtomicLong fileExentionCounter = new AtomicLong(0);
+  private static final AtomicLong fileExentionCounter = new AtomicLong(System.nanoTime());
   private HDFSWriter writer;
   private FlumeFormatter formatter;
   private long eventCounter;
@@ -205,5 +205,9 @@ public class BucketWriter {
   public String toString() {
     return "[ " + this.getClass().getSimpleName() + " filePath = " + filePath +
         ", bucketPath = " + bucketPath + " ]";
+  }
+
+  public boolean isBatchComplete() {
+    return (batchCounter == 0);
   }
 }

@@ -361,6 +361,9 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
             }
           });
           sfWriters.put(realPath, bucketWriter);
+        }
+        // track the buckets getting written in this transaction
+        if (!writers.contains(bucketWriter)) {
           writers.add(bucketWriter);
         }
 
@@ -401,7 +404,13 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
         throw new EventDeliveryException(th);
       }
     } finally {
+      // flush the buckets that still has pending data
+      // this ensures that the data removed from channel 
+      // by the current transaction is safely on disk
       for (BucketWriter writer : writers) {
+        if (writer.isBatchComplete()) {
+          continue;
+        }
         final BucketWriter callableWriter = writer;
         LOG.info("Calling abort on " + callableWriter);
         callWithTimeoutLogError(executor, callTimeout, "Calling abort on "
@@ -409,7 +418,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
           @Override
           public Void call() throws Exception {
             synchronized(callableWriter) {
-              callableWriter.abort();
+              callableWriter.flush();
             }
             return null;
           }
