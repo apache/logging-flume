@@ -18,13 +18,13 @@
  */
 package org.apache.flume.source;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
+import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
@@ -55,21 +55,23 @@ public class SyslogUDPSource extends AbstractSource
   private static final Logger logger = LoggerFactory
       .getLogger(SyslogUDPSource.class);
 
-
+  private CounterGroup counterGroup = new CounterGroup();
   public class syslogHandler extends SimpleChannelHandler {
+    private SyslogUtils syslogUtils = new SyslogUtils(true);
+
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent mEvent) {
       try {
-        Event e = SyslogUtils.extractEvent((ChannelBuffer)mEvent.getMessage());
+        Event e = syslogUtils.extractEvent((ChannelBuffer)mEvent.getMessage());
         if (e == null) {
           return;
         }
         getChannelProcessor().processEvent(e);
+        counterGroup.incrementAndGet("events.success");
       } catch (ChannelException ex) {
+        counterGroup.incrementAndGet("events.dropped");
         logger.error("Error writting to channel", ex);
         return;
-      } catch (IOException eI) {
-        logger.error("Error reading from network", eI);
       }
     }
   }
@@ -96,6 +98,8 @@ public class SyslogUDPSource extends AbstractSource
 
   @Override
   public void stop() {
+    logger.info("Syslog UDP Source stopping...");
+    logger.info("Metrics:{}", counterGroup);
     if (nettyChannel != null) {
       nettyChannel.close();
       try {

@@ -27,59 +27,127 @@ import java.util.Map;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
 import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SyslogUtils {
 
-  protected String host = null;
-  protected int port;
-  protected Channel nettyChannel;
+  private Mode m = Mode.START;
+  private StringBuilder prio = new StringBuilder();
+  private ByteArrayOutputStream baos;
   private static final Logger logger = LoggerFactory
       .getLogger(SyslogUtils.class);
 
   final public static String SYSLOG_FACILITY = "Facility";
   final public static String SYSLOG_SEVERITY = "Severity";
+  final public static String EVENT_STATUS = "flume.syslog.status";
+  final public static Integer MIN_SIZE = 10;
+  final public static Integer DEFAULT_SIZE = 2500;
+  private final boolean isUdp;
+  private boolean isBadEvent;
+  private boolean isIncompleteEvent;
+  private Integer maxSize;
+
+  public SyslogUtils() {
+    this(false);
+  }
+
+  public SyslogUtils(boolean isUdp) {
+    this(DEFAULT_SIZE, isUdp);
+  }
+
+  public SyslogUtils(Integer eventSize, boolean isUdp){
+    this.isUdp = isUdp;
+    isBadEvent = false;
+    isIncompleteEvent = false;
+    maxSize = (eventSize < MIN_SIZE) ? MIN_SIZE : eventSize;
+    baos = new ByteArrayOutputStream(eventSize);
+  }
 
   enum Mode {
-    START, PRIO, DATA, ERR
+    START, PRIO, DATA
   };
 
-  // create the event from syslog data
-  static Event buildEvent(StringBuilder prio,
-      ByteArrayOutputStream baos) {
+  public enum SyslogStatus{
+    OTHER("Unknown"),
+    INVALID("Invalid"),
+    INCOMPLETE("Incomplete");
 
-    int pri = Integer.parseInt(prio.toString());
-    int  sev = pri % 8;
-    int facility = pri - sev;
+    private final String syslogStatus;
+
+    private SyslogStatus(String status){
+      syslogStatus = status;
+    }
+
+    public String getSyslogStatus(){
+      return this.syslogStatus;
+    }
+  }
+
+  // create the event from syslog data
+  Event buildEvent() {
+    int pri = 0;
+    int sev = 0;
+    int facility = 0;
+    if(!isBadEvent){
+      pri = Integer.parseInt(prio.toString());
+      sev = pri % 8;
+      facility = pri - sev;
+    }
     Map <String, String> headers = new HashMap<String, String>();
     headers.put(SYSLOG_FACILITY, String.valueOf(facility));
     headers.put(SYSLOG_SEVERITY, String.valueOf(sev));
+    if(isBadEvent){
+      logger.warn("Event created from Invalid Syslog data.");
+      headers.put(EVENT_STATUS, SyslogStatus.INVALID.getSyslogStatus());
+    } else if(isIncompleteEvent){
+      logger.warn("Event size larger than specified event size: {}. You should " +
+          "consider increasing your event size.", maxSize);
+      headers.put(EVENT_STATUS, SyslogStatus.INCOMPLETE.getSyslogStatus());
+    }
     // TODO: add hostname and timestamp if provided ...
 
-    return EventBuilder.withBody(baos.toByteArray(), headers);
+    byte[] body = baos.toByteArray();
+    reset();
+    return EventBuilder.withBody(body, headers);
+  }
+
+  private void reset(){
+    baos.reset();
+    m = Mode.START;
+    prio.delete(0, prio.length());
+    isBadEvent = false;
+    isIncompleteEvent = false;
+
   }
 
   // extract relevant syslog data needed for building Flume event
-  public static Event extractEvent(ChannelBuffer in)
-        throws IOException {
-    StringBuilder prio = new StringBuilder();
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+  public Event extractEvent(ChannelBuffer in){
+
+    /* for protocol debugging
+    ByteBuffer bb = in.toByteBuffer();
+    int remaining = bb.remaining();
+    byte[] buf = new byte[remaining];
+    bb.get(buf);
+    HexDump.dump(buf, 0, System.out, 0);
+    */
+
     byte b = 0;
-    Mode m = Mode.START;
     Event e = null;
     boolean doneReading = false;
 
     try {
-      while (!doneReading) {
+      while (!doneReading && in.readable()) {
         b = in.readByte();
         switch (m) {
         case START:
           if (b == '<') {
             m = Mode.PRIO;
           } else {
-            m = Mode.ERR;
+            isBadEvent = true;
+            baos.write(b);
+            //Bad event, just dump everything as if it is data.
+            m = Mode.DATA;
           }
           break;
         case PRIO:
@@ -87,35 +155,48 @@ public class SyslogUtils {
             m = Mode.DATA;
           } else {
             char ch = (char) b;
-            if (Character.isDigit(ch)) {
-              prio.append(ch); // stay in PRIO mode
-            } else {
-              m = Mode.ERR;
+            prio.append(ch);
+            if (!Character.isDigit(ch)) {
+              isBadEvent = true;
+              //Append the priority to baos:
+              String badPrio = "<"+ prio;
+              baos.write(badPrio.getBytes());
+              //If we hit a bad priority, just write as if everything is data.
+              m = Mode.DATA;
             }
           }
           break;
         case DATA:
           // TCP syslog entries are separated by '\n'
           if (b == '\n') {
-            e = buildEvent(prio, baos);
+            e = buildEvent();
+            doneReading = true;
+          } else {
+            baos.write(b);
+          }
+          if(baos.size() == this.maxSize && !doneReading){
+            isIncompleteEvent = true;
+            e = buildEvent();
             doneReading = true;
           }
-
-          baos.write(b);
-          break;
-        case ERR:
-          if (b == '<') {
-            // check if its start of new event
-            m = Mode.PRIO;
-          }
-          // otherwise stay in Mode.ERR;
           break;
         }
+
       }
-      return null;
-    } catch (IndexOutOfBoundsException eF) {
-        e = buildEvent(prio, baos);
+
+      // UDP doesn't send a newline, so just use what we received
+      if (e == null && isUdp) {
+        doneReading = true;
+        e = buildEvent();
+      }
+    //} catch (IndexOutOfBoundsException eF) {
+    //    e = buildEvent(prio, baos);
+    } catch (IOException e1) {
+      //no op
+    } finally {
+      // no-op
     }
+
     return e;
   }
 

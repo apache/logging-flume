@@ -18,17 +18,16 @@
  */
 package org.apache.flume.source;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
+import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
-import org.apache.flume.source.SyslogUtils;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
@@ -53,21 +52,29 @@ implements EventDrivenSource, Configurable {
   private int port = SYSLOG_TCP_PORT; // this is syslog-ng's default tcp port.
   private String host = null;
   private Channel nettyChannel;
+  private CounterGroup counterGroup = new CounterGroup();
 
   public class syslogTcpHandler extends SimpleChannelHandler {
+
+    private SyslogUtils syslogUtils = new SyslogUtils();
+
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent mEvent) {
-      try {
-        Event e = SyslogUtils.extractEvent((ChannelBuffer)mEvent.getMessage());
+      ChannelBuffer buff = (ChannelBuffer) mEvent.getMessage();
+      while (buff.readable()) {
+        Event e = syslogUtils.extractEvent(buff);
         if (e == null) {
-          return;
+          logger.debug("Parsed partial event, event will be generated when " +
+              "rest of the event is received.");
+          continue;
         }
-        getChannelProcessor().processEvent(e);
-      } catch (ChannelException ex) {
-        logger.error("Error writting to channel", ex);
-        return;
-      } catch (IOException eI) {
-        logger.error("Error reading from network", eI);
+        try {
+          getChannelProcessor().processEvent(e);
+          counterGroup.incrementAndGet("events.success");
+        } catch (ChannelException ex) {
+          counterGroup.incrementAndGet("events.dropped");
+          logger.error("Error writting to channel, event dropped", ex);
+        }
       }
 
     }
@@ -85,6 +92,8 @@ implements EventDrivenSource, Configurable {
       }
     });
 
+    logger.info("Syslog TCP Source starting...");
+
     if (host == null) {
       nettyChannel = serverBootstrap.bind(new InetSocketAddress(port));
     } else {
@@ -96,6 +105,9 @@ implements EventDrivenSource, Configurable {
 
   @Override
   public void stop() {
+    logger.info("Syslog TCP Source stopping...");
+    logger.info("Metrics:{}", counterGroup);
+
     if (nettyChannel != null) {
       nettyChannel.close();
       try {
@@ -112,7 +124,7 @@ implements EventDrivenSource, Configurable {
 
   @Override
   public void configure(Context context) {
-    port = Integer.parseInt(context.getString("port"));
+    port = context.getInteger("port", SYSLOG_TCP_PORT);
     host = context.getString("host");
   }
 

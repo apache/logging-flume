@@ -70,16 +70,19 @@ public class TestSyslogUdpSource {
         "localhost:"+TEST_SYSLOG_PORT, SyslogAppender.LOG_FTP);
     logger.addAppender(appender);
     Event e = null;
+    Event e2 = null;
 
     source.start();
 
     // write to syslog
     logger.info("test flume syslog");
+    logger.info("");
 
     Transaction txn = channel.getTransaction();
     try {
       txn.begin();
       e = channel.take();
+      e2 = channel.take();
       txn.commit();
     } finally {
       txn.close();
@@ -90,7 +93,11 @@ public class TestSyslogUdpSource {
 
     Assert.assertNotNull(e);
     Assert.assertEquals(e.getHeaders().get(SyslogUtils.SYSLOG_FACILITY), String.valueOf(SyslogAppender.LOG_FTP));
-    Assert.assertArrayEquals(e.getBody(),"test flume syslog".getBytes());
+    Assert.assertArrayEquals(e.getBody(), "test flume syslog".getBytes());
+
+    Assert.assertNotNull(e2);
+    Assert.assertEquals(e2.getHeaders().get(SyslogUtils.SYSLOG_FACILITY), String.valueOf(SyslogAppender.LOG_FTP));
+    Assert.assertArrayEquals(e2.getBody(), "".getBytes());
   }
 
 }
