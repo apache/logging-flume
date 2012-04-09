@@ -122,4 +122,51 @@ public class TestRollingFileSink {
       reader.close();
     }
   }
+
+  @Test
+  public void testAppend2() throws InterruptedException, LifecycleException,
+      EventDeliveryException, IOException {
+
+    Context context = new Context();
+
+    context.put("sink.directory", tmpDir.getPath());
+    context.put("sink.rollInterval", "0");
+
+    Configurables.configure(sink, context);
+
+    Channel channel = new PseudoTxnMemoryChannel();
+    Configurables.configure(channel, context);
+
+    sink.setChannel(channel);
+    sink.start();
+
+    for (int i = 0; i < 10; i++) {
+      Event event = new SimpleEvent();
+
+      event.setBody(("Test event " + i).getBytes());
+
+      channel.put(event);
+      sink.process();
+
+      Thread.sleep(500);
+    }
+
+    sink.stop();
+
+    for (String file : sink.getDirectory().list()) {
+      BufferedReader reader = new BufferedReader(new FileReader(new File(
+          sink.getDirectory(), file)));
+
+      String lastLine = null;
+      String currentLine = null;
+
+      while ((currentLine = reader.readLine()) != null) {
+        lastLine = currentLine;
+        logger.debug("Produced file:{} lastLine:{}", file, lastLine);
+      }
+
+
+      reader.close();
+    }
+  }
 }

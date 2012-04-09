@@ -88,29 +88,33 @@ public class RollingFileSink extends AbstractSink implements Configurable {
     super.start();
 
     pathController.setBaseDirectory(directory);
+    if(rollInterval > 0){
 
-    rollService = Executors.newScheduledThreadPool(
-        1,
-        new ThreadFactoryBuilder().setNameFormat(
-            "rollingFileSink-roller-" + Thread.currentThread().getId() + "-%d")
-            .build());
+      rollService = Executors.newScheduledThreadPool(
+          1,
+          new ThreadFactoryBuilder().setNameFormat(
+              "rollingFileSink-roller-" +
+          Thread.currentThread().getId() + "-%d").build());
 
-    /*
-     * Every N seconds, mark that it's time to rotate. We purposefully do NOT
-     * touch anything other than the indicator flag to avoid error handling
-     * issues (e.g. IO exceptions occuring in two different threads. Resist the
-     * urge to actually perform rotation in a separate thread!
-     */
-    rollService.scheduleAtFixedRate(new Runnable() {
+      /*
+       * Every N seconds, mark that it's time to rotate. We purposefully do NOT
+       * touch anything other than the indicator flag to avoid error handling
+       * issues (e.g. IO exceptions occuring in two different threads.
+       * Resist the urge to actually perform rotation in a separate thread!
+       */
+      rollService.scheduleAtFixedRate(new Runnable() {
 
-      @Override
-      public void run() {
-        logger.debug("Marking time to rotate file {}",
-            pathController.getCurrentFile());
-        shouldRotate = true;
-      }
+        @Override
+        public void run() {
+          logger.debug("Marking time to rotate file {}",
+              pathController.getCurrentFile());
+          shouldRotate = true;
+        }
 
-    }, rollInterval, rollInterval, TimeUnit.SECONDS);
+      }, rollInterval, rollInterval, TimeUnit.SECONDS);
+    } else{
+      logger.info("RollInterval is not valid, file rolling will not happen.");
+    }
   }
 
   @Override
@@ -203,17 +207,18 @@ public class RollingFileSink extends AbstractSink implements Configurable {
         logger.error("Unable to close output stream. Exception follows.", e);
       }
     }
+    if(rollInterval > 0){
+      rollService.shutdown();
 
-    rollService.shutdown();
-
-    while (!rollService.isTerminated()) {
-      try {
-        rollService.awaitTermination(1, TimeUnit.SECONDS);
-      } catch (InterruptedException e) {
-        logger
-            .debug(
-                "Interrupted while waiting for roll service to stop. Please report this.",
-                e);
+      while (!rollService.isTerminated()) {
+        try {
+          rollService.awaitTermination(1, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+          logger
+          .debug(
+              "Interrupted while waiting for roll service to stop. " +
+              "Please report this.", e);
+        }
       }
     }
   }
