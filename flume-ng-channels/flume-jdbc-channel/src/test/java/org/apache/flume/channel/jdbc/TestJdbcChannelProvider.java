@@ -69,7 +69,7 @@ public class TestJdbcChannelProvider {
     File derbyLogFile = new File(tmpDir, "derbytest.log");
     String derbyLogFilePath = derbyLogFile.getCanonicalPath();
 
-    derbyCtx.put(ConfigurationConstants.CONFIG_JDBC_SYSPRO_PREFIX
+    derbyCtx.put(ConfigurationConstants.CONFIG_JDBC_SYSPROP_PREFIX
         + "derby.stream.error.file", derbyLogFilePath);
 
     // Use a temp file to create a temporary directory

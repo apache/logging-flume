@@ -24,44 +24,113 @@ public final class ConfigurationConstants {
 
   public static final String PREFIX = "org.apache.flume.channel.jdbc.";
 
-  public static final String CONFIG_JDBC_SYSPRO_PREFIX =
-      PREFIX + "sysprop.";
+  public static final String CONFIG_JDBC_SYSPROP_PREFIX = "sysprop.";
 
-  public static final String CONFIG_JDBC_DRIVER_CLASS =
-      PREFIX + "driver.class";
+  /**
+   * @deprecated use {@link #CONFIG_JDBC_SYSPROP_PREFIX} instead
+   */
+  public static final String OLD_CONFIG_JDBC_SYSPROP_PREFIX =
+      PREFIX + CONFIG_JDBC_SYSPROP_PREFIX;
 
-  public static final String CONFIG_USERNAME =
-      PREFIX + "db.username";
+  public static final String CONFIG_JDBC_DRIVER_CLASS = "driver.class";
 
-  public static final String CONFIG_PASSWORD =
-      PREFIX + "db.password";
+  /**
+   * @deprecated use {@link #CONFIG_JDBC_DRIVER_CLASS} instead.
+   */
+  public static final String OLD_CONFIG_JDBC_DRIVER_CLASS =
+      PREFIX + CONFIG_JDBC_DRIVER_CLASS;
 
-  public static final String CONFIG_URL =
-      PREFIX + "driver.url";
+  public static final String CONFIG_USERNAME = "db.username";
 
-  public static final String CONFIG_JDBC_PROPERTIES_FILE =
-      PREFIX + "connection.properties.file";
+  /**
+   * @deprecated use {@link #CONFIG_USERNAME} instead.
+   */
+  public static final String OLD_CONFIG_USERNAME =
+      PREFIX + CONFIG_USERNAME;
 
-  public static final String CONFIG_DATABASE_TYPE =
-      PREFIX + "db.type";
+  public static final String CONFIG_PASSWORD = "db.password";
 
-  public static final String CONFIG_CREATE_SCHEMA =
-      PREFIX + "create.schema";
+  /**
+   * @deprecated use {@link #CONFIG_PASSWORD} instead.
+   */
+  public static final String OLD_CONFIG_PASSWORD =
+      PREFIX + CONFIG_PASSWORD;
 
-  public static final String CONFIG_CREATE_INDEX =
-      PREFIX + "create.index";
+  public static final String CONFIG_URL = "driver.url";
 
-  public static final String CONFIG_CREATE_FK =
-      PREFIX + "create.foreignkey";
+  /**
+   * @deprecated use {@link #CONFIG_URL} instead.
+   */
+  public static final String OLD_CONFIG_URL =
+      PREFIX + CONFIG_URL;
+
+  public static final String CONFIG_JDBC_PROPS_FILE =
+      "connection.properties.file";
+
+  /**
+   * @deprecated use {@link #CONFIG_JDBC_PROPS_FILE} instead.
+   */
+  public static final String OLD_CONFIG_JDBC_PROPS_FILE =
+      PREFIX + CONFIG_JDBC_PROPS_FILE;
+
+  public static final String CONFIG_DATABASE_TYPE = "db.type";
+
+  /**
+   * @deprecated use {@link #CONFIG_DATABASE_TYPE} instead.
+   */
+  public static final String OLD_CONFIG_DATABASE_TYPE =
+      PREFIX + CONFIG_DATABASE_TYPE;
+
+  public static final String CONFIG_CREATE_SCHEMA = "create.schema";
+
+  /**
+   * @deprecated use {@link #CONFIG_CREATE_SCHEMA} instead.
+   */
+  public static final String OLD_CONFIG_CREATE_SCHEMA =
+      PREFIX + CONFIG_CREATE_SCHEMA;
+
+
+  public static final String CONFIG_CREATE_INDEX = "create.index";
+
+  /**
+   * @deprecated use {@link #CONFIG_CREATE_INDEX} instead.
+   */
+  public static final String OLD_CONFIG_CREATE_INDEX =
+      PREFIX + CONFIG_CREATE_INDEX;
+
+  public static final String CONFIG_CREATE_FK = "create.foreignkey";
+
+  /**
+   * @deprecated use {@link #CONFIG_CREATE_FK} instead.
+   */
+  public static final String OLD_CONFIG_CREATE_FK =
+      PREFIX + CONFIG_CREATE_FK;
 
   public static final String CONFIG_TX_ISOLATION_LEVEL =
-      PREFIX + "transaction.isolation";
+      "transaction.isolation";
 
-  public static final String CONFIG_MAX_CONNECTION =
-      PREFIX + "maximum.connections";
+  /**
+   * @deprecated use {@link #CONFIG_TX_ISOLATION_LEVEL} instead.
+   */
+  public static final String OLD_CONFIG_TX_ISOLATION_LEVEL =
+      PREFIX + CONFIG_TX_ISOLATION_LEVEL;
 
-  public static final String CONFIG_MAX_CAPACITY =
-      PREFIX + "maximum.capacity";
+  public static final String CONFIG_MAX_CONNECTIONS = "maximum.connections";
+
+  /**
+   * @deprecated use {@link #CONFIG_MAX_CONNECTIONS} instead
+   */
+  public static final String OLD_CONFIG_MAX_CONNECTIONS =
+      PREFIX + CONFIG_MAX_CONNECTIONS;
+
+  public static final String CONFIG_MAX_CAPACITY = "maximum.capacity";
+
+  /**
+   * @deprecated use {@link #CONFIG_MAX_CAPACITY} instead.
+   */
+  public static final String OLD_CONFIG_MAX_CAPACITY =
+      PREFIX + CONFIG_MAX_CAPACITY;
+
 
   // Built in constants for JDBC Channel implementation
 
