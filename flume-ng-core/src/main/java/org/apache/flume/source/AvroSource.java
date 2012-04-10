@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Responder;
@@ -41,6 +42,7 @@ import org.apache.flume.event.EventBuilder;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
+import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,6 +87,12 @@ import org.slf4j.LoggerFactory;
  * <td>TCP port / int</td>
  * <td>none (required)</td>
  * </tr>
+ * <tr>
+ * <td><tt>threads</tt></td>
+ * <td>Max number of threads assigned to thread pool, 0 being unlimited</td>
+ * <td>Count / int</td>
+ * <td>0(optional)</td>
+ * </tr>
  * </table>
  * <p>
  * <b>Metrics</b>
@@ -96,6 +104,8 @@ import org.slf4j.LoggerFactory;
 public class AvroSource extends AbstractSource implements EventDrivenSource,
     Configurable, AvroSourceProtocol {
 
+  private static final String THREADS = "threads";
+
   private static final Logger logger = LoggerFactory
       .getLogger(AvroSource.class);
 
@@ -105,6 +115,8 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   private Server server;
   private CounterGroup counterGroup;
 
+  private int maxThreads;
+
   public AvroSource() {
     counterGroup = new CounterGroup();
   }
@@ -113,6 +125,12 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   public void configure(Context context) {
     port = Integer.parseInt(context.getString("port"));
     bindAddress = context.getString("bind");
+    try {
+      maxThreads = context.getInteger(THREADS, 0);
+    } catch (NumberFormatException e) {
+      logger.warn("AVRO source\'s \"threads\" property must specify an integer value.",
+              context.getString(THREADS));
+    }
   }
 
   @Override
@@ -120,8 +138,14 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     logger.info("Avro source starting:{}", this);
 
     Responder responder = new SpecificResponder(AvroSourceProtocol.class, this);
-    server = new NettyServer(responder,
-        new InetSocketAddress(bindAddress, port));
+    if(maxThreads <= 0) {
+      server = new NettyServer(responder,
+              new InetSocketAddress(bindAddress, port));
+    } else {
+      server = new NettyServer(responder, new InetSocketAddress(bindAddress, port),
+              new NioServerSocketChannelFactory(Executors.newFixedThreadPool(maxThreads),
+                      Executors.newFixedThreadPool(maxThreads)));
+    }
 
     server.start();
 

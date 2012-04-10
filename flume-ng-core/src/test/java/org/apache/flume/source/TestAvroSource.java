@@ -120,6 +120,7 @@ public class TestAvroSource {
 
         context.put("port", String.valueOf(selectedPort = 41414 + i));
         context.put("bind", "0.0.0.0");
+        context.put("threads", "50");
 
         Configurables.configure(source, context);
 
