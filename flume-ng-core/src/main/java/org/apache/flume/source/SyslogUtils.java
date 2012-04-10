@@ -200,4 +200,12 @@ public class SyslogUtils {
     return e;
   }
 
+  public Integer getEventSize() {
+    return maxSize;
+  }
+
+  public void setEventSize(Integer eventSize) {
+    this.maxSize = eventSize;
+  }
+
 }

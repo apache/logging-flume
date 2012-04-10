@@ -52,11 +52,16 @@ implements EventDrivenSource, Configurable {
   private int port = SYSLOG_TCP_PORT; // this is syslog-ng's default tcp port.
   private String host = null;
   private Channel nettyChannel;
+  private Integer eventSize;
   private CounterGroup counterGroup = new CounterGroup();
 
   public class syslogTcpHandler extends SimpleChannelHandler {
 
     private SyslogUtils syslogUtils = new SyslogUtils();
+
+    public void setEventSize(int eventSize){
+      syslogUtils.setEventSize(eventSize);
+    }
 
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent mEvent) {
@@ -88,7 +93,9 @@ implements EventDrivenSource, Configurable {
     ServerBootstrap serverBootstrap = new ServerBootstrap(factory);
     serverBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
       public ChannelPipeline getPipeline() {
-        return Channels.pipeline(new syslogTcpHandler());
+        syslogTcpHandler handler = new syslogTcpHandler();
+        handler.setEventSize(eventSize);
+        return Channels.pipeline(handler);
       }
     });
 
@@ -126,6 +133,7 @@ implements EventDrivenSource, Configurable {
   public void configure(Context context) {
     port = context.getInteger("port", SYSLOG_TCP_PORT);
     host = context.getString("host");
+    eventSize = context.getInteger("eventSize", SyslogUtils.DEFAULT_SIZE);
   }
 
 }

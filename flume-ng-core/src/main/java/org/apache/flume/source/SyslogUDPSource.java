@@ -62,6 +62,7 @@ public class SyslogUDPSource extends AbstractSource
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent mEvent) {
       try {
+        syslogUtils.setEventSize(maxsize);
         Event e = syslogUtils.extractEvent((ChannelBuffer)mEvent.getMessage());
         if (e == null) {
           return;
