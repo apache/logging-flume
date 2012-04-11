@@ -143,6 +143,15 @@ public class SyslogUtils {
         case START:
           if (b == '<') {
             m = Mode.PRIO;
+          } else if(b == '\n'){
+          //If the character is \n, it was because the last event was exactly
+          //as long  as the maximum size allowed and
+          //the only remaining character was the delimiter - '\n', or
+          //multiple delimiters were sent in a row.
+          //Just ignore it, and move forward, don't change the mode.
+          //This is a no-op, just ignore it.
+            logger.debug("Delimiter found while in START mode, ignoring..");
+
           } else {
             isBadEvent = true;
             baos.write(b);
