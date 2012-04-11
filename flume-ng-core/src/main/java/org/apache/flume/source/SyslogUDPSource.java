@@ -28,6 +28,7 @@ import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.conf.Configurables;
 import org.apache.flume.source.SyslogUtils;
 import org.jboss.netty.bootstrap.ConnectionlessBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -45,9 +46,8 @@ import org.slf4j.LoggerFactory;
 
 public class SyslogUDPSource extends AbstractSource
       implements EventDrivenSource, Configurable {
-  final public static int SYSLOG_UDP_PORT = 514;
 
-  private int port = SYSLOG_UDP_PORT; // default udp syslog port
+  private int port;
   private int maxsize = 1 << 16; // 64k is max allowable in RFC 5426
   private String host = null;
   private Channel nettyChannel;
@@ -117,7 +117,8 @@ public class SyslogUDPSource extends AbstractSource
 
   @Override
   public void configure(Context context) {
-    port = Integer.parseInt(context.getString("port"));
+    Configurables.ensureRequiredNonNull(context, "port");
+    port = context.getInteger("port");
     host = context.getString("host");
   }
 

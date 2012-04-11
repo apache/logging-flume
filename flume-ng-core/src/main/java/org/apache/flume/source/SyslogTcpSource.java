@@ -28,6 +28,7 @@ import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.conf.Configurables;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
@@ -45,11 +46,10 @@ import org.slf4j.LoggerFactory;
 public class SyslogTcpSource extends AbstractSource
 implements EventDrivenSource, Configurable {
 
-  public final static int SYSLOG_TCP_PORT = 514;
 
   private static final Logger logger = LoggerFactory
       .getLogger(SyslogTcpSource.class);
-  private int port = SYSLOG_TCP_PORT; // this is syslog-ng's default tcp port.
+  private int port;
   private String host = null;
   private Channel nettyChannel;
   private Integer eventSize;
@@ -131,7 +131,8 @@ implements EventDrivenSource, Configurable {
 
   @Override
   public void configure(Context context) {
-    port = context.getInteger("port", SYSLOG_TCP_PORT);
+    Configurables.ensureRequiredNonNull(context, "port");
+    port = context.getInteger("port");
     host = context.getString("host");
     eventSize = context.getInteger("eventSize", SyslogUtils.DEFAULT_SIZE);
   }
