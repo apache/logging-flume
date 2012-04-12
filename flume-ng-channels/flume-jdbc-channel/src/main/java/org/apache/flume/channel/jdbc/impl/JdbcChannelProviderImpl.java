@@ -28,6 +28,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.sql.DataSource;
 
@@ -89,6 +90,9 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
 
   /** Capacity Counter if one is needed */
   private long maxCapacity = 0L;
+
+  /** The current size of the channel. */
+  private AtomicLong currentSize = new AtomicLong(0L);
 
   @Override
   public void initialize(Context context) {
@@ -154,6 +158,36 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
       LOGGER.info("Maximum channel capacity: {}", maxCapacity);
     } else {
       LOGGER.warn("JDBC channel will operate without a capacity limit.");
+    }
+
+    if (maxCapacity > 0) {
+      // Initialize current size
+      JdbcTransactionImpl tx = null;
+      try {
+        tx = getTransaction();
+        tx.begin();
+        Connection conn = tx.getConnection();
+
+        currentSize.set(schemaHandler.getChannelSize(conn));
+        tx.commit();
+      } catch (Exception ex) {
+        tx.rollback();
+        throw new JdbcChannelException("Failed to initialize current size", ex);
+      } finally {
+        if (tx != null) {
+          tx.close();
+        }
+      }
+
+      long currentSizeLong = currentSize.get();
+
+      if (currentSizeLong > maxCapacity) {
+        LOGGER.warn("The current size of channel (" + currentSizeLong
+            + ") is more than the specified maximum capacity (" + maxCapacity
+            + "). If this situation persists, it may require resizing and "
+            + "replanning of your deployment.");
+      }
+      LOGGER.info("Current channel size: {}", currentSizeLong);
     }
   }
 
@@ -260,19 +294,20 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
     try {
       tx = getTransaction();
       tx.begin();
-      Connection conn = tx.getConnection();
 
       if (maxCapacity > 0) {
-        long currentSize = schemaHandler.getChannelSize(conn);
-        if (currentSize >= maxCapacity) {
+        long currentSizeLong = currentSize.get();
+        if (currentSizeLong >= maxCapacity) {
           throw new JdbcChannelException("Channel capacity reached: "
               + "maxCapacity: " + maxCapacity + ", currentSize: "
-              + currentSize);
+              + currentSizeLong);
         }
       }
 
       // Persist the persistableEvent
       schemaHandler.storeEvent(persistableEvent, tx.getConnection());
+
+      tx.incrementPersistedEventCount();
 
       tx.commit();
     } catch (Exception ex) {
@@ -298,6 +333,10 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
       // Retrieve the persistableEvent
       result = schemaHandler.fetchAndDeleteEvent(
           channelName, tx.getConnection());
+
+      if (result != null) {
+        tx.incrementRemovedEventCount();
+      }
 
       tx.commit();
     } catch (Exception ex) {
@@ -531,7 +570,19 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
 
     dataSource = new PoolingDataSource(connectionPool);
 
-    txFactory = new JdbcTransactionFactory(dataSource);
+    txFactory = new JdbcTransactionFactory(dataSource, this);
+  }
+
+  /**
+   * A callback method invoked from individual transaction instances after
+   * a successful commit. The argument passed is the net number of events to
+   * be added to the current size as tracked by the provider.
+   * @param delta the net number of events to be added to reflect the current
+   *              size of the channel
+   */
+  protected void updateCurrentChannelSize(long delta) {
+    long currentSizeLong = currentSize.addAndGet(delta);
+    LOGGER.debug("channel size updated to: " + currentSizeLong);
   }
 
   /**

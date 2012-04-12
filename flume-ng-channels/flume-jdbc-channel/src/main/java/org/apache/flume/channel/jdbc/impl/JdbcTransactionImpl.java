@@ -35,17 +35,28 @@ public class JdbcTransactionImpl implements Transaction {
       LoggerFactory.getLogger(JdbcTransactionImpl.class);
 
   private final DataSource dataSource;
+  private final JdbcChannelProviderImpl providerImpl;
   private Connection connection;
   private JdbcTransactionFactory txFactory;
-  boolean active = true;
-  int count = 0;
+  private boolean active = true;
 
-  boolean rollback = false;
+  /** Reference count used to do the eventual commit.*/
+  private int count = 0;
+
+  /** Number of events successfully removed from the channel. */
+  private int removedEventCount = 0;
+
+  /** Number of events persisted to the channel. */
+  private int persistedEventCount = 0;
+
+  /** Flag that indicates if the transaction must be rolled back. */
+  private boolean rollback = false;
 
   protected JdbcTransactionImpl(DataSource dataSource,
-      JdbcTransactionFactory factory) {
+      JdbcTransactionFactory factory, JdbcChannelProviderImpl provider) {
     this.dataSource = dataSource;
     txFactory = factory;
+    providerImpl = provider;
   }
 
   @Override
@@ -68,7 +79,7 @@ public class JdbcTransactionImpl implements Transaction {
       }
     }
     count++;
-    LOGGER.debug("Tx count-begin: " + count + ", rollback: " + rollback);
+    LOGGER.trace("Tx count-begin: " + count + ", rollback: " + rollback);
   }
 
   @Override
@@ -80,7 +91,7 @@ public class JdbcTransactionImpl implements Transaction {
       throw new JdbcChannelException(
           "Cannot commit transaction marked for rollback");
     }
-    LOGGER.debug("Tx count-commit: " + count + ", rollback: " + rollback);
+    LOGGER.trace("Tx count-commit: " + count + ", rollback: " + rollback);
   }
 
   @Override
@@ -90,7 +101,7 @@ public class JdbcTransactionImpl implements Transaction {
     }
     LOGGER.warn("Marking transaction for rollback");
     rollback = true;
-    LOGGER.debug("Tx count-rollback: " + count + ", rollback: " + rollback);
+    LOGGER.trace("Tx count-rollback: " + count + ", rollback: " + rollback);
   }
 
   @Override
@@ -109,6 +120,14 @@ public class JdbcTransactionImpl implements Transaction {
         } else {
           LOGGER.debug("Attempting transaction commit");
           connection.commit();
+
+          // Commit successful. Update provider channel size
+          providerImpl.updateCurrentChannelSize(this.persistedEventCount
+              - this.removedEventCount);
+
+          this.persistedEventCount = 0;
+          this.removedEventCount = 0;
+
         }
       } catch (SQLException ex) {
         throw new JdbcChannelException("Unable to finalize transaction", ex);
@@ -160,5 +179,13 @@ public class JdbcTransactionImpl implements Transaction {
       throw new JdbcChannelException("Inactive transaction");
     }
     return connection;
+  }
+
+  protected void incrementRemovedEventCount() {
+    removedEventCount++;
+  }
+
+  protected void incrementPersistedEventCount() {
+    persistedEventCount++;
   }
 }

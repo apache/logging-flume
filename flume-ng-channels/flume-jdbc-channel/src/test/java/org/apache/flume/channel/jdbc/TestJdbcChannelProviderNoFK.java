@@ -15,24 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.channel.jdbc.impl;
+package org.apache.flume.channel.jdbc;
 
-import javax.sql.DataSource;
+import org.apache.flume.Context;
 
-public class JdbcTransactionFactory extends ThreadLocal<JdbcTransactionImpl> {
-
-  private final DataSource dataSource;
-  private final JdbcChannelProviderImpl providerImpl;
-
-  protected JdbcTransactionFactory(DataSource dataSource,
-      JdbcChannelProviderImpl providerImpl) {
-    super();
-    this.dataSource = dataSource;
-    this.providerImpl = providerImpl;
-  }
+public class TestJdbcChannelProviderNoFK extends BaseJdbcChannelProviderTest {
 
   @Override
-  protected JdbcTransactionImpl initialValue() {
-    return new JdbcTransactionImpl(dataSource, this, providerImpl);
+  protected void configureChannel(Context context) {
+    context.put(ConfigurationConstants.CONFIG_CREATE_FK, "false");
   }
+
 }
