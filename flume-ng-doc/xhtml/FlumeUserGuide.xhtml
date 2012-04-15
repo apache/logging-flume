@@ -1,0 +1,3391 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta name="generator" content=
+"HTML Tidy for Windows (vers 25 March 2009), see www.w3.org" />
+<title>Flume User Guide</title>
+
+<style type="text/css">
+/*<![CDATA[*/
+ol{margin:0;padding:0}p{margin:0}.c28{vertical-align:top;width:468pt;border-style:solid;background-color:#efefef;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c30{vertical-align:top;width:168pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c9{vertical-align:top;width:117pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c20{vertical-align:top;width:302.2pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c23{vertical-align:top;width:290.2pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c22{vertical-align:top;width:126pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c52{vertical-align:top;width:124.5pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c16{vertical-align:top;width:63.8pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c33{vertical-align:top;width:417pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c13{vertical-align:top;width:73.5pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c29{vertical-align:top;width:102pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c25{vertical-align:top;width:60.8pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c48{vertical-align:top;width:454.8pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c32{vertical-align:top;width:259.5pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c35{vertical-align:top;width:285.8pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c18{vertical-align:top;width:82.5pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c34{vertical-align:top;width:468pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c44{vertical-align:top;width:226.5pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c42{vertical-align:top;width:394.5pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c3{vertical-align:top;width:156pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c49{vertical-align:top;width:258pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c46{vertical-align:top;width:85.5pt;border-style:solid;border-color:#000000;border-width:1pt;padding:5pt 5pt 5pt 5pt}.c2{line-height:1.0;text-align:center;direction:ltr}.c15{font-size:10pt;font-style:italic;background-color:#d9d9d9}.c51{list-style-type:disc;margin:0;padding:0}.c47{max-width:468pt;background-color:#ffffff;padding:72pt 72pt 72pt 72pt}.c1{text-align:justify;direction:ltr}.c4{font-size:9pt;font-style:italic}.c5{color:inherit;text-decoration:inherit}.c21{color:#1155cc;text-decoration:underline}.c8{line-height:1.0}.c38{margin-left:18pt}.c40{text-align:center}.c31{margin-left:36pt}.c36{height:12pt}.c26{color:#999999}.c37{background-color:#ffff00}.c12{height:0pt}.c41{margin-left:72pt}.c11{font-size:8pt}.c39{color:#980000}.c7{direction:ltr}.c17{height:11pt}.c27{border-collapse:collapse}.c24{background-color:#d9d9d9}.c6{font-size:9pt}.c19{font-style:italic}.c10{margin-left:54pt}.c43{font-size:10pt}.c50{padding-left:0pt}.c45{text-decoration:underline}.c0{font-weight:bold}.c14{font-family:Courier New}.title{padding-top:24pt;line-height:1.15;text-align:left;color:#000000;font-size:36pt;font-family:Arial;font-weight:bold;padding-bottom:6pt}.subtitle{padding-top:18pt;line-height:1.15;text-align:left;color:#666666;font-style:italic;font-size:24pt;font-family:Georgia;padding-bottom:4pt}body{color:#000000;font-size:11pt;font-family:Arial}h1{padding-top:24pt;line-height:1.15;text-align:left;color:#000000;font-size:18pt;font-family:Arial;font-weight:bold;padding-bottom:6pt}h2{padding-top:18pt;line-height:1.15;text-align:left;color:#000000;font-size:14pt;font-family:Arial;font-weight:bold;padding-bottom:4pt}h3{padding-top:14pt;line-height:1.15;text-align:left;color:#666666;font-size:12pt;font-family:Arial;font-weight:bold;padding-bottom:4pt}h4{padding-top:12pt;line-height:1.15;text-align:left;color:#666666;font-style:italic;font-size:11pt;font-family:Arial;padding-bottom:2pt}h5{padding-top:11pt;line-height:1.15;text-align:left;color:#666666;font-size:10pt;font-family:Arial;font-weight:bold;padding-bottom:2pt}h6{padding-top:10pt;line-height:1.15;text-align:left;color:#666666;font-style:italic;font-size:10pt;font-family:Arial;padding-bottom:2pt}
+/*]]>*/
+</style>
+</head>
+<body class="c47">
+<p class="c1 title"><a name="h.pxez9amgsn" id=
+"h.pxez9amgsn"></a><span>Flume 1.x User Guide</span></p>
+<p class="c7 c17"></p>
+<p class="c38 c7"><span class="c21"><a class="c5" href=
+"#h.vyf42pjy05pl">Introduction</a></span></p>
+<p class="c31 c7"><span class="c21"><a class="c5" href=
+"#h.jb38zym0v2o7">Overview</a></span></p>
+<p class="c31 c7"><span class="c21"><a class="c5" href=
+"#h.cxdr8qwesk1v">System Requirements</a></span></p>
+<p class="c31 c7"><span class="c21"><a class="c5" href=
+"#h.kibvj576ofkt">Architecture</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.p10o4s3avxm1">Data flow model</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.8lp3h5h2lh26">Complex flows</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.x5l88baufira">Reliability</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.au0xdljlwjm0">Recoverability</a></span></p>
+<p class="c7 c38"><span class="c21"><a class="c5" href=
+"#h.xoii7tm6nssp">Setup</a></span></p>
+<p class="c31 c7"><span class="c21"><a class="c5" href=
+"#h.7sxq75vkaek5">Setting up an agent</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.briv2t36qgfy">Configuring individual components</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.fsc04m2khv47">Wiring the pieces together</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.zrmuiwsoqi8">Starting an agent</a></span></p>
+<p class="c31 c7"><span class="c21"><a class="c5" href=
+"#h.433wxogoqxjf">Now the agent will start running source and sinks
+configured in the given properties file.</a></span></p>
+<p class="c31 c7"><span class="c21"><a class="c5" href=
+"#h.rh4qsa3pkos7">Data ingestion</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.qgjhfio3r7fv">RPC</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.3c16jlo7566o">Executing commands</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.q4kupvw1x8yo">Network streams</a></span></p>
+<p class="c31 c7"><span class="c21"><a class="c5" href=
+"#h.crwmaopfd1rg">Setting multi-agent flow</a></span></p>
+<p class="c31 c7"><span class="c21"><a class="c5" href=
+"#h.u80xglo77lq5">Consolidation</a></span></p>
+<p class="c31 c7"><span class="c21"><a class="c5" href=
+"#h.752t1pg6wh0z">Multiplexing the flow</a></span></p>
+<p class="c38 c7"><span class="c21"><a class="c5" href=
+"#h.hzg055o1rg0t">Configuration</a></span></p>
+<p class="c31 c7"><span class="c21"><a class="c5" href=
+"#h.xeti16p34lqn">Defining the flow</a></span></p>
+<p class="c31 c7"><span class="c21"><a class="c5" href=
+"#h.sgbpvyjgyive">Configuring individual components</a></span></p>
+<p class="c7 c31"><span class="c21"><a class="c5" href=
+"#h.sy229ntntetl">Adding multiple flows in an agent</a></span></p>
+<p class="c31 c7"><span class="c21"><a class="c5" href=
+"#h.qrhvtfd83zw">Configuring a multi agent flow</a></span></p>
+<p class="c31 c7"><span class="c21"><a class="c5" href=
+"#h.75pyo76hkuz1">Fan out flow</a></span></p>
+<p class="c31 c7"><span class="c21"><a class="c5" href=
+"#h.9vv4srq2abnn">Flume Sources</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.zhh3di82yoat">Avro Source</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.8astmk8ul1ya">Exec Source</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.1ij7pw60n0en">NetCat Source</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.t9qf8v68k7h1">Sequence Generator Source</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.qkmimxk5if8k">Syslog source</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.2h2geb7nta7o">Legacy Sources</a></span></p>
+<p class="c41 c7"><span class="c21"><a class="c5" href=
+"#h.wfz55svgqaip">avroLegacy</a></span></p>
+<p class="c7 c41"><span class="c21"><a class="c5" href=
+"#h.ikr97ftw1rdt">thriftLegacy</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.4quua23r6yoy">Custom</a></span></p>
+<p class="c31 c7"><span class="c21"><a class="c5" href=
+"#h.zgdy9oll30mx">Flume Sinks</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.rxt2g9parmkr">HDFS Sink</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.6x3kglq55s1q">Logger Sink</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.xjb5yy9be3vv">Avro</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.7a7y0f11ig0g">IRC</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.frlqql6vu68">File Roll</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.qb43tc4wycrd">Null</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.v5lt2mw3cy92">Custom</a></span></p>
+<p class="c31 c7"><span class="c21"><a class="c5" href=
+"#h.6unrmcktxah">Flume Channels</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.8rs2cm7tmvst">Memory Channel</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.trdq4hc40vug">JDBC Channel</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.28lq72qr5h2f">Recoverable Memory Channel</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.be8h80bxof8x">File Channel</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.6gwkim32pyeu">Pseudo Transaction Channel</a></span></p>
+<p class="c38 c7"><span class="c21"><a class="c5" href=
+"#h.ehyvkliq1sz4">Security</a></span></p>
+<p class="c38 c7"><span class="c21"><a class="c5" href=
+"#h.mne44x25blml">Monitoring</a></span></p>
+<p class="c38 c7"><span class="c21"><a class="c5" href=
+"#h.17xdjsvanahj">Troubleshooting</a></span></p>
+<p class="c31 c7"><span class="c21"><a class="c5" href=
+"#h.uvm2q7r3o4mx">Handling agent failures</a></span></p>
+<p class="c31 c7"><span class="c21"><a class="c5" href=
+"#h.2x6iw042erob">Compatibility</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.rt57w37bbxdx">HDFS</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.jdkzkfxacryp">AVRO</a></span></p>
+<p class="c7 c10"><span class="c21"><a class="c5" href=
+"#h.mm1rdwhnn33">Additional version requirements</a></span></p>
+<p class="c31 c7"><span class="c21"><a class="c5" href=
+"#h.4kla0qa83f3n">Tracing</a></span></p>
+<p class="c31 c7"><span class="c21"><a class="c5" href=
+"#h.hepd4gs7sk21">More Sample Configs</a></span></p>
+<p class="c7 c17"></p>
+<p class="c7 c17"></p>
+<p class="c7 c17"></p>
+<h1 class="c1"><a name="h.vyf42pjy05pl" id=
+"h.vyf42pjy05pl"></a><span>Introduction</span></h1>
+<h2 class="c1"><a name="h.jb38zym0v2o7" id=
+"h.jb38zym0v2o7"></a><span>Overview</span></h2>
+<p class="c1"><span>Apache Flume is a distributed, reliable, and
+available system for efficiently collecting, aggregating and moving
+large amounts of log data from many different sources to a
+centralized data store.</span></p>
+<p class="c1"><span>At the moment Flume is
+an</span><span>&nbsp;incubating Apache pr</span><span>oject. There
+are currently two release code lines available, version 0.9.x and
+1.x.x. This guide
+is</span><span>&nbsp;specific</span><span>&nbsp;to 1.x (more
+specifically 1.1.0 release). The 0.9.x user guide is
+available</span> <span class="c21"><a class="c5" href=
+"http://archive.cloudera.com/cdh/3/flume/UserGuide/">here</a></span><span>.</span></p>
+<h2 class="c7"><a name="h.cxdr8qwesk1v" id=
+"h.cxdr8qwesk1v"></a><span>System Requirements</span></h2>
+<p class="c7"><span class=
+"c19 c0">TBD</span><span>&nbsp;</span></p>
+<h2 class="c1"><a name="h.kibvj576ofkt" id=
+"h.kibvj576ofkt"></a><span>Architecture</span></h2>
+<h3 class="c7"><a name="h.p10o4s3avxm1" id=
+"h.p10o4s3avxm1"></a><span>Data flow model</span></h3>
+<p class="c1"><span>A Flume event is defined as a unit of data flow
+having a byte p</span><span>ayload</span> <span>and an
+optional</span><span>&nbsp;set of string attributes</span><span>. A
+F</span><span>lume agent</span><span>&nbsp;is a (JVM) process that
+hosts the components through which events flow from an external
+source to the next destination (hop).</span></p>
+<p class="c1 c17"></p>
+<p class="c40 c7"><img height="221" src="images/UserGuide_image00.png" width=
+"621" /></p>
+<p class="c1 c17"></p>
+<p class="c1"><span>A Flume source consumes events delivered to it
+by an external source like a web server. The external source sends
+events to Flume in a format that is recognized by the target Flume
+source. For example, an Avro Flume source can be used to receive
+Avro events from Avro clients or other Flume agents in the flow
+that send events from an Avro sink. When a Flume source receives an
+event, it stores it into one or more channels. &nbsp;The channel is
+a passive store that keeps the event un</span><span>til it&rsquo;s
+consumed</span><span>&nbsp;by a Flume sink. The JDBC channel is one
+example -- it uses a filesystem backed embedded database. The sink
+removes the event from the channel and puts it into an external
+repository like HDFS (via Flume HDFS sink) or forwards it to the
+Flume source of the next Flume agent (next hop) in the flow. The
+source and sink within the given agent run asynchronously with the
+events staged in the channel.</span></p>
+<p class="c1 c17"></p>
+<h3 class="c1"><a name="h.8lp3h5h2lh26" id=
+"h.8lp3h5h2lh26"></a><span>Complex flows</span></h3>
+<p class="c1"><span>Flume allows a user to build</span>
+<span>multi-hop</span><span>&nbsp;flows where events travel through
+multiple agent</span><span>s</span><span>&nbsp;before reaching the
+final destination. It also allows fan-in and fan-out flows,
+contextual routing and backup routes (fail-over) for failed
+hops.</span></p>
+<h3 class="c1"><a name="h.x5l88baufira" id=
+"h.x5l88baufira"></a><span>Reliability</span></h3>
+<p class="c1"><span>The events are staged in a channel on each
+agent. The events are then delivered to the next agent or terminal
+repository (like HDFS) in the flow. The events are removed from a
+channel only after they are stored in the channel of next agent or
+in the terminal repository. This is a how the single-hop message
+delivery semantics in Flume provide end-to-end reliability of the
+flow.</span></p>
+<p class="c1"><span>Flume uses a transactional approach to
+guarantee the reliable delivery of the events. The sources and
+sinks encapsulate in a transaction the storage/retrieval,
+respectively, of the events placed in or provided by a transaction
+provided by the channel. This ensures that the set of events are
+reliably passed from point to point in the flow. In the case of a
+multi-hop flow, the sink from the previous hop and the source from
+the next hop both have their transactions running to ensure that
+the data is safely stored in the channel of the next
+hop.</span></p>
+<h3 class="c1"><a name="h.au0xdljlwjm0" id=
+"h.au0xdljlwjm0"></a><span>Recoverability</span></h3>
+<p class="c1"><span>The events are staged in the channel, which
+manages recovery from failure. Flume supports a durable JDBC
+channel which is backed by a relational database.</span>
+<span>There&rsquo;s also</span><span>&nbsp;a memory channel which
+simply stores the</span> <span>events</span><span>&nbsp;in an
+in-memory queue, which is faster but any events still left in the
+memory channel when an agent process dies can&rsquo;t be
+recovered.</span></p>
+<h1 class="c1"><a name="h.xoii7tm6nssp" id=
+"h.xoii7tm6nssp"></a><span>Setup</span></h1>
+<h2 class="c1"><a name="h.7sxq75vkaek5" id=
+"h.7sxq75vkaek5"></a><span>Setting up an agent</span></h2>
+<p class="c1"><span>&nbsp; &nbsp;Flume agent configuration is
+stored in a local configuration file. This is a text file which has
+a format follows the J</span><span>ava properties
+file</span><span>&nbsp;format. Configurations for one or more
+agents can be specified in the same configuration file. The
+configuration file includes properties of each source, sink and
+channel in an agent and how they are wired together to form data
+flows.</span></p>
+<h3 class="c1"><a name="h.briv2t36qgfy" id=
+"h.briv2t36qgfy"></a><span>Configuring individual
+components</span></h3>
+<p class="c1"><span>Each component (source, sink or channel) in the
+flow has a name, type, and set of properties that are specific to
+the type and instantiation. For example, an Avro source needs a
+hostname (or IP address) and a port number to receive data from. A
+memory channel can have max queue size (&ldquo;capacity&rdquo;),
+and an HDFS sink needs to know the file system URI, path to create
+files, frequency of file rotation (&ldquo;hdfs.rollInterval&rdquo;)
+etc. All such attributes of a component needs to be set in the
+properties file of &nbsp;the hosting Flume agent.</span></p>
+<h3 class="c7"><a name="h.fsc04m2khv47" id=
+"h.fsc04m2khv47"></a><span>Wiring the pieces together</span></h3>
+<p class="c1"><span>The agent needs to know what individual
+components to load and how they are connected in order to
+constitute the flow. This is done by listing the names of each of
+the sources, sinks and channels in the agent, and then specifying
+the connecting channel for each sink and source. For example, a
+agent flows events from an Avro source called avroWeb to HDFS sink
+hdfs-cluster1</span><span class="c19">&nbsp;</span><span>via a JDBC
+channel called</span> <span class=
+"c19">jdbc-channel</span><span>.</span> <span>The configuration
+file will contain names of these components and jdbc-channel as a
+shared channel for both avroWeb &nbsp;source and hdfs-cluster1
+sink</span><span>.</span></p>
+<h3 class="c7"><a name="h.zrmuiwsoqi8" id=
+"h.zrmuiwsoqi8"></a><span>Starting an agent</span></h3>
+<p class="c1"><span>An agent is started using a shell script
+called</span> <span class="c19 c0 c14">flume-ng</span><span class=
+"c14">&nbsp;</span><span>which is located in the bin directory of
+the Flume distribution. You need to specify the agent name and the
+config file on the command line</span></p>
+<p class="c1 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr>
+<td class="c24 c42">
+<p class="c7"><span class="c24 c43 c14">$ bin/flume-ng agent -n foo
+-f conf/flume-conf.properties.template</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<h2 class="c1"><a name="h.433wxogoqxjf" id=
+"h.433wxogoqxjf"></a><span>Now the agent will start running source
+and sinks configured in the given properties file.</span></h2>
+<p class="c7 c17"></p>
+<h2 class="c1"><a name="h.rh4qsa3pkos7" id=
+"h.rh4qsa3pkos7"></a><span>Data ingestion</span></h2>
+<p class="c7"><span>&nbsp; &nbsp;Flume supports a number of
+mechanisms to ingest data from external sources.</span></p>
+<h3 class="c7"><a name="h.qgjhfio3r7fv" id=
+"h.qgjhfio3r7fv"></a><span>RPC</span></h3>
+<p class="c1"><span>An Avro client included in the Flume
+distribution can send a</span> <span>give</span><span>n file to
+Flume Avro source using avro RPC mechanism.</span></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c24 c33">
+<p class="c7"><span class="c24 c43 c14">$ bin/flume-ng avro-client
+-H localhost -p 41414 -F /usr/logs/log.10</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c1"><span>The above command will send the contents of
+/usr/logs/log.10 to to the Flume source listening on that
+ports.</span></p>
+<h3 class="c1"><a name="h.3c16jlo7566o" id=
+"h.3c16jlo7566o"></a><span>Executing commands</span></h3>
+<p class="c1"><span>There&rsquo;s an exec source that executes a
+given command and consumes the output. A single &lsquo;line&rsquo;
+of output ie. text followed by carriage return (&lsquo;\r&rsquo;)
+or line feed (&lsquo;\n&rsquo;) or both
+together</span><span>.</span></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr>
+<td class="c34 c37">
+<p class="c1 c8"><span class="c19 c0">Note: Flume doesn&rsquo;t
+support tail as a source. One can wrap the tail command in an exec
+source to stream the file.</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c1 c17"></p>
+<h3 class="c1"><a name="h.q4kupvw1x8yo" id=
+"h.q4kupvw1x8yo"></a><span>Network streams</span></h3>
+<p class="c1"><span>Flume supports the following mechanisms to read
+data from popular log stream types</span></p>
+<ol class="c51" start="1">
+<li class="c1 c31 c50"><span>Avro</span></li>
+<li class="c1 c31 c50"><span>Syslog</span></li>
+<li class="c1 c31 c50"><span>Netcat</span></li>
+</ol>
+<h2 class="c1"><a name="h.crwmaopfd1rg" id=
+"h.crwmaopfd1rg"></a><span>Setting</span>
+<span>mul</span><span>ti-agent flow</span></h2>
+<p class="c40 c7"><img height="122" src="images/UserGuide_image03.png" width=
+"620" /></p>
+<p class="c7"><span>In order to flow</span><span>&nbsp;the data
+across multiple agent</span><span>s</span><span>&nbsp;or hops, the
+sink of the previous agent and source of the current hop need to be
+avro type with the sink pointing to the hostname (or IP address)
+and port of the source.</span></p>
+<p class="c7 c17"></p>
+<h2 class="c1"><a name="h.u80xglo77lq5" id=
+"h.u80xglo77lq5"></a><span>Consolidation</span></h2>
+<p class="c7"><span>A very common scenario in log collection is a
+large number of log producing clients sending data to a few
+consumer agent</span><span>s</span><span>&nbsp;that are attached to
+the storage subsystem. For examples, logs collected from hundreds
+of web servers sent to a dozen of
+agent</span><span>s</span><span>&nbsp;that write to HDFS
+cluster.</span></p>
+<p class="c7 c40"><img height="419" src="images/UserGuide_image02.png" width=
+"621" /></p>
+<p class="c1 c17"></p>
+<p class="c1"><span>This can be achieved in Flume by configuring a
+number of</span> <span>first tier agents</span><span>&nbsp;with an
+avro sink, all pointing to an avro source of single agent. This
+source on the second tier agent consolidates the received events
+into a single channel which is consumed by a sink to its final
+destination.</span></p>
+<p class="c7 c17"></p>
+<h2 class="c7"><a name="h.752t1pg6wh0z" id=
+"h.752t1pg6wh0z"></a><span>Multiplexing the flow</span></h2>
+<p class="c7"><span>Flume supports multiplexing the event flow to
+one or more destinations. This is achieved by defining a flow
+multiplexer that can replicate or selectively route an event to one
+or more channels.</span></p>
+<p class="c40 c7"><img height="361" src="images/UserGuide_image01.png" width=
+"620" /></p>
+<p class="c1 c17"></p>
+<p class="c1"><span>The above example shows a source form agent foo
+fanning out the flow to three different channels. This fan out can
+be replicating or multiplexing. In case of replicating flow, each
+event is sent to all three channels. For the multiplexing case, an
+event is delivered to a</span> <span>subset</span> <span>of
+available channels when an event&rsquo;s attribute matches a
+preconfigured value. For example, if an event</span>
+<span>attribute</span><span>&nbsp;called &ldquo;txnType&rdquo;
+&nbsp;is set to &ldquo;customer&rdquo;, then it should go to
+channel1 and channel3, if it&rsquo;s &ldquo;vendor&rdquo; then it
+should go to channel2, otherwise channel3. The mapping can be set
+in the agent&rsquo;s configuration file.</span></p>
+<p class="c1 c17"></p>
+<h1 class="c1"><a name="h.hzg055o1rg0t" id=
+"h.hzg055o1rg0t"></a><span>Configuration</span></h1>
+<p class="c7"><span>As mentioned in the earlier section, Flume
+agent configuration is read from a file that resembles a Java
+property file format with hierarchical property
+settings.</span></p>
+<h2 class="c7"><a name="h.xeti16p34lqn" id=
+"h.xeti16p34lqn"></a><span>Defining the flow</span></h2>
+<p class="c1"><span>To define the flow within a single agent, you
+need to link the sources and sinks via a channel. You need to list
+the sources, sinks and channels for the given agent, and then point
+the source and sink to a channel. A source instance can specify
+multiple channels, but a sink instance can only specify on channel.
+The format is as follows</span></p>
+<p class="c1 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c34 c24">
+<p class="c7"><span class="c14">#List the sources, sinks and
+channels for the agent</span></p>
+<p class="c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class="c14">.sources =</span>
+<span class="c19 c14">&lt;Source&gt;</span></p>
+<p class="c7"><span class="c14">&lt;</span><span class=
+"c19 c14">agent</span><span class="c14">&gt;.sinks =</span>
+<span class="c19 c14">&lt;Sink&gt;</span></p>
+<p class="c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class="c14">.channels =</span>
+<span class="c19 c14">&lt;Channel1&gt; &lt;Channel2&gt;</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">#set channel for source</span></p>
+<p class="c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class="c14">.sources.</span><span class="c19 c14">&lt;Source&gt;</span><span class="c14">.channels
+=</span> <span class="c19 c14">&lt;Channel1&gt;</span><span class=
+"c19 c14">&nbsp;</span><span class=
+"c19 c14">&lt;Channel2&gt;</span><span class=
+"c19 c14">&nbsp;...</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">#set channel for sink</span></p>
+<p class="c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class="c14">.sinks.</span><span class="c19 c14">&lt;Sink&gt;</span><span class="c14">.channel
+=</span> <span class="c19 c14">&lt;Channel1&gt;</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c7 c17"></p>
+<p class="c1"><span>For example an agent called weblog-agent is
+reading data from an external avro client and sending it to HDFS
+via a memory channel. The config file weblog.config could look like
+:</span></p>
+<p class="c1 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c34 c24">
+<p class="c7"><span class="c14">weblog-agent.sources =
+avro-AppSrv-source</span></p>
+<p class="c7"><span class="c14">weblog-agent.sinks =
+hdfs-Cluster1-sink</span></p>
+<p class="c7"><span class="c14">weblog</span><span class=
+"c14">-agent.channels = mem-channel-1</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">#set channel for source</span></p>
+<p class="c7"><span class="c14">weblog-agent.</span><span class=
+"c14">source</span><span class="c14">s.</span><span class=
+"c0 c14">avro-AppSrv-source</span><span class="c14">.channels
+=</span> <span class="c0 c14">mem-channel-1</span><span class=
+"c14">&nbsp;</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">#set channel for sink</span></p>
+<p class="c7"><span class=
+"c14">weblog-agent.sinks.</span><span class=
+"c0 c14">hdfs-Cluster1-sink</span><span class="c14">.channel
+=</span> <span class="c0 c14">mem-channel-1</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c1 c17"></p>
+<p class="c1"><span>This will make the events flow from</span>
+<span class="c14">avro-AppSrv-source</span>
+<span>to</span><span class="c14">&nbsp;hdfs-Cluster1-sink</span>
+<span>through the memory channel</span><span class=
+"c14">&nbsp;mem-channel-1.</span><span>&nbsp;When the agent
+weblog-agent is started with the weblog.config as its config file,
+it will instantiate that flow.</span></p>
+<h2 class="c1"><a name="h.sgbpvyjgyive" id=
+"h.sgbpvyjgyive"></a><span>Configuring individual
+components</span></h2>
+<p class="c1"><span>After defining the flow, you need to set
+properties of each source, sink and channel. This is done in the
+same hierarchical namespace fashion where you set the component
+type and other values for the properties specific to each
+component.</span></p>
+<p class="c1 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr>
+<td class="c34 c24">
+<p class="c8 c7"><span class="c14">#Properties for
+sources</span></p>
+<p class="c8 c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class=
+"c14">.sources.</span><span class=
+"c19 c14">&lt;Source&gt;</span><span class=
+"c14">.</span><span class=
+"c19 c14">&lt;someProperty&gt;</span><span class=
+"c14">&nbsp;=</span> <span class=
+"c19 c14">&lt;someValue&gt;</span></p>
+<p class="c8 c7"><span class="c19 c14">..</span></p>
+<p class="c8 c7 c17"></p>
+<p class="c8 c7"><span class="c14">#Properties for
+channels</span></p>
+<p class="c8 c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class=
+"c14">.channel.</span><span class=
+"c19 c14">&lt;Channel&gt;</span><span class=
+"c14">.</span><span class=
+"c19 c14">&lt;someProperty&gt;</span><span class=
+"c14">&nbsp;=</span> <span class=
+"c19 c14">&lt;someValue&gt;</span></p>
+<p class="c8 c7"><span class="c19 c14">..</span></p>
+<p class="c8 c7 c17"></p>
+<p class="c8 c7"><span class="c14">#Properties for sinks</span></p>
+<p class="c8 c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class=
+"c14">.sources.</span><span class=
+"c19 c14">&lt;Sink&gt;</span><span class="c14">.</span><span class=
+"c19 c14">&lt;someProperty&gt;</span><span class=
+"c14">&nbsp;=</span> <span class=
+"c19 c14">&lt;someValue&gt;</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c1 c17"></p>
+<p class="c1"><span>The property &ldquo;type&rdquo; needs to be set
+for each component for Flume to understand what kind of object it
+needs to be. Each source, sink and channel type has its own set of
+properties required for it to function as intended. All those need
+to be set as needed. In the previous example, we have a flow
+from</span> <span class="c14">avro-AppSrv-source</span>
+<span>to</span><span class="c14">&nbsp;hdfs-Cluster1-sink</span>
+<span>through the memory channel</span><span class=
+"c14">&nbsp;mem-channel-1.</span><span>&nbsp;Here&rsquo;s an
+example that shows configuration of each of those
+components.</span></p>
+<p class="c1 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c34 c24">
+<p class="c7"><span class="c14">weblog-agent.sources =
+avro-AppSrv-source</span></p>
+<p class="c7"><span class="c14">weblog-agent.sinks =
+hdfs-Cluster1-sink</span></p>
+<p class="c7"><span class="c19 c14">weblog</span><span class=
+"c14">-agent.channels = mem-channel-1</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">#set channel for sources,
+sinks</span></p>
+<p class="c7"><span class="c14">..</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">#properties of
+avro-AppSrv-source</span></p>
+<p class="c7"><span class="c14">weblog-agent.</span><span class=
+"c14">source</span><span class="c14">s.</span><span class=
+"c14">avro-AppSrv-source</span><span class="c14">.type =</span>
+<span class="c14">avro</span></p>
+<p class="c7"><span class="c14">weblog-agent.</span><span class=
+"c14">source</span><span class="c14">s.avro-AppSrv-source.bind =
+localhost</span></p>
+<p class="c7"><span class="c14">weblog-agent.</span><span class=
+"c14">source</span><span class="c14">s.avro-AppSrv-source.port =
+10000</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">#properties of
+mem-channel-1</span></p>
+<p class="c7"><span class=
+"c14">weblog-agent.channels.mem-channel-1.type = memory</span></p>
+<p class="c7"><span class=
+"c14">weblog-agent.channels.mem-channel-1.capacity =
+1000</span></p>
+<p class="c7"><span class=
+"c14">weblog-agent.channels.mem-channel-1.transactionCapacity =
+100</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">#properties of
+hdfs-Cluster1-sink</span></p>
+<p class="c7"><span class=
+"c14">weblog-agent.sinks.hdfs-Cluster1-sink.type = hdfs</span></p>
+<p class="c7"><span class=
+"c14">weblog-agent.sinks.hdfs-Cluster1-sink.hdfs.path =
+hdfs://namenode/flume/webdata/</span></p>
+<p class="c7"><span class="c0 c14">&hellip;</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c1 c17"></p>
+<p class="c1 c17"></p>
+<h2 class="c7"><a name="h.sy229ntntetl" id=
+"h.sy229ntntetl"></a><span>Adding multiple flows in an
+agent</span></h2>
+<p class="c7"><span>A single Flume agent can contain several
+independent flows. You can list multiple sources, sinks and
+channels in a config. These components can be linked to form
+multiple flows.</span></p>
+<p class="c1 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c34 c24">
+<p class="c7"><span class="c14">#List the sources, sinks and
+channels for the agent</span></p>
+<p class="c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class="c14">.sources =</span>
+<span class="c19 c14">&lt;Source1&gt; &lt;Source2&gt;</span></p>
+<p class="c7"><span class="c14">&lt;agent&gt;.sinks =</span>
+<span class="c19 c14">&lt;Sink1&gt; &lt;Sink2&gt;</span></p>
+<p class="c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class="c14">.channels =</span>
+<span class="c19 c14">&lt;Channel1&gt; &lt;Channel2&gt;</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c7 c17"></p>
+<p class="c7"><span>Then you can link the sources and sinks to
+their corresponding channels (for sources) of channel (for sinks)
+to setup two different flows. For example, if you need to setup two
+flows in a weblog-agent, one going from an external avro client to
+external HDFS and another from output of a tail to avro sink, then
+here&rsquo;s a config to do that :</span></p>
+<p class="c1 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c34 c24">
+<p class="c7"><span class="c14">#List the sources, sinks and
+channels in the agent</span></p>
+<p class="c7"><span class="c14">weblog-agent.sources =
+avro-AppSrv-source1 exec-tail-source2</span></p>
+<p class="c7"><span class="c14">weblog-agent.sinks =
+hdfs-Cluster1-sink1 avro-forward-sink2</span></p>
+<p class="c7"><span class="c19 c14">weblog</span><span class=
+"c14">-agent.channels = mem-channel-1 jdbc-channel-2</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">## Flow-1 configuration</span></p>
+<p class="c7"><span class="c14">weblog-agent.</span><span class=
+"c14">source</span><span class="c14">s.</span><span class=
+"c0 c14">avro-AppSrv-source1</span><span class="c14">.channels
+=</span> <span class="c0 c14">mem-channel-1</span><span class=
+"c14">&nbsp;</span></p>
+<p class="c7"><span class=
+"c14">weblog-agent.sinks.</span><span class=
+"c0 c14">hdfs-Cluster1-sink1</span><span class="c14">.channel
+=</span> <span class="c0 c14">mem-channel-1</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">## Flow-2 configuration</span></p>
+<p class="c7"><span class="c14">weblog-agent.</span><span class=
+"c14">source</span><span class="c14">s.</span><span class=
+"c0 c14">exec-tail-source2</span><span class="c14">.channels
+=</span> <span class="c0 c14">jdbc-channel-2</span><span class=
+"c14">&nbsp;</span></p>
+<p class="c7"><span class=
+"c14">weblog-agent.sinks.</span><span class=
+"c0 c14">avro-forward-sink2</span><span class="c14">.channel
+=</span> <span class="c0 c14">jdbc-channel-2</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c1 c17"></p>
+<h2 class="c7"><a name="h.qrhvtfd83zw" id=
+"h.qrhvtfd83zw"></a><span>Configuring a multi agent
+flow</span></h2>
+<p class="c7"><span>To setup a multi-tier flow, you need to have an
+avro sink of first hop pointing to avro source of the next hop.
+This will result in the first Flume agent forwarding events to the
+next Flume agent. For example, if you are periodically sending
+files (1 file per event) using avro client to a local Flume agent,
+then this local agent can forward it to another agent that has the
+mounted for storage.</span></p>
+<p class="c1 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c24 c34">
+<p class="c7"><span class="c14">##</span> <span class=
+"c0 c14">weblog agent config</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">#List sources, sinks and channels
+in the agent</span></p>
+<p class="c7"><span class="c14">weblog-agent.sources =
+avro-AppSrv-source</span></p>
+<p class="c7"><span class="c14">weblog-agent.sinks =
+avro-forward-sink</span></p>
+<p class="c7"><span class="c14">weblog</span><span class=
+"c14">-agent.channel</span><span class="c14">s</span><span class=
+"c14">&nbsp;= jdbc-channel</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">#define the flow</span></p>
+<p class="c7"><span class="c14">weblog-agent.</span><span class=
+"c14">source</span><span class="c14">s.</span><span class=
+"c14">avro-AppSrv-source</span><span class="c14">.channels =
+jdbc-channel</span></p>
+<p class="c7"><span class=
+"c14">weblog-agent.sinks.avro-forward-sink.channel =
+jdbc-channel</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">#</span><span class=
+"c14">avr</span><span class="c14">o sink properties</span></p>
+<p class="c7"><span class="c14">weblog-agent.</span><span class=
+"c14">source</span><span class="c14">s.avro-forward-sink.type =
+avro</span></p>
+<p class="c7"><span class="c14">weblog-agent.</span><span class=
+"c14">source</span><span class="c14">s.avro-forward-sink.hostname
+=</span> <span class="c0 c14">10.1.1.100</span></p>
+<p class="c7"><span class="c14">weblog-agent.</span><span class=
+"c14">source</span><span class="c14">s.avro-forward-sink.port
+=</span> <span class="c0 c14">10000</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">#configure other pieces</span></p>
+<p class="c7"><span class="c19 c0 c14">...</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c1 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c34 c24">
+<p class="c7"><span class="c0 c14">## hdfs-agent config</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">#List sources, sinks and channels
+in the agent</span></p>
+<p class="c7"><span class="c14">hdfs-agent.sources =
+avro-collection-source</span></p>
+<p class="c7"><span class="c14">hdfs-agent</span><span class=
+"c14">.sinks = hdfs-sink</span></p>
+<p class="c7"><span class="c14">hdfs-agent</span><span class=
+"c14">.channels = mem-channel</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">#define the flow</span></p>
+<p class="c7"><span class="c14">hdfs-agent.</span><span class=
+"c14">source</span><span class=
+"c14">s.avro-collection-source.channels = mem-channel</span></p>
+<p class="c7"><span class="c14">hdfs-agent</span><span class=
+"c14">.sinks.hdfs-sink.channel = mem-channel</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">#avro sink properties</span></p>
+<p class="c7"><span class="c14">hdfs-agent.</span><span class=
+"c14">source</span><span class="c14">s.avro-collection-source.type
+= avro</span></p>
+<p class="c7"><span class="c14">hdfs-agent.</span><span class=
+"c14">source</span><span class="c14">s.avro-collection-source.bind
+=</span> <span class="c0 c14">10.1.1.100</span></p>
+<p class="c7"><span class="c14">hdfs-agent</span><span class=
+"c14">.</span><span class="c14">source</span><span class=
+"c14">s.avro-collection-source.port =</span> <span class=
+"c0 c14">10000</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">#configure other pieces</span></p>
+<p class="c7"><span class="c19 c0 c14">...</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c1 c17"></p>
+<p class="c1"><span>&nbsp;Here we link the</span> <span class=
+"c14">avro-forward-sink</span> <span>from</span> <span class=
+"c14">weblog-agent</span><span>&nbsp;to</span> <span class=
+"c14">avro-collection-source</span> <span>of
+&nbsp;</span><span class="c14">hdfs-agent.</span> <span>This will
+result in the events coming from the external appserver source
+eventually getting stored in HDFS.</span></p>
+<p class="c1 c17"></p>
+<h2 class="c7"><a name="h.75pyo76hkuz1" id=
+"h.75pyo76hkuz1"></a><span>Fan out flow</span></h2>
+<p class="c1"><span>As discussed in previous section, Flume support
+fanning out the flow from one source to multiple channels. There
+are two modes of fan out, replicating and multiplexing. In the
+replicating flow the event is sent to all the configured channels.
+In case of multiplexing, the event is sent to only a subset of
+qualifying channels. To fan out the flow, one needs to specify a
+list of channels for a source and the policy for the fanning it
+out. This is done by adding a channel &ldquo;selector&rdquo; that
+can be replicating or multiplexing. Then further specify the
+selection rules if it&rsquo;s a multiplexer. If you don&rsquo;t
+specify an selector, then by default it&rsquo;s
+replicating.</span></p>
+<p class="c1 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c34 c24">
+<p class="c7"><span class="c14">#List the sources, sinks and
+channels for the agent</span></p>
+<p class="c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class="c14">.sources =</span>
+<span class="c19 c14">&lt;Source1&gt;</span></p>
+<p class="c7"><span class="c14">&lt;agent&gt;.sinks =</span>
+<span class="c19 c14">&lt;Sink1&gt; &lt;Sink2&gt;</span></p>
+<p class="c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class="c14">.channels =</span>
+<span class="c19 c14">&lt;Channel1&gt; &lt;Channel2&gt;</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">#set list of channels for source
+(separated by space)</span></p>
+<p class="c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class="c14">.sources.</span><span class="c19 c14">&lt;Source1&gt;.channels
+=</span> <span class="c19 c14">&lt;Channel1&gt;
+&lt;Channel2&gt;</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">#set channel for sinks</span></p>
+<p class="c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class="c14">.sinks.</span><span class="c19 c14">&lt;Sink1&gt;</span><span class="c14">.channel
+=</span> <span class="c19 c14">&lt;</span><span class=
+"c19 c14">Channel</span><span class="c19 c14">1&gt;</span></p>
+<p class="c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class="c14">.sinks.</span><span class="c19 c14">&lt;Sink2&gt;</span><span class="c14">.channel
+=</span> <span class="c19 c14">&lt;Channel2&gt;</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class="c14">.sources.</span><span class="c19 c14">&lt;Source1&gt;.</span><span class="c14">selector.type
+= replicating</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c7 c17"></p>
+<p class="c1"><span>The multiplexing select has a further set of
+properties to bifurcate the flow. This requires specifying a
+mapping of an event attribute to a set for channel. The selector
+checks for each configured attribute in the event header. If it
+matches the specified value, then that event is sent to all the
+channels mapped to that value. If there&rsquo;s no match, then the
+event is sent to set of channels configured as default.</span></p>
+<p class="c1 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c34 c24">
+<p class="c7"><span class="c14"># Mapping for multiplexing
+selector</span></p>
+<p class="c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class="c14">.sources.</span><span class="c19 c14">&lt;Source1&gt;.</span><span class="c14">selector.type
+=</span> <span class="c0 c14">multiplexing</span></p>
+<p class="c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class="c14">.sources.</span><span class="c19 c14">&lt;Source1&gt;.</span><span class="c14">selector.header
+= &lt;someHeader&gt;</span></p>
+<p class="c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class="c14">.sources.</span><span class="c19 c14">&lt;Source1&gt;.</span><span class="c14">selector.mapping.&lt;Value1&gt;
+= &lt;Channel1&gt;</span></p>
+<p class="c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class="c14">.sources.</span><span class="c19 c14">&lt;Source1&gt;.</span><span class="c14">selector.mapping.&lt;Value2&gt;
+= &lt;Channel1&gt; &lt;Channel2&gt;</span></p>
+<p class="c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class="c14">.sources.</span><span class="c19 c14">&lt;Source1&gt;.</span><span class="c14">selector.mapping.&lt;Value3&gt;
+= &lt;Channel2&gt;</span></p>
+<p class="c7"><span class="c14">...</span></p>
+<p class="c7"><span class=
+"c19 c14">&lt;agent&gt;</span><span class="c14">.sources.</span><span class="c19 c14">&lt;Source1&gt;.</span><span class="c14">selector.</span><span class="c0 c14">default</span><span class="c14">&nbsp;=
+&lt;Channel2&gt;</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c7 c17"></p>
+<p class="c1"><span>The mapping allows overlapping the channels for
+each value. The default must be set for a multiplexing select which
+can also contain any number of channels.</span></p>
+<p class="c1"><span>The following example has a single flow that
+multiplexed to two paths. The agent has a single avro source and
+two channels linked to two sinks.</span></p>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr>
+<td class="c34 c24">
+<p class="c7"><span class="c14">#List the sources, sinks and
+channels in the agent</span></p>
+<p class="c7"><span class="c14">weblog-agent.sources =
+avro-AppSrv-source1</span></p>
+<p class="c7"><span class="c14">weblog-agent.sinks =
+hdfs-Cluster1-sink1 avro-forward-sink2</span></p>
+<p class="c7"><span class="c14">weblog-agent</span><span class=
+"c14">.channels = mem-channel-1 jdbc-channel-2</span></p>
+<p class="c7"><span class="c14"># set channels for
+source</span></p>
+<p class="c7"><span class="c14">weblog-agent.</span><span class=
+"c14">source</span><span class="c14">s.avro-AppSrv-source1.channels
+= mem-channel-1 jdbc-channel-2</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">#set channel for sinks</span></p>
+<p class="c7"><span class=
+"c14">weblog-agent.sinks.hdfs-Cluster1-sink1.channel =
+mem-channel-1</span></p>
+<p class="c7"><span class=
+"c14">weblog-agent.sinks.avro-forward-sink2.channel =
+jdbc-channel-2</span></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c14">#</span></p>
+<p class="c7"><span class="c14">weblog-agent.</span><span class=
+"c14">source</span><span class=
+"c14">s.avro-AppSrv-source1.selector.type = multiplexing</span></p>
+<p class="c7"><span class="c14">weblog-agent.</span><span class=
+"c14">source</span><span class=
+"c14">s.avro-AppSrv-source1.selector.header = State</span></p>
+<p class="c7"><span class="c14">weblog-agent.</span><span class=
+"c14">source</span><span class=
+"c14">s.avro-AppSrv-source1.selector.mapping.CA =
+mem-channel-1</span></p>
+<p class="c7"><span class="c14">weblog-agent.</span><span class=
+"c14">source</span><span class=
+"c14">s.avro-AppSrv-source1.selector.mapping.AZ =
+jdbc-channel-2</span></p>
+<p class="c7"><span class="c14">weblog-agent.</span><span class=
+"c14">source</span><span class=
+"c14">s.avro-AppSrv-source1.selector.mapping.NY = mem-channel-1
+jdbc-channel-2</span></p>
+<p class="c7"><span class="c14">weblog-agent.</span><span class=
+"c14">source</span><span class=
+"c14">s.avro-AppSrv-source1.selector.default =
+mem-channel-1</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c7 c17"></p>
+<p class="c7"><span>The selector checks for a header called
+&ldquo;State&rdquo;. If the value is &ldquo;CA&rdquo; then its sent
+to mem-channel-1, if its &ldquo;AZ&rdquo; then it goes to
+jdbc-channel-2 or if its &ldquo;NY&rdquo; then both. If the
+&ldquo;State&rdquo; header is</span> <span>not
+set</span><span>&nbsp;or doesn&rsquo;t match any of the three, then
+it goes to mem-channel-1 which is designated as</span> <span class=
+"c19">&lsquo;default</span><span>&rsquo;.</span></p>
+<p class="c7 c17"></p>
+<h2 class="c1"><a name="h.9vv4srq2abnn" id=
+"h.9vv4srq2abnn"></a><span>Flume Sources</span></h2>
+<h3 class="c7"><a name="h.zhh3di82yoat" id=
+"h.zhh3di82yoat"></a><span>Avro Source</span></h3>
+<p class="c1"><span>Listens on Avro port and receives events from
+external Avro client streams. When paired with the built-in
+AvroSink on another (previous hop) Flume agent, it can create
+tiered collection topologies.</span></p>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span class="c0">Property</span> <span class=
+"c0">Name</span></p>
+</td>
+<td class="c16">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class="c19 c0">avro</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span>bind</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>hostname or IP address to listen
+on</span></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c8 c7"><span>port</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>Port # to bind to</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c7 c17"></p>
+<h3 class="c7"><a name="h.8astmk8ul1ya" id=
+"h.8astmk8ul1ya"></a><span>Exec Source</span></h3>
+<p class="c1"><span>This source runs a given Unix command on
+start-up and expects that process to continuously produce data on
+standard out (stderr is simply discarded, unless logStdErr=true).
+If the process exits for any reason, the source also exits and will
+produce no further data.</span></p>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span class="c0">Property Name</span></p>
+</td>
+<td class="c16">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class="c19 c0">exec</span></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c8 c7"><span>command</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>The command to execute</span></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c8 c7"><span>restartThrottle</span></p>
+</td>
+<td class="c16">
+<p class="c8 c7"><span>10000</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>Amount of tmie (in millis) to wait before
+attempting a restart</span></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c8 c7"><span>restart</span></p>
+</td>
+<td class="c16">
+<p class="c8 c7"><span>false</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>Whether the executed cmd should be restarted
+if it dies</span></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c8 c7"><span>logStdErr</span></p>
+</td>
+<td class="c16">
+<p class="c8 c7"><span>false</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>Whether the command&rsquo;s stderr should be
+logged</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr>
+<td class="c48 c37">
+<p class="c7"><span class="c37 c0">Note</span><span class="c37">:
+The ExecSource can not guarantee that if there is a failure to put
+the event into a</span> <span class=
+"c37">channel</span><span class="c37">, the client knows about it.
+In such cases, the data will be lost.</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c1 c17"></p>
+<p class="c1"><span>For example,</span></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr>
+<td class="c28">
+<p class="c8 c7"><span class="c14">exec-agent.sources =
+tail</span></p>
+<p class="c8 c7"><span class="c14">exec-agent.channels =
+memoryChannel-1</span></p>
+<p class="c8 c7"><span class="c14">exec-agent.sinks =
+logger</span></p>
+<p class="c8 c7 c17"></p>
+<p class="c8 c7"><span class="c14">exec-agent.sources.tail.type =
+exec</span></p>
+<p class="c8 c7"><span class="c14">exec-agent.sources.tail.command
+= tail -f /var/log/secure</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c1 c17"></p>
+<h3 class="c1"><a name="h.1ij7pw60n0en" id=
+"h.1ij7pw60n0en"></a><span>NetCat Source</span></h3>
+<p class="c1"><span>A netcat-like source that listens on a given
+port and turns each line of text into an event. Acts</span></p>
+<p class="c1"><span>like &ldquo;nc -k -l [host] [port]&rdquo;. In
+other words, it opens a specified port and listens for data.</span>
+<span>Th</span><span>e expectation is that the supplied data is
+newline separated text. Each line of text is turned into a Flume
+event and sent via the connected channel.</span></p>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span class="c0">Property Name</span></p>
+</td>
+<td class="c16">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span class="c0">-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class="c19 c0">netcat</span></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c8 c7"><span>bind</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>Host name or IP address to bind
+to</span></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c1 c8"><span>port</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c1 c8"><span>Port # to bind to</span></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c1 c8"><span>max-line-length</span></p>
+</td>
+<td class="c16">
+<p class="c1 c8"><span>512</span></p>
+</td>
+<td class="c20">
+<p class="c1 c8"><span>Max line length per event body (in
+bytes)</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c1 c17"></p>
+<h3 class="c1"><a name="h.t9qf8v68k7h1" id=
+"h.t9qf8v68k7h1"></a><span>Sequence Generator Source</span></h3>
+<p class="c7"><span>A simple sequence generator that continuously
+generates events with a counter that starts from 0 and increments
+by 1. Useful mainly for testing.</span></p>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span class="c0">Property Name</span></p>
+</td>
+<td class="c16">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span class="c0">-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class="c19 c0">seq</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c8 c7 c17"></p>
+<h3 class="c7"><a name="h.qkmimxk5if8k" id=
+"h.qkmimxk5if8k"></a><span>Syslog source</span></h3>
+<p class="c1"><span>Reads syslog data and generate Flume events.
+The UDP source treats an entire message as a single event. The TCP
+source on creates a new event for a string of characters separated
+&nbsp;by carriage return (&lsquo;\n&rsquo;).</span></p>
+<h4 class="c1"><a name="h.3jr4577dgfp" id=
+"h.3jr4577dgfp"></a><span>Syslog TCP</span></h4>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span class="c0">Property Name</span></p>
+</td>
+<td class="c16">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span class="c0">-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class="c0 c14">syslogtcp</span></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c8 c7"><span>host</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>Host name or IP address to bind
+to</span></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c8 c7"><span>port</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>Port # to bind to</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c8 c7 c17"></p>
+<p class="c8 c7"><span>For example, a syslog TCP source:</span></p>
+<p class="c8 c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr>
+<td class="c28">
+<p class="c8 c7"><span class="c14">syslog-agent.sources =
+syslog</span></p>
+<p class="c8 c7"><span class="c14">syslog-agent.channels =
+memoryChannel-1</span></p>
+<p class="c8 c7"><span class="c14">syslog-agent.sinks =
+logger</span></p>
+<p class="c8 c7 c17"></p>
+<p class="c8 c7"><span class="c14">syslog-agent.sources.syslog.type
+= syslogtcp</span></p>
+<p class="c8 c7"><span class="c14">syslog-agent.sources.syslog.port
+= 5140</span></p>
+<p class="c8 c7"><span class="c14">syslog-agent.sources.syslog.host
+= localhost</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c8 c7 c17"></p>
+<h4 class="c1"><a name="h.eft22qqvtndy" id=
+"h.eft22qqvtndy"></a><span>Syslog UDP</span></h4>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span class="c0">Property Name</span></p>
+</td>
+<td class="c16">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span class="c0">-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class="c0 c14">syslogudp</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span>host</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>Host name or IP address to bind
+to</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span>port</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>Port # to bind to</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c8 c7 c17"></p>
+<p class="c8 c7"><span>For example, a syslog UDP source:</span></p>
+<p class="c8 c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c28">
+<p class="c8 c7"><span class="c14">syslog-agent.sources =
+syslog</span></p>
+<p class="c8 c7"><span class="c14">syslog-agent.channels =
+memoryChannel-1</span></p>
+<p class="c8 c7"><span class="c14">syslog-agent.sinks =
+logger</span></p>
+<p class="c8 c7 c17"></p>
+<p class="c8 c7"><span class="c14">syslog-agent.sources.syslog.type
+= syslogudp</span></p>
+<p class="c8 c7"><span class="c14">syslog-agent.sources.syslog.port
+= 5140</span></p>
+<p class="c8 c7"><span class="c14">syslog-agent.sources.syslog.host
+= localhost</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 class="c8 c7 c36"><a name="h.phpzcihl76rn" id=
+"h.phpzcihl76rn"></a></h3>
+<h3 class="c8 c7"><a name="h.2h2geb7nta7o" id=
+"h.2h2geb7nta7o"></a><span>Legacy Sources</span></h3>
+<p class="c1"><span>The legacy sources allow a Flume 1.x agent to
+receive events from Flume 0.9.4 agents. It accepts events in the
+Flume 0.9.4 format, converts them to the Flume 1.0 format, and
+stores them in the connected channel. The 0.9.4 event properties
+like timestamp, pri, host, nanos, etc get converted to 1.x event
+header attributes.</span></p>
+<p class="c1"><span>The legacy source supports both Avro and Thrift
+RPC connections. To use this bridge between two Flume versions, you
+need to start a Flume 1.x agent with the avroLegacy or thriftLegacy
+source. The</span><span>&nbsp;</span><span>0.9.4 agent should have
+the agentSink pointing to host/port of the 1.x agent.</span></p>
+<h4 class="c1"><a name="h.wfz55svgqaip" id=
+"h.wfz55svgqaip"></a><span>Avro Legacy</span></h4>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span class="c0">Property Name</span></p>
+</td>
+<td class="c16">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class=
+"c19 c0">org.apache.flume.source.avroLegacy.AvroLegacySource</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span>host</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>The hostname or IP address to bind
+to</span></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c1 c8"><span>port</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c1 c8"><span>The port # to listen on</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<h4 class="c1"><a name="h.ikr97ftw1rdt" id=
+"h.ikr97ftw1rdt"></a><span>Thrift Legacy</span></h4>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span class="c0">Property Name</span></p>
+</td>
+<td class="c16">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class=
+"c19 c0">org.apache.source.thriftLegacy.ThriftLegacySource</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span>host</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>The hostname or IP address to bind
+to</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c1 c8"><span>port</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c1 c8"><span>The port # to listen on</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c37 c48">
+<p class="c7"><span class="c0 c37">Note</span><span class=
+"c37">:The reliability semantics of Flume 1.x are different from
+that of 0.9.x. The E2E or DFO mode of 0.9.x agent will not be
+supported by the legacy source. The only supported 0.9.x mode is
+the best effort, though the reliability setting of the 1.x flow
+will be applicable to the events once they are saved into the Flume
+1.x channel by the legacy source.</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c1 c17"></p>
+<h3 class="c7"><a name="h.4quua23r6yoy" id=
+"h.4quua23r6yoy"></a><span>Custom</span></h3>
+<p class="c7"><span>A custom source is your own implementation of
+the Source interface. A custom source&rsquo;s class and its
+dependencies must be included in the agent&rsquo;s classpath when
+starting the Flume agent. The type of the custom source is its
+FQCN.</span></p>
+<h2 class="c1"><a name="h.zgdy9oll30mx" id=
+"h.zgdy9oll30mx"></a><span>Flume Sinks</span></h2>
+<a href="#" name="id.m6mt3lb8yyaf" id="id.m6mt3lb8yyaf"></a>
+<h3 class="c7"><a name="h.rxt2g9parmkr" id=
+"h.rxt2g9parmkr"></a><span>HDFS Sink</span></h3>
+<p class="c1"><span>This sink writes the event into the Hadoop
+Distributed File System (HDFS)</span><span>.</span><span>&nbsp;It
+currently supports creating text and sequence files. It supports
+compression in both file types. The files can be rolled (close
+current file and create a new one) periodically based on the
+elapsed time or size of data or number of events. It also
+bucketing/partitioning data by attributes like timestamp or machine
+where the event originated. The HDFS directory path may contain
+formatting escape sequences that will replaced by the HDFS sink to
+generate a directory/file name to store the events.</span></p>
+<p class="c1"><span>Following are the escape sequences supported
+-</span></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr>
+<td class="c16">
+<p class="c1 c8"><span>%{host}</span></p>
+</td>
+<td class="c35">
+<p class="c1 c8"><span>host name stored in event header</span></p>
+</td>
+</tr>
+<tr>
+<td class="c16">
+<p class="c1 c8"><span>%t</span></p>
+</td>
+<td class="c35">
+<p class="c1"><span>Unix time in milliseconds</span></p>
+<p class="c1 c8 c17"></p>
+</td>
+</tr>
+<tr>
+<td class="c16">
+<p class="c1"><span>%a</span></p>
+</td>
+<td class="c35">
+<p class="c1"><span>locale&rsquo;s short weekday name (Mon, Tue,
+&hellip;)</span></p>
+</td>
+</tr>
+<tr>
+<td class="c16">
+<p class="c1"><span>%A</span></p>
+</td>
+<td class="c35">
+<p class="c1"><span>locale&rsquo;s full weekday name (Monday,
+Tuesday, &hellip;)</span></p>
+</td>
+</tr>
+<tr>
+<td class="c16">
+<p class="c1"><span>%b</span></p>
+</td>
+<td class="c35">
+<p class="c1"><span>locale&rsquo;s short month name (Jan,
+Feb,&hellip;)</span></p>
+</td>
+</tr>
+<tr>
+<td class="c16">
+<p class="c1"><span>%B</span></p>
+</td>
+<td class="c35">
+<p class="c1"><span>locale&rsquo;s long month name (January,
+February,&hellip;)</span></p>
+</td>
+</tr>
+<tr>
+<td class="c16">
+<p class="c1"><span>%c</span></p>
+</td>
+<td class="c35">
+<p class="c1"><span>locale&rsquo;s date and time (Thu Mar 3
+23:05:25 2005)</span></p>
+</td>
+</tr>
+<tr>
+<td class="c16">
+<p class="c1"><span>%d</span></p>
+</td>
+<td class="c35">
+<p class="c1"><span>day of month (01)</span></p>
+</td>
+</tr>
+<tr>
+<td class="c16">
+<p class="c1"><span>%D</span></p>
+</td>
+<td class="c35">
+<p class="c1"><span>date; same as %m/%d/%y</span></p>
+</td>
+</tr>
+<tr>
+<td class="c16">
+<p class="c1"><span>%H</span></p>
+</td>
+<td class="c35">
+<p class="c1"><span>hour (00..23)</span></p>
+</td>
+</tr>
+<tr>
+<td class="c16">
+<p class="c1"><span>%I</span></p>
+</td>
+<td class="c35">
+<p class="c1"><span>hour (01..12)</span></p>
+</td>
+</tr>
+<tr>
+<td class="c16">
+<p class="c1"><span>%j</span></p>
+</td>
+<td class="c35">
+<p class="c1"><span>day of year (001..366)</span></p>
+</td>
+</tr>
+<tr>
+<td class="c16">
+<p class="c1"><span>%k</span></p>
+</td>
+<td class="c35">
+<p class="c1"><span>hour ( 0..23)</span></p>
+</td>
+</tr>
+<tr>
+<td class="c16">
+<p class="c1"><span>%m</span></p>
+</td>
+<td class="c35">
+<p class="c1"><span>month (01..12)</span></p>
+</td>
+</tr>
+<tr>
+<td class="c16">
+<p class="c1"><span>%M</span></p>
+</td>
+<td class="c35">
+<p class="c1"><span>minute (00..59)</span></p>
+</td>
+</tr>
+<tr>
+<td class="c16">
+<p class="c1"><span>%P</span></p>
+</td>
+<td class="c35">
+<p class="c1"><span>locale&rsquo;s equivalent of am or
+pm</span></p>
+</td>
+</tr>
+<tr>
+<td class="c16">
+<p class="c1"><span>%s</span></p>
+</td>
+<td class="c35">
+<p class="c1"><span>seconds since 1970-01-01 00:00:00
+UTC</span></p>
+</td>
+</tr>
+<tr>
+<td class="c16">
+<p class="c1"><span>%S</span></p>
+</td>
+<td class="c35">
+<p class="c1"><span>second (00..59)</span></p>
+</td>
+</tr>
+<tr>
+<td class="c16">
+<p class="c1"><span>%y</span></p>
+</td>
+<td class="c35">
+<p class="c1"><span>last two digits of year (00..99)</span></p>
+</td>
+</tr>
+<tr>
+<td class="c16">
+<p class="c1"><span>%Y</span></p>
+</td>
+<td class="c35">
+<p class="c1"><span>year (2010)</span></p>
+</td>
+</tr>
+<tr>
+<td class="c16">
+<p class="c1"><span>%z</span></p>
+</td>
+<td class="c35">
+<p class="c1"><span>+hhmm numeric timezone (for example,
+-0400)</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c1 c17"></p>
+<p class="c1"><span>The file in use will have the name mangled to
+include &ldquo;.tmp&rdquo; at the end. Once the file is closed,
+this extension is removed. This allows excluding partially complete
+files in the directory.</span></p>
+<p class="c1 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c22">
+<p class="c8 c7"><span class="c0">Name</span></p>
+</td>
+<td class="c18">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c32">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c22">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c18">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c32">
+<p class="c1"><span>The component type name, needs to be</span>
+<span class="c19 c0">hdfs</span></p>
+</td>
+</tr>
+<tr>
+<td class="c22">
+<p class="c8 c7"><span>hdfs.path</span></p>
+</td>
+<td class="c18">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c32">
+<p class="c8 c7"><span>HDFS directory path (eg
+hdfs://namenode/flume/webdata/)</span></p>
+</td>
+</tr>
+<tr>
+<td class="c22">
+<p class="c8 c7"><span>hdfs.filePrefix</span></p>
+</td>
+<td class="c18">
+<p class="c8 c7"><span class="c43">FlumeData</span></p>
+</td>
+<td class="c32">
+<p class="c8 c7"><span>Name prefixed to files created by Flume in
+hdfs directory</span></p>
+</td>
+</tr>
+<tr>
+<td class="c22">
+<p class="c8 c7"><span>hdfs.rollInterval</span></p>
+</td>
+<td class="c18">
+<p class="c8 c7"><span>30</span></p>
+</td>
+<td class="c32">
+<p class="c8 c7"><span>Number of seconds to wait before rolling
+current file</span></p>
+</td>
+</tr>
+<tr>
+<td class="c22">
+<p class="c8 c7"><span>hdfs.rollSize</span></p>
+</td>
+<td class="c18">
+<p class="c8 c7"><span>1024</span></p>
+</td>
+<td class="c32">
+<p class="c8 c7"><span>File size to trigger roll (in
+bytes)</span></p>
+</td>
+</tr>
+<tr>
+<td class="c22">
+<p class="c8 c7"><span>hdfs.rollCount</span></p>
+</td>
+<td class="c18">
+<p class="c8 c7"><span>10</span></p>
+</td>
+<td class="c32">
+<p class="c8 c7"><span>Number of events written to file before it
+rolled</span></p>
+</td>
+</tr>
+<tr>
+<td class="c22">
+<p class="c8 c7"><span>hdfs.batchSize</span></p>
+</td>
+<td class="c18">
+<p class="c8 c7"><span>1</span></p>
+</td>
+<td class="c32">
+<p class="c8 c7"><span>number of events written to file before it
+flushed to HDFS</span></p>
+</td>
+</tr>
+<tr>
+<td class="c22">
+<p class="c8 c7"><span>hdfs.txnEventMax</span></p>
+</td>
+<td class="c18">
+<p class="c8 c7"><span>100</span></p>
+</td>
+<td class="c32">
+<p class="c8 c7 c17"></p>
+</td>
+</tr>
+<tr>
+<td class="c22">
+<p class="c8 c7"><span>hdfs.codeC</span></p>
+</td>
+<td class="c18">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c32">
+<p class="c8 c7"><span>Compression codec. one of following
+:</span></p>
+<p class="c8 c7"><span>&nbsp;gzip, bzip2, lzo, snappy</span></p>
+</td>
+</tr>
+<tr>
+<td class="c22">
+<p class="c8 c7"><span>hdfs.fileType</span></p>
+</td>
+<td class="c18">
+<p class="c8 c7"><span>SequenceFile</span></p>
+</td>
+<td class="c32">
+<p class="c8 c7"><span>File format - currently SequenceFile or
+DataStream</span></p>
+</td>
+</tr>
+<tr>
+<td class="c22">
+<p class="c8 c7"><span>hdfs.maxOpenFiles</span></p>
+</td>
+<td class="c18">
+<p class="c8 c7"><span>5000</span></p>
+</td>
+<td class="c32">
+<p class="c8 c7 c17"></p>
+</td>
+</tr>
+<tr>
+<td class="c22">
+<p class="c8 c7"><span>hdfs.writeFormat</span></p>
+</td>
+<td class="c18">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c32">
+<p class="c8 c7"><span>&ldquo;Text&rdquo; or
+&ldquo;Writable&rdquo;</span></p>
+</td>
+</tr>
+<tr>
+<td class="c22">
+<p class="c8 c7"><span>hdfs.appendTimeout</span></p>
+</td>
+<td class="c18">
+<p class="c8 c7"><span>1000</span></p>
+</td>
+<td class="c32">
+<p class="c8 c7 c17"></p>
+</td>
+</tr>
+<tr>
+<td class="c22">
+<p class="c8 c7"><span>hdfs.callTimeout</span></p>
+</td>
+<td class="c18">
+<p class="c8 c7"><span>5000</span></p>
+</td>
+<td class="c32">
+<p class="c8 c7 c17"></p>
+</td>
+</tr>
+<tr>
+<td class="c22">
+<p class="c8 c7"><span>hdfs.threadsPoolSize</span></p>
+</td>
+<td class="c18">
+<p class="c8 c7"><span>10</span></p>
+</td>
+<td class="c32">
+<p class="c8 c7 c17"></p>
+</td>
+</tr>
+<tr>
+<td class="c22">
+<p class="c8 c7"><span>hdfs.kerberosPrincipal</span></p>
+</td>
+<td class="c18">
+<p class="c2"><span>&ldquo;&rdquo;</span></p>
+</td>
+<td class="c32">
+<p class="c8 c7"><span>Kerberos user principal for accessing secure
+HDFS</span></p>
+</td>
+</tr>
+<tr>
+<td class="c22">
+<p class="c8 c7"><span>hdfs.kerberosKeytab</span></p>
+</td>
+<td class="c18">
+<p class="c2"><span>&ldquo;&rdquo;</span></p>
+</td>
+<td class="c32">
+<p class="c8 c7"><span>Kerberos keytab for accessing secure
+HDFS</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c7 c17"></p>
+<h3 class="c7"><a name="h.6x3kglq55s1q" id=
+"h.6x3kglq55s1q"></a><span>Logger Sink</span></h3>
+<p class="c1"><span>Logs event at INFO level. Typically useful for
+testing/debugging purpose.</span></p>
+<p class="c1"><span class="c19 c0">This sink has no
+properties.</span></p>
+<p class="c1 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr>
+<td class="c52">
+<p class="c1"><span>type</span></p>
+</td>
+<td class="c46">
+<p class="c40 c7"><span>-</span></p>
+</td>
+<td class="c49">
+<p class="c7"><span>The component type name, needs to be</span>
+<span class="c19 c0">logger</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c1 c17"></p>
+<h3 class="c1"><a name="h.xjb5yy9be3vv" id=
+"h.xjb5yy9be3vv"></a><span>Avro</span></h3>
+<p class="c1"><span>This sink forms one half of Flume's tiered
+collection support. Flume events sent to this sink are turned into
+Avro events and sent to the configured hostname / port pair. The
+events are taken from the configured Channel in batches of the
+configured batch size</span><span>.</span></p>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span class="c0">Property Name</span></p>
+</td>
+<td class="c16">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class="c19 c0">avro</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span>hostname</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>The hostname or IP address to bind
+to</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c1 c8"><span>port</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c1 c8"><span>The port # to listen on</span></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c1 c8"><span>batch-size</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>100</span></p>
+</td>
+<td class="c20">
+<p class="c1 c8"><span>number of event to batch together for
+send.</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 class="c36 c7"><a name="h.xduc42n9ffgi" id=
+"h.xduc42n9ffgi"></a></h3>
+<h3 class="c7"><a name="h.7a7y0f11ig0g" id=
+"h.7a7y0f11ig0g"></a><span>IRC</span></h3>
+<p class="c7"><span>The IRC sink takes messages from attached
+channel and relays those to</span> <span>configured IRC</span>
+<span>destinations.</span></p>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span class="c0">Property Name</span></p>
+</td>
+<td class="c16">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class="c19 c0">irc</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span>hostname</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c7"><span>The hostname or IP address to connect
+to</span></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c8 c7"><span>port</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>6667</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>The port number of remote host to
+connect</span></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c8 c7"><span>nick</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>Nick name</span></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c8 c7"><span>user</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>User name</span></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c8 c7"><span>password</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>User password</span></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c8 c7"><span>chan</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>channel</span></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c8 c7"><span>name</span></p>
+</td>
+<td class="c16">
+<p class="c8 c7 c17"></p>
+</td>
+<td class="c20">
+<p class="c8 c7 c17"></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c8 c7"><span>splitlines</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>(boolean)</span></p>
+</td>
+</tr>
+<tr>
+<td class="c29">
+<p class="c8 c7"><span>splitchars</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>\n</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>line separator (if you were to enter the
+default value into the config file, the you would need to escape
+the backslash, like this: &ldquo;\\n&rdquo;)</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c8 c7 c17"></p>
+<p class="c7 c17"></p>
+<h3 class="c7"><a name="h.frlqql6vu68" id=
+"h.frlqql6vu68"></a><span>File Roll</span></h3>
+<p class="c7 c17"></p>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span class="c0">Property Name</span></p>
+</td>
+<td class="c16">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class="c19 c0">file_roll</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span>sink.directory</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c7 c17"></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span>sink.rollInterval</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>30</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7 c17"></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c8 c7 c17"></p>
+<h3 class="c7"><a name="h.qb43tc4wycrd" id=
+"h.qb43tc4wycrd"></a><span>Null</span></h3>
+<p class="c7 c17"></p>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span class="c0">Property Name</span></p>
+</td>
+<td class="c16">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c29">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c16">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c20">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class="c19 c0">null</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c8 c7 c17"></p>
+<h3 class="c7"><a name="h.v5lt2mw3cy92" id=
+"h.v5lt2mw3cy92"></a><span>Custom</span></h3>
+<p class="c7"><span>A custom sink is your own implementation of the
+Sink interface. A custom sink&rsquo;s class and its dependencies
+must be included in the agent&rsquo;s classpath when starting the
+Flume agent. The type of the custom sink is its FQCN.</span></p>
+<p class="c7 c17"></p>
+<h2 class="c1"><a name="h.6unrmcktxah" id=
+"h.6unrmcktxah"></a><span>Flume Channels</span></h2>
+<p class="c7"><span>Channels are the repositories where the events
+are staged on a agent. Source adds the events and Sink removes
+it.</span></p>
+<h3 class="c7"><a name="h.8rs2cm7tmvst" id=
+"h.8rs2cm7tmvst"></a><span>Memory Channel</span></h3>
+<p class="c7"><span>The events are stored in a an in-memory queue
+with configurable max size. It&rsquo;s ideal for flow that needs
+higher throughput and prepared to lose the staged data in the event
+of a agent failures.</span></p>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span class="c0">Property Name</span></p>
+</td>
+<td class="c25">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c25">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class="c19 c0">memory</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span>capacity</span></p>
+</td>
+<td class="c25">
+<p class="c2"><span>100</span></p>
+</td>
+<td class="c23">
+<p class="c7"><span>The max number of events stored in the
+channel</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span>transactionCapacity</span></p>
+</td>
+<td class="c25">
+<p class="c2"><span>100</span></p>
+</td>
+<td class="c23">
+<p class="c7"><span>The max number of events stored in the channel
+per transaction</span></p>
+</td>
+</tr>
+<tr>
+<td class="c9">
+<p class="c8 c7"><span>keep-alive</span></p>
+</td>
+<td class="c25">
+<p class="c2"><span>3</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span>Timeout in seconds for adding or removing an
+event</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c8 c7 c17"></p>
+<h3 class="c8 c7"><a name="h.trdq4hc40vug" id=
+"h.trdq4hc40vug"></a><span>JDBC Channel</span></h3>
+<p class="c7"><span>The events are stored in a persistent storage
+that&rsquo;s backed by a database. The JDBC channel currently
+supports embedded Derby. This is a durable channel that&rsquo;s
+ideal for the flows where recoverability is important.</span></p>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr>
+<td class="c30">
+<p class="c8 c7"><span class="c0">Property Name</span></p>
+</td>
+<td class="c13">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c44">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr>
+<td class="c30">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c13">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c44">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class="c19 c0">jdbc</span></p>
+</td>
+</tr>
+<tr>
+<td class="c30">
+<p class="c8 c7"><span>db.type</span></p>
+</td>
+<td class="c13">
+<p class="c8 c7"><span>DERBY</span></p>
+</td>
+<td class="c44">
+<p class="c8 c7"><span>Database vendor, needs to be
+DERBY.</span></p>
+</td>
+</tr>
+<tr>
+<td class="c30">
+<p class="c8 c7"><span>driver.class</span></p>
+</td>
+<td class="c13">
+<p class="c8 c7">
+<span>org.apache.derby.jdbc.EmbeddedDriver</span></p>
+</td>
+<td class="c44">
+<p class="c8 c7"><span>Class for vendor&rsquo;s JDBC
+driver</span></p>
+</td>
+</tr>
+<tr>
+<td class="c30">
+<p class="c8 c7"><span>driver.url</span></p>
+</td>
+<td class="c13">
+<p class="c8 c7"><span>(constructed from other
+properties)</span></p>
+</td>
+<td class="c44">
+<p class="c8 c7"><span>JDBC connection URL</span></p>
+</td>
+</tr>
+<tr>
+<td class="c30">
+<p class="c8 c7"><span>db.username</span></p>
+</td>
+<td class="c13">
+<p class="c2"><span>&ldquo;sa&rdquo;</span></p>
+</td>
+<td class="c44">
+<p class="c8 c7"><span>User id for db connection</span></p>
+</td>
+</tr>
+<tr>
+<td class="c30">
+<p class="c8 c7"><span>db.password</span></p>
+</td>
+<td class="c13">
+<p class="c2"><span>&ldquo;&rdquo;</span></p>
+</td>
+<td class="c44">
+<p class="c8 c7"><span>password for db connection</span></p>
+</td>
+</tr>
+<tr>
+<td class="c30">
+<p class="c8 c7"><span>connection.properties.file</span></p>
+</td>
+<td class="c13">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c44">
+<p class="c8 c7"><span>JDBC Connection property file
+path</span></p>
+</td>
+</tr>
+<tr>
+<td class="c30">
+<p class="c8 c7"><span>create.schema</span></p>
+</td>
+<td class="c13">
+<p class="c2"><span>true</span></p>
+</td>
+<td class="c44">
+<p class="c8 c7"><span>If true, then creates db schema if not
+there</span></p>
+</td>
+</tr>
+<tr>
+<td class="c30">
+<p class="c8 c7"><span>create.index</span></p>
+</td>
+<td class="c13">
+<p class="c2"><span>true</span></p>
+</td>
+<td class="c44">
+<p class="c8 c7"><span>Create indexes to speed up
+lookups</span></p>
+</td>
+</tr>
+<tr>
+<td class="c30">
+<p class="c8 c7"><span>create.foreignkey</span></p>
+</td>
+<td class="c13">
+<p class="c2"><span>true</span></p>
+</td>
+<td class="c44">
+<p class="c8 c7 c17"></p>
+</td>
+</tr>
+<tr>
+<td class="c30">
+<p class="c8 c7"><span>transaction.isolation</span></p>
+</td>
+<td class="c13">
+<p class="c8 c7"><span>&ldquo;READ_COMMITTED&rdquo;</span></p>
+</td>
+<td class="c44">
+<p class="c8 c7"><span>Isolation level for db session</span></p>
+<p class="c8 c7"><span>READ_UNCOMMITTED, &nbsp;READ_COMMITTED,
+SERIALIZABLE, REPEATABLE_READ</span></p>
+</td>
+</tr>
+<tr>
+<td class="c30">
+<p class="c8 c7"><span>maximum.connections</span></p>
+</td>
+<td class="c13">
+<p class="c2"><span>10</span></p>
+</td>
+<td class="c44">
+<p class="c8 c7"><span>Max connections allowed to db</span></p>
+</td>
+</tr>
+<tr>
+<td class="c30">
+<p class="c8 c7"><span>maximum.capacity</span></p>
+</td>
+<td class="c13">
+<p class="c2"><span>0 (unlimited)</span></p>
+</td>
+<td class="c44">
+<p class="c8 c7"><span>Max number of events in the
+channel</span></p>
+</td>
+</tr>
+<tr>
+<td class="c30">
+<p class="c8 c7"><span>sysprop.</span><span class=
+"c26">*</span></p>
+</td>
+<td class="c13">
+<p class="c8 c7 c17"></p>
+</td>
+<td class="c44">
+<p class="c8 c7"><span>DB Vendor specific properties</span></p>
+</td>
+</tr>
+<tr>
+<td class="c30">
+<p class="c8 c7"><span>sysprop.user.home</span></p>
+</td>
+<td class="c13">
+<p class="c8 c7 c17"></p>
+</td>
+<td class="c44">
+<p class="c8 c7"><span>Home path to store embedded Derby
+database</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c7 c17"></p>
+<h3 class="c7"><a name="h.28lq72qr5h2f" id=
+"h.28lq72qr5h2f"></a><span>Recoverable Memory Channel</span></h3>
+<p class="c7 c17"></p>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span class="c0">Property Name</span></p>
+</td>
+<td class="c25">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c25">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class=
+"c19 c0">org.apache.flume.channel.recoverable.memory.RecoverableMemoryChannel</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span>wal.dataDir</span></p>
+</td>
+<td class="c25">
+<p class="c2">
+<span>(${user.home}/.flume/recoverable-memory-channel</span></p>
+</td>
+<td class="c23">
+<p class="c7 c17"></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span>wal.rollSize</span></p>
+</td>
+<td class="c25">
+<p class="c2"><span>(0x04000000)</span></p>
+</td>
+<td class="c23">
+<p class="c7"><span>Max size (in bytes) of a single file before we
+roll</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span>wal.minRetentionPeriod</span></p>
+</td>
+<td class="c25">
+<p class="c2"><span>300000</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span>Min amount of time (in millis) to keep a
+log</span></p>
+</td>
+</tr>
+<tr>
+<td class="c9">
+<p class="c8 c7"><span>wal.workerInterval</span></p>
+</td>
+<td class="c25">
+<p class="c8 c7"><span>60000</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span>How often (in millis) the background worker
+checks for old logs</span></p>
+</td>
+</tr>
+<tr>
+<td class="c9">
+<p class="c8 c7"><span>wal.maxLogsSize</span></p>
+</td>
+<td class="c25">
+<p class="c8 c7"><span>(0x20000000)</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span>Total amt (in bytes) of logs to keep,
+excluding the current log</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c8 c7 c17"></p>
+<h3 class="c7"><a name="h.be8h80bxof8x" id=
+"h.be8h80bxof8x"></a><span>File Channel</span></h3>
+<p class="c7"><span class="c39"><br /></span><span class=
+"c39 c0 c45">NOTE</span><span class="c39 c0">: The File Channel is
+not yet ready for use. The options are being documented here in
+advance of its completion.</span></p>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span class="c0">Property Name</span></p>
+</td>
+<td class="c25">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c25">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class=
+"c19 c0">org.apache.flume.channel.file.FileChannel</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c8 c7 c17"></p>
+<p class="c7 c17"></p>
+<h3 class="c7"><a name="h.6gwkim32pyeu" id=
+"h.6gwkim32pyeu"></a><span>Pseudo Transaction Channel</span></h3>
+<p class="c7"><span class="c39"><br /></span><span class=
+"c39 c45 c0">NOTE</span><span class="c0 c39">: The Pseudo
+Transaction Channel is mainly for testing purposes and is not meant
+for production use.</span></p>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span class="c0">Property Name</span></p>
+</td>
+<td class="c25">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c25">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class=
+"c19 c0">org.apache.flume.channel.PseudoTxnMemoryChannel</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span>capacity</span></p>
+</td>
+<td class="c25">
+<p class="c2"><span>50</span></p>
+</td>
+<td class="c23">
+<p class="c7"><span>The max number of events stored in the
+channel</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span>keep-alive</span></p>
+</td>
+<td class="c25">
+<p class="c2"><span>3</span></p>
+</td>
+<td class="c23">
+<p class="c7"><span>Timeout in seconds for adding or removing an
+event</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c8 c7 c17"></p>
+<h3 class="c7"><a name="h.m6o48s9m81ce" id=
+"h.m6o48s9m81ce"></a><span>Custom</span></h3>
+<p class="c7"><span>A custom channel is your own implementation of
+the Channel interface. A custom channel&rsquo;s class and its
+dependencies must be included in the agent&rsquo;s classpath when
+starting the Flume agent. The type of the custom channel is its
+FQCN.</span></p>
+<p class="c8 c7 c17"></p>
+<h2 class="c1"><a name="h.3h1a9vt6e65f" id=
+"h.3h1a9vt6e65f"></a><span>Flume Channel Selectors</span></h2>
+<p class="c7 c17"></p>
+<h3 class="c7"><a name="h.q51r74a0e7oz" id=
+"h.q51r74a0e7oz"></a><span>Replicating Channel Selector
+(default)</span></h3>
+<p class="c7 c17"></p>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span class="c0">Property Name</span></p>
+</td>
+<td class="c25">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c25">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class="c19 c0">replicating</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c8 c7 c17"></p>
+<h3 class="c7"><a name="h.8tjnpde700w3" id=
+"h.8tjnpde700w3"></a><span>Multiplexing Channel
+Selector</span></h3>
+<p class="c7 c17"></p>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span class="c0">Property Name</span></p>
+</td>
+<td class="c25">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c25">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class="c19 c0">multiplexing</span></p>
+</td>
+</tr>
+<tr>
+<td class="c9">
+<p class="c8 c7"><span>header</span></p>
+</td>
+<td class="c25">
+<p class="c8 c7"><span>flume.selector.header</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7 c17"></p>
+</td>
+</tr>
+<tr>
+<td class="c9">
+<p class="c8 c7"><span>default</span></p>
+</td>
+<td class="c25">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7 c17"></p>
+</td>
+</tr>
+<tr>
+<td class="c9">
+<p class="c8 c7"><span>mapping.</span><span class=
+"c26">*</span></p>
+</td>
+<td class="c25">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7 c17"></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c8 c7 c17"></p>
+<h3 class="c7"><a name="h.3s9lxo2jw5dn" id=
+"h.3s9lxo2jw5dn"></a><span>Custom</span></h3>
+<p class="c7"><span>A custom channel selector is your own
+implementation of the ChannelSelector interface. A custom channel
+selector&rsquo;s class and its dependencies must be included in the
+agent&rsquo;s classpath when starting the Flume agent. The type of
+the custom channel selector is its FQCN.</span></p>
+<p class="c7 c17"></p>
+<h2 class="c1"><a name="h.aq6crknk5u4v" id=
+"h.aq6crknk5u4v"></a><span>Flume Sink Processors</span></h2>
+<p class="c7 c17"></p>
+<h3 class="c7"><a name="h.8acvwl9dnc1r" id=
+"h.8acvwl9dnc1r"></a><span>Failover Sink Processor</span></h3>
+<p class="c7 c17"></p>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span class="c0">Property Name</span></p>
+</td>
+<td class="c25">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c25">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class="c19 c0">failover</span></p>
+</td>
+</tr>
+<tr>
+<td class="c9">
+<p class="c8 c7"><span>maxpenalty</span></p>
+</td>
+<td class="c25">
+<p class="c8 c7"><span>30000</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span>(in millis)</span></p>
+</td>
+</tr>
+<tr>
+<td class="c9">
+<p class="c8 c7"><span>priority.</span><span class=
+"c26">&lt;sinkName&gt;</span></p>
+</td>
+<td class="c25">
+<p class="c8 c7 c17"></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span>&lt;sinkName&gt; must be one of the sink
+instances associated with the current sink group</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c8 c7 c17"></p>
+<h3 class="c7"><a name="h.bstgajdxzf04" id=
+"h.bstgajdxzf04"></a><span>Default Sink Processor</span></h3>
+<p class="c7"><span>Accepts only a single sink.</span><span class=
+"c39"><br /></span></p>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span class="c0">Property Name</span></p>
+</td>
+<td class="c25">
+<p class="c8 c7"><span class="c0">Default</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span class="c0">Description</span></p>
+</td>
+</tr>
+<tr class="c12">
+<td class="c9">
+<p class="c8 c7"><span>type</span></p>
+</td>
+<td class="c25">
+<p class="c2"><span>-</span></p>
+</td>
+<td class="c23">
+<p class="c8 c7"><span>The component type name, needs to be</span>
+<span class="c19 c0">default</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c8 c7 c17"></p>
+<h3 class="c7"><a name="h.3argnysgrp49" id=
+"h.3argnysgrp49"></a><span>Custom</span></h3>
+<p class="c7"><span class="c19">Custom sink processors are not
+implemented at this time.</span></p>
+<p class="c7 c17"></p>
+<h1 class="c1"><a name="h.ehyvkliq1sz4" id=
+"h.ehyvkliq1sz4"></a><span>Security</span></h1>
+<p class="c7"><span>The HDFS sink supports Kerberos authentication
+if the underlying HDFS is running in secure mode. Please refer to
+the</span> <span class="c21"><a class="c5" href=
+"#id.m6mt3lb8yyaf">HDFS Sink</a></span>
+<span>section</span><span>&nbsp;for configuring the HDFS sink
+Kerberos-related options. &nbsp;</span></p>
+<h1 class="c1"><a name="h.mne44x25blml" id=
+"h.mne44x25blml"></a><span>Monitoring</span></h1>
+<p class="c7"><span class="c19 c0">TBD</span></p>
+<h1 class="c1"><a name="h.17xdjsvanahj" id=
+"h.17xdjsvanahj"></a><span>Troubleshooting</span></h1>
+<h2 class="c1"><a name="h.uvm2q7r3o4mx" id=
+"h.uvm2q7r3o4mx"></a><span>Handling agent failures</span></h2>
+<p class="c1"><span>If the Flume agent goes down then the all the
+flows hosted on that agent are aborted. Once the agent is
+restarted, then flow will resume. The flow using jdbc or other
+stable channel will resume processing events where it left off. If
+the agent can&rsquo;t be restarted on the same, then there an
+option to migrate the database to another hardware and setup a new
+Flume agent that can resume processing the events saved in the db.
+The database HA futures can be leveraged to move the Flume agent to
+another host.</span></p>
+<h2 class="c1"><a name="h.2x6iw042erob" id=
+"h.2x6iw042erob"></a><span>Compatibility</span></h2>
+<h3 class="c7"><a name="h.rt57w37bbxdx" id=
+"h.rt57w37bbxdx"></a><span>HDFS</span></h3>
+<p class="c7"><span>Currently Flume supports HDFS 0.20.2 and
+0.23.</span></p>
+<h3 class="c7"><a name="h.jdkzkfxacryp" id=
+"h.jdkzkfxacryp"></a><span>AVRO</span></h3>
+<p class="c7"><span class="c19 c0">TBD</span></p>
+<p class="c7 c17"></p>
+<h3 class="c7"><a name="h.mm1rdwhnn33" id=
+"h.mm1rdwhnn33"></a><span>Additional version
+requirements</span></h3>
+<p class="c7"><span class="c19 c0">TBD</span></p>
+<h2 class="c1"><a name="h.4kla0qa83f3n" id=
+"h.4kla0qa83f3n"></a><span>Tracing</span></h2>
+<p class="c7"><span class="c19 c0">TBD</span></p>
+<p class="c1 c17"></p>
+<h2 class="c1"><a name="h.hepd4gs7sk21" id=
+"h.hepd4gs7sk21"></a><span>More Sample Configs</span></h2>
+<p class="c7"><span class="c19 c0">TBD</span></p>
+<p class="c7 c17"></p>
+<h1 class="c7"><a name="h.tzhmjma3xe8x" id=
+"h.tzhmjma3xe8x"></a><span>Component Summary</span></h1>
+<p class="c7 c17"></p>
+<table cellpadding="0" cellspacing="0" class="c27">
+<tbody>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class="c6 c0">Component Interface</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c6 c0">Type</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c6 c0">Implementation
+Class</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.Channel</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c6">MEMORY</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.channel.MemoryChannel</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.Channel</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c6">JDBC</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.channel.jdbc.JdbcChannel</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.Channel</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.channel.recoverable.memory.RecoverableMemoryChannel</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.channel.recoverable.memory.RecoverableMemoryChannel</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.Channel</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.channel.file.FileChannel</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.channel.file.FileChannel</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.Channel</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.channel.PseudoTxnMemoryChannel</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.channel.PseudoTxnMemoryChannel</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c4">org.apache.flume.Channel</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c4">org.example.MyChannel</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c4">org.example.MyChannel</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.Source</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c6">AVRO</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7 c17"></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.Source</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c6">NETCAT</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7 c17"></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.Source</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c6">SEQ</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7 c17"></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.Source</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c6">EXEC</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7 c17"></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.Source</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c6">SYSLOGTCP</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7 c17"></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.Source</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c6">SYSLOGUDP</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7 c17"></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.Source</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.source.avroLegacy.AvroLegacySource</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.source.avroLegacy.AvroLegacySource</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.Source</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.source.thriftLegacy.ThriftLegacySource</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.source.thriftLegacy.ThriftLegacySource</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c4">org.apache.flume.Source</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c4">org.example.MySource</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c4">org.example.MySource</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class="c6">org.apache.flume.Sink</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c6">NULL</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.sink.NullSink</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class="c6">org.apache.flume.Sink</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c6">LOGGER</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.sink.LoggerSink</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class="c6">org.apache.flume.Sink</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c6">AVRO</span></p>
+</td>
+<td class="c3">
+<p class="c7 c8"><span class=
+"c6">org.apache.flume.sink.AvroSink</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class="c6">org.apache.flume.Sink</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c6">HDFS</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.sink.hdfs.HDFSEventSink</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class="c6">org.apache.flume.Sink</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c6">FILE_ROLL</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.sink.RollingFileSink</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class="c6">org.apache.flume.Sink</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c6">IRC</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.sink.irc.IRCSink</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class="c4">org.apache.flume.Sink</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c4">org.example.MySink</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c4">org.example.MySink</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.ChannelSelector</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c6">REPLICATING</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.channel.ReplicatingChannelSelector</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.ChannelSelector</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c6">MULTIPLEXING</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.channel.MultiplexingChannelSelector</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c4">org.apache.flume.ChannelSelector</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c4">org.example.MyChannelSelector</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c4">org.example.MyChannelSelector</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.SinkProcessor</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c6">DEFAULT</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.sink.DefaultSinkProcessor</span></p>
+</td>
+</tr>
+<tr>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.SinkProcessor</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class="c6">FAILOVER</span></p>
+</td>
+<td class="c3">
+<p class="c8 c7"><span class=
+"c6">org.apache.flume.sink.FailoverSinkProcessor</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="c7 c17"></p>
+<p class="c7 c17"></p>
+<p class="c7"><span class="c26 c11 c45 c0">Note</span><span class=
+"c26 c11 c0">: This info in this user guide is current as of git
+commit 931be8f83527a305b00b5cb1c7bc40def2938c8e repo
+git://git.apache.org/flume.git, branch
+&lsquo;trunk&rsquo;.</span></p>
+</body>
+</html>

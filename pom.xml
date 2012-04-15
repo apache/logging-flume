@@ -38,6 +38,11 @@ limitations under the License.
     <!-- defaults for flaky test and focused test exclusions -->
     <test.exclude.pattern>$</test.exclude.pattern> <!-- junk pattern -->
     <test.include.pattern>**/Test*.java</test.include.pattern>
+<!--
+    <siteUrlDeployment>file://people.apache.org/www/incubator.apache.org/flume</siteUrlDeployment>
+-->
+    <siteUrlDeployment>file://people.apache.org/www/incubator.apache.org/flume</siteUrlDeployment>
+  <stagingDirectory>${project.basedir}/flume-docs</stagingDirectory>
 
   </properties>
 
@@ -321,6 +326,11 @@ limitations under the License.
       <name>Apache Staging Repository</name>
       <url>https://repository.apache.org/service/local/staging/deploy/maven2/</url>
     </repository>
+    <site>
+      <id>apache.website</id>
+      <url>${siteUrlDeployment}</url>
+      <name>Flume Site</name>
+    </site>
   </distributionManagement>
 
   <build>
@@ -405,6 +415,7 @@ limitations under the License.
                   <exclude>.repository/</exclude>
                   <exclude>**/*.diff</exclude>
                   <exclude>**/*.patch</exclude>
+                  <exclude>**/flume-docs</exclude>
                 </excludes>
               </configuration>
             </execution>
@@ -434,6 +445,46 @@ limitations under the License.
           <version>2.3</version>
         </plugin>
 
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>3.0</version>
+          <configuration>
+            <siteDirectory>${project.basedir}/flume-ng-doc</siteDirectory>
+          </configuration>
+          <dependencies>
+          </dependencies>
+          <executions>
+            <execution>
+              <id>flume-site</id>
+              <phase>package</phase>
+              <goals>
+                <goal>site</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>flume-site-dist</id>
+              <phase>package</phase>
+              <goals>
+                <goal>stage</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+         <artifactId>maven-clean-plugin</artifactId>
+         <version>2.4.1</version>
+          <configuration>
+            <filesets>
+              <fileset>
+                <directory>flume-docs</directory>
+                <includes>
+                  <include>**</include>
+                </includes>
+              </fileset>
+            </filesets>
+          </configuration>
+        </plugin>
       </plugins>
 
     </pluginManagement>
@@ -636,4 +687,30 @@ limitations under the License.
     </dependencies>
   </dependencyManagement>
 
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <version>2.4</version>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>project-team</report>
+              <report>mailing-list</report>
+              <report>issue-tracking</report>
+              <report>license</report>
+<!-- for now
+              <report>modules</report>
+              <report>dependencies</report>
+              <report>cim</report>
+              <report>scm</report>
+-->
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+    </plugins>
+  </reporting>
+  
 </project>

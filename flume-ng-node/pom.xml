@@ -47,6 +47,7 @@
               <excludes>
                 <!-- JSON doesn't support comments -->
                 <exclude>src/test/resources/flume-conf.json</exclude>
+                <exclude>flume-docs/**</exclude>
               </excludes>
             </configuration>
           </execution>

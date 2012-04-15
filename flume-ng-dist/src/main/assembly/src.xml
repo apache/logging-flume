@@ -97,6 +97,7 @@
         <include>RELEASE-NOTES</include>
         <include>bin/**</include>
         <include>conf/**</include>
+        <include>flume-docs/**</include>
         <include>pom.xml</include>
       </includes>
     </fileSet>
