@@ -21,11 +21,12 @@ package org.apache.flume.sink.hdfs;
 import java.io.IOException;
 
 import org.apache.flume.Event;
+import org.apache.flume.conf.Configurable;
 import org.apache.flume.sink.FlumeFormatter;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.compress.CompressionCodec;
 
-public interface HDFSWriter {
+public interface HDFSWriter extends Configurable {
 
   public void open(String filePath, FlumeFormatter fmt) throws IOException;
 

@@ -1,0 +1,9 @@
+{ "type": "record", "name": "SyslogEvent", "namespace": "org.apache.flume.test",
+  "fields": [
+    { "name": "facility",  "type": "int" },
+    { "name": "severity",  "type": "int" },
+    { "name": "timestamp", "type": "long" },
+    { "name": "hostname",  "type": "string" },
+    { "name": "message",   "type": "string" }
+  ]
+}

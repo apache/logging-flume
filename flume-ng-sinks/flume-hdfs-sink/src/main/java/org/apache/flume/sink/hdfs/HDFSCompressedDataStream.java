@@ -19,6 +19,7 @@
 package org.apache.flume.sink.hdfs;
 
 import java.io.IOException;
+import org.apache.flume.Context;
 
 import org.apache.flume.Event;
 import org.apache.flume.sink.FlumeFormatter;
@@ -34,6 +35,11 @@ import org.apache.hadoop.io.compress.DefaultCodec;
 public class HDFSCompressedDataStream implements HDFSWriter {
 
   private CompressionOutputStream outStream;
+
+  @Override
+  public void configure(Context context) {
+    // no-op
+  }
 
   @Override
   public void open(String filePath, FlumeFormatter fmt) throws IOException {

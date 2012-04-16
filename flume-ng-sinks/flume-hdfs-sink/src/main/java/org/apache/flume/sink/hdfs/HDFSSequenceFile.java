@@ -19,6 +19,7 @@
 package org.apache.flume.sink.hdfs;
 
 import java.io.IOException;
+import org.apache.flume.Context;
 
 import org.apache.flume.Event;
 import org.apache.flume.sink.FlumeFormatter;
@@ -36,6 +37,11 @@ public class HDFSSequenceFile implements HDFSWriter {
 
   public HDFSSequenceFile() {
     writer = null;
+  }
+
+  @Override
+  public void configure(Context context) {
+    // no-op
   }
 
   @Override

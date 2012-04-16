@@ -19,8 +19,10 @@
 package org.apache.flume.sink.hdfs;
 
 import java.io.IOException;
-
+import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.serialization.EventSerializer;
+import org.apache.flume.serialization.EventSerializerFactory;
 import org.apache.flume.sink.FlumeFormatter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -32,17 +34,45 @@ import org.apache.hadoop.io.compress.CompressionCodec;
 public class HDFSDataStream implements HDFSWriter {
   private FSDataOutputStream outStream;
 
+  private String serializerType;
+  private Context serializerContext;
+  private EventSerializer serializer;
+
+  @Override
+  public void configure(Context context) {
+    serializerType = context.getString("serializer", "TEXT");
+    serializerContext =
+        new Context(context.getSubProperties(EventSerializer.CTX_PREFIX));
+  }
+
   @Override
   public void open(String filePath, FlumeFormatter fmt) throws IOException {
     Configuration conf = new Configuration();
     Path dstPath = new Path(filePath);
     FileSystem hdfs = dstPath.getFileSystem(conf);
 
+    boolean appending = false;
     if (conf.getBoolean("hdfs.append.support", false) == true && hdfs.isFile
             (dstPath)) {
       outStream = hdfs.append(dstPath);
+      appending = true;
     } else {
       outStream = hdfs.create(dstPath);
+    }
+
+    serializer = EventSerializerFactory.getInstance(
+        serializerType, serializerContext, outStream);
+    if (appending && !serializer.supportsReopen()) {
+      outStream.close();
+      serializer = null;
+      throw new IOException("serializer (" + serializerType +
+          ") does not support append");
+    }
+
+    if (appending) {
+      serializer.afterReopen();
+    } else {
+      serializer.afterCreate();
     }
   }
 
@@ -54,17 +84,23 @@ public class HDFSDataStream implements HDFSWriter {
 
   @Override
   public void append(Event e, FlumeFormatter fmt) throws IOException {
-    byte[] bValue = fmt.getBytes(e);
-    outStream.write(bValue, 0, bValue.length);
+    // shun flumeformatter...
+    serializer.write(e);
   }
 
   @Override
   public void sync() throws IOException {
+    serializer.flush();
+    outStream.flush();
     outStream.sync();
   }
 
   @Override
   public void close() throws IOException {
+    serializer.flush();
+    serializer.beforeClose();
+    outStream.flush();
+    outStream.sync();
     outStream.close();
   }
 

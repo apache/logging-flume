@@ -16,19 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.flume.serialization;
 
-package org.apache.flume.formatter.output;
+public enum EventSerializerType {
+  TEXT(BodyTextEventSerializer.Builder.class),
+  AVRO_EVENT(FlumeEventAvroEventSerializer.Builder.class),
+  OTHER(null);
 
-import org.apache.flume.Event;
+  private final Class<? extends EventSerializer.Builder> builderClass;
 
-@Deprecated
-public class TextDelimitedOutputFormatter implements EventFormatter {
+  EventSerializerType(Class<? extends EventSerializer.Builder> builderClass) {
+    this.builderClass = builderClass;
+  }
 
-  @Override
-  public byte[] format(Event event) {
-    String body = event.getBody().length > 0 ? new String(event.getBody()) : "";
-
-    return (body + "\n").getBytes();
+  public Class<? extends EventSerializer.Builder> getBuilderClass() {
+    return builderClass;
   }
 
 }

@@ -24,9 +24,16 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharsetDecoder;
 import java.util.Calendar;
 import java.util.List;
 
+import org.apache.avro.file.DataFileStream;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.DatumReader;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -55,7 +62,9 @@ import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
+
 
 public class TestHDFSEventSink {
 
@@ -78,6 +87,7 @@ public class TestHDFSEventSink {
   // TODO: use System.getProperty("file.separator") instead of hardcoded '/'
   @Before
   public void setUp() {
+    LOG.debug("Starting...");
     /*
      * FIXME: Use a dynamic path to support concurrent test execution. Also,
      * beware of the case where this path is used for something or when the
@@ -102,6 +112,7 @@ public class TestHDFSEventSink {
   @Test
   public void testTextBatchAppend() throws InterruptedException, LifecycleException,
       EventDeliveryException, IOException {
+    LOG.debug("Starting...");
 
     final long txnMax = 2;
     final long rollCount = 10;
@@ -178,6 +189,7 @@ public class TestHDFSEventSink {
 
   @Test
   public void testLifecycle() throws InterruptedException, LifecycleException {
+    LOG.debug("Starting...");
     Context context = new Context();
 
     context.put("hdfs.path", testPath);
@@ -197,6 +209,7 @@ public class TestHDFSEventSink {
   @Test
   public void testEmptyChannelResultsInStatusBackoff()
       throws InterruptedException, LifecycleException, EventDeliveryException {
+    LOG.debug("Starting...");
     Context context = new Context();
     Channel channel = new MemoryChannel();
     context.put("hdfs.path", testPath);
@@ -213,6 +226,7 @@ public class TestHDFSEventSink {
   public void testTextAppend() throws InterruptedException, LifecycleException,
       EventDeliveryException, IOException {
 
+    LOG.debug("Starting...");
     final long txnMax = 25;
     final long rollCount = 3;
     final long batchSize = 2;
@@ -287,9 +301,89 @@ public class TestHDFSEventSink {
   }
 
   @Test
+  public void testAvroAppend() throws InterruptedException, LifecycleException,
+      EventDeliveryException, IOException {
+
+    LOG.debug("Starting...");
+    final long txnMax = 25;
+    final long rollCount = 3;
+    final long batchSize = 2;
+    final String fileName = "FlumeData";
+    String newPath = testPath + "/singleTextBucket";
+    int totalEvents = 0;
+    int i = 1, j = 1;
+
+    // clear the test directory
+    Configuration conf = new Configuration();
+    FileSystem fs = FileSystem.get(conf);
+    Path dirPath = new Path(newPath);
+    fs.delete(dirPath, true);
+    fs.mkdirs(dirPath);
+
+    Context context = new Context();
+
+    // context.put("hdfs.path", testPath + "/%Y-%m-%d/%H");
+    context.put("hdfs.path", newPath);
+    context.put("hdfs.filePrefix", fileName);
+    context.put("hdfs.txnEventMax", String.valueOf(txnMax));
+    context.put("hdfs.rollCount", String.valueOf(rollCount));
+    context.put("hdfs.batchSize", String.valueOf(batchSize));
+    context.put("hdfs.writeFormat", "Text");
+    context.put("hdfs.fileType", "DataStream");
+    context.put("serializer", "AVRO_EVENT");
+
+    Configurables.configure(sink, context);
+
+    Channel channel = new MemoryChannel();
+    Configurables.configure(channel, context);
+
+    sink.setChannel(channel);
+    sink.start();
+
+    Calendar eventDate = Calendar.getInstance();
+    List<String> bodies = Lists.newArrayList();
+
+    // push the event batches into channel
+    for (i = 1; i < 4; i++) {
+      Transaction txn = channel.getTransaction();
+      txn.begin();
+      for (j = 1; j <= txnMax; j++) {
+        Event event = new SimpleEvent();
+        eventDate.clear();
+        eventDate.set(2011, i, i, i, 0); // yy mm dd
+        event.getHeaders().put("timestamp",
+            String.valueOf(eventDate.getTimeInMillis()));
+        event.getHeaders().put("hostname", "Host" + i);
+        String body = "Test." + i + "." + j;
+        event.setBody(body.getBytes());
+        bodies.add(body);
+        channel.put(event);
+        totalEvents++;
+      }
+      txn.commit();
+      txn.close();
+
+      // execute sink to process the events
+      sink.process();
+    }
+
+    sink.stop();
+
+    // loop through all the files generated and check their contains
+    FileStatus[] dirStat = fs.listStatus(dirPath);
+    Path fList[] = FileUtil.stat2Paths(dirStat);
+
+    // check that the roll happened correctly for the given data
+    // Note that we'll end up with one last file with only header
+    Assert.assertEquals((totalEvents / rollCount) + 1, fList.length);
+    verifyOutputAvroFiles(fs, conf, dirPath.toUri().getPath(), fileName, bodies);
+  }
+
+  @Test
   public void testSimpleAppend() throws InterruptedException,
       LifecycleException, EventDeliveryException, IOException {
 
+    LOG.debug("Starting...");
     final long txnMax = 25;
     final String fileName = "FlumeData";
     final long rollCount = 5;
@@ -365,6 +459,7 @@ public class TestHDFSEventSink {
   public void testAppend() throws InterruptedException, LifecycleException,
       EventDeliveryException, IOException {
 
+    LOG.debug("Starting...");
     final long txnMax = 25;
     final long rollCount = 3;
     final long batchSize = 2;
@@ -427,6 +522,7 @@ public class TestHDFSEventSink {
   public void testBadSimpleAppend() throws InterruptedException,
       LifecycleException, EventDeliveryException, IOException {
 
+    LOG.debug("Starting...");
     final long txnMax = 25;
     final String fileName = "FlumeData";
     final long rollCount = 5;
@@ -561,6 +657,34 @@ public class TestHDFSEventSink {
 
   }
 
+  private void verifyOutputAvroFiles(FileSystem fs, Configuration conf, String dir, String prefix, List<String> bodies) throws IOException {
+    int found = 0;
+    int expected = bodies.size();
+    for(String outputFile : getAllFiles(dir)) {
+      String name = (new File(outputFile)).getName();
+      if(name.startsWith(prefix)) {
+        FSDataInputStream input = fs.open(new Path(outputFile));
+        DatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>();
+        DataFileStream<GenericRecord> avroStream =
+            new DataFileStream<GenericRecord>(input, reader);
+        GenericRecord record = new GenericData.Record(avroStream.getSchema());
+        while (avroStream.hasNext()) {
+          avroStream.next(record);
+          ByteBuffer body = (ByteBuffer) record.get("body");
+          CharsetDecoder decoder = Charsets.UTF_8.newDecoder();
+          String bodyStr = decoder.decode(body).toString();
+          LOG.debug("Removing event: {}", bodyStr);
+          bodies.remove(bodyStr);
+          found++;
+        }
+        avroStream.close();
+        input.close();
+      }
+    }
+    assertTrue("Found = " + found + ", Expected = "  +
+        expected + ", Left = " + bodies.size() + " " + bodies,
+          bodies.size() == 0);
+  }
 
   /**
    * Ensure that when a write throws an IOException we are
@@ -570,6 +694,7 @@ public class TestHDFSEventSink {
   public void testCloseReopen() throws InterruptedException,
       LifecycleException, EventDeliveryException, IOException {
 
+    LOG.debug("Starting...");
     final long txnMax = 25;
     final String fileName = "FlumeData";
     final long rollCount = 5;
@@ -660,6 +785,7 @@ public class TestHDFSEventSink {
   public void testSlowAppendFailure() throws InterruptedException,
       LifecycleException, EventDeliveryException, IOException {
 
+    LOG.debug("Starting...");
     final long txnMax = 2;
     final String fileName = "FlumeData";
     final long rollCount = 5;
@@ -813,6 +939,7 @@ public class TestHDFSEventSink {
   @Test
   public void testSlowAppendWithLongTimeout() throws InterruptedException,
       LifecycleException, EventDeliveryException, IOException {
+    LOG.debug("Starting...");
     slowAppendTestHelper(3000);
   }
 
@@ -823,6 +950,7 @@ public class TestHDFSEventSink {
   @Test
   public void testSlowAppendWithoutTimeout() throws InterruptedException,
       LifecycleException, EventDeliveryException, IOException {
+    LOG.debug("Starting...");
     slowAppendTestHelper(0);
   }
 }

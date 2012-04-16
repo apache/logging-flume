@@ -415,6 +415,7 @@ limitations under the License.
                   <exclude>.repository/</exclude>
                   <exclude>**/*.diff</exclude>
                   <exclude>**/*.patch</exclude>
+                  <exclude>**/*.avsc</exclude>
                   <exclude>**/flume-docs</exclude>
                 </excludes>
               </configuration>
@@ -615,6 +616,13 @@ limitations under the License.
         <artifactId>irclib</artifactId>
         <version>1.10</version>
       </dependency>
+
+      <dependency>
+        <groupId>joda-time</groupId>
+        <artifactId>joda-time</artifactId>
+        <version>2.1</version>
+      </dependency>
+
 
       <!-- internal module dependencies -->
 

@@ -104,6 +104,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private String kerbConfPrincipal;
   private String kerbKeytabFile;
   private long callTimeout;
+  private Context context;
 
   /*
    * Extended Java LinkedHashMap for open file handle LRU queue We want to clear
@@ -150,6 +151,8 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     // read configuration and setup thresholds
   @Override
   public void configure(Context context) {
+    this.context = context;
+
     String dirpath = Preconditions.checkNotNull(
         context.getString("hdfs.path"), "hdfs.path is required");
     String fileName = context.getString("hdfs.filePrefix", defaultFileName);
@@ -346,7 +349,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
           final HDFSWriter writer = myWriterFactory.getWriter(fileType);
           final FlumeFormatter formatter = HDFSFormatterFactory
               .getFormatter(writeFormat);
-          bucketWriter = new BucketWriter(rollInterval, rollSize, rollCount, batchSize);
+          bucketWriter = new BucketWriter(rollInterval, rollSize, rollCount, batchSize, context);
           final BucketWriter callableWriter = bucketWriter;
           final String callablePath = realPath;
           final CompressionCodec callableCodec = codeC;

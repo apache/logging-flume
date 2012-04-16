@@ -20,6 +20,7 @@ package org.apache.flume.sink.hdfs;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.flume.Context;
 
 import org.apache.flume.Event;
 import org.apache.flume.sink.FlumeFormatter;
@@ -58,6 +59,7 @@ public class BucketWriter {
   private CompressionCodec codeC;
   private CompressionType compType;
   private String bucketPath;
+  private Context context;
 
   // clear the class counters
   private void resetCounters() {
@@ -68,12 +70,13 @@ public class BucketWriter {
   }
 
   // constructor. initialize the thresholds and open the file handle
-  public BucketWriter(long rollInt, long rollSz, long rollCnt, long bSize)
-      throws IOException {
+  public BucketWriter(long rollInt, long rollSz, long rollCnt, long bSize,
+      Context ctx) throws IOException {
     rollInterval = rollInt;
     rollSize = rollSz;
     rollCount = rollCnt;
     batchSize = bSize;
+    context = ctx;
 
     resetCounters();
     // open();
@@ -83,6 +86,8 @@ public class BucketWriter {
     if ((filePath == null) || (writer == null) || (formatter == null)) {
       throw new IOException("Invalid file settings");
     }
+
+    writer.configure(context);
 
     long counter = fileExentionCounter.incrementAndGet();
     if (codeC == null) {

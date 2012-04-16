@@ -19,6 +19,7 @@
 package org.apache.flume.sink.hdfs;
 
 import java.io.IOException;
+import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.sink.FlumeFormatter;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
@@ -46,6 +47,11 @@ public class MockHDFSWriter implements HDFSWriter {
     filesOpened = 0;
     bytesWritten = 0;
     eventsWritten = 0;
+  }
+
+  @Override
+  public void configure(Context context) {
+    // no-op
   }
 
   @Override

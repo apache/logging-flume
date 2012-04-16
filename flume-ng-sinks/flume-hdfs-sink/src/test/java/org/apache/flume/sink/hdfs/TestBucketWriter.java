@@ -21,6 +21,7 @@ package org.apache.flume.sink.hdfs;
 import com.google.common.base.Charsets;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
 import org.junit.Assert;
@@ -33,6 +34,7 @@ public class TestBucketWriter {
 
   private static Logger logger =
       LoggerFactory.getLogger(TestBucketWriter.class);
+  private Context ctx = new Context();
 
   @Before
   public void setup() {
@@ -42,7 +44,7 @@ public class TestBucketWriter {
   @Test
   public void testEventCountingRoller() throws IOException {
     int maxEvents = 100;
-    BucketWriter bucketWriter = new BucketWriter(0, 0, maxEvents, 0);
+    BucketWriter bucketWriter = new BucketWriter(0, 0, maxEvents, 0, ctx);
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
     HDFSTextFormatter formatter = new HDFSTextFormatter();
 
@@ -65,7 +67,7 @@ public class TestBucketWriter {
   @Test
   public void testSizeRoller() throws IOException {
     int maxBytes = 300;
-    BucketWriter bucketWriter = new BucketWriter(0, maxBytes, 0, 0);
+    BucketWriter bucketWriter = new BucketWriter(0, maxBytes, 0, 0, ctx);
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
     HDFSTextFormatter formatter = new HDFSTextFormatter();
 
@@ -88,7 +90,7 @@ public class TestBucketWriter {
   @Test
   public void testIntervalRoller() throws IOException, InterruptedException {
     int rollInterval = 2; // seconds
-    BucketWriter bucketWriter = new BucketWriter(rollInterval, 0, 0, 0);
+    BucketWriter bucketWriter = new BucketWriter(rollInterval, 0, 0, 0, ctx);
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
     HDFSTextFormatter formatter = new HDFSTextFormatter();
 
