@@ -104,7 +104,7 @@ commands:
 
 global options:
   --conf,-c <conf>      use configs in <conf> directory
-  --classpath,-C <cp>   override the classpath for flume jars
+  --classpath,-C <cp>   append to the classpath
   -Dproperty=value      sets a JDK system property value
 
 agent options:
@@ -234,11 +234,11 @@ if [ -z "${FLUME_HOME}" ] ; then
   FLUME_HOME=$(cd $(dirname $0)/..; pwd)
 fi
 
-# If the user hasn't overridden the classpath, build it from the dist lib dir
-if [ -z "${FLUME_CLASSPATH}" ] ; then
-  FLUME_CLASSPATH="${FLUME_HOME}/lib/*"
+# Append to the classpath
+if [ -n "${FLUME_CLASSPATH}" ] ; then
+  FLUME_CLASSPATH="${FLUME_HOME}/lib/*:$FLUME_CLASSPATH"
 else
-  warn "Base FLUME_CLASSPATH set to ($FLUME_CLASSPATH) - Hope you know what you're doing."
+  FLUME_CLASSPATH="${FLUME_HOME}/lib/*"
 fi
 
 # look for hadoop libs
