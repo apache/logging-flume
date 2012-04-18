@@ -145,6 +145,7 @@ run_flume() {
 ################################
 
 # set default params
+FLUME_HOME=$(cd $(dirname $0)/..; pwd)
 FLUME_CLASSPATH=""
 FLUME_JAVA_LIBRARY_PATH=""
 JAVA_OPTS="-Xmx20m"
@@ -234,7 +235,7 @@ if [ -n "${opt_classpath}" ]; then
   fi
 fi
 
-# prepend flume jars to the specified classpath (if any)
+# prepend $FLUME_HOME/lib jars to the specified classpath (if any)
 if [ -n "${FLUME_CLASSPATH}" ] ; then
   FLUME_CLASSPATH="${FLUME_HOME}/lib/*:$FLUME_CLASSPATH"
 else
@@ -257,11 +258,6 @@ if [ -z "${JAVA_HOME}" ] ; then
 fi
 
 [ -n "${JAVA_HOME}" ] || error "Unable to find a suitable JAVA_HOME" 1
-
-# figure out where the flume distribution is
-if [ -z "${FLUME_HOME}" ] ; then
-  FLUME_HOME=$(cd $(dirname $0)/..; pwd)
-fi
 
 # look for hadoop libs
 add_hadoop_paths
