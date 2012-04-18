@@ -22,8 +22,8 @@ package org.apache.flume.lifecycle;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -38,18 +38,22 @@ public class LifecycleSupervisor implements LifecycleAware {
       .getLogger(LifecycleSupervisor.class);
 
   private Map<LifecycleAware, Supervisoree> supervisedProcesses;
-  private ScheduledExecutorService monitorService;
+  private Map<LifecycleAware, MonitorRunnable> monitorRunnables;
+
+  private ScheduledThreadPoolExecutor monitorService;
 
   private LifecycleState lifecycleState;
 
   public LifecycleSupervisor() {
     lifecycleState = LifecycleState.IDLE;
     supervisedProcesses = new HashMap<LifecycleAware, Supervisoree>();
-    monitorService = Executors.newScheduledThreadPool(
-        5,
+    monitorRunnables = new HashMap<LifecycleAware, MonitorRunnable>();
+    monitorService = new ScheduledThreadPoolExecutor(10,
         new ThreadFactoryBuilder().setNameFormat(
             "lifecycleSupervisor-" + Thread.currentThread().getId() + "-%d")
             .build());
+    monitorService.setMaximumPoolSize(20);
+    monitorService.setKeepAliveTime(30, TimeUnit.SECONDS);
   }
 
   @Override
@@ -57,18 +61,6 @@ public class LifecycleSupervisor implements LifecycleAware {
 
     logger.info("Starting lifecycle supervisor {}", Thread.currentThread()
         .getId());
-
-    for (Entry<LifecycleAware, Supervisoree> entry : supervisedProcesses
-        .entrySet()) {
-
-      MonitorRunnable monitorCheckRunnable = new MonitorRunnable();
-
-      monitorCheckRunnable.lifecycleAware = entry.getKey();
-      monitorCheckRunnable.supervisoree = entry.getValue();
-
-      monitorService.scheduleAtFixedRate(monitorCheckRunnable, 0, 3,
-          TimeUnit.SECONDS);
-    }
 
     lifecycleState = LifecycleState.START;
 
@@ -106,7 +98,8 @@ public class LifecycleSupervisor implements LifecycleAware {
     if (lifecycleState.equals(LifecycleState.START)) {
       lifecycleState = LifecycleState.STOP;
     }
-
+    supervisedProcesses.clear();
+    monitorRunnables.clear();
     logger.debug("Lifecycle supervisor stopped");
   }
 
@@ -137,7 +130,9 @@ public class LifecycleSupervisor implements LifecycleAware {
     monitorRunnable.monitorService = monitorService;
 
     supervisedProcesses.put(lifecycleAware, process);
-    monitorService.schedule(monitorRunnable, 0, TimeUnit.SECONDS);
+    monitorRunnables.put(lifecycleAware, monitorRunnable);
+    monitorService.scheduleWithFixedDelay(
+        monitorRunnable, 0, 3, TimeUnit.SECONDS);
   }
 
   public synchronized void unsupervise(LifecycleAware lifecycleAware) {
@@ -155,6 +150,9 @@ public class LifecycleSupervisor implements LifecycleAware {
       lifecycleAware.stop();
     }
     supervisedProcesses.remove(lifecycleAware);
+    //We need to do this because a reconfiguration simply unsupervises old
+    //components and supervises new ones.
+    monitorService.remove(monitorRunnables.get(lifecycleAware));
   }
 
   public synchronized void setDesiredState(LifecycleAware lifecycleAware,
@@ -246,12 +244,6 @@ public class LifecycleSupervisor implements LifecycleAware {
               supervisoree.policy, lifecycleAware);
         }
       }
-      }
-
-      if (!supervisoree.status.discard) {
-        monitorService.schedule(this, 3, TimeUnit.SECONDS);
-      } else {
-        logger.debug("Halting monitoring on {}", supervisoree);
       }
 
       logger.debug("Status check complete");
