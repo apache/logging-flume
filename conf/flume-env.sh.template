@@ -14,19 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-# If this file is is FLUME_CONF_DIR/flume-env.sh, it sourced during execution
-# of the flume script and the flume-daemon.sh script.
+# If this file is placed at FLUME_CONF_DIR/flume-env.sh, it will be sourced
+# during Flume startup.
 
 # Enviroment variables can be set here.
 
+#JAVA_HOME=/usr/lib/jvm/java-6-sun
 
-#export JAVA_HOME=/usr/lib/jvm/java-6-sun
+# Give Flume more memory
+#JAVA_OPTS="-Xmx200m"
 
-#export JAVA_OPTS="-Xmx20m"
-
-
-#Note that the conf directory is always included in the classpath.
-#export FLUME_CLASSPATH=""
-
+# Note that the Flume conf directory is always included in the classpath.
+#FLUME_CLASSPATH=""
 
