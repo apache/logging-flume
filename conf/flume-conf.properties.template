@@ -19,28 +19,28 @@
 # The configuration file needs to define the sources, 
 # the channels and the sinks.
 # Sources, channels and sinks are defined per agent, 
-# in this case called foo
+# in this case called 'agent'
 
-foo.sources = seqGenSrc
-foo.channels = memoryChannel
-foo.sinks = loggerSink
+agent.sources = seqGenSrc
+agent.channels = memoryChannel
+agent.sinks = loggerSink
 
 # For each one of the sources, the type is defined
-foo.sources.seqGenSrc.type = seq
+agent.sources.seqGenSrc.type = seq
 
 # The channel can be defined as follows.
-foo.sources.seqGenSrc.channels = memoryChannel
+agent.sources.seqGenSrc.channels = memoryChannel
 
 # Each sink's type must be defined
-foo.sinks.loggerSink.type = logger
+agent.sinks.loggerSink.type = logger
 
 #Specify the channel the sink should use
-foo.sinks.loggerSink.channel = memoryChannel
+agent.sinks.loggerSink.channel = memoryChannel
 
 # Each channel's type is defined.
-foo.channels.memoryChannel.type = memory
+agent.channels.memoryChannel.type = memory
 
 # Other config values specific to each type of channel(sink or source)
 # can be defined as well
 # In this case, it specifies the capacity of the memory channel
-foo.channels.memoryChannel.capacity = 100
+agent.channels.memoryChannel.capacity = 100
