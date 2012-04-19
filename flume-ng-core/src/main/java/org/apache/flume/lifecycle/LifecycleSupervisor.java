@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -38,22 +39,26 @@ public class LifecycleSupervisor implements LifecycleAware {
       .getLogger(LifecycleSupervisor.class);
 
   private Map<LifecycleAware, Supervisoree> supervisedProcesses;
-  private Map<LifecycleAware, MonitorRunnable> monitorRunnables;
+  private Map<LifecycleAware, ScheduledFuture<?>> monitorFutures;
 
   private ScheduledThreadPoolExecutor monitorService;
 
   private LifecycleState lifecycleState;
+  private Purger purger;
+  private boolean needToPurge;
 
   public LifecycleSupervisor() {
     lifecycleState = LifecycleState.IDLE;
     supervisedProcesses = new HashMap<LifecycleAware, Supervisoree>();
-    monitorRunnables = new HashMap<LifecycleAware, MonitorRunnable>();
+    monitorFutures = new HashMap<LifecycleAware, ScheduledFuture<?>>();
     monitorService = new ScheduledThreadPoolExecutor(10,
         new ThreadFactoryBuilder().setNameFormat(
             "lifecycleSupervisor-" + Thread.currentThread().getId() + "-%d")
             .build());
     monitorService.setMaximumPoolSize(20);
     monitorService.setKeepAliveTime(30, TimeUnit.SECONDS);
+    purger = new Purger();
+    needToPurge = false;
   }
 
   @Override
@@ -61,7 +66,7 @@ public class LifecycleSupervisor implements LifecycleAware {
 
     logger.info("Starting lifecycle supervisor {}", Thread.currentThread()
         .getId());
-
+    monitorService.scheduleWithFixedDelay(purger, 2, 2, TimeUnit.HOURS);
     lifecycleState = LifecycleState.START;
 
     logger.debug("Lifecycle supervisor started");
@@ -99,7 +104,7 @@ public class LifecycleSupervisor implements LifecycleAware {
       lifecycleState = LifecycleState.STOP;
     }
     supervisedProcesses.clear();
-    monitorRunnables.clear();
+    monitorFutures.clear();
     logger.debug("Lifecycle supervisor stopped");
   }
 
@@ -130,9 +135,10 @@ public class LifecycleSupervisor implements LifecycleAware {
     monitorRunnable.monitorService = monitorService;
 
     supervisedProcesses.put(lifecycleAware, process);
-    monitorRunnables.put(lifecycleAware, monitorRunnable);
-    monitorService.scheduleWithFixedDelay(
+
+    ScheduledFuture<?> future = monitorService.scheduleWithFixedDelay(
         monitorRunnable, 0, 3, TimeUnit.SECONDS);
+    monitorFutures.put(lifecycleAware, future);
   }
 
   public synchronized void unsupervise(LifecycleAware lifecycleAware) {
@@ -152,7 +158,10 @@ public class LifecycleSupervisor implements LifecycleAware {
     supervisedProcesses.remove(lifecycleAware);
     //We need to do this because a reconfiguration simply unsupervises old
     //components and supervises new ones.
-    monitorService.remove(monitorRunnables.get(lifecycleAware));
+    monitorFutures.get(lifecycleAware).cancel(false);
+    //purges are expensive, so it is done only once every 2 hours.
+    needToPurge = true;
+    monitorFutures.remove(lifecycleAware);
   }
 
   public synchronized void setDesiredState(LifecycleAware lifecycleAware,
@@ -247,6 +256,17 @@ public class LifecycleSupervisor implements LifecycleAware {
       }
 
       logger.debug("Status check complete");
+    }
+  }
+
+  private class Purger implements Runnable{
+
+    @Override
+    public void run() {
+      if(needToPurge){
+        monitorService.purge();
+        needToPurge = false;
+      }
     }
   }
 
