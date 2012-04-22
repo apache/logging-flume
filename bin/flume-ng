@@ -145,7 +145,6 @@ run_flume() {
 ################################
 
 # set default params
-FLUME_HOME=$(cd $(dirname $0)/..; pwd)
 FLUME_CLASSPATH=""
 FLUME_JAVA_LIBRARY_PATH=""
 JAVA_OPTS="-Xmx20m"
@@ -233,6 +232,10 @@ if [ -n "${opt_classpath}" ]; then
   else
     FLUME_CLASSPATH="${opt_classpath}"
   fi
+fi
+
+if [ -z "${FLUME_HOME}" ]; then
+  FLUME_HOME=$(cd $(dirname $0)/..; pwd)
 fi
 
 # prepend $FLUME_HOME/lib jars to the specified classpath (if any)
