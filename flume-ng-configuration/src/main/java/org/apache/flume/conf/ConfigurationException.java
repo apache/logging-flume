@@ -16,35 +16,27 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.flume.channel;
+package org.apache.flume.conf;
 
-/**
- * Enumeration of built in channel selector types available in the system.
- */
-public enum ChannelSelectorType {
+import org.apache.flume.FlumeException;
 
-  /**
-   * Place holder for custom channel selectors not part of this enumeration.
-   */
-  OTHER(null),
+public class ConfigurationException extends FlumeException {
 
   /**
-   * Replicating channel selector.
+   *
    */
-  REPLICATING(ReplicatingChannelSelector.class.getName()),
+  private static final long serialVersionUID = 1L;
 
-  /**
-   * Multiplexing channel selector.
-   */
-  MULTIPLEXING(MultiplexingChannelSelector.class.getName());
-
-  private final String channelSelectorClassName;
-
-  private ChannelSelectorType(String channelSelectorClassName) {
-    this.channelSelectorClassName = channelSelectorClassName;
+  public ConfigurationException(String arg0) {
+    super(arg0);
   }
 
-  public String getChannelSelectorClassName() {
-    return channelSelectorClassName;
+  public ConfigurationException(Throwable arg0) {
+    super(arg0);
   }
+
+  public ConfigurationException(String arg0, Throwable arg1) {
+    super(arg0, arg1);
+  }
+
 }

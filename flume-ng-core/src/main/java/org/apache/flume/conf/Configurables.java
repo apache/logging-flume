@@ -45,6 +45,14 @@ public class Configurables {
     return false;
   }
 
+  public static boolean configure(Object target, ComponentConfiguration conf) {
+    if (target instanceof ConfigurableComponent) {
+      ((ConfigurableComponent) target).configure(conf);
+      return true;
+    }
+    return false;
+  }
+
   public static void ensureRequiredNonNull(Context context, String... keys) {
     for (String key : keys) {
       if (!context.getParameters().containsKey(key)

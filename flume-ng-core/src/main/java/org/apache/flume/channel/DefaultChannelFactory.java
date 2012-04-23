@@ -25,6 +25,7 @@ import java.util.Map;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelFactory;
 import org.apache.flume.FlumeException;
+import org.apache.flume.conf.channel.ChannelType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

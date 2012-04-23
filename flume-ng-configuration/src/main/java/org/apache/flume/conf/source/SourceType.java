@@ -16,8 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.flume.source;
-
+package org.apache.flume.conf.source;
 
 /**
  * Enumeration of built in source types available in the system.
@@ -31,39 +30,47 @@ public enum SourceType {
 
   /**
    * Sequence generator file source.
-   * @see SequenceGeneratorSource
+   *
+   * @see org.apache.flume.source.SequenceGeneratorSource
    */
-  SEQ(SequenceGeneratorSource.class.getName()),
+  SEQ("org.apache.flume.source.SequenceGeneratorSource"),
 
   /**
    * Netcat source.
-   * @see NetcatSource
+   *
+   * @see org.apache.flume.source.NetcatSource
    */
-  NETCAT(NetcatSource.class.getName()),
+  NETCAT("org.apache.flume.source.NetcatSource"),
 
   /**
    * Exec source.
-   * @see ExecSource
+   *
+   * @see org.apache.flume.source.ExecSource
    */
-  EXEC(ExecSource.class.getName()),
+  EXEC("org.apache.flume.source.ExecSource"),
 
   /**
-   * Avro soruce.
-   * @see AvroSource
+   * Avro source.
+   *
+   * @see org.apache.flume.source.AvroSource
    */
-  AVRO(AvroSource.class.getName()),
-
-  /**
-   * SyslogTcpSource
-   * @see SyslogTcpSource
-   */
-  SYSLOGTCP(SyslogTcpSource.class.getName()),
+  AVRO("org.apache.flume.source.AvroSource"),
 
   /**
    * SyslogTcpSource
-   * @see SyslogTcpSource
+   *
+   * @see org.apache.flume.source.SyslogTcpSource
    */
-  SYSLOGUDP(SyslogUDPSource.class.getName());
+
+  SYSLOGTCP("org.apache.flume.source.SyslogTcpSource"),
+
+  /**
+   * SyslogUDPSource
+   *
+   * @see org.apache.flume.source.SyslogUDPSource
+   */
+
+  SYSLOGUDP("org.apache.flume.source.SyslogUDPSource");
 
   private final String sourceClassName;
 

@@ -21,18 +21,23 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.flume.Context;
+import org.apache.flume.FlumeException;
 import org.apache.flume.Sink;
 import org.apache.flume.SinkProcessor;
+import org.apache.flume.conf.ComponentConfiguration;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.conf.ConfigurableComponent;
+import org.apache.flume.conf.ConfigurationException;
+import org.apache.flume.conf.sink.SinkGroupConfiguration;
 
 /**
  * <p>Configuration concept for handling multiple sinks working together.</p>
  * @see org.apache.flume.conf.properties.PropertiesFileConfigurationProvider
  */
-public class SinkGroup implements Configurable {
-  private static final String PROCESSOR_PREFIX = "processor.";
+public class SinkGroup implements Configurable, ConfigurableComponent {
   List<Sink> sinks;
   SinkProcessor processor;
+  SinkGroupConfiguration conf;
 
   public SinkGroup(List<Sink> groupSinks) {
     sinks = groupSinks;
@@ -40,13 +45,25 @@ public class SinkGroup implements Configurable {
 
   @Override
   public void configure(Context context) {
-    Context processorContext = new Context();
-    Map<String, String> subparams = context.getSubProperties(PROCESSOR_PREFIX);
-    processorContext.putAll(subparams);
-    processor = SinkProcessorFactory.getProcessor(processorContext, sinks);
+    conf = new SinkGroupConfiguration("sinkgrp");
+    try {
+      conf.configure(context);
+    } catch (ConfigurationException e) {
+      throw new FlumeException("Invalid Configuration!", e);
+    }
+    configure(conf);
+
   }
 
   public SinkProcessor getProcessor() {
     return processor;
+  }
+
+  @Override
+  public void configure(ComponentConfiguration conf) {
+    this.conf = (SinkGroupConfiguration) conf;
+    processor =
+        SinkProcessorFactory.getProcessor(this.conf.getProcessorContext(),
+            sinks);
   }
 }

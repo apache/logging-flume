@@ -26,6 +26,8 @@ import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.FlumeException;
 import org.apache.flume.conf.Configurables;
+import org.apache.flume.conf.channel.ChannelSelectorConfiguration;
+import org.apache.flume.conf.channel.ChannelSelectorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +47,18 @@ public class ChannelSelectorFactory {
     context.putAll(config);
 
     Configurables.configure(selector, context);
+    return selector;
+  }
 
+  public static ChannelSelector create(List<Channel> channels,
+      ChannelSelectorConfiguration conf) {
+    String type = "replicating";
+    if (conf != null){
+      type = conf.getType();
+    }
+    ChannelSelector selector = getSelectorForType(type);
+    selector.setChannels(channels);
+    Configurables.configure(selector, conf);
     return selector;
   }
 

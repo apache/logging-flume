@@ -65,6 +65,10 @@
   <dependencies>
     <dependency>
       <groupId>org.apache.flume</groupId>
+      <artifactId>flume-ng-configuration</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-ng-sdk</artifactId>
     </dependency>
     <dependency>

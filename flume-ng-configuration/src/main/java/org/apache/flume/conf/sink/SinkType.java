@@ -16,8 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.flume.sink;
-
+package org.apache.flume.conf.sink;
 
 /**
  * Enumeration of built in sink types available in the system.
@@ -29,24 +28,26 @@ public enum SinkType {
    */
   OTHER(null),
 
-
   /**
    * Null sink
+   *
    * @see NullSink
    */
-  NULL(NullSink.class.getName()),
+  NULL("org.apache.flume.sink.NullSink"),
 
   /**
    * Logger sink
+   *
    * @see LoggerSink
    */
-  LOGGER(LoggerSink.class.getName()),
+  LOGGER("org.apache.flume.sink.LoggerSink"),
 
   /**
    * Rolling file sink
+   *
    * @see RollingFileSink
    */
-  FILE_ROLL(RollingFileSink.class.getName()),
+  FILE_ROLL("org.apache.flume.sink.RollingFileSink"),
 
   /**
    * HDFS Sink provided by org.apache.flume.sink.hdfs.HDFSEventSink
@@ -55,14 +56,15 @@ public enum SinkType {
 
   /**
    * IRC Sink provided by org.apache.flume.sink.irc.IRCSink
-   */ 
+   */
   IRC("org.apache.flume.sink.irc.IRCSink"),
 
   /**
    * Avro sink
+   *
    * @see AvroSink
    */
-  AVRO(AvroSink.class.getName());
+  AVRO("org.apache.flume.sink.AvroSink");
 
   private final String sinkClassName;
 

@@ -36,6 +36,7 @@
       <useAllReactorProjects>true</useAllReactorProjects>
 
       <includes>
+        <include>org.apache.flume:flume-ng-configuration</include>
         <include>org.apache.flume:flume-ng-sdk</include>
         <include>org.apache.flume:flume-ng-core</include>
         <include>org.apache.flume:flume-ng-node</include>
@@ -87,6 +88,7 @@
       <directory>../</directory>
 
       <excludes>
+        <exclude>flume-ng-configuration/**</exclude>
         <exclude>flume-ng-sdk/**</exclude>
         <exclude>flume-ng-core/**</exclude>
         <exclude>flume-ng-node/**</exclude>

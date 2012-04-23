@@ -24,7 +24,9 @@ import org.apache.flume.Context;
 import org.apache.flume.FlumeException;
 import org.apache.flume.Sink;
 import org.apache.flume.SinkProcessor;
-import org.apache.flume.SinkProcessorType;
+import org.apache.flume.conf.ComponentConfiguration;
+import org.apache.flume.conf.Configurables;
+import org.apache.flume.conf.sink.SinkProcessorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +56,7 @@ public class SinkProcessorFactory {
  List<Sink> sinks) {
     Map<String, String> params = context.getParameters();
     SinkProcessor processor;
-    String typeStr = (String) params.get(TYPE);
+    String typeStr = params.get(TYPE);
     SinkProcessorType type = SinkProcessorType.DEFAULT;
     try {
       type = SinkProcessorType.valueOf(typeStr.toUpperCase());
@@ -78,7 +80,41 @@ public class SinkProcessorFactory {
     }
 
     processor.setSinks(sinks);
-    processor.configure(context);
+    Configurables.configure(processor, context);
     return processor;
   }
+
+  @SuppressWarnings("unchecked")
+  public static SinkProcessor getProcessor(ComponentConfiguration conf,
+      List<Sink> sinks) {
+    String typeStr = conf.getType();
+    SinkProcessor processor;
+    SinkProcessorType type = SinkProcessorType.DEFAULT;
+    try {
+      type = SinkProcessorType.valueOf(typeStr.toUpperCase());
+    } catch (Exception ex) {
+      logger.warn("Sink type {} does not exist, using default", typeStr);
+    }
+
+    Class<? extends SinkProcessor> processorClass = null;
+    try {
+      processorClass =
+          (Class<? extends SinkProcessor>) Class.forName(type
+              .getSinkProcessorClassName());
+    } catch (Exception ex) {
+      throw new FlumeException("Unable to load sink processor type: " + typeStr
+          + ", class: " + type.getSinkProcessorClassName(), ex);
+    }
+    try {
+      processor = processorClass.newInstance();
+    } catch (Exception e) {
+      throw new FlumeException("Unable to create processor, type: " + typeStr
+          + ", class: " + type.getSinkProcessorClassName(), e);
+    }
+
+    processor.setSinks(sinks);
+    Configurables.configure(processor, conf);
+    return processor;
+  }
+
 }

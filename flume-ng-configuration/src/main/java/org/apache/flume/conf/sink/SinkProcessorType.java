@@ -16,25 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.flume;
-
-import org.apache.flume.sink.DefaultSinkProcessor;
-import org.apache.flume.sink.FailoverSinkProcessor;
+package org.apache.flume.conf.sink;
 
 public enum SinkProcessorType {
   /**
    * Failover processor
-   * 
+   *
    * @see FailoverSinkProcessor
    */
-  FAILOVER(FailoverSinkProcessor.class.getName()),
+  FAILOVER("org.apache.flume.sink.FailoverSinkProcessor"),
 
   /**
    * Standard processor
-   * 
+   *
    * @see DefaultSinkProcessor
    */
-  DEFAULT(DefaultSinkProcessor.class.getName());
+  DEFAULT("org.apache.flume.sink.DefaultSinkProcessor");
   private final String processorClassName;
 
   private SinkProcessorType(String processorClassName) {

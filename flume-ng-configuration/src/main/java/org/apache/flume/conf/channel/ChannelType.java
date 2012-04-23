@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.flume.channel;
+package org.apache.flume.conf.channel;
 
 /**
  * Enumeration of built in channel types available in the system.
@@ -30,14 +30,23 @@ public enum ChannelType {
 
   /**
    * Memory channel
+   *
    * @see MemoryChannel
    */
-  MEMORY(MemoryChannel.class.getName()),
+  MEMORY("org.apache.flume.channel.MemoryChannel"),
 
   /**
    * JDBC channel provided by org.apache.flume.channel.jdbc.JdbcChannel
    */
-  JDBC("org.apache.flume.channel.jdbc.JdbcChannel");
+  JDBC("org.apache.flume.channel.jdbc.JdbcChannel"),
+
+  /**
+   * Recoverable Memory Channel
+   *
+   * @see org.apache.flume.channel.recoverable.memory.RecoverableMemoryChannel
+   */
+  RECOVERABLEMEMORY(
+      "org.apache.flume.channel.recoverable.memory.RecoverableMemoryChannel");
 
   private final String channelClassName;
 

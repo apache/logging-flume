@@ -24,6 +24,8 @@ import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Sink;
 import org.apache.flume.Sink.Status;
 import org.apache.flume.SinkProcessor;
+import org.apache.flume.conf.ComponentConfiguration;
+import org.apache.flume.conf.ConfigurableComponent;
 import org.apache.flume.lifecycle.LifecycleState;
 
 import com.google.common.base.Preconditions;
@@ -33,7 +35,8 @@ import com.google.common.base.Preconditions;
  * results without any additional handling. Suitable for all sinks that aren't
  * assigned to a group.
  */
-public class DefaultSinkProcessor implements SinkProcessor {
+public class DefaultSinkProcessor implements SinkProcessor,
+ConfigurableComponent {
   private Sink sink;
   private LifecycleState lifecycleState;
 
@@ -72,6 +75,11 @@ public class DefaultSinkProcessor implements SinkProcessor {
         + "only handle one sink, "
         + "try using a policy that supports multiple sinks");
     sink = sinks.get(0);
+  }
+
+  @Override
+  public void configure(ComponentConfiguration conf) {
+
   }
 
 }

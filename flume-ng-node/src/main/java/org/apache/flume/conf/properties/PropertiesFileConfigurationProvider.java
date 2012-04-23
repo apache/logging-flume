@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.StringTokenizer;
+import java.util.Set;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
@@ -40,10 +40,15 @@ import org.apache.flume.SourceRunner;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.ChannelSelectorFactory;
 import org.apache.flume.conf.Configurables;
+import org.apache.flume.conf.FlumeConfiguration;
+import org.apache.flume.conf.channel.ChannelSelectorConfiguration;
 import org.apache.flume.conf.file.AbstractFileConfigurationProvider;
 import org.apache.flume.conf.file.SimpleNodeConfiguration;
-import org.apache.flume.conf.properties.FlumeConfiguration.AgentConfiguration;
-import org.apache.flume.conf.properties.FlumeConfiguration.ComponentConfiguration;
+import org.apache.flume.conf.sink.SinkConfiguration;
+import org.apache.flume.conf.sink.SinkGroupConfiguration;
+import org.apache.flume.conf.source.SourceConfiguration;
+import org.apache.flume.conf.FlumeConfiguration.AgentConfiguration;
+import org.apache.flume.conf.ComponentConfiguration;
 import org.apache.flume.node.NodeConfiguration;
 import org.apache.flume.sink.DefaultSinkProcessor;
 import org.apache.flume.sink.SinkGroup;
@@ -112,9 +117,9 @@ import org.slf4j.LoggerFactory;
  * <tt>&lt;agent name&gt;.sinks.&lt;sink name&gt;.runner.polling.interval =
  * 60</tt></li>
  * <li>A fourth optional list <tt>&lt;agent name&gt;.sinkgroups</tt>
- * may be added to each agent, consisting of unique space separated names 
+ * may be added to each agent, consisting of unique space separated names
  * for groups</li>
- * <li>Each sinkgroup must specify sinks, containing a list of all sinks 
+ * <li>Each sinkgroup must specify sinks, containing a list of all sinks
  * belonging to it. These cannot be shared by multiple groups.
  * Further, one can set a processor and behavioral parameters to determine
  * how sink selection is made via <tt>&lt;agent name&gt;.sinkgroups.&lt;
@@ -238,49 +243,45 @@ public class PropertiesFileConfigurationProvider extends
 
   private void loadChannels(AgentConfiguration agentConf,
       NodeConfiguration conf) throws InstantiationException {
-
+    LOGGER.info("Creating channels");
     for (ComponentConfiguration comp : agentConf.getChannels()) {
-      Context context = new Context();
-
       Channel channel = getChannelFactory().create(comp.getComponentName(),
-          comp.getConfiguration().get("type"));
+          comp.getType());
 
-      for (Entry<String, String> entry : comp.getConfiguration().entrySet()) {
-        context.put(entry.getKey(), entry.getValue());
-      }
-
-      Configurables.configure(channel, context);
+      Configurables.configure(channel, comp);
 
       conf.getChannels().put(comp.getComponentName(), channel);
+      }
+
+    for (String ch : agentConf.getChannelContext().keySet()) {
+      Context context = agentConf.getChannelContext().get(ch);
+      Channel channel =
+          getChannelFactory().create(ch, context.getString("type"));
+      Configurables.configure(channel, context);
+      conf.getChannels().put(ch, channel);
+      LOGGER.info("created channel " + ch);
     }
+
   }
 
-  private void
-      loadSources(AgentConfiguration agentConf, NodeConfiguration conf)
+  private void loadSources(AgentConfiguration agentConf, NodeConfiguration conf)
       throws InstantiationException {
 
     for (ComponentConfiguration comp : agentConf.getSources()) {
-      Context context = new Context();
-
-      Map<String, String> componentConfig = comp.getConfiguration();
+      SourceConfiguration config = (SourceConfiguration) comp;
 
       Source source = getSourceFactory().create(comp.getComponentName(),
-          componentConfig.get("type"));
+          comp.getType());
 
-      for (Entry<String, String> entry : comp.getConfiguration().entrySet()) {
-        context.put(entry.getKey(), entry.getValue());
-      }
-
-      Configurables.configure(source, context);
-
-      String channelNames = comp.getConfiguration().get("channels");
+      Configurables.configure(source, config);
+      Set<String> channelNames = config.getChannels();
       List<Channel> channels = new ArrayList<Channel>();
-
-      for (String chName : channelNames.split(" ")) {
+      for (String chName : channelNames) {
         channels.add(conf.getChannels().get(chName));
       }
 
-      Map<String, String> selectorConfig = comp.getSubconfiguration("selector");
+      ChannelSelectorConfiguration selectorConfig =
+          config.getSelectorConfiguration();
 
       ChannelSelector selector = ChannelSelectorFactory.create(
           channels, selectorConfig);
@@ -291,6 +292,32 @@ public class PropertiesFileConfigurationProvider extends
       conf.getSourceRunners().put(comp.getComponentName(),
           SourceRunner.forSource(source));
     }
+    Map<String, Context> sourceContexts = agentConf.getSourceContext();
+      List<Channel> channels = new ArrayList<Channel>();
+
+    for (String src : sourceContexts.keySet()) {
+      Context context = sourceContexts.get(src);
+      Source source =
+          getSourceFactory().create(src,
+              context.getString("type"));
+      Configurables.configure(source, context);
+      String[] channelNames = context.getString("channels").split("\\s+");
+      for (String chName : channelNames) {
+        channels.add(conf.getChannels().get(chName));
+      }
+
+      Map<String, String> selectorConfig = context.getSubProperties("selector");
+
+      ChannelSelector selector = ChannelSelectorFactory.create(
+          channels, selectorConfig);
+
+      ChannelProcessor channelProcessor = new ChannelProcessor(selector);
+
+      source.setChannelProcessor(channelProcessor);
+      conf.getSourceRunners().put(src,
+          SourceRunner.forSource(source));
+
+    }
   }
 
   private void loadSinks(AgentConfiguration agentConf, NodeConfiguration conf)
@@ -298,21 +325,25 @@ public class PropertiesFileConfigurationProvider extends
 
     Map<String, Sink> sinks = new HashMap<String, Sink>();
     for (ComponentConfiguration comp : agentConf.getSinks()) {
-      Context context = new Context();
-      Map<String, String> componentConfig = comp.getConfiguration();
 
+      SinkConfiguration config = (SinkConfiguration) comp;
       Sink sink = getSinkFactory().create(comp.getComponentName(),
-          componentConfig.get("type"));
+          comp.getType());
 
-      for (Entry<String, String> entry : comp.getConfiguration().entrySet()) {
-        context.put(entry.getKey(), entry.getValue());
+      Configurables.configure(sink, config);
+
+      sink.setChannel(conf.getChannels().get(config.getChannel()));
+      sinks.put(comp.getComponentName(), sink);
       }
 
+    Map<String, Context> sinkContexts = agentConf.getSinkContext();
+    for (String sinkName : sinkContexts.keySet()) {
+      Context context = sinkContexts.get(sinkName);
+      Sink sink = getSinkFactory().create(sinkName, context.getString("type"));
       Configurables.configure(sink, context);
 
-      sink.setChannel(conf.getChannels().get(
-          componentConfig.get("channel")));
-      sinks.put(comp.getComponentName(), sink);
+      sink.setChannel(conf.getChannels().get(context.getString("channel")));
+      sinks.put(sinkName, sink);
     }
 
     loadSinkGroups(agentConf, sinks, conf);
@@ -323,41 +354,35 @@ public class PropertiesFileConfigurationProvider extends
           throws InstantiationException {
     Map<String, String> usedSinks = new HashMap<String, String>();
     for (ComponentConfiguration comp : agentConf.getSinkGroups()) {
-      Context context = new Context();
       String groupName = comp.getComponentName();
-      Map<String, String> groupConf = comp.getConfiguration();
-      for (Entry<String, String> ent : groupConf.entrySet()) {
-        context.put(ent.getKey(), ent.getValue());
-      }
-      String groupSinkList = groupConf.get("sinks");
-      StringTokenizer sinkTokenizer = new StringTokenizer(groupSinkList, " \t");
+      SinkGroupConfiguration groupConf = (SinkGroupConfiguration) comp;
+      List<String> groupSinkList = groupConf.getSinks();
       List<Sink> groupSinks = new ArrayList<Sink>();
-      while (sinkTokenizer.hasMoreTokens()) {
-        String sinkName = sinkTokenizer.nextToken();
-        Sink s = sinks.remove(sinkName);
+      for (String sink : groupSinkList) {
+        Sink s = sinks.remove(sink);
         if (s == null) {
-          String sinkUser = usedSinks.get(sinkName);
+          String sinkUser = usedSinks.get(sink);
           if (sinkUser != null) {
             throw new InstantiationException(String.format(
                 "Sink %s of group %s already " +
-                "in use by group %s", sinkName, groupName, sinkUser));
+                    "in use by group %s", sink, groupName, sinkUser));
           } else {
             throw new InstantiationException(String.format(
                 "Sink %s of group %s does "
-                    + "not exist or is not properly configured", sinkName,
+                    + "not exist or is not properly configured", sink,
                 groupName));
           }
         }
         groupSinks.add(s);
-        usedSinks.put(sinkName, groupName);
+        usedSinks.put(sink, groupName);
       }
       SinkGroup group = new SinkGroup(groupSinks);
-      Configurables.configure(group, context);
+      Configurables.configure(group, groupConf);
       conf.getSinkRunners().put(comp.getComponentName(),
           new SinkRunner(group.getProcessor()));
     }
     // add any unasigned sinks to solo collectors
-    for (Entry<String, Sink> entry : sinks.entrySet()) {
+    for(Entry<String, Sink> entry : sinks.entrySet()) {
       if (!usedSinks.containsValue(entry.getKey())) {
         SinkProcessor pr = new DefaultSinkProcessor();
         List<Sink> sinkMap = new ArrayList<Sink>();
@@ -369,5 +394,4 @@ public class PropertiesFileConfigurationProvider extends
       }
     }
   }
-
 }

@@ -24,6 +24,7 @@ import java.util.Map;
 import org.apache.flume.FlumeException;
 import org.apache.flume.Source;
 import org.apache.flume.SourceFactory;
+import org.apache.flume.conf.source.SourceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
