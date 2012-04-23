@@ -20,13 +20,21 @@ package org.apache.flume.serialization;
 
 import java.io.IOException;
 import java.io.OutputStream;
+
+import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.Schema;
+import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.reflect.ReflectDatumWriter;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.conf.Configurable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static org.apache.flume.serialization.AvroEventSerializerConfigurationConstants.*;
 
 /**
  * This is a helper class provided to make it straightforward to serialize
@@ -35,6 +43,9 @@ import org.apache.flume.conf.Configurable;
  */
 public abstract class AbstractAvroEventSerializer<T>
     implements EventSerializer, Configurable {
+
+  private static final Logger logger =
+      LoggerFactory.getLogger(AbstractAvroEventSerializer.class);
 
   private DatumWriter<T> writer = null;
   private DataFileWriter<T> dataFileWriter = null;
@@ -59,9 +70,24 @@ public abstract class AbstractAvroEventSerializer<T>
 
   @Override
   public void configure(Context context) {
+
+    int syncIntervalBytes =
+        context.getInteger(SYNC_INTERVAL_BYTES, DEFAULT_SYNC_INTERVAL_BYTES);
+    String compressionCodec =
+        context.getString(COMPRESSION_CODEC, DEFAULT_COMPRESSION_CODEC);
+
     writer = new ReflectDatumWriter<T>(getSchema());
     dataFileWriter = new DataFileWriter<T>(writer);
-    dataFileWriter.setSyncInterval(20480);
+
+    dataFileWriter.setSyncInterval(syncIntervalBytes);
+
+    try {
+      CodecFactory codecFactory = CodecFactory.fromString(compressionCodec);
+      dataFileWriter.setCodec(codecFactory);
+    } catch (AvroRuntimeException e) {
+      logger.warn("Unable to instantiate avro codec with name (" +
+          compressionCodec + "). Compression disabled. Exception follows.", e);
+    }
   }
 
   @Override

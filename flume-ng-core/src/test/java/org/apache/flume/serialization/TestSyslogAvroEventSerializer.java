@@ -32,6 +32,7 @@ import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumReader;
 import org.apache.commons.io.FileUtils;
+import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.source.SyslogUtils;
@@ -75,9 +76,13 @@ public class TestSyslogAvroEventSerializer {
     // create the file, write some data
     OutputStream out = new FileOutputStream(testFile);
     String builderName = SyslogAvroEventSerializer.Builder.class.getName();
-    // FIXME: pass a context
+
+    Context ctx = new Context();
+    ctx.put("syncInterval", "4096");
+    ctx.put("compressionCodec", "snappy");
+
     EventSerializer serializer =
-        EventSerializerFactory.getInstance(builderName, null, out);
+        EventSerializerFactory.getInstance(builderName, ctx, out);
     serializer.afterCreate(); // must call this when a file is newly created
 
     List<Event> events = generateSyslogEvents();

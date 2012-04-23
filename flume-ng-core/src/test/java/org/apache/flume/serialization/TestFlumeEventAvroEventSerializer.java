@@ -32,22 +32,69 @@ import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumReader;
 import org.apache.commons.io.FileUtils;
+import org.apache.flume.Context;
 import org.apache.flume.event.EventBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class TestFlumeEventAvroEventSerializer {
 
+  private static final File TESTFILE =
+      new File("src/test/resources/FlumeEventAvroEvent.avro");
+
   @Test
-  public void testAvroContainerFormat()
+  public void testAvroSerializer()
       throws FileNotFoundException, IOException {
-    File file = new File("src/test/resources/FlumeEventAvroEvent.avro");
+
+    createAvroFile(TESTFILE, null);
+    validateAvroFile(TESTFILE);
+    FileUtils.forceDelete(TESTFILE);
+  }
+
+  @Test
+  public void testAvroSerializerNullCompression()
+      throws FileNotFoundException, IOException {
+
+    createAvroFile(TESTFILE, "null");
+    validateAvroFile(TESTFILE);
+    FileUtils.forceDelete(TESTFILE);
+  }
+
+  @Test
+  public void testAvroSerializerDeflateCompression()
+      throws FileNotFoundException, IOException {
+
+    createAvroFile(TESTFILE, "deflate");
+    validateAvroFile(TESTFILE);
+    FileUtils.forceDelete(TESTFILE);
+  }
+
+  @Test
+  public void testAvroSerializerSnappyCompression()
+      throws FileNotFoundException, IOException {
+
+    createAvroFile(TESTFILE, "snappy");
+    validateAvroFile(TESTFILE);
+    FileUtils.forceDelete(TESTFILE);
+  }
+
+  public void createAvroFile(File file, String codec)
+      throws FileNotFoundException, IOException {
+
+    Assert.assertFalse("File should be exist yet", file.exists());
 
     // serialize a few events using the reflection-based avro serializer
     OutputStream out = new FileOutputStream(file);
+
+    Context ctx = new Context();
+    if (codec != null) {
+      ctx.put("compressionCodec", codec);
+    }
+
     EventSerializer.Builder builder =
         new FlumeEventAvroEventSerializer.Builder();
-    EventSerializer serializer = builder.build(null, out);
+    EventSerializer serializer = builder.build(ctx, out);
+
     serializer.afterCreate();
     serializer.write(EventBuilder.withBody("yo man!", Charsets.UTF_8));
     serializer.write(EventBuilder.withBody("2nd event!", Charsets.UTF_8));
@@ -56,7 +103,9 @@ public class TestFlumeEventAvroEventSerializer {
     serializer.beforeClose();
     out.flush();
     out.close();
+  }
 
+  public void validateAvroFile(File file) throws IOException {
     // read the events back using GenericRecord
     DatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>();
     DataFileReader<GenericRecord> fileReader =
@@ -73,8 +122,6 @@ public class TestFlumeEventAvroEventSerializer {
     }
     fileReader.close();
     Assert.assertEquals("Should have found a total of 3 events", 3, numEvents);
-
-    FileUtils.forceDelete(file);
   }
 
 }
