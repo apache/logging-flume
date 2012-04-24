@@ -21,11 +21,15 @@ package org.apache.flume.client.avro;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 import com.google.common.collect.Lists;
 import org.apache.commons.cli.CommandLine;
@@ -53,7 +57,7 @@ public class AvroCLIClient {
   private String hostname;
   private int port;
   private String fileName;
-
+  private Map<String, String> headers = new HashMap<String, String>();
   private int sent;
 
   public static void main(String[] args) {
@@ -77,12 +81,48 @@ public class AvroCLIClient {
     logger.debug("Exiting");
   }
 
+  /*
+   * Header Format : key1=value1, key2=value2,...
+   */
+  private void parseHeaders(CommandLine commandLine) {
+    String headerFile =  commandLine.getOptionValue("headerFile");
+    FileInputStream fs = null;
+    try {
+      if (headerFile != null) {
+        fs = new FileInputStream(headerFile);
+        Properties properties = new Properties();
+        properties.load(fs);
+        for (Map.Entry<Object, Object> propertiesEntry : properties.entrySet()) {
+          String key = (String) propertiesEntry.getKey();
+          String value = (String) propertiesEntry.getValue();
+          logger.debug("Inserting Header Key [" + key + "] header value [" +
+          value + "]");
+          headers.put(key, value);
+        }
+      }
+    } catch (Exception e) {
+      logger.error("Unable to load headerFile", headerFile, e);
+      return;
+    } finally {
+      if (fs != null) {
+       try {
+        fs.close();
+       }catch (Exception e) {
+         logger.error("Unable to close headerFile", e);
+         return;
+       }
+      }
+    }
+  }
+
   private boolean parseCommandLine(String[] args) throws ParseException {
     Options options = new Options();
 
     options.addOption("p", "port", true, "port of the avro source")
         .addOption("H", "host", true, "hostname of the avro source")
         .addOption("F", "filename", true, "file to stream to avro source")
+        .addOption("R", "headerFile", true, ("file containing headers as " +
+            "key/value pairs on each new line"))
         .addOption("h", "help", false, "display help text");
 
     CommandLineParser parser = new GnuParser();
@@ -103,13 +143,21 @@ public class AvroCLIClient {
 
     if (!commandLine.hasOption("host")) {
       throw new ParseException(
-          "You must specify a hostname to connet to with --host");
+          "You must specify a hostname to connect to with --host");
     }
 
     hostname = commandLine.getOptionValue("host");
     fileName = commandLine.getOptionValue("filename");
 
+    if (commandLine.hasOption("headerFile")){
+      parseHeaders(commandLine);
+    }
+
     return true;
+  }
+
+  private void setHeaders(Event event) {
+    event.setHeaders(headers);
   }
 
   private void run() throws IOException, FlumeException,
@@ -142,6 +190,7 @@ public class AvroCLIClient {
         }
 
         Event event = EventBuilder.withBody(line, Charset.forName("UTF8"));
+        setHeaders(event);
         eventBuffer.add(event);
 
         sentBytes += event.getBody().length;

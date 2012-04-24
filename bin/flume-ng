@@ -117,6 +117,7 @@ avro-client options:
   --host,-H <host>      hostname to which events will be sent (required)
   --port,-p <port>      port of the avro source (required)
   --filename,-F <file>  text file to stream to avro source [default: std input]
+  --headerFile,-R <file> headerFile containing headers as key/value pairs on each new line
   --help,-h             display help text
 
 Note that if <conf> directory is specified, then it is always included first
