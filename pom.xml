@@ -42,7 +42,7 @@ limitations under the License.
     <siteUrlDeployment>file://people.apache.org/www/incubator.apache.org/flume</siteUrlDeployment>
 -->
     <siteUrlDeployment>file://people.apache.org/www/incubator.apache.org/flume</siteUrlDeployment>
-  <stagingDirectory>${project.basedir}/flume-docs</stagingDirectory>
+  <stagingDirectory>${project.basedir}/target/docs</stagingDirectory>
 
   </properties>
 
