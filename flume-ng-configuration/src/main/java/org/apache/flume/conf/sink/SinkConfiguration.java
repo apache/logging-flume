@@ -22,8 +22,6 @@ import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.conf.FlumeConfigurationError;
 import org.apache.flume.conf.FlumeConfigurationErrorType;
 import org.apache.flume.conf.FlumeConfigurationError.ErrorOrWarning;
-import org.apache.flume.conf.channel.ChannelConfiguration;
-import org.apache.flume.conf.source.SourceConfiguration;
 
 public class SinkConfiguration extends ComponentConfiguration {
 
@@ -111,7 +109,9 @@ public class SinkConfiguration extends ComponentConfiguration {
     @SuppressWarnings("unchecked")
     public SinkConfiguration getConfiguration(String name)
         throws ConfigurationException {
-
+      if (this.equals(SinkConfigurationType.OTHER)) {
+        return new SinkConfiguration(name);
+      }
       Class<? extends SinkConfiguration> clazz;
       SinkConfiguration instance = null;
       try {

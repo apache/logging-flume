@@ -32,7 +32,6 @@ import org.apache.flume.conf.FlumeConfigurationError.ErrorOrWarning;
 import org.apache.flume.conf.channel.ChannelSelectorConfiguration;
 import org.apache.flume.conf.channel.ChannelSelectorConfiguration.ChannelSelectorConfigurationType;
 import org.apache.flume.conf.channel.ChannelSelectorType;
-import org.apache.flume.conf.channel.ChannelConfiguration.ChannelConfigurationType;
 
 public class SourceConfiguration extends ComponentConfiguration {
   protected Set<String> channels;
@@ -172,7 +171,7 @@ public class SourceConfiguration extends ComponentConfiguration {
     @SuppressWarnings("unchecked")
     public SourceConfiguration getConfiguration(String name)
         throws ConfigurationException {
-      if (this.equals(ChannelConfigurationType.OTHER)) {
+      if (this.equals(SourceConfigurationType.OTHER)) {
         return new SourceConfiguration(name);
       }
       Class<? extends SourceConfiguration> clazz = null;
@@ -183,9 +182,11 @@ public class SourceConfiguration extends ComponentConfiguration {
               (Class<? extends SourceConfiguration>) Class
                   .forName(srcConfigurationName);
           instance = clazz.getConstructor(String.class).newInstance(name);
-        }
-        else {
-          return new SourceConfiguration(name);
+        } else {
+          // Could not find the configuration stub, do basic validation
+          instance = new SourceConfiguration(name);
+          // Let the caller know that this was created because of this exception.
+          instance.setNotFoundConfigClass();
         }
       } catch (ClassNotFoundException e) {
         // Could not find the configuration stub, do basic validation
