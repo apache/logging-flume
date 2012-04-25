@@ -112,8 +112,6 @@ public abstract class ComponentConfiguration {
     sb.append(FlumeConfiguration.NEWLINE).append(indent).append(
         FlumeConfiguration.INDENTSTEP);
 
-    sb.append(FlumeConfiguration.NEWLINE);
-
     return sb.toString();
   }
 

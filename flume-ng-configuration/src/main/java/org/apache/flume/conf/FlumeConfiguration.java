@@ -282,7 +282,8 @@ public class FlumeConfiguration {
      */
     private boolean isValid() {
       logger.debug("Starting validation of configuration for agent: "
-          + agentName + ", initial-configuration: " + this);
+          + agentName + ", initial-configuration: " +
+          this.getPrevalidationConfig());
 
       // Make sure that at least one channel is specified
       if (channels == null || channels.trim().length() == 0) {
@@ -337,6 +338,9 @@ public class FlumeConfiguration {
       this.channels = getSpaceDelimitedList(channelSet);
       this.sinks = getSpaceDelimitedList(sinkSet);
       this.sinkgroups = getSpaceDelimitedList(sinkgroupSet);
+
+      logger.debug("Post validation configuration for " + agentName + NEWLINE
+          + this.getPostvalidationConfig());
 
       return true;
     }
@@ -534,13 +538,13 @@ public class FlumeConfiguration {
           } catch (ConfigurationException e) {
             if (srcConf != null) errorList.addAll(srcConf.getErrors());
             iter.remove();
-            logger.debug("removed " + sourceName + " due to " + e.getMessage());
+            logger.warn("Removed " + sourceName + " due to " + e.getMessage());
           }
         } else {
           iter.remove();
           errorList.add(new FlumeConfigurationError(agentName, sourceName,
               FlumeConfigurationErrorType.CONFIG_ERROR, ErrorOrWarning.ERROR));
-          logger.debug("context empty for: " + sourceName);
+          logger.warn("Configuration empty for: " + sourceName + ".Removed.");
         }
       }
 
@@ -588,7 +592,6 @@ public class FlumeConfiguration {
        */
       while (iter.hasNext()) {
         String sinkName = iter.next();
-        logger.warn("Sink: " + sinkName);
         Context sinkContext = sinkContextMap.get(sinkName.trim());
         if (sinkContext == null) {
           iter.remove();
@@ -625,14 +628,13 @@ public class FlumeConfiguration {
               newContextMap.put(sinkName, sinkContext);
             } else if (configSpecified) {
               sinkConfigMap.put(sinkName, sinkConf);
-              logger.debug("added to map: " + sinkName);
             }
             if (sinkConf != null) errorList.addAll(sinkConf.getErrors());
           } catch (ConfigurationException e) {
             iter.remove();
             if (sinkConf != null) errorList.addAll(sinkConf.getErrors());
-            logger.debug("removing sink not due to null context" + sinkName
-                + e.getMessage());
+            logger.warn("Configuration empty for: " + sinkName + ".Removed.");
+
           }
         }
         // Filter out any sinks that have invalid channel
@@ -698,11 +700,16 @@ public class FlumeConfiguration {
             .add(new FlumeConfigurationError(agentName, sinkgroupName,
                 FlumeConfigurationErrorType.CONFIG_ERROR,
                 ErrorOrWarning.ERROR));
+            logger.warn("Configuration error for: " + sinkgroupName
+                + ".Removed.");
+
           }
         } else {
           iter.remove();
           errorList.add(new FlumeConfigurationError(agentName, sinkgroupName,
               FlumeConfigurationErrorType.CONFIG_ERROR, ErrorOrWarning.ERROR));
+          logger.warn("Configuration error for: " + sinkgroupName
+              + ".Removed.");
         }
 
       }
@@ -785,13 +792,56 @@ public class FlumeConfiguration {
       return out;
     }
 
-    @Override
-    public String toString() {
+    public String getPrevalidationConfig() {
       StringBuilder sb = new StringBuilder("AgentConfiguration[");
       sb.append(agentName).append("]").append(NEWLINE).append("SOURCES: ");
-      sb.append(sourceConfigMap).append(NEWLINE).append("CHANNELS: ");
-      sb.append(channelConfigMap).append(NEWLINE).append("SINKS: ");
-      sb.append(sinkConfigMap);
+      sb.append(sourceContextMap).append(NEWLINE).append("CHANNELS: ");
+      sb.append(channelContextMap).append(NEWLINE).append("SINKS: ");
+      sb.append(sinkContextMap).append(NEWLINE);
+
+      return sb.toString();
+    }
+
+    public String getPostvalidationConfig() {
+      StringBuilder sb = new StringBuilder(
+          "AgentConfiguration created without Configuration stubs " +
+          "for which only basic syntactical validation was performed[");
+      sb.append(agentName).append("]").append(NEWLINE);
+      if(!sourceContextMap.isEmpty() ||
+          !sinkContextMap.isEmpty() ||
+          !channelContextMap.isEmpty()) {
+        if(!sourceContextMap.isEmpty()){
+          sb.append("SOURCES: ").append(sourceContextMap).append(NEWLINE);
+        }
+
+        if(!channelContextMap.isEmpty()){
+          sb.append("CHANNELS: ").append(channelContextMap).append(NEWLINE);
+        }
+
+        if(!sinkContextMap.isEmpty()){
+          sb.append("SINKS: ").append(sinkContextMap).append(NEWLINE);
+        }
+      }
+
+      if(!sourceConfigMap.isEmpty() ||
+          !sinkConfigMap.isEmpty() ||
+          !channelConfigMap.isEmpty()) {
+        sb.append("AgentConfiguration created with Configuration stubs " +
+            "for which full validation was performed[");
+        sb.append(agentName).append("]").append(NEWLINE);
+
+        if(!sourceConfigMap.isEmpty()){
+          sb.append("SOURCES: ").append(sourceConfigMap).append(NEWLINE);
+        }
+
+        if(!channelConfigMap.isEmpty()){
+          sb.append("CHANNELS: ").append(channelConfigMap).append(NEWLINE);
+        }
+
+        if(!sinkConfigMap.isEmpty()){
+          sb.append("SINKS: ").append(sinkConfigMap).append(NEWLINE);
+        }
+      }
 
       return sb.toString();
     }

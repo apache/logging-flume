@@ -19,6 +19,7 @@ package org.apache.flume.conf.sink;
 import org.apache.flume.Context;
 import org.apache.flume.conf.ComponentConfiguration;
 import org.apache.flume.conf.ConfigurationException;
+import org.apache.flume.conf.FlumeConfiguration;
 import org.apache.flume.conf.FlumeConfigurationError;
 import org.apache.flume.conf.FlumeConfigurationErrorType;
 import org.apache.flume.conf.FlumeConfigurationError.ErrorOrWarning;
@@ -50,6 +51,22 @@ public class SinkConfiguration extends ComponentConfiguration {
       throw new ConfigurationException("No channel configured for sink: "
           + this.getComponentName());
     }
+  }
+
+  @Override
+  public String toString(int indentCount){
+    StringBuilder indentSb = new StringBuilder("");
+
+    for (int i = 0; i < indentCount; i++) {
+      indentSb.append(FlumeConfiguration.INDENTSTEP);
+    }
+
+    String basicStr = super.toString(indentCount);
+    StringBuilder sb = new StringBuilder();
+    sb.append(basicStr).append(FlumeConfiguration.INDENTSTEP).append(
+        "CHANNEL:").append(this.channel).append(
+        FlumeConfiguration.NEWLINE);
+    return sb.toString();
   }
 
   public enum SinkConfigurationType {

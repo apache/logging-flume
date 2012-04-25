@@ -108,6 +108,18 @@ public class SourceConfiguration extends ComponentConfiguration {
     }
   }
 
+  @Override
+  public String toString(int indentCount){
+    String basicStr = super.toString(indentCount);
+    StringBuilder sb = new StringBuilder();
+    sb.append(basicStr).append("CHANNELS:");
+    for(String channel : this.channels){
+      sb.append(FlumeConfiguration.INDENTSTEP).append(
+          channel).append(FlumeConfiguration.NEWLINE);
+    }
+    return sb.toString();
+  }
+
   private ChannelSelectorType getKnownChannelSelector(String type) {
     ChannelSelectorType[] values = ChannelSelectorType.values();
     for (ChannelSelectorType value : values) {
