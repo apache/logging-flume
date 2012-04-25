@@ -293,13 +293,13 @@ public class PropertiesFileConfigurationProvider extends
           SourceRunner.forSource(source));
     }
     Map<String, Context> sourceContexts = agentConf.getSourceContext();
-      List<Channel> channels = new ArrayList<Channel>();
 
     for (String src : sourceContexts.keySet()) {
       Context context = sourceContexts.get(src);
       Source source =
           getSourceFactory().create(src,
               context.getString("type"));
+      List<Channel> channels = new ArrayList<Channel>();
       Configurables.configure(source, context);
       String[] channelNames = context.getString("channels").split("\\s+");
       for (String chName : channelNames) {
