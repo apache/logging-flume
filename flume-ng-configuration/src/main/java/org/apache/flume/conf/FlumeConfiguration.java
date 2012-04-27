@@ -472,6 +472,16 @@ public class FlumeConfiguration {
     }
 
     private Set<String> validateSources(Set<String> channelSet) {
+      //Arrays.split() call will throw NPE if the sources string is empty
+      if(sources == null || sources.isEmpty()){
+        logger.warn("Agent configuration for '" + agentName
+            + "' has no sources.");
+        errorList.add(new FlumeConfigurationError(agentName,
+            FlumeConfiguration.SOURCES,
+            FlumeConfigurationErrorType.PROPERTY_VALUE_NULL,
+            ErrorOrWarning.WARNING));
+        return new HashSet<String>();
+      }
       Set<String> sourceSet =
           new HashSet<String>(Arrays.asList(sources.split("\\s+")));
       Map<String, Context> newContextMap = new HashMap<String, Context>();
@@ -564,8 +574,14 @@ public class FlumeConfiguration {
       Map<String, Context> newContextMap = new HashMap<String, Context>();
       Set<String> sinkSet;
       SinkConfiguration sinkConf = null;
-      if (sinks == null) {
-        sinkSet = new HashSet<String>();
+      if (sinks == null || sinks.isEmpty()) {
+        logger.warn("Agent configuration for '" + agentName
+            + "' has no sinks.");
+        errorList.add(new FlumeConfigurationError(agentName,
+            FlumeConfiguration.SINKS,
+            FlumeConfigurationErrorType.PROPERTY_VALUE_NULL,
+            ErrorOrWarning.WARNING));
+        return new HashSet<String>();
       } else {
         sinkSet =
             new HashSet<String>(Arrays.asList(sinks.split("\\s+")));
