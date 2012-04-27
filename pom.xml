@@ -417,7 +417,7 @@ limitations under the License.
                   <exclude>**/*.diff</exclude>
                   <exclude>**/*.patch</exclude>
                   <exclude>**/*.avsc</exclude>
-                  <exclude>**/flume-docs/**</exclude>
+                  <exclude>**/docs/**</exclude>
                 </excludes>
               </configuration>
             </execution>
