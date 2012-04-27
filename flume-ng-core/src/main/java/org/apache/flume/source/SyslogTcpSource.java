@@ -19,6 +19,7 @@
 package org.apache.flume.source;
 
 import java.net.InetSocketAddress;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -53,6 +54,7 @@ implements EventDrivenSource, Configurable {
   private String host = null;
   private Channel nettyChannel;
   private Integer eventSize;
+  private Map<String, String> formaterProp;
   private CounterGroup counterGroup = new CounterGroup();
 
   public class syslogTcpHandler extends SimpleChannelHandler {
@@ -61,6 +63,10 @@ implements EventDrivenSource, Configurable {
 
     public void setEventSize(int eventSize){
       syslogUtils.setEventSize(eventSize);
+    }
+
+    public void setFormater(Map<String, String> prop) {
+      syslogUtils.addFormats(prop);
     }
 
     @Override
@@ -95,6 +101,7 @@ implements EventDrivenSource, Configurable {
       public ChannelPipeline getPipeline() {
         syslogTcpHandler handler = new syslogTcpHandler();
         handler.setEventSize(eventSize);
+        handler.setFormater(formaterProp);
         return Channels.pipeline(handler);
       }
     });
@@ -135,6 +142,7 @@ implements EventDrivenSource, Configurable {
     port = context.getInteger("port");
     host = context.getString("host");
     eventSize = context.getInteger("eventSize", SyslogUtils.DEFAULT_SIZE);
+    formaterProp = context.getSubProperties("format");
   }
 
 }

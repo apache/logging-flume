@@ -19,6 +19,9 @@
 package org.apache.flume.source;
 
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Map;
 
 import junit.framework.Assert;
@@ -29,6 +32,150 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.junit.Test;
 
 public class TestSyslogUtils {
+  @Test
+  public void TestHeader0() throws ParseException {
+    String stamp1 = "2012-04-13T11:11:11";
+    String format1 = "yyyy-MM-dd'T'HH:mm:ssZ";
+    String host1 = "ubuntu-11.cloudera.com";
+    String data1 = "some msg";
+    // timestamp with hh:mm format timezone with no version
+    String msg1 = "<10>" + stamp1+ "+08:00" + " " + host1 + " " + data1 + "\n";
+    checkHeader(msg1, stamp1 + "+0800", format1, host1, data1);
+  }
+
+  @Test
+  public void TestHeader1() throws ParseException {
+    String stamp1 = "2012-04-13T11:11:11";
+    String format1 = "yyyy-MM-dd'T'HH:mm:ss";
+    String host1 = "ubuntu-11.cloudera.com";
+    String data1 = "some msg";
+    String msg1 = "<10>1 " + stamp1 + " " + host1 + " " + data1 + "\n";
+    checkHeader(msg1, stamp1, format1, host1, data1);
+  }
+
+  @Test
+  public void TestHeader2() throws ParseException {
+
+    String stamp1 = "2012-04-13T11:11:11";
+    String format1 = "yyyy-MM-dd'T'HH:mm:ssZ";
+    String host1 = "ubuntu-11.cloudera.com";
+    String data1 = "some msg";
+    // timestamp with 'Z' appended, translates to UTC
+    String msg1 = "<10>1 " + stamp1+ "Z" + " " + host1 + " " + data1 + "\n";
+    checkHeader(msg1, stamp1 + "+0000", format1, host1, data1);
+  }
+
+  @Test
+  public void TestHeader3() throws ParseException {
+    String stamp1 = "2012-04-13T11:11:11";
+    String format1 = "yyyy-MM-dd'T'HH:mm:ssZ";
+    String host1 = "ubuntu-11.cloudera.com";
+    String data1 = "some msg";
+    // timestamp with hh:mm format timezone
+    String msg1 = "<10>1 " + stamp1+ "+08:00" + " " + host1 + " " + data1 + "\n";
+    checkHeader(msg1, stamp1 + "+0800", format1, host1, data1);
+  }
+
+  @Test
+  public void TestHeader4() throws ParseException {
+     String host1 = "ubuntu-11.cloudera.com";
+    String data1 = "some msg";
+    // null format timestamp (-)
+    String msg1 = "<10>1 " + "-" + " " + host1 + " " + data1 + "\n";
+    checkHeader(msg1, null, null, host1, data1);
+  }
+
+  @Test
+  public void TestHeader5() throws ParseException {
+    String stamp1 = "2012-04-13T11:11:11";
+    String format1 = "yyyy-MM-dd'T'HH:mm:ss";
+    String host1 = "-";
+    String data1 = "some msg";
+    // null host
+    String msg1 = "<10>1 " + stamp1 + " " + host1 + " " + data1 + "\n";
+    checkHeader(msg1, stamp1, format1, null, data1);
+  }
+
+  @Test
+  public void TestHeader6() throws ParseException {
+    String stamp1 = "2012-04-13T11:11:11";
+    String format1 = "yyyy-MM-dd'T'HH:mm:ssZ";
+    String host1 = "-";
+    String data1 = "some msg";
+    // null host
+    String msg1 = "<10>1 " + stamp1+ "Z" + " " + host1 + " " + data1 + "\n";
+    checkHeader(msg1, stamp1 + "+0000", format1, null, data1);
+  }
+
+  @Test
+  public void TestHeader7() throws ParseException {
+    String stamp1 = "2012-04-13T11:11:11";
+    String format1 = "yyyy-MM-dd'T'HH:mm:ssZ";
+    String host1 = "-";
+    String data1 = "some msg";
+    // null host
+    String msg1 = "<10>1 " + stamp1+ "+08:00" + " " + host1 + " " + data1 + "\n";
+    checkHeader(msg1, stamp1 + "+0800", format1, null, data1);
+  }
+
+  @Test
+  public void TestHeader8() throws ParseException {
+    String stamp1 = "2012-04-13T11:11:11.999";
+    String format1 = "yyyy-MM-dd'T'HH:mm:ss.S";
+    String host1 = "ubuntu-11.cloudera.com";
+    String data1 = "some msg";
+    String msg1 = "<10>1 " + stamp1 + " " + host1 + " " + data1 + "\n";
+    checkHeader(msg1, stamp1, format1, host1, data1);
+  }
+
+  @Test
+  public void TestHeader9() throws ParseException {
+    String stamp1 = "Apr 11 13:14:04";
+    String format1 = "yyyyMMM d HH:mm:ss";
+    String host1 = "ubuntu-11.cloudera.com";
+    String data1 = "some msg";
+    // timestamp with 'Z' appended, translates to UTC
+    String msg1 = "<10>" + stamp1 + " " + host1 + " " + data1 + "\n";
+    checkHeader(msg1, String.valueOf(Calendar.getInstance().get(Calendar.YEAR)) + stamp1,
+        format1, host1, data1);
+  }
+
+  @Test
+  public void TestHeader10() throws ParseException {
+    String stamp1 = "Apr  1 13:14:04";
+    String format1 = "yyyyMMM d HH:mm:ss";
+    String host1 = "ubuntu-11.cloudera.com";
+    String data1 = "some msg";
+    // timestamp with 'Z' appended, translates to UTC
+    String msg1 = "<10>" + stamp1 + " " + host1 + " " + data1 + "\n";
+    checkHeader(msg1, String.valueOf(Calendar.getInstance().get(Calendar.YEAR)) + stamp1,
+        format1, host1, data1);
+  }
+
+  public void checkHeader(String msg1, String stamp1, String format1, String host1, String data1) throws ParseException {
+    SyslogUtils util = new SyslogUtils(false);
+    ChannelBuffer buff = ChannelBuffers.buffer(100);
+
+    buff.writeBytes(msg1.getBytes());
+    Event e = util.extractEvent(buff);
+    if(e == null){
+      throw new NullPointerException("Event is null");
+    }
+    Map<String, String> headers2 = e.getHeaders();
+    if (stamp1 == null) {
+      Assert.assertFalse(headers2.containsKey("timestamp"));
+    } else {
+      SimpleDateFormat formater = new SimpleDateFormat(format1);
+      Assert.assertEquals(String.valueOf(formater.parse(stamp1).getTime()), headers2.get("timestamp"));
+    }
+    if (host1 == null) {
+      Assert.assertFalse(headers2.containsKey("host"));
+    } else {
+      String host2 = headers2.get("host");
+      Assert.assertEquals(host2,host1);
+    }
+    Assert.assertEquals(data1, new String(e.getBody()));
+  }
 
   /**
    * Test bad event format 1: Priority is not numeric

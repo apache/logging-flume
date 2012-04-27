@@ -19,6 +19,7 @@
 package org.apache.flume.source;
 
 import java.net.InetSocketAddress;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -51,6 +52,7 @@ public class SyslogUDPSource extends AbstractSource
   private int maxsize = 1 << 16; // 64k is max allowable in RFC 5426
   private String host = null;
   private Channel nettyChannel;
+  private Map<String, String> formaterProp;
 
   private static final Logger logger = LoggerFactory
       .getLogger(SyslogUDPSource.class);
@@ -58,6 +60,10 @@ public class SyslogUDPSource extends AbstractSource
   private CounterGroup counterGroup = new CounterGroup();
   public class syslogHandler extends SimpleChannelHandler {
     private SyslogUtils syslogUtils = new SyslogUtils(true);
+
+    public void setFormater(Map<String, String> prop) {
+      syslogUtils.addFormats(prop);
+    }
 
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent mEvent) {
@@ -82,9 +88,11 @@ public class SyslogUDPSource extends AbstractSource
     // setup Netty server
     ConnectionlessBootstrap serverBootstrap = new ConnectionlessBootstrap
         (new OioDatagramChannelFactory(Executors.newCachedThreadPool()));
+    final syslogHandler handler = new syslogHandler();
+    handler.setFormater(formaterProp);
     serverBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
       public ChannelPipeline getPipeline() {
-       return Channels.pipeline(new syslogHandler());
+       return Channels.pipeline(handler);
       }
      });
 
@@ -120,6 +128,7 @@ public class SyslogUDPSource extends AbstractSource
     Configurables.ensureRequiredNonNull(context, "port");
     port = context.getInteger("port");
     host = context.getString("host");
+    formaterProp = context.getSubProperties("format");
   }
 
 }
