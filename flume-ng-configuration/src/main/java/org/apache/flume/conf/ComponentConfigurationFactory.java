@@ -64,8 +64,6 @@ public class ComponentConfigurationFactory {
                 "Cannot create configuration. Unknown Type specified: " +
                     type);
         }
-      } catch (NullPointerException e1) {
-        return null;
       } catch (Exception e2) {
         throw new ConfigurationException("Could not create configuration!", e);
       }
