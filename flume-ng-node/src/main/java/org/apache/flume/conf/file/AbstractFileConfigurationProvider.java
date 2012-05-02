@@ -69,8 +69,7 @@ public abstract class AbstractFileConfigurationProvider implements
     Preconditions.checkState(file != null,
         "The parameter file must not be null");
 
-    executorService = Executors
-        .newScheduledThreadPool(1,
+    executorService = Executors.newSingleThreadScheduledExecutor(
             new ThreadFactoryBuilder().setNameFormat("conf-file-poller-%d")
                 .build());
 
@@ -79,7 +78,7 @@ public abstract class AbstractFileConfigurationProvider implements
     fileWatcherRunnable.file = file;
     fileWatcherRunnable.counterGroup = counterGroup;
 
-    executorService.scheduleAtFixedRate(fileWatcherRunnable, 0, 30,
+    executorService.scheduleWithFixedDelay(fileWatcherRunnable, 0, 30,
         TimeUnit.SECONDS);
 
     lifecycleState = LifecycleState.START;
