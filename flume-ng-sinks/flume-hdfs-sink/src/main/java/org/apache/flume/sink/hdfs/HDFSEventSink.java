@@ -268,7 +268,8 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
    * for the specified amount of time in milliseconds. In case of timeout
    * or any other error, log error and return null.
    */
-  private static <T> T callWithTimeoutLogError(final ExecutorService executor, long timeout, String name, final Callable<T> callable) {
+  private static <T> T callWithTimeoutLogError(final ExecutorService executor,
+      long timeout, String name, final Callable<T> callable) {
     try {
       return callWithTimeout(executor, timeout, callable);
     } catch (Exception e) {
@@ -285,7 +286,8 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
    * for the specified amount of time in milliseconds. In case of timeout
    * cancel the callable and throw an IOException
    */
-  private static <T> T callWithTimeout(final ExecutorService executor, long timeout, final Callable<T> callable)
+  private static <T> T callWithTimeout(final ExecutorService executor,
+      long timeout, final Callable<T> callable)
       throws IOException, InterruptedException {
     Future<T> future = executor.submit(callable);
     try {
@@ -358,7 +360,8 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
             @Override
             public Void call() throws Exception {
               synchronized(callableWriter) {
-                callableWriter.open(callablePath, callableCodec, callableCompType, writer, formatter);
+                callableWriter.open(callablePath, callableCodec,
+                    callableCompType, writer, formatter);
               }
               return null;
             }
@@ -415,8 +418,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
           continue;
         }
         final BucketWriter callableWriter = writer;
-        LOG.info("Calling abort on " + callableWriter);
-        callWithTimeoutLogError(executor, callTimeout, "Calling abort on "
+        callWithTimeoutLogError(executor, callTimeout, "flush on "
         + callableWriter, new Callable<Void>() {
           @Override
           public Void call() throws Exception {
@@ -436,7 +438,8 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     for (Entry<String, BucketWriter> e : sfWriters.entrySet()) {
       LOG.info("Closing " + e.getKey());
       final BucketWriter callableWriter = e.getValue();
-      callWithTimeoutLogError(executor, callTimeout, "Closing " + e.getKey(), new Callable<Void>() {
+      callWithTimeoutLogError(executor, callTimeout, "close on " + e.getKey(),
+          new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           synchronized(callableWriter) {
@@ -468,7 +471,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     // writers will be opened in "process"?
     for (Entry<String, BucketWriter> e : sfWriters.entrySet()) {
       final BucketWriter callableWriter = e.getValue();
-      callWithTimeoutLogError(executor, callTimeout, "Calling open on " +
+      callWithTimeoutLogError(executor, callTimeout, "open on " +
       callableWriter, new Callable<Void>() {
         @Override
         public Void call() throws Exception {
