@@ -75,6 +75,7 @@ public class TestNettyAvroRpcClient {
    */
   @Test(expected=FlumeException.class)
   public void testUnableToConnect() throws FlumeException {
+    @SuppressWarnings("unused")
     NettyAvroRpcClient client = new NettyAvroRpcClient(
         new InetSocketAddress(localhost, 1), 0);
   }
@@ -111,15 +112,17 @@ public class TestNettyAvroRpcClient {
    * First connect the client, then shut down the server, then send a request.
    * @throws FlumeException
    * @throws EventDeliveryException
+   * @throws InterruptedException
    */
   @Test(expected=EventDeliveryException.class)
   public void testServerDisconnect() throws FlumeException,
-      EventDeliveryException {
+      EventDeliveryException, InterruptedException {
     NettyAvroRpcClient client = null;
     Server server = RpcTestUtils.startServer(new OKAvroHandler());
     try {
       client = RpcTestUtils.getStockLocalClient(server.getPort());
       server.close();
+      Thread.sleep(1000L); // wait a second for the close to occur
       try {
         server.join();
       } catch (InterruptedException ex) {

@@ -29,7 +29,7 @@ public class Configurables {
   /**
    * Check that {@code target} implements {@link Configurable} and, if so, ask
    * it to configure itself using the supplied {@code context}.
-   * 
+   *
    * @param target
    *          An object that potentially implements Configurable.
    * @param context

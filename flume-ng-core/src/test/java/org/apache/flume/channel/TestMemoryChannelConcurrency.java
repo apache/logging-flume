@@ -52,6 +52,7 @@ public class TestMemoryChannelConcurrency {
 
     Configurables.configure(channel, new Context());
     Thread t1 = new Thread(new Runnable() {
+      @Override
       public void run() {
         Transaction tx = channel.getTransaction();
         tx.begin();
@@ -74,6 +75,7 @@ public class TestMemoryChannelConcurrency {
     });
 
     Thread t2 = new Thread(new Runnable() {
+      @Override
       public void run() {
         Transaction tx = channel.getTransaction();
         try {
@@ -145,6 +147,7 @@ public class TestMemoryChannelConcurrency {
 
     for (int i = 0; i < threadCount; i++) {
       Thread t = new Thread() {
+        @Override
         public void run() {
           Long tid = Thread.currentThread().getId();
           String strtid = tid.toString();
@@ -227,6 +230,7 @@ public class TestMemoryChannelConcurrency {
     // start a sink and source for each
     for (int i = 0; i < threadCount/2; i++) {
       Thread t = new Thread() {
+        @Override
         public void run() {
           Long tid = Thread.currentThread().getId();
           String strtid = tid.toString();
@@ -269,6 +273,7 @@ public class TestMemoryChannelConcurrency {
       t.start();
       final Integer takeMapLock = 0;
       t = new Thread() {
+        @Override
         public void run() {
           Random rng = new Random(Thread.currentThread().getId());
 

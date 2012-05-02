@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
@@ -56,6 +57,7 @@ public class TestRecoverableMemoryChannel {
   .getLogger(TestRecoverableMemoryChannel.class);
 
   private RecoverableMemoryChannel channel;
+  Context context;
 
   private File dataDir;
 
@@ -69,7 +71,7 @@ public class TestRecoverableMemoryChannel {
 
   private RecoverableMemoryChannel createFileChannel() {
     RecoverableMemoryChannel channel = new RecoverableMemoryChannel();
-    Context context = new Context();
+    context = new Context();
     context.put(RecoverableMemoryChannel.WAL_DATA_DIR, dataDir.getAbsolutePath());
     Configurables.configure(channel, context);
     channel.start();
@@ -80,7 +82,39 @@ public class TestRecoverableMemoryChannel {
   public void teardown() {
     FileUtils.deleteQuietly(dataDir);
   }
-
+  @Test
+  public void testRestart() throws Exception {
+    List<String> in = Lists.newArrayList();
+    try {
+      while(true) {
+        in.addAll(putEvents(channel, "restart", 1, 1));
+      }
+    } catch (ChannelException e) {
+      Assert.assertEquals("Cannot acquire capacity", e.getMessage());
+    }
+    channel.stop();
+    channel = createFileChannel();
+    List<String> out = takeEvents(channel, 1, Integer.MAX_VALUE);
+    Collections.sort(in);
+    Collections.sort(out);
+    Assert.assertEquals(in, out);
+  }
+  @Test
+  public void testReconfigure() throws Exception {
+    List<String> in = Lists.newArrayList();
+    try {
+      while(true) {
+        in.addAll(putEvents(channel, "restart", 1, 1));
+      }
+    } catch (ChannelException e) {
+      Assert.assertEquals("Cannot acquire capacity", e.getMessage());
+    }
+    Configurables.configure(channel, context);
+    List<String> out = takeEvents(channel, 1, Integer.MAX_VALUE);
+    Collections.sort(in);
+    Collections.sort(out);
+    Assert.assertEquals(in, out);
+  }
   @Test
   public void testRollbackWithSink() throws Exception {
     final NullSink sink = new NullSink();
@@ -165,7 +199,7 @@ public class TestRecoverableMemoryChannel {
   @Test
   public void testPut() throws Exception {
     // should find no items
-    int found = takeEvents(channel, "unbatched-gets", 1, 5).size();
+    int found = takeEvents(channel, 1, 5).size();
     Assert.assertEquals(0, found);
     putEvents(channel, "unbatched", 1, 5);
     putEvents(channel, "batched", 5, 5);
@@ -213,11 +247,10 @@ public class TestRecoverableMemoryChannel {
           try {
             startLatch.countDown();
             startLatch.await();
-            String prefix = "take-thread-" + Integer.toString(id);
             if (id % 2 == 0) {
-              actual.addAll(takeEvents(channel, prefix, 1, Integer.MAX_VALUE));
+              actual.addAll(takeEvents(channel, 1, Integer.MAX_VALUE));
             } else {
-              actual.addAll(takeEvents(channel, prefix, 5, Integer.MAX_VALUE));
+              actual.addAll(takeEvents(channel, 5, Integer.MAX_VALUE));
             }
           } catch (Exception e) {
             errors.add(e);
@@ -235,7 +268,7 @@ public class TestRecoverableMemoryChannel {
     Collections.sort(actual);
     Assert.assertEquals(expected, actual);
   }
-  private static List<String> takeEvents(Channel channel, String prefix, int batchSize,
+  private static List<String> takeEvents(Channel channel, int batchSize,
       int numEvents) throws Exception {
     List<String> result = Lists.newArrayList();
     for (int i = 0; i < numEvents; i += batchSize) {

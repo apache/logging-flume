@@ -21,6 +21,7 @@ package org.apache.flume.node.nodemanager;
 
 import java.util.Map.Entry;
 
+import org.apache.flume.Channel;
 import org.apache.flume.SinkRunner;
 import org.apache.flume.SourceRunner;
 import org.apache.flume.lifecycle.LifecycleAware;
@@ -56,18 +57,30 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
     if (this.nodeConfiguration != null) {
       logger
           .info("Shutting down old configuration: {}", this.nodeConfiguration);
-      for (Entry<String, SinkRunner> entry :
-        this.nodeConfiguration.getSinkRunners().entrySet()) {
+      for (Entry<String, SourceRunner> entry : this.nodeConfiguration
+          .getSourceRunners().entrySet()) {
         try{
+          logger.info("Stopping Source " + entry.getKey());
           nodeSupervisor.unsupervise(entry.getValue());
         } catch (Exception e){
           logger.error("Error while stopping {}", entry.getValue(), e);
         }
       }
 
-      for (Entry<String, SourceRunner> entry : this.nodeConfiguration
-          .getSourceRunners().entrySet()) {
+      for (Entry<String, SinkRunner> entry :
+        this.nodeConfiguration.getSinkRunners().entrySet()) {
         try{
+          logger.info("Stopping Sink " + entry.getKey());
+          nodeSupervisor.unsupervise(entry.getValue());
+        } catch (Exception e){
+          logger.error("Error while stopping {}", entry.getValue(), e);
+        }
+      }
+
+      for (Entry<String, Channel> entry :
+        this.nodeConfiguration.getChannels().entrySet()) {
+        try{
+          logger.info("Stopping Channel " + entry.getKey());
           nodeSupervisor.unsupervise(entry.getValue());
         } catch (Exception e){
           logger.error("Error while stopping {}", entry.getValue(), e);
@@ -76,9 +89,22 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
     }
 
     this.nodeConfiguration = nodeConfiguration;
+
+    for (Entry<String, Channel> entry :
+      nodeConfiguration.getChannels().entrySet()) {
+      try{
+        logger.info("Starting Channel " + entry.getKey());
+        nodeSupervisor.supervise(entry.getValue(),
+            new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
+      } catch (Exception e){
+        logger.error("Error while starting {}", entry.getValue(), e);
+      }
+    }
+
     for (Entry<String, SinkRunner> entry : nodeConfiguration.getSinkRunners()
         .entrySet()) {
       try{
+        logger.info("Starting Sink " + entry.getKey());
         nodeSupervisor.supervise(entry.getValue(),
           new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
       } catch (Exception e) {
@@ -89,6 +115,7 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
     for (Entry<String, SourceRunner> entry : nodeConfiguration
         .getSourceRunners().entrySet()) {
       try{
+        logger.info("Starting Source " + entry.getKey());
         nodeSupervisor.supervise(entry.getValue(),
           new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
       } catch (Exception e) {

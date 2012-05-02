@@ -49,6 +49,7 @@ abstract public class AbstractSink implements Sink, LifecycleAware {
     lifecycleState = LifecycleState.STOP;
   }
 
+  @Override
   public synchronized Channel getChannel() {
     return channel;
   }

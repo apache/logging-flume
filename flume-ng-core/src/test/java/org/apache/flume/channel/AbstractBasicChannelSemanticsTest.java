@@ -190,6 +190,7 @@ public abstract class AbstractBasicChannelSemanticsTest {
 
   protected void testWrongThread(final Runnable test) throws Exception {
     executor.submit(new Runnable() {
+        @Override
         public void run() {
           testIllegalState(test);
         }
@@ -209,6 +210,7 @@ public abstract class AbstractBasicChannelSemanticsTest {
   protected void testException(TestChannel.Mode mode,
       final Class<? extends Throwable> exceptionClass, final Runnable test) {
     testMode(mode, new Runnable() {
+        @Override
         public void run() {
           testException(exceptionClass, test);
         }
@@ -230,8 +232,10 @@ public abstract class AbstractBasicChannelSemanticsTest {
 
   protected void testInterrupt(final Runnable test) {
     testMode(TestChannel.Mode.SLEEP, new Runnable() {
+        @Override
         public void run() {
           testException(InterruptedException.class, new Runnable() {
+              @Override
               public void run() {
                 interruptTest(test);
               }
@@ -243,6 +247,7 @@ public abstract class AbstractBasicChannelSemanticsTest {
   protected void interruptTest(final Runnable test) {
     final Thread mainThread = Thread.currentThread();
     Future<?> future = executor.submit(new Runnable() {
+        @Override
         public void run() {
           try {
             Thread.sleep(500);

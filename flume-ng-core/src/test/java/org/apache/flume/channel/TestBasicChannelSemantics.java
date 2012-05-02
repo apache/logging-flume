@@ -51,6 +51,7 @@ public class TestBasicChannelSemantics
   public void testMultiThreadedHappyPath() throws Exception {
     final int testLength = 1000;
     Future<?> producer = executor.submit(new Runnable() {
+        @Override
         public void run() {
           try {
             Thread.sleep(500);
@@ -89,6 +90,7 @@ public class TestBasicChannelSemantics
     final Transaction transaction = channel.getTransaction();
 
     executor.submit(new Runnable() {
+        @Override
         public void run() {
           Assert.assertNotSame(transaction, channel.getTransaction());
         }
@@ -99,6 +101,7 @@ public class TestBasicChannelSemantics
     transaction.begin();
 
     executor.submit(new Runnable() {
+        @Override
         public void run() {
           Assert.assertNotSame(transaction, channel.getTransaction());
         }
@@ -108,6 +111,7 @@ public class TestBasicChannelSemantics
     transaction.commit();
 
     executor.submit(new Runnable() {
+        @Override
         public void run() {
           Assert.assertNotSame(transaction, channel.getTransaction());
         }
@@ -117,6 +121,7 @@ public class TestBasicChannelSemantics
     transaction.close();
 
     executor.submit(new Runnable() {
+        @Override
         public void run() {
           Assert.assertNotSame(transaction, channel.getTransaction());
         }
@@ -129,6 +134,7 @@ public class TestBasicChannelSemantics
     final Transaction transaction = channel.getTransaction();
 
     testExceptions(new Runnable() {
+        @Override
         public void run() {
           transaction.begin();
         }
@@ -137,6 +143,7 @@ public class TestBasicChannelSemantics
     transaction.begin();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.begin();
         }
@@ -145,6 +152,7 @@ public class TestBasicChannelSemantics
     transaction.commit();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.begin();
         }
@@ -153,6 +161,7 @@ public class TestBasicChannelSemantics
     transaction.close();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.begin();
         }
@@ -162,6 +171,7 @@ public class TestBasicChannelSemantics
   @Test
   public void testPut1() throws Exception {
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           channel.put(events.get(0));
         }
@@ -170,6 +180,7 @@ public class TestBasicChannelSemantics
     Transaction transaction = channel.getTransaction();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           channel.put(events.get(0));
         }
@@ -179,12 +190,14 @@ public class TestBasicChannelSemantics
     channel.put(events.get(0));
 
     testIllegalArgument(new Runnable() {
+        @Override
         public void run() {
           channel.put(null);
         }
       });
 
     testExceptions(new Runnable() {
+        @Override
         public void run() {
           channel.put(events.get(0));
         }
@@ -193,6 +206,7 @@ public class TestBasicChannelSemantics
     transaction.commit();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           channel.put(events.get(0));
         }
@@ -201,6 +215,7 @@ public class TestBasicChannelSemantics
     transaction.close();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           channel.put(events.get(0));
         }
@@ -215,6 +230,7 @@ public class TestBasicChannelSemantics
     transaction.rollback();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           channel.put(events.get(0));
         }
@@ -223,6 +239,7 @@ public class TestBasicChannelSemantics
     transaction.close();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           channel.put(events.get(0));
         }
@@ -237,6 +254,7 @@ public class TestBasicChannelSemantics
 
     final Transaction finalTransaction = transaction;
     testChannelException(new Runnable() {
+        @Override
         public void run() {
           finalTransaction.commit();
         }
@@ -245,6 +263,7 @@ public class TestBasicChannelSemantics
     transaction.rollback();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           channel.put(events.get(0));
         }
@@ -253,6 +272,7 @@ public class TestBasicChannelSemantics
     transaction.close();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           channel.put(events.get(0));
         }
@@ -262,6 +282,7 @@ public class TestBasicChannelSemantics
   @Test
   public void testTake1() throws Exception {
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           channel.take();
         }
@@ -270,6 +291,7 @@ public class TestBasicChannelSemantics
     Transaction transaction = channel.getTransaction();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           channel.take();
         }
@@ -284,20 +306,24 @@ public class TestBasicChannelSemantics
     Assert.assertNotNull(channel.take());
 
     testWrongThread(new Runnable() {
+        @Override
         public void run() {
           channel.take();
         }
       });
 
     testBasicExceptions(new Runnable() {
+        @Override
         public void run() {
           channel.take();
         }
       });
 
     testMode(TestChannel.Mode.SLEEP, new Runnable() {
+        @Override
         public void run() {
           interruptTest(new Runnable() {
+              @Override
               public void run() {
                 Assert.assertNull(channel.take());
                 Assert.assertTrue(Thread.interrupted());
@@ -311,6 +337,7 @@ public class TestBasicChannelSemantics
     transaction.commit();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           channel.take();
         }
@@ -319,6 +346,7 @@ public class TestBasicChannelSemantics
     transaction.close();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           channel.take();
         }
@@ -333,6 +361,7 @@ public class TestBasicChannelSemantics
     transaction.rollback();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           channel.take();
         }
@@ -341,6 +370,7 @@ public class TestBasicChannelSemantics
     transaction.close();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           channel.take();
         }
@@ -355,6 +385,7 @@ public class TestBasicChannelSemantics
 
     final Transaction finalTransaction = transaction;
     testChannelException(new Runnable() {
+        @Override
         public void run() {
           finalTransaction.commit();
         }
@@ -363,6 +394,7 @@ public class TestBasicChannelSemantics
     transaction.rollback();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           channel.take();
         }
@@ -371,6 +403,7 @@ public class TestBasicChannelSemantics
     transaction.close();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           channel.take();
         }
@@ -382,6 +415,7 @@ public class TestBasicChannelSemantics
     final Transaction transaction = channel.getTransaction();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.commit();
         }
@@ -390,6 +424,7 @@ public class TestBasicChannelSemantics
     transaction.begin();
 
     testExceptions(new Runnable() {
+        @Override
         public void run() {
           transaction.commit();
         }
@@ -398,6 +433,7 @@ public class TestBasicChannelSemantics
     transaction.commit();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.commit();
         }
@@ -406,6 +442,7 @@ public class TestBasicChannelSemantics
     transaction.close();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.commit();
         }
@@ -420,6 +457,7 @@ public class TestBasicChannelSemantics
     transaction.rollback();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.commit();
         }
@@ -428,6 +466,7 @@ public class TestBasicChannelSemantics
     transaction.close();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.commit();
         }
@@ -439,6 +478,7 @@ public class TestBasicChannelSemantics
     final Transaction transaction = channel.getTransaction();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
@@ -447,6 +487,7 @@ public class TestBasicChannelSemantics
     transaction.begin();
 
     testWrongThread(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
@@ -455,6 +496,7 @@ public class TestBasicChannelSemantics
     transaction.rollback();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
@@ -463,6 +505,7 @@ public class TestBasicChannelSemantics
     transaction.close();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
@@ -474,6 +517,7 @@ public class TestBasicChannelSemantics
     final Transaction transaction = channel.getTransaction();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
@@ -482,12 +526,14 @@ public class TestBasicChannelSemantics
     transaction.begin();
 
     testError(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
       });
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
@@ -496,6 +542,7 @@ public class TestBasicChannelSemantics
     transaction.close();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
@@ -507,6 +554,7 @@ public class TestBasicChannelSemantics
     final Transaction transaction = channel.getTransaction();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
@@ -515,12 +563,14 @@ public class TestBasicChannelSemantics
     transaction.begin();
 
     testRuntimeException(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
       });
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
@@ -529,6 +579,7 @@ public class TestBasicChannelSemantics
     transaction.close();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
@@ -540,6 +591,7 @@ public class TestBasicChannelSemantics
     final Transaction transaction = channel.getTransaction();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
@@ -548,12 +600,14 @@ public class TestBasicChannelSemantics
     transaction.begin();
 
     testChannelException(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
       });
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
@@ -562,6 +616,7 @@ public class TestBasicChannelSemantics
     transaction.close();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
@@ -574,6 +629,7 @@ public class TestBasicChannelSemantics
     final Transaction transaction = channel.getTransaction();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
@@ -582,12 +638,14 @@ public class TestBasicChannelSemantics
     transaction.begin();
 
     testInterrupt(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
       });
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
@@ -596,6 +654,7 @@ public class TestBasicChannelSemantics
     transaction.close();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
@@ -610,6 +669,7 @@ public class TestBasicChannelSemantics
     transaction.commit();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
@@ -618,6 +678,7 @@ public class TestBasicChannelSemantics
     transaction.close();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
@@ -631,6 +692,7 @@ public class TestBasicChannelSemantics
     transaction.begin();
 
     testExceptions(new Runnable() {
+        @Override
         public void run() {
           transaction.commit();
         }
@@ -639,6 +701,7 @@ public class TestBasicChannelSemantics
     transaction.rollback();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
@@ -647,6 +710,7 @@ public class TestBasicChannelSemantics
     transaction.close();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.rollback();
         }
@@ -658,12 +722,14 @@ public class TestBasicChannelSemantics
     final Transaction transaction = channel.getTransaction();
 
     testError(new Runnable() {
+        @Override
         public void run() {
           transaction.close();
         }
       });
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.close();
         }
@@ -675,12 +741,14 @@ public class TestBasicChannelSemantics
     final Transaction transaction = channel.getTransaction();
 
     testRuntimeException(new Runnable() {
+        @Override
         public void run() {
           transaction.close();
         }
       });
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.close();
         }
@@ -692,12 +760,14 @@ public class TestBasicChannelSemantics
     final Transaction transaction = channel.getTransaction();
 
     testChannelException(new Runnable() {
+        @Override
         public void run() {
           transaction.close();
         }
       });
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.close();
         }
@@ -710,6 +780,7 @@ public class TestBasicChannelSemantics
     transaction.begin();
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.close();
         }
@@ -722,12 +793,14 @@ public class TestBasicChannelSemantics
     transaction.begin();
 
     testChannelException(new Runnable() {
+        @Override
         public void run() {
           transaction.commit();
         }
       });
 
     testIllegalState(new Runnable() {
+        @Override
         public void run() {
           transaction.close();
         }

@@ -98,6 +98,7 @@ implements EventDrivenSource, Configurable {
 
     ServerBootstrap serverBootstrap = new ServerBootstrap(factory);
     serverBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
+      @Override
       public ChannelPipeline getPipeline() {
         syslogTcpHandler handler = new syslogTcpHandler();
         handler.setEventSize(eventSize);

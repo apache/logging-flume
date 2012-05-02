@@ -100,13 +100,13 @@ public class BucketPath {
 
   /**
    * Hardcoded lookups for %x style escape replacement. Add your own!
-   * 
+   *
    * All shorthands are Date format strings, currently.
-   * 
+   *
    * Returns the empty string if an escape is not recognized.
-   * 
+   *
    * Dates follow the same format as unix date, with a few exceptions.
-   * 
+   *
    */
   public static String replaceShorthand(char c, Map<String, String> headers) {
     // It's a date
@@ -189,9 +189,9 @@ public class BucketPath {
   /**
    * Replace all substrings of form %{tagname} with get(tagname).toString() and
    * all shorthand substrings of form %x with a special value.
-   * 
+   *
    * Any unrecognized / not found tags will be replaced with the empty string.
-   * 
+   *
    * TODO(henry): we may want to consider taking this out of Event and into a
    * more general class when we get more use cases for this pattern.
    */

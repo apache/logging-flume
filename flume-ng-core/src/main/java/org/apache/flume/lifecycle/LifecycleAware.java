@@ -43,40 +43,40 @@ package org.apache.flume.lifecycle;
  * </p>
  * <code>
  *  public class MyService implements LifecycleAware {
- * 
+ *
  *    private LifecycleState lifecycleState;
- * 
+ *
  *    public MyService() {
  *      lifecycleState = LifecycleState.IDLE;
  *    }
- * 
+ *
  *    @Override
  *    public void start(Context context) throws LifecycleException,
  *      InterruptedException {
- * 
+ *
  *      ...your code does something.
- * 
+ *
  *      lifecycleState = LifecycleState.START;
  *    }
- * 
+ *
  *    @Override
  *    public void stop(Context context) throws LifecycleException,
  *      InterruptedException {
- * 
+ *
  *      try {
  *        ...you stop services here.
  *      } catch (SomethingException) {
  *        lifecycleState = LifecycleState.ERROR;
  *      }
- * 
+ *
  *      lifecycleState = LifecycleState.STOP;
  *    }
- * 
+ *
  *    @Override
  *    public LifecycleState getLifecycleState() {
  *      return lifecycleState;
  *    }
- * 
+ *
  *  }
  * </code>
  */
@@ -90,7 +90,7 @@ public interface LifecycleAware {
    * Implementations should determine the result of any start logic and effect
    * the return value of {@link #getLifecycleState()} accordingly.
    * </p>
-   * 
+   *
    * @throws LifecycleException
    * @throws InterruptedException
    */
@@ -104,7 +104,7 @@ public interface LifecycleAware {
    * Implementations should determine the result of any stop logic and effect
    * the return value of {@link #getLifecycleState()} accordingly.
    * </p>
-   * 
+   *
    * @throws LifecycleException
    * @throws InterruptedException
    */

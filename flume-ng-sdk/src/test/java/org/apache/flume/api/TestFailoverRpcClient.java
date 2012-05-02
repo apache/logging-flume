@@ -37,10 +37,12 @@ public class TestFailoverRpcClient {
    *
    * @throws FlumeException
    * @throws EventDeliveryException
+   * @throws InterruptedException
    */
 
   @Test
-  public void testFailover() throws FlumeException, EventDeliveryException {
+  public void testFailover()
+      throws FlumeException, EventDeliveryException,InterruptedException {
     FailoverRpcClient client = null;
     Server server1 = RpcTestUtils.startServer(new OKAvroHandler());
     Server server2 = RpcTestUtils.startServer(new OKAvroHandler());
@@ -63,6 +65,7 @@ public class TestFailoverRpcClient {
     Assert.assertEquals(client.getLastConnectedServerAddress(),
         new InetSocketAddress("localhost", server1.getPort()));
     server1.close();
+    Thread.sleep(1000L); // wait a second for the close to occur
     events = new ArrayList<Event>();
     for (int i = 0; i < 50; i++) {
       events.add(EventBuilder.withBody("evt: " + i, Charset.forName("UTF8")));
@@ -71,6 +74,7 @@ public class TestFailoverRpcClient {
     Assert.assertEquals(new InetSocketAddress("localhost", server2.getPort()),
         client.getLastConnectedServerAddress());
     server2.close();
+    Thread.sleep(1000L); // wait a second for the close to occur
     client.append(EventBuilder.withBody("Had a sandwich?",
         Charset.forName("UTF8")));
     Assert.assertEquals(new InetSocketAddress("localhost", server3.getPort()),
@@ -78,6 +82,7 @@ public class TestFailoverRpcClient {
     // Bring server 2 back.
     Server server4 = RpcTestUtils.startServer(new OKAvroHandler(), s2Port);
     server3.close();
+    Thread.sleep(1000L); // wait a second for the close to occur
     events = new ArrayList<Event>();
     for (int i = 0; i < 50; i++) {
       events.add(EventBuilder.withBody("evt: " + i, Charset.forName("UTF8")));
@@ -94,7 +99,7 @@ public class TestFailoverRpcClient {
     Assert.assertEquals(new InetSocketAddress("localhost", s2Port),
         client.getLastConnectedServerAddress());
     server4.close();
-
+    Thread.sleep(1000L); // wait a second for the close to occur
     events = new ArrayList<Event>();
     for (int i = 0; i < 50; i++) {
       events.add(EventBuilder.withBody("evt: " + i, Charset.forName("UTF8")));
@@ -103,6 +108,7 @@ public class TestFailoverRpcClient {
     Assert.assertEquals(new InetSocketAddress("localhost", s1Port),
         client.getLastConnectedServerAddress());
     server5.close();
+    Thread.sleep(1000L); // wait a second for the close to occur
     Server server6 = RpcTestUtils.startServer(new OKAvroHandler(), s1Port);
     client
     .append(EventBuilder.withBody("Had a whole watermelon?",
@@ -111,6 +117,7 @@ public class TestFailoverRpcClient {
         client.getLastConnectedServerAddress());
 
     server6.close();
+    Thread.sleep(1000L); // wait a second for the close to occur
     Server server7 = RpcTestUtils.startServer(new OKAvroHandler(), s3Port);
     events = new ArrayList<Event>();
     for (int i = 0; i < 50; i++) {

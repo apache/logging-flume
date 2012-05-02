@@ -22,6 +22,8 @@ package org.apache.flume.channel.recoverable.memory;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.flume.Channel;
@@ -59,61 +61,125 @@ public class RecoverableMemoryChannel extends BasicChannelSemantics {
   public static final String WAL_MAX_LOGS_SIZE = "wal.maxLogsSize";
   public static final String WAL_MIN_RENTENTION_PERIOD = "wal.minRententionPeriod";
   public static final String WAL_WORKER_INTERVAL = "wal.workerInterval";
+  public static final String CAPACITY = "capacity";
+  public static final String KEEPALIVE = "keep-alive";
+
+  public static final int DEFAULT_CAPACITY = 100;
+  public static final int DEFAULT_KEEPALIVE = 3;
 
   private MemoryChannel memoryChannel = new MemoryChannel();
   private AtomicLong seqidGenerator = new AtomicLong(0);
   private WAL<RecoverableMemoryChannelEvent> wal;
+  /**
+   * MemoryChannel checks to ensure the capacity is available
+   * on commit. That is a problem because we need to write to
+   * disk before we commit the data to MemoryChannel. As such
+   * we keep track of capacity ourselves.
+   */
+  private Semaphore queueRemaining;
+  private int capacity;
+  private int keepAlive;
+  private volatile boolean open;
+
+  public RecoverableMemoryChannel() {
+    open = false;
+  }
 
   @Override
   public void configure(Context context) {
     memoryChannel.configure(context);
-
-    String homePath = System.getProperty("user.home").replace('\\', '/');
-    String dataDir = context.getString(WAL_DATA_DIR, homePath + "/.flume/recoverable-memory-channel");
-    if(wal != null) {
-      try {
-        wal.close();
-      } catch (IOException e) {
-        LOG.error("Error closing existing wal during reconfigure", e);
-      }
+    int capacity = context.getInteger(CAPACITY, DEFAULT_CAPACITY);
+    if(queueRemaining == null) {
+      queueRemaining = new Semaphore(capacity, true);
+    } else if(capacity > this.capacity) {
+      // capacity increase
+      queueRemaining.release(capacity - this.capacity);
+    } else if(capacity < this.capacity) {
+      queueRemaining.acquireUninterruptibly(this.capacity - capacity);
     }
+    this.capacity = capacity;
+    keepAlive = context.getInteger(KEEPALIVE, DEFAULT_KEEPALIVE);
     long rollSize = context.getLong(WAL_ROLL_SIZE, WAL.DEFAULT_ROLL_SIZE);
     long maxLogsSize = context.getLong(WAL_MAX_LOGS_SIZE, WAL.DEFAULT_MAX_LOGS_SIZE);
-    long minRententionPeriod = context.getLong(WAL_MIN_RENTENTION_PERIOD, WAL.DEFAULT_MIN_LOG_RENTENTION_PERIOD);
+    long minLogRetentionPeriod = context.getLong(WAL_MIN_RENTENTION_PERIOD, WAL.DEFAULT_MIN_LOG_RENTENTION_PERIOD);
     long workerInterval = context.getLong(WAL_WORKER_INTERVAL, WAL.DEFAULT_WORKER_INTERVAL);
-    try {
-      wal = new WAL<RecoverableMemoryChannelEvent>(new File(dataDir),
-          RecoverableMemoryChannelEvent.class, rollSize, maxLogsSize,
-          minRententionPeriod, workerInterval);
-    } catch (IOException e) {
-      Throwables.propagate(e);
+    if(wal == null) {
+      String homePath = System.getProperty("user.home").replace('\\', '/');
+      String dataDir = context.getString(WAL_DATA_DIR, homePath + "/.flume/recoverable-memory-channel");
+      try {
+        wal = new WAL<RecoverableMemoryChannelEvent>(new File(dataDir),
+            RecoverableMemoryChannelEvent.class, rollSize, maxLogsSize,
+            minLogRetentionPeriod, workerInterval);
+      } catch (IOException e) {
+        Throwables.propagate(e);
+      }
+    } else {
+      wal.setRollSize(rollSize);
+      wal.setMaxLogsSize(maxLogsSize);
+      wal.setMinLogRetentionPeriod(minLogRetentionPeriod);
+      wal.setWorkerInterval(workerInterval);
+      LOG.warn(this.getClass().getSimpleName() + " only supports " +
+          "partial reconfiguration.");
     }
   }
 
   @Override
   public synchronized void start() {
+    LOG.info("Starting " + this);
     try {
       WALReplayResult<RecoverableMemoryChannelEvent> results = wal.replay();
       Preconditions.checkArgument(results.getSequenceID() >= 0);
       LOG.info("Replay SequenceID " + results.getSequenceID());
       seqidGenerator.set(results.getSequenceID());
-      Transaction transaction = memoryChannel.getTransaction();
-      transaction.begin();
-      LOG.info("Replay Events " + results.getResults().size());
+      int numResults = results.getResults().size();
+      Preconditions.checkState(numResults <= capacity, "Capacity " + capacity +
+          ", but we need to replay " + numResults);
+      LOG.info("Replay Events " + numResults);
       for(WALEntry<RecoverableMemoryChannelEvent> entry : results.getResults()) {
-        memoryChannel.put(entry.getData());
         seqidGenerator.set(Math.max(entry.getSequenceID(),seqidGenerator.get()));
       }
-      transaction.commit();
-      transaction.close();
+      for(WALEntry<RecoverableMemoryChannelEvent> entry : results.getResults()) {
+        Transaction transaction = null;
+        try {
+          transaction = memoryChannel.getTransaction();
+          transaction.begin();
+          memoryChannel.put(entry.getData());
+          transaction.commit();
+        } catch(Exception e) {
+          if(transaction != null) {
+            try {
+              transaction.rollback();
+            } catch(Exception ex) {
+              LOG.info("Error during rollback", ex);
+            }
+          }
+          Throwables.propagate(e);
+        } catch(Error e) {
+          if(transaction != null) {
+            try {
+              transaction.rollback();
+            } catch(Exception ex) {
+              LOG.info("Error during rollback", ex);
+            }
+          }
+          throw e;
+        } finally {
+          if(transaction != null) {
+            transaction.close();
+          }
+        }
+      }
     } catch (IOException e) {
       Throwables.propagate(e);
     }
     super.start();
+    open = true;
   }
 
   @Override
   public synchronized void stop() {
+    open = false;
+    LOG.info("Stopping " + this);
     try {
       close();
     } catch (IOException e) {
@@ -124,7 +190,7 @@ public class RecoverableMemoryChannel extends BasicChannelSemantics {
 
   @Override
   protected BasicTransactionSemantics createTransaction() {
-    return new FileBackedTransaction(this, memoryChannel);
+    return new RecoverableMemoryTransaction(this, memoryChannel);
   }
 
   private void commitEvents(List<RecoverableMemoryChannelEvent> events)
@@ -155,17 +221,21 @@ public class RecoverableMemoryChannel extends BasicChannelSemantics {
    * An implementation of {@link Transaction} for {@link RecoverableMemoryChannel}s.
    * </p>
    */
-  private static class FileBackedTransaction extends BasicTransactionSemantics {
+  private static class RecoverableMemoryTransaction extends BasicTransactionSemantics {
 
     private Transaction transaction;
     private MemoryChannel memoryChannel;
-    private RecoverableMemoryChannel fileChannel;
+    private RecoverableMemoryChannel channel;
     private List<Long> sequenceIds = Lists.newArrayList();
     private List<RecoverableMemoryChannelEvent> events = Lists.newArrayList();
-    private FileBackedTransaction(RecoverableMemoryChannel fileChannel, MemoryChannel memoryChannel) {
-      this.fileChannel = fileChannel;
+    private int takes;
+
+    private RecoverableMemoryTransaction(RecoverableMemoryChannel channel,
+        MemoryChannel memoryChannel) {
+      this.channel = channel;
       this.memoryChannel = memoryChannel;
       this.transaction = this.memoryChannel.getTransaction();
+      this.takes = 0;
     }
     @Override
     protected void doBegin() throws InterruptedException {
@@ -173,16 +243,27 @@ public class RecoverableMemoryChannel extends BasicChannelSemantics {
     }
     @Override
     protected void doPut(Event event) throws InterruptedException {
-      RecoverableMemoryChannelEvent sequencedEvent = new RecoverableMemoryChannelEvent(event, fileChannel.nextSequenceID());
+      if(!channel.open) {
+        throw new ChannelException("Channel not open");
+      }
+      if(!channel.queueRemaining.tryAcquire(channel.keepAlive, TimeUnit.SECONDS)) {
+        throw new ChannelException("Cannot acquire capacity");
+      }
+      RecoverableMemoryChannelEvent sequencedEvent =
+          new RecoverableMemoryChannelEvent(event, channel.nextSequenceID());
       memoryChannel.put(sequencedEvent);
       events.add(sequencedEvent);
     }
 
     @Override
     protected Event doTake() throws InterruptedException {
+      if(!channel.open) {
+        throw new ChannelException("Channel not open");
+      }
       RecoverableMemoryChannelEvent event = (RecoverableMemoryChannelEvent)memoryChannel.take();
       if(event != null) {
         sequenceIds.add(event.sequenceId);
+        takes++;
         return event.event;
       }
       return null;
@@ -190,27 +271,32 @@ public class RecoverableMemoryChannel extends BasicChannelSemantics {
 
     @Override
     protected void doCommit() throws InterruptedException {
+      if(!channel.open) {
+        throw new ChannelException("Channel not open");
+      }
       if(sequenceIds.size() > 0) {
         try {
-          fileChannel.commitSequenceID(sequenceIds);
+          channel.commitSequenceID(sequenceIds);
         } catch (IOException e) {
           throw new ChannelException("Unable to commit", e);
         }
       }
       if(!events.isEmpty()) {
         try {
-          fileChannel.commitEvents(events);
+          channel.commitEvents(events);
         } catch (IOException e) {
           throw new ChannelException("Unable to commit", e);
         }
       }
       transaction.commit();
+      channel.queueRemaining.release(takes);
     }
 
     @Override
     protected void doRollback() throws InterruptedException {
       sequenceIds.clear();
       events.clear();
+      channel.queueRemaining.release(events.size());
       transaction.rollback();
     }
 

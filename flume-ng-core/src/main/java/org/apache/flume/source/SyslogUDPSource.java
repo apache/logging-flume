@@ -91,6 +91,7 @@ public class SyslogUDPSource extends AbstractSource
     final syslogHandler handler = new syslogHandler();
     handler.setFormater(formaterProp);
     serverBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
+      @Override
       public ChannelPipeline getPipeline() {
        return Channels.pipeline(handler);
       }

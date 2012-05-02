@@ -19,7 +19,6 @@
 
 package org.apache.flume.sink;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.apache.flume.Channel;

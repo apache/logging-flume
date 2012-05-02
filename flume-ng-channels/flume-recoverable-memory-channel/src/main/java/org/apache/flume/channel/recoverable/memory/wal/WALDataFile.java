@@ -38,10 +38,10 @@ import com.google.common.collect.Lists;
 class WALDataFile<T extends Writable> {
 
   private static final int VERSION = 1;
-  
+
   private static final int RECORD_TYPE_EVENT = 1;
   private static final int RECORD_TYPE_COMMIT = 2;
-  
+
   static class Reader<T extends Writable> implements Closeable {
     Class<T> clazz;
     DataInputStream input;
@@ -78,7 +78,7 @@ class WALDataFile<T extends Writable> {
           // would have gotten an exception and retried or locally
           // stored the batch for resending later
           return null;
-        }        
+        }
       }
     }
 
@@ -118,7 +118,7 @@ class WALDataFile<T extends Writable> {
       // if this is successful, the events have been
       // successfully persisted and will be replayed
       // in the case of a crash
-      dataOutput.writeInt(RECORD_TYPE_COMMIT); 
+      dataOutput.writeInt(RECORD_TYPE_COMMIT);
       flush(false);
     }
 

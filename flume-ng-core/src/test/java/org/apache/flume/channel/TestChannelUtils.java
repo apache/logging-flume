@@ -79,8 +79,10 @@ public class TestChannelUtils
   private void testTransact(final TestChannel.Mode mode,
       Class<? extends Throwable> exceptionClass, final Runnable test) {
     testException(exceptionClass, new Runnable() {
+        @Override
         public void run() {
           ChannelUtils.transact(channel, new Runnable() {
+              @Override
               public void run() {
                 testMode(mode, test);
               }
@@ -95,6 +97,7 @@ public class TestChannelUtils
   private void testTransact(TestChannel.Mode mode,
       Class<? extends Throwable> exceptionClass) {
     testTransact(mode, exceptionClass, new Runnable() {
+        @Override
         public void run() {
           channel.put(events.get(0));
         }
@@ -120,8 +123,10 @@ public class TestChannelUtils
   public void testInterrupt() throws Exception {
     testTransact(TestChannel.Mode.SLEEP, InterruptedException.class,
         new Runnable() {
+          @Override
           public void run() {
             interruptTest(new Runnable() {
+                @Override
                 public void run() {
                   channel.put(events.get(0));
                 }

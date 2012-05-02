@@ -45,29 +45,29 @@ import com.google.common.io.Files;
  * Provides Write Ahead Log functionality for a generic Writable. All entries
  * stored in the WAL must be assigned a unique increasing sequence id. WAL
  * files will be removed when the following condition holds (defaults):
- * 
+ *
  * At least 512MB of WAL's exist, the file in question is greater than
  * five minutes old and the largest committed sequence id is greater
  * than the largest sequence id in the file.
- * 
+ *
  * <pre>
  *  WAL wal = new WAL(path, Writable.class);
  *  wal.writeEvent(event, 1);
  *  wal.writeEvent(event, 2);
  *  wal.writeSequenceID(1);
  *  wal.writeEvent(event, 3);
- * 
+ *
  *  System crashes or shuts down...
- * 
+ *
  *  WAL wal = new WAL(path, Writable.class);
  *  [Event 2, Event 3]  = wal.replay();
  * </pre>
- * 
+ *
  * WAL files will be created in the specified data directory. They will be
  * rolled at 64MB and deleted five minutes after they are no longer needed.
  * that is the current sequence id) is greater than the greatest sequence id
  *  in the file.
- * 
+ *
  * The only synchronization this class does is around rolling log files. When
  * a roll of the log file is required, the thread which discovers this
  * will execute the roll. Any threads calling a write*() method during
@@ -87,10 +87,10 @@ public class WAL<T extends Writable> implements Closeable {
   private AtomicLong largestCommitedSequenceID = new AtomicLong(0);
   private volatile boolean rollRequired;
   private volatile boolean rollInProgress;
-  private long rollSize;
-  private long maxLogsSize;
-  private long minLogRentionPeriod;
-  private long workerInterval;
+  private volatile long rollSize;
+  private volatile long maxLogsSize;
+  private volatile long minLogRetentionPeriod;
+  private volatile long workerInterval;
   private int numReplaySequenceIDOverride;
   private Worker backgroundWorker;
 
@@ -120,7 +120,7 @@ public class WAL<T extends Writable> implements Closeable {
   /**
    * Creates a wal object with no defaults, using the specified parameters in
    * the constructor for operation.
-   * 
+   *
    * @param path
    * @param clazz
    * @param rollSize
@@ -139,7 +139,7 @@ public class WAL<T extends Writable> implements Closeable {
     this.path = path;
     this.rollSize = rollSize;
     this.maxLogsSize = maxLogsSize;
-    this.minLogRentionPeriod = minLogRentionPeriod;
+    this.minLogRetentionPeriod = minLogRentionPeriod;
     this.workerInterval = workerInterval;
 
     StringBuffer buffer = new StringBuffer();
@@ -168,9 +168,7 @@ public class WAL<T extends Writable> implements Closeable {
     createOrDie(sequenceIDPath);
     this.clazz = clazz;
 
-    backgroundWorker = new Worker(this.workerInterval, this.maxLogsSize,
-        this.minLogRentionPeriod, largestCommitedSequenceID,
-        fileLargestSequenceIDMap);
+    backgroundWorker = new Worker(this);
     backgroundWorker.setName("WAL-Worker-" + path.getAbsolutePath());
     backgroundWorker.setDaemon(true);
     backgroundWorker.start();
@@ -225,7 +223,6 @@ public class WAL<T extends Writable> implements Closeable {
         return null;
       }
     });
-
     // then estimate the size of the array
     // needed to hold all the sequence ids
     int baseSize = WALEntry.getBaseSize();
@@ -240,6 +237,7 @@ public class WAL<T extends Writable> implements Closeable {
     readFiles(sequenceIDPath, new Function<File, Void>() {
       @Override
       public Void apply(File input) {
+        LOG.info("Replaying " + input);
         WALDataFile.Reader<NullWritable> reader = null;
         int localIndex = index.get();
         try {
@@ -282,6 +280,7 @@ public class WAL<T extends Writable> implements Closeable {
     readFiles(dataPath, new Function<File, Void>() {
       @Override
       public Void apply(File input) {
+        LOG.info("Replaying " + input);
         WALDataFile.Reader<T> reader = null;
         try {
           reader = new WALDataFile.Reader<T>(input, dataClazz);
@@ -316,8 +315,10 @@ public class WAL<T extends Writable> implements Closeable {
     synchronized (this.fileLargestSequenceIDMap) {
       this.fileLargestSequenceIDMap.clear();
       this.fileLargestSequenceIDMap.putAll(fileLargestSequenceIDMap);
+      LOG.info("SequenceIDMap " + fileLargestSequenceIDMap);
     }
     largestCommitedSequenceID.set(sequenceID.get());
+    LOG.info("Replay complete: LargestCommitedSequenceID = " + largestCommitedSequenceID.get());
     return new WALReplayResult<T>(entries, largestCommitedSequenceID.get());
   }
 
@@ -438,19 +439,10 @@ public class WAL<T extends Writable> implements Closeable {
   }
 
   private static class Worker extends Thread {
-    private long workerInterval;
-    private long maxLogsSize;
-    private long minLogRentionPeriod;
-    private AtomicLong largestSequenceID;
-    private Map<String, Long> fileLargestSequenceIDMap;
+    private WAL<? extends Writable> wal;
     private volatile boolean run = true;
-
-    public Worker(long workerInterval, long maxLogsSize,
-        long minLogRentionPeriod, AtomicLong largestSequenceID,
-        Map<String, Long> fileLargestSequenceIDMap) {
-      this.workerInterval = workerInterval;
-      this.largestSequenceID = largestSequenceID;
-      this.fileLargestSequenceIDMap = fileLargestSequenceIDMap;
+    public Worker(WAL<? extends Writable> wal) {
+      this.wal = wal;
     }
 
     @Override
@@ -459,7 +451,7 @@ public class WAL<T extends Writable> implements Closeable {
       while (run) {
         try {
           try {
-            Thread.sleep(workerInterval);
+            Thread.sleep(wal.workerInterval);
           } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
           }
@@ -468,19 +460,19 @@ public class WAL<T extends Writable> implements Closeable {
           }
           List<String> filesToRemove = Lists.newArrayList();
           long totalSize = 0;
-          synchronized (fileLargestSequenceIDMap) {
-            for (String key : fileLargestSequenceIDMap.keySet()) {
+          synchronized (wal.fileLargestSequenceIDMap) {
+            for (String key : wal.fileLargestSequenceIDMap.keySet()) {
               File file = new File(key);
               totalSize += file.length();
             }
-            if (totalSize >= maxLogsSize) {
-              for (String key : fileLargestSequenceIDMap.keySet()) {
+            if (totalSize >= wal.maxLogsSize) {
+              for (String key : wal.fileLargestSequenceIDMap.keySet()) {
                 File file = new File(key);
-                Long seqid = fileLargestSequenceIDMap.get(key);
-                long largestCommitedSeqID = largestSequenceID.get();
+                Long seqid = wal.fileLargestSequenceIDMap.get(key);
+                long largestCommitedSeqID = wal.largestCommitedSequenceID.get();
                 if (file.exists()
                     // has not been modified in 5 minutes
-                    && System.currentTimeMillis() - file.lastModified() > minLogRentionPeriod
+                    && System.currentTimeMillis() - file.lastModified() > wal.minLogRetentionPeriod
                     // current seqid is greater than the largest seqid in the file
                     && largestCommitedSeqID > seqid) {
                   filesToRemove.add(key);
@@ -489,7 +481,7 @@ public class WAL<T extends Writable> implements Closeable {
                 }
               }
               for (String key : filesToRemove) {
-                fileLargestSequenceIDMap.remove(key);
+                wal.fileLargestSequenceIDMap.remove(key);
               }
             }
           }
@@ -505,6 +497,23 @@ public class WAL<T extends Writable> implements Closeable {
       run = false;
       this.interrupt();
     }
+  }
+
+
+  public void setRollSize(long rollSize) {
+    this.rollSize = rollSize;
+  }
+
+  public void setMaxLogsSize(long maxLogsSize) {
+    this.maxLogsSize = maxLogsSize;
+  }
+
+  public void setMinLogRetentionPeriod(long minLogRetentionPeriod) {
+    this.minLogRetentionPeriod = minLogRetentionPeriod;
+  }
+
+  public void setWorkerInterval(long workerInterval) {
+    this.workerInterval = workerInterval;
   }
 
   /**

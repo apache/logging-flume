@@ -159,7 +159,8 @@ public class SequenceIDBuffer implements IndexedSortable {
       }
 
     }
-    return 0;
+    // default from VM source code
+    return Runtime.getRuntime().maxMemory();
   }
 
 
