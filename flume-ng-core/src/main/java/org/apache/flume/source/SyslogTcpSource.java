@@ -143,7 +143,7 @@ implements EventDrivenSource, Configurable {
     port = context.getInteger("port");
     host = context.getString("host");
     eventSize = context.getInteger("eventSize", SyslogUtils.DEFAULT_SIZE);
-    formaterProp = context.getSubProperties("format");
+    formaterProp = context.getSubProperties("format.");
   }
 
 }

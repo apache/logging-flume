@@ -129,7 +129,7 @@ public class SyslogUDPSource extends AbstractSource
     Configurables.ensureRequiredNonNull(context, "port");
     port = context.getInteger("port");
     host = context.getString("host");
-    formaterProp = context.getSubProperties("format");
+    formaterProp = context.getSubProperties("format.");
   }
 
 }
