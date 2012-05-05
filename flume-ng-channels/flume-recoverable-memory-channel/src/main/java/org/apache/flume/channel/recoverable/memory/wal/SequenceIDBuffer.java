@@ -18,41 +18,27 @@
  */
 package org.apache.flume.channel.recoverable.memory.wal;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
-import java.util.List;
 
+import org.apache.flume.tools.DirectMemoryUtils;
 import org.apache.hadoop.util.IndexedSortable;
 import org.apache.hadoop.util.QuickSort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 
 public class SequenceIDBuffer implements IndexedSortable {
-  private static final Logger LOG = LoggerFactory.getLogger(SequenceIDBuffer.class);
+  private static final Logger LOG =
+      LoggerFactory.getLogger(SequenceIDBuffer.class);
+  private static final int SIZE_OF_LONG = 8;
   private LongBuffer buffer;
   private ByteBuffer backingBuffer;
 
   public SequenceIDBuffer(int size) {
-    long directMemorySize = getDirectMemorySize();
-    int bytesRequired = size * 8;
-    if((long)bytesRequired > directMemorySize) {
-      LOG.warn("DirectMemorySize is " + directMemorySize +
-          " and we require " + bytesRequired + ", allocate will likely faily.");
-    }
-    try {
-      backingBuffer = ByteBuffer.allocateDirect(bytesRequired);
-    } catch(OutOfMemoryError e) {
-      LOG.error("DirectMemorySize is " + directMemorySize +
-          " and we required " + bytesRequired +
-          " via: -XX:MaxDirectMemorySize", e);
-      throw e;
-    }
+    int bytesRequired = size * SIZE_OF_LONG;
+    backingBuffer = DirectMemoryUtils.allocate(bytesRequired);
     buffer = backingBuffer.asLongBuffer();
   }
 
@@ -109,16 +95,12 @@ public class SequenceIDBuffer implements IndexedSortable {
 
   public void close() {
     try {
-      Preconditions.checkArgument(backingBuffer.isDirect(),
-          "buffer isn't direct!");
-      Method cleanerMethod = backingBuffer.getClass().getMethod("cleaner");
-      cleanerMethod.setAccessible(true);
-      Object cleaner = cleanerMethod.invoke(backingBuffer);
-      Method cleanMethod = cleaner.getClass().getMethod("clean");
-      cleanMethod.setAccessible(true);
-      cleanMethod.invoke(cleaner);
+      DirectMemoryUtils.clean(backingBuffer);
     } catch (Exception e) {
-      Throwables.propagate(e);
+      LOG.warn("Error cleaning up buffer", e);
+      if (LOG.isDebugEnabled()) {
+        Throwables.propagate(e);
+      }
     }
   }
 
@@ -126,43 +108,6 @@ public class SequenceIDBuffer implements IndexedSortable {
     QuickSort quickSort = new QuickSort();
     quickSort.sort(this, 0, size());
   }
-
-  /**
-   * @return the setting of -XX:MaxDirectMemorySize as a long. Returns 0 if
-   *         -XX:MaxDirectMemorySize is not set.
-   */
-
-  private static long getDirectMemorySize() {
-    RuntimeMXBean RuntimemxBean = ManagementFactory.getRuntimeMXBean();
-    List<String> arguments = RuntimemxBean.getInputArguments();
-    long multiplier = 1; //for the byte case.
-    for (String s : arguments) {
-      if (s.contains("-XX:MaxDirectMemorySize=")) {
-        String memSize = s.toLowerCase()
-            .replace("-xx:maxdirectmemorysize=", "").trim();
-
-        if (memSize.contains("k")) {
-          multiplier = 1024;
-        }
-
-        else if (memSize.contains("m")) {
-          multiplier = 1048576;
-        }
-
-        else if (memSize.contains("g")) {
-          multiplier = 1073741824;
-        }
-        memSize = memSize.replaceAll("[^\\d]", "");
-
-        long retValue = Long.parseLong(memSize);
-        return retValue * multiplier;
-      }
-
-    }
-    // default from VM source code
-    return Runtime.getRuntime().maxMemory();
-  }
-
 
   public static void main(String[] args) throws Exception {
     try {

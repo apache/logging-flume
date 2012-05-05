@@ -20,371 +20,375 @@
 package org.apache.flume.channel.file;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
+import org.apache.flume.Context;
 import org.apache.flume.Event;
-import org.apache.flume.Transaction;
-import org.apache.flume.channel.AbstractChannel;
+import org.apache.flume.channel.BasicChannelSemantics;
+import org.apache.flume.channel.BasicTransactionSemantics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 
 /**
  * <p>
  * A durable {@link Channel} implementation that uses the local file system for
  * its storage.
  * </p>
+ * <p>
+ * FileChannel works by writing all transactions to a set of directories
+ * specified in the configuration. Additionally, when a commit occurs
+ * the transaction is synced to disk. Pointers to events put on the
+ * channel are stored in memory. As such, each event on the queue
+ * will require 8 bytes of DirectMemory (non-heap). However, the channel
+ * will only allow a configurable number messages into the channel.
+ * The appropriate amount of direct memory for said capacity,
+ * must be allocated to the JVM via the JVM property: -XX:MaxDirectMemorySize
+ * </p>
+ * <br>
+ * <p>
+ * Memory Consumption:
+ * <ol>
+ * <li>200GB of data in queue at 100 byte messages: 16GB</li>
+ * <li>200GB of data in queue at 500 byte messages: 3.2GB</li>
+ * <li>200GB of data in queue at 1000 byte messages: 1.6GB</li>
+ * </ol>
+ * </p>
  */
-public class FileChannel extends AbstractChannel {
+public class FileChannel extends BasicChannelSemantics {
 
-  private static final Logger logger = LoggerFactory
+  private static final Logger LOG = LoggerFactory
       .getLogger(FileChannel.class);
 
-  private static ThreadLocal<FileBackedTransaction> currentTransaction = new ThreadLocal<FileBackedTransaction>();
+  private int capacity;
+  private int keepAlive;
+  private int transactionCapacity;
+  private long checkpointInterval;
+  private long maxFileSize;
+  private File checkpointDir;
+  private File[] dataDirs;
+  private Log log;
+  private boolean shutdownHookAdded;
+  private Thread shutdownHook;
+  private volatile boolean open;
+  private Semaphore queueRemaining;
+  private final ThreadLocal<FileBackedTransaction> transactions =
+      new ThreadLocal<FileBackedTransaction>();
 
-  private File directory;
-
-  private File openDirectory;
-  private File completeDirectory;
-  private boolean isInitialized;
-
-  private File currentOutputFile;
-  private boolean shouldRotate;
-
-  private void initialize() {
-    Preconditions.checkState(directory != null, "Directory must not be null");
-    Preconditions.checkState(directory.getParentFile().exists(),
-        "Directory %s must exist", directory.getParentFile());
-
-    logger.info("Initializing file channel directory:{}", directory);
-
-    openDirectory = new File(directory, "open");
-    completeDirectory = new File(directory, "complete");
-
-    if (!openDirectory.mkdirs()) {
-      throw new ChannelException("Unable to create open file directory:"
-          + openDirectory);
-    }
-
-    if (!completeDirectory.mkdirs()) {
-      throw new ChannelException("Unable to create complete file directory:"
-          + completeDirectory);
-    }
-
-    shouldRotate = false;
-    isInitialized = true;
-  }
+  /**
+   * Transaction IDs should unique within a file channel
+   * across JVM restarts.
+   */
+  private static final AtomicLong TRANSACTION_ID =
+      new AtomicLong(System.currentTimeMillis());
 
   @Override
-  public void put(Event event) throws ChannelException {
-    Preconditions.checkState(currentTransaction.get() != null,
-        "No transaction currently in progress");
+  public void configure(Context context) {
 
-    currentTransaction.get().put(event);
-  }
+    String homePath = System.getProperty("user.home").replace('\\', '/');
 
-  @Override
-  public Event take() throws ChannelException {
-    Preconditions.checkState(currentTransaction.get() != null,
-        "No transaction currently in progress");
+    String strCheckpointDir =
+        context.getString(FileChannelConfiguration.CHECKPOINT_DIR,
+            homePath + "/.flume/file-channel/checkpoint");
 
-    return currentTransaction.get().take();
-  }
+    String[] strDataDirs = context.getString(FileChannelConfiguration.DATA_DIRS,
+        homePath + "/.flume/file-channel/data").split(",");
 
-  @Override
-  public synchronized Transaction getTransaction() {
-    if (!isInitialized) {
-      /* This is a catch-all to ensure we initialize file system storage once. */
-      initialize();
+    if(checkpointDir == null) {
+      checkpointDir = new File(strCheckpointDir);
+    } else if(!checkpointDir.getAbsolutePath().
+        equals(new File(strCheckpointDir).getAbsolutePath())) {
+      LOG.warn("An attempt was made to change the checkpoint " +
+          "directory after start, this is not supported.");
     }
-
-    FileBackedTransaction tx = currentTransaction.get();
-
-    if (shouldRotate) {
-      currentOutputFile = null;
-    }
-
-    /*
-     * If there's no current transaction (which is stored in a threadlocal) OR
-     * its current state is CLOSED - which indicates the transaction is in a
-     * final state and unusable - we create a new transaction with the current
-     * output file and set the thread-local transaction holder to it.
-     */
-    if (tx == null || tx.state.equals(FileBackedTransaction.State.CLOSED)) {
-      FileBackedTransaction transaction = new FileBackedTransaction();
-
-      if (currentOutputFile == null) {
-        currentOutputFile = new File(openDirectory, Thread.currentThread()
-            .getId() + "-" + System.currentTimeMillis());
-
-        logger.debug("Using new output file:{}", currentOutputFile);
+    if(dataDirs == null) {
+      dataDirs = new File[strDataDirs.length];
+      for (int i = 0; i < strDataDirs.length; i++) {
+        dataDirs[i] = new File(strDataDirs[i]);
       }
-
-      transaction.currentOutputFile = currentOutputFile;
-
-      currentTransaction.set(transaction);
-
-      logger.debug("Created transaction:{} for channel:{}", transaction, this);
+    } else {
+      boolean changed = false;
+      if(dataDirs.length != strDataDirs.length) {
+        changed = true;
+      } else {
+        for (int i = 0; i < strDataDirs.length; i++) {
+          if(!dataDirs[i].getAbsolutePath().
+              equals(new File(strDataDirs[i]).getAbsolutePath())) {
+            changed = true;
+            break;
+          }
+        }
+      }
+      if(changed) {
+        LOG.warn("An attempt was made to change the data " +
+            "directories after start, this is not supported.");
+      }
     }
 
-    return currentTransaction.get();
-  }
+    int newCapacity = context.getInteger(FileChannelConfiguration.CAPACITY,
+        FileChannelConfiguration.DEFAULT_CAPACITY);
+    if(capacity > 0 && newCapacity != capacity) {
+      LOG.warn("Capacity of this channel cannot be sized on the fly due " +
+          "the requirement we have enough DirectMemory for the queue and " +
+          "downsizing of the queue cannot be guranteed due to the " +
+          "fact there maybe more items on the queue than the new capacity.");
+    } else {
+      capacity = newCapacity;
+    }
 
-  public File getDirectory() {
-    return directory;
-  }
+    keepAlive =
+        context.getInteger(FileChannelConfiguration.KEEP_ALIVE,
+            FileChannelConfiguration.DEFAULT_KEEP_ALIVE);
+    transactionCapacity =
+        context.getInteger(FileChannelConfiguration.TRANSACTION_CAPACITY,
+            FileChannelConfiguration.DEFAULT_TRANSACTION_CAPACITY);
 
-  public void setDirectory(File directory) {
-    this.directory = directory;
-  }
+    checkpointInterval =
+        context.getLong(FileChannelConfiguration.CHECKPOINT_INTERVAL,
+            FileChannelConfiguration.DEFAULT_CHECKPOINT_INTERVAL);
 
-  public File getOpenDirectory() {
-    return openDirectory;
-  }
+    // cannot be over FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE
+    maxFileSize = Math.min(
+        context.getLong(FileChannelConfiguration.MAX_FILE_SIZE,
+            FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE),
+            FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE);
 
-  public File getCompleteDirectory() {
-    return completeDirectory;
-  }
-
-  public boolean isInitialized() {
-    return isInitialized;
+    if(queueRemaining == null) {
+      queueRemaining = new Semaphore(capacity, true);
+    }
+    if(log != null) {
+      log.setCheckpointInterval(checkpointInterval);
+      log.setMaxFileSize(maxFileSize);
+    }
   }
 
   @Override
-  public String getName() {
-    // TODO Auto-generated method stub
-    return null;
+  public synchronized void start() {
+    LOG.info("Starting FileChannel with dataDir "  + Arrays.toString(dataDirs));
+    try {
+      log = new Log(checkpointInterval, maxFileSize, capacity,
+          checkpointDir, dataDirs);
+      log.replay();
+    } catch (IOException e) {
+      Throwables.propagate(e);
+    }
+    open = true;
+    boolean error = true;
+    try {
+      int depth = getDepth();
+      Preconditions.checkState(queueRemaining.tryAcquire(depth),
+          "Unable to acquire " + depth + " permits");
+      LOG.info("Queue Size after replay: " + depth);
+      // shutdown hook flushes all data to disk and closes
+      // file descriptors along with setting all closed flags
+      if(!shutdownHookAdded) {
+        shutdownHookAdded = true;
+        final FileChannel fileChannel = this;
+        LOG.info("Adding shutdownhook for " + fileChannel);
+        shutdownHook = new Thread() {
+          @Override
+          public void run() {
+            String desc = Arrays.toString(fileChannel.dataDirs);
+            LOG.info("Closing FileChannel " + desc);
+            try {
+              fileChannel.close();
+            } catch (Exception e) {
+              LOG.error("Error closing fileChannel " + desc, e);
+            }
+          }
+        };
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
+      }
+      error = false;
+    } finally {
+      if(error) {
+        open = false;
+      }
+    }
+    super.start();
+  }
+
+  @Override
+  public synchronized void stop() {
+    LOG.info("Stopping FileChannel with dataDir " +  Arrays.toString(dataDirs));
+    try {
+      if(shutdownHookAdded && shutdownHook != null) {
+        Runtime.getRuntime().removeShutdownHook(shutdownHook);
+        shutdownHookAdded = false;
+        shutdownHook = null;
+      }
+    } finally {
+      close();
+    }
+    super.stop();
+  }
+
+  @Override
+  protected BasicTransactionSemantics createTransaction() {
+    Preconditions.checkState(open, "Channel closed");
+    FileBackedTransaction trans = transactions.get();
+    if(trans != null && !trans.isClosed()) {
+      Preconditions.checkState(false,
+          "Thread has transaction which is still open: " +
+              trans.getStateAsString());
+    }
+    trans = new FileBackedTransaction(log, TRANSACTION_ID.incrementAndGet(),
+        transactionCapacity, keepAlive, queueRemaining);
+    transactions.set(trans);
+    return trans;
+  }
+
+  int getDepth() {
+    Preconditions.checkState(open, "Channel closed");
+    Preconditions.checkNotNull(log, "log");
+    FlumeEventQueue queue = log.getFlumeEventQueue();
+    Preconditions.checkNotNull(queue, "queue");
+    return queue.size();
+  }
+  void close() {
+    if(open) {
+      open = false;
+      log.close();
+      log = null;
+      queueRemaining = null;
+    }
   }
 
   /**
-   * <p>
-   * An implementation of {@link Transaction} for {@link FileChannel}s.
-   * </p>
+   * Transaction backed by a file. This transaction supports either puts
+   * or takes but not both.
    */
-  public static class FileBackedTransaction implements Transaction {
-
-    private String transactionId;
-
-    private List<Event> readEvents;
-    private List<Event> writeEvents;
-
-    private File currentOutputFile;
-
-    private FileInputStream inputStream;
-    private FileOutputStream outputStream;
-
-    private State state;
-    private boolean readInitialized;
-    private boolean writeInitialized;
-
-    public FileBackedTransaction() {
-      transactionId = Thread.currentThread().getId() + "-"
-          + System.currentTimeMillis();
-
-      state = State.NEW;
-      readInitialized = false;
-      writeInitialized = false;
+  static class FileBackedTransaction extends BasicTransactionSemantics {
+    private final LinkedBlockingDeque<FlumeEventPointer> takeList;
+    private final LinkedBlockingDeque<FlumeEventPointer> putList;
+    private final long transactionID;
+    private final int keepAlive;
+    private final Log log;
+    private final FlumeEventQueue queue;
+    private final Semaphore queueRemaining;
+    public FileBackedTransaction(Log log, long transactionID,
+        int transCapacity, int keepAlive, Semaphore queueRemaining) {
+      this.log = log;
+      queue = log.getFlumeEventQueue();
+      this.transactionID = transactionID;
+      this.keepAlive = keepAlive;
+      this.queueRemaining = queueRemaining;
+      putList = new LinkedBlockingDeque<FlumeEventPointer>(transCapacity);
+      takeList = new LinkedBlockingDeque<FlumeEventPointer>(transCapacity);
     }
-
-    /**
-     * <p>
-     * Initializes the input (i.e. {@code take()}) support in this transaction.
-     * </p>
-     * <p>
-     * Any transaction may support reads, writes, or a combination thereof. In
-     * order to consume the least amount of resources possible, initialization
-     * of resources are deferred until the first read ({@code take()} or write (
-     * {@code put()}) is performed.
-     * </p>
-     * <p>
-     */
-    private void initializeInput() {
-      readEvents = new LinkedList<Event>();
-
-      readInitialized = true;
+    private boolean isClosed() {
+      return State.CLOSED.equals(getState());
     }
-
-    /**
-     * <p>
-     * Initializes the output (i.e. {@code put()}) support in this transaction.
-     * </p>
-     * <p>
-     * Any transaction may support reads, writes, or a combination thereof. In
-     * order to consume the least amount of resources possible, initialization
-     * of resources are deferred until the first read ({@code take()} or write (
-     * {@code put()}) is performed.
-     * </p>
-     * <p>
-     */
-    private void initializeOutput() {
-      writeEvents = new LinkedList<Event>();
-
+    private String getStateAsString() {
+      return String.valueOf(getState());
+    }
+    @Override
+    protected void doPut(Event event) throws InterruptedException {
+      if(putList.remainingCapacity() == 0) {
+        throw new ChannelException("Put queue for FileBackedTransaction " +
+            "of capacity " + putList.size() + " full, consider " +
+            "committing more frequently, increasing capacity or " +
+            "increasing thread count");
+      }
+      if(!queueRemaining.tryAcquire(keepAlive, TimeUnit.SECONDS)) {
+        throw new ChannelException("Cannot acquire capacity");
+      }
       try {
-        outputStream = new FileOutputStream(currentOutputFile, true);
-      } catch (FileNotFoundException e) {
-        throw new ChannelException("Unable to open new output file:"
-            + currentOutputFile, e);
+        FlumeEventPointer ptr = log.put(transactionID, event);
+        Preconditions.checkState(putList.offer(ptr));
+      } catch (IOException e) {
+        throw new ChannelException("Put failed due to IO error", e);
       }
-
-      writeInitialized = true;
     }
 
     @Override
-    public void begin() {
-      if (state.equals(State.CLOSED)) {
-        throw new IllegalStateException(
-            "Illegal to begin a transaction with state:" + state);
+    protected Event doTake() throws InterruptedException {
+      if(takeList.remainingCapacity() == 0) {
+        throw new ChannelException("Take list for FileBackedTransaction, capacity " +
+            takeList.size() + " full, consider committing more frequently, " +
+            "increasing capacity, or increasing thread count");
       }
-
-      logger.debug("Beginning a new transaction");
-
-      state = State.OPEN;
-    }
-
-    @Override
-    public void commit() {
-      Preconditions.checkState(state.equals(State.OPEN),
-          "Attempt to commit a transaction that isn't open (state:" + state
-              + ")");
-
-      logger.debug("Committing current transaction");
-
-      if (writeInitialized) {
-        logger.debug("Flushing {} writes", writeEvents.size());
-
+      FlumeEventPointer ptr = queue.removeHead();
+      if(ptr != null) {
         try {
-          for (Event event : writeEvents) {
-            // TODO: Serialize event properly (avro?)
-            outputStream.write((event.toString() + "\n").getBytes());
-            outputStream.flush();
-          }
-
-          // TODO: Write checksum.
-          outputStream.write("---\n".getBytes());
-
-          writeEvents.clear();
+          // first add to takeList so that if write to disk
+          // fails rollback actually does it's work
+          Preconditions.checkState(takeList.offer(ptr));
+          log.take(transactionID, ptr); // write take to disk
+          Event event = log.get(ptr);
+          return event;
         } catch (IOException e) {
-          throw new ChannelException("Unable to write to output file", e);
+          throw new ChannelException("Take failed due to IO error", e);
         }
       }
-
-      if (readInitialized) {
-        logger.debug("Freeing {} consumed events", readEvents.size());
-
-        // TODO: Implement me!
-      }
-
-      state = State.COMPLETED;
-    }
-
-    @Override
-    public void rollback() {
-      Preconditions.checkState(state.equals(State.OPEN),
-          "Attempt to rollback a transaction that isn't open (state:" + state
-              + ")");
-
-      logger.debug("Rolling back current transaction");
-
-      if (writeInitialized) {
-        writeEvents.clear();
-      }
-
-      if (readInitialized) {
-        readEvents.clear();
-      }
-
-      state = State.COMPLETED;
-    }
-
-    @Override
-    public void close() {
-      Preconditions
-          .checkState(
-              state.equals(State.COMPLETED),
-              "Attempt to close a transaction that isn't completed - you must either commit or rollback (state:"
-                  + state + ")");
-
-      logger.debug("Closing current transaction:{}", this);
-
-      if (writeInitialized) {
-        try {
-          outputStream.close();
-        } catch (IOException e) {
-          throw new ChannelException("Unable to close current output file", e);
-        }
-      }
-
-      if (readInitialized) {
-        // TODO: Implement me!
-      }
-
-      state = State.CLOSED;
-    }
-
-    private void put(Event event) {
-      if (!writeInitialized) {
-        initializeOutput();
-      }
-
-      writeEvents.add(event);
-    }
-
-    private Event take() {
-      if (!readInitialized) {
-        initializeInput();
-      }
-
-      // TODO: Implement me!
       return null;
     }
 
     @Override
-    public String toString() {
-      StringBuilder builder = new StringBuilder(
-          "FileTransaction: { transactionId:").append(transactionId)
-          .append(" state:").append(state);
-
-      if (readInitialized) {
-        builder.append(" read-enabled: { readBuffer:")
-            .append(readEvents.size()).append(" }");
+    protected void doCommit() throws InterruptedException {
+      int puts = putList.size();
+      int takes = takeList.size();
+      if(puts > 0) {
+        Preconditions.checkState(takes == 0);
+        synchronized (queue) {
+          while(!putList.isEmpty()) {
+            if(!queue.addTail(putList.removeFirst())) {
+              StringBuilder msg = new StringBuilder();
+              msg.append("Queue add failed, this shouldn't be able to ");
+              msg.append("happen. A portion of the transaction has been ");
+              msg.append("added to the queue but the remaining portion ");
+              msg.append("cannot be added. Those messages will be consumed ");
+              msg.append("despite this transaction failing. Please report.");
+              LOG.error(msg.toString());
+              Preconditions.checkState(false, msg.toString());
+            }
+          }
+        }
+        try {
+          log.commitPut(transactionID);
+        } catch (IOException e) {
+          throw new ChannelException("Commit failed due to IO error", e);
+        }
+      } else if(takes > 0) {
+        try {
+          log.commitTake(transactionID);
+        } catch (IOException e) {
+          throw new ChannelException("Commit failed due to IO error", e);
+        }
+        queueRemaining.release(takes);
       }
-
-      if (writeInitialized) {
-        builder.append(" write-enabled: { writeBuffer:")
-            .append(writeEvents.size()).append(" currentOutputFile:")
-            .append(currentOutputFile).append(" }");
-      }
-
-      builder.append(" }");
-
-      return builder.toString();
+      putList.clear();
+      takeList.clear();
     }
 
-    /**
-     * <p>
-     * The state of the {@link Transaction} to which it belongs.
-     * </p>
-     * <dl>
-     * <dt>NEW</dt>
-     * <dd>A newly created transaction that has not yet begun.</dd>
-     * <dt>OPEN</dt>
-     * <dd>A transaction that is open. It is permissible to commit or rollback.</dd>
-     * <dt>COMPLETED</dt>
-     * <dd>This transaction has been committed or rolled back. It is illegal to
-     * perform any further operations beyond closing it.</dd>
-     * <dt>CLOSED</dt>
-     * <dd>A closed transaction. No further operations are permitted.</dd>
-     */
-    private static enum State {
-      NEW, OPEN, COMPLETED, CLOSED
+    @Override
+    protected void doRollback() throws InterruptedException {
+      int puts = putList.size();
+      int takes = takeList.size();
+      if(takes > 0) {
+        Preconditions.checkState(puts == 0);
+        while(!takeList.isEmpty()) {
+          Preconditions.checkState(queue.addHead(takeList.removeLast()),
+              "Queue add failed, this shouldn't be able to happen");
+        }
+      }
+      queueRemaining.release(puts);
+      try {
+        log.rollback(transactionID);
+      } catch (IOException e) {
+        throw new ChannelException("Commit failed due to IO error", e);
+      }
+      putList.clear();
+      takeList.clear();
     }
 
   }
