@@ -306,7 +306,7 @@ public class PropertiesFileConfigurationProvider extends
         channels.add(conf.getChannels().get(chName));
       }
 
-      Map<String, String> selectorConfig = context.getSubProperties("selector");
+      Map<String, String> selectorConfig = context.getSubProperties("selector" + ".");
 
       ChannelSelector selector = ChannelSelectorFactory.create(
           channels, selectorConfig);
