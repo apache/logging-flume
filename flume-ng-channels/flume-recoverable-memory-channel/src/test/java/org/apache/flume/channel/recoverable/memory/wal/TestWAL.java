@@ -190,7 +190,7 @@ public class TestWAL {
     wal.close();
     wal = new WAL<Text>(dataDir, Text.class);
     WALReplayResult<Text> result = wal.replay();
-    Assert.assertEquals(2000, result.getSequenceID());
+    Assert.assertEquals(1000, result.getSequenceID());
     List<String> actual = toStringList(result.getResults());
     // we don't know what order the items threads will be able to
     // append to the wal, so sort to the lists to make then sensible
