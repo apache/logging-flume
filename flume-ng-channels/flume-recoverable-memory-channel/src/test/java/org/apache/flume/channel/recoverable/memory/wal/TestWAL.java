@@ -146,7 +146,7 @@ public class TestWAL {
 
   @Test
   public void testThreadedAppend() throws IOException, InterruptedException {
-    int numThreads = 20;
+    int numThreads = 10;
     final CountDownLatch startLatch = new CountDownLatch(numThreads);
     final CountDownLatch stopLatch = new CountDownLatch(numThreads);
     final AtomicLong seqid = new AtomicLong(0);
@@ -185,7 +185,7 @@ public class TestWAL {
       t.setDaemon(true);
       t.start();
     }
-    Assert.assertTrue(stopLatch.await(15, TimeUnit.SECONDS));
+    Assert.assertTrue(stopLatch.await(30, TimeUnit.SECONDS));
     Assert.assertEquals(Collections.EMPTY_LIST, errors);
     wal.close();
     wal = new WAL<Text>(dataDir, Text.class);
