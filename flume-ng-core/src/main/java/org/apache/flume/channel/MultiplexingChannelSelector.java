@@ -36,8 +36,8 @@ public class MultiplexingChannelSelector extends AbstractChannelSelector {
   public static final String CONFIG_MULTIPLEX_HEADER_NAME = "header";
   public static final String DEFAULT_MULTIPLEX_HEADER =
       "flume.selector.header";
-  public static final String CONFIG_PREFIX_MAPPING = "mapping";
-  public static final String CONFIG_PREFIX_DEFAULT = "default";
+  public static final String CONFIG_PREFIX_MAPPING = "mapping.";
+  public static final String CONFIG_DEFAULT_CHANNEL = "default";
   @SuppressWarnings("unused")
   private static final Logger LOG = LoggerFactory
     .getLogger(MultiplexingChannelSelector.class);
@@ -84,15 +84,14 @@ public class MultiplexingChannelSelector extends AbstractChannelSelector {
     }
 
     defaultChannels = getChannelListFromNames(
-        context.getString(CONFIG_PREFIX_DEFAULT),
-        channelNameMap);
+        context.getString(CONFIG_DEFAULT_CHANNEL), channelNameMap);
 
     if(defaultChannels.isEmpty()){
       throw new FlumeException("Default channel list empty");
     }
 
-    Map<String, String> mapConfig = context.getSubProperties(
-        CONFIG_PREFIX_MAPPING + ".");
+    Map<String, String> mapConfig =
+        context.getSubProperties(CONFIG_PREFIX_MAPPING);
 
     channelMapping = new HashMap<String, List<Channel>>();
 

@@ -22,13 +22,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.flume.Context;
+import org.apache.flume.conf.BasicConfigurationConstants;
 import org.apache.flume.conf.ComponentConfiguration;
 import org.apache.flume.conf.ComponentConfigurationFactory;
 import org.apache.flume.conf.ConfigurationException;
-import org.apache.flume.conf.FlumeConfiguration;
 
 public class SinkGroupConfiguration extends ComponentConfiguration {
-  private static final String PROCESSOR_PREFIX = "processor.";
   private Context processorContext;
   private List<String> sinks;
   private SinkProcessorConfiguration processorConf;
@@ -49,13 +48,14 @@ public class SinkGroupConfiguration extends ComponentConfiguration {
   @Override
   public void configure(Context context) throws ConfigurationException {
     super.configure(context);
-    sinks = Arrays.asList(context.getString("sinks").split("\\s+"));
-    Map<String, String> params = context.getSubProperties(PROCESSOR_PREFIX);
+    sinks = Arrays.asList(context.getString(
+        BasicConfigurationConstants.CONFIG_SINKS).split("\\s+"));
+    Map<String, String> params = context.getSubProperties(
+        BasicConfigurationConstants.CONFIG_SINK_PROCESSOR_PREFIX);
     processorContext = new Context();
     processorContext.putAll(params);
-    SinkProcessorType spType =
-        getKnownSinkProcessor(
-            processorContext.getString(FlumeConfiguration.CONF_TYPE));
+    SinkProcessorType spType = getKnownSinkProcessor(processorContext.getString(
+            BasicConfigurationConstants.CONFIG_TYPE));
 
     if (spType != null) {
       processorConf =

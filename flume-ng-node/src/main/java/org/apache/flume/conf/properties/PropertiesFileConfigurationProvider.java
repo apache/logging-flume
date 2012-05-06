@@ -39,16 +39,17 @@ import org.apache.flume.Source;
 import org.apache.flume.SourceRunner;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.ChannelSelectorFactory;
+import org.apache.flume.conf.BasicConfigurationConstants;
+import org.apache.flume.conf.ComponentConfiguration;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.conf.FlumeConfiguration;
+import org.apache.flume.conf.FlumeConfiguration.AgentConfiguration;
 import org.apache.flume.conf.channel.ChannelSelectorConfiguration;
 import org.apache.flume.conf.file.AbstractFileConfigurationProvider;
 import org.apache.flume.conf.file.SimpleNodeConfiguration;
 import org.apache.flume.conf.sink.SinkConfiguration;
 import org.apache.flume.conf.sink.SinkGroupConfiguration;
 import org.apache.flume.conf.source.SourceConfiguration;
-import org.apache.flume.conf.FlumeConfiguration.AgentConfiguration;
-import org.apache.flume.conf.ComponentConfiguration;
 import org.apache.flume.node.NodeConfiguration;
 import org.apache.flume.sink.DefaultSinkProcessor;
 import org.apache.flume.sink.SinkGroup;
@@ -256,7 +257,8 @@ public class PropertiesFileConfigurationProvider extends
     for (String ch : agentConf.getChannelContext().keySet()) {
       Context context = agentConf.getChannelContext().get(ch);
       Channel channel =
-          getChannelFactory().create(ch, context.getString("type"));
+          getChannelFactory().create(ch, context.getString(
+              BasicConfigurationConstants.CONFIG_TYPE));
       Configurables.configure(channel, context);
       conf.getChannels().put(ch, channel);
       LOGGER.info("created channel " + ch);
@@ -298,15 +300,17 @@ public class PropertiesFileConfigurationProvider extends
       Context context = sourceContexts.get(src);
       Source source =
           getSourceFactory().create(src,
-              context.getString("type"));
+              context.getString(BasicConfigurationConstants.CONFIG_TYPE));
       List<Channel> channels = new ArrayList<Channel>();
       Configurables.configure(source, context);
-      String[] channelNames = context.getString("channels").split("\\s+");
+      String[] channelNames = context.getString(
+          BasicConfigurationConstants.CONFIG_CHANNELS).split("\\s+");
       for (String chName : channelNames) {
         channels.add(conf.getChannels().get(chName));
       }
 
-      Map<String, String> selectorConfig = context.getSubProperties("selector" + ".");
+      Map<String, String> selectorConfig = context.getSubProperties(
+          BasicConfigurationConstants.CONFIG_SOURCE_CHANNELSELECTOR_PREFIX);
 
       ChannelSelector selector = ChannelSelectorFactory.create(
           channels, selectorConfig);
@@ -339,10 +343,12 @@ public class PropertiesFileConfigurationProvider extends
     Map<String, Context> sinkContexts = agentConf.getSinkContext();
     for (String sinkName : sinkContexts.keySet()) {
       Context context = sinkContexts.get(sinkName);
-      Sink sink = getSinkFactory().create(sinkName, context.getString("type"));
+      Sink sink = getSinkFactory().create(sinkName, context.getString(
+          BasicConfigurationConstants.CONFIG_TYPE));
       Configurables.configure(sink, context);
 
-      sink.setChannel(conf.getChannels().get(context.getString("channel")));
+      sink.setChannel(conf.getChannels().get(context.getString(
+          BasicConfigurationConstants.CONFIG_CHANNEL)));
       sinks.put(sinkName, sink);
     }
 

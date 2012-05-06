@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
@@ -71,12 +72,19 @@ public class Context {
    * { key = value}
    * </code>
    *
+   * <b>Note:</b> The <tt>prefix</tt> must end with a period character. If not
+   * this method will raise an IllegalArgumentException.
+   *
    * @param prefix key prefix to find and remove from keys in resulting map
    * @return map with keys which matched prefix with prefix removed from
    *   keys in resulting map. If no keys are matched, the returned map is
    *   empty
+   * @throws IllegalArguemntException if the given prefix does not end with
+   *   a period character.
    */
   public ImmutableMap<String, String> getSubProperties(String prefix) {
+    Preconditions.checkArgument(prefix.endsWith("."),
+        "The given prefix does not end with a period (" + prefix + ")");
     Map<String, String> result = Maps.newHashMap();
     synchronized(parameters) {
       for (String key : parameters.keySet()) {

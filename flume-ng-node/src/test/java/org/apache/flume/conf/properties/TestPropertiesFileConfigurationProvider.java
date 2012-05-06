@@ -20,8 +20,11 @@ package org.apache.flume.conf.properties;
 import java.io.File;
 
 import org.apache.flume.channel.DefaultChannelFactory;
+import org.apache.flume.node.NodeConfiguration;
+import org.apache.flume.node.nodemanager.NodeConfigurationAware;
 import org.apache.flume.sink.DefaultSinkFactory;
 import org.apache.flume.source.DefaultSourceFactory;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,9 +39,24 @@ public class TestPropertiesFileConfigurationProvider {
   private static final Logger LOGGER = LoggerFactory
       .getLogger(TestPropertiesFileConfigurationProvider.class);
 
+  @Before
+  public void setUp() throws Exception {
+    File tmpDir = new File("target/test");
+    tmpDir.mkdirs();
+
+    File derbyLogFile = new File(tmpDir, "derbytest.log");
+    String derbyLogFilePath = derbyLogFile.getCanonicalPath();
+
+    System.setProperty("derby.stream.error.file", derbyLogFilePath);
+  }
+
   @Test
   public void testPropertyRead() throws Exception {
-    PropertiesFileConfigurationProvider provider = new PropertiesFileConfigurationProvider();
+    PropertiesFileConfigurationProvider provider =
+        new PropertiesFileConfigurationProvider();
+
+    provider.setNodeName("host1");
+    provider.setConfigurationAware(new DummyNodeConfigurationAware());
 
     provider.setChannelFactory(new DefaultChannelFactory());
     provider.setSourceFactory(new DefaultSourceFactory());
@@ -46,6 +64,15 @@ public class TestPropertiesFileConfigurationProvider {
 
     provider.setFile(TESTFILE);
     provider.load();
+  }
+
+  private static class DummyNodeConfigurationAware implements
+    NodeConfigurationAware {
+
+    @Override
+    public void onNodeConfigurationChanged(NodeConfiguration config) {
+       // no handling necessary
+    }
   }
 
 }

@@ -126,10 +126,12 @@ public class SyslogUDPSource extends AbstractSource
 
   @Override
   public void configure(Context context) {
-    Configurables.ensureRequiredNonNull(context, "port");
-    port = context.getInteger("port");
-    host = context.getString("host");
-    formaterProp = context.getSubProperties("format.");
+    Configurables.ensureRequiredNonNull(
+        context, SyslogSourceConfigurationConstants.CONFIG_PORT);
+    port = context.getInteger(SyslogSourceConfigurationConstants.CONFIG_PORT);
+    host = context.getString(SyslogSourceConfigurationConstants.CONFIG_HOST);
+    formaterProp = context.getSubProperties(
+        SyslogSourceConfigurationConstants.CONFIG_FORMAT_PREFIX);
   }
 
 }

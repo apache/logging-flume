@@ -111,19 +111,27 @@ public class SyslogUtils {
 
   // extend the default header formatter
   public void addFormats(Map<String, String> formatProp) {
-    if (formatProp.isEmpty() || !formatProp.containsKey("regex")) {
+    if (formatProp.isEmpty() || !formatProp.containsKey(
+        SyslogSourceConfigurationConstants.CONFIG_REGEX)) {
       return;
     }
     SyslogFormater fmt1 = new SyslogFormater();
-    fmt1.regexPattern = formatProp.get("regex");
-    if (formatProp.containsKey("search")) {
-      fmt1.searchPattern.add(formatProp.get("search"));
+    fmt1.regexPattern = formatProp.get(
+        SyslogSourceConfigurationConstants.CONFIG_REGEX);
+    if (formatProp.containsKey(
+        SyslogSourceConfigurationConstants.CONFIG_SEARCH)) {
+      fmt1.searchPattern.add(formatProp.get(
+          SyslogSourceConfigurationConstants.CONFIG_SEARCH));
     }
-    if (formatProp.containsKey("replace")) {
-      fmt1.replacePattern.add(formatProp.get("replace"));
+    if (formatProp.containsKey(
+        SyslogSourceConfigurationConstants.CONFIG_REPLACE)) {
+      fmt1.replacePattern.add(formatProp.get(
+          SyslogSourceConfigurationConstants.CONFIG_REPLACE));
     }
-    if (formatProp.containsKey("dateFormat")) {
-        fmt1.dateFormat.add(new SimpleDateFormat(formatProp.get("dateFormat")));
+    if (formatProp.containsKey(
+        SyslogSourceConfigurationConstants.CONFIG_DATEFORMAT)) {
+        fmt1.dateFormat.add(new SimpleDateFormat(formatProp.get(
+            SyslogSourceConfigurationConstants.CONFIG_DATEFORMAT)));
     }
     formats.add(0, fmt1);
   }

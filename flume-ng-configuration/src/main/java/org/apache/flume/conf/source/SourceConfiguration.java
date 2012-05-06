@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.flume.Context;
+import org.apache.flume.conf.BasicConfigurationConstants;
 import org.apache.flume.conf.ComponentConfiguration;
 import org.apache.flume.conf.ComponentConfigurationFactory;
 import org.apache.flume.conf.ConfigurationException;
@@ -36,7 +37,7 @@ import org.apache.flume.conf.channel.ChannelSelectorType;
 public class SourceConfiguration extends ComponentConfiguration {
   protected Set<String> channels;
   protected ChannelSelectorConfiguration selectorConf;
-  private static final String CHANNELS_CONF = "channels";
+
   public SourceConfiguration(String componentName) {
     super(componentName);
   }
@@ -52,7 +53,8 @@ public class SourceConfiguration extends ComponentConfiguration {
   public void configure(Context context) throws ConfigurationException {
     super.configure(context);
     try {
-      String channelList = context.getString(CHANNELS_CONF);
+      String channelList = context.getString(
+          BasicConfigurationConstants.CONFIG_CHANNELS);
       if (channelList != null) {
         this.channels =
             new HashSet<String>(Arrays.asList(channelList.split("\\s+")));
@@ -65,11 +67,11 @@ public class SourceConfiguration extends ComponentConfiguration {
               + this.getComponentName());
         }
       }
-      Map<String, String> selectorParams =
-          context.getSubProperties("selector.");
+      Map<String, String> selectorParams = context.getSubProperties(
+              BasicConfigurationConstants.CONFIG_SOURCE_CHANNELSELECTOR_PREFIX);
       String selType;
       if (selectorParams != null && !selectorParams.isEmpty()) {
-        selType = selectorParams.get(FlumeConfiguration.CONF_TYPE);
+        selType = selectorParams.get(BasicConfigurationConstants.CONFIG_TYPE);
         System.out.println("Loading selector: " + selType);
       } else {
         selType = ChannelSelectorConfigurationType.REPLICATING.toString();
@@ -85,7 +87,8 @@ public class SourceConfiguration extends ComponentConfiguration {
       selectorContext.putAll(selectorParams);
       String config = null;
       if (selectorType == null) {
-        config = selectorContext.getString(FlumeConfiguration.CONF_CONFIG);
+        config = selectorContext.getString(
+            BasicConfigurationConstants.CONFIG_CONFIG);
         if (config == null || config.isEmpty()) {
           config = "OTHER";
         }

@@ -62,21 +62,11 @@ public class FlumeConfiguration {
   private static final Logger logger = LoggerFactory
       .getLogger(FlumeConfiguration.class);
 
-  public static final String SOURCES = "sources";
-  public static final String SOURCES_PREFIX = SOURCES + ".";
-  public static final String SINKS = "sinks";
-  public static final String SINKS_PREFIX = SINKS + ".";
-  public static final String SINKGROUPS = "sinkgroups";
-  public static final String SINKGROUPS_PREFIX = SINKGROUPS + ".";
-  public static final String CHANNELS = "channels";
-  public static final String CHANNELS_PREFIX = CHANNELS + ".";
   private final Map<String, AgentConfiguration> agentConfigMap;
   private final LinkedList<FlumeConfigurationError> errors;
   public static final String NEWLINE = System.getProperty("line.separator",
       "\n");
   public static final String INDENTSTEP = "  ";
-  public static final String CONF_TYPE = "type";
-  public static final String CONF_CONFIG = "config";
 
   /**
    * Creates a populated Flume Configuration object.
@@ -290,7 +280,7 @@ public class FlumeConfiguration {
         logger.warn("Agent configuration for '" + agentName
             + "' does not contain any channels. Marking it as invalid.");
         errorList.add(new FlumeConfigurationError(agentName,
-            CHANNELS,
+            BasicConfigurationConstants.CONFIG_CHANNELS,
             FlumeConfigurationErrorType.PROPERTY_VALUE_NULL,
             ErrorOrWarning.ERROR));
         return false;
@@ -307,7 +297,7 @@ public class FlumeConfiguration {
         logger.warn("Agent configuration for '" + agentName
             + "' does not contain any valid channels. Marking it as invalid.");
         errorList.add(new FlumeConfigurationError(agentName,
-            FlumeConfiguration.CHANNELS,
+            BasicConfigurationConstants.CONFIG_CHANNELS,
             FlumeConfigurationErrorType.PROPERTY_VALUE_NULL,
             ErrorOrWarning.ERROR));
         return false;
@@ -322,11 +312,11 @@ public class FlumeConfiguration {
         logger.warn("Agent configuration for '" + agentName
             + "' has no sources or sinks. Will be marked invalid.");
         errorList.add(new FlumeConfigurationError(agentName,
-            FlumeConfiguration.SOURCES,
+            BasicConfigurationConstants.CONFIG_SOURCES,
             FlumeConfigurationErrorType.PROPERTY_VALUE_NULL,
             ErrorOrWarning.ERROR));
         errorList.add(new FlumeConfigurationError(agentName,
-            FlumeConfiguration.SINKS,
+            BasicConfigurationConstants.CONFIG_SINKS,
             FlumeConfigurationErrorType.PROPERTY_VALUE_NULL,
             ErrorOrWarning.ERROR));
         return false;
@@ -414,13 +404,14 @@ public class FlumeConfiguration {
         // Context exists in map.
         if (channelContext != null) {
           // Get the configuration object for the channel:
-          ChannelType chType =
-              getKnownChannel(channelContext.getString(CONF_TYPE));
+          ChannelType chType = getKnownChannel(channelContext.getString(
+                  BasicConfigurationConstants.CONFIG_TYPE));
           boolean configSpecified = false;
           String config = null;
           // Not a known channel - cannot do specific validation to this channel
           if (chType == null) {
-            config = channelContext.getString(CONF_CONFIG);
+            config = channelContext.getString
+                (BasicConfigurationConstants.CONFIG_CONFIG);
             if (config == null || config.isEmpty()) {
               config = "OTHER";
             } else {
@@ -477,7 +468,7 @@ public class FlumeConfiguration {
         logger.warn("Agent configuration for '" + agentName
             + "' has no sources.");
         errorList.add(new FlumeConfigurationError(agentName,
-            FlumeConfiguration.SOURCES,
+            BasicConfigurationConstants.CONFIG_SOURCES,
             FlumeConfigurationErrorType.PROPERTY_VALUE_NULL,
             ErrorOrWarning.WARNING));
         return new HashSet<String>();
@@ -512,9 +503,11 @@ public class FlumeConfiguration {
         String config = null;
         boolean configSpecified = false;
         if (srcContext != null) {
-          SourceType srcType = getKnownSource(srcContext.getString(CONF_TYPE));
+          SourceType srcType = getKnownSource(srcContext.getString(
+              BasicConfigurationConstants.CONFIG_TYPE));
           if (srcType == null) {
-            config = srcContext.getString(CONF_CONFIG);
+            config = srcContext.getString(
+                BasicConfigurationConstants.CONFIG_CONFIG);
             if (config == null || config.isEmpty()) {
               config = "OTHER";
             } else {
@@ -578,7 +571,7 @@ public class FlumeConfiguration {
         logger.warn("Agent configuration for '" + agentName
             + "' has no sinks.");
         errorList.add(new FlumeConfigurationError(agentName,
-            FlumeConfiguration.SINKS,
+            BasicConfigurationConstants.CONFIG_SINKS,
             FlumeConfigurationErrorType.PROPERTY_VALUE_NULL,
             ErrorOrWarning.WARNING));
         return new HashSet<String>();
@@ -617,9 +610,11 @@ public class FlumeConfiguration {
         } else {
           String config = null;
           boolean configSpecified = false;
-          SinkType sinkType = getKnownSink(sinkContext.getString(CONF_TYPE));
+          SinkType sinkType = getKnownSink(sinkContext.getString(
+              BasicConfigurationConstants.CONFIG_TYPE));
           if (sinkType == null) {
-            config = sinkContext.getString(CONF_CONFIG);
+            config = sinkContext.getString(
+                BasicConfigurationConstants.CONFIG_CONFIG);
             if (config == null || config.isEmpty()) {
               config = "OTHER";
             } else{
@@ -864,7 +859,7 @@ public class FlumeConfiguration {
 
     private boolean addProperty(String key, String value) {
       // Check for sources
-      if (key.equals(SOURCES)) {
+      if (key.equals(BasicConfigurationConstants.CONFIG_SOURCES)) {
         if (sources == null) {
           sources = value;
           return true;
@@ -872,7 +867,7 @@ public class FlumeConfiguration {
           logger
           .warn("Duplicate source list specified for agent: " + agentName);
           errorList.add(new FlumeConfigurationError(agentName,
-              SOURCES,
+              BasicConfigurationConstants.CONFIG_SOURCES,
               FlumeConfigurationErrorType.DUPLICATE_PROPERTY,
               ErrorOrWarning.ERROR));
           return false;
@@ -880,7 +875,7 @@ public class FlumeConfiguration {
       }
 
       // Check for sinks
-      if (key.equals(SINKS)) {
+      if (key.equals(BasicConfigurationConstants.CONFIG_SINKS)) {
         if (sinks == null) {
           sinks = value;
           logger.info("Added sinks: " + sinks + " Agent: " + this.agentName);
@@ -888,7 +883,7 @@ public class FlumeConfiguration {
         } else {
           logger.warn("Duplicate sink list specfied for agent: " + agentName);
           errorList.add(new FlumeConfigurationError(agentName,
-              SINKS,
+              BasicConfigurationConstants.CONFIG_SINKS,
               FlumeConfigurationErrorType.DUPLICATE_PROPERTY,
               ErrorOrWarning.ERROR));
           return false;
@@ -896,7 +891,7 @@ public class FlumeConfiguration {
       }
 
       // Check for channels
-      if (key.equals(CHANNELS)) {
+      if (key.equals(BasicConfigurationConstants.CONFIG_CHANNELS)) {
         if (channels == null) {
           channels = value;
 
@@ -905,7 +900,7 @@ public class FlumeConfiguration {
           logger.warn("Duplicate channel list specified for agent: "
               + agentName);
           errorList.add(new FlumeConfigurationError(agentName,
-              CHANNELS,
+              BasicConfigurationConstants.CONFIG_CHANNELS,
               FlumeConfigurationErrorType.DUPLICATE_PROPERTY,
               ErrorOrWarning.ERROR));
           return false;
@@ -913,7 +908,7 @@ public class FlumeConfiguration {
       }
 
       // Check for sinkgroups
-      if (key.equals(SINKGROUPS)) {
+      if (key.equals(BasicConfigurationConstants.CONFIG_SINKGROUPS)) {
         if (sinkgroups == null) {
           sinkgroups = value;
 
@@ -922,14 +917,15 @@ public class FlumeConfiguration {
           logger
           .warn("Duplicate sinkgroup list specfied for agent: " + agentName);
           errorList.add(new FlumeConfigurationError(agentName,
-              SINKGROUPS,
+              BasicConfigurationConstants.CONFIG_SINKGROUPS,
               FlumeConfigurationErrorType.DUPLICATE_PROPERTY,
               ErrorOrWarning.ERROR));
           return false;
         }
       }
 
-      ComponentNameAndConfigKey cnck = parseConfigKey(key, SOURCES_PREFIX);
+      ComponentNameAndConfigKey cnck = parseConfigKey(key,
+          BasicConfigurationConstants.CONFIG_SOURCES_PREFIX);
 
       if (cnck != null) {
         // it is a source
@@ -945,7 +941,8 @@ public class FlumeConfiguration {
         return true;
       }
 
-      cnck = parseConfigKey(key, CHANNELS_PREFIX);
+      cnck = parseConfigKey(key,
+          BasicConfigurationConstants.CONFIG_CHANNELS_PREFIX);
 
       if (cnck != null) {
         // it is a channel
@@ -961,7 +958,8 @@ public class FlumeConfiguration {
         return true;
       }
 
-      cnck = parseConfigKey(key, SINKS_PREFIX);
+      cnck = parseConfigKey(key,
+          BasicConfigurationConstants.CONFIG_SINKS_PREFIX);
 
       if (cnck != null) {
         // it is a sink
@@ -980,7 +978,8 @@ public class FlumeConfiguration {
         return true;
       }
 
-      cnck = parseConfigKey(key, SINKGROUPS_PREFIX);
+      cnck = parseConfigKey(key,
+          BasicConfigurationConstants.CONFIG_SINKGROUPS_PREFIX);
 
       if (cnck != null) {
         String name = cnck.getComponentName();

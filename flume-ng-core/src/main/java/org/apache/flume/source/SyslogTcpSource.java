@@ -139,11 +139,13 @@ implements EventDrivenSource, Configurable {
 
   @Override
   public void configure(Context context) {
-    Configurables.ensureRequiredNonNull(context, "port");
-    port = context.getInteger("port");
-    host = context.getString("host");
+    Configurables.ensureRequiredNonNull(context,
+        SyslogSourceConfigurationConstants.CONFIG_PORT);
+    port = context.getInteger(SyslogSourceConfigurationConstants.CONFIG_PORT);
+    host = context.getString(SyslogSourceConfigurationConstants.CONFIG_HOST);
     eventSize = context.getInteger("eventSize", SyslogUtils.DEFAULT_SIZE);
-    formaterProp = context.getSubProperties("format.");
+    formaterProp = context.getSubProperties(
+        SyslogSourceConfigurationConstants.CONFIG_FORMAT_PREFIX);
   }
 
 }

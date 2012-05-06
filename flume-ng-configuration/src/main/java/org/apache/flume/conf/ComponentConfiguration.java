@@ -62,14 +62,15 @@ public abstract class ComponentConfiguration {
 
   public void configure(Context context) throws ConfigurationException {
     failIfConfigured();
-    String confType = context.getString(FlumeConfiguration.CONF_TYPE);
+    String confType = context.getString(
+        BasicConfigurationConstants.CONFIG_TYPE);
     if (confType != null && !confType.isEmpty()){
       this.type = confType;
     }
     // Type can be set by child class constructors, so check if it was.
     if (this.type == null || this.type.isEmpty()) {
       errors.add(new FlumeConfigurationError(componentName,
-          FlumeConfiguration.CONF_TYPE,
+          BasicConfigurationConstants.CONFIG_TYPE,
           FlumeConfigurationErrorType.ATTRS_MISSING, ErrorOrWarning.ERROR));
 
       throw new ConfigurationException(
