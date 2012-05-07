@@ -267,8 +267,8 @@ public class TestFileChannel {
   @Test
   public void testThreaded() throws IOException, InterruptedException {
     int numThreads = 10;
-    final CountDownLatch startLatch = new CountDownLatch(numThreads * 2);
-    final CountDownLatch stopLatch = new CountDownLatch(numThreads * 2);
+    final CountDownLatch producerStopLatch = new CountDownLatch(numThreads);
+    final CountDownLatch consumerStopLatch = new CountDownLatch(numThreads);
     final List<Exception> errors = Collections
         .synchronizedList(new ArrayList<Exception>());
     final List<String> expected = Collections
@@ -281,17 +281,17 @@ public class TestFileChannel {
         @Override
         public void run() {
           try {
-            startLatch.countDown();
-            startLatch.await();
             if (id % 2 == 0) {
               expected.addAll(putEvents(channel, Integer.toString(id), 1, 5));
             } else {
               expected.addAll(putEvents(channel, Integer.toString(id), 5, 5));
             }
+            LOG.info("Completed some puts " + expected.size());
           } catch (Exception e) {
+            LOG.error("Error doing puts", e);
             errors.add(e);
           } finally {
-            stopLatch.countDown();
+            producerStopLatch.countDown();
           }
         }
       };
@@ -304,25 +304,34 @@ public class TestFileChannel {
         @Override
         public void run() {
           try {
-            startLatch.countDown();
-            startLatch.await();
-            Thread.sleep(100L); // ensure puts have started
-            if (id % 2 == 0) {
-              actual.addAll(takeEvents(channel, 1, Integer.MAX_VALUE));
+            while(!producerStopLatch.await(1, TimeUnit.SECONDS) ||
+                expected.size() > actual.size()) {
+              if (id % 2 == 0) {
+                actual.addAll(takeEvents(channel, 1, Integer.MAX_VALUE));
+              } else {
+                actual.addAll(takeEvents(channel, 5, Integer.MAX_VALUE));
+              }
+            }
+            if(actual.isEmpty()) {
+              LOG.error("Found nothing!");
             } else {
-              actual.addAll(takeEvents(channel, 5, Integer.MAX_VALUE));
+              LOG.info("Completed some takes " + actual.size());
             }
           } catch (Exception e) {
+            LOG.error("Error doing takes", e);
             errors.add(e);
           } finally {
-            stopLatch.countDown();
+            consumerStopLatch.countDown();
           }
         }
       };
       t.setDaemon(true);
       t.start();
     }
-    Assert.assertTrue(stopLatch.await(30, TimeUnit.SECONDS));
+    Assert.assertTrue("Timed out waiting for producers",
+        producerStopLatch.await(30, TimeUnit.SECONDS));
+    Assert.assertTrue("Timed out waiting for consumer",
+        consumerStopLatch.await(30, TimeUnit.SECONDS));
     Assert.assertEquals(Collections.EMPTY_LIST, errors);
     Collections.sort(expected);
     Collections.sort(actual);

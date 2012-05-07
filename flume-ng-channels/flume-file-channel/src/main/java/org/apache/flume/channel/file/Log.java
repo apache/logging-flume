@@ -390,6 +390,14 @@ class Log {
         logFiles.get(index).close();
       }
     }
+    synchronized (idLogFileMap) {
+      for(Integer logId : idLogFileMap.keySet()) {
+        LogFile.RandomReader reader = idLogFileMap.get(logId);
+        if(reader != null) {
+          reader.close();
+        }
+      }      
+    }
     try {
       unlock(checkpointDir);
     } catch(IOException ex) {
@@ -522,6 +530,7 @@ class Log {
   }
 
   private void removeOldLogs() {
+    Preconditions.checkState(open, "Log is closed");
     // we will find the smallest fileID currently in use and
     // won't delete any files with an id larger than the min
     Set<Integer> fileIDs = new TreeSet<Integer>(queue.getFileIDs());
@@ -645,15 +654,16 @@ class Log {
             // recheck run flag
             continue;
           }
-          if(!log.open) {
-            continue;
+          if(log.open) {
+            // check to see if we should do a checkpoint
+            long elapsed = System.currentTimeMillis() - log.getLastCheckpoint();
+            if (elapsed > log.checkpointInterval) {
+              log.writeCheckpoint();
+            }
           }
-          // check to see if we should do a checkpoint
-          long elapsed = System.currentTimeMillis() - log.getLastCheckpoint();
-          if (elapsed > log.checkpointInterval) {
-            log.writeCheckpoint();
+          if(log.open) {
+            log.removeOldLogs();
           }
-          log.removeOldLogs();
         } catch (IOException e) {
           LOG.error("Error doing checkpoint", e);
         } catch (Exception e) {
