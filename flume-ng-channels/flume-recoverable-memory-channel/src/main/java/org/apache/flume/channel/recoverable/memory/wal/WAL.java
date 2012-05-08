@@ -147,7 +147,7 @@ public class WAL<T extends Writable> implements Closeable {
     buffer.append("rollSize = ").append(rollSize).append(", ");
     buffer.append("maxLogsSize = ").append(maxLogsSize).append(", ");
     buffer.append("minLogRentionPeriod = ").append(minLogRentionPeriod).append(", ");
-    buffer.append("workerInterval = ").append(workerInterval).append("\n");
+    buffer.append("workerInterval = ").append(workerInterval);
     LOG.info("WAL Parameters: " + buffer);
 
     File clazzNamePath = new File(path, "clazz");

@@ -52,7 +52,6 @@ import com.google.common.io.Files;
 
 public class TestRecoverableMemoryChannel {
 
-  @SuppressWarnings("unused")
   private static final Logger logger = LoggerFactory
   .getLogger(TestRecoverableMemoryChannel.class);
 
@@ -204,12 +203,13 @@ public class TestRecoverableMemoryChannel {
     putEvents(channel, "unbatched", 1, 5);
     putEvents(channel, "batched", 5, 5);
   }
-
   @Test
   public void testThreaded() throws IOException, InterruptedException {
     int numThreads = 10;
-    final CountDownLatch startLatch = new CountDownLatch(numThreads * 2);
-    final CountDownLatch stopLatch = new CountDownLatch(numThreads * 2);
+    final CountDownLatch producerStopLatch = new CountDownLatch(numThreads);
+    // due to limited capacity we must wait for consumers to start to put
+    final CountDownLatch consumerStartLatch = new CountDownLatch(numThreads);
+    final CountDownLatch consumerStopLatch = new CountDownLatch(numThreads);
     final List<Exception> errors = Collections
         .synchronizedList(new ArrayList<Exception>());
     final List<String> expected = Collections
@@ -222,17 +222,18 @@ public class TestRecoverableMemoryChannel {
         @Override
         public void run() {
           try {
-            startLatch.countDown();
-            startLatch.await();
+            consumerStartLatch.await();
             if (id % 2 == 0) {
               expected.addAll(putEvents(channel, Integer.toString(id), 1, 5));
             } else {
               expected.addAll(putEvents(channel, Integer.toString(id), 5, 5));
             }
+            logger.info("Completed some puts " + expected.size());
           } catch (Exception e) {
+            logger.error("Error doing puts", e);
             errors.add(e);
           } finally {
-            stopLatch.countDown();
+            producerStopLatch.countDown();
           }
         }
       };
@@ -245,24 +246,36 @@ public class TestRecoverableMemoryChannel {
         @Override
         public void run() {
           try {
-            startLatch.countDown();
-            startLatch.await();
-            if (id % 2 == 0) {
-              actual.addAll(takeEvents(channel, 1, Integer.MAX_VALUE));
+            consumerStartLatch.countDown();
+            consumerStartLatch.await();
+            while(!producerStopLatch.await(1, TimeUnit.SECONDS) ||
+                expected.size() > actual.size()) {
+              if (id % 2 == 0) {
+                actual.addAll(takeEvents(channel, 1, Integer.MAX_VALUE));
+              } else {
+                actual.addAll(takeEvents(channel, 5, Integer.MAX_VALUE));
+              }
+            }
+            if(actual.isEmpty()) {
+              logger.error("Found nothing!");
             } else {
-              actual.addAll(takeEvents(channel, 5, Integer.MAX_VALUE));
+              logger.info("Completed some takes " + actual.size());
             }
           } catch (Exception e) {
+            logger.error("Error doing takes", e);
             errors.add(e);
           } finally {
-            stopLatch.countDown();
+            consumerStopLatch.countDown();
           }
         }
       };
       t.setDaemon(true);
       t.start();
     }
-    Assert.assertTrue(stopLatch.await(5, TimeUnit.SECONDS));
+    Assert.assertTrue("Timed out waiting for producers",
+        producerStopLatch.await(30, TimeUnit.SECONDS));
+    Assert.assertTrue("Timed out waiting for consumer",
+        consumerStopLatch.await(30, TimeUnit.SECONDS));
     Assert.assertEquals(Collections.EMPTY_LIST, errors);
     Collections.sort(expected);
     Collections.sort(actual);
