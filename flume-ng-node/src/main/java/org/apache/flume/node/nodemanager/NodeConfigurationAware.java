@@ -23,6 +23,15 @@ import org.apache.flume.node.NodeConfiguration;
 
 public interface NodeConfigurationAware {
 
-  public void onNodeConfigurationChanged(NodeConfiguration nodeConfiguration);
+  /**
+   * Stop all components currently running.
+   */
+  public void stopAllComponents();
+
+  /**
+   * Start components with the configuration provided.
+   * @param nodeConfiguration
+   */
+  public void startAllComponents(NodeConfiguration nodeConfiguration);
 
 }

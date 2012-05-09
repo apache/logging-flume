@@ -70,7 +70,11 @@ public class TestPropertiesFileConfigurationProvider {
     NodeConfigurationAware {
 
     @Override
-    public void onNodeConfigurationChanged(NodeConfiguration config) {
+    public void stopAllComponents(){
+
+    }
+    @Override
+    public void startAllComponents(NodeConfiguration config) {
        // no handling necessary
     }
   }

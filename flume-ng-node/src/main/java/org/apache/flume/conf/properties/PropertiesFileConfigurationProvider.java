@@ -216,11 +216,13 @@ public class PropertiesFileConfigurationProvider extends
       AgentConfiguration agentConf = fconfig.getConfigurationFor(getNodeName());
 
       if (agentConf != null) {
+        getConfigurationAware().stopAllComponents();
+
         loadChannels(agentConf, conf);
         loadSources(agentConf, conf);
         loadSinks(agentConf, conf);
 
-        getConfigurationAware().onNodeConfigurationChanged(conf);
+        getConfigurationAware().startAllComponents(conf);
       } else {
         LOGGER.warn("No configuration found for this host:{}", getNodeName());
       }

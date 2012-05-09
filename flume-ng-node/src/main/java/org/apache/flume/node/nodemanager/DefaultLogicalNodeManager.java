@@ -51,9 +51,7 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
   }
 
   @Override
-  public void onNodeConfigurationChanged(NodeConfiguration nodeConfiguration) {
-    logger.info("Node configuration change:{}", nodeConfiguration);
-
+  public void stopAllComponents() {
     if (this.nodeConfiguration != null) {
       logger
           .info("Shutting down old configuration: {}", this.nodeConfiguration);
@@ -87,6 +85,11 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
         }
       }
     }
+  }
+
+  @Override
+  public void startAllComponents(NodeConfiguration nodeConfiguration) {
+    logger.info("Starting new configuration:{}", nodeConfiguration);
 
     this.nodeConfiguration = nodeConfiguration;
 
