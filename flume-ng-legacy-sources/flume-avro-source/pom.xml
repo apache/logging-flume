@@ -64,6 +64,11 @@ limitations under the License.
 
     <dependency>
       <groupId>org.apache.flume</groupId>
+      <artifactId>flume-ng-configuration</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-ng-core</artifactId>
     </dependency>
 
@@ -87,12 +92,12 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro</artifactId>
-   </dependency>
+    </dependency>
 
     <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro-ipc</artifactId>
-   </dependency>
+    </dependency>
 
   </dependencies>
 
