@@ -30,6 +30,8 @@ import org.apache.flume.conf.sink.SinkProcessorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
+
 public class SinkProcessorFactory {
   private static final Logger logger = LoggerFactory
       .getLogger(SinkProcessorFactory.class);
@@ -54,20 +56,30 @@ public class SinkProcessorFactory {
   @SuppressWarnings("unchecked")
   public static SinkProcessor getProcessor(Context context,
  List<Sink> sinks) {
+    Preconditions.checkNotNull(context);
+    Preconditions.checkNotNull(sinks);
+    Preconditions.checkArgument(!sinks.isEmpty());
     Map<String, String> params = context.getParameters();
     SinkProcessor processor;
     String typeStr = params.get(TYPE);
-    SinkProcessorType type = SinkProcessorType.DEFAULT;
+    SinkProcessorType type = SinkProcessorType.OTHER;
+    String processorClassName = typeStr;
     try {
       type = SinkProcessorType.valueOf(typeStr.toUpperCase());
     } catch (Exception ex) {
-      logger.warn("Sink type {} does not exist, using default", typeStr);
+      logger.warn("Sink type {} is a custom type", typeStr);
     }
 
+    if(!type.equals(SinkProcessorType.OTHER)) {
+      processorClassName = type.getSinkProcessorClassName();
+    }
+
+    logger.debug("Creating instance of sink processor type {}, class {}",
+            typeStr, processorClassName);
     Class<? extends SinkProcessor> processorClass = null;
     try {
       processorClass = (Class<? extends SinkProcessor>) Class.forName(
-          type.getSinkProcessorClassName());
+          processorClassName);
     } catch (Exception ex) {
       throw new FlumeException("Unable to load sink processor type: " + typeStr
           + ", class: " + type.getSinkProcessorClassName(), ex);
@@ -75,8 +87,8 @@ public class SinkProcessorFactory {
     try {
       processor = processorClass.newInstance();
     } catch (Exception e) {
-      throw new FlumeException("Unable to create processor, type: " + typeStr
-          + ", class: " + type.getSinkProcessorClassName(), e);
+      throw new FlumeException("Unable to create sink processor, type: " + typeStr
+          + ", class: " + processorClassName, e);
     }
 
     processor.setSinks(sinks);

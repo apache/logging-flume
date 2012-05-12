@@ -20,6 +20,11 @@ package org.apache.flume.conf.sink;
 
 public enum SinkProcessorType {
   /**
+   * Place holder for custom sinks not part of this enumeration.
+   */
+  OTHER(null),
+
+  /**
    * Failover processor
    *
    * @see FailoverSinkProcessor
