@@ -18,6 +18,8 @@
  */
 package org.apache.flume.channel;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,8 +28,13 @@ import java.util.Map;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
+import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.FlumeException;
+import org.apache.flume.interceptor.Interceptor;
+import org.apache.flume.interceptor.InterceptorChain;
 import org.apache.flume.Transaction;
+import org.apache.flume.conf.Configurable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,15 +49,77 @@ import org.slf4j.LoggerFactory;
  * channels are
  * {@linkplain ChannelSelector#getOptionalChannels(Event) optional}.
  */
-public class ChannelProcessor {
+public class ChannelProcessor implements Configurable {
 
   private static final Logger LOG = LoggerFactory.getLogger(
       ChannelProcessor.class);
 
   private final ChannelSelector selector;
+  private final InterceptorChain interceptorChain;
 
   public ChannelProcessor(ChannelSelector selector) {
     this.selector = selector;
+    this.interceptorChain = new InterceptorChain();
+  }
+
+  public void initialize() {
+    interceptorChain.initialize();
+  }
+
+  public void close() {
+    interceptorChain.close();
+  }
+
+  /**
+   * The Context of the associated Source is passed.
+   * @param context
+   */
+  @Override
+  public void configure(Context context) {
+    configureInterceptors(context);
+  }
+
+  // WARNING: throws FlumeException (is that ok?)
+  private void configureInterceptors(Context context) {
+
+    List<Interceptor> interceptors = Lists.newLinkedList();
+
+    String interceptorListStr = context.getString("interceptors", "");
+    if (interceptorListStr.isEmpty()) {
+      return;
+    }
+    String[] interceptorNames = interceptorListStr.split("\\s+");
+
+    Context interceptorContexts =
+        new Context(context.getSubProperties("interceptors."));
+
+    // run through and instantiate all the interceptors specified in the Context
+    for (String interceptorName : interceptorNames) {
+      Context interceptorContext = new Context(
+          interceptorContexts.getSubProperties(interceptorName + "."));
+      String type = interceptorContext.getString("type");
+      try {
+        // TODO: support aliases for built-in interceptor types
+        Class<?> clazz = Class.forName(type);
+        if (Interceptor.Builder.class.isAssignableFrom(clazz)) {
+          Interceptor.Builder builder =
+              (Interceptor.Builder) clazz.newInstance();
+          builder.configure(interceptorContext);
+          interceptors.add(builder.build());
+        }
+      } catch (ClassNotFoundException e) {
+        LOG.error("Builder class not found. Exception follows.", e);
+        throw new FlumeException("Interceptor.Builder not found.", e);
+      } catch (InstantiationException e) {
+        LOG.error("Could not instantiate Builder. Exception follows.", e);
+        throw new FlumeException("Interceptor.Builder not constructable.", e);
+      } catch (IllegalAccessException e) {
+        LOG.error("Unable to access Builder. Exception follows.", e);
+        throw new FlumeException("Unable to access Interceptor.Builder.", e);
+      }
+    }
+
+    interceptorChain.setInterceptors(interceptors);
   }
 
   public ChannelSelector getSelector() {
@@ -70,6 +139,10 @@ public class ChannelProcessor {
    * @throws ChannelException when a write to a required channel fails.
    */
   public void processEventBatch(List<Event> events) {
+    Preconditions.checkNotNull(events, "Event list must not be null");
+
+    events = interceptorChain.intercept(events);
+
     Map<Channel, List<Event>> reqChannelQueue =
         new LinkedHashMap<Channel, List<Event>>();
 
@@ -102,7 +175,6 @@ public class ChannelProcessor {
     }
 
     // Process required channels
-
     for (Channel reqChannel : reqChannelQueue.keySet()) {
       Transaction tx = null;
       try {
@@ -165,15 +237,20 @@ public class ChannelProcessor {
    */
   public void processEvent(Event event) {
 
+    event = interceptorChain.intercept(event);
+    if (event == null) {
+      return;
+    }
+
     // Process required channels
     List<Channel> requiredChannels = selector.getRequiredChannels(event);
-    for (Channel requriedChannel : requiredChannels) {
-      Transaction tx = null;
+    for (Channel requiredChannel : requiredChannels) {
+      Transaction tx = requiredChannel.getTransaction();
+      Preconditions.checkNotNull(tx, "Transaction object must not be null");
       try {
-        tx = requriedChannel.getTransaction();
         tx.begin();
 
-        requriedChannel.put(event);
+        requiredChannel.put(event);
 
         tx.commit();
       } catch (ChannelException ex) {

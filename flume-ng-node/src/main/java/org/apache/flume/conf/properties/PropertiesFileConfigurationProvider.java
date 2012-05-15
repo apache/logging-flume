@@ -291,6 +291,7 @@ public class PropertiesFileConfigurationProvider extends
           channels, selectorConfig);
 
       ChannelProcessor channelProcessor = new ChannelProcessor(selector);
+      Configurables.configure(channelProcessor, config);
 
       source.setChannelProcessor(channelProcessor);
       conf.getSourceRunners().put(comp.getComponentName(),
@@ -318,6 +319,7 @@ public class PropertiesFileConfigurationProvider extends
           channels, selectorConfig);
 
       ChannelProcessor channelProcessor = new ChannelProcessor(selector);
+      Configurables.configure(channelProcessor, context);
 
       source.setChannelProcessor(channelProcessor);
       conf.getSourceRunners().put(src,
