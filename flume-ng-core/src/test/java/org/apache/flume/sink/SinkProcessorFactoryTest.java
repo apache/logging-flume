@@ -46,4 +46,19 @@ public class SinkProcessorFactoryTest {
     Assert.assertEquals(sp.getClass(), sp2.getClass());
   }
 
+  @Test
+  public void testInstantiatingLoadBalancingSinkProcessor() {
+    Context context = new Context();
+    context.put("type", LoadBalancingSinkProcessor.class.getName());
+    context.put("selector", "random");
+    SinkFactory sf = new DefaultSinkFactory();
+    List<Sink> sinks = new ArrayList<Sink>();
+    sinks.add(sf.create("sink1", "avro"));
+    sinks.add(sf.create("sink2", "avro"));
+    SinkProcessor sp = SinkProcessorFactory.getProcessor(context, sinks);
+    context.put("type", "load_balance");
+    SinkProcessor sp2 = SinkProcessorFactory.getProcessor(context, sinks);
+    Assert.assertEquals(sp.getClass(), sp2.getClass());
+  }
+
 }

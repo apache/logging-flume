@@ -29,9 +29,7 @@ import java.util.TreeMap;
 import org.apache.flume.Context;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Sink;
-import org.apache.flume.SinkProcessor;
 import org.apache.flume.Sink.Status;
-import org.apache.flume.lifecycle.LifecycleState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +61,7 @@ import org.slf4j.LoggerFactory;
  * host1.sinkgroups.group1.processor.maxpenalty = 10000
  *
  */
-public class FailoverSinkProcessor implements SinkProcessor {
+public class FailoverSinkProcessor extends AbstractSinkProcessor {
   private static final int FAILURE_PENALTY = 1000;
   private static final int DEFAULT_MAX_PENALTY = 30000;
 
@@ -115,29 +113,7 @@ public class FailoverSinkProcessor implements SinkProcessor {
   private Sink activeSink;
   private SortedMap<Integer, Sink> liveSinks;
   private Queue<FailedSink> failedSinks;
-  private LifecycleState state;
   private int maxPenalty;
-
-  @Override
-  public void start() {
-    for(Sink s : sinks.values()) {
-      s.start();
-    }
-    state = LifecycleState.START;
-  }
-
-  @Override
-  public void stop() {
-    for(Sink s : sinks.values()) {
-      s.stop();
-    }
-    state = LifecycleState.STOP;
-  }
-
-  @Override
-  public LifecycleState getLifecycleState() {
-    return state;
-  }
 
   @Override
   public void configure(Context context) {
@@ -168,8 +144,8 @@ public class FailoverSinkProcessor implements SinkProcessor {
         liveSinks.put(priority, sinks.get(entry.getKey()));
       } else {
         logger.warn("Sink {} not added to FailverSinkProcessor as priority" +
-        		"duplicates that of sink {}", entry.getKey(),
-        		liveSinks.get(priority));
+            "duplicates that of sink {}", entry.getKey(),
+            liveSinks.get(priority));
       }
     }
     activeSink = liveSinks.get(liveSinks.lastKey());
@@ -230,6 +206,9 @@ public class FailoverSinkProcessor implements SinkProcessor {
 
   @Override
   public void setSinks(List<Sink> sinks) {
+    // needed to implement the start/stop functionality
+    super.setSinks(sinks);
+
     this.sinks = new HashMap<String, Sink>();
     for (Sink sink : sinks) {
       this.sinks.put(sink.getName(), sink);
