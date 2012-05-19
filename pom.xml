@@ -77,6 +77,11 @@ limitations under the License.
             <artifactId>${hadoop.common.artifact.id}</artifactId>
             <version>${hadoop.version}</version>
           </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-test</artifactId>
+            <version>${hadoop.version}</version>
+          </dependency>
         </dependencies>
       </dependencyManagement>
     </profile>
@@ -103,6 +108,11 @@ limitations under the License.
           <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-hdfs</artifactId>
+            <version>${hadoop.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-minicluster</artifactId>
             <version>${hadoop.version}</version>
           </dependency>
           <dependency>
@@ -644,13 +654,6 @@ limitations under the License.
         <version>${hadoop.version}</version>
       </dependency>
 
-      <dependency>
-        <groupId>org.apache.hadoop</groupId>
-        <artifactId>hadoop-test</artifactId>
-        <version>${hadoop.version}</version>
-        <scope>test</scope>
-      </dependency>
-
       <!-- internal module dependencies -->
 
       <dependency>
@@ -728,6 +731,12 @@ limitations under the License.
         <groupId>org.apache.flume.flume-ng-clients</groupId>
         <artifactId>flume-ng-log4jappender</artifactId>
         <version>1.2.0-incubating-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-core</artifactId>
+        <version>1.8</version>
       </dependency>
 
     </dependencies>

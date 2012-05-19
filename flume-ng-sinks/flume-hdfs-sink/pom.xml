@@ -96,6 +96,36 @@ limitations under the License.
   <profiles>
 
     <profile>
+      <id>hadoop-1.0</id>
+      <activation>
+        <property>
+          <name>!hadoop.profile</name>
+        </property>
+      </activation>
+      <properties>
+        <hadoop.version>1.0.1</hadoop.version>
+        <hadoop.common.artifact.id>hadoop-core</hadoop.common.artifact.id>
+      </properties>
+      <dependencies>
+
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-test</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <!-- required because the hadoop-core pom is missing these deps
+            and MiniDFSCluster pulls in the webhdfs classes -->
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-core</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+      </dependencies>
+    </profile>
+
+    <profile>
       <id>hadoop-0.23</id>
       <activation>
         <property>
@@ -103,17 +133,30 @@ limitations under the License.
           <value>23</value>
         </property>
       </activation>
+      <properties>
+        <hadoop.version>0.23.1</hadoop.version>
+        <hadoop.common.artifact.id>hadoop-common</hadoop.common.artifact.id>
+      </properties>
       <dependencies>
+
         <dependency>
           <groupId>org.apache.hadoop</groupId>
           <artifactId>hadoop-hdfs</artifactId>
           <optional>true</optional>
         </dependency>
+
         <dependency>
           <groupId>org.apache.hadoop</groupId>
           <artifactId>hadoop-auth</artifactId>
           <optional>true</optional>
         </dependency>
+
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-minicluster</artifactId>
+          <scope>test</scope>
+        </dependency>
+
       </dependencies>
     </profile>
 

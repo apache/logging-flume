@@ -29,7 +29,6 @@ public class HDFSFormatterFactory {
   }
 
   static final String hdfsWritableFormat = "Writable";
-  static final String hdfsAvroFormat = "Avro";
   static final String hdfsTextFormat = "Text";
 
   static FlumeFormatter getFormatter(String formatType) throws IOException {

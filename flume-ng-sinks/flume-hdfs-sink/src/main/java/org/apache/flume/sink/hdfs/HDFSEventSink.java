@@ -19,7 +19,7 @@
 package org.apache.flume.sink.hdfs;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,11 +32,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
+import org.apache.flume.FlumeException;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.formatter.output.BucketPath;
@@ -46,7 +48,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
+import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,26 +61,25 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private static final Logger LOG = LoggerFactory
       .getLogger(HDFSEventSink.class);
 
-  static final long defaultRollInterval = 30;
-  static final long defaultRollSize = 1024;
-  static final long defaultRollCount = 10;
-  static final String defaultFileName = "FlumeData";
-  static final String defaultBucketFormat = "%yyyy-%mm-%dd/%HH";
-  static final long defaultBatchSize = 1;
-  static final long defaultTxnEventMax = 100;
-  static final String defaultFileType = HDFSWriterFactory.SequenceFileType;
-  static final int defaultMaxOpenFiles = 5000;
+  private static final long defaultRollInterval = 30;
+  private static final long defaultRollSize = 1024;
+  private static final long defaultRollCount = 10;
+  private static final String defaultFileName = "FlumeData";
+  private static final long defaultBatchSize = 1;
+  private static final long defaultTxnEventMax = 100;
+  private static final String defaultFileType = HDFSWriterFactory.SequenceFileType;
+  private static final int defaultMaxOpenFiles = 5000;
   /**
    * Default length of time we wait for an append
    * before closing the file and moving on.
    */
-  static final long defaultAppendTimeout = 1000;
+  private static final long defaultAppendTimeout = 1000;
   /**
    * Default length of time we for a non-append
    * before closing the file and moving on. This
    * includes open/close/flush.
    */
-  static final long defaultCallTimeout = 5000;
+  private static final long defaultCallTimeout = 5000;
   /**
    * Default number of threads available for tasks
    * such as append/open/close/flush with hdfs.
@@ -84,7 +87,17 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
    * the case that they take too long. In which
    * case we create a new file and move on.
    */
-  static final int defaultThreadPoolSize = 10;
+  private static final int defaultThreadPoolSize = 10;
+
+  /**
+   * Singleton credential manager that manages static credentials for the
+   * entire JVM
+   */
+  private static final AtomicReference<KerberosUser> staticLogin
+      = new AtomicReference<KerberosUser>();
+
+  private final HDFSWriterFactory writerFactory;
+  private final WriterLinkedHashMap sfWriters;
 
   private long rollInterval;
   private long rollSize;
@@ -98,11 +111,14 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private String path;
   private int maxOpenFiles;
   private String writeFormat;
-  private HDFSWriterFactory myWriterFactory;
   private ExecutorService executor;
   private long appendTimeout;
+
   private String kerbConfPrincipal;
-  private String kerbKeytabFile;
+  private String kerbKeytab;
+  private String proxyUserName;
+  private UserGroupInformation proxyTicket;
+
   private long callTimeout;
   private Context context;
 
@@ -134,18 +150,43 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     }
   }
 
-  final WriterLinkedHashMap sfWriters = new WriterLinkedHashMap();
+  /**
+   * Helper class to wrap authentication calls.
+   * @param <T> generally should be {@link Void}
+   */
+  private static abstract class ProxyCallable<T> implements Callable {
+    private UserGroupInformation proxyTicket;
 
-  // Used to short-circuit around doing regex matches when we know there are
-  // no templates to be replaced.
-  // private boolean shouldSub = false;
+    public ProxyCallable(UserGroupInformation proxyTicket) {
+      this.proxyTicket = proxyTicket;
+    }
 
-  public HDFSEventSink() {
-    myWriterFactory = new HDFSWriterFactory();
+    @Override
+    public T call() throws Exception {
+      if (proxyTicket == null) {
+        return doCall();
+      } else {
+        return proxyTicket.doAs(new PrivilegedExceptionAction<T>() {
+
+          @Override
+          public T run() throws Exception {
+            return doCall();
+          }
+        });
+      }
+    }
+
+    abstract public T doCall() throws Exception;
   }
 
-  public HDFSEventSink(HDFSWriterFactory newWriterFactory) {
-    myWriterFactory = newWriterFactory;
+
+  public HDFSEventSink() {
+    this(new HDFSWriterFactory());
+  }
+
+  public HDFSEventSink(HDFSWriterFactory writerFactory) {
+    this.writerFactory = writerFactory;
+    this.sfWriters = new WriterLinkedHashMap();
   }
 
     // read configuration and setup thresholds
@@ -156,8 +197,8 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     String dirpath = Preconditions.checkNotNull(
         context.getString("hdfs.path"), "hdfs.path is required");
     String fileName = context.getString("hdfs.filePrefix", defaultFileName);
-    // FIXME: Not transportable.
-    this.path = new String(dirpath + "/" + fileName);
+    // FIXME: Not portable to Windows
+    this.path = dirpath + "/" + fileName;
     rollInterval = context.getLong("hdfs.rollInterval", defaultRollInterval);
     rollSize = context.getLong("hdfs.rollSize", defaultRollSize);
     rollCount = context.getLong("hdfs.rollCount", defaultRollCount);
@@ -171,7 +212,8 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     callTimeout = context.getLong("hdfs.callTimeout", defaultCallTimeout);
     threadsPoolSize = context.getInteger("hdfs.threadsPoolSize", defaultThreadPoolSize);
     kerbConfPrincipal = context.getString("hdfs.kerberosPrincipal", "");
-    kerbKeytabFile = context.getString("hdfs.kerberosKeytab", "");
+    kerbKeytab = context.getString("hdfs.kerberosKeytab", "");
+    proxyUserName = context.getString("hdfs.proxyUser", "");
 
     Preconditions.checkArgument(batchSize > 0,
         "batchSize must be greater than 0");
@@ -198,15 +240,8 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       }
     }
 
-    boolean useSec = isHadoopSecurityEnabled();
-    LOG.info("Hadoop Security enabled: " + useSec);
-
-    if (useSec) {
-      if (tryKerberosLogin()) {
-        LOG.info("Successfully logged in via Kerberos.");
-      } else {
-        LOG.warn("Failed to log in via Kerberos.");
-      }
+    if (!authenticate(path)) {
+      LOG.error("Failed to authenticate!");
     }
   }
 
@@ -273,7 +308,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     try {
       return callWithTimeout(executor, timeout, callable);
     } catch (Exception e) {
-      LOG.error("Error calling " + callable, e);
+      LOG.error(name + "; called " + callable, e);
       if(e instanceof InterruptedException) {
         Thread.currentThread().interrupt();
       }
@@ -317,7 +352,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
           "Blocked callable interrupted by rotation event");
     } catch (InterruptedException ex) {
       LOG.warn("Unexpected Exception " + ex.getMessage(), ex);
-      throw (InterruptedException) ex;
+      throw ex;
     }
   }
   /**
@@ -330,25 +365,23 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   public Status process() throws EventDeliveryException {
     Channel channel = getChannel();
     Transaction transaction = channel.getTransaction();
-    String realPath = null;
     List<BucketWriter> writers = Lists.newArrayList();
     try {
       transaction.begin();
       Event event = null;
       for (int txnEventCount = 0; txnEventCount < txnEventMax; txnEventCount++) {
-        realPath = null;
         event = channel.take();
         if (event == null) {
           break;
         }
 
         // reconstruct the path name by substituting place holders
-        realPath = BucketPath.escapeString(path, event.getHeaders());
+        String realPath = BucketPath.escapeString(path, event.getHeaders());
         BucketWriter bucketWriter = sfWriters.get(realPath);
 
         // we haven't seen this file yet, so open it and cache the handle
         if (bucketWriter == null) {
-          final HDFSWriter writer = myWriterFactory.getWriter(fileType);
+          final HDFSWriter writer = writerFactory.getWriter(fileType);
           final FlumeFormatter formatter = HDFSFormatterFactory
               .getFormatter(writeFormat);
           bucketWriter = new BucketWriter(rollInterval, rollSize, rollCount, batchSize, context);
@@ -356,9 +389,11 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
           final String callablePath = realPath;
           final CompressionCodec callableCodec = codeC;
           final CompressionType callableCompType = compType;
-          callWithTimeout(executor, callTimeout, new Callable<Void>() {
+
+          callWithTimeout(executor, callTimeout,
+              new ProxyCallable<Void>(proxyTicket) {
             @Override
-            public Void call() throws Exception {
+            public Void doCall() throws Exception {
               synchronized(callableWriter) {
                 callableWriter.open(callablePath, callableCodec,
                     callableCompType, writer, formatter);
@@ -368,6 +403,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
           });
           sfWriters.put(realPath, bucketWriter);
         }
+
         // track the buckets getting written in this transaction
         if (!writers.contains(bucketWriter)) {
           writers.add(bucketWriter);
@@ -376,9 +412,10 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
         // Write the data to HDFS
         final BucketWriter callableWriter = bucketWriter;
         final Event callableEvent = event;
-        callWithTimeout(executor, appendTimeout, new Callable<Void>() {
+        callWithTimeout(executor, appendTimeout,
+            new ProxyCallable<Void>(proxyTicket) {
           @Override
-          public Void call() throws Exception {
+          public Void doCall() throws Exception {
             synchronized(callableWriter) {
               try {
                 callableWriter.append(callableEvent);
@@ -419,9 +456,9 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
         }
         final BucketWriter callableWriter = writer;
         callWithTimeoutLogError(executor, callTimeout, "flush on "
-        + callableWriter, new Callable<Void>() {
+        + callableWriter, new ProxyCallable<Void>(proxyTicket) {
           @Override
-          public Void call() throws Exception {
+          public Void doCall() throws Exception {
             synchronized(callableWriter) {
               callableWriter.flush();
             }
@@ -439,9 +476,9 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       LOG.info("Closing " + e.getKey());
       final BucketWriter callableWriter = e.getValue();
       callWithTimeoutLogError(executor, callTimeout, "close on " + e.getKey(),
-          new Callable<Void>() {
+          new ProxyCallable<Void>(proxyTicket) {
         @Override
-        public Void call() throws Exception {
+        public Void doCall() throws Exception {
           synchronized(callableWriter) {
             callableWriter.close();
           }
@@ -465,162 +502,203 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   @Override
   public void start() {
     executor = Executors.newFixedThreadPool(threadsPoolSize);
-    // XXX if restarted, the code below reopens the writers from the
+    // FIXME: if restarted, the code below reopens the writers from the
     // previous "process" executions. Is this what we want? Why
     // not clear this list during close since the appropriate
     // writers will be opened in "process"?
-    for (Entry<String, BucketWriter> e : sfWriters.entrySet()) {
-      final BucketWriter callableWriter = e.getValue();
-      callWithTimeoutLogError(executor, callTimeout, "open on " +
-      callableWriter, new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          synchronized(callableWriter) {
-            callableWriter.open();
+    // TODO: check if this has anything to do with renaming .tmp files.
+    // If not, remove this code.
+    for (Entry<String, BucketWriter> entry : sfWriters.entrySet()) {
+      final BucketWriter callableWriter = entry.getValue();
+      try {
+        callWithTimeout(executor, callTimeout,
+            new ProxyCallable<Void>(proxyTicket) {
+          @Override
+          public Void doCall() throws Exception {
+            synchronized(callableWriter) {
+              callableWriter.open();
+            }
+            return null;
           }
-          return null;
-        }
-      });
+        });
+      } catch (IOException e) {
+        throw new FlumeException("Exception opening HDFS file.", e);
+      } catch (InterruptedException e) {
+        throw new FlumeException("Interrupt while opening HDFS file.", e);
+      }
     }
     super.start();
   }
 
-  /**
-   * Wraps call to Hadoop UserGroupInformation.isSecurityEnabled()
-   * @return {@code true} if enabled, {@code false} if disabled or unavailable
-   */
-  private boolean isHadoopSecurityEnabled() {
-    /*
-     * UserGroupInformation is in hadoop 0.18
-     * UserGroupInformation.isSecurityEnabled() not in pre security API.
-     *
-     * boolean enabled = UserGroupInformation.isSecurityEnabled();
-     */
-    boolean enabled;
-    try {
-      Class<UserGroupInformation> ugiC = UserGroupInformation.class;
-      // static call, null this obj
-      enabled = (Boolean) ugiC.getMethod("isSecurityEnabled").invoke(null);
-    } catch (NoSuchMethodException e) {
-      LOG.warn("Flume is using Hadoop core "
-          + org.apache.hadoop.util.VersionInfo.getVersion()
-          + " which does not support Security / Authentication: "
-          + e.getMessage());
-      return false;
-    } catch (Exception e) {
-      LOG.error("Unexpected error checking for Hadoop security support. " +
-          "Exception follows.", e);
-      return false;
+  private boolean authenticate(String hdfsPath) {
+
+    // logic for kerberos login
+    boolean useSecurity = UserGroupInformation.isSecurityEnabled();
+
+    LOG.info("Hadoop Security enabled: " + useSecurity);
+
+    if (useSecurity) {
+
+      // sanity checking
+      if (kerbConfPrincipal.isEmpty()) {
+        LOG.error("Hadoop running in secure mode, but Flume config doesn't "
+            + "specify a principal to use for Kerberos auth.");
+        return false;
+      }
+      if (kerbKeytab.isEmpty()) {
+        LOG.error("Hadoop running in secure mode, but Flume config doesn't "
+            + "specify a keytab to use for Kerberos auth.");
+        return false;
+      }
+
+      String principal;
+      try {
+        // resolves _HOST pattern using standard Hadoop search/replace
+        // via DNS lookup when 2nd argument is empty
+        principal = SecurityUtil.getServerPrincipal(kerbConfPrincipal, "");
+      } catch (IOException e) {
+        LOG.error("Host lookup error resolving kerberos principal ("
+            + kerbConfPrincipal + "). Exception follows.", e);
+        return false;
+      }
+
+      Preconditions.checkNotNull(principal, "Principal must not be null");
+      KerberosUser prevUser = staticLogin.get();
+      KerberosUser newUser = new KerberosUser(principal, kerbKeytab);
+
+      // be cruel and unusual when user tries to login as multiple principals
+      // this isn't really valid with a reconfigure but this should be rare
+      // enough to warrant a restart of the agent JVM
+      // TODO: find a way to interrogate the entire current config state,
+      // since we don't have to be unnecessarily protective if they switch all
+      // HDFS sinks to use a different principal all at once.
+      Preconditions.checkState(prevUser == null || prevUser.equals(newUser),
+          "Cannot use multiple kerberos principals in the same agent. " +
+          " Must restart agent to use new principal or keytab. " +
+          "Previous = %s, New = %s", prevUser, newUser);
+
+      // attempt to use cached credential if the user is the same
+      // this is polite and should avoid flooding the KDC with auth requests
+      UserGroupInformation curUser = null;
+      if (prevUser != null && prevUser.equals(newUser)) {
+        try {
+          curUser = UserGroupInformation.getLoginUser();
+        } catch (IOException e) {
+          LOG.warn("User unexpectedly had no active login. Continuing with " +
+              "authentication", e);
+        }
+      }
+
+      if (curUser == null || !curUser.getUserName().equals(principal)) {
+        try {
+          // static login
+          kerberosLogin(principal, kerbKeytab);
+        } catch (IOException e) {
+          LOG.error("Authentication or file read error while attempting to "
+              + "login as kerberos principal (" + principal + ") using "
+              + "keytab (" + kerbKeytab + "). Exception follows.", e);
+        }
+      }
+
+      // we supposedly got through this unscathed... so store the static user
+      staticLogin.set(newUser);
     }
 
-    return enabled;
-  }
-
-  /**
-   * Attempt Kerberos login via a keytab if security is enabled in Hadoop.
-   *
-   * This method should only be called if {@link #isHadoopSecurityEnabled()}
-   * returns true. This function assumes that is the case.
-   *
-   * This should be able to support multiple Hadoop clusters as long as the
-   * particular principal is allowed on multiple clusters.
-   *
-   * To preserve compatibility with non-security enhanced HDFS, we use
-   * reflection on various UserGroupInformation and SecurityUtil related method
-   * calls.
-   *
-   * @return {@code true} if and only if login was successful.
-   */
-  private boolean tryKerberosLogin() {
-
-    // attempt to load kerberos information for authenticated hdfs comms.
-    LOG.info("Kerberos login as principal (" + kerbConfPrincipal + ") from " +
-        "keytab file (" + kerbKeytabFile + ")");
-
-    if (kerbConfPrincipal.isEmpty()) {
-      LOG.error("Hadoop running in secure mode, but Flume config doesn't " +
-          "specify a principal to use for Kerberos auth.");
-      return false;
+    // hadoop impersonation works with or without kerberos security
+    proxyTicket = null;
+    if (!proxyUserName.isEmpty()) {
+      try {
+        proxyTicket = UserGroupInformation.createProxyUser(
+            proxyUserName, UserGroupInformation.getLoginUser());
+      } catch (IOException e) {
+        LOG.error("Unable to login as proxy user. Exception follows.", e);
+        return false;
+      }
     }
 
-    if (kerbKeytabFile.isEmpty()) {
-      LOG.error("Hadoop running in secure mode, but Flume config doesn't " +
-          "specify a keytab to use for Kerberos auth.");
-      return false;
+    UserGroupInformation ugi = null;
+    if (proxyTicket != null) {
+      ugi = proxyTicket;
+    } else if (useSecurity) {
+      try {
+        ugi = UserGroupInformation.getLoginUser();
+      } catch (IOException e) {
+        LOG.error("Unexpected error: Unable to get authenticated user after " +
+            "apparent successful login! Exception follows.", e);
+        return false;
+      }
     }
 
-    String principal;
-    try {
-      /*
-       * SecurityUtil not present pre hadoop 20.2
-       *
-       * SecurityUtil.getServerPrincipal not in pre-security Hadoop API
-       *
-       * // resolves _HOST pattern using standard Hadoop search/replace
-       * // via DNS lookup when 2nd argument is empty
-       *
-       * String principal = SecurityUtil.getServerPrincipal(confPrincipal, "");
-       */
-      @SuppressWarnings("rawtypes")
-      Class suC = Class.forName("org.apache.hadoop.security.SecurityUtil");
-      @SuppressWarnings("unchecked")
-      Method m = suC.getMethod("getServerPrincipal", String.class, String.class);
-      principal = (String) m.invoke(null, kerbConfPrincipal, "");
-    } catch (Exception e) {
-      LOG.error("Host lookup error resolving kerberos principal (" +
-          kerbConfPrincipal + "). Exception follows.", e);
-      return false;
-    }
+    if (ugi != null) {
+      // dump login information
+      AuthenticationMethod authMethod = ugi.getAuthenticationMethod();
+      LOG.info("Auth method: {}", authMethod);
+      LOG.info(" User name: {}", ugi.getUserName());
+      LOG.info(" Using keytab: {}", ugi.isFromKeytab());
+      if (authMethod == AuthenticationMethod.PROXY) {
+        UserGroupInformation superUser;
+        try {
+          superUser = UserGroupInformation.getLoginUser();
+          LOG.info(" Superuser auth: {}", superUser.getAuthenticationMethod());
+          LOG.info(" Superuser name: {}", superUser.getUserName());
+          LOG.info(" Superuser using keytab: {}", superUser.isFromKeytab());
+        } catch (IOException e) {
+          LOG.error("Unexpected error: unknown superuser impersonating proxy.",
+              e);
+          return false;
+        }
+      }
 
-    try {
-      /*
-       * UserGroupInformation.loginUserFromKeytab not in pre-security Hadoop API
-       *
-       * // attempts to log user in using resolved principal
-       *
-       * UserGroupInformation.loginUserFromKeytab(principal, kerbKeytabFile);
-       */
-      Class<UserGroupInformation> ugi = UserGroupInformation.class;
-      ugi.getMethod("loginUserFromKeytab", String.class, String.class)
-          .invoke(null, principal, kerbKeytabFile);
-    } catch (Exception e) {
-      LOG.error("Authentication or file read error while attempting to " +
-          "login as kerberos principal (" + principal + ") using keytab (" +
-          kerbKeytabFile + "). Exception follows.", e);
-      return false;
-    }
+      LOG.info("Logged in as user {}", ugi.getUserName());
 
-    try {
-      /*
-       * getLoginUser, getAuthenticationMethod, and isLoginKeytabBased are not
-       * in Hadoop 20.2, only kerberized enhanced version.
-       *
-       * getUserName is in all 0.18.3+
-       *
-       * UserGroupInformation ugi = UserGroupInformation.getLoginUser();
-       * LOG.info("Auth method: " + ugi.getAuthenticationMethod());
-       * LOG.info(" User name: " + ugi.getUserName());
-       * LOG.info(" Using keytab: " +
-       * UserGroupInformation.isLoginKeytabBased());
-       */
-
-      Class<UserGroupInformation> ugiC = UserGroupInformation.class;
-      // static call, null this obj
-      UserGroupInformation ugi = (UserGroupInformation) ugiC.getMethod(
-          "getLoginUser").invoke(null);
-      String authMethod = ugiC.getMethod("getAuthenticationMethod").invoke(ugi)
-          .toString();
-      boolean keytabBased = (Boolean) ugiC.getMethod("isLoginKeytabBased")
-          .invoke(ugi);
-
-      LOG.info("Auth method: " + authMethod);
-      LOG.info(" User name: " + ugi.getUserName());
-      LOG.info(" Using keytab: " + keytabBased);
-    } catch (Exception e) {
-      LOG.error("Flume was unable to dump kerberos login user"
-          + " and authentication method", e);
+      return true;
     }
 
     return true;
   }
+
+  /**
+   * Static synchronized method for static Kerberos login. <br/>
+   * Static synchronized due to a thundering herd problem when multiple Sinks
+   * attempt to log in using the same principal at the same time with the
+   * intention of impersonating different users (or even the same user).
+   * If this is not controlled, MIT Kerberos v5 believes it is seeing a replay
+   * attach and it returns:
+   * <blockquote>Request is a replay (34) - PROCESS_TGS</blockquote>
+   * In addition, since the underlying Hadoop APIs we are using for
+   * impersonation are static, we define this method as static as well.
+   *
+   * @param principal Fully-qualified principal to use for authentication.
+   * @param keytab Location of keytab file containing credentials for principal.
+   * @return Logged-in user
+   * @throws IOException if login fails.
+   */
+  private static synchronized UserGroupInformation kerberosLogin(
+      String principal, String keytab) throws IOException {
+
+    // if we are the 2nd user thru the lock, the login should already be
+    // available statically if login was successful
+    UserGroupInformation curUser = null;
+    try {
+      curUser = UserGroupInformation.getLoginUser();
+    } catch (IOException e) {
+      // not a big deal but this shouldn't typically happen because it will
+      // generally fall back to the UNIX user
+      LOG.debug("Unable to get login user before Kerberos auth attempt.", e);
+    }
+
+    // this means we really actually have not logged in successfully yet
+    if (curUser == null || !curUser.getUserName().equals(principal)) {
+
+      LOG.info("Attempting kerberos login as principal (" + principal + ") " +
+          "from keytab file (" + keytab + ")");
+
+      // attempt static kerberos login
+      UserGroupInformation.loginUserFromKeytab(principal, keytab);
+      curUser = UserGroupInformation.getLoginUser();
+    }
+
+    return curUser;
+  }
+
 }
