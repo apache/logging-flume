@@ -19,11 +19,14 @@
 package org.apache.flume.formatter.output;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.flume.tools.TimestampRoundDownUtil;
 
 import com.google.common.base.Preconditions;
 
@@ -109,6 +112,33 @@ public class BucketPath {
    *
    */
   public static String replaceShorthand(char c, Map<String, String> headers) {
+    return replaceShorthand(c, headers, false, 0, 0);
+  }
+
+  /**
+   * Hardcoded lookups for %x style escape replacement. Add your own!
+   *
+   * All shorthands are Date format strings, currently.
+   *
+   * Returns the empty string if an escape is not recognized.
+   *
+   * Dates follow the same format as unix date, with a few exceptions.
+   * @param c - The character to replace.
+   * @param headers - Event headers
+   * @param needRounding - Should the timestamp be rounded down?
+   * @param unit - if needRounding is true, what unit to round down to. This
+   * must be one of the units specified by {@link java.util.Calendar} -
+   * HOUR, MINUTE or SECOND. Defaults to second, if none of these are present.
+   * Ignored if needRounding is false.
+   * @param roundDown - if needRounding is true,
+   * The time should be rounded to the largest multiple of this
+   * value, smaller than the time supplied, defaults to 1, if <= 0(rounds off
+   * to the second/minute/hour immediately lower than the timestamp supplied.
+   * Ignored if needRounding is false.
+   * @return
+   */
+  public static String replaceShorthand(char c, Map<String, String> headers,
+      boolean needRounding, int unit, int roundDown) {
     // It's a date
     String formatString = "";
     switch (c) {
@@ -160,7 +190,12 @@ public class BucketPath {
       formatString = "a";
       break;
     case 's':
-      return "" + (Long.valueOf(headers.get("timestamp"))/ 1000);
+      long ts = Long.valueOf(headers.get("timestamp"));
+      if(needRounding){
+        ts = roundDown(
+            roundDown, unit, ts);
+      }
+      return "" + (ts/1000);
     case 'S':
       formatString = "ss";
       break;
@@ -182,8 +217,38 @@ public class BucketPath {
       return "";
     }
     SimpleDateFormat format = new SimpleDateFormat(formatString);
-    Date date = new Date(Long.valueOf(headers.get("timestamp")));
+    long ts = Long.valueOf(headers.get("timestamp"));
+    long timestamp = ts;
+    if(needRounding){
+      timestamp = roundDown(roundDown, unit, ts);
+    }
+    Date date = new Date(timestamp);
     return format.format(date);
+  }
+
+  private static long roundDown(int roundDown, int unit, long ts){
+    long timestamp = ts;
+    if(roundDown <= 0){
+      roundDown = 1;
+    }
+    switch (unit) {
+      case Calendar.SECOND:
+        timestamp = TimestampRoundDownUtil.roundDownTimeStampSeconds(
+            ts, roundDown);
+        break;
+      case Calendar.MINUTE:
+        timestamp = TimestampRoundDownUtil.roundDownTimeStampMinutes(
+            ts, roundDown);
+        break;
+      case Calendar.HOUR_OF_DAY:
+        timestamp = TimestampRoundDownUtil.roundDownTimeStampHours(
+            ts, roundDown);
+        break;
+      default:
+        timestamp = ts;
+        break;
+    }
+    return timestamp;
   }
 
   /**
@@ -195,7 +260,33 @@ public class BucketPath {
    * TODO(henry): we may want to consider taking this out of Event and into a
    * more general class when we get more use cases for this pattern.
    */
-  public static String escapeString(String in, Map<String, String> headers) {
+  public static String escapeString(String in, Map<String, String> headers){
+    return escapeString(in, headers, false, 0, 0);
+  }
+
+  /**
+   * Replace all substrings of form %{tagname} with get(tagname).toString() and
+   * all shorthand substrings of form %x with a special value.
+   *
+   * Any unrecognized / not found tags will be replaced with the empty string.
+   *
+   * TODO(henry): we may want to consider taking this out of Event and into a
+   * more general class when we get more use cases for this pattern.
+   *
+   * @param needRounding - Should the timestamp be rounded down?
+   * @param unit - if needRounding is true, what unit to round down to. This
+   * must be one of the units specified by {@link java.util.Calendar} -
+   * HOUR, MINUTE or SECOND. Defaults to second, if none of these are present.
+   * Ignored if needRounding is false.
+   * @param roundDown - if needRounding is true,
+   * The time should be rounded to the largest multiple of this
+   * value, smaller than the time supplied, defaults to 1, if <= 0(rounds off
+   * to the second/minute/hour immediately lower than the timestamp supplied.
+   * Ignored if needRounding is false.
+   * @return Escaped string.
+   */
+  public static String escapeString(String in, Map<String, String> headers,
+      boolean needRounding, int unit, int roundDown) {
     Matcher matcher = tagPattern.matcher(in);
     StringBuffer sb = new StringBuffer();
     while (matcher.find()) {
@@ -216,7 +307,8 @@ public class BucketPath {
             && matcher.group(1).length() == 1,
             "Expected to match single character tag in string " + in);
         char c = matcher.group(1).charAt(0);
-        replacement = replaceShorthand(c, headers);
+        replacement = replaceShorthand(c, headers,
+            needRounding, unit, roundDown);
       }
 
       // The replacement string must have '$' and '\' chars escaped. This
@@ -243,7 +335,13 @@ public class BucketPath {
    * mapping of an attribute name to the value based on the escape sequence
    * found in the argument string.
    */
-  public static Map<String, String> getEscapeMapping(String in, Map<String, String> headers) {
+  public static Map<String, String> getEscapeMapping(String in,
+      Map<String, String> headers) {
+    return getEscapeMapping(in, headers, false, 0, 0);
+  }
+  public static Map<String, String> getEscapeMapping(String in,
+      Map<String, String> headers, boolean needRounding,
+      int unit, int roundDown) {
     Map<String, String> mapping = new HashMap<String, String>();
     Matcher matcher = tagPattern.matcher(in);
     while (matcher.find()) {
@@ -266,7 +364,8 @@ public class BucketPath {
             && matcher.group(1).length() == 1,
             "Expected to match single character tag in string " + in);
         char c = matcher.group(1).charAt(0);
-        replacement = replaceShorthand(c, headers);
+        replacement = replaceShorthand(c, headers,
+            needRounding, unit, roundDown);
         mapping.put(expandShorthand(c), replacement);
       }
     }

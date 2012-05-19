@@ -21,6 +21,7 @@ package org.apache.flume.sink.hdfs;
 import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -118,6 +119,10 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private String kerbKeytab;
   private String proxyUserName;
   private UserGroupInformation proxyTicket;
+
+  private boolean needRounding = false;
+  private int roundUnit = Calendar.SECOND;
+  private int roundValue = 1;
 
   private long callTimeout;
   private Context context;
@@ -242,6 +247,32 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
     if (!authenticate(path)) {
       LOG.error("Failed to authenticate!");
+    }
+    needRounding = context.getBoolean("hdfs.round", false);
+
+    if(needRounding) {
+      String unit = context.getString("hdfs.roundUnit", "second");
+      if (unit.equalsIgnoreCase("hour")) {
+        this.roundUnit = Calendar.HOUR_OF_DAY;
+      } else if (unit.equalsIgnoreCase("minute")) {
+        this.roundUnit = Calendar.MINUTE;
+      } else if (unit.equalsIgnoreCase("second")){
+        this.roundUnit = Calendar.SECOND;
+      } else {
+        LOG.warn("Rounding unit is not valid, please set one of" +
+            "minute, hour, or second. Rounding will be disabled");
+        needRounding = false;
+      }
+      this.roundValue = context.getInteger("hdfs.roundValue", 1);
+      if(roundUnit == Calendar.SECOND || roundUnit == Calendar.MINUTE){
+        Preconditions.checkArgument(roundValue > 0 && roundValue <= 60,
+            "Round value" +
+            "must be > 0 and <= 60");
+      } else if (roundUnit == Calendar.HOUR_OF_DAY){
+        Preconditions.checkArgument(roundValue > 0 && roundValue <= 24,
+            "Round value" +
+            "must be > 0 and <= 24");
+      }
     }
   }
 
@@ -376,7 +407,8 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
         }
 
         // reconstruct the path name by substituting place holders
-        String realPath = BucketPath.escapeString(path, event.getHeaders());
+        String realPath = BucketPath.escapeString(path, event.getHeaders(),
+            needRounding, roundUnit, roundValue);
         BucketWriter bucketWriter = sfWriters.get(realPath);
 
         // we haven't seen this file yet, so open it and cache the handle
@@ -448,7 +480,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       }
     } finally {
       // flush the buckets that still has pending data
-      // this ensures that the data removed from channel 
+      // this ensures that the data removed from channel
       // by the current transaction is safely on disk
       for (BucketWriter writer : writers) {
         if (writer.isBatchComplete()) {
