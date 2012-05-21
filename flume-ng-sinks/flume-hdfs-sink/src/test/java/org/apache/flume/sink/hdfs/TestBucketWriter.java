@@ -24,8 +24,8 @@ import java.util.concurrent.TimeUnit;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
+import org.apache.hadoop.io.SequenceFile;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,19 +36,14 @@ public class TestBucketWriter {
       LoggerFactory.getLogger(TestBucketWriter.class);
   private Context ctx = new Context();
 
-  @Before
-  public void setup() {
-
-  }
-
   @Test
   public void testEventCountingRoller() throws IOException {
     int maxEvents = 100;
-    BucketWriter bucketWriter = new BucketWriter(0, 0, maxEvents, 0, ctx);
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
     HDFSTextFormatter formatter = new HDFSTextFormatter();
-
-    bucketWriter.open("/tmp/file", hdfsWriter, formatter);
+    BucketWriter bucketWriter = new BucketWriter(0, 0, maxEvents, 0, ctx,
+        "/tmp/file", null, SequenceFile.CompressionType.NONE, hdfsWriter,
+        formatter);
 
     Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
     for (int i = 0; i < 1000; i++) {
@@ -59,19 +54,19 @@ public class TestBucketWriter {
     logger.info("Number of bytes written: {}", hdfsWriter.getBytesWritten());
     logger.info("Number of files opened: {}", hdfsWriter.getFilesOpened());
 
-    Assert.assertEquals(hdfsWriter.getEventsWritten(), 1000);
-    Assert.assertEquals(hdfsWriter.getBytesWritten(), 3000);
-    Assert.assertEquals(hdfsWriter.getFilesOpened(), 11);
+    Assert.assertEquals("events written", 1000, hdfsWriter.getEventsWritten());
+    Assert.assertEquals("bytes written", 3000, hdfsWriter.getBytesWritten());
+    Assert.assertEquals("files opened", 10, hdfsWriter.getFilesOpened());
   }
 
   @Test
   public void testSizeRoller() throws IOException {
     int maxBytes = 300;
-    BucketWriter bucketWriter = new BucketWriter(0, maxBytes, 0, 0, ctx);
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
     HDFSTextFormatter formatter = new HDFSTextFormatter();
-
-    bucketWriter.open("/tmp/file", hdfsWriter, formatter);
+    BucketWriter bucketWriter = new BucketWriter(0, maxBytes, 0, 0, ctx,
+        "/tmp/file", null, SequenceFile.CompressionType.NONE, hdfsWriter,
+        formatter);
 
     Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
     for (int i = 0; i < 1000; i++) {
@@ -82,19 +77,19 @@ public class TestBucketWriter {
     logger.info("Number of bytes written: {}", hdfsWriter.getBytesWritten());
     logger.info("Number of files opened: {}", hdfsWriter.getFilesOpened());
 
-    Assert.assertEquals(hdfsWriter.getEventsWritten(), 1000);
-    Assert.assertEquals(hdfsWriter.getBytesWritten(), 3000);
-    Assert.assertEquals(hdfsWriter.getFilesOpened(), 11);
+    Assert.assertEquals("events written", 1000, hdfsWriter.getEventsWritten());
+    Assert.assertEquals("bytes written", 3000, hdfsWriter.getBytesWritten());
+    Assert.assertEquals("files opened", 10, hdfsWriter.getFilesOpened());
   }
 
   @Test
   public void testIntervalRoller() throws IOException, InterruptedException {
     int rollInterval = 2; // seconds
-    BucketWriter bucketWriter = new BucketWriter(rollInterval, 0, 0, 0, ctx);
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
     HDFSTextFormatter formatter = new HDFSTextFormatter();
-
-    bucketWriter.open("/tmp/file", hdfsWriter, formatter);
+    BucketWriter bucketWriter = new BucketWriter(rollInterval, 0, 0, 0, ctx,
+        "/tmp/file", null, SequenceFile.CompressionType.NONE, hdfsWriter,
+        formatter);
 
     Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
     long startNanos = System.nanoTime();
@@ -114,9 +109,10 @@ public class TestBucketWriter {
     logger.info("Number of bytes written: {}", hdfsWriter.getBytesWritten());
     logger.info("Number of files opened: {}", hdfsWriter.getFilesOpened());
 
-    Assert.assertEquals(hdfsWriter.getEventsWritten(), 1000);
-    Assert.assertEquals(hdfsWriter.getBytesWritten(), 3000);
-    Assert.assertEquals(hdfsWriter.getFilesOpened(), elapsedSeconds/2 + 1);
+    Assert.assertEquals("events written", 1000, hdfsWriter.getEventsWritten());
+    Assert.assertEquals("bytes written", 3000, hdfsWriter.getBytesWritten());
+    Assert.assertEquals("files opened", elapsedSeconds/2 + 1,
+        hdfsWriter.getFilesOpened());
   }
 
 }

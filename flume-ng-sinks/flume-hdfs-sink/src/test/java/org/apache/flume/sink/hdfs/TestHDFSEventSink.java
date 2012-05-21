@@ -17,9 +17,6 @@
  */
 package org.apache.flume.sink.hdfs;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -57,8 +54,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -181,8 +176,7 @@ public class TestHDFSEventSink {
     Path fList[] = FileUtil.stat2Paths(dirStat);
 
     // check that the roll happened correctly for the given data
-    // Note that we'll end up with one last file with only header
-    Assert.assertEquals((totalEvents / rollCount) + 1, fList.length);
+    Assert.assertEquals("num files", totalEvents / rollCount, fList.length);
     // check the contents of the all files
     verifyOutputTextFiles(fs, conf, dirPath.toUri().getPath(), fileName, bodies);
   }
@@ -295,8 +289,7 @@ public class TestHDFSEventSink {
     Path fList[] = FileUtil.stat2Paths(dirStat);
 
     // check that the roll happened correctly for the given data
-    // Note that we'll end up with one last file with only header
-    Assert.assertEquals((totalEvents / rollCount) + 1, fList.length);
+    Assert.assertEquals("num files", totalEvents / rollCount, fList.length);
     verifyOutputTextFiles(fs, conf, dirPath.toUri().getPath(), fileName, bodies);
   }
 
@@ -374,8 +367,7 @@ public class TestHDFSEventSink {
     Path fList[] = FileUtil.stat2Paths(dirStat);
 
     // check that the roll happened correctly for the given data
-    // Note that we'll end up with one last file with only header
-    Assert.assertEquals((totalEvents / rollCount) + 1, fList.length);
+    Assert.assertEquals("num files", totalEvents / rollCount, fList.length);
     verifyOutputAvroFiles(fs, conf, dirPath.toUri().getPath(), fileName, bodies);
   }
 
@@ -450,8 +442,7 @@ public class TestHDFSEventSink {
     Path fList[] = FileUtil.stat2Paths(dirStat);
 
     // check that the roll happened correctly for the given data
-    // Note that we'll end up with two files which has have a header
-    Assert.assertEquals((totalEvents / rollCount) + 1, fList.length);
+    Assert.assertEquals("num files", totalEvents / rollCount, fList.length);
     verifyOutputSequenceFiles(fs, conf, dirPath.toUri().getPath(), fileName, bodies);
   }
 
@@ -623,13 +614,21 @@ public class TestHDFSEventSink {
         BytesWritable value = new BytesWritable();
         while(reader.next(key, value)) {
           String body = new String(value.getBytes(), 0, value.getLength());
-          bodies.remove(body);
-          found++;
+          if (bodies.contains(body)) {
+            LOG.debug("Found event body: {}", body);
+            bodies.remove(body);
+            found++;
+          }
         }
         reader.close();
       }
     }
-    assertTrue("Found = " + found + ", Expected = "  +
+    if (!bodies.isEmpty()) {
+      for (String body : bodies) {
+        LOG.error("Never found event body: {}", body);
+      }
+    }
+    Assert.assertTrue("Found = " + found + ", Expected = "  +
         expected + ", Left = " + bodies.size() + " " + bodies,
           bodies.size() == 0);
 
@@ -651,7 +650,7 @@ public class TestHDFSEventSink {
         reader.close();
       }
     }
-    assertTrue("Found = " + found + ", Expected = "  +
+    Assert.assertTrue("Found = " + found + ", Expected = "  +
         expected + ", Left = " + bodies.size() + " " + bodies,
           bodies.size() == 0);
 
@@ -681,25 +680,27 @@ public class TestHDFSEventSink {
         input.close();
       }
     }
-    assertTrue("Found = " + found + ", Expected = "  +
+    Assert.assertTrue("Found = " + found + ", Expected = "  +
         expected + ", Left = " + bodies.size() + " " + bodies,
           bodies.size() == 0);
   }
 
   /**
    * Ensure that when a write throws an IOException we are
-   * able to continue to progress (via close/open).
+   * able to continue to progress in the next process() call.
+   * This relies on Transactional rollback semantics for durability and
+   * the behavior of the BucketWriter class of close()ing upon IOException.
    */
   @Test
   public void testCloseReopen() throws InterruptedException,
       LifecycleException, EventDeliveryException, IOException {
 
     LOG.debug("Starting...");
+    final int numBatches = 4;
     final long txnMax = 25;
     final String fileName = "FlumeData";
     final long rollCount = 5;
     final long batchSize = 2;
-    final int numBatches = 4;
     String newPath = testPath + "/singleBucket";
     int i = 1, j = 1;
 
@@ -724,29 +725,8 @@ public class TestHDFSEventSink {
 
     Configurables.configure(sink, context);
 
-    Channel channel = mock(Channel.class);
-    final List<Event> events = Lists.newArrayList();
-    doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        Object[] args = invocation.getArguments();
-        events.add((Event)args[0]);
-        return null;
-      }
-    }).when(channel).put(any(Event.class));
-
-    when(channel.take()).then(new Answer<Event>() {
-      @Override
-      public Event answer(InvocationOnMock invocation) throws Throwable {
-        if(events.isEmpty()) {
-          return null;
-        }
-        return events.remove(0);
-      }
-    });
-    when(channel.getTransaction()).thenReturn(mock(Transaction.class));
-
-    Configurables.configure(channel, context);
+    MemoryChannel channel = new MemoryChannel();
+    Configurables.configure(channel, new Context());
 
     sink.setChannel(channel);
     sink.start();
@@ -755,19 +735,25 @@ public class TestHDFSEventSink {
     List<String> bodies = Lists.newArrayList();
     // push the event batches into channel
     for (i = 1; i < numBatches; i++) {
-      for (j = 1; j <= txnMax; j++) {
-        Event event = new SimpleEvent();
-        eventDate.clear();
-        eventDate.set(2011, i, i, i, 0); // yy mm dd
-        event.getHeaders().put("timestamp",
-            String.valueOf(eventDate.getTimeInMillis()));
-        event.getHeaders().put("hostname", "Host" + i);
-        String body = "Test." + i + "." + j;
-        event.setBody(body.getBytes());
-        bodies.add(body);
-        // inject fault
-        event.getHeaders().put("fault-until-reopen", "");
-        channel.put(event);
+      channel.getTransaction().begin();
+      try {
+        for (j = 1; j <= txnMax; j++) {
+          Event event = new SimpleEvent();
+          eventDate.clear();
+          eventDate.set(2011, i, i, i, 0); // yy mm dd
+          event.getHeaders().put("timestamp",
+              String.valueOf(eventDate.getTimeInMillis()));
+          event.getHeaders().put("hostname", "Host" + i);
+          String body = "Test." + i + "." + j;
+          event.setBody(body.getBytes());
+          bodies.add(body);
+          // inject fault
+          event.getHeaders().put("fault-until-reopen", "");
+          channel.put(event);
+        }
+        channel.getTransaction().commit();
+      } finally {
+        channel.getTransaction().close();
       }
       LOG.info("execute sink to process the events: " + sink.process());
     }
@@ -812,6 +798,7 @@ public class TestHDFSEventSink {
     context.put("hdfs.rollCount", String.valueOf(rollCount));
     context.put("hdfs.batchSize", String.valueOf(batchSize));
     context.put("hdfs.fileType", HDFSBadWriterFactory.BadSequenceFileType);
+    context.put("hdfs.callTimeout", Long.toString(1000));
     Configurables.configure(sink, context);
 
     Channel channel = new MemoryChannel();
