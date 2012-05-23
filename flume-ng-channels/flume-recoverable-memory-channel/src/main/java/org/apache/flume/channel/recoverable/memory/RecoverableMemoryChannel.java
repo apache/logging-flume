@@ -59,7 +59,7 @@ public class RecoverableMemoryChannel extends BasicChannelSemantics {
   public static final String WAL_DATA_DIR = "wal.dataDir";
   public static final String WAL_ROLL_SIZE = "wal.rollSize";
   public static final String WAL_MAX_LOGS_SIZE = "wal.maxLogsSize";
-  public static final String WAL_MIN_RENTENTION_PERIOD = "wal.minRententionPeriod";
+  public static final String WAL_MIN_RETENTION_PERIOD = "wal.minRetentionPeriod";
   public static final String WAL_WORKER_INTERVAL = "wal.workerInterval";
   public static final String CAPACITY = "capacity";
   public static final String KEEPALIVE = "keep-alive";
@@ -101,7 +101,7 @@ public class RecoverableMemoryChannel extends BasicChannelSemantics {
     keepAlive = context.getInteger(KEEPALIVE, DEFAULT_KEEPALIVE);
     long rollSize = context.getLong(WAL_ROLL_SIZE, WAL.DEFAULT_ROLL_SIZE);
     long maxLogsSize = context.getLong(WAL_MAX_LOGS_SIZE, WAL.DEFAULT_MAX_LOGS_SIZE);
-    long minLogRetentionPeriod = context.getLong(WAL_MIN_RENTENTION_PERIOD, WAL.DEFAULT_MIN_LOG_RENTENTION_PERIOD);
+    long minLogRetentionPeriod = context.getLong(WAL_MIN_RETENTION_PERIOD, WAL.DEFAULT_MIN_LOG_RETENTION_PERIOD);
     long workerInterval = context.getLong(WAL_WORKER_INTERVAL, WAL.DEFAULT_WORKER_INTERVAL);
     if(wal == null) {
       String homePath = System.getProperty("user.home").replace('\\', '/');

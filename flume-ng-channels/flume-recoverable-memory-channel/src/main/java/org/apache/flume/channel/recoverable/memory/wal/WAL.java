@@ -105,7 +105,7 @@ public class WAL<T extends Writable> implements Closeable {
   /**
    * Minimum number of ms to keep a log file.
    */
-  public static final long DEFAULT_MIN_LOG_RENTENTION_PERIOD = 5L * 60L * 1000L;
+  public static final long DEFAULT_MIN_LOG_RETENTION_PERIOD = 5L * 60L * 1000L;
   /**
    * How often in ms the background worker runs
    */
@@ -114,7 +114,7 @@ public class WAL<T extends Writable> implements Closeable {
   // used for testing only
   WAL(File path, Class<T> clazz) throws IOException {
     this(path, clazz, DEFAULT_ROLL_SIZE, DEFAULT_MAX_LOGS_SIZE,
-        DEFAULT_MIN_LOG_RENTENTION_PERIOD, DEFAULT_WORKER_INTERVAL);
+        DEFAULT_MIN_LOG_RETENTION_PERIOD, DEFAULT_WORKER_INTERVAL);
   }
 
   /**
