@@ -79,7 +79,7 @@ public class FileChannel extends BasicChannelSemantics {
   private Log log;
   private boolean shutdownHookAdded;
   private Thread shutdownHook;
-  private volatile boolean open;
+	private volatile boolean open;
   private Semaphore queueRemaining;
   private final ThreadLocal<FileBackedTransaction> transactions =
       new ThreadLocal<FileBackedTransaction>();

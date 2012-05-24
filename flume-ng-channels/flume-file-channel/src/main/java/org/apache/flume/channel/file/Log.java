@@ -123,8 +123,6 @@ class Log {
    */
   synchronized void replay() throws IOException {
     Preconditions.checkState(!open, "Cannot replay after Log as been opened");
-    open = true;
-    boolean error = true;
     try {
       /*
        * First we are going to look through the data directories
@@ -161,7 +159,7 @@ class Log {
        */
       checkpointA = new Checkpoint(new File(checkpointDir, "chkpt-A"),
           queueSize);
-      checkpointB = new Checkpoint(new File(checkpointDir, "chkpt-B"), 
+      checkpointB = new Checkpoint(new File(checkpointDir, "chkpt-B"),
           queueSize);
       if (checkpointA.getTimestamp() > checkpointB.getTimestamp()) {
         try {
@@ -213,11 +211,9 @@ class Log {
        * Now that we have replayed, write the current queue to disk
        */
       writeCheckpoint();
-      error = false;
-    } finally {
-      if (error) {
-        open = false;
-      }
+      open = true;
+    } catch (Exception ex) {
+      LOGGER.error("Failed to initialize Log", ex);
     }
   }
 
@@ -396,7 +392,7 @@ class Log {
         if(reader != null) {
           reader.close();
         }
-      }      
+      }
     }
     try {
       unlock(checkpointDir);
@@ -478,7 +474,6 @@ class Log {
    */
   private synchronized void roll(int index, ByteBuffer buffer)
       throws IOException {
-    Preconditions.checkState(open, "Log is closed");
     LogFile.Writer oldLogFile = logFiles.get(index);
     // check to make sure a roll is actually required due to
     // the possibility of multiple writes waiting on lock
@@ -510,7 +505,6 @@ class Log {
    * @throws IOException if we are unable to write the checkpoint out to disk
    */
   private synchronized void writeCheckpoint() throws IOException {
-    Preconditions.checkState(open, "Log is closed");
     synchronized (queue) {
       checkpoint.get().write(queue);
       if (!checkpoint.compareAndSet(checkpointA, checkpointB)) {
