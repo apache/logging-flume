@@ -19,6 +19,7 @@
 
 package org.apache.flume.sink.hdfs;
 
+
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.flume.Context;
