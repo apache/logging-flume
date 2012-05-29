@@ -1,3 +1,4 @@
+
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -48,7 +49,6 @@ class BucketWriter {
    * tossed away and we will create a new instance. Gurantee unique files
    * in this case.
    */
-  private static final AtomicLong fileExentionCounter = new AtomicLong(System.nanoTime());
   private HDFSWriter writer;
   private FlumeFormatter formatter;
   private long eventCounter;
@@ -62,10 +62,13 @@ class BucketWriter {
   private CompressionType compType;
   private FileSystem fileSystem;
   private Context context;
+
   private volatile String filePath;
   private volatile String bucketPath;
   private volatile long batchCounter;
   private volatile boolean isOpen;
+
+  private final AtomicLong fileExtensionCounter;
 
   // clear the class counters
   private void resetCounters() {
@@ -90,6 +93,7 @@ class BucketWriter {
     formatter = fmt;
     isOpen = false;
 
+    fileExtensionCounter = new AtomicLong(System.currentTimeMillis());
     writer.configure(context);
   }
 
@@ -103,7 +107,7 @@ class BucketWriter {
       throw new IOException("Invalid file settings");
     }
 
-    long counter = fileExentionCounter.incrementAndGet();
+    long counter = fileExtensionCounter.incrementAndGet();
 
     Configuration config = new Configuration();
     // disable FileSystem JVM shutdown hook
