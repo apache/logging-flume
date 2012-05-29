@@ -22,6 +22,7 @@ package org.apache.flume.source.thriftLegacy;
 import java.lang.InterruptedException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -64,6 +65,9 @@ public class ThriftLegacySource  extends AbstractSource implements
   private TServerTransport serverTransport;
   private Thread thriftHandlerThread;
 
+  // Charset#decode is threadsafe.
+  private Charset UTF_8 = Charset.forName("UTF-8");
+
   @SuppressWarnings("deprecation")
   private class ThriftFlumeEventServerImpl
         implements ThriftFlumeEventServer.Iface {
@@ -80,7 +84,8 @@ public class ThriftLegacySource  extends AbstractSource implements
       headers.put(PRIORITY, evt.getPriority().toString());
       headers.put(NANOS, Long.toString(evt.getNanos()));
       for (Entry<String, ByteBuffer> entry: evt.getFields().entrySet()) {
-        headers.put(entry.getKey().toString(), entry.getValue().toString());
+        headers.put(entry.getKey().toString(),
+          UTF_8.decode(entry.getValue()).toString());
       }
       headers.put(OG_EVENT, "yes");
 

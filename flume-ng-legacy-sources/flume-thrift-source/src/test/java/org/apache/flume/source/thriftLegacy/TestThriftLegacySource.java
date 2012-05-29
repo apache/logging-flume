@@ -107,8 +107,7 @@ public class TestThriftLegacySource {
     source.setChannelProcessor(new ChannelProcessor(rcs));
   }
 
-  @Test
-  public void testLifecycle() throws InterruptedException {
+  private void bind() throws InterruptedException {
     boolean bound = false;
 
     for (int i = 0; i < 100 && !bound; i++) {
@@ -131,8 +130,10 @@ public class TestThriftLegacySource {
         .assertTrue("Reached start or error", LifecycleController.waitForOneOf(
             source, LifecycleState.START_OR_ERROR));
     Assert.assertEquals("Server is started", LifecycleState.START,
-        source.getLifecycleState());
+            source.getLifecycleState());
+  }
 
+  private void stop() throws InterruptedException {
     source.stop();
     Assert.assertTrue("Reached stop or error",
         LifecycleController.waitForOneOf(source, LifecycleState.STOP_OR_ERROR));
@@ -141,31 +142,14 @@ public class TestThriftLegacySource {
   }
 
   @Test
+  public void testLifecycle() throws InterruptedException {
+    bind();
+    stop();
+  }
+
+  @Test
   public void testRequest() throws InterruptedException, IOException {
-    boolean bound = false;
-    int i;
-
-    for (i = 0; i < 100 && !bound; i++) {
-      try {
-        Context context = new Context();
-
-        context.put("port", String.valueOf(selectedPort = 41414 + i));
-        context.put("host", "0.0.0.0");
-
-        Configurables.configure(source, context);
-
-        source.start();
-        bound = true;
-      } catch (ChannelException e) {
-        // Assume port in use, try another one
-      }
-    }
-
-    Assert
-        .assertTrue("Reached start or error", LifecycleController.waitForOneOf(
-            source, LifecycleState.START_OR_ERROR));
-    Assert.assertEquals("Server is started", LifecycleState.START,
-        source.getLifecycleState());
+    bind();
 
     Map flumeMap = new HashMap<CharSequence, ByteBuffer>();
     ThriftFlumeEvent thriftEvent =  new ThriftFlumeEvent(
@@ -185,12 +169,33 @@ public class TestThriftLegacySource {
     transaction.commit();
     transaction.close();
 
-    source.stop();
+    stop();
+  }
 
-    Assert.assertTrue("Reached stop or error",
-        LifecycleController.waitForOneOf(source, LifecycleState.STOP_OR_ERROR));
-    Assert.assertEquals("Server is stopped", LifecycleState.STOP,
-        source.getLifecycleState());
+  @Test
+  public void testHeaders() throws InterruptedException, IOException {
+    bind();
+
+    Map flumeHeaders = new HashMap<CharSequence, ByteBuffer>();
+    flumeHeaders.put("hello", ByteBuffer.wrap("world".getBytes("UTF-8")));
+    ThriftFlumeEvent thriftEvent =  new ThriftFlumeEvent(
+        1, Priority.INFO, ByteBuffer.wrap("foo".getBytes()),
+        0, "fooHost", flumeHeaders);
+    FlumeClient fClient = new FlumeClient("0.0.0.0", selectedPort);
+    fClient.append(thriftEvent);
+
+    // check if the event has arrived in the channel through OG thrift source
+    Transaction transaction = channel.getTransaction();
+    transaction.begin();
+
+    Event event = channel.take();
+    Assert.assertNotNull(event);
+    Assert.assertEquals("Event in channel has our header", "world",
+        event.getHeaders().get("hello"));
+    transaction.commit();
+    transaction.close();
+
+    stop();
   }
 
 }
