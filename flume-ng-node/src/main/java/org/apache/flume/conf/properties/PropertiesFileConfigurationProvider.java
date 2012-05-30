@@ -247,23 +247,31 @@ public class PropertiesFileConfigurationProvider extends
   private void loadChannels(AgentConfiguration agentConf,
       NodeConfiguration conf) throws InstantiationException {
     LOGGER.info("Creating channels");
-    for (ComponentConfiguration comp : agentConf.getChannels()) {
-      Channel channel = getChannelFactory().create(comp.getComponentName(),
-          comp.getType());
+    Set<String> channels = agentConf.getChannelSet();
+    Map<String, ComponentConfiguration> compMap =
+        agentConf.getChannelConfigMap();
+    for (String chName : channels) {
+      ComponentConfiguration comp = compMap.get(chName);
+      if(comp != null) {
+        Channel channel = getChannelFactory().create(comp.getComponentName(),
+            comp.getType());
 
-      Configurables.configure(channel, comp);
+        Configurables.configure(channel, comp);
 
-      conf.getChannels().put(comp.getComponentName(), channel);
+        conf.getChannels().put(comp.getComponentName(), channel);
       }
+    }
 
-    for (String ch : agentConf.getChannelContext().keySet()) {
+    for (String ch : channels) {
       Context context = agentConf.getChannelContext().get(ch);
-      Channel channel =
-          getChannelFactory().create(ch, context.getString(
-              BasicConfigurationConstants.CONFIG_TYPE));
-      Configurables.configure(channel, context);
-      conf.getChannels().put(ch, channel);
-      LOGGER.info("created channel " + ch);
+      if(context != null){
+        Channel channel =
+            getChannelFactory().create(ch, context.getString(
+                BasicConfigurationConstants.CONFIG_TYPE));
+        Configurables.configure(channel, context);
+        conf.getChannels().put(ch, channel);
+        LOGGER.info("created channel " + ch);
+      }
     }
 
   }
@@ -271,89 +279,103 @@ public class PropertiesFileConfigurationProvider extends
   private void loadSources(AgentConfiguration agentConf, NodeConfiguration conf)
       throws InstantiationException {
 
-    for (ComponentConfiguration comp : agentConf.getSources()) {
-      SourceConfiguration config = (SourceConfiguration) comp;
+    Set<String> sources = agentConf.getSourceSet();
+    Map<String, ComponentConfiguration> compMap =
+        agentConf.getSourceConfigMap();
+    for (String sourceName : sources) {
+      ComponentConfiguration comp = compMap.get(sourceName);
+      if(comp != null) {
+        SourceConfiguration config = (SourceConfiguration) comp;
 
-      Source source = getSourceFactory().create(comp.getComponentName(),
-          comp.getType());
+        Source source = getSourceFactory().create(comp.getComponentName(),
+            comp.getType());
 
-      Configurables.configure(source, config);
-      Set<String> channelNames = config.getChannels();
-      List<Channel> channels = new ArrayList<Channel>();
-      for (String chName : channelNames) {
-        channels.add(conf.getChannels().get(chName));
+        Configurables.configure(source, config);
+        Set<String> channelNames = config.getChannels();
+        List<Channel> channels = new ArrayList<Channel>();
+        for (String chName : channelNames) {
+          channels.add(conf.getChannels().get(chName));
+        }
+
+        ChannelSelectorConfiguration selectorConfig =
+            config.getSelectorConfiguration();
+
+        ChannelSelector selector = ChannelSelectorFactory.create(
+            channels, selectorConfig);
+
+        ChannelProcessor channelProcessor = new ChannelProcessor(selector);
+        Configurables.configure(channelProcessor, config);
+
+        source.setChannelProcessor(channelProcessor);
+        conf.getSourceRunners().put(comp.getComponentName(),
+            SourceRunner.forSource(source));
       }
-
-      ChannelSelectorConfiguration selectorConfig =
-          config.getSelectorConfiguration();
-
-      ChannelSelector selector = ChannelSelectorFactory.create(
-          channels, selectorConfig);
-
-      ChannelProcessor channelProcessor = new ChannelProcessor(selector);
-      Configurables.configure(channelProcessor, config);
-
-      source.setChannelProcessor(channelProcessor);
-      conf.getSourceRunners().put(comp.getComponentName(),
-          SourceRunner.forSource(source));
     }
     Map<String, Context> sourceContexts = agentConf.getSourceContext();
 
-    for (String src : sourceContexts.keySet()) {
+    for (String src : sources) {
       Context context = sourceContexts.get(src);
-      Source source =
-          getSourceFactory().create(src,
-              context.getString(BasicConfigurationConstants.CONFIG_TYPE));
-      List<Channel> channels = new ArrayList<Channel>();
-      Configurables.configure(source, context);
-      String[] channelNames = context.getString(
-          BasicConfigurationConstants.CONFIG_CHANNELS).split("\\s+");
-      for (String chName : channelNames) {
-        channels.add(conf.getChannels().get(chName));
+      if(context != null){
+        Source source =
+            getSourceFactory().create(src,
+                context.getString(BasicConfigurationConstants.CONFIG_TYPE));
+        List<Channel> channels = new ArrayList<Channel>();
+        Configurables.configure(source, context);
+        String[] channelNames = context.getString(
+            BasicConfigurationConstants.CONFIG_CHANNELS).split("\\s+");
+        for (String chName : channelNames) {
+          channels.add(conf.getChannels().get(chName));
+        }
+
+        Map<String, String> selectorConfig = context.getSubProperties(
+            BasicConfigurationConstants.CONFIG_SOURCE_CHANNELSELECTOR_PREFIX);
+
+        ChannelSelector selector = ChannelSelectorFactory.create(
+            channels, selectorConfig);
+
+        ChannelProcessor channelProcessor = new ChannelProcessor(selector);
+        Configurables.configure(channelProcessor, context);
+
+        source.setChannelProcessor(channelProcessor);
+        conf.getSourceRunners().put(src,
+            SourceRunner.forSource(source));
+
       }
-
-      Map<String, String> selectorConfig = context.getSubProperties(
-          BasicConfigurationConstants.CONFIG_SOURCE_CHANNELSELECTOR_PREFIX);
-
-      ChannelSelector selector = ChannelSelectorFactory.create(
-          channels, selectorConfig);
-
-      ChannelProcessor channelProcessor = new ChannelProcessor(selector);
-      Configurables.configure(channelProcessor, context);
-
-      source.setChannelProcessor(channelProcessor);
-      conf.getSourceRunners().put(src,
-          SourceRunner.forSource(source));
-
     }
   }
 
   private void loadSinks(AgentConfiguration agentConf, NodeConfiguration conf)
       throws InstantiationException {
-
+    Set<String> sinkNames = agentConf.getSinkSet();
+    Map<String, ComponentConfiguration> compMap =
+        agentConf.getSinkConfigMap();
     Map<String, Sink> sinks = new HashMap<String, Sink>();
-    for (ComponentConfiguration comp : agentConf.getSinks()) {
+    for (String sinkName : sinkNames) {
+      ComponentConfiguration comp = compMap.get(sinkName);
+      if(comp != null) {
+        SinkConfiguration config = (SinkConfiguration) comp;
+        Sink sink = getSinkFactory().create(comp.getComponentName(),
+            comp.getType());
 
-      SinkConfiguration config = (SinkConfiguration) comp;
-      Sink sink = getSinkFactory().create(comp.getComponentName(),
-          comp.getType());
+        Configurables.configure(sink, config);
 
-      Configurables.configure(sink, config);
-
-      sink.setChannel(conf.getChannels().get(config.getChannel()));
-      sinks.put(comp.getComponentName(), sink);
+        sink.setChannel(conf.getChannels().get(config.getChannel()));
+        sinks.put(comp.getComponentName(), sink);
       }
+    }
 
     Map<String, Context> sinkContexts = agentConf.getSinkContext();
-    for (String sinkName : sinkContexts.keySet()) {
+    for (String sinkName : sinkNames) {
       Context context = sinkContexts.get(sinkName);
-      Sink sink = getSinkFactory().create(sinkName, context.getString(
-          BasicConfigurationConstants.CONFIG_TYPE));
-      Configurables.configure(sink, context);
+      if(context != null) {
+        Sink sink = getSinkFactory().create(sinkName, context.getString(
+            BasicConfigurationConstants.CONFIG_TYPE));
+        Configurables.configure(sink, context);
 
-      sink.setChannel(conf.getChannels().get(context.getString(
-          BasicConfigurationConstants.CONFIG_CHANNEL)));
-      sinks.put(sinkName, sink);
+        sink.setChannel(conf.getChannels().get(context.getString(
+            BasicConfigurationConstants.CONFIG_CHANNEL)));
+        sinks.put(sinkName, sink);
+      }
     }
 
     loadSinkGroups(agentConf, sinks, conf);
@@ -362,34 +384,39 @@ public class PropertiesFileConfigurationProvider extends
   private void loadSinkGroups(AgentConfiguration agentConf,
       Map<String, Sink> sinks, NodeConfiguration conf)
           throws InstantiationException {
+    Set<String> sinkgroupNames = agentConf.getSinkgroupSet();
+    Map<String, ComponentConfiguration> compMap =
+        agentConf.getSinkGroupConfigMap();
     Map<String, String> usedSinks = new HashMap<String, String>();
-    for (ComponentConfiguration comp : agentConf.getSinkGroups()) {
-      String groupName = comp.getComponentName();
-      SinkGroupConfiguration groupConf = (SinkGroupConfiguration) comp;
-      List<String> groupSinkList = groupConf.getSinks();
-      List<Sink> groupSinks = new ArrayList<Sink>();
-      for (String sink : groupSinkList) {
-        Sink s = sinks.remove(sink);
-        if (s == null) {
-          String sinkUser = usedSinks.get(sink);
-          if (sinkUser != null) {
-            throw new InstantiationException(String.format(
-                "Sink %s of group %s already " +
-                    "in use by group %s", sink, groupName, sinkUser));
-          } else {
-            throw new InstantiationException(String.format(
-                "Sink %s of group %s does "
-                    + "not exist or is not properly configured", sink,
-                groupName));
+    for (String groupName: sinkgroupNames) {
+      ComponentConfiguration comp = compMap.get(groupName);
+      if(comp != null) {
+        SinkGroupConfiguration groupConf = (SinkGroupConfiguration) comp;
+        List<String> groupSinkList = groupConf.getSinks();
+        List<Sink> groupSinks = new ArrayList<Sink>();
+        for (String sink : groupSinkList) {
+          Sink s = sinks.remove(sink);
+          if (s == null) {
+            String sinkUser = usedSinks.get(sink);
+            if (sinkUser != null) {
+              throw new InstantiationException(String.format(
+                  "Sink %s of group %s already " +
+                      "in use by group %s", sink, groupName, sinkUser));
+            } else {
+              throw new InstantiationException(String.format(
+                  "Sink %s of group %s does "
+                      + "not exist or is not properly configured", sink,
+                      groupName));
+            }
           }
+          groupSinks.add(s);
+          usedSinks.put(sink, groupName);
         }
-        groupSinks.add(s);
-        usedSinks.put(sink, groupName);
+        SinkGroup group = new SinkGroup(groupSinks);
+        Configurables.configure(group, groupConf);
+        conf.getSinkRunners().put(comp.getComponentName(),
+            new SinkRunner(group.getProcessor()));
       }
-      SinkGroup group = new SinkGroup(groupSinks);
-      Configurables.configure(group, groupConf);
-      conf.getSinkRunners().put(comp.getComponentName(),
-          new SinkRunner(group.getProcessor()));
     }
     // add any unasigned sinks to solo collectors
     for(Entry<String, Sink> entry : sinks.entrySet()) {

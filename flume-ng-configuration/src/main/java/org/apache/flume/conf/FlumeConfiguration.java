@@ -18,7 +18,6 @@ package org.apache.flume.conf;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -210,6 +209,11 @@ public class FlumeConfiguration {
     private Map<String, Context> channelContextMap;
     private Map<String, Context> sinkGroupContextMap;
 
+    private Set<String> sinkSet;
+    private Set<String> sourceSet;
+    private Set<String> channelSet;
+    private Set<String> sinkgroupSet;
+
     private final List<FlumeConfigurationError> errorList;
 
     private AgentConfiguration(String agentName,
@@ -227,20 +231,20 @@ public class FlumeConfiguration {
 
     }
 
-    public Collection<ComponentConfiguration> getChannels() {
-      return channelConfigMap.values();
+    public Map<String, ComponentConfiguration> getChannelConfigMap() {
+      return channelConfigMap;
     }
 
-    public Collection<ComponentConfiguration> getSources() {
-      return sourceConfigMap.values();
+    public Map<String, ComponentConfiguration> getSourceConfigMap() {
+      return sourceConfigMap;
     }
 
-    public Collection<ComponentConfiguration> getSinks() {
-      return sinkConfigMap.values();
+    public Map<String, ComponentConfiguration> getSinkConfigMap() {
+      return sinkConfigMap;
     }
 
-    public Collection<ComponentConfiguration> getSinkGroups() {
-      return sinkgroupConfigMap.values();
+    public Map<String, ComponentConfiguration> getSinkGroupConfigMap() {
+      return sinkgroupConfigMap;
     }
 
     public Map<String, Context> getSourceContext() {
@@ -254,6 +258,23 @@ public class FlumeConfiguration {
     public Map<String, Context> getChannelContext() {
       return this.channelContextMap;
     }
+
+    public Set<String> getSinkSet() {
+      return sinkSet;
+    }
+
+    public Set<String> getSourceSet() {
+      return sourceSet;
+    }
+
+    public Set<String> getChannelSet() {
+      return channelSet;
+    }
+
+    public Set<String> getSinkgroupSet() {
+      return sinkgroupSet;
+    }
+
 
     /**
      * <p>
@@ -286,7 +307,7 @@ public class FlumeConfiguration {
         return false;
       }
 
-      Set<String> channelSet =
+      channelSet =
           new HashSet<String>(Arrays
               .asList(channels.split("\\s+")));
       // validateComponent(channelSet, channelConfigMap, CLASS_CHANNEL,
@@ -303,9 +324,9 @@ public class FlumeConfiguration {
         return false;
       }
 
-      Set<String> sourceSet = validateSources(channelSet);
-      Set<String> sinkSet = validateSinks(channelSet);
-      Set<String> sinkgroupSet = validateGroups(sinkSet);
+      sourceSet = validateSources(channelSet);
+      sinkSet = validateSinks(channelSet);
+      sinkgroupSet = validateGroups(sinkSet);
 
       // If no sources or sinks are present, then this is invalid
       if (sourceSet.size() == 0 && sinkSet.size() == 0) {
