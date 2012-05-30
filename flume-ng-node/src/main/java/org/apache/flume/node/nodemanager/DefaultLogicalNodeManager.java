@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 
 public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
     implements NodeConfigurationAware {
@@ -101,6 +102,22 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
             new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
       } catch (Exception e){
         logger.error("Error while starting {}", entry.getValue(), e);
+      }
+    }
+
+    /*
+     * Wait for all channels to start.
+     */
+    for(Channel ch: nodeConfiguration.getChannels().values()){
+      while(ch.getLifecycleState() != LifecycleState.START){
+        try {
+          logger.info("Waiting for channel: " + ch.getName() +
+              " to start. Sleeping for 500 ms");
+          Thread.sleep(500);
+        } catch (InterruptedException e) {
+          logger.error("Interrupted while waiting for channel to start.", e);
+          Throwables.propagate(e);
+        }
       }
     }
 
