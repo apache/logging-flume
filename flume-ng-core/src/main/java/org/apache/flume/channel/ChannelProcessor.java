@@ -35,6 +35,7 @@ import org.apache.flume.interceptor.Interceptor;
 import org.apache.flume.interceptor.InterceptorChain;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.interceptor.InterceptorBuilderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,19 +95,15 @@ public class ChannelProcessor implements Configurable {
         new Context(context.getSubProperties("interceptors."));
 
     // run through and instantiate all the interceptors specified in the Context
+    InterceptorBuilderFactory factory = new InterceptorBuilderFactory();
     for (String interceptorName : interceptorNames) {
       Context interceptorContext = new Context(
           interceptorContexts.getSubProperties(interceptorName + "."));
       String type = interceptorContext.getString("type");
       try {
-        // TODO: support aliases for built-in interceptor types
-        Class<?> clazz = Class.forName(type);
-        if (Interceptor.Builder.class.isAssignableFrom(clazz)) {
-          Interceptor.Builder builder =
-              (Interceptor.Builder) clazz.newInstance();
-          builder.configure(interceptorContext);
-          interceptors.add(builder.build());
-        }
+        Interceptor.Builder builder = factory.newInstance(type);
+        builder.configure(interceptorContext);
+        interceptors.add(builder.build());
       } catch (ClassNotFoundException e) {
         LOG.error("Builder class not found. Exception follows.", e);
         throw new FlumeException("Interceptor.Builder not found.", e);
