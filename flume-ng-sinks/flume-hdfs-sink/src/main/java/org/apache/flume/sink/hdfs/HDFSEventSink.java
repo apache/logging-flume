@@ -151,7 +151,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
    * Helper class to wrap authentication calls.
    * @param <T> generally should be {@link Void}
    */
-  private static abstract class ProxyCallable<T> implements Callable {
+  private static abstract class ProxyCallable<T> implements Callable<T> {
     private UserGroupInformation proxyTicket;
 
     public ProxyCallable(UserGroupInformation proxyTicket) {
