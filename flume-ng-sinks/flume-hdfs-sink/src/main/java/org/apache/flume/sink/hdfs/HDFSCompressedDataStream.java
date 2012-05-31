@@ -74,11 +74,12 @@ public class HDFSCompressedDataStream implements HDFSWriter {
 
   @Override
   public void sync() throws IOException {
-    outStream.finish();
+    outStream.flush();
   }
 
   @Override
   public void close() throws IOException {
+    outStream.flush();
     outStream.close();
   }
 

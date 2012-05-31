@@ -23,7 +23,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import junit.framework.Assert;
+import java.util.zip.GZIPInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.Context;
 import org.apache.flume.EventDeliveryException;
@@ -36,6 +36,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -85,6 +86,8 @@ public class TestHDFSEventSinkOnMiniCluster {
   public void simpleHDFSTest() throws EventDeliveryException, IOException {
     String outputDir = "/flume/simpleHDFSTest";
     Path outputDirPath = new Path(outputDir);
+
+    logger.info("Running test with output dir: {}", outputDir);
 
     FileSystem fs = cluster.getFileSystem();
     // ensure output directory is empty
@@ -142,6 +145,86 @@ public class TestHDFSEventSinkOnMiniCluster {
       String line = reader.readLine();
       logger.info("First line in file {}: {}", filePath, line);
       Assert.assertEquals(EVENT_BODY, line);
+    }
+
+    if (!KEEP_DATA) {
+      fs.delete(outputDirPath, true);
+    }
+  }
+
+  /**
+   * Writes two events in GZIP-compressed format.
+   */
+  @Test
+  public void simpleHDFSGZipCompressedTest() throws EventDeliveryException, IOException {
+    String outputDir = "/flume/simpleHDFSGZipCompressedTest";
+    Path outputDirPath = new Path(outputDir);
+
+    logger.info("Running test with output dir: {}", outputDir);
+
+    FileSystem fs = cluster.getFileSystem();
+    // ensure output directory is empty
+    if (fs.exists(outputDirPath)) {
+      fs.delete(outputDirPath, true);
+    }
+
+    String nnURL = getNameNodeURL(cluster);
+    logger.info("Namenode address: {}", nnURL);
+
+    Context chanCtx = new Context();
+    MemoryChannel channel = new MemoryChannel();
+    channel.setName("simpleHDFSTest-mem-chan");
+    channel.configure(chanCtx);
+    channel.start();
+
+    Context sinkCtx = new Context();
+    sinkCtx.put("hdfs.path", nnURL + outputDir);
+    sinkCtx.put("hdfs.fileType", HDFSWriterFactory.CompStreamType);
+    sinkCtx.put("hdfs.batchSize", Integer.toString(1));
+    sinkCtx.put("hdfs.codeC", "gzip");
+
+    HDFSEventSink sink = new HDFSEventSink();
+    sink.setName("simpleHDFSTest-hdfs-sink");
+    sink.configure(sinkCtx);
+    sink.setChannel(channel);
+    sink.start();
+
+    // create an event
+    String EVENT_BODY_1 = "yarg1";
+    String EVENT_BODY_2 = "yarg2";
+    channel.getTransaction().begin();
+    try {
+      channel.put(EventBuilder.withBody(EVENT_BODY_1, Charsets.UTF_8));
+      channel.put(EventBuilder.withBody(EVENT_BODY_2, Charsets.UTF_8));
+      channel.getTransaction().commit();
+    } finally {
+      channel.getTransaction().close();
+    }
+
+    // store event to HDFS
+    sink.process();
+
+    // shut down flume
+    sink.stop();
+    channel.stop();
+
+    // verify that it's in HDFS and that its content is what we say it should be
+    FileStatus[] statuses = fs.listStatus(outputDirPath);
+    Assert.assertNotNull("No files found written to HDFS", statuses);
+    Assert.assertEquals("Only one file expected", 1, statuses.length);
+
+    for (FileStatus status : statuses) {
+      Path filePath = status.getPath();
+      logger.info("Found file on DFS: {}", filePath);
+      FSDataInputStream stream = fs.open(filePath);
+      BufferedReader reader = new BufferedReader(new InputStreamReader(
+          new GZIPInputStream(stream)));
+      String line = reader.readLine();
+      logger.info("First line in file {}: {}", filePath, line);
+      Assert.assertEquals(EVENT_BODY_1, line);
+      line = reader.readLine();
+      logger.info("Second line in file {}: {}", filePath, line);
+      Assert.assertEquals(EVENT_BODY_2, line);
     }
 
     if (!KEEP_DATA) {
