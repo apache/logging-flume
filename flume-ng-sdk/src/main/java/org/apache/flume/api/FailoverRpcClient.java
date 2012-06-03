@@ -109,7 +109,6 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
         maxTries = hosts.size();
       }
     }
-    Integer batchSize;
     try {
       batchSize = Integer.parseInt(properties.getProperty("batch-size"));
       if (batchSize == null){
@@ -269,7 +268,7 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
       try {
         localClient =
             RpcClientFactory.getDefaultInstance(hosts.get(count).getHostName(),
-                hosts.get(count).getPort());
+                hosts.get(count).getPort(), batchSize);
         lastCheckedhost = count;
         return localClient;
       } catch (FlumeException e) {
