@@ -112,6 +112,7 @@
         <include>bin/**</include>
         <include>conf/**</include>
         <include>pom.xml</include>
+        <include>flume-ng-doc/**</include>
       </includes>
     </fileSet>
 
