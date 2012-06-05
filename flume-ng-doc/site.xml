@@ -27,7 +27,7 @@
 
   <poweredBy>
     <logo name="Flume" href="http://incubator.apache.org/flume"
-          img="http://incubator.apache.org/flume/images/flume-logo.jpeg" />
+          img="_static/flume-logo.png" />
   </poweredBy>
 
   <body>

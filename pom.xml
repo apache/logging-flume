@@ -38,11 +38,8 @@ limitations under the License.
     <!-- defaults for flaky test and focused test exclusions -->
     <test.exclude.pattern>$</test.exclude.pattern> <!-- junk pattern -->
     <test.include.pattern>**/Test*.java</test.include.pattern>
-<!--
     <siteUrlDeployment>file://people.apache.org/www/incubator.apache.org/flume</siteUrlDeployment>
--->
-    <siteUrlDeployment>file://people.apache.org/www/incubator.apache.org/flume</siteUrlDeployment>
-  <stagingDirectory>${project.basedir}/target/docs</stagingDirectory>
+    <stagingDirectory>${project.basedir}/target/docs</stagingDirectory>
 
   </properties>
 
@@ -132,6 +129,32 @@ limitations under the License.
       <properties>
         <thrift.executable>${env.THRIFT_HOME}/bin/thrift</thrift.executable>
       </properties>
+    </profile>
+
+    <!-- maven 2 & 3 compat for reporting plugin -->
+    <profile>
+      <id>maven-3</id>
+      <activation>
+        <file>
+          <!--  This employs that the basedir expression is only recognized by Maven 3.x (see MNG-2363) -->
+          <exists>${basedir}</exists>
+        </file>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-site-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-descriptor</id>
+                <goals>
+                  <goal>attach-descriptor</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
   </profiles>
 
@@ -306,6 +329,17 @@ limitations under the License.
       </snapshots>
     </pluginRepository>
 
+    <pluginRepository>
+      <id>oss.sonatype.org</id>
+      <url>https://oss.sonatype.org/content/groups/public</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+
   </pluginRepositories>
 
   <repositories>
@@ -435,6 +469,12 @@ limitations under the License.
         </plugin>
 
         <plugin>
+          <groupId>org.tomdz.maven</groupId>
+          <artifactId>sphinx-maven-plugin</artifactId>
+          <version>1.0.2</version>
+        </plugin>
+
+        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-assembly-plugin</artifactId>
           <version>2.2.2</version>
@@ -460,7 +500,7 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-site-plugin</artifactId>
-          <version>3.0</version>
+          <version>3.1</version>
           <configuration>
             <siteDirectory>${project.basedir}/flume-ng-doc</siteDirectory>
           </configuration>
@@ -483,9 +523,10 @@ limitations under the License.
             </execution>
           </executions>
         </plugin>
+
         <plugin>
-         <artifactId>maven-clean-plugin</artifactId>
-         <version>2.4.1</version>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>2.4.1</version>
           <configuration>
             <filesets>
               <fileset>
@@ -744,6 +785,7 @@ limitations under the License.
 
   <reporting>
     <plugins>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-project-info-reports-plugin</artifactId>
@@ -765,6 +807,16 @@ limitations under the License.
           </reportSet>
         </reportSets>
       </plugin>
+
+      <plugin>
+        <groupId>org.tomdz.maven</groupId>
+        <artifactId>sphinx-maven-plugin</artifactId>
+        <inherited>false</inherited>
+        <configuration>
+          <sourceDirectory>${project.basedir}/flume-ng-doc/sphinx</sourceDirectory>
+        </configuration>
+      </plugin>
+
     </plugins>
   </reporting>
   
