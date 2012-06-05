@@ -180,6 +180,14 @@ public class AvroSink extends AbstractSink implements Configurable {
     }
   }
 
+  /**
+   * The start() of AvroSink is more of an optimization that allows connection
+   * to be created before the process() loop is started. In case it so happens
+   * that the start failed, the process() loop will itself attempt to reconnect
+   * as necessary. This is the expected behavior since it is possible that the
+   * downstream source becomes unavailable in the middle of the process loop
+   * and the sink will have to retry the connection again.
+   */
   @Override
   public void start() {
     logger.info("Avro sink starting");
@@ -187,15 +195,12 @@ public class AvroSink extends AbstractSink implements Configurable {
     try {
       createConnection();
     } catch (FlumeException e) {
-      logger.error("Unable to create avro client using hostname:" + hostname
+      logger.warn("Unable to create avro client using hostname:" + hostname
           + ", port:" + port + ", batchSize: " + batchSize +
           ". Exception follows.", e);
 
       /* Try to prevent leaking resources. */
       destroyConnection();
-
-      /* FIXME: Mark ourselves as failed. */
-      return;
     }
 
     super.start();
@@ -253,23 +258,10 @@ public class AvroSink extends AbstractSink implements Configurable {
       logger.error("Unable to get event from channel. Exception follows.", e);
       status = Status.BACKOFF;
 
-    } catch (EventDeliveryException e) {
+    } catch (Exception ex) {
       transaction.rollback();
       destroyConnection();
-      throw e;
-
-    } catch (FlumeException e) {
-      transaction.rollback();
-      destroyConnection();
-      throw new EventDeliveryException("RPC connection error. " +
-          "Exception follows.", e);
-
-    } catch (Exception e) {
-      transaction.rollback();
-      destroyConnection();
-      throw new EventDeliveryException("Unexpected error. " +
-          "Exception follows.", e);
-
+      throw new EventDeliveryException("Failed to send message", ex);
     } finally {
       transaction.close();
     }

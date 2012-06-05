@@ -18,30 +18,33 @@ package org.apache.flume.api;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+
 import org.apache.avro.ipc.CallFuture;
-
-import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.ipc.NettyTransceiver;
+import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
-
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
+import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,12 +57,6 @@ public class NettyAvroRpcClient extends AbstractRpcClient
 implements RpcClient {
 
   private final ReentrantLock stateLock = new ReentrantLock();
-
-  private final static long DEFAULT_CONNECT_TIMEOUT_MILLIS =
-      TimeUnit.MILLISECONDS.convert(60, TimeUnit.SECONDS);
-
-  private final static long DEFAULT_REQUEST_TIMEOUT_MILLIS =
-      TimeUnit.MILLISECONDS.convert(60, TimeUnit.SECONDS);
 
   /**
    * Guarded by {@code stateLock}
@@ -85,12 +82,10 @@ implements RpcClient {
       throw new NullPointerException("InetSocketAddress is null");
     }
     this.address = address;
-    if(batchSize == null || batchSize == 0){
-      this.batchSize = DEFAULT_BATCH_SIZE;
+    if(batchSize != null && batchSize > 0) {
+      this.batchSize = batchSize;
     }
-    else{
-    this.batchSize = batchSize;
-    }
+
     connect();
   }
 
@@ -106,7 +101,7 @@ implements RpcClient {
    * @throws FlumeException
    */
   private void connect() throws FlumeException {
-    connect(DEFAULT_CONNECT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+    connect(connectTimeout, TimeUnit.MILLISECONDS);
   }
 
   /**
@@ -117,7 +112,13 @@ implements RpcClient {
    */
   private void connect(long timeout, TimeUnit tu) throws FlumeException {
     try {
-      transceiver = new NettyTransceiver(this.address, tu.toMillis(timeout));
+      transceiver = new NettyTransceiver(this.address,
+          new NioClientSocketChannelFactory(
+        Executors.newCachedThreadPool(new TransceiverThreadFactory(
+            "Avro " + NettyTransceiver.class.getSimpleName() + " Boss")),
+        Executors.newCachedThreadPool(new TransceiverThreadFactory(
+            "Avro " + NettyTransceiver.class.getSimpleName() + " I/O Worker"))),
+          tu.toMillis(timeout));
       avroClient =
           SpecificRequestor.getClient(AvroSourceProtocol.Callback.class,
           transceiver);
@@ -146,7 +147,7 @@ implements RpcClient {
   @Override
   public void append(Event event) throws EventDeliveryException {
     try {
-      append(event, DEFAULT_REQUEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+      append(event, requestTimeout, TimeUnit.MILLISECONDS);
     } catch (EventDeliveryException e) {
       // we mark as no longer active without trying to clean up resources
       // client is required to call close() to clean up resources
@@ -179,7 +180,7 @@ implements RpcClient {
   @Override
   public void appendBatch(List<Event> events) throws EventDeliveryException {
     try {
-      appendBatch(events, DEFAULT_REQUEST_TIMEOUT_MILLIS,
+      appendBatch(events, requestTimeout,
           TimeUnit.MILLISECONDS);
     } catch (EventDeliveryException e) {
       // we mark as no longer active without trying to clean up resources
@@ -346,12 +347,15 @@ implements RpcClient {
             "cannot reconfigure.");
         throw new FlumeException("This client was already configured, " +
             "cannot reconfigure.");
-    }
+      }
     } finally {
       stateLock.unlock();
-      }
-    String strbatchSize = properties.getProperty("batch-size");
-    batchSize = DEFAULT_BATCH_SIZE;
+    }
+
+    // batch size
+    String strbatchSize = properties.getProperty(
+        RpcClientConfigurationConstants.CONFIG_BATCH_SIZE);
+    batchSize = RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE;
     if (strbatchSize != null && !strbatchSize.isEmpty()) {
       try {
         batchSize = Integer.parseInt(strbatchSize);
@@ -360,7 +364,10 @@ implements RpcClient {
             ".Default value assigned.", e);
       }
     }
-    String hostNames = properties.getProperty(CONFIG_HOSTS);
+
+    // host and port
+    String hostNames = properties.getProperty(
+        RpcClientConfigurationConstants.CONFIG_HOSTS);
     String[] hosts = null;
     if (hostNames != null && !hostNames.isEmpty()) {
       hosts = hostNames.split("\\s+");
@@ -368,7 +375,15 @@ implements RpcClient {
       logger.error("Hosts list is invalid: "+ hostNames);
       throw new FlumeException("Hosts list is invalid: "+ hostNames);
     }
-    String host = properties.getProperty(HOSTS_PREFIX+hosts[0]);
+
+    if (hosts.length > 1) {
+      logger.warn("More than one hosts are specified for the default client. "
+          + "Only the first host will be used and others ignored. Specified: "
+          + hostNames + "; to be used: " + hosts[0]);
+    }
+
+    String host = properties.getProperty(
+        RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX+hosts[0]);
     if (host == null || host.isEmpty()) {
       logger.error("Host not found: " + hosts[0]);
       throw new FlumeException("Host not found: " + hosts[0]);
@@ -386,7 +401,77 @@ implements RpcClient {
       throw new FlumeException("Invalid Port:" + hostAndPort[1], e);
     }
     this.address = new InetSocketAddress(hostAndPort[0], port);
+
+    // connect timeout
+    connectTimeout =
+        RpcClientConfigurationConstants.DEFAULT_CONNECT_TIMEOUT_MILLIS;
+    String strConnTimeout = properties.getProperty(
+        RpcClientConfigurationConstants.CONFIG_CONNECT_TIMEOUT);
+    if (strConnTimeout != null && strConnTimeout.trim().length() > 0) {
+      try {
+        connectTimeout = Long.parseLong(strConnTimeout);
+        if (connectTimeout < 1000) {
+          logger.warn("Connection timeout specified less than 1s. " +
+              "Using default value instead.");
+          connectTimeout =
+              RpcClientConfigurationConstants.DEFAULT_CONNECT_TIMEOUT_MILLIS;
+        }
+      } catch (NumberFormatException ex) {
+        logger.error("Invalid connect timeout specified: " + strConnTimeout);
+      }
+    }
+
+    // request timeout
+    requestTimeout =
+        RpcClientConfigurationConstants.DEFAULT_REQUEST_TIMEOUT_MILLIS;
+    String strReqTimeout = properties.getProperty(
+        RpcClientConfigurationConstants.CONFIG_REQUEST_TIMEOUT);
+    if  (strReqTimeout != null && strReqTimeout.trim().length() > 0) {
+      try {
+        requestTimeout = Long.parseLong(strReqTimeout);
+        if (requestTimeout < 1000) {
+          logger.warn("Request timeout specified less than 1s. " +
+              "Using default value instead.");
+          requestTimeout =
+              RpcClientConfigurationConstants.DEFAULT_REQUEST_TIMEOUT_MILLIS;
+        }
+      } catch (NumberFormatException ex) {
+        logger.error("Invalid request timeout specified: " + strReqTimeout);
+      }
+    }
+
     this.connect();
   }
 
+  /**
+   * A thread factor implementation modeled after the implementation of
+   * NettyTransceiver.NettyTransceiverThreadFactory class which is
+   * a private static class. The only difference between that and this
+   * implementation is that this implementation marks all the threads daemon
+   * which allows the termination of the VM when the non-daemon threads
+   * are done.
+   */
+  private static class TransceiverThreadFactory implements ThreadFactory {
+    private final AtomicInteger threadId = new AtomicInteger(0);
+    private final String prefix;
+
+    /**
+     * Creates a TransceiverThreadFactory that creates threads with the
+     * specified name.
+     * @param prefix the name prefix to use for all threads created by this
+     * ThreadFactory.  A unique ID will be appended to this prefix to form the
+     * final thread name.
+     */
+    public TransceiverThreadFactory(String prefix) {
+      this.prefix = prefix;
+    }
+
+    @Override
+    public Thread newThread(Runnable r) {
+      Thread thread = new Thread(r);
+      thread.setDaemon(true);
+      thread.setName(prefix + " " + threadId.incrementAndGet());
+      return thread;
+    }
+  }
 }

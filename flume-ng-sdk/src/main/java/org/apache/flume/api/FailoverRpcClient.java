@@ -16,7 +16,6 @@
 package org.apache.flume.api;
 
 import java.net.InetSocketAddress;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -49,11 +48,12 @@ import org.slf4j.LoggerFactory;
 
 public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
   private volatile RpcClient client;
-  private List<InetSocketAddress> hosts;
+  private List<HostInfo> hosts;
   private Integer maxTries;
   private int lastCheckedhost;
   private boolean isActive;
-  private static final String CONFIG_MAX_ATTEMPTS = "max-attempts";
+  private Properties configurationProperties;
+
   private static final Logger logger = LoggerFactory
       .getLogger(FailoverRpcClient.class);
 
@@ -73,14 +73,15 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
       throw new FlumeException("This client was already configured, " +
           "cannot reconfigure.");
     }
-    hosts = new ArrayList<InetSocketAddress>();
-    String hostNames = properties.getProperty(CONFIG_HOSTS);
+    hosts = new ArrayList<HostInfo>();
+    String hostNames = properties.getProperty(
+        RpcClientConfigurationConstants.CONFIG_HOSTS);
     String[] hostList;
     if (hostNames != null && !hostNames.isEmpty()) {
       hostList = hostNames.split("\\s+");
       for (int i = 0; i < hostList.length; i++) {
         String hostAndPortStr = properties.getProperty(
-            HOSTS_PREFIX + hostList[i]);
+            RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX + hostList[i]);
         // Ignore that host if value is not there
         if (hostAndPortStr != null) {
           String[] hostAndPort = hostAndPortStr.split(":");
@@ -95,11 +96,16 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
             logger.error("Invalid port number" + hostAndPortStr, e);
             throw new FlumeException("Invalid port number" + hostAndPortStr);
           }
-          hosts.add(new InetSocketAddress(hostAndPort[0].trim(), port));
+          HostInfo info = new HostInfo();
+          info.hostName = hostAndPort[0].trim();
+          info.port = port;
+          info.referenceName = hostList[i];
+          hosts.add(info);
         }
       }
     }
-    String tries = properties.getProperty(CONFIG_MAX_ATTEMPTS);
+    String tries = properties.getProperty(
+        RpcClientConfigurationConstants.CONFIG_MAX_ATTEMPTS);
     if (tries == null || tries.isEmpty()){
       maxTries = hosts.size();
     } else {
@@ -109,16 +115,23 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
         maxTries = hosts.size();
       }
     }
-    try {
-      batchSize = Integer.parseInt(properties.getProperty("batch-size"));
-      if (batchSize == null){
-        logger.warn("No batch size found - assigning default size");
-        batchSize = DEFAULT_BATCH_SIZE;
+
+    String strBatchSize = properties.getProperty(
+        RpcClientConfigurationConstants.CONFIG_BATCH_SIZE);
+
+    if (strBatchSize != null && strBatchSize.trim().length() > 0) {
+      try {
+        batchSize = Integer.parseInt(strBatchSize);
+        if (batchSize < 1) {
+          logger.warn("A batch-size less than 1 was specified: " + batchSize
+              + ". Using default instead.");
+          batchSize = RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE;
+        }
+      } catch (NumberFormatException ex) {
+        logger.warn("Invalid batch size specified: " + strBatchSize
+            + ". Using default instead.");
       }
-    } catch (NumberFormatException e) {
-      logger.warn("Batch Size {} is invalid - assigning default size",
-          properties.getProperty("batch-size"), e);
-      batchSize = DEFAULT_BATCH_SIZE;
+
     }
     isActive = true;
   }
@@ -255,7 +268,8 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
    * @return The last socket address this client connected to
    */
   protected InetSocketAddress getLastConnectedServerAddress() {
-    return hosts.get(lastCheckedhost);
+    HostInfo hostInfo = hosts.get(lastCheckedhost);
+    return new InetSocketAddress(hostInfo.hostName, hostInfo.port);
   }
 
   private RpcClient getNextClient() throws FlumeException {
@@ -263,30 +277,33 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
         (lastCheckedhost == (hosts.size() - 1)) ? -1 : lastCheckedhost;
     RpcClient localClient = null;
     int limit = hosts.size();
+
+    Properties props = new Properties();
+    props.putAll(configurationProperties);
+    props.put(RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE,
+        RpcClientConfigurationConstants.DEFAULT_CLIENT_TYPE);
     //Try to connect to all hosts again, till we find one available
     for (int count = lastCheckedhost + 1; count < limit; count++) {
+      HostInfo hostInfo = hosts.get(count);
       try {
-        localClient =
-            RpcClientFactory.getDefaultInstance(hosts.get(count).getHostName(),
-                hosts.get(count).getPort(), batchSize);
+        setDefaultProperties(hostInfo, props);
+        localClient = RpcClientFactory.getInstance(props);
         lastCheckedhost = count;
         return localClient;
       } catch (FlumeException e) {
-        logger.info("Could not connect to " + hosts.get(count).getHostName()
-            +":"+ String.valueOf(hosts.get(count).getPort()), e);
+        logger.info("Could not connect to " + hostInfo, e);
         continue;
       }
     }
-    for(int count = 0; count <= lastCheckedhost; count++){
+    for(int count = 0; count <= lastCheckedhost; count++) {
+      HostInfo hostInfo = hosts.get(count);
       try {
-        localClient =
-            RpcClientFactory.getDefaultInstance(hosts.get(count).getHostName(),
-                hosts.get(count).getPort());
+        setDefaultProperties(hostInfo, props);
+        localClient = RpcClientFactory.getInstance(props);
         lastCheckedhost = count;
         return localClient;
       } catch (FlumeException e) {
-        logger.info("Could not connect to " + hosts.get(count).getHostName()
-            +":"+ String.valueOf(hosts.get(count).getPort()), e);
+        logger.info("Could not connect to " + hostInfo, e);
         continue;
       }
     }
@@ -299,8 +316,29 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
     return localClient;
   }
 
+  private void setDefaultProperties(HostInfo hostInfo, Properties props) {
+    props.put(RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE,
+        RpcClientFactory.ClientType.DEFAULT.name());
+    props.put(RpcClientConfigurationConstants.CONFIG_HOSTS,
+        hostInfo.referenceName);
+  }
+
   @Override
   public void configure(Properties properties) throws FlumeException {
-    this.configureHosts(properties);
+    configurationProperties = new Properties();
+    configurationProperties.putAll(properties);
+
+    configureHosts(configurationProperties);
+  }
+
+  private static class HostInfo {
+    private String hostName;
+    private int port;
+    private String referenceName;
+
+    @Override
+    public String toString() {
+      return referenceName + "{" + hostName + ":" + port + "}";
+    }
   }
 }

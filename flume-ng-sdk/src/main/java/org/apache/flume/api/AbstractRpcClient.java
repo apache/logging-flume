@@ -24,10 +24,13 @@ import org.apache.flume.FlumeException;
 
 public abstract class AbstractRpcClient implements RpcClient {
 
-  protected Integer batchSize;
-  public static final String HOSTS_PREFIX = "hosts.";
-  public static final String CONFIG_HOSTS = "hosts";
-  public final static Integer DEFAULT_BATCH_SIZE = 100;
+  protected int batchSize =
+      RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE;
+  protected long connectTimeout =
+      RpcClientConfigurationConstants.DEFAULT_CONNECT_TIMEOUT_MILLIS;
+  protected long requestTimeout =
+      RpcClientConfigurationConstants.DEFAULT_REQUEST_TIMEOUT_MILLIS;
+
   @Override
   public int getBatchSize(){
     return batchSize;

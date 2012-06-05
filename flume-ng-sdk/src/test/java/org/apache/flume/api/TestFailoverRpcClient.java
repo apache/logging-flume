@@ -53,9 +53,9 @@ public class TestFailoverRpcClient {
     int s3Port = server3.getPort();
     props.put("client.type", "default_failover");
     props.put("hosts", "host1 host2 host3");
-    props.put("hosts.host1", " localhost:" + String.valueOf(s1Port));
-    props.put("hosts.host2", " localhost:" + String.valueOf(s2Port));
-    props.put("hosts.host3", " localhost:" + String.valueOf(s3Port));
+    props.put("hosts.host1", "127.0.0.1:" + String.valueOf(s1Port));
+    props.put("hosts.host2", "127.0.0.1:" + String.valueOf(s2Port));
+    props.put("hosts.host3", "127.0.0.1:" + String.valueOf(s3Port));
     client = (FailoverRpcClient) RpcClientFactory.getInstance(props);
     List<Event> events = new ArrayList<Event>();
     for (int i = 0; i < 50; i++) {
@@ -63,7 +63,7 @@ public class TestFailoverRpcClient {
     }
     client.appendBatch(events);
     Assert.assertEquals(client.getLastConnectedServerAddress(),
-        new InetSocketAddress("localhost", server1.getPort()));
+        new InetSocketAddress("127.0.0.1", server1.getPort()));
     server1.close();
     Thread.sleep(1000L); // wait a second for the close to occur
     events = new ArrayList<Event>();

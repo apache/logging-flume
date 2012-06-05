@@ -25,7 +25,6 @@ import org.apache.flume.FlumeException;
  */
 public class RpcClientFactory {
 
-  private final static String CONF_CLIENT_TYPE = "client.type";
   /**
    * Returns an instance of {@link RpcClient}, optionally with failover.
    * To create a failover client, the properties object should have a
@@ -48,7 +47,8 @@ public class RpcClientFactory {
   public static RpcClient getInstance(Properties properties)
       throws FlumeException {
     String type = null;
-    type = properties.getProperty(CONF_CLIENT_TYPE);
+    type = properties.getProperty(
+        RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE);
     if (type == null || type.isEmpty()) {
       type = ClientType.DEFAULT.getClientClassName();
     }
@@ -134,7 +134,7 @@ public class RpcClientFactory {
 
   }
 
-  private static enum ClientType {
+  public static enum ClientType {
     OTHER(null),
     DEFAULT("org.apache.flume.api.NettyAvroRpcClient"),
     DEFAULT_FAILOVER("org.apache.flume.api.FailoverRpcClient");
