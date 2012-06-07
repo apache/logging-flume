@@ -812,7 +812,8 @@ hdfs.maxOpenFiles       5000
 hdfs.writeFormat        --            "Text" or "Writable"
 hdfs.appendTimeout      1000
 hdfs.callTimeout        5000
-hdfs.threadsPoolSize    10
+hdfs.threadsPoolSize    10            Number of threads per HDFS sink for HDFS IO ops (open, write, etc.)
+hdfs.rollTimerPoolSize  1             Number of threads per HDFS sink for scheduling timed file rolling
 hdfs.kerberosPrincipal  --            Kerberos user principal for accessing secure HDFS
 hdfs.kerberosKeytab     --            Kerberos keytab for accessing secure HDFS
 serializer              ``TEXT``      Other possible options include ``AVRO_EVENT`` or the

@@ -56,6 +56,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.util.concurrent.ScheduledExecutorService;
 
 public class HDFSEventSink extends AbstractSink implements Configurable {
   private static final Logger LOG = LoggerFactory
@@ -82,6 +84,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
    * case we create a new file and move on.
    */
   private static final int defaultThreadPoolSize = 10;
+  private static final int defaultRollTimerPoolSize = 1;
 
   /**
    * Singleton credential manager that manages static credentials for the
@@ -91,7 +94,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       = new AtomicReference<KerberosUser>();
 
   private final HDFSWriterFactory writerFactory;
-  private final WriterLinkedHashMap sfWriters;
+  private WriterLinkedHashMap sfWriters;
 
   private long rollInterval;
   private long rollSize;
@@ -99,13 +102,15 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private long txnEventMax;
   private long batchSize;
   private int threadsPoolSize;
+  private int rollTimerPoolSize;
   private CompressionCodec codeC;
   private CompressionType compType;
   private String fileType;
   private String path;
   private int maxOpenFiles;
   private String writeFormat;
-  private ExecutorService executor;
+  private ExecutorService callTimeoutPool;
+  private ScheduledExecutorService timedRollerPool;
 
   private String kerbConfPrincipal;
   private String kerbKeytab;
@@ -120,25 +125,31 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private Context context;
 
   /*
-   * Extended Java LinkedHashMap for open file handle LRU queue We want to clear
-   * the oldest file handle if there are too many open ones
+   * Extended Java LinkedHashMap for open file handle LRU queue.
+   * We want to clear the oldest file handle if there are too many open ones.
    */
-  private class WriterLinkedHashMap extends LinkedHashMap<String, BucketWriter> {
-    private static final long serialVersionUID = 1L;
+  private static class WriterLinkedHashMap
+      extends LinkedHashMap<String, BucketWriter> {
+
+    private final int maxOpenFiles;
+
+    public WriterLinkedHashMap(int maxOpenFiles) {
+      super(16, 0.75f, true); // stock initial capacity/load, access ordering
+      this.maxOpenFiles = maxOpenFiles;
+    }
 
     @Override
     protected boolean removeEldestEntry(Entry<String, BucketWriter> eldest) {
-      /*
-       * FIXME: We probably shouldn't shared state this way. Make this class
-       * private static and explicitly expose maxOpenFiles.
-       */
-      if (super.size() > maxOpenFiles) {
+      if (size() > maxOpenFiles) {
         // If we have more that max open files, then close the last one and
         // return true
         try {
           eldest.getValue().close();
-        } catch (IOException eI) {
-          LOG.warn(eldest.getKey().toString(), eI);
+        } catch (IOException e) {
+          LOG.warn(eldest.getKey().toString(), e);
+        } catch (InterruptedException e) {
+          LOG.warn(eldest.getKey().toString(), e);
+          Thread.currentThread().interrupt();
         }
         return true;
       } else {
@@ -147,43 +158,12 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     }
   }
 
-  /**
-   * Helper class to wrap authentication calls.
-   * @param <T> generally should be {@link Void}
-   */
-  private static abstract class ProxyCallable<T> implements Callable<T> {
-    private UserGroupInformation proxyTicket;
-
-    public ProxyCallable(UserGroupInformation proxyTicket) {
-      this.proxyTicket = proxyTicket;
-    }
-
-    @Override
-    public T call() throws Exception {
-      if (proxyTicket == null) {
-        return doCall();
-      } else {
-        return proxyTicket.doAs(new PrivilegedExceptionAction<T>() {
-
-          @Override
-          public T run() throws Exception {
-            return doCall();
-          }
-        });
-      }
-    }
-
-    abstract public T doCall() throws Exception;
-  }
-
-
   public HDFSEventSink() {
     this(new HDFSWriterFactory());
   }
 
   public HDFSEventSink(HDFSWriterFactory writerFactory) {
     this.writerFactory = writerFactory;
-    this.sfWriters = new WriterLinkedHashMap();
   }
 
     // read configuration and setup thresholds
@@ -206,7 +186,10 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     maxOpenFiles = context.getInteger("hdfs.maxOpenFiles", defaultMaxOpenFiles);
     writeFormat = context.getString("hdfs.writeFormat");
     callTimeout = context.getLong("hdfs.callTimeout", defaultCallTimeout);
-    threadsPoolSize = context.getInteger("hdfs.threadsPoolSize", defaultThreadPoolSize);
+    threadsPoolSize = context.getInteger("hdfs.threadsPoolSize",
+        defaultThreadPoolSize);
+    rollTimerPoolSize = context.getInteger("hdfs.rollTimerPoolSize",
+        defaultRollTimerPoolSize);
     kerbConfPrincipal = context.getString("hdfs.kerberosPrincipal", "");
     kerbKeytab = context.getString("hdfs.kerberosKeytab", "");
     proxyUserName = context.getString("hdfs.proxyUser", "");
@@ -323,33 +306,14 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   /**
    * Execute the callable on a separate thread and wait for the completion
    * for the specified amount of time in milliseconds. In case of timeout
-   * or any other error, log error and return null.
-   */
-  private static <T> T callWithTimeoutLogError(final ExecutorService executor,
-      long timeout, String name, final Callable<T> callable) {
-    try {
-      return callWithTimeout(executor, timeout, callable);
-    } catch (Exception e) {
-      LOG.error(name + "; called " + callable, e);
-      if(e instanceof InterruptedException) {
-        Thread.currentThread().interrupt();
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Execute the callable on a separate thread and wait for the completion
-   * for the specified amount of time in milliseconds. In case of timeout
    * cancel the callable and throw an IOException
    */
-  private static <T> T callWithTimeout(final ExecutorService executor,
-      long timeout, final Callable<T> callable)
+  private <T> T callWithTimeout(Callable<T> callable)
       throws IOException, InterruptedException {
-    Future<T> future = executor.submit(callable);
+    Future<T> future = callTimeoutPool.submit(callable);
     try {
-      if (timeout > 0) {
-        return future.get(timeout, TimeUnit.MILLISECONDS);
+      if (callTimeout > 0) {
+        return future.get(callTimeout, TimeUnit.MILLISECONDS);
       } else {
         return future.get();
       }
@@ -405,14 +369,13 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
         // we haven't seen this file yet, so open it and cache the handle
         if (bucketWriter == null) {
-
           HDFSWriter hdfsWriter = writerFactory.getWriter(fileType);
           FlumeFormatter formatter = HDFSFormatterFactory
               .getFormatter(writeFormat);
 
           bucketWriter = new BucketWriter(rollInterval, rollSize, rollCount,
               batchSize, context, realPath, codeC, compType, hdfsWriter,
-              formatter);
+              formatter, timedRollerPool, proxyTicket);
 
           sfWriters.put(realPath, bucketWriter);
         }
@@ -423,32 +386,14 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
         }
 
         // Write the data to HDFS
-        final BucketWriter callableWriter = bucketWriter;
-        final Event callableEvent = event;
-        callWithTimeout(executor, callTimeout,
-            new ProxyCallable<Void>(proxyTicket) {
-          @Override
-          public Void doCall() throws Exception {
-            callableWriter.append(callableEvent);
-            return null;
-          }
-        });
+        append(bucketWriter, event);
       }
 
       // flush all pending buckets before committing the transaction
-      for (BucketWriter writer : writers) {
-        if (writer.isBatchComplete()) {
-          continue;
+      for (BucketWriter bucketWriter : writers) {
+        if (!bucketWriter.isBatchComplete()) {
+          flush(bucketWriter);
         }
-        final BucketWriter callableWriter = writer;
-        callWithTimeout(executor, callTimeout,
-            new ProxyCallable<Void>(proxyTicket) {
-          @Override
-          public Void doCall() throws Exception {
-            callableWriter.flush();
-            return null;
-          }
-        });
       }
 
       transaction.commit();
@@ -477,36 +422,54 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   public void stop() {
     // do not constrain close() calls with a timeout
     for (Entry<String, BucketWriter> entry : sfWriters.entrySet()) {
-      LOG.info("Closing " + entry.getKey());
-      final BucketWriter callableWriter = entry.getValue();
-      callWithTimeoutLogError(executor, callTimeout, "close on " +
-          entry.getKey(), new ProxyCallable<Void>(proxyTicket) {
+      LOG.info("Closing {}", entry.getKey());
 
-        @Override
-        public Void doCall() throws Exception {
-          callableWriter.close();
-          return null;
+      final BucketWriter callableWriter = entry.getValue();
+      try {
+        close(entry.getValue());
+      } catch (Exception ex) {
+        LOG.warn("Exception while closing " + entry.getKey() + ". " +
+            "Exception follows.", ex);
+        if (ex instanceof InterruptedException) {
+          Thread.currentThread().interrupt();
         }
-      });
+      }
     }
+
+    // shut down all our thread pools
+    ExecutorService toShutdown[] = { callTimeoutPool, timedRollerPool };
+    for (ExecutorService execService : toShutdown) {
+      execService.shutdown();
+      try {
+        while (execService.isTerminated() == false) {
+          execService.awaitTermination(
+              Math.max(defaultCallTimeout, callTimeout), TimeUnit.MILLISECONDS);
+        }
+      } catch (InterruptedException ex) {
+        LOG.warn("shutdown interrupted on " + execService, ex);
+      }
+    }
+
+    callTimeoutPool = null;
+    timedRollerPool = null;
 
     sfWriters.clear();
-    executor.shutdown();
-    try {
-      while (executor.isTerminated() == false) {
-        executor.awaitTermination(Math.max(defaultCallTimeout, callTimeout),
-            TimeUnit.MILLISECONDS);
-      }
-    } catch (InterruptedException ex) {
-      LOG.warn("shutdown interrupted", ex);
-    }
-    executor = null;
+    sfWriters = null;
+
     super.stop();
   }
 
   @Override
   public void start() {
-    executor = Executors.newFixedThreadPool(threadsPoolSize);
+    String timeoutName = "hdfs-" + getName() + "-call-runner-%d";
+    callTimeoutPool = Executors.newFixedThreadPool(threadsPoolSize,
+        new ThreadFactoryBuilder().setNameFormat(timeoutName).build());
+
+    String rollerName = "hdfs-" + getName() + "-roll-timer-%d";
+    timedRollerPool = Executors.newScheduledThreadPool(rollTimerPoolSize,
+        new ThreadFactoryBuilder().setNameFormat(rollerName).build());
+
+    this.sfWriters = new WriterLinkedHashMap(maxOpenFiles);
     super.start();
   }
 
@@ -695,4 +658,49 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
         " }";
   }
 
+  /**
+   * Append to bucket writer with timeout enforced
+   */
+  private void append(final BucketWriter bucketWriter, final Event event)
+      throws IOException, InterruptedException {
+
+    // Write the data to HDFS
+    callWithTimeout(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        bucketWriter.append(event);
+        return null;
+      }
+    });
+  }
+
+  /**
+   * Flush bucket writer with timeout enforced
+   */
+  private void flush(final BucketWriter bucketWriter)
+      throws IOException, InterruptedException {
+
+    callWithTimeout(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        bucketWriter.flush();
+        return null;
+      }
+    });
+  }
+
+  /**
+   * Close bucket writer with timeout enforced
+   */
+  private void close(final BucketWriter bucketWriter)
+      throws IOException, InterruptedException {
+
+    callWithTimeout(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        bucketWriter.close();
+        return null;
+      }
+    });
+  }
 }

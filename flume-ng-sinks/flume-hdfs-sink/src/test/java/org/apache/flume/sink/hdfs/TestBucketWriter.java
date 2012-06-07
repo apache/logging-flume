@@ -20,12 +20,16 @@ package org.apache.flume.sink.hdfs;
 
 import com.google.common.base.Charsets;
 import java.io.IOException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
 import org.apache.hadoop.io.SequenceFile;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,14 +40,28 @@ public class TestBucketWriter {
       LoggerFactory.getLogger(TestBucketWriter.class);
   private Context ctx = new Context();
 
+  private static ScheduledExecutorService timedRollerPool;
+
+  @BeforeClass
+  public static void setup() {
+    timedRollerPool = Executors.newSingleThreadScheduledExecutor();
+  }
+
+  @AfterClass
+  public static void teardown() throws InterruptedException {
+    timedRollerPool.shutdown();
+    timedRollerPool.awaitTermination(2, TimeUnit.SECONDS);
+    timedRollerPool.shutdownNow();
+  }
+
   @Test
-  public void testEventCountingRoller() throws IOException {
+  public void testEventCountingRoller() throws IOException, InterruptedException {
     int maxEvents = 100;
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
     HDFSTextFormatter formatter = new HDFSTextFormatter();
     BucketWriter bucketWriter = new BucketWriter(0, 0, maxEvents, 0, ctx,
         "/tmp/file", null, SequenceFile.CompressionType.NONE, hdfsWriter,
-        formatter);
+        formatter, timedRollerPool, null);
 
     Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
     for (int i = 0; i < 1000; i++) {
@@ -60,13 +78,13 @@ public class TestBucketWriter {
   }
 
   @Test
-  public void testSizeRoller() throws IOException {
+  public void testSizeRoller() throws IOException, InterruptedException {
     int maxBytes = 300;
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
     HDFSTextFormatter formatter = new HDFSTextFormatter();
     BucketWriter bucketWriter = new BucketWriter(0, maxBytes, 0, 0, ctx,
         "/tmp/file", null, SequenceFile.CompressionType.NONE, hdfsWriter,
-        formatter);
+        formatter, timedRollerPool, null);
 
     Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
     for (int i = 0; i < 1000; i++) {
@@ -84,21 +102,26 @@ public class TestBucketWriter {
 
   @Test
   public void testIntervalRoller() throws IOException, InterruptedException {
-    int rollInterval = 2; // seconds
+    final int ROLL_INTERVAL = 1; // seconds
+    final int NUM_EVENTS = 10;
+
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
     HDFSTextFormatter formatter = new HDFSTextFormatter();
-    BucketWriter bucketWriter = new BucketWriter(rollInterval, 0, 0, 0, ctx,
+    BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
         "/tmp/file", null, SequenceFile.CompressionType.NONE, hdfsWriter,
-        formatter);
+        formatter, timedRollerPool, null);
 
     Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
     long startNanos = System.nanoTime();
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < NUM_EVENTS - 1; i++) {
       bucketWriter.append(e);
-      if (i % 100 == 0) {
-        Thread.sleep(500L);
-      }
     }
+
+    // sleep to force a roll... wait 2x interval just to be sure
+    Thread.sleep(2 * ROLL_INTERVAL * 1000L);
+
+    // write one more event (to reopen a new file so we will roll again later)
+    bucketWriter.append(e);
 
     long elapsedMillis = TimeUnit.MILLISECONDS.convert(
         System.nanoTime() - startNanos, TimeUnit.NANOSECONDS);
@@ -108,11 +131,22 @@ public class TestBucketWriter {
     logger.info("Number of events written: {}", hdfsWriter.getEventsWritten());
     logger.info("Number of bytes written: {}", hdfsWriter.getBytesWritten());
     logger.info("Number of files opened: {}", hdfsWriter.getFilesOpened());
+    logger.info("Number of files closed: {}", hdfsWriter.getFilesClosed());
 
-    Assert.assertEquals("events written", 1000, hdfsWriter.getEventsWritten());
-    Assert.assertEquals("bytes written", 3000, hdfsWriter.getBytesWritten());
-    Assert.assertEquals("files opened", elapsedSeconds/2 + 1,
-        hdfsWriter.getFilesOpened());
+    Assert.assertEquals("events written", NUM_EVENTS,
+        hdfsWriter.getEventsWritten());
+    Assert.assertEquals("bytes written", e.getBody().length * NUM_EVENTS,
+        hdfsWriter.getBytesWritten());
+    Assert.assertEquals("files opened", 2, hdfsWriter.getFilesOpened());
+
+    // before auto-roll
+    Assert.assertEquals("files closed", 1, hdfsWriter.getFilesClosed());
+
+    logger.info("Waiting for roll...");
+    Thread.sleep(2 * ROLL_INTERVAL * 1000L);
+
+    logger.info("Number of files closed: {}", hdfsWriter.getFilesClosed());
+    Assert.assertEquals("files closed", 2, hdfsWriter.getFilesClosed());
   }
 
 }

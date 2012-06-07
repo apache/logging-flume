@@ -28,11 +28,16 @@ import org.apache.hadoop.io.compress.CompressionCodec;
 public class MockHDFSWriter implements HDFSWriter {
 
   private int filesOpened = 0;
+  private int filesClosed = 0;
   private int bytesWritten = 0;
   private int eventsWritten = 0;
 
   public int getFilesOpened() {
     return filesOpened;
+  }
+
+  public int getFilesClosed() {
+    return filesClosed;
   }
 
   public int getBytesWritten() {
@@ -45,6 +50,7 @@ public class MockHDFSWriter implements HDFSWriter {
 
   public void clear() {
     filesOpened = 0;
+    filesClosed = 0;
     bytesWritten = 0;
     eventsWritten = 0;
   }
@@ -77,7 +83,7 @@ public class MockHDFSWriter implements HDFSWriter {
 
   @Override
   public void close() throws IOException {
-    // does nothing
+    filesClosed++;
   }
 
 }
