@@ -147,6 +147,60 @@ public class RpcTestUtils {
     }
   }
 
+  public static class LoadBalancedAvroHandler implements AvroSourceProtocol {
+
+    private int appendCount = 0;
+    private int appendBatchCount = 0;
+
+    private boolean failed = false;
+
+    public int getAppendCount() {
+      return appendCount;
+    }
+
+    public int getAppendBatchCount() {
+      return appendBatchCount;
+    }
+
+    public boolean isFailed() {
+      return failed;
+    }
+
+    public void setFailed() {
+      this.failed = true;
+    }
+
+    public void setOK() {
+      this.failed = false;
+    }
+
+    @Override
+    public Status append(AvroFlumeEvent event) throws AvroRemoteException {
+      if (failed) {
+        logger.debug("Event rejected");
+        return Status.FAILED;
+      }
+      logger.debug("LB: Received event from append(): {}",
+          new String(event.getBody().array(), Charset.forName("UTF8")));
+      appendCount++;
+      return Status.OK;
+    }
+
+    @Override
+    public Status appendBatch(List<AvroFlumeEvent> events) throws
+        AvroRemoteException {
+      if (failed) {
+        logger.debug("Event batch rejected");
+        return Status.FAILED;
+      }
+      logger.debug("LB: Received {} events from appendBatch()",
+          events.size());
+
+      appendBatchCount++;
+      return Status.OK;
+    }
+  }
+
   /**
    * A service that logs receipt of the request and returns OK
    */

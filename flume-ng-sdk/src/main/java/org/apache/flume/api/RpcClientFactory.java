@@ -35,7 +35,7 @@ public class RpcClientFactory {
    * <p>
    * If no <tt>client.type</tt> is specified, a default client that connects to
    * single host at a given port is created.(<tt>type</tt> can also simply be
-   * <tt>netty</tt> for the default client).
+   * <tt>DEFAULT</tt> for the default client).
    *
    * @see org.apache.flume.api.NettyAvroClient
    *
@@ -136,8 +136,10 @@ public class RpcClientFactory {
 
   public static enum ClientType {
     OTHER(null),
-    DEFAULT("org.apache.flume.api.NettyAvroRpcClient"),
-    DEFAULT_FAILOVER("org.apache.flume.api.FailoverRpcClient");
+    DEFAULT(NettyAvroRpcClient.class.getCanonicalName()),
+    DEFAULT_FAILOVER(FailoverRpcClient.class.getCanonicalName()),
+    DEFAULT_LOADBALANCE(LoadBalancingRpcClient.class.getCanonicalName());
+
 
     private final String clientClassName;
 

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -7,13 +7,14 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.flume.sink;
 
@@ -29,6 +30,7 @@ import org.apache.flume.Sink;
 import org.apache.flume.Sink.Status;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.lifecycle.LifecycleAware;
+import org.apache.flume.util.SpecificOrderIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -214,7 +216,7 @@ public class LoadBalancingSinkProcessor extends AbstractSinkProcessor {
         indexOrder[i] = (begin + i)%size;
       }
 
-      return new SpecificOrderSinkIterator(indexOrder, getSinks());
+      return new SpecificOrderIterator<Sink>(indexOrder, getSinks());
     }
   }
 
@@ -243,41 +245,7 @@ public class LoadBalancingSinkProcessor extends AbstractSinkProcessor {
 
       indexOrder[0] = indexList.get(0);
 
-      return new SpecificOrderSinkIterator(indexOrder, getSinks());
-    }
-  }
-
-
-  /**
-   * A utility class that iterates over the given ordered list of Sinks via
-   * the specified order array. The entries of the order array indicate the
-   * index within the ordered list of Sinks that needs to be picked over the
-   * course of iteration.
-   */
-  private static class SpecificOrderSinkIterator implements Iterator<Sink> {
-
-    private final int[] order;
-    private final List<Sink> sinks;
-    private int index = 0;
-
-    SpecificOrderSinkIterator(int[] orderArray, List<Sink> sinkList) {
-      order = orderArray;
-      sinks = sinkList;
-    }
-
-    @Override
-    public boolean hasNext() {
-      return index < order.length;
-    }
-
-    @Override
-    public Sink next() {
-      return sinks.get(order[index++]);
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException();
+      return new SpecificOrderIterator<Sink>(indexOrder, getSinks());
     }
   }
 }

@@ -73,37 +73,7 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
       throw new FlumeException("This client was already configured, " +
           "cannot reconfigure.");
     }
-    hosts = new ArrayList<HostInfo>();
-    String hostNames = properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_HOSTS);
-    String[] hostList;
-    if (hostNames != null && !hostNames.isEmpty()) {
-      hostList = hostNames.split("\\s+");
-      for (int i = 0; i < hostList.length; i++) {
-        String hostAndPortStr = properties.getProperty(
-            RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX + hostList[i]);
-        // Ignore that host if value is not there
-        if (hostAndPortStr != null) {
-          String[] hostAndPort = hostAndPortStr.split(":");
-          if (hostAndPort.length != 2){
-            logger.error("Invalid host address" + hostAndPortStr);
-            throw new FlumeException("Invalid host address" + hostAndPortStr);
-          }
-          Integer port = null;
-          try {
-            port = Integer.parseInt(hostAndPort[1]);
-          } catch (NumberFormatException e) {
-            logger.error("Invalid port number" + hostAndPortStr, e);
-            throw new FlumeException("Invalid port number" + hostAndPortStr);
-          }
-          HostInfo info = new HostInfo();
-          info.hostName = hostAndPort[0].trim();
-          info.port = port;
-          info.referenceName = hostList[i];
-          hosts.add(info);
-        }
-      }
-    }
+    hosts = HostInfo.getHostInfoList(properties);
     String tries = properties.getProperty(
         RpcClientConfigurationConstants.CONFIG_MAX_ATTEMPTS);
     if (tries == null || tries.isEmpty()){
@@ -269,7 +239,8 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
    */
   protected InetSocketAddress getLastConnectedServerAddress() {
     HostInfo hostInfo = hosts.get(lastCheckedhost);
-    return new InetSocketAddress(hostInfo.hostName, hostInfo.port);
+    return new InetSocketAddress(hostInfo.getHostName(),
+        hostInfo.getPortNumber());
   }
 
   private RpcClient getNextClient() throws FlumeException {
@@ -320,7 +291,7 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
     props.put(RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE,
         RpcClientFactory.ClientType.DEFAULT.name());
     props.put(RpcClientConfigurationConstants.CONFIG_HOSTS,
-        hostInfo.referenceName);
+        hostInfo.getReferenceName());
   }
 
   @Override
@@ -329,16 +300,5 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
     configurationProperties.putAll(properties);
 
     configureHosts(configurationProperties);
-  }
-
-  private static class HostInfo {
-    private String hostName;
-    private int port;
-    private String referenceName;
-
-    @Override
-    public String toString() {
-      return referenceName + "{" + hostName + ":" + port + "}";
-    }
   }
 }
