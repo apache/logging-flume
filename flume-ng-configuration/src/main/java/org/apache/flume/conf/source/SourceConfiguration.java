@@ -58,14 +58,14 @@ public class SourceConfiguration extends ComponentConfiguration {
       if (channelList != null) {
         this.channels =
             new HashSet<String>(Arrays.asList(channelList.split("\\s+")));
-        if (channels.isEmpty()) {
-          errors.add(new FlumeConfigurationError(componentName,
-              ComponentType.CHANNEL.getComponentType(),
-              FlumeConfigurationErrorType.PROPERTY_VALUE_NULL,
-              ErrorOrWarning.ERROR));
-          throw new ConfigurationException("No channels set for "
-              + this.getComponentName());
-        }
+      }
+      if (channels.isEmpty()) {
+        errors.add(new FlumeConfigurationError(componentName,
+            ComponentType.CHANNEL.getComponentType(),
+            FlumeConfigurationErrorType.PROPERTY_VALUE_NULL,
+            ErrorOrWarning.ERROR));
+        throw new ConfigurationException("No channels set for "
+            + this.getComponentName());
       }
       Map<String, String> selectorParams = context.getSubProperties(
               BasicConfigurationConstants.CONFIG_SOURCE_CHANNELSELECTOR_PREFIX);
