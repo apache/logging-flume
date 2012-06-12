@@ -807,11 +807,11 @@ hdfs.rollCount          10            Number of events written to file before it
 hdfs.batchSize          1             number of events written to file before it flushed to HDFS
 hdfs.txnEventMax        100
 hdfs.codeC              --            Compression codec. one of following : gzip, bzip2, lzo, snappy
-hdfs.fileType           SequenceFile  File format: currently ``SequenceFile``, ``DataStream`` or ``CompressedStream``
+hdfs.fileType           SequenceFile  File format: currently ``SequenceFile`` or ``DataStream``
 hdfs.maxOpenFiles       5000
 hdfs.writeFormat        --            "Text" or "Writable"
 hdfs.appendTimeout      1000
-hdfs.callTimeout        10000
+hdfs.callTimeout        5000
 hdfs.threadsPoolSize    10            Number of threads per HDFS sink for HDFS IO ops (open, write, etc.)
 hdfs.rollTimerPoolSize  1             Number of threads per HDFS sink for scheduling timed file rolling
 hdfs.kerberosPrincipal  --            Kerberos user principal for accessing secure HDFS
