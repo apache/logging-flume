@@ -778,7 +778,7 @@ Alias      Description
 %k         hour ( 0..23)
 %m         month (01..12)
 %M         minute (00..59)
-%P         locale's equivalent of am or pm
+%p         locale's equivalent of am or pm
 %s         seconds since 1970-01-01 00:00:00 UTC
 %S         second (00..59)
 %y         last two digits of year (00..99)
