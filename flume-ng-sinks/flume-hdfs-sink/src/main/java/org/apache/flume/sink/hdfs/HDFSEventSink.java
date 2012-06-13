@@ -18,6 +18,7 @@
 
 package org.apache.flume.sink.hdfs;
 
+import java.io.File;
 import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
@@ -492,6 +493,15 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
         LOG.error("Hadoop running in secure mode, but Flume config doesn't "
             + "specify a keytab to use for Kerberos auth.");
         return false;
+      } else {
+        //If keytab is specified, user should want it take effect.
+        //HDFSEventSink will halt when keytab file is non-exist or unreadable
+        File kfile = new File(kerbKeytab);
+        if (!(kfile.isFile() && kfile.canRead())) {
+          throw new IllegalArgumentException("The keyTab file: " 
+              + kerbKeytab + " is nonexistent or can't read. "
+              + "Please specify a readable keytab file for Kerberos auth.");
+        }
       }
 
       String principal;

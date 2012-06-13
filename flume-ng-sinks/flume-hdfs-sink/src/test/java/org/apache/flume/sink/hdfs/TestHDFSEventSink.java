@@ -42,6 +42,7 @@ import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.SimpleEvent;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.CommonConfigurationKeys;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -50,6 +51,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -215,7 +217,48 @@ public class TestHDFSEventSink {
     Assert.assertEquals(Status.BACKOFF, sink.process());
     sink.stop();
   }
+  
+  @Test
+  public void testKerbFileAccess() throws InterruptedException,
+      LifecycleException, EventDeliveryException, IOException {
+    LOG.debug("Starting testKerbFileAccess() ...");
+    final long txnMax = 25;
+    final String fileName = "FlumeData";
+    final long rollCount = 5;
+    final long batchSize = 2;
+    String newPath = testPath + "/singleBucket";
+    String kerbConfPrincipal = "user1/localhost@EXAMPLE.COM";
+    String kerbKeytab = "/usr/lib/flume/nonexistkeytabfile";
 
+    //turn security on
+    Configuration conf = new Configuration();
+    conf.set(CommonConfigurationKeys.HADOOP_SECURITY_AUTHENTICATION,
+        "kerberos");
+    UserGroupInformation.setConfiguration(conf);
+
+    Context context = new Context();
+    context.put("hdfs.path", newPath);
+    context.put("hdfs.filePrefix", fileName);
+    context.put("hdfs.txnEventMax", String.valueOf(txnMax));
+    context.put("hdfs.rollCount", String.valueOf(rollCount));
+    context.put("hdfs.batchSize", String.valueOf(batchSize));
+    context.put("hdfs.kerberosPrincipal", kerbConfPrincipal);
+    context.put("hdfs.kerberosKeytab", kerbKeytab);    
+
+    try {
+      Configurables.configure(sink, context);
+      Assert.fail("no exception thrown");
+    } catch (IllegalArgumentException expected) {
+      Assert.assertTrue(expected.getMessage().contains(
+          "is nonexistent or can't read."));
+    } finally {
+      //turn security off
+      conf.set(CommonConfigurationKeys.HADOOP_SECURITY_AUTHENTICATION,
+          "simple");
+      UserGroupInformation.setConfiguration(conf);
+    }
+  }
+  
   @Test
   public void testTextAppend() throws InterruptedException, LifecycleException,
       EventDeliveryException, IOException {
