@@ -53,6 +53,7 @@ limitations under the License.
     <module>flume-ng-legacy-sources</module>
     <module>flume-ng-clients</module>
     <module>flume-ng-sdk</module>
+    <module>flume-ng-tests</module>
   </modules>
 
   <profiles>
@@ -779,6 +780,13 @@ limitations under the License.
         <artifactId>jersey-core</artifactId>
         <version>1.8</version>
       </dependency>
+
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-compress</artifactId>
+        <version>1.4.1</version>
+      </dependency>
+
 
     </dependencies>
   </dependencyManagement>
