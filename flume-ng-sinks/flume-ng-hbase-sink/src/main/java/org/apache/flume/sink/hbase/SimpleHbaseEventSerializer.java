@@ -77,6 +77,8 @@ public class SimpleHbaseEventSerializer implements HbaseEventSerializer {
         keyType = KeyType.TS;
       } else if (suffix.equals("random")) {
         keyType = KeyType.RANDOM;
+      } else if(suffix.equals("nano")){
+        keyType = KeyType.TSNANO;
       } else {
         keyType = KeyType.UUID;
       }
@@ -107,6 +109,8 @@ public class SimpleHbaseEventSerializer implements HbaseEventSerializer {
           rowKey = SimpleRowKeyGenerator.getTimestampKey(rowPrefix);
         } else if(keyType == KeyType.RANDOM) {
           rowKey = SimpleRowKeyGenerator.getRandomKey(rowPrefix);
+        } else if(keyType == KeyType.TSNANO) {
+          rowKey = SimpleRowKeyGenerator.getNanoTimestampKey(rowPrefix);
         } else {
           rowKey = SimpleRowKeyGenerator.getUUIDKey(rowPrefix);
         }
@@ -135,10 +139,11 @@ public class SimpleHbaseEventSerializer implements HbaseEventSerializer {
     public void close() {
     }
 
-    private enum KeyType{
+    public enum KeyType{
       UUID,
       RANDOM,
-      TS;
+      TS,
+      TSNANO;
     }
 
   }

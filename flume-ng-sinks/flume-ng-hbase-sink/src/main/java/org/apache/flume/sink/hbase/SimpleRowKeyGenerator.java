@@ -19,7 +19,6 @@
 package org.apache.flume.sink.hbase;
 
 import java.io.UnsupportedEncodingException;
-import java.util.Calendar;
 import java.util.Random;
 import java.util.UUID;
 
@@ -40,10 +39,14 @@ public class SimpleRowKeyGenerator {
       throws UnsupportedEncodingException{
     return (prefix + String.valueOf(new Random().nextLong())).getBytes("UTF8");
   }
-
   public static byte[] getTimestampKey(String prefix)
       throws UnsupportedEncodingException {
-    Calendar cal = Calendar.getInstance();
-    return (prefix + String.valueOf(cal.getTimeInMillis())).getBytes("UTF8");
+    return (prefix + String.valueOf(
+        System.currentTimeMillis())).getBytes("UTF8");
+  }
+  public static byte[] getNanoTimestampKey(String prefix)
+      throws UnsupportedEncodingException{
+    return (prefix + String.valueOf(
+        System.nanoTime())).getBytes("UTF8");
   }
 }
