@@ -46,6 +46,39 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.stumbleupon.async.Callback;
 
+/**
+*
+* A simple sink which reads events from a channel and writes them to HBase.
+* This Sink uses an aysnchronous API internally and is likely to
+* perform better.
+* The Hbase configution is picked up from the first <tt>hbase-site.xml</tt>
+* encountered in the classpath. This sink supports batch reading of
+* events from the channel, and writing them to Hbase, to minimize the number
+* of flushes on the hbase tables. To use this sink, it has to be configured
+* with certain mandatory parameters:
+*
+* <tt>table: </tt> The name of the table in Hbase to write to. <p>
+* <tt>columnFamily: </tt> The column family in Hbase to write to.
+* Other optional parameters are:<p>
+* <tt>serializer:</tt> A class implementing {@link AsyncHBaseEventSerializer}.
+*  An instance of
+* this class will be used to serialize events which are written to hbase.<p>
+* <tt>serializer.*:</tt> Passed in the configure() method to serializer
+* as an object of {@link org.apache.flume.Context}.<p>
+* <tt>batchSize: </tt>This is the batch size used by the client. This is the
+* maximum number of events the sink will commit per transaction. The default
+* batch size is 100 events.
+* <p>
+*
+* <strong>Note: </strong> Hbase does not guarantee atomic commits on multiple
+* rows. So if a subset of events in a batch are written to disk by Hbase and
+* Hbase fails, the flume transaction is rolled back, causing flume to write
+* all the events in the transaction all over again, which will cause
+* duplicates. The serializer is expected to take care of the handling of
+* duplicates etc. HBase also does not support batch increments, so if
+* multiple increments are returned by the serializer, then HBase failure
+* will cause them to be re-written, when HBase comes back up.
+*/
 public class AsyncHBaseSink extends AbstractSink implements Configurable {
 
   private String tableName;
@@ -214,6 +247,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
 
   @Override
   public void stop(){
+    serializer.cleanUp();
     client.shutdown();
     client = null;
   }

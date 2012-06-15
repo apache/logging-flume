@@ -108,8 +108,8 @@ public class TestAsyncHBaseSink {
 
   @AfterClass
   public static void tearDown() throws Exception {
-    zookeeperCluster.shutdown();
     hbaseCluster.shutdown();
+    zookeeperCluster.shutdown();
     FileUtils.deleteDirectory(new File(workDir));
   }
 

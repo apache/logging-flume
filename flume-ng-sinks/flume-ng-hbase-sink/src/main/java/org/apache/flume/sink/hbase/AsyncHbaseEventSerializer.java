@@ -26,6 +26,14 @@ import org.apache.flume.conf.ConfigurableComponent;
 import org.hbase.async.AtomicIncrementRequest;
 import org.hbase.async.PutRequest;
 
+/**
+ * Interface for an event serializer which serializes the headers and body
+ * of an event to write them to hbase. This is configurable, so any config
+ * params required should be taken through this.
+ * The table should be valid on the column family. An implementation
+ * of this interface is expected by the {@linkplain AsyncHBaseSink} to serialize
+ * the events.
+ */
 public interface AsyncHbaseEventSerializer extends Configurable,
 ConfigurableComponent {
 
@@ -39,11 +47,10 @@ ConfigurableComponent {
 
   /**
    * Get the actions that should be written out to hbase as a result of this
-   * event. This list is written to hbase using the HBase batch API.
-   * @return List of {@link org.apache.hadoop.hbase.client.Row} which
+   * event. This list is written to hbase.
+   * @return List of {@link org.hbase.async.PutRequest} which
    * are written as such to HBase.
    *
-   * 0.92 increments do not implement Row, so this is not generic.
    *
    */
   public List<PutRequest> getActions();

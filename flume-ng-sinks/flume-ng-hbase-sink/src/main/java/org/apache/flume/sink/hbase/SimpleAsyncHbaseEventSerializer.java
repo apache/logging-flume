@@ -31,6 +31,25 @@ import org.apache.flume.sink.hbase.SimpleHbaseEventSerializer.KeyType;
 
 import com.google.common.base.Charsets;
 
+/**
+ * A simple serializer to be used with the AsyncHBaseSink
+ * that returns puts from an event, by writing the event
+ * body into it. The headers are discarded. It also updates a row in hbase
+ * which acts as an event counter.
+ *
+ * Takes optional parameters:<p>
+ * <tt>rowPrefix:</tt> The prefix to be used. Default: <i>default</i><p>
+ * <tt>incrementRow</tt> The row to increment. Default: <i>incRow</i><p>
+ * <tt>suffix:</tt> <i>uuid/random/timestamp.</i>Default: <i>uuid</i><p>
+ *
+ * Mandatory parameters: <p>
+ * <tt>cf:</tt>Column family.<p>
+ * Components that have no defaults and will not be used if absent:
+ * <tt>payloadColumn:</tt> Which column to put payload in. If it is not present,
+ * event data will not be written.<p>
+ * <tt>incrementColumn:</tt> Which column to increment. If this is absent, it
+ *  means no column is incremented.
+ */
 public class SimpleAsyncHbaseEventSerializer implements AsyncHbaseEventSerializer {
   private byte[] table;
   private byte[] cf;
@@ -53,14 +72,19 @@ public class SimpleAsyncHbaseEventSerializer implements AsyncHbaseEventSerialize
     if(payloadColumn != null){
       byte[] rowKey;
       try {
-        if (keyType == KeyType.TS) {
-          rowKey = SimpleRowKeyGenerator.getNanoTimestampKey(rowPrefix);
-        } else if(keyType == KeyType.RANDOM) {
-          rowKey = SimpleRowKeyGenerator.getRandomKey(rowPrefix);
-        } else if(keyType == KeyType.TSNANO) {
-          rowKey = SimpleRowKeyGenerator.getNanoTimestampKey(rowPrefix);
-        } else {
-          rowKey = SimpleRowKeyGenerator.getUUIDKey(rowPrefix);
+        switch (keyType) {
+          case TS:
+            rowKey = SimpleRowKeyGenerator.getTimestampKey(rowPrefix);
+            break;
+          case TSNANO:
+            rowKey = SimpleRowKeyGenerator.getNanoTimestampKey(rowPrefix);
+            break;
+          case RANDOM:
+            rowKey = SimpleRowKeyGenerator.getRandomKey(rowPrefix);
+            break;
+          default:
+            rowKey = SimpleRowKeyGenerator.getUUIDKey(rowPrefix);
+            break;
         }
         PutRequest putRequest =  new PutRequest(table, rowKey, cf,
             payloadColumn, payload);
