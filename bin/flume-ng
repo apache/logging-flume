@@ -68,6 +68,18 @@ add_hadoop_paths() {
     local HADOOP_JAVA_LIBRARY_PATH=$(HADOOP_CLASSPATH="$FLUME_CLASSPATH" \
         ${HADOOP_IN_PATH} org.apache.flume.tools.GetJavaProperty \
         java.library.path 2>/dev/null)
+
+    # look for the line that has the desired property value
+    # (considering extraneous output from some GC options that write to stdout)
+    IFS=$'\n'
+    for line in $HADOOP_JAVA_LIBRARY_PATH; do
+      if [[ $line =~ ^java\.library\.path=([^\n]*) ]]; then
+        HADOOP_JAVA_LIBRARY_PATH=${BASH_REMATCH[1]}
+        break
+      fi
+    done
+    unset IFS
+
     if [ -n "${HADOOP_JAVA_LIBRARY_PATH}" ]; then
       FLUME_JAVA_LIBRARY_PATH="$FLUME_JAVA_LIBRARY_PATH:$HADOOP_JAVA_LIBRARY_PATH"
     fi
@@ -104,6 +116,18 @@ add_HBASE_paths() {
     local HBASE_JAVA_LIBRARY_PATH=$(HBASE_CLASSPATH="$FLUME_CLASSPATH" \
         ${HBASE_IN_PATH} org.apache.flume.tools.GetJavaProperty \
         java.library.path 2>/dev/null)
+
+    # look for the line that has the desired property value
+    # (considering extraneous output from some GC options that write to stdout)
+    IFS=$'\n'
+    for line in $HBASE_JAVA_LIBRARY_PATH; do
+      if [[ $line =~ ^java\.library\.path=([^\n]*) ]]; then
+        HBASE_JAVA_LIBRARY_PATH=${BASH_REMATCH[1]}
+        break
+      fi
+    done
+    unset IFS
+
     if [ -n "${HBASE_JAVA_LIBRARY_PATH}" ]; then
       FLUME_JAVA_LIBRARY_PATH="$FLUME_JAVA_LIBRARY_PATH:$HBASE_JAVA_LIBRARY_PATH"
     fi

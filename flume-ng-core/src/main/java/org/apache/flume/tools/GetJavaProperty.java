@@ -28,7 +28,7 @@ public class GetJavaProperty {
       }
     } else {
       for (String prop : args) {
-        System.out.println(System.getProperty(prop, ""));
+        System.out.println(prop + "=" + System.getProperty(prop, ""));
       }
     }
   }
