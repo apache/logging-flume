@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<project name="Flume">
+  <skin>
+    <groupId>org.apache.maven.skins</groupId>
+    <artifactId>maven-fluido-skin</artifactId>
+    <version>1.2.1</version>
+  </skin>
+
+  <custom>
+    <fluidoSkin>
+      <topBarEnabled>false</topBarEnabled>
+      <sideBarEnabled>true</sideBarEnabled>
+      <searchEnabled>true</searchEnabled>
+    </fluidoSkin>
+  </custom>
+  <!--
+  <publishDate position="right"/>
+  <version position="none"/>    -->
+
+  <bannerLeft>
+    <name>Apache Flume</name>
+    <src>images/flume-logo.png</src>
+    <href>http://flume.apache.org/</href>
+  </bannerLeft>
+
+  <body>
+    <menu name="Apache Flume" inherit="top">
+      <item name="About" href="./index.html"/>
+      <item name="Download" href="./download.html"/>
+      <item name="User's Guide" href="./usersGuide/overview.html" collapse="true">
+        <item name="Introduction" href="./usersGuide/overview.html#Introduction"/>
+        <item name="Setup" href="./usersGuide/setup.html"/>
+        <item name="Configuration" href="./usersGuide/configuration.html"/>
+        <item name="Log4j Appender" href="./usersGuide/log4jappender.html"/>
+        <item name="Security" href="./usersGuide/security.html"/>
+        <item name="Monitoring" href="./usersGuide/monitoring.html"/>
+        <item name="Troubleshooting" href="./usersGuide/troubleshoot.html"/>
+        <item name="Component Summary" href="./usersGuide/components.html"/>
+      </item>
+      <item name="Developer's Guide" href="./devGuide/overview.html" collapse="true">
+        <item name="Overview" href="./devGuide/overview.html#overview"/>
+        <item name="Architecture" href="./devGuide/overview.html#architecture"/>
+        <item name="Building" href="./devGuide/building.html"/>
+        <item name="Developing Custom Components" href="./devGuide/custom.html"/>
+      </item>
+    </menu>
+    <menu name="Components" inherit="top">
+      <item name="Channels" href="./channels.html" collapse="true">
+        <item name="File" href="flume-ng-channels/flume-file-channel/index.html"/>
+        <item name="JDBC" href="flume-ng-channels/flume-jdbc-channel/index.html"/>
+        <item name="Recoverable Memory" href="flume-ng-channels/flume-recoverable-memory-channel/index.html"/>
+      </item>
+      <item name="Clients"  href="./clients.html" collapse="true">
+        <item name="Log4j Appender" href="flume-ng-clients/flume-ng-log4jappender/index.html"/>
+      </item>
+      <item name="Configuration" href="flume-ng-configuration/index.html"/>
+      <item name="Core" href="flume-ng-core/index.html"/>
+      <item name="Legacy Sources" href="./legacySources.html" collapse="true">
+        <item name="Avro" href="flume-ng-legacy-sources/flume-avro-source/index.html"/>
+        <item name="Thrift" href="flume-ng-legacy-sources/flume-thrift-source/index.html"/>
+      </item>
+      <item name="Node" href="flume-ng-node/index.html"/>
+      <item name="SDK" href="flume-ng-sdk/index.html"/>
+      <item name="Sinks" href="./sinks.html" collapse="true">
+        <item name="HDFS" href="flume-ng-sinks/flume-hdfs-sink/index.html"/>
+        <item name="IRC" href="flume-ng-sinks/flume-irc-sink/index.html"/>
+        <item name="HBase" href="flume-ng-sinks/flume-ng-hbase-sink/index.html"/>
+      </item>
+    </menu>
+    <links>
+      <item name="Flume Wiki" href="https://cwiki.apache.org/confluence/display/FLUME/Index"/>
+      <item name="Apache" href="http://www.apache.org/"/>
+    </links>
+    <menu ref="reports"/>
+  </body>
+</project>

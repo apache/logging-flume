@@ -1,0 +1,2995 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="http://www.w3.org/TR/xhtml1/strict">
+  <properties>
+    <title>Flume 1.x User Guide</title>
+  </properties>
+  <body>
+    <section name="Flume 1.x User Guide"><!-- Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. -->
+      <a name="configuration" id="configuration"/>
+      <subsection name="Configuration">
+        <p>As mentioned in the earlier section, Flume agent configuration is read from a
+          file that resembles a Java property file format with hierarchical property
+          settings.
+        </p>
+        <a name="defining-the-flow" id="defining-the-flow"/>
+        <h4>Defining the flow</h4>
+        <p>To define the flow within a single agent, you need to link the sources and
+          sinks via a channel. You need to list the sources, sinks and channels for the
+          given agent, and then point the source and sink to a channel. A source instance
+          can specify multiple channels, but a sink instance can only specify on channel.
+          The format is as follows:
+        </p>
+        <source><![CDATA[
+        # list the sources, sinks and channels for the agent
+        <Agent>.sources = <Source>
+        <Agent>.sinks = <Sink>
+        <Agent>.channels = <Channel1> <Channel2>
+
+        # set channel for source
+        <Agent>.sources.<Source>.channels = <Channel1> <Channel2> ...
+
+        # set channel for sink
+        <Agent>.sinks.<Sink>.channel = <Channel1>]]></source>
+        <p>For example an agent is reading data from an external avro client and sending
+          it to HDFS via a memory channel. The config file weblog.config could look like:
+        </p>
+        <source>
+          # list the sources, sinks and channels for the agent
+          agent.sources = avro-appserver-src-1
+          agent.sinks = hdfs-sink-1
+          agent.channels = mem-channel-1
+
+          # set channel for source
+          agent.sources.avro-appserver-src-1.channels = mem-channel-1
+
+          # set channel for sink
+          agent.sinks.hdfs-sink-1.channel = mem-channel-1
+        </source>
+        <p>This will make the events flow from avro-AppSrv-source to hdfs-Cluster1-sink
+          through the memory channel mem-channel-1. When the agent is started with the
+          weblog.config as its config file, it will instantiate that flow.
+        </p>
+        <a name="id1" id="id1"/>
+        <h4>Configuring individual components</h4>
+        <p>After defining the flow, you need to set properties of each source, sink and
+          channel. This is done in the same hierarchical namespace fashion where you set
+          the component type and other values for the properties specific to each
+          component:
+        </p>
+        <source><![CDATA[
+        # properties for sources
+        <Agent>.sources.<Source>.<someProperty> = <someValue>
+
+        # properties for channels
+        <Agent>.channel.<Channel>.<someProperty> = <someValue>
+
+        # properties for sinks
+        <Agent>.sources.<Sink>.<someProperty> = <someValue>]]></source>
+
+        <p>The property "type" needs to be set for each component for Flume to understand
+          what kind of object it needs to be. Each source, sink and channel type has its
+          own set of properties required for it to function as intended. All those need
+          to be set as needed. In the previous example, we have a flow from
+          avro-AppSrv-source to hdfs-Cluster1-sink through the memory channel
+          mem-channel-1. Here's an example that shows configuration of each of those
+          components:
+        </p>
+        <source>
+          agent.sources = avro-AppSrv-source
+          agent.sinks = hdfs-Cluster1-sink
+          agent.channels = mem-channel-1
+
+          # set channel for sources, sinks
+
+          # properties of avro-AppSrv-source
+          agent.sources.avro-AppSrv-source.type = avro
+          agent.sources.avro-AppSrv-source.bind = localhost
+          agent.sources.avro-AppSrv-source.port = 10000
+
+          # properties of mem-channel-1
+          agent.channels.mem-channel-1.type = memory
+          agent.channels.mem-channel-1.capacity = 1000
+          agent.channels.mem-channel-1.transactionCapacity = 100
+
+          # properties of hdfs-Cluster1-sink
+          agent.sinks.hdfs-Cluster1-sink.type = hdfs
+          agent.sinks.hdfs-Cluster1-sink.hdfs.path = hdfs://namenode/flume/webdata
+
+          #...
+        </source>
+        <a name="adding-multiple-flows-in-an-agent" id="adding-multiple-flows-in-an-agent"/>
+        <h4>Adding multiple flows in an agent</h4>
+        <p>A single Flume agent can contain several independent flows. You can list
+          multiple sources, sinks and channels in a config. These components can be
+          linked to form multiple flows:
+        </p>
+        <source><![CDATA[
+          # list the sources, sinks and channels for the agent
+          <Agent>.sources = <Source1> <Source2>
+          <Agent>.sinks = <Sink1> <Sink2>
+          <Agent>.channels = <Channel1> <Channel2>]]></source>
+        <p>Then you can link the sources and sinks to their corresponding channels (for
+          sources) of channel (for sinks) to setup two different flows. For example, if
+          you need to setup two flows in an agent, one going from an external avro client
+          to external HDFS and another from output of a tail to avro sink, then here's a
+          config to do that:
+        </p>
+        <source>
+          # list the sources, sinks and channels in the agent
+          agent.sources = avro-AppSrv-source1 exec-tail-source2
+          agent.sinks = hdfs-Cluster1-sink1 avro-forward-sink2
+          agent.channels = mem-channel-1 jdbc-channel-2
+
+          # flow #1 configuration
+          agent.sources.avro-AppSrv-source1.channels = mem-channel-1
+          agent.sinks.hdfs-Cluster1-sink1.channel = mem-channel-1
+
+          # flow #2 configuration
+          agent.sources.exec-tail-source2.channels = jdbc-channel-2
+          agent.sinks.avro-forward-sink2.channel = jdbc-channel-2
+        </source>
+        <a name="configuring-a-multi-agent-flow" id="configuring-a-multi-agent-flow"/>
+        <h4>Configuring a multi agent flow</h4>
+        <p>To setup a multi-tier flow, you need to have an avro sink of first hop pointing
+          to avro source of the next hop. This will result in the first Flume agent
+          forwarding events to the next Flume agent. For example, if you are
+          periodically sending files (1 file per event) using avro client to a local
+          Flume agent, then this local agent can forward it to another agent that has the
+          mounted for storage.
+        </p>
+        <p>Weblog agent config:</p>
+        <source>
+          # list sources, sinks and channels in the agent
+          agent.sources = avro-AppSrv-source
+          agent.sinks = avro-forward-sink
+          agent.channels = jdbc-channel
+
+          # define the flow
+          agent.sources.avro-AppSrv-source.channels = jdbc-channel
+          agent.sinks.avro-forward-sink.channel = jdbc-channel
+
+          # avro sink properties
+          agent.sources.avro-forward-sink.type = avro
+          agent.sources.avro-forward-sink.hostname = 10.1.1.100
+          agent.sources.avro-forward-sink.port = 10000
+
+          # configure other pieces
+          #...
+        </source>
+        <p>HDFS agent config:</p>
+        <source>
+          # list sources, sinks and channels in the agent
+          agent.sources = avro-collection-source
+          agent.sinks = hdfs-sink
+          agent.channels = mem-channel
+
+          # define the flow
+          agent.sources.avro-collection-source.channels = mem-channel
+          agent.sinks.hdfs-sink.channel = mem-channel
+
+          # avro sink properties
+          agent.sources.avro-collection-source.type = avro
+          agent.sources.avro-collection-source.bind = 10.1.1.100
+          agent.sources.avro-collection-source.port = 10000
+
+          # configure other pieces
+          #...
+        </source>
+        <p>Here we link the avro-forward-sink from the weblog agent to the
+          avro-collection-source of the hdfs agent. This will result in the events coming
+          from the external appserver source eventually getting stored in HDFS.
+        </p>
+        <a name="fan-out-flow" id="fan-out-flow"/>
+        <h4>Fan out flow</h4>
+        <p>As discussed in previous section, Flume support fanning out the flow from one
+          source to multiple channels. There are two modes of fan out, replicating and
+          multiplexing. In the replicating flow the event is sent to all the configured
+          channels. In case of multiplexing, the event is sent to only a subset of
+          qualifying channels. To fan out the flow, one needs to specify a list of
+          channels for a source and the policy for the fanning it out. This is done by
+          adding a channel "selector" that can be replicating or multiplexing. Then
+          further specify the selection rules if it's a multiplexer. If you don't specify
+          an selector, then by default it's replicating:
+        </p>
+        <source><![CDATA[
+          # List the sources, sinks and channels for the agent
+          <Agent>.sources = <Source1>
+          <Agent>.sinks = <Sink1> <Sink2>
+          <Agent>.channels = <Channel1> <Channel2>
+
+          # set list of channels for source (separated by space)
+          <Agent>.sources.<Source1>.channels = <Channel1> <Channel2>
+
+          # set channel for sinks
+          <Agent>.sinks.<Sink1>.channel = <Channel1>
+          <Agent>.sinks.<Sink2>.channel = <Channel2>
+
+          <Agent>.sources.<Source1>.selector.type = replicating]]></source>
+        <p>The multiplexing select has a further set of properties to bifurcate the flow.
+          This requires specifying a mapping of an event attribute to a set for channel.
+          The selector checks for each configured attribute in the event header. If it
+          matches the specified value, then that event is sent to all the channels mapped
+          to that value. If there's no match, then the event is sent to set of channels
+          configured as default:
+        </p>
+        <source><![CDATA[
+          # Mapping for multiplexing selector
+          <Agent>.sources.<Source1>.selector.type = multiplexing
+          <Agent>.sources.<Source1>.selector.header = <someHeader>
+          <Agent>.sources.<Source1>.selector.mapping.<Value1> = <Channel1>
+          <Agent>.sources.<Source1>.selector.mapping.<Value2> = <Channel1> <Channel2>
+          <Agent>.sources.<Source1>.selector.mapping.<Value3> = <Channel2>
+            #...
+
+          <Agent>.sources.<Source1>.selector.default = <Channel2>]]></source>
+        <p>The mapping allows overlapping the channels for each value. The default must be
+          set for a multiplexing select which can also contain any number of channels.
+        </p>
+        <p>The following example has a single flow that multiplexed to two paths. The
+          agent has a single avro source and two channels linked to two sinks:
+        </p>
+        <source>
+          # list the sources, sinks and channels in the agent
+          agent.sources = avro-AppSrv-source1
+          agent.sinks = hdfs-Cluster1-sink1 avro-forward-sink2
+          agent.channels = mem-channel-1 jdbc-channel-2
+
+          # set channels for source
+          agent.sources.avro-AppSrv-source1.channels = mem-channel-1 jdbc-channel-2
+
+          # set channel for sinks
+          agent.sinks.hdfs-Cluster1-sink1.channel = mem-channel-1
+          agent.sinks.avro-forward-sink2.channel = jdbc-channel-2
+
+          # channel selector configuration
+          agent.sources.avro-AppSrv-source1.selector.type = multiplexing
+          agent.sources.avro-AppSrv-source1.selector.header = State
+          agent.sources.avro-AppSrv-source1.selector.mapping.CA = mem-channel-1
+          agent.sources.avro-AppSrv-source1.selector.mapping.AZ = jdbc-channel-2
+          agent.sources.avro-AppSrv-source1.selector.mapping.NY = mem-channel-1 jdbc-channel-2
+          agent.sources.avro-AppSrv-source1.selector.default = mem-channel-1
+        </source>
+        <p>The selector checks for a header called "State". If the value is "CA" then its
+          sent to mem-channel-1, if its "AZ" then it goes to jdbc-channel-2 or if its
+          "NY" then both. If the "State" header is not set or doesn't match any of the
+          three, then it goes to mem-channel-1 which is designated as 'default'.
+        </p>
+        <a name="flume-sources" id="flume-sources"/>
+        <h4>Flume Sources</h4>
+        <a name="avro-source" id="avro-source"/>
+        <h5>Avro Source</h5>
+        <p>Listens on Avro port and receives events from external Avro client streams.
+          When paired with the built-in AvroSink on another (previous hop) Flume agent,
+          it can create tiered collection topologies.
+          Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="13%"/>
+            <col width="11%"/>
+            <col width="51%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>channels</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be avro</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>bind</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>hostname or IP address to listen on</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>port</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>Port # to bind to</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>threads</p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>Maximum number of worker threads to spawn</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="exec-source" id="exec-source"/>
+        <h5>Exec Source</h5>
+        <p>This source runs a given Unix command on start-up and expects that process to
+          continuously produce data on standard out (stderr is simply discarded, unless
+          logStdErr=true). If the process exits for any reason, the source also exits and
+          will produce no further data.
+          Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="15%"/>
+            <col width="11%"/>
+            <col width="62%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>channels</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be exec</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>command</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The command to execute</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>restartThrottle</p>
+              </td>
+              <td>
+                <p>10000</p>
+              </td>
+              <td>
+                <p>Amount of time (in millis) to wait before attempting a restart</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>restart</p>
+              </td>
+              <td>
+                <p>false</p>
+              </td>
+              <td>
+                <p>Whether the executed cmd should be restarted if it dies</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>logStdErr</p>
+              </td>
+              <td>
+                <p>false</p>
+              </td>
+              <td>
+                <p>Whether the command's stderr should be logged</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>selector.type</p>
+              </td>
+              <td>
+                <p>replicating</p>
+              </td>
+              <td>
+                <p>replicating or multiplexing</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>selector.*</p>
+              </td>
+              <td/>
+              <td>
+                <p>Depends on the selector.type value</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="note">
+          <p class="title">note :</p>
+          <p class="body">
+            <p>The ExecSource can not guarantee that if there is a failure to put the
+              event into a channel, the client knows about it. In such cases, the
+              data will be lost.
+            </p>
+          </p>
+        </div>
+        <p>For example:</p>
+        <source>
+          agent.sources = tail
+          agent.channels = memoryChannel-1
+          agent.sinks = logger
+          agent.sources.tail.type = exec
+          agent.sources.tail.command = tail -f /var/log/secure
+        </source>
+        <a name="netcat-source" id="netcat-source"/>
+        <h5>NetCat Source</h5>
+        <p>A netcat-like source that listens on a given port and turns each line of text
+          into an event. Acts like "nc -k -l [host] [port]". In other words, it opens a
+          specified port and listens for data. The expectation is that the supplied data
+          is newline separated text. Each line of text is turned into a Flume event and
+          sent via the connected channel.
+          Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="15%"/>
+            <col width="11%"/>
+            <col width="43%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>channels</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be netcat</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>bind</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>Host name or IP address to bind to</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>port</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>Port # to bind to</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>max-line-length</p>
+              </td>
+              <td>
+                <p>512</p>
+              </td>
+              <td>
+                <p>Max line length per event body (in bytes)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>selector.type</p>
+              </td>
+              <td>
+                <p>replicating</p>
+              </td>
+              <td>
+                <p>replicating or multiplexing</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>selector.*</p>
+              </td>
+              <td/>
+              <td>
+                <p>Depends on the selector.type value</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="sequence-generator-source" id="sequence-generator-source"/>
+        <h5>Sequence Generator Source</h5>
+        <p>A simple sequence generator that continuously generates events with a counter
+          that starts from 0 and increments by 1. Useful mainly for testing.
+          Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="13%"/>
+            <col width="11%"/>
+            <col width="40%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>channels</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be seq</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>selector.type</p>
+              </td>
+              <td/>
+              <td>
+                <p>replicating or multiplexing</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>selector.*</p>
+              </td>
+              <td>
+                <p>replicating</p>
+              </td>
+              <td>
+                <p>Depends on the selector.type value</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="syslog-sources" id="syslog-sources"/>
+        <h5>Syslog Sources</h5>
+        <p>Reads syslog data and generate Flume events. The UDP source treats an entire
+          message as a single event. The TCP source on creates a new event for a string
+          of characters separated by carriage return ('n').
+          Required properties are in<b>bold</b>.
+        </p>
+        <a name="syslog-tcp-source" id="syslog-tcp-source"/>
+        <h6>Syslog TCP Source</h6>
+        <table border="1">
+          <colgroup>
+            <col width="13%"/>
+            <col width="11%"/>
+            <col width="46%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>channels</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be syslogtcp</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>host</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>Host name or IP address to bind to</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>port</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>Port # to bind to</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>eventSize</p>
+              </td>
+              <td>
+                <p>2500</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>selector.type</p>
+              </td>
+              <td/>
+              <td>
+                <p>replicating or multiplexing</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>selector.*</p>
+              </td>
+              <td>
+                <p>replicating</p>
+              </td>
+              <td>
+                <p>Depends on the selector.type value</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p>For example, a syslog TCP source:</p>
+        <source>
+          agent.sources = syslog
+          agent.channels = memoryChannel-1
+          agent.sinks = logger
+          agent.sources.syslog.type = syslogtcp
+          agent.sources.syslog.port = 5140
+          agent.sources.syslog.host = localhost
+        </source>
+        <a name="syslog-udp-source" id="syslog-udp-source"/>
+        <h6>Syslog UDP Source</h6>
+        <table border="1">
+          <colgroup>
+            <col width="13%"/>
+            <col width="11%"/>
+            <col width="46%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>channels</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be syslogudp</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>host</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>Host name or IP address to bind to</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>port</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>Port # to bind to</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>selector.type</p>
+              </td>
+              <td/>
+              <td>
+                <p>replicating or multiplexing</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>selector.*</p>
+              </td>
+              <td>
+                <p>replicating</p>
+              </td>
+              <td>
+                <p>Depends on the selector.type value</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p>For example, a syslog UDP source:</p>
+        <source>
+          agent.sources = syslog
+          agent.channels = memoryChannel-1
+          agent.sinks = logger
+          agent.sources.syslog.type = syslogudp
+          agent.sources.syslog.port = 5140
+          agent.sources.syslog.host = localhost
+        </source>
+        <a name="legacy-sources" id="legacy-sources"/>
+        <h5>Legacy Sources</h5>
+        <p>The legacy sources allow a Flume 1.x agent to receive events from Flume 0.9.4
+          agents. It accepts events in the Flume 0.9.4 format, converts them to the Flume
+          1.0 format, and stores them in the connected channel. The 0.9.4 event
+          properties like timestamp, pri, host, nanos, etc get converted to 1.x event
+          header attributes. The legacy source supports both Avro and Thrift RPC
+          connections. To use this bridge between two Flume versions, you need to start a
+          Flume 1.x agent with the avroLegacy or thriftLegacy source. The 0.9.4 agent
+          should have the agent Sink pointing to the host/port of the 1.x agent.
+          Required properties are in<b>bold</b>.
+        </p>
+        <a name="avro-legacy-source" id="avro-legacy-source"/>
+        <h6>Avro Legacy Source</h6>
+        <table border="1">
+          <colgroup>
+            <col width="13%"/>
+            <col width="11%"/>
+            <col width="88%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>channels</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be org.apache.flume.source.avroLegacy.AvroLegacySource</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>host</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The hostname or IP address to bind to</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>port</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The port # to listen on</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>selector.type</p>
+              </td>
+              <td/>
+              <td>
+                <p>replicating or multiplexing</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>selector.*</p>
+              </td>
+              <td>
+                <p>replicating</p>
+              </td>
+              <td>
+                <p>Depends on the selector.type value</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="thrift-legacy-source" id="thrift-legacy-source"/>
+        <h6>Thrift Legacy Source</h6>
+        <table border="1">
+          <colgroup>
+            <col width="13%"/>
+            <col width="11%"/>
+            <col width="86%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>channels</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be org.apache.source.thriftLegacy.ThriftLegacySource</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>host</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The hostname or IP address to bind to</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>port</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The port # to listen on</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>selector.type</p>
+              </td>
+              <td/>
+              <td>
+                <p>replicating or multiplexing</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>selector.*</p>
+              </td>
+              <td>
+                <p>replicating</p>
+              </td>
+              <td>
+                <p>Depends on the selector.type value</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="note">
+          <p class="title">note :</p>
+          <p class="body">
+            <p>The reliability semantics of Flume 1.x are different from that of
+              Flume 0.9.x. The E2E or DFO mode of a Flume 0.9.x agent will not be
+              supported by the legacy source. The only supported 0.9.x mode is the
+              best effort, though the reliability setting of the 1.x flow will be
+              applicable to the events once they are saved into the Flume 1.x
+              channel by the legacy source.
+            </p>
+          </p>
+        </div>
+        <a name="custom-source" id="custom-source"/>
+        <h5>Custom Source</h5>
+        <p>A custom source is your own implementation of the Source interface. A custom
+          source's class and its dependencies must be included in the agent's classpath
+          when starting the Flume agent. The type of the custom source is its FQCN.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="13%"/>
+            <col width="11%"/>
+            <col width="46%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>channels</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be your FQCN</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>selector.type</p>
+              </td>
+              <td/>
+              <td>
+                <p>replicating or multiplexing</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>selector.*</p>
+              </td>
+              <td>
+                <p>replicating</p>
+              </td>
+              <td>
+                <p>Depends on the selector.type value</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="flume-sinks" id="flume-sinks"/>
+        <h4>Flume Sinks</h4>
+        <a name="hdfs-sink" id="hdfs-sink"/>
+        <h5>HDFS Sink</h5>
+        <p>This sink writes the event into the Hadoop Distributed File System (HDFS). It
+          currently supports creating text and sequence files. It supports compression in
+          both file types. The files can be rolled (close current file and create a new
+          one) periodically based on the elapsed time or size of data or number of events.
+          It also bucketing/partitioning data by attributes like timestamp or machine
+          where the event originated. The HDFS directory path may contain formatting
+          escape sequences that will replaced by the HDFS sink to generate a
+          directory/file name to store the events. Using this sink requires hadoop to be
+          installed so that Flume can use the Hadoop jars to communicate with the HDFS
+          cluster.
+        </p>
+        <p>The following are the escape sequences supported:</p>
+        <table border="1">
+          <colgroup>
+            <col width="9%"/>
+            <col width="49%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Alias</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>%{host}</p>
+              </td>
+              <td>
+                <p>host name stored in event header</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>%t</p>
+              </td>
+              <td>
+                <p>Unix time in milliseconds</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>%a</p>
+              </td>
+              <td>
+                <p>locale's short weekday name (Mon, Tue, ...)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>%A</p>
+              </td>
+              <td>
+                <p>locale's full weekday name (Monday, Tuesday, ...)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>%b</p>
+              </td>
+              <td>
+                <p>locale's short month name (Jan, Feb, ...)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>%B</p>
+              </td>
+              <td>
+                <p>locale's long month name (January, February, ...)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>%c</p>
+              </td>
+              <td>
+                <p>locale's date and time (Thu Mar 3 23:05:25 2005)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>%d</p>
+              </td>
+              <td>
+                <p>day of month (01)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>%D</p>
+              </td>
+              <td>
+                <p>date; same as %m/%d/%y</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>%H</p>
+              </td>
+              <td>
+                <p>hour (00..23)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>%I</p>
+              </td>
+              <td>
+                <p>hour (01..12)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>%j</p>
+              </td>
+              <td>
+                <p>day of year (001..366)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>%k</p>
+              </td>
+              <td>
+                <p>hour ( 0..23)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>%m</p>
+              </td>
+              <td>
+                <p>month (01..12)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>%M</p>
+              </td>
+              <td>
+                <p>minute (00..59)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>%p</p>
+              </td>
+              <td>
+                <p>locale's equivalent of am or pm</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>%s</p>
+              </td>
+              <td>
+                <p>seconds since 1970-01-01 00:00:00 UTC</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>%S</p>
+              </td>
+              <td>
+                <p>second (00..59)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>%y</p>
+              </td>
+              <td>
+                <p>last two digits of year (00..99)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>%Y</p>
+              </td>
+              <td>
+                <p>year (2010)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>%z</p>
+              </td>
+              <td>
+                <p>+hhmm numeric timezone (for example, -0400)</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p>The file in use will have the name mangled to include ".tmp" at the end. Once
+          the file is closed, this extension is removed. This allows excluding partially
+          complete files in the directory.
+          Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="22%"/>
+            <col width="12%"/>
+            <col width="79%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>channel</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be hdfs</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>hdfs.path</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>HDFS directory path (eg hdfs://namenode/flume/webdata/)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>hdfs.filePrefix</p>
+              </td>
+              <td>
+                <p>FlumeData</p>
+              </td>
+              <td>
+                <p>Name prefixed to files created by Flume in hdfs directory</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>hdfs.rollInterval</p>
+              </td>
+              <td>
+                <p>30</p>
+              </td>
+              <td>
+                <p>Number of seconds to wait before rolling current file
+                  (0 = never roll based on time interval)
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>hdfs.rollSize</p>
+              </td>
+              <td>
+                <p>1024</p>
+              </td>
+              <td>
+                <p>File size to trigger roll, in bytes (0: never roll based on file size)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>hdfs.rollCount</p>
+              </td>
+              <td>
+                <p>10</p>
+              </td>
+              <td>
+                <p>Number of events written to file before it rolled
+                  (0 = never roll based on number of events)
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>hdfs.batchSize</p>
+              </td>
+              <td>
+                <p>1</p>
+              </td>
+              <td>
+                <p>number of events written to file before it flushed to HDFS</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>hdfs.txnEventMax</p>
+              </td>
+              <td>
+                <p>100</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>hdfs.codeC</p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>Compression codec. one of following : gzip, bzip2, lzo, snappy</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>hdfs.fileType</p>
+              </td>
+              <td>
+                <p>SequenceFile</p>
+              </td>
+              <td>
+                <p>File format: currently<code>SequenceFile</code>,
+                  <code>DataStream</code>
+                  or
+                  <code>CompressedStream</code>
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>hdfs.maxOpenFiles</p>
+              </td>
+              <td>
+                <p>5000</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>hdfs.writeFormat</p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>"Text" or "Writable"</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>hdfs.appendTimeout</p>
+              </td>
+              <td>
+                <p>1000</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>hdfs.callTimeout</p>
+              </td>
+              <td>
+                <p>10000</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>hdfs.threadsPoolSize</p>
+              </td>
+              <td>
+                <p>10</p>
+              </td>
+              <td>
+                <p>Number of threads per HDFS sink for HDFS IO ops (open, write, etc.)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>hdfs.rollTimerPoolSize</p>
+              </td>
+              <td>
+                <p>1</p>
+              </td>
+              <td>
+                <p>Number of threads per HDFS sink for scheduling timed file rolling</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>hdfs.kerberosPrincipal</p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>Kerberos user principal for accessing secure HDFS</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>hdfs.kerberosKeytab</p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>Kerberos keytab for accessing secure HDFS</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>serializer</p>
+              </td>
+              <td>
+                <p>
+                  <code>TEXT</code>
+                </p>
+              </td>
+              <td>
+                <p>Other possible options include
+                  <code>AVRO_EVENT</code>
+                  or the
+                  fully-qualified class name of an implementation of the
+                  <code>EventSerializer.Builder</code>
+                  interface.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>serializer.*</p>
+              </td>
+              <td/>
+              <td/>
+            </tr>
+          </tbody>
+        </table>
+        <a name="logger-sink" id="logger-sink"/>
+        <h5>Logger Sink</h5>
+        <p>Logs event at INFO level. Typically useful for testing/debugging purpose.
+          Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="14%"/>
+            <col width="7%"/>
+            <col width="43%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>channel</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be logger</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="avro-sink" id="avro-sink"/>
+        <h5>Avro Sink</h5>
+        <p>This sink forms one half of Flume's tiered collection support. Flume events
+          sent to this sink are turned into Avro events and sent to the configured
+          hostname / port pair. The events are taken from the configured Channel in
+          batches of the configured batch size.
+          Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="14%"/>
+            <col width="7%"/>
+            <col width="46%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>channel</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be<code>avro</code>.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>hostname</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The hostname or IP address to bind to.</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>port</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The port # to listen on.</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>batch-size</p>
+              </td>
+              <td>
+                <p>100</p>
+              </td>
+              <td>
+                <p>number of event to batch together for send.</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="irc-sink" id="irc-sink"/>
+        <h5>IRC Sink</h5>
+        <p>The IRC sink takes messages from attached channel and relays those to
+          configured IRC destinations.
+          Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="15%"/>
+            <col width="7%"/>
+            <col width="56%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>channel</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be irc</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>hostname</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The hostname or IP address to connect to</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>port</b>
+                </p>
+              </td>
+              <td>
+                <p>6667</p>
+              </td>
+              <td>
+                <p>The port number of remote host to connect</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>nick</p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>Nick name</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>user</p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>User name</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>password</p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>User password</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>chan</p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>channel</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>name</p>
+              </td>
+              <td/>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>splitlines</p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>(boolean)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>splitchars</p>
+              </td>
+              <td>
+                <p>n</p>
+              </td>
+              <td>
+                <p>line separator (if you were to enter the default value
+                  into the config file, then you would need to escape the
+                  backslash, like this: "\n")
+                </p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="file-roll-sink" id="file-roll-sink"/>
+        <h5>File Roll Sink</h5>
+        <p>Stores events on the local filesystem.
+          Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="17%"/>
+            <col width="7%"/>
+            <col width="118%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>channel</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be<code>FILE_ROLL</code>.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>sink.directory</p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>sink.rollInterval</p>
+              </td>
+              <td>
+                <p>30</p>
+              </td>
+              <td>
+                <p>Roll the file every 30 seconds. Specifying 0 will disable rolling and cause all events to be written
+                  to a single file.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>sink.serializer</p>
+              </td>
+              <td>
+                <p>TEXT</p>
+              </td>
+              <td>
+                <p>Other possible options include AVRO_EVENT or the FQCN of an implementation of EventSerializer.Builder
+                  interface.
+                </p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="null-sink" id="null-sink"/>
+        <h5>Null Sink</h5>
+        <p>Discards all events it receives from the channel.
+          Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="13%"/>
+            <col width="7%"/>
+            <col width="46%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>channel</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be<code>NULL</code>.
+                </p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="custom-sink" id="custom-sink"/>
+        <h5>Custom Sink</h5>
+        <p>A custom sink is your own implementation of the Sink interface. A custom
+          sink's class and its dependencies must be included in the agent's classpath
+          when starting the Flume agent. The type of the custom sink is its FQCN.
+          Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="13%"/>
+            <col width="7%"/>
+            <col width="46%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>channel</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be your FQCN</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="flume-channels" id="flume-channels"/>
+        <h4>Flume Channels</h4>
+        <p>Channels are the repositories where the events are staged on a agent.
+          Source adds the events and Sink removes it.
+        </p>
+        <a name="memory-channel" id="memory-channel"/>
+        <h5>Memory Channel</h5>
+        <p>The events are stored in a an in-memory queue with configurable max size. It's
+          ideal for flow that needs higher throughput and prepared to lose the staged
+          data in the event of a agent failures.
+          Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="19%"/>
+            <col width="7%"/>
+            <col width="62%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be memory</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>capacity</p>
+              </td>
+              <td>
+                <p>100</p>
+              </td>
+              <td>
+                <p>The max number of events stored in the channel</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>transactionCapacity</p>
+              </td>
+              <td>
+                <p>100</p>
+              </td>
+              <td>
+                <p>The max number of events stored in the channel per transaction</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>keep-alive</p>
+              </td>
+              <td>
+                <p>3</p>
+              </td>
+              <td>
+                <p>Timeout in seconds for adding or removing an event</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="jdbc-channel" id="jdbc-channel"/>
+        <h5>JDBC Channel</h5>
+        <p>The events are stored in a persistent storage that's backed by a database.
+          The JDBC channel currently supports embedded Derby. This is a durable channel
+          that's ideal for the flows where recoverability is important.
+          Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="26%"/>
+            <col width="36%"/>
+            <col width="49%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be jdbc</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>db.type</p>
+              </td>
+              <td>
+                <p>DERBY</p>
+              </td>
+              <td>
+                <p>Database vendor, needs to be DERBY.</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>driver.class</p>
+              </td>
+              <td>
+                <p>org.apache.derby.jdbc.EmbeddedDriver</p>
+              </td>
+              <td>
+                <p>Class for vendor's JDBC driver</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>driver.url</p>
+              </td>
+              <td>
+                <p>(constructed from other properties)</p>
+              </td>
+              <td>
+                <p>JDBC connection URL</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>db.username</p>
+              </td>
+              <td>
+                <p>"sa"</p>
+              </td>
+              <td>
+                <p>User id for db connection</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>db.password</p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>password for db connection</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>connection.properties.file</p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>JDBC Connection property file path</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>create.schema</p>
+              </td>
+              <td>
+                <p>true</p>
+              </td>
+              <td>
+                <p>If true, then creates db schema if not there</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>create.index</p>
+              </td>
+              <td>
+                <p>true</p>
+              </td>
+              <td>
+                <p>Create indexes to speed up lookups</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>create.foreignkey</p>
+              </td>
+              <td>
+                <p>true</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>transaction.isolation</p>
+              </td>
+              <td>
+                <p>"READ_COMMITTED"</p>
+              </td>
+              <td>
+                <p>Isolation level for db session READ_UNCOMMITTED,
+                  READ_COMMITTED, SERIALIZABLE, REPEATABLE_READ
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>maximum.connections</p>
+              </td>
+              <td>
+                <p>10</p>
+              </td>
+              <td>
+                <p>Max connections allowed to db</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>maximum.capacity</p>
+              </td>
+              <td>
+                <p>0 (unlimited)</p>
+              </td>
+              <td>
+                <p>Max number of events in the channel</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>sysprop.*</p>
+              </td>
+              <td/>
+              <td>
+                <p>DB Vendor specific properties</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>sysprop.user.home</p>
+              </td>
+              <td/>
+              <td>
+                <p>Home path to store embedded Derby database</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="recoverable-memory-channel" id="recoverable-memory-channel"/>
+        <h5>Recoverable Memory Channel</h5>
+        <div class="warning">
+          <p class="title">warning :</p>
+          <p class="body">
+            <p>The Recoverable Memory Channel is currently experimental and is not
+              yet ready for production use. This channel's properties are being
+              documented here in advance of its completion.
+            </p>
+          </p>
+        </div>
+        <p>Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="22%"/>
+            <col width="47%"/>
+            <col width="73%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be
+                  org.apache.flume.channel.recoverable.memory.RecoverableMemoryChannel
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>wal.dataDir</p>
+              </td>
+              <td>
+                <p>${user.home}/.flume/recoverable-memory-channel</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>wal.rollSize</p>
+              </td>
+              <td>
+                <p>(0x04000000)</p>
+              </td>
+              <td>
+                <p>Max size (in bytes) of a single file before we roll</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>wal.minRetentionPeriod</p>
+              </td>
+              <td>
+                <p>300000</p>
+              </td>
+              <td>
+                <p>Min amount of time (in millis) to keep a log</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>wal.workerInterval</p>
+              </td>
+              <td>
+                <p>60000</p>
+              </td>
+              <td>
+                <p>How often (in millis) the background worker checks for old logs</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>wal.maxLogsSize</p>
+              </td>
+              <td>
+                <p>(0x20000000)</p>
+              </td>
+              <td>
+                <p>Total amt (in bytes) of logs to keep, excluding the current log</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="file-channel" id="file-channel"/>
+        <h5>File Channel</h5>
+        <div class="note">
+          <p class="title">note :</p>
+          <p class="body">
+            <p>The File Channel is still undergoing testing and is not yet considered
+              to be as stable as the Memory Channel.
+            </p>
+          </p>
+        </div>
+        <p>Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="13%"/>
+            <col width="7%"/>
+            <col width="46%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be<code>FILE</code>.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>(TBD)</p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td/>
+            </tr>
+          </tbody>
+        </table>
+        <a name="pseudo-transaction-channel" id="pseudo-transaction-channel"/>
+        <h5>Pseudo Transaction Channel</h5>
+        <div class="warning">
+          <p class="title">warning :</p>
+          <p class="body">
+            <p>The Pseudo Transaction Channel is only for unit testing purposes
+              and is NOT meant for production use.
+            </p>
+          </p>
+        </div>
+        <p>Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="13%"/>
+            <col width="7%"/>
+            <col width="84%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be org.apache.flume.channel.PseudoTxnMemoryChannel</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>capacity</p>
+              </td>
+              <td>
+                <p>50</p>
+              </td>
+              <td>
+                <p>The max number of events stored in the channel</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>keep-alive</p>
+              </td>
+              <td>
+                <p>3</p>
+              </td>
+              <td>
+                <p>Timeout in seconds for adding or removing an event</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="custom-channel" id="custom-channel"/>
+        <h5>Custom Channel</h5>
+        <p>A custom channel is your own implementation of the Channel interface. A
+          custom channel's class and its dependencies must be included in the agent's
+          classpath when starting the Flume agent. The type of the custom channel is
+          its FQCN.
+          Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="13%"/>
+            <col width="7%"/>
+            <col width="65%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>
+                  <b>type</b>
+                </p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be a fully-qualified class name</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="flume-channel-selectors" id="flume-channel-selectors"/>
+        <h4>Flume Channel Selectors</h4>
+        <p>If the type is not specified, then defaults to "replicating".</p>
+        <a name="replicating-channel-selector-default" id="replicating-channel-selector-default"/>
+        <h5>Replicating Channel Selector (default)</h5>
+        <p>Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="13%"/>
+            <col width="11%"/>
+            <col width="48%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>selector.type</p>
+              </td>
+              <td>
+                <p>replicating</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be replicating</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="multiplexing-channel-selector" id="multiplexing-channel-selector"/>
+        <h5>Multiplexing Channel Selector</h5>
+        <p>Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="18%"/>
+            <col width="21%"/>
+            <col width="49%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>selector.type</p>
+              </td>
+              <td>
+                <p>replicating</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be multiplexing</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>selector.header</p>
+              </td>
+              <td>
+                <p>flume.selector.header</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>selector.default</p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td/>
+            </tr>
+            <tr>
+              <td>
+                <p>selector.mapping.*</p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td/>
+            </tr>
+          </tbody>
+        </table>
+        <a name="custom-channel-selector" id="custom-channel-selector"/>
+        <h5>Custom Channel Selector</h5>
+        <p>A custom channel selector is your own implementation of the ChannelSelector
+          interface. A custom channel selector's class and its dependencies must be
+          included in the agent's classpath when starting the Flume agent. The type of
+          the custom channel selector is its FQCN.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="13%"/>
+            <col width="7%"/>
+            <col width="46%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>selector.type</p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be your FQCN</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="flume-sink-processors" id="flume-sink-processors"/>
+        <h4>Flume Sink Processors</h4>
+        <a name="default-sink-processor" id="default-sink-processor"/>
+        <h5>Default Sink Processor</h5>
+        <p>Accepts only a single sink.
+          Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="14%"/>
+            <col width="7%"/>
+            <col width="44%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>processor.type</p>
+              </td>
+              <td>
+                <p>default</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be default</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="failover-sink-processor" id="failover-sink-processor"/>
+        <h5>Failover Sink Processor</h5>
+        <p>Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="29%"/>
+            <col width="7%"/>
+            <col width="83%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>processor.type</p>
+              </td>
+              <td>
+                <p>default</p>
+              </td>
+              <td>
+                <p>The component type name, needs to be failover</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>processor.maxpenalty</p>
+              </td>
+              <td>
+                <p>30000</p>
+              </td>
+              <td>
+                <p>(in millis)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>processor.priority.&lt;sinkName&gt;</p>
+              </td>
+              <td/>
+              <td>
+                <p>&lt;sinkName&gt; must be one of the sink instances associated with the current sink group</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="custom-sink-processor" id="custom-sink-processor"/>
+        <h5>Custom Sink Processor</h5>
+        <p>Custom sink processors are not implemented at this time.</p>
+        <a name="flume-properties" id="flume-properties"/>
+        <h4>Flume Properties</h4>
+        <table border="1">
+          <colgroup>
+            <col width="25%"/>
+            <col width="7%"/>
+            <col width="68%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>flume.called.from.service</p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>If this property is specified then the Flume agent will continue
+                  polling for the config file even if the config file is not found
+                  at the expected location. Otherwise, the Flume agent will terminate
+                  if the config doesn't exist at the expected location. No property
+                  value is needed when setting this property (eg, just specifying
+                  -Dflume.called.from.service is enough)
+                </p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <a name="property-flume-called-from-service" id="property-flume-called-from-service"/>
+        <h5>Property: flume.called.from.service</h5>
+        <p>Flume periodically polls, every 30 seconds, for changes to the specified
+          config file. A Flume agent loads a new configuration from the config file if
+          either an existing file is polled for the first time, or if an existing
+          file's modification date has changed since the last time it was polled.
+          Renaming or moving a file does not change its modification time. When a
+          Flume agent polls a non-existent file then one of two things happens: 1.
+          When the agent polls a non-existent config file for the first time, then the
+          agent behaves according to the flume.called.from.service property. If the
+          property is set, then the agent will continue polling (always at the same
+          period -- every 30 seconds). If the property is not set, then the agent
+          immediately terminates. ...OR... 2. When the agent polls a non-existent
+          config file and this is not the first time the file is polled, then the
+          agent makes no config changes for this polling period. The agent continues
+          polling rather than terminating.
+        </p>
+      </subsection>
+    </section>
+  </body>
+</document>

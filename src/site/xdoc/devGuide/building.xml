@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="http://www.w3.org/TR/xhtml1/strict">
+  <properties>
+    <title>Flume 1.x Developer Guide</title>
+  </properties>
+  <body>
+    <section name="Flume 1.x Developer Guide">
+      <!-- Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License. -->
+      <a name="building-flume" id="building-flume"/>
+      <subsection name="Building Flume">
+        <a name="getting-the-source" id="getting-the-source"/>
+        <h4>Getting the source</h4>
+        <p>Check out the code using Subversion. Click here for
+          <a href="http://svn.apache.org/repos/asf/incubator/flume/" id="">the SVN repository root</a>.
+        </p>
+        <p>The Flume 1.x development happens under the branch "trunk" so this command line
+          can be used:
+        </p>
+        <pre class="literal_block">svn checkout http://svn.apache.org/repos/asf/incubator/flume/trunk flume-trunk</pre>
+        <p>Alternatively, if you prefer using Git, you may use:</p>
+        <pre class="literal_block">git clone git://git.apache.org/flume.git
+          cd flume
+          git checkout trunk
+        </pre>
+        <a name="compile-test-flume" id="compile-test-flume"/>
+        <h4>Compile/test Flume</h4>
+        <p>The Flume build is mavenized. You can compile Flume using the standard Maven
+          commands:
+        </p>
+        <ol type="1">
+          <li>
+            <p>Compile only:
+              <code>mvn clean compile</code>
+            </p>
+          </li>
+          <li>
+            <p>Compile and run unit tests:
+              <code>mvn clean test</code>
+            </p>
+          </li>
+          <li>
+            <p>Run individual test(s):
+              <code>mvn clean test -Dtest=&lt;Test1&gt;,&lt;Test2&gt;,... -DfailIfNoTests=false</code>
+            </p>
+          </li>
+          <li>
+            <p>Create tarball package:
+              <code>mvn clean install</code>
+            </p>
+          </li>
+          <li>
+            <p>Create tarball package (skip unit tests):
+              <code>mvn clean install -DskipTests</code>
+            </p>
+          </li>
+        </ol>
+      </subsection>
+    </section>
+  </body>
+</document>

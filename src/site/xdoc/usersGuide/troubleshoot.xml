@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="http://www.w3.org/TR/xhtml1/strict">
+  <properties>
+    <title>Flume 1.x User Guide</title>
+  </properties>
+  <body>
+    <section name="Flume 1.x User Guide"><!-- Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. -->
+      <a name="troubleshooting" id="troubleshooting"/>
+      <subsection name="Troubleshooting">
+        <a name="handling-agent-failures" id="handling-agent-failures"/>
+        <h4>Handling agent failures</h4>
+        <p>If the Flume agent goes down then the all the flows hosted on that agent are
+          aborted. Once the agent is restarted, then flow will resume. The flow using
+          jdbc or other stable channel will resume processing events where it left
+          off. If the agent can't be restarted on the same, then there an option to
+          migrate the database to another hardware and setup a new Flume agent that
+          can resume processing the events saved in the db. The database HA futures
+          can be leveraged to move the Flume agent to another host.
+        </p>
+        <a name="compatibility" id="compatibility"/>
+        <h4>Compatibility</h4>
+        <a name="hdfs" id="hdfs"/>
+        <h5>HDFS</h5>
+        <p>Currently Flume supports HDFS 0.20.2 and 0.23.</p>
+        <a name="avro" id="avro"/>
+        <h5>AVRO</h5>
+        <p>TBD</p>
+        <a name="additional-version-requirements" id="additional-version-requirements"/>
+        <h5>Additional version requirements</h5>
+        <p>TBD</p>
+        <a name="tracing" id="tracing"/>
+        <h4>Tracing</h4>
+        <p>TBD</p>
+        <a name="more-sample-configs" id="more-sample-configs"/>
+        <h4>More Sample Configs</h4>
+        <p>TBD</p>
+      </subsection>
+    </section>
+  </body>
+</document>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="http://www.w3.org/TR/xhtml1/strict">
+  <properties>
+    <title>Flume 1.x User Guide</title>
+  </properties>
+  <body>
+    <section name="Flume 1.x User Guide"><!-- Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. -->
+      <a name="log4j-appender" id="log4j-appender"/>
+      <subsection name="Log4J Appender">
+        <p>Appends Log4j events to a flume agent's avro source. A client using this
+          appender must have the flume-ng-sdk in the classpath (eg,
+          flume-ng-sdk-1.2.0-incubating-SNAPSHOT.jar).
+          Required properties are in<b>bold</b>.
+        </p>
+        <table border="1">
+          <colgroup>
+            <col width="13%"/>
+            <col width="7%"/>
+            <col width="74%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>
+                <p>Property Name</p>
+              </th>
+              <th>
+                <p>Default</p>
+              </th>
+              <th>
+                <p>Description</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p>Hostname</p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The hostname on which a remote Flume agent is running with an avro source.</p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>Port</p>
+              </td>
+              <td>
+                <p>--</p>
+              </td>
+              <td>
+                <p>The port at which the remote Flume agent's avro source is listening.</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p>Sample log4j.properties file:</p>
+        <source>
+          #...
+          log4j.appender.flume = org.apache.flume.clients.log4jappender.Log4jAppender
+          log4j.appender.flume.Hostname = example.com
+          log4j.appender.flume.Port = 41414
+
+          # configure a class's logger to output to the flume appender
+          log4j.logger.org.example.MyClass = DEBUG,flume
+          #...
+        </source>
+      </subsection>
+    </section>
+  </body>
+</document>

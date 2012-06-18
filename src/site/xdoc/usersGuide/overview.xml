@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="http://www.w3.org/TR/xhtml1/strict">
+  <properties>
+    <title>Flume 1.x User Guide</title>
+  </properties>
+  <body>
+    <section name="Flume 1.x User Guide"><!-- Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. -->
+      <a name="introduction" id="introduction"/>
+      <subsection name="Introduction">
+        <a name="overview" id="overview"/>
+        <h4>Overview</h4>
+        <p>Apache Flume is a distributed, reliable, and available system for efficiently
+          collecting, aggregating and moving large amounts of log data from many
+          different sources to a centralized data store.
+        </p>
+        <p>At the moment Flume is an incubating Apache project. There are currently two
+          release code lines available, version 0.9.x and 1.x.x. This guide is specific
+          to 1.x (more specifically 1.1.0 release). Please click here for<a
+              href="http://archive.cloudera.com/cdh/3/flume/UserGuide/" id="">the Flume
+            0.9.x User Guide</a>.
+        </p>
+        <a name="system-requirements" id="system-requirements"/>
+        <h4>System Requirements</h4>
+        <p>TBD</p>
+        <a name="architecture" id="architecture"/>
+        <h4>Architecture</h4>
+        <a name="data-flow-model" id="data-flow-model"/>
+        <h5>Data flow model</h5>
+        <p>A Flume event is defined as a unit of data flow having a byte payload and an
+          optional set of string attributes. A Flume agent is a (JVM) process that hosts
+          the components through which events flow from an external source to the next
+          destination (hop).
+        </p>
+        <img alt="Agent component diagram" src="../images/UserGuide_image00.png"/>
+        <p>A Flume source consumes events delivered to it by an external source like a web
+          server. The external source sends events to Flume in a format that is
+          recognized by the target Flume source. For example, an Avro Flume source can be
+          used to receive Avro events from Avro clients or other Flume agents in the flow
+          that send events from an Avro sink. When a Flume source receives an event, it
+          stores it into one or more channels. The channel is a passive store that keeps
+          the event until it's consumed by a Flume sink. The JDBC channel is one example
+          -- it uses a filesystem backed embedded database. The sink removes the event
+          from the channel and puts it into an external repository like HDFS (via Flume
+          HDFS sink) or forwards it to the Flume source of the next Flume agent (next
+          hop) in the flow. The source and sink within the given agent run asynchronously
+          with the events staged in the channel.
+        </p>
+        <a name="complex-flows" id="complex-flows"/>
+        <h5>Complex flows</h5>
+        <p>Flume allows a user to build multi-hop flows where events travel through
+          multiple agents before reaching the final destination. It also allows fan-in
+          and fan-out flows, contextual routing and backup routes (fail-over) for failed
+          hops.
+        </p>
+        <a name="reliability" id="reliability"/>
+        <h5>Reliability</h5>
+        <p>The events are staged in a channel on each agent. The events are then delivered
+          to the next agent or terminal repository (like HDFS) in the flow. The events
+          are removed from a channel only after they are stored in the channel of next
+          agent or in the terminal repository. This is a how the single-hop message
+          delivery semantics in Flume provide end-to-end reliability of the flow.
+        </p>
+        <p>Flume uses a transactional approach to guarantee the reliable delivery of the
+          events. The sources and sinks encapsulate in a transaction the
+          storage/retrieval, respectively, of the events placed in or provided by a
+          transaction provided by the channel. This ensures that the set of events are
+          reliably passed from point to point in the flow. In the case of a multi-hop
+          flow, the sink from the previous hop and the source from the next hop both have
+          their transactions running to ensure that the data is safely stored in the
+          channel of the next hop.
+        </p>
+        <a name="recoverability" id="recoverability"/>
+        <h5>Recoverability</h5>
+        <p>The events are staged in the channel, which manages recovery from failure.
+          Flume supports a durable JDBC channel which is backed by a relational database.
+          There's also a memory channel which simply stores the events in an in-memory
+          queue, which is faster but any events still left in the memory channel when an
+          agent process dies can't be recovered.
+        </p>
+      </subsection>
+   </section>
+  </body>
+</document>

@@ -30,6 +30,7 @@ limitations under the License.
   <version>1.2.0-incubating-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Apache Flume</name>
+  <url>http://flume.apache.org/</url>
 
   <properties>
     <!-- Set default encoding to UTF-8 to remove maven complaints -->
@@ -39,7 +40,7 @@ limitations under the License.
     <test.exclude.pattern>$</test.exclude.pattern> <!-- junk pattern -->
     <test.include.pattern>**/Test*.java</test.include.pattern>
     <siteUrlDeployment>file://people.apache.org/www/incubator.apache.org/flume</siteUrlDeployment>
-    <stagingDirectory>${project.basedir}/target/docs</stagingDirectory>
+    <!--<stagingDirectory>${project.basedir}/target/docs</stagingDirectory>  -->
 
   </properties>
 
@@ -48,11 +49,13 @@ limitations under the License.
     <module>flume-ng-configuration</module>
     <module>flume-ng-sinks</module>
     <module>flume-ng-node</module>
-    <module>flume-ng-dist</module>
     <module>flume-ng-channels</module>
     <module>flume-ng-legacy-sources</module>
     <module>flume-ng-clients</module>
     <module>flume-ng-sdk</module>
+    <!-- The test module has an implicit relationship with the distribution. This is poor practice but
+         I am not going to deal with this at the moment -->
+    <module>flume-ng-dist</module>
     <module>flume-ng-tests</module>
   </modules>
 
@@ -145,17 +148,53 @@ limitations under the License.
         <plugins>
           <plugin>
             <artifactId>maven-site-plugin</artifactId>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>apache-release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>2.8.1</version>
             <executions>
               <execution>
-                <id>attach-descriptor</id>
+                <id>javadoc-jar</id>
+                <phase>package</phase>
                 <goals>
-                  <goal>attach-descriptor</goal>
+                  <goal>aggregate</goal>
                 </goals>
+                <configuration>
+                  <!-- switch on dependency-driven aggregation -->
+                  <includeDependencySources>true</includeDependencySources>
+
+                  <dependencySourceIncludes>
+                    <!-- include ONLY flume multi-module dependencies -->
+                    <dependencySourceInclude>org.apache.flume:*</dependencySourceInclude>
+                  </dependencySourceIncludes>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>source-release-assembly</id>
+                <configuration>
+                  <skipAssembly>true</skipAssembly>
+                </configuration>
               </execution>
             </executions>
           </plugin>
         </plugins>
       </build>
+      <!-- Normally the distribution would be built during the release
+      <modules>
+        <module>flume-ng-dist</module>
+      </modules> -->
     </profile>
   </profiles>
 
@@ -231,6 +270,12 @@ limitations under the License.
       <id>bruce.mitchener@gmail.com</id>
       <name>Bruce Mitchener</name>
       <organization>-</organization>
+    </developer>
+    <developer>
+      <email>rgoers@apache.org</email>
+      <id>rgoers@apache.org</id>
+      <name>Ralph Goers</name>
+      <organization>Intuit</organization>
     </developer>
   </developers>
 
@@ -380,37 +425,6 @@ limitations under the License.
   </distributionManagement>
 
   <build>
-
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <version>2.8.1</version>
-        <executions>
-          <execution>
-            <id>javadoc-jar</id>
-            <phase>package</phase>
-            <goals>
-              <goal>aggregate</goal>
-            </goals>
-            <configuration>
-              <!-- switch on dependency-driven aggregation -->
-              <includeDependencySources>true</includeDependencySources>
-
-              <dependencySourceIncludes>
-                <!-- include ONLY flume multi-module dependencies -->
-                <dependencySourceInclude>org.apache.flume:*</dependencySourceInclude>
-              </dependencySourceIncludes>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-
     <pluginManagement>
       <plugins>
 
@@ -443,39 +457,6 @@ limitations under the License.
         </plugin>
 
         <plugin>
-          <groupId>org.apache.rat</groupId>
-          <artifactId>apache-rat-plugin</artifactId>
-          <version>0.7</version>
-          <executions>
-            <execution>
-              <id>test.rat</id>
-              <phase>test</phase>
-              <goals>
-                <goal>check</goal>
-              </goals>
-              <configuration>
-                <excludes>
-                  <exclude>.git/</exclude>
-                  <exclude>.gitignore</exclude>
-                  <!-- ASF jenkins box puts the Maven repo in our root directory. -->
-                  <exclude>.repository/</exclude>
-                  <exclude>**/*.diff</exclude>
-                  <exclude>**/*.patch</exclude>
-                  <exclude>**/*.avsc</exclude>
-                  <exclude>**/docs/**</exclude>
-                </excludes>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-
-        <plugin>
-          <groupId>org.tomdz.maven</groupId>
-          <artifactId>sphinx-maven-plugin</artifactId>
-          <version>1.0.2</version>
-        </plugin>
-
-        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-assembly-plugin</artifactId>
           <version>2.2.2</version>
@@ -500,29 +481,17 @@ limitations under the License.
 
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-release-plugin</artifactId>
+          <version>2.2.2</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-site-plugin</artifactId>
           <version>3.1</version>
           <configuration>
-            <siteDirectory>${project.basedir}/flume-ng-doc</siteDirectory>
+            <!-- <siteDirectory>${project.basedir}/flume-ng-doc</siteDirectory>  -->
           </configuration>
-          <dependencies>
-          </dependencies>
-          <executions>
-            <execution>
-              <id>flume-site</id>
-              <phase>package</phase>
-              <goals>
-                <goal>site</goal>
-              </goals>
-            </execution>
-            <execution>
-              <id>flume-site-dist</id>
-              <phase>package</phase>
-              <goals>
-                <goal>stage</goal>
-              </goals>
-            </execution>
-          </executions>
         </plugin>
 
         <plugin>
@@ -701,78 +670,78 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-configuration</artifactId>
-        <version>1.2.0-incubating-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-core</artifactId>
-        <version>1.2.0-incubating-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-node</artifactId>
-        <version>1.2.0-incubating-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-channels</groupId>
         <artifactId>flume-file-channel</artifactId>
-        <version>1.2.0-incubating-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-channels</groupId>
         <artifactId>flume-jdbc-channel</artifactId>
-        <version>1.2.0-incubating-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
      <dependency>
        <groupId>org.apache.flume.flume-ng-channels</groupId>
        <artifactId>flume-recoverable-memory-channel</artifactId>
-       <version>1.2.0-incubating-SNAPSHOT</version>
+       <version>${project.version}</version>
      </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-hdfs-sink</artifactId>
-        <version>1.2.0-incubating-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-irc-sink</artifactId>
-        <version>1.2.0-incubating-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-ng-hbase-sink</artifactId>
-        <version>1.2.0-incubating-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
         <artifactId>flume-thrift-source</artifactId>
-        <version>1.2.0-incubating-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
         <artifactId>flume-avro-source</artifactId>
-        <version>1.2.0-incubating-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-sdk</artifactId>
-        <version>1.2.0-incubating-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-clients</groupId>
         <artifactId>flume-ng-log4jappender</artifactId>
-        <version>1.2.0-incubating-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
@@ -812,31 +781,44 @@ limitations under the License.
         <reportSets>
           <reportSet>
             <reports>
-              <report>project-team</report>
-              <report>mailing-list</report>
-              <report>issue-tracking</report>
-              <report>license</report>
-<!-- for now
+              <report>index</report>
+              <report>summary</report>
               <report>modules</report>
-              <report>dependencies</report>
-              <report>cim</report>
+              <report>license</report>
+              <report>project-team</report>
               <report>scm</report>
--->
+              <report>issue-tracking</report>
+              <report>mailing-list</report>
+              <!-- <report>dependency-management</report>
+              <report>dependencies</report>
+              <report>dependency-convergence</report> -->
+              <report>cim</report>
+              <report>plugin-management</report>
             </reports>
           </reportSet>
         </reportSets>
       </plugin>
 
       <plugin>
-        <groupId>org.tomdz.maven</groupId>
-        <artifactId>sphinx-maven-plugin</artifactId>
-        <inherited>false</inherited>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
+        <version>0.8</version>
         <configuration>
-          <sourceDirectory>${project.basedir}/flume-ng-doc/sphinx</sourceDirectory>
+          <excludes>
+            <exclude>.idea/**/*</exclude>
+            <exclude>**/*.iml</exclude>
+            <exclude>.git/</exclude>
+            <exclude>.gitignore</exclude>
+            <!-- ASF jenkins box puts the Maven repo in our root directory. -->
+            <exclude>.repository/</exclude>
+            <exclude>**/*.diff</exclude>
+            <exclude>**/*.patch</exclude>
+            <exclude>**/*.avsc</exclude>
+            <exclude>**/docs/**</exclude>
+          </excludes>
         </configuration>
       </plugin>
-
     </plugins>
   </reporting>
-  
+
 </project>

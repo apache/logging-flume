@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="http://www.w3.org/TR/xhtml1/strict">
+  <properties>
+    <title>Flume 1.x Developer Guide</title>
+  </properties>
+  <body>
+    <section name="Flume 1.x Developer Guide">
+      <!-- Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License. -->
+      <a name="developing-custom-components" id="developing-custom-components"/>
+      <subsection name="Developing custom components">
+        <a name="client" id="client"/>
+        <h4>Client</h4>
+        <p>The client operates at the point of origin of events and delivers them to a
+          Flume agent. Clients typically operate in the process space of the application
+          they are consuming data from. Currently flume supports Avro, log4j and syslog
+          as ways to transfer data from remote source. Additionally there’s an Exec
+          source that can consume the output of a local process as input to Flume.
+        </p>
+        <p>It’s quite possible to have a use case where these existing options are not
+          sufficient. In this case you can build a custom mechanism to send data to
+          Flume. There are two ways of achieving this. First is to create a custom client
+          that communicates to one of the flume’s existing sources like Avro or syslog.
+          Here the client should convert it’s data into messages understood by these
+          Flume sources. The other option is to write a custom Flume source that directly
+          talks to your existing client application using some IPC or RPC protocols, and
+          then convert the data into flume events to send it upstream.
+        </p>
+        <a name="client-sdk" id="client-sdk"/>
+        <h5>Client SDK</h5>
+        <p>Though flume contains a number of built in mechanisms to ingest data, often one
+          wants the ability to communicate with flume directly from a custom application.
+          The Client SDK is a library that enables applications to connect to Flume and
+          send data into Flume’s data flow over RPC.
+        </p>
+        <a name="rpc-client-interface" id="rpc-client-interface"/>
+        <h5>RPC Client interface</h5>
+        <p>The is an interface to wrap the user data data and attributes into an
+          <code>Event</code>, which is Flume’s unit of flow. This encapsulates the RPC mechanism
+          supported by Flume. The application can simply call
+          <code>append()</code>
+          or
+          <code>appendBatch()</code>
+          to send data and not worry about the underlying message
+          exchanges.
+        </p>
+        <a name="avro-rpc-client" id="avro-rpc-client"/>
+        <h5>Avro RPC Client</h5>
+        <p>As of Flume 1.1.0, Avro is the only support RPC protocol. The
+          <code>NettyAvroRpcClient</code>
+          implements the
+          <code>RpcClient</code>
+          interface. The client needs
+          to create this object with the host and port of the Flume agent and use it to
+          send data into flume. The following example shows how to use the Client SDK
+          API:
+        </p>
+        <source>
+        import org.apache.flume.Event;
+        import org.apache.flume.EventDeliveryException;
+        import org.apache.flume.FlumeException;
+        import org.apache.flume.api.RpcClient;
+        import org.apache.flume.api.RpcClientFactory;
+        import org.apache.flume.event.EventBuilder;
+
+        public void myInit () {
+          // setup the RPC connection to Flume agent at hostname/port
+          RpcClient rpcClient = RpcClientFactory.getDefaultInstance(hostname, port);
+          ...
+        }
+
+        public void sendDataToFlume(String data) {
+          // Create flume event object
+          Event event = EventBuilder.withBody(data, Charset.forName("UTF-8"));
+          try {
+            rpcClient.append(event);
+          } catch (EventDeliveryException e) {
+            // clean up and recreate rpcClient
+            rpcClient.close();
+            rpcClient = null;
+            rpcClient = RpcClientFactory.getDefaultInstance(hostname, port);
+          }
+          ...
+        }
+
+        public void cleanUp () {
+          // close the rpc connection
+          rpcClient.close();
+          ...
+        }
+        </source>
+        <a name="failover-handler" id="failover-handler"/>
+        <h5>Failover handler</h5>
+        <p>This class wraps the Avro RPC client to provide failover handling capability to
+          clients. This takes a list of host/ports of the Flume agent. If there’s an
+          error in communicating the current agent, then it automatically falls back to
+          the next agent in the list:
+        </p>
+        <source>
+          // Setup properties for the failover
+          Properties props = new Properties();
+          props.put("client.type", "default_failover");
+
+          // list of hosts
+          props.put("hosts", "host1 host2 host3");
+
+          // address/port pair for each host
+          props.put("hosts.host1", host1 + ":" + port1);
+          props.put("hosts.host1", host2 + ":" + port2);
+          props.put("hosts.host1", host3 + ":" + port3);
+
+          // create the client with failover properties
+          client = (FailoverRpcClient);
+          RpcClientFactory.getInstance(props);
+        </source>
+        <a name="transaction-interface" id="transaction-interface"/>
+        <h4>Transaction interface</h4>
+        <p>The
+          <code>Transaction</code>
+          interface is the basis of reliability for Flume. All the
+          major components ie. sources, sinks and channels needs to interface with Flume
+          transaction.
+        </p>
+        <img alt="Transaction sequence diagram" src="../images/DevGuide_image01.png"/>
+        <p>The transaction interface is implemented by a channel implementation. The
+          source and sink connected to channel obtain a transaction object. The sources
+          actually use a channel selector interface that encapsulate the transaction
+          (discussed in later sections). The operations to stage or extract an event is
+          done inside an active transaction. For example:
+        </p>
+        <source>
+          Channel ch = ...
+          Transaction tx = ch.getTransaction();
+          try {
+            tx.begin();
+            ...
+            // ch.put(event) or ch.take()
+            ...
+            tx.commit();
+          } catch (ChannelException ex) {
+            tx.rollback();
+            ...
+          } finally {
+            tx.close();
+          }
+        </source>
+        <p>Here we get hold of a transaction from a channel. After the begin method is
+          executed, the event is put in the channel and transaction is committed.
+        </p>
+        <a name="sink" id="sink"/>
+        <h4>Sink</h4>
+        <p>The purpose of a sink to extract events from the channel and forward it to the
+          next Agent in the flow or store in an external repository. A sink is linked to
+          a channel instance as per the flow configuration. There’s a sink runner thread
+          that’s get created for every configured sink which manages the sink’s
+          lifecycle. The sink needs to implement
+          <code>start()</code>
+          and
+          <code>stop()</code>
+          methods that
+          are part of the
+          <code>LifecycleAware</code>
+          interface. The
+          <code>start()</code>
+          method should
+          initialize the sink and bring it to a state where it can forward the events to
+          its next destination. The
+          <code>process()</code>
+          method from the
+          <code>Sink</code>
+          interface
+          should do the core processing of extracting the event from channel and
+          forwarding it. The
+          <code>stop()</code>
+          method should do the necessary cleanup. The sink
+          also needs to implement a
+          <code>Configurable</code>
+          interface for processing its own
+          configuration settings:
+        </p>
+        <source>
+      // foo sink
+      public class FooSink extends AbstractSink implements Configurable {
+        @Override
+        public void configure(Context context) {
+          some_Param = context.get("some_param", String.class);
+          // process some_param ‚Ä¶
+        }
+        @Override
+        public void start() {
+          // initialize the connection to foo repository ..
+        }
+        @Override
+        public void stop () {
+          // cleanup and disconnect from foo repository ..
+        }
+        @Override
+        public Status process() throws EventDeliveryException {
+          // Start transaction
+          ch = getChannel();
+          tx = ch.getTransaction();
+          try {
+            tx.begin();
+            Event e = ch.take();
+            // send the event to foo
+            // foo.some_operation(e);
+            tx.commit();
+            sgtatus = Status.READY;
+            (ChannelException e) {
+              tx.rollback();
+              status = Status.BACKOFF;
+            } finally {
+              tx.close();
+            }
+            return status;
+          }
+        }
+      }
+
+        </source>
+        <a name="source" id="source"/>
+        <h4>Source</h4>
+        <p>The purpose of a Source is to receive data from an external client and store it
+          in the channel. As mentioned above, for sources the
+          <code>Transaction</code>
+          interface
+          is encapsulated by the<code>ChannelSelector</code>. Similar to<code>SinkRunner</code>, there’s
+          a
+          <code>SourceRunner</code>
+          thread that gets created for every configured source that
+          manages the source’s lifecycle. The source needs to implement
+          <code>start()</code>
+          and
+          <code>stop()</code>
+          methods that are part of the
+          <code>LifecycleAware</code>
+          interface. There are
+          two types of sources, pollable and event-driven. The runner of pollable source
+          runner invokes a
+          <code>process()</code>
+          method from the pollable source. The
+          <code>process()</code>
+          method should check for new data and store it in the channel. The
+          event driver source needs have its own callback mechanism that captures the new
+          data:
+        </p>
+        <source>
+      // bar source
+      public class BarSource extends AbstractSource implements Configurable, EventDrivenSource{
+        @Override
+        public void configure(Context context) {
+          some_Param = context.get("some_param", String.class);
+          // process some_param ‚Ä¶
+        }
+        @Override
+        public void start() {
+          // initialize the connection to bar client ..
+        }
+        @Override
+        public void stop () {
+          // cleanup and disconnect from bar client ..
+        }
+        @Override
+        public Status process() throws EventDeliveryException {
+          try {
+            // receive new data
+            Event e = get_some_data();
+            // store the event to underlying channels(s)
+            getChannelProcessor().processEvent(e)
+          } catch (ChannelException ex) {
+            return Status.BACKOFF;
+          }
+          return Status.READY;
+        }
+      }
+        </source>
+        <a name="channel" id="channel"/>
+        <h4>Channel</h4>
+        <p>TBD</p>
+      </subsection>
+    </section>
+  </body>
+</document>

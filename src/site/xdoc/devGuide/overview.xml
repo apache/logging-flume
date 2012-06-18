@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="http://www.w3.org/TR/xhtml1/strict">
+  <properties>
+    <title>Flume 1.x Developer Guide</title>
+  </properties>
+  <body>
+    <section name="Flume 1.x Developer Guide">
+      <h2>Introduction</h2>
+      <!-- Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License. -->
+      <a name="overview" id="overview"/>
+      <subsection name="Overview">
+        <p>Apache Flume is a distributed, reliable, and available system for
+          efficiently collecting, aggregating and moving large amounts of log
+          data from many different sources to a centralized data store.
+        </p>
+        <p>At the moment Flume is an incubating Apache project. There are
+          currently two release code lines available, version 0.9.x and 1.x.x. This guide
+          is specific to 1.x (more specifically 1.1.0 release). Please click here for
+          <a href="http://archive.cloudera.com/cdh/3/flume/DeveloperGuide/" id="">the Flume 0.9.x Developer Guide</a>.
+        </p>
+      </subsection>
+      <a name="architecture" id="architecture"/>
+      <subsection name="Architecture">
+        <a name="data-flow-model" id="data-flow-model"/>
+        <h4>Data flow model</h4>
+        <p>A unit of data flow is called event which is a byte payload that is accompanied
+          by an optional set of string attributes. Flume agent is a process (JVM) that
+          hosts the components that flows events from an external source to next
+          destination.
+        </p>
+        <img alt="Agent component diagram" src="../images/DevGuide_image00.png"/>
+        <p>A source consumes events delivered to it by an external source like web server
+          in a specific format. For example, an Avro source can be used to receive Avro
+          events from clients or other agents in the flow. When a source receives an
+          event, it stores it into one or more channels. The channel is a passive store
+          that keeps the event until its consumed by a sink. An example of channel is
+          the JDBC channel that uses a file-system backed embedded database. The sink
+          removes the event from channel and puts it into an external repository like
+          HDFS or forwards it to the source in next hop of the flow. The source and sink
+          within the given agent run asynchronously with the events staged in the
+          channel.
+        </p>
+        <a name="reliability" id="reliability"/>
+        <h4>Reliability</h4>
+        <p>The events are staged in the channel on each agent. Then they are delivered to
+          the next agent or terminal repository (like HDFS) in the flow. The events are
+          removed from the channel only after they are stored in the channel of next
+          agent or in the terminal repository. This is a how the single-hop message
+          delivery semantics in Flume provide end-to-end reliability of the flowFlume
+          uses transactional approach to guarantee the reliable delivery of the events.
+          The sources and sinks encapsulate the store/retrieval of the events in a
+          transaction provided by the channel. This ensures that the set of events are
+          reliably passed from point to point in the flow. In case of multi hop flow, the
+          sink on previous hop and source on next hop both have their transactions
+          running to ensure that the data is safely stored in the channel of the next
+          hop.
+        </p>
+      </subsection>
+    </section>
+  </body>
+</document>

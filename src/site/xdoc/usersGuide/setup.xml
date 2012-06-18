@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="http://www.w3.org/TR/xhtml1/strict">
+  <properties>
+    <title>Flume 1.x User Guide</title>
+  </properties>
+  <body>
+    <section name="Flume 1.x User Guide"><!-- Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. -->
+      <a name="setup" id="setup"/>
+      <subsection name="Setup">
+        <a name="setting-up-an-agent" id="setting-up-an-agent"/>
+        <h4>Setting up an agent</h4>
+        <p>Flume agent configuration is stored in a local configuration file. This is a
+          text file which has a format follows the Java properties file format.
+          Configurations for one or more agents can be specified in the same
+          configuration file. The configuration file includes properties of each source,
+          sink and channel in an agent and how they are wired together to form data
+          flows.
+        </p>
+        <a name="configuring-individual-components" id="configuring-individual-components"/>
+        <h5>Configuring individual components</h5>
+        <p>Each component (source, sink or channel) in the flow has a name, type, and set
+          of properties that are specific to the type and instantiation. For example, an
+          Avro source needs a hostname (or IP address) and a port number to receive data
+          from. A memory channel can have max queue size ("capacity"), and an HDFS sink
+          needs to know the file system URI, path to create files, frequency of file
+          rotation ("hdfs.rollInterval") etc. All such attributes of a component needs to
+          be set in the properties file of the hosting Flume agent.
+        </p>
+        <a name="wiring-the-pieces-together" id="wiring-the-pieces-together"/>
+        <h5>Wiring the pieces together</h5>
+        <p>The agent needs to know what individual components to load and how they are
+          connected in order to constitute the flow. This is done by listing the names of
+          each of the sources, sinks and channels in the agent, and then specifying the
+          connecting channel for each sink and source. For example, a agent flows events
+          from an Avro source called avroWeb to HDFS sink hdfs-cluster1 via a JDBC
+          channel called jdbc-channel. The configuration file will contain names of these
+          components and jdbc-channel as a shared channel for both avroWeb source and
+          hdfs-cluster1 sink.
+        </p>
+        <a name="starting-an-agent" id="starting-an-agent"/>
+        <h5>Starting an agent</h5>
+        <p>An agent is started using a shell script called flume-ng which is located in
+          the bin directory of the Flume distribution. You need to specify the agent
+          name, the config directory, and the config file on the command line:
+        </p>
+        <pre class="literal_block">$ bin/flume-ng agent -n agent -c conf -f conf/flume-conf.properties.template</pre>
+        <p>Now the agent will start running source and sinks configured in the given
+          properties file.
+        </p>
+        <a name="data-ingestion" id="data-ingestion"/>
+        <h4>Data ingestion</h4>
+        <p>Flume supports a number of mechanisms to ingest data from external sources.</p>
+        <a name="rpc" id="rpc"/>
+        <h5>RPC</h5>
+        <p>An Avro client included in the Flume distribution can send a given file to
+          Flume Avro source using avro RPC mechanism:
+        </p>
+        <pre class="literal_block">$ bin/flume-ng avro-client -H localhost -p 41414 -F /usr/logs/log.10</pre>
+        <p>The above command will send the contents of /usr/logs/log.10 to to the Flume
+          source listening on that ports.
+        </p>
+        <a name="executing-commands" id="executing-commands"/>
+        <h5>Executing commands</h5>
+        <p>There's an exec source that executes a given command and consumes the output. A
+          single 'line' of output ie. text followed by carriage return ('\r') or line
+          feed ('\n') or both together.
+        </p>
+        <div class="note">
+          <p class="title">note :</p>
+          <p class="body">
+            <p>Flume does not support tail as a source. One can wrap the tail command in an exec source to stream the
+              file.
+            </p>
+          </p>
+        </div>
+        <a name="network-streams" id="network-streams"/>
+        <h5>Network streams</h5>
+        <p>Flume supports the following mechanisms to read data from popular log stream
+          types, such as:
+        </p>
+        <ol type="1">
+          <li>
+            <p>Avro</p>
+          </li>
+          <li>
+            <p>Syslog</p>
+          </li>
+          <li>
+            <p>Netcat</p>
+          </li>
+        </ol>
+        <a name="setting-multi-agent-flow" id="setting-multi-agent-flow"/>
+        <h4>Setting multi-agent flow</h4>
+        <img alt="Two agents communicating over Avro RPC" src="../images/UserGuide_image03.png"/>
+        <p>In order to flow the data across multiple agents or hops, the sink of the
+          previous agent and source of the current hop need to be avro type with the sink
+          pointing to the hostname (or IP address) and port of the source.
+        </p>
+        <a name="consolidation" id="consolidation"/>
+        <h4>Consolidation</h4>
+        <p>A very common scenario in log collection is a large number of log producing
+          clients sending data to a few consumer agents that are attached to the storage
+          subsystem. For examples, logs collected from hundreds of web servers sent to a
+          dozen of agents that write to HDFS cluster.
+        </p>
+        <img alt="A fan-in flow using Avro RPC to consolidate events in one place" src="../images/UserGuide_image02.png"/>
+        <p>This can be achieved in Flume by configuring a number of first tier agents with
+          an avro sink, all pointing to an avro source of single agent. This source on
+          the second tier agent consolidates the received events into a single channel
+          which is consumed by a sink to its final destination.
+        </p>
+        <a name="multiplexing-the-flow" id="multiplexing-the-flow"/>
+        <h4>Multiplexing the flow</h4>
+        <p>Flume supports multiplexing the event flow to one or more destinations. This is
+          achieved by defining a flow multiplexer that can replicate or selectively route
+          an event to one or more channels.
+        </p>
+        <img alt="A fan-out flow using a (multiplexing) channel selector" src="../images/UserGuide_image01.png"/>
+        <p>The above example shows a source from agent "foo" fanning out the flow to three
+          different channels. This fan out can be replicating or multiplexing. In case of
+          replicating flow, each event is sent to all three channels. For the
+          multiplexing case, an event is delivered to a subset of available channels when
+          an event's attribute matches a preconfigured value. For example, if an event
+          attribute called "txnType" is set to "customer", then it should go to channel1
+          and channel3, if it's "vendor" then it should go to channel2, otherwise
+          channel3. The mapping can be set in the agent's configuration file.
+        </p>
+      </subsection>
+    </section>
+  </body>
+</document>
