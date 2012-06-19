@@ -26,11 +26,11 @@
     <section name="Sinks">
 
       <p>
-        Flume is a distributed, reliable, and available system for efficiently
-        collecting, aggregating, and moving large amounts of log data from many
-        different sources to a centralized data store.
+        Sinks handle events by either sending them to another Agent or by sending them to something outside
+        of Flume - usually a repository that will permanently store the events. Sinks that do not pass events
+        to another Flume Agent are referred to as Terminating Sinks.
       </p>
-
+      <img alt="Agent component diagram" src="./images/DevGuide_image00.png"/>
 
     </section>
 
