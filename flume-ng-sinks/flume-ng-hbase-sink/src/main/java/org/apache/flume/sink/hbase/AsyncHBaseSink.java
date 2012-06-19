@@ -30,7 +30,6 @@ import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
-import org.apache.flume.serialization.EventSerializer;
 import org.apache.flume.sink.AbstractSink;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -55,15 +54,17 @@ import com.stumbleupon.async.Callback;
 * encountered in the classpath. This sink supports batch reading of
 * events from the channel, and writing them to Hbase, to minimize the number
 * of flushes on the hbase tables. To use this sink, it has to be configured
-* with certain mandatory parameters:
+* with certain mandatory parameters:<p>
 *
 * <tt>table: </tt> The name of the table in Hbase to write to. <p>
-* <tt>columnFamily: </tt> The column family in Hbase to write to.
+* <tt>columnFamily: </tt> The column family in Hbase to write to.<p>
 * Other optional parameters are:<p>
-* <tt>serializer:</tt> A class implementing {@link AsyncHBaseEventSerializer}.
+* <tt>serializer:</tt> A class implementing
+*  {@link AsyncHbaseEventSerializer}.
 *  An instance of
 * this class will be used to serialize events which are written to hbase.<p>
-* <tt>serializer.*:</tt> Passed in the configure() method to serializer
+* <tt>serializer.*:</tt> Passed in the <code>configure()</code> method to
+* serializer
 * as an object of {@link org.apache.flume.Context}.<p>
 * <tt>batchSize: </tt>This is the batch size used by the client. This is the
 * maximum number of events the sink will commit per transaction. The default
@@ -197,13 +198,15 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
 
   @Override
   public void configure(Context context) {
-    tableName = context.getString("table");
-    String cf = context.getString("columnFamily");
-    batchSize = context.getLong("batchSize", new Long(100));
+    tableName = context.getString(HBaseSinkConfigurationConstants.CONFIG_TABLE);
+    String cf = context.getString(
+        HBaseSinkConfigurationConstants.CONFIG_COLUMN_FAMILY);
+    batchSize = context.getLong(
+        HBaseSinkConfigurationConstants.CONFIG_BATCHSIZE, new Long(100));
     serializerContext = new Context();
     //If not specified, will use HBase defaults.
     eventSerializerType = context.getString(
-        "serializer");
+        HBaseSinkConfigurationConstants.CONFIG_SERIALIZER);
     Preconditions.checkNotNull(tableName,
         "Table name cannot be empty, please specify in configuration file");
     Preconditions.checkNotNull(cf,
@@ -214,8 +217,8 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
           "org.apache.flume.sink.hbase.SimpleAsyncHbaseEventSerializer";
       logger.info("No serializer defined, Will use default");
     }
-    serializerContext.putAll(
-        context.getSubProperties(EventSerializer.CTX_PREFIX));
+    serializerContext.putAll(context.getSubProperties(
+            HBaseSinkConfigurationConstants.CONFIG_SERIALIZER_PREFIX));
     columnFamily = cf.getBytes(Charsets.UTF_8);
     try {
       @SuppressWarnings("unchecked")
