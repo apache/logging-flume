@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+
+<document>
+  <properties>
+    <title>Apache Flume HBase Sink</title>
+    <author email="rgoers@apache.org">Ralph Goers</author>
+  </properties>
+
+  <body>
+    <section name="Flume HBase Sink">
+      <p>
+        A simple sink which reads events from a channel and writes them to HBase.
+        The Hbase configution is picked up from the first <tt>hbase-site.xml</tt>
+        encountered in the classpath. This sink supports batch reading of
+        events from the channel, and writing them to Hbase, to minimize the number
+        of flushes on the hbase tables. To use this sink, it has to be configured
+        with certain mandatory parameters:
+      </p>
+      <p>
+        This sink also allows these other parameters:
+      </p>
+      <p>
+        <tt>batchsize: </tt>This is the batch size used by the client. This is the
+        maximum number of events the sink will commit per transaction. The default
+        batch size is 100 events.
+      </p>
+      <p>
+        This sink will commit each transaction if the table's write buffer size is
+        reached or if the number of events in the current transaction reaches the
+        batch size, whichever comes first.
+        Other optional parameters are:
+      </p>
+      <p>
+        <tt>serializer:</tt> A class implementing HBaseEventSerializer.
+        An instance of
+        this class will be used to write out events to hbase.
+      </p>
+      <p>
+        <tt>serializer.*:</tt> Passed in the configure() method to serializer
+        as an object of org.apache.flume.Context.
+      </p>
+      <p>
+        <tt>batchSize: </tt>This is the batch size used by the client. This is the
+        maximum number of events the sink will commit per transaction. The default
+        batch size is 100 events.
+      </p>
+      <p>
+        <strong>Note: </strong> While this sink flushes all events in a transaction
+        to HBase in one shot, Hbase does not guarantee atomic commits on multiple
+        rows. So if a subset of events in a batch are written to disk by Hbase and
+        Hbase fails, the flume transaction is rolled back, causing flume to write
+        all the events in the transaction all over again, which will cause
+        duplicates. The serializer is expected to take care of the handling of
+        duplicates etc. HBase also does not support batch increments, so if
+        multiple increments are returned by the serializer, then HBase failure
+        will cause them to be re-written, when HBase comes back up.
+     </p>
+
+    </section>
+
+  </body>
+</document>
