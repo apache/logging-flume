@@ -203,6 +203,9 @@ public abstract class AbstractFileConfigurationProvider implements
         } catch (Exception e) {
           logger.error("Failed to load configuration data. Exception follows.",
               e);
+        } catch (NoClassDefFoundError e) {
+          logger.error("Failed to start agent because dependencies were not " +
+              "found in classpath. Error follows.", e);
         }
       }
     }
