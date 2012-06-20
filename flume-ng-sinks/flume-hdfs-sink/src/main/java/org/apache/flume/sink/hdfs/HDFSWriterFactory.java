@@ -30,11 +30,11 @@ public class HDFSWriterFactory {
   }
 
   public HDFSWriter getWriter(String fileType) throws IOException {
-    if (fileType.equals(SequenceFileType)) {
+    if (fileType.equalsIgnoreCase(SequenceFileType)) {
       return new HDFSSequenceFile();
-    } else if (fileType.equals(DataStreamType)) {
+    } else if (fileType.equalsIgnoreCase(DataStreamType)) {
       return new HDFSDataStream();
-    } else if (fileType.equals(CompStreamType)) {
+    } else if (fileType.equalsIgnoreCase(CompStreamType)) {
       return new HDFSCompressedDataStream();
     } else {
       throw new IOException("File type " + fileType + " not supported");
