@@ -1010,18 +1010,29 @@ wal.maxLogsSize         (0x20000000)                                     Total a
 File Channel
 ~~~~~~~~~~~~
 
-.. note:: The File Channel is still undergoing testing and is not yet considered
-          to be as stable as the Memory Channel.
-
 Required properties are in **bold**.
 
-=============  =======  ==============================================
-Property Name  Default  Description
-=============  =======  ==============================================
-**type**       --       The component type name, needs to be ``FILE``.
-(TBD)          --
-=============  =======  ==============================================
+====================  ================================  ========================================================
+Property Name         Default                           Description
+====================  ================================  ========================================================
+**type**              --                                The component type name, needs to be ``FILE``.
+checkpointDir         ~/.flume/file-channel/checkpoint  The directory where checkpoint file will be stored
+dataDirs              ~/.flume/file-channel/data        The directory where log files will be stored
+transactionCapacity   1000                              The maximum size of transaction supported by the channel
+checkpointInterval    30000                             Amount of time (in millis) between checkpoints
+maxFileSize           2146435071                        Max size (in bytes) of a single log file
+capacity              1000000                           Maximum capacity of the channel
+keep-alive            3                                 Amount of time (in sec) to wait for a put operation
+write-timeout         3                                 Amount of time (in sec) to wait for a write operation
+====================  ================================  ========================================================
 
+.. note:: By default the File Channel uses paths for checkpoint and data 
+          directories that are within the user home as specified above. 
+          As a result if you have more than one File Channel instances
+          active within the agent, only one will be able to lock the
+          directories and cause the other channel initialization to fail.
+          It is therefore necessary that you provide explicit paths to
+          all the configured channels, preferably on different disks.
 
 Pseudo Transaction Channel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
