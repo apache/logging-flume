@@ -170,8 +170,8 @@ global options:
   -Dproperty=value      sets a JDK system property value
 
 agent options:
-  --conf-file,-f        specify a config file (required)
-  --name,-n             the name of this agent (required)
+  --conf-file,-f <file> specify a config file (required)
+  --name,-n <name>      the name of this agent (required)
   --help,-h             display help text
 
 avro-client options:
