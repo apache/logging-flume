@@ -31,12 +31,14 @@ import com.google.common.io.Files;
 
 public class TestLog {
   private static final long MAX_FILE_SIZE = 1000;
+  private static final int CAPACITY = 10000;
   private Log log;
   private File checkpointDir;
   private File[] dataDirs;
   private long transactionID;
   @Before
   public void setup() throws IOException {
+    transactionID = 0;
     checkpointDir = Files.createTempDir();
     Assert.assertTrue(checkpointDir.isDirectory());
     dataDirs = new File[3];
@@ -44,8 +46,9 @@ public class TestLog {
       dataDirs[i] = Files.createTempDir();
       Assert.assertTrue(dataDirs[i].isDirectory());
     }
-    log = new Log(1L, MAX_FILE_SIZE, 10000,
-        checkpointDir, dataDirs);
+    log = new Log.Builder().setCheckpointInterval(1L).setMaxFileSize(
+        MAX_FILE_SIZE).setQueueSize(CAPACITY).setCheckpointDir(
+            checkpointDir).setLogDirs(dataDirs).build();
     log.replay();
   }
   @After
@@ -77,6 +80,7 @@ public class TestLog {
   @Test
   public void testRoll() throws IOException, InterruptedException {
     log.shutdownWorker();
+    Thread.sleep(1000);
     for (int i = 0; i < 1000; i++) {
       FlumeEvent eventIn = TestUtils.newPersistableEvent();
       long transactionID = ++this.transactionID;
@@ -109,8 +113,10 @@ public class TestLog {
     FlumeEventPointer eventPointerIn = log.put(transactionID, eventIn);
     log.commitPut(transactionID);
     log.close();
-    log = new Log(Long.MAX_VALUE, LogFile.MAX_FILE_SIZE, 1,
-        checkpointDir, dataDirs);
+    log = new Log.Builder().setCheckpointInterval(
+        Long.MAX_VALUE).setMaxFileSize(LogFile.MAX_FILE_SIZE).setQueueSize(
+            CAPACITY).setCheckpointDir(checkpointDir).setLogDirs(
+                dataDirs).build();
     log.replay();
     System.out.println(log.getNextFileID());
     takeAndVerify(eventPointerIn, eventIn);
@@ -126,8 +132,10 @@ public class TestLog {
     log.put(transactionID, eventIn);
     log.rollback(transactionID); // rolled back so it should not be replayed
     log.close();
-    log = new Log(Long.MAX_VALUE, LogFile.MAX_FILE_SIZE, 1,
-        checkpointDir, dataDirs);
+    log = new Log.Builder().setCheckpointInterval(
+        Long.MAX_VALUE).setMaxFileSize(LogFile.MAX_FILE_SIZE).setQueueSize(
+            CAPACITY).setCheckpointDir(checkpointDir).setLogDirs(
+                dataDirs).build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
     Assert.assertNull(queue.removeHead());
@@ -147,8 +155,9 @@ public class TestLog {
     log.take(takeTransactionID, eventPointer);
     log.commitTake(takeTransactionID);
     log.close();
-    log = new Log(Long.MAX_VALUE, LogFile.MAX_FILE_SIZE, 1,
-        checkpointDir, dataDirs);
+    new Log.Builder().setCheckpointInterval(
+        Long.MAX_VALUE).setMaxFileSize(LogFile.MAX_FILE_SIZE).setQueueSize(
+            1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs).build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
     Assert.assertNull(queue.removeHead());
@@ -168,8 +177,9 @@ public class TestLog {
     log.take(takeTransactionID, eventPointerIn);
     log.rollback(takeTransactionID);
     log.close();
-    log = new Log(Long.MAX_VALUE, LogFile.MAX_FILE_SIZE, 1,
-        checkpointDir, dataDirs);
+    new Log.Builder().setCheckpointInterval(
+        Long.MAX_VALUE).setMaxFileSize(LogFile.MAX_FILE_SIZE).setQueueSize(
+            1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs).build();
     log.replay();
     takeAndVerify(eventPointerIn, eventIn);
   }
@@ -179,8 +189,9 @@ public class TestLog {
     long putTransactionID = ++transactionID;
     log.commitPut(putTransactionID);
     log.close();
-    log = new Log(Long.MAX_VALUE, LogFile.MAX_FILE_SIZE, 1,
-        checkpointDir, dataDirs);
+    new Log.Builder().setCheckpointInterval(
+        Long.MAX_VALUE).setMaxFileSize(LogFile.MAX_FILE_SIZE).setQueueSize(
+            1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs).build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
     FlumeEventPointer eventPointerOut = queue.removeHead();
@@ -192,8 +203,9 @@ public class TestLog {
     long putTransactionID = ++transactionID;
     log.commitTake(putTransactionID);
     log.close();
-    log = new Log(Long.MAX_VALUE, LogFile.MAX_FILE_SIZE, 1,
-        checkpointDir, dataDirs);
+    new Log.Builder().setCheckpointInterval(
+        Long.MAX_VALUE).setMaxFileSize(LogFile.MAX_FILE_SIZE).setQueueSize(
+            1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs).build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
     FlumeEventPointer eventPointerOut = queue.removeHead();
@@ -205,8 +217,9 @@ public class TestLog {
     long putTransactionID = ++transactionID;
     log.rollback(putTransactionID);
     log.close();
-    log = new Log(Long.MAX_VALUE, LogFile.MAX_FILE_SIZE, 1,
-        checkpointDir, dataDirs);
+    new Log.Builder().setCheckpointInterval(
+        Long.MAX_VALUE).setMaxFileSize(LogFile.MAX_FILE_SIZE).setQueueSize(
+            1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs).build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
     FlumeEventPointer eventPointerOut = queue.removeHead();

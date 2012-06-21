@@ -33,11 +33,11 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.channel.BasicChannelSemantics;
 import org.apache.flume.channel.BasicTransactionSemantics;
+import org.apache.flume.channel.file.Log.Builder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 
 /**
  * <p>
@@ -79,10 +79,11 @@ public class FileChannel extends BasicChannelSemantics {
   private Log log;
   private boolean shutdownHookAdded;
   private Thread shutdownHook;
-	private volatile boolean open;
+  private volatile boolean open;
   private Semaphore queueRemaining;
   private final ThreadLocal<FileBackedTransaction> transactions =
       new ThreadLocal<FileBackedTransaction>();
+  private int logWriteTimeout;
 
   /**
    * Transaction IDs should unique within a file channel
@@ -162,6 +163,19 @@ public class FileChannel extends BasicChannelSemantics {
             FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE),
             FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE);
 
+    logWriteTimeout = context.getInteger(
+        FileChannelConfiguration.LOG_WRITE_TIMEOUT,
+        FileChannelConfiguration.DEFAULT_WRITE_TIMEOUT);
+
+    if (logWriteTimeout < 0) {
+      LOG.warn("Log write time out is invalid: " + logWriteTimeout
+          + ", using default: "
+          + FileChannelConfiguration.DEFAULT_WRITE_TIMEOUT);
+
+      logWriteTimeout = FileChannelConfiguration.DEFAULT_WRITE_TIMEOUT;
+    }
+
+
     if(queueRemaining == null) {
       queueRemaining = new Semaphore(capacity, true);
     }
@@ -175,15 +189,19 @@ public class FileChannel extends BasicChannelSemantics {
   public synchronized void start() {
     LOG.info("Starting FileChannel with dataDir "  + Arrays.toString(dataDirs));
     try {
-      log = new Log(checkpointInterval, maxFileSize, capacity,
-          checkpointDir, dataDirs);
+      Builder builder = new Log.Builder();
+      builder.setCheckpointInterval(checkpointInterval);
+      builder.setMaxFileSize(maxFileSize);
+      builder.setQueueSize(capacity);
+      builder.setLogWriteTimeout(logWriteTimeout);
+      builder.setCheckpointDir(checkpointDir);
+      builder.setLogDirs(dataDirs);
+
+      log = builder.build();
+
       log.replay();
-    } catch (IOException e) {
-      Throwables.propagate(e);
-    }
-    open = true;
-    boolean error = true;
-    try {
+      open = true;
+
       int depth = getDepth();
       Preconditions.checkState(queueRemaining.tryAcquire(depth),
           "Unable to acquire " + depth + " permits");
@@ -208,11 +226,9 @@ public class FileChannel extends BasicChannelSemantics {
         };
         Runtime.getRuntime().addShutdownHook(shutdownHook);
       }
-      error = false;
-    } finally {
-      if(error) {
-        open = false;
-      }
+    } catch (Exception ex) {
+      open = false;
+      LOG.error("Failed to start the file channel", ex);
     }
     super.start();
   }
@@ -226,6 +242,8 @@ public class FileChannel extends BasicChannelSemantics {
         shutdownHookAdded = false;
         shutdownHook = null;
       }
+    } catch (Exception ex) {
+      LOG.debug("Failed to remove shutdown hook", ex);
     } finally {
       close();
     }
@@ -252,7 +270,7 @@ public class FileChannel extends BasicChannelSemantics {
     Preconditions.checkNotNull(log, "log");
     FlumeEventQueue queue = log.getFlumeEventQueue();
     Preconditions.checkNotNull(queue, "queue");
-    return queue.size();
+    return queue.getSize();
   }
   void close() {
     if(open) {
@@ -261,6 +279,10 @@ public class FileChannel extends BasicChannelSemantics {
       log = null;
       queueRemaining = null;
     }
+  }
+
+  boolean isOpen() {
+    return open;
   }
 
   /**

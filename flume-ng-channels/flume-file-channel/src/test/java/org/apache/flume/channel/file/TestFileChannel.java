@@ -71,22 +71,22 @@ public class TestFileChannel {
       dataDir += dataDirs[i].getAbsolutePath() + ",";
     }
     dataDir = dataDir.substring(0, dataDir.length() - 1);
-    channel = createFileChannel(1000);
+    channel = createFileChannel();
 
   }
   private FileChannel createFileChannel() {
-    return createFileChannel(FileChannelConfiguration.DEFAULT_CAPACITY);
-  }
-  private FileChannel createFileChannel(int capacity) {
     FileChannel channel = new FileChannel();
     context.put(FileChannelConfiguration.CHECKPOINT_DIR,
         checkpointDir.getAbsolutePath());
     context.put(FileChannelConfiguration.DATA_DIRS, dataDir);
-    context.put(FileChannelConfiguration.CAPACITY, String.valueOf(capacity));
+    context.put(FileChannelConfiguration.CAPACITY, String.valueOf(10000));
+    // Set checkpoint for 5 seconds otherwise test will run out of memory
+    context.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, "5000");
     Configurables.configure(channel, context);
     channel.start();
     return channel;
   }
+
   @After
   public void teardown() {
     if(channel != null) {
@@ -180,7 +180,7 @@ public class TestFileChannel {
   @Test
   public void testCapacity() throws Exception {
     channel.close();
-    channel = createFileChannel(5);
+    channel = createFileChannel();
     try {
       putEvents(channel, "capacity", 1, 6);
     } catch (ChannelException e) {
@@ -337,20 +337,10 @@ public class TestFileChannel {
     Collections.sort(actual);
     Assert.assertEquals(expected, actual);
   }
-  @Test(expected=IOException.class)
+  @Test
   public void testLocking() throws IOException {
-    try {
-      createFileChannel();
-    } catch (RuntimeException e) {
-      Throwable cause = e.getCause();
-      Assert.assertNotNull(cause);
-      Assert.assertTrue(cause.getClass().getSimpleName(),
-          cause instanceof IOException);
-      String msg = cause.getMessage();
-      Assert.assertNotNull(msg);
-      Assert.assertTrue(msg.endsWith("The directory is already locked."));
-      throw (IOException)cause;
-    }
+    FileChannel fc = createFileChannel();
+    Assert.assertTrue(!fc.isOpen());
   }
   @Test
   public void testIntegration() throws IOException, InterruptedException {

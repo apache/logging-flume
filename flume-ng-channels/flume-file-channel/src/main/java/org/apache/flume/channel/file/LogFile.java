@@ -61,7 +61,7 @@ class LogFile {
       FILL.put(OP_EOF);
     }
   }
-  private static final int VERSION = 1;
+  private static final int VERSION = 2;
 
 
   static class Writer {
@@ -70,6 +70,7 @@ class LogFile {
     private final long maxFileSize;
     private final RandomAccessFile writeFileHandle;
     private final FileChannel writeFileChannel;
+    private final long checkpointPositionMarker;
 
     private volatile boolean open;
 
@@ -80,22 +81,42 @@ class LogFile {
       writeFileHandle = new RandomAccessFile(file, "rw");
       writeFileHandle.writeInt(VERSION);
       writeFileHandle.writeInt(fileID);
+      checkpointPositionMarker = writeFileHandle.getFilePointer();
+      // checkpoint marker
+      writeFileHandle.writeLong(0L);
+      // timestamp placeholder
+      writeFileHandle.writeLong(0L);
       writeFileChannel = writeFileHandle.getChannel();
       writeFileChannel.force(true);
       LOG.info("Opened " + file);
       open = true;
     }
 
+    File getFile() {
+      return file;
+    }
+
+    synchronized void markCheckpoint(long timestamp) throws IOException {
+      long currentPosition = writeFileChannel.size();
+      writeFileHandle.seek(checkpointPositionMarker);
+      writeFileHandle.writeLong(currentPosition);
+      writeFileHandle.writeLong(timestamp);
+      writeFileChannel.position(currentPosition);
+      LOG.info("Noted checkpoint for file: " + file + ", id: " + fileID
+          + ", checkpoint position: " + currentPosition);
+    }
+
     String getParent() {
       return file.getParent();
     }
+
     synchronized void close() {
       if(open) {
         open = false;
         if(writeFileChannel.isOpen()) {
           LOG.info("Closing " + file);
           try {
-            writeFileChannel.force(false);
+            writeFileChannel.force(true);
           } catch (IOException e) {
             LOG.warn("Unable to flush to disk", e);
           }
@@ -175,6 +196,11 @@ class LogFile {
       readFileHandles.add(open());
       open = true;
     }
+
+    File getFile() {
+      return file;
+    }
+
     FlumeEvent get(int offset) throws IOException, InterruptedException {
       Preconditions.checkState(open, "File closed");
       RandomAccessFile fileHandle = checkOut();
@@ -232,7 +258,7 @@ class LogFile {
         close(fileHandle);
       }
     }
-    private RandomAccessFile checkOut() 
+    private RandomAccessFile checkOut()
         throws IOException, InterruptedException {
       RandomAccessFile fileHandle = readFileHandles.poll();
       if(fileHandle != null) {
@@ -260,6 +286,8 @@ class LogFile {
     private final FileChannel fileChannel;
     private final int version;
     private final int logFileID;
+    private final long lastCheckpointPosition;
+    private final long lastCheckpointTimestamp;
 
     /**
      * Construct a Sequential Log Reader object
@@ -276,6 +304,9 @@ class LogFile {
             " expected " + Integer.toHexString(VERSION));
       }
       logFileID = fileHandle.readInt();
+      lastCheckpointPosition = fileHandle.readLong();
+      lastCheckpointTimestamp = fileHandle.readLong();
+
       Preconditions.checkArgument(logFileID >= 0, "LogFileID is not positive: "
           + Integer.toHexString(logFileID));
     }
@@ -284,6 +315,19 @@ class LogFile {
     }
     int getLogFileID() {
       return logFileID;
+    }
+    void skipToLastCheckpointPosition(long checkpointTimestamp)
+        throws IOException {
+      if (lastCheckpointPosition > 0L
+          && lastCheckpointTimestamp == checkpointTimestamp) {
+        LOG.info("fast-forward to checkpoint position: "
+                  + lastCheckpointPosition);
+        fileChannel.position(lastCheckpointPosition);
+      } else {
+        LOG.warn("Checkpoint was not done or did not match."
+            + "Replaying the entire log: file = " + lastCheckpointTimestamp
+            + ", queue: " + checkpointTimestamp);
+      }
     }
     Pair<Integer, TransactionEventRecord> next() throws IOException {
       try {

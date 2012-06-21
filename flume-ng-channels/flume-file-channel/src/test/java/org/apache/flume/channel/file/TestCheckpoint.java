@@ -43,14 +43,14 @@ public class TestCheckpoint {
   @Test
   public void testSerialization() throws IOException {
     FlumeEventPointer ptrIn = new FlumeEventPointer(10, 20);
-    FlumeEventQueue queueIn = new FlumeEventQueue(1);
+    FlumeEventQueue queueIn = new FlumeEventQueue(1, file);
     queueIn.addHead(ptrIn);
-    Checkpoint checkpoint = new Checkpoint(file, 1);
-    Assert.assertEquals(0, checkpoint.getTimestamp());
-    checkpoint.write(queueIn);
-    FlumeEventQueue queueOut = checkpoint.read();
-    FlumeEventPointer ptrOut = queueOut.removeHead();
+    FlumeEventQueue queueOut = new FlumeEventQueue(1, file);
+    Assert.assertEquals(0, queueOut.getTimestamp());
+    queueIn.checkpoint(false);
+    FlumeEventQueue queueOut2 = new FlumeEventQueue(1, file);
+    FlumeEventPointer ptrOut = queueOut2.removeHead();
     Assert.assertEquals(ptrIn, ptrOut);
-    Assert.assertTrue(checkpoint.getTimestamp() > 0);
+    Assert.assertTrue(queueOut2.getTimestamp() > 0);
   }
 }

@@ -18,7 +18,6 @@
  */
 package org.apache.flume.channel.file;
 
-import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -29,19 +28,24 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.apache.flume.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -62,23 +66,71 @@ class Log {
   private final File checkpointDir;
   private final File[] logDirs;
   private final BackgroundWorker worker;
-  private final int queueSize;
+  private final int queueCapacity;
   private final AtomicReferenceArray<LogFile.Writer> logFiles;
 
   private volatile boolean open;
-  private AtomicReference<Checkpoint> checkpoint;
-  private Checkpoint checkpointA;
-  private Checkpoint checkpointB;
   private FlumeEventQueue queue;
   private long checkpointInterval;
   private long maxFileSize;
   private final Map<String, FileLock> locks;
+  private final ReentrantReadWriteLock checkpointLock =
+      new ReentrantReadWriteLock(true);
+  private final ReadLock checkpointReadLock = checkpointLock.readLock();
+  private final WriteLock checkpointWriterLock = checkpointLock.writeLock();
+  private int logWriteTimeout;
 
-  Log(long checkpointInterval, long maxFileSize, int queueSize,
-      File checkpointDir, File... logDirs) throws IOException {
+  static class Builder {
+    private long bCheckpointInterval;
+    private long bMaxFileSize;
+    private int bQueueCapacity;
+    private File bCheckpointDir;
+    private File[] bLogDirs;
+    private int bLogWriteTimeout =
+        FileChannelConfiguration.DEFAULT_WRITE_TIMEOUT;
+
+    Builder setCheckpointInterval(long interval) {
+      bCheckpointInterval = interval;
+      return this;
+    }
+
+    Builder setMaxFileSize(long maxSize) {
+      bMaxFileSize = maxSize;
+      return this;
+    }
+
+    Builder setQueueSize(int capacity) {
+      bQueueCapacity = capacity;
+      return this;
+    }
+
+    Builder setCheckpointDir(File cpDir) {
+      bCheckpointDir = cpDir;
+      return this;
+    }
+
+    Builder setLogDirs(File[] dirs) {
+      bLogDirs = dirs;
+      return this;
+    }
+
+    Builder setLogWriteTimeout(int timeout) {
+      bLogWriteTimeout = timeout;
+      return this;
+    }
+
+    Log build() throws IOException {
+      return new Log(bCheckpointInterval, bMaxFileSize, bQueueCapacity,
+          bLogWriteTimeout, bCheckpointDir, bLogDirs);
+    }
+  }
+
+  private Log(long checkpointInterval, long maxFileSize, int queueCapacity,
+      int logWriteTimeout, File checkpointDir, File... logDirs)
+          throws IOException {
     Preconditions.checkArgument(checkpointInterval > 0,
         "checkpointInterval <= 0");
-    Preconditions.checkArgument(queueSize > 0, "queueSize <= 0");
+    Preconditions.checkArgument(queueCapacity > 0, "queueCapacity <= 0");
     Preconditions.checkArgument(maxFileSize > 0, "maxFileSize <= 0");
     Preconditions.checkNotNull(checkpointDir, "checkpointDir");
     Preconditions.checkArgument(
@@ -106,9 +158,10 @@ class Log {
     open = false;
     this.checkpointInterval = checkpointInterval;
     this.maxFileSize = maxFileSize;
-    this.queueSize = queueSize;
+    this.queueCapacity = queueCapacity;
     this.checkpointDir = checkpointDir;
     this.logDirs = logDirs;
+    this.logWriteTimeout = logWriteTimeout;
     logFiles = new AtomicReferenceArray<LogFile.Writer>(this.logDirs.length);
     worker = new BackgroundWorker(this);
     worker.setName("Log-BackgroundWorker");
@@ -123,6 +176,9 @@ class Log {
    */
   synchronized void replay() throws IOException {
     Preconditions.checkState(!open, "Cannot replay after Log as been opened");
+
+    checkpointWriterLock.lock();
+
     try {
       /*
        * First we are going to look through the data directories
@@ -157,63 +213,40 @@ class Log {
        * Read the checkpoint (in memory queue) from one of two alternating
        * locations. We will read the last one written to disk.
        */
-      checkpointA = new Checkpoint(new File(checkpointDir, "chkpt-A"),
-          queueSize);
-      checkpointB = new Checkpoint(new File(checkpointDir, "chkpt-B"),
-          queueSize);
-      if (checkpointA.getTimestamp() > checkpointB.getTimestamp()) {
-        try {
-          LOGGER.info("Reading checkpoint A " + checkpointA.getFile());
-          // read from checkpoint A, write to B
-          queue = checkpointA.read();
-          checkpoint = new AtomicReference<Checkpoint>(checkpointB);
-        } catch (EOFException e) {
-          LOGGER.info("EOF reading from A", e);
-          // read from checkpoint B, write to A
-          queue = checkpointB.read();
-          checkpoint = new AtomicReference<Checkpoint>(checkpointA);
-        }
-      } else if (checkpointB.getTimestamp() > checkpointA.getTimestamp()) {
-        try {
-          LOGGER.info("Reading checkpoint B " + checkpointB.getFile());
-          // read from checkpoint B, write to A
-          queue = checkpointB.read();
-          checkpoint = new AtomicReference<Checkpoint>(checkpointA);
-        } catch (EOFException e) {
-          LOGGER.info("EOF reading from B", e);
-          // read from checkpoint A, write to B
-          queue = checkpointA.read();
-          checkpoint = new AtomicReference<Checkpoint>(checkpointB);
-        }
-      } else {
-        LOGGER.info("Starting checkpoint from scratch");
-        queue = new FlumeEventQueue(queueSize);
-        checkpoint = new AtomicReference<Checkpoint>(checkpointA);
-      }
+      queue = new FlumeEventQueue(queueCapacity,
+                        new File(checkpointDir, "checkpoint"));
 
-      long ts = checkpoint.get().getTimestamp();
+      long ts = queue.getTimestamp();
       LOGGER.info("Last Checkpoint " + new Date(ts) +
-          ", queue depth = " + queue.size());
+          ", queue depth = " + queue.getSize());
 
       /*
        * We now have everything we need to actually replay the log files
        * the queue, the timestamp the queue was written to disk, and
        * the list of data files.
        */
-      ReplayHandler replayHandler = new ReplayHandler(queue,
-          checkpoint.get().getTimestamp());
+      ReplayHandler replayHandler = new ReplayHandler(queue);
       replayHandler.replayLog(dataFiles);
+
       for (int index = 0; index < logDirs.length; index++) {
         LOGGER.info("Rolling " + logDirs[index]);
         roll(index);
       }
+
       /*
        * Now that we have replayed, write the current queue to disk
        */
-      writeCheckpoint();
+      writeCheckpoint(true);
+
       open = true;
     } catch (Exception ex) {
       LOGGER.error("Failed to initialize Log", ex);
+      if (ex instanceof IOException) {
+        throw (IOException) ex;
+      }
+      Throwables.propagate(ex);
+    } finally {
+      checkpointWriterLock.unlock();
     }
   }
 
@@ -258,22 +291,44 @@ class Log {
   FlumeEventPointer put(long transactionID, Event event)
       throws IOException {
     Preconditions.checkState(open, "Log is closed");
-    FlumeEvent flumeEvent = new FlumeEvent(event.getHeaders(), event.getBody());
-    Put put = new Put(transactionID, flumeEvent);
-    put.setTimestamp(System.currentTimeMillis());
-    ByteBuffer buffer = TransactionEventRecord.toByteBuffer(put);
-    int logFileIndex = nextLogWriter(transactionID);
-    if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
-      roll(logFileIndex, buffer);
-    }
-    boolean error = true;
+
+    boolean lockAcquired = false;
     try {
-      FlumeEventPointer ptr = logFiles.get(logFileIndex).put(buffer);
-      error = false;
-      return ptr;
+      lockAcquired = checkpointReadLock.tryLock(logWriteTimeout, TimeUnit.SECONDS);
+    } catch (InterruptedException ex) {
+      LOGGER.warn("Interrupted while waiting for log write lock", ex);
+      Thread.currentThread().interrupt();
+    }
+
+    if (!lockAcquired) {
+      throw new IOException("Failed to obtain lock for writing to the log. "
+          + "Try increasing the log write timeout value or disabling it by "
+          + "setting it to 0.");
+    }
+
+    try {
+      FlumeEvent flumeEvent = new FlumeEvent(
+                    event.getHeaders(), event.getBody());
+      Put put = new Put(transactionID, flumeEvent);
+      put.setTimestamp(System.currentTimeMillis());
+      ByteBuffer buffer = TransactionEventRecord.toByteBuffer(put);
+      int logFileIndex = nextLogWriter(transactionID);
+      if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
+        roll(logFileIndex, buffer);
+      }
+      boolean error = true;
+      try {
+        FlumeEventPointer ptr = logFiles.get(logFileIndex).put(buffer);
+        error = false;
+        return ptr;
+      } finally {
+        if (error) {
+          roll(logFileIndex);
+        }
+      }
     } finally {
-      if (error) {
-        roll(logFileIndex);
+      if (lockAcquired) {
+        checkpointReadLock.unlock();
       }
     }
   }
@@ -289,21 +344,42 @@ class Log {
   void take(long transactionID, FlumeEventPointer pointer)
       throws IOException {
     Preconditions.checkState(open, "Log is closed");
-    Take take = new Take(transactionID, pointer.getOffset(),
-        pointer.getFileID());
-    take.setTimestamp(System.currentTimeMillis());
-    ByteBuffer buffer = TransactionEventRecord.toByteBuffer(take);
-    int logFileIndex = nextLogWriter(transactionID);
-    if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
-      roll(logFileIndex, buffer);
-    }
-    boolean error = true;
+
+    boolean lockAcquired = false;
     try {
-      logFiles.get(logFileIndex).take(buffer);
-      error = false;
+      lockAcquired = checkpointReadLock.tryLock(logWriteTimeout, TimeUnit.SECONDS);
+    } catch (InterruptedException ex) {
+      LOGGER.warn("Interrupted while waiting for log write lock", ex);
+      Thread.currentThread().interrupt();
+    }
+
+    if (!lockAcquired) {
+      throw new IOException("Failed to obtain lock for writing to the log. "
+          + "Try increasing the log write timeout value or disabling it by "
+          + "setting it to 0.");
+    }
+
+    try {
+      Take take = new Take(transactionID, pointer.getOffset(),
+          pointer.getFileID());
+      take.setTimestamp(System.currentTimeMillis());
+      ByteBuffer buffer = TransactionEventRecord.toByteBuffer(take);
+      int logFileIndex = nextLogWriter(transactionID);
+      if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
+        roll(logFileIndex, buffer);
+      }
+      boolean error = true;
+      try {
+        logFiles.get(logFileIndex).take(buffer);
+        error = false;
+      } finally {
+        if (error) {
+          roll(logFileIndex);
+        }
+      }
     } finally {
-      if (error) {
-        roll(logFileIndex);
+      if (lockAcquired) {
+        checkpointReadLock.unlock();
       }
     }
   }
@@ -317,23 +393,45 @@ class Log {
    */
   void rollback(long transactionID) throws IOException {
     Preconditions.checkState(open, "Log is closed");
+
+    boolean lockAcquired = false;
+    try {
+      lockAcquired = checkpointReadLock.tryLock(logWriteTimeout, TimeUnit.SECONDS);
+    } catch (InterruptedException ex) {
+      LOGGER.warn("Interrupted while waiting for log write lock", ex);
+      Thread.currentThread().interrupt();
+    }
+
+    if (!lockAcquired) {
+      throw new IOException("Failed to obtain lock for writing to the log. "
+          + "Try increasing the log write timeout value or disabling it by "
+          + "setting it to 0.");
+    }
+
     if(LOGGER.isDebugEnabled()) {
       LOGGER.debug("Rolling back " + transactionID);
     }
-    Rollback rollback = new Rollback(transactionID);
-    rollback.setTimestamp(System.currentTimeMillis());
-    ByteBuffer buffer = TransactionEventRecord.toByteBuffer(rollback);
-    int logFileIndex = nextLogWriter(transactionID);
-    if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
-      roll(logFileIndex, buffer);
-    }
-    boolean error = true;
+
     try {
-      logFiles.get(logFileIndex).rollback(buffer);
-      error = false;
+      Rollback rollback = new Rollback(transactionID);
+      rollback.setTimestamp(System.currentTimeMillis());
+      ByteBuffer buffer = TransactionEventRecord.toByteBuffer(rollback);
+      int logFileIndex = nextLogWriter(transactionID);
+      if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
+        roll(logFileIndex, buffer);
+      }
+      boolean error = true;
+      try {
+        logFiles.get(logFileIndex).rollback(buffer);
+        error = false;
+      } finally {
+        if (error) {
+          roll(logFileIndex);
+        }
+      }
     } finally {
-      if (error) {
-        roll(logFileIndex);
+      if (lockAcquired) {
+        checkpointReadLock.unlock();
       }
     }
   }
@@ -380,6 +478,7 @@ class Log {
     open = false;
     if (worker != null) {
       worker.shutdown();
+      worker.interrupt();
     }
     if (logFiles != null) {
       for (int index = 0; index < logFiles.length(); index++) {
@@ -427,23 +526,47 @@ class Log {
    * @throws IOException
    */
   private void commit(long transactionID, short type) throws IOException {
-    Commit commit = new Commit(transactionID, type);
-    commit.setTimestamp(System.currentTimeMillis());
-    ByteBuffer buffer = TransactionEventRecord.toByteBuffer(commit);
-    int logFileIndex = nextLogWriter(transactionID);
-    if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
-      roll(logFileIndex, buffer);
-    }
-    boolean error = true;
+
+    Preconditions.checkState(open, "Log is closed");
+
+    boolean lockAcquired = false;
     try {
-      logFiles.get(logFileIndex).commit(buffer);
-      error = false;
+      lockAcquired = checkpointReadLock.tryLock(logWriteTimeout, TimeUnit.SECONDS);
+    } catch (InterruptedException ex) {
+      LOGGER.warn("Interrupted while waiting for log write lock", ex);
+      Thread.currentThread().interrupt();
+    }
+
+    if (!lockAcquired) {
+      throw new IOException("Failed to obtain lock for writing to the log. "
+          + "Try increasing the log write timeout value or disabling it by "
+          + "setting it to 0.");
+    }
+
+    try {
+      Commit commit = new Commit(transactionID, type);
+      commit.setTimestamp(System.currentTimeMillis());
+      ByteBuffer buffer = TransactionEventRecord.toByteBuffer(commit);
+      int logFileIndex = nextLogWriter(transactionID);
+      if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
+        roll(logFileIndex, buffer);
+      }
+      boolean error = true;
+      try {
+        logFiles.get(logFileIndex).commit(buffer);
+        error = false;
+      } finally {
+        if (error) {
+          roll(logFileIndex);
+        }
+      }
     } finally {
-      if (error) {
-        roll(logFileIndex);
+      if (lockAcquired) {
+        checkpointReadLock.unlock();
       }
     }
   }
+
   /**
    * Atomic so not synchronization required.
    * @return
@@ -474,53 +597,102 @@ class Log {
    */
   private synchronized void roll(int index, ByteBuffer buffer)
       throws IOException {
-    LogFile.Writer oldLogFile = logFiles.get(index);
-    // check to make sure a roll is actually required due to
-    // the possibility of multiple writes waiting on lock
-    if(oldLogFile == null || buffer == null ||
-        oldLogFile.isRollRequired(buffer)) {
-      try {
-        LOGGER.info("Roll start " + logDirs[index]);
-        int fileID = nextFileID.incrementAndGet();
-        File file = new File(logDirs[index], PREFIX + fileID);
-        Preconditions.checkState(!file.exists(), "File alread exists "  + file);
-        Preconditions.checkState(file.createNewFile(), "File could not be created " + file);
-        idLogFileMap.put(fileID, new LogFile.RandomReader(file));
-        // writer from this point on will get new reference
-        logFiles.set(index, new LogFile.Writer(file, fileID, maxFileSize));
-        // close out old log
-        if (oldLogFile != null) {
-          oldLogFile.close();
+    boolean lockAcquired = false;
+    try {
+      lockAcquired = checkpointReadLock.tryLock(logWriteTimeout, TimeUnit.SECONDS);
+    } catch (InterruptedException ex) {
+      LOGGER.warn("Interrupted while waiting for log write lock", ex);
+      Thread.currentThread().interrupt();
+    }
+
+    if (!lockAcquired) {
+      throw new IOException("Failed to obtain lock for writing to the log. "
+          + "Try increasing the log write timeout value or disabling it by "
+          + "setting it to 0.");
+    }
+
+    try {
+      LogFile.Writer oldLogFile = logFiles.get(index);
+      // check to make sure a roll is actually required due to
+      // the possibility of multiple writes waiting on lock
+      if(oldLogFile == null || buffer == null ||
+          oldLogFile.isRollRequired(buffer)) {
+        try {
+          LOGGER.info("Roll start " + logDirs[index]);
+          int fileID = nextFileID.incrementAndGet();
+          File file = new File(logDirs[index], PREFIX + fileID);
+          Preconditions.checkState(!file.exists(),
+              "File already exists "  + file);
+          Preconditions.checkState(file.createNewFile(),
+              "File could not be created " + file);
+          idLogFileMap.put(fileID, new LogFile.RandomReader(file));
+          // writer from this point on will get new reference
+          logFiles.set(index, new LogFile.Writer(file, fileID, maxFileSize));
+          // close out old log
+          if (oldLogFile != null) {
+            oldLogFile.close();
+          }
+        } finally {
+          LOGGER.info("Roll end");
         }
-      } finally {
-        LOGGER.info("Roll end");
+      }
+    } finally {
+      if (lockAcquired) {
+        checkpointReadLock.unlock();
       }
     }
   }
+
+  private synchronized void writeCheckpoint() throws IOException {
+    writeCheckpoint(false);
+  }
+
   /**
    * Write the current checkpoint object and then swap objects so that
    * the next checkpoint occurs on the other checkpoint directory.
    *
    * Synchronization required since both synchronized and unsynchronized
+   * @param force  a flag to force the writing of checkpoint
    * @throws IOException if we are unable to write the checkpoint out to disk
    */
-  private synchronized void writeCheckpoint() throws IOException {
-    synchronized (queue) {
-      checkpoint.get().write(queue);
-      if (!checkpoint.compareAndSet(checkpointA, checkpointB)) {
-        Preconditions.checkState(checkpoint.compareAndSet(checkpointB,
-            checkpointA));
+  private synchronized void writeCheckpoint(boolean force) throws IOException {
+    checkpointWriterLock.lock();
+    try {
+      if (queue.checkpoint(force) || force) {
+        long ts = queue.getTimestamp();
+
+        Set<Integer> idSet = queue.getFileIDs();
+
+        int numFiles = logFiles.length();
+        for (int i = 0; i < numFiles; i++) {
+          LogFile.Writer writer = logFiles.get(i);
+          writer.markCheckpoint(ts);
+          int id = writer.getFileID();
+          idSet.remove(id);
+          LOGGER.debug("Updated checkpoint for file: " + writer.getFile());
+        }
+
+        // Update any inactive data files as well
+        Iterator<Integer> idIterator = idSet.iterator();
+        while (idIterator.hasNext()) {
+          int id = idIterator.next();
+          LogFile.RandomReader reader = idLogFileMap.remove(id);
+          File file = reader.getFile();
+          reader.close();
+          LogFile.Writer writer = new LogFile.Writer(file, id, maxFileSize);
+          writer.markCheckpoint(ts);
+          writer.close();
+          reader = new LogFile.RandomReader(file);
+          idLogFileMap.put(id, reader);
+          LOGGER.debug("Updated checkpoint for file: " + file);
+          idIterator.remove();
+        }
+        Preconditions.checkState(idSet.size() == 0,
+            "Could not update all data file timestamps: " + idSet);
       }
+    } finally {
+      checkpointWriterLock.unlock();
     }
-  }
-  /**
-   * Synchronization not required as this is atomic
-   * @return last time we successfully check pointed
-   * @throws IOException if there is an io error reading the ts from disk
-   */
-  private long getLastCheckpoint() throws IOException {
-    Preconditions.checkState(open, "Log is closed");
-    return checkpoint.get().getTimestamp();
   }
 
   private void removeOldLogs() {
@@ -634,12 +806,12 @@ class Log {
     void shutdown() {
       if(run) {
         run = false;
-        interrupt();
       }
     }
 
     @Override
     public void run() {
+      long lastCheckTime = 0L;
       while (run) {
         try {
           try {
@@ -650,9 +822,11 @@ class Log {
           }
           if(log.open) {
             // check to see if we should do a checkpoint
-            long elapsed = System.currentTimeMillis() - log.getLastCheckpoint();
+            long currentTime = System.currentTimeMillis();
+            long elapsed = currentTime - lastCheckTime;
             if (elapsed > log.checkpointInterval) {
               log.writeCheckpoint();
+              lastCheckTime = currentTime;
             }
           }
           if(log.open) {

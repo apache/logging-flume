@@ -57,9 +57,9 @@ class ReplayHandler {
    */
   private final List<Long> pendingTakes;
 
-  ReplayHandler(FlumeEventQueue queue, long lastCheckpoint) {
+  ReplayHandler(FlumeEventQueue queue) {
     this.queue = queue;
-    this.lastCheckpoint = lastCheckpoint;
+    this.lastCheckpoint = queue.getTimestamp();
     pendingTakes = Lists.newArrayList();
   }
 
@@ -73,36 +73,41 @@ class ReplayHandler {
       LogFile.SequentialReader reader = null;
       try {
         reader = new LogFile.SequentialReader(log);
+        reader.skipToLastCheckpointPosition(queue.getTimestamp());
         Pair<Integer, TransactionEventRecord> entry;
         FlumeEventPointer ptr;
         // for puts the fileId is the fileID of the file they exist in
         // for takes the fileId and offset are pointers to a put
         int fileId = reader.getLogFileID();
+        int readCount = 0;
+        int putCount = 0;
+        int takeCount = 0;
+        int rollbackCount = 0;
+        int commitCount = 0;
+        int skipCount = 0;
         while ((entry = reader.next()) != null) {
           int offset = entry.getLeft();
           TransactionEventRecord record = entry.getRight();
           short type = record.getRecordType();
           long trans = record.getTransactionID();
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("record.getTimestamp() = " + record.getTimestamp()
-                + ", lastCheckpoint = " + lastCheckpoint + ", fileId = "
-                + fileId + ", offset = " + offset + ", type = "
-                + TransactionEventRecord.getName(type) + ", transaction "
-                + trans);
-          }
+          readCount++;
           if (record.getTimestamp() > lastCheckpoint) {
             if (type == TransactionEventRecord.Type.PUT.get()) {
+              putCount++;
               ptr = new FlumeEventPointer(fileId, offset);
               transactionMap.put(trans, ptr);
             } else if (type == TransactionEventRecord.Type.TAKE.get()) {
+              takeCount++;
               Take take = (Take) record;
               ptr = new FlumeEventPointer(take.getFileID(), take.getOffset());
               transactionMap.put(trans, ptr);
             } else if (type == TransactionEventRecord.Type.ROLLBACK.get()) {
+              rollbackCount++;
               transactionMap.remove(trans);
             } else if (type == TransactionEventRecord.Type.COMMIT.get()) {
+              commitCount++;
               @SuppressWarnings("unchecked")
-              Collection<FlumeEventPointer> pointers = 
+              Collection<FlumeEventPointer> pointers =
                 (Collection<FlumeEventPointer>) transactionMap.remove(trans);
               if (pointers != null && pointers.size() > 0) {
                 processCommit(((Commit) record).getType(), pointers);
@@ -113,9 +118,16 @@ class ReplayHandler {
                   + Integer.toHexString(type));
             }
 
+          } else {
+            skipCount++;
           }
         }
         LOG.info("Replayed " + count + " from " + log);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("read: " + readCount + ", put: " + putCount + ", take: "
+            + takeCount + ", rollback: " + rollbackCount + ", commit: "
+            + commitCount + ", skipp: " + skipCount);
+        }
       } catch (EOFException e) {
         LOG.warn("Hit EOF on " + log);
       } finally {
@@ -134,7 +146,6 @@ class ReplayHandler {
         for (Long pointer : pendingTakes) {
           LOG.debug("Pending take " + FlumeEventPointer.fromLong(pointer));
         }
-        Preconditions.checkState(false, msg);
       } else {
         LOG.error(msg + ". Duplicate messages will exist in destination.");
       }
@@ -143,9 +154,6 @@ class ReplayHandler {
   }
 
   private void processCommit(short type, Collection<FlumeEventPointer> pointers) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Processing commit of " + TransactionEventRecord.getName(type));
-    }
     if (type == TransactionEventRecord.Type.PUT.get()) {
       for (FlumeEventPointer pointer : pointers) {
         Preconditions.checkState(queue.addTail(pointer), "Unable to add "
@@ -154,8 +162,6 @@ class ReplayHandler {
           Preconditions.checkState(queue.remove(pointer),
               "Take was pending and pointer was successfully added to the"
                   + " queue but could not be removed: " + pointer);
-        } else if (LOG.isDebugEnabled()) {
-          LOG.debug("Commited Put " + pointer);
         }
       }
     } else if (type == TransactionEventRecord.Type.TAKE.get()) {
@@ -163,9 +169,6 @@ class ReplayHandler {
         boolean removed = queue.remove(pointer);
         if (!removed) {
           pendingTakes.add(pointer.toLong());
-          if (LOG.isDebugEnabled()) {
-            LOG.info("Unable to remove " + pointer + " added to pending list");
-          }
         }
       }
     } else {

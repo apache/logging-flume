@@ -18,18 +18,21 @@
  */
 package org.apache.flume.channel.file;
 
-import java.io.DataInput;
-import java.io.DataOutput;
+import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.io.RandomAccessFile;
 import java.nio.LongBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel.MapMode;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.flume.tools.DirectMemoryUtils;
-import org.apache.hadoop.io.Writable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,49 +43,166 @@ import com.google.common.collect.Maps;
  * Queue of events in the channel. This queue stores only
  * {@link FlumeEventPointer} objects which are represented
  * as 8 byte longs internally. Additionally the queue itself
- * of longs is stored as a {@link LongBuffer} in DirectMemory
- * (off heap).
+ * of longs is stored as a memory mapped file with a fixed
+ * header and circular queue semantics. The header of the queue
+ * contains the timestamp of last sync, the queue size and
+ * the head position.
  */
-class FlumeEventQueue implements Writable {
-  // XXX  We use % heavily which can be CPU intensive.
-  @SuppressWarnings("unused")
+class FlumeEventQueue {
   private static final Logger LOG = LoggerFactory
   .getLogger(FlumeEventQueue.class);
-  protected static final int VERSION = 1;
-  protected static final int SIZE_OF_LONG = 8;
-  protected static final int EMPTY = 0;
-  protected final Map<Integer, AtomicInteger> fileIDCounts = Maps.newHashMap();
-  protected final LongBuffer elements;
-  protected final ByteBuffer backingBuffer;
-  // both fields will be modified by multiple threads
-  protected volatile int size;
-  protected volatile int next;
+  private static final int VERSION = 2;
+  private static final int EMPTY = 0;
+  private static final int INDEX_VERSION = 0;
+  private static final int INDEX_TIMESTAMP = 1;
+  private static final int INDEX_SIZE = 2;
+  private static final int INDEX_HEAD = 3;
+  private static final int INDEX_ACTIVE_LOG = 4;
+  private static final int MAX_ACTIVE_LOGS = 1024;
+  private static final int HEADER_SIZE = 1028;
+  private final Map<Integer, AtomicInteger> fileIDCounts = Maps.newHashMap();
+  private final MappedByteBuffer mappedBuffer;
+  private final LongBuffer elementsBuffer;
+  private LongBufferWrapper elements;
+  private final RandomAccessFile checkpointFile;
+  private final java.nio.channels.FileChannel checkpointFileHandle;
+  private final int queueCapacity;
+
+  private int queueSize;
+  private int queueHead;
+  private long timestamp;
+
   /**
    * @param capacity max event capacity of queue
+   * @throws IOException
    */
-  FlumeEventQueue(int capacity) {
-    Preconditions.checkArgument(capacity > 0, "Capacity must be greater than zero");
-    backingBuffer = DirectMemoryUtils.allocate(capacity * SIZE_OF_LONG);
-    elements = backingBuffer.asLongBuffer();
-    for (int index = 0; index < elements.capacity(); index++) {
-      elements.put(index, EMPTY);
+  FlumeEventQueue(int capacity, File file) throws IOException {
+    Preconditions.checkArgument(capacity > 0,
+        "Capacity must be greater than zero");
+    this.queueCapacity = capacity;
+
+    if (!file.exists()) {
+      Preconditions.checkState(file.createNewFile(), "Unable to create file: "
+          + file);
     }
+
+    boolean freshlyAllocated = false;
+    checkpointFile = new RandomAccessFile(file, "rw");
+    if (checkpointFile.length() == 0) {
+      // Allocate
+      LOG.info("Event queue has zero allocation. Initializing to capacity. "
+          + "Please wait...");
+      checkpointFile.writeLong(VERSION);
+      int absoluteCapacity = capacity + HEADER_SIZE;
+      for (int i = 1; i < absoluteCapacity; i++) {
+        checkpointFile.writeLong(EMPTY);
+      }
+      LOG.info("Event queue allocation complete");
+      freshlyAllocated = true;
+    } else {
+      int fileCapacity = (int) checkpointFile.length() / 8;
+      int expectedCapacity = capacity + HEADER_SIZE;
+
+      Preconditions.checkState(fileCapacity == expectedCapacity,
+          "Capacity cannot be reduced once the channel is initialized");
+    }
+
+    checkpointFileHandle = checkpointFile.getChannel();
+
+    mappedBuffer = checkpointFileHandle.map(MapMode.READ_WRITE, 0,
+        file.length());
+
+    elementsBuffer = mappedBuffer.asLongBuffer();
+    if (freshlyAllocated) {
+      elementsBuffer.put(INDEX_VERSION, VERSION);
+    } else {
+      int version = (int) elementsBuffer.get(INDEX_VERSION);
+      Preconditions.checkState(version == VERSION,
+          "Invalid version: " + version);
+      timestamp = elementsBuffer.get(INDEX_TIMESTAMP);
+      queueSize = (int) elementsBuffer.get(INDEX_SIZE);
+      queueHead = (int) elementsBuffer.get(INDEX_HEAD);
+
+      int indexMaxLog = INDEX_ACTIVE_LOG + MAX_ACTIVE_LOGS;
+      for (int i = INDEX_ACTIVE_LOG; i < indexMaxLog; i++) {
+        long nextFileCode = elementsBuffer.get(i);
+        if (nextFileCode  != EMPTY) {
+          Pair<Integer, Integer> idAndCount =
+              deocodeActiveLogCounter(nextFileCode);
+          fileIDCounts.put(idAndCount.getLeft(),
+              new AtomicInteger(idAndCount.getRight()));
+        }
+      }
+    }
+
+    elements = new LongBufferWrapper(elementsBuffer);
   }
+
+  private Pair<Integer, Integer> deocodeActiveLogCounter(long value) {
+    int fileId = (int) (value >>> 32);
+    int count = (int) value;
+
+    return Pair.of(fileId, count);
+  }
+
+  private long encodeActiveLogCounter(int fileId, int count) {
+    long result = fileId;
+    result = (long)fileId << 32;
+    result += (long) count;
+    return result;
+  }
+
+  synchronized long getTimestamp() {
+    return timestamp;
+  }
+
+  synchronized boolean checkpoint(boolean force) {
+    if (!elements.syncRequired() && !force) {
+      LOG.debug("Checkpoint not required");
+      return false;
+    }
+
+    updateHeaders();
+
+    List<Long> fileIdAndCountEncoded = new ArrayList<Long>();
+    for (Integer fileId : fileIDCounts.keySet()) {
+      Integer count = fileIDCounts.get(fileId).get();
+      long value = encodeActiveLogCounter(fileId, count);
+      fileIdAndCountEncoded.add(value);
+    }
+
+    int emptySlots = MAX_ACTIVE_LOGS - fileIdAndCountEncoded.size();
+    for (int i = 0; i < emptySlots; i++)  {
+      fileIdAndCountEncoded.add(0L);
+    }
+    for (int i = 0; i < MAX_ACTIVE_LOGS; i++) {
+      elementsBuffer.put(i + INDEX_ACTIVE_LOG, fileIdAndCountEncoded.get(i));
+    }
+
+    elements.sync();
+    mappedBuffer.force();
+
+    return true;
+  }
+
   /**
    * Retrieve and remove the head of the queue.
    *
    * @return FlumeEventPointer or null if queue is empty
    */
   synchronized FlumeEventPointer removeHead() {
-    if(size() == 0) {
+    if(queueSize == 0) {
       return null;
     }
+
     long value = remove(0);
     Preconditions.checkState(value != EMPTY);
+
     FlumeEventPointer ptr = FlumeEventPointer.fromLong(value);
     decrementFileID(ptr.getFileID());
     return ptr;
   }
+
   /**
    * Add a FlumeEventPointer to the head of the queue
    * @param FlumeEventPointer to be added
@@ -90,14 +210,19 @@ class FlumeEventQueue implements Writable {
    * added to the queue
    */
   synchronized boolean addHead(FlumeEventPointer e) {
+    if (queueSize == queueCapacity) {
+      return false;
+    }
+
     long value = e.toLong();
     Preconditions.checkArgument(value != EMPTY);
-    if(add(0, value)) {
-      incrementFileID(e.getFileID());
-      return true;
-    }
-    return false;
+    incrementFileID(e.getFileID());
+
+    add(0, value);
+    return true;
   }
+
+
   /**
    * Add a FlumeEventPointer to the tail of the queue
    * this will normally be used when recovering from a
@@ -107,13 +232,16 @@ class FlumeEventQueue implements Writable {
    * was added to the queue
    */
   synchronized boolean addTail(FlumeEventPointer e) {
+    if (queueSize == queueCapacity) {
+      return false;
+    }
+
     long value = e.toLong();
     Preconditions.checkArgument(value != EMPTY);
-    if(add(size(), value)) {
-      incrementFileID(e.getFileID());
-      return true;
-    }
-    return false;
+    incrementFileID(e.getFileID());
+
+    add(queueSize, value);
+    return true;
   }
 
   /**
@@ -126,7 +254,7 @@ class FlumeEventQueue implements Writable {
   synchronized boolean remove(FlumeEventPointer e) {
     long value = e.toLong();
     Preconditions.checkArgument(value != EMPTY);
-    for (int i = 0; i < size; i++) {
+    for (int i = 0; i < queueSize; i++) {
       if(get(i) == value) {
         remove(i);
         FlumeEventPointer ptr = FlumeEventPointer.fromLong(value);
@@ -144,15 +272,12 @@ class FlumeEventQueue implements Writable {
   synchronized Set<Integer> getFileIDs() {
     return new HashSet<Integer>(fileIDCounts.keySet());
   }
-  /**
-   * @return current size of the queue, not the capacity
-   */
-  synchronized int size() {
-    return size;
-  }
+
   protected void incrementFileID(int fileID) {
     AtomicInteger counter = fileIDCounts.get(fileID);
     if(counter == null) {
+      Preconditions.checkState(fileIDCounts.size() < MAX_ACTIVE_LOGS,
+          "Too many active logs");
       counter = new AtomicInteger(0);
       fileIDCounts.put(fileID, counter);
     }
@@ -169,82 +294,148 @@ class FlumeEventQueue implements Writable {
   }
 
   protected long get(int index) {
-    if (index < 0 || index > size - 1) {
+    if (index < 0 || index > queueSize - 1) {
       throw new IndexOutOfBoundsException(String.valueOf(index));
     }
-    return elements.get(convert(index));
+
+    return elements.get(getPhysicalIndex(index));
+  }
+
+  private void set(int index, long value) {
+    if (index < 0 || index > queueSize - 1) {
+      throw new IndexOutOfBoundsException(String.valueOf(index));
+    }
+
+    elements.put(getPhysicalIndex(index), value);
   }
 
   protected boolean add(int index, long value) {
-    if (index < 0 || index > size) {
+    if (index < 0 || index > queueSize) {
       throw new IndexOutOfBoundsException(String.valueOf(index));
     }
-    if (size + 1 > elements.capacity()) {
+
+    if (queueSize == queueCapacity) {
       return false;
     }
-    // shift right if element is not added at the right
-    // edge of the array. the common case, add(size-1, value)
-    // will result in no copy operations
-    for (int k = size; k > index; k--) {
-      elements.put(convert(k),
-          elements.get(convert(k - 1)));
+
+    queueSize++;
+
+    if (index <= queueSize/2) {
+      // Shift left
+      queueHead--;
+      if (queueHead < 0) {
+        queueHead = queueCapacity - 1;
+      }
+      for (int i = 0; i < index; i++) {
+        set(i, get(i+1));
+      }
+    } else {
+      // Sift right
+      for (int i = queueSize - 1; i > index; i--) {
+        set(i, get(i-1));
+      }
     }
-    elements.put(convert(index), value);
-    size++;
+    set(index, value);
     return true;
   }
 
-  protected long remove(int index) {
-    if (index < 0 || index > size - 1) {
+  protected synchronized long remove(int index) {
+    if (index < 0 || index > queueSize - 1) {
       throw new IndexOutOfBoundsException(String.valueOf(index));
     }
-    long value = elements.get(convert(index));
-    // shift left if element removed is not on the left
-    // edge of the array. the common case, remove(0)
-    // will result in no copy operations
-    for (int k = index; k > 0; k--) {
-      elements.put(convert(k),
-          elements.get(convert(k - 1)));
+    long value = get(index);
+
+    if (index > queueSize/2) {
+      // Move tail part to left
+      for (int i = index; i < queueSize - 1; i++) {
+        long rightValue = get(i+1);
+        set(i, rightValue);
+      }
+      set(queueSize - 1, EMPTY);
+    } else {
+      // Move head part to right
+      for (int i = index - 1; i >= 0; i--) {
+        long leftValue = get(i);
+        set(i+1, leftValue);
+      }
+      set(0, EMPTY);
+      queueHead++;
+      if (queueHead == queueCapacity) {
+        queueHead = 0;
+      }
     }
-    elements.put(next % elements.capacity(), EMPTY);
-    next = (next + 1) % elements.capacity();
-    size--;
+
+    queueSize--;
     return value;
   }
 
-  protected int convert(int index) {
-    return (next + index % elements.capacity()) % elements.capacity();
-  }
-
-  @Override
-  public synchronized void readFields(DataInput input) throws IOException {
-    int version = input.readInt();
-    if(version != VERSION) {
-      throw new IOException("Bad Version " + Integer.toHexString(version));
-    }
-    int length = input.readInt();
-    for (int index = 0; index < length; index++) {
-      long value = input.readLong();
-      FlumeEventPointer ptr = FlumeEventPointer.fromLong(value);
-      Preconditions.checkState(value != EMPTY);
-      Preconditions.checkState(addHead(ptr), "Unable to add to queue");
+  private synchronized void updateHeaders() {
+    timestamp = System.currentTimeMillis();
+    elementsBuffer.put(INDEX_TIMESTAMP, timestamp);
+    elementsBuffer.put(INDEX_SIZE, queueSize);
+    elementsBuffer.put(INDEX_HEAD, queueHead);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Updating checkpoint headers: ts: " + timestamp + ", qs: "
+          + queueSize + ", qh: " + queueHead);
     }
   }
 
-  @Override
-  public synchronized void write(DataOutput output) throws IOException {
-    output.writeInt(VERSION);
-    output.writeInt(size);
-    for (int index = 0; index < size; index++) {
-      long value = elements.get(convert(index));
-      Preconditions.checkState(value != EMPTY);;
-      output.writeLong(value);
-    }
+
+  private int getPhysicalIndex(int index) {
+    return HEADER_SIZE + (queueHead + index) % queueCapacity;
   }
+
+  protected synchronized int getSize() {
+    return queueSize;
+  }
+
   /**
    * @return max capacity of the queue
    */
   public int getCapacity() {
-    return elements.capacity();
+    return queueCapacity;
+  }
+
+  static class LongBufferWrapper {
+    private final LongBuffer buffer;
+
+    Map<Integer, Long> overwriteMap = new HashMap<Integer, Long>();
+
+    LongBufferWrapper(LongBuffer lb) {
+      buffer = lb;
+    }
+
+    long get(int index) {
+      long result = EMPTY;
+      if (overwriteMap.containsKey(index)) {
+        result = overwriteMap.get(index);
+      } else {
+        result = buffer.get(index);
+      }
+
+      return result;
+    }
+
+    void put(int index, long value) {
+      overwriteMap.put(index, value);
+    }
+
+    boolean syncRequired() {
+      return overwriteMap.size() > 0;
+    }
+
+    void sync() {
+      Iterator<Integer> it = overwriteMap.keySet().iterator();
+      while (it.hasNext()) {
+        int index = it.next();
+        long value = overwriteMap.get(index);
+
+        buffer.put(index, value);
+        it.remove();
+      }
+
+      Preconditions.checkState(overwriteMap.size() == 0,
+          "concurrent update detected");
+    }
   }
 }

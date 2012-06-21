@@ -35,10 +35,10 @@ public class FileChannelConfiguration {
   public static final String TRANSACTION_CAPACITY = "transactionCapacity";
   public static final int DEFAULT_TRANSACTION_CAPACITY = 1000;
   /**
-   * Interval at which checkpoints should be taken. Default 5 mins (ms)
+   * Interval at which checkpoints should be taken. Default 30s (ms)
    */
   public static final String CHECKPOINT_INTERVAL = "checkpointInterval";
-  public static final long DEFAULT_CHECKPOINT_INTERVAL = 5L * 60L * 1000L;
+  public static final long DEFAULT_CHECKPOINT_INTERVAL = 30L * 1000L;
   /**
    * Max file size for data files, cannot exceed the default. Default: 2GB
    */
@@ -57,4 +57,11 @@ public class FileChannelConfiguration {
    */
   public static final String KEEP_ALIVE = "keep-alive";
   public static final int DEFAULT_KEEP_ALIVE = 3;
+
+  /**
+   * The amount of time in seconds a writer will wait before failing when
+   * checkpoint is enqueued or in progress.
+   */
+  public static final String LOG_WRITE_TIMEOUT = "write-timeout";
+  public static final int DEFAULT_WRITE_TIMEOUT = 3;
 }

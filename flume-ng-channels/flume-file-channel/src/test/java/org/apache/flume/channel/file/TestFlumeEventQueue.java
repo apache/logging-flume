@@ -18,6 +18,8 @@
  */
 package org.apache.flume.channel.file;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Set;
 
 import org.junit.Assert;
@@ -28,39 +30,43 @@ import com.google.common.collect.Sets;
 
 public class TestFlumeEventQueue {
 
+  File file;
   FlumeEventPointer pointer1 = new FlumeEventPointer(1, 1);
   FlumeEventPointer pointer2 = new FlumeEventPointer(2, 2);
   FlumeEventQueue queue;
   @Before
-  public void setup() {
-    queue = new FlumeEventQueue(1000);
+  public void setup() throws Exception {
+    file = File.createTempFile("Checkpoint", "");
   }
   @Test
-  public void testQueueIsEmptyAfterCreation() {
+  public void testQueueIsEmptyAfterCreation() throws IOException {
+    queue = new FlumeEventQueue(1000, file);
     Assert.assertNull(queue.removeHead());
   }
   @Test
-  public void testCapacity() {
-    queue = new FlumeEventQueue(1);
+  public void testCapacity() throws Exception {
+    queue = new FlumeEventQueue(1, file);
     Assert.assertTrue(queue.addTail(pointer1));
     Assert.assertFalse(queue.addTail(pointer2));
   }
   @Test(expected=IllegalArgumentException.class)
-  public void testInvalidCapacityZero() {
-    queue = new FlumeEventQueue(0);
+  public void testInvalidCapacityZero() throws Exception {
+    queue = new FlumeEventQueue(0, file);
   }
   @Test(expected=IllegalArgumentException.class)
-  public void testInvalidCapacityNegative() {
-    queue = new FlumeEventQueue(-1);
+  public void testInvalidCapacityNegative() throws Exception {
+    queue = new FlumeEventQueue(-1, file);
   }
   @Test
-  public void addTail1() {
+  public void addTail1() throws Exception {
+    queue = new FlumeEventQueue(1000, file);
     Assert.assertTrue(queue.addTail(pointer1));
     Assert.assertEquals(pointer1, queue.removeHead());
     Assert.assertEquals(Sets.newHashSet(), queue.getFileIDs());
   }
   @Test
-  public void addTail2() {
+  public void addTail2() throws Exception {
+    queue = new FlumeEventQueue(1000, file);
     Assert.assertTrue(queue.addTail(pointer1));
     Assert.assertTrue(queue.addTail(pointer2));
     Assert.assertEquals(Sets.newHashSet(1, 2), queue.getFileIDs());
@@ -68,7 +74,8 @@ public class TestFlumeEventQueue {
     Assert.assertEquals(Sets.newHashSet(2), queue.getFileIDs());
   }
   @Test
-  public void addTailLarge() {
+  public void addTailLarge() throws Exception {
+    queue = new FlumeEventQueue(1000, file);
     int size = 500;
     Set<Integer> fileIDs = Sets.newHashSet();
     for (int i = 1; i <= size; i++) {
@@ -84,14 +91,16 @@ public class TestFlumeEventQueue {
     Assert.assertEquals(Sets.newHashSet(), queue.getFileIDs());
   }
   @Test
-  public void addHead1() {
+  public void addHead1() throws Exception {
+    queue = new FlumeEventQueue(1000, file);
     Assert.assertTrue(queue.addHead(pointer1));
     Assert.assertEquals(Sets.newHashSet(1), queue.getFileIDs());
     Assert.assertEquals(pointer1, queue.removeHead());
     Assert.assertEquals(Sets.newHashSet(), queue.getFileIDs());
   }
   @Test
-  public void addHead2() {
+  public void addHead2() throws Exception {
+    queue = new FlumeEventQueue(1000, file);
     Assert.assertTrue(queue.addHead(pointer1));
     Assert.assertTrue(queue.addHead(pointer2));
     Assert.assertEquals(Sets.newHashSet(1, 2), queue.getFileIDs());
@@ -99,7 +108,8 @@ public class TestFlumeEventQueue {
     Assert.assertEquals(Sets.newHashSet(1), queue.getFileIDs());
   }
   @Test
-  public void addHeadLarge() {
+  public void addHeadLarge() throws Exception {
+    queue = new FlumeEventQueue(1000, file);
     int size = 500;
     Set<Integer> fileIDs = Sets.newHashSet();
     for (int i = 1; i <= size; i++) {
@@ -115,7 +125,8 @@ public class TestFlumeEventQueue {
     Assert.assertEquals(Sets.newHashSet(), queue.getFileIDs());
   }
   @Test
-  public void addTailRemove1() {
+  public void addTailRemove1() throws Exception {
+    queue = new FlumeEventQueue(1000, file);
     Assert.assertTrue(queue.addTail(pointer1));
     Assert.assertEquals(Sets.newHashSet(1), queue.getFileIDs());
     Assert.assertTrue(queue.remove(pointer1));
@@ -125,7 +136,8 @@ public class TestFlumeEventQueue {
   }
 
   @Test
-  public void addTailRemove2() {
+  public void addTailRemove2() throws Exception {
+    queue = new FlumeEventQueue(1000, file);
     Assert.assertTrue(queue.addTail(pointer1));
     Assert.assertTrue(queue.addTail(pointer2));
     Assert.assertTrue(queue.remove(pointer1));
@@ -133,27 +145,30 @@ public class TestFlumeEventQueue {
   }
 
   @Test
-  public void addHeadRemove1() {
+  public void addHeadRemove1() throws Exception {
+    queue = new FlumeEventQueue(1000, file);
     queue.addHead(pointer1);
     Assert.assertTrue(queue.remove(pointer1));
     Assert.assertNull(queue.removeHead());
   }
   @Test
-  public void addHeadRemove2() {
+  public void addHeadRemove2() throws Exception {
+    queue = new FlumeEventQueue(1000, file);
     Assert.assertTrue(queue.addHead(pointer1));
     Assert.assertTrue(queue.addHead(pointer2));
     Assert.assertTrue(queue.remove(pointer1));
     Assert.assertEquals(pointer2, queue.removeHead());
   }
   @Test
-  public void testWrappingCorrectly() {
+  public void testWrappingCorrectly() throws Exception {
+    queue = new FlumeEventQueue(1000, file);
     int size = Integer.MAX_VALUE;
     for (int i = 1; i <= size; i++) {
       if(!queue.addHead(new FlumeEventPointer(i, i))) {
         break;
       }
     }
-    for (int i = queue.size()/2; i > 0; i--) {
+    for (int i = queue.getSize()/2; i > 0; i--) {
       Assert.assertNotNull(queue.removeHead());
     }
     // addHead below would throw an IndexOOBounds with
