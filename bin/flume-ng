@@ -71,9 +71,10 @@ add_hadoop_paths() {
 
     # look for the line that has the desired property value
     # (considering extraneous output from some GC options that write to stdout)
+    # IFS = InternalFieldSeparator (set to recognize only newline char as delimiter)
     IFS=$'\n'
     for line in $HADOOP_JAVA_LIBRARY_PATH; do
-      if [[ $line =~ ^java\.library\.path=([^\n]*) ]]; then
+      if [[ $line =~ ^java\.library\.path=(.*)$ ]]; then
         HADOOP_JAVA_LIBRARY_PATH=${BASH_REMATCH[1]}
         break
       fi
@@ -119,9 +120,10 @@ add_HBASE_paths() {
 
     # look for the line that has the desired property value
     # (considering extraneous output from some GC options that write to stdout)
+    # IFS = InternalFieldSeparator (set to recognize only newline char as delimiter)
     IFS=$'\n'
     for line in $HBASE_JAVA_LIBRARY_PATH; do
-      if [[ $line =~ ^java\.library\.path=([^\n]*) ]]; then
+      if [[ $line =~ ^java\.library\.path=(.*)$ ]]; then
         HBASE_JAVA_LIBRARY_PATH=${BASH_REMATCH[1]}
         break
       fi
