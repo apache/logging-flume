@@ -113,6 +113,7 @@
         <include>conf/**</include>
         <include>pom.xml</include>
         <include>flume-ng-doc/**</include>
+        <include>flume-ng-tests/**</include>
       </includes>
     </fileSet>
 

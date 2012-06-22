@@ -99,8 +99,9 @@
         <include>RELEASE-NOTES</include>
         <include>bin/**</include>
         <include>conf/**</include>
-        <include>flume-docs/**</include>
         <include>pom.xml</include>
+        <include>flume-ng-doc/**</include>
+        <include>flume-ng-tests/**</include>
       </includes>
     </fileSet>
   </fileSets>
