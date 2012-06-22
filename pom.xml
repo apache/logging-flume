@@ -455,6 +455,8 @@ limitations under the License.
               </goals>
               <configuration>
                 <excludes>
+                  <exclude>.idea/</exclude>
+                  <exclude>**/*.iml</exclude>
                   <exclude>.git/</exclude>
                   <exclude>.gitignore</exclude>
                   <!-- ASF jenkins box puts the Maven repo in our root directory. -->
