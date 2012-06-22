@@ -20,7 +20,6 @@ package org.apache.flume.sink.hdfs;
 
 import java.io.IOException;
 import org.apache.flume.Context;
-
 import org.apache.flume.Event;
 import org.apache.flume.sink.FlumeFormatter;
 import org.apache.hadoop.conf.Configuration;
@@ -31,10 +30,17 @@ import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionOutputStream;
 import org.apache.hadoop.io.compress.DefaultCodec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HDFSCompressedDataStream implements HDFSWriter {
 
-  private CompressionOutputStream outStream;
+  private static final Logger logger =
+      LoggerFactory.getLogger(HDFSCompressedDataStream.class);
+
+  private FSDataOutputStream fsOut;
+  private CompressionOutputStream cmpOut;
+  private boolean isFinished = false;
 
   @Override
   public void configure(Context context) {
@@ -51,36 +57,49 @@ public class HDFSCompressedDataStream implements HDFSWriter {
   @Override
   public void open(String filePath, CompressionCodec codec,
       CompressionType cType, FlumeFormatter fmt) throws IOException {
-
-    FSDataOutputStream fsOutStream;
     Configuration conf = new Configuration();
     Path dstPath = new Path(filePath);
     FileSystem hdfs = dstPath.getFileSystem(conf);
 
     if (conf.getBoolean("hdfs.append.support", false) == true && hdfs.isFile
     (dstPath)) {
-      fsOutStream = hdfs.append(dstPath);
+      fsOut = hdfs.append(dstPath);
     } else {
-      fsOutStream = hdfs.create(dstPath);
+      fsOut = hdfs.create(dstPath);
     }
-    outStream = codec.createOutputStream(fsOutStream);
+    cmpOut = codec.createOutputStream(fsOut);
+    isFinished = false;
   }
 
   @Override
   public void append(Event e, FlumeFormatter fmt) throws IOException {
+    if (isFinished) {
+      cmpOut.resetState();
+      isFinished = false;
+    }
     byte[] bValue = fmt.getBytes(e);
-    outStream.write(bValue, 0, bValue.length);
+    cmpOut.write(bValue);
   }
 
   @Override
   public void sync() throws IOException {
-    outStream.flush();
+    // We must use finish() and resetState() here -- flush() is apparently not
+    // supported by the compressed output streams (it's a no-op).
+    // Also, since resetState() writes headers, avoid calling it without an
+    // additional write/append operation.
+    // Note: There are bugs in Hadoop & JDK w/ pure-java gzip; see HADOOP-8522.
+    if (!isFinished) {
+      cmpOut.finish();
+      isFinished = true;
+    }
+    fsOut.flush();
+    fsOut.sync();
   }
 
   @Override
   public void close() throws IOException {
-    outStream.flush();
-    outStream.close();
+    sync();
+    cmpOut.close();
   }
 
 }
