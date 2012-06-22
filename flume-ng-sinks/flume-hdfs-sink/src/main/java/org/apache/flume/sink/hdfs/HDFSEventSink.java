@@ -208,6 +208,20 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       compType = CompressionType.BLOCK;
     }
 
+    // Do not allow user to set fileType DataStream with codeC together
+    // To prevent output file with compress extension (like .snappy)
+    if(fileType.equalsIgnoreCase(HDFSWriterFactory.DataStreamType)
+        && codecName != null) {
+      throw new IllegalArgumentException("fileType: " + fileType +
+          " which does NOT support compressed output. Please don't set codeC" +
+          " or change the fileType if compressed output is desired.");
+    }
+
+    if(fileType.equalsIgnoreCase(HDFSWriterFactory.CompStreamType)) {
+      Preconditions.checkNotNull(codeC, "It's essential to set compress codec"
+          + " when fileType is: " + fileType);
+    }
+
     if (writeFormat == null) {
       // Default write formatter is chosen by requested file type
       if(fileType.equalsIgnoreCase(HDFSWriterFactory.DataStreamType)

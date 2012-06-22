@@ -808,6 +808,8 @@ hdfs.batchSize          1             number of events written to file before it
 hdfs.txnEventMax        100
 hdfs.codeC              --            Compression codec. one of following : gzip, bzip2, lzo, snappy
 hdfs.fileType           SequenceFile  File format: currently ``SequenceFile``, ``DataStream`` or ``CompressedStream``
+                                      (1)DataStream will not compress output file and please don't set codeC
+                                      (2)CompressedStream requires set hdfs.codeC with an available codeC
 hdfs.maxOpenFiles       5000
 hdfs.writeFormat        --            "Text" or "Writable"
 hdfs.appendTimeout      1000
