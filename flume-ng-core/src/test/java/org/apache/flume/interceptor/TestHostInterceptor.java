@@ -49,6 +49,28 @@ public class TestHostInterceptor {
     Assert.assertNotNull(actualHost);
   }
 
+  @Test
+  public void testCustomHeader() throws Exception {
+    Interceptor.Builder builder = InterceptorBuilderFactory.newInstance(
+            InterceptorType.HOST.toString());
+    Context ctx = new Context();
+    ctx.put("preserveExisting", "false");
+    ctx.put("hostHeader", "hostname");
+    builder.configure(ctx);
+    Interceptor interceptor = builder.build();
+
+    Event eventBeforeIntercept = EventBuilder.withBody("test event",
+            Charsets.UTF_8);
+    Assert.assertNull(eventBeforeIntercept.getHeaders().get("hostname"));
+
+    Event eventAfterIntercept = interceptor.intercept(eventBeforeIntercept);
+    String actualHost = eventAfterIntercept.getHeaders().get("hostname");
+
+    Assert.assertNotNull(actualHost);
+    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress(),
+        actualHost);
+  }
+
   /**
    * Ensure host is NOT overwritten when preserveExisting=true.
    */

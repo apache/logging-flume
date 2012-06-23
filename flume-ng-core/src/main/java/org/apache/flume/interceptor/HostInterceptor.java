@@ -44,6 +44,8 @@ import static org.apache.flume.interceptor.HostInterceptor.Constants.*;
  *   useIP: Whether to use IP address or fully-qualified hostname for 'host'
  *          header value (default is true)<p>
  *
+ *  hostHeader: Specify the key to be used in the event header map for the
+ *          host name. (default is "host") <p>
  *
  * Sample config:<p>
  *
@@ -54,6 +56,7 @@ import static org.apache.flume.interceptor.HostInterceptor.Constants.*;
  *   agent.sources.r1.interceptors.i1.type = org.apache.flume.interceptor.HostInterceptor$Builder<p>
  *   agent.sources.r1.interceptors.i1.preserveExisting = true<p>
  *   agent.sources.r1.interceptors.i1.useIP = false<p>
+ *   agent.sources.r1.interceptors.i1.hostHeader = hostname<p>
  * </code>
  *
  */
@@ -63,14 +66,29 @@ public class HostInterceptor implements Interceptor {
           .getLogger(HostInterceptor.class);
 
   private final boolean preserveExisting;
-  private final boolean useIP;
+  private final String header;
+  private String host = null;
 
   /**
    * Only {@link HostInterceptor.Builder} can build me
    */
-  private HostInterceptor(boolean preserveExisting, boolean useIP) {
-        this.preserveExisting = preserveExisting;
-        this.useIP = useIP;
+  private HostInterceptor(boolean preserveExisting,
+      boolean useIP, String header) {
+    this.preserveExisting = preserveExisting;
+    this.header = header;
+    InetAddress addr;
+    try {
+      addr = InetAddress.getLocalHost();
+      if (useIP) {
+        host = addr.getHostAddress();
+      } else {
+        host = addr.getCanonicalHostName();
+      }
+    } catch (UnknownHostException e) {
+      logger.warn("Could not get local host address. Exception follows.", e);
+    }
+
+
   }
 
   @Override
@@ -85,26 +103,12 @@ public class HostInterceptor implements Interceptor {
   public Event intercept(Event event) {
     Map<String, String> headers = event.getHeaders();
 
-    if (preserveExisting && headers.containsKey(HOST)) {
-        return event;
+    if (preserveExisting && headers.containsKey(header)) {
+      return event;
     }
-
-    InetAddress addr;
-    try {
-        addr = InetAddress.getLocalHost();
-    } catch (UnknownHostException e) {
-        logger.warn("Could not get local host address. Exception follows.", e);
-        return event;
+    if(host != null) {
+      headers.put(header, host);
     }
-
-    String host;
-    if (useIP) {
-        host = addr.getHostAddress();
-    } else {
-        host = addr.getCanonicalHostName();
-    }
-
-    headers.put(HOST, host);
 
     return event;
   }
@@ -134,16 +138,18 @@ public class HostInterceptor implements Interceptor {
 
     private boolean preserveExisting = PRESERVE_DFLT;
     private boolean useIP = USE_IP_DFLT;
+    private String header = HOST;
 
     @Override
     public Interceptor build() {
-      return new HostInterceptor(preserveExisting, useIP);
+      return new HostInterceptor(preserveExisting, useIP, header);
     }
 
     @Override
     public void configure(Context context) {
       preserveExisting = context.getBoolean(PRESERVE, PRESERVE_DFLT);
       useIP = context.getBoolean(USE_IP, USE_IP_DFLT);
+      header = context.getString(HOST_HEADER, HOST);
     }
 
   }
@@ -156,6 +162,8 @@ public class HostInterceptor implements Interceptor {
 
     public static String USE_IP = "useIP";
     public static boolean USE_IP_DFLT = true;
+
+    public static String HOST_HEADER = "hostHeader";
   }
 
 }
