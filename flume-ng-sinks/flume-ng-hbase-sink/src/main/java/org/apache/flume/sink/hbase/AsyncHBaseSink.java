@@ -28,6 +28,7 @@ import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
+import org.apache.flume.FlumeException;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.sink.AbstractSink;
@@ -93,6 +94,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
   private HBaseClient client;
   private Configuration conf;
   private Transaction txn;
+  private volatile boolean open = false;
 
   public AsyncHBaseSink(){
     conf = HBaseConfiguration.create();
@@ -110,6 +112,10 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
      * the next one is being processed.
      *
      */
+    if(!open){
+      throw new EventDeliveryException("Sink was never opened. " +
+          "Please fix the configuration.");
+    }
     AtomicBoolean txnFail = new AtomicBoolean(false);
     Status status = Status.READY;
     Channel channel = getChannel();
@@ -165,6 +171,8 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
      */
     if (txnFail.get()) {
       this.handleTransactionFailure(txn);
+      throw new EventDeliveryException("Could not write events to Hbase. " +
+          "Transaction failed, and rolled back.");
     } else {
       try{
         txn.commit();
@@ -244,6 +252,25 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
     } else {
       client = new HBaseClient(zkQuorum);
     }
+    CountDownLatch latch = new CountDownLatch(1);
+    AtomicBoolean fail = new AtomicBoolean(false);
+    client.ensureTableFamilyExists(
+        tableName.getBytes(Charsets.UTF_8), columnFamily).addCallbacks(
+            new SuccessCallback<Object, Object>(latch) ,
+            new ErrBack<Object, Object>(latch, fail));
+    try {
+      latch.await();
+    } catch (InterruptedException e) {
+      throw new FlumeException(
+          "Interrupted while waiting for Hbase Callbacks", e);
+    }
+    if(fail.get()){
+      throw new FlumeException(
+          "Could not start sink. " +
+          "Table or column family does not exist in Hbase.");
+    } else {
+      open = true;
+    }
     client.setFlushInterval((short) 0);
     super.start();
   }
@@ -253,6 +280,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
     serializer.cleanUp();
     client.shutdown();
     client = null;
+    open = false;
   }
 
   private void handleTransactionFailure(Transaction txn)
