@@ -57,9 +57,12 @@ class FlumeEventQueue {
   private static final int INDEX_TIMESTAMP = 1;
   private static final int INDEX_SIZE = 2;
   private static final int INDEX_HEAD = 3;
-  private static final int INDEX_ACTIVE_LOG = 4;
+  private static final int INDEX_CHECKPOINT_MARKER = 4;
+  private static final int CHECKPOINT_COMPLETE = EMPTY;
+  private static final int CHECKPOINT_INCOMPLETE = 1;
+  private static final int INDEX_ACTIVE_LOG = 5;
   private static final int MAX_ACTIVE_LOGS = 1024;
-  private static final int HEADER_SIZE = 1028;
+  private static final int HEADER_SIZE = 1029;
   private static final int MAX_ALLOC_BUFFER_SIZE = 2*1024*1024; // 2MB
   private final Map<Integer, AtomicInteger> fileIDCounts = Maps.newHashMap();
   private final MappedByteBuffer mappedBuffer;
@@ -68,6 +71,7 @@ class FlumeEventQueue {
   private final RandomAccessFile checkpointFile;
   private final java.nio.channels.FileChannel checkpointFileHandle;
   private final int queueCapacity;
+  private final String channelNameDescriptor;
 
   private int queueSize;
   private int queueHead;
@@ -77,14 +81,15 @@ class FlumeEventQueue {
    * @param capacity max event capacity of queue
    * @throws IOException
    */
-  FlumeEventQueue(int capacity, File file) throws IOException {
+  FlumeEventQueue(int capacity, File file, String name) throws IOException {
     Preconditions.checkArgument(capacity > 0,
         "Capacity must be greater than zero");
+    this.channelNameDescriptor = "[channel=" + name + "]";
     this.queueCapacity = capacity;
 
     if (!file.exists()) {
       Preconditions.checkState(file.createNewFile(), "Unable to create file: "
-          + file);
+          + file.getCanonicalPath() + " " + channelNameDescriptor);
     }
 
     boolean freshlyAllocated = false;
@@ -115,7 +120,8 @@ class FlumeEventQueue {
       int expectedCapacity = capacity + HEADER_SIZE;
 
       Preconditions.checkState(fileCapacity == expectedCapacity,
-          "Capacity cannot be reduced once the channel is initialized");
+          "Capacity cannot be reduced once the channel is initialized "
+              + channelNameDescriptor);
     }
 
     checkpointFileHandle = checkpointFile.getChannel();
@@ -129,10 +135,17 @@ class FlumeEventQueue {
     } else {
       int version = (int) elementsBuffer.get(INDEX_VERSION);
       Preconditions.checkState(version == VERSION,
-          "Invalid version: " + version);
+          "Invalid version: " + version + channelNameDescriptor);
       timestamp = elementsBuffer.get(INDEX_TIMESTAMP);
       queueSize = (int) elementsBuffer.get(INDEX_SIZE);
       queueHead = (int) elementsBuffer.get(INDEX_HEAD);
+
+      long checkpointComplete =
+          (int) elementsBuffer.get(INDEX_CHECKPOINT_MARKER);
+      Preconditions.checkState(checkpointComplete == CHECKPOINT_COMPLETE,
+          "The last checkpoint was not completed correctly. Please delete "
+          + "the checkpoint file: " + file.getCanonicalPath() + " to rebuild "
+          + "the checkpoint and start again. " + channelNameDescriptor);
 
       int indexMaxLog = INDEX_ACTIVE_LOG + MAX_ACTIVE_LOGS;
       for (int i = INDEX_ACTIVE_LOG; i < indexMaxLog; i++) {
@@ -146,7 +159,7 @@ class FlumeEventQueue {
       }
     }
 
-    elements = new LongBufferWrapper(elementsBuffer);
+    elements = new LongBufferWrapper(elementsBuffer, channelNameDescriptor);
   }
 
   private Pair<Integer, Integer> deocodeActiveLogCounter(long value) {
@@ -173,6 +186,9 @@ class FlumeEventQueue {
       return false;
     }
 
+    // Start checkpoint
+    elementsBuffer.put(INDEX_CHECKPOINT_MARKER, CHECKPOINT_INCOMPLETE);
+
     updateHeaders();
 
     List<Long> fileIdAndCountEncoded = new ArrayList<Long>();
@@ -191,6 +207,9 @@ class FlumeEventQueue {
     }
 
     elements.sync();
+
+    // Finish checkpoint
+    elementsBuffer.put(INDEX_CHECKPOINT_MARKER, CHECKPOINT_COMPLETE);
     mappedBuffer.force();
 
     return true;
@@ -207,7 +226,8 @@ class FlumeEventQueue {
     }
 
     long value = remove(0);
-    Preconditions.checkState(value != EMPTY);
+    Preconditions.checkState(value != EMPTY, "Empty value "
+          + channelNameDescriptor);
 
     FlumeEventPointer ptr = FlumeEventPointer.fromLong(value);
     decrementFileID(ptr.getFileID());
@@ -288,7 +308,7 @@ class FlumeEventQueue {
     AtomicInteger counter = fileIDCounts.get(fileID);
     if(counter == null) {
       Preconditions.checkState(fileIDCounts.size() < MAX_ACTIVE_LOGS,
-          "Too many active logs");
+          "Too many active logs " + channelNameDescriptor);
       counter = new AtomicInteger(0);
       fileIDCounts.put(fileID, counter);
     }
@@ -297,7 +317,8 @@ class FlumeEventQueue {
 
   protected void decrementFileID(int fileID) {
     AtomicInteger counter = fileIDCounts.get(fileID);
-    Preconditions.checkState(counter != null);
+    Preconditions.checkState(counter != null, "null counter "
+        + channelNameDescriptor);
     int count = counter.decrementAndGet();
     if(count == 0) {
       fileIDCounts.remove(fileID);
@@ -306,7 +327,8 @@ class FlumeEventQueue {
 
   protected long get(int index) {
     if (index < 0 || index > queueSize - 1) {
-      throw new IndexOutOfBoundsException(String.valueOf(index));
+      throw new IndexOutOfBoundsException(String.valueOf(index)
+          + channelNameDescriptor);
     }
 
     return elements.get(getPhysicalIndex(index));
@@ -314,7 +336,8 @@ class FlumeEventQueue {
 
   private void set(int index, long value) {
     if (index < 0 || index > queueSize - 1) {
-      throw new IndexOutOfBoundsException(String.valueOf(index));
+      throw new IndexOutOfBoundsException(String.valueOf(index)
+          + channelNameDescriptor);
     }
 
     elements.put(getPhysicalIndex(index), value);
@@ -322,7 +345,8 @@ class FlumeEventQueue {
 
   protected boolean add(int index, long value) {
     if (index < 0 || index > queueSize) {
-      throw new IndexOutOfBoundsException(String.valueOf(index));
+      throw new IndexOutOfBoundsException(String.valueOf(index)
+          + channelNameDescriptor);
     }
 
     if (queueSize == queueCapacity) {
@@ -352,7 +376,8 @@ class FlumeEventQueue {
 
   protected synchronized long remove(int index) {
     if (index < 0 || index > queueSize - 1) {
-      throw new IndexOutOfBoundsException(String.valueOf(index));
+      throw new IndexOutOfBoundsException(String.valueOf(index)
+          + channelNameDescriptor);
     }
     long value = get(index);
 
@@ -387,7 +412,7 @@ class FlumeEventQueue {
     elementsBuffer.put(INDEX_HEAD, queueHead);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Updating checkpoint headers: ts: " + timestamp + ", qs: "
-          + queueSize + ", qh: " + queueHead);
+          + queueSize + ", qh: " + queueHead + " " + channelNameDescriptor);
     }
   }
 
@@ -409,11 +434,13 @@ class FlumeEventQueue {
 
   static class LongBufferWrapper {
     private final LongBuffer buffer;
+    private final String channelNameDescriptor;
 
     Map<Integer, Long> overwriteMap = new HashMap<Integer, Long>();
 
-    LongBufferWrapper(LongBuffer lb) {
+    LongBufferWrapper(LongBuffer lb, String nameDescriptor) {
       buffer = lb;
+      channelNameDescriptor = nameDescriptor;
     }
 
     long get(int index) {
@@ -446,7 +473,7 @@ class FlumeEventQueue {
       }
 
       Preconditions.checkState(overwriteMap.size() == 0,
-          "concurrent update detected");
+          "concurrent update detected " + channelNameDescriptor);
     }
   }
 }

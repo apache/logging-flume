@@ -105,7 +105,8 @@ public class TestFileChannel {
         in.addAll(putEvents(channel, "restart", 1, 1));
       }
     } catch (ChannelException e) {
-      Assert.assertEquals("Cannot acquire capacity", e.getMessage());
+      Assert.assertEquals("Cannot acquire capacity. [channel=null]",
+          e.getMessage());
     }
     channel.stop();
     channel = createFileChannel();
@@ -122,7 +123,8 @@ public class TestFileChannel {
         in.addAll(putEvents(channel, "restart", 1, 1));
       }
     } catch (ChannelException e) {
-      Assert.assertEquals("Cannot acquire capacity", e.getMessage());
+      Assert.assertEquals("Cannot acquire capacity. [channel=null]",
+          e.getMessage());
     }
     Configurables.configure(channel, context);
     List<String> out = takeEvents(channel, 1, Integer.MAX_VALUE);

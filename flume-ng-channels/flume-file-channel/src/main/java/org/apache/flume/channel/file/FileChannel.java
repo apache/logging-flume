@@ -84,6 +84,13 @@ public class FileChannel extends BasicChannelSemantics {
   private final ThreadLocal<FileBackedTransaction> transactions =
       new ThreadLocal<FileBackedTransaction>();
   private int logWriteTimeout;
+  private String channelNameDescriptor = "[channel=unknown]";
+
+  @Override
+  public synchronized void setName(String name) {
+    channelNameDescriptor = "[channel=" + name + "]";
+    super.setName(name);
+  }
 
   /**
    * Transaction IDs should unique within a file channel
@@ -204,8 +211,9 @@ public class FileChannel extends BasicChannelSemantics {
 
       int depth = getDepth();
       Preconditions.checkState(queueRemaining.tryAcquire(depth),
-          "Unable to acquire " + depth + " permits");
-      LOG.info("Queue Size after replay: " + depth);
+          "Unable to acquire " + depth + " permits " + channelNameDescriptor);
+      LOG.info("Queue Size after replay: " + depth
+           + channelNameDescriptor);
       // shutdown hook flushes all data to disk and closes
       // file descriptors along with setting all closed flags
       if(!shutdownHookAdded) {
@@ -252,21 +260,21 @@ public class FileChannel extends BasicChannelSemantics {
 
   @Override
   protected BasicTransactionSemantics createTransaction() {
-    Preconditions.checkState(open, "Channel closed");
+    Preconditions.checkState(open, "Channel closed"  + channelNameDescriptor);
     FileBackedTransaction trans = transactions.get();
     if(trans != null && !trans.isClosed()) {
       Preconditions.checkState(false,
           "Thread has transaction which is still open: " +
-              trans.getStateAsString());
+              trans.getStateAsString()  + channelNameDescriptor);
     }
     trans = new FileBackedTransaction(log, TRANSACTION_ID.incrementAndGet(),
-        transactionCapacity, keepAlive, queueRemaining);
+        transactionCapacity, keepAlive, queueRemaining, getName());
     transactions.set(trans);
     return trans;
   }
 
   int getDepth() {
-    Preconditions.checkState(open, "Channel closed");
+    Preconditions.checkState(open, "Channel closed"  + channelNameDescriptor);
     Preconditions.checkNotNull(log, "log");
     FlumeEventQueue queue = log.getFlumeEventQueue();
     Preconditions.checkNotNull(queue, "queue");
@@ -297,8 +305,10 @@ public class FileChannel extends BasicChannelSemantics {
     private final Log log;
     private final FlumeEventQueue queue;
     private final Semaphore queueRemaining;
+    private final String channelNameDescriptor;
     public FileBackedTransaction(Log log, long transactionID,
-        int transCapacity, int keepAlive, Semaphore queueRemaining) {
+        int transCapacity, int keepAlive, Semaphore queueRemaining,
+        String name) {
       this.log = log;
       queue = log.getFlumeEventQueue();
       this.transactionID = transactionID;
@@ -306,6 +316,7 @@ public class FileChannel extends BasicChannelSemantics {
       this.queueRemaining = queueRemaining;
       putList = new LinkedBlockingDeque<FlumeEventPointer>(transCapacity);
       takeList = new LinkedBlockingDeque<FlumeEventPointer>(transCapacity);
+      channelNameDescriptor = "[channel=" + name + "]";
     }
     private boolean isClosed() {
       return State.CLOSED.equals(getState());
@@ -319,16 +330,19 @@ public class FileChannel extends BasicChannelSemantics {
         throw new ChannelException("Put queue for FileBackedTransaction " +
             "of capacity " + putList.size() + " full, consider " +
             "committing more frequently, increasing capacity or " +
-            "increasing thread count");
+            "increasing thread count. " + channelNameDescriptor);
       }
       if(!queueRemaining.tryAcquire(keepAlive, TimeUnit.SECONDS)) {
-        throw new ChannelException("Cannot acquire capacity");
+        throw new ChannelException("Cannot acquire capacity. "
+            + channelNameDescriptor);
       }
       try {
         FlumeEventPointer ptr = log.put(transactionID, event);
-        Preconditions.checkState(putList.offer(ptr));
+        Preconditions.checkState(putList.offer(ptr), "putList offer failed "
+             + channelNameDescriptor);
       } catch (IOException e) {
-        throw new ChannelException("Put failed due to IO error", e);
+        throw new ChannelException("Put failed due to IO error "
+                + channelNameDescriptor, e);
       }
     }
 
@@ -337,19 +351,22 @@ public class FileChannel extends BasicChannelSemantics {
       if(takeList.remainingCapacity() == 0) {
         throw new ChannelException("Take list for FileBackedTransaction, capacity " +
             takeList.size() + " full, consider committing more frequently, " +
-            "increasing capacity, or increasing thread count");
+            "increasing capacity, or increasing thread count. "
+               + channelNameDescriptor);
       }
       FlumeEventPointer ptr = queue.removeHead();
       if(ptr != null) {
         try {
           // first add to takeList so that if write to disk
           // fails rollback actually does it's work
-          Preconditions.checkState(takeList.offer(ptr));
+          Preconditions.checkState(takeList.offer(ptr), "takeList offer failed "
+               + channelNameDescriptor);
           log.take(transactionID, ptr); // write take to disk
           Event event = log.get(ptr);
           return event;
         } catch (IOException e) {
-          throw new ChannelException("Take failed due to IO error", e);
+          throw new ChannelException("Take failed due to IO error "
+                  + channelNameDescriptor, e);
         }
       }
       return null;
@@ -360,7 +377,8 @@ public class FileChannel extends BasicChannelSemantics {
       int puts = putList.size();
       int takes = takeList.size();
       if(puts > 0) {
-        Preconditions.checkState(takes == 0);
+        Preconditions.checkState(takes == 0, "nonzero puts and takes "
+                + channelNameDescriptor);
         synchronized (queue) {
           while(!putList.isEmpty()) {
             if(!queue.addTail(putList.removeFirst())) {
@@ -370,6 +388,7 @@ public class FileChannel extends BasicChannelSemantics {
               msg.append("added to the queue but the remaining portion ");
               msg.append("cannot be added. Those messages will be consumed ");
               msg.append("despite this transaction failing. Please report.");
+              msg.append(channelNameDescriptor);
               LOG.error(msg.toString());
               Preconditions.checkState(false, msg.toString());
             }
@@ -378,13 +397,15 @@ public class FileChannel extends BasicChannelSemantics {
         try {
           log.commitPut(transactionID);
         } catch (IOException e) {
-          throw new ChannelException("Commit failed due to IO error", e);
+          throw new ChannelException("Commit failed due to IO error "
+              + channelNameDescriptor, e);
         }
       } else if(takes > 0) {
         try {
           log.commitTake(transactionID);
         } catch (IOException e) {
-          throw new ChannelException("Commit failed due to IO error", e);
+          throw new ChannelException("Commit failed due to IO error "
+               + channelNameDescriptor, e);
         }
         queueRemaining.release(takes);
       }
@@ -397,17 +418,20 @@ public class FileChannel extends BasicChannelSemantics {
       int puts = putList.size();
       int takes = takeList.size();
       if(takes > 0) {
-        Preconditions.checkState(puts == 0);
+        Preconditions.checkState(puts == 0, "nonzero puts and takes "
+            + channelNameDescriptor);
         while(!takeList.isEmpty()) {
           Preconditions.checkState(queue.addHead(takeList.removeLast()),
-              "Queue add failed, this shouldn't be able to happen");
+              "Queue add failed, this shouldn't be able to happen "
+                   + channelNameDescriptor);
         }
       }
       queueRemaining.release(puts);
       try {
         log.rollback(transactionID);
       } catch (IOException e) {
-        throw new ChannelException("Commit failed due to IO error", e);
+        throw new ChannelException("Commit failed due to IO error "
+             + channelNameDescriptor, e);
       }
       putList.clear();
       takeList.clear();

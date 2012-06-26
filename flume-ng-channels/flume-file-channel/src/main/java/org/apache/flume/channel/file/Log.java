@@ -79,6 +79,8 @@ class Log {
   private final ReadLock checkpointReadLock = checkpointLock.readLock();
   private final WriteLock checkpointWriterLock = checkpointLock.writeLock();
   private int logWriteTimeout;
+  private final String channelName;
+  private final String channelNameDescriptor;
 
   static class Builder {
     private long bCheckpointInterval;
@@ -88,6 +90,7 @@ class Log {
     private File[] bLogDirs;
     private int bLogWriteTimeout =
         FileChannelConfiguration.DEFAULT_WRITE_TIMEOUT;
+    private String bName;
 
     Builder setCheckpointInterval(long interval) {
       bCheckpointInterval = interval;
@@ -119,14 +122,19 @@ class Log {
       return this;
     }
 
+    Builder setChannelName(String name) {
+      bName = name;
+      return this;
+    }
+
     Log build() throws IOException {
       return new Log(bCheckpointInterval, bMaxFileSize, bQueueCapacity,
-          bLogWriteTimeout, bCheckpointDir, bLogDirs);
+          bLogWriteTimeout, bCheckpointDir, bName, bLogDirs);
     }
   }
 
   private Log(long checkpointInterval, long maxFileSize, int queueCapacity,
-      int logWriteTimeout, File checkpointDir, File... logDirs)
+      int logWriteTimeout, File checkpointDir, String name, File... logDirs)
           throws IOException {
     Preconditions.checkArgument(checkpointInterval > 0,
         "checkpointInterval <= 0");
@@ -138,6 +146,9 @@ class Log {
             + checkpointDir + " could not be created");
     Preconditions.checkNotNull(logDirs, "logDirs");
     Preconditions.checkArgument(logDirs.length > 0, "logDirs empty");
+    this.channelName = name;
+    this.channelNameDescriptor = "[channel=" + name + "]";
+
     for (File logDir : logDirs) {
       Preconditions.checkArgument(logDir.isDirectory() || logDir.mkdirs(),
           "LogDir " + logDir + " could not be created");
@@ -214,7 +225,7 @@ class Log {
        * locations. We will read the last one written to disk.
        */
       queue = new FlumeEventQueue(queueCapacity,
-                        new File(checkpointDir, "checkpoint"));
+                        new File(checkpointDir, "checkpoint"), channelName);
 
       long ts = queue.getTimestamp();
       LOGGER.info("Last Checkpoint " + new Date(ts) +
@@ -324,7 +335,7 @@ class Log {
     if (!lockAcquired) {
       throw new IOException("Failed to obtain lock for writing to the log. "
           + "Try increasing the log write timeout value or disabling it by "
-          + "setting it to 0.");
+          + "setting it to 0. " + channelNameDescriptor);
     }
 
     try {
@@ -377,7 +388,7 @@ class Log {
     if (!lockAcquired) {
       throw new IOException("Failed to obtain lock for writing to the log. "
           + "Try increasing the log write timeout value or disabling it by "
-          + "setting it to 0.");
+          + "setting it to 0. " + channelNameDescriptor);
     }
 
     try {
@@ -426,7 +437,7 @@ class Log {
     if (!lockAcquired) {
       throw new IOException("Failed to obtain lock for writing to the log. "
           + "Try increasing the log write timeout value or disabling it by "
-          + "setting it to 0.");
+          + "setting it to 0. "+ channelNameDescriptor);
     }
 
     if(LOGGER.isDebugEnabled()) {
@@ -561,7 +572,7 @@ class Log {
     if (!lockAcquired) {
       throw new IOException("Failed to obtain lock for writing to the log. "
           + "Try increasing the log write timeout value or disabling it by "
-          + "setting it to 0.");
+          + "setting it to 0. " + channelNameDescriptor);
     }
 
     try {
@@ -629,7 +640,7 @@ class Log {
     if (!lockAcquired) {
       throw new IOException("Failed to obtain lock for writing to the log. "
           + "Try increasing the log write timeout value or disabling it by "
-          + "setting it to 0.");
+          + "setting it to 0. "+ channelNameDescriptor);
     }
 
     try {
@@ -762,7 +773,8 @@ class Log {
     FileLock lock = tryLock(dir);
     if (lock == null) {
       String msg = "Cannot lock " + dir
-          + ". The directory is already locked.";
+          + ". The directory is already locked. "
+          + channelNameDescriptor;
       LOGGER.info(msg);
       throw new IOException(msg);
     }

@@ -302,7 +302,8 @@ class LogFile {
       version = fileHandle.readInt();
       if(version != VERSION) {
         throw new IOException("Version is " + Integer.toHexString(version) +
-            " expected " + Integer.toHexString(VERSION));
+            " expected " + Integer.toHexString(VERSION)
+            + " file: " + file.getCanonicalPath());
       }
       logFileID = fileHandle.readInt();
       lastCheckpointPosition = fileHandle.readLong();
