@@ -51,7 +51,7 @@ import com.google.common.collect.Maps;
 class FlumeEventQueue {
   private static final Logger LOG = LoggerFactory
   .getLogger(FlumeEventQueue.class);
-  private static final int VERSION = 2;
+  private static final long VERSION = 2;
   private static final int EMPTY = 0;
   private static final int INDEX_VERSION = 0;
   private static final int INDEX_TIMESTAMP = 1;
@@ -60,6 +60,7 @@ class FlumeEventQueue {
   private static final int INDEX_ACTIVE_LOG = 4;
   private static final int MAX_ACTIVE_LOGS = 1024;
   private static final int HEADER_SIZE = 1028;
+  private static final int MAX_ALLOC_BUFFER_SIZE = 2*1024*1024; // 2MB
   private final Map<Integer, AtomicInteger> fileIDCounts = Maps.newHashMap();
   private final MappedByteBuffer mappedBuffer;
   private final LongBuffer elementsBuffer;
@@ -92,11 +93,21 @@ class FlumeEventQueue {
       // Allocate
       LOG.info("Event queue has zero allocation. Initializing to capacity. "
           + "Please wait...");
-      checkpointFile.writeLong(VERSION);
-      int absoluteCapacity = capacity + HEADER_SIZE;
-      for (int i = 1; i < absoluteCapacity; i++) {
-        checkpointFile.writeLong(EMPTY);
+      int totalBytes = (capacity + HEADER_SIZE)*8;
+      if (totalBytes <= MAX_ALLOC_BUFFER_SIZE) {
+        checkpointFile.write(new byte[totalBytes]);
+      } else {
+        byte[] initBuffer = new byte[MAX_ALLOC_BUFFER_SIZE];
+        int remainingBytes = totalBytes;
+        while (remainingBytes >= MAX_ALLOC_BUFFER_SIZE) {
+          checkpointFile.write(initBuffer);
+          remainingBytes -= MAX_ALLOC_BUFFER_SIZE;
+        }
+        if (remainingBytes > 0) {
+          checkpointFile.write(initBuffer, 0, remainingBytes);
+        }
       }
+
       LOG.info("Event queue allocation complete");
       freshlyAllocated = true;
     } else {
