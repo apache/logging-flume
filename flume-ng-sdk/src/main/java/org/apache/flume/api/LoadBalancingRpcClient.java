@@ -66,8 +66,8 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
 
     while (it.hasNext()) {
       HostInfo host = it.next();
-      RpcClient client = getClient(host);
       try {
+        RpcClient client = getClient(host);
         client.append(event);
         eventSent = true;
         break;
