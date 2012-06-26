@@ -114,7 +114,8 @@ public class TestLog {
     log.commitPut(transactionID);
     log.close();
     log = new Log.Builder().setCheckpointInterval(
-        Long.MAX_VALUE).setMaxFileSize(LogFile.MAX_FILE_SIZE).setQueueSize(
+        Long.MAX_VALUE).setMaxFileSize(
+            FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE).setQueueSize(
             CAPACITY).setCheckpointDir(checkpointDir).setLogDirs(
                 dataDirs).build();
     log.replay();
@@ -133,7 +134,8 @@ public class TestLog {
     log.rollback(transactionID); // rolled back so it should not be replayed
     log.close();
     log = new Log.Builder().setCheckpointInterval(
-        Long.MAX_VALUE).setMaxFileSize(LogFile.MAX_FILE_SIZE).setQueueSize(
+        Long.MAX_VALUE).setMaxFileSize(
+            FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE).setQueueSize(
             CAPACITY).setCheckpointDir(checkpointDir).setLogDirs(
                 dataDirs).build();
     log.replay();
@@ -156,7 +158,8 @@ public class TestLog {
     log.commitTake(takeTransactionID);
     log.close();
     new Log.Builder().setCheckpointInterval(
-        Long.MAX_VALUE).setMaxFileSize(LogFile.MAX_FILE_SIZE).setQueueSize(
+        Long.MAX_VALUE).setMaxFileSize(
+            FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE).setQueueSize(
             1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs).build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
@@ -178,7 +181,8 @@ public class TestLog {
     log.rollback(takeTransactionID);
     log.close();
     new Log.Builder().setCheckpointInterval(
-        Long.MAX_VALUE).setMaxFileSize(LogFile.MAX_FILE_SIZE).setQueueSize(
+        Long.MAX_VALUE).setMaxFileSize(
+            FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE).setQueueSize(
             1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs).build();
     log.replay();
     takeAndVerify(eventPointerIn, eventIn);
@@ -190,7 +194,8 @@ public class TestLog {
     log.commitPut(putTransactionID);
     log.close();
     new Log.Builder().setCheckpointInterval(
-        Long.MAX_VALUE).setMaxFileSize(LogFile.MAX_FILE_SIZE).setQueueSize(
+        Long.MAX_VALUE).setMaxFileSize(
+            FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE).setQueueSize(
             1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs).build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
@@ -204,7 +209,8 @@ public class TestLog {
     log.commitTake(putTransactionID);
     log.close();
     new Log.Builder().setCheckpointInterval(
-        Long.MAX_VALUE).setMaxFileSize(LogFile.MAX_FILE_SIZE).setQueueSize(
+        Long.MAX_VALUE).setMaxFileSize(
+            FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE).setQueueSize(
             1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs).build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
@@ -218,7 +224,8 @@ public class TestLog {
     log.rollback(putTransactionID);
     log.close();
     new Log.Builder().setCheckpointInterval(
-        Long.MAX_VALUE).setMaxFileSize(LogFile.MAX_FILE_SIZE).setQueueSize(
+        Long.MAX_VALUE).setMaxFileSize(
+            FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE).setQueueSize(
             1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs).build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();

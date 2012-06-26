@@ -50,8 +50,6 @@ class LogFile {
    */
   private static final ByteBuffer FILL = DirectMemoryUtils.
       allocate(1024 * 1024); // preallocation, 1MB
-  public static final long MAX_FILE_SIZE =
-      Integer.MAX_VALUE - (1024L * 1024L);
 
   private static final byte OP_RECORD = Byte.MAX_VALUE;
   private static final byte OP_EOF = Byte.MIN_VALUE;
@@ -77,7 +75,8 @@ class LogFile {
     Writer(File file, int logFileID, long maxFileSize) throws IOException {
       this.file = file;
       fileID = logFileID;
-      this.maxFileSize = Math.min(maxFileSize, MAX_FILE_SIZE);
+      this.maxFileSize = Math.min(maxFileSize,
+          FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE);
       writeFileHandle = new RandomAccessFile(file, "rw");
       writeFileHandle.writeInt(VERSION);
       writeFileHandle.writeInt(fileID);
@@ -332,8 +331,11 @@ class LogFile {
     Pair<Integer, TransactionEventRecord> next() throws IOException {
       try {
         long position = fileChannel.position();
-        Preconditions.checkState(position < MAX_FILE_SIZE,
-            String.valueOf(position));
+        if (position > FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE) {
+          LOG.warn("File position exceeds the threshold: "
+                + FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE
+                + ", position: " + position);
+        }
         int offset = (int) position;
         byte operation = fileHandle.readByte();
         if(operation != OP_RECORD) {

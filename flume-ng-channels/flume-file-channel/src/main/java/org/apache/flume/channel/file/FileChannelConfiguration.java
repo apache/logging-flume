@@ -40,10 +40,11 @@ public class FileChannelConfiguration {
   public static final String CHECKPOINT_INTERVAL = "checkpointInterval";
   public static final long DEFAULT_CHECKPOINT_INTERVAL = 30L * 1000L;
   /**
-   * Max file size for data files, cannot exceed the default. Default: 2GB
+   * Max file size for data files, cannot exceed the default. Default~ 1.5GB
    */
   public static final String MAX_FILE_SIZE = "maxFileSize";
-  public static final long DEFAULT_MAX_FILE_SIZE = LogFile.MAX_FILE_SIZE;
+  public static final long DEFAULT_MAX_FILE_SIZE =
+        Integer.MAX_VALUE - (500L * 1024L * 1024L); // ~1.52 G
   /**
    * Maximum capacity of the channel. This number needs to be configured
    * in line with -XX:MaxDirectMemorySize. {@link FileChannel}
@@ -63,5 +64,5 @@ public class FileChannelConfiguration {
    * checkpoint is enqueued or in progress.
    */
   public static final String LOG_WRITE_TIMEOUT = "write-timeout";
-  public static final int DEFAULT_WRITE_TIMEOUT = 3;
+  public static final int DEFAULT_WRITE_TIMEOUT = 10;
 }
