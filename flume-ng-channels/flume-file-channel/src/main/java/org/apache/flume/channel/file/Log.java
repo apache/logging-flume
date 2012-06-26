@@ -273,10 +273,31 @@ class Log {
   FlumeEvent get(FlumeEventPointer pointer) throws IOException,
   InterruptedException {
     Preconditions.checkState(open, "Log is closed");
-    int id = pointer.getFileID();
-    LogFile.RandomReader logFile = idLogFileMap.get(id);
-    Preconditions.checkNotNull(logFile, "LogFile is null for id " + id);
-    return logFile.get(pointer.getOffset());
+
+    boolean lockAcquired = false;
+    try {
+      lockAcquired = checkpointReadLock.tryLock(logWriteTimeout, TimeUnit.SECONDS);
+    } catch (InterruptedException ex) {
+      LOGGER.warn("Interrupted while waiting for log write lock", ex);
+      Thread.currentThread().interrupt();
+    }
+
+    if (!lockAcquired) {
+      throw new IOException("Failed to obtain lock for writing to the log. "
+          + "Try increasing the log write timeout value or disabling it by "
+          + "setting it to 0.");
+    }
+
+    try {
+      int id = pointer.getFileID();
+      LogFile.RandomReader logFile = idLogFileMap.get(id);
+      Preconditions.checkNotNull(logFile, "LogFile is null for id " + id);
+      return logFile.get(pointer.getOffset());
+    } finally {
+      if (lockAcquired) {
+        checkpointReadLock.unlock();
+      }
+    }
   }
 
   /**

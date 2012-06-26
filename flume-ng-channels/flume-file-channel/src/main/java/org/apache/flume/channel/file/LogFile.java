@@ -287,6 +287,7 @@ class LogFile {
     private final int logFileID;
     private final long lastCheckpointPosition;
     private final long lastCheckpointTimestamp;
+    private final File file;
 
     /**
      * Construct a Sequential Log Reader object
@@ -295,6 +296,7 @@ class LogFile {
      * @throws EOFException if the file is empty
      */
     SequentialReader(File file) throws IOException, EOFException {
+      this.file = file;
       fileHandle = new RandomAccessFile(file, "r");
       fileChannel = fileHandle.getChannel();
       version = fileHandle.readInt();
@@ -318,14 +320,14 @@ class LogFile {
     void skipToLastCheckpointPosition(long checkpointTimestamp)
         throws IOException {
       if (lastCheckpointPosition > 0L
-          && lastCheckpointTimestamp == checkpointTimestamp) {
+          && lastCheckpointTimestamp <= checkpointTimestamp) {
         LOG.info("fast-forward to checkpoint position: "
                   + lastCheckpointPosition);
         fileChannel.position(lastCheckpointPosition);
       } else {
-        LOG.warn("Checkpoint was not done or did not match."
-            + "Replaying the entire log: file = " + lastCheckpointTimestamp
-            + ", queue: " + checkpointTimestamp);
+        LOG.warn("Checkpoint for file(" + file.getAbsolutePath() + ") "
+            + "is: " + lastCheckpointTimestamp + ", which is beyond the "
+            + "requested checkpoint time: " + checkpointTimestamp + ". ");
       }
     }
     Pair<Integer, TransactionEventRecord> next() throws IOException {
