@@ -160,7 +160,8 @@ public class TestAbstractLogicalNodeManager {
 
     generatorSource.setChannelProcessor(new ChannelProcessor(rcs));
 
-    Sink nullSink = new NullSink();
+    NullSink nullSink = new NullSink();
+    nullSink.configure(new Context());
     nullSink.setChannel(channel);
 
     nodeManager.add(SourceRunner.forSource(generatorSource));
@@ -200,7 +201,8 @@ public class TestAbstractLogicalNodeManager {
 
     source.setChannelProcessor(new ChannelProcessor(rcs));
 
-    Sink sink = new NullSink();
+    NullSink sink = new NullSink();
+    sink.configure(new Context());
     sink.setChannel(channel);
 
     nodeManager.add(SourceRunner.forSource(source));

@@ -116,8 +116,11 @@ public class TestRecoverableMemoryChannel {
   }
   @Test
   public void testRollbackWithSink() throws Exception {
-    final NullSink sink = new NullSink();
-    sink.setChannel(channel);
+    final NullSink nullSink = new NullSink();
+    Context ctx = new Context();
+    ctx.put("batchSize", "1");
+    nullSink.configure(ctx);
+    nullSink.setChannel(channel);
     final int numItems = 99;
     Thread t = new Thread() {
       @Override
@@ -125,7 +128,7 @@ public class TestRecoverableMemoryChannel {
         int count = 0;
         while(count++ < numItems) {
           try {
-            sink.process();
+            nullSink.process();
             Thread.sleep(1);
           } catch(EventDeliveryException e) {
             break;

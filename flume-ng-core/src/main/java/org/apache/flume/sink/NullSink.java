@@ -17,12 +17,15 @@
  */
 package org.apache.flume.sink;
 
+import com.google.common.base.Preconditions;
 import org.apache.flume.Channel;
+import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Sink;
 import org.apache.flume.Transaction;
+import org.apache.flume.conf.Configurable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,60 +47,83 @@ import org.slf4j.LoggerFactory;
  * TODO
  * </p>
  */
-public class NullSink extends AbstractSink {
+public class NullSink extends AbstractSink implements Configurable {
 
   private static final Logger logger = LoggerFactory.getLogger(NullSink.class);
 
+  private static final int DFLT_BATCH_SIZE = 100;
+
   private CounterGroup counterGroup;
+  private int batchSize = DFLT_BATCH_SIZE;
 
   public NullSink() {
     counterGroup = new CounterGroup();
   }
 
   @Override
+  public void configure(Context context) {
+    batchSize = context.getInteger("batchSize", DFLT_BATCH_SIZE);
+    logger.debug(this.getName() + " " +
+        "batch size set to " + String.valueOf(batchSize));
+    Preconditions.checkArgument(batchSize > 0, "Batch size must be > 0");
+  }
+
+  @Override
   public Status process() throws EventDeliveryException {
+    Status status = Status.READY;
+
     Channel channel = getChannel();
     Transaction transaction = channel.getTransaction();
     Event event = null;
 
     try {
       transaction.begin();
-      event = channel.take();
-      transaction.commit();
-
-      if (event != null) {
-        // logger.debug("Consumed the event: " + event);
-        counterGroup.incrementAndGet("events.successful");
-        return Status.READY;
-      } else {
-        return Status.BACKOFF;
+      int i = 0;
+      for (i = 0; i < batchSize; i++) {
+        event = channel.take();
+        if(event == null) {
+          status = Status.BACKOFF;
+          break;
+        }
       }
+      transaction.commit();
+      counterGroup.addAndGet("events.success", (long) Math.min(batchSize, i));
+      counterGroup.incrementAndGet("transaction.success");
     } catch (Exception ex) {
       transaction.rollback();
-      counterGroup.incrementAndGet("events.failed");
+      counterGroup.incrementAndGet("transaction.failed");
       logger.error("Failed to deliver event. Exception follows.", ex);
       throw new EventDeliveryException("Failed to deliver event: " + event, ex);
     } finally {
       transaction.close();
     }
+
+    return status;
   }
 
   @Override
   public void start() {
-    logger.info("Null sink starting");
+    logger.info("Starting {}...", this);
 
+    counterGroup.setName(this.getName());
     super.start();
 
-    logger.debug("Null sink started");
+    logger.info("Null sink {} started.", getName());
   }
 
   @Override
   public void stop() {
-    logger.info("Null sink stopping");
+    logger.info("Null sink {} stopping...", getName());
 
     super.stop();
 
-    logger.info("Null sink stopped. Event metrics:{}", counterGroup);
+    logger.info("Null sink {} stopped. Event metrics: {}",
+        getName(), counterGroup);
+  }
+
+  @Override
+  public String toString() {
+    return "NullSink " + getName() + " { batchSize: " + batchSize + " }";
   }
 
 }

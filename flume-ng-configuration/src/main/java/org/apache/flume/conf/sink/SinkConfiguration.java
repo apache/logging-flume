@@ -80,7 +80,7 @@ public class SinkConfiguration extends ComponentConfiguration {
      *
      * @see NullSink
      */
-    NULL(null),
+    NULL("org.apache.flume.conf.sink.NullSinkConfiguration"),
 
     /**
      * Logger sink
