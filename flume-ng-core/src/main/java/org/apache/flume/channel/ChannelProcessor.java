@@ -185,9 +185,16 @@ public class ChannelProcessor implements Configurable {
         }
 
         tx.commit();
-      } catch (ChannelException ex) {
+      } catch (Throwable t) {
+        LOG.error("Caught exception during Transaction", t);
         tx.rollback();
-        throw ex;
+        if (t instanceof ChannelException) {
+          throw (ChannelException) t;
+        } else if (t instanceof Error) {
+          throw (Error) t;
+        } else {
+          throw new ChannelException("Uncaught throwable", t);
+        }
       } finally {
         if (tx != null) {
           tx.close();
@@ -209,9 +216,12 @@ public class ChannelProcessor implements Configurable {
         }
 
         tx.commit();
-      } catch (ChannelException ex) {
+      } catch (Throwable t) {
         tx.rollback();
-        LOG.warn("Unable to put event on optional channel", ex);
+        LOG.warn("Unable to put event on optional channel", t);
+        if (t instanceof Error) {
+          throw (Error) t;
+        }
       } finally {
         if (tx != null) {
           tx.close();

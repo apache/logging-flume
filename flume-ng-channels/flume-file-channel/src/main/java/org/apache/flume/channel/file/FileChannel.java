@@ -203,6 +203,7 @@ public class FileChannel extends BasicChannelSemantics {
       builder.setLogWriteTimeout(logWriteTimeout);
       builder.setCheckpointDir(checkpointDir);
       builder.setLogDirs(dataDirs);
+      builder.setChannelName(getName());
 
       log = builder.build();
 
