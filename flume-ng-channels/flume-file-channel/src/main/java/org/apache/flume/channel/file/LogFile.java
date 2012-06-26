@@ -72,21 +72,51 @@ class LogFile {
 
     private volatile boolean open;
 
-    Writer(File file, int logFileID, long maxFileSize) throws IOException {
+    Writer(File file, int logFileID, long maxFileSize)
+        throws IOException {
+      this(file, logFileID, maxFileSize, true);
+    }
+
+    Writer(File file, int logFileID, long maxFileSize, boolean active)
+        throws IOException {
       this.file = file;
       fileID = logFileID;
       this.maxFileSize = Math.min(maxFileSize,
           FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE);
       writeFileHandle = new RandomAccessFile(file, "rw");
-      writeFileHandle.writeInt(VERSION);
-      writeFileHandle.writeInt(fileID);
-      checkpointPositionMarker = writeFileHandle.getFilePointer();
-      // checkpoint marker
-      writeFileHandle.writeLong(0L);
-      // timestamp placeholder
-      writeFileHandle.writeLong(0L);
-      writeFileChannel = writeFileHandle.getChannel();
-      writeFileChannel.force(true);
+      if (active) {
+        writeFileHandle.writeInt(VERSION);
+        writeFileHandle.writeInt(fileID);
+        checkpointPositionMarker = writeFileHandle.getFilePointer();
+        // checkpoint marker
+        writeFileHandle.writeLong(0L);
+        // timestamp placeholder
+        writeFileHandle.writeLong(0L);
+        writeFileChannel = writeFileHandle.getChannel();
+        writeFileChannel.force(true);
+      } else {
+        int version = writeFileHandle.readInt();
+        if (version != VERSION) {
+          throw new IOException("The version of log file: "
+              + file.getCanonicalPath() + " is different from expected "
+              + " version: expected = " + VERSION + ", found = " + version);
+        }
+        int fid = writeFileHandle.readInt();
+        if (fid != logFileID) {
+          throw new IOException("The file id of log file: "
+              + file.getCanonicalPath() + " is different from expected "
+              + " id: expected = " + logFileID + ", found = " + fid);
+        }
+        checkpointPositionMarker = writeFileHandle.getFilePointer();
+        long chkptMarker = writeFileHandle.readLong();
+        long chkptTimestamp = writeFileHandle.readLong();
+        LOG.info("File: " + file.getCanonicalPath() + " was last checkpointed "
+             + "at position: " + chkptMarker + ", ts: " + chkptTimestamp);
+        writeFileChannel = writeFileHandle.getChannel();
+
+        // Jump to the last position
+        writeFileChannel.position(chkptMarker);
+      }
       LOG.info("Opened " + file);
       open = true;
     }
@@ -96,7 +126,7 @@ class LogFile {
     }
 
     synchronized void markCheckpoint(long timestamp) throws IOException {
-      long currentPosition = writeFileChannel.size();
+      long currentPosition = writeFileChannel.position();
       writeFileHandle.seek(checkpointPositionMarker);
       writeFileHandle.writeLong(currentPosition);
       writeFileHandle.writeLong(timestamp);
@@ -342,6 +372,7 @@ class LogFile {
         int offset = (int) position;
         byte operation = fileHandle.readByte();
         if(operation != OP_RECORD) {
+          LOG.info("Encountered non op-record at " + offset);
           return null;
         }
         TransactionEventRecord record = TransactionEventRecord.

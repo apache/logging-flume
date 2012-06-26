@@ -711,7 +711,9 @@ class Log {
           LogFile.RandomReader reader = idLogFileMap.remove(id);
           File file = reader.getFile();
           reader.close();
-          LogFile.Writer writer = new LogFile.Writer(file, id, maxFileSize);
+          // Open writer in inactive mode
+          LogFile.Writer writer =
+              new LogFile.Writer(file, id, maxFileSize, false);
           writer.markCheckpoint(ts);
           writer.close();
           reader = new LogFile.RandomReader(file);
