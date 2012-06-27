@@ -77,8 +77,6 @@ public class FileChannel extends BasicChannelSemantics {
   private File checkpointDir;
   private File[] dataDirs;
   private Log log;
-  private boolean shutdownHookAdded;
-  private Thread shutdownHook;
   private volatile boolean open;
   private Semaphore queueRemaining;
   private final ThreadLocal<FileBackedTransaction> transactions =
@@ -194,7 +192,7 @@ public class FileChannel extends BasicChannelSemantics {
 
   @Override
   public synchronized void start() {
-    LOG.info("Starting FileChannel with dataDir "  + Arrays.toString(dataDirs));
+    LOG.info("Starting {}...", this);
     try {
       Builder builder = new Log.Builder();
       builder.setCheckpointInterval(checkpointInterval);
@@ -213,28 +211,8 @@ public class FileChannel extends BasicChannelSemantics {
       int depth = getDepth();
       Preconditions.checkState(queueRemaining.tryAcquire(depth),
           "Unable to acquire " + depth + " permits " + channelNameDescriptor);
-      LOG.info("Queue Size after replay: " + depth
+      LOG.info("Queue Size after replay: " + depth + " "
            + channelNameDescriptor);
-      // shutdown hook flushes all data to disk and closes
-      // file descriptors along with setting all closed flags
-      if(!shutdownHookAdded) {
-        shutdownHookAdded = true;
-        final FileChannel fileChannel = this;
-        LOG.info("Adding shutdownhook for " + fileChannel);
-        shutdownHook = new Thread() {
-          @Override
-          public void run() {
-            String desc = Arrays.toString(fileChannel.dataDirs);
-            LOG.info("Closing FileChannel " + desc);
-            try {
-              fileChannel.close();
-            } catch (Exception e) {
-              LOG.error("Error closing fileChannel " + desc, e);
-            }
-          }
-        };
-        Runtime.getRuntime().addShutdownHook(shutdownHook);
-      }
     } catch (Exception ex) {
       open = false;
       LOG.error("Failed to start the file channel", ex);
@@ -244,24 +222,19 @@ public class FileChannel extends BasicChannelSemantics {
 
   @Override
   public synchronized void stop() {
-    LOG.info("Stopping FileChannel with dataDir " +  Arrays.toString(dataDirs));
-    try {
-      if(shutdownHookAdded && shutdownHook != null) {
-        Runtime.getRuntime().removeShutdownHook(shutdownHook);
-        shutdownHookAdded = false;
-        shutdownHook = null;
-      }
-    } catch (Exception ex) {
-      LOG.debug("Failed to remove shutdown hook", ex);
-    } finally {
-      close();
-    }
+    LOG.info("Stopping {}...", this);
+    close();
     super.stop();
+  }
+
+  public String toString() {
+    return "FileChannel " + getName() + " { dataDirs: " +
+        Arrays.toString(dataDirs) + " }";
   }
 
   @Override
   protected BasicTransactionSemantics createTransaction() {
-    Preconditions.checkState(open, "Channel closed"  + channelNameDescriptor);
+    Preconditions.checkState(open, "Channel closed " + channelNameDescriptor);
     FileBackedTransaction trans = transactions.get();
     if(trans != null && !trans.isClosed()) {
       Preconditions.checkState(false,
