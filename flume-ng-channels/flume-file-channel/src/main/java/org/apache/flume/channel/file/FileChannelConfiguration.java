@@ -65,4 +65,11 @@ public class FileChannelConfiguration {
    */
   public static final String LOG_WRITE_TIMEOUT = "write-timeout";
   public static final int DEFAULT_WRITE_TIMEOUT = 10;
+
+  /**
+   * The amount of time in seconds the channel should wait to write the
+   * checkpoint when some other operation(s) are enqueued or in progress.
+   */
+  public static final String CHECKPOINT_WRITE_TIMEOUT = "checkpoint-timeout";
+  public static final int DEFAULT_CHECKPOINT_WRITE_TIMEOUT = 600;
 }

@@ -82,6 +82,7 @@ public class FileChannel extends BasicChannelSemantics {
   private final ThreadLocal<FileBackedTransaction> transactions =
       new ThreadLocal<FileBackedTransaction>();
   private int logWriteTimeout;
+  private int checkpointWriteTimeout;
   private String channelNameDescriptor = "[channel=unknown]";
 
   @Override
@@ -180,6 +181,19 @@ public class FileChannel extends BasicChannelSemantics {
       logWriteTimeout = FileChannelConfiguration.DEFAULT_WRITE_TIMEOUT;
     }
 
+    checkpointWriteTimeout = context.getInteger(
+        FileChannelConfiguration.CHECKPOINT_WRITE_TIMEOUT,
+        FileChannelConfiguration.DEFAULT_CHECKPOINT_WRITE_TIMEOUT);
+
+    if (checkpointWriteTimeout < 0) {
+      LOG.warn("Checkpoint write time out is invalid: " + checkpointWriteTimeout
+          + ", using default: "
+          + FileChannelConfiguration.DEFAULT_CHECKPOINT_WRITE_TIMEOUT);
+
+      checkpointWriteTimeout =
+          FileChannelConfiguration.DEFAULT_CHECKPOINT_WRITE_TIMEOUT;
+    }
+
 
     if(queueRemaining == null) {
       queueRemaining = new Semaphore(capacity, true);
@@ -202,7 +216,7 @@ public class FileChannel extends BasicChannelSemantics {
       builder.setCheckpointDir(checkpointDir);
       builder.setLogDirs(dataDirs);
       builder.setChannelName(getName());
-
+      builder.setCheckpointWriteTimeout(checkpointWriteTimeout);
       log = builder.build();
 
       log.replay();
