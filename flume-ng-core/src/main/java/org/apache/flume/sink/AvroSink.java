@@ -141,9 +141,9 @@ public class AvroSink extends AbstractSink implements Configurable {
   private void createConnection() throws FlumeException {
 
     if (client == null) {
-      logger.debug(
-          "Building RpcClient with hostname:{}, port:{}, batchSize:{}",
-          new Object[] { hostname, port, batchSize });
+      logger.debug("Avro sink {}: Building RpcClient with hostname: {}, " +
+          "port: {}, batchSize: {}",
+          new Object[] { getName(), hostname, port, batchSize });
 
        client = RpcClientFactory.getDefaultInstance(hostname, port, batchSize);
     }
@@ -152,12 +152,12 @@ public class AvroSink extends AbstractSink implements Configurable {
 
   private void destroyConnection() {
     if (client != null) {
-      logger.debug("Closing avro client:{}", client);
+      logger.debug("Avro sink {} closing avro client: {}", getName(), client);
       try {
         client.close();
       } catch (FlumeException e) {
-        logger.error("Attempt to close avro client failed. Exception follows.",
-            e);
+        logger.error("Avro sink " + getName() + ": Attempt to close avro " +
+            "client failed. Exception follows.", e);
       }
     }
 
@@ -190,7 +190,7 @@ public class AvroSink extends AbstractSink implements Configurable {
    */
   @Override
   public void start() {
-    logger.info("Avro sink starting");
+    logger.info("Starting {}...", this);
 
     try {
       createConnection();
@@ -205,18 +205,24 @@ public class AvroSink extends AbstractSink implements Configurable {
 
     super.start();
 
-    logger.debug("Avro sink started");
+    logger.info("Avro sink {} started.", getName());
   }
 
   @Override
   public void stop() {
-    logger.info("Avro sink stopping");
+    logger.info("Avro sink {} stopping...", getName());
 
     destroyConnection();
 
     super.stop();
 
-    logger.debug("Avro sink stopped. Metrics:{}", counterGroup);
+    logger.info("Avro sink {} stopped. Metrics: {}", getName(), counterGroup);
+  }
+
+  @Override
+  public String toString() {
+    return "AvroSink " + getName() + " { host: " + hostname + ", port: " +
+        port + " }";
   }
 
   @Override
@@ -255,7 +261,8 @@ public class AvroSink extends AbstractSink implements Configurable {
 
     } catch (ChannelException e) {
       transaction.rollback();
-      logger.error("Unable to get event from channel. Exception follows.", e);
+      logger.error("Avro Sink " + getName() + ": Unable to get event from" +
+          " channel. Exception follows.", e);
       status = Status.BACKOFF;
 
     } catch (Exception ex) {

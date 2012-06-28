@@ -145,7 +145,7 @@ public class RpcClientFactory {
 
     private ClientType(String className) {
       this.clientClassName = className;
-  }
+    }
 
     protected String getClientClassName() {
       return this.clientClassName;
