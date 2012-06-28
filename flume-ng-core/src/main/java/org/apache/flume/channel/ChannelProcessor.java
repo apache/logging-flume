@@ -186,14 +186,14 @@ public class ChannelProcessor implements Configurable {
 
         tx.commit();
       } catch (Throwable t) {
-        LOG.error("Caught exception during Transaction", t);
         tx.rollback();
-        if (t instanceof ChannelException) {
-          throw (ChannelException) t;
-        } else if (t instanceof Error) {
+        if (t instanceof Error) {
+          LOG.error("Error while writing to required channel: " +
+              reqChannel, t);
           throw (Error) t;
         } else {
-          throw new ChannelException("Uncaught throwable", t);
+          throw new ChannelException("Unable to put batch on required " +
+              "channel: " + reqChannel, t);
         }
       } finally {
         if (tx != null) {
@@ -218,7 +218,7 @@ public class ChannelProcessor implements Configurable {
         tx.commit();
       } catch (Throwable t) {
         tx.rollback();
-        LOG.warn("Unable to put event on optional channel", t);
+        LOG.error("Unable to put batch on optional channel: " + optChannel, t);
         if (t instanceof Error) {
           throw (Error) t;
         }
@@ -251,21 +251,25 @@ public class ChannelProcessor implements Configurable {
 
     // Process required channels
     List<Channel> requiredChannels = selector.getRequiredChannels(event);
-    for (Channel requiredChannel : requiredChannels) {
-      Transaction tx = requiredChannel.getTransaction();
+    for (Channel reqChannel : requiredChannels) {
+      Transaction tx = reqChannel.getTransaction();
       Preconditions.checkNotNull(tx, "Transaction object must not be null");
       try {
         tx.begin();
 
-        requiredChannel.put(event);
+        reqChannel.put(event);
 
         tx.commit();
-      } catch (ChannelException ex) {
+      } catch (Throwable t) {
         tx.rollback();
-        throw ex;
-      } catch (Exception e) {
-        tx.rollback();
-        throw new ChannelException("Unexpected error", e);
+        if (t instanceof Error) {
+          LOG.error("Error while writing to required channel: " +
+              reqChannel, t);
+          throw (Error) t;
+        } else {
+          throw new ChannelException("Unable to put event on required " +
+              "channel: " + reqChannel, t);
+        }
       } finally {
         if (tx != null) {
           tx.close();
@@ -275,19 +279,21 @@ public class ChannelProcessor implements Configurable {
 
     // Process optional channels
     List<Channel> optionalChannels = selector.getOptionalChannels(event);
-    for (Channel optionalChannel : optionalChannels) {
+    for (Channel optChannel : optionalChannels) {
       Transaction tx = null;
       try {
-        tx = optionalChannel.getTransaction();
+        tx = optChannel.getTransaction();
         tx.begin();
 
-        optionalChannel.put(event);
+        optChannel.put(event);
 
         tx.commit();
-      } catch (ChannelException ex) {
+      } catch (Throwable t) {
         tx.rollback();
-        LOG.warn("Unable to put event on optional channel "
-            + optionalChannel.getName(), ex);
+        LOG.error("Unable to put event on optional channel: " + optChannel, t);
+        if (t instanceof Error) {
+          throw (Error) t;
+        }
       } finally {
         if (tx != null) {
           tx.close();

@@ -135,7 +135,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
 
   @Override
   public void start() {
-    logger.info("Avro source starting:{}", this);
+    logger.info("Starting {}...", this);
 
     Responder responder = new SpecificResponder(AvroSourceProtocol.class, this);
     if(maxThreads <= 0) {
@@ -143,7 +143,8 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
               new InetSocketAddress(bindAddress, port));
     } else {
       server = new NettyServer(responder, new InetSocketAddress(bindAddress, port),
-              new NioServerSocketChannelFactory(Executors.newFixedThreadPool(maxThreads),
+              new NioServerSocketChannelFactory(
+                      Executors.newCachedThreadPool(),
                       Executors.newFixedThreadPool(maxThreads)));
     }
 
@@ -151,30 +152,31 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
 
     super.start();
 
-    logger.debug("Avro source started");
+    logger.info("Avro source {} started.", getName());
   }
 
   @Override
   public void stop() {
-    logger.info("Avro source stopping:{}", this);
+    logger.info("Avro source {} stopping: {}", getName(), this);
 
     server.close();
 
     try {
       server.join();
     } catch (InterruptedException e) {
-      logger
-          .info("Interrupted while waiting for Avro server to stop. Exiting.");
+      logger.info("Avro source " + getName() + ": Interrupted while waiting " +
+          "for Avro server to stop. Exiting. Exception follows.", e);
     }
 
     super.stop();
 
-    logger.debug("Avro source stopped. Metrics:{}", counterGroup);
+    logger.info("Avro source {} stopped. Metrics: {}", getName(), counterGroup);
   }
 
   @Override
   public String toString() {
-    return "AvroSource: { bindAddress:" + bindAddress + " port:" + port + " }";
+    return "Avro source " + getName() + ": { bindAddress: " + bindAddress +
+        ", port: " + port + " }";
   }
 
   /**
@@ -192,8 +194,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
 
   @Override
   public Status append(AvroFlumeEvent avroEvent) {
-    logger.debug("Received avro event:{}", avroEvent);
-
+    logger.debug("Avro source {}: Received avro event: {}", getName(), avroEvent);
     counterGroup.incrementAndGet("rpc.received");
 
     Event event = EventBuilder.withBody(avroEvent.getBody().array(),
@@ -202,7 +203,8 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     try {
       getChannelProcessor().processEvent(event);
     } catch (ChannelException ex) {
-      logger.warn("Unable to process event", ex);
+      logger.warn("Avro source " + getName() + ": Unable to process event. " +
+          "Exception follows.", ex);
       return Status.FAILED;
     }
 
@@ -213,14 +215,16 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
 
   @Override
   public Status appendBatch(List<AvroFlumeEvent> events) {
-    counterGroup.incrementAndGet("rpc.received.batch");
+    logger.debug("Avro source {}: Received avro event batch of {} events.",
+        getName(), events.size());
+    counterGroup.incrementAndGet("rpc.batch.received");
 
     List<Event> batch = new ArrayList<Event>();
 
     for (AvroFlumeEvent avroEvent : events) {
       Event event = EventBuilder.withBody(avroEvent.getBody().array(),
           toStringMap(avroEvent.getHeaders()));
-      counterGroup.incrementAndGet("rpc.events");
+      counterGroup.incrementAndGet("rpc.batch.events");
 
       batch.add(event);
     }
@@ -228,11 +232,12 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     try {
       getChannelProcessor().processEventBatch(batch);
     } catch (ChannelException ex) {
-      logger.error("Unable to process event batch", ex);
+      logger.error("Avro source " + getName() + ": Unable to process event " +
+          "batch. Exception follows.", ex);
       return Status.FAILED;
     }
 
-    counterGroup.incrementAndGet("rpc.successful");
+    counterGroup.incrementAndGet("rpc.batch.successful");
 
     return Status.OK;
   }

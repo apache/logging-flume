@@ -67,7 +67,7 @@ public class DefaultSinkFactory implements SinkFactory {
       throws FlumeException {
     Preconditions.checkNotNull(name);
     Preconditions.checkNotNull(type);
-    logger.info("Creating instance of sink {} type{}", name, type);
+    logger.info("Creating instance of sink: {}, type: {}", name, type);
 
     String sinkClassName = type;
 
