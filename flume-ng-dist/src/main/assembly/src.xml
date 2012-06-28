@@ -85,7 +85,7 @@
         <exclude>flume-ng-legacy-sources/**</exclude>
         <exclude>flume-ng-clients/**</exclude>
         <exclude>flume-ng-dist/**</exclude>
-        <exclude>target/**</exclude>
+        <exclude>**/target/**</exclude>
         <exclude>lib/**</exclude>
       </excludes>
 
