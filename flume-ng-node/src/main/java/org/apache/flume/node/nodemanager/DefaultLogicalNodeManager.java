@@ -54,8 +54,7 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
   @Override
   public void stopAllComponents() {
     if (this.nodeConfiguration != null) {
-      logger
-          .info("Shutting down old configuration: {}", this.nodeConfiguration);
+      logger.info("Shutting down configuration: {}", this.nodeConfiguration);
       for (Entry<String, SourceRunner> entry : this.nodeConfiguration
           .getSourceRunners().entrySet()) {
         try{
@@ -197,6 +196,8 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
   public void stop() {
 
     logger.info("Node manager stopping");
+
+    stopAllComponents();
 
     nodeSupervisor.stop();
 
