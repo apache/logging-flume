@@ -25,21 +25,25 @@
 
 FLUME_AGENT_CLASS="org.apache.flume.node.Application"
 FLUME_AVRO_CLIENT_CLASS="org.apache.flume.client.avro.AvroCLIClient"
+FLUME_VERSION_CLASS="org.apache.flume.tools.VersionInfo"
 
+CLEAN_FLAG=1
 ################################
 # functions
 ################################
 
 info() {
-  local msg=$1
-
-  echo "Info: $msg" >&2
+  if [ ${CLEAN_FLAG} -ne 0 ]; then
+    local msg=$1
+    echo "Info: $msg" >&2
+  fi
 }
 
 warn() {
-  local msg=$1
-
-  echo "Warning: $msg" >&2
+  if [ ${CLEAN_FLAG} -ne 0 ]; then
+    local msg=$1
+    echo "Warning: $msg" >&2
+  fi
 }
 
 error() {
@@ -164,6 +168,7 @@ commands:
   help                  display this help text
   agent                 run a Flume agent
   avro-client           run an avro Flume client
+  version               show Flume version info
 
 global options:
   --conf,-c <conf>      use configs in <conf> directory
@@ -199,7 +204,9 @@ run_flume() {
     error "Must specify flume application class" 1
   fi
 
-  set -x
+  if [ ${CLEAN_FLAG} -ne 0 ]; then
+    set -x
+  fi
   $EXEC $JAVA_HOME/bin/java $JAVA_OPTS -cp "$FLUME_CLASSPATH" \
       -Djava.library.path=$FLUME_JAVA_LIBRARY_PATH "$FLUME_APPLICATION_CLASS" $*
 }
@@ -236,6 +243,10 @@ case "$mode" in
   avro-client)
     opt_avro_client=1
     ;;
+  version)
+   opt_version=1
+   CLEAN_FLAG=0
+   ;;
   *)
     error "Unknown or unspecified command '$mode'"
     echo
@@ -348,6 +359,8 @@ if [ -n "$opt_agent" ] ; then
   run_flume $FLUME_AGENT_CLASS $args
 elif [ -n "$opt_avro_client" ] ; then
   run_flume $FLUME_AVRO_CLIENT_CLASS $args
+elif [ -n "${opt_version}" ] ; then
+  run_flume $FLUME_VERSION_CLASS $args
 else
   error "This message should never appear" 1
 fi
