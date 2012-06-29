@@ -132,6 +132,15 @@ limitations under the License.
       </properties>
     </profile>
 
+    <profile>
+      <id>not-windows</id>
+      <activation>
+        <os>
+          <family>!Windows</family>
+        </os>
+      </activation>
+    </profile>
+
     <!-- maven 2 & 3 compat for reporting plugin -->
     <profile>
       <id>maven-3</id>
@@ -840,5 +849,5 @@ limitations under the License.
 
     </plugins>
   </reporting>
-  
+
 </project>
