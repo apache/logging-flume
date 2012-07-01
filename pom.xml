@@ -404,7 +404,7 @@ limitations under the License.
             <id>javadoc-jar</id>
             <phase>package</phase>
             <goals>
-              <goal>aggregate</goal>
+              <goal>aggregate-jar</goal>
             </goals>
             <configuration>
               <!-- switch on dependency-driven aggregation -->
