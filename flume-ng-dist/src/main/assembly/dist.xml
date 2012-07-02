@@ -125,6 +125,14 @@
       <outputDirectory>docs</outputDirectory>
     </fileSet>
 
+    <fileSet>
+      <directory>../target/apidocs</directory>
+      <includes>
+        <include>/**</include>
+      </includes>
+      <outputDirectory>docs/apidocs</outputDirectory>
+    </fileSet>
+
   </fileSets>
 
 </assembly>
