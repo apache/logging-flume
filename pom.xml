@@ -212,114 +212,126 @@ limitations under the License.
 
   <developers>
     <developer>
-      <email>jon@cloudera.com</email>
-      <id>jon@cloudera.com</id>
-      <name>Jon Hsieh</name>
+      <name>Andrew Bayer</name>
+      <id>abayer</id>
+      <email>abayer@apache.org</email>
       <organization>Cloudera</organization>
     </developer>
     <developer>
-      <email>phunt@cloudera.com</email>
-      <id>phunt@cloudera.com</id>
-      <name>Patrick Hunt</name>
+      <name>Ahmed Radwan</name>
+      <id>ahmed</id>
+      <email>ahmed@apache.org</email>
       <organization>Cloudera</organization>
     </developer>
     <developer>
-      <email>henry@cloudera.com</email>
-      <id>henry@cloudera.com</id>
-      <name>Henry Robinson</name>
+      <name>Arvind Prabhakar</name>
+      <id>arvind</id>
+      <email>arvind@apache.org</email>
       <organization>Cloudera</organization>
     </developer>
     <developer>
-      <email>esammer@cloudera.com</email>
-      <id>esammer@cloudera.com</id>
-      <name>E. Sammer</name>
+      <name>Brock Noland</name>
+      <id>brock</id>
+      <email>brock@apache.org</email>
       <organization>Cloudera</organization>
     </developer>
     <developer>
-      <email>bruce.mitchener@gmail.com</email>
-      <id>bruce.mitchener@gmail.com</id>
       <name>Bruce Mitchener</name>
+      <id>brucem</id>
+      <email>brucem@apache.org</email>
       <organization>-</organization>
+    </developer>
+    <developer>
+      <name>Derek Deeter</name>
+      <id>ddeeter</id>
+      <email>ddeeter@apache.org</email>
+      <organization>Intuit</organization>
+    </developer>
+    <developer>
+      <name>Eric Sammer</name>
+      <id>esammer</id>
+      <email>esammer@apache.org</email>
+      <organization>Cloudera</organization>
+    </developer>
+    <developer>
+      <name>Henry Robinson</name>
+      <id>henry</id>
+      <email>henry@apache.org</email>
+      <organization>Cloudera</organization>
+    </developer>
+    <developer>
+      <name>Hari Shreedharan</name>
+      <id>hshreedharan</id>
+      <email>hshreedharan@apache.org</email>
+      <organization>Cloudera</organization>
+    </developer>
+    <developer>
+      <name>Jaroslav Cecho</name>
+      <id>jarcec</id>
+      <email>jarcec@apache.org</email>
+      <organization>Cloudera</organization>
+    </developer>
+    <developer>
+      <name>Jonathan Hsieh</name>
+      <id>jmhsieh</id>
+      <email>jmhsieh@apache.org</email>
+      <organization>Cloudera</organization>
+    </developer>
+    <developer>
+      <name>Juhani Connolly</name>
+      <id>juhanic</id>
+      <email>juhanic@apache.org</email>
+      <organization>CyberAgent</organization>
+    </developer>
+    <developer>
+      <name>Aaron Kimball</name>
+      <id>kimballa</id>
+      <email>kimballa@apache.org</email>
+      <organization>Odiago</organization>
+    </developer>
+    <developer>
+      <name>Mingjie Lai</name>
+      <id>mlai</id>
+      <email>mlai@apache.org</email>
+      <organization>Trend Micro</organization>
+    </developer>
+    <developer>
+      <name>Mike Percy</name>
+      <id>mpercy</id>
+      <email>mpercy@apache.org</email>
+      <organization>Cloudera</organization>
+    </developer>
+    <developer>
+      <name>Nick Verbeck</name>
+      <id>nerdynick</id>
+      <email>nerdynick@apache.org</email>
+      <organization>-</organization>
+    </developer>
+    <developer>
+      <name>Patrick Hunt</name>
+      <id>phunt</id>
+      <email>phunt@apache.org</email>
+      <organization>Cloudera</organization>
+    </developer>
+    <developer>
+      <name>Prasad Mujumdar</name>
+      <id>prasadm</id>
+      <email>prasadm@apache.org</email>
+      <organization>Cloudera</organization>
+    </developer>
+    <developer>
+      <name>Ralph Goers</name>
+      <id>rgoers</id>
+      <email>rgoers@apache.org</email>
+      <organization>Intuit</organization>
+    </developer>
+    <developer>
+      <name>Will McQueen</name>
+      <id>will</id>
+      <email>will@apache.org</email>
+      <organization>Cloudera</organization>
     </developer>
   </developers>
-
-  <contributors>
-    <contributor>
-      <email>akimball83@gmail.com</email>
-      <name>Aaron Kimball</name>
-      <organization>Odiago</organization>
-    </contributor>
-    <contributor>
-      <email>-</email>
-      <name>Abhinay Mehta</name>
-      <organization>-</organization>
-    </contributor>
-    <contributor>
-      <email>baranau.a@gmail.com</email>
-      <name>Alex Baranau</name>
-      <organization>-</organization>
-    </contributor>
-    <contributor>
-      <email>andrew@cloudera.com</email>
-      <name>Andrew Bayer</name>
-      <organization>Cloudera</organization>
-    </contributor>
-    <contributor>
-      <email>aphadke@mozilla.com</email>
-      <name>Anurag Phadke</name>
-      <organization>Mozilla</organization>
-    </contributor>
-    <contributor>
-      <email>rayan@cloudera.com</email>
-      <name>Dani Rayan</name>
-      <organization>Cloudera</organization>
-    </contributor>
-    <contributor>
-      <email>darthur@digitalsmiths.com</email>
-      <name>David Arthur</name>
-      <organization>Digital Smiths</organization>
-    </contributor>
-    <contributor>
-      <email>david.zuelke@bitextender.com</email>
-      <name>David Zuelke</name>
-      <organization>Bit Extender</organization>
-    </contributor>
-    <contributor>
-      <email>dvryaboy@gmail.com</email>
-      <name>Dmitry Ryaboy</name>
-      <organization>Twitter</organization>
-    </contributor>
-    <contributor>
-      <email>jacob.rideout@returnpath.net</email>
-      <name>Jacob Rideout</name>
-      <organization>ReturnPath</organization>
-    </contributor>
-    <contributor>
-      <email>tlipcon@cloudera.com</email>
-      <name>Todd Lipcon</name>
-      <organization>Cloudera</organization>
-    </contributor>
-    <contributor>
-      <email>vibhor@cloudera.com</email>
-      <name>Vibhor Bhatt</name>
-      <organization>Cloudera</organization>
-    </contributor>
-    <contributor>
-      <email>newalex@cloudera.com</email>
-      <name>Alex Newman</name>
-      <organization>Cloudera</organization>
-    </contributor>
-    <contributor>
-      <email>patrick@cloudera.com</email>
-      <name>Patrick Angeles</name>
-      <organization>Cloudera</organization>
-    </contributor>
-    <contributor>
-      <email>pwendell@cloudera.com</email>
-      <name>Patrick Wendell</name>
-      <organization>Cloudera</organization>
-    </contributor>
-  </contributors>
 
   <organization>
     <name>Apache Software Foundation</name>
