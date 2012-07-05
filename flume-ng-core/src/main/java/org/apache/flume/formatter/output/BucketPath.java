@@ -139,6 +139,22 @@ public class BucketPath {
    */
   public static String replaceShorthand(char c, Map<String, String> headers,
       boolean needRounding, int unit, int roundDown) {
+
+    String timestampHeader = headers.get("timestamp");
+    long ts;
+    try {
+      ts = Long.valueOf(timestampHeader);
+    } catch (NumberFormatException e) {
+      throw new RuntimeException("Flume wasn't able to parse timestamp header"
+        + " in the event to resolve time based bucketing. Please check that"
+        + " you're correctly populating timestamp header (for example using"
+        + " TimestampInterceptor source interceptor).", e);
+    }
+
+    if(needRounding){
+      ts = roundDown(roundDown, unit, ts);
+    }
+
     // It's a date
     String formatString = "";
     switch (c) {
@@ -190,11 +206,6 @@ public class BucketPath {
       formatString = "a";
       break;
     case 's':
-      long ts = Long.valueOf(headers.get("timestamp"));
-      if(needRounding){
-        ts = roundDown(
-            roundDown, unit, ts);
-      }
       return "" + (ts/1000);
     case 'S':
       formatString = "ss";
@@ -202,7 +213,7 @@ public class BucketPath {
     case 't':
       // This is different from unix date (which would insert a tab character
       // here)
-      return headers.get("timestamp");
+      return timestampHeader;
     case 'y':
       formatString = "yy";
       break;
@@ -216,13 +227,9 @@ public class BucketPath {
 //      LOG.warn("Unrecognized escape in event format string: %" + c);
       return "";
     }
+
     SimpleDateFormat format = new SimpleDateFormat(formatString);
-    long ts = Long.valueOf(headers.get("timestamp"));
-    long timestamp = ts;
-    if(needRounding){
-      timestamp = roundDown(roundDown, unit, ts);
-    }
-    Date date = new Date(timestamp);
+    Date date = new Date(ts);
     return format.format(date);
   }
 
