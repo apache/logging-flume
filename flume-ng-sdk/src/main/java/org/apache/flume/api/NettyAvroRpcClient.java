@@ -80,25 +80,6 @@ implements RpcClient {
 
   /**
    * This constructor is intended to be called from {@link RpcClientFactory}.
-   * @param address The InetSocketAddress to connect to
-   * @param batchSize Maximum number of Events to accept in appendBatch()
-   */
-  protected NettyAvroRpcClient(InetSocketAddress address, Integer batchSize)
-      throws FlumeException{
-    if (address == null){
-      logger.error("InetSocketAddress is null, cannot create client.");
-      throw new NullPointerException("InetSocketAddress is null");
-    }
-    this.address = address;
-    if(batchSize != null && batchSize > 0) {
-      this.batchSize = batchSize;
-    }
-
-    connect();
-  }
-
-  /**
-   * This constructor is intended to be called from {@link RpcClientFactory}.
    * A call to this constructor should be followed by call to configure().
    */
   protected NettyAvroRpcClient(){
@@ -183,6 +164,10 @@ implements RpcClient {
       if (t instanceof Error) {
         throw (Error) t;
       }
+      if (t instanceof TimeoutException) {
+        throw new EventDeliveryException(this + ": Failed to send event. " +
+            "RPC request timed out after " + requestTimeout + "ms", t);
+      }
       throw new EventDeliveryException(this + ": Failed to send event", t);
     }
   }
@@ -216,7 +201,8 @@ implements RpcClient {
     try {
       handshake.get(connectTimeout, TimeUnit.MILLISECONDS);
     } catch (TimeoutException ex) {
-      throw new EventDeliveryException(this + ": Handshake timed out", ex);
+      throw new EventDeliveryException(this + ": Handshake timed out after " +
+          connectTimeout + " ms", ex);
     } catch (InterruptedException ex) {
       throw new EventDeliveryException(this + ": Interrupted in handshake", ex);
     } catch (ExecutionException ex) {
@@ -235,15 +221,17 @@ implements RpcClient {
   @Override
   public void appendBatch(List<Event> events) throws EventDeliveryException {
     try {
-      appendBatch(events, requestTimeout,
-          TimeUnit.MILLISECONDS);
-
+      appendBatch(events, requestTimeout, TimeUnit.MILLISECONDS);
     } catch (Throwable t) {
       // we mark as no longer active without trying to clean up resources
       // client is required to call close() to clean up resources
       setState(ConnState.DEAD);
       if (t instanceof Error) {
         throw (Error) t;
+      }
+      if (t instanceof TimeoutException) {
+        throw new EventDeliveryException(this + ": Failed to send event. " +
+            "RPC request timed out after " + requestTimeout + " ms", t);
       }
       throw new EventDeliveryException(this + ": Failed to send batch", t);
     }
@@ -289,7 +277,8 @@ implements RpcClient {
       try {
         handshake.get(connectTimeout, TimeUnit.MILLISECONDS);
       } catch (TimeoutException ex) {
-        throw new EventDeliveryException(this + ": Handshake timed out", ex);
+        throw new EventDeliveryException(this + ": Handshake timed out after " +
+            connectTimeout + "ms", ex);
       } catch (InterruptedException ex) {
         throw new EventDeliveryException(this + ": Interrupted in handshake",
             ex);
@@ -342,7 +331,7 @@ implements RpcClient {
    * {@link Condition} variable gets signaled reliably.
    * Throws {@code IllegalStateException} when called to transition from CLOSED
    * to another state.
-   * @param state
+   * @param newState
    */
   private void setState(ConnState newState) {
     stateLock.lock();
@@ -426,14 +415,20 @@ implements RpcClient {
     }
 
     // batch size
-    String strbatchSize = properties.getProperty(
+    String strBatchSize = properties.getProperty(
         RpcClientConfigurationConstants.CONFIG_BATCH_SIZE);
+    logger.debug("Batch size string = " + strBatchSize);
     batchSize = RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE;
-    if (strbatchSize != null && !strbatchSize.isEmpty()) {
+    if (strBatchSize != null && !strBatchSize.isEmpty()) {
       try {
-        batchSize = Integer.parseInt(strbatchSize);
+        int parsedBatch = Integer.parseInt(strBatchSize);
+        if (parsedBatch < 1) {
+          logger.warn("Invalid value for batchSize: {}; Using default value.", parsedBatch);
+        } else {
+          batchSize = parsedBatch;
+        }
       } catch (NumberFormatException e) {
-        logger.warn("Batchsize is not valid for RpcClient: " + strbatchSize +
+        logger.warn("Batchsize is not valid for RpcClient: " + strBatchSize +
             ". Default value assigned.", e);
       }
     }

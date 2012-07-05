@@ -22,6 +22,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.junit.Test;
 
@@ -47,7 +48,7 @@ public class TestNettyAvroRpcClient {
   private static final Logger logger = LoggerFactory
       .getLogger(TestNettyAvroRpcClient.class);
 
-  private static final String localhost = "localhost";
+  private static final String localhost = "127.0.0.1";
 
   /**
    * Simple request
@@ -79,8 +80,12 @@ public class TestNettyAvroRpcClient {
   @Test(expected=FlumeException.class)
   public void testUnableToConnect() throws FlumeException {
     @SuppressWarnings("unused")
-    NettyAvroRpcClient client = new NettyAvroRpcClient(
-        new InetSocketAddress(localhost, 1), 0);
+    NettyAvroRpcClient client = new NettyAvroRpcClient();
+    Properties props = new Properties();
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS, "localhost");
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX + "localhost",
+        localhost + ":" + 1);
+    client.configure(props);
   }
 
   /**
@@ -95,9 +100,14 @@ public class TestNettyAvroRpcClient {
     int moreThanBatchSize = batchSize + 1;
     NettyAvroRpcClient client = null;
     Server server = RpcTestUtils.startServer(new OKAvroHandler());
+    Properties props = new Properties();
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS, "localhost");
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX + "localhost",
+        localhost + ":" + server.getPort());
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_BATCH_SIZE, "" + batchSize);
     try {
-      client = new NettyAvroRpcClient(
-          new InetSocketAddress(localhost, server.getPort()), batchSize);
+      client = new NettyAvroRpcClient();
+      client.configure(props);
 
       // send one more than the batch size
       List<Event> events = new ArrayList<Event>();

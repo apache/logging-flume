@@ -19,6 +19,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import junit.framework.Assert;
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.NettyServer;
@@ -99,8 +100,12 @@ public class RpcTestUtils {
    * Helper method for constructing a Netty RPC client that talks to localhost.
    */
   public static NettyAvroRpcClient getStockLocalClient(int port) {
-    NettyAvroRpcClient client =
-       new NettyAvroRpcClient(new InetSocketAddress("localhost", port), 0);
+    Properties props = new Properties();
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS, "h1");
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX + "h1",
+        "127.0.0.1" + ":" + port);
+    NettyAvroRpcClient client = new NettyAvroRpcClient();
+    client.configure(props);
 
     return client;
   }

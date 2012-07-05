@@ -39,6 +39,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import java.util.Properties;
+import org.apache.flume.api.RpcClientConfigurationConstants;
 
 /**
  * <p>
@@ -74,26 +76,38 @@ import com.google.common.collect.Lists;
  * <tr>
  * <th>Parameter</th>
  * <th>Description</th>
- * <th>Unit / Type</th>
+ * <th>Unit (data type)</th>
  * <th>Default</th>
  * </tr>
  * <tr>
  * <td><tt>hostname</tt></td>
  * <td>The hostname to which events should be sent.</td>
- * <td>Hostname or IP / String</td>
+ * <td>Hostname or IP (String)</td>
  * <td>none (required)</td>
  * </tr>
  * <tr>
  * <td><tt>port</tt></td>
  * <td>The port to which events should be sent on <tt>hostname</tt>.</td>
- * <td>TCP port / int</td>
+ * <td>TCP port (int)</td>
  * <td>none (required)</td>
  * </tr>
  * <tr>
  * <td><tt>batch-size</tt></td>
  * <td>The maximum number of events to send per RPC.</td>
- * <td>events / int</td>
+ * <td>events (int)</td>
  * <td>100</td>
+ * </tr>
+ * <tr>
+ * <td><tt>connect-timeout</tt></td>
+ * <td>Maximum time to wait for the first Avro handshake and RPC request</td>
+ * <td>milliseconds (long)</td>
+ * <td>20000</td>
+ * </tr>
+ * <tr>
+ * <td><tt>request-timeout</tt></td>
+ * <td>Maximum time to wait RPC requests after the first</td>
+ * <td>milliseconds (long)</td>
+ * <td>20000</td>
  * </tr>
  * </table>
  * <p>
@@ -106,14 +120,13 @@ import com.google.common.collect.Lists;
 public class AvroSink extends AbstractSink implements Configurable {
 
   private static final Logger logger = LoggerFactory.getLogger(AvroSink.class);
-  private static final Integer defaultBatchSize = 100;
 
   private String hostname;
   private Integer port;
-  private Integer batchSize;
 
   private RpcClient client;
   private CounterGroup counterGroup;
+  private Properties clientProps;
 
   public AvroSink() {
     counterGroup = new CounterGroup();
@@ -121,16 +134,37 @@ public class AvroSink extends AbstractSink implements Configurable {
 
   @Override
   public void configure(Context context) {
+    clientProps = new Properties();
+
     hostname = context.getString("hostname");
     port = context.getInteger("port");
 
-    batchSize = context.getInteger("batch-size");
-    if (batchSize == null) {
-      batchSize = defaultBatchSize;
-    }
-
     Preconditions.checkState(hostname != null, "No hostname specified");
     Preconditions.checkState(port != null, "No port specified");
+
+    clientProps.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS, "h1");
+    clientProps.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX +
+        "h1", hostname + ":" + port);
+
+    Integer batchSize = context.getInteger("batch-size");
+    if (batchSize != null) {
+      clientProps.setProperty(RpcClientConfigurationConstants.CONFIG_BATCH_SIZE,
+          String.valueOf(batchSize));
+    }
+
+    Long connectTimeout = context.getLong("connect-timeout");
+    if (connectTimeout != null) {
+      clientProps.setProperty(
+          RpcClientConfigurationConstants.CONFIG_CONNECT_TIMEOUT,
+          String.valueOf(connectTimeout));
+    }
+
+    Long requestTimeout = context.getLong("request-timeout");
+    if (requestTimeout != null) {
+      clientProps.setProperty(
+          RpcClientConfigurationConstants.CONFIG_REQUEST_TIMEOUT,
+          String.valueOf(requestTimeout));
+    }
   }
 
   /**
@@ -141,11 +175,12 @@ public class AvroSink extends AbstractSink implements Configurable {
   private void createConnection() throws FlumeException {
 
     if (client == null) {
-      logger.debug("Avro sink {}: Building RpcClient with hostname: {}, " +
-          "port: {}, batchSize: {}",
-          new Object[] { getName(), hostname, port, batchSize });
+      logger.info("Avro sink {}: Building RpcClient with hostname: {}, " +
+          "port: {}",
+          new Object[] { getName(), hostname, port });
 
-       client = RpcClientFactory.getDefaultInstance(hostname, port, batchSize);
+       client = RpcClientFactory.getInstance(clientProps);
+       logger.debug("Avro sink {}: Created RpcClient: {}", getName(), client);
     }
 
   }
@@ -195,9 +230,8 @@ public class AvroSink extends AbstractSink implements Configurable {
     try {
       createConnection();
     } catch (FlumeException e) {
-      logger.warn("Unable to create avro client using hostname:" + hostname
-          + ", port:" + port + ", batchSize: " + batchSize +
-          ". Exception follows.", e);
+      logger.warn("Unable to create avro client using hostname: " + hostname
+          + ", port: " + port, e);
 
       /* Try to prevent leaking resources. */
       destroyConnection();
@@ -238,7 +272,7 @@ public class AvroSink extends AbstractSink implements Configurable {
 
       List<Event> batch = Lists.newLinkedList();
 
-      for (int i = 0; i < batchSize; i++) {
+      for (int i = 0; i < client.getBatchSize(); i++) {
         Event event = channel.take();
 
         if (event == null) {
@@ -259,16 +293,19 @@ public class AvroSink extends AbstractSink implements Configurable {
       transaction.commit();
       counterGroup.incrementAndGet("batch.success");
 
-    } catch (ChannelException e) {
+    } catch (Throwable t) {
       transaction.rollback();
-      logger.error("Avro Sink " + getName() + ": Unable to get event from" +
-          " channel. Exception follows.", e);
-      status = Status.BACKOFF;
-
-    } catch (Exception ex) {
-      transaction.rollback();
-      destroyConnection();
-      throw new EventDeliveryException("Failed to send message", ex);
+      counterGroup.incrementAndGet("batch.failure");
+      if (t instanceof Error) {
+        throw (Error) t;
+      } else if (t instanceof ChannelException) {
+        logger.error("Avro Sink " + getName() + ": Unable to get event from" +
+            " channel " + channel.getName() + ". Exception follows.", t);
+        status = Status.BACKOFF;
+      } else {
+        destroyConnection();
+        throw new EventDeliveryException("Failed to send events", t);
+      }
     } finally {
       transaction.close();
     }
