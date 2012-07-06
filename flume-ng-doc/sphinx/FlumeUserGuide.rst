@@ -144,7 +144,7 @@ An agent is started using a shell script called flume-ng which is located in
 the bin directory of the Flume distribution. You need to specify the agent
 name, the config directory, and the config file on the command line::
 
-  $ bin/flume-ng agent -n agent -c conf -f conf/flume-conf.properties.template
+  $ bin/flume-ng agent -n $agent_name -c conf -f conf/flume-conf.properties.template
 
 Now the agent will start running source and sinks configured in the given
 properties file.
@@ -320,21 +320,21 @@ The format is as follows:
   # set channel for sink
   <Agent>.sinks.<Sink>.channel = <Channel1>
 
-For example an agent is reading data from an external avro client and sending
+For example an agent named agent_foo is reading data from an external avro client and sending
 it to HDFS via a memory channel. The config file weblog.config could look like:
 
 .. code-block:: properties
 
   # list the sources, sinks and channels for the agent
-  agent.sources = avro-appserver-src-1
-  agent.sinks = hdfs-sink-1
-  agent.channels = mem-channel-1
+  agent_foo.sources = avro-appserver-src-1
+  agent_foo.sinks = hdfs-sink-1
+  agent_foo.channels = mem-channel-1
 
   # set channel for source
-  agent.sources.avro-appserver-src-1.channels = mem-channel-1
+  agent_foo.sources.avro-appserver-src-1.channels = mem-channel-1
 
   # set channel for sink
-  agent.sinks.hdfs-sink-1.channel = mem-channel-1
+  agent_foo.sinks.hdfs-sink-1.channel = mem-channel-1
 
 This will make the events flow from avro-AppSrv-source to hdfs-Cluster1-sink
 through the memory channel mem-channel-1. When the agent is started with the
@@ -369,25 +369,25 @@ components:
 
 .. code-block:: properties
 
-  agent.sources = avro-AppSrv-source
-  agent.sinks = hdfs-Cluster1-sink
-  agent.channels = mem-channel-1
+  agent_foo.sources = avro-AppSrv-source
+  agent_foo.sinks = hdfs-Cluster1-sink
+  agent_foo.channels = mem-channel-1
 
   # set channel for sources, sinks
 
   # properties of avro-AppSrv-source
-  agent.sources.avro-AppSrv-source.type = avro
-  agent.sources.avro-AppSrv-source.bind = localhost
-  agent.sources.avro-AppSrv-source.port = 10000
+  agent_foo.sources.avro-AppSrv-source.type = avro
+  agent_foo.sources.avro-AppSrv-source.bind = localhost
+  agent_foo.sources.avro-AppSrv-source.port = 10000
 
   # properties of mem-channel-1
-  agent.channels.mem-channel-1.type = memory
-  agent.channels.mem-channel-1.capacity = 1000
-  agent.channels.mem-channel-1.transactionCapacity = 100
+  agent_foo.channels.mem-channel-1.type = memory
+  agent_foo.channels.mem-channel-1.capacity = 1000
+  agent_foo.channels.mem-channel-1.transactionCapacity = 100
 
   # properties of hdfs-Cluster1-sink
-  agent.sinks.hdfs-Cluster1-sink.type = hdfs
-  agent.sinks.hdfs-Cluster1-sink.hdfs.path = hdfs://namenode/flume/webdata
+  agent_foo.sinks.hdfs-Cluster1-sink.type = hdfs
+  agent_foo.sinks.hdfs-Cluster1-sink.hdfs.path = hdfs://namenode/flume/webdata
 
   #...
 
@@ -414,24 +414,24 @@ config to do that:
 .. code-block:: properties
 
   # list the sources, sinks and channels in the agent
-  agent.sources = avro-AppSrv-source1 exec-tail-source2
-  agent.sinks = hdfs-Cluster1-sink1 avro-forward-sink2
-  agent.channels = mem-channel-1 jdbc-channel-2
+  agent_foo.sources = avro-AppSrv-source1 exec-tail-source2
+  agent_foo.sinks = hdfs-Cluster1-sink1 avro-forward-sink2
+  agent_foo.channels = mem-channel-1 jdbc-channel-2
 
   # flow #1 configuration
-  agent.sources.avro-AppSrv-source1.channels = mem-channel-1
-  agent.sinks.hdfs-Cluster1-sink1.channel = mem-channel-1
+  agent_foo.sources.avro-AppSrv-source1.channels = mem-channel-1
+  agent_foo.sinks.hdfs-Cluster1-sink1.channel = mem-channel-1
 
   # flow #2 configuration
-  agent.sources.exec-tail-source2.channels = jdbc-channel-2
-  agent.sinks.avro-forward-sink2.channel = jdbc-channel-2
+  agent_foo.sources.exec-tail-source2.channels = jdbc-channel-2
+  agent_foo.sinks.avro-forward-sink2.channel = jdbc-channel-2
 
 Configuring a multi agent flow
 ------------------------------
 
 To setup a multi-tier flow, you need to have an avro sink of first hop pointing
 to avro source of the next hop. This will result in the first Flume agent
-forwarding events to the next Flume agent.  For example, if you are
+forwarding events to the next Flume agent. For example, if you are
 periodically sending files (1 file per event) using avro client to a local
 Flume agent, then this local agent can forward it to another agent that has the
 mounted for storage.
@@ -441,18 +441,18 @@ Weblog agent config:
 .. code-block:: properties
 
   # list sources, sinks and channels in the agent
-  agent.sources = avro-AppSrv-source
-  agent.sinks = avro-forward-sink
-  agent.channels = jdbc-channel
+  agent_foo.sources = avro-AppSrv-source
+  agent_foo.sinks = avro-forward-sink
+  agent_foo.channels = jdbc-channel
 
   # define the flow
-  agent.sources.avro-AppSrv-source.channels = jdbc-channel
-  agent.sinks.avro-forward-sink.channel = jdbc-channel
+  agent_foo.sources.avro-AppSrv-source.channels = jdbc-channel
+  agent_foo.sinks.avro-forward-sink.channel = jdbc-channel
 
   # avro sink properties
-  agent.sources.avro-forward-sink.type = avro
-  agent.sources.avro-forward-sink.hostname = 10.1.1.100
-  agent.sources.avro-forward-sink.port = 10000
+  agent_foo.sources.avro-forward-sink.type = avro
+  agent_foo.sources.avro-forward-sink.hostname = 10.1.1.100
+  agent_foo.sources.avro-forward-sink.port = 10000
 
   # configure other pieces
   #...
@@ -463,18 +463,18 @@ HDFS agent config:
 .. code-block:: properties
 
   # list sources, sinks and channels in the agent
-  agent.sources = avro-collection-source
-  agent.sinks = hdfs-sink
-  agent.channels = mem-channel
+  agent_foo.sources = avro-collection-source
+  agent_foo.sinks = hdfs-sink
+  agent_foo.channels = mem-channel
 
   # define the flow
-  agent.sources.avro-collection-source.channels = mem-channel
-  agent.sinks.hdfs-sink.channel = mem-channel
+  agent_foo.sources.avro-collection-source.channels = mem-channel
+  agent_foo.sinks.hdfs-sink.channel = mem-channel
 
   # avro sink properties
-  agent.sources.avro-collection-source.type = avro
-  agent.sources.avro-collection-source.bind = 10.1.1.100
-  agent.sources.avro-collection-source.port = 10000
+  agent_foo.sources.avro-collection-source.type = avro
+  agent_foo.sources.avro-collection-source.bind = 10.1.1.100
+  agent_foo.sources.avro-collection-source.port = 10000
 
   # configure other pieces
   #...
@@ -537,29 +537,29 @@ The mapping allows overlapping the channels for each value. The default must be
 set for a multiplexing select which can also contain any number of channels.
 
 The following example has a single flow that multiplexed to two paths. The
-agent has a single avro source and two channels linked to two sinks:
+agent named agent_foo has a single avro source and two channels linked to two sinks:
 
 .. code-block:: properties
 
   # list the sources, sinks and channels in the agent
-  agent.sources = avro-AppSrv-source1
-  agent.sinks = hdfs-Cluster1-sink1 avro-forward-sink2
-  agent.channels = mem-channel-1 jdbc-channel-2
+  agent_foo.sources = avro-AppSrv-source1
+  agent_foo.sinks = hdfs-Cluster1-sink1 avro-forward-sink2
+  agent_foo.channels = mem-channel-1 jdbc-channel-2
 
   # set channels for source
-  agent.sources.avro-AppSrv-source1.channels = mem-channel-1 jdbc-channel-2
+  agent_foo.sources.avro-AppSrv-source1.channels = mem-channel-1 jdbc-channel-2
 
   # set channel for sinks
-  agent.sinks.hdfs-Cluster1-sink1.channel = mem-channel-1
-  agent.sinks.avro-forward-sink2.channel = jdbc-channel-2
+  agent_foo.sinks.hdfs-Cluster1-sink1.channel = mem-channel-1
+  agent_foo.sinks.avro-forward-sink2.channel = jdbc-channel-2
 
   # channel selector configuration
-  agent.sources.avro-AppSrv-source1.selector.type = multiplexing
-  agent.sources.avro-AppSrv-source1.selector.header = State
-  agent.sources.avro-AppSrv-source1.selector.mapping.CA = mem-channel-1
-  agent.sources.avro-AppSrv-source1.selector.mapping.AZ = jdbc-channel-2
-  agent.sources.avro-AppSrv-source1.selector.mapping.NY = mem-channel-1 jdbc-channel-2
-  agent.sources.avro-AppSrv-source1.selector.default = mem-channel-1
+  agent_foo.sources.avro-AppSrv-source1.selector.type = multiplexing
+  agent_foo.sources.avro-AppSrv-source1.selector.header = State
+  agent_foo.sources.avro-AppSrv-source1.selector.mapping.CA = mem-channel-1
+  agent_foo.sources.avro-AppSrv-source1.selector.mapping.AZ = jdbc-channel-2
+  agent_foo.sources.avro-AppSrv-source1.selector.mapping.NY = mem-channel-1 jdbc-channel-2
+  agent_foo.sources.avro-AppSrv-source1.selector.default = mem-channel-1
 
 The selector checks for a header called "State". If the value is "CA" then its
 sent to mem-channel-1, if its "AZ" then it goes to jdbc-channel-2 or if its
@@ -582,27 +582,41 @@ Required properties are in **bold**.
 Property Name  Default      Description
 =============  ===========  ===================================================
 **channels**   --
-**type**       --           The component type name, needs to be avro
+**type**       --           The component type name, needs to be ``avro``
 **bind**       --           hostname or IP address to listen on
 **port**       --           Port # to bind to
 threads        --           Maximum number of worker threads to spawn
 =============  ===========  ===================================================
 
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.sources = avrosource-1
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sources.avrosource-1.type = avro
+  agent_foo.sources.avrosource-1.channels = memoryChannel-1
+  agent_foo.sources.avrosource-1.bind = 0.0.0.0
+  agent_foo.sources.avrosource-1.port = 4141
 
 Exec Source
 ~~~~~~~~~~~
 
-This source runs a given Unix command on start-up and expects that process to
+Exec source runs a given Unix command on start-up and expects that process to
 continuously produce data on standard out (stderr is simply discarded, unless
-logStdErr=true). If the process exits for any reason, the source also exits and
-will produce no further data.
+property logStdErr is set to true). If the process exits for any reason, the source also exits and
+will produce no further data. This means configurations such as ``cat [named pipe]``
+or ``tail -F [file]`` are going to produce the desired results where as ``date``
+will probably not - the former two commands produce streams of data where as the
+latter produces a single event and exits.
+
 Required properties are in **bold**.
 
 ===============  ===========  ==============================================================
 Property Name    Default      Description
 ===============  ===========  ==============================================================
 **channels**     --
-**type**         --           The component type name, needs to be exec
+**type**         --           The component type name, needs to be ``exec``
 **command**      --           The command to execute
 restartThrottle  10000        Amount of time (in millis) to wait before attempting a restart
 restart          false        Whether the executed cmd should be restarted if it dies
@@ -612,38 +626,52 @@ selector.*                    Depends on the selector.type value
 ===============  ===========  ==============================================================
 
 
-.. note:: The ExecSource can not guarantee that if there is a failure to put the
-          event into a channel, the client knows about it. In such cases, the
-          data will be lost.
+.. warning:: The problem with ExecSource and other asynchronous sources is that the
+             source can not guarantee that if there is a failure to put the event
+             into the Channel the client knows about it. In such cases, the data will
+             be lost. As a for instance, one of the most commonly requested features
+             is the ``tail -F [file]``-like use case where an application writes
+             to a log file on disk and Flume tails the file, sending each line as an
+             event. While this is possible, there's an obvious problem; what happens
+             if the channel fills up and Flume can't send an event? Flume has no way
+             of indicating to the application writing the log file that it needs to
+             retain the log or that the event hasn't been sent, for some reason. If
+             this doesn't make sense, you need only know this: Your application can
+             never guarantee data has been received when using a unidirectional 
+             asynchronous interface such as ExecSource! As an extension of this
+             warning - and to be completely clear - there is absolutely zero guarantee
+             of event delivery when using this source. You have been warned.
 
+.. note:: You can use ExecSource to emulate TailSource from Flume 0.9x (flume og).
+          Just use unix command ``tail -F /full/path/to/your/file``. Parameter
+          -F is better in this case than -f as it will also follow file rotation.
 
-For example:
+Example for agent named **agent_foo**:
 
 .. code-block:: properties
 
-  agent.sources = tail
-  agent.channels = memoryChannel-1
-  agent.sinks = logger
-  agent.sources.tail.type = exec
-  agent.sources.tail.command = tail -f /var/log/secure
-
-
+  agent_foo.sources = tailsource-1
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sources.tailsource-1.type = exec
+  agent_foo.sources.tailsource-1.command = tail -F /var/log/secure
+  agent_foo.sources.tailsource-1.channels = memoryChannel-1
 
 NetCat Source
 ~~~~~~~~~~~~~
 
 A netcat-like source that listens on a given port and turns each line of text
-into an event. Acts like "nc -k -l [host] [port]". In other words, it opens a
-specified port and listens for data. The expectation is that the supplied data
-is newline separated text. Each line of text is turned into a Flume event and
-sent via the connected channel.
+into an event. Acts like ``nc -k -l [host] [port]``. In other words,
+it opens a specified port and listens for data. The expectation is that the
+supplied data is newline separated text. Each line of text is turned into a
+Flume event and sent via the connected channel.
+
 Required properties are in **bold**.
 
 ===============  ===========  ===========================================
 Property Name    Default      Description
 ===============  ===========  ===========================================
 **channels**     --
-**type**         --           The component type name, needs to be netcat
+**type**         --           The component type name, needs to be ``netcat``
 **bind**         --           Host name or IP address to bind to
 **port**         --           Port # to bind to
 max-line-length  512          Max line length per event body (in bytes)
@@ -651,6 +679,16 @@ selector.type    replicating  replicating or multiplexing
 selector.*                    Depends on the selector.type value
 ===============  ===========  ===========================================
 
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.sources = ncsource-1
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sources.ncsource-1.type = netcat
+  agent_foo.sources.ncsource-1.bind = 0.0.0.0
+  agent_foo.sources.ncsource-1.bind = 6666
+  agent_foo.sources.ncsource-1.channels = memoryChannel-1
 
 Sequence Generator Source
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -663,11 +701,19 @@ Required properties are in **bold**.
 Property Name  Default      Description
 =============  ===========  ========================================
 **channels**   --
-**type**       --           The component type name, needs to be seq
+**type**       --           The component type name, needs to be ``seq``
 selector.type               replicating or multiplexing
 selector.*     replicating  Depends on the selector.type value
 =============  ===========  ========================================
 
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.sources = ncsource-1
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sources.ncsource-1.type = seq
+  agent_foo.sources.ncsource-1.channels = memoryChannel-1
 
 Syslog Sources
 ~~~~~~~~~~~~~~
@@ -675,6 +721,7 @@ Syslog Sources
 Reads syslog data and generate Flume events. The UDP source treats an entire
 message as a single event. The TCP source on creates a new event for a string
 of characters separated by carriage return ('\n').
+
 Required properties are in **bold**.
 
 Syslog TCP Source
@@ -684,7 +731,7 @@ Syslog TCP Source
 Property Name  Default      Description
 =============  ===========  ==============================================
 **channels**   --
-**type**       --           The component type name, needs to be syslogtcp
+**type**       --           The component type name, needs to be ``syslogtcp``
 **host**       --           Host name or IP address to bind to
 **port**       --           Port # to bind to
 eventSize      2500
@@ -693,16 +740,16 @@ selector.*     replicating  Depends on the selector.type value
 =============  ===========  ==============================================
 
 
-For example, a syslog TCP source:
+For example, a syslog TCP source for agent named **agent_foo**:
 
 .. code-block:: properties
 
-  agent.sources = syslog
-  agent.channels = memoryChannel-1
-  agent.sinks = logger
-  agent.sources.syslog.type = syslogtcp
-  agent.sources.syslog.port = 5140
-  agent.sources.syslog.host = localhost
+  agent_foo.sources = syslogsource-1
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sources.syslogsource-1.type = syslogtcp
+  agent_foo.sources.syslogsource-1.port = 5140
+  agent_foo.sources.syslogsource-1.host = localhost
+  agent_foo.sources.syslogsource-1.channels = memoryChannel-1
 
 Syslog UDP Source
 '''''''''''''''''
@@ -711,7 +758,7 @@ Syslog UDP Source
 Property Name  Default      Description
 =============  ===========  ==============================================
 **channels**   --
-**type**       --           The component type name, needs to be syslogudp
+**type**       --           The component type name, needs to be ``syslogudp``
 **host**       --           Host name or IP address to bind to
 **port**       --           Port # to bind to
 selector.type               replicating or multiplexing
@@ -719,16 +766,16 @@ selector.*     replicating  Depends on the selector.type value
 =============  ===========  ==============================================
 
 
-For example, a syslog UDP source:
+For example, a syslog UDP source for agent named **agent_foo**:
 
 .. code-block:: properties
 
-  agent.sources = syslog
-  agent.channels = memoryChannel-1
-  agent.sinks = logger
-  agent.sources.syslog.type = syslogudp
-  agent.sources.syslog.port = 5140
-  agent.sources.syslog.host = localhost
+  agent_foo.sources = syslogsource-1
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sources.syslogsource-1.type = syslogudp
+  agent_foo.sources.syslogsource-1.port = 5140
+  agent_foo.sources.syslogsource-1.host = localhost
+  agent_foo.sources.syslogsource-1.channels = memoryChannel-1
 
 
 Legacy Sources
@@ -742,6 +789,14 @@ header attributes. The legacy source supports both Avro and Thrift RPC
 connections. To use this bridge between two Flume versions, you need to start a
 Flume 1.x agent with the avroLegacy or thriftLegacy source. The 0.9.4 agent
 should have the agent Sink pointing to the host/port of the 1.x agent.
+
+.. note:: The reliability semantics of Flume 1.x are different from that of
+          Flume 0.9.x. The E2E or DFO mode of a Flume 0.9.x agent will not be
+          supported by the legacy source. The only supported 0.9.x mode is the
+          best effort, though the reliability setting of the 1.x flow will be
+          applicable to the events once they are saved into the Flume 1.x
+          channel by the legacy source.
+
 Required properties are in **bold**.
 
 
@@ -752,13 +807,23 @@ Avro Legacy Source
 Property Name  Default      Description
 =============  ===========  ========================================================================================
 **channels**   --
-**type**       --           The component type name, needs to be org.apache.flume.source.avroLegacy.AvroLegacySource
+**type**       --           The component type name, needs to be ``org.apache.flume.source.avroLegacy.AvroLegacySource``
 **host**       --           The hostname or IP address to bind to
 **port**       --           The port # to listen on
 selector.type               replicating or multiplexing
 selector.*     replicating  Depends on the selector.type value
 =============  ===========  ========================================================================================
 
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.sources = legacysource-1
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sources.legacysource-1.type = org.apache.flume.source.avroLegacy.AvroLegacySource
+  agent_foo.sources.legacysource-1.host = 0.0.0.0
+  agent_foo.sources.legacysource-1.bind = 6666
+  agent_foo.sources.legacysource-1.channels = memoryChannel-1
 
 Thrift Legacy Source
 ''''''''''''''''''''
@@ -767,21 +832,23 @@ Thrift Legacy Source
 Property Name  Default      Description
 =============  ===========  ======================================================================================
 **channels**   --
-**type**       --           The component type name, needs to be org.apache.source.thriftLegacy.ThriftLegacySource
+**type**       --           The component type name, needs to be ``org.apache.source.thriftLegacy.ThriftLegacySource``
 **host**       --           The hostname or IP address to bind to
 **port**       --           The port # to listen on
 selector.type               replicating or multiplexing
 selector.*     replicating  Depends on the selector.type value
 =============  ===========  ======================================================================================
 
+Example for agent named **agent_foo**:
 
-.. note:: The reliability semantics of Flume 1.x are different from that of
-          Flume 0.9.x. The E2E or DFO mode of a Flume 0.9.x agent will not be
-          supported by the legacy source. The only supported 0.9.x mode is the
-          best effort, though the reliability setting of the 1.x flow will be
-          applicable to the events once they are saved into the Flume 1.x
-          channel by the legacy source.
+.. code-block:: properties
 
+  agent_foo.sources = legacysource-1
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sources.legacysource-1.type = org.apache.source.thriftLegacy.ThriftLegacySource
+  agent_foo.sources.legacysource-1.host = 0.0.0.0
+  agent_foo.sources.legacysource-1.bind = 6666
+  agent_foo.sources.legacysource-1.channels = memoryChannel-1
 
 Custom Source
 ~~~~~~~~~~~~~
@@ -799,6 +866,14 @@ selector.type               replicating or multiplexing
 selector.*     replicating  Depends on the selector.type value
 =============  ===========  ==============================================
 
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.sources = legacysource-1
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sources.legacysource-1.type = your.namespace.YourClass
+  agent_foo.sources.legacysource-1.channels = memoryChannel-1
 
 Flume Sinks
 -----------
@@ -855,7 +930,7 @@ Required properties are in **bold**.
 Name                    Default       Description
 ======================  ============  ======================================================================
 **channel**             --
-**type**                --            The component type name, needs to be hdfs
+**type**                --            The component type name, needs to be ``hdfs``
 **hdfs.path**           --            HDFS directory path (eg hdfs://namenode/flume/webdata/)
 hdfs.filePrefix         FlumeData     Name prefixed to files created by Flume in hdfs directory
 hdfs.rollInterval       30            Number of seconds to wait before rolling current file
@@ -883,6 +958,17 @@ serializer              ``TEXT``      Other possible options include ``AVRO_EVEN
 serializer.*
 ======================  ============  ======================================================================
 
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sinks = hdfsSink-1
+  agent_foo.sinks.hdfsSink-1.type = hdfs
+  agent_foo.sinks.hdfsSink-1.channels = memoryChannel-1
+  agent_foo.sinks.hdfsSink-1.hdfs.path = /flume/events/%y-%m-%d
+  agent_foo.sinks.hdfsSink-1.hdfs.filePrevix = events-
+
 
 Logger Sink
 ~~~~~~~~~~~
@@ -894,9 +980,17 @@ Required properties are in **bold**.
 Property Name   Default  Description
 ==============  =======  ===========================================
 **channel**     --
-**type**        --       The component type name, needs to be logger
+**type**        --       The component type name, needs to be ``logger``
 ==============  =======  ===========================================
 
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sinks = loggerSink-1
+  agent_foo.sinks.loggerSink-1.type = logger
+  agent_foo.sinks.loggerSink-1.channels = memoryChannel-1
 
 Avro Sink
 ~~~~~~~~~
@@ -907,18 +1001,28 @@ hostname / port pair. The events are taken from the configured Channel in
 batches of the configured batch size.
 Required properties are in **bold**.
 
-==============  =======  ==============================================
-Property Name   Default  Description
-==============  =======  ==============================================
-**channel**     --
-**type**        --       The component type name, needs to be ``avro``.
-**hostname**    --       The hostname or IP address to bind to.
-**port**        --       The port # to listen on.
-batch-size      100      number of event to batch together for send.
-connect-timeout 20000    Amount of time (ms) to allow for the first (handshake) request.
-request-timeout 20000    Amount of time (ms) to allow for requests after the first.
-==============  =======  ==============================================
+===============  =======  ==============================================
+Property Name    Default  Description
+===============  =======  ==============================================
+**channel**      --
+**type**         --       The component type name, needs to be ``avro``.
+**hostname**     --       The hostname or IP address to bind to.
+**port**         --       The port # to listen on.
+batch-size       100      number of event to batch together for send.
+connect-timeout  20000    Amount of time (ms) to allow for the first (handshake) request.
+request-timeout  20000    Amount of time (ms) to allow for requests after the first.
+===============  =======  ==============================================
 
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sinks = avroSink-1
+  agent_foo.sinks.avroSink-1.type = avro
+  agent_foo.sinks.avroSink-1.channels = memoryChannel-1
+  agent_foo.sinks.avroSink-1.hostname = 10.10.10.10
+  agent_foo.sinks.avroSink-1.port = 4545
 
 IRC Sink
 ~~~~~~~~
@@ -931,13 +1035,13 @@ Required properties are in **bold**.
 Property Name    Default  Description
 ===============  =======  ========================================================
 **channel**      --
-**type**         --       The component type name, needs to be irc
+**type**         --       The component type name, needs to be ``irc``
 **hostname**     --       The hostname or IP address to connect to
-**port**         6667     The port number of remote host to connect
-nick             --       Nick name
+port             6667     The port number of remote host to connect
+**nick**         --       Nick name
 user             --       User name
 password         --       User password
-chan             --       channel
+**chan**         --       channel
 name
 splitlines       --       (boolean)
 splitchars       \n       line separator (if you were to enter the default value
@@ -945,6 +1049,17 @@ splitchars       \n       line separator (if you were to enter the default value
                           backslash, like this: "\\n")
 ===============  =======  ========================================================
 
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sinks = ircSink-1
+  agent_foo.sinks.ircSink-1.type = irc
+  agent_foo.sinks.ircSink-1.channels = memoryChannel-1
+  agent_foo.sinks.ircSink-1.hostname = irc.yourdomain.com
+  agent_foo.sinks.ircSink-1.nick = flume
+  agent_foo.sinks.ircSink-1.chan = #flume
 
 File Roll Sink
 ~~~~~~~~~~~~~~
@@ -962,6 +1077,15 @@ sink.rollInterval  30       Roll the file every 30 seconds. Specifying 0 will di
 sink.serializer    TEXT     Other possible options include AVRO_EVENT or the FQCN of an implementation of EventSerializer.Builder interface.
 =================  =======  ======================================================================================================================
 
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sinks = fileSink-1
+  agent_foo.sinks.fileSink-1.type = FILE_ROLL
+  agent_foo.sinks.fileSink-1.channels = memoryChannel-1
+  agent_foo.sinks.fileSink-1.sink.directory = /var/log/flume
 
 Null Sink
 ~~~~~~~~~
@@ -976,6 +1100,14 @@ Property Name  Default  Description
 **type**       --       The component type name, needs to be ``NULL``.
 =============  =======  ==============================================
 
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sinks = nullSink-1
+  agent_foo.sinks.nullSink-1.type = NULL
+  agent_foo.sinks.nullSink-1.channels = memoryChannel-1
 
 Custom Sink
 ~~~~~~~~~~~
@@ -992,6 +1124,14 @@ Property Name  Default  Description
 **type**       --       The component type name, needs to be your FQCN
 =============  =======  ==============================================
 
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sinks = customSink-1
+  agent_foo.sinks.customSink-1.type = your.namespace.YourClass
+  agent_foo.sinks.customSink-1.channels = memoryChannel-1
 
 Flume Channels
 --------------
@@ -1010,12 +1150,19 @@ Required properties are in **bold**.
 ===================  =======  ==============================================================
 Property Name        Default  Description
 ===================  =======  ==============================================================
-**type**             --       The component type name, needs to be memory
+**type**             --       The component type name, needs to be ``memory``
 capacity             100      The max number of events stored in the channel
 transactionCapacity  100      The max number of events stored in the channel per transaction
 keep-alive           3        Timeout in seconds for adding or removing an event
 ===================  =======  ==============================================================
 
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.channels = memoryChannel-1
+  agent_foo.channels.memoryChannel-1.type = memory
+  agent_foo.channels.memoryChannel-1.capacity = 1000
 
 JDBC Channel
 ~~~~~~~~~~~~
@@ -1028,7 +1175,7 @@ Required properties are in **bold**.
 ==========================  ====================================  =================================================
 Property Name               Default                               Description
 ==========================  ====================================  =================================================
-**type**                    --                                    The component type name, needs to be jdbc
+**type**                    --                                    The component type name, needs to be ``jdbc``
 db.type                     DERBY                                 Database vendor, needs to be DERBY.
 driver.class                org.apache.derby.jdbc.EmbeddedDriver  Class for vendor's JDBC driver
 driver.url                  (constructed from other properties)   JDBC connection URL
@@ -1046,6 +1193,12 @@ sysprop.*                                                         DB Vendor spec
 sysprop.user.home                                                 Home path to store embedded Derby database
 ==========================  ====================================  =================================================
 
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.channels = jdbcChannel-1
+  agent_foo.channels.jdbcChannel-1.type = jdbc
 
 Recoverable Memory Channel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1061,7 +1214,7 @@ Required properties are in **bold**.
 Property Name           Default                                          Description
 ======================  ===============================================  =========================================================================
 **type**                --                                               The component type name, needs to be
-                                                                         org.apache.flume.channel.recoverable.memory.RecoverableMemoryChannel
+                                                                         ``org.apache.flume.channel.recoverable.memory.RecoverableMemoryChannel``
 wal.dataDir             ${user.home}/.flume/recoverable-memory-channel
 wal.rollSize            (0x04000000)                                     Max size (in bytes) of a single file before we roll
 wal.minRetentionPeriod  300000                                           Min amount of time (in millis) to keep a log
@@ -1097,6 +1250,15 @@ write-timeout         3                                 Amount of time (in sec) 
           It is therefore necessary that you provide explicit paths to
           all the configured channels, preferably on different disks.
 
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.channels = fileChannel-1
+  agent_foo.channels.fileChannel-1.type = file
+  agent_foo.channels.fileChannel-1.checkpointDir = /mnt/flume/checkpoint
+  agent_foo.channels.fileChannel-1.dataDirs = /mnt/flume/data
+
 Pseudo Transaction Channel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1108,7 +1270,7 @@ Required properties are in **bold**.
 =============  =======  ====================================================================================
 Property Name  Default  Description
 =============  =======  ====================================================================================
-**type**       --       The component type name, needs to be org.apache.flume.channel.PseudoTxnMemoryChannel
+**type**       --       The component type name, needs to be ``org.apache.flume.channel.PseudoTxnMemoryChannel``
 capacity       50       The max number of events stored in the channel
 keep-alive     3        Timeout in seconds for adding or removing an event
 =============  =======  ====================================================================================
@@ -1129,6 +1291,12 @@ Property Name  Default  Description
 **type**       --       The component type name, needs to be a fully-qualified class name
 =============  =======  =================================================================
 
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.channels = customChannel-1
+  agent_foo.channels.customChannel-1.type = your.domain.YourClass
 
 Flume Channel Selectors
 -----------------------
@@ -1143,9 +1311,17 @@ Required properties are in **bold**.
 =============  ===========  ================================================
 Property Name  Default      Description
 =============  ===========  ================================================
-selector.type  replicating  The component type name, needs to be replicating
+selector.type  replicating  The component type name, needs to be ``replicating``
 =============  ===========  ================================================
 
+Example for agent named **agent_foo** and it's source called **source_foo**:
+
+.. code-block:: properties
+
+  agent_foo.sources = source_foo
+  agent_foo.channels = channel-1 channel-2 channel-3
+  agent_foo.source.source_foo.selector.type = replicating
+  agent_foo.source.source_foo.channels = channel-1 channel-2 channel-3
 
 Multiplexing Channel Selector
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1155,12 +1331,23 @@ Required properties are in **bold**.
 ==================  =====================  =================================================
 Property Name       Default                Description
 ==================  =====================  =================================================
-selector.type       replicating            The component type name, needs to be multiplexing
+selector.type       replicating            The component type name, needs to be ``multiplexing``
 selector.header     flume.selector.header
 selector.default    --
 selector.mapping.*  --
 ==================  =====================  =================================================
 
+Example for agent named **agent_foo** and it's source called **source_foo**:
+
+.. code-block:: properties
+
+  agent_foo.sources = source_foo
+  agent_foo.channels = channel-1 channel-2 channel-3 channel-4
+  agent_foo.sources.source_foo.selector.type = multiplexing
+  agent_foo.sources.source_foo.selector.header = state
+  agent_foo.sources.source_foo.selector.mapping.CZ = channel-1
+  agent_foo.sources.source_foo.selector.mapping.US = channel-2 channel-3
+  agent_foo.sources.source_foo.selector.default = channel-4
 
 Custom Channel Selector
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -1176,6 +1363,13 @@ Property Name  Default  Description
 selector.type  --       The component type name, needs to be your FQCN
 =============  =======  ==============================================
 
+Example for agent named **agent_foo** and it's source called **source_foo**:
+
+.. code-block:: properties
+
+  agent_foo.sources = source_foo
+  agent_foo.channels = channel-1
+  agent_foo.sources.source_foo.selector.type = your.namespace.YourClass
 
 Flume Sink Processors
 ---------------------
@@ -1201,7 +1395,7 @@ Required properties are in **bold**.
 =============================  =======  ===================================================================================
 Property Name                  Default  Description
 =============================  =======  ===================================================================================
-processor.type                 default  The component type name, needs to be failover
+processor.type                 default  The component type name, needs to be ``failover``
 processor.maxpenalty           30000    (in millis)
 processor.priority.<sinkName>           <sinkName> must be one of the sink instances associated with the current sink group
 =============================  =======  ===================================================================================
