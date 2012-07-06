@@ -24,9 +24,10 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.concurrent.GuardedBy;
 
+import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
-import org.apache.flume.ChannelException;
+import org.apache.flume.instrumentation.ChannelCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,14 +42,18 @@ public class MemoryChannel extends BasicChannelSemantics {
   public class MemoryTransaction extends BasicTransactionSemantics {
     private LinkedBlockingDeque<Event> takeList;
     private LinkedBlockingDeque<Event> putList;
+    private final ChannelCounter channelCounter;
 
-    public MemoryTransaction(int transCapacity) {
+    public MemoryTransaction(int transCapacity, ChannelCounter counter) {
       putList = new LinkedBlockingDeque<Event>(transCapacity);
       takeList = new LinkedBlockingDeque<Event>(transCapacity);
+
+      channelCounter = counter;
     }
 
     @Override
     protected void doPut(Event event) {
+      channelCounter.incrementEventPutAttemptCount();
       if(!putList.offer(event)) {
         throw new ChannelException("Put queue for MemoryTransaction of capacity " +
             putList.size() + " full, consider committing more frequently, " +
@@ -58,6 +63,7 @@ public class MemoryChannel extends BasicChannelSemantics {
 
     @Override
     protected Event doTake() throws InterruptedException {
+      channelCounter.incrementEventTakeAttemptCount();
       if(takeList.remainingCapacity() == 0) {
         throw new ChannelException("Take list for MemoryTransaction, capacity " +
             takeList.size() + " full, consider committing more frequently, " +
@@ -87,6 +93,7 @@ public class MemoryChannel extends BasicChannelSemantics {
         }
       }
       int puts = putList.size();
+      int takes = takeList.size();
       synchronized(queueLock) {
         if(puts > 0 ) {
           while(!putList.isEmpty()) {
@@ -102,7 +109,14 @@ public class MemoryChannel extends BasicChannelSemantics {
       if(remainingChange > 0) {
         queueRemaining.release(remainingChange);
       }
+      if (puts > 0) {
+        channelCounter.addToEventPutSuccessCount(puts);
+      }
+      if (takes > 0) {
+        channelCounter.addToEventTakeSuccessCount(takes);
+      }
 
+      channelCounter.setChannelSize(queue.size());
     }
 
     @Override
@@ -117,6 +131,7 @@ public class MemoryChannel extends BasicChannelSemantics {
         putList.clear();
       }
       queueStored.release(takes);
+      channelCounter.setChannelSize(queue.size());
     }
 
   }
@@ -140,6 +155,7 @@ public class MemoryChannel extends BasicChannelSemantics {
   // maximum items in a transaction queue
   private volatile Integer transCapacity;
   private volatile int keepAlive;
+  private ChannelCounter channelCounter;
 
 
   public MemoryChannel() {
@@ -193,6 +209,10 @@ public class MemoryChannel extends BasicChannelSemantics {
         queueStored = new Semaphore(0);
       }
     }
+
+    if (channelCounter == null) {
+      channelCounter = new ChannelCounter(getName());
+    }
   }
 
   private void resizeQueue(int capacity) throws InterruptedException {
@@ -224,7 +244,21 @@ public class MemoryChannel extends BasicChannelSemantics {
   }
 
   @Override
+  public synchronized void start() {
+    channelCounter.start();
+    channelCounter.setChannelSize(queue.size());
+    super.start();
+  }
+
+  @Override
+  public synchronized void stop() {
+    channelCounter.setChannelSize(queue.size());
+    channelCounter.stop();
+    super.stop();
+  }
+
+  @Override
   protected BasicTransactionSemantics createTransaction() {
-    return new MemoryTransaction(transCapacity);
+    return new MemoryTransaction(transCapacity, channelCounter);
   }
 }

@@ -34,6 +34,7 @@ import org.apache.flume.Event;
 import org.apache.flume.channel.BasicChannelSemantics;
 import org.apache.flume.channel.BasicTransactionSemantics;
 import org.apache.flume.channel.file.Log.Builder;
+import org.apache.flume.instrumentation.ChannelCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,6 +85,7 @@ public class FileChannel extends BasicChannelSemantics {
   private int logWriteTimeout;
   private int checkpointWriteTimeout;
   private String channelNameDescriptor = "[channel=unknown]";
+  private ChannelCounter channelCounter;
 
   @Override
   public synchronized void setName(String name) {
@@ -202,6 +204,10 @@ public class FileChannel extends BasicChannelSemantics {
       log.setCheckpointInterval(checkpointInterval);
       log.setMaxFileSize(maxFileSize);
     }
+
+    if (channelCounter == null) {
+      channelCounter = new ChannelCounter(getName());
+    }
   }
 
   @Override
@@ -231,13 +237,22 @@ public class FileChannel extends BasicChannelSemantics {
       open = false;
       LOG.error("Failed to start the file channel", ex);
     }
+    if (open) {
+      channelCounter.start();
+      channelCounter.setChannelSize(getDepth());
+    }
     super.start();
   }
 
   @Override
   public synchronized void stop() {
     LOG.info("Stopping {}...", this);
+    int size = getDepth();
     close();
+    if (!open) {
+      channelCounter.setChannelSize(size);
+      channelCounter.stop();
+    }
     super.stop();
   }
 
@@ -256,7 +271,8 @@ public class FileChannel extends BasicChannelSemantics {
               trans.getStateAsString()  + channelNameDescriptor);
     }
     trans = new FileBackedTransaction(log, TRANSACTION_ID.incrementAndGet(),
-        transactionCapacity, keepAlive, queueRemaining, getName());
+        transactionCapacity, keepAlive, queueRemaining, getName(),
+        channelCounter);
     transactions.set(trans);
     return trans;
   }
@@ -294,9 +310,10 @@ public class FileChannel extends BasicChannelSemantics {
     private final FlumeEventQueue queue;
     private final Semaphore queueRemaining;
     private final String channelNameDescriptor;
+    private final ChannelCounter channelCounter;
     public FileBackedTransaction(Log log, long transactionID,
         int transCapacity, int keepAlive, Semaphore queueRemaining,
-        String name) {
+        String name, ChannelCounter counter) {
       this.log = log;
       queue = log.getFlumeEventQueue();
       this.transactionID = transactionID;
@@ -305,6 +322,7 @@ public class FileChannel extends BasicChannelSemantics {
       putList = new LinkedBlockingDeque<FlumeEventPointer>(transCapacity);
       takeList = new LinkedBlockingDeque<FlumeEventPointer>(transCapacity);
       channelNameDescriptor = "[channel=" + name + "]";
+      this.channelCounter = counter;
     }
     private boolean isClosed() {
       return State.CLOSED.equals(getState());
@@ -314,6 +332,7 @@ public class FileChannel extends BasicChannelSemantics {
     }
     @Override
     protected void doPut(Event event) throws InterruptedException {
+      channelCounter.incrementEventPutAttemptCount();
       if(putList.remainingCapacity() == 0) {
         throw new ChannelException("Put queue for FileBackedTransaction " +
             "of capacity " + putList.size() + " full, consider " +
@@ -336,6 +355,7 @@ public class FileChannel extends BasicChannelSemantics {
 
     @Override
     protected Event doTake() throws InterruptedException {
+      channelCounter.incrementEventTakeAttemptCount();
       if(takeList.remainingCapacity() == 0) {
         throw new ChannelException("Take list for FileBackedTransaction, capacity " +
             takeList.size() + " full, consider committing more frequently, " +
@@ -384,6 +404,7 @@ public class FileChannel extends BasicChannelSemantics {
         }
         try {
           log.commitPut(transactionID);
+          channelCounter.addToEventPutSuccessCount(puts);
         } catch (IOException e) {
           throw new ChannelException("Commit failed due to IO error "
               + channelNameDescriptor, e);
@@ -391,6 +412,7 @@ public class FileChannel extends BasicChannelSemantics {
       } else if(takes > 0) {
         try {
           log.commitTake(transactionID);
+          channelCounter.addToEventTakeSuccessCount(takes);
         } catch (IOException e) {
           throw new ChannelException("Commit failed due to IO error "
                + channelNameDescriptor, e);
@@ -399,6 +421,7 @@ public class FileChannel extends BasicChannelSemantics {
       }
       putList.clear();
       takeList.clear();
+      channelCounter.setChannelSize(queue.getSize());
     }
 
     @Override
@@ -423,6 +446,7 @@ public class FileChannel extends BasicChannelSemantics {
       }
       putList.clear();
       takeList.clear();
+      channelCounter.setChannelSize(queue.getSize());
     }
 
   }

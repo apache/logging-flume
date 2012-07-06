@@ -20,27 +20,27 @@
 package org.apache.flume.sink;
 
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
-import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
 import org.apache.flume.Sink;
 import org.apache.flume.Transaction;
 import org.apache.flume.api.RpcClient;
+import org.apache.flume.api.RpcClientConfigurationConstants;
 import org.apache.flume.api.RpcClientFactory;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.source.AvroSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import java.util.Properties;
-import org.apache.flume.api.RpcClientConfigurationConstants;
 
 /**
  * <p>
@@ -125,12 +125,8 @@ public class AvroSink extends AbstractSink implements Configurable {
   private Integer port;
 
   private RpcClient client;
-  private CounterGroup counterGroup;
   private Properties clientProps;
-
-  public AvroSink() {
-    counterGroup = new CounterGroup();
-  }
+  private SinkCounter sinkCounter;
 
   @Override
   public void configure(Context context) {
@@ -165,6 +161,10 @@ public class AvroSink extends AbstractSink implements Configurable {
           RpcClientConfigurationConstants.CONFIG_REQUEST_TIMEOUT,
           String.valueOf(requestTimeout));
     }
+
+    if (sinkCounter == null) {
+      sinkCounter = new SinkCounter(getName());
+    }
   }
 
   /**
@@ -178,8 +178,16 @@ public class AvroSink extends AbstractSink implements Configurable {
       logger.info("Avro sink {}: Building RpcClient with hostname: {}, " +
           "port: {}",
           new Object[] { getName(), hostname, port });
-
+      try {
        client = RpcClientFactory.getInstance(clientProps);
+      } catch (Exception ex) {
+        sinkCounter.incrementConnectionFailedCount();
+        if (ex instanceof FlumeException) {
+          throw (FlumeException) ex;
+        } else {
+          throw new FlumeException(ex);
+        }
+      }
        logger.debug("Avro sink {}: Created RpcClient: {}", getName(), client);
     }
 
@@ -190,7 +198,9 @@ public class AvroSink extends AbstractSink implements Configurable {
       logger.debug("Avro sink {} closing avro client: {}", getName(), client);
       try {
         client.close();
+        sinkCounter.incrementConnectionClosedCount();
       } catch (FlumeException e) {
+        sinkCounter.incrementConnectionFailedCount();
         logger.error("Avro sink " + getName() + ": Attempt to close avro " +
             "client failed. Exception follows.", e);
       }
@@ -226,7 +236,7 @@ public class AvroSink extends AbstractSink implements Configurable {
   @Override
   public void start() {
     logger.info("Starting {}...", this);
-
+    sinkCounter.start();
     try {
       createConnection();
     } catch (FlumeException e) {
@@ -247,10 +257,10 @@ public class AvroSink extends AbstractSink implements Configurable {
     logger.info("Avro sink {} stopping...", getName());
 
     destroyConnection();
-
+    sinkCounter.stop();
     super.stop();
 
-    logger.info("Avro sink {} stopped. Metrics: {}", getName(), counterGroup);
+    logger.info("Avro sink {} stopped. Metrics: {}", getName(), sinkCounter);
   }
 
   @Override
@@ -276,26 +286,33 @@ public class AvroSink extends AbstractSink implements Configurable {
         Event event = channel.take();
 
         if (event == null) {
-          counterGroup.incrementAndGet("batch.underflow");
           break;
         }
 
         batch.add(event);
       }
 
-      if (batch.isEmpty()) {
-        counterGroup.incrementAndGet("batch.empty");
+      int size = batch.size();
+      int batchSize = client.getBatchSize();
+
+      if (size == 0) {
+        sinkCounter.incrementBatchEmptyCount();
         status = Status.BACKOFF;
       } else {
+        if (size < batchSize) {
+          sinkCounter.incrementBatchUnderflowCount();
+        } else {
+          sinkCounter.incrementBatchCompleteCount();
+        }
+        sinkCounter.addToEventDrainAttemptCount(size);
         client.appendBatch(batch);
       }
 
       transaction.commit();
-      counterGroup.incrementAndGet("batch.success");
+      sinkCounter.addToEventDrainSuccessCount(size);
 
     } catch (Throwable t) {
       transaction.rollback();
-      counterGroup.incrementAndGet("batch.failure");
       if (t instanceof Error) {
         throw (Error) t;
       } else if (t instanceof ChannelException) {

@@ -20,7 +20,6 @@ package org.apache.flume.sink.hdfs;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedHashMap;
@@ -32,6 +31,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -43,6 +43,7 @@ import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.formatter.output.BucketPath;
+import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.AbstractSink;
 import org.apache.flume.sink.FlumeFormatter;
 import org.apache.hadoop.conf.Configuration;
@@ -58,7 +59,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import java.util.concurrent.ScheduledExecutorService;
 
 public class HDFSEventSink extends AbstractSink implements Configurable {
   private static final Logger LOG = LoggerFactory
@@ -124,6 +124,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
   private long callTimeout;
   private Context context;
+  private SinkCounter sinkCounter;
 
   /*
    * Extended Java LinkedHashMap for open file handle LRU queue.
@@ -263,6 +264,10 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
             "must be > 0 and <= 24");
       }
     }
+
+    if (sinkCounter == null) {
+      sinkCounter = new SinkCounter(getName());
+    }
   }
 
   private static boolean codecMatches(Class<? extends CompressionCodec> cls,
@@ -334,8 +339,10 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       }
     } catch (TimeoutException eT) {
       future.cancel(true);
+      sinkCounter.incrementConnectionFailedCount();
       throw new IOException("Callable timed out", eT);
     } catch (ExecutionException e1) {
+      sinkCounter.incrementConnectionFailedCount();
       Throwable cause = e1.getCause();
       if (cause instanceof IOException) {
         throw (IOException) cause;
@@ -371,7 +378,8 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     transaction.begin();
     try {
       Event event = null;
-      for (int txnEventCount = 0; txnEventCount < txnEventMax; txnEventCount++) {
+      int txnEventCount = 0;
+      for (txnEventCount = 0; txnEventCount < txnEventMax; txnEventCount++) {
         event = channel.take();
         if (event == null) {
           break;
@@ -390,7 +398,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
           bucketWriter = new BucketWriter(rollInterval, rollSize, rollCount,
               batchSize, context, realPath, codeC, compType, hdfsWriter,
-              formatter, timedRollerPool, proxyTicket);
+              formatter, timedRollerPool, proxyTicket, sinkCounter);
 
           sfWriters.put(realPath, bucketWriter);
         }
@@ -404,6 +412,14 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
         append(bucketWriter, event);
       }
 
+      if (txnEventCount == 0) {
+        sinkCounter.incrementBatchEmptyCount();
+      } else if (txnEventCount == txnEventMax) {
+        sinkCounter.incrementBatchCompleteCount();
+      } else {
+        sinkCounter.incrementBatchUnderflowCount();
+      }
+
       // flush all pending buckets before committing the transaction
       for (BucketWriter bucketWriter : writers) {
         if (!bucketWriter.isBatchComplete()) {
@@ -412,6 +428,11 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       }
 
       transaction.commit();
+
+      if (txnEventCount > 0) {
+        sinkCounter.addToEventDrainSuccessCount(txnEventCount);
+      }
+
       if(event == null) {
         return Status.BACKOFF;
       }
@@ -470,7 +491,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
     sfWriters.clear();
     sfWriters = null;
-
+    sinkCounter.stop();
     super.stop();
   }
 
@@ -485,6 +506,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
         new ThreadFactoryBuilder().setNameFormat(rollerName).build());
 
     this.sfWriters = new WriterLinkedHashMap(maxOpenFiles);
+    sinkCounter.start();
     super.start();
   }
 
@@ -512,7 +534,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
         //HDFSEventSink will halt when keytab file is non-exist or unreadable
         File kfile = new File(kerbKeytab);
         if (!(kfile.isFile() && kfile.canRead())) {
-          throw new IllegalArgumentException("The keyTab file: " 
+          throw new IllegalArgumentException("The keyTab file: "
               + kerbKeytab + " is nonexistent or can't read. "
               + "Please specify a readable keytab file for Kerberos auth.");
         }
