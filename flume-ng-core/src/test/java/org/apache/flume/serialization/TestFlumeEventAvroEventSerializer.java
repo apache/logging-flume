@@ -81,7 +81,9 @@ public class TestFlumeEventAvroEventSerializer {
   public void createAvroFile(File file, String codec)
       throws FileNotFoundException, IOException {
 
-    Assert.assertFalse("File should be exist yet", file.exists());
+    if(file.exists()){
+      FileUtils.forceDelete(file);
+    }
 
     // serialize a few events using the reflection-based avro serializer
     OutputStream out = new FileOutputStream(file);
