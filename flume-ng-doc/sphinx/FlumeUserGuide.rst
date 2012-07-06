@@ -149,6 +149,65 @@ name, the config directory, and the config file on the command line::
 Now the agent will start running source and sinks configured in the given
 properties file.
 
+A simple example
+~~~~~~~~~~~~~~~~
+Here, we give an example configuration file, describing a single-node Flume deployment. This configuration lets a user generate events and subsequently logs them to the console.
+
+.. code-block:: properties
+   
+  # example.conf: A single-node Flume configuration
+
+  # Name the components on this agent
+  agent1.sources = source1
+  agent1.sinks = sink1
+  agent1.channels = channel1
+
+  # Describe/configure source1
+  agent1.sources.source1.type = netcat
+  agent1.sources.source1.bind = localhost
+  agent1.sources.source1.port = 44444
+
+  # Describe sink1
+  agent1.sinks.sink1.type = logger
+
+  # Use a channel which buffers events in memory
+  agent1.channels.channel1.type = memory
+  agent1.channels.channel1.capacity = 1000
+  agent1.channels.channel1.transactionCapactiy = 100
+ 
+  # Bind the source and sink to the channel
+  agent1.sources.source1.channels = channel1
+  agent1.sinks.sink1.channel = channel1
+
+This configuration defines a single agent, called *agent1*. *agent1* has a source that listens for data on port 44444, a channel that buffers event data in memory, and a sink that logs event data to the console. The configuration file names the various components, then describes their types and configuration parameters. A given configuration file might define several named agents; when a given Flume process is launched a flag is passed telling it which named agent to manifest.
+
+Given this configuration file, we can start Flume as follows::
+
+  $ bin/flume-ng agent --conf-file example.conf --name agent1 -Dflume.root.logger=INFO,console
+
+Note that in a full deployment we would typically include one more option: ``--conf=<conf-dir>``. The ``<conf-dir>`` directory would include a shell script *flume-env.sh* and potentially a log4j properties file. In this example, we pass a Java option to force Flume to log to the console and we go without a custom environment script.
+
+From a separate terminal, we can then telnet port 44444 and send Flume an event:
+
+.. code-block:: properties
+
+  $ telnet localhost 44444
+  Trying 127.0.0.1...
+  Connected to localhost.localdomain (127.0.0.1).
+  Escape character is '^]'.
+  Hello world! <ENTER>
+  OK
+
+The original Flume terminal will output the event in a log message.
+
+.. code-block:: properties
+
+  12/06/19 15:32:19 INFO source.NetcatSource: Source starting
+  12/06/19 15:32:19 INFO source.NetcatSource: Created serverSocket:sun.nio.ch.ServerSocketChannelImpl[/127.0.0.1:44444]
+  12/06/19 15:32:34 INFO sink.LoggerSink: Event: { headers:{} body: 48 65 6C 6C 6F 20 77 6F 72 6C 64 21 0D          Hello world!. }
+
+Congratulations - you've successfully configured and deployed a Flume agent! Subsequent sections cover agent configuration in much more detail.
+
 Data ingestion
 --------------
 
