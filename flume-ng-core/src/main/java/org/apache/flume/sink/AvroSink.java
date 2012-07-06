@@ -179,7 +179,8 @@ public class AvroSink extends AbstractSink implements Configurable {
           "port: {}",
           new Object[] { getName(), hostname, port });
       try {
-       client = RpcClientFactory.getInstance(clientProps);
+        client = RpcClientFactory.getInstance(clientProps);
+        sinkCounter.incrementConnectionCreatedCount();
       } catch (Exception ex) {
         sinkCounter.incrementConnectionFailedCount();
         if (ex instanceof FlumeException) {
