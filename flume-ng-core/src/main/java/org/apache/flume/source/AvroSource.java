@@ -33,12 +33,12 @@ import org.apache.avro.ipc.specific.SpecificResponder;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
-import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.Source;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
@@ -113,13 +113,9 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   private String bindAddress;
 
   private Server server;
-  private CounterGroup counterGroup;
+  private SourceCounter sourceCounter;
 
   private int maxThreads;
-
-  public AvroSource() {
-    counterGroup = new CounterGroup();
-  }
 
   @Override
   public void configure(Context context) {
@@ -130,6 +126,10 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     } catch (NumberFormatException e) {
       logger.warn("AVRO source\'s \"threads\" property must specify an integer value.",
               context.getString(THREADS));
+    }
+
+    if (sourceCounter == null) {
+      sourceCounter = new SourceCounter(getName());
     }
   }
 
@@ -149,7 +149,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     }
 
     server.start();
-
+    sourceCounter.start();
     super.start();
 
     logger.info("Avro source {} started.", getName());
@@ -167,10 +167,11 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
       logger.info("Avro source " + getName() + ": Interrupted while waiting " +
           "for Avro server to stop. Exiting. Exception follows.", e);
     }
-
+    sourceCounter.stop();
     super.stop();
 
-    logger.info("Avro source {} stopped. Metrics: {}", getName(), counterGroup);
+    logger.info("Avro source {} stopped. Metrics: {}", getName(),
+        sourceCounter);
   }
 
   @Override
@@ -194,8 +195,10 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
 
   @Override
   public Status append(AvroFlumeEvent avroEvent) {
-    logger.debug("Avro source {}: Received avro event: {}", getName(), avroEvent);
-    counterGroup.incrementAndGet("rpc.received");
+    logger.debug("Avro source {}: Received avro event: {}", getName(),
+        avroEvent);
+    sourceCounter.incrementAppendReceivedCount();
+    sourceCounter.incrementEventReceivedCount();
 
     Event event = EventBuilder.withBody(avroEvent.getBody().array(),
         toStringMap(avroEvent.getHeaders()));
@@ -208,7 +211,8 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
       return Status.FAILED;
     }
 
-    counterGroup.incrementAndGet("rpc.successful");
+    sourceCounter.incrementAppendAcceptedCount();
+    sourceCounter.incrementEventAcceptedCount();
 
     return Status.OK;
   }
@@ -217,14 +221,14 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   public Status appendBatch(List<AvroFlumeEvent> events) {
     logger.debug("Avro source {}: Received avro event batch of {} events.",
         getName(), events.size());
-    counterGroup.incrementAndGet("rpc.batch.received");
+    sourceCounter.incrementAppendBatchReceivedCount();
+    sourceCounter.addToEventReceivedCount(events.size());
 
     List<Event> batch = new ArrayList<Event>();
 
     for (AvroFlumeEvent avroEvent : events) {
       Event event = EventBuilder.withBody(avroEvent.getBody().array(),
           toStringMap(avroEvent.getHeaders()));
-      counterGroup.incrementAndGet("rpc.batch.events");
 
       batch.add(event);
     }
@@ -237,7 +241,8 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
       return Status.FAILED;
     }
 
-    counterGroup.incrementAndGet("rpc.batch.successful");
+    sourceCounter.incrementAppendBatchAcceptedCount();
+    sourceCounter.addToEventAcceptedCount(events.size());
 
     return Status.OK;
   }

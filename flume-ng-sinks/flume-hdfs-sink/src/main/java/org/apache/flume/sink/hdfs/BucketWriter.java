@@ -26,8 +26,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.FlumeFormatter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -78,11 +80,13 @@ class BucketWriter {
   private volatile long batchCounter;
   private volatile boolean isOpen;
   private volatile ScheduledFuture<Void> timedRollFuture;
+  private SinkCounter sinkCounter;
 
   BucketWriter(long rollInterval, long rollSize, long rollCount, long batchSize,
       Context context, String filePath, CompressionCodec codeC,
       CompressionType compType, HDFSWriter writer, FlumeFormatter formatter,
-      ScheduledExecutorService timedRollerPool, UserGroupInformation user) {
+      ScheduledExecutorService timedRollerPool, UserGroupInformation user,
+      SinkCounter sinkCounter) {
     this.rollInterval = rollInterval;
     this.rollSize = rollSize;
     this.rollCount = rollCount;
@@ -95,6 +99,7 @@ class BucketWriter {
     this.formatter = formatter;
     this.timedRollerPool = timedRollerPool;
     this.user = user;
+    this.sinkCounter = sinkCounter;
 
     fileExtensionCounter = new AtomicLong(System.currentTimeMillis());
 
@@ -172,24 +177,33 @@ class BucketWriter {
     // NOTE: tried synchronizing on the underlying Kerberos principal previously
     // which caused deadlocks. See FLUME-1231.
     synchronized (staticLock) {
-      long counter = fileExtensionCounter.incrementAndGet();
-      if (codeC == null) {
-        bucketPath = filePath + "." + counter;
-        // Need to get reference to FS using above config before underlying
-        // writer does in order to avoid shutdown hook & IllegalStateExceptions
-        fileSystem = new Path(bucketPath).getFileSystem(config);
-        LOG.info("Creating " + bucketPath + IN_USE_EXT);
-        writer.open(bucketPath + IN_USE_EXT, formatter);
-      } else {
-        bucketPath = filePath + "." + counter
-            + codeC.getDefaultExtension();
-        // need to get reference to FS before writer does to avoid shutdown hook
-        fileSystem = new Path(bucketPath).getFileSystem(config);
-        LOG.info("Creating " + bucketPath + IN_USE_EXT);
-        writer.open(bucketPath + IN_USE_EXT, codeC, compType, formatter);
+      try {
+        long counter = fileExtensionCounter.incrementAndGet();
+        if (codeC == null) {
+          bucketPath = filePath + "." + counter;
+          // Need to get reference to FS using above config before underlying
+          // writer does in order to avoid shutdown hook & IllegalStateExceptions
+          fileSystem = new Path(bucketPath).getFileSystem(config);
+          LOG.info("Creating " + bucketPath + IN_USE_EXT);
+          writer.open(bucketPath + IN_USE_EXT, formatter);
+        } else {
+          bucketPath = filePath + "." + counter
+              + codeC.getDefaultExtension();
+          // need to get reference to FS before writer does to avoid shutdown hook
+          fileSystem = new Path(bucketPath).getFileSystem(config);
+          LOG.info("Creating " + bucketPath + IN_USE_EXT);
+          writer.open(bucketPath + IN_USE_EXT, codeC, compType, formatter);
+        }
+      } catch (Exception ex) {
+        sinkCounter.incrementConnectionFailedCount();
+        if (ex instanceof IOException) {
+          throw (IOException) ex;
+        } else {
+          throw new IOException(ex);
+        }
       }
     }
-
+    sinkCounter.incrementConnectionCreatedCount();
     resetCounters();
 
     // if time-based rolling is enabled, schedule the roll
@@ -234,9 +248,11 @@ class BucketWriter {
     if (isOpen) {
       try {
         writer.close(); // could block
+        sinkCounter.incrementConnectionClosedCount();
       } catch (IOException e) {
         LOG.warn("failed to close() HDFSWriter for file (" + bucketPath +
             IN_USE_EXT + "). Exception follows.", e);
+        sinkCounter.incrementConnectionFailedCount();
       }
       isOpen = false;
     } else {
@@ -299,6 +315,7 @@ class BucketWriter {
 
     // write the event
     try {
+      sinkCounter.incrementEventDrainAttemptCount();
       writer.append(event, formatter); // could block
     } catch (IOException e) {
       LOG.warn("Caught IOException writing to HDFSWriter ({}). Closing file (" +
