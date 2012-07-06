@@ -856,6 +856,8 @@ Property Name   Default  Description
 **hostname**    --       The hostname or IP address to bind to.
 **port**        --       The port # to listen on.
 batch-size      100      number of event to batch together for send.
+connect-timeout 20000    Amount of time (ms) to allow for the first (handshake) request.
+request-timeout 20000    Amount of time (ms) to allow for requests after the first.
 ==============  =======  ==============================================
 
 

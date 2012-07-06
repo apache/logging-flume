@@ -23,7 +23,9 @@ import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.common.base.Charsets;
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Server;
@@ -52,7 +54,7 @@ public class TestAvroSink {
 
   private static final Logger logger = LoggerFactory
       .getLogger(TestAvroSink.class);
-  private static final String hostname = "localhost";
+  private static final String hostname = "127.0.0.1";
   private static final Integer port = 41414;
 
   private AvroSink sink;
@@ -65,9 +67,11 @@ public class TestAvroSink {
 
     Context context = new Context();
 
-    context.put("hostname", "localhost");
-    context.put("port", "41414");
-    context.put("batch-size", "2");
+    context.put("hostname", hostname);
+    context.put("port", String.valueOf(port));
+    context.put("batch-size", String.valueOf(2));
+    context.put("connect-timeout", String.valueOf(2000L));
+    context.put("request-timeout", String.valueOf(3000L));
 
     sink.setChannel(channel);
 
@@ -76,8 +80,9 @@ public class TestAvroSink {
   }
 
   @Test
-  public void testLifecycle() throws InterruptedException {
-    Server server = createServer();
+  public void testLifecycle() throws InterruptedException,
+      InstantiationException, IllegalAccessException {
+    Server server = createServer(new MockAvroServer());
 
     server.start();
 
@@ -94,11 +99,10 @@ public class TestAvroSink {
 
   @Test
   public void testProcess() throws InterruptedException,
-      EventDeliveryException {
+      EventDeliveryException, InstantiationException, IllegalAccessException {
 
-    Event event = EventBuilder.withBody("test event 1".getBytes(),
-        new HashMap<String, String>());
-    Server server = createServer();
+    Event event = EventBuilder.withBody("test event 1", Charsets.UTF_8);
+    Server server = createServer(new MockAvroServer());
 
     server.start();
 
@@ -130,12 +134,67 @@ public class TestAvroSink {
   }
 
   @Test
+  public void testTimeout() throws InterruptedException,
+      EventDeliveryException, InstantiationException, IllegalAccessException {
+    Event event = EventBuilder.withBody("foo", Charsets.UTF_8);
+    AtomicLong delay = new AtomicLong();
+    Server server = createServer(new DelayMockAvroServer(delay));
+    server.start();
+    sink.start();
+    Assert.assertTrue(LifecycleController.waitForOneOf(sink,
+        LifecycleState.START_OR_ERROR, 5000));
+
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    for (int i = 0; i < 4; i++) {
+      channel.put(event);
+    }
+    txn.commit();
+    txn.close();
+
+    // should throw EventDeliveryException due to connect timeout
+    delay.set(3000L); // because connect-timeout = 2000
+    boolean threw = false;
+    try {
+      sink.process();
+    } catch (EventDeliveryException ex) {
+      logger.info("Correctly threw due to connect timeout. Exception follows.",
+          ex);
+      threw = true;
+    }
+
+    Assert.assertTrue("Must throw due to connect timeout", threw);
+
+    // now, allow the connect handshake to occur
+    delay.set(0);
+    sink.process();
+
+    // should throw another EventDeliveryException due to request timeout
+    delay.set(4000L); // because request-timeout = 3000
+    threw = false;
+    try {
+      sink.process();
+    } catch (EventDeliveryException ex) {
+      logger.info("Correctly threw due to request timeout. Exception follows.",
+          ex);
+      threw = true;
+    }
+
+    Assert.assertTrue("Must throw due to request timeout", threw);
+
+    sink.stop();
+    Assert.assertTrue(LifecycleController.waitForOneOf(sink,
+        LifecycleState.STOP_OR_ERROR, 5000));
+    server.close();
+  }
+
+  @Test
   public void testFailedConnect() throws InterruptedException,
-      EventDeliveryException {
+      EventDeliveryException, InstantiationException, IllegalAccessException {
 
     Event event = EventBuilder.withBody("test event 1",
         Charset.forName("UTF8"));
-    Server server = createServer();
+    Server server = createServer(new MockAvroServer());
 
     server.start();
     sink.start();
@@ -166,7 +225,7 @@ public class TestAvroSink {
           threwException);
     }
 
-    server = createServer();
+    server = createServer(new MockAvroServer());
     server.start();
 
     for (int i = 0; i < 5; i++) {
@@ -182,9 +241,10 @@ public class TestAvroSink {
     server.close();
   }
 
-  private Server createServer() {
+  private Server createServer(AvroSourceProtocol protocol)
+      throws IllegalAccessException, InstantiationException {
     Server server = new NettyServer(new SpecificResponder(
-        AvroSourceProtocol.class, new MockAvroServer()), new InetSocketAddress(
+        AvroSourceProtocol.class, protocol), new InetSocketAddress(
         hostname, port));
 
     return server;
@@ -201,9 +261,40 @@ public class TestAvroSink {
     @Override
     public Status appendBatch(List<AvroFlumeEvent> events)
         throws AvroRemoteException {
-
       logger.debug("Received event batch:{}", events);
+      return Status.OK;
+    }
 
+  }
+
+  private static class DelayMockAvroServer implements AvroSourceProtocol {
+
+    private final AtomicLong delay;
+
+    public DelayMockAvroServer(AtomicLong delay) {
+      this.delay = delay;
+    }
+
+    private void sleep() throws AvroRemoteException {
+      try {
+        Thread.sleep(delay.get());
+      } catch (InterruptedException e) {
+        throw new AvroRemoteException("Interrupted while sleeping", e);
+      }
+    }
+
+    @Override
+    public Status append(AvroFlumeEvent event) throws AvroRemoteException {
+      logger.debug("Received event:{}; delaying for {}ms", event, delay);
+      sleep();
+      return Status.OK;
+    }
+
+    @Override
+    public Status appendBatch(List<AvroFlumeEvent> events)
+        throws AvroRemoteException {
+      logger.debug("Received event batch:{}; delaying for {}ms", events, delay);
+      sleep();
       return Status.OK;
     }
 

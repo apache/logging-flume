@@ -69,10 +69,10 @@ public final class RpcClientConfigurationConstants {
   public final static Integer DEFAULT_BATCH_SIZE = 100;
 
   /**
-   * Default connection timeout in milliseconds.
+   * Default connection, handshake, and initial request timeout in milliseconds.
    */
   public final static long DEFAULT_CONNECT_TIMEOUT_MILLIS =
-      TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS);
+      TimeUnit.MILLISECONDS.convert(20, TimeUnit.SECONDS);
 
   /**
    * Default request timeout in milliseconds.

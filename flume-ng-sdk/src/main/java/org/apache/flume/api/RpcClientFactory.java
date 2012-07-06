@@ -15,9 +15,12 @@
  */
 package org.apache.flume.api;
 
-import java.net.InetSocketAddress;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
 import java.util.Properties;
-
 import org.apache.flume.FlumeException;
 
 /**
@@ -42,7 +45,6 @@ public class RpcClientFactory {
    * @param properties The properties to instantiate the client with.
    * @throws FlumeException
    */
-
   @SuppressWarnings("unchecked")
   public static RpcClient getInstance(Properties properties)
       throws FlumeException {
@@ -83,6 +85,22 @@ public class RpcClientFactory {
     client.configure(properties);
     return client;
 
+  }
+
+  /**
+   * Delegates to {@link #getInstance(Properties props)}, given a File path
+   * to a {@link Properties} file.
+   * @param propertiesFile Valid properties file
+   * @return RpcClient configured according to the given Properties file.
+   * @throws FileNotFoundException If the file cannot be found
+   * @throws IOException If there is an IO error
+   */
+  public static RpcClient getInstance(File propertiesFile)
+      throws FileNotFoundException, IOException {
+    Reader reader = new FileReader(propertiesFile);
+    Properties props = new Properties();
+    props.load(reader);
+    return getInstance(props);
   }
 
   /**
@@ -128,10 +146,25 @@ public class RpcClientFactory {
    */
   public static RpcClient getDefaultInstance(String hostname, Integer port,
       Integer batchSize) throws FlumeException {
-    NettyAvroRpcClient client = new NettyAvroRpcClient(
-        new InetSocketAddress(hostname, port), batchSize);
-    return client;
 
+    if (hostname == null) {
+      throw new NullPointerException("hostname must not be null");
+    }
+    if (port == null) {
+      throw new NullPointerException("port must not be null");
+    }
+    if (batchSize == null) {
+      throw new NullPointerException("batchSize must not be null");
+    }
+
+    Properties props = new Properties();
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS, "h1");
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX + "h1",
+        hostname + ":" + port.intValue());
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_BATCH_SIZE, batchSize.toString());
+    NettyAvroRpcClient client = new NettyAvroRpcClient();
+    client.configure(props);
+    return client;
   }
 
   public static enum ClientType {
