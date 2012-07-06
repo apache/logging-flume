@@ -108,7 +108,8 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
      * Wait for all channels to start.
      */
     for(Channel ch: nodeConfiguration.getChannels().values()){
-      while(ch.getLifecycleState() != LifecycleState.START){
+      while(ch.getLifecycleState() != LifecycleState.START
+          && !nodeSupervisor.isComponentInErrorState(ch)){
         try {
           logger.info("Waiting for channel: " + ch.getName() +
               " to start. Sleeping for 500 ms");

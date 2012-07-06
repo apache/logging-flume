@@ -128,6 +128,7 @@ public class LifecycleSupervisor implements LifecycleAware {
 
     process.policy = policy;
     process.status.desiredState = desiredState;
+    process.status.error = false;
 
     MonitorRunnable monitorRunnable = new MonitorRunnable();
     monitorRunnable.lifecycleAware = lifecycleAware;
@@ -183,6 +184,10 @@ public class LifecycleSupervisor implements LifecycleAware {
     return lifecycleState;
   }
 
+  public synchronized boolean isComponentInErrorState(LifecycleAware component){
+    return supervisedProcesses.get(component).status.error;
+
+  }
   public static class MonitorRunnable implements Runnable {
 
     public ScheduledExecutorService monitorService;
@@ -208,6 +213,10 @@ public class LifecycleSupervisor implements LifecycleAware {
           // Unsupervise has already been called on this.
           logger.info("Component has already been stopped {}", lifecycleAware);
           return;
+        } else if(supervisoree.status.error) {
+          logger.info("Component {} is in error state, and Flume will not" +
+              "attempt to change its state", lifecycleAware);
+          return;
         }
 
       supervisoree.status.lastSeenState = lifecycleAware.getLifecycleState();
@@ -226,18 +235,43 @@ public class LifecycleSupervisor implements LifecycleAware {
         case START:
           try {
             lifecycleAware.start();
-          } catch (Exception e) {
+          } catch (Throwable e) {
             logger.error("Unable to start " + lifecycleAware
                 + " - Exception follows.", e);
+            if(e instanceof Error){
+              //This component can never recover, shut it down.
+              supervisoree.status.desiredState = LifecycleState.STOP;
+              try{
+                lifecycleAware.stop();
+                logger.warn("Component {} stopped, since it could not be" +
+                    "successfully started due to missing dependencies",
+                    lifecycleAware);
+              } catch (Throwable e1) {
+                logger.error("Unsuccessful attempt to " +
+                    "shutdown component: {} due to missing dependencies." +
+                    " Please shutdown the agent" +
+                    "or disable this component, or the agent will be" +
+                    "in an undefined state.", e1);
+                supervisoree.status.error = true;
+                if(e1 instanceof Error){
+                  throw (Error)e1;
+                }
+                //Set the state to stop, so that the conf poller can
+                //proceed.
+              }
+            }
             supervisoree.status.failures++;
           }
           break;
         case STOP:
           try {
             lifecycleAware.stop();
-          } catch (Exception e) {
+          } catch (Throwable e) {
             logger.error("Unable to stop " + lifecycleAware
                 + " - Exception follows.", e);
+            if(e instanceof Error) {
+              throw (Error)e;
+            }
             supervisoree.status.failures++;
           }
           break;
@@ -277,12 +311,14 @@ public class LifecycleSupervisor implements LifecycleAware {
     public LifecycleState desiredState;
     public int failures;
     public boolean discard;
+    public volatile boolean error;
 
     @Override
     public String toString() {
       return "{ lastSeen:" + lastSeen + " lastSeenState:" + lastSeenState
           + " desiredState:" + desiredState + " firstSeen:" + firstSeen
-          + " failures:" + failures + " discard:" + discard + " }";
+          + " failures:" + failures + " discard:" + discard + " error:" +
+          error + " }";
     }
 
   }
@@ -320,5 +356,6 @@ public class LifecycleSupervisor implements LifecycleAware {
     }
 
   }
+
 
 }
