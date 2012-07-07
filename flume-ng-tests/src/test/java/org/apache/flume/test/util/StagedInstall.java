@@ -391,7 +391,7 @@ public class StagedInstall {
           @Override
           public boolean accept(File pathname) {
             String name = pathname.getName();
-            if (name != null && name.startsWith("flume-ng-dist-")
+            if (name != null && name.startsWith("apache-flume-")
                 && name.endsWith("-dist.tar.gz")) {
               return true;
             }
