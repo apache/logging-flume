@@ -853,6 +853,7 @@ limitations under the License.
       <plugin>
         <groupId>org.tomdz.maven</groupId>
         <artifactId>sphinx-maven-plugin</artifactId>
+        <version>1.0.2</version>
         <inherited>false</inherited>
         <configuration>
           <sourceDirectory>${project.basedir}/flume-ng-doc/sphinx</sourceDirectory>
