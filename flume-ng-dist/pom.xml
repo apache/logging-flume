@@ -45,6 +45,7 @@
             </goals>
             <inherited>false</inherited>
             <configuration>
+              <finalName>apache-flume-${project.version}</finalName>
               <descriptors>
                 <descriptor>src/main/assembly/dist.xml</descriptor>
                 <descriptor>src/main/assembly/src.xml</descriptor>

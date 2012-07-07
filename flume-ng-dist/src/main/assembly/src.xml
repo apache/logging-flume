@@ -28,7 +28,7 @@
     <format>tar.gz</format>
   </formats>
 
-  <baseDirectory>flume-${project.version}</baseDirectory>
+  <baseDirectory>apache-flume-${project.version}</baseDirectory>
 
   <moduleSets>
 
