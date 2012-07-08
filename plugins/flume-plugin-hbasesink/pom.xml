@@ -1,0 +1,47 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <parent>
+    <relativePath>../../pom.xml</relativePath>
+    <groupId>com.cloudera</groupId>
+    <artifactId>flume</artifactId>
+    <version>0.9.5-SNAPSHOT</version>
+  </parent>
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.cloudera.flume.plugin</groupId>
+  <artifactId>flume-plugin-hbasesink</artifactId>
+  <name>Flume HBase Plugin</name>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>${project.parent.groupId}</groupId>
+      <artifactId>flume-core</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase</artifactId>
+      <version>0.90.1-cdh3u0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase</artifactId>
+      <version>0.90.1-cdh3u0</version>
+      <classifier>tests</classifier>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-test</artifactId>
+      <version>0.20.2-cdh3u0</version>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+
+</project>

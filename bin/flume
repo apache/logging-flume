@@ -1,0 +1,320 @@
+#!/usr/bin/env /bin/bash
+# Licensed to Cloudera, Inc. under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  Cloudera, Inc. licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+
+##
+# This script runs core flume commands.  It sets up the proper jar
+# library paths and defaults to a java class name.
+#
+# TODO (jon) This assumes CLASSPATH has $JAVA_HOME/lib/tools.jar in it
+# (jetty requires this to compile jsps.  In future will precompile
+# jsps to make this requirement go away.)
+#
+# This scripts honors the folling env variables:
+#   FLUME_PID_DIR      -- subdirectory where PID files 
+#                            flume-$FLUME_IDENT_STRING-master.pid
+#                         will be deposited
+#   FLUME_IDENT_STRING -- a unique qualifier for the process owning the PID
+#                         typically a user name running the process
+
+function usage {
+  echo "usage: flume command [args...]"
+  echo "commands include: "
+  echo "  dump            Takes a specified source and dumps to console"
+  echo "  source          Takes a specified source and dumps to console"
+  echo "  node            Start a Flume node/agent (with watchdog)"
+  echo "  master          Start a Flume Master server (with watchdog)"
+  echo "  version         Dump flume build version information "
+  echo "  node_nowatch    Start a flume node/agent (no watchdog)"
+  echo "  master_nowatch  Start a Flume Master server (no watchdog)"
+  echo "  class <class>   Run specified fully qualified class using Flume environment (no watchdog)"
+  echo "                   ex: flume com.cloudera.flume.agent.FlumeNode "
+  echo "  classpath       Dump the classpath used by the java executables"
+  echo "  shell           Start the flume shell"
+  echo "  killmaster      Kill a running master"
+  echo "  dumplog         Takes a specified WAL/DFO log file and dumps to console"
+  echo "  sink            Start a one-shot flume node with console source and specified sink"
+  exit -1
+}
+
+CMDPATH=`dirname $0`
+
+# This is to make CMDPATH correct if you go to the bin directory
+# and run ./flume <command>.
+pushd $CMDPATH >/dev/null
+CMDPATH=`pwd`
+popd >/dev/null
+
+# name of path
+CMDPATH=`dirname $CMDPATH`
+
+FLUME=$CMDPATH/bin/flume
+
+MASTERPID=${FLUME_PID_DIR:="/tmp"}/flume-$FLUME_IDENT_STRING-master.pid
+NODEPID=${FLUME_PID_DIR:="/tmp"}/flume-$FLUME_IDENT_STRING-node.pid
+
+CMD="$1"
+if [ -z "$CMD" ]; then
+    usage
+fi
+
+cygwin=false
+pathsep=":"
+case "`uname`" in
+    CYGWIN*)
+        cygwin=true
+        pathsep=";"
+        ;;
+esac
+
+function append_jars_onto_classpath() {
+    local JARS
+    JARS=`find $1/*.jar 2> /dev/null || true`
+    for i in $JARS; do
+        if [ -n "$CLASSPATH" ]; then
+            CLASSPATH=${CLASSPATH}${pathsep}${i}
+        else
+            CLASSPATH=${i}
+        fi
+    done
+}
+
+# name of script
+BINPATH=`dirname $0`
+
+if [ -f "${BINPATH}/flume-env.sh" ]; then
+    source "$BINPATH/flume-env.sh"
+fi
+
+if [ -z "$FLUME_HOME" ]; then
+    export FLUME_HOME="$CMDPATH"
+fi
+
+JOPTS="-Dflume.log.dir=${FLUME_LOG_DIR:-${FLUME_HOME}/logs} "
+JOPTS="$JOPTS -Dflume.log.file=${FLUME_LOGFILE:-flume.log} "
+JOPTS="$JOPTS -Dflume.root.logger=${FLUME_ROOT_LOGGER:-INFO,console} "
+JOPTS="$JOPTS -Dzookeeper.root.logger=${ZOOKEEPER_ROOT_LOGGER:-ERROR,console} "
+JOPTS="$JOPTS -Dwatchdog.root.logger=${WATCHDOG_ROOT_LOGGER:-INFO,console} "
+
+function append_path() {
+  if [ -z "$1" ]; then
+    echo $2
+  else
+    echo $1:$2
+  fi
+}
+
+if [ "$cygwin" == false ] ; then
+  # unix and "unix-like" setup
+  # pick user override, or check for dev env, or check for install
+  if [ -n "$FLUME_CONF_DIR" ]; then
+      true
+  elif [ -e "./conf/flume-conf.xml" ]; then
+      export FLUME_CONF_DIR="./conf"
+  elif [ -e "/etc/flume/conf/flume-conf.xml" ]; then
+      export FLUME_CONF_DIR="/etc/flume/conf"
+  else
+      echo "FLUME_CONF_DIR cannot be determined, please set explicitly"
+      exit -1
+  fi
+  # conf dir first in the class path in order to ensure we get flume log4j.properties
+  CLASSPATH="$FLUME_CONF_DIR"
+
+  if [ -n "$FLUME_CLASSPATH" ]; then
+      CLASSPATH="${CLASSPATH}:${FLUME_CLASSPATH}"
+  fi
+
+  # put hadoop conf dir in classpath to include Hadoop
+  # core-site.xml/hdfs-site.xml
+  if [ -n "${HADOOP_CONF_DIR}" ]; then
+      CLASSPATH="${CLASSPATH}:${HADOOP_CONF_DIR}" 
+  elif [ -n "${HADOOP_HOME}" ] ; then
+      CLASSPATH="${CLASSPATH}:${HADOOP_HOME}/conf"
+  elif [ -e "/usr/lib/hadoop/conf" ] ; then
+      # if neither is present see if the CDH dir exists
+      CLASSPATH="${CLASSPATH}:/usr/lib/hadoop/conf";
+      HADOOP_HOME="/usr/lib/hadoop"
+  fi  # otherwise give up
+
+  # try to load the hadoop core jars
+  HADOOP_CORE_FOUND=false
+  while true; do
+      if [ -n "$HADOOP_HOME" ]; then
+	  HADCOREJARS=`find ${HADOOP_HOME}/hadoop-core*.jar || find ${HADOOP_HOME}/lib/hadoop-core*.jar ||  true`
+	  if [ -n "$HADCOREJARS" ]; then
+              HADOOP_CORE_FOUND=true
+              CLASSPATH="$CLASSPATH:${HADCOREJARS}"
+	      break;
+	  fi
+      fi   
+
+      HADCOREJARS=`find ./lib/hadoop-core*.jar 2> /dev/null || true`
+      if [ -n "$HADCOREJARS" ]; then
+          # if this is the dev environment then hadoop jar will
+          # get added as part of ./lib (below)
+          break
+      fi
+
+      # core jars may be missing, we'll check for this below
+      break
+  done
+
+  append_jars_onto_classpath "$CMDPATH/lib"
+  append_jars_onto_classpath "$CMDPATH/libtest"
+
+  CLASSPATH="${CLASSPATH}:$JAVA_HOME/lib/tools.jar"
+
+  if [ -z "$ZOOKEEPER_HOME" ]; then
+    export ZOOKEEPER_HOME="/usr/lib/zookeeper"
+  fi
+
+  append_jars_onto_classpath "${ZOOKEEPER_HOME}"
+
+  CLASSPATH="$CLASSPATH:$CMDPATH/build/classes"
+  append_jars_onto_classpath "$CMDPATH/build"
+  append_jars_onto_classpath "${FLUME_HOME}"
+
+  # attempt to add native library paths.
+  JAVA_PLATFORM=`CLASSPATH=${CLASSPATH} java org.apache.hadoop.util.PlatformName | sed -e "s/ /_/g"`
+  if [ -d "${HADOOP_HOME}/lib/native" ]; then
+      if [ -d "${HADOOP_HOME}/lib/native/${JAVA_PLATFORM}" ]; then
+	  JAVA_LIBRARY_PATH=$(append_path "${JAVA_LIBRARY_PATH}" "${HADOOP_HOME}/lib/native/${JAVA_PLATFORM}")
+      fi
+  fi
+
+
+  JOPTS="$JOPTS -Djava.library.path=$CMDPATH/lib:$LD_LIBRARY_PATH:$JAVA_LIBRARY_PATH"
+
+else
+  # windows with cygwin
+  JOPTS="$JOPTS -Djava.library.path=`cygpath -d $CMDPATH/lib` "
+
+  CLASSPATH="$JAVA_HOME/lib/tools.jar"
+
+  append_jars_onto_classpath "$CMDPATH/lib"
+  append_jars_onto_classpath "$CMDPATH/libtest"
+
+fi
+
+export CLASSPATH
+
+# if we found hadoop core already then no need to test
+# however if we're not certain then check the classpath
+if [ $HADOOP_CORE_FOUND == false ]; then
+    LENCP=${#CLASSPATH}
+    # replace hadoop-core*.jar with 0 len string
+    HADTEST=${CLASSPATH/hadoop-core*.jar/}
+    HADTESTLEN=${#HADTEST}
+    # lengths should be different if jars are in classpath
+    if [ $LENCP -eq $HADTESTLEN ]; then
+        echo "HADOOP_HOME is unset, hadoop jars may not be added to classpath"
+    fi
+fi
+
+if [ -f "${HADOOP_CONF_DIR}/hadoop-env.sh" ]; then
+  . "${HADOOP_CONF_DIR}/hadoop-env.sh"
+fi
+
+shift
+
+# pass properties to allow java program to drop a pid file. java must
+# now be exec'ed so the pid remains the same as the script.  In the
+# mastercase, we actually only drop the pid of the watchdog.  The
+# watchdog kills the watched child process if killed cleanly.
+WATCHDOG_OPTS="-Dpid=$$ -Dpidfile="
+WATCHDOG_CLASS=com.cloudera.flume.watchdog.FlumeWatchdog
+
+MASTER_WATCHDOG="java ${JOPTS} -Dpid=$$ -Dpidfile=$MASTERPID $WATCHDOG_CLASS"
+MASTERI_WATCHDOG="java ${JOPTS} -Dpid=$$ -Dpidfile=$MASTERPID  $WATCHDOG_CLASS"
+
+NODE_WATCHDOG="java ${JOPTS} -Dpid=$$ -Dpidfile=$NODEPID $WATCHDOG_CLASS"
+NODEI_WATCHDOG="java ${JOPTS} -Dfwdstdin=true -Dpid=$$ -Dpidfile=$NODEPID $WATCHDOG_CLASS"
+
+if [ -n "$FLUME_VERBOSE" ]; then
+    if [ -n "$FLUME_VERBOSE_JAVA" ]; then
+        JOPTS="$JOPTS -verbose "
+    fi
+    echo "$CLASSPATH"
+    set -x
+fi
+
+if [ "$CMD" = "-h" ] ; then
+  usage
+elif [ "$CMD" = "node" ] ; then
+  # there can be multiple nodes.
+  exec $NODE_WATCHDOG java $JOPTS $UOPTS com.cloudera.flume.agent.FlumeNode "$@"
+elif [ "$CMD" = "nodei" ] ; then
+  # there can be multiple nodes.
+  exec $NODEI_WATCHDOG java $JOPTS $UOPTS com.cloudera.flume.agent.FlumeNode "$@"
+elif [ "$CMD" = "master" ] ; then
+  # only allow one master
+  if [ -f $MASTERPID ] ; then
+    PID=`cat $MASTERPID`
+    echo "Master already running, pid=$PID"
+    exit -1
+  fi
+  exec $MASTER_WATCHDOG java $JOPTS $UOPTS com.cloudera.flume.master.FlumeMaster "$@"
+elif [ "$CMD" = "node_nowatch" ] ; then
+  exec java $JOPTS $UOPTS com.cloudera.flume.agent.FlumeNode "$@"
+elif [ "$CMD" = "master_nowatch" ] ; then
+  exec java $JOPTS $UOPTS com.cloudera.flume.master.FlumeMaster "$@"
+elif [ "$CMD" = "watchdog" ] ; then
+  exec java $UOPTS $WATCHDOG_CLASS "$@"
+elif [ "$CMD" = "version" ] ; then
+  exec java $JOPTS $UOPTS com.cloudera.flume.VersionInfo
+elif [ "$CMD" = "unit" ] ; then
+  exec $FLUME junit.textui.TestRunner "$@"
+elif [ "$CMD" = "unit4" ] ; then
+  exec $FLUME org.junit.runner.JUnitCore "$@"
+elif [ "$CMD" = "dump" -o "$CMD" = "source" ] ; then
+  # this has no error checking.  be careful!
+  if [ -z "$2" ] ; then
+    CONSOLE="console"
+  else
+    CONSOLE="console(\"$2\")"
+  fi
+  exec java $JOPTS $UOPTS com.cloudera.flume.agent.FlumeNode \
+      -1 -s -n dump -c "dump: $1 | $CONSOLE; "
+elif [ "$CMD" = "dumplog" ] ; then
+  # this has no error checking.  be careful!
+  exec java $JOPTS $UOPTS com.cloudera.flume.agent.FlumeNode \
+      -1 -s -n dump -c "dump: seqfile(\"$1\") | console(\"avrojson\"); "
+elif [ "$CMD" = "sink" ];  then
+  exec java $JOPTS $UOPTS com.cloudera.flume.agent.FlumeNode \
+      -1 -s -n dump -c "dump: console | $1; "
+elif [ "$CMD" = "shell" ] ; then
+  exec java $JOPTS $UOPTS com.cloudera.flume.util.FlumeShell "$@"
+elif [ "$CMD" = "killmaster" ] ; then
+  if [ -f $MASTERPID ] ; then
+    PID=`cat $MASTERPID`
+    echo "Killing FlumeMaster (pid=$PID)"
+    if kill $PID ; then
+      echo "FlumeMaster stopped"
+    else
+     echo "FlumeMaster (pid=$PID) could not be stopped"
+    fi
+    rm -f $MASTERPID
+  fi
+elif [ "$CMD" = "class" ]; then
+  # Just do a java class with the environment setup
+  exec java $JOPTS $UOPTS "$@"
+elif [ "$CMD" = "classpath" ];  then
+  echo $CLASSPATH
+else
+  usage
+fi

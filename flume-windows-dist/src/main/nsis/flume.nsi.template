@@ -1,0 +1,840 @@
+; Licensed to Cloudera, Inc. under one
+; or more contributor license agreements.  See the NOTICE file
+; distributed with this work for additional information
+; regarding copyright ownership.  Cloudera, Inc. licenses this file
+; to you under the Apache License, Version 2.0 (the
+; "License"); you may not use this file except in compliance
+; with the License.  You may obtain a copy of the License at
+; 
+;     http://www.apache.org/licenses/LICENSE-2.0
+; 
+; Unless required by applicable law or agreed to in writing, software
+; distributed under the License is distributed on an "AS IS" BASIS,
+; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+; See the License for the specific language governing permissions and
+; limitations under the License.
+
+; Flume script for Nullsoft Installer
+
+  ;Compression options
+  CRCCheck on
+  SetCompressor /SOLID lzma
+
+  Name "Cloudera Flume"
+
+  ;Product information
+  VIAddVersionKey ProductName "Cloudera Flume"
+  VIAddVersionKey CompanyName "Cloudera, Inc"
+  VIAddVersionKey LegalCopyright "Copyright (c) 2009-@YEAR@ Cloudera, Inc"
+  VIAddVersionKey FileDescription "Cloudera Flume Installer"
+  VIAddVersionKey FileVersion "1.0"
+  VIAddVersionKey ProductVersion "@VERSION@"
+  VIAddVersionKey Comments "github.com/cloudera/flume"
+  VIAddVersionKey InternalName "flume-@VERSION@.exe"
+  VIProductVersion @VERSION_NUMBER@
+
+!include "MUI2.nsh"
+!include "nsDialogs.nsh"
+!include "StrFunc.nsh"
+!include "LogicLib.nsh"
+!include "FileFunc.nsh"
+!include "x64.nsh"
+${StrRep}
+
+Var JavaHome
+Var JavaExe
+Var JvmDll
+Var Arch
+Var ResetInstDir
+Var FlumePort
+Var FlumeMaster
+
+; Variables that store handles of dialog controls
+Var CtlJavaHome
+Var CtlFlumePort
+Var CtlFlumeMaster
+
+; Handle of the service-install.log file
+; It is opened in "Core" section and closed in "-post"
+Var ServiceInstallLog
+
+;--------------------------------
+;Configuration
+
+  !define MUI_HEADERIMAGE
+  !define MUI_HEADERIMAGE_RIGHT
+;  !define MUI_HEADERIMAGE_BITMAP header.bmp
+;  !define MUI_WELCOMEFINISHPAGE_BITMAP side_left.bmp
+  !define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\RELEASENOTES"
+  !define MUI_FINISHPAGE_RUN $INSTDIR\bin\flumenodew.exe
+  !define MUI_FINISHPAGE_RUN_PARAMETERS //MR//FlumeNode
+  !define MUI_FINISHPAGE_NOREBOOTSUPPORT
+
+  !define MUI_ABORTWARNING
+
+;  !define MUI_ICON flume.ico
+;  !define MUI_UNICON flume.ico
+
+  ;General
+  OutFile flume-node-@VERSION@.exe
+
+  ;Install Options pages
+  LangString TEXT_JVM_TITLE ${LANG_ENGLISH} "Java Virtual Machine"
+  LangString TEXT_JVM_SUBTITLE ${LANG_ENGLISH} "Java Virtual Machine Path Selection."
+  LangString TEXT_JVM_PAGETITLE ${LANG_ENGLISH} ": Java Virtual Machine Path Selection"
+
+  LangString TEXT_CONF_TITLE ${LANG_ENGLISH} "Configuration"
+  LangString TEXT_CONF_SUBTITLE ${LANG_ENGLISH} "Flume basic configuration."
+  LangString TEXT_CONF_PAGETITLE ${LANG_ENGLISH} ": Configuration Options"
+
+  LangString TEXT_JVM_LABEL1 ${LANG_ENGLISH} "Please select the path of a Java SE 6.0 or later JRE installed on your system."
+  LangString TEXT_CONF_LABEL_PORT ${LANG_ENGLISH} "Flume Node Status HTTP port"
+  LangString TEXT_CONF_LABEL_MASTERHOST ${LANG_ENGLISH} "Flume Node master host"
+
+  ;Install Page order
+  !insertmacro MUI_PAGE_WELCOME
+  !insertmacro MUI_PAGE_LICENSE LICENSE
+  ; Use custom onLeave function with COMPONENTS page
+  !define MUI_PAGE_CUSTOMFUNCTION_LEAVE pageComponentsLeave
+  !insertmacro MUI_PAGE_COMPONENTS
+  Page custom pageConfiguration pageConfigurationLeave "$(TEXT_CONF_PAGETITLE)"
+  Page custom pageChooseJVM pageChooseJVMLeave "$(TEXT_JVM_PAGETITLE)"
+  !insertmacro MUI_PAGE_DIRECTORY
+  !insertmacro MUI_PAGE_INSTFILES
+  Page custom CheckUserType
+  !insertmacro MUI_PAGE_FINISH
+
+  ;Uninstall Page order
+  !insertmacro MUI_UNPAGE_CONFIRM
+  !insertmacro MUI_UNPAGE_INSTFILES
+
+  ;Component-selection page
+    ;Descriptions
+    LangString DESC_SecFlume ${LANG_ENGLISH} "Install the Flume Node as a Windows service."
+    LangString DESC_SecFlumeCore ${LANG_ENGLISH} "Install the Flume core and create the Windows service."
+    LangString DESC_SecFlumeService ${LANG_ENGLISH} "Automatically start the Flume Node service when the computer is started."
+    LangString DESC_SecMenu ${LANG_ENGLISH} "Create a Start Menu program group for Flume."
+    LangString DESC_SecDocs ${LANG_ENGLISH} "Install the Flume documentation bundle. This includes documentation Flume's configuration options."
+
+  ;Language
+  !insertmacro MUI_LANGUAGE English
+
+  ;Install types
+  InstType "Node as Service"
+  InstType "Node only"
+
+  ; Main registry key
+  InstallDirRegKey HKLM "SOFTWARE\Cloudera\Flume\@VERSION@" ""
+
+  ReserveFile "${NSISDIR}\Plugins\System.dll"
+  ReserveFile "${NSISDIR}\Plugins\nsDialogs.dll"
+
+;--------------------------------
+;Installer Sections
+
+SubSection "Flume" SecFlume
+
+Section "Core" SecFlumeCore
+
+  SectionIn 1 2 RO
+
+  ${If} ${Silent}
+    Call checkJava
+  ${EndIf}
+
+  SetOutPath $INSTDIR
+;  File flume.ico
+  File CHANGELOG.html
+  File DEVNOTES
+  File LICENSE
+  File NOTICE
+  File README
+  File /nonfatal RELEASENOTES
+  SetOutPath $INSTDIR\bin
+  File bin\flumenode-service.bat
+  File bin\flumenodew.exe
+  
+  ; Figure out the target JVM's platform: x86 / AMD64 / IA64
+  Call configure
+
+  ${If} $Arch == "x86"
+    DetailPrint "Using Jvm: $JavaHome, $Arch (32 bit x86)"
+    File /oname=flumenode.exe bin\flumenode.exe
+  ${ElseIf} $Arch == "x64"
+    DetailPrint "Using Jvm: $JavaHome, $Arch (amd64)"
+    File /oname=flumenode.exe bin\amd64\flumenode.exe
+  ${ElseIf} $Arch == "i64"
+    DetailPrint "Using Jvm: $JavaHome, $Arch (ia64)"
+    File /oname=flumenode.exe bin\ia64\flumenode.exe
+  ${EndIf}
+
+  SetOutPath $INSTDIR\conf
+  File conf\flume-conf.xml
+  File conf\flume-site.xml.template
+  File conf\log4j.properties
+  
+  SetOutPath $INSTDIR\docs
+  File /r docs\*.*
+  
+  SetOutPath $INSTDIR\lib   
+  File /r lib\*.*
+
+  ; Note: just calling 'SetOutPath' will create the empty folders for us
+  SetOutPath $INSTDIR\log
+
+  SetOutPath $INSTDIR\webapps
+  File webapps\*.war
+
+  FileOpen $ServiceInstallLog "$INSTDIR\log\service-install.log" a
+  FileSeek $ServiceInstallLog 0 END
+
+  ; Will be closed in "-post" section
+  ; FileClose $ServiceInstallLog
+  
+SectionEnd
+
+Section "Service Startup" SecFlumeService
+
+  SectionIn 1
+  ; snipped from http://nsis.sourceforge.net/Setting_Environment_Variables
+  System::Call 'Kernel32::SetEnvironmentVariable(t,t) i("JAVA_HOME", "$JavaHome").r0'
+  DetailPrint "Set JAVA_HOME before service install to $JavaHome"
+  StrCmp $0 0 error
+    nsExec::ExecToLog '"$INSTDIR\bin\flumenode-service.bat" install' $0
+    goto done
+  error: 
+    MessageBox MB_OK "Can't set environment variable JAVA_HOME"
+  done:
+
+;  ${If} $ServiceInstallLog != ""
+;    FileWrite $ServiceInstallLog '"$INSTDIR\bin\flumenode.exe" //US//FlumeNode --Startup auto'
+;    FileWrite $ServiceInstallLog "$\r$\n"
+;  ${EndIf}
+;  DetailPrint "Configuring FlumeNode service"
+;  nsExec::ExecToLog '"$INSTDIR\bin\flumenode.exe" //US//FlumeNode --Startup auto'
+  ; Behave like Apache Httpd (put the icon in tray on login)
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "ClouderaFlumeMonitor@VERSION@" '"$INSTDIR\bin\flumenodew.exe" //MS//FlumeNode'
+
+  ClearErrors
+
+SectionEnd
+
+SubSectionEnd
+
+Section "Start Menu Items" SecMenu
+
+  SectionIn 1 2 
+
+  Call createShortcuts
+SectionEnd
+
+;Section "Documentation" SecDocs
+;
+;  SectionIn 1 2
+;  SetOutPath $INSTDIR\webapps\docs
+;  File /r webapps\docs\*.*
+;
+;SectionEnd
+
+
+Section -post
+;  ${If} $ServiceInstallLog != ""
+;    FileWrite $ServiceInstallLog '"$INSTDIR\bin\flumenode.exe" //US//FlumeNode --Classpath "$INSTDIR\bin\bootstrap.jar;$INSTDIR\bin\flume-juli.jar" --StartClass org.apache.catalina.startup.Bootstrap --StopClass org.apache.catalina.startup.Bootstrap --StartParams start --StopParams stop  --StartMode jvm --StopMode jvm'
+;    FileWrite $ServiceInstallLog "$\r$\n"
+;    FileWrite $ServiceInstallLog '"$INSTDIR\bin\flumenode.exe" //US//FlumeNode --JvmOptions "-Dcatalina.home=$INSTDIR#-Dcatalina.base=$INSTDIR#-Djava.endorsed.dirs=$INSTDIR\endorsed#-Djava.io.tmpdir=$INSTDIR\temp#-Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager#-Djava.util.logging.config.file=$INSTDIR\conf\logging.properties"'
+;    FileWrite $ServiceInstallLog "$\r$\n"
+;    FileWrite $ServiceInstallLog '"$INSTDIR\bin\flumenode.exe" //US//FlumeNode; --StdOutput auto --StdError auto --PidFile flumenode.pid'
+;    FileWrite $ServiceInstallLog "$\r$\n"
+;    FileClose $ServiceInstallLog
+ ; ${EndIf}
+
+  DetailPrint "Configuring FlumeNode service"
+;  nsExec::ExecToLog '"$INSTDIR\bin\flumenode.exe" //US//FlumeNode --Classpath "$INSTDIR\bin\bootstrap.jar;$INSTDIR\bin\flume-juli.jar" --StartClass org.apache.catalina.startup.Bootstrap --StopClass org.apache.catalina.startup.Bootstrap --StartParams start --StopParams stop  --StartMode jvm --StopMode jvm'
+;  nsExec::ExecToLog '"$INSTDIR\bin\flumenode.exe" //US//FlumeNode --JvmOptions "-Dcatalina.home=$INSTDIR#-Dcatalina.base=$INSTDIR#-Djava.endorsed.dirs=$INSTDIR\endorsed#-Djava.io.tmpdir=$INSTDIR\temp#-Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager#-Djava.util.logging.config.file=$INSTDIR\conf\logging.properties"'
+;  nsExec::ExecToLog '"$INSTDIR\bin\flumenode.exe" //US//FlumeNode --StdOutput auto --StdError auto --PidFile flumenode.pid'
+
+  WriteUninstaller "$INSTDIR\Uninstall.exe"
+
+  WriteRegStr HKLM "SOFTWARE\Cloudera\Flume\@VERSION_MAJOR_MINOR@" "InstallPath" $INSTDIR
+  WriteRegStr HKLM "SOFTWARE\Cloudera\Flume\@VERSION_MAJOR_MINOR@" "Version" @VERSION@
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Cloudera Flume @VERSION_MAJOR_MINOR@" \
+                   "DisplayName" "Cloudera Flume @VERSION_MAJOR_MINOR@ (remove only)"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Cloudera Flume @VERSION_MAJOR_MINOR@" \
+                   "UninstallString" '"$INSTDIR\Uninstall.exe"'
+
+
+  StrCpy $0 "$EXEDIR\install.log"
+  Push $0
+  Call DumpLog
+
+SectionEnd
+
+Function .onInit
+  ${GetParameters} $R0
+  ClearErrors
+
+  ${GetOptions} "$R0" "/?" $R1
+  ${IfNot} ${Errors}
+    MessageBox MB_OK|MB_ICONINFORMATION 'Available options:$\r$\n\
+               /S - Silent install.$\r$\n\
+               /D=INSTDIR - Specify installation directory.'
+    Abort
+  ${EndIf}
+  ClearErrors
+
+  StrCpy $ResetInstDir "$INSTDIR"
+
+  ;Initialize default values
+  StrCpy $JavaHome ""
+  StrCpy $FlumePort "35862"
+  StrCpy $FlumeMaster "localhost"
+FunctionEnd
+
+Function pageChooseJVM
+  !insertmacro MUI_HEADER_TEXT "$(TEXT_JVM_TITLE)" "$(TEXT_JVM_SUBTITLE)"
+  ${If} $JavaHome == ""
+    Call findJavaHome
+    Pop $JavaHome
+  ${EndIf}
+
+  nsDialogs::Create 1018
+  Pop $R0
+
+  ${NSD_CreateLabel} 0 5u 100% 25u "$(TEXT_JVM_LABEL1)"
+  Pop $R0
+  ${NSD_CreateDirRequest} 0 65u 280u 13u "$JavaHome"
+  Pop $CtlJavaHome
+  ${NSD_CreateBrowseButton} 282u 65u 15u 13u "..."
+  Pop $R0
+  ${NSD_OnClick} $R0 pageChooseJVM_onDirBrowse
+
+  ${NSD_SetFocus} $CtlJavaHome
+  nsDialogs::Show
+FunctionEnd
+
+; onClick function for button next to DirRequest control
+Function pageChooseJVM_onDirBrowse
+  ; R0 is HWND of the button, it is on top of the stack
+  Pop $R0
+
+  ${NSD_GetText} $CtlJavaHome $R1
+  nsDialogs::SelectFolderDialog "" "$R1"
+  Pop $R1
+
+  ${If} $R1 != "error"
+    ${NSD_SetText} $CtlJavaHome $R1
+  ${EndIf}
+FunctionEnd
+
+Function pageChooseJVMLeave
+  ${NSD_GetText} $CtlJavaHome $JavaHome
+  ${If} $JavaHome == ""
+    Abort
+  ${EndIf}
+
+  Call checkJava
+FunctionEnd
+
+; onLeave function for the COMPONENTS page
+; It updates options based on what components were selected.
+;
+Function pageComponentsLeave
+;  StrCpy $FlumeAdminEnable "0"
+;  StrCpy $FlumeAdminRoles ""
+
+FunctionEnd
+
+Function pageConfiguration
+  !insertmacro MUI_HEADER_TEXT "$(TEXT_CONF_TITLE)" "$(TEXT_CONF_SUBTITLE)"
+
+  nsDialogs::Create 1018
+  Pop $R0
+
+  ; node master
+  ${NSD_CreateLabel} 0 5u 100u 15u "$(TEXT_CONF_LABEL_MASTERHOST)"
+  Pop $R0
+
+  ${NSD_CreateText} 150u 5u 50u 13u "$FlumeMaster"
+  Pop $CtlFlumeMaster
+ 
+  ; node http port
+  ${NSD_CreateLabel} 0 18u 100u 15u "$(TEXT_CONF_LABEL_PORT)"
+  Pop $R0
+
+  ${NSD_CreateText} 150u 18u 50u 13u "$FlumePort"
+  Pop $CtlFlumePort
+  ${NSD_SetTextLimit} $CtlFlumePort 5
+
+
+  ${NSD_SetFocus} $CtlFlumeMaster
+  nsDialogs::Show
+FunctionEnd
+
+Function pageConfigurationLeave
+  ${NSD_GetText} $CtlFlumePort $FlumePort
+  ${NSD_GetText} $CtlFlumeMaster $FlumeMaster
+FunctionEnd
+
+;--------------------------------
+;Descriptions
+
+!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecFlume} $(DESC_SecFlume)
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecFlumeCore} $(DESC_SecFlumeCore)
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecFlumeService} $(DESC_SecFlumeService)
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecMenu} $(DESC_SecMenu)
+!insertmacro MUI_FUNCTION_DESCRIPTION_END
+
+
+; =====================
+; CheckUserType Function
+; =====================
+;
+; Check the user type, and warn if it's not an administrator.
+; Taken from Examples/UserInfo that ships with NSIS.
+Function CheckUserType
+  ClearErrors
+  UserInfo::GetName
+  IfErrors Win9x
+  Pop $0
+  UserInfo::GetAccountType
+  Pop $1
+  StrCmp $1 "Admin" 0 +3
+    ; This is OK, do nothing
+    Goto done
+
+    MessageBox MB_OK|MB_ICONEXCLAMATION 'Note: the current user is not an administrator. \
+               To run Flume as a Windows service, you must be an administrator. \
+               You can still run Flume from the command-line as this type of user.'
+    Goto done
+
+  Win9x:
+    # This one means you don't need to care about admin or
+    # not admin because Windows 9x doesn't either
+    MessageBox MB_OK "Error! This DLL can't run under Windows 9x!"
+
+  done:
+FunctionEnd
+
+; ==================
+; checkJava Function
+; ==================
+;
+; Checks that a valid JVM has been specified or a suitable default is available
+; Sets $JavaHome, $JavaExe and $JvmDll accordingly
+; Determines if the JVM is 32-bit or 64-bit and sets $Arch accordingly. For
+; 64-bit JVMs, also determines if it is x64 or ia64
+Function checkJava
+
+  ${If} $JavaHome == ""
+    ; E.g. if a silent install
+    Call findJavaHome
+    Pop $JavaHome
+  ${EndIf}
+
+  ${If} $JavaHome == ""
+  ${OrIfNot} ${FileExists} "$JavaHome\bin\java.exe"
+    IfSilent +2
+    MessageBox MB_OK|MB_ICONSTOP "No Java Virtual Machine found in folder:$\r$\n$JavaHome"
+    DetailPrint "No Java Virtual Machine found in folder:$\r$\n$JavaHome"
+    Quit
+  ${EndIf}
+
+  StrCpy "$JavaExe" "$JavaHome\bin\java.exe"
+
+  ; Need path to jvm.dll to configure the service - uses $JavaHome
+  Call findJVMPath
+  Pop $5
+  ${If} $5 == ""
+    IfSilent +2
+    MessageBox MB_OK|MB_ICONSTOP "No Java Virtual Machine found in folder:$\r$\n$5"
+    DetailPrint "No Java Virtual Machine found in folder:$\r$\n$5"
+    Quit
+  ${EndIf}
+
+  StrCpy "$JvmDll" $5
+
+  ; Read PE header of JvmDll to check for architecture
+  ; 1. Jump to 0x3c and read offset of PE header
+  ; 2. Jump to offset. Read PE header signature. It must be 'PE'\0\0 (50 45 00 00).
+  ; 3. The next word gives the machine type.
+  ; 0x014c: x86
+  ; 0x8664: x64
+  ; 0x0200: i64
+  ClearErrors
+  FileOpen $R1 "$JvmDll" r
+  IfErrors WrongPEHeader
+
+  FileSeek $R1 0x3c SET
+  FileReadByte $R1 $R2
+  FileReadByte $R1 $R3
+  IntOp $R3 $R3 << 8
+  IntOp $R2 $R2 + $R3
+
+  FileSeek $R1 $R2 SET
+  FileReadByte $R1 $R2
+  IntCmp $R2 0x50 +1 WrongPEHeader WrongPEHeader
+  FileReadByte $R1 $R2
+  IntCmp $R2 0x45 +1 WrongPEHeader WrongPEHeader
+  FileReadByte $R1 $R2
+  IntCmp $R2 0 +1 WrongPEHeader WrongPEHeader
+  FileReadByte $R1 $R2
+  IntCmp $R2 0 +1 WrongPEHeader WrongPEHeader
+
+  FileReadByte $R1 $R2
+  FileReadByte $R1 $R3
+  IntOp $R3 $R3 << 8
+  IntOp $R2 $R2 + $R3
+
+  IntCmp $R2 0x014c +1 +3 +3
+  StrCpy "$Arch" "x86"
+  Goto DonePEHeader
+
+  IntCmp $R2 0x8664 +1 +3 +3
+  StrCpy "$Arch" "x64"
+  Goto DonePEHeader
+
+  IntCmp $R2 0x0200 +1 +3 +3
+  StrCpy "$Arch" "i64"
+  Goto DonePEHeader
+
+WrongPEHeader:
+  IfSilent +2
+  MessageBox MB_OK|MB_ICONEXCLAMATION 'Cannot read PE header from "$JvmDll"$\r$\nWill assume that the architecture is x86.'
+  DetailPrint 'Cannot read PE header from "$JvmDll". Assuming the architecture is x86.'
+  StrCpy "$Arch" "x86"
+
+DonePEHeader:
+  FileClose $R1
+
+  DetailPrint 'Architecture: "$Arch"'
+
+  StrCpy $INSTDIR "$ResetInstDir"
+
+  ; The default varies depending on 32-bit or 64-bit
+  ${If} "$INSTDIR" == ""
+    ${If} $Arch == "x86"
+      StrCpy $INSTDIR "$PROGRAMFILES32\Cloudera\Flume @VERSION_MAJOR_MINOR@"
+    ${Else}
+      StrCpy $INSTDIR "$PROGRAMFILES64\Cloudera\Flume @VERSION_MAJOR_MINOR@"
+    ${EndIf}
+  ${EndIf}
+
+FunctionEnd
+
+
+; =====================
+; findJavaHome Function
+; =====================
+;
+; Find the JAVA_HOME used on the system, and put the result on the top of the
+; stack
+; Will return an empty string if the path cannot be determined
+;
+Function findJavaHome
+
+  ClearErrors
+
+  ; Use the 64-bit registry on 64-bit machines
+  ExpandEnvStrings $0 "%PROGRAMW6432%"
+  ${If} $0 != "%PROGRAMW6432%"
+    SetRegView 64
+  ${EndIf}
+
+  ReadRegStr $2 HKLM "SOFTWARE\JavaSoft\Java Runtime Environment" "CurrentVersion"
+  ReadRegStr $1 HKLM "SOFTWARE\JavaSoft\Java Runtime Environment\$2" "JavaHome"
+  ReadRegStr $3 HKLM "SOFTWARE\JavaSoft\Java Runtime Environment\$2" "RuntimeLib"
+
+  IfErrors 0 NoErrors
+  
+  ${If} ${RunningX64}
+    ReadRegStr $2 HKLM "SOFTWARE\Wow6432Node\JavaSoft\Java Runtime Environment" "CurrentVersion"
+    ReadRegStr $1 HKLM "SOFTWARE\Wow6432Node\JavaSoft\Java Runtime Environment\$2" "JavaHome"
+    ReadRegStr $3 HKLM "SOFTWARE\Wow6432Node\JavaSoft\Java Runtime Environment\$2" "RuntimeLib"
+  ${EndIf}
+  
+  IfErrors 0 NoErrors
+
+  StrCpy $1 ""
+
+NoErrors:
+
+  ClearErrors
+
+  ; Put the result in the stack
+  Push $1
+
+FunctionEnd
+
+
+; ====================
+; FindJVMPath Function
+; ====================
+;
+; Find the full JVM path, and put the result on top of the stack
+; Implicit argument: $JavaHome
+; Will return an empty string if the path cannot be determined
+;
+Function findJVMPath
+
+  ClearErrors
+
+  ;Step one: Is this a JRE path (Program Files\Java\XXX)
+  StrCpy $1 "$JavaHome"
+
+  StrCpy $2 "$1\bin\hotspot\jvm.dll"
+  IfFileExists "$2" FoundJvmDll
+  StrCpy $2 "$1\bin\server\jvm.dll"
+  IfFileExists "$2" FoundJvmDll
+  StrCpy $2 "$1\bin\client\jvm.dll"
+  IfFileExists "$2" FoundJvmDll
+  StrCpy $2 "$1\bin\classic\jvm.dll"
+  IfFileExists "$2" FoundJvmDll
+
+  ;Step two: Is this a JDK path (Program Files\XXX\jre)
+  StrCpy $1 "$JavaHome\jre"
+
+  StrCpy $2 "$1\bin\hotspot\jvm.dll"
+  IfFileExists "$2" FoundJvmDll
+  StrCpy $2 "$1\bin\server\jvm.dll"
+  IfFileExists "$2" FoundJvmDll
+  StrCpy $2 "$1\bin\client\jvm.dll"
+  IfFileExists "$2" FoundJvmDll
+  StrCpy $2 "$1\bin\classic\jvm.dll"
+  IfFileExists "$2" FoundJvmDll
+
+  ClearErrors
+  ;Step tree: Read defaults from registry
+
+  ReadRegStr $1 HKLM "SOFTWARE\JavaSoft\Java Runtime Environment" "CurrentVersion"
+  ReadRegStr $2 HKLM "SOFTWARE\JavaSoft\Java Runtime Environment\$1" "RuntimeLib"
+
+  IfErrors 0 FoundJvmDll
+  StrCpy $2 ""
+
+  FoundJvmDll:
+  ClearErrors
+
+  ; Put the result in the stack
+  Push $2
+
+FunctionEnd
+
+
+; ==================
+; Configure Function
+; ==================
+;
+; Writes flume-site.xml
+;
+Function configure
+  StrCpy $R4 'port="$FlumePort"'
+  StrCpy $R5 ''
+
+  DetailPrint 'Flume Node has master set to  "$FlumeMaster"'
+  DetailPrint 'Flume Node status http server on port "$FlumePort"'
+
+  ; Build final flume-site.xml
+  Delete "$INSTDIR\conf\flume-site.xml"
+  DetailPrint "Writing flume-site.xml"
+  FileOpen $R9 "$INSTDIR\conf\flume-site.xml" w
+
+  FileWrite $R9 '<?xml version="1.0"?>$\n'
+  FileWrite $R9 '<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>$\n'
+  FileWrite $R9 '<configuration><property>$\n'
+  FileWrite $R9 '<name>flume.master.servers</name>$\n'
+  FileWrite $R9 '<value>'
+  FileWrite $R9 $FlumeMaster
+  FileWrite $R9 '</value>$\n'
+  FileWrite $R9 '</property></configuration>$\n'
+
+  FileClose $R9
+  DetailPrint "flume-site.xml written"
+
+FunctionEnd
+
+
+Function xmlEscape
+  Pop $0
+  ${StrRep} $0 $0 "&" "&amp;"
+  ${StrRep} $0 $0 "$\"" "&quot;"
+  ${StrRep} $0 $0 "<" "&lt;"
+  ${StrRep} $0 $0 ">" "&gt;"
+  Push $0
+FunctionEnd
+
+
+; =================
+; CopyFile Function
+; =================
+;
+; Copy specified file contents to $R9
+;
+Function copyFile
+
+  ClearErrors
+
+  Pop $0
+
+  FileOpen $1 $0 r
+
+ NoError:
+
+  FileRead $1 $2
+  IfErrors EOF 0
+  FileWrite $R9 $2
+
+  IfErrors 0 NoError
+
+ EOF:
+
+  FileClose $1
+
+  ClearErrors
+
+FunctionEnd
+
+
+; =================
+; createShortcuts Function
+; =================
+;
+; This is called by the SecMenu section.
+;
+; The code is moved here, because ${SecManager} etc. are not visible
+; in SecMenu, because they are defined lower than it.
+;
+Function createShortcuts
+
+  SetOutPath "$SMPROGRAMS\Cloudera Flume @VERSION_MAJOR_MINOR@"
+
+  CreateShortCut "$SMPROGRAMS\Cloudera Flume @VERSION_MAJOR_MINOR@\Flume Node Status Page.lnk" \
+                 "http://127.0.0.1:$FlumePort/"
+
+  CreateShortCut "$SMPROGRAMS\Cloudera Flume @VERSION_MAJOR_MINOR@\Flume Github Project Home Page.lnk" \
+                 "http://github.com/cloudera/flume/"
+
+  CreateShortCut "$SMPROGRAMS\Cloudera Flume @VERSION_MAJOR_MINOR@\Flume Documentation.lnk" \
+                 "$INSTDIR\docs\index.html"
+
+
+  CreateShortCut "$SMPROGRAMS\Cloudera Flume @VERSION_MAJOR_MINOR@\Uninstall Flume @VERSION_MAJOR_MINOR@.lnk" \
+                 "$INSTDIR\Uninstall.exe"
+
+  CreateShortCut "$SMPROGRAMS\Cloudera Flume @VERSION_MAJOR_MINOR@\Flume @VERSION_MAJOR_MINOR@ Program Directory.lnk" \
+                 "$INSTDIR"
+
+;  CreateShortCut "$SMPROGRAMS\Cloudera Flume @VERSION_MAJOR_MINOR@\Monitor Flume.lnk" \
+;                 "$INSTDIR\bin\flumenodew.exe" \
+;                 '//MS//FlumeNode' \
+;                 "$INSTDIR\flume.ico" 0 SW_SHOWNORMAL
+
+;  CreateShortCut "$SMPROGRAMS\Cloudera Flume @VERSION_MAJOR_MINOR@\Configure Flume Node Service.lnk" \
+;                 "$INSTDIR\bin\flumenodew.exe" \
+;                 '//ES//FlumeNode' \
+;                 "$INSTDIR\flume.ico" 0 SW_SHOWNORMAL
+
+FunctionEnd
+
+; dump install log to a file so we can debug.
+
+
+!define LVM_GETITEMCOUNT 0x1004
+!define LVM_GETITEMTEXT 0x102D
+ 
+Function DumpLog
+  Exch $5
+  Push $0
+  Push $1
+  Push $2
+  Push $3
+  Push $4
+  Push $6
+ 
+  FindWindow $0 "#32770" "" $HWNDPARENT
+  GetDlgItem $0 $0 1016
+  StrCmp $0 0 exit
+  FileOpen $5 $5 "w"
+  StrCmp $5 "" exit
+    SendMessage $0 ${LVM_GETITEMCOUNT} 0 0 $6
+    System::Alloc ${NSIS_MAX_STRLEN}
+    Pop $3
+    StrCpy $2 0
+    System::Call "*(i, i, i, i, i, i, i, i, i) i \
+      (0, 0, 0, 0, 0, r3, ${NSIS_MAX_STRLEN}) .r1"
+    loop: StrCmp $2 $6 done
+      System::Call "User32::SendMessageA(i, i, i, i) i \
+        ($0, ${LVM_GETITEMTEXT}, $2, r1)"
+      System::Call "*$3(&t${NSIS_MAX_STRLEN} .r4)"
+      FileWrite $5 "$4$\r$\n"
+      IntOp $2 $2 + 1
+      Goto loop
+    done:
+      FileClose $5
+      System::Free $1
+      System::Free $3
+  exit:
+    Pop $6
+    Pop $4
+    Pop $3
+    Pop $2
+    Pop $1
+    Pop $0
+    Exch $5
+FunctionEnd
+
+
+;--------------------------------
+;Uninstaller Section
+
+Section Uninstall
+
+  Delete "$INSTDIR\Uninstall.exe"
+
+  ; Stop Flume service monitor if running
+  DetailPrint "Stopping Flume @VERSION@ service monitor"
+  nsExec::ExecToLog '"$INSTDIR\bin\flumenodew.exe" //MQ//FlumeNode'
+  ; Delete Flume service
+  DetailPrint "Uninstalling FlumeNode service"
+  nsExec::ExecToLog '"$INSTDIR\bin\flumenode.exe" //DS//FlumeNode'
+  ClearErrors
+
+  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Cloudera Flume @VERSION_MAJOR_MINOR@"
+  DeleteRegKey HKLM "SOFTWARE\Cloudera\Flume\@VERSION_MAJOR_MINOR@"
+  DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "ClouderaFlumeMonitor@VERSION_MAJOR_MINOR@"
+  RMDir /r "$SMPROGRAMS\Cloudera Flume @VERSION_MAJOR_MINOR@"
+  Delete "$INSTDIR\flume.ico"
+  Delete "$INSTDIR\LICENSE"
+  Delete "$INSTDIR\NOTICE"
+  RMDir /r "$INSTDIR\bin"
+  RMDir /r "$INSTDIR\lib"
+  Delete "$INSTDIR\conf\*.dtd"
+  RMDir "$INSTDIR\logs"
+  RMDir /r "$INSTDIR\webapps\docs"
+  RMDir /r "$INSTDIR\webapps\examples"
+  RMDir /r "$INSTDIR\work"
+  RMDir /r "$INSTDIR\temp"
+  RMDir "$INSTDIR"
+
+  IfSilent Removed 0
+
+  ; if $INSTDIR was removed, skip these next ones
+  IfFileExists "$INSTDIR" 0 Removed
+    MessageBox MB_YESNO|MB_ICONQUESTION \
+      "Remove all files in your Flume @VERSION_MAJOR_MINOR@ directory? (If you have anything  \
+ you created that you want to keep, click No)" IDNO Removed
+    ; these would be skipped if the user hits no
+    RMDir /r "$INSTDIR\webapps"
+    RMDir /r "$INSTDIR\log"
+    RMDir /r "$INSTDIR\conf"
+    Delete "$INSTDIR\*.*"
+    RMDir /r "$INSTDIR"
+    Sleep 500
+    IfFileExists "$INSTDIR" 0 Removed
+      MessageBox MB_OK|MB_ICONEXCLAMATION \
+                 "Note: $INSTDIR could not be removed."
+  Removed:
+
+SectionEnd
+
+;eof

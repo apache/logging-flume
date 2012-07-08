@@ -1,0 +1,11 @@
+hadoop_worker:x:1:^(\S+?)\s
+hadoop_event_level:x:2:^(\S+?\s+){4}(\S+?)\s+
+hadoop_event_source:x:2:^(\S+?\s+){5}(\S+?:)\s+
+hadoop_nullptr:x:1:(NullPointerException)
+hadoop_heartbeaterr:x:1:from (\S+?:\S+?):
+hadoop_losttracker:x:1:Lost tracker '(\S+?)'
+hadoop_recving:x:1:dfs.DataNode: (Receiving block)
+hadoop_recved:x:1:dfs.DataNode: (Received block)
+hadoop_retrying:x:1:ipc.Client: Retrying connect to server: (\S+?)\s+
+hadoop_mrTT_connEx:x:1:(mapred.TaskTracker: Caught exception: java.net.ConnectException)
+hadoop_mrTT_resend:x:1:(mapred.TaskTracker: Resending)

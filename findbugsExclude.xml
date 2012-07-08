@@ -1,0 +1,141 @@
+<!-- Exclusions of non-bugs from Flume's findbugs build -->
+<FindBugsFilter>
+  <!-- Prevent thrift generated java files from raising bugs as we can't control them -->
+	<Match>
+    <Package name="com.cloudera.flume.conf.thrift"/>
+  </Match>
+  <Match>
+    <Package name="com.cloudera.flume.handlers.thrift"/>
+  </Match>
+	<!-- Prevent generated parser/lexer code from raising bugs -->
+	<Match>
+		<Class name="~com\.cloudera\.flume\.conf\.FlumeDeploy.*" />
+	</Match>
+	<!-- Prevent generated parser/lexer code from raising bugs -->
+	<Match>
+		<Class name="~com\.cloudera\.flume\.shell\.antlr\.FlumeShell.*" />
+	</Match>
+
+  <!-- Prevent scribe thrift files from raising bugs -->
+	<Match>
+		<Class name="com.cloudera.flume.handlers.scribe.LogEntry"/>
+	</Match>
+	<Match>
+		<Class name="com.cloudera.flume.handlers.scribe.ResultCode"/>
+	</Match>
+	<Match>
+		<Class name="com.cloudera.flume.handlers.scribe.fb_status"/>
+	</Match>
+	<Match>
+		<Class name="~com\.cloudera\.flume\.handlers\.scribe\..cribe.*"/>
+	</Match>
+	<Match>
+		<Class name="~com\.cloudera\.flume\.handlers\.scribe\.FacebookService.*"/>
+	</Match>
+	<Match>
+		<Class name="~com\.cloudera\.flume\.reporter\.server\.FlumeReport.*"/>
+	</Match>
+
+
+
+  <!-- Dead store due to javac compiler on final local var-->	
+   <Match>
+     <Class name="com.cloudera.flume.master.ZKClient" />
+       <Bug pattern="DLS_DEAD_LOCAL_STORE" />
+       <Method name="getastSequentialChild" />
+   </Match>
+
+   <!-- Headers are currently unused but will be reinstated -->
+   <Match>
+     <Class name="com.cloudera.distributed.Message" />
+       <Bug pattern="URF_UNREAD_FIELD" />
+   </Match>
+
+   <!-- FlumeNodes are instantiated once only, so the static write is ok. -->
+   <Match>
+     <Class name="com.cloudera.flume.agent.FlumeNode" />
+       <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD" />
+       <Method name="&lt;init&gt;" />
+   </Match>
+
+   <!-- GC is used legitimately here, and System.exit -->
+   <Match>
+     <Class name="com.cloudera.flume.agent.MemoryMonitor\$\d+" />
+       <Bug code="DM_GC,DM_EXIT" />
+       <Method name="memoryUsageLow" />
+   </Match>
+
+   <!-- data is checked for not null by Preconditions -->
+   <Match>
+     <Class name="com.cloudera.flume.agent.diskfailover.NaiveFileFailoverManager" />
+       <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE" />
+       <Method name="getFile" />
+   </Match>
+
+   <!-- data is checked for not null by Preconditions -->
+   <Match>
+     <Class name="com.cloudera.flume.agent.durability.NaiveFileWALManager" />
+       <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE" />
+       <Method name="getFile" />
+   </Match>
+
+   <!-- Reference copied for speed -->
+   <Match>
+     <Class name="com.cloudera.flume.core.EventImpl" />
+       <Bug pattern="EI_EXPOSE_REP2" />
+       <Method name="&lt;init&gt;" />
+   </Match>
+
+   <!-- Returning reference for speed -->
+   <Match>
+     <Class name="com.cloudera.flume.core.EventImpl" />
+       <Bug pattern="EI_EXPOSE_REP" />
+       <Method name="getBody" />
+   </Match>
+
+   <!-- BENCH_* are mutable -->
+   <Match>
+     <Class name="com.cloudera.flume.handlers.debug.BenchmarkInjectDecorator" />
+       <Bug pattern="MS_PKGPROTECT" />
+   </Match>
+
+   <!-- CHECKSUM_* are mutable, but will not realistically be mutated by caller. Consider making package private in future. -->
+   <Match>
+     <Class name="com.cloudera.flume.handlers.endtoend.AckChecksumInjector" />
+       <Bug pattern="MS_MUTABLE_ARRAY,MS_PKGPROTECT" />
+   </Match>
+
+   <!-- Finalizer inherited as public from org.apache.log4j.AppenderSkeleton -->
+   <Match>
+     <Class name="com.cloudera.flume.handlers.log4j.SeqfileAppender" />
+       <Bug pattern="FI_PUBLIC_SHOULD_BE_PROTECTED" />
+       <Method name="finalize" />
+   </Match>
+
+   <!-- SYSLOG_* are mutable but will not realistically be mutated by caller. -->
+   <Match>
+     <Class name="com.cloudera.flume.handlers.syslog.SyslogConsts" />
+       <Bug pattern="MS_OOI_PKGPROTECT" />
+   </Match>
+
+   <!-- FlumeMaster are instantiated once only, so the static write is ok. -->
+   <Match>
+     <Class name="com.cloudera.flume.master.FlumeMaster" />
+       <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD" />
+   </Match>
+
+   <!-- Only one FlumeMaster is ever created -->
+   <Match>
+     <Class name="com.cloudera.flume.master.FlumeMaster" />
+       <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD" />
+       <Method name="FlumeMaster" />
+   </Match>
+
+   <!-- Dead store used to kick GC, loop will exit by throwing. -->
+   <Match>
+     <Class name="com.cloudera.util.Benchmark" />
+       <Bug pattern="DLS_DEAD_LOCAL_STORE,IL_INFINITE_LOOP" />
+       <Method name="flushMemoryExhaust" />
+   </Match>
+
+</FindBugsFilter>

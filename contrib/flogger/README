@@ -1,0 +1,34 @@
+Synopsis: flogger -h <hostname>:<port> [-t <key>:<value>]
+
+Description: flogger is a commandline utility that will send data to a flume node listening on specified <hostname>:<port>
+             <hostname>:<port> is mandatory.
+             flogger will optionally tag the data with specified <key>:<value>
+
+Prerequisites for flogger installation:
+1. Linux
+2. Thrift installed
+
+Prerequisites for flogger Testing:
+1. Hadoop installed
+2. Flume installed
+3. A Flume node listening on a port 
+   e.g.: flume dump 'rpcSource(12345)'
+
+Intallation:
+From the 'contrib/flogger' directory
+1. make
+2. sudo make install
+
+Usage:
+1. For instance, run a flume node on localhost and port:12345
+    $bin/flume dump 'rpcSource(12345)'
+
+2. On a machine where flogger is installed
+    $flogger -h localhost:12345
+    my message
+
+In above e.g. the flume node will dump the message to console like
+[INFO Tue Aug 31 20:51:12 PDT 2010] my message
+
+3. $top | flogger -h localhost:12345
+will send the output of top to the flume node.

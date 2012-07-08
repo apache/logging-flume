@@ -1,0 +1,88 @@
+/**
+ * Licensed to Cloudera, Inc. under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  Cloudera, Inc. licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.cloudera.flume.handlers.debug;
+
+import java.io.IOException;
+
+import com.cloudera.flume.conf.Context;
+import com.cloudera.flume.conf.SinkFactory.SinkDecoBuilder;
+import com.cloudera.flume.core.Event;
+import com.cloudera.flume.core.EventSink;
+import com.cloudera.flume.core.EventSinkDecorator;
+import com.google.common.base.Preconditions;
+
+/**
+ * This decorator adds a delay to the append operation. This will hopefully
+ * allow for us to inject faults into messages being passed through the system.
+ */
+public class DelayDecorator<S extends EventSink> extends EventSinkDecorator<S> {
+
+  final int millis;
+  final boolean delayOpen;
+
+  public DelayDecorator(S s, int millis, boolean delayOpen) {
+    super(s);
+    this.millis = millis;
+    this.delayOpen = delayOpen;
+  }
+
+  @Override
+  public void open() throws IOException, InterruptedException {
+    if (delayOpen) {
+      try {
+        Thread.sleep(millis);
+      } catch (InterruptedException e1) {
+        throw e1;
+      }
+    }
+    super.open();
+  }
+
+  @Override
+  public void append(Event e) throws IOException, InterruptedException {
+    try {
+      Thread.sleep(millis);
+      super.append(e);
+    } catch (InterruptedException e1) {
+      throw e1;
+    }
+
+  }
+
+  public static SinkDecoBuilder builder() {
+
+    return new SinkDecoBuilder() {
+      @Override
+      public EventSinkDecorator<EventSink> build(Context context,
+          String... argv) {
+        Preconditions
+            .checkArgument(argv.length <= 3, "usage: delay(init=1000 [,delayOpen])");
+        int delaymillis = 1000;
+        boolean delayOpen = false;
+        if (argv.length >= 1)
+          delaymillis = Integer.parseInt(argv[0]);
+        if (argv.length >= 2) {
+          delayOpen = true;
+        }
+        return new DelayDecorator<EventSink>(null, delaymillis, delayOpen);
+      }
+
+    };
+  }
+
+}

@@ -1,0 +1,15 @@
+# Lines that start with '#' are comments.
+*~
+*.diff
+*#
+.classpath
+.project
+.settings
+bin/flume-env.sh
+conf/flume-site.xml
+bin/.settings
+.eclipse
+pmd_report.html
+*/bin
+/plugins/*/bin
+/plugins/*/target
