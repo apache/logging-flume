@@ -56,7 +56,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'Apache Flume (incubating)'
+project = 'Apache Flume'
 copyright = '2009-2012 The Apache Software Foundation'
 
 keep_warnings = True

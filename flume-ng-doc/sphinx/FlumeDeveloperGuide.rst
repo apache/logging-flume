@@ -28,11 +28,11 @@ Apache Flume is a distributed, reliable, and available system for
 efficiently collecting, aggregating and moving large amounts of log
 data from many different sources to a centralized data store.
 
-At the moment Flume is an incubating Apache project. There are
-currently two release code lines available, version 0.9.x and 1.x.x. This guide
-is specific to 1.x (more specifically 1.1.0 release). Please click here for
-`the Flume 0.9.x Developer Guide
-<http://archive.cloudera.com/cdh/3/flume/DeveloperGuide/>`_.
+Apache Flume is a top level project at the Apache Software Foundation.
+There are currently two release code lines available, version 0.9.x and 1.x.x.
+This guide is specific to 1.x (more specifically 1.1.0 release).
+Please click here for
+`the Flume 0.9.x Developer Guide <http://archive.cloudera.com/cdh/3/flume/DeveloperGuide/>`_.
 
 Architecture
 ------------
@@ -83,12 +83,12 @@ Getting the source
 ~~~~~~~~~~~~~~~~~~
 
 Check out the code using Subversion. Click here for
-`the SVN repository root <http://svn.apache.org/repos/asf/incubator/flume/>`_.
+`the SVN repository root <http://svn.apache.org/repos/asf/flume/>`_.
 
 The Flume 1.x development happens under the branch "trunk" so this command line
 can be used::
 
-  svn checkout http://svn.apache.org/repos/asf/incubator/flume/trunk flume-trunk
+  svn checkout http://svn.apache.org/repos/asf/flume/trunk flume-trunk
 
 Alternatively, if you prefer using Git, you may use::
 

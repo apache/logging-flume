@@ -28,10 +28,11 @@ Apache Flume is a distributed, reliable, and available system for efficiently
 collecting, aggregating and moving large amounts of log data from many
 different sources to a centralized data store.
 
-At the moment Flume is an incubating Apache project. There are currently two
-release code lines available, version 0.9.x and 1.x.x. This guide is specific
-to 1.x (more specifically 1.1.0 release). Please click here for `the Flume
-0.9.x User Guide <http://archive.cloudera.com/cdh/3/flume/UserGuide/>`_.
+Apache Flume is a top level project at the Apache Software Foundation.
+There are currently two release code lines available, version 0.9.x and 1.x.x.
+This guide is specific to 1.x (more specifically 1.1.0 release).
+Please click here for
+`the Flume 0.9.x User Guide <http://archive.cloudera.com/cdh/3/flume/UserGuide/>`_.
 
 System Requirements
 -------------------
@@ -1530,7 +1531,7 @@ Log4J Appender
 
 Appends Log4j events to a flume agent's avro source. A client using this
 appender must have the flume-ng-sdk in the classpath (eg,
-flume-ng-sdk-1.2.0-incubating-SNAPSHOT.jar).
+flume-ng-sdk-1.3.0-SNAPSHOT.jar).
 Required properties are in **bold**.
 
 =============  =======  ==========================================================================
