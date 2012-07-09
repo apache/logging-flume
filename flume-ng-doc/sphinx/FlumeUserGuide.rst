@@ -579,15 +579,17 @@ When paired with the built-in AvroSink on another (previous hop) Flume agent,
 it can create tiered collection topologies.
 Required properties are in **bold**.
 
-=============  ===========  ===================================================
-Property Name  Default      Description
-=============  ===========  ===================================================
-**channels**   --
-**type**       --           The component type name, needs to be ``avro``
-**bind**       --           hostname or IP address to listen on
-**port**       --           Port # to bind to
-threads        --           Maximum number of worker threads to spawn
-=============  ===========  ===================================================
+==============  ===========  ===================================================
+Property Name   Default      Description
+==============  ===========  ===================================================
+**channels**    --
+**type**        --           The component type name, needs to be ``avro``
+**bind**        --           hostname or IP address to listen on
+**port**        --           Port # to bind to
+threads         --           Maximum number of worker threads to spawn
+interceptors    --           Space separated list of interceptors
+interceptors.*
+==============  ===========  ===================================================
 
 Example for agent named **agent_foo**:
 
@@ -624,6 +626,8 @@ restart          false        Whether the executed cmd should be restarted if it
 logStdErr        false        Whether the command's stderr should be logged
 selector.type    replicating  replicating or multiplexing
 selector.*                    Depends on the selector.type value
+interceptors     --           Space separated list of interceptors
+interceptors.*
 ===============  ===========  ==============================================================
 
 
@@ -678,6 +682,8 @@ Property Name    Default      Description
 max-line-length  512          Max line length per event body (in bytes)
 selector.type    replicating  replicating or multiplexing
 selector.*                    Depends on the selector.type value
+interceptors     --           Space separated list of interceptors
+interceptors.*
 ===============  ===========  ===========================================
 
 Example for agent named **agent_foo**:
@@ -698,14 +704,16 @@ A simple sequence generator that continuously generates events with a counter
 that starts from 0 and increments by 1. Useful mainly for testing.
 Required properties are in **bold**.
 
-=============  ===========  ========================================
-Property Name  Default      Description
-=============  ===========  ========================================
-**channels**   --
-**type**       --           The component type name, needs to be ``seq``
-selector.type               replicating or multiplexing
-selector.*     replicating  Depends on the selector.type value
-=============  ===========  ========================================
+==============  ===========  ========================================
+Property Name   Default      Description
+==============  ===========  ========================================
+**channels**    --
+**type**        --           The component type name, needs to be ``seq``
+selector.type                replicating or multiplexing
+selector.*      replicating  Depends on the selector.type value
+interceptors    --           Space separated list of interceptors
+interceptors.*
+==============  ===========  ========================================
 
 Example for agent named **agent_foo**:
 
@@ -728,17 +736,19 @@ Required properties are in **bold**.
 Syslog TCP Source
 '''''''''''''''''
 
-=============  ===========  ==============================================
-Property Name  Default      Description
-=============  ===========  ==============================================
-**channels**   --
-**type**       --           The component type name, needs to be ``syslogtcp``
-**host**       --           Host name or IP address to bind to
-**port**       --           Port # to bind to
-eventSize      2500
-selector.type               replicating or multiplexing
-selector.*     replicating  Depends on the selector.type value
-=============  ===========  ==============================================
+==============   ===========  ==============================================
+Property Name    Default      Description
+==============   ===========  ==============================================
+**channels**     --
+**type**         --           The component type name, needs to be ``syslogtcp``
+**host**         --           Host name or IP address to bind to
+**port**         --           Port # to bind to
+eventSize        2500
+selector.type                 replicating or multiplexing
+selector.*       replicating  Depends on the selector.type value
+interceptors     --           Space separated list of interceptors
+interceptors.*
+==============   ===========  ==============================================
 
 
 For example, a syslog TCP source for agent named **agent_foo**:
@@ -755,16 +765,18 @@ For example, a syslog TCP source for agent named **agent_foo**:
 Syslog UDP Source
 '''''''''''''''''
 
-=============  ===========  ==============================================
-Property Name  Default      Description
-=============  ===========  ==============================================
-**channels**   --
-**type**       --           The component type name, needs to be ``syslogudp``
-**host**       --           Host name or IP address to bind to
-**port**       --           Port # to bind to
-selector.type               replicating or multiplexing
-selector.*     replicating  Depends on the selector.type value
-=============  ===========  ==============================================
+==============  ===========  ==============================================
+Property Name   Default      Description
+==============  ===========  ==============================================
+**channels**    --
+**type**        --           The component type name, needs to be ``syslogudp``
+**host**        --           Host name or IP address to bind to
+**port**        --           Port # to bind to
+selector.type                replicating or multiplexing
+selector.*      replicating  Depends on the selector.type value
+interceptors    --           Space separated list of interceptors
+interceptors.*
+==============  ===========  ==============================================
 
 
 For example, a syslog UDP source for agent named **agent_foo**:
@@ -804,16 +816,18 @@ Required properties are in **bold**.
 Avro Legacy Source
 ''''''''''''''''''
 
-=============  ===========  ========================================================================================
-Property Name  Default      Description
-=============  ===========  ========================================================================================
-**channels**   --
-**type**       --           The component type name, needs to be ``org.apache.flume.source.avroLegacy.AvroLegacySource``
-**host**       --           The hostname or IP address to bind to
-**port**       --           The port # to listen on
-selector.type               replicating or multiplexing
-selector.*     replicating  Depends on the selector.type value
-=============  ===========  ========================================================================================
+==============  ===========  ========================================================================================
+Property Name   Default      Description
+==============  ===========  ========================================================================================
+**channels**    --
+**type**        --           The component type name, needs to be ``org.apache.flume.source.avroLegacy.AvroLegacySource``
+**host**        --           The hostname or IP address to bind to
+**port**        --           The port # to listen on
+selector.type                replicating or multiplexing
+selector.*      replicating  Depends on the selector.type value
+interceptors    --           Space separated list of interceptors
+interceptors.*
+==============  ===========  ========================================================================================
 
 Example for agent named **agent_foo**:
 
@@ -829,16 +843,18 @@ Example for agent named **agent_foo**:
 Thrift Legacy Source
 ''''''''''''''''''''
 
-=============  ===========  ======================================================================================
-Property Name  Default      Description
-=============  ===========  ======================================================================================
-**channels**   --
-**type**       --           The component type name, needs to be ``org.apache.source.thriftLegacy.ThriftLegacySource``
-**host**       --           The hostname or IP address to bind to
-**port**       --           The port # to listen on
-selector.type               replicating or multiplexing
-selector.*     replicating  Depends on the selector.type value
-=============  ===========  ======================================================================================
+==============  ===========  ======================================================================================
+Property Name   Default      Description
+==============  ===========  ======================================================================================
+**channels**    --
+**type**        --           The component type name, needs to be ``org.apache.source.thriftLegacy.ThriftLegacySource``
+**host**        --           The hostname or IP address to bind to
+**port**        --           The port # to listen on
+selector.type                replicating or multiplexing
+selector.*      replicating  Depends on the selector.type value
+interceptors    --           Space separated list of interceptors
+interceptors.*
+==============  ===========  ======================================================================================
 
 Example for agent named **agent_foo**:
 
@@ -858,14 +874,16 @@ A custom source is your own implementation of the Source interface. A custom
 source's class and its dependencies must be included in the agent's classpath
 when starting the Flume agent. The type of the custom source is its FQCN.
 
-=============  ===========  ==============================================
-Property Name  Default      Description
-=============  ===========  ==============================================
-**channels**   --
-**type**       --           The component type name, needs to be your FQCN
-selector.type               replicating or multiplexing
-selector.*     replicating  Depends on the selector.type value
-=============  ===========  ==============================================
+==============  ===========  ==============================================
+Property Name   Default      Description
+==============  ===========  ==============================================
+**channels**    --
+**type**        --           The component type name, needs to be your FQCN
+selector.type                replicating or multiplexing
+selector.*      replicating  Depends on the selector.type value
+interceptors    --           Space separated list of interceptors
+interceptors.*
+==============  ===========  ==============================================
 
 Example for agent named **agent_foo**:
 
@@ -1501,6 +1519,67 @@ Custom Sink Processor
 ~~~~~~~~~~~~~~~~~~~~~
 
 Custom sink processors are not implemented at this time.
+
+Flume Interceptors
+------------------
+
+Flume has the capability to modify/drop events in-flight. This is done with the help of interceptors. Interceptors
+are classes that implement ``org.apache.flume.interceptor.Interceptor`` interface. An interceptor can
+modify or even drop events based on any criteria chosen by the developer of the interceptor. Flume supports
+chaining of interceptors. This is made possible through by specifying the list of interceptor builder class names
+in the configuration. Interceptors are specified as a whitespace separated list in the source configuration.
+The order in which the interceptors are specified is the order in which they are invoked.
+The list of events returned by one interceptor is passed to the next interceptor in the chain. Interceptors
+can modify or drop events. If an interceptor needs to drop events, it just does not return that event in
+the list that it returns. If it is to drop all events, then it simply returns an empty list. Interceptors
+are named components, here is an example of how they are created through configuration:
+
+.. code-block:: properties
+
+  agent_foo.sources = source_foo
+  agent_foo.channels = channel-1
+  agent_foo.sources.source_foo.interceptors = a b
+  agent_foo.sources.source_foo.interceptors.a.type = org.apache.flume.interceptor.HostInterceptor$Builder
+  agent_foo.sources.source_foo.interceptors.a.preserveExisting = false
+  agent_foo.sources.source_foo.interceptors.a.hostHeader = hostname
+  agent_foo.sources.source_foo.interceptors.b.type = org.apache.flume.interceptor.TimestampInterceptor$Builder
+
+Note that the interceptor builders are passed to the type config parameter. The interceptors are themselves
+configurable and can be passed configuration values just like they are passed to any other configurable component.
+In the above example, events are passed to the HostInterceptor first and the events returned by the HostInterceptor
+are then passed along to the TimestampInterceptor.
+
+Timestamp Interceptor
+~~~~~~~~~~~~~~~~~~~~~
+
+This interceptor inserts into the event headers, the time in millis at which it processes the event. This interceptor
+inserts a header with key ``timestamp`` whose value is the relevant timestamp. This interceptor
+can preserve an existing timestamp if it is already present in the configuration.
+
+================  =======  ========================================================================
+Property Name     Default  Description
+================  =======  ========================================================================
+type              --       The component type name, has to be ``TIMESTAMP``
+preserveExisting  false    If the timestamp already exists, should it be preserved - true or false
+================  =======  ========================================================================
+
+Host Interceptor
+~~~~~~~~~~~~~~~~
+
+This interceptor inserts the hostname or IP address of the host that this agent is running on. It inserts a header
+with key ``host`` or a configured key whose value is the hostname or IP address of the host, based on configuration.
+
+================  =======  ========================================================================
+Property Name     Default  Description
+================  =======  ========================================================================
+type              --       The component type name, has to be ``HOST``
+preserveExisting  false    If the host header already exists, should it be preserved - true or false
+useIP             true     Use the IP Address if true, else use hostname.
+hostHeader        host     The header key to be used.
+================  =======  ========================================================================
+
+In the example above, the key used in the event headers is "hostname"
+
 
 Flume Properties
 ----------------
