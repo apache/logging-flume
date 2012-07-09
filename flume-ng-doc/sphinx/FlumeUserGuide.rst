@@ -954,6 +954,9 @@ hdfs.threadsPoolSize    10            Number of threads per HDFS sink for HDFS I
 hdfs.rollTimerPoolSize  1             Number of threads per HDFS sink for scheduling timed file rolling
 hdfs.kerberosPrincipal  --            Kerberos user principal for accessing secure HDFS
 hdfs.kerberosKeytab     --            Kerberos keytab for accessing secure HDFS
+hdfs.round              false         Should the timestamp be rounded down (if true, affects all time based escape sequences except %t)
+hdfs.roundValue         1             Rounded down to the highest multiple of this (in the unit configured using ``hdfs.roundUnit``), less than current time.
+hdfs.roundUnit          second        The unit of the round down value - ``second``, ``minute`` or ``hour``.
 serializer              ``TEXT``      Other possible options include ``AVRO_EVENT`` or the
                                       fully-qualified class name of an implementation of the
                                       ``EventSerializer.Builder`` interface.
@@ -968,8 +971,13 @@ Example for agent named **agent_foo**:
   agent_foo.sinks = hdfsSink-1
   agent_foo.sinks.hdfsSink-1.type = hdfs
   agent_foo.sinks.hdfsSink-1.channels = memoryChannel-1
-  agent_foo.sinks.hdfsSink-1.hdfs.path = /flume/events/%y-%m-%d
-  agent_foo.sinks.hdfsSink-1.hdfs.filePrevix = events-
+  agent_foo.sinks.hdfsSink-1.hdfs.path = /flume/events/%y-%m-%d/%H%M/%S
+  agent_foo.sinks.hdfsSink-1.hdfs.filePrefix = events-
+  agent_foo.sinks.hdfsSink-1.hdfs.round = true
+  agent_foo.sinks.hdfsSink-1.hdfs.roundValue = 10
+  agent_foo.sinks.hdfsSink-1.hdfs.roundUnit = minute
+
+The above configuration will round down the timestamp to the last 10th minute. For example, an event with timestamp 11:54:34 AM, June 12, 2012 will cause the hdfs path to become ``/flume/events/2012-06-12/1150/00``.
 
 
 Logger Sink
