@@ -29,6 +29,7 @@ limitations under the License.
   <artifactId>flume-parent</artifactId>
   <version>1.2.0</version>
   <packaging>pom</packaging>
+
   <name>Apache Flume</name>
 
   <properties>
