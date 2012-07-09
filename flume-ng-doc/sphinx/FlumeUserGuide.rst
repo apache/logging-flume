@@ -1488,37 +1488,118 @@ Example for agent named **agent_foo** and it's source called **source_foo**:
 Flume Sink Processors
 ---------------------
 
+Sink groups allow users to group multiple sinks into one entity.
+Sink processors can be used to provide load balancing capabilities over all
+sinks inside the group or to achieve fail over from one sink to another in
+case of temporal failure.
+
+Required properties are in **bold**.
+
+===================  ===========  =================================================================================
+Property Name        Default      Description
+===================  ===========  =================================================================================
+**processor.sinks**  --           Space separated list of sinks that are participating in the group
+**processor.type**   ``default``  The component type name, needs to be ``default``, ``failover`` or ``load_balance``
+===================  ===========  =================================================================================
+
+
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.sinkgroups = group1
+  agent_foo.sinkgroups.group1.sinks = sink1 sink2
+  agent_foo.sinkgroups.group1.processor.type = load_balance
+
 Default Sink Processor
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Accepts only a single sink.
-Required properties are in **bold**.
-
-==============  =======  ============================================
-Property Name   Default  Description
-==============  =======  ============================================
-processor.type  default  The component type name, needs to be default
-==============  =======  ============================================
-
+Default sink processor accepts only a single sink. User is not forced
+to create processor (sink group) for single sinks. Instead user can follow
+the source - channel - sink pattern that was explained above in this user
+guide.
 
 Failover Sink Processor
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+Failover Sink Processor maintains a prioritized list of sinks, guaranteeing
+that so long as one is available events will be processed (delivered).
+
+The fail over mechanism works by relegating failed sinks to a pool where
+they are assigned a cool down period, increasing with sequential failures
+before they are retried. Once a sink successfully sends an event it is
+restored to the live pool.
+
+To configure, set a sink groups processor to ``failover`` and set
+priorities for all individual sinks. All specified priorities must
+be unique. Furthermore, upper limit to fail over time can be set
+(in milliseconds) using ``maxpenalty`` property.
+
 Required properties are in **bold**.
 
-=============================  =======  ===================================================================================
-Property Name                  Default  Description
-=============================  =======  ===================================================================================
-processor.type                 default  The component type name, needs to be ``failover``
-processor.maxpenalty           30000    (in millis)
-processor.priority.<sinkName>           <sinkName> must be one of the sink instances associated with the current sink group
-=============================  =======  ===================================================================================
+=================================  ===========  ===================================================================================
+Property Name                      Default      Description
+=================================  ===========  ===================================================================================
+**processor.sinks**                --           Space separated list of sinks that are participating in the group
+**processor.type**                 ``default``  The component type name, needs to be ``failover``
+**processor.priority.<sinkName>**  --             <sinkName> must be one of the sink instances associated with the current sink group
+processor.maxpenalty               30000        (in millis)
+=================================  ===========  ===================================================================================
 
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.sinkgroups = group1
+  agent_foo.sinkgroups.group1.sinks = sink1 sink2
+  agent_foo.sinkgroups.group1.processor.type = failover
+  agent_foo.sinkgroups.group1.processor.priority.sink1 = 5
+  agent_foo.sinkgroups.group1.processor.priority.sink2 = 10
+  agent_foo.sinkgroups.group1.processor.maxpenalty = 10000
+
+
+Load balancing Sink Processor
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Load balancing sink processor provides the ability to load-balance flow over
+multiple sinks. It maintains an indexed list of active sinks on which the
+load must be distributed. Implementation supports distributing load using
+either via ``ROUND_ROBIN`` or via ``RANDOM`` selection mechanism. The choice
+of selection mechanism defaults to ``ROUND_ROBIN`` type, but can be overridden
+via configuration. Custom selection mechanisms are supported via custom
+classes that inherits from ``LoadBalancingSelector``.
+
+When invoked, this selector picks the next sink using its configured selection
+mechanism and invokes it. In case the selected sink fails to deliver the event,
+the processor picks the next available sink via its configured selection mechanism.
+This implementation does not blacklist the failing sink and instead continues
+to optimistically attempt every available sink. If all sinks invocations
+result in failure, the selector propagates the failure to the sink runner.
+
+Required properties are in **bold**.
+
+=============================  ===============  ===============================================================
+Property Name                  Default          Description
+=============================  ===============  ===============================================================
+**processor.sinks**            --               Space separated list of sinks that are participating in the group
+**processor.type**             ``default``      The component type name, needs to be ``load_balance``
+processor.selector             ``ROUND_ROBIN``  Selection mechanism. Must be either ``ROUND_ROBIN``, ``RANDOM``
+                                                or custom FQDN to class that inherits from ``LoadBalancingSelector``
+=============================  ===============  ===============================================================
+
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.sinkgroups = group1
+  agent_foo.sinkgroups.group1.sinks = sink1 sink2
+  agent_foo.sinkgroups.group1.processor.type = load_balance
+  agent_foo.sinkgroups.group1.processor.selector = random
 
 Custom Sink Processor
 ~~~~~~~~~~~~~~~~~~~~~
 
-Custom sink processors are not implemented at this time.
+Custom sink processors are not supported at the moment.
 
 Flume Interceptors
 ------------------
@@ -1733,4 +1814,5 @@ org.apache.flume.ChannelSelector  MULTIPLEXING        org.apache.flume.channel.M
 org.apache.flume.ChannelSelector  --                  org.example.MyChannelSelector
 org.apache.flume.SinkProcessor    DEFAULT             org.apache.flume.sink.DefaultSinkProcessor
 org.apache.flume.SinkProcessor    FAILOVER            org.apache.flume.sink.FailoverSinkProcessor
+org.apache.flume.SinkProcessor    LOAD_BALANCE        org.apache.flume.sink.LoadBalancingSinkProcessor
 ================================  ==================  ====================================================================
