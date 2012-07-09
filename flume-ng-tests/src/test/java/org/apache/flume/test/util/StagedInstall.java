@@ -22,8 +22,10 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.Socket;
 import java.util.Map;
 import java.util.Properties;
 import java.util.zip.GZIPInputStream;
@@ -433,6 +435,27 @@ public class StagedInstall {
       dir = dir.getParentFile();
     }
     return tarballPath;
+  }
+
+  public static void waitUntilPortOpens(String host, int port, long timeout)
+      throws IOException, InterruptedException{
+    long startTime = System.currentTimeMillis();
+    Socket socket;
+    boolean connected = false;
+    //See if port has opened for timeout.
+    while(System.currentTimeMillis() - startTime < timeout){
+      try{
+        socket = new Socket(host, port);
+        socket.close();
+        connected = true;
+        break;
+      } catch (IOException e){
+        Thread.sleep(2000);
+      }
+    }
+    if(!connected) {
+      throw new IOException("Port not opened within specified timeout.");
+    }
   }
 
   private class ProcessShutdownHook extends Thread {

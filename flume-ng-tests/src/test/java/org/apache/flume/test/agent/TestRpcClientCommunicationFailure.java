@@ -35,9 +35,10 @@ public class TestRpcClientCommunicationFailure {
    @Test
    public void testFailure() throws Exception {
      try {
+
        StagedInstall.getInstance().startAgent(
          "rpccagent", CONFIG_FILE_PRCCLIENT_TEST);
-
+       StagedInstall.waitUntilPortOpens("localhost", 12121, 20000);
        RpcClient client = RpcClientFactory.getDefaultInstance(
            "localhost", 12121);
        String[] text = {"foo", "bar", "xyz", "abc"};
