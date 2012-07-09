@@ -1109,6 +1109,92 @@ Example for agent named **agent_foo**:
   agent_foo.sinks.nullSink-1.type = NULL
   agent_foo.sinks.nullSink-1.channels = memoryChannel-1
 
+HBaseSinks
+~~~~~~~~~~
+
+HBaseSink
+'''''''''
+
+This sink writes data to HBase. The Hbase configuration is picked up from the first
+hbase-site.xml encountered in the classpath. A class implementing HbaseEventSerializer
+which is specified by the configuration is used to convert the events into
+HBase puts and/or increments. These puts and increments are then written
+to HBase. This sink provides the same consistency guarantees as HBase,
+which is currently row-wise atomicity. In the event of Hbase failing to
+write certain events, the sink will replay all events in that transaction.
+For convenience two serializers are provided with flume. The
+SimpleHbaseEventSerializer (org.apache.flume.sink.hbase.SimpleHbaseEventSerializer)
+writes the event body
+as is to HBase, and optionally increments a column in Hbase. This is primarily
+an example implementation. The RegexHbaseEventSerializer
+(org.apache.flume.sink.hbase.RegexHbaseEventSerializer) breaks the event body
+based on the given regex and writes each part into different columns.
+
+The type is the FQCN: org.apache.flume.sink.hbase.HBaseSink.
+Required properties are in **bold**.
+
+================  ======================================================  ========================================================================
+Property Name     Default                                                 Description
+================  ======================================================  ========================================================================
+**channel**       --
+**type**          --                                                      The component type name, needs to be ``org.apache.flume.sink.HBaseSink``
+**table**         --                                                      The name of the table in Hbase to write to.
+**columnFamily**  --                                                      The column family in Hbase to write to.
+batchSize         100                                                     Number of events to be written per txn.
+serializer        org.apache.flume.sink.hbase.SimpleHbaseEventSerializer
+serializer.*      --                                                      Properties to be passed to the serializer.
+================  ======================================================  ========================================================================
+
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sinks = hbaseSink-1
+  agent_foo.sinks.hbaseSink-1.type = org.apache.flume.sink.hbase.HBaseSink
+  agent_foo.sinks.hbaseSink-1.table = foo_table
+  agent_foo.sinks.hbaseSink-1.columnFamily = bar_cf
+  agent_foo.sinks.hbaseSink-1.serializer = org.apache.flume.sink.hbase.RegexHbaseEventSerializer
+  agent_foo.sinks.hbaseSink-1.channels = memoryChannel-1
+
+AsyncHBaseSink
+''''''''''''''
+
+This sink writes data to HBase using an asynchronous model. A class implementing
+AsyncHbaseEventSerializer
+which is specified by the configuration is used to convert the events into
+HBase puts and/or increments. These puts and increments are then written
+to HBase. This sink provides the same consistency guarantees as HBase,
+which is currently row-wise atomicity. In the event of Hbase failing to
+write certain events, the sink will replay all events in that transaction.
+This sink is still experimental.
+The type is the FQCN: org.apache.flume.sink.hbase.AsyncHBaseSink.
+Required properties are in **bold**.
+
+================  ============================================================  =============================================================================
+Property Name     Default                                                       Description
+================  ============================================================  =============================================================================
+**channel**       --
+**type**          --                                                            The component type name, needs to be ``org.apache.flume.sink.AsyncHBaseSink``
+**table**         --                                                            The name of the table in Hbase to write to.
+**columnFamily**  --                                                            The column family in Hbase to write to.
+batchSize         100                                                           Number of events to be written per txn.
+serializer        org.apache.flume.sink.hbase.SimpleAsyncHbaseEventSerializer
+serializer.*      --                                                            Properties to be passed to the serializer.
+================  ============================================================  =============================================================================
+
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sinks = hbaseSink-1
+  agent_foo.sinks.hbaseSink-1.type = org.apache.flume.sink.hbase.AsyncHBaseSink
+  agent_foo.sinks.hbaseSink-1.table = foo_table
+  agent_foo.sinks.hbaseSink-1.columnFamily = bar_cf
+  agent_foo.sinks.hbaseSink-1.serializer = org.apache.flume.sink.hbase.SimpleAsyncHbaseEventSerializer
+  agent_foo.sinks.hbaseSink-1.channels = memoryChannel-1
+
 Custom Sink
 ~~~~~~~~~~~
 
@@ -1548,6 +1634,8 @@ org.apache.flume.Sink             NULL                org.apache.flume.sink.Null
 org.apache.flume.Sink             LOGGER              org.apache.flume.sink.LoggerSink
 org.apache.flume.Sink             AVRO                org.apache.flume.sink.AvroSink
 org.apache.flume.Sink             HDFS                org.apache.flume.sink.hdfs.HDFSEventSink
+org.apache.flume.Sink             --                  org.apache.flume.sink.hbase.HBaseSink
+org.apache.flume.Sink             --                  org.apache.flume.sink.hbase.AsyncHBaseSink
 org.apache.flume.Sink             FILE_ROLL           org.apache.flume.sink.RollingFileSink
 org.apache.flume.Sink             IRC                 org.apache.flume.sink.irc.IRCSink
 org.apache.flume.Sink             --                  org.example.MySink
