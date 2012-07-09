@@ -15,7 +15,7 @@
 
 
 =======================================
-Apache Flume (incubating) documentation
+Apache Flume documentation
 =======================================
 
 Flume is a distributed, reliable, and available system for efficiently
@@ -50,7 +50,7 @@ Overview
 - `Flume Wiki <http://cwiki.apache.org/confluence/display/FLUME>`_
 - `Getting Started Guide <http://cwiki.apache.org/confluence/display/FLUME/Getting+Started>`_
 - `Flume Issue Tracking (JIRA) <https://issues.apache.org/jira/browse/FLUME>`_
-- `Flume Source Code (SVN) <https://svn.apache.org/repos/asf/incubator/flume/>`_
+- `Flume Source Code (SVN) <http://svn.apache.org/repos/asf/flume/>`_
 
 Documentation
 -------------
