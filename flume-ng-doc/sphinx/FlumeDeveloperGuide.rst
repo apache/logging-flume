@@ -14,9 +14,9 @@
    limitations under the License.
 
 
-=========================
-Flume 1.x Developer Guide
-=========================
+==========================================
+Flume 1.3.0-SNAPSHOT Developer Guide
+==========================================
 
 Introduction
 ============
@@ -29,8 +29,8 @@ efficiently collecting, aggregating and moving large amounts of log
 data from many different sources to a centralized data store.
 
 Apache Flume is a top level project at the Apache Software Foundation.
-There are currently two release code lines available, version 0.9.x and 1.x.x.
-This guide is specific to 1.x (more specifically 1.1.0 release).
+There are currently two release code lines available, versions 0.9.x and 1.x.
+This documentation applies to the 1.x codeline.  
 Please click here for
 `the Flume 0.9.x Developer Guide <http://archive.cloudera.com/cdh/3/flume/DeveloperGuide/>`_.
 

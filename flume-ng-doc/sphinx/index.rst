@@ -14,9 +14,9 @@
    limitations under the License.
 
 
-=======================================
-Apache Flume documentation
-=======================================
+================================================
+Apache Flume 1.3.0-SNAPSHOT documentation
+================================================
 
 Flume is a distributed, reliable, and available system for efficiently
 collecting, aggregating, and moving large amounts of log data from many

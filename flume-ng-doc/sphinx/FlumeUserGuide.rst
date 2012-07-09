@@ -14,9 +14,9 @@
    limitations under the License.
 
 
-====================
-Flume 1.x User Guide
-====================
+======================================
+Flume 1.3.0-SNAPSHOT User Guide
+======================================
 
 Introduction
 ============
@@ -29,8 +29,8 @@ collecting, aggregating and moving large amounts of log data from many
 different sources to a centralized data store.
 
 Apache Flume is a top level project at the Apache Software Foundation.
-There are currently two release code lines available, version 0.9.x and 1.x.x.
-This guide is specific to 1.x (more specifically 1.1.0 release).
+There are currently two release code lines available, versions 0.9.x and 1.x.
+This documentation applies to the 1.x codeline.  
 Please click here for
 `the Flume 0.9.x User Guide <http://archive.cloudera.com/cdh/3/flume/UserGuide/>`_.
 
@@ -882,23 +882,24 @@ Flume Sinks
 HDFS Sink
 ~~~~~~~~~
 
-This sink writes the event into the Hadoop Distributed File System (HDFS). It
+This sink writes events into the Hadoop Distributed File System (HDFS). It
 currently supports creating text and sequence files. It supports compression in
 both file types. The files can be rolled (close current file and create a new
 one) periodically based on the elapsed time or size of data or number of events.
-It also bucketing/partitioning data by attributes like timestamp or machine
+It also buckets/partitions data by attributes like timestamp or machine
 where the event originated. The HDFS directory path may contain formatting
 escape sequences that will replaced by the HDFS sink to generate a
 directory/file name to store the events. Using this sink requires hadoop to be
 installed so that Flume can use the Hadoop jars to communicate with the HDFS
-cluster.
+cluster. Note that a version of Hadoop that supports the sync() call is
+required.
 
 The following are the escape sequences supported:
 
 =========  =================================================
 Alias      Description
 =========  =================================================
-%{host}    host name stored in event header
+%{host}    Substitute value of event header named "host". Arbitrary header names are supported.
 %t         Unix time in milliseconds
 %a         locale's short weekday name (Mon, Tue, ...)
 %A         locale's full weekday name (Monday, Tuesday, ...)
