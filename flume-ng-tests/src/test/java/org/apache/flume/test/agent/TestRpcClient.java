@@ -44,6 +44,7 @@ public class TestRpcClient {
 
   @Test
   public void testRpcClient() throws Exception {
+    StagedInstall.waitUntilPortOpens("localhost", 12121, 20000);
     RpcClient client = RpcClientFactory.getDefaultInstance("localhost", 12121);
     String[] text = {"foo", "bar", "xyz", "abc"};
     for (String str : text) {
