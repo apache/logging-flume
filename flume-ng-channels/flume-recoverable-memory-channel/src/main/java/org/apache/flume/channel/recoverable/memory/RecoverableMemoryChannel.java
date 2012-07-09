@@ -49,7 +49,13 @@ import com.google.common.collect.Lists;
  * A durable {@link Channel} implementation that uses the local file system for
  * its storage.
  * </p>
+ *
+ * @deprecated The RecoverableMemoryChannel has been deprecated in favor of
+ * {@link org.apache.flume.channel.file.FileChannel}, which gives better
+ * performance and is also durable.
  */
+
+@Deprecated
 public class RecoverableMemoryChannel extends BasicChannelSemantics {
 
   private static final Logger LOG = LoggerFactory
