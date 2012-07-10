@@ -185,30 +185,37 @@ limitations under the License.
 
   <mailingLists>
     <mailingList>
-      <archive>http://mail-archives.apache.org/mod_mbox/incubator-flume-user/</archive>
-      <name>flume-user</name>
-      <post>flume-user@incubator.apache.org</post>
-      <subscribe>flume-user-subscribe@incubator.apache.org</subscribe>
-      <unsubscribe>flume-user-unsubscribe@incubator.apache.org</unsubscribe>
+      <archive>http://mail-archives.apache.org/mod_mbox/flume-user/</archive>
+      <name>Flume User List</name>
+      <post>user@flume.apache.org</post>
+      <subscribe>user-subscribe@flume.apache.org</subscribe>
+      <unsubscribe>user-unsubscribe@flume.apache.org</unsubscribe>
     </mailingList>
     <mailingList>
-      <archive>http://mail-archives.apache.org/mod_mbox/incubator-flume-dev/</archive>
-      <name>flume-dev</name>
-      <post>flume-dev@incubator.apache.org</post>
-      <subscribe>flume-dev-subscribe@incubator.apache.org</subscribe>
-      <unsubscribe>flume-dev-unsubscribe@incubator.apache.org</unsubscribe>
+      <archive>http://mail-archives.apache.org/mod_mbox/flume-dev/</archive>
+      <name>Flume Developer List</name>
+      <post>dev@flume.apache.org</post>
+      <subscribe>dev-subscribe@flume.apache.org</subscribe>
+      <unsubscribe>dev-unsubscribe@flume.apache.org</unsubscribe>
+    </mailingList>
+    <mailingList>
+      <archive>http://mail-archives.apache.org/mod_mbox/flume-commits/</archive>
+      <name>Flume Commits</name>
+      <post>commits@flume.apache.org</post>
+      <subscribe>commits-subscribe@flume.apache.org</subscribe>
+      <unsubscribe>commits-unsubscribe@flume.apache.org</unsubscribe>
     </mailingList>
   </mailingLists>
 
   <scm>
-    <url>scm:svn:https://svn.apache.org/repos/asf/incubator/flume/</url>
-    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/incubator/flume/</developerConnection>
-    <connection>scm:svn:https://svn.apache.org/repos/asf/incubator/flume</connection>
+    <url>scm:svn:https://svn.apache.org/repos/asf/flume/</url>
+    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/flume/</developerConnection>
+    <connection>scm:svn:https://svn.apache.org/repos/asf/flume</connection>
   </scm>
 
   <ciManagement>
     <system>jenkins</system>
-    <url>https://builds.apache.org/job/flume-728/</url>
+    <url>https://builds.apache.org/job/flume-trunk</url>
   </ciManagement>
 
   <developers>
