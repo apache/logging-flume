@@ -22,6 +22,7 @@ public enum InterceptorType {
 
   TIMESTAMP(org.apache.flume.interceptor.TimestampInterceptor.Builder.class),
   HOST(org.apache.flume.interceptor.HostInterceptor.Builder.class),
+  STATIC(org.apache.flume.interceptor.StaticInterceptor.Builder.class)
   ;
 
   private final Class<? extends Interceptor.Builder> builderClass;
