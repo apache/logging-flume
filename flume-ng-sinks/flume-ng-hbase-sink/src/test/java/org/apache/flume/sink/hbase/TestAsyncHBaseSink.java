@@ -46,6 +46,7 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
 import org.junit.AfterClass;
@@ -55,6 +56,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.primitives.Longs;
+import java.lang.reflect.Method;
 
 public class TestAsyncHBaseSink {
   private static HBaseTestingUtility testUtility;
@@ -85,7 +87,6 @@ public class TestAsyncHBaseSink {
     Configuration hbaseConf =  HBaseConfiguration.create();
 
     hbaseConf.set(HConstants.HBASE_DIR, hbaseRoot);
-    hbaseConf.set("hbase.master", "local");
     hbaseConf.setInt(HConstants.ZOOKEEPER_CLIENT_PORT, 2181);
     hbaseConf.set(HConstants.ZOOKEEPER_QUORUM, "0.0.0.0");
     hbaseConf.setInt("hbase.master.info.port", -1);
@@ -93,11 +94,42 @@ public class TestAsyncHBaseSink {
     String zookeeperDir = new File(workDir,"zk").getAbsolutePath();
     int zookeeperPort = 2181;
     zookeeperCluster = new MiniZooKeeperCluster();
-    zookeeperCluster.setDefaultClientPort(zookeeperPort);
+    Method m;
+    Class<?> zkParam[] = {Integer.TYPE};
+    try{
+      m = MiniZooKeeperCluster.class.getDeclaredMethod("setDefaultClientPort",
+          zkParam);
+    } catch (NoSuchMethodException e) {
+      m = MiniZooKeeperCluster.class.getDeclaredMethod("setClientPort",
+          zkParam);
+    }
+
+    m.invoke(zookeeperCluster, new Object[] {new Integer(zookeeperPort)});
     zookeeperCluster.startup(new File(zookeeperDir));
-    hbaseCluster= new MiniHBaseCluster(hbaseConf, 1);
-    hbaseConf.set("hbase.master",
-        hbaseCluster.getMaster().getServerName().getHostAndPort());
+    hbaseCluster = new MiniHBaseCluster(hbaseConf, 1);
+    HMaster master = hbaseCluster.getMaster();
+    Object serverName = master.getServerName();
+    String hostAndPort;
+    if(serverName instanceof String) {
+      System.out.println("Server name is string, using HServerAddress.");
+      m = HMaster.class.getDeclaredMethod("getMasterAddress",
+          new Class<?>[]{});
+      Class<?> clazz = Class.forName("org.apache.hadoop.hbase.HServerAddress");
+      /*
+       * Call method to get server address
+       */
+      Object serverAddr = clazz.cast(m.invoke(master, new Object[]{}));
+      //returns the address as hostname:port
+      hostAndPort = serverAddr.toString();
+    } else {
+      System.out.println("ServerName is org.apache.hadoop.hbase.ServerName," +
+          "using getHostAndPort()");
+      Class<?> clazz = Class.forName("org.apache.hadoop.hbase.ServerName");
+      m = clazz.getDeclaredMethod("getHostAndPort", new Class<?>[] {});
+      hostAndPort = m.invoke(serverName, new Object[]{}).toString();
+    }
+
+    hbaseConf.set("hbase.master", hostAndPort);
     testUtility = new HBaseTestingUtility(hbaseConf);
     testUtility.setZkCluster(zookeeperCluster);
     hbaseCluster.startMaster();
