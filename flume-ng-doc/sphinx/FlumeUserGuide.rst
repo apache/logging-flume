@@ -624,6 +624,7 @@ Property Name    Default      Description
 restartThrottle  10000        Amount of time (in millis) to wait before attempting a restart
 restart          false        Whether the executed cmd should be restarted if it dies
 logStdErr        false        Whether the command's stderr should be logged
+batchSize        20           The max number of lines to read and send to the channel at a time
 selector.type    replicating  replicating or multiplexing
 selector.*                    Depends on the selector.type value
 interceptors     --           Space separated list of interceptors
@@ -1363,6 +1364,10 @@ write-timeout         3                                 Amount of time (in sec) 
           directories and cause the other channel initialization to fail.
           It is therefore necessary that you provide explicit paths to
           all the configured channels, preferably on different disks.
+          Furthermore, as file channel will sync to disk after every commit,
+          coupling it with a sink/source that batches events together may
+          be necessary to provide good performance where multiple disks are
+          not available for checkpoint and data directories.
 
 Example for agent named **agent_foo**:
 

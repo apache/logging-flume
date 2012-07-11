@@ -22,6 +22,8 @@ package org.apache.flume.source;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -30,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
+import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.Source;
 import org.apache.flume.channel.ChannelProcessor;
@@ -116,6 +119,12 @@ import com.google.common.base.Preconditions;
  * <td>Boolean</td>
  * <td>false</td>
  * </tr>
+ * <tr>
+ * <td><tt>batchSize</tt></td>
+ * <td>The number of events to commit to channel at a time.</td>
+ * <td>integer</td>
+ * <td>20</td>
+ * </tr>
  * </table>
  * <p>
  * <b>Metrics</b>
@@ -138,6 +147,7 @@ Configurable {
   private long restartThrottle;
   private boolean restart;
   private boolean logStderr;
+  private Integer bufferCount;
   private ExecRunnable runner;
 
   @Override
@@ -148,7 +158,7 @@ Configurable {
     counterGroup = new CounterGroup();
 
     runner = new ExecRunnable(command, getChannelProcessor(), counterGroup,
-        restart, restartThrottle, logStderr);
+        restart, restartThrottle, logStderr, bufferCount);
 
     // FIXME: Use a callback-like executor / future to signal us upon failure.
     runnerFuture = executor.submit(runner);
@@ -210,17 +220,21 @@ Configurable {
 
     logStderr = context.getBoolean(ExecSourceConfigurationConstants.CONFIG_LOG_STDERR,
         ExecSourceConfigurationConstants.DEFAULT_LOG_STDERR);
+
+    bufferCount = context.getInteger(ExecSourceConfigurationConstants.CONFIG_BATCH_SIZE,
+        ExecSourceConfigurationConstants.DEFAULT_BATCH_SIZE);
   }
 
   private static class ExecRunnable implements Runnable {
 
     public ExecRunnable(String command, ChannelProcessor channelProcessor,
         CounterGroup counterGroup, boolean restart, long restartThrottle,
-        boolean logStderr) {
+        boolean logStderr, int bufferCount) {
       this.command = command;
       this.channelProcessor = channelProcessor;
       this.counterGroup = counterGroup;
       this.restartThrottle = restartThrottle;
+      this.bufferCount = bufferCount;
       this.restart = restart;
       this.logStderr = logStderr;
     }
@@ -230,6 +244,7 @@ Configurable {
     private CounterGroup counterGroup;
     private volatile boolean restart;
     private long restartThrottle;
+    private int bufferCount;
     private boolean logStderr;
 
     @Override
@@ -252,10 +267,17 @@ Configurable {
           stderrReader.start();
 
           String line = null;
-
+          List<Event> eventList = new ArrayList<Event>();
           while ((line = reader.readLine()) != null) {
             counterGroup.incrementAndGet("exec.lines.read");
-            channelProcessor.processEvent(EventBuilder.withBody(line.getBytes()));
+            eventList.add(EventBuilder.withBody(line.getBytes()));
+            if(eventList.size() >= bufferCount) {
+              channelProcessor.processEventBatch(eventList);
+              eventList.clear();
+            }
+          }
+          if(!eventList.isEmpty()) {
+            channelProcessor.processEventBatch(eventList);
           }
         } catch (Exception e) {
           logger.error("Failed while running command: " + command, e);

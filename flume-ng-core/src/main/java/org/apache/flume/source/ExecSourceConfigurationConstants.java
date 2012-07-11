@@ -38,4 +38,9 @@ public class ExecSourceConfigurationConstants {
   public static final String CONFIG_LOG_STDERR = "logStdErr";
   public static final boolean DEFAULT_LOG_STDERR = false;
 
+  /**
+   * Number of lines to read at a time
+   */
+  public static final String CONFIG_BATCH_SIZE = "batchSize";
+  public static final int DEFAULT_BATCH_SIZE = 20;
 }
