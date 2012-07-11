@@ -31,6 +31,7 @@ import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.FlumeException;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
@@ -121,7 +122,7 @@ public class TestThriftLegacySource {
 
         source.start();
         bound = true;
-      } catch (ChannelException e) {
+      } catch (FlumeException e) {
         // Assume port in use, try another one
       }
     }
