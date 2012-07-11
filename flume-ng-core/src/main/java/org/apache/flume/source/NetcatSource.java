@@ -40,6 +40,7 @@ import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
+import org.apache.flume.FlumeException;
 import org.apache.flume.Source;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.Configurables;
@@ -145,8 +146,6 @@ public class NetcatSource extends AbstractSource implements Configurable,
 
     logger.info("Source starting");
 
-    super.start();
-
     counterGroup.incrementAndGet("open.attempts");
 
     handlerService = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
@@ -163,7 +162,7 @@ public class NetcatSource extends AbstractSource implements Configurable,
     } catch (IOException e) {
       counterGroup.incrementAndGet("open.errors");
       logger.error("Unable to bind to socket. Exception follows.", e);
-      return;
+      throw new FlumeException(e);
     }
 
     AcceptHandler acceptRunnable = new AcceptHandler(maxLineLength);
@@ -179,13 +178,12 @@ public class NetcatSource extends AbstractSource implements Configurable,
     acceptThread.start();
 
     logger.debug("Source started");
+    super.start();
   }
 
   @Override
   public void stop() {
     logger.info("Source stopping");
-
-    super.stop();
 
     acceptThreadShouldStop.set(true);
 
@@ -238,6 +236,7 @@ public class NetcatSource extends AbstractSource implements Configurable,
     }
 
     logger.debug("Source stopped. Event metrics:{}", counterGroup);
+    super.stop();
   }
 
   private static class AcceptHandler implements Runnable {

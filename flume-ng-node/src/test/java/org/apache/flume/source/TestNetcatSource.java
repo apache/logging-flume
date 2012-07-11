@@ -37,6 +37,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.EventDrivenSource;
+import org.apache.flume.FlumeException;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
@@ -79,15 +80,22 @@ public class TestNetcatSource {
       EventDeliveryException {
 
     ExecutorService executor = Executors.newFixedThreadPool(3);
-    Context context = new Context();
+    boolean bound = false;
 
-    /* FIXME: Use a random port for testing. */
-    context.put("bind", "0.0.0.0");
-    context.put("port", "41414");
+    for(int i = 0; i < 100 && !bound; i++) {
+      try {
+        Context context = new Context();
+        context.put("bind", "0.0.0.0");
+        context.put("port", "41414");
 
-    Configurables.configure(source, context);
+        Configurables.configure(source, context);
 
-    source.start();
+        source.start();
+        bound = true;
+      } catch (FlumeException e) {
+        // assume port in use, try another one
+      }
+    }
 
     Runnable clientRequestRunnable = new Runnable() {
 
