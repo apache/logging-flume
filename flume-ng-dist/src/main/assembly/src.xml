@@ -95,7 +95,6 @@
         <include>LICENSE</include>
         <include>NOTICE</include>
         <include>CHANGELOG</include>
-        <include>DISCLAIMER</include>
         <include>RELEASE-NOTES</include>
         <include>bin/**</include>
         <include>conf/**</include>
