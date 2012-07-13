@@ -32,6 +32,7 @@ import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
+import org.apache.flume.FlumeException;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.source.AbstractSource;
 import org.apache.flume.event.EventBuilder;
@@ -141,8 +142,7 @@ public class ThriftLegacySource  extends AbstractSource implements
       server = new TThreadPoolServer(new TThreadPoolServer.
           Args(serverTransport).processor(processor));
     } catch (TTransportException e) {
-      e.printStackTrace();
-      return;
+      throw new FlumeException("Failed starting source", e);
     }
     ThriftHandler thriftHandler = new ThriftHandler(server);
     thriftHandlerThread = new Thread(thriftHandler);
