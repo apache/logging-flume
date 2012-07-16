@@ -1100,15 +1100,15 @@ File Roll Sink
 Stores events on the local filesystem.
 Required properties are in **bold**.
 
-=================  =======  ======================================================================================================================
-Property Name      Default  Description
-=================  =======  ======================================================================================================================
-**channel**        --
-**type**           --       The component type name, needs to be ``FILE_ROLL``.
-sink.directory     --
-sink.rollInterval  30       Roll the file every 30 seconds. Specifying 0 will disable rolling and cause all events to be written to a single file.
-sink.serializer    TEXT     Other possible options include AVRO_EVENT or the FQCN of an implementation of EventSerializer.Builder interface.
-=================  =======  ======================================================================================================================
+===================  =======  ======================================================================================================================
+Property Name        Default  Description
+===================  =======  ======================================================================================================================
+**channel**          --
+**type**             --       The component type name, needs to be ``FILE_ROLL``.
+**sink.directory**   --       The directory where files will be stored
+sink.rollInterval    30       Roll the file every 30 seconds. Specifying 0 will disable rolling and cause all events to be written to a single file.
+sink.serializer      TEXT     Other possible options include AVRO_EVENT or the FQCN of an implementation of EventSerializer.Builder interface.
+===================  =======  ======================================================================================================================
 
 Example for agent named **agent_foo**:
 
