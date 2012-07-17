@@ -48,7 +48,7 @@ import static org.apache.flume.interceptor.StaticInterceptor.Constants.*;
  *   agent.sources.r1.channels = c1<p>
  *   agent.sources.r1.type = SEQ<p>
  *   agent.sources.r1.interceptors = i1<p>
- *   agent.sources.r1.interceptors.i1.type = org.apache.flume.interceptor.StaticInterceptor$Builder<p>
+ *   agent.sources.r1.interceptors.i1.type = timestamp<p>
  *   agent.sources.r1.interceptors.i1.preserveExisting = false<p>
  *   agent.sources.r1.interceptors.i1.key = datacenter<p>
  *   agent.sources.r1.interceptors.i1.value= NYC_01<p>

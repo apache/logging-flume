@@ -53,7 +53,7 @@ import static org.apache.flume.interceptor.HostInterceptor.Constants.*;
  *   agent.sources.r1.channels = c1<p>
  *   agent.sources.r1.type = SEQ<p>
  *   agent.sources.r1.interceptors = i1<p>
- *   agent.sources.r1.interceptors.i1.type = org.apache.flume.interceptor.HostInterceptor$Builder<p>
+ *   agent.sources.r1.interceptors.i1.type = host<p>
  *   agent.sources.r1.interceptors.i1.preserveExisting = true<p>
  *   agent.sources.r1.interceptors.i1.useIP = false<p>
  *   agent.sources.r1.interceptors.i1.hostHeader = hostname<p>
