@@ -34,6 +34,12 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import java.util.Properties;
+import java.util.Set;
+import org.apache.flume.Context;
+import org.apache.flume.instrumentation.MonitorService;
+import org.apache.flume.instrumentation.MonitoringType;
+
 
 public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
     implements NodeConfigurationAware {
@@ -44,6 +50,11 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
   private LifecycleSupervisor nodeSupervisor;
   private LifecycleState lifecycleState;
   private NodeConfiguration nodeConfiguration;
+
+  private MonitorService monitorServer;
+
+  public static final String CONF_MONITOR_CLASS = "flume.monitoring.type";
+  public static final String CONF_MONITOR_PREFIX = "flume.monitoring.";
 
   public DefaultLogicalNodeManager() {
     nodeSupervisor = new LifecycleSupervisor();
@@ -84,6 +95,9 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
           logger.error("Error while stopping {}", entry.getValue(), e);
         }
       }
+    }
+    if(monitorServer != null) {
+      monitorServer.stop();
     }
   }
 
@@ -142,6 +156,8 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
         logger.error("Error while starting {}", entry.getValue(), e);
       }
     }
+
+    this.loadMonitoring();
   }
 
   @Override
@@ -212,4 +228,36 @@ public class DefaultLogicalNodeManager extends AbstractLogicalNodeManager
     return lifecycleState;
   }
 
+  private void loadMonitoring() {
+    Properties systemProps = System.getProperties();
+    Set<String> keys = systemProps.stringPropertyNames();
+    try {
+      if (keys.contains(CONF_MONITOR_CLASS)) {
+        String monitorType = systemProps.getProperty(CONF_MONITOR_CLASS);
+        Class<? extends MonitorService> klass;
+        try {
+          //Is it a known type?
+          klass = MonitoringType.valueOf(
+                  monitorType.toUpperCase()).getMonitorClass();
+        } catch (Exception e) {
+          //Not a known type, use FQCN
+          klass = (Class<? extends MonitorService>) Class.forName(monitorType);
+        }
+        this.monitorServer = klass.newInstance();
+        Context context = new Context();
+        for (String key : keys) {
+          if (key.startsWith(CONF_MONITOR_PREFIX)) {
+            context.put(key.substring(CONF_MONITOR_PREFIX.length()),
+                    systemProps.getProperty(key));
+          }
+        }
+        monitorServer.configure(context);
+        monitorServer.start();
+      }
+    } catch (Exception e) {
+      logger.warn("Error starting monitoring. "
+              + "Monitoring might not be available.", e);
+    }
+
+  }
 }

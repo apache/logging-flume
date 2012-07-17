@@ -1744,7 +1744,61 @@ configuring the HDFS sink Kerberos-related options.
 Monitoring
 ==========
 
-TBD
+Monitoring in Flume is still a work in progress. Changes can happen very often.
+Several Flume components report metrics to the JMX platform MBean server. These
+metrics can be queried using Jconsole.
+
+Ganglia Reporting
+-----------------
+Flume can also report these metrics to
+Ganglia 3 or Ganglia 3.1 metanodes. To report metrics to Ganglia, a flume agent
+must be started with this support. The Flume agent has to be started by passing
+in the following parameters as system properties prefixed by ``flume.monitoring.``,
+and can be specified in the flume-env.sh:
+
+=======================  =======  =====================================================================================
+Property Name            Default  Description
+=======================  =======  =====================================================================================
+**type**                 --       The component type name, has to be ``GANGLIA``
+**hosts**                --       Comma separated list of ``hostname:port``
+pollInterval             60       Time, in seconds, between consecutive reporting to ganglia server
+isGanglia3               false    Ganglia server version is 3. By default, Flume sends in ganglia 3.1 format
+=======================  =======  =====================================================================================
+
+We can start Flume with Ganglia support as follows::
+
+  $ bin/flume-ng agent --conf-file example.conf --name agent1 -Dflume.monitoring.type=GANGLIA -Dflume.monitoring.hosts=com.example:1234,com.example2:5455
+
+Any custom flume components should use Java MBean ObjectNames which begin
+with ``org.apache.flume`` for Flume to report the metrics to Ganglia. This can
+be done by adding the ObjectName as follows(the name can be anything provided it
+starts with ``org.apache.flume``):
+
+.. code-block:: java
+
+  ObjectName objName = new ObjectName("org.apache.flume." + myClassName + ":type=" + name);
+
+  ManagementFactory.getPlatformMBeanServer().registerMBean(this, objName);
+
+
+Custom Reporting
+----------------
+It is possible to report metrics to other systems by writing servers that do
+the reporting. Any reporting class has to implement the interface,
+``org.apache.flume.instrumentation.MonitorService``. Such a class can be used
+the same way the GangliaServer is used for reporting. They can poll the platform
+mbean server to poll the mbeans for metrics. For example, if an HTTP
+monitoring service called ``HTTPReporting`` can be used as follows::
+
+  $ bin/flume-ng agent --conf-file example.conf --name agent1 -Dflume.monitoring.type=com.example.reporting.HTTPReporting -Dflume.monitoring.node=com.example:332
+
+=======================  =======  ========================================
+Property Name            Default  Description
+=======================  =======  ========================================
+**type**                 --       The component type name, has to be FQCN
+=======================  =======  ========================================
+
+
 
 Troubleshooting
 ===============
