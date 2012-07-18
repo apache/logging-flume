@@ -195,10 +195,14 @@ class LogFile {
       Preconditions.checkArgument(expectedLength < (long) Integer.MAX_VALUE);
       int offset = (int)length;
       Preconditions.checkState(offset > 0);
-      preallocate(1 + buffer.capacity());
-      writeFileHandle.writeByte(OP_RECORD);
-      int wrote = writeFileChannel.write(buffer);
-      Preconditions.checkState(wrote == buffer.limit());
+      int recordLength = 1 + buffer.capacity();
+      preallocate(recordLength);
+      ByteBuffer toWrite = ByteBuffer.allocate(recordLength);
+      toWrite.put(OP_RECORD);
+      toWrite.put(buffer);
+      toWrite.position(0);
+      int wrote = writeFileChannel.write(toWrite);
+      Preconditions.checkState(wrote == toWrite.limit());
       return Pair.of(fileID, offset);
     }
     private void preallocate(int size) throws IOException {
