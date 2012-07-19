@@ -235,9 +235,12 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
 
     try {
       getChannelProcessor().processEventBatch(batch);
-    } catch (ChannelException ex) {
+    } catch (Throwable t) {
       logger.error("Avro source " + getName() + ": Unable to process event " +
-          "batch. Exception follows.", ex);
+          "batch. Exception follows.", t);
+      if (t instanceof Error) {
+        throw (Error) t;
+      }
       return Status.FAILED;
     }
 
