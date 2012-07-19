@@ -947,6 +947,10 @@ the file is closed, this extension is removed. This allows excluding partially
 complete files in the directory.
 Required properties are in **bold**.
 
+.. note:: For all of the time related escape sequences, a header with the key
+          "timestamp" must exist among the headers of the event. One way to add
+          this automatically is to use the TimestampInterceptor.
+
 ======================  ============  ======================================================================
 Name                    Default       Description
 ======================  ============  ======================================================================
