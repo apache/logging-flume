@@ -1649,9 +1649,20 @@ can preserve an existing timestamp if it is already present in the configuration
 ================  =======  ========================================================================
 Property Name     Default  Description
 ================  =======  ========================================================================
-type              --       The component type name, has to be ``TIMESTAMP``
+**type**          --       The component type name, has to be ``TIMESTAMP``
 preserveExisting  false    If the timestamp already exists, should it be preserved - true or false
 ================  =======  ========================================================================
+
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.sources = source1
+  agent_foo.channels = channel1
+  agent_foo.sources.source1.channels =  channel1
+  agent_foo.sources.source1.type = SEQ
+  agent_foo.sources.source1.interceptors = inter1
+  agent_foo.sources.source1.interceptors.inter1.type = timestamp
 
 Host Interceptor
 ~~~~~~~~~~~~~~~~
@@ -1662,14 +1673,51 @@ with key ``host`` or a configured key whose value is the hostname or IP address 
 ================  =======  ========================================================================
 Property Name     Default  Description
 ================  =======  ========================================================================
-type              --       The component type name, has to be ``HOST``
+**type**          --       The component type name, has to be ``HOST``
 preserveExisting  false    If the host header already exists, should it be preserved - true or false
 useIP             true     Use the IP Address if true, else use hostname.
 hostHeader        host     The header key to be used.
 ================  =======  ========================================================================
 
-In the example above, the key used in the event headers is "hostname"
+Example for agent named **agent_foo**:
 
+.. code-block:: properties
+
+  agent_foo.sources = source_foo
+  agent_foo.channels = channel-1
+  agent_foo.sources.source_foo.interceptors = host_int
+  agent_foo.sources.source_foo.interceptors.host_int.type = host
+  agent_foo.sources.source_foo.interceptors.host_int.hostHeader = hostname
+
+Static Interceptor
+~~~~~~~~~~~~~~~~~~
+
+Static interceptor allows user to append a static header with static value to all events.
+
+The current implementation does not allow specifying multiple headers at one time. Instead user might chain
+multiple static interceptors each defining one static header.
+
+================  =======  ========================================================================
+Property Name     Default  Description
+================  =======  ========================================================================
+**type**          --       The component type name, has to be ``STATIC``
+preserveExisting  true     If configured header already exists, should it be preserved - true or false
+key               key      Name of header that should be created
+value             value    Static value that should be created
+================  =======  ========================================================================
+
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.sources = source1
+  agent_foo.channels = channel1
+  agent_foo.sources.source1.channels =  channel1
+  agent_foo.sources.source1.type = SEQ
+  agent_foo.sources.source1.interceptors = inter1
+  agent_foo.sources.source1.interceptors.inter1.type = static
+  agent_foo.sources.source1.interceptors.inter1.key = datacenter
+  agent_foo.sources.source1.interceptors.inter1.value = NEW_YORK
 
 Flume Properties
 ----------------
@@ -1845,37 +1893,40 @@ TBD
 Component Summary
 =================
 
-================================  ==================  ====================================================================
-Component Interface               Type                Implementation Class
-================================  ==================  ====================================================================
-org.apache.flume.Channel          MEMORY              org.apache.flume.channel.MemoryChannel
-org.apache.flume.Channel          JDBC                org.apache.flume.channel.jdbc.JdbcChannel
-org.apache.flume.Channel          --                  org.apache.flume.channel.recoverable.memory.RecoverableMemoryChannel
-org.apache.flume.Channel          FILE                org.apache.flume.channel.file.FileChannel
-org.apache.flume.Channel          --                  org.apache.flume.channel.PseudoTxnMemoryChannel
-org.apache.flume.Channel          --                  org.example.MyChannel
-org.apache.flume.Source           AVRO
-org.apache.flume.Source           NETCAT
-org.apache.flume.Source           SEQ
-org.apache.flume.Source           EXEC
-org.apache.flume.Source           SYSLOGTCP
-org.apache.flume.Source           SYSLOGUDP
-org.apache.flume.Source           --                  org.apache.flume.source.avroLegacy.AvroLegacySource
-org.apache.flume.Source           --                  org.apache.flume.source.thriftLegacy.ThriftLegacySource
-org.apache.flume.Source           --                  org.example.MySource
-org.apache.flume.Sink             NULL                org.apache.flume.sink.NullSink
-org.apache.flume.Sink             LOGGER              org.apache.flume.sink.LoggerSink
-org.apache.flume.Sink             AVRO                org.apache.flume.sink.AvroSink
-org.apache.flume.Sink             HDFS                org.apache.flume.sink.hdfs.HDFSEventSink
-org.apache.flume.Sink             --                  org.apache.flume.sink.hbase.HBaseSink
-org.apache.flume.Sink             --                  org.apache.flume.sink.hbase.AsyncHBaseSink
-org.apache.flume.Sink             FILE_ROLL           org.apache.flume.sink.RollingFileSink
-org.apache.flume.Sink             IRC                 org.apache.flume.sink.irc.IRCSink
-org.apache.flume.Sink             --                  org.example.MySink
-org.apache.flume.ChannelSelector  REPLICATING         org.apache.flume.channel.ReplicatingChannelSelector
-org.apache.flume.ChannelSelector  MULTIPLEXING        org.apache.flume.channel.MultiplexingChannelSelector
-org.apache.flume.ChannelSelector  --                  org.example.MyChannelSelector
-org.apache.flume.SinkProcessor    DEFAULT             org.apache.flume.sink.DefaultSinkProcessor
-org.apache.flume.SinkProcessor    FAILOVER            org.apache.flume.sink.FailoverSinkProcessor
-org.apache.flume.SinkProcessor    LOAD_BALANCE        org.apache.flume.sink.LoadBalancingSinkProcessor
-================================  ==================  ====================================================================
+========================================  ==================  ====================================================================
+Component Interface                       Type                Implementation Class
+========================================  ==================  ====================================================================
+org.apache.flume.Channel                  MEMORY              org.apache.flume.channel.MemoryChannel
+org.apache.flume.Channel                  JDBC                org.apache.flume.channel.jdbc.JdbcChannel
+org.apache.flume.Channel                  --                  org.apache.flume.channel.recoverable.memory.RecoverableMemoryChannel
+org.apache.flume.Channel                  FILE                org.apache.flume.channel.file.FileChannel
+org.apache.flume.Channel                  --                  org.apache.flume.channel.PseudoTxnMemoryChannel
+org.apache.flume.Channel                  --                  org.example.MyChannel
+org.apache.flume.Source                   AVRO                org.apache.flume.source.AvroSource
+org.apache.flume.Source                   NETCAT              org.apache.flume.source.NetcatSource
+org.apache.flume.Source                   SEQ                 org.apache.flume.source.SequenceGeneratorSource
+org.apache.flume.Source                   EXEC                org.apache.flume.source.ExecSource
+org.apache.flume.Source                   SYSLOGTCP           org.apache.flume.source.SyslogTcpSource
+org.apache.flume.Source                   SYSLOGUDP           org.apache.flume.source.SyslogUDPSource
+org.apache.flume.Source                   --                  org.apache.flume.source.avroLegacy.AvroLegacySource
+org.apache.flume.Source                   --                  org.apache.flume.source.thriftLegacy.ThriftLegacySource
+org.apache.flume.Source                   --                  org.example.MySource
+org.apache.flume.Sink                     NULL                org.apache.flume.sink.NullSink
+org.apache.flume.Sink                     LOGGER              org.apache.flume.sink.LoggerSink
+org.apache.flume.Sink                     AVRO                org.apache.flume.sink.AvroSink
+org.apache.flume.Sink                     HDFS                org.apache.flume.sink.hdfs.HDFSEventSink
+org.apache.flume.Sink                     --                  org.apache.flume.sink.hbase.HBaseSink
+org.apache.flume.Sink                     --                  org.apache.flume.sink.hbase.AsyncHBaseSink
+org.apache.flume.Sink                     FILE_ROLL           org.apache.flume.sink.RollingFileSink
+org.apache.flume.Sink                     IRC                 org.apache.flume.sink.irc.IRCSink
+org.apache.flume.Sink                     --                  org.example.MySink
+org.apache.flume.ChannelSelector          REPLICATING         org.apache.flume.channel.ReplicatingChannelSelector
+org.apache.flume.ChannelSelector          MULTIPLEXING        org.apache.flume.channel.MultiplexingChannelSelector
+org.apache.flume.ChannelSelector          --                  org.example.MyChannelSelector
+org.apache.flume.SinkProcessor            DEFAULT             org.apache.flume.sink.DefaultSinkProcessor
+org.apache.flume.SinkProcessor            FAILOVER            org.apache.flume.sink.FailoverSinkProcessor
+org.apache.flume.SinkProcessor            LOAD_BALANCE        org.apache.flume.sink.LoadBalancingSinkProcessor
+org.apache.flume.interceptor.Interceptor  TIMESTAMP           org.apache.flume.interceptor.TimestampInterceptor$Builder
+org.apache.flume.interceptor.Interceptor  HOST                org.apache.flume.interceptor.HostInterceptor$Builder
+org.apache.flume.interceptor.Interceptor  STATIC              org.apache.flume.interceptor.StaticInterceptor$Builder
+========================================  ==================  ====================================================================
