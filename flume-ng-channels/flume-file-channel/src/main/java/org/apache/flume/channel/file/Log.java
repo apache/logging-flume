@@ -197,7 +197,7 @@ class Log {
    * @throws IOException
    */
   void replay() throws IOException {
-    Preconditions.checkState(!open, "Cannot replay after Log as been opened");
+    Preconditions.checkState(!open, "Cannot replay after Log has been opened");
 
     checkpointWriterLock.lock();
 
@@ -262,7 +262,7 @@ class Log {
 
       open = true;
     } catch (Exception ex) {
-      LOGGER.error("Failed to initialize Log", ex);
+      LOGGER.error("Failed to initialize Log on " + channelNameDescriptor, ex);
       if (ex instanceof IOException) {
         throw (IOException) ex;
       }
@@ -339,7 +339,8 @@ class Log {
     try {
       lockAcquired = checkpointReadLock.tryLock(logWriteTimeout, TimeUnit.SECONDS);
     } catch (InterruptedException ex) {
-      LOGGER.warn("Interrupted while waiting for log write lock", ex);
+      LOGGER.warn("Interrupted while waiting for log write lock on " +
+          channelNameDescriptor, ex);
       Thread.currentThread().interrupt();
     }
 

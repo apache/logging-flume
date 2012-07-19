@@ -366,6 +366,7 @@ class LogFile {
       }
     }
     Pair<Integer, TransactionEventRecord> next() throws IOException {
+      int offset = -1;
       try {
         long position = fileChannel.position();
         if (position > FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE) {
@@ -373,7 +374,7 @@ class LogFile {
                 + FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE
                 + ", position: " + position);
         }
-        int offset = (int) position;
+        offset = (int) position;
         byte operation = fileHandle.readByte();
         if(operation != OP_RECORD) {
           LOG.info("Encountered non op-record at " + offset);
@@ -385,6 +386,9 @@ class LogFile {
         return Pair.of(offset, record);
       } catch(EOFException e) {
         return null;
+      } catch (IOException e) {
+        throw new IOException("Unable to read next Transaction from log file " +
+            file.getCanonicalPath() + " at offset " + offset, e);
       }
     }
     void close() {

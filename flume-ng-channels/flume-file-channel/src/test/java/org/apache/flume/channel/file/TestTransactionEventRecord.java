@@ -108,7 +108,7 @@ public class TestTransactionEventRecord {
       TransactionEventRecord.fromDataInput(toDataInput(0, in));
       Assert.fail();
     } catch (IOException e) {
-      Assert.assertEquals("Header 0 not expected value: deadbeef",
+      Assert.assertEquals("Header 0 is not the required value: deadbeef",
           e.getMessage());
     }
   }
