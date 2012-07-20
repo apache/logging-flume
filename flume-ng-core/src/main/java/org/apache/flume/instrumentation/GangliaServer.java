@@ -93,6 +93,7 @@ public class GangliaServer implements MonitorService {
   public final int DEFAULT_POLL_FREQUENCY = 60;
   public final String CONF_HOSTS = "hosts";
   public final String CONF_ISGANGLIA3 = "isGanglia3";
+  private static final String GANGLIA_CONTEXT = "flume.";
 
   /**
    *
@@ -350,14 +351,16 @@ public class GangliaServer implements MonitorService {
           }
           AttributeList attrList = mbeanServer.getAttributes(
                   obj.getObjectName(), strAtts);
+          String component = obj.getObjectName().toString().substring(
+              obj.getObjectName().toString().indexOf('=') + 1);
           for (Object attr : attrList) {
             Attribute localAttr = (Attribute) attr;
             if (isGanglia3) {
-              server.createGangliaMessage(obj.getObjectName() + "."
+              server.createGangliaMessage(GANGLIA_CONTEXT + component + "."
                       + localAttr.getName(),
                       localAttr.getValue().toString());
             } else {
-              server.createGangliaMessage31(obj.getObjectName() + "."
+              server.createGangliaMessage31(GANGLIA_CONTEXT + component + "."
                       + localAttr.getName(),
                       localAttr.getValue().toString());
             }
