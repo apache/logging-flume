@@ -237,7 +237,8 @@ public class GangliaServer implements MonitorService {
   }
 
   protected void createGangliaMessage(String name, String value) {
-    logger.debug("Sending ganglia3 formatted message.");
+    logger.debug("Sending ganglia3 formatted message."
+            + name + ": " + value);
     name = hostname + "." + name;
     xdr_int(0);
     xdr_string("float");
@@ -250,12 +251,13 @@ public class GangliaServer implements MonitorService {
   }
 
   protected void createGangliaMessage31(String name, String value) {
-    logger.debug("Sending ganglia 3.1 formatted message.");
+    logger.debug("Sending ganglia 3.1 formatted message: "
+            + name + ": " + value);
     xdr_int(128); // metric_id = metadata_msg
     xdr_string(hostname); // hostname
     xdr_string(name); // metric name
     xdr_int(0); // spoof = False
-    xdr_string("string"); // metric type
+    xdr_string("float"); // metric type
     xdr_string(name); // metric name
     xdr_string(DEFAULT_UNITS); // units
     xdr_int(DEFAULT_SLOPE); // slope
