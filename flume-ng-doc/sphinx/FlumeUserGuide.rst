@@ -1719,6 +1719,19 @@ Example for agent named **agent_foo**:
   agent_foo.sources.source1.interceptors.inter1.key = datacenter
   agent_foo.sources.source1.interceptors.inter1.value = NEW_YORK
 
+Regex Filtering Interceptor
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This interceptor filters events selectively by interpreting the event body as text and matching the text against a configured regular expression. The supplied regular expression can be used to include events or exclude events.
+
+================  =======  ========================================================================
+Property Name     Default  Description
+================  =======  ========================================================================
+**type**          --       The component type name has to be ``REGEX_FILTER``
+regex             ".*"     Regular expression for matching against events
+excludeRegex      false    If true, regex determines events to exclude, otherwise regex determines events to include.
+================  =======  ========================================================================
+
 Flume Properties
 ----------------
 
@@ -1732,7 +1745,6 @@ flume.called.from.service  --       If this property is specified then the Flume
                                     value is needed when setting this property (eg, just specifying
                                     -Dflume.called.from.service is enough)
 =========================  =======  ====================================================================
-
 
 Property: flume.called.from.service
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
