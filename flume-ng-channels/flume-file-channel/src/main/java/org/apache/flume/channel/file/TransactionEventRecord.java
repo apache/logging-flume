@@ -134,7 +134,7 @@ abstract class TransactionEventRecord implements Writable {
     int header = in.readInt();
     if(header != MAGIC_HEADER) {
       throw new IOException("Header " + Integer.toHexString(header) +
-          " not expected value: " + Integer.toHexString(MAGIC_HEADER));
+          " is not the required value: " + Integer.toHexString(MAGIC_HEADER));
     }
     short type = in.readShort();
     long transactionID = in.readLong();

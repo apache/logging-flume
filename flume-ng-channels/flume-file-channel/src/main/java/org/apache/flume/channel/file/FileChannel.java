@@ -233,9 +233,12 @@ public class FileChannel extends BasicChannelSemantics {
           "Unable to acquire " + depth + " permits " + channelNameDescriptor);
       LOG.info("Queue Size after replay: " + depth + " "
            + channelNameDescriptor);
-    } catch (Exception ex) {
+    } catch (Throwable t) {
       open = false;
-      LOG.error("Failed to start the file channel", ex);
+      LOG.error("Failed to start the file channel " + channelNameDescriptor, t);
+      if (t instanceof Error) {
+        throw (Error) t;
+      }
     }
     if (open) {
       channelCounter.start();

@@ -93,6 +93,7 @@ public class GangliaServer implements MonitorService {
   public final int DEFAULT_POLL_FREQUENCY = 60;
   public final String CONF_HOSTS = "hosts";
   public final String CONF_ISGANGLIA3 = "isGanglia3";
+  private static final String GANGLIA_CONTEXT = "flume.";
 
   /**
    *
@@ -236,7 +237,8 @@ public class GangliaServer implements MonitorService {
   }
 
   protected void createGangliaMessage(String name, String value) {
-    logger.debug("Sending ganglia3 formatted message.");
+    logger.debug("Sending ganglia3 formatted message."
+            + name + ": " + value);
     name = hostname + "." + name;
     xdr_int(0);
     xdr_string("float");
@@ -249,12 +251,13 @@ public class GangliaServer implements MonitorService {
   }
 
   protected void createGangliaMessage31(String name, String value) {
-    logger.debug("Sending ganglia 3.1 formatted message.");
+    logger.debug("Sending ganglia 3.1 formatted message: "
+            + name + ": " + value);
     xdr_int(128); // metric_id = metadata_msg
     xdr_string(hostname); // hostname
     xdr_string(name); // metric name
     xdr_int(0); // spoof = False
-    xdr_string("string"); // metric type
+    xdr_string("float"); // metric type
     xdr_string(name); // metric name
     xdr_string(DEFAULT_UNITS); // units
     xdr_int(DEFAULT_SLOPE); // slope
@@ -350,14 +353,16 @@ public class GangliaServer implements MonitorService {
           }
           AttributeList attrList = mbeanServer.getAttributes(
                   obj.getObjectName(), strAtts);
+          String component = obj.getObjectName().toString().substring(
+              obj.getObjectName().toString().indexOf('=') + 1);
           for (Object attr : attrList) {
             Attribute localAttr = (Attribute) attr;
             if (isGanglia3) {
-              server.createGangliaMessage(obj.getObjectName() + "."
+              server.createGangliaMessage(GANGLIA_CONTEXT + component + "."
                       + localAttr.getName(),
                       localAttr.getValue().toString());
             } else {
-              server.createGangliaMessage31(obj.getObjectName() + "."
+              server.createGangliaMessage31(GANGLIA_CONTEXT + component + "."
                       + localAttr.getName(),
                       localAttr.getValue().toString());
             }

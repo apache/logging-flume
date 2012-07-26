@@ -176,8 +176,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     String dirpath = Preconditions.checkNotNull(
         context.getString("hdfs.path"), "hdfs.path is required");
     String fileName = context.getString("hdfs.filePrefix", defaultFileName);
-    // FIXME: Not portable to Windows
-    this.path = dirpath + "/" + fileName;
+    this.path = dirpath + System.getProperty("file.separator") + fileName;
     rollInterval = context.getLong("hdfs.rollInterval", defaultRollInterval);
     rollSize = context.getLong("hdfs.rollSize", defaultRollSize);
     rollCount = context.getLong("hdfs.rollCount", defaultRollCount);
@@ -340,7 +339,8 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     } catch (TimeoutException eT) {
       future.cancel(true);
       sinkCounter.incrementConnectionFailedCount();
-      throw new IOException("Callable timed out", eT);
+      throw new IOException("Callable timed out after " + callTimeout + " ms",
+          eT);
     } catch (ExecutionException e1) {
       sinkCounter.incrementConnectionFailedCount();
       Throwable cause = e1.getCause();
