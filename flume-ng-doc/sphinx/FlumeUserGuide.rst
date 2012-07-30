@@ -1323,9 +1323,9 @@ Recoverable Memory Channel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-.. warning:: The Recoverable Memory Channel is currently experimental and is not
-             yet ready for production use. This channel's properties are being
-             documented here in advance of its completion.
+.. warning:: The Recoverable Memory Channel has been deprecated
+             in favor of the FileChannel. FileChannel is durable channel
+             and performs better than the Recoverable Memory Channel.
 
 Required properties are in **bold**.
 
