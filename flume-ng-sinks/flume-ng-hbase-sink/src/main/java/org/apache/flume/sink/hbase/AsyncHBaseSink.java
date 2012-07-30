@@ -43,10 +43,12 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.stumbleupon.async.Callback;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import org.apache.flume.ChannelException;
 import org.apache.flume.instrumentation.SinkCounter;
 
 /**
@@ -74,6 +76,9 @@ import org.apache.flume.instrumentation.SinkCounter;
 * maximum number of events the sink will commit per transaction. The default
 * batch size is 100 events.
 * <p>
+* <tt>timeout: </tt> The length of time in milliseconds the sink waits for
+* callbacks from hbase for all events in a transaction.
+* If no timeout is specified, the sink will wait forever.<p>
 *
 * <strong>Note: </strong> Hbase does not guarantee atomic commits on multiple
 * rows. So if a subset of events in a batch are written to disk by Hbase and
@@ -99,6 +104,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
   private Transaction txn;
   private volatile boolean open = false;
   private SinkCounter sinkCounter;
+  private long timeout;
 
   public AsyncHBaseSink(){
     conf = HBaseConfiguration.create();
@@ -145,35 +151,40 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
 
     Status status = Status.READY;
     Channel channel = getChannel();
-    txn = channel.getTransaction();
-    txn.begin();
     int i = 0;
-    for (; i < batchSize; i++) {
-      Event event = channel.take();
-      if (event == null) {
-        status = Status.BACKOFF;
-        if (i == 0) {
-          sinkCounter.incrementBatchEmptyCount();
+    try {
+      txn = channel.getTransaction();
+      txn.begin();
+      for (; i < batchSize; i++) {
+        Event event = channel.take();
+        if (event == null) {
+          status = Status.BACKOFF;
+          if (i == 0) {
+            sinkCounter.incrementBatchEmptyCount();
+          } else {
+            sinkCounter.incrementBatchUnderflowCount();
+          }
+          break;
         } else {
-          sinkCounter.incrementBatchUnderflowCount();
-        }
-        break;
-      } else {
-        serializer.setEvent(event);
-        List<PutRequest> actions = serializer.getActions();
-        List<AtomicIncrementRequest> increments = serializer.getIncrements();
-        callbacksExpected.addAndGet(actions.size() + increments.size());
+          serializer.setEvent(event);
+          List<PutRequest> actions = serializer.getActions();
+          List<AtomicIncrementRequest> increments = serializer.getIncrements();
+          callbacksExpected.addAndGet(actions.size() + increments.size());
 
-        for (PutRequest action : actions) {
-          client.put(action).addCallbacks(putSuccessCallback, putFailureCallback);
-        }
-        for (AtomicIncrementRequest increment : increments) {
-          client.atomicIncrement(increment).addCallbacks(
-                  incrementSuccessCallback, incrementFailureCallback);
+          for (PutRequest action : actions) {
+            client.put(action).addCallbacks(putSuccessCallback, putFailureCallback);
+          }
+          for (AtomicIncrementRequest increment : increments) {
+            client.atomicIncrement(increment).addCallbacks(
+                    incrementSuccessCallback, incrementFailureCallback);
+          }
         }
       }
+    } catch (Throwable e) {
+      this.handleTransactionFailure(txn);
+      this.checkIfChannelExceptionAndThrow(e);
     }
-    if(i == batchSize) {
+    if (i == batchSize) {
       sinkCounter.incrementBatchCompleteCount();
     }
     sinkCounter.addToEventDrainAttemptCount(i);
@@ -183,14 +194,14 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
       while ((callbacksReceived.get() < callbacksExpected.get())
               && !txnFail.get()) {
         try {
-          condition.await();
-        } catch (InterruptedException ex) {
-          logger.error("Interrupted while waiting for callbacks from HBase.");
-          try {
-            txn.rollback();
-          } finally {
-            txn.close();
+          if(!condition.await(timeout, TimeUnit.MILLISECONDS)){
+            txnFail.set(true);
+            logger.warn("HBase callbacks timed out. "
+                    + "Transaction will be rolled back.");
           }
+        } catch (Exception ex) {
+          logger.error("Exception while waiting for callbacks from HBase.");
+          this.handleTransactionFailure(txn);
           Throwables.propagate(ex);
         }
       }
@@ -215,28 +226,11 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
     } else {
       try{
         txn.commit();
+        txn.close();
         sinkCounter.addToEventDrainSuccessCount(i);
       } catch (Throwable e) {
-        try{
-          txn.rollback();
-        } catch (Exception e2) {
-          logger.error("Exception in rollback. Rollback might not have been" +
-              "successful." , e2);
-        }
-        logger.error("Failed to commit transaction." +
-            "Transaction rolled back.", e);
-        if(e instanceof Error || e instanceof RuntimeException){
-          logger.error("Failed to commit transaction." +
-              "Transaction rolled back.", e);
-          Throwables.propagate(e);
-        } else {
-          logger.error("Failed to commit transaction." +
-              "Transaction rolled back.", e);
-          throw new EventDeliveryException("Failed to commit transaction." +
-              "Transaction rolled back.", e);
-        }
-      } finally {
-        txn.close();
+        this.handleTransactionFailure(txn);
+        this.checkIfChannelExceptionAndThrow(e);
       }
     }
 
@@ -282,6 +276,13 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
 
     if(sinkCounter == null) {
       sinkCounter = new SinkCounter(this.getName());
+    }
+    timeout = context.getLong(HBaseSinkConfigurationConstants.CONFIG_TIMEOUT,
+            HBaseSinkConfigurationConstants.DEFAULT_TIMEOUT);
+    if(timeout <= 0){
+      logger.warn("Timeout should be positive for Hbase sink. "
+              + "Sink will not timeout.");
+      timeout = HBaseSinkConfigurationConstants.DEFAULT_TIMEOUT;
     }
   }
   @Override
@@ -418,5 +419,15 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
       }
       return null;
     }
+  }
+
+  private void checkIfChannelExceptionAndThrow(Throwable e)
+          throws EventDeliveryException {
+    if (e instanceof ChannelException) {
+      throw new EventDeliveryException("Error in processing transaction.", e);
+    } else if (e instanceof Error || e instanceof RuntimeException) {
+      Throwables.propagate(e);
+    }
+    throw new EventDeliveryException("Error in processing transaction.", e);
   }
 }

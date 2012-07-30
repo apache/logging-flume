@@ -30,7 +30,7 @@ different sources to a centralized data store.
 
 Apache Flume is a top level project at the Apache Software Foundation.
 There are currently two release code lines available, versions 0.9.x and 1.x.
-This documentation applies to the 1.x codeline.  
+This documentation applies to the 1.x codeline.
 Please click here for
 `the Flume 0.9.x User Guide <http://archive.cloudera.com/cdh/3/flume/UserGuide/>`_.
 
@@ -155,7 +155,7 @@ A simple example
 Here, we give an example configuration file, describing a single-node Flume deployment. This configuration lets a user generate events and subsequently logs them to the console.
 
 .. code-block:: properties
-   
+
   # example.conf: A single-node Flume configuration
 
   # Name the components on this agent
@@ -175,7 +175,7 @@ Here, we give an example configuration file, describing a single-node Flume depl
   agent1.channels.channel1.type = memory
   agent1.channels.channel1.capacity = 1000
   agent1.channels.channel1.transactionCapactiy = 100
- 
+
   # Bind the source and sink to the channel
   agent1.sources.source1.channels = channel1
   agent1.sinks.sink1.channel = channel1
@@ -643,7 +643,7 @@ interceptors.*
              of indicating to the application writing the log file that it needs to
              retain the log or that the event hasn't been sent, for some reason. If
              this doesn't make sense, you need only know this: Your application can
-             never guarantee data has been received when using a unidirectional 
+             never guarantee data has been received when using a unidirectional
              asynchronous interface such as ExecSource! As an extension of this
              warning - and to be completely clear - there is absolutely zero guarantee
              of event delivery when using this source. You have been warned.
@@ -1204,17 +1204,19 @@ This sink is still experimental.
 The type is the FQCN: org.apache.flume.sink.hbase.AsyncHBaseSink.
 Required properties are in **bold**.
 
-================  ============================================================  =============================================================================
+================  ============================================================  ====================================================================================
 Property Name     Default                                                       Description
-================  ============================================================  =============================================================================
+================  ============================================================  ====================================================================================
 **channel**       --
 **type**          --                                                            The component type name, needs to be ``org.apache.flume.sink.AsyncHBaseSink``
 **table**         --                                                            The name of the table in Hbase to write to.
 **columnFamily**  --                                                            The column family in Hbase to write to.
 batchSize         100                                                           Number of events to be written per txn.
+timeout           --                                                            The length of time (in milliseconds) the sink waits for acks from hbase for
+                                                                                all events in a transaction. If no timeout is specified, the sink will wait forever.
 serializer        org.apache.flume.sink.hbase.SimpleAsyncHbaseEventSerializer
 serializer.*      --                                                            Properties to be passed to the serializer.
-================  ============================================================  =============================================================================
+================  ============================================================  ====================================================================================
 
 Example for agent named **agent_foo**:
 
@@ -1361,8 +1363,8 @@ keep-alive            3                                 Amount of time (in sec) 
 write-timeout         3                                 Amount of time (in sec) to wait for a write operation
 ====================  ================================  ========================================================
 
-.. note:: By default the File Channel uses paths for checkpoint and data 
-          directories that are within the user home as specified above. 
+.. note:: By default the File Channel uses paths for checkpoint and data
+          directories that are within the user home as specified above.
           As a result if you have more than one File Channel instances
           active within the agent, only one will be able to lock the
           directories and cause the other channel initialization to fail.
