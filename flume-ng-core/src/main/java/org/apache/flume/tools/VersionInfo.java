@@ -18,15 +18,12 @@
 package org.apache.flume.tools;
 
 import org.apache.flume.VersionAnnotation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /*
  * This class provides version info of Flume NG
  */
 
 public class VersionInfo {
-  private static final Logger LOG = LoggerFactory.getLogger(VersionInfo.class);
 
   private static Package myPackage;
   private static VersionAnnotation version;
@@ -112,7 +109,6 @@ public class VersionInfo {
   }
 
   public static void main(String[] args) {
-    LOG.debug("version: "+ version);
     System.out.println("Flume " + getVersion());
     System.out.println("Subversion " + getUrl() + " -r " + getRevision());
     System.out.println("Compiled by " + getUser() + " on " + getDate());
