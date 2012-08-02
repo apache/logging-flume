@@ -100,11 +100,6 @@ public class ChannelProcessor implements Configurable {
       Context interceptorContext = new Context(
           interceptorContexts.getSubProperties(interceptorName + "."));
       String type = interceptorContext.getString("type");
-      if (type == null) {
-        LOG.error("Type not specified for interceptor " + interceptorName);
-        throw new FlumeException("Interceptor.Type not specified for " +
-          interceptorName);
-      }
       try {
         Interceptor.Builder builder = factory.newInstance(type);
         builder.configure(interceptorContext);

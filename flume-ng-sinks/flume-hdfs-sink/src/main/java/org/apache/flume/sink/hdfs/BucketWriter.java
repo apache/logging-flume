@@ -40,8 +40,6 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Throwables;
-
 /**
  * Internal API intended for HDFSSink use.
  * This class does file rolling and handles file formats and serialization.
@@ -201,7 +199,7 @@ class BucketWriter {
         if (ex instanceof IOException) {
           throw (IOException) ex;
         } else {
-          throw Throwables.propagate(ex);
+          throw new IOException(ex);
         }
       }
     }
@@ -215,11 +213,7 @@ class BucketWriter {
         public Void call() throws Exception {
           LOG.debug("Rolling file ({}): Roll scheduled after {} sec elapsed.",
               bucketPath + IN_USE_EXT, rollInterval);
-          try {
-            close();
-          } catch(Throwable t) {
-            LOG.error("Unexpected error", t);
-          }
+          close();
           return null;
         }
       };

@@ -37,6 +37,7 @@ import javax.management.AttributeList;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanServer;
 import javax.management.ObjectInstance;
+import javax.management.ObjectName;
 import org.apache.flume.Context;
 import org.apache.flume.FlumeException;
 import org.apache.flume.api.HostInfo;
@@ -331,49 +332,45 @@ public class GangliaServer implements MonitorService {
 
     @Override
     public void run() {
+      Set<ObjectInstance> queryMBeans = null;
       try {
-        Set<ObjectInstance> queryMBeans = null;
+        queryMBeans = mbeanServer.queryMBeans(
+                null, null);
+      } catch (Exception ex) {
+        logger.error("Could not get Mbeans for monitoring", ex);
+        Throwables.propagate(ex);
+      }
+      for (ObjectInstance obj : queryMBeans) {
         try {
-          queryMBeans = mbeanServer.queryMBeans(
-                  null, null);
-        } catch (Exception ex) {
-          logger.error("Could not get Mbeans for monitoring", ex);
-          Throwables.propagate(ex);
-        }
-        for (ObjectInstance obj : queryMBeans) {
-          try {
-            if (!obj.getObjectName().toString().startsWith("org.apache.flume")) {
-              continue;
-            }
-            MBeanAttributeInfo[] attrs = mbeanServer.
-                    getMBeanInfo(obj.getObjectName()).getAttributes();
-            String strAtts[] = new String[attrs.length];
-            for (int i = 0; i < strAtts.length; i++) {
-              strAtts[i] = attrs[i].getName();
-            }
-            AttributeList attrList = mbeanServer.getAttributes(
-                    obj.getObjectName(), strAtts);
-            String component = obj.getObjectName().toString().substring(
-                obj.getObjectName().toString().indexOf('=') + 1);
-            for (Object attr : attrList) {
-              Attribute localAttr = (Attribute) attr;
-              if (isGanglia3) {
-                server.createGangliaMessage(GANGLIA_CONTEXT + component + "."
-                        + localAttr.getName(),
-                        localAttr.getValue().toString());
-              } else {
-                server.createGangliaMessage31(GANGLIA_CONTEXT + component + "."
-                        + localAttr.getName(),
-                        localAttr.getValue().toString());
-              }
-              server.sendToGangliaNodes();
-            }
-          } catch (Exception ex) {
-            logger.error("Error getting mbean attributes", ex);
+          if (!obj.getObjectName().toString().startsWith("org.apache.flume")) {
+            continue;
           }
+          MBeanAttributeInfo[] attrs = mbeanServer.
+                  getMBeanInfo(obj.getObjectName()).getAttributes();
+          String strAtts[] = new String[attrs.length];
+          for (int i = 0; i < strAtts.length; i++) {
+            strAtts[i] = attrs[i].getName();
+          }
+          AttributeList attrList = mbeanServer.getAttributes(
+                  obj.getObjectName(), strAtts);
+          String component = obj.getObjectName().toString().substring(
+              obj.getObjectName().toString().indexOf('=') + 1);
+          for (Object attr : attrList) {
+            Attribute localAttr = (Attribute) attr;
+            if (isGanglia3) {
+              server.createGangliaMessage(GANGLIA_CONTEXT + component + "."
+                      + localAttr.getName(),
+                      localAttr.getValue().toString());
+            } else {
+              server.createGangliaMessage31(GANGLIA_CONTEXT + component + "."
+                      + localAttr.getName(),
+                      localAttr.getValue().toString());
+            }
+            server.sendToGangliaNodes();
+          }
+        } catch (Exception ex) {
+          logger.error("Error getting mbean attributes", ex);
         }
-      } catch(Throwable t) {
-        logger.error("Unexpected error", t);
       }
     }
   }

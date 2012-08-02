@@ -460,6 +460,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     for (Entry<String, BucketWriter> entry : sfWriters.entrySet()) {
       LOG.info("Closing {}", entry.getKey());
 
+      final BucketWriter callableWriter = entry.getValue();
       try {
         close(entry.getValue());
       } catch (Exception ex) {
