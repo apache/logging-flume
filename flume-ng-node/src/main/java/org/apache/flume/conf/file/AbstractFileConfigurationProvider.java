@@ -206,6 +206,9 @@ public abstract class AbstractFileConfigurationProvider implements
         } catch (NoClassDefFoundError e) {
           logger.error("Failed to start agent because dependencies were not " +
               "found in classpath. Error follows.", e);
+        } catch (Throwable t) {
+          // caught because the caller does not handle or log Throwables
+          logger.error("Unhandled error", t);
         }
       }
     }
