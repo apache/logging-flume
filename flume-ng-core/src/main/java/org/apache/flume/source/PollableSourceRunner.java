@@ -80,6 +80,8 @@ public class PollableSourceRunner extends SourceRunner {
     runner.shouldStop = shouldStop;
 
     runnerThread = new Thread(runner);
+    runnerThread.setName(getClass().getSimpleName() + "-" + 
+        source.getClass().getSimpleName() + "-" + source.getName());
     runnerThread.start();
 
     lifecycleState = LifecycleState.START;
