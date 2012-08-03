@@ -329,13 +329,13 @@ manages the source’s lifecycle. The source needs to implement ``start()`` and
 two types of sources, pollable and event-driven. The runner of pollable source
 runner invokes a ``process()`` method from the pollable source. The
 ``process()`` method should check for new data and store it in the channel. The
-event driver source needs have its own callback mechanism that captures the new
+event driven source needs have its own callback mechanism that captures the new
 data:
 
 .. code-block:: java
 
   // bar source
-  public class BarSource extends AbstractSource implements Configurable, EventDrivenSource{
+  public class BarSource extends AbstractSource implements Configurable, PollableSource {
     @Override
     public void configure(Context context) {
       some_Param = context.get("some_param", String.class);
