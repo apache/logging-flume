@@ -44,5 +44,8 @@ public class HBaseSinkConfigurationConstants {
    */
   public static final String CONFIG_SERIALIZER_PREFIX = CONFIG_SERIALIZER + ".";
 
+  public static final String CONFIG_TIMEOUT = "timeout";
+
+  public static final long DEFAULT_TIMEOUT = Long.MAX_VALUE;
 
 }

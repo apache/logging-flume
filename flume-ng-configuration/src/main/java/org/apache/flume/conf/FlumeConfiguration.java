@@ -551,6 +551,12 @@ public class FlumeConfiguration {
                 channels.addAll(srcConf.getChannels());
               }
               channels.retainAll(channelSet);
+              if(channels.isEmpty()){
+                throw new ConfigurationException(
+                        "No Channels configured for " + sourceName);
+              }
+              srcContext.put(BasicConfigurationConstants.CONFIG_CHANNELS,
+                      this.getSpaceDelimitedList(channels));
             }
             if ((configSpecified && srcConf.isNotFoundConfigClass()) ||
                 !configSpecified) {
@@ -655,6 +661,10 @@ public class FlumeConfiguration {
               sinkConf.configure(sinkContext);
 
             }
+            if(!channelSet.contains(sinkConf.getChannel())){
+              throw new ConfigurationException("Channel " +
+                      sinkConf.getChannel() + " not in active set.");
+            }
             if ((configSpecified && sinkConf.isNotFoundConfigClass()) ||
                 !configSpecified) {
               newContextMap.put(sinkName, sinkContext);
@@ -665,8 +675,8 @@ public class FlumeConfiguration {
           } catch (ConfigurationException e) {
             iter.remove();
             if (sinkConf != null) errorList.addAll(sinkConf.getErrors());
-            logger.warn("Configuration empty for: " + sinkName + ".Removed.");
-
+            logger.warn("Configuration for : " + sinkName
+                    + " has errors, and will be removed: ", e);
           }
         }
         // Filter out any sinks that have invalid channel

@@ -74,7 +74,7 @@ public class HDFSSequenceFile implements HDFSWriter {
 
   @Override
   public void sync() throws IOException {
-    writer.syncFs();
+    writer.sync();
   }
 
   @Override

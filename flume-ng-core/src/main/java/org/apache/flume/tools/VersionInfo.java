@@ -18,15 +18,12 @@
 package org.apache.flume.tools;
 
 import org.apache.flume.VersionAnnotation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /*
  * This class provides version info of Flume NG
  */
 
 public class VersionInfo {
-  private static final Logger LOG = LoggerFactory.getLogger(VersionInfo.class);
 
   private static Package myPackage;
   private static VersionAnnotation version;
@@ -57,7 +54,12 @@ public class VersionInfo {
    * @return the revision number, eg. "100755"
    */
   public static String getRevision() {
-    return version != null ? version.revision() : "Unknown";
+    if(version != null
+            && version.revision() != null
+            && !version.revision().isEmpty()){
+      return version.revision();
+    }
+    return "Unknown";
   }
 
   /**
@@ -112,9 +114,10 @@ public class VersionInfo {
   }
 
   public static void main(String[] args) {
-    LOG.debug("version: "+ version);
     System.out.println("Flume " + getVersion());
-    System.out.println("Subversion " + getUrl() + " -r " + getRevision());
+    System.out.println("Source code repository: "
+            + "https://git-wip-us.apache.org/repos/asf/flume.git");
+    System.out.println("Revision: " + getRevision());
     System.out.println("Compiled by " + getUser() + " on " + getDate());
     System.out.println("From source with checksum " + getSrcChecksum());
   }
