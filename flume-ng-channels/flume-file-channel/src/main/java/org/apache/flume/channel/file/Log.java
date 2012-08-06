@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,6 +47,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import java.util.SortedSet;
 
 /**
  * Stores FlumeEvents on disk and pointers to the events in a in memory queue.
@@ -706,6 +706,7 @@ class Log {
   private boolean writeCheckpoint(boolean force)
       throws IOException {
     boolean lockAcquired = false;
+    boolean checkpointCompleted = false;
     try {
       lockAcquired = checkpointWriterLock.tryLock(this.checkpointWriteTimeout,
           TimeUnit.SECONDS);
@@ -716,11 +717,19 @@ class Log {
     if(!lockAcquired) {
       return false;
     }
+    SortedSet<Integer> idSet = null;
     try {
       if (queue.checkpoint(force) || force) {
         long ts = queue.getTimestamp();
 
-        Set<Integer> idSet = queue.getFileIDs();
+        //Since the active files might also be in the queue's fileIDs,
+        //we need to either move each one to a new set or remove each one
+        //as we do here. Otherwise we cannot make sure every element in
+        //fileID set from the queue have been updated.
+        //Since clone is smarter than insert, better to make
+        //a copy of the set first so that we can use it later.
+        idSet = queue.getFileIDs();
+        SortedSet<Integer> idSetToCompare = new TreeSet(idSet);
 
         int numFiles = logFiles.length();
         for (int i = 0; i < numFiles; i++) {
@@ -749,25 +758,32 @@ class Log {
           idIterator.remove();
         }
         Preconditions.checkState(idSet.size() == 0,
-            "Could not update all data file timestamps: " + idSet);
+                "Could not update all data file timestamps: " + idSet);
+        //Add files from all log directories
+        for (int index = 0; index < logDirs.length; index++) {
+          idSetToCompare.add(logFiles.get(index).getFileID());
+        }
+        idSet = idSetToCompare;
+        checkpointCompleted = true;
       }
     } finally {
       checkpointWriterLock.unlock();
+    }
+    //Do the deletes outside the checkpointWriterLock
+    //Delete logic is expensive.
+    if (open && checkpointCompleted) {
+      removeOldLogs(idSet);
     }
     //Since the exception is not caught, this will not be returned if
     //an exception is thrown from the try.
     return true;
   }
 
-  private void removeOldLogs() {
+  private void removeOldLogs(SortedSet<Integer> fileIDs) {
     Preconditions.checkState(open, "Log is closed");
     // we will find the smallest fileID currently in use and
     // won't delete any files with an id larger than the min
-    Set<Integer> fileIDs = new TreeSet<Integer>(queue.getFileIDs());
-    for (int index = 0; index < logDirs.length; index++) {
-      fileIDs.add(logFiles.get(index).getFileID());
-    }
-    int minFileID = Collections.min(fileIDs);
+    int minFileID = fileIDs.first();
     LOGGER.debug("Files currently in use: " + fileIDs);
     for(File logDir : logDirs) {
       List<File> logs = LogUtils.getLogs(logDir);
@@ -894,9 +910,6 @@ class Log {
                 lastCheckTime = currentTime;
               }
             }
-          }
-          if(log.open) {
-            log.removeOldLogs();
           }
         } catch (IOException e) {
           LOG.error("Error doing checkpoint", e);
