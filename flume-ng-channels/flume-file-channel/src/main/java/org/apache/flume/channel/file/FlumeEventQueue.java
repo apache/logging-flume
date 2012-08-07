@@ -26,11 +26,9 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -38,6 +36,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Queue of events in the channel. This queue stores only
@@ -296,12 +296,15 @@ class FlumeEventQueue {
     return false;
   }
   /**
-   * @return the set of fileIDs which are currently on the queue
+   * @return a copy of the set of fileIDs which are currently on the queue
    * will be normally be used when deciding which data files can
    * be deleted
    */
-  synchronized Set<Integer> getFileIDs() {
-    return new HashSet<Integer>(fileIDCounts.keySet());
+  synchronized SortedSet<Integer> getFileIDs() {
+    //Java implements clone pretty well. The main place this is used
+    //in checkpointing and deleting old files, so best
+    //to use a sorted set implementation.
+    return new TreeSet<Integer>(fileIDCounts.keySet());
   }
 
   protected void incrementFileID(int fileID) {
