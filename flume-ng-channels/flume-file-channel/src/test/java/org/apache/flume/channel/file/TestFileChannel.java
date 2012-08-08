@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -76,6 +77,7 @@ public class TestFileChannel {
   }
   private FileChannel createFileChannel() {
     FileChannel channel = new FileChannel();
+    channel.setName("fc-" + UUID.randomUUID()); // fixes mbean error
     context.put(FileChannelConfiguration.CHECKPOINT_DIR,
         checkpointDir.getAbsolutePath());
     context.put(FileChannelConfiguration.DATA_DIRS, dataDir);
@@ -105,7 +107,7 @@ public class TestFileChannel {
         in.addAll(putEvents(channel, "restart", 1, 1));
       }
     } catch (ChannelException e) {
-      Assert.assertEquals("Cannot acquire capacity. [channel=null]",
+      Assert.assertEquals("Cannot acquire capacity. [channel="+channel.getName()+"]",
           e.getMessage());
     }
     channel.stop();
@@ -123,7 +125,7 @@ public class TestFileChannel {
         in.addAll(putEvents(channel, "restart", 1, 1));
       }
     } catch (ChannelException e) {
-      Assert.assertEquals("Cannot acquire capacity. [channel=null]",
+      Assert.assertEquals("Cannot acquire capacity. [channel="+channel.getName()+"]",
           e.getMessage());
     }
     Configurables.configure(channel, context);
