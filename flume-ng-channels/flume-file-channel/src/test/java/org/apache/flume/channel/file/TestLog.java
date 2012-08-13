@@ -48,7 +48,8 @@ public class TestLog {
     }
     log = new Log.Builder().setCheckpointInterval(1L).setMaxFileSize(
         MAX_FILE_SIZE).setQueueSize(CAPACITY).setCheckpointDir(
-            checkpointDir).setLogDirs(dataDirs).build();
+            checkpointDir).setLogDirs(dataDirs)
+            .setChannelName("testlog").build();
     log.replay();
   }
   @After
@@ -117,7 +118,7 @@ public class TestLog {
         Long.MAX_VALUE).setMaxFileSize(
             FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE).setQueueSize(
             CAPACITY).setCheckpointDir(checkpointDir).setLogDirs(
-                dataDirs).build();
+                dataDirs).setChannelName("testlog").build();
     log.replay();
     System.out.println(log.getNextFileID());
     takeAndVerify(eventPointerIn, eventIn);
@@ -137,7 +138,7 @@ public class TestLog {
         Long.MAX_VALUE).setMaxFileSize(
             FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE).setQueueSize(
             CAPACITY).setCheckpointDir(checkpointDir).setLogDirs(
-                dataDirs).build();
+                dataDirs).setChannelName("testlog").build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
     Assert.assertNull(queue.removeHead());
@@ -160,7 +161,8 @@ public class TestLog {
     new Log.Builder().setCheckpointInterval(
         Long.MAX_VALUE).setMaxFileSize(
             FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE).setQueueSize(
-            1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs).build();
+            1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs)
+            .setChannelName("testlog").build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
     Assert.assertNull(queue.removeHead());
@@ -183,7 +185,8 @@ public class TestLog {
     new Log.Builder().setCheckpointInterval(
         Long.MAX_VALUE).setMaxFileSize(
             FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE).setQueueSize(
-            1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs).build();
+            1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs)
+            .setChannelName("testlog").build();
     log.replay();
     takeAndVerify(eventPointerIn, eventIn);
   }
@@ -196,7 +199,8 @@ public class TestLog {
     new Log.Builder().setCheckpointInterval(
         Long.MAX_VALUE).setMaxFileSize(
             FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE).setQueueSize(
-            1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs).build();
+            1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs)
+            .setChannelName("testlog").build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
     FlumeEventPointer eventPointerOut = queue.removeHead();
@@ -211,7 +215,8 @@ public class TestLog {
     new Log.Builder().setCheckpointInterval(
         Long.MAX_VALUE).setMaxFileSize(
             FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE).setQueueSize(
-            1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs).build();
+            1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs)
+            .setChannelName("testlog").build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
     FlumeEventPointer eventPointerOut = queue.removeHead();
@@ -226,7 +231,8 @@ public class TestLog {
     new Log.Builder().setCheckpointInterval(
         Long.MAX_VALUE).setMaxFileSize(
             FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE).setQueueSize(
-            1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs).build();
+            1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs)
+            .setChannelName("testlog").build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
     FlumeEventPointer eventPointerOut = queue.removeHead();

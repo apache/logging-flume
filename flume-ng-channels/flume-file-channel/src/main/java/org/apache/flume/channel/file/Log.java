@@ -156,6 +156,9 @@ class Log {
             + checkpointDir + " could not be created");
     Preconditions.checkNotNull(logDirs, "logDirs");
     Preconditions.checkArgument(logDirs.length > 0, "logDirs empty");
+    Preconditions.checkArgument(name != null && !name.trim().isEmpty(), 
+            "channel name should be specified");
+
     this.channelName = name;
     this.channelNameDescriptor = "[channel=" + name + "]";
 
@@ -186,7 +189,7 @@ class Log {
     this.checkpointWriteTimeout = checkpointWriteTimeout;
     logFiles = new AtomicReferenceArray<LogFile.Writer>(this.logDirs.length);
     worker = new BackgroundWorker(this);
-    worker.setName("Log-BackgroundWorker");
+    worker.setName("Log-BackgroundWorker-" + name);
     worker.setDaemon(true);
     worker.start();
   }
