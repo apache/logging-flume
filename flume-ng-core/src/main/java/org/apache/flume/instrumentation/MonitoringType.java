@@ -24,7 +24,8 @@ package org.apache.flume.instrumentation;
  */
 public enum MonitoringType {
   OTHER(null),
-  GANGLIA(org.apache.flume.instrumentation.GangliaServer.class);
+  GANGLIA(org.apache.flume.instrumentation.GangliaServer.class),
+  HTTP(org.apache.flume.instrumentation.http.HTTPMetricsServer.class);
 
   private Class<? extends MonitorService> monitoringClass;
 
