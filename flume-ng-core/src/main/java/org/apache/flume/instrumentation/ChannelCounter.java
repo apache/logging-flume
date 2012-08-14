@@ -35,13 +35,10 @@ public class ChannelCounter extends MonitoredCounterGroup implements
   private static final String COUNTER_EVENT_TAKE_SUCCESS =
       "channel.event.take.success";
 
-  private static final String COUNTER_CHANNEL_CAPACITY =
-          "channel.capacity";
-
   private static final String[] ATTRIBUTES = {
     COUNTER_CHANNEL_SIZE, COUNTER_EVENT_PUT_ATTEMPT,
     COUNTER_EVENT_TAKE_ATTEMPT, COUNTER_EVENT_PUT_SUCCESS,
-    COUNTER_EVENT_TAKE_SUCCESS, COUNTER_CHANNEL_CAPACITY
+    COUNTER_EVENT_TAKE_SUCCESS
   };
 
   public ChannelCounter(String name) {
@@ -92,13 +89,4 @@ public class ChannelCounter extends MonitoredCounterGroup implements
   public long addToEventTakeSuccessCount(long delta) {
     return addAndGet(COUNTER_EVENT_TAKE_SUCCESS, delta);
   }
-
-  public void setChannelCapacity(long capacity){
-    set(COUNTER_CHANNEL_CAPACITY, capacity);
-  }
-
-  public long getChannelCapacity(){
-    return get(COUNTER_CHANNEL_CAPACITY);
-  }
-
 }

@@ -18,13 +18,6 @@
  */
 package org.apache.flume.instrumentation;
 
-/**
- * This interface represents a channel counter mbean. Any class implementing
- * this interface must sub-class
- * {@linkplain org.apache.flume.instrumentation.MonitoredCounterGroup}. This
- * interface might change between minor releases. Please see
- * {@linkplain org.apache.flume.instrumentation.ChannelCounter} class.
- */
 public interface ChannelCounterMBean {
 
   long getChannelSize();
@@ -40,8 +33,4 @@ public interface ChannelCounterMBean {
   long getStartTime();
 
   long getStopTime();
-
-  long getChannelCapacity();
-
-  String getType();
 }

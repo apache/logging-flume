@@ -247,8 +247,6 @@ public class MemoryChannel extends BasicChannelSemantics {
   public synchronized void start() {
     channelCounter.start();
     channelCounter.setChannelSize(queue.size());
-    channelCounter.setChannelCapacity(Long.valueOf(
-            queue.size() + queue.remainingCapacity()));
     super.start();
   }
 
