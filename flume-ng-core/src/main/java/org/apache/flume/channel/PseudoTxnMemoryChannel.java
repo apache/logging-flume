@@ -28,6 +28,7 @@ import org.apache.flume.Event;
 import org.apache.flume.Transaction;
 
 import com.google.common.base.Preconditions;
+import org.apache.flume.instrumentation.ChannelCounter;
 
 /**
  * <p>
@@ -83,6 +84,7 @@ public class PseudoTxnMemoryChannel extends AbstractChannel {
 
   private BlockingQueue<Event> queue;
   private Integer keepAlive;
+  private ChannelCounter channelCounter;
 
   @Override
   public void configure(Context context) {
@@ -98,27 +100,51 @@ public class PseudoTxnMemoryChannel extends AbstractChannel {
     }
 
     queue = new ArrayBlockingQueue<Event>(capacity);
+    if(channelCounter == null) {
+      channelCounter = new ChannelCounter(getName());
+    }
+  }
+
+  @Override
+  public void start(){
+    channelCounter.start();
+    channelCounter.setChannelSize(queue.size());
+    channelCounter.setChannelSize(
+            Long.valueOf(queue.size() + queue.remainingCapacity()));
+    super.start();
+  }
+
+  @Override
+  public void stop(){
+    channelCounter.setChannelSize(queue.size());
+    channelCounter.stop();
+    super.stop();
   }
 
   @Override
   public void put(Event event) {
     Preconditions.checkState(queue != null,
         "No queue defined (Did you forget to configure me?");
-
+    channelCounter.incrementEventPutAttemptCount();
     try {
       queue.put(event);
     } catch (InterruptedException ex) {
       throw new ChannelException("Failed to put(" + event + ")", ex);
     }
+    channelCounter.addToEventPutSuccessCount(1);
+    channelCounter.setChannelSize(queue.size());
   }
 
   @Override
   public Event take() {
     Preconditions.checkState(queue != null,
         "No queue defined (Did you forget to configure me?");
-
+    channelCounter.incrementEventTakeAttemptCount();
     try {
-      return queue.poll(keepAlive, TimeUnit.SECONDS);
+      Event e = queue.poll(keepAlive, TimeUnit.SECONDS);
+      channelCounter.addToEventTakeSuccessCount(1);
+      channelCounter.setChannelSize(queue.size());
+      return e;
     } catch (InterruptedException ex) {
       throw new ChannelException("Failed to take()", ex);
     }

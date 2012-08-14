@@ -239,6 +239,7 @@ public class FileChannel extends BasicChannelSemantics {
     if (open) {
       channelCounter.start();
       channelCounter.setChannelSize(getDepth());
+      channelCounter.setChannelCapacity(capacity);
     }
     super.start();
   }

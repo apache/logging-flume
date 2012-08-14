@@ -17,6 +17,13 @@
  * under the License.
  */
 package org.apache.flume.instrumentation;
+/**
+ * This interface represents a sink counter mbean. Any class implementing
+ * this interface must sub-class
+ * {@linkplain org.apache.flume.instrumentation.MonitoredCounterGroup}. This
+ * interface might change between minor releases. Please see
+ * {@linkplain org.apache.flume.instrumentation.SinkCounter} class.
+ */
 
 public interface SinkCounterMBean {
 
@@ -39,4 +46,6 @@ public interface SinkCounterMBean {
   long getStartTime();
 
   long getStopTime();
+
+  String getType();
 }
