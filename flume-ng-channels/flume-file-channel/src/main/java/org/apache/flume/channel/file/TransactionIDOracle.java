@@ -18,38 +18,21 @@
  */
 package org.apache.flume.channel.file;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * Represents a Rollback on disk
- */
-class Rollback extends TransactionEventRecord {
-  Rollback(Long transactionID) {
-    super(transactionID);
-  }
-  @Override
-  public void readFields(DataInput in) throws IOException {
-    super.readFields(in);
-  }
+public final class TransactionIDOracle {
 
-  @Override
-  public void write(DataOutput out) throws IOException {
-    super.write(out);
+  private TransactionIDOracle() {}
+  private static final AtomicLong TRANSACTION_ID =
+      new AtomicLong(System.currentTimeMillis());
+
+  public static void setSeed(long highest) {
+    long previous;
+    while(highest > (previous = TRANSACTION_ID.get())) {
+      TRANSACTION_ID.compareAndSet(previous, highest);
+    }
   }
-  @Override
-  short getRecordType() {
-    return Type.ROLLBACK.get();
-  }
-  @Override
-  public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.append("Rollback [getLogWriteOrderID()=");
-    builder.append(getLogWriteOrderID());
-    builder.append(", getTransactionID()=");
-    builder.append(getTransactionID());
-    builder.append("]");
-    return builder.toString();
+  public static long next() {
+    return TRANSACTION_ID.incrementAndGet();
   }
 }

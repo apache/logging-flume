@@ -32,6 +32,7 @@ import org.apache.flume.tools.DirectMemoryUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
@@ -125,11 +126,11 @@ class LogFile {
       return file;
     }
 
-    synchronized void markCheckpoint(long timestamp) throws IOException {
+    synchronized void markCheckpoint(long logWriteOrderID) throws IOException {
       long currentPosition = writeFileChannel.position();
       writeFileHandle.seek(checkpointPositionMarker);
       writeFileHandle.writeLong(currentPosition);
-      writeFileHandle.writeLong(timestamp);
+      writeFileHandle.writeLong(logWriteOrderID);
       writeFileChannel.position(currentPosition);
       LOG.info("Noted checkpoint for file: " + file + ", id: " + fileID
           + ", checkpoint position: " + currentPosition);
@@ -241,7 +242,7 @@ class LogFile {
       try {
         fileHandle.seek(offset);
         byte operation = fileHandle.readByte();
-        Preconditions.checkState(operation == OP_RECORD);
+        Preconditions.checkState(operation == OP_RECORD, Integer.toHexString(operation));
         TransactionEventRecord record = TransactionEventRecord.
             fromDataInput(fileHandle);
         if(!(record instanceof Put)) {
@@ -365,7 +366,7 @@ class LogFile {
             + "requested checkpoint time: " + checkpointTimestamp + ". ");
       }
     }
-    Pair<Integer, TransactionEventRecord> next() throws IOException {
+    LogRecord next() throws IOException {
       int offset = -1;
       try {
         long position = fileChannel.position();
@@ -377,13 +378,18 @@ class LogFile {
         offset = (int) position;
         byte operation = fileHandle.readByte();
         if(operation != OP_RECORD) {
-          LOG.info("Encountered non op-record at " + offset);
+          if(operation == OP_EOF) {
+            LOG.info("Encountered EOF at " + offset + " in " + file);
+          } else {
+            LOG.error("Encountered non op-record at " + offset + " " +
+                Integer.toHexString(operation) + " in " + file);
+          }
           return null;
         }
         TransactionEventRecord record = TransactionEventRecord.
             fromDataInput(fileHandle);
         Preconditions.checkState(offset > 0);
-        return Pair.of(offset, record);
+        return new LogRecord(logFileID, offset, record);
       } catch(EOFException e) {
         return null;
       } catch (IOException e) {
@@ -396,6 +402,62 @@ class LogFile {
         try {
           fileHandle.close();
         } catch (IOException e) {}
+      }
+    }
+  }
+
+  public static void main(String[] args) throws EOFException, IOException {
+    File file = new File(args[0]);
+    LogFile.SequentialReader reader = null;
+    try {
+      reader = new LogFile.SequentialReader(file);
+      LogRecord entry;
+      FlumeEventPointer ptr;
+      // for puts the fileId is the fileID of the file they exist in
+      // for takes the fileId and offset are pointers to a put
+      int fileId = reader.getLogFileID();
+      int count = 0;
+      int readCount = 0;
+      int putCount = 0;
+      int takeCount = 0;
+      int rollbackCount = 0;
+      int commitCount = 0;
+      while ((entry = reader.next()) != null) {
+        int offset = entry.getOffset();
+        TransactionEventRecord record = entry.getEvent();
+        short type = record.getRecordType();
+        long trans = record.getTransactionID();
+        long ts = record.getLogWriteOrderID();
+        readCount++;
+        ptr = null;
+        if (type == TransactionEventRecord.Type.PUT.get()) {
+          putCount++;
+          ptr = new FlumeEventPointer(fileId, offset);
+        } else if (type == TransactionEventRecord.Type.TAKE.get()) {
+          takeCount++;
+          Take take = (Take) record;
+          ptr = new FlumeEventPointer(take.getFileID(), take.getOffset());
+        } else if (type == TransactionEventRecord.Type.ROLLBACK.get()) {
+          rollbackCount++;
+        } else if (type == TransactionEventRecord.Type.COMMIT.get()) {
+          commitCount++;
+        } else {
+          Preconditions.checkArgument(false, "Unknown record type: "
+              + Integer.toHexString(type));
+        }
+        System.out.println(Joiner.on(", ").skipNulls().join(
+            trans, ts, fileId, offset, TransactionEventRecord.getName(type), ptr));
+
+      }
+      System.out.println("Replayed " + count + " from " + file + " read: " + readCount
+          + ", put: " + putCount + ", take: "
+          + takeCount + ", rollback: " + rollbackCount + ", commit: "
+          + commitCount);
+    } catch (EOFException e) {
+      System.out.println("Hit EOF on " + file);
+    } finally {
+      if (reader != null) {
+        reader.close();
       }
     }
   }

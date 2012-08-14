@@ -116,10 +116,10 @@ public class TestLogFile {
       puts.put(ptr.getOffset(), put);
     }
     LogFile.SequentialReader reader = new LogFile.SequentialReader(dataFile);
-    Pair<Integer, TransactionEventRecord> entry;
+    LogRecord entry;
     while((entry = reader.next()) != null) {
-      Integer offset = entry.getLeft();
-      TransactionEventRecord record = entry.getRight();
+      Integer offset = entry.getOffset();
+      TransactionEventRecord record = entry.getEvent();
       Put put = puts.get(offset);
       FlumeEvent eventIn = put.getEvent();
       Assert.assertEquals(put.getTransactionID(), record.getTransactionID());

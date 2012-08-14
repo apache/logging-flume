@@ -18,38 +18,19 @@
  */
 package org.apache.flume.channel.file;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import junit.framework.Assert;
 
-/**
- * Represents a Rollback on disk
- */
-class Rollback extends TransactionEventRecord {
-  Rollback(Long transactionID) {
-    super(transactionID);
-  }
-  @Override
-  public void readFields(DataInput in) throws IOException {
-    super.readFields(in);
+import org.junit.Test;
+
+public class TestWriteOrderOracle {
+
+
+  @Test
+  public void testSetSeed() {
+    long current = WriteOrderOracle.next();
+    current += Integer.MAX_VALUE;
+    WriteOrderOracle.setSeed(current);
+    Assert.assertTrue(WriteOrderOracle.next() > System.currentTimeMillis());
   }
 
-  @Override
-  public void write(DataOutput out) throws IOException {
-    super.write(out);
-  }
-  @Override
-  short getRecordType() {
-    return Type.ROLLBACK.get();
-  }
-  @Override
-  public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.append("Rollback [getLogWriteOrderID()=");
-    builder.append(getLogWriteOrderID());
-    builder.append(", getTransactionID()=");
-    builder.append(getTransactionID());
-    builder.append("]");
-    return builder.toString();
-  }
 }

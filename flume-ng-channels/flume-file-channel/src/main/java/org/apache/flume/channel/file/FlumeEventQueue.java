@@ -54,7 +54,7 @@ class FlumeEventQueue {
   private static final long VERSION = 2;
   private static final int EMPTY = 0;
   private static final int INDEX_VERSION = 0;
-  private static final int INDEX_TIMESTAMP = 1;
+  private static final int INDEX_WRITE_ORDER_ID = 1;
   private static final int INDEX_SIZE = 2;
   private static final int INDEX_HEAD = 3;
   private static final int INDEX_CHECKPOINT_MARKER = 4;
@@ -75,7 +75,7 @@ class FlumeEventQueue {
 
   private int queueSize;
   private int queueHead;
-  private long timestamp;
+  private long logWriteOrderID;
 
   /**
    * @param capacity max event capacity of queue
@@ -120,8 +120,9 @@ class FlumeEventQueue {
       int expectedCapacity = capacity + HEADER_SIZE;
 
       Preconditions.checkState(fileCapacity == expectedCapacity,
-          "Capacity cannot be reduced once the channel is initialized "
-              + channelNameDescriptor);
+          "Capacity cannot be changed once the channel is initialized "
+              + channelNameDescriptor + ": fileCapacity = " + fileCapacity
+              + ", expectedCapacity = " + expectedCapacity);
     }
 
     checkpointFileHandle = checkpointFile.getChannel();
@@ -136,7 +137,7 @@ class FlumeEventQueue {
       int version = (int) elementsBuffer.get(INDEX_VERSION);
       Preconditions.checkState(version == VERSION,
           "Invalid version: " + version + channelNameDescriptor);
-      timestamp = elementsBuffer.get(INDEX_TIMESTAMP);
+      logWriteOrderID = elementsBuffer.get(INDEX_WRITE_ORDER_ID);
       queueSize = (int) elementsBuffer.get(INDEX_SIZE);
       queueHead = (int) elementsBuffer.get(INDEX_HEAD);
 
@@ -176,8 +177,8 @@ class FlumeEventQueue {
     return result;
   }
 
-  synchronized long getTimestamp() {
-    return timestamp;
+  synchronized long getLogWriteOrderID() {
+    return logWriteOrderID;
   }
 
   synchronized boolean checkpoint(boolean force) {
@@ -379,8 +380,8 @@ class FlumeEventQueue {
 
   protected synchronized long remove(int index) {
     if (index < 0 || index > queueSize - 1) {
-      throw new IndexOutOfBoundsException(String.valueOf(index)
-          + channelNameDescriptor);
+      throw new IndexOutOfBoundsException("index = " + index
+          + ", queueSize " + queueSize +" " + channelNameDescriptor);
     }
     long value = get(index);
 
@@ -409,13 +410,13 @@ class FlumeEventQueue {
   }
 
   private synchronized void updateHeaders() {
-    timestamp = System.currentTimeMillis();
-    elementsBuffer.put(INDEX_TIMESTAMP, timestamp);
+    logWriteOrderID = WriteOrderOracle.next();
+    elementsBuffer.put(INDEX_WRITE_ORDER_ID, logWriteOrderID);
     elementsBuffer.put(INDEX_SIZE, queueSize);
     elementsBuffer.put(INDEX_HEAD, queueHead);
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Updating checkpoint headers: ts: " + timestamp + ", qs: "
-          + queueSize + ", qh: " + queueHead + " " + channelNameDescriptor);
+      LOG.debug("Updating checkpoint headers: ts: " + logWriteOrderID + ", queueSize: "
+          + queueSize + ", queueHead: " + queueHead + " " + channelNameDescriptor);
     }
   }
 
@@ -477,6 +478,29 @@ class FlumeEventQueue {
 
       Preconditions.checkState(overwriteMap.size() == 0,
           "concurrent update detected " + channelNameDescriptor);
+    }
+  }
+
+  public static void main(String[] args) throws IOException {
+    File file = new File(args[0]);
+    if(!file.exists()) {
+      throw new IOException("File " + file + " does not exist");
+    }
+    if(file.length() == 0) {
+      throw new IOException("File " + file + " is empty");
+    }
+    int capacity = (int)((file.length() - (HEADER_SIZE * 8L)) / 8L);
+    FlumeEventQueue queue = new FlumeEventQueue(capacity, file, "debug");
+    System.out.println("File Reference Counts" + queue.fileIDCounts);
+    System.out.println("Queue Capacity " + queue.getCapacity());
+    System.out.println("Queue Size " + queue.getSize());
+    System.out.println("Queue Head " + queue.queueHead);
+    for (int index = 0; index < queue.getCapacity(); index++) {
+      long value = queue.elements.get(queue.getPhysicalIndex(index));
+      int fileID = (int)(value >>> 32);
+      int offset = (int)value;
+      System.out.println(index + ":" + Long.toHexString(value) + " fileID = "
+          + fileID + ", offset = " + offset);
     }
   }
 }

@@ -25,7 +25,6 @@ import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
@@ -86,19 +85,13 @@ public class FileChannel extends BasicChannelSemantics {
   private int checkpointWriteTimeout;
   private String channelNameDescriptor = "[channel=unknown]";
   private ChannelCounter channelCounter;
+  private boolean useLogReplayV1;
 
   @Override
   public synchronized void setName(String name) {
     channelNameDescriptor = "[channel=" + name + "]";
     super.setName(name);
   }
-
-  /**
-   * Transaction IDs should unique within a file channel
-   * across JVM restarts.
-   */
-  private static final AtomicLong TRANSACTION_ID =
-      new AtomicLong(System.currentTimeMillis());
 
   @Override
   public void configure(Context context) {
@@ -196,6 +189,9 @@ public class FileChannel extends BasicChannelSemantics {
           FileChannelConfiguration.DEFAULT_CHECKPOINT_WRITE_TIMEOUT;
     }
 
+    useLogReplayV1 = context.getBoolean(
+        FileChannelConfiguration.USE_LOG_REPLAY_V1,
+          FileChannelConfiguration.DEFAULT_USE_LOG_REPLAY_V1);
 
     if(queueRemaining == null) {
       queueRemaining = new Semaphore(capacity, true);
@@ -223,8 +219,8 @@ public class FileChannel extends BasicChannelSemantics {
       builder.setLogDirs(dataDirs);
       builder.setChannelName(getName());
       builder.setCheckpointWriteTimeout(checkpointWriteTimeout);
+      builder.setUseLogReplayV1(useLogReplayV1);
       log = builder.build();
-
       log.replay();
       open = true;
 
@@ -273,7 +269,7 @@ public class FileChannel extends BasicChannelSemantics {
           "Thread has transaction which is still open: " +
               trans.getStateAsString()  + channelNameDescriptor);
     }
-    trans = new FileBackedTransaction(log, TRANSACTION_ID.incrementAndGet(),
+    trans = new FileBackedTransaction(log, TransactionIDOracle.next(),
         transactionCapacity, keepAlive, queueRemaining, getName(),
         channelCounter);
     transactions.set(trans);

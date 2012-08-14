@@ -24,7 +24,6 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -82,6 +81,7 @@ class Log {
   private final String channelName;
   private final String channelNameDescriptor;
   private int checkpointWriteTimeout;
+  private boolean useLogReplayV1;
 
   static class Builder {
     private long bCheckpointInterval;
@@ -94,6 +94,7 @@ class Log {
     private String bName;
     private int bCheckpointWriteTimeout =
         FileChannelConfiguration.DEFAULT_CHECKPOINT_WRITE_TIMEOUT;
+    private boolean useLogReplayV1;
 
     Builder setCheckpointInterval(long interval) {
       bCheckpointInterval = interval;
@@ -134,17 +135,21 @@ class Log {
       bCheckpointWriteTimeout = checkpointTimeout;
       return this;
     }
+    Builder setUseLogReplayV1(boolean useLogReplayV1){
+      this.useLogReplayV1 = useLogReplayV1;
+      return this;
+    }
 
     Log build() throws IOException {
       return new Log(bCheckpointInterval, bMaxFileSize, bQueueCapacity,
           bLogWriteTimeout, bCheckpointWriteTimeout, bCheckpointDir, bName,
-          bLogDirs);
+          useLogReplayV1, bLogDirs);
     }
   }
 
   private Log(long checkpointInterval, long maxFileSize, int queueCapacity,
       int logWriteTimeout, int checkpointWriteTimeout, File checkpointDir,
-      String name, File... logDirs)
+      String name, boolean useLogReplayV1, File... logDirs)
           throws IOException {
     Preconditions.checkArgument(checkpointInterval > 0,
         "checkpointInterval <= 0");
@@ -156,11 +161,12 @@ class Log {
             + checkpointDir + " could not be created");
     Preconditions.checkNotNull(logDirs, "logDirs");
     Preconditions.checkArgument(logDirs.length > 0, "logDirs empty");
-    Preconditions.checkArgument(name != null && !name.trim().isEmpty(), 
+    Preconditions.checkArgument(name != null && !name.trim().isEmpty(),
             "channel name should be specified");
 
     this.channelName = name;
     this.channelNameDescriptor = "[channel=" + name + "]";
+    this.useLogReplayV1 = useLogReplayV1;
 
     for (File logDir : logDirs) {
       Preconditions.checkArgument(logDir.isDirectory() || logDir.mkdirs(),
@@ -226,7 +232,7 @@ class Log {
         }
       }
       LOGGER.info("Found NextFileID " + nextFileID +
-          ", from " + Arrays.toString(logDirs));
+          ", from " + dataFiles);
 
       /*
        * sort the data files by file id so we can replay them by file id
@@ -238,12 +244,11 @@ class Log {
        * Read the checkpoint (in memory queue) from one of two alternating
        * locations. We will read the last one written to disk.
        */
+      File checkpointFile = new File(checkpointDir, "checkpoint");
       queue = new FlumeEventQueue(queueCapacity,
-                        new File(checkpointDir, "checkpoint"), channelName);
-
-      long ts = queue.getTimestamp();
-      LOGGER.info("Last Checkpoint " + new Date(ts) +
-          ", queue depth = " + queue.getSize());
+                        checkpointFile, channelName);
+      LOGGER.info("Last Checkpoint " + new Date(checkpointFile.lastModified())
+        + ", queue depth = " + queue.getSize());
 
       /*
        * We now have everything we need to actually replay the log files
@@ -251,7 +256,14 @@ class Log {
        * the list of data files.
        */
       ReplayHandler replayHandler = new ReplayHandler(queue);
-      replayHandler.replayLog(dataFiles);
+      if(useLogReplayV1) {
+        LOGGER.info("Replaying logs with v1 replay logic");
+        replayHandler.replayLogv1(dataFiles);
+      } else {
+        LOGGER.info("Replaying logs with v2 replay logic");
+        replayHandler.replayLog(dataFiles);
+      }
+
 
       for (int index = 0; index < logDirs.length; index++) {
         LOGGER.info("Rolling " + logDirs[index]);
@@ -357,7 +369,7 @@ class Log {
       FlumeEvent flumeEvent = new FlumeEvent(
                     event.getHeaders(), event.getBody());
       Put put = new Put(transactionID, flumeEvent);
-      put.setTimestamp(System.currentTimeMillis());
+      put.setLogWriteOrderID(WriteOrderOracle.next());
       ByteBuffer buffer = TransactionEventRecord.toByteBuffer(put);
       int logFileIndex = nextLogWriter(transactionID);
       if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
@@ -409,7 +421,7 @@ class Log {
     try {
       Take take = new Take(transactionID, pointer.getOffset(),
           pointer.getFileID());
-      take.setTimestamp(System.currentTimeMillis());
+      take.setLogWriteOrderID(WriteOrderOracle.next());
       ByteBuffer buffer = TransactionEventRecord.toByteBuffer(take);
       int logFileIndex = nextLogWriter(transactionID);
       if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
@@ -461,7 +473,7 @@ class Log {
 
     try {
       Rollback rollback = new Rollback(transactionID);
-      rollback.setTimestamp(System.currentTimeMillis());
+      rollback.setLogWriteOrderID(WriteOrderOracle.next());
       ByteBuffer buffer = TransactionEventRecord.toByteBuffer(rollback);
       int logFileIndex = nextLogWriter(transactionID);
       if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
@@ -592,7 +604,7 @@ class Log {
 
     try {
       Commit commit = new Commit(transactionID, type);
-      commit.setTimestamp(System.currentTimeMillis());
+      commit.setLogWriteOrderID(WriteOrderOracle.next());
       ByteBuffer buffer = TransactionEventRecord.toByteBuffer(commit);
       int logFileIndex = nextLogWriter(transactionID);
       if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
@@ -723,7 +735,7 @@ class Log {
     SortedSet<Integer> idSet = null;
     try {
       if (queue.checkpoint(force) || force) {
-        long ts = queue.getTimestamp();
+        long logWriteOrderID = queue.getLogWriteOrderID();
 
         //Since the active files might also be in the queue's fileIDs,
         //we need to either move each one to a new set or remove each one
@@ -732,12 +744,12 @@ class Log {
         //Since clone is smarter than insert, better to make
         //a copy of the set first so that we can use it later.
         idSet = queue.getFileIDs();
-        SortedSet<Integer> idSetToCompare = new TreeSet(idSet);
+        SortedSet<Integer> idSetToCompare = new TreeSet<Integer>(idSet);
 
         int numFiles = logFiles.length();
         for (int i = 0; i < numFiles; i++) {
           LogFile.Writer writer = logFiles.get(i);
-          writer.markCheckpoint(ts);
+          writer.markCheckpoint(logWriteOrderID);
           int id = writer.getFileID();
           idSet.remove(id);
           LOGGER.debug("Updated checkpoint for file: " + writer.getFile());
@@ -753,7 +765,7 @@ class Log {
           // Open writer in inactive mode
           LogFile.Writer writer =
               new LogFile.Writer(file, id, maxFileSize, false);
-          writer.markCheckpoint(ts);
+          writer.markCheckpoint(logWriteOrderID);
           writer.close();
           reader = new LogFile.RandomReader(file);
           idLogFileMap.put(id, reader);

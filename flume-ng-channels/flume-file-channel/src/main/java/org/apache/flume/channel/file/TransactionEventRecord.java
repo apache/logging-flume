@@ -37,7 +37,7 @@ import com.google.common.collect.ImmutableMap;
  */
 abstract class TransactionEventRecord implements Writable {
   private final long transactionID;
-  private long timestamp;
+  private long logWriteOrderID;
 
   protected TransactionEventRecord(long transactionID) {
     this.transactionID = transactionID;
@@ -45,18 +45,18 @@ abstract class TransactionEventRecord implements Writable {
 
   @Override
   public void readFields(DataInput in) throws IOException {
-    timestamp = in.readLong();
+    logWriteOrderID = in.readLong();
   }
   @Override
   public void write(DataOutput out) throws IOException {
-    out.writeLong(timestamp);
+    out.writeLong(logWriteOrderID);
   }
 
-  public void setTimestamp(long timestamp) {
-    this.timestamp = timestamp;
+  public void setLogWriteOrderID(long logWriteOrderID) {
+    this.logWriteOrderID = logWriteOrderID;
   }
-  public long getTimestamp() {
-    return timestamp;
+  public long getLogWriteOrderID() {
+    return logWriteOrderID;
   }
   long getTransactionID() {
     return transactionID;

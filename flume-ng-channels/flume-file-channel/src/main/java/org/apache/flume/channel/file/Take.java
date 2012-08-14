@@ -61,4 +61,18 @@ class Take extends TransactionEventRecord {
   short getRecordType() {
     return Type.TAKE.get();
   }
+  @Override
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    builder.append("Take [offset=");
+    builder.append(offset);
+    builder.append(", fileID=");
+    builder.append(fileID);
+    builder.append(", getLogWriteOrderID()=");
+    builder.append(getLogWriteOrderID());
+    builder.append(", getTransactionID()=");
+    builder.append(getTransactionID());
+    builder.append("]");
+    return builder.toString();
+  }
 }
