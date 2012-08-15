@@ -894,6 +894,33 @@ Example for agent named **agent_foo**:
   agent_foo.channels = memoryChannel-1
   agent_foo.sources.legacysource-1.type = your.namespace.YourClass
   agent_foo.sources.legacysource-1.channels = memoryChannel-1
+  
+Scribe Source
+~~~~~~~~~~~~~
+
+Scribe is another type of ingest system. To adopt existing Scribe ingest system, 
+Flume should use ScribeSource based on Thrift with compatible transfering protocol.
+The deployment of Scribe please following guide from Facebook.
+Required properties are in **bold**.
+
+==============  ===========  ==============================================
+Property Name   Default      Description
+==============  ===========  ==============================================
+**type**        --           The component type name, needs to be ``org.apache.flume.source.scribe.ScribeSource``
+port            1499         Port that Scribe should be connected
+workerThreads   5			 Handing threads number in Thrift
+==============  ===========  ==============================================
+
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.sources = scribesource-1
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sources.scribesource-1.type = org.apache.flume.source.scribe.ScribeSource
+  agent_foo.sources.scribesource-1.port = 1463
+  agent_foo.sources.scribesource-1.workerThreads = 5
+  agent_foo.sources.scribesource-1.channels = memoryChannel-1
 
 Flume Sinks
 -----------
