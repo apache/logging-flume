@@ -120,7 +120,6 @@ public class TestLog {
             CAPACITY).setCheckpointDir(checkpointDir).setLogDirs(
                 dataDirs).setChannelName("testlog").build();
     log.replay();
-    System.out.println(log.getNextFileID());
     takeAndVerify(eventPointerIn, eventIn);
   }
   /**
@@ -169,11 +168,21 @@ public class TestLog {
   }
 
   /**
-   * After replay of the log, we should the event because the take
+   * After replay of the log, we should get the event because the take
    * was rolled back
    */
   @Test
-  public void testPutTakeRollback() throws IOException, InterruptedException {
+  public void testPutTakeRollbackLogReplayV1()
+      throws IOException, InterruptedException {
+    doPutTakeRollback(true);
+  }
+  @Test
+  public void testPutTakeRollbackLogReplayV2()
+      throws IOException, InterruptedException {
+    doPutTakeRollback(false);
+  }
+  public void doPutTakeRollback(boolean useLogReplayV1)
+      throws IOException, InterruptedException {
     FlumeEvent eventIn = TestUtils.newPersistableEvent();
     long putTransactionID = ++transactionID;
     FlumeEventPointer eventPointerIn = log.put(putTransactionID, eventIn);
@@ -186,7 +195,7 @@ public class TestLog {
         Long.MAX_VALUE).setMaxFileSize(
             FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE).setQueueSize(
             1).setCheckpointDir(checkpointDir).setLogDirs(dataDirs)
-            .setChannelName("testlog").build();
+            .setChannelName("testlog").setUseLogReplayV1(useLogReplayV1).build();
     log.replay();
     takeAndVerify(eventPointerIn, eventIn);
   }

@@ -16,24 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.flume.channel.file;
 
-package org.apache.flume.instrumentation;
+import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * Enum for Monitoring types.
- */
-public enum MonitoringType {
-  OTHER(null),
-  GANGLIA(org.apache.flume.instrumentation.GangliaServer.class),
-  HTTP(org.apache.flume.instrumentation.http.HTTPMetricsServer.class);
+public final class TransactionIDOracle {
 
-  private Class<? extends MonitorService> monitoringClass;
+  private TransactionIDOracle() {}
+  private static final AtomicLong TRANSACTION_ID =
+      new AtomicLong(System.currentTimeMillis());
 
-  private MonitoringType(Class<? extends MonitorService> klass) {
-    this.monitoringClass = klass;
+  public static void setSeed(long highest) {
+    long previous;
+    while(highest > (previous = TRANSACTION_ID.get())) {
+      TRANSACTION_ID.compareAndSet(previous, highest);
+    }
   }
-
-  public Class<? extends MonitorService> getMonitorClass(){
-    return this.monitoringClass;
+  public static long next() {
+    return TRANSACTION_ID.incrementAndGet();
   }
 }

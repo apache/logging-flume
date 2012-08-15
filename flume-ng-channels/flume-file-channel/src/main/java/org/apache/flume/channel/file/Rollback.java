@@ -42,4 +42,14 @@ class Rollback extends TransactionEventRecord {
   short getRecordType() {
     return Type.ROLLBACK.get();
   }
+  @Override
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    builder.append("Rollback [getLogWriteOrderID()=");
+    builder.append(getLogWriteOrderID());
+    builder.append(", getTransactionID()=");
+    builder.append(getTransactionID());
+    builder.append("]");
+    return builder.toString();
+  }
 }

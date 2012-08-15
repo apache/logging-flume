@@ -16,24 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.flume.channel.file;
 
-package org.apache.flume.instrumentation;
+import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * Enum for Monitoring types.
- */
-public enum MonitoringType {
-  OTHER(null),
-  GANGLIA(org.apache.flume.instrumentation.GangliaServer.class),
-  HTTP(org.apache.flume.instrumentation.http.HTTPMetricsServer.class);
+public final class WriteOrderOracle {
 
-  private Class<? extends MonitorService> monitoringClass;
+  private WriteOrderOracle() {}
+  private static final AtomicLong WRITER_ORDERER =
+      new AtomicLong(System.currentTimeMillis());
 
-  private MonitoringType(Class<? extends MonitorService> klass) {
-    this.monitoringClass = klass;
+  public static void setSeed(long highest) {
+    long previous;
+    while(highest > (previous = WRITER_ORDERER.get())) {
+      WRITER_ORDERER.compareAndSet(previous, highest);
+    }
   }
-
-  public Class<? extends MonitorService> getMonitorClass(){
-    return this.monitoringClass;
+  public static long next() {
+    return WRITER_ORDERER.incrementAndGet();
   }
 }

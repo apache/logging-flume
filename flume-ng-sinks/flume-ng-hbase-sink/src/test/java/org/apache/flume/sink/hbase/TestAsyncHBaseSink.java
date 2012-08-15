@@ -55,6 +55,7 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import com.google.common.io.Files;
 import com.google.common.primitives.Longs;
 import java.lang.reflect.Method;
 
@@ -62,7 +63,7 @@ public class TestAsyncHBaseSink {
   private static HBaseTestingUtility testUtility;
   private static MiniZooKeeperCluster zookeeperCluster;
   private static MiniHBaseCluster hbaseCluster;
-  private static String workDir = "./testFlumeHbaseSink";
+  private static String workDir = Files.createTempDir().getAbsolutePath();
 
   private static String tableName = "TestHbaseSink";
   private static String columnFamily = "TestColumnFamily";
@@ -260,7 +261,6 @@ public class TestAsyncHBaseSink {
     Assert.assertArrayEquals(Longs.toByteArray(3), out);
     testUtility.deleteTable(tableName.getBytes());
   }
-
 
   @Test(expected = FlumeException.class)
   public void testMissingTable() throws Exception {

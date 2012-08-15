@@ -46,11 +46,11 @@ public class TestCheckpoint {
     FlumeEventQueue queueIn = new FlumeEventQueue(1, file, "test");
     queueIn.addHead(ptrIn);
     FlumeEventQueue queueOut = new FlumeEventQueue(1, file, "test");
-    Assert.assertEquals(0, queueOut.getTimestamp());
+    Assert.assertEquals(0, queueOut.getLogWriteOrderID());
     queueIn.checkpoint(false);
     FlumeEventQueue queueOut2 = new FlumeEventQueue(1, file, "test");
     FlumeEventPointer ptrOut = queueOut2.removeHead();
     Assert.assertEquals(ptrIn, ptrOut);
-    Assert.assertTrue(queueOut2.getTimestamp() > 0);
+    Assert.assertTrue(queueOut2.getLogWriteOrderID() > 0);
   }
 }

@@ -72,4 +72,9 @@ public class FileChannelConfiguration {
    */
   public static final String CHECKPOINT_WRITE_TIMEOUT = "checkpoint-timeout";
   public static final int DEFAULT_CHECKPOINT_WRITE_TIMEOUT = 600;
+  /**
+   * Turn on Flume 1.2 log replay logic
+   */
+  public static final String USE_LOG_REPLAY_V1 = "use-log-replay-v1";
+  public static final boolean DEFAULT_USE_LOG_REPLAY_V1 = false;
 }

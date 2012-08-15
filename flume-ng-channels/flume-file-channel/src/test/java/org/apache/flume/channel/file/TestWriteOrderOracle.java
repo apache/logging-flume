@@ -16,24 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.flume.channel.file;
 
-package org.apache.flume.instrumentation;
+import junit.framework.Assert;
 
-/**
- * Enum for Monitoring types.
- */
-public enum MonitoringType {
-  OTHER(null),
-  GANGLIA(org.apache.flume.instrumentation.GangliaServer.class),
-  HTTP(org.apache.flume.instrumentation.http.HTTPMetricsServer.class);
+import org.junit.Test;
 
-  private Class<? extends MonitorService> monitoringClass;
+public class TestWriteOrderOracle {
 
-  private MonitoringType(Class<? extends MonitorService> klass) {
-    this.monitoringClass = klass;
+
+  @Test
+  public void testSetSeed() {
+    long current = WriteOrderOracle.next();
+    current += Integer.MAX_VALUE;
+    WriteOrderOracle.setSeed(current);
+    Assert.assertTrue(WriteOrderOracle.next() > System.currentTimeMillis());
   }
 
-  public Class<? extends MonitorService> getMonitorClass(){
-    return this.monitoringClass;
-  }
 }

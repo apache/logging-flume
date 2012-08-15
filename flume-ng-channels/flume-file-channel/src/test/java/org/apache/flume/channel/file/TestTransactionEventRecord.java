@@ -55,24 +55,24 @@ public class TestTransactionEventRecord {
   public void testPutSerialization() throws IOException {
     Put in = new Put(System.currentTimeMillis(),
         new FlumeEvent(new HashMap<String, String>(), new byte[0]));
-    in.setTimestamp(System.currentTimeMillis());
+    in.setLogWriteOrderID(System.currentTimeMillis());
     Put out = (Put)TransactionEventRecord.fromDataInput(toDataInput(in));
     Assert.assertEquals(in.getClass(), out.getClass());
     Assert.assertEquals(in.getRecordType(), out.getRecordType());
     Assert.assertEquals(in.getTransactionID(), out.getTransactionID());
-    Assert.assertEquals(in.getTimestamp(), out.getTimestamp());
+    Assert.assertEquals(in.getLogWriteOrderID(), out.getLogWriteOrderID());
     Assert.assertEquals(in.getEvent().getHeaders(), out.getEvent().getHeaders());
     Assert.assertTrue(Arrays.equals(in.getEvent().getBody(), out.getEvent().getBody()));
   }
   @Test
   public void testTakeSerialization() throws IOException {
     Take in = new Take(System.currentTimeMillis(), 10, 20);
-    in.setTimestamp(System.currentTimeMillis());
+    in.setLogWriteOrderID(System.currentTimeMillis());
     Take out = (Take)TransactionEventRecord.fromDataInput(toDataInput(in));
     Assert.assertEquals(in.getClass(), out.getClass());
     Assert.assertEquals(in.getRecordType(), out.getRecordType());
     Assert.assertEquals(in.getTransactionID(), out.getTransactionID());
-    Assert.assertEquals(in.getTimestamp(), out.getTimestamp());
+    Assert.assertEquals(in.getLogWriteOrderID(), out.getLogWriteOrderID());
     Assert.assertEquals(in.getFileID(), out.getFileID());
     Assert.assertEquals(in.getOffset(), out.getOffset());
   }
@@ -80,30 +80,30 @@ public class TestTransactionEventRecord {
   @Test
   public void testRollbackSerialization() throws IOException {
     Rollback in = new Rollback(System.currentTimeMillis());
-    in.setTimestamp(System.currentTimeMillis());
+    in.setLogWriteOrderID(System.currentTimeMillis());
     Rollback out = (Rollback)TransactionEventRecord.fromDataInput(toDataInput(in));
     Assert.assertEquals(in.getClass(), out.getClass());
     Assert.assertEquals(in.getRecordType(), out.getRecordType());
     Assert.assertEquals(in.getTransactionID(), out.getTransactionID());
-    Assert.assertEquals(in.getTimestamp(), out.getTimestamp());
+    Assert.assertEquals(in.getLogWriteOrderID(), out.getLogWriteOrderID());
   }
 
   @Test
   public void testCommitSerialization() throws IOException {
     Commit in = new Commit(System.currentTimeMillis());
-    in.setTimestamp(System.currentTimeMillis());
+    in.setLogWriteOrderID(System.currentTimeMillis());
     Commit out = (Commit)TransactionEventRecord.fromDataInput(toDataInput(in));
     Assert.assertEquals(in.getClass(), out.getClass());
     Assert.assertEquals(in.getRecordType(), out.getRecordType());
     Assert.assertEquals(in.getTransactionID(), out.getTransactionID());
-    Assert.assertEquals(in.getTimestamp(), out.getTimestamp());
+    Assert.assertEquals(in.getLogWriteOrderID(), out.getLogWriteOrderID());
   }
 
   @Test
   public void testBadHeader() throws IOException {
     Put in = new Put(System.currentTimeMillis(),
         new FlumeEvent(new HashMap<String, String>(), new byte[0]));
-    in.setTimestamp(System.currentTimeMillis());
+    in.setLogWriteOrderID(System.currentTimeMillis());
     try {
       TransactionEventRecord.fromDataInput(toDataInput(0, in));
       Assert.fail();

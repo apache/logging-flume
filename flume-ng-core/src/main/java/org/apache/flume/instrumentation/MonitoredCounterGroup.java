@@ -139,4 +139,8 @@ public abstract class MonitoredCounterGroup {
     SINK_PROCESSOR,
     SINK
   };
+
+  public String getType(){
+    return type.name();
+  }
 }
