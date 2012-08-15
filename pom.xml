@@ -48,6 +48,7 @@ limitations under the License.
     <module>flume-ng-core</module>
     <module>flume-ng-configuration</module>
     <module>flume-ng-sinks</module>
+    <module>flume-ng-sources</module>
     <module>flume-ng-node</module>
     <module>flume-ng-dist</module>
     <module>flume-ng-channels</module>
@@ -810,6 +811,12 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-ng-hbase-sink</artifactId>
+        <version>1.3.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.flume.flume-ng-sources</groupId>
+        <artifactId>flume-scribe-source</artifactId>
         <version>1.3.0-SNAPSHOT</version>
       </dependency>
 

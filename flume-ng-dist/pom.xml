@@ -105,6 +105,10 @@
       <artifactId>flume-ng-hbase-sink</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.flume.flume-ng-sources</groupId>
+      <artifactId>flume-scribe-source</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
       <artifactId>flume-avro-source</artifactId>
     </dependency>
