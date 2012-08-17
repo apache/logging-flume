@@ -32,6 +32,11 @@ import org.apache.flume.event.EventBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Internal load-generating source implementation. Useful for tests.
+ *
+ * See {@link StressSource#configure(Context)} for configuration options.
+ */
 public class StressSource extends AbstractSource implements
   Configurable, PollableSource {
 
@@ -41,6 +46,8 @@ public class StressSource extends AbstractSource implements
   private CounterGroup counterGroup;
   private byte[] buffer;
   private Event event;
+  private long maxTotalEvents;
+  private long maxSuccessfulEvents;
 
   public StressSource() {
     counterGroup = new CounterGroup();
@@ -48,6 +55,11 @@ public class StressSource extends AbstractSource implements
   }
   @Override
   public void configure(Context context) {
+    /* Limit on the total number of events. */
+    maxTotalEvents = context.getLong("maxTotalEvents", -1L);
+    /* Limit on the total number of successful events. */
+    maxSuccessfulEvents = context.getLong("maxSuccessfulEvents", -1L);
+    /* Size of events to be generated. */
     int size = context.getInteger("size", 500);
     buffer = new byte[size];
     Arrays.fill(buffer, Byte.MAX_VALUE);
@@ -55,6 +67,12 @@ public class StressSource extends AbstractSource implements
   }
   @Override
   public Status process() throws EventDeliveryException {
+    if ((maxTotalEvents >= 0 &&
+        counterGroup.incrementAndGet("events.total") > maxTotalEvents) ||
+        (maxSuccessfulEvents >= 0 &&
+        counterGroup.get("events.successful") >= maxSuccessfulEvents)) {
+      return Status.BACKOFF;
+    }
     try {
       getChannelProcessor().processEvent(event);
       counterGroup.incrementAndGet("events.successful");
@@ -82,5 +100,4 @@ public class StressSource extends AbstractSource implements
 
     logger.info("Sequence generator source stopped. Metrics:{}", counterGroup);
   }
-
 }

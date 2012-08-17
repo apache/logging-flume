@@ -103,8 +103,6 @@ public class TestSequenceGeneratorSource {
       Assert.assertArrayEquals(String.valueOf(i).getBytes(),
           new String(event.getBody()).getBytes());
     }
-
     source.stop();
   }
-
 }
