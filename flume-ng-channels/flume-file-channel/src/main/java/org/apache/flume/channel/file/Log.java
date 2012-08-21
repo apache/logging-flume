@@ -245,8 +245,10 @@ class Log {
        * locations. We will read the last one written to disk.
        */
       File checkpointFile = new File(checkpointDir, "checkpoint");
-      queue = new FlumeEventQueue(queueCapacity,
-                        checkpointFile, channelName);
+      File inflightTakesFile = new File(checkpointDir, "inflighttakes");
+      File inflightPutsFile = new File(checkpointDir, "inflightputs");
+      queue = new FlumeEventQueue(queueCapacity, checkpointFile,
+              inflightTakesFile, inflightPutsFile, channelName);
       LOGGER.info("Last Checkpoint " + new Date(checkpointFile.lastModified())
         + ", queue depth = " + queue.getSize());
 
@@ -378,6 +380,7 @@ class Log {
       boolean error = true;
       try {
         FlumeEventPointer ptr = logFiles.get(logFileIndex).put(buffer);
+        queue.addWithoutCommit(ptr, transactionID);
         error = false;
         return ptr;
       } finally {
@@ -704,7 +707,7 @@ class Log {
     }
   }
 
-  private boolean writeCheckpoint() throws IOException {
+  private boolean writeCheckpoint() throws Exception {
     return writeCheckpoint(false);
   }
 
@@ -718,8 +721,7 @@ class Log {
    * @param force  a flag to force the writing of checkpoint
    * @throws IOException if we are unable to write the checkpoint out to disk
    */
-  private boolean writeCheckpoint(boolean force)
-      throws IOException {
+  private boolean writeCheckpoint(boolean force) throws Exception {
     boolean lockAcquired = false;
     boolean checkpointCompleted = false;
     try {

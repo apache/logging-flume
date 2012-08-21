@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.flume.channel.file;
 
 import java.io.File;
@@ -56,17 +55,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 public class TestFileChannel {
 
   private static final Logger LOG = LoggerFactory
-      .getLogger(TestFileChannel.class);
-
+          .getLogger(TestFileChannel.class);
   private FileChannel channel;
   private File baseDir;
   private File checkpointDir;
@@ -101,7 +104,7 @@ public class TestFileChannel {
   private Context createContext(Map<String, String> overrides) {
     Context context = new Context();
     context.put(FileChannelConfiguration.CHECKPOINT_DIR,
-        checkpointDir.getAbsolutePath());
+            checkpointDir.getAbsolutePath());
     context.put(FileChannelConfiguration.DATA_DIRS, dataDir);
     context.put(FileChannelConfiguration.CAPACITY, String.valueOf(10000));
     // Set checkpoint for 5 seconds otherwise test will run out of memory
@@ -120,6 +123,176 @@ public class TestFileChannel {
     return channel;
   }
   @Test
+  public void testFailAfterTakeBeforeCommit() throws Throwable {
+    final FileChannel channel = createFileChannel();
+    channel.start();
+    final Set<String> eventSet = Sets.newHashSet();
+    eventSet.addAll(putEvents(channel, "testTakeFailBeforeCommit", 5, 5));
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+    channel.take();
+    channel.take();
+    //Simulate multiple sources, so separate thread - txns are thread local,
+    //so a new txn wont be created here unless it is in a different thread.
+    Executors.newSingleThreadExecutor().submit(new Runnable() {
+      @Override
+      public void run() {
+        Transaction tx = channel.getTransaction();
+        tx.begin();
+        channel.take();
+        channel.take();
+        channel.take();
+      }
+    }).get();
+    long lastTake = System.currentTimeMillis();
+    File inflightsFile = new File(checkpointDir, "inflighttakes");
+
+    while (inflightsFile.lastModified() < lastTake) {
+      Thread.sleep(500);
+    }
+    channel.stop();
+    //Simulate a sink, so separate thread.
+    try {
+      Executors.newSingleThreadExecutor().submit(new Runnable() {
+        @Override
+        public void run() {
+          FileChannel channel = createFileChannel();
+          channel.start();
+          Transaction tx = channel.getTransaction();
+          tx.begin();
+          Event e;
+          /*
+           * Explicitly not put in a loop, so it is easy to find out which
+           * event became null easily.
+           */
+          e = channel.take();
+          Assert.assertNotNull(e);
+          Assert.assertTrue(eventSet.remove(new String(e.getBody())));
+          e = channel.take();
+          Assert.assertNotNull(e);
+          Assert.assertTrue(eventSet.remove(new String(e.getBody())));
+          e = channel.take();
+          Assert.assertNotNull(e);
+          Assert.assertTrue(eventSet.remove(new String(e.getBody())));
+          e = channel.take();
+          Assert.assertNotNull(e);
+          Assert.assertTrue(eventSet.remove(new String(e.getBody())));
+          e = channel.take();
+          Assert.assertNotNull(e);
+          Assert.assertTrue(eventSet.remove(new String(e.getBody())));
+          tx.commit();
+          tx.close();
+          channel.stop();
+        }
+      }).get();
+    } catch (ExecutionException e) {
+      throw e.getCause();
+    }
+
+  }
+
+  @Test
+  public void testFailAfterPutCheckpointCommit() throws Throwable {
+    final Set<String> set = Sets.newHashSet();
+    final Map<String, String> overrides = Maps.newHashMap();
+    overrides.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, "10000");
+    final FileChannel channel = createFileChannel(overrides);
+    channel.start();
+    Transaction tx = channel.getTransaction();
+    //Initially commit a put to make sure checkpoint is required.
+    tx.begin();
+    channel.put(EventBuilder.withBody(new byte[]{'1', '2'}));
+    set.add(new String(new byte[]{'1', '2'}));
+    tx.commit();
+    tx.close();
+    tx = channel.getTransaction();
+    tx.begin();
+    channel.put(EventBuilder.withBody(new byte[]{'a', 'b'}));
+    set.add(new String(new byte[]{'a', 'b'}));
+    channel.put(EventBuilder.withBody(new byte[]{'c', 'd'}));
+    set.add(new String(new byte[]{'c', 'd'}));
+    channel.put(EventBuilder.withBody(new byte[]{'e', 'f'}));
+    set.add(new String(new byte[]{'e', 'f'}));
+    //Simulate multiple sources, so separate thread - txns are thread local,
+    //so a new txn wont be created here unless it is in a different thread.
+    final CountDownLatch latch = new CountDownLatch(1);
+    Executors.newSingleThreadExecutor().submit(
+            new Runnable() {
+              @Override
+              public void run() {
+                Transaction tx = channel.getTransaction();
+                tx.begin();
+                channel.put(EventBuilder.withBody(new byte[]{'3', '4'}));
+                channel.put(EventBuilder.withBody(new byte[]{'5', '6'}));
+                channel.put(EventBuilder.withBody(new byte[]{'7', '8'}));
+                set.add(new String(new byte[]{'3', '4'}));
+                set.add(new String(new byte[]{'5', '6'}));
+                set.add(new String(new byte[]{'7', '8'}));
+
+                try {
+                  latch.await();
+                  tx.commit();
+                } catch (InterruptedException e) {
+                  tx.rollback();
+                  Throwables.propagate(e);
+                } finally {
+                  tx.close();
+                }
+              }
+            });
+    long lastPut = System.currentTimeMillis();
+    File checkpoint = new File(checkpointDir, "checkpoint");
+    while (checkpoint.lastModified() < lastPut) {
+      Thread.sleep(500);
+    }
+    tx.commit();
+    tx.close();
+    latch.countDown();
+    Thread.sleep(2000);
+    channel.stop();
+
+    //Simulate a sink, so separate thread.
+    try {
+      Executors.newSingleThreadExecutor().submit(new Runnable() {
+        @Override
+        public void run() {
+          FileChannel channel = createFileChannel();
+          channel.start();
+          Transaction tx = channel.getTransaction();
+          tx.begin();
+          Event e = channel.take();
+          Assert.assertNotNull(e);
+          Assert.assertTrue(set.remove(new String(e.getBody())));
+          e = channel.take();
+          Assert.assertNotNull(e);
+          Assert.assertTrue(set.remove(new String(e.getBody())));
+          e = channel.take();
+          Assert.assertNotNull(e);
+          Assert.assertTrue(set.remove(new String(e.getBody())));
+          e = channel.take();
+          Assert.assertNotNull(e);
+          Assert.assertTrue(set.remove(new String(e.getBody())));
+          e = channel.take();
+          Assert.assertNotNull(e);
+          Assert.assertTrue(set.remove(new String(e.getBody())));
+          e = channel.take();
+          Assert.assertNotNull(e);
+          Assert.assertTrue(set.remove(new String(e.getBody())));
+          e = channel.take();
+          Assert.assertNotNull(e);
+          Assert.assertTrue(set.remove(new String(e.getBody())));
+          tx.commit();
+          tx.close();
+          channel.stop();
+        }
+      }).get();
+    } catch (ExecutionException e) {
+      throw e.getCause();
+    }
+
+  }
+
+  @Test
   public void testRestartLogReplayV1() throws Exception {
     doTestRestart(true);
   }
@@ -130,7 +303,7 @@ public class TestFileChannel {
   public void doTestRestart(boolean useLogReplayV1) throws Exception {
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.USE_LOG_REPLAY_V1,
-        String.valueOf(useLogReplayV1));
+            String.valueOf(useLogReplayV1));
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
@@ -268,7 +441,7 @@ public class TestFileChannel {
       Assert.fail();
     } catch (ChannelException e) {
       Assert.assertEquals("Cannot acquire capacity. [channel="+channel.getName()+"]",
-          e.getMessage());
+              e.getMessage());
     }
     // take an event, roll it back, and
     // then make sure a put fails
@@ -285,7 +458,7 @@ public class TestFileChannel {
       Assert.fail();
     } catch (ChannelException e) {
       Assert.assertEquals("Cannot acquire capacity. [channel="+channel.getName()+"]",
-          e.getMessage());
+              e.getMessage());
     }
     // ensure we the events back
     Assert.assertEquals(5, takeEvents(channel, 1, 5).size());
@@ -316,11 +489,11 @@ public class TestFileChannel {
       Assert.fail();
     } catch (ChannelException e) {
       Assert.assertEquals("Cannot acquire capacity. [channel="+channel.getName()+"]",
-          e.getMessage());
+              e.getMessage());
     }
     // then do a put which will block but it will be assigned a tx id
     Future<String> put = Executors.newSingleThreadExecutor()
-        .submit(new Callable<String>() {
+            .submit(new Callable<String>() {
       @Override
       public String call() throws Exception {
         List<String> result = putEvents(channel, "blocked-put", 1, 1);
@@ -420,11 +593,11 @@ public class TestFileChannel {
     final CountDownLatch producerStopLatch = new CountDownLatch(numThreads);
     final CountDownLatch consumerStopLatch = new CountDownLatch(numThreads);
     final List<Exception> errors = Collections
-        .synchronizedList(new ArrayList<Exception>());
+            .synchronizedList(new ArrayList<Exception>());
     final List<String> expected = Collections
-        .synchronizedList(new ArrayList<String>());
+            .synchronizedList(new ArrayList<String>());
     final List<String> actual = Collections
-        .synchronizedList(new ArrayList<String>());
+            .synchronizedList(new ArrayList<String>());
     for (int i = 0; i < numThreads; i++) {
       final int id = i;
       Thread t = new Thread() {
@@ -479,9 +652,9 @@ public class TestFileChannel {
       t.start();
     }
     Assert.assertTrue("Timed out waiting for producers",
-        producerStopLatch.await(30, TimeUnit.SECONDS));
+            producerStopLatch.await(30, TimeUnit.SECONDS));
     Assert.assertTrue("Timed out waiting for consumer",
-        consumerStopLatch.await(30, TimeUnit.SECONDS));
+            consumerStopLatch.await(30, TimeUnit.SECONDS));
     Assert.assertEquals(Collections.EMPTY_LIST, errors);
     Collections.sort(expected);
     Collections.sort(actual);
@@ -501,9 +674,9 @@ public class TestFileChannel {
     // checkpoints and rolls occur during the test
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.CHECKPOINT_INTERVAL,
-        String.valueOf(10L * 1000L));
+            String.valueOf(10L * 1000L));
     overrides.put(FileChannelConfiguration.MAX_FILE_SIZE,
-        String.valueOf(1024 * 1024 * 5));
+            String.valueOf(1024 * 1024 * 5));
     // do reconfiguration
     channel = createFileChannel(overrides);
     channel.start();
@@ -558,13 +731,13 @@ public class TestFileChannel {
    */
   @Test
   public void testFileFormatV2postFLUME1432()
-      throws Exception {
+          throws Exception {
     copyDecompressed("fileformat-v2-checkpoint.gz",
-        new File(checkpointDir, "checkpoint"));
+            new File(checkpointDir, "checkpoint"));
     for (int i = 0; i < dataDirs.length; i++) {
       int fileIndex = i + 1;
       copyDecompressed("fileformat-v2-log-"+fileIndex+".gz",
-          new File(dataDirs[i], "log-" + fileIndex));
+              new File(dataDirs[i], "log-" + fileIndex));
     }
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(10));
@@ -573,7 +746,7 @@ public class TestFileChannel {
     Assert.assertTrue(channel.isOpen());
     List<String> events = takeEvents(channel, 1);
     List<String> expected = Arrays.asList(new String[] {
-        "2684", "2685", "2686", "2687", "2688", "2689", "2690", "2691"
+              "2684", "2685", "2686", "2687", "2688", "2689", "2690", "2691"
         }
     );
     Assert.assertEquals(expected, events);
@@ -584,27 +757,27 @@ public class TestFileChannel {
    */
   @Test
   public void testFileFormatV2PreFLUME1432LogReplayV1()
-      throws Exception {
+          throws Exception {
     doTestFileFormatV2PreFLUME1432(true);
   }
   @Test
   public void testFileFormatV2PreFLUME1432LogReplayV2()
-      throws Exception {
+          throws Exception {
     doTestFileFormatV2PreFLUME1432(false);
   }
   public void doTestFileFormatV2PreFLUME1432(boolean useLogReplayV1)
-      throws Exception {
+          throws Exception {
     copyDecompressed("fileformat-v2-pre-FLUME-1432-checkpoint.gz",
-        new File(checkpointDir, "checkpoint"));
+            new File(checkpointDir, "checkpoint"));
     for (int i = 0; i < dataDirs.length; i++) {
       int fileIndex = i + 1;
-      copyDecompressed("fileformat-v2-pre-FLUME-1432-log-"+fileIndex+".gz",
-          new File(dataDirs[i], "log-" + fileIndex));
+      copyDecompressed("fileformat-v2-pre-FLUME-1432-log-" + fileIndex + ".gz",
+              new File(dataDirs[i], "log-" + fileIndex));
     }
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(10000));
     overrides.put(FileChannelConfiguration.USE_LOG_REPLAY_V1,
-        String.valueOf(useLogReplayV1));
+            String.valueOf(useLogReplayV1));
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
@@ -612,20 +785,184 @@ public class TestFileChannel {
     Assert.assertEquals(50, events.size());
   }
 
+  /**
+   * Test contributed by Brock Noland during code review.
+   * @throws Exception
+   */
+  @Test
+  public void testTakeTransactionCrossingCheckpoint() throws Exception {
+    channel = createFileChannel();
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    List<String> in = Lists.newArrayList();
+    try {
+      while (true) {
+        in.addAll(putEvents(channel, "restart", 1, 1));
+      }
+    } catch (ChannelException e) {
+      Assert.assertEquals("Cannot acquire capacity. [channel="
+              + channel.getName() + "]", e.getMessage());
+    }
+    List<String> out = Lists.newArrayList();
+    // now take one item off the channel
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+    Event e = channel.take();
+    long takeTime = System.currentTimeMillis();
+    Assert.assertNotNull(e);
+    String s = new String(e.getBody(), Charsets.UTF_8);
+    out.add(s);
+    LOG.info("Slow take got " + s);
+    // sleep so a checkpoint occurs. take is before
+    // and commit is after the checkpoint
+    File checkpoint = new File(checkpointDir, "checkpoint");
+    while(checkpoint.lastModified() < takeTime){
+      TimeUnit.MILLISECONDS.sleep(500);
+    }
+    tx.commit();
+    tx.close();
+    channel.stop();
+    channel = createFileChannel();
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    // we should not geet the item we took of the queue above
+    out.addAll(takeEvents(channel, 1, Integer.MAX_VALUE));
+    channel.stop();
+    Collections.sort(in);
+    Collections.sort(out);
+    if (!out.equals(in)) {
+      List<String> difference = new ArrayList<String>();
+      if (in.size() > out.size()) {
+        LOG.info("The channel shorted us");
+        difference.addAll(in);
+        difference.removeAll(out);
+      } else {
+        LOG.info("We got more events than expected, perhaps dups");
+        difference.addAll(out);
+        difference.removeAll(in);
+      }
+      LOG.error("difference = " + difference
+              + ", in.size = " + in.size() + ", out.size = " + out.size());
+      Assert.fail();
+    }
+  }
+
+  @Test
+  public void testPutForceCheckpointCommitReplay() throws Exception{
+    Set<String> set = Sets.newHashSet();
+    Map<String, String> overrides = Maps.newHashMap();
+    overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(2));
+    FileChannel channel = createFileChannel(overrides);
+    channel.start();
+    //Force a checkpoint by committing a transaction
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+    channel.put(EventBuilder.withBody(new byte[]{'a','b'}));
+    set.add(new String(new byte[]{'a','b'}));
+    tx.commit();
+    tx.close();
+    tx = channel.getTransaction();
+    tx.begin();
+    channel.put(EventBuilder.withBody(new byte[]{'c','d'}));
+    set.add(new String(new byte[]{'c', 'd'}));
+    File checkpoint = new File(checkpointDir, "checkpoint");
+    long t1 = System.currentTimeMillis();
+    while(checkpoint.lastModified() < t1) {
+      TimeUnit.MILLISECONDS.sleep(500);
+      if (System.currentTimeMillis() - checkpoint.lastModified() > 15000) {
+        throw new TimeoutException("Checkpoint did not happen");
+      }
+    }
+    tx.commit();
+    tx.close();
+    channel.stop();
+
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    tx = channel.getTransaction();
+    tx.begin();
+    Event e = channel.take();
+    Assert.assertNotNull(e);
+    Assert.assertTrue(set.contains(new String(e.getBody())));
+    e = channel.take();
+    Assert.assertNotNull(e);
+    Assert.assertTrue(set.contains(new String(e.getBody())));
+    tx.commit();
+    tx.close();
+    channel.stop();
+
+  }
+
+  @Test
+  public void testPutCheckpointCommitCheckpointReplay() throws Exception {
+    Set<String> set = Sets.newHashSet();
+    Map<String, String> overrides = Maps.newHashMap();
+    overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(2));
+    FileChannel channel = createFileChannel(overrides);
+    channel.start();
+    //Force a checkpoint by committing a transaction
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+    channel.put(EventBuilder.withBody(new byte[]{'a','b'}));
+    set.add(new String(new byte[]{'a','b'}));
+    tx.commit();
+    tx.close();
+    tx = channel.getTransaction();
+    tx.begin();
+    channel.put(EventBuilder.withBody(new byte[]{'c', 'd'}));
+    set.add(new String(new byte[]{'c','d'}));
+    File checkpoint = new File(checkpointDir, "checkpoint");
+    long t1 = System.currentTimeMillis();
+    while (checkpoint.lastModified() < t1) {
+      TimeUnit.MILLISECONDS.sleep(500);
+      if(t1 - checkpoint.lastModified() > 15000){
+        throw new TimeoutException("Checkpoint was expected,"
+                + " but did not happen");
+      }
+    }
+    tx.commit();
+    tx.close();
+    long t2 = System.currentTimeMillis();
+    while(checkpoint.lastModified() < t2){
+      TimeUnit.MILLISECONDS.sleep(500);
+      if (t2 - checkpoint.lastModified() > 15000) {
+        throw new TimeoutException("Checkpoint was expected, "
+                + "but did not happen");
+      }
+    }
+    channel.stop();
+
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    tx = channel.getTransaction();
+    tx.begin();
+    Event e = channel.take();
+    Assert.assertNotNull(e);
+    Assert.assertTrue(set.contains(new String(e.getBody())));
+    e = channel.take();
+    Assert.assertNotNull(e);
+    Assert.assertTrue(set.contains(new String(e.getBody())));
+    tx.commit();
+    tx.close();
+    channel.stop();
+  }
+
   private static void copyDecompressed(String resource, File output)
-      throws IOException {
+          throws IOException {
     URL input =  Resources.getResource(resource);
     long copied = ByteStreams.copy(new GZIPInputStream(input.openStream()),
-        new FileOutputStream(output));
+            new FileOutputStream(output));
     LOG.info("Copied " + copied + " bytes from " + input + " to " + output);
   }
 
   private static List<String> takeEvents(Channel channel,
-      int batchSize) throws Exception {
+          int batchSize) throws Exception {
     return takeEvents(channel, batchSize, Integer.MAX_VALUE);
   }
   private static List<String> takeEvents(Channel channel,
-      int batchSize, int numEvents) throws Exception {
+          int batchSize, int numEvents) throws Exception {
     List<String> result = Lists.newArrayList();
     for (int i = 0; i < numEvents; i += batchSize) {
       for (int j = 0; j < batchSize; j++) {
@@ -650,7 +987,7 @@ public class TestFileChannel {
     return result;
   }
   private static List<String> putEvents(Channel channel, String prefix,
-      int batchSize, int numEvents) throws Exception {
+          int batchSize, int numEvents) throws Exception {
     List<String> result = Lists.newArrayList();
     for (int i = 0; i < numEvents; i += batchSize) {
       for (int j = 0; j < batchSize; j++) {

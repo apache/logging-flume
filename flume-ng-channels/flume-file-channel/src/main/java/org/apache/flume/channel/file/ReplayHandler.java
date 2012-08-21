@@ -26,14 +26,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 
-import org.apache.commons.collections.MultiMap;
-import org.apache.commons.collections.map.MultiValueMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Sets;
+import java.util.Iterator;
+import java.util.Set;
+import org.apache.commons.collections.MultiMap;
+import org.apache.commons.collections.map.MultiValueMap;
 
 /**
  * Processes a set of data logs, replaying said logs into the queue.
@@ -78,6 +82,16 @@ class ReplayHandler {
     int total = 0;
     int count = 0;
     MultiMap transactionMap = new MultiValueMap();
+    //Read inflight puts to see if they were committed
+    SetMultimap<Long, Long> inflightPuts = queue.deserializeInflightPuts();
+    for (Long txnID : inflightPuts.keySet()) {
+      Set<Long> eventPointers = inflightPuts.get(txnID);
+      for (Long eventPointer : eventPointers) {
+        transactionMap.put(txnID, FlumeEventPointer.fromLong(eventPointer));
+      }
+    }
+
+    SetMultimap<Long, Long> inflightTakes = queue.deserializeInflightTakes();
     LOG.info("Starting replay of " + logs);
     for (File log : logs) {
       LOG.info("Replaying " + log);
@@ -120,6 +134,20 @@ class ReplayHandler {
               @SuppressWarnings("unchecked")
               Collection<FlumeEventPointer> pointers =
                 (Collection<FlumeEventPointer>) transactionMap.remove(trans);
+              if (((Commit) record).getType()
+                      == TransactionEventRecord.Type.TAKE.get()) {
+                if (inflightTakes.containsKey(trans)) {
+                  if (pointers == null) {
+                    pointers = Sets.newHashSet();
+                  }
+                  Set<Long> takes = inflightTakes.removeAll(trans);
+                  Iterator<Long> it = takes.iterator();
+                  while (it.hasNext()) {
+                    Long take = it.next();
+                    pointers.add(FlumeEventPointer.fromLong(take));
+                  }
+                }
+              }
               if (pointers != null && pointers.size() > 0) {
                 processCommit(((Commit) record).getType(), pointers);
                 count += pointers.size();
@@ -149,6 +177,19 @@ class ReplayHandler {
         }
       }
     }
+    //re-insert the events in the take map,
+    //since the takes were not committed.
+    int uncommittedTakes = 0;
+    for (Long inflightTxnId : inflightTakes.keySet()) {
+      Set<Long> inflightUncommittedTakes =
+              inflightTakes.get(inflightTxnId);
+      for (Long inflightUncommittedTake : inflightUncommittedTakes) {
+        queue.addHead(FlumeEventPointer.fromLong(inflightUncommittedTake));
+        uncommittedTakes++;
+      }
+    }
+    inflightTakes.clear();
+    count += uncommittedTakes;
     int pendingTakesSize = pendingTakes.size();
     if (pendingTakesSize > 0) {
       String msg = "Pending takes " + pendingTakesSize
@@ -173,6 +214,16 @@ class ReplayHandler {
     MultiMap transactionMap = new MultiValueMap();
     long transactionIDSeed = 0, writeOrderIDSeed = 0;
     LOG.info("Starting replay of " + logs);
+    //Load the inflight puts into the transaction map to see if they were
+    //committed in one of the logs.
+    SetMultimap<Long, Long> inflightPuts = queue.deserializeInflightPuts();
+    for (Long txnID : inflightPuts.keySet()) {
+      Set<Long> eventPointers = inflightPuts.get(txnID);
+      for (Long eventPointer : eventPointers) {
+        transactionMap.put(txnID, FlumeEventPointer.fromLong(eventPointer));
+      }
+    }
+    SetMultimap<Long, Long> inflightTakes = queue.deserializeInflightTakes();
     try {
       for (File log : logs) {
         LOG.info("Replaying " + log);
@@ -232,6 +283,20 @@ class ReplayHandler {
             @SuppressWarnings("unchecked")
             Collection<FlumeEventPointer> pointers =
               (Collection<FlumeEventPointer>) transactionMap.remove(trans);
+            if (((Commit) record).getType()
+                    == TransactionEventRecord.Type.TAKE.get()) {
+              if (inflightTakes.containsKey(trans)) {
+                if(pointers == null){
+                  pointers = Sets.newHashSet();
+                }
+                Set<Long> takes = inflightTakes.removeAll(trans);
+                Iterator<Long> it = takes.iterator();
+                while (it.hasNext()) {
+                  Long take = it.next();
+                  pointers.add(FlumeEventPointer.fromLong(take));
+                }
+              }
+            }
             if (pointers != null && pointers.size() > 0) {
               processCommit(((Commit) record).getType(), pointers);
               count += pointers.size();
@@ -256,6 +321,19 @@ class ReplayHandler {
         }
       }
     }
+    //re-insert the events in the take map,
+    //since the takes were not committed.
+    int uncommittedTakes = 0;
+    for (Long inflightTxnId : inflightTakes.keySet()) {
+      Set<Long> inflightUncommittedTakes =
+              inflightTakes.get(inflightTxnId);
+      for (Long inflightUncommittedTake : inflightUncommittedTakes) {
+        queue.addHead(FlumeEventPointer.fromLong(inflightUncommittedTake));
+        uncommittedTakes++;
+      }
+    }
+    inflightTakes.clear();
+    count += uncommittedTakes;
     int pendingTakesSize = pendingTakes.size();
     if (pendingTakesSize > 0) {
       String msg = "Pending takes " + pendingTakesSize

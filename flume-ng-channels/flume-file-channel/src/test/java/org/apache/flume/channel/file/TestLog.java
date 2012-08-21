@@ -140,7 +140,7 @@ public class TestLog {
                 dataDirs).setChannelName("testlog").build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
-    Assert.assertNull(queue.removeHead());
+    Assert.assertNull(queue.removeHead(transactionID));
   }
 
   /**
@@ -164,7 +164,7 @@ public class TestLog {
             .setChannelName("testlog").build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
-    Assert.assertNull(queue.removeHead());
+    Assert.assertNull(queue.removeHead(0));
   }
 
   /**
@@ -212,7 +212,7 @@ public class TestLog {
             .setChannelName("testlog").build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
-    FlumeEventPointer eventPointerOut = queue.removeHead();
+    FlumeEventPointer eventPointerOut = queue.removeHead(0);
     Assert.assertNull(eventPointerOut);
   }
 
@@ -228,7 +228,7 @@ public class TestLog {
             .setChannelName("testlog").build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
-    FlumeEventPointer eventPointerOut = queue.removeHead();
+    FlumeEventPointer eventPointerOut = queue.removeHead(0);
     Assert.assertNull(eventPointerOut);
   }
 
@@ -244,16 +244,16 @@ public class TestLog {
             .setChannelName("testlog").build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
-    FlumeEventPointer eventPointerOut = queue.removeHead();
+    FlumeEventPointer eventPointerOut = queue.removeHead(0);
     Assert.assertNull(eventPointerOut);
   }
 
   private void takeAndVerify(FlumeEventPointer eventPointerIn,
       FlumeEvent eventIn) throws IOException, InterruptedException {
     FlumeEventQueue queue = log.getFlumeEventQueue();
-    FlumeEventPointer eventPointerOut = queue.removeHead();
+    FlumeEventPointer eventPointerOut = queue.removeHead(0);
     Assert.assertNotNull(eventPointerOut);
-    Assert.assertNull(queue.removeHead());
+    Assert.assertNull(queue.removeHead(0));
     Assert.assertEquals(eventPointerIn, eventPointerOut);
     Assert.assertEquals(eventPointerIn.hashCode(), eventPointerOut.hashCode());
     FlumeEvent eventOut = log.get(eventPointerOut);

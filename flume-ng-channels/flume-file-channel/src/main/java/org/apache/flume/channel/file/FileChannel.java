@@ -256,6 +256,7 @@ public class FileChannel extends BasicChannelSemantics {
     super.stop();
   }
 
+  @Override
   public String toString() {
     return "FileChannel " + getName() + " { dataDirs: " +
         Arrays.toString(dataDirs) + " }";
@@ -362,7 +363,7 @@ public class FileChannel extends BasicChannelSemantics {
             "increasing capacity, or increasing thread count. "
                + channelNameDescriptor);
       }
-      FlumeEventPointer ptr = queue.removeHead();
+      FlumeEventPointer ptr = queue.removeHead(transactionID);
       if(ptr != null) {
         try {
           // first add to takeList so that if write to disk
@@ -387,6 +388,23 @@ public class FileChannel extends BasicChannelSemantics {
       if(puts > 0) {
         Preconditions.checkState(takes == 0, "nonzero puts and takes "
                 + channelNameDescriptor);
+        /*
+         * OK to not put this in synchronized(queue) block, because if a
+         * checkpoint occurs after the commit it is fine.
+         * The puts will be in the inflightputs file in the checkpoint.
+         * The commit did not return, so previous hop would not get success
+         * for the commit.
+         * The replay will not see the commit in the log file(since the
+         * commit is before the checkpoint in the logs) - and hence the events
+         * are not added back to the queue, so no duplicates or data loss.
+         */
+        try {
+          log.commitPut(transactionID);
+          channelCounter.addToEventPutSuccessCount(puts);
+        } catch (IOException e) {
+          throw new ChannelException("Commit failed due to IO error "
+                  + channelNameDescriptor, e);
+        }
         synchronized (queue) {
           while(!putList.isEmpty()) {
             if(!queue.addTail(putList.removeFirst())) {
@@ -401,21 +419,24 @@ public class FileChannel extends BasicChannelSemantics {
               Preconditions.checkState(false, msg.toString());
             }
           }
+          queue.completeTransaction(transactionID);
         }
+      } else if (takes > 0) {
         try {
-          log.commitPut(transactionID);
-          channelCounter.addToEventPutSuccessCount(puts);
-        } catch (IOException e) {
-          throw new ChannelException("Commit failed due to IO error "
-              + channelNameDescriptor, e);
-        }
-      } else if(takes > 0) {
-        try {
+          /*
+           * OK to not have the commit take in synchronized(queue) block.
+           * If a checkpoint happens in between the commitTake and
+           * the completeTxn call, the takes will be in the inflightTakes file.
+           * When the channel replays the events, these takes will be put
+           * back into the channel - and will cause duplicates, but the
+           * number of duplicates will be pretty limited.
+           */
           log.commitTake(transactionID);
+          queue.completeTransaction(transactionID);
           channelCounter.addToEventTakeSuccessCount(takes);
         } catch (IOException e) {
           throw new ChannelException("Commit failed due to IO error "
-               + channelNameDescriptor, e);
+                  + channelNameDescriptor, e);
         }
         queueRemaining.release(takes);
       }
@@ -428,26 +449,36 @@ public class FileChannel extends BasicChannelSemantics {
     protected void doRollback() throws InterruptedException {
       int puts = putList.size();
       int takes = takeList.size();
-      if(takes > 0) {
-        Preconditions.checkState(puts == 0, "nonzero puts and takes "
-            + channelNameDescriptor);
-        while(!takeList.isEmpty()) {
-          Preconditions.checkState(queue.addHead(takeList.removeLast()),
-              "Queue add failed, this shouldn't be able to happen "
-                   + channelNameDescriptor);
-        }
-      }
-      queueRemaining.release(puts);
+      /*
+       * OK to not have the rollback within the synchronized(queue) block.
+       * If a checkpoint occurs between the rollback and the synchronized(queue)
+       * block, the takes are kept in the inflighttakes file in the checkpoint.
+       * During a replay the commit or rollback for the takes are not seen,
+       * so the takes are re-inserted into the queue - which is a rollback
+       * anyway.
+       */
       try {
         log.rollback(transactionID);
       } catch (IOException e) {
         throw new ChannelException("Commit failed due to IO error "
-             + channelNameDescriptor, e);
+                + channelNameDescriptor, e);
       }
+      if(takes > 0) {
+        Preconditions.checkState(puts == 0, "nonzero puts and takes "
+            + channelNameDescriptor);
+        synchronized (queue) {
+          while (!takeList.isEmpty()) {
+            Preconditions.checkState(queue.addHead(takeList.removeLast()),
+                    "Queue add failed, this shouldn't be able to happen "
+                    + channelNameDescriptor);
+          }
+          queue.completeTransaction(transactionID);
+        }
+      }
+      queueRemaining.release(puts);
       putList.clear();
       takeList.clear();
       channelCounter.setChannelSize(queue.getSize());
     }
-
   }
 }
