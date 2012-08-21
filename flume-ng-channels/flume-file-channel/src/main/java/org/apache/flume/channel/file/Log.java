@@ -52,6 +52,12 @@ import java.util.SortedSet;
  * Stores FlumeEvents on disk and pointers to the events in a in memory queue.
  * Once a log object is created the replay method should be called to reconcile
  * the on disk write ahead log with the last checkpoint of the queue.
+ *
+ * Before calling any of commitPut/commitTake/get/put/rollback/take
+ * Log.tryLockShared should be called and the above operations
+ * should only be called if tryLockShared returns true. After
+ * the operation and any additional modifications of the
+ * FlumeEventQueue, the Log.unlockShared method should be called.
  */
 class Log {
   public static final String PREFIX = "log-";
@@ -75,7 +81,13 @@ class Log {
   private final Map<String, FileLock> locks;
   private final ReentrantReadWriteLock checkpointLock =
       new ReentrantReadWriteLock(true);
+  /**
+   * Shared lock
+   */
   private final ReadLock checkpointReadLock = checkpointLock.readLock();
+  /**
+   * Exclusive lock
+   */
   private final WriteLock checkpointWriterLock = checkpointLock.writeLock();
   private int logWriteTimeout;
   private final String channelName;
@@ -208,7 +220,8 @@ class Log {
   void replay() throws IOException {
     Preconditions.checkState(!open, "Cannot replay after Log has been opened");
 
-    checkpointWriterLock.lock();
+    Preconditions.checkState(tryLockExclusive(), "Cannot obtain lock on "
+        + channelNameDescriptor);
 
     try {
       /*
@@ -285,7 +298,7 @@ class Log {
       }
       Throwables.propagate(ex);
     } finally {
-      checkpointWriterLock.unlock();
+      unlockExclusive();
     }
   }
 
@@ -312,31 +325,10 @@ class Log {
   FlumeEvent get(FlumeEventPointer pointer) throws IOException,
   InterruptedException {
     Preconditions.checkState(open, "Log is closed");
-
-    boolean lockAcquired = false;
-    try {
-      lockAcquired = checkpointReadLock.tryLock(logWriteTimeout, TimeUnit.SECONDS);
-    } catch (InterruptedException ex) {
-      LOGGER.warn("Interrupted while waiting for log write lock", ex);
-      Thread.currentThread().interrupt();
-    }
-
-    if (!lockAcquired) {
-      throw new IOException("Failed to obtain lock for writing to the log. "
-          + "Try increasing the log write timeout value or disabling it by "
-          + "setting it to 0.");
-    }
-
-    try {
-      int id = pointer.getFileID();
-      LogFile.RandomReader logFile = idLogFileMap.get(id);
-      Preconditions.checkNotNull(logFile, "LogFile is null for id " + id);
-      return logFile.get(pointer.getOffset());
-    } finally {
-      if (lockAcquired) {
-        checkpointReadLock.unlock();
-      }
-    }
+    int id = pointer.getFileID();
+    LogFile.RandomReader logFile = idLogFileMap.get(id);
+    Preconditions.checkNotNull(logFile, "LogFile is null for id " + id);
+    return logFile.get(pointer.getOffset());
   }
 
   /**
@@ -351,46 +343,23 @@ class Log {
   FlumeEventPointer put(long transactionID, Event event)
       throws IOException {
     Preconditions.checkState(open, "Log is closed");
-
-    boolean lockAcquired = false;
-    try {
-      lockAcquired = checkpointReadLock.tryLock(logWriteTimeout, TimeUnit.SECONDS);
-    } catch (InterruptedException ex) {
-      LOGGER.warn("Interrupted while waiting for log write lock on " +
-          channelNameDescriptor, ex);
-      Thread.currentThread().interrupt();
+    FlumeEvent flumeEvent = new FlumeEvent(
+        event.getHeaders(), event.getBody());
+    Put put = new Put(transactionID, flumeEvent);
+    put.setLogWriteOrderID(WriteOrderOracle.next());
+    ByteBuffer buffer = TransactionEventRecord.toByteBuffer(put);
+    int logFileIndex = nextLogWriter(transactionID);
+    if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
+      roll(logFileIndex, buffer);
     }
-
-    if (!lockAcquired) {
-      throw new IOException("Failed to obtain lock for writing to the log. "
-          + "Try increasing the log write timeout value or disabling it by "
-          + "setting it to 0. " + channelNameDescriptor);
-    }
-
+    boolean error = true;
     try {
-      FlumeEvent flumeEvent = new FlumeEvent(
-                    event.getHeaders(), event.getBody());
-      Put put = new Put(transactionID, flumeEvent);
-      put.setLogWriteOrderID(WriteOrderOracle.next());
-      ByteBuffer buffer = TransactionEventRecord.toByteBuffer(put);
-      int logFileIndex = nextLogWriter(transactionID);
-      if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
-        roll(logFileIndex, buffer);
-      }
-      boolean error = true;
-      try {
-        FlumeEventPointer ptr = logFiles.get(logFileIndex).put(buffer);
-        queue.addWithoutCommit(ptr, transactionID);
-        error = false;
-        return ptr;
-      } finally {
-        if (error) {
-          roll(logFileIndex);
-        }
-      }
+      FlumeEventPointer ptr = logFiles.get(logFileIndex).put(buffer);
+      error = false;
+      return ptr;
     } finally {
-      if (lockAcquired) {
-        checkpointReadLock.unlock();
+      if (error) {
+        roll(logFileIndex);
       }
     }
   }
@@ -406,42 +375,21 @@ class Log {
   void take(long transactionID, FlumeEventPointer pointer)
       throws IOException {
     Preconditions.checkState(open, "Log is closed");
-
-    boolean lockAcquired = false;
-    try {
-      lockAcquired = checkpointReadLock.tryLock(logWriteTimeout, TimeUnit.SECONDS);
-    } catch (InterruptedException ex) {
-      LOGGER.warn("Interrupted while waiting for log write lock", ex);
-      Thread.currentThread().interrupt();
+    Take take = new Take(transactionID, pointer.getOffset(),
+        pointer.getFileID());
+    take.setLogWriteOrderID(WriteOrderOracle.next());
+    ByteBuffer buffer = TransactionEventRecord.toByteBuffer(take);
+    int logFileIndex = nextLogWriter(transactionID);
+    if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
+      roll(logFileIndex, buffer);
     }
-
-    if (!lockAcquired) {
-      throw new IOException("Failed to obtain lock for writing to the log. "
-          + "Try increasing the log write timeout value or disabling it by "
-          + "setting it to 0. " + channelNameDescriptor);
-    }
-
+    boolean error = true;
     try {
-      Take take = new Take(transactionID, pointer.getOffset(),
-          pointer.getFileID());
-      take.setLogWriteOrderID(WriteOrderOracle.next());
-      ByteBuffer buffer = TransactionEventRecord.toByteBuffer(take);
-      int logFileIndex = nextLogWriter(transactionID);
-      if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
-        roll(logFileIndex, buffer);
-      }
-      boolean error = true;
-      try {
-        logFiles.get(logFileIndex).take(buffer);
-        error = false;
-      } finally {
-        if (error) {
-          roll(logFileIndex);
-        }
-      }
+      logFiles.get(logFileIndex).take(buffer);
+      error = false;
     } finally {
-      if (lockAcquired) {
-        checkpointReadLock.unlock();
+      if (error) {
+        roll(logFileIndex);
       }
     }
   }
@@ -456,44 +404,23 @@ class Log {
   void rollback(long transactionID) throws IOException {
     Preconditions.checkState(open, "Log is closed");
 
-    boolean lockAcquired = false;
-    try {
-      lockAcquired = checkpointReadLock.tryLock(logWriteTimeout, TimeUnit.SECONDS);
-    } catch (InterruptedException ex) {
-      LOGGER.warn("Interrupted while waiting for log write lock", ex);
-      Thread.currentThread().interrupt();
-    }
-
-    if (!lockAcquired) {
-      throw new IOException("Failed to obtain lock for writing to the log. "
-          + "Try increasing the log write timeout value or disabling it by "
-          + "setting it to 0. "+ channelNameDescriptor);
-    }
-
     if(LOGGER.isDebugEnabled()) {
       LOGGER.debug("Rolling back " + transactionID);
     }
-
+    Rollback rollback = new Rollback(transactionID);
+    rollback.setLogWriteOrderID(WriteOrderOracle.next());
+    ByteBuffer buffer = TransactionEventRecord.toByteBuffer(rollback);
+    int logFileIndex = nextLogWriter(transactionID);
+    if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
+      roll(logFileIndex, buffer);
+    }
+    boolean error = true;
     try {
-      Rollback rollback = new Rollback(transactionID);
-      rollback.setLogWriteOrderID(WriteOrderOracle.next());
-      ByteBuffer buffer = TransactionEventRecord.toByteBuffer(rollback);
-      int logFileIndex = nextLogWriter(transactionID);
-      if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
-        roll(logFileIndex, buffer);
-      }
-      boolean error = true;
-      try {
-        logFiles.get(logFileIndex).rollback(buffer);
-        error = false;
-      } finally {
-        if (error) {
-          roll(logFileIndex);
-        }
-      }
+      logFiles.get(logFileIndex).rollback(buffer);
+      error = false;
     } finally {
-      if (lockAcquired) {
-        checkpointReadLock.unlock();
+      if (error) {
+        roll(logFileIndex);
       }
     }
   }
@@ -531,6 +458,36 @@ class Log {
     Preconditions.checkState(open, "Log is closed");
     commit(transactionID, TransactionEventRecord.Type.TAKE.get());
   }
+
+
+  private boolean tryLockExclusive() {
+    try {
+      return checkpointWriterLock.tryLock(checkpointWriteTimeout,
+          TimeUnit.SECONDS);
+    } catch (InterruptedException ex) {
+      LOGGER.warn("Interrupted while waiting for log exclusive lock", ex);
+      Thread.currentThread().interrupt();
+    }
+    return false;
+  }
+  private void unlockExclusive()  {
+    checkpointWriterLock.unlock();
+  }
+
+  boolean tryLockShared() {
+    try {
+      return checkpointReadLock.tryLock(logWriteTimeout, TimeUnit.SECONDS);
+    } catch (InterruptedException ex) {
+      LOGGER.warn("Interrupted while waiting for log shared lock", ex);
+      Thread.currentThread().interrupt();
+    }
+    return false;
+  }
+
+  void unlockShared()  {
+    checkpointReadLock.unlock();
+  }
+
 
   /**
    * Synchronization required since we do not want this
@@ -590,41 +547,20 @@ class Log {
   private void commit(long transactionID, short type) throws IOException {
 
     Preconditions.checkState(open, "Log is closed");
-
-    boolean lockAcquired = false;
-    try {
-      lockAcquired = checkpointReadLock.tryLock(logWriteTimeout, TimeUnit.SECONDS);
-    } catch (InterruptedException ex) {
-      LOGGER.warn("Interrupted while waiting for log write lock", ex);
-      Thread.currentThread().interrupt();
+    Commit commit = new Commit(transactionID, type);
+    commit.setLogWriteOrderID(WriteOrderOracle.next());
+    ByteBuffer buffer = TransactionEventRecord.toByteBuffer(commit);
+    int logFileIndex = nextLogWriter(transactionID);
+    if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
+      roll(logFileIndex, buffer);
     }
-
-    if (!lockAcquired) {
-      throw new IOException("Failed to obtain lock for writing to the log. "
-          + "Try increasing the log write timeout value or disabling it by "
-          + "setting it to 0. " + channelNameDescriptor);
-    }
-
+    boolean error = true;
     try {
-      Commit commit = new Commit(transactionID, type);
-      commit.setLogWriteOrderID(WriteOrderOracle.next());
-      ByteBuffer buffer = TransactionEventRecord.toByteBuffer(commit);
-      int logFileIndex = nextLogWriter(transactionID);
-      if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
-        roll(logFileIndex, buffer);
-      }
-      boolean error = true;
-      try {
-        logFiles.get(logFileIndex).commit(buffer);
-        error = false;
-      } finally {
-        if (error) {
-          roll(logFileIndex);
-        }
-      }
+      logFiles.get(logFileIndex).commit(buffer);
+      error = false;
     } finally {
-      if (lockAcquired) {
-        checkpointReadLock.unlock();
+      if (error) {
+        roll(logFileIndex);
       }
     }
   }
@@ -661,15 +597,7 @@ class Log {
    */
   private synchronized void roll(int index, ByteBuffer buffer)
       throws IOException {
-    boolean lockAcquired = false;
-    try {
-      lockAcquired = checkpointReadLock.tryLock(logWriteTimeout, TimeUnit.SECONDS);
-    } catch (InterruptedException ex) {
-      LOGGER.warn("Interrupted while waiting for log write lock", ex);
-      Thread.currentThread().interrupt();
-    }
-
-    if (!lockAcquired) {
+    if (!tryLockShared()) {
       throw new IOException("Failed to obtain lock for writing to the log. "
           + "Try increasing the log write timeout value or disabling it by "
           + "setting it to 0. "+ channelNameDescriptor);
@@ -701,9 +629,7 @@ class Log {
         }
       }
     } finally {
-      if (lockAcquired) {
-        checkpointReadLock.unlock();
-      }
+      unlockShared();
     }
   }
 
@@ -722,15 +648,8 @@ class Log {
    * @throws IOException if we are unable to write the checkpoint out to disk
    */
   private boolean writeCheckpoint(boolean force) throws Exception {
-    boolean lockAcquired = false;
     boolean checkpointCompleted = false;
-    try {
-      lockAcquired = checkpointWriterLock.tryLock(this.checkpointWriteTimeout,
-          TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-      LOGGER.warn("Interrupted while waiting to acquire lock.", e);
-      Thread.currentThread().interrupt();
-    }
+    boolean lockAcquired = tryLockExclusive();
     if(!lockAcquired) {
       return false;
     }
@@ -784,7 +703,7 @@ class Log {
         checkpointCompleted = true;
       }
     } finally {
-      checkpointWriterLock.unlock();
+      unlockExclusive();
     }
     //Do the deletes outside the checkpointWriterLock
     //Delete logic is expensive.
