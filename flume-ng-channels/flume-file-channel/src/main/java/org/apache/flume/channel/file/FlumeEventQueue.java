@@ -35,9 +35,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.SetMultimap;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import org.apache.commons.lang.ArrayUtils;
 
 /**
  * Queue of events in the channel. This queue stores only
@@ -48,7 +60,7 @@ import java.util.TreeSet;
  * contains the timestamp of last sync, the queue size and
  * the head position.
  */
-class FlumeEventQueue {
+final class FlumeEventQueue {
   private static final Logger LOG = LoggerFactory
   .getLogger(FlumeEventQueue.class);
   private static final long VERSION = 2;
@@ -72,6 +84,8 @@ class FlumeEventQueue {
   private final java.nio.channels.FileChannel checkpointFileHandle;
   private final int queueCapacity;
   private final String channelNameDescriptor;
+  private final InflightEventWrapper inflightTakes;
+  private final InflightEventWrapper inflightPuts;
 
   private int queueSize;
   private int queueHead;
@@ -81,7 +95,8 @@ class FlumeEventQueue {
    * @param capacity max event capacity of queue
    * @throws IOException
    */
-  FlumeEventQueue(int capacity, File file, String name) throws IOException {
+  FlumeEventQueue(int capacity, File file, File inflightTakesFile,
+          File inflightPutsFile, String name) throws Exception {
     Preconditions.checkArgument(capacity > 0,
         "Capacity must be greater than zero");
     this.channelNameDescriptor = "[channel=" + name + "]";
@@ -161,6 +176,14 @@ class FlumeEventQueue {
     }
 
     elements = new LongBufferWrapper(elementsBuffer, channelNameDescriptor);
+    //TODO: Support old code paths with no inflight files.
+    try {
+      inflightPuts = new InflightEventWrapper(inflightPutsFile);
+      inflightTakes = new InflightEventWrapper(inflightTakesFile);
+    } catch (Exception e) {
+      LOG.error("Could not read checkpoint.", e);
+      throw e;
+    }
   }
 
   private Pair<Integer, Integer> deocodeActiveLogCounter(long value) {
@@ -177,12 +200,23 @@ class FlumeEventQueue {
     return result;
   }
 
+  SetMultimap<Long, Long> deserializeInflightPuts() throws IOException{
+    return inflightPuts.deserialize();
+  }
+
+  SetMultimap<Long, Long> deserializeInflightTakes() throws IOException{
+    return inflightTakes.deserialize();
+  }
+
   synchronized long getLogWriteOrderID() {
     return logWriteOrderID;
   }
 
-  synchronized boolean checkpoint(boolean force) {
-    if (!elements.syncRequired() && !force) {
+  synchronized boolean checkpoint(boolean force) throws Exception {
+    if (!elements.syncRequired()
+            && !inflightTakes.syncRequired()
+            && !force) { //No need to check inflight puts, since that would
+                         //cause elements.syncRequired() to return true.
       LOG.debug("Checkpoint not required");
       return false;
     }
@@ -209,6 +243,8 @@ class FlumeEventQueue {
 
     elements.sync();
 
+    inflightPuts.serializeAndWrite();
+    inflightTakes.serializeAndWrite();
     // Finish checkpoint
     elementsBuffer.put(INDEX_CHECKPOINT_MARKER, CHECKPOINT_COMPLETE);
     mappedBuffer.force();
@@ -221,12 +257,12 @@ class FlumeEventQueue {
    *
    * @return FlumeEventPointer or null if queue is empty
    */
-  synchronized FlumeEventPointer removeHead() {
-    if(queueSize == 0) {
+  synchronized FlumeEventPointer removeHead(long transactionID) {
+    if(queueSize  == 0) {
       return null;
     }
 
-    long value = remove(0);
+    long value = remove(0, transactionID);
     Preconditions.checkState(value != EMPTY, "Empty value "
           + channelNameDescriptor);
 
@@ -236,13 +272,21 @@ class FlumeEventQueue {
   }
 
   /**
-   * Add a FlumeEventPointer to the head of the queue
+   * Add a FlumeEventPointer to the head of the queue.
+   * Called during rollbacks.
    * @param FlumeEventPointer to be added
    * @return true if space was available and pointer was
    * added to the queue
    */
   synchronized boolean addHead(FlumeEventPointer e) {
+    //Called only during rollback, so should not consider inflight takes' size,
+    //because normal puts through addTail method already account for these
+    //events since they are in the inflight takes. So puts will not happen
+    //in such a way that these takes cannot go back in. If this if returns true,
+    //there is a buuuuuuuug!
     if (queueSize == queueCapacity) {
+      LOG.error("Could not reinsert to queue, events which were taken but "
+              + "not committed. Please report this issue.");
       return false;
     }
 
@@ -256,15 +300,13 @@ class FlumeEventQueue {
 
 
   /**
-   * Add a FlumeEventPointer to the tail of the queue
-   * this will normally be used when recovering from a
-   * crash
+   * Add a FlumeEventPointer to the tail of the queue.
    * @param FlumeEventPointer to be added
    * @return true if space was available and pointer
    * was added to the queue
    */
   synchronized boolean addTail(FlumeEventPointer e) {
-    if (queueSize == queueCapacity) {
+    if ((queueSize + inflightTakes.getSize()) == queueCapacity) {
       return false;
     }
 
@@ -274,6 +316,16 @@ class FlumeEventQueue {
 
     add(queueSize, value);
     return true;
+  }
+
+  /**
+   * Must be called when a put happens to the log. This ensures that put commits
+   * after checkpoints will retrieve all events committed in that txn.
+   * @param e
+   * @param transactionID
+   */
+  synchronized void addWithoutCommit(FlumeEventPointer e, long transactionID) {
+    inflightPuts.addEvent(transactionID, e.toLong());
   }
 
   /**
@@ -288,7 +340,7 @@ class FlumeEventQueue {
     Preconditions.checkArgument(value != EMPTY);
     for (int i = 0; i < queueSize; i++) {
       if(get(i) == value) {
-        remove(i);
+        remove(i, 0);
         FlumeEventPointer ptr = FlumeEventPointer.fromLong(value);
         decrementFileID(ptr.getFileID());
         return true;
@@ -378,13 +430,26 @@ class FlumeEventQueue {
     return true;
   }
 
-  protected synchronized long remove(int index) {
+  /**
+   * Must be called when a transaction is being committed or rolled back.
+   * @param transactionID
+   */
+  synchronized void completeTransaction(long transactionID) {
+    if (!inflightPuts.completeTransaction(transactionID)) {
+      inflightTakes.completeTransaction(transactionID);
+    }
+  }
+
+  protected synchronized long remove(int index, long transactionID) {
     if (index < 0 || index > queueSize - 1) {
       throw new IndexOutOfBoundsException("index = " + index
           + ", queueSize " + queueSize +" " + channelNameDescriptor);
     }
     long value = get(index);
-
+    //if txn id = 0, we are recovering from a crash.
+    if(transactionID != 0) {
+      inflightTakes.addEvent(transactionID, value);
+    }
     if (index > queueSize/2) {
       // Move tail part to left
       for (int i = index; i < queueSize - 1; i++) {
@@ -426,7 +491,7 @@ class FlumeEventQueue {
   }
 
   protected synchronized int getSize() {
-    return queueSize;
+    return queueSize + inflightTakes.getSize();
   }
 
   /**
@@ -481,26 +546,239 @@ class FlumeEventQueue {
     }
   }
 
-  public static void main(String[] args) throws IOException {
+  /**
+   * A representation of in flight events which have not yet been committed.
+   * None of the methods are thread safe, and should be called from thread
+   * safe methods only.
+   */
+  private class InflightEventWrapper {
+    private SetMultimap<Long, Long> inflightEvents = HashMultimap.create();
+    private RandomAccessFile file;
+    private volatile java.nio.channels.FileChannel fileChannel;
+    private final MessageDigest digest;
+    private volatile Future<?> future;
+    private final File inflightEventsFile;
+    private volatile boolean syncRequired = false;
+
+    public InflightEventWrapper(File inflightEventsFile) throws Exception{
+      if(!inflightEventsFile.exists()){
+        Preconditions.checkState(inflightEventsFile.createNewFile(),"Could not"
+                + "create inflight events file: "
+                + inflightEventsFile.getCanonicalPath());
+      }
+      this.inflightEventsFile = inflightEventsFile;
+      file = new RandomAccessFile(inflightEventsFile, "rw");
+      fileChannel = file.getChannel();
+      digest = MessageDigest.getInstance("MD5");
+    }
+
+    /**
+     * Complete the transaction, and remove all events from inflight list.
+     * @param transactionID
+     */
+    public boolean completeTransaction(Long transactionID) {
+      if(!inflightEvents.containsKey(transactionID)) {
+        return false;
+      }
+      inflightEvents.removeAll(transactionID);
+      syncRequired = true;
+      return true;
+    }
+
+    /**
+     * Add an event pointer to the inflights list.
+     * @param transactionID
+     * @param pointer
+     */
+    public void addEvent(Long transactionID, Long pointer){
+      inflightEvents.put(transactionID, pointer);
+      syncRequired = true;
+    }
+
+    /**
+     * Serialize the set of in flights into a byte longBuffer.
+     * @return Returns the checksum of the buffer that is being
+     * asynchronously written to disk.
+     */
+    public void serializeAndWrite() throws Exception {
+      //Check if there is a current write happening, if there is abort it.
+      if (future != null) {
+        try {
+          future.cancel(true);
+        } catch (Exception e) {
+          LOG.warn("Interrupted a write to inflights "
+                  + "file: " + inflightEventsFile.getName()
+                  + " to start a new write.");
+        }
+        while (!future.isDone()) {
+          TimeUnit.MILLISECONDS.sleep(100);
+        }
+      }
+      Collection<Long> values = inflightEvents.values();
+      if(values.isEmpty()){
+        file.setLength(0L);
+      }
+      if(!fileChannel.isOpen()){
+        file = new RandomAccessFile(inflightEventsFile, "rw");
+        fileChannel = file.getChannel();
+      }
+      //What is written out?
+      //Checksum - 16 bytes
+      //and then each key-value pair from the map:
+      //transactionid numberofeventsforthistxn listofeventpointers
+
+      try {
+        int expectedFileSize = (((inflightEvents.keySet().size() * 2) //For transactionIDs and events per txn ID
+                + values.size()) * 8) //Event pointers
+                + 16; //Checksum
+        //There is no real need of filling the channel with 0s, since we
+        //will write the exact nummber of bytes as expected file size.
+        file.setLength(expectedFileSize);
+        Preconditions.checkState(file.length() == expectedFileSize,
+                "Expected File size of inflight events file does not match the "
+                + "current file size. Checkpoint is incomplete.");
+        file.seek(0);
+        final ByteBuffer buffer = ByteBuffer.allocate(expectedFileSize);
+        LongBuffer longBuffer = buffer.asLongBuffer();
+        for (Long txnID : inflightEvents.keySet()) {
+          Set<Long> pointers = inflightEvents.get(txnID);
+          longBuffer.put(txnID);
+          longBuffer.put((long) pointers.size());
+          LOG.debug("Number of events inserted into "
+                  + "inflights file: " + String.valueOf(pointers.size())
+                  + " file: " + inflightEventsFile.getCanonicalPath());
+          long[] written = ArrayUtils.toPrimitive(
+                  pointers.toArray(new Long[0]));
+          longBuffer.put(written);
+        }
+        byte[] checksum = digest.digest(buffer.array());
+        file.write(checksum);
+        future = Executors.newSingleThreadExecutor().submit(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    try {
+                      buffer.position(0);
+                      fileChannel.write(buffer);
+                      fileChannel.force(true);
+                    } catch (IOException ex) {
+                      LOG.error("Error while writing inflight events to "
+                              + "inflights file: "
+                              + inflightEventsFile.getName());
+                    }
+                  }
+                });
+        syncRequired = false;
+      } catch (IOException ex) {
+        LOG.error("Error while writing checkpoint to disk.", ex);
+        throw ex;
+      }
+    }
+
+    /**
+     * Read the inflights file and return a
+     * {@link com.google.common.collect.SetMultimap}
+     * of transactionIDs to events that were inflight.
+     *
+     * @return - map of inflight events per txnID.
+     *
+     */
+    public SetMultimap<Long, Long> deserialize() throws IOException {
+      SetMultimap<Long, Long> inflights = HashMultimap.create();
+      if (!fileChannel.isOpen()) {
+        file = new RandomAccessFile(inflightEventsFile, "rw");
+        fileChannel = file.getChannel();
+      }
+      if(file.length() == 0) {
+        return inflights;
+      }
+      file.seek(0);
+      byte[] checksum = new byte[16];
+      file.read(checksum);
+      ByteBuffer buffer = ByteBuffer.allocate(
+              (int)(file.length() - file.getFilePointer()));
+      fileChannel.read(buffer);
+      byte[] fileChecksum = digest.digest(buffer.array());
+      if (!Arrays.equals(checksum, fileChecksum)) {
+        throw new IllegalStateException("Checksum of inflights file differs"
+                + " from the checksum expected.");
+      }
+      buffer.position(0);
+      LongBuffer longBuffer = buffer.asLongBuffer();
+      try {
+        while (true) {
+          long txnID = longBuffer.get();
+          int numEvents = (int)(longBuffer.get());
+          for(int i = 0; i < numEvents; i++) {
+            long val = longBuffer.get();
+            inflights.put(txnID, val);
+          }
+        }
+      } catch (BufferUnderflowException ex) {
+        LOG.debug("Reached end of inflights buffer. Long buffer position ="
+                + String.valueOf(longBuffer.position()));
+      }
+      return  inflights;
+    }
+
+    public int getSize() {
+      return inflightEvents.size();
+    }
+
+    public boolean syncRequired(){
+      return syncRequired;
+    }
+  }
+
+  public static void main(String[] args) throws Exception {
     File file = new File(args[0]);
-    if(!file.exists()) {
+    File inflightTakesFile = new File(args[1]);
+    File inflightPutsFile = new File(args[2]);
+    if (!file.exists()) {
       throw new IOException("File " + file + " does not exist");
     }
-    if(file.length() == 0) {
+    if (file.length() == 0) {
       throw new IOException("File " + file + " is empty");
     }
-    int capacity = (int)((file.length() - (HEADER_SIZE * 8L)) / 8L);
-    FlumeEventQueue queue = new FlumeEventQueue(capacity, file, "debug");
+    int capacity = (int) ((file.length() - (HEADER_SIZE * 8L)) / 8L);
+    FlumeEventQueue queue = new FlumeEventQueue(
+            capacity, file, inflightTakesFile, inflightPutsFile, "debug");
     System.out.println("File Reference Counts" + queue.fileIDCounts);
     System.out.println("Queue Capacity " + queue.getCapacity());
     System.out.println("Queue Size " + queue.getSize());
     System.out.println("Queue Head " + queue.queueHead);
     for (int index = 0; index < queue.getCapacity(); index++) {
       long value = queue.elements.get(queue.getPhysicalIndex(index));
-      int fileID = (int)(value >>> 32);
-      int offset = (int)value;
+      int fileID = (int) (value >>> 32);
+      int offset = (int) value;
       System.out.println(index + ":" + Long.toHexString(value) + " fileID = "
-          + fileID + ", offset = " + offset);
+              + fileID + ", offset = " + offset);
+    }
+
+    SetMultimap<Long, Long> putMap = queue.deserializeInflightPuts();
+    System.out.println("Inflight Puts:");
+
+    for (Long txnID : putMap.keySet()) {
+      Set<Long> puts = putMap.get(txnID);
+      System.out.println("Transaction ID: " + String.valueOf(txnID));
+      for (long value : puts) {
+        int fileID = (int) (value >>> 32);
+        int offset = (int) value;
+        System.out.println(Long.toHexString(value) + " fileID = "
+                + fileID + ", offset = " + offset);
+      }
+    }
+    SetMultimap<Long, Long> takeMap = queue.deserializeInflightTakes();
+    System.out.println("Inflight takes:");
+    for (Long txnID : takeMap.keySet()) {
+      Set<Long> takes = takeMap.get(txnID);
+      System.out.println("Transaction ID: " + String.valueOf(txnID));
+      for (long value : takes) {
+        int fileID = (int) (value >>> 32);
+        int offset = (int) value;
+        System.out.println(Long.toHexString(value) + " fileID = "
+                + fileID + ", offset = " + offset);
+      }
     }
   }
 }

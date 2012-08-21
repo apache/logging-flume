@@ -30,9 +30,13 @@ import org.junit.Test;
 public class TestCheckpoint {
 
   File file;
+  File inflightPuts;
+  File inflightTakes;
   @Before
   public void setup() throws IOException {
     file = File.createTempFile("Checkpoint", "");
+    inflightPuts = File.createTempFile("inflightPuts", "");
+    inflightTakes = File.createTempFile("inflightTakes", "");
     Assert.assertTrue(file.isFile());
     Assert.assertTrue(file.canWrite());
   }
@@ -41,15 +45,18 @@ public class TestCheckpoint {
     file.delete();
   }
   @Test
-  public void testSerialization() throws IOException {
+  public void testSerialization() throws Exception {
     FlumeEventPointer ptrIn = new FlumeEventPointer(10, 20);
-    FlumeEventQueue queueIn = new FlumeEventQueue(1, file, "test");
+    FlumeEventQueue queueIn = new FlumeEventQueue(1, file, inflightTakes,
+            inflightPuts, "test");
     queueIn.addHead(ptrIn);
-    FlumeEventQueue queueOut = new FlumeEventQueue(1, file, "test");
+    FlumeEventQueue queueOut = new FlumeEventQueue(1, file, inflightTakes,
+            inflightPuts, "test");
     Assert.assertEquals(0, queueOut.getLogWriteOrderID());
     queueIn.checkpoint(false);
-    FlumeEventQueue queueOut2 = new FlumeEventQueue(1, file, "test");
-    FlumeEventPointer ptrOut = queueOut2.removeHead();
+    FlumeEventQueue queueOut2 = new FlumeEventQueue(1, file, inflightTakes,
+            inflightPuts, "test");
+    FlumeEventPointer ptrOut = queueOut2.removeHead(0);
     Assert.assertEquals(ptrIn, ptrOut);
     Assert.assertTrue(queueOut2.getLogWriteOrderID() > 0);
   }
