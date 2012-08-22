@@ -791,7 +791,9 @@ public class TestFileChannel {
    */
   @Test
   public void testTakeTransactionCrossingCheckpoint() throws Exception {
-    channel = createFileChannel();
+    Map<String, String> overrides = Maps.newHashMap();
+    overrides.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, "10000");
+    channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
     List<String> in = Lists.newArrayList();
@@ -822,7 +824,7 @@ public class TestFileChannel {
     tx.commit();
     tx.close();
     channel.stop();
-    channel = createFileChannel();
+    channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
     // we should not geet the item we took of the queue above
@@ -852,6 +854,7 @@ public class TestFileChannel {
     Set<String> set = Sets.newHashSet();
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(2));
+    overrides.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, "10000");
     FileChannel channel = createFileChannel(overrides);
     channel.start();
     //Force a checkpoint by committing a transaction
@@ -899,6 +902,7 @@ public class TestFileChannel {
     Set<String> set = Sets.newHashSet();
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(2));
+    overrides.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, "10000");
     FileChannel channel = createFileChannel(overrides);
     channel.start();
     //Force a checkpoint by committing a transaction
@@ -916,7 +920,7 @@ public class TestFileChannel {
     long t1 = System.currentTimeMillis();
     while (checkpoint.lastModified() < t1) {
       TimeUnit.MILLISECONDS.sleep(500);
-      if(t1 - checkpoint.lastModified() > 15000){
+      if(System.currentTimeMillis() - checkpoint.lastModified() > 15000){
         throw new TimeoutException("Checkpoint was expected,"
                 + " but did not happen");
       }
