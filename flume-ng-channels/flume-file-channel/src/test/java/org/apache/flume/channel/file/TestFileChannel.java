@@ -17,7 +17,8 @@
  * under the License.
  */
 package org.apache.flume.channel.file;
-
+import static org.fest.reflect.core.Reflection.field;
+import static org.fest.reflect.core.Reflection.method;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -64,7 +65,6 @@ import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 public class TestFileChannel {
 
@@ -144,12 +144,7 @@ public class TestFileChannel {
         channel.take();
       }
     }).get();
-    long lastTake = System.currentTimeMillis();
-    File inflightsFile = new File(checkpointDir, "inflighttakes");
-
-    while (inflightsFile.lastModified() < lastTake) {
-      Thread.sleep(500);
-    }
+    forceCheckpoint(channel);
     channel.stop();
     //Simulate a sink, so separate thread.
     try {
@@ -240,11 +235,7 @@ public class TestFileChannel {
                 }
               }
             });
-    long lastPut = System.currentTimeMillis();
-    File checkpoint = new File(checkpointDir, "checkpoint");
-    while (checkpoint.lastModified() < lastPut) {
-      Thread.sleep(500);
-    }
+    forceCheckpoint(channel);
     tx.commit();
     tx.close();
     latch.countDown();
@@ -810,17 +801,13 @@ public class TestFileChannel {
     Transaction tx = channel.getTransaction();
     tx.begin();
     Event e = channel.take();
-    long takeTime = System.currentTimeMillis();
     Assert.assertNotNull(e);
     String s = new String(e.getBody(), Charsets.UTF_8);
     out.add(s);
     LOG.info("Slow take got " + s);
     // sleep so a checkpoint occurs. take is before
     // and commit is after the checkpoint
-    File checkpoint = new File(checkpointDir, "checkpoint");
-    while(checkpoint.lastModified() < takeTime){
-      TimeUnit.MILLISECONDS.sleep(500);
-    }
+    forceCheckpoint(channel);
     tx.commit();
     tx.close();
     channel.stop();
@@ -868,14 +855,7 @@ public class TestFileChannel {
     tx.begin();
     channel.put(EventBuilder.withBody(new byte[]{'c','d'}));
     set.add(new String(new byte[]{'c', 'd'}));
-    File checkpoint = new File(checkpointDir, "checkpoint");
-    long t1 = System.currentTimeMillis();
-    while(checkpoint.lastModified() < t1) {
-      TimeUnit.MILLISECONDS.sleep(500);
-      if (System.currentTimeMillis() - checkpoint.lastModified() > 15000) {
-        throw new TimeoutException("Checkpoint did not happen");
-      }
-    }
+    forceCheckpoint(channel);
     tx.commit();
     tx.close();
     channel.stop();
@@ -916,25 +896,10 @@ public class TestFileChannel {
     tx.begin();
     channel.put(EventBuilder.withBody(new byte[]{'c', 'd'}));
     set.add(new String(new byte[]{'c','d'}));
-    File checkpoint = new File(checkpointDir, "checkpoint");
-    long t1 = System.currentTimeMillis();
-    while (checkpoint.lastModified() < t1) {
-      TimeUnit.MILLISECONDS.sleep(500);
-      if(System.currentTimeMillis() - checkpoint.lastModified() > 15000){
-        throw new TimeoutException("Checkpoint was expected,"
-                + " but did not happen");
-      }
-    }
+    forceCheckpoint(channel);
     tx.commit();
     tx.close();
-    long t2 = System.currentTimeMillis();
-    while(checkpoint.lastModified() < t2){
-      TimeUnit.MILLISECONDS.sleep(500);
-      if (t2 - checkpoint.lastModified() > 15000) {
-        throw new TimeoutException("Checkpoint was expected, "
-                + "but did not happen");
-      }
-    }
+    forceCheckpoint(channel);
     channel.stop();
 
     channel = createFileChannel(overrides);
@@ -953,6 +918,19 @@ public class TestFileChannel {
     channel.stop();
   }
 
+  private static void forceCheckpoint(FileChannel channel) {
+    Log log = field("log")
+        .ofType(Log.class)
+          .in(channel)
+            .get();
+
+    Assert.assertTrue("writeCheckpoint returned false",
+        method("writeCheckpoint")
+          .withReturnType(Boolean.class)
+            .withParameterTypes(Boolean.class)
+              .in(log)
+                .invoke(true));
+  }
   private static void copyDecompressed(String resource, File output)
           throws IOException {
     URL input =  Resources.getResource(resource);

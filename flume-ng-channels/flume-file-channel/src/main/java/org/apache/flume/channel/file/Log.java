@@ -647,7 +647,7 @@ class Log {
    * @param force  a flag to force the writing of checkpoint
    * @throws IOException if we are unable to write the checkpoint out to disk
    */
-  private boolean writeCheckpoint(boolean force) throws Exception {
+  private Boolean writeCheckpoint(Boolean force) throws Exception {
     boolean checkpointCompleted = false;
     boolean lockAcquired = tryLockExclusive();
     if(!lockAcquired) {
