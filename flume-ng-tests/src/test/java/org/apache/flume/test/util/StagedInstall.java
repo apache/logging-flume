@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.zip.GZIPInputStream;
@@ -33,6 +34,9 @@ import java.util.zip.GZIPInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.log4j.Logger;
+
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 
 
 /**
@@ -62,6 +66,7 @@ public class StagedInstall {
   private Process process;
   private ProcessShutdownHook shutdownHook;
   private ProcessInputStreamConsumer consumer;
+  private String agentClasspath;
 
   private static StagedInstall INSTANCE;
 
@@ -87,6 +92,7 @@ public class StagedInstall {
     consumer.interrupt();
     consumer = null;
     configFilePath = null;
+    agentClasspath = null;
     Runtime.getRuntime().removeShutdownHook(shutdownHook);
     shutdownHook = null;
 
@@ -122,20 +128,23 @@ public class StagedInstall {
 
     LOGGER.info("Created configuration file: " + configFilePath);
 
-    String[] cmdArgs = {
-        launchScriptPath, "agent", "-n", name, "-f", configFilePath,
-        "-c", confDirPath,
-        "-D" + ENV_FLUME_LOG_DIR + "=" + logDirPath,
-        "-D" + ENV_FLUME_ROOT_LOGGER + "=" + ENV_FLUME_ROOT_LOGGER_VALUE,
-        "-D" + ENV_FLUME_LOG_FILE + "=" + logFileName
-    };
-
-    StringBuilder sb = new StringBuilder("");
-    for (String cmdArg : cmdArgs) {
-      sb.append(cmdArg).append(" ");
+    ImmutableList.Builder<String> builder = new ImmutableList.Builder<String>();
+    builder.add(launchScriptPath);
+    builder.add("agent");
+    builder.add("--conf", confDirPath);
+    if (agentClasspath != null) {
+        builder.add("--classpath", agentClasspath);
     }
+    builder.add("--conf-file", configFilePath);
+    builder.add("--name", name);
+    builder.add("-D" + ENV_FLUME_LOG_DIR + "=" + logDirPath);
+    builder.add("-D" + ENV_FLUME_ROOT_LOGGER + "="
+            + ENV_FLUME_ROOT_LOGGER_VALUE);
+    builder.add("-D" + ENV_FLUME_LOG_FILE + "=" + logFileName);
 
-    LOGGER.info("Using command: " + sb.toString());
+    List<String> cmdArgs = builder.build();
+
+    LOGGER.info("Using command: " + Joiner.on(" ").join(cmdArgs));
 
     ProcessBuilder pb = new ProcessBuilder(cmdArgs);
 
@@ -153,6 +162,10 @@ public class StagedInstall {
     Runtime.getRuntime().addShutdownHook(shutdownHook);
 
     Thread.sleep(3000); // sleep for 3s to let system initialize
+  }
+
+  public synchronized void setAgentClasspath(String agentClasspath) {
+      this.agentClasspath = agentClasspath;
   }
 
   private File createConfigurationFile(String agentName, Properties properties)
