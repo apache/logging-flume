@@ -488,41 +488,49 @@ class Log {
     checkpointReadLock.unlock();
   }
 
+  private void lockExclusive(){
+    checkpointWriterLock.lock();
+  }
 
   /**
    * Synchronization required since we do not want this
    * to be called during a checkpoint.
    */
   synchronized void close() {
-    open = false;
-    if (worker != null) {
-      worker.shutdown();
-      worker.interrupt();
-    }
-    if (logFiles != null) {
-      for (int index = 0; index < logFiles.length(); index++) {
-        logFiles.get(index).close();
+    lockExclusive();
+    try {
+      open = false;
+      if (worker != null) {
+        worker.shutdown();
+        worker.interrupt();
       }
-    }
-    synchronized (idLogFileMap) {
-      for(Integer logId : idLogFileMap.keySet()) {
-        LogFile.RandomReader reader = idLogFileMap.get(logId);
-        if(reader != null) {
-          reader.close();
+      if (logFiles != null) {
+        for (int index = 0; index < logFiles.length(); index++) {
+          logFiles.get(index).close();
         }
       }
-    }
-    try {
-      unlock(checkpointDir);
-    } catch(IOException ex) {
-      LOGGER.warn("Error unlocking " + checkpointDir, ex);
-    }
-    for (File logDir : logDirs) {
-      try {
-        unlock(logDir);
-      } catch(IOException ex) {
-        LOGGER.warn("Error unlocking " + logDir, ex);
+      synchronized (idLogFileMap) {
+        for (Integer logId : idLogFileMap.keySet()) {
+          LogFile.RandomReader reader = idLogFileMap.get(logId);
+          if (reader != null) {
+            reader.close();
+          }
+        }
       }
+      try {
+        unlock(checkpointDir);
+      } catch (IOException ex) {
+        LOGGER.warn("Error unlocking " + checkpointDir, ex);
+      }
+      for (File logDir : logDirs) {
+        try {
+          unlock(logDir);
+        } catch (IOException ex) {
+          LOGGER.warn("Error unlocking " + logDir, ex);
+        }
+      }
+    } finally {
+      unlockExclusive();
     }
   }
 
