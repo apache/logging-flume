@@ -357,7 +357,10 @@ final class FlumeEventQueue {
     //Java implements clone pretty well. The main place this is used
     //in checkpointing and deleting old files, so best
     //to use a sorted set implementation.
-    return new TreeSet<Integer>(fileIDCounts.keySet());
+    SortedSet<Integer> fileIDs = new TreeSet(fileIDCounts.keySet());
+    fileIDs.addAll(inflightPuts.getFileIDs());
+    fileIDs.addAll(inflightTakes.getFileIDs());
+    return fileIDs;
   }
 
   protected void incrementFileID(int fileID) {
@@ -559,6 +562,7 @@ final class FlumeEventQueue {
     private volatile Future<?> future;
     private final File inflightEventsFile;
     private volatile boolean syncRequired = false;
+    private SetMultimap<Long, Integer> inflightFileIDs = HashMultimap.create();
 
     public InflightEventWrapper(File inflightEventsFile) throws Exception{
       if(!inflightEventsFile.exists()){
@@ -581,6 +585,7 @@ final class FlumeEventQueue {
         return false;
       }
       inflightEvents.removeAll(transactionID);
+      inflightFileIDs.removeAll(transactionID);
       syncRequired = true;
       return true;
     }
@@ -592,6 +597,8 @@ final class FlumeEventQueue {
      */
     public void addEvent(Long transactionID, Long pointer){
       inflightEvents.put(transactionID, pointer);
+      inflightFileIDs.put(transactionID,
+              FlumeEventPointer.fromLong(pointer).getFileID());
       syncRequired = true;
     }
 
@@ -727,6 +734,10 @@ final class FlumeEventQueue {
 
     public boolean syncRequired(){
       return syncRequired;
+    }
+
+    public Collection<Integer> getFileIDs(){
+      return inflightFileIDs.values();
     }
   }
 
