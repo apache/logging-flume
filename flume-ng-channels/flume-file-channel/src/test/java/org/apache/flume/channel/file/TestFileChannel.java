@@ -859,6 +859,39 @@ public class TestFileChannel {
     channel.stop();
   }
 
+  @Test
+  public void testReferenceCounts() throws Exception {
+    Set<String> set = Sets.newHashSet();
+    Map<String, String> overrides = Maps.newHashMap();
+    overrides.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, "10000");
+    overrides.put(FileChannelConfiguration.MAX_FILE_SIZE, "20");
+    final FileChannel channel = createFileChannel(overrides);
+    channel.start();
+    List<String> in = putEvents(channel, "testing-reference-counting", 1, 15);
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+    for (int i = 0; i < 10; i++) {
+      channel.take();
+    }
+
+    forceCheckpoint(channel);
+    tx.rollback();
+    //Since we did not commit the original transaction. now we should get 15
+    //events back.
+    final List<String> takenEvents = Lists.newArrayList();
+    Executors.newSingleThreadExecutor().submit(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          takenEvents.addAll(takeEvents(channel, 15));
+        } catch (Exception ex) {
+          Throwables.propagate(ex);
+        }
+      }
+    }).get();
+    Assert.assertEquals(15, takenEvents.size());
+  }
+
   private static void forceCheckpoint(FileChannel channel) {
     Log log = field("log")
         .ofType(Log.class)
