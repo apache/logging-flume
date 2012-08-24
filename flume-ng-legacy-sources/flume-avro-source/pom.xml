@@ -51,6 +51,9 @@ limitations under the License.
             </goals>
           </execution>
         </executions>
+        <configuration>
+          <stringType>CharSequence</stringType>
+        </configuration>
       </plugin>
     </plugins>
   </build>

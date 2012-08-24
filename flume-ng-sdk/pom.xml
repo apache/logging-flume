@@ -35,7 +35,7 @@ limitations under the License.
         <groupId>org.apache.avro</groupId>
         <artifactId>avro-maven-plugin</artifactId>
         <configuration>
-          <stringType>String</stringType>
+          <stringType>CharSequence</stringType>
         </configuration>
         <executions>
           <execution>
