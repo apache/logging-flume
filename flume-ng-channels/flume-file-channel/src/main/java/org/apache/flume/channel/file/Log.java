@@ -493,10 +493,10 @@ class Log {
   }
 
   /**
-   * Synchronization required since we do not want this
-   * to be called during a checkpoint.
+   * Synchronization not required since this method gets the write lock,
+   * so checkpoint and this method cannot run at the same time.
    */
-  synchronized void close() {
+  void close() {
     lockExclusive();
     try {
       open = false;
