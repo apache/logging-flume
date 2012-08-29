@@ -157,6 +157,9 @@ public class TestMonitoredCounterGroup {
     assertSkCounterState(on, connCreated, connClosed, connFailed, batchEmpty,
         batchUnderflow, batchComplete, eventDrainAttempt, eventDrainSuccess);
 
+    // give start time a chance to increment
+    Thread.sleep(5L);
+
     skc.start();
     Assert.assertTrue("StartTime", getStartTime(on) != 0L);
     Assert.assertTrue("StartTime", getStartTime(on) > start1);
@@ -219,6 +222,9 @@ public class TestMonitoredCounterGroup {
     assertChCounterState(on, numChannelSize, numEventPutAttempt,
         numEventTakeAttempt, numEventPutSuccess, numEventTakeSuccess);
 
+    // give start time a chance to increment
+    Thread.sleep(5L);
+
     chc.start();
     Assert.assertTrue("StartTime", getStartTime(on) != 0L);
     Assert.assertTrue("StartTime", getStartTime(on) > start1);
@@ -279,6 +285,9 @@ public class TestMonitoredCounterGroup {
     assertSrcCounterState(on, numEventReceived, numEventAccepted,
         numAppendReceived, numAppendAccepted, numAppendBatchReceived,
         numAppendBatchAccepted);
+
+    // give start time a chance to increment
+    Thread.sleep(5L);
 
     srcc.start();
     Assert.assertTrue("StartTime", getStartTime(on) != 0L);
