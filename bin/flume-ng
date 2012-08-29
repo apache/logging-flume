@@ -276,6 +276,9 @@ while [ -n "$*" ] ; do
     -D*)
       opt_java_props="$opt_java_props $arg"
       ;;
+    -X*)
+      opt_java_props="$opt_java_props $arg"
+      ;;
     *)
       args="$args $arg"
       ;;
