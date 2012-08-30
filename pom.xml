@@ -460,7 +460,7 @@ limitations under the License.
           <version>2.12</version>
           <configuration>
             <forkMode>always</forkMode>
-            <forkedProcessTimeoutInSeconds>480</forkedProcessTimeoutInSeconds>
+            <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
             <redirectTestOutputToFile>true</redirectTestOutputToFile>
             <includes>
               <include>${test.include.pattern}</include>
