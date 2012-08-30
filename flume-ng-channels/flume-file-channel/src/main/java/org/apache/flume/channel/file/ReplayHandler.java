@@ -212,7 +212,8 @@ class ReplayHandler {
   void replayLog(List<File> logs) throws IOException {
     int count = 0;
     MultiMap transactionMap = new MultiValueMap();
-    long transactionIDSeed = 0, writeOrderIDSeed = 0;
+    // seed both with the highest known sequence of either the tnxid or woid
+    long transactionIDSeed = lastCheckpoint, writeOrderIDSeed = lastCheckpoint;
     LOG.info("Starting replay of " + logs);
     //Load the inflight puts into the transaction map to see if they were
     //committed in one of the logs.
