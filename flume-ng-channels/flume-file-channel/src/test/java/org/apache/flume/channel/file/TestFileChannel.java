@@ -221,16 +221,30 @@ public class TestFileChannel {
 
   @Test
   public void testRestartLogReplayV1() throws Exception {
-    doTestRestart(true);
+    doTestRestart(true, false, false);
   }
   @Test
   public void testRestartLogReplayV2() throws Exception {
-    doTestRestart(false);
+    doTestRestart(false, false, false);
   }
-  public void doTestRestart(boolean useLogReplayV1) throws Exception {
+
+  @Test
+  public void testFastReplayV1() throws Exception {
+    doTestRestart(true, true, true);
+  }
+
+  @Test
+  public void testFastReplayV2() throws Exception {
+    doTestRestart(false, true, true);
+  }
+  public void doTestRestart(boolean useLogReplayV1,
+          boolean forceCheckpoint, boolean deleteCheckpoint) throws Exception {
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.USE_LOG_REPLAY_V1,
             String.valueOf(useLogReplayV1));
+    overrides.put(
+            FileChannelConfiguration.USE_FAST_REPLAY,
+            String.valueOf(deleteCheckpoint));
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
@@ -243,7 +257,14 @@ public class TestFileChannel {
       Assert.assertEquals("Cannot acquire capacity. [channel="
           +channel.getName()+"]", e.getMessage());
     }
+    if (forceCheckpoint) {
+      forceCheckpoint(channel);
+    }
     channel.stop();
+    if(deleteCheckpoint) {
+      File checkpoint = new File(checkpointDir, "checkpoint");
+      checkpoint.delete();
+    }
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());

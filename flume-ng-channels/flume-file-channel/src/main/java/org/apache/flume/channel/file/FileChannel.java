@@ -86,6 +86,7 @@ public class FileChannel extends BasicChannelSemantics {
   private String channelNameDescriptor = "[channel=unknown]";
   private ChannelCounter channelCounter;
   private boolean useLogReplayV1;
+  private boolean useFastReplay = false;
 
   @Override
   public synchronized void setName(String name) {
@@ -193,6 +194,10 @@ public class FileChannel extends BasicChannelSemantics {
         FileChannelConfiguration.USE_LOG_REPLAY_V1,
           FileChannelConfiguration.DEFAULT_USE_LOG_REPLAY_V1);
 
+    useFastReplay = context.getBoolean(
+            FileChannelConfiguration.USE_FAST_REPLAY,
+            FileChannelConfiguration.DEFAULT_USE_FAST_REPLAY);
+
     if(queueRemaining == null) {
       queueRemaining = new Semaphore(capacity, true);
     }
@@ -220,6 +225,7 @@ public class FileChannel extends BasicChannelSemantics {
       builder.setChannelName(getName());
       builder.setCheckpointWriteTimeout(checkpointWriteTimeout);
       builder.setUseLogReplayV1(useLogReplayV1);
+      builder.setUseFastReplay(useFastReplay);
       log = builder.build();
       log.replay();
       open = true;
