@@ -1656,17 +1656,22 @@ are named components, here is an example of how they are created through configu
 .. code-block:: properties
 
   agent_foo.sources = source_foo
+  agent_foo.sinks = hdfs
   agent_foo.channels = channel-1
   agent_foo.sources.source_foo.interceptors = a b
   agent_foo.sources.source_foo.interceptors.a.type = org.apache.flume.interceptor.HostInterceptor$Builder
   agent_foo.sources.source_foo.interceptors.a.preserveExisting = false
   agent_foo.sources.source_foo.interceptors.a.hostHeader = hostname
   agent_foo.sources.source_foo.interceptors.b.type = org.apache.flume.interceptor.TimestampInterceptor$Builder
+  agent_foo.sinks.hdfs.filePrefix = FlumeData.%{CollectorHost}.%Y-%m-%d
+  agent_foo.sinks.hdfs.channel = channel-1
 
 Note that the interceptor builders are passed to the type config parameter. The interceptors are themselves
 configurable and can be passed configuration values just like they are passed to any other configurable component.
 In the above example, events are passed to the HostInterceptor first and the events returned by the HostInterceptor
-are then passed along to the TimestampInterceptor.
+are then passed along to the TimestampInterceptor. You can specify either the fully qualified class name (FQCN) 
+or the alias ``TIMESTAMP``. If you have multiple collectors writing to the same HDFS path then you could also use 
+the HostInterceptor.
 
 Timestamp Interceptor
 ~~~~~~~~~~~~~~~~~~~~~
@@ -1678,7 +1683,7 @@ can preserve an existing timestamp if it is already present in the configuration
 ================  =======  ========================================================================
 Property Name     Default  Description
 ================  =======  ========================================================================
-**type**          --       The component type name, has to be ``TIMESTAMP``
+**type**          --       The component type name, has to be ``TIMESTAMP`` or the FQCN
 preserveExisting  false    If the timestamp already exists, should it be preserved - true or false
 ================  =======  ========================================================================
 
