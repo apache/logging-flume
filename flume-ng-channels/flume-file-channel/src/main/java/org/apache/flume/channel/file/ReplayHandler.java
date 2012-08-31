@@ -65,10 +65,17 @@ class ReplayHandler {
    * finding the put and commit in logdir2.
    */
   private final List<Long> pendingTakes;
+  private final boolean useFastReplay;
+  private final File cpDir;
+  private final long maxFileSize;
 
-  ReplayHandler(FlumeEventQueue queue) {
+  ReplayHandler(FlumeEventQueue queue, boolean useFastReplay, File cpDir,
+          long maxFileSize) {
     this.queue = queue;
+    this.useFastReplay = useFastReplay;
     this.lastCheckpoint = queue.getLogWriteOrderID();
+    this.cpDir = cpDir;
+    this.maxFileSize = maxFileSize;
     pendingTakes = Lists.newArrayList();
     readers = Maps.newHashMap();
     logRecordBuffer = new PriorityQueue<LogRecord>();
@@ -78,7 +85,15 @@ class ReplayHandler {
    * is failing on ol logs for some reason.
    */
   @Deprecated
-  void replayLogv1(List<File> logs) throws IOException {
+  void replayLogv1(List<File> logs) throws Exception {
+    if(useFastReplay) {
+      CheckpointRebuilder rebuilder = new CheckpointRebuilder(cpDir, logs,
+              maxFileSize, queue);
+      if(rebuilder.rebuild()){
+        LOG.info("Fast replay successful.");
+        return;
+      }
+    }
     int total = 0;
     int count = 0;
     MultiMap transactionMap = new MultiValueMap();
@@ -209,7 +224,15 @@ class ReplayHandler {
    * @param logs
    * @throws IOException
    */
-  void replayLog(List<File> logs) throws IOException {
+  void replayLog(List<File> logs) throws Exception {
+    if (useFastReplay) {
+      CheckpointRebuilder rebuilder = new CheckpointRebuilder(cpDir, logs,
+              maxFileSize, queue);
+      if (rebuilder.rebuild()) {
+        LOG.info("Fast replay successful.");
+        return;
+      }
+    }
     int count = 0;
     MultiMap transactionMap = new MultiValueMap();
     // seed both with the highest known sequence of either the tnxid or woid

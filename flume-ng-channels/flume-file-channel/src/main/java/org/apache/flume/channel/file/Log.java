@@ -78,6 +78,7 @@ class Log {
   private FlumeEventQueue queue;
   private long checkpointInterval;
   private long maxFileSize;
+  private final boolean useFastReplay;
   private final Map<String, FileLock> locks;
   private final ReentrantReadWriteLock checkpointLock =
       new ReentrantReadWriteLock(true);
@@ -107,6 +108,7 @@ class Log {
     private int bCheckpointWriteTimeout =
         FileChannelConfiguration.DEFAULT_CHECKPOINT_WRITE_TIMEOUT;
     private boolean useLogReplayV1;
+    private boolean useFastReplay;
 
     Builder setCheckpointInterval(long interval) {
       bCheckpointInterval = interval;
@@ -152,16 +154,22 @@ class Log {
       return this;
     }
 
+    Builder setUseFastReplay(boolean useFastReplay){
+      this.useFastReplay = useFastReplay;
+      return this;
+    }
+
     Log build() throws IOException {
       return new Log(bCheckpointInterval, bMaxFileSize, bQueueCapacity,
           bLogWriteTimeout, bCheckpointWriteTimeout, bCheckpointDir, bName,
-          useLogReplayV1, bLogDirs);
+          useLogReplayV1, useFastReplay, bLogDirs);
     }
   }
 
   private Log(long checkpointInterval, long maxFileSize, int queueCapacity,
       int logWriteTimeout, int checkpointWriteTimeout, File checkpointDir,
-      String name, boolean useLogReplayV1, File... logDirs)
+      String name, boolean useLogReplayV1, boolean useFastReplay,
+      File... logDirs)
           throws IOException {
     Preconditions.checkArgument(checkpointInterval > 0,
         "checkpointInterval <= 0");
@@ -179,7 +187,7 @@ class Log {
     this.channelName = name;
     this.channelNameDescriptor = "[channel=" + name + "]";
     this.useLogReplayV1 = useLogReplayV1;
-
+    this.useFastReplay = useFastReplay;
     for (File logDir : logDirs) {
       Preconditions.checkArgument(logDir.isDirectory() || logDir.mkdirs(),
           "LogDir " + logDir + " could not be created");
@@ -270,7 +278,8 @@ class Log {
        * the queue, the timestamp the queue was written to disk, and
        * the list of data files.
        */
-      ReplayHandler replayHandler = new ReplayHandler(queue);
+      ReplayHandler replayHandler = new ReplayHandler(queue, useFastReplay,
+              checkpointFile, maxFileSize);
       if(useLogReplayV1) {
         LOGGER.info("Replaying logs with v1 replay logic");
         replayHandler.replayLogv1(dataFiles);
