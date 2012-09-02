@@ -18,6 +18,7 @@
  */
 package org.apache.flume.channel.file;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.SetMultimap;
@@ -146,9 +147,12 @@ public class CheckpointRebuilder {
     }
     Set<ComparableFlumeEventPointer> sortedPuts =
             Sets.newTreeSet(committedPuts);
+    int count = 0;
     for (ComparableFlumeEventPointer put : sortedPuts) {
       queue.addTail(put.pointer);
+      count++;
     }
+    LOG.info("Replayed {} events using fast replay logic.", count);
     return true;
   }
 
@@ -178,13 +182,15 @@ public class CheckpointRebuilder {
     }
   }
 
-  private class ComparableFlumeEventPointer
+  private final class ComparableFlumeEventPointer
           implements Comparable<ComparableFlumeEventPointer> {
 
     private final FlumeEventPointer pointer;
     private final long orderID;
 
     public ComparableFlumeEventPointer(FlumeEventPointer pointer, long orderID){
+      Preconditions.checkNotNull(pointer, "FlumeEventPointer cannot be"
+              + "null while creating a ComparableFlumeEventPointer");
       this.pointer = pointer;
       this.orderID = orderID;
     }
@@ -206,7 +212,16 @@ public class CheckpointRebuilder {
 
     @Override
     public boolean equals(Object o){
-      return pointer.equals(o);
+      if(this == o){
+        return true;
+      }
+      if(o == null){
+        return false;
+      }
+      if(o.getClass() != this.getClass()){
+        return false;
+      }
+      return pointer.equals(((ComparableFlumeEventPointer)o).pointer);
     }
   }
 
