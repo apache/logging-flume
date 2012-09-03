@@ -1943,6 +1943,96 @@ Property Name            Default  Description
 =======================  =======  ========================================
 
 
+Topology Design Considerations
+==============================
+Flume is very flexible and allows a large range of possible deployment
+scenarios. If you plan to use Flume in a large, production deployment, it is
+prudent to spend some time thinking about how to express your problem in
+terms of a Flume topology. This section covers a few considerations.
+
+Is Flume a good fit for your problem?
+-------------------------------------
+If you need to ingest textual log data into Hadoop/HDFS then Flume is the
+right fit for your problem, full stop. For other use cases, here are some
+guidelines:
+
+Flume is designed to transport and ingest regularly generated event data over
+relatively stable, potentially complex topologies. The notion of "event data"
+is very broadly defined. To Flume, an event is just a generic blob of bytes.
+There are some limitations on how large an event can be - for instance, it
+cannot be larger than you can store in memory or on disk on a single machine -
+but in practice flume events can be everything from textual log entries to
+image files. The key property of an event  is that they are generated in a
+continuous, streaming fashion. If your data is not regularly generated
+(i.e. you are trying to do a single bulk load of data into a Hadoop cluster)
+then Flume will still work, but it is probably overkill for your situation.
+Flume likes relatively stable topologies. Your topologies do not need to be
+immutable, because Flume can deal with changes in topology without losing data
+and can also tolerate periodic reconfiguration due to fail-over or
+provisioning. It probably won't work well if you plant to change topologies
+every day, because reconfiguration takes some thought and overhead.
+
+Flow reliability in Flume
+-------------------------
+The reliability of a Flume flow depends on several factors. By adjusting these
+factors, you can achieve a wide array of reliability options with Flume.
+
+**What type of channel you use.** Flume has both durable channels (those which
+will persist data to disk) and non durable channels (those which will lose
+data if a machine fails). Durable channels use disk-based storage, and data
+stored in such channels will persist across machine restarts or non
+disk-related failures.
+
+**Whether your channels are sufficiently provisioned for the workload.** Channels
+in Flume act as buffers at various hops. These buffers have a fixed capacity,
+and once that capacity is full you will create back pressure on earlier points
+in the flow. If this pressure propagates to the source of the flow, Flume will
+become unavailable and may lose data.
+
+**Whether you use redundant topologies.** Flume let's you replicate flows
+across redundant topologies. This can provide a very easy source of fault
+tolerance and one which is overcomes both disk or machine failures. 
+
+*The best way to think about reliability in a Flume topology is to consider
+various failure scenarios and their outcomes.* What happens if a disk fails?
+What happens if a machine fails? What happens if your terminal sink
+(e.g. HDFS) goes down for some time and you have back pressure? The space of
+possible designs is huge, but the underlying questions you need to ask are
+just a handful.
+
+Flume topology design
+---------------------
+The first step in designing a Flume topology is to enumerate all sources
+and destinations (terminal sinks) for your data. These will define the edge
+points of your topology. The next consideration is whether to introduce
+intermediate aggregation tiers or event routing. If you are collecting data
+form a large number of sources, it can be helpful to aggregate the data in
+order to simplify ingestion at the terminal sink. An aggregation tier can
+also smooth out burstiness from sources or unavailability at sinks, by
+acting as a buffer. If you are routing data between different locations,
+you may also want to split flows at various points: this creates
+sub-topologies which may themselves include aggregation points.
+
+Sizing a Flume deployment
+-------------------------
+Once you have an idea of what your topology will look like, the next question
+is how much hardware and networking capacity is needed. This starts by
+quantifying how much data you generate. That is not always
+a simple task! Most data streams are bursty (for instance, due to diurnal
+patterns) and potentially unpredictable. A good starting point is to think
+about the maximum throughput you'll have in each tier of the topology, both
+in terms of *events per second* and *bytes per second*. Once you know the
+required throughput of a given tier, you can calulate a lower bound on how many
+nodes you require for that tier. To determine attainable throughput, it's
+best to experiment with Flume on your hardware, using synthetic or sampled
+event data. In general, disk-based channels
+should get 10's of MB/s and memory based channels should get 100's of MB/s or
+more. Performance will vary widely, however depending on hardware and
+operating environment.
+
+Sizing aggregate throughput gives you a lower bound on the number of nodes
+you will need to each tier. There are several reasons to have additional
+nodes, such as increased redundancy and better ability to absorb bursts in load.
 
 Troubleshooting
 ===============
