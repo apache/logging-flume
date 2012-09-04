@@ -371,7 +371,7 @@ class LogFile {
       try {
         long position = fileChannel.position();
         if (position > FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE) {
-          LOG.warn("File position exceeds the threshold: "
+          LOG.info("File position exceeds the threshold: "
                 + FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE
                 + ", position: " + position);
         }
