@@ -509,6 +509,7 @@ public class TestHDFSEventSink {
     Context context = new Context();
 
     context.put("hdfs.path", testPath + "/%Y-%m-%d/%H");
+    context.put("hdfs.timeZone", "UTC");
     context.put("hdfs.filePrefix", fileName);
     context.put("hdfs.txnEventMax", String.valueOf(txnMax));
     context.put("hdfs.rollCount", String.valueOf(rollCount));

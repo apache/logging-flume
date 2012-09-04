@@ -23,6 +23,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -116,6 +117,16 @@ public class BucketPath {
   }
 
   /**
+   * A wrapper around
+   * {@link BucketPath#replaceShorthand(char, Map, TimeZone, boolean, int, int)}
+   * with the timezone set to the default.
+   */
+  public static String replaceShorthand(char c, Map<String, String> headers,
+      boolean needRounding, int unit, int roundDown) {
+    return replaceShorthand(c, headers, null, needRounding, unit, roundDown);
+  }
+
+  /**
    * Hardcoded lookups for %x style escape replacement. Add your own!
    *
    * All shorthands are Date format strings, currently.
@@ -125,6 +136,7 @@ public class BucketPath {
    * Dates follow the same format as unix date, with a few exceptions.
    * @param c - The character to replace.
    * @param headers - Event headers
+   * @param timeZone - The timezone to use for formatting the timestamp
    * @param needRounding - Should the timestamp be rounded down?
    * @param unit - if needRounding is true, what unit to round down to. This
    * must be one of the units specified by {@link java.util.Calendar} -
@@ -138,7 +150,7 @@ public class BucketPath {
    * @return
    */
   public static String replaceShorthand(char c, Map<String, String> headers,
-      boolean needRounding, int unit, int roundDown) {
+      TimeZone timeZone, boolean needRounding, int unit, int roundDown) {
 
     String timestampHeader = headers.get("timestamp");
     long ts;
@@ -229,6 +241,10 @@ public class BucketPath {
     }
 
     SimpleDateFormat format = new SimpleDateFormat(formatString);
+    if (timeZone != null) {
+      format.setTimeZone(timeZone);
+    }
+
     Date date = new Date(ts);
     return format.format(date);
   }
@@ -272,6 +288,16 @@ public class BucketPath {
   }
 
   /**
+   * A wrapper around
+   * {@link BucketPath#escapeString(String, Map, TimeZone, boolean, int, int)}
+   * with the timezone set to the default.
+   */
+  public static String escapeString(String in, Map<String, String> headers,
+      boolean needRounding, int unit, int roundDown) {
+    return escapeString(in, headers, null, needRounding, unit, roundDown);
+  }
+
+  /**
    * Replace all substrings of form %{tagname} with get(tagname).toString() and
    * all shorthand substrings of form %x with a special value.
    *
@@ -293,7 +319,7 @@ public class BucketPath {
    * @return Escaped string.
    */
   public static String escapeString(String in, Map<String, String> headers,
-      boolean needRounding, int unit, int roundDown) {
+      TimeZone timeZone, boolean needRounding, int unit, int roundDown) {
     Matcher matcher = tagPattern.matcher(in);
     StringBuffer sb = new StringBuffer();
     while (matcher.find()) {
@@ -314,7 +340,7 @@ public class BucketPath {
             && matcher.group(1).length() == 1,
             "Expected to match single character tag in string " + in);
         char c = matcher.group(1).charAt(0);
-        replacement = replaceShorthand(c, headers,
+        replacement = replaceShorthand(c, headers, timeZone,
             needRounding, unit, roundDown);
       }
 

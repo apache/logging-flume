@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
@@ -108,6 +109,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private CompressionType compType;
   private String fileType;
   private String path;
+  private TimeZone timeZone;
   private int maxOpenFiles;
   private String writeFormat;
   private ExecutorService callTimeoutPool;
@@ -177,6 +179,8 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
         context.getString("hdfs.path"), "hdfs.path is required");
     String fileName = context.getString("hdfs.filePrefix", defaultFileName);
     this.path = dirpath + System.getProperty("file.separator") + fileName;
+    String tzName = context.getString("hdfs.timeZone");
+    timeZone = tzName == null ? null : TimeZone.getTimeZone(tzName);
     rollInterval = context.getLong("hdfs.rollInterval", defaultRollInterval);
     rollSize = context.getLong("hdfs.rollSize", defaultRollSize);
     rollCount = context.getLong("hdfs.rollCount", defaultRollCount);
@@ -387,7 +391,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
         // reconstruct the path name by substituting place holders
         String realPath = BucketPath.escapeString(path, event.getHeaders(),
-            needRounding, roundUnit, roundValue);
+            timeZone, needRounding, roundUnit, roundValue);
         BucketWriter bucketWriter = sfWriters.get(realPath);
 
         // we haven't seen this file yet, so open it and cache the handle
