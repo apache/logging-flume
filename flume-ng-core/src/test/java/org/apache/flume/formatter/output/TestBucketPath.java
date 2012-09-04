@@ -24,6 +24,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -97,4 +98,18 @@ public class TestBucketPath {
     Assert.assertEquals(expectedString, escapedString);
   }
 
+  @Test
+  public void testDateFormatTimeZone(){
+    TimeZone utcTimeZone = TimeZone.getTimeZone("UTC");
+    String test = "%c";
+    String escapedString = BucketPath.escapeString(
+        test, headers, utcTimeZone, false, Calendar.HOUR_OF_DAY, 12);
+    System.out.println("Escaped String: " + escapedString);
+    SimpleDateFormat format = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy");
+    format.setTimeZone(utcTimeZone);
+    Date d = new Date(cal.getTimeInMillis());
+    String expectedString = format.format(d);
+    System.out.println("Expected String: "+ expectedString);
+    Assert.assertEquals(expectedString, escapedString);
+  }
 }
