@@ -113,7 +113,7 @@ public class TestLoadBalancingSinkProcessor {
     s1.setChannel(ch);
 
     // s1 always fails
-    s1.setFail();
+    s1.setFail(true);
 
     MockSink s2 = new MockSink(2);
     s2.setChannel(ch);
@@ -123,7 +123,7 @@ public class TestLoadBalancingSinkProcessor {
     s3.setChannel(ch);
 
     // s3 always fails
-    s3.setFail();
+    s3.setFail(true);
 
     List<Sink> sinks = new ArrayList<Sink>();
     sinks.add(s1);
@@ -143,6 +143,65 @@ public class TestLoadBalancingSinkProcessor {
   }
 
   @Test
+  public void testRandomBackoff() throws Exception {
+    Channel ch = new MockChannel();
+    int n = 100;
+    int numEvents = n;
+    for (int i = 0; i < numEvents; i++) {
+      ch.put(new MockEvent("test" + i));
+    }
+
+    MockSink s1 = new MockSink(1);
+    s1.setChannel(ch);
+
+    // s1 always fails
+    s1.setFail(true);
+
+    MockSink s2 = new MockSink(2);
+    s2.setChannel(ch);
+
+    MockSink s3 = new MockSink(3);
+    s3.setChannel(ch);
+
+    // s3 always fails
+    s3.setFail(true);
+
+    List<Sink> sinks = new ArrayList<Sink>();
+    sinks.add(s1);
+    sinks.add(s2);
+    sinks.add(s3);
+
+    LoadBalancingSinkProcessor lbsp = getProcessor("random_backoff", sinks);
+
+    // TODO: there is a remote possibility that s0 or s2
+    // never get hit by the random assignment
+    // and thus not backoffed, causing the test to fail
+    for(int i=0; i < 50; i++) {
+      // a well behaved runner would always check the return.
+      lbsp.process();
+    }
+    Assert.assertEquals(50, s2.getEvents().size());
+    s2.setFail(true);
+    s1.setFail(false); // s1 should still be backed off
+    try {
+      lbsp.process();
+      // nothing should be able to process right now
+      Assert.fail("Expected EventDeliveryException");
+    } catch (EventDeliveryException e) {
+      // this is expected
+    }
+    Thread.sleep(2100); // wait for s1 to no longer be backed off
+    Sink.Status s = Sink.Status.READY;
+    while (s != Sink.Status.BACKOFF) {
+      s = lbsp.process();
+    }
+
+    Assert.assertEquals(50, s1.getEvents().size());
+    Assert.assertEquals(50, s2.getEvents().size());
+    Assert.assertEquals(0, s3.getEvents().size());
+  }
+
+  @Test
   public void testRandomPersistentFailure() throws Exception {
     Channel ch = new MockChannel();
     int n = 100;
@@ -158,7 +217,7 @@ public class TestLoadBalancingSinkProcessor {
     s2.setChannel(ch);
 
     // s2 always fails
-    s2.setFail();
+    s2.setFail(true);
 
     MockSink s3 = new MockSink(3);
     s3.setChannel(ch);
@@ -272,7 +331,7 @@ public class TestLoadBalancingSinkProcessor {
     s1.setChannel(ch);
 
     // s1 always fails
-    s1.setFail();
+    s1.setFail(true);
 
     MockSink s2 = new MockSink(2);
     s2.setChannel(ch);
@@ -282,7 +341,7 @@ public class TestLoadBalancingSinkProcessor {
     s3.setChannel(ch);
 
     // s3 always fails
-    s3.setFail();
+    s3.setFail(true);
 
     List<Sink> sinks = new ArrayList<Sink>();
     sinks.add(s1);
@@ -317,7 +376,7 @@ public class TestLoadBalancingSinkProcessor {
     s2.setChannel(ch);
 
     // s2 always fails
-    s2.setFail();
+    s2.setFail(true);
 
     MockSink s3 = new MockSink(3);
     s3.setChannel(ch);
@@ -338,6 +397,148 @@ public class TestLoadBalancingSinkProcessor {
     Assert.assertTrue(s2.getEvents().size() == 0);
     Assert.assertTrue(s3.getEvents().size() == 2*n);
   }
+
+  // test that even if the sink recovers immediately that it is kept out of commission briefly
+  // test also verifies that when a sink fails, events are balanced over remaining sinks
+  @Test
+  public void testRoundRobinBackoffInitialFailure() throws EventDeliveryException {
+    Channel ch = new MockChannel();
+    int n = 100;
+    int numEvents = 3*n;
+    for (int i = 0; i < numEvents; i++) {
+      ch.put(new MockEvent("test" + i));
+    }
+
+    MockSink s1 = new MockSink(1);
+    s1.setChannel(ch);
+
+    MockSink s2 = new MockSink(2);
+    s2.setChannel(ch);
+
+      MockSink s3 = new MockSink(3);
+    s3.setChannel(ch);
+
+    List<Sink> sinks = new ArrayList<Sink>();
+    sinks.add(s1);
+    sinks.add(s2);
+    sinks.add(s3);
+
+    LoadBalancingSinkProcessor lbsp = getProcessor("round_robin_backoff",sinks);
+
+    Status s = Status.READY;
+    for (int i = 0; i < 3 && s != Status.BACKOFF; i++) {
+      s = lbsp.process();
+    }
+    s2.setFail(true);
+    for (int i = 0; i < 3 && s != Status.BACKOFF; i++) {
+      s = lbsp.process();
+    }
+    s2.setFail(false);
+    while (s != Status.BACKOFF) {
+      s = lbsp.process();
+    }
+
+    Assert.assertEquals((3 * n) / 2, s1.getEvents().size());
+    Assert.assertEquals(1, s2.getEvents().size());
+    Assert.assertEquals((3 * n) /2 - 1, s3.getEvents().size());
+  }
+
+  @Test
+  public void testRoundRobinBackoffIncreasingBackoffs() throws EventDeliveryException, InterruptedException {
+    Channel ch = new MockChannel();
+    int n = 100;
+    int numEvents = 3*n;
+    for (int i = 0; i < numEvents; i++) {
+      ch.put(new MockEvent("test" + i));
+    }
+
+    MockSink s1 = new MockSink(1);
+    s1.setChannel(ch);
+
+    MockSink s2 = new MockSink(2);
+    s2.setChannel(ch);
+    s2.setFail(true);
+
+      MockSink s3 = new MockSink(3);
+    s3.setChannel(ch);
+
+    List<Sink> sinks = new ArrayList<Sink>();
+    sinks.add(s1);
+    sinks.add(s2);
+    sinks.add(s3);
+
+    LoadBalancingSinkProcessor lbsp = getProcessor("round_robin_backoff",sinks);
+
+    Status s = Status.READY;
+    for (int i = 0; i < 3 && s != Status.BACKOFF; i++) {
+      s = lbsp.process();
+    }
+    Assert.assertEquals(0, s2.getEvents().size());
+    Thread.sleep(2100);
+    // this should let the sink come out of backoff and get backed off  for a longer time
+    for (int i = 0; i < 3 && s != Status.BACKOFF; i++) {
+      s = lbsp.process();
+    }
+    Assert.assertEquals(0, s2.getEvents().size());
+    s2.setFail(false);
+    Thread.sleep(2100);
+    // this time it shouldn't come out of backoff yet as the timeout isn't over
+    for (int i = 0; i < 3 && s != Status.BACKOFF; i++) {
+      s = lbsp.process();
+    }
+    Assert.assertEquals(0, s2.getEvents().size());
+    // after this s2 should be receiving events agains
+    Thread.sleep(2100);
+    while (s != Status.BACKOFF) {
+      s = lbsp.process();
+    }
+
+    Assert.assertEquals( n + 2, s1.getEvents().size());
+    Assert.assertEquals( n - 3, s2.getEvents().size());
+    Assert.assertEquals( n + 1, s3.getEvents().size());
+  }
+
+  @Test
+  public void testRoundRobinBackoffFailureRecovery() throws EventDeliveryException, InterruptedException {
+    Channel ch = new MockChannel();
+    int n = 100;
+    int numEvents = 3*n;
+    for (int i = 0; i < numEvents; i++) {
+      ch.put(new MockEvent("test" + i));
+    }
+
+    MockSink s1 = new MockSink(1);
+    s1.setChannel(ch);
+
+    MockSink s2 = new MockSink(2);
+    s2.setChannel(ch);
+    s2.setFail(true);
+
+      MockSink s3 = new MockSink(3);
+    s3.setChannel(ch);
+
+    List<Sink> sinks = new ArrayList<Sink>();
+    sinks.add(s1);
+    sinks.add(s2);
+    sinks.add(s3);
+
+    LoadBalancingSinkProcessor lbsp = getProcessor("round_robin_backoff",sinks);
+
+    Status s = Status.READY;
+    for (int i = 0; i < 3 && s != Status.BACKOFF; i++) {
+      s = lbsp.process();
+    }
+    s2.setFail(false);
+    Thread.sleep(2000);
+    while (s != Status.BACKOFF) {
+      s = lbsp.process();
+    }
+
+    Assert.assertEquals(n + 1, s1.getEvents().size());
+    Assert.assertEquals(n - 1,  s2.getEvents().size());
+    Assert.assertEquals(n, s3.getEvents().size());
+  }
+
 
   @Test
   public void testRoundRobinNoFailure() throws Exception {
@@ -388,7 +589,7 @@ public class TestLoadBalancingSinkProcessor {
     s1.setChannel(ch);
 
     // s1 always fails
-    s1.setFail();
+    s1.setFail(true);
 
     MockSink s2 = new MockSink(2);
     s2.setChannel(ch);
@@ -436,8 +637,8 @@ public class TestLoadBalancingSinkProcessor {
       return id;
     }
 
-    void setFail() {
-      fail = true;
+    void setFail(boolean bFail) {
+      fail = bFail;
     }
 
     @Override

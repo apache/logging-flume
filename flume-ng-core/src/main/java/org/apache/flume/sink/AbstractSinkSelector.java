@@ -63,4 +63,9 @@ public abstract class AbstractSinkSelector implements SinkSelector {
   protected List<Sink> getSinks() {
     return sinkList;
   }
+
+  @Override
+  public void informSinkFailed(Sink failedSink) {
+    // no-op
+  }
 }
