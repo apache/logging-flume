@@ -1603,28 +1603,38 @@ Load balancing Sink Processor
 Load balancing sink processor provides the ability to load-balance flow over
 multiple sinks. It maintains an indexed list of active sinks on which the
 load must be distributed. Implementation supports distributing load using
-either via ``ROUND_ROBIN`` or via ``RANDOM`` selection mechanism. The choice
-of selection mechanism defaults to ``ROUND_ROBIN`` type, but can be overridden
+either via ``ROUND_ROBIN``, ``RANDOM``, ``ROUND_ROBIN_BACKOFF``, or
+``RANDOM_BACKOFF`` selection mechanisms. The choice of selection mechanism
+defaults to ``ROUND_ROBIN`` type, but can be overridden
 via configuration. Custom selection mechanisms are supported via custom
 classes that inherits from ``LoadBalancingSelector``.
 
 When invoked, this selector picks the next sink using its configured selection
-mechanism and invokes it. In case the selected sink fails to deliver the event,
-the processor picks the next available sink via its configured selection mechanism.
-This implementation does not blacklist the failing sink and instead continues
-to optimistically attempt every available sink. If all sinks invocations
-result in failure, the selector propagates the failure to the sink runner.
+mechanism and invokes it. For ROUND_ROBIN and RANDOM In case the selected sink
+fails to deliver the event, the processor picks the next available sink via
+its configured selection mechanism. This implementation does not blacklist
+the failing sink and instead continues to optimistically attempt every
+available sink. If all sinks invocations result in failure, the selector
+propagates the failure to the sink runner. The BACKOFF variants will blacklist
+sinks that fail, removing them for selection for a given timeout. When the
+timeout ends, if the sink is still unresponsive timeout is increased
+exponentially to avoid potentially getting stuck in long waits on unresponsive
+sinks.
+
+
 
 Required properties are in **bold**.
 
-=============================  ===============  ===============================================================
-Property Name                  Default          Description
-=============================  ===============  ===============================================================
-**processor.sinks**            --               Space separated list of sinks that are participating in the group
-**processor.type**             ``default``      The component type name, needs to be ``load_balance``
-processor.selector             ``ROUND_ROBIN``  Selection mechanism. Must be either ``ROUND_ROBIN``, ``RANDOM``
-                                                or custom FQDN to class that inherits from ``LoadBalancingSelector``
-=============================  ===============  ===============================================================
+====================================  ===============  ===============================================================
+Property Name                         Default          Description
+====================================  ===============  ===============================================================
+**processor.sinks**            --                      Space separated list of sinks that are participating in the group
+**processor.type**                    ``default``      The component type name, needs to be ``load_balance``
+processor.selector                    ``ROUND_ROBIN``  Selection mechanism. Must be either ``ROUND_ROBIN``, ``RANDOM``
+                                                       ``ROUND_ROBIN_BACKOFF``, ``RANDOM_BACKOFF`` or custom FQDN to
+                                                       class that inherits from ``LoadBalancingSelector``
+processor.selector.maxBackoffMillis   30000            used by backoff selectors to limit exponential backoff in miliseconds
+====================================  ===============  ===============================================================
 
 Example for agent named **agent_foo**:
 
