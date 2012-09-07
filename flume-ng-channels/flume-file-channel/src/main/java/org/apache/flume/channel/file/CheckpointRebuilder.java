@@ -40,7 +40,6 @@ public class CheckpointRebuilder {
 
   private final File checkpointDir;
   private final List<File> logFiles;
-  private final long maxFileSize;
   private final FlumeEventQueue queue;
   private final Set<ComparableFlumeEventPointer> committedPuts =
           Sets.newHashSet();
@@ -55,12 +54,10 @@ public class CheckpointRebuilder {
           LoggerFactory.getLogger(CheckpointRebuilder.class);
 
   public CheckpointRebuilder(File checkpointDir, List<File> logFiles,
-          long maxFileSize,
           FlumeEventQueue queue) throws IOException {
     this.checkpointDir = checkpointDir;
     this.logFiles = logFiles;
     this.queue = queue;
-    this.maxFileSize = maxFileSize;
   }
 
   public boolean rebuild() throws IOException, Exception {
@@ -72,7 +69,7 @@ public class CheckpointRebuilder {
     LOG.info("Attempting to fast replay the log files.");
     List<LogFile.SequentialReader> logReaders = Lists.newArrayList();
     for (File logFile : logFiles) {
-      logReaders.add(new LogFile.SequentialReader(logFile));
+      logReaders.add(LogFileFactory.getSequentialReader(logFile));
     }
     long transactionIDSeed = 0;
     long writeOrderIDSeed = 0;
@@ -158,26 +155,25 @@ public class CheckpointRebuilder {
 
   private void writeCheckpoint() throws IOException {
     long checkpointLogOrderID = 0;
-    List<LogFile.Writer> logWriters = Lists.newArrayList();
+    List<LogFile.MetaDataWriter> metaDataWriters = Lists.newArrayList();
     for (File logFile : logFiles) {
         String name = logFile.getName();
-        logWriters.add(new LogFile.Writer(logFile,
-                Integer.parseInt(name.substring(name.lastIndexOf('-') + 1)),
-                maxFileSize));
+        metaDataWriters.add(LogFileFactory.getMetaDataWriter(logFile,
+            Integer.parseInt(name.substring(name.lastIndexOf('-') + 1))));
     }
     try {
       if (queue.checkpoint(true)) {
         checkpointLogOrderID = queue.getLogWriteOrderID();
-        for (LogFile.Writer logWriter : logWriters) {
-          logWriter.markCheckpoint(checkpointLogOrderID);
+        for (LogFile.MetaDataWriter metaDataWriter : metaDataWriters) {
+          metaDataWriter.markCheckpoint(checkpointLogOrderID);
         }
       }
     } catch (Exception e) {
       LOG.warn("Error while generating checkpoint "
               + "using fast generation logic", e);
     } finally {
-      for (LogFile.Writer logWriter : logWriters) {
-        logWriter.close();
+      for (LogFile.MetaDataWriter metaDataWriter : metaDataWriters) {
+        metaDataWriter.close();
       }
     }
   }
@@ -233,8 +229,6 @@ public class CheckpointRebuilder {
     opt = new Option("l", true, "comma-separated list of log directories");
     opt.setRequired(true);
     options.addOption(opt);
-    opt = new Option("s", true, "maximum size of log files");
-    opt.setRequired(true);
     options.addOption(opt);
     opt = new Option("t", true, "capacity of the channel");
     opt.setRequired(true);
@@ -249,14 +243,14 @@ public class CheckpointRebuilder {
       logFiles.addAll(Arrays.asList(files));
     }
     int capacity = Integer.parseInt(cli.getOptionValue("t"));
-    long maxFileSize = Long.parseLong(cli.getOptionValue("s"));
-    boolean isReplayV1 = cli.hasOption("v");
-    FlumeEventQueue queue = new FlumeEventQueue(capacity,
-            new File(checkpointDir, "checkpoint"),
+    EventQueueBackingStore backingStore =
+        EventQueueBackingStoreFactory.get(new File(checkpointDir, "checkpoint"),
+            capacity, "channel");
+    FlumeEventQueue queue = new FlumeEventQueue(backingStore,
             new File(checkpointDir, "inflighttakes"),
-            new File(checkpointDir, "inflightputs"), "channel");
+            new File(checkpointDir, "inflightputs"));
     CheckpointRebuilder rebuilder = new CheckpointRebuilder(checkpointDir,
-            logFiles, maxFileSize, queue);
+            logFiles, queue);
     if(rebuilder.rebuild()) {
       rebuilder.writeCheckpoint();
     } else {

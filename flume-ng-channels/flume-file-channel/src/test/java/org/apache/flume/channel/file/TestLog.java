@@ -100,8 +100,8 @@ public class TestLog {
         }
       }
     }
-    // 67 files with TestLog.MAX_FILE_SIZE=1000
-    Assert.assertEquals(78, logCount);
+    // 78 (*2 for meta) files with TestLog.MAX_FILE_SIZE=1000
+    Assert.assertEquals(156, logCount);
   }
   /**
    * After replay of the log, we should find the event because the put

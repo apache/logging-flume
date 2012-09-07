@@ -18,7 +18,6 @@
  */
 package org.apache.flume.channel.file;
 
-import com.google.common.base.Preconditions;
 
 /**
  * Pointer to an Event on disk. This is represented in memory
@@ -31,7 +30,15 @@ class FlumeEventPointer {
   FlumeEventPointer(int fileID, int offset) {
     this.fileID = fileID;
     this.offset = offset;
-    Preconditions.checkArgument(offset > 0);
+    /*
+     * Log files used to have a header, now metadata is in
+     * a separate file so data starts at offset 0.
+     */
+    if(offset < 0) {
+      throw new IllegalArgumentException("offset = " + offset + "(" +
+          Integer.toHexString(offset) + ")" + ", fileID = " + fileID
+            + "(" + Integer.toHexString(fileID) + ")");
+    }
   }
   int getFileID() {
     return fileID;

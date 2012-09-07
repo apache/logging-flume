@@ -46,17 +46,19 @@ public class TestCheckpoint {
   }
   @Test
   public void testSerialization() throws Exception {
+    EventQueueBackingStore backingStore =
+        new EventQueueBackingStoreFileV2(file, 1, "test");
     FlumeEventPointer ptrIn = new FlumeEventPointer(10, 20);
-    FlumeEventQueue queueIn = new FlumeEventQueue(1, file, inflightTakes,
-            inflightPuts, "test");
+    FlumeEventQueue queueIn = new FlumeEventQueue(backingStore,
+        inflightTakes, inflightPuts);
     queueIn.addHead(ptrIn);
-    FlumeEventQueue queueOut = new FlumeEventQueue(1, file, inflightTakes,
-            inflightPuts, "test");
+    FlumeEventQueue queueOut = new FlumeEventQueue(backingStore,
+        inflightTakes, inflightPuts);
     Assert.assertEquals(0, queueOut.getLogWriteOrderID());
     queueIn.checkpoint(false);
-    FlumeEventQueue queueOut2 = new FlumeEventQueue(1, file, inflightTakes,
-            inflightPuts, "test");
-    FlumeEventPointer ptrOut = queueOut2.removeHead(0);
+    FlumeEventQueue queueOut2 = new FlumeEventQueue(backingStore,
+        inflightTakes, inflightPuts);
+    FlumeEventPointer ptrOut = queueOut2.removeHead(0L);
     Assert.assertEquals(ptrIn, ptrOut);
     Assert.assertTrue(queueOut2.getLogWriteOrderID() > 0);
   }

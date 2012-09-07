@@ -23,10 +23,15 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
 
+import org.apache.flume.chanel.file.proto.ProtosFactory;
 import org.apache.hadoop.io.Writable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -36,26 +41,30 @@ import com.google.common.collect.ImmutableMap;
  * Base class for records in data file: Put, Take, Rollback, Commit
  */
 abstract class TransactionEventRecord implements Writable {
+  private static final Logger LOG = LoggerFactory
+      .getLogger(TransactionEventRecord.class);
   private final long transactionID;
   private long logWriteOrderID;
 
-  protected TransactionEventRecord(long transactionID) {
+  protected TransactionEventRecord(long transactionID, long logWriteOrderID) {
     this.transactionID = transactionID;
+    this.logWriteOrderID = logWriteOrderID;
   }
 
   @Override
   public void readFields(DataInput in) throws IOException {
-    logWriteOrderID = in.readLong();
+
   }
   @Override
   public void write(DataOutput out) throws IOException {
-    out.writeLong(logWriteOrderID);
+
   }
 
-  public void setLogWriteOrderID(long logWriteOrderID) {
-    this.logWriteOrderID = logWriteOrderID;
-  }
-  public long getLogWriteOrderID() {
+  abstract void writeProtos(OutputStream out) throws IOException;
+
+  abstract void readProtos(InputStream in) throws IOException;
+
+  long getLogWriteOrderID() {
     return logWriteOrderID;
   }
   long getTransactionID() {
@@ -91,46 +100,49 @@ abstract class TransactionEventRecord implements Writable {
         ImmutableMap.<Short, Constructor<? extends TransactionEventRecord>>builder();
     try {
       builder.put(Type.PUT.get(),
-          Put.class.getDeclaredConstructor(Long.class));
+          Put.class.getDeclaredConstructor(Long.class, Long.class));
       builder.put(Type.TAKE.get(),
-          Take.class.getDeclaredConstructor(Long.class));
+          Take.class.getDeclaredConstructor(Long.class, Long.class));
       builder.put(Type.ROLLBACK.get(),
-          Rollback.class.getDeclaredConstructor(Long.class));
+          Rollback.class.getDeclaredConstructor(Long.class, Long.class));
       builder.put(Type.COMMIT.get(),
-          Commit.class.getDeclaredConstructor(Long.class));
+          Commit.class.getDeclaredConstructor(Long.class, Long.class));
     } catch (Exception e) {
       Throwables.propagate(e);
     }
     TYPES = builder.build();
   }
 
-
-  static ByteBuffer toByteBuffer(TransactionEventRecord record) {
+  @Deprecated
+  static ByteBuffer toByteBufferV2(TransactionEventRecord record) {
     ByteArrayOutputStream byteOutput = new ByteArrayOutputStream(512);
     DataOutputStream dataOutput = new DataOutputStream(byteOutput);
     try {
       dataOutput.writeInt(MAGIC_HEADER);
       dataOutput.writeShort(record.getRecordType());
       dataOutput.writeLong(record.getTransactionID());
+      dataOutput.writeLong(record.getLogWriteOrderID());
       record.write(dataOutput);
       dataOutput.flush();
       // TODO toByteArray does an unneeded copy
       return ByteBuffer.wrap(byteOutput.toByteArray());
     } catch(IOException e) {
       // near impossible
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     } finally {
       if(dataOutput != null) {
         try {
           dataOutput.close();
-        } catch (IOException e) {}
+        } catch (IOException e) {
+          LOG.warn("Error closing byte array output stream", e);
+        }
       }
     }
-    throw new IllegalStateException(
-        "Should not occur as method should return or throw an exception");
   }
 
-  static TransactionEventRecord fromDataInput(DataInput in) throws IOException {
+  @Deprecated
+  static TransactionEventRecord fromDataInputV2(DataInput in)
+      throws IOException {
     int header = in.readInt();
     if(header != MAGIC_HEADER) {
       throw new IOException("Header " + Integer.toHexString(header) +
@@ -138,9 +150,54 @@ abstract class TransactionEventRecord implements Writable {
     }
     short type = in.readShort();
     long transactionID = in.readLong();
-    TransactionEventRecord entry = newRecordForType(type, transactionID);
+    long writeOrderID = in.readLong();
+    TransactionEventRecord entry = newRecordForType(type, transactionID,
+        writeOrderID);
     entry.readFields(in);
     return entry;
+  }
+
+  static ByteBuffer toByteBuffer(TransactionEventRecord record) {
+    ByteArrayOutputStream byteOutput = new ByteArrayOutputStream(512);
+    try {
+      ProtosFactory.TransactionEventHeader.Builder headerBuilder =
+          ProtosFactory.TransactionEventHeader.newBuilder();
+      headerBuilder.setType(record.getRecordType());
+      headerBuilder.setTransactionID(record.getTransactionID());
+      headerBuilder.setWriteOrderID(record.getLogWriteOrderID());
+      headerBuilder.build().writeDelimitedTo(byteOutput);
+      record.writeProtos(byteOutput);
+      ProtosFactory.TransactionEventFooter footer =
+          ProtosFactory.TransactionEventFooter.newBuilder().build();
+      footer.writeDelimitedTo(byteOutput);
+      return ByteBuffer.wrap(byteOutput.toByteArray());
+    } catch(IOException e) {
+      throw Throwables.propagate(e);
+    } finally {
+      if(byteOutput != null) {
+        try {
+          byteOutput.close();
+        } catch (IOException e) {
+          LOG.warn("Error closing byte array output stream", e);
+        }
+      }
+    }
+  }
+
+  static TransactionEventRecord fromInputStream(InputStream in)
+      throws IOException {
+    ProtosFactory.TransactionEventHeader header =
+        ProtosFactory.TransactionEventHeader.parseDelimitedFrom(in);
+    short type = (short)header.getType();
+    long transactionID = header.getTransactionID();
+    long writeOrderID = header.getWriteOrderID();
+    TransactionEventRecord transactionEvent =
+        newRecordForType(type, transactionID, writeOrderID);
+    transactionEvent.readProtos(in);
+    @SuppressWarnings("unused")
+    ProtosFactory.TransactionEventFooter footer =
+        ProtosFactory.TransactionEventFooter.parseDelimitedFrom(in);
+    return transactionEvent;
   }
 
   static String getName(short type) {
@@ -150,17 +207,15 @@ abstract class TransactionEventRecord implements Writable {
     return constructor.getDeclaringClass().getSimpleName();
   }
 
-  private static TransactionEventRecord newRecordForType(short type, long transactionID) {
+  private static TransactionEventRecord newRecordForType(short type,
+      long transactionID, long writeOrderID) {
     Constructor<? extends TransactionEventRecord> constructor = TYPES.get(type);
     Preconditions.checkNotNull(constructor, "Unknown action " +
         Integer.toHexString(type));
     try {
-      return constructor.newInstance(transactionID);
+      return constructor.newInstance(transactionID, writeOrderID);
     } catch (Exception e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
-    throw new IllegalStateException(
-        "Should not occur as method should return or throw an exception");
   }
-
 }

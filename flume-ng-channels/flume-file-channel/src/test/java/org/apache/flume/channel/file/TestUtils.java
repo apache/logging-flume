@@ -18,27 +18,34 @@
  */
 package org.apache.flume.channel.file;
 
-import com.google.common.base.Charsets;
+import static org.fest.reflect.core.Reflection.*;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Map;
-
-import org.apache.hadoop.io.Writable;
-
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import java.util.Set;
 import java.util.UUID;
+import java.util.zip.GZIPInputStream;
+
 import org.apache.flume.Channel;
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
 import org.apache.flume.event.EventBuilder;
+import org.apache.hadoop.io.Writable;
 import org.junit.Assert;
-import static org.fest.reflect.core.Reflection.*;
+
+import com.google.common.base.Charsets;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Resources;
 
 public class TestUtils {
 
@@ -161,5 +168,11 @@ public class TestUtils {
       }
     }
     return result;
+  }
+  public static void copyDecompressed(String resource, File output)
+      throws IOException {
+    URL input =  Resources.getResource(resource);
+    ByteStreams.copy(new GZIPInputStream(input.openStream()),
+        new FileOutputStream(output));
   }
 }

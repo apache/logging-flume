@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,7 +47,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import java.util.SortedSet;
 
 /**
  * Stores FlumeEvents on disk and pointers to the events in a in memory queue.
@@ -91,7 +91,6 @@ class Log {
    */
   private final WriteLock checkpointWriterLock = checkpointLock.writeLock();
   private int logWriteTimeout;
-  private final String channelName;
   private final String channelNameDescriptor;
   private int checkpointWriteTimeout;
   private boolean useLogReplayV1;
@@ -184,7 +183,6 @@ class Log {
     Preconditions.checkArgument(name != null && !name.trim().isEmpty(),
             "channel name should be specified");
 
-    this.channelName = name;
     this.channelNameDescriptor = "[channel=" + name + "]";
     this.useLogReplayV1 = useLogReplayV1;
     this.useFastReplay = useFastReplay;
@@ -225,6 +223,7 @@ class Log {
    * directly before the shutdown or crash.
    * @throws IOException
    */
+  @SuppressWarnings("deprecation")
   void replay() throws IOException {
     Preconditions.checkState(!open, "Cannot replay after Log has been opened");
 
@@ -248,7 +247,7 @@ class Log {
           int id = LogUtils.getIDForFile(file);
           dataFiles.add(file);
           nextFileID.set(Math.max(nextFileID.get(), id));
-          idLogFileMap.put(id, new LogFile.RandomReader(new File(logDir, PREFIX
+          idLogFileMap.put(id, LogFileFactory.getRandomReader(new File(logDir, PREFIX
               + id)));
         }
       }
@@ -268,8 +267,11 @@ class Log {
       File checkpointFile = new File(checkpointDir, "checkpoint");
       File inflightTakesFile = new File(checkpointDir, "inflighttakes");
       File inflightPutsFile = new File(checkpointDir, "inflightputs");
-      queue = new FlumeEventQueue(queueCapacity, checkpointFile,
-              inflightTakesFile, inflightPutsFile, channelName);
+      EventQueueBackingStore backingStore =
+          EventQueueBackingStoreFactory.get(checkpointFile, queueCapacity,
+              channelNameDescriptor);
+      queue = new FlumeEventQueue(backingStore, inflightTakesFile,
+            inflightPutsFile);
       LOGGER.info("Last Checkpoint " + new Date(checkpointFile.lastModified())
         + ", queue depth = " + queue.getSize());
 
@@ -279,7 +281,7 @@ class Log {
        * the list of data files.
        */
       ReplayHandler replayHandler = new ReplayHandler(queue, useFastReplay,
-              checkpointFile, maxFileSize);
+              checkpointFile);
       if(useLogReplayV1) {
         LOGGER.info("Replaying logs with v1 replay logic");
         replayHandler.replayLogv1(dataFiles);
@@ -287,7 +289,6 @@ class Log {
         LOGGER.info("Replaying logs with v2 replay logic");
         replayHandler.replayLog(dataFiles);
       }
-
 
       for (int index = 0; index < logDirs.length; index++) {
         LOGGER.info("Rolling " + logDirs[index]);
@@ -354,8 +355,7 @@ class Log {
     Preconditions.checkState(open, "Log is closed");
     FlumeEvent flumeEvent = new FlumeEvent(
         event.getHeaders(), event.getBody());
-    Put put = new Put(transactionID, flumeEvent);
-    put.setLogWriteOrderID(WriteOrderOracle.next());
+    Put put = new Put(transactionID, WriteOrderOracle.next(), flumeEvent);
     ByteBuffer buffer = TransactionEventRecord.toByteBuffer(put);
     int logFileIndex = nextLogWriter(transactionID);
     if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
@@ -384,9 +384,8 @@ class Log {
   void take(long transactionID, FlumeEventPointer pointer)
       throws IOException {
     Preconditions.checkState(open, "Log is closed");
-    Take take = new Take(transactionID, pointer.getOffset(),
-        pointer.getFileID());
-    take.setLogWriteOrderID(WriteOrderOracle.next());
+    Take take = new Take(transactionID, WriteOrderOracle.next(),
+        pointer.getOffset(), pointer.getFileID());
     ByteBuffer buffer = TransactionEventRecord.toByteBuffer(take);
     int logFileIndex = nextLogWriter(transactionID);
     if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
@@ -416,8 +415,7 @@ class Log {
     if(LOGGER.isDebugEnabled()) {
       LOGGER.debug("Rolling back " + transactionID);
     }
-    Rollback rollback = new Rollback(transactionID);
-    rollback.setLogWriteOrderID(WriteOrderOracle.next());
+    Rollback rollback = new Rollback(transactionID, WriteOrderOracle.next());
     ByteBuffer buffer = TransactionEventRecord.toByteBuffer(rollback);
     int logFileIndex = nextLogWriter(transactionID);
     if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
@@ -526,6 +524,7 @@ class Log {
           }
         }
       }
+      queue.close();
       try {
         unlock(checkpointDir);
       } catch (IOException ex) {
@@ -564,8 +563,7 @@ class Log {
   private void commit(long transactionID, short type) throws IOException {
 
     Preconditions.checkState(open, "Log is closed");
-    Commit commit = new Commit(transactionID, type);
-    commit.setLogWriteOrderID(WriteOrderOracle.next());
+    Commit commit = new Commit(transactionID, WriteOrderOracle.next(), type);
     ByteBuffer buffer = TransactionEventRecord.toByteBuffer(commit);
     int logFileIndex = nextLogWriter(transactionID);
     if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
@@ -634,9 +632,9 @@ class Log {
               "File already exists "  + file);
           Preconditions.checkState(file.createNewFile(),
               "File could not be created " + file);
-          idLogFileMap.put(fileID, new LogFile.RandomReader(file));
+          idLogFileMap.put(fileID, LogFileFactory.getRandomReader(file));
           // writer from this point on will get new reference
-          logFiles.set(index, new LogFile.Writer(file, fileID, maxFileSize));
+          logFiles.set(index, LogFileFactory.getWriter(file, fileID, maxFileSize));
           // close out old log
           if (oldLogFile != null) {
             oldLogFile.close();
@@ -670,9 +668,9 @@ class Log {
     if(!lockAcquired) {
       return false;
     }
-    SortedSet<Integer> idSet = null;
+    SortedSet<Integer> logFileRefCountsAll = null, logFileRefCountsActive = null;
     try {
-      if (queue.checkpoint(force) || force) {
+      if (queue.checkpoint(force)) {
         long logWriteOrderID = queue.getLogWriteOrderID();
 
         //Since the active files might also be in the queue's fileIDs,
@@ -681,42 +679,52 @@ class Log {
         //fileID set from the queue have been updated.
         //Since clone is smarter than insert, better to make
         //a copy of the set first so that we can use it later.
-        idSet = queue.getFileIDs();
-        SortedSet<Integer> idSetToCompare = new TreeSet<Integer>(idSet);
+        logFileRefCountsAll = queue.getFileIDs();
+        logFileRefCountsActive = new TreeSet<Integer>(logFileRefCountsAll);
 
         int numFiles = logFiles.length();
         for (int i = 0; i < numFiles; i++) {
-          LogFile.Writer writer = logFiles.get(i);
-          writer.markCheckpoint(logWriteOrderID);
-          int id = writer.getFileID();
-          idSet.remove(id);
-          LOGGER.debug("Updated checkpoint for file: " + writer.getFile());
+          LogFile.Writer logWriter = logFiles.get(i);
+          int logFileID = logWriter.getLogFileID();
+          File logFile = logWriter.getFile();
+          LogFile.MetaDataWriter writer =
+              LogFileFactory.getMetaDataWriter(logFile, logFileID);
+          try {
+            writer.markCheckpoint(logWriter.position(), logWriteOrderID);
+          } finally {
+            writer.close();
+          }
+          logFileRefCountsAll.remove(logFileID);
+          LOGGER.info("Updated checkpoint for file: " + logFile + " position: "
+              + logWriter.position() + " logWriteOrderID: " + logWriteOrderID);
         }
 
         // Update any inactive data files as well
-        Iterator<Integer> idIterator = idSet.iterator();
+        Iterator<Integer> idIterator = logFileRefCountsAll.iterator();
         while (idIterator.hasNext()) {
           int id = idIterator.next();
           LogFile.RandomReader reader = idLogFileMap.remove(id);
           File file = reader.getFile();
           reader.close();
-          // Open writer in inactive mode
-          LogFile.Writer writer =
-              new LogFile.Writer(file, id, maxFileSize, false);
-          writer.markCheckpoint(logWriteOrderID);
-          writer.close();
-          reader = new LogFile.RandomReader(file);
+          LogFile.MetaDataWriter writer =
+              LogFileFactory.getMetaDataWriter(file, id);
+          try {
+            writer.markCheckpoint(logWriteOrderID);
+          } finally {
+            writer.close();
+          }
+          reader = LogFileFactory.getRandomReader(file);
           idLogFileMap.put(id, reader);
-          LOGGER.debug("Updated checkpoint for file: " + file);
+          LOGGER.debug("Updated checkpoint for file: " + file
+              + "logWriteOrderID " + logWriteOrderID);
           idIterator.remove();
         }
-        Preconditions.checkState(idSet.size() == 0,
-                "Could not update all data file timestamps: " + idSet);
+        Preconditions.checkState(logFileRefCountsAll.size() == 0,
+                "Could not update all data file timestamps: " + logFileRefCountsAll);
         //Add files from all log directories
         for (int index = 0; index < logDirs.length; index++) {
-          idSetToCompare.add(logFiles.get(index).getFileID());
+          logFileRefCountsActive.add(logFiles.get(index).getLogFileID());
         }
-        idSet = idSetToCompare;
         checkpointCompleted = true;
       }
     } finally {
@@ -725,7 +733,7 @@ class Log {
     //Do the deletes outside the checkpointWriterLock
     //Delete logic is expensive.
     if (open && checkpointCompleted) {
-      removeOldLogs(idSet);
+      removeOldLogs(logFileRefCountsActive);
     }
     //Since the exception is not caught, this will not be returned if
     //an exception is thrown from the try.
@@ -755,6 +763,11 @@ class Log {
           LOGGER.info("Removing old log " + logFile +
               ", result = " + logFile.delete() + ", minFileID "
               + minFileID);
+          File metaDataFile = Serialization.getMetaDataFile(logFile);
+          if(metaDataFile.exists() && !metaDataFile.delete()) {
+            LOGGER.warn("Could not remove metadata file "
+                + metaDataFile + " for " + logFile);
+          }
         }
       }
     }
@@ -795,6 +808,7 @@ class Log {
    * <code>null</code> if directory is already locked.
    * @throws IOException if locking fails.
    */
+  @SuppressWarnings("resource")
   private FileLock tryLock(File dir) throws IOException {
     File lockF = new File(dir, FILE_LOCK);
     lockF.deleteOnExit();

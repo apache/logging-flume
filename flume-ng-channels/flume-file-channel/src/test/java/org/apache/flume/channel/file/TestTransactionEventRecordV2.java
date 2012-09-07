@@ -34,29 +34,36 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-public class TestTransactionEventRecord {
+@SuppressWarnings("deprecation")
+public class TestTransactionEventRecordV2 {
 
   @Test
   public void testTypes() throws IOException {
-    Put put = new Put(System.currentTimeMillis());
-    Assert.assertEquals(TransactionEventRecord.Type.PUT.get(), put.getRecordType());
+    Put put = new Put(System.currentTimeMillis(), WriteOrderOracle.next());
+    Assert.assertEquals(TransactionEventRecord.Type.PUT.get(),
+        put.getRecordType());
 
-    Take take = new Take(System.currentTimeMillis());
-    Assert.assertEquals(TransactionEventRecord.Type.TAKE.get(), take.getRecordType());
+    Take take = new Take(System.currentTimeMillis(), WriteOrderOracle.next());
+    Assert.assertEquals(TransactionEventRecord.Type.TAKE.get(),
+        take.getRecordType());
 
-    Rollback rollback = new Rollback(System.currentTimeMillis());
-    Assert.assertEquals(TransactionEventRecord.Type.ROLLBACK.get(), rollback.getRecordType());
+    Rollback rollback = new Rollback(System.currentTimeMillis(),
+        WriteOrderOracle.next());
+    Assert.assertEquals(TransactionEventRecord.Type.ROLLBACK.get(),
+        rollback.getRecordType());
 
-    Commit commit = new Commit(System.currentTimeMillis());
-    Assert.assertEquals(TransactionEventRecord.Type.COMMIT.get(), commit.getRecordType());
+    Commit commit = new Commit(System.currentTimeMillis(),
+        WriteOrderOracle.next());
+    Assert.assertEquals(TransactionEventRecord.Type.COMMIT.get(),
+        commit.getRecordType());
   }
 
   @Test
   public void testPutSerialization() throws IOException {
     Put in = new Put(System.currentTimeMillis(),
+        WriteOrderOracle.next(),
         new FlumeEvent(new HashMap<String, String>(), new byte[0]));
-    in.setLogWriteOrderID(System.currentTimeMillis());
-    Put out = (Put)TransactionEventRecord.fromDataInput(toDataInput(in));
+    Put out = (Put)TransactionEventRecord.fromDataInputV2(toDataInput(in));
     Assert.assertEquals(in.getClass(), out.getClass());
     Assert.assertEquals(in.getRecordType(), out.getRecordType());
     Assert.assertEquals(in.getTransactionID(), out.getTransactionID());
@@ -66,9 +73,9 @@ public class TestTransactionEventRecord {
   }
   @Test
   public void testTakeSerialization() throws IOException {
-    Take in = new Take(System.currentTimeMillis(), 10, 20);
-    in.setLogWriteOrderID(System.currentTimeMillis());
-    Take out = (Take)TransactionEventRecord.fromDataInput(toDataInput(in));
+    Take in = new Take(System.currentTimeMillis(),
+        WriteOrderOracle.next(), 10, 20);
+    Take out = (Take)TransactionEventRecord.fromDataInputV2(toDataInput(in));
     Assert.assertEquals(in.getClass(), out.getClass());
     Assert.assertEquals(in.getRecordType(), out.getRecordType());
     Assert.assertEquals(in.getTransactionID(), out.getTransactionID());
@@ -79,9 +86,9 @@ public class TestTransactionEventRecord {
 
   @Test
   public void testRollbackSerialization() throws IOException {
-    Rollback in = new Rollback(System.currentTimeMillis());
-    in.setLogWriteOrderID(System.currentTimeMillis());
-    Rollback out = (Rollback)TransactionEventRecord.fromDataInput(toDataInput(in));
+    Rollback in = new Rollback(System.currentTimeMillis(),
+        WriteOrderOracle.next());
+    Rollback out = (Rollback)TransactionEventRecord.fromDataInputV2(toDataInput(in));
     Assert.assertEquals(in.getClass(), out.getClass());
     Assert.assertEquals(in.getRecordType(), out.getRecordType());
     Assert.assertEquals(in.getTransactionID(), out.getTransactionID());
@@ -90,9 +97,9 @@ public class TestTransactionEventRecord {
 
   @Test
   public void testCommitSerialization() throws IOException {
-    Commit in = new Commit(System.currentTimeMillis());
-    in.setLogWriteOrderID(System.currentTimeMillis());
-    Commit out = (Commit)TransactionEventRecord.fromDataInput(toDataInput(in));
+    Commit in = new Commit(System.currentTimeMillis(),
+        WriteOrderOracle.next());
+    Commit out = (Commit)TransactionEventRecord.fromDataInputV2(toDataInput(in));
     Assert.assertEquals(in.getClass(), out.getClass());
     Assert.assertEquals(in.getRecordType(), out.getRecordType());
     Assert.assertEquals(in.getTransactionID(), out.getTransactionID());
@@ -102,10 +109,10 @@ public class TestTransactionEventRecord {
   @Test
   public void testBadHeader() throws IOException {
     Put in = new Put(System.currentTimeMillis(),
+        WriteOrderOracle.next(),
         new FlumeEvent(new HashMap<String, String>(), new byte[0]));
-    in.setLogWriteOrderID(System.currentTimeMillis());
     try {
-      TransactionEventRecord.fromDataInput(toDataInput(0, in));
+      TransactionEventRecord.fromDataInputV2(toDataInput(0, in));
       Assert.fail();
     } catch (IOException e) {
       Assert.assertEquals("Header 0 is not the required value: deadbeef",
@@ -118,7 +125,7 @@ public class TestTransactionEventRecord {
     TransactionEventRecord in = mock(TransactionEventRecord.class);
     when(in.getRecordType()).thenReturn(Short.MIN_VALUE);
     try {
-      TransactionEventRecord.fromDataInput(toDataInput(in));
+      TransactionEventRecord.fromDataInputV2(toDataInput(in));
       Assert.fail();
     } catch(NullPointerException e) {
       Assert.assertEquals("Unknown action ffff8000", e.getMessage());
@@ -126,7 +133,7 @@ public class TestTransactionEventRecord {
   }
 
   private DataInput toDataInput(TransactionEventRecord record) throws IOException {
-    ByteBuffer buffer = TransactionEventRecord.toByteBuffer(record);
+    ByteBuffer buffer = TransactionEventRecord.toByteBufferV2(record);
     ByteArrayInputStream byteInput = new ByteArrayInputStream(buffer.array());
     DataInputStream dataInput = new DataInputStream(byteInput);
     return dataInput;
@@ -137,6 +144,7 @@ public class TestTransactionEventRecord {
     dataOutput.writeInt(header);
     dataOutput.writeShort(record.getRecordType());
     dataOutput.writeLong(record.getTransactionID());
+    dataOutput.writeLong(record.getLogWriteOrderID());
     record.write(dataOutput);
     ByteArrayInputStream byteInput = new ByteArrayInputStream(byteOutput.toByteArray());
     DataInputStream dataInput = new DataInputStream(byteInput);

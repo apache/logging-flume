@@ -61,7 +61,8 @@ public class LogUtils {
     List<File> result = Lists.newArrayList();
     for (File file : logDir.listFiles()) {
       String name = file.getName();
-      if (name.startsWith(Log.PREFIX)) {
+      if (name.startsWith(Log.PREFIX) &&
+          !name.endsWith(Serialization.METADATA_FILENAME)) {
         result.add(file);
       }
     }
