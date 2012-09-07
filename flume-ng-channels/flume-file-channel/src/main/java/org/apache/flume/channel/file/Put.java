@@ -21,6 +21,14 @@ package org.apache.flume.channel.file;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Map;
+
+import org.apache.flume.chanel.file.proto.ProtosFactory;
+
+import com.google.common.collect.Maps;
+import com.google.protobuf.ByteString;
 
 /**
  * Represents a Put on disk
@@ -28,12 +36,12 @@ import java.io.IOException;
 class Put extends TransactionEventRecord {
   private FlumeEvent event;
 
-  Put(Long transactionID) {
-    super(transactionID);
+  Put(Long transactionID, Long logWriteOrderID) {
+    super(transactionID, logWriteOrderID);
   }
 
-  Put(Long transactionID, FlumeEvent event) {
-    this(transactionID);
+  Put(Long transactionID, Long logWriteOrderID, FlumeEvent event) {
+    this(transactionID, logWriteOrderID);
     this.event = event;
   }
 
@@ -53,6 +61,37 @@ class Put extends TransactionEventRecord {
     event.write(out);
   }
   @Override
+  void writeProtos(OutputStream out) throws IOException {
+    ProtosFactory.Put.Builder putBuilder = ProtosFactory.Put.newBuilder();
+    ProtosFactory.FlumeEvent.Builder eventBuilder =
+        ProtosFactory.FlumeEvent.newBuilder();
+    Map<String, String> headers = event.getHeaders();
+    ProtosFactory.FlumeEventHeader.Builder headerBuilder =
+        ProtosFactory.FlumeEventHeader.newBuilder();
+    if(headers != null) {
+      for(String key : headers.keySet()) {
+        String value = headers.get(key);
+        headerBuilder.clear();
+        eventBuilder.addHeaders(headerBuilder.setKey(key)
+            .setValue(value).build());
+      }
+    }
+    eventBuilder.setBody(ByteString.copyFrom(event.getBody()));
+    putBuilder.setEvent(eventBuilder.build());
+    putBuilder.build().writeDelimitedTo(out);
+  }
+  @Override
+  void readProtos(InputStream in) throws IOException {
+    ProtosFactory.Put put = ProtosFactory.Put.parseDelimitedFrom(in);
+    Map<String, String> headers = Maps.newHashMap();
+    ProtosFactory.FlumeEvent protosEvent = put.getEvent();
+    for(ProtosFactory.FlumeEventHeader header : protosEvent.getHeadersList()) {
+      headers.put(header.getKey(), header.getValue());
+    }
+    // TODO when we remove v2, remove FlumeEvent and use EventBuilder here
+    event = new FlumeEvent(headers, protosEvent.getBody().toByteArray());
+  }
+  @Override
   public short getRecordType() {
     return Type.PUT.get();
   }
@@ -69,4 +108,5 @@ class Put extends TransactionEventRecord {
     builder.append("]");
     return builder.toString();
   }
+
 }

@@ -21,13 +21,17 @@ package org.apache.flume.channel.file;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import org.apache.flume.chanel.file.proto.ProtosFactory;
 
 /**
  * Represents a Rollback on disk
  */
 class Rollback extends TransactionEventRecord {
-  Rollback(Long transactionID) {
-    super(transactionID);
+  Rollback(Long transactionID, Long logWriteOrderID) {
+    super(transactionID, logWriteOrderID);
   }
   @Override
   public void readFields(DataInput in) throws IOException {
@@ -37,6 +41,18 @@ class Rollback extends TransactionEventRecord {
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
+  }
+  @Override
+  void writeProtos(OutputStream out) throws IOException {
+    ProtosFactory.Rollback.Builder rollbackBuilder =
+        ProtosFactory.Rollback.newBuilder();
+    rollbackBuilder.build().writeDelimitedTo(out);
+  }
+  @Override
+  void readProtos(InputStream in) throws IOException {
+    @SuppressWarnings("unused")
+    ProtosFactory.Rollback rollback =
+      ProtosFactory.Rollback.parseDelimitedFrom(in);
   }
   @Override
   short getRecordType() {

@@ -36,14 +36,12 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
-/**
- * Represents a single data file on disk. Has methods to write,
- * read sequentially (replay), and read randomly (channel takes).
- */
-class LogFile {
+abstract class LogFile {
 
   private static final Logger LOG = LoggerFactory
       .getLogger(LogFile.class);
+
+
   /**
    * This class preallocates the data files 1MB at time to avoid
    * the updating of the inode on each write and to avoid the disk
@@ -52,117 +50,106 @@ class LogFile {
   private static final ByteBuffer FILL = DirectMemoryUtils.
       allocate(1024 * 1024); // preallocation, 1MB
 
-  private static final byte OP_RECORD = Byte.MAX_VALUE;
-  private static final byte OP_EOF = Byte.MIN_VALUE;
+  protected static final byte OP_RECORD = Byte.MAX_VALUE;
+  protected static final byte OP_EOF = Byte.MIN_VALUE;
 
   static {
     for (int i = 0; i < FILL.capacity(); i++) {
       FILL.put(OP_EOF);
     }
   }
-  private static final int VERSION = 2;
 
+  abstract static class MetaDataWriter {
+    private final File file;
+    private final int logFileID;
+    private final RandomAccessFile writeFileHandle;
 
-  static class Writer {
-    private final int fileID;
+    private long lastCheckpointOffset;
+    private long lastCheckpointWriteOrderID;
+
+    protected MetaDataWriter(File file, int logFileID) throws IOException {
+      this.file = file;
+      this.logFileID = logFileID;
+      writeFileHandle = new RandomAccessFile(file, "rw");
+
+    }
+    protected RandomAccessFile getFileHandle() {
+      return writeFileHandle;
+    }
+    protected void setLastCheckpointOffset(long lastCheckpointOffset) {
+      this.lastCheckpointOffset = lastCheckpointOffset;
+    }
+    protected void setLastCheckpointWriteOrderID(long lastCheckpointWriteOrderID) {
+      this.lastCheckpointWriteOrderID = lastCheckpointWriteOrderID;
+    }
+    protected long getLastCheckpointOffset() {
+      return lastCheckpointOffset;
+    }
+    protected long getLastCheckpointWriteOrderID() {
+      return lastCheckpointWriteOrderID;
+    }
+    protected File getFile() {
+      return file;
+    }
+    protected int getLogFileID() {
+      return logFileID;
+    }
+    void markCheckpoint(long logWriteOrderID)
+        throws IOException {
+      markCheckpoint(lastCheckpointOffset, logWriteOrderID);
+    }
+    abstract void markCheckpoint(long currentPosition, long logWriteOrderID)
+        throws IOException;
+
+    abstract int getVersion();
+
+    void close() {
+      try {
+        writeFileHandle.close();
+      } catch (IOException e) {
+        LOG.warn("Unable to close " + file, e);
+      }
+    }
+  }
+
+  static abstract class Writer {
+    private final int logFileID;
     private final File file;
     private final long maxFileSize;
     private final RandomAccessFile writeFileHandle;
     private final FileChannel writeFileChannel;
-    private final long checkpointPositionMarker;
-
     private volatile boolean open;
 
     Writer(File file, int logFileID, long maxFileSize)
         throws IOException {
-      this(file, logFileID, maxFileSize, true);
-    }
-
-    Writer(File file, int logFileID, long maxFileSize, boolean active)
-        throws IOException {
       this.file = file;
-      fileID = logFileID;
+      this.logFileID = logFileID;
       this.maxFileSize = Math.min(maxFileSize,
           FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE);
       writeFileHandle = new RandomAccessFile(file, "rw");
-      if (active) {
-        writeFileHandle.writeInt(VERSION);
-        writeFileHandle.writeInt(fileID);
-        checkpointPositionMarker = writeFileHandle.getFilePointer();
-        // checkpoint marker
-        writeFileHandle.writeLong(0L);
-        // timestamp placeholder
-        writeFileHandle.writeLong(0L);
-        writeFileChannel = writeFileHandle.getChannel();
-        writeFileChannel.force(true);
-      } else {
-        int version = writeFileHandle.readInt();
-        if (version != VERSION) {
-          throw new IOException("The version of log file: "
-              + file.getCanonicalPath() + " is different from expected "
-              + " version: expected = " + VERSION + ", found = " + version);
-        }
-        int fid = writeFileHandle.readInt();
-        if (fid != logFileID) {
-          throw new IOException("The file id of log file: "
-              + file.getCanonicalPath() + " is different from expected "
-              + " id: expected = " + logFileID + ", found = " + fid);
-        }
-        checkpointPositionMarker = writeFileHandle.getFilePointer();
-        long chkptMarker = writeFileHandle.readLong();
-        long chkptTimestamp = writeFileHandle.readLong();
-        LOG.info("File: " + file.getCanonicalPath() + " was last checkpointed "
-             + "at position: " + chkptMarker + ", ts: " + chkptTimestamp);
-        writeFileChannel = writeFileHandle.getChannel();
-
-        // Jump to the last position
-        writeFileChannel.position(chkptMarker);
-      }
+      writeFileChannel = writeFileHandle.getChannel();
       LOG.info("Opened " + file);
       open = true;
+    }
+
+    abstract int getVersion();
+
+    int getLogFileID() {
+      return logFileID;
     }
 
     File getFile() {
       return file;
     }
-
-    synchronized void markCheckpoint(long logWriteOrderID) throws IOException {
-      long currentPosition = writeFileChannel.position();
-      writeFileHandle.seek(checkpointPositionMarker);
-      writeFileHandle.writeLong(currentPosition);
-      writeFileHandle.writeLong(logWriteOrderID);
-      writeFileChannel.position(currentPosition);
-      LOG.info("Noted checkpoint for file: " + file + ", id: " + fileID
-          + ", checkpoint position: " + currentPosition);
-    }
-
     String getParent() {
       return file.getParent();
     }
-
-    synchronized void close() {
-      if(open) {
-        open = false;
-        if(writeFileChannel.isOpen()) {
-          LOG.info("Closing " + file);
-          try {
-            writeFileChannel.force(true);
-          } catch (IOException e) {
-            LOG.warn("Unable to flush to disk", e);
-          }
-          try {
-            writeFileHandle.close();
-          } catch (IOException e) {
-            LOG.info("Unable to close", e);
-          }
-        }
-      }
+    long getMaxSize() {
+      return maxFileSize;
     }
-
-    synchronized long length() throws IOException {
-      return writeFileChannel.position();
+    synchronized long position() throws IOException {
+      return getFileChannel().position();
     }
-
     synchronized FlumeEventPointer put(ByteBuffer buffer) throws IOException {
       Pair<Integer, Integer> pair = write(buffer);
       return new FlumeEventPointer(pair.getLeft(), pair.getRight());
@@ -177,49 +164,72 @@ class LogFile {
       write(buffer);
       sync();
     }
-
-    synchronized boolean isRollRequired(ByteBuffer buffer) throws IOException {
-      return open && length() + (long) buffer.capacity() > maxFileSize;
-    }
-
-    int getFileID() {
-      return fileID;
-    }
-    private void sync() throws IOException {
-      Preconditions.checkState(open, "File closed");
-      writeFileChannel.force(false);
-    }
     private Pair<Integer, Integer> write(ByteBuffer buffer) throws IOException {
-      Preconditions.checkState(open, "File closed");
-      long length = length();
+      Preconditions.checkState(isOpen(), "File closed");
+      long length = position();
       long expectedLength = length + (long) buffer.capacity();
       Preconditions.checkArgument(expectedLength < (long) Integer.MAX_VALUE);
       int offset = (int)length;
-      Preconditions.checkState(offset > 0);
+      Preconditions.checkState(offset >= 0, String.valueOf(offset));
       int recordLength = 1 + buffer.capacity();
       preallocate(recordLength);
       ByteBuffer toWrite = ByteBuffer.allocate(recordLength);
       toWrite.put(OP_RECORD);
       toWrite.put(buffer);
       toWrite.position(0);
-      int wrote = writeFileChannel.write(toWrite);
+      int wrote = getFileChannel().write(toWrite);
       Preconditions.checkState(wrote == toWrite.limit());
-      return Pair.of(fileID, offset);
+      return Pair.of(getLogFileID(), offset);
     }
-    private void preallocate(int size) throws IOException {
-      long position = writeFileChannel.position();
-      if(position + size > writeFileChannel.size()) {
-        LOG.debug("Preallocating at position " + position);
-        synchronized (FILL) {
-          FILL.position(0);
-          writeFileChannel.write(FILL, position);
+    synchronized boolean isRollRequired(ByteBuffer buffer) throws IOException {
+      return isOpen() && position() + (long) buffer.capacity() > getMaxSize();
+    }
+    private void sync() throws IOException {
+      Preconditions.checkState(isOpen(), "File closed");
+      getFileChannel().force(false);
+    }
+
+
+    protected boolean isOpen() {
+      return open;
+    }
+    protected RandomAccessFile getFileHandle() {
+      return writeFileHandle;
+    }
+    protected FileChannel getFileChannel() {
+      return writeFileChannel;
+    }
+    synchronized void close() {
+      if(open) {
+        open = false;
+        if(writeFileChannel.isOpen()) {
+          LOG.info("Closing " + file);
+          try {
+            writeFileChannel.force(true);
+          } catch (IOException e) {
+            LOG.warn("Unable to flush to disk " + file, e);
+          }
+          try {
+            writeFileHandle.close();
+          } catch (IOException e) {
+            LOG.warn("Unable to close " + file, e);
+          }
         }
       }
     }
-
+    protected void preallocate(int size) throws IOException {
+      long position = position();
+      if(position + size > getFileChannel().size()) {
+        LOG.debug("Preallocating at position " + position);
+        synchronized (FILL) {
+          FILL.position(0);
+          getFileChannel().write(FILL, position);
+        }
+      }
+    }
   }
 
-  static class RandomReader {
+  static abstract class RandomReader {
     private final File file;
     private final BlockingQueue<RandomAccessFile> readFileHandles =
         new ArrayBlockingQueue<RandomAccessFile>(50, true);
@@ -230,6 +240,11 @@ class LogFile {
       readFileHandles.add(open());
       open = true;
     }
+
+    protected abstract TransactionEventRecord doGet(RandomAccessFile fileHandle)
+        throws IOException;
+
+    abstract int getVersion();
 
     File getFile() {
       return file;
@@ -242,9 +257,9 @@ class LogFile {
       try {
         fileHandle.seek(offset);
         byte operation = fileHandle.readByte();
-        Preconditions.checkState(operation == OP_RECORD, Integer.toHexString(operation));
-        TransactionEventRecord record = TransactionEventRecord.
-            fromDataInput(fileHandle);
+        Preconditions.checkState(operation == OP_RECORD,
+            Integer.toHexString(operation));
+        TransactionEventRecord record = doGet(fileHandle);
         if(!(record instanceof Put)) {
           Preconditions.checkState(false, "Record is " +
               record.getClass().getSimpleName());
@@ -253,12 +268,13 @@ class LogFile {
         return ((Put)record).getEvent();
       } finally {
         if(error) {
-          close(fileHandle);
+          close(fileHandle, file);
         } else {
           checkIn(fileHandle);
         }
       }
     }
+
     synchronized void close() {
       if(open) {
         open = false;
@@ -270,28 +286,30 @@ class LogFile {
               try {
                 fileHandle.close();
               } catch (IOException e) {
-                LOG.info("Unable to close fileHandle for " + file);
+                LOG.warn("Unable to close fileHandle for " + file, e);
               }
             }
           }
           fileHandles.clear();
           try {
-            Thread.sleep(100L);
+            Thread.sleep(5L);
           } catch (InterruptedException e) {
             // this is uninterruptable
           }
         }
       }
     }
+
     private RandomAccessFile open() throws IOException {
       return new RandomAccessFile(file, "r");
     }
 
     private void checkIn(RandomAccessFile fileHandle) {
       if(!readFileHandles.offer(fileHandle)) {
-        close(fileHandle);
+        close(fileHandle, file);
       }
     }
+
     private RandomAccessFile checkOut()
         throws IOException, InterruptedException {
       RandomAccessFile fileHandle = readFileHandles.poll();
@@ -306,23 +324,26 @@ class LogFile {
       }
       return readFileHandles.take();
     }
-    private static void close(RandomAccessFile fileHandle) {
+    private static void close(RandomAccessFile fileHandle, File file) {
       if(fileHandle != null) {
         try {
           fileHandle.close();
-        } catch (IOException e) {}
+        } catch (IOException e) {
+          LOG.warn("Unable to close " + file, e);
+        }
       }
     }
   }
 
-  static class SequentialReader {
+  static abstract class SequentialReader {
+
     private final RandomAccessFile fileHandle;
     private final FileChannel fileChannel;
-    private final int version;
-    private final int logFileID;
-    private final long lastCheckpointPosition;
-    private final long lastCheckpointTimestamp;
     private final File file;
+
+    private int logFileID;
+    private long lastCheckpointPosition;
+    private long lastCheckpointWriteOrderID;
 
     /**
      * Construct a Sequential Log Reader object
@@ -334,38 +355,44 @@ class LogFile {
       this.file = file;
       fileHandle = new RandomAccessFile(file, "r");
       fileChannel = fileHandle.getChannel();
-      version = fileHandle.readInt();
-      if(version != VERSION) {
-        throw new IOException("Version is " + Integer.toHexString(version) +
-            " expected " + Integer.toHexString(VERSION)
-            + " file: " + file.getCanonicalPath());
-      }
-      logFileID = fileHandle.readInt();
-      lastCheckpointPosition = fileHandle.readLong();
-      lastCheckpointTimestamp = fileHandle.readLong();
+    }
+    abstract LogRecord doNext(int offset) throws IOException;
 
+    abstract int getVersion();
+
+    protected void setLastCheckpointPosition(long lastCheckpointPosition) {
+      this.lastCheckpointPosition = lastCheckpointPosition;
+    }
+    protected void setLastCheckpointWriteOrderID(long lastCheckpointWriteOrderID) {
+      this.lastCheckpointWriteOrderID = lastCheckpointWriteOrderID;
+    }
+    protected void setLogFileID(int logFileID) {
+      this.logFileID = logFileID;
       Preconditions.checkArgument(logFileID >= 0, "LogFileID is not positive: "
           + Integer.toHexString(logFileID));
+
     }
-    int getVersion() {
-      return version;
+    protected RandomAccessFile getFileHandle() {
+      return fileHandle;
     }
     int getLogFileID() {
       return logFileID;
     }
-    void skipToLastCheckpointPosition(long checkpointTimestamp)
+    void skipToLastCheckpointPosition(long checkpointWriteOrderID)
         throws IOException {
       if (lastCheckpointPosition > 0L
-          && lastCheckpointTimestamp <= checkpointTimestamp) {
+          && lastCheckpointWriteOrderID <= checkpointWriteOrderID) {
         LOG.info("fast-forward to checkpoint position: "
                   + lastCheckpointPosition);
         fileChannel.position(lastCheckpointPosition);
       } else {
         LOG.warn("Checkpoint for file(" + file.getAbsolutePath() + ") "
-            + "is: " + lastCheckpointTimestamp + ", which is beyond the "
-            + "requested checkpoint time: " + checkpointTimestamp + ". ");
+            + "is: " + lastCheckpointWriteOrderID + ", which is beyond the "
+            + "requested checkpoint time: " + checkpointWriteOrderID
+            + " and position " + lastCheckpointPosition);
       }
     }
+
     LogRecord next() throws IOException {
       int offset = -1;
       try {
@@ -376,6 +403,7 @@ class LogFile {
                 + ", position: " + position);
         }
         offset = (int) position;
+        Preconditions.checkState(offset >= 0);
         byte operation = fileHandle.readByte();
         if(operation != OP_RECORD) {
           if(operation == OP_EOF) {
@@ -386,10 +414,7 @@ class LogFile {
           }
           return null;
         }
-        TransactionEventRecord record = TransactionEventRecord.
-            fromDataInput(fileHandle);
-        Preconditions.checkState(offset > 0);
-        return new LogRecord(logFileID, offset, record);
+        return doNext(offset);
       } catch(EOFException e) {
         return null;
       } catch (IOException e) {
@@ -397,6 +422,7 @@ class LogFile {
             file.getCanonicalPath() + " at offset " + offset, e);
       }
     }
+
     void close() {
       if(fileHandle != null) {
         try {
@@ -405,12 +431,11 @@ class LogFile {
       }
     }
   }
-
   public static void main(String[] args) throws EOFException, IOException {
     File file = new File(args[0]);
     LogFile.SequentialReader reader = null;
     try {
-      reader = new LogFile.SequentialReader(file);
+      reader = LogFileFactory.getSequentialReader(file);
       LogRecord entry;
       FlumeEventPointer ptr;
       // for puts the fileId is the fileID of the file they exist in

@@ -33,8 +33,10 @@ public class TestLogRecord {
   @Test
   public void testConstructor() {
     long now = System.currentTimeMillis();
-    Commit commit = new Commit(now);
+    Commit commit = new Commit(now, now + 1);
     LogRecord logRecord = new LogRecord(1, 2, commit);
+    Assert.assertTrue(now == commit.getTransactionID());
+    Assert.assertTrue(now + 1 == commit.getLogWriteOrderID());
     Assert.assertTrue(1 == logRecord.getFileID());
     Assert.assertTrue(2 == logRecord.getOffset());
     Assert.assertTrue(commit == logRecord.getEvent());
@@ -46,8 +48,7 @@ public class TestLogRecord {
     long now = System.currentTimeMillis();
     List<LogRecord> records = Lists.newArrayList();
     for (int i = 0; i < 3; i++) {
-      Commit commit = new Commit((long)i);
-      commit.setLogWriteOrderID(now - i);
+      Commit commit = new Commit((long)i, now - i);
       LogRecord logRecord = new LogRecord(1, i, commit);
       records.add(logRecord);
     }

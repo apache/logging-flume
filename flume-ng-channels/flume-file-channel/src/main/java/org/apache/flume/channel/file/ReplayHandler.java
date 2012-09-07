@@ -67,15 +67,12 @@ class ReplayHandler {
   private final List<Long> pendingTakes;
   private final boolean useFastReplay;
   private final File cpDir;
-  private final long maxFileSize;
 
-  ReplayHandler(FlumeEventQueue queue, boolean useFastReplay, File cpDir,
-          long maxFileSize) {
+  ReplayHandler(FlumeEventQueue queue, boolean useFastReplay, File cpDir) {
     this.queue = queue;
     this.useFastReplay = useFastReplay;
     this.lastCheckpoint = queue.getLogWriteOrderID();
     this.cpDir = cpDir;
-    this.maxFileSize = maxFileSize;
     pendingTakes = Lists.newArrayList();
     readers = Maps.newHashMap();
     logRecordBuffer = new PriorityQueue<LogRecord>();
@@ -88,7 +85,7 @@ class ReplayHandler {
   void replayLogv1(List<File> logs) throws Exception {
     if(useFastReplay) {
       CheckpointRebuilder rebuilder = new CheckpointRebuilder(cpDir, logs,
-              maxFileSize, queue);
+              queue);
       if(rebuilder.rebuild()){
         LOG.info("Fast replay successful.");
         return;
@@ -112,7 +109,7 @@ class ReplayHandler {
       LOG.info("Replaying " + log);
       LogFile.SequentialReader reader = null;
       try {
-        reader = new LogFile.SequentialReader(log);
+        reader = LogFileFactory.getSequentialReader(log);
         reader.skipToLastCheckpointPosition(queue.getLogWriteOrderID());
         LogRecord entry;
         FlumeEventPointer ptr;
@@ -227,7 +224,7 @@ class ReplayHandler {
   void replayLog(List<File> logs) throws Exception {
     if (useFastReplay) {
       CheckpointRebuilder rebuilder = new CheckpointRebuilder(cpDir, logs,
-              maxFileSize, queue);
+              queue);
       if (rebuilder.rebuild()) {
         LOG.info("Fast replay successful.");
         return;
@@ -252,7 +249,8 @@ class ReplayHandler {
       for (File log : logs) {
         LOG.info("Replaying " + log);
         try {
-          LogFile.SequentialReader reader = new LogFile.SequentialReader(log);
+          LogFile.SequentialReader reader =
+              LogFileFactory.getSequentialReader(log);
           reader.skipToLastCheckpointPosition(queue.getLogWriteOrderID());
           Preconditions.checkState(!readers.containsKey(reader.getLogFileID()),
               "Readers " + readers + " already contains "

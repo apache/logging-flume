@@ -18,14 +18,16 @@
  */
 package org.apache.flume.channel.file;
 
+import static org.apache.flume.channel.file.TestUtils.*;
+
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,7 +38,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.ChannelException;
@@ -57,13 +58,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
-import com.google.common.io.Resources;
-import java.util.HashSet;
-import java.util.Iterator;
-
-import static org.apache.flume.channel.file.TestUtils.*;
 
 public class TestFileChannel {
 
@@ -221,30 +216,42 @@ public class TestFileChannel {
 
   @Test
   public void testRestartLogReplayV1() throws Exception {
-    doTestRestart(true, false, false);
+    doTestRestart(true, false, false, false);
   }
   @Test
   public void testRestartLogReplayV2() throws Exception {
-    doTestRestart(false, false, false);
+    doTestRestart(false, false, false, false);
   }
 
   @Test
   public void testFastReplayV1() throws Exception {
-    doTestRestart(true, true, true);
+    doTestRestart(true, true, true, true);
   }
 
   @Test
   public void testFastReplayV2() throws Exception {
-    doTestRestart(false, true, true);
+    doTestRestart(false, true, true, true);
   }
+
+  @Test
+  public void testNormalReplayV1() throws Exception {
+    doTestRestart(true, true, true, false);
+  }
+
+  @Test
+  public void testNormalReplayV2() throws Exception {
+    doTestRestart(false, true, true, false);
+  }
+
   public void doTestRestart(boolean useLogReplayV1,
-          boolean forceCheckpoint, boolean deleteCheckpoint) throws Exception {
+          boolean forceCheckpoint, boolean deleteCheckpoint,
+          boolean useFastReplay) throws Exception {
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.USE_LOG_REPLAY_V1,
             String.valueOf(useLogReplayV1));
     overrides.put(
             FileChannelConfiguration.USE_FAST_REPLAY,
-            String.valueOf(deleteCheckpoint));
+            String.valueOf(useFastReplay));
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
@@ -263,13 +270,51 @@ public class TestFileChannel {
     channel.stop();
     if(deleteCheckpoint) {
       File checkpoint = new File(checkpointDir, "checkpoint");
-      checkpoint.delete();
+      Assert.assertTrue(checkpoint.delete());
+      File checkpointMetaData = Serialization.getMetaDataFile(checkpoint);
+      Assert.assertTrue(checkpointMetaData.delete());
     }
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
     Set<String> out = takeEvents(channel, 1, Integer.MAX_VALUE);
     compareInputAndOut(in, out);
+  }
+  @Test
+  public void testRestartFailsWhenMetaDataExistsButCheckpointDoesNot()
+      throws Exception {
+    Map<String, String> overrides = Maps.newHashMap();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Assert.assertEquals(1,  putEvents(channel, "restart", 1, 1).size());
+    forceCheckpoint(channel);
+    channel.stop();
+    File checkpoint = new File(checkpointDir, "checkpoint");
+    Assert.assertTrue(checkpoint.delete());
+    File checkpointMetaData = Serialization.getMetaDataFile(checkpoint);
+    Assert.assertTrue(checkpointMetaData.exists());
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertFalse(channel.isOpen());
+  }
+  @Test
+  public void testRestartFailsWhenCheckpointExistsButMetaDoesNot()
+      throws Exception {
+    Map<String, String> overrides = Maps.newHashMap();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Assert.assertEquals(1,  putEvents(channel, "restart", 1, 1).size());
+    forceCheckpoint(channel);
+    channel.stop();
+    File checkpoint = new File(checkpointDir, "checkpoint");
+    File checkpointMetaData = Serialization.getMetaDataFile(checkpoint);
+    Assert.assertTrue(checkpointMetaData.delete());
+    Assert.assertTrue(checkpoint.exists());
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertFalse(channel.isOpen());
   }
   @Test
   public void testReconfigure() throws Exception {
@@ -586,11 +631,11 @@ public class TestFileChannel {
   @Test
   public void testFileFormatV2postFLUME1432()
           throws Exception {
-    copyDecompressed("fileformat-v2-checkpoint.gz",
+    TestUtils.copyDecompressed("fileformat-v2-checkpoint.gz",
             new File(checkpointDir, "checkpoint"));
     for (int i = 0; i < dataDirs.length; i++) {
       int fileIndex = i + 1;
-      copyDecompressed("fileformat-v2-log-"+fileIndex+".gz",
+      TestUtils.copyDecompressed("fileformat-v2-log-"+fileIndex+".gz",
               new File(dataDirs[i], "log-" + fileIndex));
     }
     Map<String, String> overrides = Maps.newHashMap();
@@ -623,12 +668,12 @@ public class TestFileChannel {
   }
   public void doTestFileFormatV2PreFLUME1432(boolean useLogReplayV1)
           throws Exception {
-    copyDecompressed("fileformat-v2-pre-FLUME-1432-checkpoint.gz",
+    TestUtils.copyDecompressed("fileformat-v2-pre-FLUME-1432-checkpoint.gz",
             new File(checkpointDir, "checkpoint"));
     for (int i = 0; i < dataDirs.length; i++) {
       int fileIndex = i + 1;
-      copyDecompressed("fileformat-v2-pre-FLUME-1432-log-" + fileIndex + ".gz",
-              new File(dataDirs[i], "log-" + fileIndex));
+      TestUtils.copyDecompressed("fileformat-v2-pre-FLUME-1432-log-" + fileIndex
+          + ".gz", new File(dataDirs[i], "log-" + fileIndex));
     }
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(10000));
@@ -757,14 +802,4 @@ public class TestFileChannel {
     }).get();
     Assert.assertEquals(15, takenEvents.size());
   }
-
-
-  private static void copyDecompressed(String resource, File output)
-          throws IOException {
-    URL input =  Resources.getResource(resource);
-    long copied = ByteStreams.copy(new GZIPInputStream(input.openStream()),
-            new FileOutputStream(output));
-    LOG.info("Copied " + copied + " bytes from " + input + " to " + output);
-  }
-
 }

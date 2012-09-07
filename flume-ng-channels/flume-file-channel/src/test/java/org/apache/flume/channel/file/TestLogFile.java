@@ -21,7 +21,9 @@ package org.apache.flume.channel.file;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -34,7 +36,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 
@@ -51,7 +52,7 @@ public class TestLogFile {
     dataDir = Files.createTempDir();
     dataFile = new File(dataDir, String.valueOf(fileID));
     Assert.assertTrue(dataDir.isDirectory());
-    logFileWriter = new LogFile.Writer(dataFile, fileID, 1000);
+    logFileWriter = LogFileFactory.getWriter(dataFile, fileID, 1000);
   }
   @After
   public void cleanup() throws IOException {
@@ -63,20 +64,25 @@ public class TestLogFile {
   }
   @Test
   public void testPutGet() throws InterruptedException, IOException {
-    final List<Throwable> errors = Lists.newArrayList();
+    final List<Throwable> errors =
+        Collections.synchronizedList(new ArrayList<Throwable>());
     ExecutorService executorService = Executors.newFixedThreadPool(10);
-    final LogFile.RandomReader logFileReader = new LogFile.RandomReader(dataFile);
+    final LogFile.RandomReader logFileReader =
+        LogFileFactory.getRandomReader(dataFile);
     for (int i = 0; i < 1000; i++) {
       // first try and throw failures
-      for(Throwable throwable : errors) {
-        Throwables.propagateIfInstanceOf(throwable, AssertionError.class);
-      }
-      // then throw errors
-      for(Throwable throwable : errors) {
-        Throwables.propagate(throwable);
+      synchronized (errors) {
+        for(Throwable throwable : errors) {
+          Throwables.propagateIfInstanceOf(throwable, AssertionError.class);
+        }
+        // then throw errors
+        for(Throwable throwable : errors) {
+          Throwables.propagate(throwable);
+        }
       }
       final FlumeEvent eventIn = TestUtils.newPersistableEvent();
-      final Put put = new Put(++transactionID, eventIn);
+      final Put put = new Put(++transactionID, WriteOrderOracle.next(),
+          eventIn);
       ByteBuffer bytes = TransactionEventRecord.toByteBuffer(put);
       FlumeEventPointer ptr = logFileWriter.put(bytes);
       final int offset = ptr.getOffset();
@@ -110,12 +116,14 @@ public class TestLogFile {
     Map<Integer, Put> puts = Maps.newHashMap();
     for (int i = 0; i < 1000; i++) {
       FlumeEvent eventIn = TestUtils.newPersistableEvent();
-      Put put = new Put(++transactionID, eventIn);
+      Put put = new Put(++transactionID, WriteOrderOracle.next(),
+          eventIn);
       ByteBuffer bytes = TransactionEventRecord.toByteBuffer(put);
       FlumeEventPointer ptr = logFileWriter.put(bytes);
       puts.put(ptr.getOffset(), put);
     }
-    LogFile.SequentialReader reader = new LogFile.SequentialReader(dataFile);
+    LogFile.SequentialReader reader =
+        LogFileFactory.getSequentialReader(dataFile);
     LogRecord entry;
     while((entry = reader.next()) != null) {
       Integer offset = entry.getOffset();
