@@ -69,7 +69,7 @@ public class CheckpointRebuilder {
     LOG.info("Attempting to fast replay the log files.");
     List<LogFile.SequentialReader> logReaders = Lists.newArrayList();
     for (File logFile : logFiles) {
-      logReaders.add(LogFileFactory.getSequentialReader(logFile));
+      logReaders.add(LogFileFactory.getSequentialReader(logFile, null));
     }
     long transactionIDSeed = 0;
     long writeOrderIDSeed = 0;

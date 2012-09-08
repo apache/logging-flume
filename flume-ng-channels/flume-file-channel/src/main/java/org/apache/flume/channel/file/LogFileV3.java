@@ -23,13 +23,20 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.nio.channels.Channels;
+import java.security.Key;
+
+import javax.annotation.Nullable;
 
 import org.apache.flume.chanel.file.proto.ProtosFactory;
+import org.apache.flume.channel.file.encryption.CipherProvider;
+import org.apache.flume.channel.file.encryption.CipherProviderFactory;
+import org.apache.flume.channel.file.encryption.KeyProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Preconditions;
+import com.google.protobuf.ByteString;
 
 /**
  * Represents a single data file on disk. Has methods to write,
@@ -42,7 +49,7 @@ class LogFileV3 extends LogFile {
   private LogFileV3() {}
 
   static class MetaDataWriter extends LogFile.MetaDataWriter {
-    private final ProtosFactory.LogFileMetaData logFileMetaData;
+    private ProtosFactory.LogFileMetaData logFileMetaData;
     private final File metaDataFile;
     protected MetaDataWriter(File logFile, int logFileID) throws IOException {
       super(logFile, logFileID);
@@ -71,11 +78,12 @@ class LogFileV3 extends LogFile {
           ProtosFactory.LogFileMetaData.newBuilder(logFileMetaData);
       metaDataBuilder.setCheckpointPosition(currentPosition);
       metaDataBuilder.setCheckpointWriteOrderID(logWriteOrderID);
+      logFileMetaData = metaDataBuilder.build();
       LOGGER.info("Updating " + metaDataFile.getName()  + " currentPosition = "
           + currentPosition + ", logWriteOrderID = " + logWriteOrderID);
       FileOutputStream outputStream = new FileOutputStream(metaDataFile);
       try {
-        metaDataBuilder.build().writeDelimitedTo(outputStream);
+        logFileMetaData.writeDelimitedTo(outputStream);
         outputStream.getChannel().force(true);
       } finally {
         try {
@@ -119,11 +127,27 @@ class LogFileV3 extends LogFile {
   }
 
   static class Writer extends LogFile.Writer {
-    Writer(File file, int logFileID, long maxFileSize)
+    Writer(File file, int logFileID, long maxFileSize,
+        @Nullable Key encryptionKey,
+        @Nullable String encryptionKeyAlias,
+        @Nullable String encryptionCipherProvider)
         throws IOException {
-      super(file, logFileID, maxFileSize);
+      super(file, logFileID, maxFileSize, CipherProviderFactory.
+          getEncrypter(encryptionCipherProvider, encryptionKey));
       ProtosFactory.LogFileMetaData.Builder metaDataBuilder =
           ProtosFactory.LogFileMetaData.newBuilder();
+      if(encryptionKey != null) {
+        Preconditions.checkNotNull(encryptionKeyAlias, "encryptionKeyAlias");
+        Preconditions.checkNotNull(encryptionCipherProvider,
+            "encryptionCipherProvider");
+        ProtosFactory.LogFileEncryption.Builder logFileEncryptionBuilder =
+            ProtosFactory.LogFileEncryption.newBuilder();
+        logFileEncryptionBuilder.setCipherProvider(encryptionCipherProvider);
+        logFileEncryptionBuilder.setKeyAlias(encryptionKeyAlias);
+        logFileEncryptionBuilder.setParameters(
+            ByteString.copyFrom(getEncryptor().getParameters()));
+        metaDataBuilder.setEncryption(logFileEncryptionBuilder);
+      }
       metaDataBuilder.setVersion(getVersion());
       metaDataBuilder.setLogFileID(logFileID);
       metaDataBuilder.setCheckpointPosition(0L);
@@ -149,8 +173,10 @@ class LogFileV3 extends LogFile {
 
   static class RandomReader extends LogFile.RandomReader {
     private volatile boolean initialized;
-    RandomReader(File file) throws IOException {
-      super(file);
+    private CipherProvider.Decryptor decryptor;
+    RandomReader(File file, @Nullable KeyProvider encryptionKeyProvider)
+        throws IOException {
+      super(file, encryptionKeyProvider);
     }
     private void initialize() throws IOException {
       File metaDataFile = Serialization.getMetaDataFile(getFile());
@@ -163,6 +189,17 @@ class LogFileV3 extends LogFile {
           throw new IOException("Version is " + Integer.toHexString(version) +
               " expected " + Integer.toHexString(getVersion())
               + " file: " + getFile().getCanonicalPath());
+        }
+        if(metaData.hasEncryption()) {
+          if(getKeyProvider() == null) {
+            throw new IllegalStateException("Data file is encrypted but no " +
+                " provider was specified");
+          }
+          ProtosFactory.LogFileEncryption encryption = metaData.getEncryption();
+          Key key = getKeyProvider().getKey(encryption.getKeyAlias());
+          decryptor = CipherProviderFactory.
+              getDecrypter(encryption.getCipherProvider(), key,
+                  encryption.getParameters().toByteArray());
         }
       } finally {
         try {
@@ -186,16 +223,19 @@ class LogFileV3 extends LogFile {
         initialized = true;
         initialize();
       }
-      return TransactionEventRecord.
-          fromInputStream(Channels.newInputStream(fileHandle.getChannel()));
+      byte[] buffer = readDelimitedBuffer(fileHandle);
+      if(decryptor != null) {
+        buffer = decryptor.decrypt(buffer);
+      }
+      return TransactionEventRecord.fromByteArray(buffer);
     }
   }
 
   static class SequentialReader extends LogFile.SequentialReader {
-
-    private InputStream inputStream;
-    SequentialReader(File file) throws EOFException, IOException {
-      super(file);
+    private CipherProvider.Decryptor decryptor;
+    SequentialReader(File file, @Nullable KeyProvider encryptionKeyProvider)
+        throws EOFException, IOException {
+      super(file, encryptionKeyProvider);
       File metaDataFile = Serialization.getMetaDataFile(file);
       FileInputStream inputStream = new FileInputStream(metaDataFile);
       try {
@@ -207,6 +247,17 @@ class LogFileV3 extends LogFile {
               " expected " + Integer.toHexString(getVersion())
               + " file: " + file.getCanonicalPath());
         }
+        if(metaData.hasEncryption()) {
+          if(getKeyProvider() == null) {
+            throw new IllegalStateException("Data file is encrypted but no " +
+                " provider was specified");
+          }
+          ProtosFactory.LogFileEncryption encryption = metaData.getEncryption();
+          Key key = getKeyProvider().getKey(encryption.getKeyAlias());
+          decryptor = CipherProviderFactory.
+              getDecrypter(encryption.getCipherProvider(), key,
+                  encryption.getParameters().toByteArray());
+        }
         setLogFileID(metaData.getLogFileID());
         setLastCheckpointPosition(metaData.getCheckpointPosition());
         setLastCheckpointWriteOrderID(metaData.getCheckpointWriteOrderID());
@@ -217,7 +268,6 @@ class LogFileV3 extends LogFile {
           LOGGER.warn("Unable to close " + metaDataFile, e);
         }
       }
-      this.inputStream = Channels.newInputStream(getFileHandle().getChannel());
     }
 
     @Override
@@ -226,8 +276,12 @@ class LogFileV3 extends LogFile {
     }
     @Override
     LogRecord doNext(int offset) throws IOException {
+      byte[] buffer = readDelimitedBuffer(getFileHandle());
+      if(decryptor != null) {
+        buffer = decryptor.decrypt(buffer);
+      }
       TransactionEventRecord event =
-          TransactionEventRecord.fromInputStream(inputStream);
+          TransactionEventRecord.fromByteArray(buffer);
       return new LogRecord(getLogFileID(), offset, event);
     }
   }

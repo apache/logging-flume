@@ -31,7 +31,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -96,25 +95,14 @@ public class TestFileChannel {
     return createContext(new HashMap<String, String>());
   }
   private Context createContext(Map<String, String> overrides) {
-    Context context = new Context();
-    context.put(FileChannelConfiguration.CHECKPOINT_DIR,
-            checkpointDir.getAbsolutePath());
-    context.put(FileChannelConfiguration.DATA_DIRS, dataDir);
-    context.put(FileChannelConfiguration.CAPACITY, String.valueOf(10000));
-    // Set checkpoint for 5 seconds otherwise test will run out of memory
-    context.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, "5000");
-    context.putAll(overrides);
-    return context;
+    return TestUtils.createFileChannelContext(checkpointDir.getAbsolutePath(),
+        dataDir, overrides);
   }
   private FileChannel createFileChannel() {
     return createFileChannel(new HashMap<String, String>());
   }
   private FileChannel createFileChannel(Map<String, String> overrides) {
-    FileChannel channel = new FileChannel();
-    channel.setName("FileChannel-" + UUID.randomUUID());
-    Context context = createContext(overrides);
-    Configurables.configure(channel, context);
-    return channel;
+    return TestUtils.createFileChannel(checkpointDir.getAbsolutePath(), dataDir, overrides);
   }
   @Test
   public void testFailAfterTakeBeforeCommit() throws Throwable {
@@ -728,7 +716,6 @@ public class TestFileChannel {
 
   @Test
   public void testPutForceCheckpointCommitReplay() throws Exception{
-    Set<String> set = Sets.newHashSet();
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(2));
     overrides.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, "10000");
@@ -782,7 +769,7 @@ public class TestFileChannel {
     overrides.put(FileChannelConfiguration.MAX_FILE_SIZE, "20");
     final FileChannel channel = createFileChannel(overrides);
     channel.start();
-    Set<String> in = putEvents(channel, "testing-reference-counting", 1, 15);
+    putEvents(channel, "testing-reference-counting", 1, 15);
     Transaction tx = channel.getTransaction();
     takeWithoutCommit(channel, tx, 10);
     forceCheckpoint(channel);

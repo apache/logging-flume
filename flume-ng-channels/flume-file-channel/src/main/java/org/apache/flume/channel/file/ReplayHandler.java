@@ -22,10 +22,17 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Set;
 
+import javax.annotation.Nullable;
+
+import org.apache.commons.collections.MultiMap;
+import org.apache.commons.collections.map.MultiValueMap;
+import org.apache.flume.channel.file.encryption.KeyProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,10 +41,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
-import java.util.Iterator;
-import java.util.Set;
-import org.apache.commons.collections.MultiMap;
-import org.apache.commons.collections.map.MultiValueMap;
 
 /**
  * Processes a set of data logs, replaying said logs into the queue.
@@ -49,6 +52,7 @@ class ReplayHandler {
   private final long lastCheckpoint;
   private final Map<Integer, LogFile.SequentialReader> readers;
   private final PriorityQueue<LogRecord> logRecordBuffer;
+  private final KeyProvider encryptionKeyProvider;
   /**
    * This data structure stores takes for which we found a commit in the log
    * files before we found a commit for the put. This can happen if the channel
@@ -68,7 +72,8 @@ class ReplayHandler {
   private final boolean useFastReplay;
   private final File cpDir;
 
-  ReplayHandler(FlumeEventQueue queue, boolean useFastReplay, File cpDir) {
+  ReplayHandler(FlumeEventQueue queue, @Nullable KeyProvider encryptionKeyProvider,
+      boolean useFastReplay, File cpDir) {
     this.queue = queue;
     this.useFastReplay = useFastReplay;
     this.lastCheckpoint = queue.getLogWriteOrderID();
@@ -76,6 +81,7 @@ class ReplayHandler {
     pendingTakes = Lists.newArrayList();
     readers = Maps.newHashMap();
     logRecordBuffer = new PriorityQueue<LogRecord>();
+    this.encryptionKeyProvider = encryptionKeyProvider;
   }
   /**
    * Replay logic from Flume1.2 which can be activated if the v2 logic
@@ -109,7 +115,7 @@ class ReplayHandler {
       LOG.info("Replaying " + log);
       LogFile.SequentialReader reader = null;
       try {
-        reader = LogFileFactory.getSequentialReader(log);
+        reader = LogFileFactory.getSequentialReader(log, encryptionKeyProvider);
         reader.skipToLastCheckpointPosition(queue.getLogWriteOrderID());
         LogRecord entry;
         FlumeEventPointer ptr;
@@ -250,7 +256,7 @@ class ReplayHandler {
         LOG.info("Replaying " + log);
         try {
           LogFile.SequentialReader reader =
-              LogFileFactory.getSequentialReader(log);
+              LogFileFactory.getSequentialReader(log, encryptionKeyProvider);
           reader.skipToLastCheckpointPosition(queue.getLogWriteOrderID());
           Preconditions.checkState(!readers.containsKey(reader.getLogFileID()),
               "Readers " + readers + " already contains "

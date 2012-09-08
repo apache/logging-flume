@@ -38,6 +38,13 @@ message LogFileMetaData {
   required sfixed32 logFileID = 2;
   required sfixed64 checkpointPosition = 3;
   required sfixed64 checkpointWriteOrderID = 4;
+  optional LogFileEncryption encryption = 5;
+}
+
+message LogFileEncryption {
+  required string cipherProvider = 1;
+  required string keyAlias = 2;
+  optional bytes parameters = 3;
 }
 
 message TransactionEventHeader {
