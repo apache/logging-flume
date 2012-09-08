@@ -20,6 +20,8 @@ package org.apache.flume.channel.file.encryption;
 
 import java.nio.ByteBuffer;
 import java.security.Key;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 import javax.crypto.Cipher;
@@ -111,13 +113,28 @@ public class AESCTRNoPaddingProvider extends CipherProvider {
       throw Throwables.propagate(e);
     }
   }
+
   private static Cipher getCipher(Key key, int mode, byte[] parameters) {
     try {
       Cipher cipher = Cipher.getInstance(TYPE);
       cipher.init(mode, key, new IvParameterSpec(parameters));
       return cipher;
     } catch (Exception e) {
-      LOG.error("Unable to instaniate " + TYPE, e);
+      String msg = "Unable to load key using transformation: " + TYPE;
+      if (e instanceof InvalidKeyException) {
+        try {
+          int maxAllowedLen = Cipher.getMaxAllowedKeyLength(TYPE);
+          if (maxAllowedLen < 256) {
+            msg += "; Warning: Maximum allowed key length = " + maxAllowedLen
+                + " with the available JCE security policy files. Have you"
+                + " installed the JCE unlimited strength jurisdiction policy"
+                + " files?";
+          }
+        } catch (NoSuchAlgorithmException ex) {
+          msg += "; Unable to find specified algorithm?";
+        }
+      }
+      LOG.error(msg, e);
       throw Throwables.propagate(e);
     }
   }
