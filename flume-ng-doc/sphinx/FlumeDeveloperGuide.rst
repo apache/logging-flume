@@ -30,7 +30,7 @@ data from many different sources to a centralized data store.
 
 Apache Flume is a top level project at the Apache Software Foundation.
 There are currently two release code lines available, versions 0.9.x and 1.x.
-This documentation applies to the 1.x codeline.  
+This documentation applies to the 1.x codeline.
 Please click here for
 `the Flume 0.9.x Developer Guide <http://archive.cloudera.com/cdh/3/flume/DeveloperGuide/>`_.
 
@@ -83,18 +83,13 @@ Getting the source
 ~~~~~~~~~~~~~~~~~~
 
 Check out the code using Subversion. Click here for
-`the SVN repository root <http://svn.apache.org/repos/asf/flume/>`_.
+`the git repository root <https://git-wip-us.apache.org/repos/asf/flume.git>`_.
 
 The Flume 1.x development happens under the branch "trunk" so this command line
 can be used::
 
-  svn checkout http://svn.apache.org/repos/asf/flume/trunk flume-trunk
+  git clone https://git-wip-us.apache.org/repos/asf/flume.git flume-trunk
 
-Alternatively, if you prefer using Git, you may use::
-
-  git clone git://git.apache.org/flume.git
-  cd flume
-  git checkout trunk
 
 Compile/test Flume
 ~~~~~~~~~~~~~~~~~~
@@ -108,6 +103,9 @@ commands:
 #. Create tarball package: ``mvn clean install``
 #. Create tarball package (skip unit tests): ``mvn clean install -DskipTests``
 
+(Please note that Flume requires that Google Protocol Buffers compiler be in the path
+for the build to be successful. You download and install it by following
+the instructions `here <https://developers.google.com/protocol-buffers/>`_.)
 
 Developing custom components
 ----------------------------
