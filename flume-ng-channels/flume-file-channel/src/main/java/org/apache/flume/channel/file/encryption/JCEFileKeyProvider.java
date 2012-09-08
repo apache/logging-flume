@@ -49,7 +49,7 @@ public class JCEFileKeyProvider extends KeyProvider {
     try {
       ks = KeyStore.getInstance("jceks");
       keyStorePassword = Files.toString(keyStorePasswordFile, Charsets.UTF_8)
-          .toCharArray();
+          .trim().toCharArray();
       ks.load(new FileInputStream(keyStoreFile), keyStorePassword);
     } catch(Exception ex) {
       throw Throwables.propagate(ex);
@@ -62,7 +62,7 @@ public class JCEFileKeyProvider extends KeyProvider {
       char[] keyPassword = keyStorePassword;
       if(aliasPasswordFileMap.containsKey(alias)) {
         keyPassword = Files.toString(aliasPasswordFileMap.get(alias),
-            Charsets.UTF_8).toCharArray();
+            Charsets.UTF_8).trim().toCharArray();
       }
       Key key = ks.getKey(alias, keyPassword);
       return key;
@@ -100,10 +100,10 @@ public class JCEFileKeyProvider extends KeyProvider {
           }
         }
       }
-     File keyStoreFile = new File(keyStoreFileName.trim());
-     File keyStorePasswordFile = new File(keyStorePasswordFileName.trim());
-     return new JCEFileKeyProvider(keyStoreFile, keyStorePasswordFile,
-         aliasPasswordFileMap);
+      File keyStoreFile = new File(keyStoreFileName.trim());
+      File keyStorePasswordFile = new File(keyStorePasswordFileName.trim());
+      return new JCEFileKeyProvider(keyStoreFile, keyStorePasswordFile,
+          aliasPasswordFileMap);
     }
   }
 }
