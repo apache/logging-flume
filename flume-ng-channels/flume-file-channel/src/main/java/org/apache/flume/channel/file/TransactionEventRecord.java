@@ -18,6 +18,7 @@
  */
 package org.apache.flume.channel.file;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -184,20 +185,30 @@ abstract class TransactionEventRecord implements Writable {
     }
   }
 
-  static TransactionEventRecord fromInputStream(InputStream in)
+
+  static TransactionEventRecord fromByteArray(byte[] buffer)
       throws IOException {
-    ProtosFactory.TransactionEventHeader header =
-        ProtosFactory.TransactionEventHeader.parseDelimitedFrom(in);
-    short type = (short)header.getType();
-    long transactionID = header.getTransactionID();
-    long writeOrderID = header.getWriteOrderID();
-    TransactionEventRecord transactionEvent =
-        newRecordForType(type, transactionID, writeOrderID);
-    transactionEvent.readProtos(in);
-    @SuppressWarnings("unused")
-    ProtosFactory.TransactionEventFooter footer =
-        ProtosFactory.TransactionEventFooter.parseDelimitedFrom(in);
-    return transactionEvent;
+    ByteArrayInputStream in = new ByteArrayInputStream(buffer);
+    try {
+      ProtosFactory.TransactionEventHeader header =
+          ProtosFactory.TransactionEventHeader.parseDelimitedFrom(in);
+      short type = (short)header.getType();
+      long transactionID = header.getTransactionID();
+      long writeOrderID = header.getWriteOrderID();
+      TransactionEventRecord transactionEvent =
+          newRecordForType(type, transactionID, writeOrderID);
+      transactionEvent.readProtos(in);
+      @SuppressWarnings("unused")
+      ProtosFactory.TransactionEventFooter footer =
+          ProtosFactory.TransactionEventFooter.parseDelimitedFrom(in);
+      return transactionEvent;
+    } finally {
+      try {
+        in.close();
+      } catch (IOException e) {
+        LOG.warn("Error closing byte array input stream", e);
+      }
+    }
   }
 
   static String getName(short type) {

@@ -61,7 +61,7 @@ public class TestTransactionEventRecordV3 {
     Put in = new Put(System.currentTimeMillis(),
         WriteOrderOracle.next(),
         new FlumeEvent(headers, new byte[0]));
-    Put out = (Put)TransactionEventRecord.fromInputStream(toInputStream(in));
+    Put out = (Put)TransactionEventRecord.fromByteArray(toByteArray(in));
     Assert.assertEquals(in.getClass(), out.getClass());
     Assert.assertEquals(in.getRecordType(), out.getRecordType());
     Assert.assertEquals(in.getTransactionID(), out.getTransactionID());
@@ -76,7 +76,7 @@ public class TestTransactionEventRecordV3 {
     Put in = new Put(System.currentTimeMillis(),
         WriteOrderOracle.next(),
         new FlumeEvent(null, new byte[0]));
-    Put out = (Put)TransactionEventRecord.fromInputStream(toInputStream(in));
+    Put out = (Put)TransactionEventRecord.fromByteArray(toByteArray(in));
     Assert.assertEquals(in.getClass(), out.getClass());
     Assert.assertEquals(in.getRecordType(), out.getRecordType());
     Assert.assertEquals(in.getTransactionID(), out.getTransactionID());
@@ -89,7 +89,7 @@ public class TestTransactionEventRecordV3 {
   public void testTakeSerialization() throws IOException {
     Take in = new Take(System.currentTimeMillis(),
         WriteOrderOracle.next(), 10, 20);
-    Take out = (Take)TransactionEventRecord.fromInputStream(toInputStream(in));
+    Take out = (Take)TransactionEventRecord.fromByteArray(toByteArray(in));
     Assert.assertEquals(in.getClass(), out.getClass());
     Assert.assertEquals(in.getRecordType(), out.getRecordType());
     Assert.assertEquals(in.getTransactionID(), out.getTransactionID());
@@ -102,7 +102,7 @@ public class TestTransactionEventRecordV3 {
   public void testRollbackSerialization() throws IOException {
     Rollback in = new Rollback(System.currentTimeMillis(),
         WriteOrderOracle.next());
-    Rollback out = (Rollback)TransactionEventRecord.fromInputStream(toInputStream(in));
+    Rollback out = (Rollback)TransactionEventRecord.fromByteArray(toByteArray(in));
     Assert.assertEquals(in.getClass(), out.getClass());
     Assert.assertEquals(in.getRecordType(), out.getRecordType());
     Assert.assertEquals(in.getTransactionID(), out.getTransactionID());
@@ -113,7 +113,7 @@ public class TestTransactionEventRecordV3 {
   public void testCommitSerialization() throws IOException {
     Commit in = new Commit(System.currentTimeMillis(),
         WriteOrderOracle.next());
-    Commit out = (Commit)TransactionEventRecord.fromInputStream(toInputStream(in));
+    Commit out = (Commit)TransactionEventRecord.fromByteArray(toByteArray(in));
     Assert.assertEquals(in.getClass(), out.getClass());
     Assert.assertEquals(in.getRecordType(), out.getRecordType());
     Assert.assertEquals(in.getTransactionID(), out.getTransactionID());
@@ -125,16 +125,15 @@ public class TestTransactionEventRecordV3 {
     TransactionEventRecord in = mock(TransactionEventRecord.class);
     when(in.getRecordType()).thenReturn(Short.MIN_VALUE);
     try {
-      TransactionEventRecord.fromInputStream(toInputStream(in));
+      TransactionEventRecord.fromByteArray(toByteArray(in));
       Assert.fail();
     } catch(NullPointerException e) {
       Assert.assertEquals("Unknown action ffff8000", e.getMessage());
     }
   }
 
-  private InputStream toInputStream(TransactionEventRecord record) throws IOException {
+  private byte[] toByteArray(TransactionEventRecord record) throws IOException {
     ByteBuffer buffer = TransactionEventRecord.toByteBuffer(record);
-    ByteArrayInputStream byteInput = new ByteArrayInputStream(buffer.array());
-    return byteInput;
+    return buffer.array();
   }
 }

@@ -21,7 +21,11 @@ package org.apache.flume.channel.file;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.security.Key;
 
+import javax.annotation.Nullable;
+
+import org.apache.flume.channel.file.encryption.KeyProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,14 +62,18 @@ class LogFileFactory {
   }
 
   static LogFile.Writer getWriter(File file, int logFileID,
-      long maxFileSize) throws IOException {
+      long maxFileSize, @Nullable Key encryptionKey,
+      @Nullable String encryptionKeyAlias,
+      @Nullable String encryptionCipherProvider) throws IOException {
     if(!(file.exists() || file.createNewFile())) {
       throw new IOException("Cannot create " + file);
     }
-    return new LogFileV3.Writer(file, logFileID, maxFileSize);
+    return new LogFileV3.Writer(file, logFileID, maxFileSize, encryptionKey,
+        encryptionKeyAlias, encryptionCipherProvider);
   }
 
-  static LogFile.RandomReader getRandomReader(File file)
+  static LogFile.RandomReader getRandomReader(File file,
+      @Nullable KeyProvider encryptionKeyProvider)
       throws IOException {
     RandomAccessFile logFile = new RandomAccessFile(file, "r");
     try {
@@ -73,7 +81,7 @@ class LogFileFactory {
       // either this is a rr for a just created file or
       // the metadata file exists and as such it's V3
       if(logFile.length() == 0L || metaDataFile.exists()) {
-        return new LogFileV3.RandomReader(file);
+        return new LogFileV3.RandomReader(file, encryptionKeyProvider);
       }
       int version = logFile.readInt();
       if(Serialization.VERSION_2 == version) {
@@ -92,13 +100,14 @@ class LogFileFactory {
     }
   }
 
-  static LogFile.SequentialReader getSequentialReader(File file)
+  static LogFile.SequentialReader getSequentialReader(File file,
+      @Nullable KeyProvider encryptionKeyProvider)
       throws IOException {
     RandomAccessFile logFile = null;
     try {
       File metaDataFile = Serialization.getMetaDataFile(file);
       if(metaDataFile.exists()) {
-        return new LogFileV3.SequentialReader(file);
+        return new LogFileV3.SequentialReader(file, encryptionKeyProvider);
       }
       logFile = new RandomAccessFile(file, "r");
       int version = logFile.readInt();

@@ -35,8 +35,10 @@ import java.util.UUID;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.flume.Channel;
+import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
+import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.apache.hadoop.io.Writable;
 import org.junit.Assert;
@@ -45,6 +47,7 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import com.google.common.io.Resources;
 
 public class TestUtils {
@@ -175,4 +178,32 @@ public class TestUtils {
     ByteStreams.copy(new GZIPInputStream(input.openStream()),
         new FileOutputStream(output));
   }
+
+  public static Context createFileChannelContext(String checkpointDir,
+      String dataDir, Map<String, String> overrides) {
+    Context context = new Context();
+    context.put(FileChannelConfiguration.CHECKPOINT_DIR,
+            checkpointDir);
+    context.put(FileChannelConfiguration.DATA_DIRS, dataDir);
+    context.put(FileChannelConfiguration.CAPACITY, String.valueOf(10000));
+    // Set checkpoint for 5 seconds otherwise test will run out of memory
+    context.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, "5000");
+    context.putAll(overrides);
+    return context;
+  }
+  public static FileChannel createFileChannel(String checkpointDir,
+      String dataDir, Map<String, String> overrides) {
+    FileChannel channel = new FileChannel();
+    channel.setName("FileChannel-" + UUID.randomUUID());
+    Context context = createFileChannelContext(checkpointDir, dataDir, overrides);
+    Configurables.configure(channel, context);
+    return channel;
+  }
+  public static File writeStringToFile(File baseDir, String name,
+      String text) throws IOException {
+    File passwordFile = new File(baseDir, name);
+    Files.write(text, passwordFile, Charsets.UTF_8);
+    return passwordFile;
+  }
+
 }

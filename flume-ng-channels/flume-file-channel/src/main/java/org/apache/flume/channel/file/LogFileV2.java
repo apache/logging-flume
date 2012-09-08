@@ -95,7 +95,7 @@ class LogFileV2 extends LogFile {
 
     Writer(File file, int logFileID, long maxFileSize)
         throws IOException {
-      super(file, logFileID, maxFileSize);
+      super(file, logFileID, maxFileSize, null);
       RandomAccessFile writeFileHandle = getFileHandle();
       writeFileHandle.writeInt(getVersion());
       writeFileHandle.writeInt(logFileID);
@@ -113,8 +113,9 @@ class LogFileV2 extends LogFile {
   }
 
   static class RandomReader extends LogFile.RandomReader {
-    RandomReader(File file) throws IOException {
-      super(file);
+    RandomReader(File file)
+        throws IOException {
+      super(file, null);
     }
     @Override
     int getVersion() {
@@ -129,8 +130,9 @@ class LogFileV2 extends LogFile {
 
   static class SequentialReader extends LogFile.SequentialReader {
 
-    SequentialReader(File file) throws EOFException, IOException {
-      super(file);
+    SequentialReader(File file)
+        throws EOFException, IOException {
+      super(file, null);
       RandomAccessFile fileHandle = getFileHandle();
       int version = fileHandle.readInt();
       if(version != getVersion()) {

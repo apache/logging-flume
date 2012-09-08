@@ -52,12 +52,15 @@ public class TestLogFile {
     dataDir = Files.createTempDir();
     dataFile = new File(dataDir, String.valueOf(fileID));
     Assert.assertTrue(dataDir.isDirectory());
-    logFileWriter = LogFileFactory.getWriter(dataFile, fileID, 1000);
+    logFileWriter = LogFileFactory.getWriter(dataFile, fileID, 1000, null, null,
+        null);
   }
   @After
   public void cleanup() throws IOException {
     try {
-      logFileWriter.close();
+      if(logFileWriter != null) {
+        logFileWriter.close();
+      }
     } finally {
       FileUtils.deleteQuietly(dataDir);
     }
@@ -68,7 +71,7 @@ public class TestLogFile {
         Collections.synchronizedList(new ArrayList<Throwable>());
     ExecutorService executorService = Executors.newFixedThreadPool(10);
     final LogFile.RandomReader logFileReader =
-        LogFileFactory.getRandomReader(dataFile);
+        LogFileFactory.getRandomReader(dataFile, null);
     for (int i = 0; i < 1000; i++) {
       // first try and throw failures
       synchronized (errors) {
@@ -123,7 +126,7 @@ public class TestLogFile {
       puts.put(ptr.getOffset(), put);
     }
     LogFile.SequentialReader reader =
-        LogFileFactory.getSequentialReader(dataFile);
+        LogFileFactory.getSequentialReader(dataFile, null);
     LogRecord entry;
     while((entry = reader.next()) != null) {
       Integer offset = entry.getOffset();

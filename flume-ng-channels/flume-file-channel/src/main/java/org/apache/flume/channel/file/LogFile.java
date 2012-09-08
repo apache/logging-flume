@@ -28,6 +28,10 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import javax.annotation.Nullable;
+
+import org.apache.flume.channel.file.encryption.CipherProvider;
+import org.apache.flume.channel.file.encryption.KeyProvider;
 import org.apache.flume.tools.DirectMemoryUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,14 +122,17 @@ abstract class LogFile {
     private final long maxFileSize;
     private final RandomAccessFile writeFileHandle;
     private final FileChannel writeFileChannel;
+    private final CipherProvider.Encryptor encryptor;
     private volatile boolean open;
 
-    Writer(File file, int logFileID, long maxFileSize)
+    Writer(File file, int logFileID, long maxFileSize,
+        CipherProvider.Encryptor encryptor)
         throws IOException {
       this.file = file;
       this.logFileID = logFileID;
       this.maxFileSize = Math.min(maxFileSize,
           FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE);
+      this.encryptor = encryptor;
       writeFileHandle = new RandomAccessFile(file, "rw");
       writeFileChannel = writeFileHandle.getChannel();
       LOG.info("Opened " + file);
@@ -134,6 +141,9 @@ abstract class LogFile {
 
     abstract int getVersion();
 
+    protected CipherProvider.Encryptor getEncryptor() {
+      return encryptor;
+    }
     int getLogFileID() {
       return logFileID;
     }
@@ -151,38 +161,51 @@ abstract class LogFile {
       return getFileChannel().position();
     }
     synchronized FlumeEventPointer put(ByteBuffer buffer) throws IOException {
+      if(encryptor != null) {
+        buffer = ByteBuffer.wrap(encryptor.encrypt(buffer.array()));
+      }
       Pair<Integer, Integer> pair = write(buffer);
       return new FlumeEventPointer(pair.getLeft(), pair.getRight());
     }
     synchronized void take(ByteBuffer buffer) throws IOException {
+      if(encryptor != null) {
+        buffer = ByteBuffer.wrap(encryptor.encrypt(buffer.array()));
+      }
       write(buffer);
     }
     synchronized void rollback(ByteBuffer buffer) throws IOException {
+      if(encryptor != null) {
+        buffer = ByteBuffer.wrap(encryptor.encrypt(buffer.array()));
+      }
       write(buffer);
     }
     synchronized void commit(ByteBuffer buffer) throws IOException {
+      if(encryptor != null) {
+        buffer = ByteBuffer.wrap(encryptor.encrypt(buffer.array()));
+      }
       write(buffer);
       sync();
     }
     private Pair<Integer, Integer> write(ByteBuffer buffer) throws IOException {
       Preconditions.checkState(isOpen(), "File closed");
       long length = position();
-      long expectedLength = length + (long) buffer.capacity();
+      long expectedLength = length + (long) buffer.limit();
       Preconditions.checkArgument(expectedLength < (long) Integer.MAX_VALUE);
       int offset = (int)length;
       Preconditions.checkState(offset >= 0, String.valueOf(offset));
-      int recordLength = 1 + buffer.capacity();
+      // OP_RECORD + size + buffer
+      int recordLength = 1 + (int)Serialization.SIZE_OF_INT + buffer.limit();
       preallocate(recordLength);
       ByteBuffer toWrite = ByteBuffer.allocate(recordLength);
       toWrite.put(OP_RECORD);
-      toWrite.put(buffer);
+      writeDelimitedBuffer(toWrite, buffer);
       toWrite.position(0);
       int wrote = getFileChannel().write(toWrite);
       Preconditions.checkState(wrote == toWrite.limit());
       return Pair.of(getLogFileID(), offset);
     }
     synchronized boolean isRollRequired(ByteBuffer buffer) throws IOException {
-      return isOpen() && position() + (long) buffer.capacity() > getMaxSize();
+      return isOpen() && position() + (long) buffer.limit() > getMaxSize();
     }
     private void sync() throws IOException {
       Preconditions.checkState(isOpen(), "File closed");
@@ -233,10 +256,12 @@ abstract class LogFile {
     private final File file;
     private final BlockingQueue<RandomAccessFile> readFileHandles =
         new ArrayBlockingQueue<RandomAccessFile>(50, true);
-
+    private final KeyProvider encryptionKeyProvider;
     private volatile boolean open;
-    public RandomReader(File file) throws IOException {
+    public RandomReader(File file, @Nullable KeyProvider encryptionKeyProvider)
+        throws IOException {
       this.file = file;
+      this.encryptionKeyProvider = encryptionKeyProvider;
       readFileHandles.add(open());
       open = true;
     }
@@ -248,6 +273,10 @@ abstract class LogFile {
 
     File getFile() {
       return file;
+    }
+
+    protected KeyProvider getKeyProvider() {
+      return encryptionKeyProvider;
     }
 
     FlumeEvent get(int offset) throws IOException, InterruptedException {
@@ -340,6 +369,7 @@ abstract class LogFile {
     private final RandomAccessFile fileHandle;
     private final FileChannel fileChannel;
     private final File file;
+    private final KeyProvider encryptionKeyProvider;
 
     private int logFileID;
     private long lastCheckpointPosition;
@@ -351,8 +381,10 @@ abstract class LogFile {
      * @throws IOException if an I/O error occurs
      * @throws EOFException if the file is empty
      */
-    SequentialReader(File file) throws IOException, EOFException {
+    SequentialReader(File file, @Nullable KeyProvider encryptionKeyProvider)
+        throws IOException, EOFException {
       this.file = file;
+      this.encryptionKeyProvider = encryptionKeyProvider;
       fileHandle = new RandomAccessFile(file, "r");
       fileChannel = fileHandle.getChannel();
     }
@@ -371,6 +403,9 @@ abstract class LogFile {
       Preconditions.checkArgument(logFileID >= 0, "LogFileID is not positive: "
           + Integer.toHexString(logFileID));
 
+    }
+    protected KeyProvider getKeyProvider() {
+      return encryptionKeyProvider;
     }
     protected RandomAccessFile getFileHandle() {
       return fileHandle;
@@ -431,11 +466,25 @@ abstract class LogFile {
       }
     }
   }
+  protected static void writeDelimitedBuffer(ByteBuffer output, ByteBuffer buffer)
+      throws IOException {
+    output.putInt(buffer.limit());
+    output.put(buffer);
+  }
+  protected static byte[] readDelimitedBuffer(RandomAccessFile fileHandle)
+      throws IOException {
+    int length = fileHandle.readInt();
+    Preconditions.checkState(length >= 0, Integer.toHexString(length));
+    byte[] buffer = new byte[length];
+    fileHandle.readFully(buffer);
+    return buffer;
+  }
+
   public static void main(String[] args) throws EOFException, IOException {
     File file = new File(args[0]);
     LogFile.SequentialReader reader = null;
     try {
-      reader = LogFileFactory.getSequentialReader(file);
+      reader = LogFileFactory.getSequentialReader(file, null);
       LogRecord entry;
       FlumeEventPointer ptr;
       // for puts the fileId is the fileID of the file they exist in

@@ -33,6 +33,9 @@ import org.apache.flume.Event;
 import org.apache.flume.channel.BasicChannelSemantics;
 import org.apache.flume.channel.BasicTransactionSemantics;
 import org.apache.flume.channel.file.Log.Builder;
+import org.apache.flume.channel.file.encryption.EncryptionConfiguration;
+import org.apache.flume.channel.file.encryption.KeyProvider;
+import org.apache.flume.channel.file.encryption.KeyProviderFactory;
 import org.apache.flume.instrumentation.ChannelCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,6 +90,9 @@ public class FileChannel extends BasicChannelSemantics {
   private ChannelCounter channelCounter;
   private boolean useLogReplayV1;
   private boolean useFastReplay = false;
+  private KeyProvider encryptionKeyProvider;
+  private String encryptionKeyAlias;
+  private String encryptionCipherProvider;
 
   @Override
   public synchronized void setName(String name) {
@@ -198,6 +204,27 @@ public class FileChannel extends BasicChannelSemantics {
             FileChannelConfiguration.USE_FAST_REPLAY,
             FileChannelConfiguration.DEFAULT_USE_FAST_REPLAY);
 
+    Context encryptionContext = new Context(
+        context.getSubProperties(EncryptionConfiguration.ENCRYPTION_PREFIX +
+            "."));
+    String encryptionKeyProviderName = encryptionContext.getString(
+        EncryptionConfiguration.KEY_PROVIDER);
+    encryptionKeyAlias = encryptionContext.getString(
+        EncryptionConfiguration.KEY_ALIAS);
+    encryptionCipherProvider = encryptionContext.getString(
+        EncryptionConfiguration.CIPHER_PROVIDER);
+    if(encryptionKeyProviderName != null) {
+      Preconditions.checkNotNull(encryptionKeyAlias, "encryptionKeyAlias");
+      Preconditions.checkNotNull(encryptionCipherProvider,
+          "encryptionCipherProvider");
+      encryptionKeyProvider = KeyProviderFactory.
+          getInstance(encryptionKeyProviderName, encryptionContext);
+    } else {
+      Preconditions.checkState(encryptionKeyAlias == null, "encryptionKeyAlias");
+      Preconditions.checkState(encryptionCipherProvider == null,
+          "encryptionCipherProvider");
+    }
+
     if(queueRemaining == null) {
       queueRemaining = new Semaphore(capacity, true);
     }
@@ -226,6 +253,9 @@ public class FileChannel extends BasicChannelSemantics {
       builder.setCheckpointWriteTimeout(checkpointWriteTimeout);
       builder.setUseLogReplayV1(useLogReplayV1);
       builder.setUseFastReplay(useFastReplay);
+      builder.setEncryptionKeyProvider(encryptionKeyProvider);
+      builder.setEncryptionKeyAlias(encryptionKeyAlias);
+      builder.setEncryptionCipherProvider(encryptionCipherProvider);
       log = builder.build();
       log.replay();
       open = true;
@@ -300,7 +330,7 @@ public class FileChannel extends BasicChannelSemantics {
     }
   }
 
-  boolean isOpen() {
+  public boolean isOpen() {
     return open;
   }
 

@@ -24,6 +24,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
+import java.security.Key;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -39,7 +40,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
+import javax.annotation.Nullable;
+
 import org.apache.flume.Event;
+import org.apache.flume.channel.file.encryption.KeyProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,6 +98,10 @@ class Log {
   private final String channelNameDescriptor;
   private int checkpointWriteTimeout;
   private boolean useLogReplayV1;
+  private KeyProvider encryptionKeyProvider;
+  private String encryptionCipherProvider;
+  private String encryptionKeyAlias;
+  private Key encryptionKey;
 
   static class Builder {
     private long bCheckpointInterval;
@@ -108,6 +116,9 @@ class Log {
         FileChannelConfiguration.DEFAULT_CHECKPOINT_WRITE_TIMEOUT;
     private boolean useLogReplayV1;
     private boolean useFastReplay;
+    private KeyProvider bEncryptionKeyProvider;
+    private String bEncryptionKeyAlias;
+    private String bEncryptionCipherProvider;
 
     Builder setCheckpointInterval(long interval) {
       bCheckpointInterval = interval;
@@ -148,6 +159,7 @@ class Log {
       bCheckpointWriteTimeout = checkpointTimeout;
       return this;
     }
+
     Builder setUseLogReplayV1(boolean useLogReplayV1){
       this.useLogReplayV1 = useLogReplayV1;
       return this;
@@ -158,17 +170,35 @@ class Log {
       return this;
     }
 
+    Builder setEncryptionKeyProvider(KeyProvider encryptionKeyProvider) {
+      bEncryptionKeyProvider = encryptionKeyProvider;
+      return this;
+    }
+
+    Builder setEncryptionKeyAlias(String encryptionKeyAlias) {
+      bEncryptionKeyAlias = encryptionKeyAlias;
+      return this;
+    }
+
+    Builder setEncryptionCipherProvider(String encryptionCipherProvider) {
+      bEncryptionCipherProvider = encryptionCipherProvider;
+      return this;
+    }
+
     Log build() throws IOException {
       return new Log(bCheckpointInterval, bMaxFileSize, bQueueCapacity,
           bLogWriteTimeout, bCheckpointWriteTimeout, bCheckpointDir, bName,
-          useLogReplayV1, useFastReplay, bLogDirs);
+          useLogReplayV1, useFastReplay, bEncryptionKeyProvider,
+          bEncryptionKeyAlias, bEncryptionCipherProvider, bLogDirs);
     }
   }
 
   private Log(long checkpointInterval, long maxFileSize, int queueCapacity,
       int logWriteTimeout, int checkpointWriteTimeout, File checkpointDir,
       String name, boolean useLogReplayV1, boolean useFastReplay,
-      File... logDirs)
+      @Nullable KeyProvider encryptionKeyProvider,
+      @Nullable String encryptionKeyAlias,
+      @Nullable String encryptionCipherProvider, File... logDirs)
           throws IOException {
     Preconditions.checkArgument(checkpointInterval > 0,
         "checkpointInterval <= 0");
@@ -202,6 +232,25 @@ class Log {
         unlock(logDir);
       }
       throw e;
+    }
+    if(encryptionKeyProvider != null && encryptionKeyAlias != null &&
+        encryptionCipherProvider != null) {
+      LOGGER.info("Encryption is enabled with encryptionKeyProvider = " +
+          encryptionKeyProvider + ", encryptionKeyAlias = " + encryptionKeyAlias
+          + ", encryptionCipherProvider = " + encryptionCipherProvider);
+      this.encryptionKeyProvider = encryptionKeyProvider;
+      this.encryptionKeyAlias = encryptionKeyAlias;
+      this.encryptionCipherProvider = encryptionCipherProvider;
+      this.encryptionKey = encryptionKeyProvider.getKey(encryptionKeyAlias);
+    } else if (encryptionKeyProvider == null && encryptionKeyAlias == null &&
+        encryptionCipherProvider == null) {
+      LOGGER.info("Encryption is not enabled");
+    } else {
+      throw new IllegalArgumentException("Encryption configuration must all " +
+          "null or all not null: encryptionKeyProvider = " +
+          encryptionKeyProvider + ", encryptionKeyAlias = " +
+          encryptionKeyAlias +  ", encryptionCipherProvider = " +
+          encryptionCipherProvider);
     }
     open = false;
     this.checkpointInterval = checkpointInterval;
@@ -247,8 +296,8 @@ class Log {
           int id = LogUtils.getIDForFile(file);
           dataFiles.add(file);
           nextFileID.set(Math.max(nextFileID.get(), id));
-          idLogFileMap.put(id, LogFileFactory.getRandomReader(new File(logDir, PREFIX
-              + id)));
+          idLogFileMap.put(id, LogFileFactory.getRandomReader(new File(logDir,
+              PREFIX + id), encryptionKeyProvider));
         }
       }
       LOGGER.info("Found NextFileID " + nextFileID +
@@ -280,8 +329,8 @@ class Log {
        * the queue, the timestamp the queue was written to disk, and
        * the list of data files.
        */
-      ReplayHandler replayHandler = new ReplayHandler(queue, useFastReplay,
-              checkpointFile);
+      ReplayHandler replayHandler = new ReplayHandler(queue,
+          encryptionKeyProvider, useFastReplay, checkpointFile);
       if(useLogReplayV1) {
         LOGGER.info("Replaying logs with v1 replay logic");
         replayHandler.replayLogv1(dataFiles);
@@ -632,9 +681,12 @@ class Log {
               "File already exists "  + file);
           Preconditions.checkState(file.createNewFile(),
               "File could not be created " + file);
-          idLogFileMap.put(fileID, LogFileFactory.getRandomReader(file));
+          idLogFileMap.put(fileID, LogFileFactory.getRandomReader(file,
+              encryptionKeyProvider));
           // writer from this point on will get new reference
-          logFiles.set(index, LogFileFactory.getWriter(file, fileID, maxFileSize));
+          logFiles.set(index, LogFileFactory.getWriter(file, fileID,
+              maxFileSize, encryptionKey, encryptionKeyAlias,
+              encryptionCipherProvider));
           // close out old log
           if (oldLogFile != null) {
             oldLogFile.close();
@@ -713,7 +765,7 @@ class Log {
           } finally {
             writer.close();
           }
-          reader = LogFileFactory.getRandomReader(file);
+          reader = LogFileFactory.getRandomReader(file, encryptionKeyProvider);
           idLogFileMap.put(id, reader);
           LOGGER.debug("Updated checkpoint for file: " + file
               + "logWriteOrderID " + logWriteOrderID);
