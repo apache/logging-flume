@@ -49,22 +49,24 @@ limitations under the License.
       <build>
         <plugins>
           <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <version>1.2.1</version>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.7</version>
             <executions>
               <execution>
                 <id>generate-version</id>
                 <phase>generate-sources</phase>
                 <configuration>
-                  <executable>scripts/saveVersion.sh</executable>
-                  <arguments>
-                    <argument>${project.version}</argument>
-                    <argument>${project.build.directory}</argument>
-                  </arguments>
+                  <target>
+                    <mkdir dir="${project.build.directory}/generated-sources/java"/>
+                    <exec executable="sh">
+                      <arg
+                        line = "${basedir}/scripts/saveVersion.sh ${project.version} ${project.build.directory}" />
+                    </exec>
+                  </target>
                 </configuration>
                 <goals>
-                  <goal>exec</goal>
+                  <goal>run</goal>
                 </goals>
               </execution>
             </executions>
