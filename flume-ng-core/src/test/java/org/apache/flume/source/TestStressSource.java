@@ -26,10 +26,17 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import junit.framework.TestCase;
+
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
+import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
+import org.apache.flume.PollableSource.Status;
 import org.apache.flume.channel.ChannelProcessor;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,6 +56,16 @@ public class TestStressSource {
           .get();
   }
 
+  @SuppressWarnings("unchecked")
+  private List<Event> getEventList(StressSource source) {
+    return field("eventBatchList").ofType(List.class).in(source).get();
+  }
+
+  private CounterGroup getCounterGroup(StressSource source) {
+    return field("counterGroup").ofType(CounterGroup.class).in(source).get();
+  }
+
+
   @Test
   public void testMaxTotalEvents() throws InterruptedException,
       EventDeliveryException {
@@ -62,6 +79,27 @@ public class TestStressSource {
       source.process();
     }
     verify(mockProcessor, times(35)).processEvent(getEvent(source));
+  }
+
+  @Test
+  public void testBatchEvents() throws InterruptedException,
+      EventDeliveryException {
+    StressSource source = new StressSource();
+    source.setChannelProcessor(mockProcessor);
+    Context context = new Context();
+    context.put("maxTotalEvents", "35");
+    context.put("batchSize", "10");
+    source.configure(context);
+
+    for (int i = 0; i < 50; i++) {
+      if (source.process() == Status.BACKOFF) {
+        TestCase.assertTrue("Source should have sent all events in 4 batches", i == 4);
+        break;
+      }
+    }
+    verify(mockProcessor, times(4)).processEventBatch(getEventList(source));
+    TestCase.assertTrue("Number of successful events should be 35", getCounterGroup(source).get("events.successful") == 35);
+    TestCase.assertTrue("Number of failure events should be 0", getCounterGroup(source).get("events.failed") == 0);
   }
 
   @Test
