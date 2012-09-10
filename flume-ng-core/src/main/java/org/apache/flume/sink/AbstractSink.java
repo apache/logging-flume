@@ -74,4 +74,7 @@ abstract public class AbstractSink implements Sink, LifecycleAware {
     return name;
   }
 
+  public String toString() {
+	  return this.getClass().getName() + "{name:" + name + ", channel:" + channel.getName() + "}";
+  }
 }

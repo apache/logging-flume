@@ -73,4 +73,8 @@ abstract public class AbstractSource implements Source {
   public synchronized String getName() {
     return name;
   }
+
+  public String toString() {
+	  return this.getClass().getName() + "{name:" + name + ",state:" + lifecycleState +"}";
+  }  
 }

@@ -64,4 +64,9 @@ public abstract class AbstractChannel
   public void configure(Context context) {
 
   }
+
+  public String toString() {
+	  return this.getClass().getName() + "{name: " + name + "}";
+  }
+
 }
