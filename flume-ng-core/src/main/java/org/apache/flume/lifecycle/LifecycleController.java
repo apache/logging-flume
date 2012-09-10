@@ -68,12 +68,10 @@ public class LifecycleController {
         }
       }
 
-      logger.debug("Still want one of states:{} sleeping:{}ms", states,
-          sleepInterval);
       Thread.sleep(sleepInterval);
     } while (timeout == 0 || System.currentTimeMillis() < deadLine);
 
-    logger.debug("Didn't see state within timeout {}ms", timeout);
+    logger.debug("Didn't see {} state(s) within timeout of {}ms", states, timeout);
 
     return false;
   }
