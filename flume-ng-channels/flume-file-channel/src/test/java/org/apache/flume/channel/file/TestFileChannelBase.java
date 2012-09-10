@@ -39,7 +39,7 @@ public class TestFileChannelBase {
   protected String dataDir;
 
   @Before
-  public void setup() {
+  public void setup() throws Exception {
     baseDir = Files.createTempDir();
     checkpointDir = new File(baseDir, "chkpt");
     Assert.assertTrue(checkpointDir.mkdirs() || checkpointDir.isDirectory());

@@ -56,7 +56,7 @@ public class TestFileChannel extends TestFileChannelBase {
           .getLogger(TestFileChannel.class);
 
   @Before
-  public void setup() {
+  public void setup() throws Exception {
     super.setup();
   }
   @After

@@ -41,7 +41,7 @@ public class TestFileChannelFormatRegression extends TestFileChannelBase {
       .getLogger(TestFileChannelFormatRegression.class);
 
   @Before
-  public void setup() {
+  public void setup() throws Exception {
     super.setup();
   }
 

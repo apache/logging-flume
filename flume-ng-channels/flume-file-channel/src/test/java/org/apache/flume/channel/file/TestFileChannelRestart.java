@@ -40,7 +40,7 @@ public class TestFileChannelRestart extends TestFileChannelBase {
       .getLogger(TestFileChannelRestart.class);
 
   @Before
-  public void setup() {
+  public void setup() throws Exception {
     super.setup();
   }
 
