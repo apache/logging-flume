@@ -24,11 +24,10 @@ import java.io.File;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.flume.ChannelException;
 import org.apache.flume.FlumeException;
-import org.apache.flume.channel.file.FileChannel;
 import org.apache.flume.channel.file.FileChannelConfiguration;
+import org.apache.flume.channel.file.TestFileChannelBase;
 import org.apache.flume.channel.file.TestUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -42,31 +41,16 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 
-public class TestFileChannelEncryption {
+public class TestFileChannelEncryption extends TestFileChannelBase {
   protected static final Logger LOGGER =
       LoggerFactory.getLogger(TestFileChannelEncryption.class);
-  private FileChannel channel;
-  private File baseDir;
-  private File checkpointDir;
-  private File[] dataDirs;
-  private String dataDir;
   private File keyStoreFile;
   private File keyStorePasswordFile;
   private Map<String, File> keyAliasPassword;
 
   @Before
   public void setup() throws Exception {
-    baseDir = Files.createTempDir();
-    checkpointDir = new File(baseDir, "chkpt");
-    Assert.assertTrue(checkpointDir.mkdirs() || checkpointDir.isDirectory());
-    dataDirs = new File[3];
-    dataDir = "";
-    for (int i = 0; i < dataDirs.length; i++) {
-      dataDirs[i] = new File(baseDir, "data" + (i+1));
-      Assert.assertTrue(dataDirs[i].mkdirs() || dataDirs[i].isDirectory());
-      dataDir += dataDirs[i].getAbsolutePath() + ",";
-    }
-    dataDir = dataDir.substring(0, dataDir.length() - 1);
+    super.setup();
     keyStorePasswordFile = new File(baseDir, "keyStorePasswordFile");
     Files.write("keyStorePassword", keyStorePasswordFile, Charsets.UTF_8);
     keyStoreFile = new File(baseDir, "keyStoreFile");
@@ -77,10 +61,7 @@ public class TestFileChannelEncryption {
   }
   @After
   public void teardown() {
-    if(channel != null && channel.isOpen()) {
-      channel.stop();
-    }
-    FileUtils.deleteQuietly(baseDir);
+    super.teardown();
   }
   private Map<String, String> getOverrides() throws Exception {
     Map<String, String> overrides = Maps.newHashMap();
@@ -106,8 +87,7 @@ public class TestFileChannelEncryption {
   @Test
   public void testBasicEncyrptionDecryption() throws Exception {
     Map<String, String> overrides = getOverridesForEncryption();
-    channel = TestUtils.createFileChannel(checkpointDir.getAbsolutePath(),
-        dataDir, overrides);
+    channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
     Set<String> in = Sets.newHashSet();
@@ -130,8 +110,7 @@ public class TestFileChannelEncryption {
   @Test
   public void testEncryptedChannelWithoutEncryptionConfigFails() throws Exception {
     Map<String, String> overrides = getOverridesForEncryption();
-    channel = TestUtils.createFileChannel(checkpointDir.getAbsolutePath(),
-        dataDir, overrides);
+    channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
     Set<String> in = Sets.newHashSet();
@@ -145,8 +124,7 @@ public class TestFileChannelEncryption {
     }
     channel.stop();
     Map<String, String> noEncryptionOverrides = getOverrides();
-    channel = TestUtils.createFileChannel(checkpointDir.getAbsolutePath(),
-        dataDir, noEncryptionOverrides);
+    channel = createFileChannel(noEncryptionOverrides);
     channel.start();
 
     if(channel.isOpen()) {
@@ -161,8 +139,7 @@ public class TestFileChannelEncryption {
   @Test
   public void testUnencyrptedAndEncryptedLogs() throws Exception {
     Map<String, String> noEncryptionOverrides = getOverrides();
-    channel = TestUtils.createFileChannel(checkpointDir.getAbsolutePath(),
-        dataDir, noEncryptionOverrides);
+    channel = createFileChannel(noEncryptionOverrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
     Set<String> in = Sets.newHashSet();
@@ -181,8 +158,7 @@ public class TestFileChannelEncryption {
     // now we have logs with no encryption and the channel is half full
     channel.stop();
     Map<String, String> overrides = getOverridesForEncryption();
-    channel = TestUtils.createFileChannel(checkpointDir.getAbsolutePath(),
-        dataDir, overrides);
+    channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
     try {
@@ -202,8 +178,7 @@ public class TestFileChannelEncryption {
     overrides.put(EncryptionConfiguration.ENCRYPTION_PREFIX + "." +
         EncryptionConfiguration.KEY_PROVIDER, "invalid");
     try {
-      channel = TestUtils.createFileChannel(checkpointDir.getAbsolutePath(),
-          dataDir, overrides);
+      channel = createFileChannel(overrides);
       Assert.fail();
     } catch(FlumeException ex) {
       Assert.assertEquals("java.lang.ClassNotFoundException: invalid",
@@ -216,8 +191,7 @@ public class TestFileChannelEncryption {
     overrides.put(EncryptionConfiguration.ENCRYPTION_PREFIX + "." +
         EncryptionConfiguration.KEY_PROVIDER, String.class.getName());
     try {
-      channel = TestUtils.createFileChannel(checkpointDir.getAbsolutePath(),
-          dataDir, overrides);
+      channel = createFileChannel(overrides);
       Assert.fail();
     } catch(FlumeException ex) {
       Assert.assertEquals("Unable to instantiate Builder from java.lang.String",
@@ -229,8 +203,7 @@ public class TestFileChannelEncryption {
     Map<String, String> overrides = getOverridesForEncryption();
     overrides.put(EncryptionConfiguration.ENCRYPTION_PREFIX + "." +
         EncryptionConfiguration.CIPHER_PROVIDER, "invalid");
-    channel = TestUtils.createFileChannel(checkpointDir.getAbsolutePath(),
-        dataDir, overrides);
+    channel = createFileChannel(overrides);
     channel.start();
     Assert.assertFalse(channel.isOpen());
   }
@@ -239,8 +212,7 @@ public class TestFileChannelEncryption {
     Map<String, String> overrides = getOverridesForEncryption();
     overrides.put(EncryptionConfiguration.ENCRYPTION_PREFIX + "." +
         EncryptionConfiguration.CIPHER_PROVIDER, String.class.getName());
-    channel = TestUtils.createFileChannel(checkpointDir.getAbsolutePath(),
-        dataDir, overrides);
+    channel = createFileChannel(overrides);
     channel.start();
     Assert.assertFalse(channel.isOpen());
   }
@@ -250,8 +222,7 @@ public class TestFileChannelEncryption {
     overrides.put(EncryptionConfiguration.ENCRYPTION_PREFIX + "." +
         EncryptionConfiguration.JCE_FILE_KEY_STORE_FILE, "/path/does/not/exist");
     try {
-      channel = TestUtils.createFileChannel(checkpointDir.getAbsolutePath(),
-          dataDir, overrides);
+      channel = createFileChannel(overrides);
       Assert.fail();
     } catch(RuntimeException ex) {
       Assert.assertEquals("java.io.FileNotFoundException: /path/does/not/exist " +
@@ -262,10 +233,10 @@ public class TestFileChannelEncryption {
   public void testMissingKeyStorePasswordFile() throws Exception {
     Map<String, String> overrides = getOverridesForEncryption();
     overrides.put(EncryptionConfiguration.ENCRYPTION_PREFIX + "." +
-        EncryptionConfiguration.JCE_FILE_KEY_STORE_PASSWORD_FILE, "/path/does/not/exist");
+        EncryptionConfiguration.JCE_FILE_KEY_STORE_PASSWORD_FILE,
+          "/path/does/not/exist");
     try {
-      channel = TestUtils.createFileChannel(checkpointDir.getAbsolutePath(),
-          dataDir, overrides);
+      channel = createFileChannel(overrides);
       Assert.fail();
     } catch(RuntimeException ex) {
       Assert.assertEquals("java.io.FileNotFoundException: /path/does/not/exist " +

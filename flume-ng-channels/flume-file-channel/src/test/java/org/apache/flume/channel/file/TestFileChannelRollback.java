@@ -41,7 +41,7 @@ public class TestFileChannelRollback extends TestFileChannelBase {
       .getLogger(TestFileChannelRollback.class);
 
   @Before
-  public void setup() {
+  public void setup() throws Exception {
     super.setup();
   }
 
