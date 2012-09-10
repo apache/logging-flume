@@ -52,9 +52,11 @@ public class NullSink extends AbstractSink implements Configurable {
   private static final Logger logger = LoggerFactory.getLogger(NullSink.class);
 
   private static final int DFLT_BATCH_SIZE = 100;
+  private static final int DFLT_LOG_EVERY_N_EVENTS = 10000;
 
   private CounterGroup counterGroup;
   private int batchSize = DFLT_BATCH_SIZE;
+  private int logEveryNEvents = DFLT_LOG_EVERY_N_EVENTS;
 
   public NullSink() {
     counterGroup = new CounterGroup();
@@ -66,6 +68,11 @@ public class NullSink extends AbstractSink implements Configurable {
     logger.debug(this.getName() + " " +
         "batch size set to " + String.valueOf(batchSize));
     Preconditions.checkArgument(batchSize > 0, "Batch size must be > 0");
+
+    logEveryNEvents = context.getInteger("logEveryNEvents", DFLT_LOG_EVERY_N_EVENTS);
+    logger.debug(this.getName() + " " +
+        "log event N events set to " + logEveryNEvents);
+    Preconditions.checkArgument(logEveryNEvents > 0, "logEveryNEvents must be > 0");
   }
 
   @Override
@@ -75,12 +82,16 @@ public class NullSink extends AbstractSink implements Configurable {
     Channel channel = getChannel();
     Transaction transaction = channel.getTransaction();
     Event event = null;
+    long eventCounter = counterGroup.get("events.success");
 
     try {
       transaction.begin();
       int i = 0;
       for (i = 0; i < batchSize; i++) {
         event = channel.take();
+        if (++eventCounter % logEveryNEvents == 0) {
+          logger.info("Null sink {} successful processed {} events.", getName(), eventCounter);
+        }
         if(event == null) {
           status = Status.BACKOFF;
           break;
