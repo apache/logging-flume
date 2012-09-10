@@ -133,19 +133,19 @@ public class StressSource extends AbstractSource implements
 
   @Override
   public void start() {
-    logger.info("Sequence generator source starting");
+    logger.info("Stress source starting");
 
     super.start();
 
-    logger.debug("Sequence generator source started");
+    logger.debug("Stress source started");
   }
 
   @Override
   public void stop() {
-    logger.info("Sequence generator source stopping");
+    logger.info("Stress source stopping");
 
     super.stop();
 
-    logger.info("Sequence generator source stopped. Metrics:{}", counterGroup);
+    logger.info("Stress source stopped. Metrics:{}", counterGroup);
   }
 }
