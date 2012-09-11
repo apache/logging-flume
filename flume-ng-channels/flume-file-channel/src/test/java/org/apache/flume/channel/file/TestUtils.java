@@ -35,6 +35,7 @@ import java.util.UUID;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
@@ -73,6 +74,7 @@ public class TestUtils {
   public static void compareInputAndOut(Set<String> in, Set<String> out) {
     Assert.assertNotNull(in);
     Assert.assertNotNull(out);
+    Assert.assertEquals(in.size(), out.size());
     Assert.assertTrue(in.equals(out));
   }
 
@@ -148,23 +150,74 @@ public class TestUtils {
     }
     return result;
   }
-
+  public static Set<String> consumeChannel(Channel channel)
+      throws Exception {
+    Set<String> result = Sets.newHashSet();
+    int[] batchSizes = new int[] {
+        1000, 100, 10, 1
+    };
+    for (int i = 0; i < batchSizes.length; i++) {
+      while(true) {
+        Set<String> batch = takeEvents(channel, batchSizes[i]);
+        if(batch.isEmpty()) {
+          break;
+        }
+        result.addAll(batch);
+      }
+    }
+    return result;
+  }
+  public static Set<String> fillChannel(Channel channel, String prefix)
+      throws Exception {
+    Set<String> result = Sets.newHashSet();
+    int[] batchSizes = new int[] {
+        1000, 100, 10, 1
+    };
+    for (int i = 0; i < batchSizes.length; i++) {
+      try {
+        while(true) {
+          Set<String> batch = putEvents(channel, prefix, batchSizes[i],
+              Integer.MAX_VALUE, true);
+          if(batch.isEmpty()) {
+            break;
+          }
+          result.addAll(batch);
+        }
+      } catch (ChannelException e) {
+        Assert.assertEquals("Cannot acquire capacity. [channel="
+            +channel.getName()+"]", e.getMessage());
+      }
+    }
+    return result;
+  }
   public static Set<String> putEvents(Channel channel, String prefix,
-          int batchSize, int numEvents) throws Exception {
+      int batchSize, int numEvents) throws Exception {
+    return putEvents(channel, prefix, batchSize, numEvents, false);
+  }
+  public static Set<String> putEvents(Channel channel, String prefix,
+          int batchSize, int numEvents, boolean untilCapacityIsReached)
+              throws Exception {
     Set<String> result = Sets.newHashSet();
     for (int i = 0; i < numEvents; i += batchSize) {
       Transaction transaction = channel.getTransaction();
       transaction.begin();
       try {
+        Set<String> batch = Sets.newHashSet();
         for (int j = 0; j < batchSize; j++) {
           String s = prefix + "-" + i + "-" + j + "-" + UUID.randomUUID();
           Event event = EventBuilder.withBody(s.getBytes(Charsets.UTF_8));
-          result.add(s);
           channel.put(event);
+          batch.add(s);
         }
         transaction.commit();
+        result.addAll(batch);
       } catch (Exception ex) {
         transaction.rollback();
+        if(untilCapacityIsReached && ex instanceof ChannelException &&
+            ("Cannot acquire capacity. [channel=" +channel.getName() + "]").
+              equals(ex.getMessage())) {
+          break;
+        }
         throw ex;
       } finally {
         transaction.close();
@@ -185,6 +238,7 @@ public class TestUtils {
     context.put(FileChannelConfiguration.CHECKPOINT_DIR,
             checkpointDir);
     context.put(FileChannelConfiguration.DATA_DIRS, dataDir);
+    context.put(FileChannelConfiguration.KEEP_ALIVE, String.valueOf(1));
     context.put(FileChannelConfiguration.CAPACITY, String.valueOf(10000));
     // Set checkpoint for 5 seconds otherwise test will run out of memory
     context.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, "5000");

@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 
 public class TestFileChannelEncryption extends TestFileChannelBase {
@@ -90,21 +89,13 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
-    Set<String> in = Sets.newHashSet();
-    try {
-      while(true) {
-        in.addAll(putEvents(channel, "restart", 1, 1));
-      }
-    } catch (ChannelException e) {
-      Assert.assertEquals("Cannot acquire capacity. [channel="
-          +channel.getName()+"]", e.getMessage());
-    }
+    Set<String> in = fillChannel(channel, "restart");
     channel.stop();
     channel = TestUtils.createFileChannel(checkpointDir.getAbsolutePath(),
         dataDir, overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
-    Set<String> out = takeEvents(channel, 1, Integer.MAX_VALUE);
+    Set<String> out =  consumeChannel(channel);
     compareInputAndOut(in, out);
   }
   @Test
@@ -113,15 +104,7 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
-    Set<String> in = Sets.newHashSet();
-    try {
-      while(true) {
-        in.addAll(putEvents(channel, "will-not-restart", 1, 1));
-      }
-    } catch (ChannelException e) {
-      Assert.assertEquals("Cannot acquire capacity. [channel="
-          +channel.getName()+"]", e.getMessage());
-    }
+    fillChannel(channel, "will-not-restart");
     channel.stop();
     Map<String, String> noEncryptionOverrides = getOverrides();
     channel = createFileChannel(noEncryptionOverrides);
@@ -142,15 +125,7 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
     channel = createFileChannel(noEncryptionOverrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
-    Set<String> in = Sets.newHashSet();
-    try {
-      while(true) {
-        in.addAll(putEvents(channel, "unencrypted-and-encrypted", 1, 1));
-      }
-    } catch (ChannelException e) {
-      Assert.assertEquals("Cannot acquire capacity. [channel="
-          +channel.getName()+"]", e.getMessage());
-    }
+    Set<String> in = fillChannel(channel, "unencrypted-and-encrypted");
     int numEventsToRemove = in.size() / 2;
     for (int i = 0; i < numEventsToRemove; i++) {
       Assert.assertTrue(in.removeAll(takeEvents(channel, 1, 1)));
@@ -161,15 +136,8 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
-    try {
-      while(true) {
-        in.addAll(putEvents(channel, "unencrypted-and-encrypted", 1, 1));
-      }
-    } catch (ChannelException e) {
-      Assert.assertEquals("Cannot acquire capacity. [channel="
-          +channel.getName()+"]", e.getMessage());
-    }
-    Set<String> out = takeEvents(channel, 1, Integer.MAX_VALUE);
+    in.addAll(fillChannel(channel, "unencrypted-and-encrypted"));
+    Set<String> out = consumeChannel(channel);
     compareInputAndOut(in, out);
   }
   @Test

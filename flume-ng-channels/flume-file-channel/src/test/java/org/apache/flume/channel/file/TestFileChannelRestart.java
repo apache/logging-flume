@@ -24,7 +24,6 @@ import java.io.File;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.flume.ChannelException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -33,7 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
 public class TestFileChannelRestart extends TestFileChannelBase {
   protected static final Logger LOG = LoggerFactory
@@ -89,15 +87,7 @@ public class TestFileChannelRestart extends TestFileChannelBase {
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
-    Set<String> in = Sets.newHashSet();
-    try {
-      while(true) {
-        in.addAll(putEvents(channel, "restart", 1, 1));
-      }
-    } catch (ChannelException e) {
-      Assert.assertEquals("Cannot acquire capacity. [channel="
-          +channel.getName()+"]", e.getMessage());
-    }
+    Set<String> in = fillChannel(channel, "restart");
     if (forceCheckpoint) {
       forceCheckpoint(channel);
     }
@@ -111,7 +101,7 @@ public class TestFileChannelRestart extends TestFileChannelBase {
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
-    Set<String> out = takeEvents(channel, 1, Integer.MAX_VALUE);
+    Set<String> out = consumeChannel(channel);
     compareInputAndOut(in, out);
   }
   @Test
