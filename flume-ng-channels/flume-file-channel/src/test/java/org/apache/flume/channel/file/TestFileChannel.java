@@ -219,13 +219,7 @@ public class TestFileChannel extends TestFileChannelBase {
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
-    try {
-      putEvents(channel, "fillup", 1, Integer.MAX_VALUE);
-      Assert.fail();
-    } catch (ChannelException e) {
-      Assert.assertEquals("Cannot acquire capacity. [channel="+channel.getName()+"]",
-              e.getMessage());
-    }
+    fillChannel(channel, "fillup");
     // take an event, roll it back, and
     // then make sure a put fails
     Transaction transaction;
@@ -236,13 +230,7 @@ public class TestFileChannel extends TestFileChannelBase {
     transaction.rollback();
     transaction.close();
     // ensure the take the didn't change the state of the capacity
-    try {
-      putEvents(channel, "capacity", 1, 1);
-      Assert.fail();
-    } catch (ChannelException e) {
-      Assert.assertEquals("Cannot acquire capacity. [channel="+channel.getName()+"]",
-              e.getMessage());
-    }
+    Assert.assertEquals(0, fillChannel(channel, "capacity").size());
     // ensure we the events back
     Assert.assertEquals(5, takeEvents(channel, 1, 5).size());
   }
@@ -267,13 +255,7 @@ public class TestFileChannel extends TestFileChannelBase {
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
-    try {
-      putEvents(channel, "fillup", 1, Integer.MAX_VALUE);
-      Assert.fail();
-    } catch (ChannelException e) {
-      Assert.assertEquals("Cannot acquire capacity. [channel="+channel.getName()+"]",
-              e.getMessage());
-    }
+    fillChannel(channel, "fillup");
     // then do a put which will block but it will be assigned a tx id
     Future<String> put = Executors.newSingleThreadExecutor()
             .submit(new Callable<String>() {
@@ -395,15 +377,7 @@ public class TestFileChannel extends TestFileChannelBase {
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
-    Set<String> in = Sets.newHashSet();
-    try {
-      while (true) {
-        in.addAll(putEvents(channel, "restart", 1, 1));
-      }
-    } catch (ChannelException e) {
-      Assert.assertEquals("Cannot acquire capacity. [channel="
-              + channel.getName() + "]", e.getMessage());
-    }
+    Set<String> in = fillChannel(channel, "restart");
     Set<String> out = Sets.newHashSet();
     // now take one item off the channel
     Transaction tx = channel.getTransaction();
