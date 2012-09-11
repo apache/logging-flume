@@ -529,7 +529,7 @@ public class TestLoadBalancingSinkProcessor {
       s = lbsp.process();
     }
     s2.setFail(false);
-    Thread.sleep(2000);
+    Thread.sleep(2001);
     while (s != Status.BACKOFF) {
       s = lbsp.process();
     }
