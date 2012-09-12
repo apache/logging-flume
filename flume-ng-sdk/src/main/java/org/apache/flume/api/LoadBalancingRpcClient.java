@@ -18,19 +18,18 @@
  */
 package org.apache.flume.api;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Random;
 
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
-import org.apache.flume.util.SpecificOrderIterator;
+import org.apache.flume.util.OrderSelector;
+import org.apache.flume.util.RandomOrderSelector;
+import org.apache.flume.util.RoundRobinOrderSelector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,12 +65,14 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
 
     while (it.hasNext()) {
       HostInfo host = it.next();
+      RpcClient client;
       try {
-        RpcClient client = getClient(host);
+        client = getClient(host);
         client.append(event);
         eventSent = true;
         break;
       } catch (Exception ex) {
+        selector.informFailure(host);
         LOGGER.warn("Failed to send event to host " + host, ex);
       }
     }
@@ -94,6 +95,7 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
         batchSent = true;
         break;
       } catch (Exception ex) {
+        selector.informFailure(host);
         LOGGER.warn("Failed to send batch to host " + host, ex);
       }
     }
@@ -144,12 +146,24 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
         RpcClientConfigurationConstants.CONFIG_HOST_SELECTOR,
         RpcClientConfigurationConstants.HOST_SELECTOR_ROUND_ROBIN);
 
+    boolean backoff = Boolean.valueOf(properties.getProperty(
+            RpcClientConfigurationConstants.CONFIG_BACKOFF,
+            String.valueOf(false)));
+
+    String maxBackoffStr = properties.getProperty(
+        RpcClientConfigurationConstants.CONFIG_MAX_BACKOFF);
+
+    long maxBackoff = 0;
+    if(maxBackoffStr != null) {
+      maxBackoff = Long.parseLong(maxBackoffStr);
+    }
+
     if (lbTypeName.equalsIgnoreCase(
         RpcClientConfigurationConstants.HOST_SELECTOR_ROUND_ROBIN)) {
-      selector = new RoundRobinHostSelector();
+      selector = new RoundRobinHostSelector(backoff, maxBackoff);
     } else if (lbTypeName.equalsIgnoreCase(
         RpcClientConfigurationConstants.HOST_SELECTOR_RANDOM)) {
-      selector = new RandomOrderHostSelector();
+      selector = new RandomOrderHostSelector(backoff, maxBackoff);
     } else {
       try {
         @SuppressWarnings("unchecked")
@@ -205,6 +219,8 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
     void setHosts(List<HostInfo> hosts);
 
     Iterator<HostInfo> createHostIterator();
+
+    void informFailure(HostInfo failedHost);
   }
 
   /**
@@ -212,68 +228,53 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
    */
   private static class RoundRobinHostSelector implements HostSelector {
 
-    private int nextHead;
+    private OrderSelector<HostInfo> selector;
 
-    private List<HostInfo> hostList;
-
+    RoundRobinHostSelector(boolean backoff, long maxBackoff){
+      selector = new RoundRobinOrderSelector<HostInfo>(backoff);
+      if(maxBackoff != 0){
+        selector.setMaxTimeOut(maxBackoff);
+      }
+    }
     @Override
     public synchronized Iterator<HostInfo> createHostIterator() {
-
-      int size = hostList.size();
-      int[] indexOrder = new int[size];
-
-      int begin = nextHead++;
-      if (nextHead == size) {
-        nextHead = 0;
-      }
-
-      for (int i=0; i < size; i++) {
-        indexOrder[i] = (begin + i)%size;
-      }
-
-      return new SpecificOrderIterator<HostInfo>(indexOrder, hostList);
+      return selector.createIterator();
     }
 
     @Override
     public synchronized void setHosts(List<HostInfo> hosts) {
-      List<HostInfo> infos = new ArrayList<HostInfo>();
-      infos.addAll(hosts);
-      hostList = Collections.unmodifiableList(infos);
+      selector.setObjects(hosts);
+    }
+
+    public synchronized void informFailure(HostInfo failedHost){
+      selector.informFailure(failedHost);
     }
   }
 
   private static class RandomOrderHostSelector implements HostSelector {
 
-    private List<HostInfo> hostList;
+    private OrderSelector<HostInfo> selector;
 
-    private Random random = new Random(System.currentTimeMillis());
+    RandomOrderHostSelector(boolean backoff, Long maxBackoff) {
+      selector = new RandomOrderSelector<HostInfo>(backoff);
+      if (maxBackoff != 0) {
+        selector.setMaxTimeOut(maxBackoff);
+      }
+    }
 
     @Override
     public synchronized Iterator<HostInfo> createHostIterator() {
-      int size = hostList.size();
-      int[] indexOrder = new int[size];
-
-      List<Integer> indexList = new ArrayList<Integer>();
-      for (int i=0; i<size; i++) {
-        indexList.add(i);
-      }
-
-      while (indexList.size() != 1) {
-        int position = indexList.size();
-        int pick = random.nextInt(position);
-        indexOrder[position - 1] = indexList.remove(pick);
-      }
-
-      indexOrder[0] = indexList.get(0);
-
-      return new SpecificOrderIterator<HostInfo>(indexOrder, hostList);
+      return selector.createIterator();
     }
 
     @Override
     public synchronized void setHosts(List<HostInfo> hosts) {
-      List<HostInfo> infos = new ArrayList<HostInfo>();
-      infos.addAll(hosts);
-      hostList = Collections.unmodifiableList(infos);
+      selector.setObjects(hosts);
+    }
+
+    @Override
+    public void informFailure(HostInfo failedHost) {
+      selector.informFailure(failedHost);
     }
   }
 
