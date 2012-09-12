@@ -66,6 +66,32 @@ public class TestLogFile {
     }
   }
   @Test
+  public void testWriterRefusesToOverwriteFile() throws IOException {
+    Assert.assertTrue(dataFile.isFile() || dataFile.createNewFile());
+    try {
+      LogFileFactory.getWriter(dataFile, fileID, 1000, null, null,
+          null);
+      Assert.fail();
+    } catch (IllegalStateException e) {
+      Assert.assertEquals("File already exists " + dataFile.getAbsolutePath(),
+          e.getMessage());
+    }
+  }
+  @Test
+  public void testWriterFailsWithDirectory() throws IOException {
+    FileUtils.deleteQuietly(dataFile);
+    Assert.assertFalse(dataFile.exists());
+    Assert.assertTrue(dataFile.mkdirs());
+    try {
+      LogFileFactory.getWriter(dataFile, fileID, 1000, null, null,
+          null);
+      Assert.fail();
+    } catch (IllegalStateException e) {
+      Assert.assertEquals("File already exists " + dataFile.getAbsolutePath(),
+          e.getMessage());
+    }
+  }
+  @Test
   public void testPutGet() throws InterruptedException, IOException {
     final List<Throwable> errors =
         Collections.synchronizedList(new ArrayList<Throwable>());

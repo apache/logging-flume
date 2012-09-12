@@ -29,6 +29,8 @@ import org.apache.flume.channel.file.encryption.KeyProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
+
 @SuppressWarnings("deprecation")
 class LogFileFactory {
   private static final Logger LOGGER =
@@ -65,9 +67,10 @@ class LogFileFactory {
       long maxFileSize, @Nullable Key encryptionKey,
       @Nullable String encryptionKeyAlias,
       @Nullable String encryptionCipherProvider) throws IOException {
-    if(!(file.exists() || file.createNewFile())) {
-      throw new IOException("Cannot create " + file);
-    }
+    Preconditions.checkState(!file.exists(), "File already exists "  +
+      file.getAbsolutePath());
+    Preconditions.checkState(file.createNewFile(), "File could not be created "
+        + file.getAbsolutePath());
     return new LogFileV3.Writer(file, logFileID, maxFileSize, encryptionKey,
         encryptionKeyAlias, encryptionCipherProvider);
   }
