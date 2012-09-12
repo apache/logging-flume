@@ -75,6 +75,46 @@ public class TestSequenceGeneratorSource {
   }
 
   @Test
+  public void testBatchProcessWithLifeCycle() throws InterruptedException, LifecycleException,
+      EventDeliveryException {
+
+    int batchSize = 10;
+
+    Channel channel = new PseudoTxnMemoryChannel();
+    Context context = new Context();
+
+    context.put("logicalNode.name", "test");
+    context.put("batchSize", Integer.toString(batchSize));
+
+    Configurables.configure(source, context);
+    Configurables.configure(channel, context);
+
+    List<Channel> channels = new ArrayList<Channel>();
+    channels.add(channel);
+
+    ChannelSelector rcs = new ReplicatingChannelSelector();
+    rcs.setChannels(channels);
+
+    source.setChannelProcessor(new ChannelProcessor(rcs));
+
+    source.start();
+
+    for (long i = 0; i < 100; i++) {
+      source.process();
+
+      for (long j = batchSize; j > 0; j--) {
+        Event event = channel.take();
+        String expectedVal = String.valueOf(((i+1)*batchSize)-j);
+        String resultedVal = new String(event.getBody());
+        Assert.assertTrue("Expected " + expectedVal + " is not equals to " +
+            resultedVal, expectedVal.equals(resultedVal));
+      }
+    }
+
+    source.stop();
+  }
+
+  @Test
   public void testLifecycle() throws InterruptedException,
       EventDeliveryException {
 
