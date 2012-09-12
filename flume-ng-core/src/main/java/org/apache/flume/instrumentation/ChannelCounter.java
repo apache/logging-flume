@@ -97,8 +97,18 @@ public class ChannelCounter extends MonitoredCounterGroup implements
     set(COUNTER_CHANNEL_CAPACITY, capacity);
   }
 
+  @Override
   public long getChannelCapacity(){
     return get(COUNTER_CHANNEL_CAPACITY);
+  }
+
+  @Override
+  public double getChannelFillPercentage(){
+    long capacity = getChannelCapacity();
+    if(capacity != 0L) {
+      return ((getChannelSize()/(double)capacity) * 100);
+    }
+    return Double.MAX_VALUE;
   }
 
 }
