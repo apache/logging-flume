@@ -44,4 +44,6 @@ public interface ChannelCounterMBean {
   long getChannelCapacity();
 
   String getType();
+
+  double getChannelFillPercentage();
 }
