@@ -19,34 +19,61 @@
 
 package org.apache.flume.source;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.flume.ChannelException;
+import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
+import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.PollableSource;
+import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SequenceGeneratorSource extends AbstractSource implements
-    PollableSource {
+    PollableSource, Configurable {
 
   private static final Logger logger = LoggerFactory
       .getLogger(SequenceGeneratorSource.class);
 
   private long sequence;
+  private int batchSize;
   private CounterGroup counterGroup;
+  private List<Event> batchArrayList;
 
   public SequenceGeneratorSource() {
     sequence = 0;
     counterGroup = new CounterGroup();
   }
 
+  /**
+   * Read parameters from context
+   * <li>batchSize = type int that defines the size of event batches
+   */
+  @Override
+  public void configure(Context context) {
+    batchSize = context.getInteger("batchSize", 1);
+    if (batchSize > 1) {
+      batchArrayList = new ArrayList<Event>(batchSize);
+    }
+  }
+
   @Override
   public Status process() throws EventDeliveryException {
 
     try {
-      getChannelProcessor().processEvent(
-          EventBuilder.withBody(String.valueOf(sequence++).getBytes()));
+      if (batchSize <= 1) {
+        getChannelProcessor().processEvent(
+            EventBuilder.withBody(String.valueOf(sequence++).getBytes()));
+      } else {
+        batchArrayList.clear();
+        for (int i = 0; i < batchSize; i++) {
+          batchArrayList.add(i, EventBuilder.withBody(String.valueOf(sequence++).getBytes()));
+        }
+        getChannelProcessor().processEventBatch(batchArrayList);
+      }
       counterGroup.incrementAndGet("events.successful");
     } catch (ChannelException ex) {
       counterGroup.incrementAndGet("events.failed");
