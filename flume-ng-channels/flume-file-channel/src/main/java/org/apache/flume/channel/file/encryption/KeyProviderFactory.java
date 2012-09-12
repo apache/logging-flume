@@ -30,10 +30,11 @@ public class KeyProviderFactory {
       LoggerFactory.getLogger(KeyProviderFactory.class);
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  public static KeyProvider getInstance(String keyProviderType, Context context) {
-
+  public static KeyProvider getInstance(Context context) {
+    String keyProviderType = context.getString(
+        EncryptionConfiguration.KEY_PROVIDER_TYPE);
     Preconditions.checkNotNull(keyProviderType,
-        "provider type must not be null");
+        "key provider type must not be null");
 
     // try to find builder class in enum of known providers
     KeyProviderType type;
@@ -50,7 +51,7 @@ public class KeyProviderFactory {
     if (providerClass == null) {
       try {
         Class c = Class.forName(keyProviderType);
-        if (c != null && CipherProvider.class.isAssignableFrom(c)) {
+        if (c != null && KeyProvider.Builder.class.isAssignableFrom(c)) {
           providerClass = (Class<? extends KeyProvider.Builder>) c;
         } else {
           String errMessage = "Unable to instantiate Builder from " +

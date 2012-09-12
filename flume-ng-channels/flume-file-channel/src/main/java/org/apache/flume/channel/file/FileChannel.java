@@ -40,7 +40,9 @@ import org.apache.flume.instrumentation.ChannelCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 /**
  * <p>
@@ -214,11 +216,16 @@ public class FileChannel extends BasicChannelSemantics {
     encryptionCipherProvider = encryptionContext.getString(
         EncryptionConfiguration.CIPHER_PROVIDER);
     if(encryptionKeyProviderName != null) {
-      Preconditions.checkNotNull(encryptionKeyAlias, "encryptionKeyAlias");
-      Preconditions.checkNotNull(encryptionCipherProvider,
+      Preconditions.checkState(!Strings.isNullOrEmpty(encryptionKeyAlias),
+          "encryptionKeyAlias");
+      Preconditions.checkState(!Strings.isNullOrEmpty(encryptionCipherProvider),
           "encryptionCipherProvider");
+      Context keyProviderContext = new Context(encryptionContext.
+          getSubProperties(Joiner.on(".").
+              join(EncryptionConfiguration.KEY_PROVIDER,
+                  encryptionKeyProviderName.trim(), "")));
       encryptionKeyProvider = KeyProviderFactory.
-          getInstance(encryptionKeyProviderName, encryptionContext);
+          getInstance(keyProviderContext);
     } else {
       Preconditions.checkState(encryptionKeyAlias == null, "encryptionKeyAlias");
       Preconditions.checkState(encryptionCipherProvider == null,

@@ -28,6 +28,10 @@ public class EncryptionConfiguration {
    */
   public static final String KEY_PROVIDER = "keyProvider";
   /**
+   * Encryption key provider type, default is null.
+   */
+  public static final String KEY_PROVIDER_TYPE = "type";
+  /**
    * Encryption key alias, default is null.
    */
   public static final String KEY_ALIAS = "keyAlias";
@@ -40,8 +44,7 @@ public class EncryptionConfiguration {
    * Space separated list of keys which are needed for the current set of logs
    * plus the one specified in keyAlias
    */
-  public static final String KEYS = "keys";
-
+  public static final String JCE_FILE_KEYS = "keys";
   /**
    * Path to key password file is:
    * keys.aliasName.passwordFile

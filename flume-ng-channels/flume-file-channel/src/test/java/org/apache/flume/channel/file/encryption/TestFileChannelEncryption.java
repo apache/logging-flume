@@ -37,12 +37,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 
 public class TestFileChannelEncryption extends TestFileChannelBase {
   protected static final Logger LOGGER =
       LoggerFactory.getLogger(TestFileChannelEncryption.class);
+  private static final String KEY_PROVIDER_NAME =  "myKeyProvider";
   private File keyStoreFile;
   private File keyStorePasswordFile;
   private Map<String, File> keyAliasPassword;
@@ -70,10 +72,8 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
   private Map<String, String> getOverridesForEncryption() throws Exception {
     Map<String, String> overrides = getOverrides();
     Map<String, String> encryptionProps = EncryptionTestUtils.
-        configureForKeyStore(keyStoreFile, keyStorePasswordFile,
-            keyAliasPassword);
-    encryptionProps.put(EncryptionConfiguration.KEY_PROVIDER,
-        KeyProviderType.JCEKSFILE.name());
+        configureForKeyStore(KEY_PROVIDER_NAME, keyStoreFile,
+            keyStorePasswordFile, keyAliasPassword);
     encryptionProps.put(EncryptionConfiguration.CIPHER_PROVIDER,
         CipherProviderType.AESCTRNOPADDING.name());
     encryptionProps.put(EncryptionConfiguration.KEY_ALIAS, "key-1");
@@ -82,6 +82,32 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
           encryptionProps.get(key));
     }
     return overrides;
+  }
+  @Test
+  public void testConfiguration() throws Exception {
+    Map<String, String> overrides = Maps.newHashMap();
+    overrides.put("encryption.keyAlias", "key-1");
+    overrides.put("encryption.cipherProvider", "AESCTRNOPADDING");
+    overrides.put("encryption.keyProvider", "myKeyProvider");
+    overrides.put("encryption.keyProvider.myKeyProvider.type", "JCEKSFILE");
+    overrides.put("encryption.keyProvider.myKeyProvider.keyStoreFile",
+        keyStoreFile.getAbsolutePath());
+    overrides.put("encryption.keyProvider.myKeyProvider.keyStorePasswordFile",
+        keyStorePasswordFile.getAbsolutePath());
+    overrides.put("encryption.keyProvider.myKeyProvider.keys", "key-0 key-1");
+    overrides.put("encryption.keyProvider.myKeyProvider.keys.key-0.passwordFile",
+        keyAliasPassword.get("key-0").getAbsolutePath());
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> in = fillChannel(channel, "restart");
+    channel.stop();
+    channel = TestUtils.createFileChannel(checkpointDir.getAbsolutePath(),
+        dataDir, overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> out =  consumeChannel(channel);
+    compareInputAndOut(in, out);
   }
   @Test
   public void testBasicEncyrptionDecryption() throws Exception {
@@ -143,8 +169,9 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
   @Test
   public void testBadKeyProviderInvalidValue() throws Exception {
     Map<String, String> overrides = getOverridesForEncryption();
-    overrides.put(EncryptionConfiguration.ENCRYPTION_PREFIX + "." +
-        EncryptionConfiguration.KEY_PROVIDER, "invalid");
+    overrides.put(Joiner.on(".").join(EncryptionConfiguration.ENCRYPTION_PREFIX,
+        EncryptionConfiguration.KEY_PROVIDER, KEY_PROVIDER_NAME,
+        EncryptionConfiguration.KEY_PROVIDER_TYPE), "invalid");
     try {
       channel = createFileChannel(overrides);
       Assert.fail();
@@ -156,8 +183,9 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
   @Test
   public void testBadKeyProviderInvalidClass() throws Exception {
     Map<String, String> overrides = getOverridesForEncryption();
-    overrides.put(EncryptionConfiguration.ENCRYPTION_PREFIX + "." +
-        EncryptionConfiguration.KEY_PROVIDER, String.class.getName());
+    overrides.put(Joiner.on(".").join(EncryptionConfiguration.ENCRYPTION_PREFIX,
+        EncryptionConfiguration.KEY_PROVIDER, KEY_PROVIDER_NAME,
+        EncryptionConfiguration.KEY_PROVIDER_TYPE), String.class.getName());
     try {
       channel = createFileChannel(overrides);
       Assert.fail();
@@ -169,8 +197,8 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
   @Test
   public void testBadCipherProviderInvalidValue() throws Exception {
     Map<String, String> overrides = getOverridesForEncryption();
-    overrides.put(EncryptionConfiguration.ENCRYPTION_PREFIX + "." +
-        EncryptionConfiguration.CIPHER_PROVIDER, "invalid");
+    overrides.put(Joiner.on(".").join(EncryptionConfiguration.ENCRYPTION_PREFIX,
+        EncryptionConfiguration.CIPHER_PROVIDER), "invalid");
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertFalse(channel.isOpen());
@@ -178,8 +206,8 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
   @Test
   public void testBadCipherProviderInvalidClass() throws Exception {
     Map<String, String> overrides = getOverridesForEncryption();
-    overrides.put(EncryptionConfiguration.ENCRYPTION_PREFIX + "." +
-        EncryptionConfiguration.CIPHER_PROVIDER, String.class.getName());
+    overrides.put(Joiner.on(".").join(EncryptionConfiguration.ENCRYPTION_PREFIX,
+        EncryptionConfiguration.CIPHER_PROVIDER), String.class.getName());
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertFalse(channel.isOpen());
@@ -187,8 +215,10 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
   @Test
   public void testMissingKeyStoreFile() throws Exception {
     Map<String, String> overrides = getOverridesForEncryption();
-    overrides.put(EncryptionConfiguration.ENCRYPTION_PREFIX + "." +
-        EncryptionConfiguration.JCE_FILE_KEY_STORE_FILE, "/path/does/not/exist");
+    overrides.put(Joiner.on(".").join(EncryptionConfiguration.ENCRYPTION_PREFIX,
+        EncryptionConfiguration.KEY_PROVIDER, KEY_PROVIDER_NAME,
+        EncryptionConfiguration.JCE_FILE_KEY_STORE_FILE),
+        "/path/does/not/exist");
     try {
       channel = createFileChannel(overrides);
       Assert.fail();
@@ -200,9 +230,10 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
   @Test
   public void testMissingKeyStorePasswordFile() throws Exception {
     Map<String, String> overrides = getOverridesForEncryption();
-    overrides.put(EncryptionConfiguration.ENCRYPTION_PREFIX + "." +
-        EncryptionConfiguration.JCE_FILE_KEY_STORE_PASSWORD_FILE,
-          "/path/does/not/exist");
+    overrides.put(Joiner.on(".").join(EncryptionConfiguration.ENCRYPTION_PREFIX,
+        EncryptionConfiguration.KEY_PROVIDER, KEY_PROVIDER_NAME,
+        EncryptionConfiguration.JCE_FILE_KEY_STORE_PASSWORD_FILE),
+        "/path/does/not/exist");
     try {
       channel = createFileChannel(overrides);
       Assert.fail();
