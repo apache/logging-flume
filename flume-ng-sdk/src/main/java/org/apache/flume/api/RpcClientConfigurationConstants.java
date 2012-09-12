@@ -115,6 +115,10 @@ public final class RpcClientConfigurationConstants {
   public static final String HOST_SELECTOR_ROUND_ROBIN = "ROUND_ROBIN";
   public static final String HOST_SELECTOR_RANDOM = "RANDOM";
 
+  public static final String CONFIG_MAX_BACKOFF = "maxBackoff";
+  public static final String CONFIG_BACKOFF = "backoff";
+  public static final String DEFAULT_BACKOFF = "false";
+
   private RpcClientConfigurationConstants() {
     // disable explicit object creation
   }

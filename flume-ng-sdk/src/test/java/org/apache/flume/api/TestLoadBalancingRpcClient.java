@@ -18,6 +18,8 @@
  */
 package org.apache.flume.api;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -28,10 +30,12 @@ import junit.framework.Assert;
 
 import org.apache.avro.ipc.Server;
 import org.apache.flume.Event;
+import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
 import org.apache.flume.api.RpcTestUtils.LoadBalancedAvroHandler;
 import org.apache.flume.api.RpcTestUtils.OKAvroHandler;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.source.avro.Status;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -380,6 +384,201 @@ public class TestLoadBalancingRpcClient {
         if (s[i] != null) s[i].close();
       }
     }
+  }
+
+  @Test
+  public void testRandomBackoff() throws Exception {
+    Properties p = new Properties();
+    List<LoadBalancedAvroHandler> hosts = Lists.newArrayList();
+    List<Server> servers = Lists.newArrayList();
+    StringBuilder hostList = new StringBuilder("");
+    for(int i = 0; i < 3;i++){
+      LoadBalancedAvroHandler s = new LoadBalancedAvroHandler();
+      hosts.add(s);
+      Server srv = RpcTestUtils.startServer(s);
+      servers.add(srv);
+      String name = "h" + i;
+      p.put("hosts." + name, "127.0.0.1:" + srv.getPort());
+      hostList.append(name).append(" ");
+    }
+    p.put("hosts", hostList.toString().trim());
+    p.put("client.type", "default_loadbalance");
+    p.put("host-selector", "random");
+    p.put("backoff", "true");
+    hosts.get(0).setFailed();
+    hosts.get(2).setFailed();
+
+    RpcClient c = RpcClientFactory.getInstance(p);
+    Assert.assertTrue(c instanceof LoadBalancingRpcClient);
+
+    // TODO: there is a remote possibility that s0 or s2
+    // never get hit by the random assignment
+    // and thus not backoffed, causing the test to fail
+    for(int i=0; i < 50; i++) {
+      // a well behaved runner would always check the return.
+      c.append(EventBuilder.withBody(("test" + String.valueOf(i)).getBytes()));
+    }
+    Assert.assertEquals(50, hosts.get(1).getAppendCount());
+    Assert.assertEquals(0, hosts.get(0).getAppendCount());
+    Assert.assertEquals(0, hosts.get(2).getAppendCount());
+    hosts.get(0).setOK();
+    hosts.get(1).setFailed(); // s0 should still be backed off
+    try {
+      c.append(EventBuilder.withBody("shouldfail".getBytes()));
+      // nothing should be able to process right now
+      Assert.fail("Expected EventDeliveryException");
+    } catch (EventDeliveryException e) {
+      // this is expected
+    }
+    Thread.sleep(2500); // wait for s0 to no longer be backed off
+
+    for (int i = 0; i < 50; i++) {
+      // a well behaved runner would always check the return.
+      c.append(EventBuilder.withBody(("test" + String.valueOf(i)).getBytes()));
+    }
+    Assert.assertEquals(50, hosts.get(0).getAppendCount());
+    Assert.assertEquals(50, hosts.get(1).getAppendCount());
+    Assert.assertEquals(0, hosts.get(2).getAppendCount());
+  }
+  @Test
+  public void testRoundRobinBackoffInitialFailure() throws EventDeliveryException {
+    Properties p = new Properties();
+    List<LoadBalancedAvroHandler> hosts = Lists.newArrayList();
+    List<Server> servers = Lists.newArrayList();
+    StringBuilder hostList = new StringBuilder("");
+    for (int i = 0; i < 3; i++) {
+      LoadBalancedAvroHandler s = new LoadBalancedAvroHandler();
+      hosts.add(s);
+      Server srv = RpcTestUtils.startServer(s);
+      servers.add(srv);
+      String name = "h" + i;
+      p.put("hosts." + name, "127.0.0.1:" + srv.getPort());
+      hostList.append(name).append(" ");
+    }
+    p.put("hosts", hostList.toString().trim());
+    p.put("client.type", "default_loadbalance");
+    p.put("host-selector", "round_robin");
+    p.put("backoff", "true");
+
+    RpcClient c = RpcClientFactory.getInstance(p);
+    Assert.assertTrue(c instanceof LoadBalancingRpcClient);
+
+    for (int i = 0; i < 3; i++) {
+      c.append(EventBuilder.withBody("testing".getBytes()));
+    }
+    hosts.get(1).setFailed();
+    for (int i = 0; i < 3; i++) {
+      c.append(EventBuilder.withBody("testing".getBytes()));
+    }
+    hosts.get(1).setOK();
+    //This time the iterators will never have "1".
+    //So clients get in the order: 1 - 3 - 1
+    for (int i = 0; i < 3; i++) {
+      c.append(EventBuilder.withBody("testing".getBytes()));
+    }
+
+    Assert.assertEquals(1 + 2 + 1, hosts.get(0).getAppendCount());
+    Assert.assertEquals(1, hosts.get(1).getAppendCount());
+    Assert.assertEquals(1 + 1 + 2, hosts.get(2).getAppendCount());
+  }
+
+  @Test
+  public void testRoundRobinBackoffIncreasingBackoffs() throws Exception {
+    Properties p = new Properties();
+    List<LoadBalancedAvroHandler> hosts = Lists.newArrayList();
+    List<Server> servers = Lists.newArrayList();
+    StringBuilder hostList = new StringBuilder("");
+    for (int i = 0; i < 3; i++) {
+      LoadBalancedAvroHandler s = new LoadBalancedAvroHandler();
+      hosts.add(s);
+      if(i == 1) {
+        s.setFailed();
+      }
+      Server srv = RpcTestUtils.startServer(s);
+      servers.add(srv);
+      String name = "h" + i;
+      p.put("hosts." + name, "127.0.0.1:" + srv.getPort());
+      hostList.append(name).append(" ");
+    }
+    p.put("hosts", hostList.toString().trim());
+    p.put("client.type", "default_loadbalance");
+    p.put("host-selector", "round_robin");
+    p.put("backoff", "true");
+
+    RpcClient c = RpcClientFactory.getInstance(p);
+    Assert.assertTrue(c instanceof LoadBalancingRpcClient);
+
+    for (int i = 0; i < 3; i++) {
+      c.append(EventBuilder.withBody("testing".getBytes()));
+    }
+    Assert.assertEquals(0, hosts.get(1).getAppendCount());
+    Thread.sleep(2100);
+    // this should let the sink come out of backoff and get backed off  for a longer time
+    for (int i = 0; i < 3; i++) {
+      c.append(EventBuilder.withBody("testing".getBytes()));
+    }
+    Assert.assertEquals(0, hosts.get(1).getAppendCount());
+    hosts.get(1).setOK();
+    Thread.sleep(2100);
+    // this time it shouldn't come out of backoff yet as the timeout isn't over
+    for (int i = 0; i < 3; i++) {
+      c.append(EventBuilder.withBody("testing".getBytes()));
+
+    }
+    Assert.assertEquals(0, hosts.get(1).getAppendCount());
+    // after this s2 should be receiving events agains
+    Thread.sleep(2500);
+    int numEvents = 60;
+    for (int i = 0; i < numEvents; i++) {
+      c.append(EventBuilder.withBody("testing".getBytes()));
+    }
+
+    Assert.assertEquals( 2 + 2 + 1 + (numEvents/3), hosts.get(0).getAppendCount());
+    Assert.assertEquals((numEvents/3), hosts.get(1).getAppendCount());
+    Assert.assertEquals(1 + 1 + 2 + (numEvents/3), hosts.get(2).getAppendCount());
+  }
+
+  @Test
+  public void testRoundRobinBackoffFailureRecovery() throws EventDeliveryException, InterruptedException {
+    Properties p = new Properties();
+    List<LoadBalancedAvroHandler> hosts = Lists.newArrayList();
+    List<Server> servers = Lists.newArrayList();
+    StringBuilder hostList = new StringBuilder("");
+    for (int i = 0; i < 3; i++) {
+      LoadBalancedAvroHandler s = new LoadBalancedAvroHandler();
+      hosts.add(s);
+      if (i == 1) {
+        s.setFailed();
+      }
+      Server srv = RpcTestUtils.startServer(s);
+      servers.add(srv);
+      String name = "h" + i;
+      p.put("hosts." + name, "127.0.0.1:" + srv.getPort());
+      hostList.append(name).append(" ");
+    }
+    p.put("hosts", hostList.toString().trim());
+    p.put("client.type", "default_loadbalance");
+    p.put("host-selector", "round_robin");
+    p.put("backoff", "true");
+
+    RpcClient c = RpcClientFactory.getInstance(p);
+    Assert.assertTrue(c instanceof LoadBalancingRpcClient);
+
+
+    for (int i = 0; i < 3; i++) {
+      c.append(EventBuilder.withBody("recovery test".getBytes()));
+    }
+    hosts.get(1).setOK();
+    Thread.sleep(3000);
+    int numEvents = 60;
+
+    for(int i = 0; i < numEvents; i++){
+      c.append(EventBuilder.withBody("testing".getBytes()));
+    }
+
+    Assert.assertEquals(2 + (numEvents/3) , hosts.get(0).getAppendCount());
+    Assert.assertEquals(0 + (numEvents/3), hosts.get(1).getAppendCount());
+    Assert.assertEquals(1 + (numEvents/3), hosts.get(2).getAppendCount());
   }
 
   private List<Event> getBatchedEvent(int index) {

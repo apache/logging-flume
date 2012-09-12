@@ -40,6 +40,15 @@ import org.junit.Test;
 
 public class TestLoadBalancingSinkProcessor {
 
+  private Context getContext(String selectorType, boolean backoff) {
+    Map<String, String> p = new HashMap<String, String>();
+    p.put("selector", selectorType);
+    p.put("backoff", String.valueOf(backoff));
+    Context ctx = new Context(p);
+
+    return ctx;
+  }
+
   private Context getContext(String selectorType) {
     Map<String, String> p = new HashMap<String, String>();
     p.put("selector", selectorType);
@@ -49,8 +58,8 @@ public class TestLoadBalancingSinkProcessor {
   }
 
   private LoadBalancingSinkProcessor getProcessor(
-      String selectorType, List<Sink> sinks) {
-    return getProcessor(sinks, getContext(selectorType));
+      String selectorType, List<Sink> sinks, boolean backoff) {
+    return getProcessor(sinks, getContext(selectorType, backoff));
   }
 
   private LoadBalancingSinkProcessor getProcessor(List<Sink> sinks, Context ctx)
@@ -130,7 +139,7 @@ public class TestLoadBalancingSinkProcessor {
     sinks.add(s2);
     sinks.add(s3);
 
-    LoadBalancingSinkProcessor lbsp = getProcessor("random", sinks);
+    LoadBalancingSinkProcessor lbsp = getProcessor("random", sinks, false);
 
     Sink.Status s = Sink.Status.READY;
     while (s != Sink.Status.BACKOFF) {
@@ -171,7 +180,7 @@ public class TestLoadBalancingSinkProcessor {
     sinks.add(s2);
     sinks.add(s3);
 
-    LoadBalancingSinkProcessor lbsp = getProcessor("random_backoff", sinks);
+    LoadBalancingSinkProcessor lbsp = getProcessor("random", sinks, true);
 
     // TODO: there is a remote possibility that s0 or s2
     // never get hit by the random assignment
@@ -227,7 +236,7 @@ public class TestLoadBalancingSinkProcessor {
     sinks.add(s2);
     sinks.add(s3);
 
-    LoadBalancingSinkProcessor lbsp = getProcessor("random",sinks);
+    LoadBalancingSinkProcessor lbsp = getProcessor("random",sinks, false);
 
     Status s = Status.READY;
     while (s != Status.BACKOFF) {
@@ -290,7 +299,7 @@ public class TestLoadBalancingSinkProcessor {
     sinks.add(s9);
     sinks.add(s0);
 
-    LoadBalancingSinkProcessor lbsp = getProcessor("random",sinks);
+    LoadBalancingSinkProcessor lbsp = getProcessor("random",sinks, false);
 
     Status s = Status.READY;
     while (s != Status.BACKOFF) {
@@ -348,7 +357,7 @@ public class TestLoadBalancingSinkProcessor {
     sinks.add(s2);
     sinks.add(s3);
 
-    LoadBalancingSinkProcessor lbsp = getProcessor("round_robin", sinks);
+    LoadBalancingSinkProcessor lbsp = getProcessor("round_robin", sinks, false);
 
     Sink.Status s = Sink.Status.READY;
     while (s != Sink.Status.BACKOFF) {
@@ -386,7 +395,7 @@ public class TestLoadBalancingSinkProcessor {
     sinks.add(s2);
     sinks.add(s3);
 
-    LoadBalancingSinkProcessor lbsp = getProcessor("round_robin",sinks);
+    LoadBalancingSinkProcessor lbsp = getProcessor("round_robin",sinks, false);
 
     Status s = Status.READY;
     while (s != Status.BACKOFF) {
@@ -423,7 +432,7 @@ public class TestLoadBalancingSinkProcessor {
     sinks.add(s2);
     sinks.add(s3);
 
-    LoadBalancingSinkProcessor lbsp = getProcessor("round_robin_backoff",sinks);
+    LoadBalancingSinkProcessor lbsp = getProcessor("round_robin",sinks, true);
 
     Status s = Status.READY;
     for (int i = 0; i < 3 && s != Status.BACKOFF; i++) {
@@ -467,7 +476,7 @@ public class TestLoadBalancingSinkProcessor {
     sinks.add(s2);
     sinks.add(s3);
 
-    LoadBalancingSinkProcessor lbsp = getProcessor("round_robin_backoff",sinks);
+    LoadBalancingSinkProcessor lbsp = getProcessor("round_robin",sinks, true);
 
     Status s = Status.READY;
     for (int i = 0; i < 3 && s != Status.BACKOFF; i++) {
@@ -522,7 +531,7 @@ public class TestLoadBalancingSinkProcessor {
     sinks.add(s2);
     sinks.add(s3);
 
-    LoadBalancingSinkProcessor lbsp = getProcessor("round_robin_backoff",sinks);
+    LoadBalancingSinkProcessor lbsp = getProcessor("round_robin",sinks, true);
 
     Status s = Status.READY;
     for (int i = 0; i < 3 && s != Status.BACKOFF; i++) {
@@ -564,7 +573,7 @@ public class TestLoadBalancingSinkProcessor {
     sinks.add(s2);
     sinks.add(s3);
 
-    LoadBalancingSinkProcessor lbsp = getProcessor("round_robin",sinks);
+    LoadBalancingSinkProcessor lbsp = getProcessor("round_robin",sinks, false);
 
     Status s = Status.READY;
     while (s != Status.BACKOFF) {
