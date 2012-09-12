@@ -562,7 +562,10 @@ class Log {
       }
       if (logFiles != null) {
         for (int index = 0; index < logFiles.length(); index++) {
-          logFiles.get(index).close();
+          LogFile.Writer writer = logFiles.get(index);
+          if(writer != null) {
+            writer.close();
+          }
         }
       }
       synchronized (idLogFileMap) {
@@ -677,16 +680,13 @@ class Log {
           LOGGER.info("Roll start " + logDirs[index]);
           int fileID = nextFileID.incrementAndGet();
           File file = new File(logDirs[index], PREFIX + fileID);
-          Preconditions.checkState(!file.exists(),
-              "File already exists "  + file);
-          Preconditions.checkState(file.createNewFile(),
-              "File could not be created " + file);
+          LogFile.Writer writer = LogFileFactory.getWriter(file, fileID,
+              maxFileSize, encryptionKey, encryptionKeyAlias,
+              encryptionCipherProvider);
           idLogFileMap.put(fileID, LogFileFactory.getRandomReader(file,
               encryptionKeyProvider));
           // writer from this point on will get new reference
-          logFiles.set(index, LogFileFactory.getWriter(file, fileID,
-              maxFileSize, encryptionKey, encryptionKeyAlias,
-              encryptionCipherProvider));
+          logFiles.set(index, writer);
           // close out old log
           if (oldLogFile != null) {
             oldLogFile.close();
