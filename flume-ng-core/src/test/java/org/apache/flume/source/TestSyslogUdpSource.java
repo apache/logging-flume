@@ -92,11 +92,13 @@ public class TestSyslogUdpSource {
     logger.removeAppender(appender);
 
     Assert.assertNotNull(e);
-    Assert.assertEquals(e.getHeaders().get(SyslogUtils.SYSLOG_FACILITY), String.valueOf(SyslogAppender.LOG_FTP));
+    Assert.assertEquals(String.valueOf(SyslogAppender.LOG_FTP / 8),
+        e.getHeaders().get(SyslogUtils.SYSLOG_FACILITY));
     Assert.assertArrayEquals(e.getBody(), "test flume syslog".getBytes());
 
     Assert.assertNotNull(e2);
-    Assert.assertEquals(e2.getHeaders().get(SyslogUtils.SYSLOG_FACILITY), String.valueOf(SyslogAppender.LOG_FTP));
+    Assert.assertEquals(String.valueOf(SyslogAppender.LOG_FTP / 8),
+        e2.getHeaders().get(SyslogUtils.SYSLOG_FACILITY));
     Assert.assertArrayEquals(e2.getBody(), "".getBytes());
   }
 
