@@ -25,7 +25,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
 
-import org.apache.flume.chanel.file.proto.ProtosFactory;
+import org.apache.flume.channel.file.proto.ProtosFactory;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;

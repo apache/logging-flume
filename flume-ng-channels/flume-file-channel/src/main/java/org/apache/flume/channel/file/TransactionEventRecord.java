@@ -29,7 +29,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
 
-import org.apache.flume.chanel.file.proto.ProtosFactory;
+import org.apache.flume.channel.file.proto.ProtosFactory;
 import org.apache.hadoop.io.Writable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

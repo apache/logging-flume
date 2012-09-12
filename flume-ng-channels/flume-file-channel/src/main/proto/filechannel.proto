@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-option java_package = "org.apache.flume.chanel.file.proto";
+option java_package = "org.apache.flume.channel.file.proto";
 option java_outer_classname = "ProtosFactory";
 
 message Checkpoint {

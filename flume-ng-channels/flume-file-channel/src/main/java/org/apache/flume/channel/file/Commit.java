@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.apache.flume.chanel.file.proto.ProtosFactory;
+import org.apache.flume.channel.file.proto.ProtosFactory;
 
 /**
  * Represents a Commit on disk
