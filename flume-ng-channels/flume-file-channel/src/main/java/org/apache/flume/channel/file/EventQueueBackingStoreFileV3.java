@@ -26,7 +26,7 @@ import java.io.RandomAccessFile;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.flume.chanel.file.proto.ProtosFactory;
+import org.apache.flume.channel.file.proto.ProtosFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

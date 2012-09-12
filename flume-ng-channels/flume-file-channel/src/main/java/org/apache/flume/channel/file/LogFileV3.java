@@ -28,7 +28,7 @@ import java.security.Key;
 
 import javax.annotation.Nullable;
 
-import org.apache.flume.chanel.file.proto.ProtosFactory;
+import org.apache.flume.channel.file.proto.ProtosFactory;
 import org.apache.flume.channel.file.encryption.CipherProvider;
 import org.apache.flume.channel.file.encryption.CipherProviderFactory;
 import org.apache.flume.channel.file.encryption.KeyProvider;
