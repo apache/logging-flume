@@ -196,7 +196,7 @@ public class SyslogUtils {
     if(!isBadEvent){
       pri = Integer.parseInt(prio.toString());
       sev = pri % 8;
-      facility = pri - sev;
+      facility = pri / 8;
       formatHeaders();
     }
 

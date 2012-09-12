@@ -23,12 +23,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Map;
-
-import junit.framework.Assert;
-
 import org.apache.flume.Event;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class TestSyslogUtils {
@@ -237,7 +235,7 @@ public class TestSyslogUtils {
       throw new NullPointerException("Event is null");
     }
     Map<String, String> headers = e.getHeaders();
-    Assert.assertEquals("8", headers.get(SyslogUtils.SYSLOG_FACILITY));
+    Assert.assertEquals("1", headers.get(SyslogUtils.SYSLOG_FACILITY));
     Assert.assertEquals("2", headers.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(null, headers.get(SyslogUtils.EVENT_STATUS));
     Assert.assertEquals(goodData1.trim(), new String(e.getBody()).trim());
@@ -273,7 +271,7 @@ public class TestSyslogUtils {
       throw new NullPointerException("Event is null");
     }
     Map<String, String> headers2 = e2.getHeaders();
-    Assert.assertEquals("8", headers2.get(SyslogUtils.SYSLOG_FACILITY));
+    Assert.assertEquals("1", headers2.get(SyslogUtils.SYSLOG_FACILITY));
     Assert.assertEquals("2", headers2.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(null,
         headers2.get(SyslogUtils.EVENT_STATUS));
@@ -295,7 +293,7 @@ public class TestSyslogUtils {
       throw new NullPointerException("Event is null");
     }
     Map<String, String> headers2 = e2.getHeaders();
-    Assert.assertEquals("8", headers2.get(SyslogUtils.SYSLOG_FACILITY));
+    Assert.assertEquals("1", headers2.get(SyslogUtils.SYSLOG_FACILITY));
     Assert.assertEquals("2", headers2.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(null,
         headers2.get(SyslogUtils.EVENT_STATUS));
@@ -364,7 +362,7 @@ public class TestSyslogUtils {
       throw new NullPointerException("Event is null");
     }
     Map<String, String> headers = e.getHeaders();
-    Assert.assertEquals("8", headers.get(SyslogUtils.SYSLOG_FACILITY));
+    Assert.assertEquals("1", headers.get(SyslogUtils.SYSLOG_FACILITY));
     Assert.assertEquals("2", headers.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(null,
         headers.get(SyslogUtils.EVENT_STATUS));
@@ -376,7 +374,7 @@ public class TestSyslogUtils {
       throw new NullPointerException("Event is null");
     }
     Map<String, String> headers2 = e2.getHeaders();
-    Assert.assertEquals("16", headers2.get(SyslogUtils.SYSLOG_FACILITY));
+    Assert.assertEquals("2", headers2.get(SyslogUtils.SYSLOG_FACILITY));
     Assert.assertEquals("4", headers2.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(null,
         headers.get(SyslogUtils.EVENT_STATUS));
@@ -395,7 +393,7 @@ public class TestSyslogUtils {
       throw new NullPointerException("Event is null");
     }
     Map<String, String> headers = e.getHeaders();
-    Assert.assertEquals("8", headers.get(SyslogUtils.SYSLOG_FACILITY));
+    Assert.assertEquals("1", headers.get(SyslogUtils.SYSLOG_FACILITY));
     Assert.assertEquals("2", headers.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(SyslogUtils.SyslogStatus.INCOMPLETE.getSyslogStatus(),
         headers.get(SyslogUtils.EVENT_STATUS));
