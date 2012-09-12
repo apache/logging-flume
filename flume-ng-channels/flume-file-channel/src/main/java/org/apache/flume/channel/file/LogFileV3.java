@@ -25,6 +25,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.security.Key;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import javax.annotation.Nullable;
 
@@ -173,7 +175,12 @@ class LogFileV3 extends LogFile {
 
   static class RandomReader extends LogFile.RandomReader {
     private volatile boolean initialized;
-    private CipherProvider.Decryptor decryptor;
+    private volatile boolean encryptionEnabled;
+    private volatile Key key;
+    private volatile String cipherProvider;
+    private volatile byte[] parameters;
+    private BlockingQueue<CipherProvider.Decryptor> decryptors =
+        new LinkedBlockingDeque<CipherProvider.Decryptor>();
     RandomReader(File file, @Nullable KeyProvider encryptionKeyProvider)
         throws IOException {
       super(file, encryptionKeyProvider);
@@ -190,16 +197,17 @@ class LogFileV3 extends LogFile {
               " expected " + Integer.toHexString(getVersion())
               + " file: " + getFile().getCanonicalPath());
         }
+        encryptionEnabled = false;
         if(metaData.hasEncryption()) {
           if(getKeyProvider() == null) {
             throw new IllegalStateException("Data file is encrypted but no " +
                 " provider was specified");
           }
           ProtosFactory.LogFileEncryption encryption = metaData.getEncryption();
-          Key key = getKeyProvider().getKey(encryption.getKeyAlias());
-          decryptor = CipherProviderFactory.
-              getDecrypter(encryption.getCipherProvider(), key,
-                  encryption.getParameters().toByteArray());
+          key = getKeyProvider().getKey(encryption.getKeyAlias());
+          cipherProvider = encryption.getCipherProvider();
+          parameters = encryption.getParameters().toByteArray();
+          encryptionEnabled = true;
         }
       } finally {
         try {
@@ -208,6 +216,14 @@ class LogFileV3 extends LogFile {
           LOGGER.warn("Unable to close " + metaDataFile, e);
         }
       }
+    }
+    private CipherProvider.Decryptor getDecryptor() {
+      CipherProvider.Decryptor decryptor = decryptors.poll();
+      if(decryptor == null) {
+        decryptor = CipherProviderFactory.getDecrypter(cipherProvider, key,
+            parameters);
+      }
+      return decryptor;
     }
     @Override
     int getVersion() {
@@ -219,15 +235,29 @@ class LogFileV3 extends LogFile {
       // readers are opened right when the file is created and thus
       // empty. As such we wait to initialize until there is some
       // data before we we initialize
-      if(!initialized) {
-        initialized = true;
-        initialize();
+      synchronized (this) {
+        if(!initialized) {
+          initialized = true;
+          initialize();
+        }
       }
       byte[] buffer = readDelimitedBuffer(fileHandle);
-      if(decryptor != null) {
-        buffer = decryptor.decrypt(buffer);
+      CipherProvider.Decryptor decryptor = null;
+      boolean success = false;
+      try {
+        if(encryptionEnabled) {
+          decryptor = getDecryptor();
+          buffer = decryptor.decrypt(buffer);
+        }
+        TransactionEventRecord event = TransactionEventRecord.
+            fromByteArray(buffer);
+        success = true;
+        return event;
+      } finally {
+        if(success && encryptionEnabled && decryptor != null) {
+          decryptors.offer(decryptor);
+        }
       }
-      return TransactionEventRecord.fromByteArray(buffer);
     }
   }
 
