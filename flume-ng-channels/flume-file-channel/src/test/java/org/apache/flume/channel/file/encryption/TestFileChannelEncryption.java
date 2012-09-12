@@ -21,8 +21,14 @@ package org.apache.flume.channel.file.encryption;
 import static org.apache.flume.channel.file.TestUtils.*;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.flume.ChannelException;
 import org.apache.flume.FlumeException;
@@ -82,6 +88,80 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
           encryptionProps.get(key));
     }
     return overrides;
+  }
+  /**
+   * Test fails without FLUME-1565
+   */
+  @Test
+  public void testThreadedConsume() throws Exception {
+    int numThreads = 20;
+    Map<String, String> overrides = getOverridesForEncryption();
+    overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(10000));
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Executor executor = Executors.newFixedThreadPool(numThreads);
+    Set<String> in = fillChannel(channel, "threaded-consume");
+    final AtomicBoolean error = new AtomicBoolean(false);
+    final CountDownLatch startLatch = new CountDownLatch(numThreads);
+    final CountDownLatch stopLatch = new CountDownLatch(numThreads);
+    final Set<String> out = Collections.synchronizedSet(new HashSet<String>());
+    for (int i = 0; i < numThreads; i++) {
+      executor.execute(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            startLatch.countDown();
+            startLatch.await();
+            out.addAll(takeEvents(channel, 10));
+          } catch (Throwable t) {
+            error.set(true);
+            LOGGER.error("Error in take thread", t);
+          } finally {
+            stopLatch.countDown();
+          }
+        }
+      });
+    }
+    stopLatch.await();
+    Assert.assertFalse(error.get());
+    compareInputAndOut(in, out);
+  }
+  @Test
+  public void testThreadedProduce() throws Exception {
+    int numThreads = 20;
+    Map<String, String> overrides = getOverridesForEncryption();
+    overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(10000));
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Executor executor = Executors.newFixedThreadPool(numThreads);
+    final AtomicBoolean error = new AtomicBoolean(false);
+    final CountDownLatch startLatch = new CountDownLatch(numThreads);
+    final CountDownLatch stopLatch = new CountDownLatch(numThreads);
+    final Set<String> in = Collections.synchronizedSet(new HashSet<String>());
+    for (int i = 0; i < numThreads; i++) {
+      executor.execute(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            startLatch.countDown();
+            startLatch.await();
+            in.addAll(putEvents(channel, "thread-produce", 10, 10000, true));
+          } catch (Throwable t) {
+            error.set(true);
+            LOGGER.error("Error in put thread", t);
+          } finally {
+            stopLatch.countDown();
+          }
+        }
+      });
+    }
+    stopLatch.await();
+    Set<String> out = consumeChannel(channel);
+
+    Assert.assertFalse(error.get());
+    compareInputAndOut(in, out);
   }
   @Test
   public void testConfiguration() throws Exception {
