@@ -20,6 +20,8 @@ package org.apache.flume.channel.file.encryption;
 
 import java.security.Key;
 
+import com.google.common.base.Preconditions;
+
 public abstract class CipherProvider {
 
   public abstract Encryptor.Builder<?> newEncryptorBuilder();
@@ -35,7 +37,7 @@ public abstract class CipherProvider {
     public static abstract class Builder<T extends Encryptor> {
       protected Key key;
       public Builder<T> setKey(Key key) {
-        this.key = key;
+        this.key = Preconditions.checkNotNull(key, "key cannot be null");
         return this;
       }
       public abstract T build();
@@ -52,7 +54,7 @@ public abstract class CipherProvider {
       protected byte[] parameters;
       protected Key key;
       public Builder<T> setKey(Key key) {
-        this.key = key;
+        this.key = Preconditions.checkNotNull(key, "key cannot be null");
         return this;
       }
       public Builder<T> setParameters(byte[] parameters) {

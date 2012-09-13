@@ -83,6 +83,7 @@ public class FileChannel extends BasicChannelSemantics {
   private File[] dataDirs;
   private Log log;
   private volatile boolean open;
+  private volatile Throwable startupError;
   private Semaphore queueRemaining;
   private final ThreadLocal<FileBackedTransaction> transactions =
       new ThreadLocal<FileBackedTransaction>();
@@ -274,6 +275,7 @@ public class FileChannel extends BasicChannelSemantics {
            + channelNameDescriptor);
     } catch (Throwable t) {
       open = false;
+      startupError = t;
       LOG.error("Failed to start the file channel " + channelNameDescriptor, t);
       if (t instanceof Error) {
         throw (Error) t;
@@ -290,6 +292,7 @@ public class FileChannel extends BasicChannelSemantics {
   @Override
   public synchronized void stop() {
     LOG.info("Stopping {}...", this);
+    startupError = null;
     int size = getDepth();
     close();
     if (!open) {
@@ -307,7 +310,15 @@ public class FileChannel extends BasicChannelSemantics {
 
   @Override
   protected BasicTransactionSemantics createTransaction() {
-    Preconditions.checkState(open, "Channel closed " + channelNameDescriptor);
+    if(!open) {
+      String msg = "Channel closed " + channelNameDescriptor;
+      if(startupError != null) {
+        msg += ". Due to " + startupError.getClass().getName() + ": " +
+            startupError.getMessage();
+        throw new IllegalStateException(msg, startupError);
+      }
+      throw new IllegalStateException(msg);
+    }
     FileBackedTransaction trans = transactions.get();
     if(trans != null && !trans.isClosed()) {
       Preconditions.checkState(false,
