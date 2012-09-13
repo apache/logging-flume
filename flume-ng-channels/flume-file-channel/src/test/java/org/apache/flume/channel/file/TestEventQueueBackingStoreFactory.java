@@ -82,6 +82,38 @@ public class TestEventQueueBackingStoreFactory {
         Serialization.VERSION_2, pointersInTestCheckpoint);
   }
   @Test
+  public void testDecreaseCapacity() throws Exception {
+    Assert.assertTrue(checkpoint.delete());
+    EventQueueBackingStore backingStore = EventQueueBackingStoreFactory.
+        get(checkpoint, 10, "test");
+    backingStore.close();
+    try {
+      EventQueueBackingStoreFactory.get(checkpoint, 9, "test");
+      Assert.fail();
+    } catch (IllegalStateException e) {
+      String expected = "Configured capacity is 9 but the  checkpoint file " +
+            "capacity is 10. See FileChannel documentation on how to change " +
+            "a channels capacity.";
+      Assert.assertEquals(expected, e.getMessage());
+    }
+  }
+  @Test
+  public void testIncreaseCapacity() throws Exception {
+    Assert.assertTrue(checkpoint.delete());
+    EventQueueBackingStore backingStore = EventQueueBackingStoreFactory.
+        get(checkpoint, 10, "test");
+    backingStore.close();
+    try {
+      EventQueueBackingStoreFactory.get(checkpoint, 11, "test");
+      Assert.fail();
+    } catch (IllegalStateException e) {
+      String expected = "Configured capacity is 11 but the  checkpoint file " +
+      		"capacity is 10. See FileChannel documentation on how to change " +
+      		"a channels capacity.";
+      Assert.assertEquals(expected, e.getMessage());
+    }
+  }
+  @Test
   public void testNewCheckpoint() throws Exception {
     Assert.assertTrue(checkpoint.delete());
     verify(EventQueueBackingStoreFactory.get(checkpoint, 10, "test", false),

@@ -28,13 +28,9 @@ public class EncryptionConfiguration {
    */
   public static final String KEY_PROVIDER = "keyProvider";
   /**
-   * Encryption key provider type, default is null.
-   */
-  public static final String KEY_PROVIDER_TYPE = "type";
-  /**
    * Encryption key alias, default is null.
    */
-  public static final String KEY_ALIAS = "keyAlias";
+  public static final String ACTIVE_KEY = "activeKey";
   /**
    * Encryption cipher provider, default is null.
    */

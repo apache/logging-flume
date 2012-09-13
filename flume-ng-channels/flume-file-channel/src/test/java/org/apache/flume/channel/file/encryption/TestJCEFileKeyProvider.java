@@ -32,12 +32,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 
 public class TestJCEFileKeyProvider {
-  private static final String KEY_PROVIDER_NAME =  "myKeyProvider";
   private CipherProvider.Encryptor encryptor;
   private CipherProvider.Decryptor decryptor;
   private File baseDir;
@@ -72,13 +70,12 @@ public class TestJCEFileKeyProvider {
     EncryptionTestUtils.createKeyStore(keyStoreFile, keyStorePasswordFile,
         keyAliasPassword);
     Context context = new Context(EncryptionTestUtils.
-        configureForKeyStore(KEY_PROVIDER_NAME, keyStoreFile,
+        configureForKeyStore(keyStoreFile,
             keyStorePasswordFile, keyAliasPassword));
     Context keyProviderContext = new Context(
-        context.getSubProperties(Joiner.on(".").join(
-            EncryptionConfiguration.KEY_PROVIDER, KEY_PROVIDER_NAME, "")));
+        context.getSubProperties(EncryptionConfiguration.KEY_PROVIDER + "."));
     KeyProvider keyProvider = KeyProviderFactory.
-        getInstance(keyProviderContext);
+        getInstance(KeyProviderType.JCEKSFILE.name(), keyProviderContext);
     testKeyProvider(keyProvider);
   }
   @Test
@@ -86,13 +83,12 @@ public class TestJCEFileKeyProvider {
     keyAliasPassword.putAll(EncryptionTestUtils.
         configureTestKeyStore(baseDir, keyStoreFile));
     Context context = new Context(EncryptionTestUtils.
-        configureForKeyStore(KEY_PROVIDER_NAME, keyStoreFile,
+        configureForKeyStore(keyStoreFile,
             keyStorePasswordFile, keyAliasPassword));
     Context keyProviderContext = new Context(
-        context.getSubProperties(Joiner.on(".").join(
-            EncryptionConfiguration.KEY_PROVIDER, KEY_PROVIDER_NAME, "")));
+        context.getSubProperties(EncryptionConfiguration.KEY_PROVIDER + "."));
     KeyProvider keyProvider = KeyProviderFactory.
-        getInstance(keyProviderContext);
+        getInstance(KeyProviderType.JCEKSFILE.name(), keyProviderContext);
     testKeyProvider(keyProvider);
   }
   private void createNewKeyStore() throws Exception {

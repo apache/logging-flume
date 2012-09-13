@@ -95,9 +95,9 @@ public class EncryptionTestUtils {
     result.put("key-1", null);
     return result;
   }
-  public static Map<String,String> configureForKeyStore(String keyProviderName,
-      File keyStoreFile, File keyStorePasswordFile,
-      Map<String, File> keyAliasPassword) throws Exception {
+  public static Map<String,String> configureForKeyStore(File keyStoreFile,
+      File keyStorePasswordFile, Map<String, File> keyAliasPassword)
+          throws Exception {
     Map<String, String> context = Maps.newHashMap();
     List<String> keys = Lists.newArrayList();
     Joiner joiner = Joiner.on(".");
@@ -107,26 +107,22 @@ public class EncryptionTestUtils {
         keys.add(alias);
       } else {
         String propertyName = joiner.join(EncryptionConfiguration.KEY_PROVIDER,
-            keyProviderName, EncryptionConfiguration.JCE_FILE_KEYS, alias,
+            EncryptionConfiguration.JCE_FILE_KEYS, alias,
             EncryptionConfiguration.JCE_FILE_KEY_PASSWORD_FILE);
         keys.add(alias);
         context.put(propertyName, passwordFile.getAbsolutePath());
       }
     }
-    context.put(EncryptionConfiguration.KEY_PROVIDER, keyProviderName);
     context.put(joiner.join(EncryptionConfiguration.KEY_PROVIDER,
-        keyProviderName, EncryptionConfiguration.KEY_PROVIDER_TYPE),
-        KeyProviderType.JCEKSFILE.name());
-    context.put(joiner.join(EncryptionConfiguration.KEY_PROVIDER,
-        keyProviderName, EncryptionConfiguration.JCE_FILE_KEY_STORE_FILE),
+        EncryptionConfiguration.JCE_FILE_KEY_STORE_FILE),
         keyStoreFile.getAbsolutePath());
     if(keyStorePasswordFile != null) {
       context.put(joiner.join(EncryptionConfiguration.KEY_PROVIDER,
-          keyProviderName, EncryptionConfiguration.JCE_FILE_KEY_STORE_PASSWORD_FILE),
+          EncryptionConfiguration.JCE_FILE_KEY_STORE_PASSWORD_FILE),
           keyStorePasswordFile.getAbsolutePath());
     }
     context.put(joiner.join(EncryptionConfiguration.KEY_PROVIDER,
-        keyProviderName, EncryptionConfiguration.JCE_FILE_KEYS),
+        EncryptionConfiguration.JCE_FILE_KEYS),
         Joiner.on(" ").join(keys));
     return context;
   }

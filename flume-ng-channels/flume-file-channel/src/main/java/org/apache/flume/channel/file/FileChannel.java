@@ -40,7 +40,6 @@ import org.apache.flume.instrumentation.ChannelCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
@@ -94,7 +93,7 @@ public class FileChannel extends BasicChannelSemantics {
   private boolean useLogReplayV1;
   private boolean useFastReplay = false;
   private KeyProvider encryptionKeyProvider;
-  private String encryptionKeyAlias;
+  private String encryptionActiveKey;
   private String encryptionCipherProvider;
 
   @Override
@@ -212,25 +211,30 @@ public class FileChannel extends BasicChannelSemantics {
             "."));
     String encryptionKeyProviderName = encryptionContext.getString(
         EncryptionConfiguration.KEY_PROVIDER);
-    encryptionKeyAlias = encryptionContext.getString(
-        EncryptionConfiguration.KEY_ALIAS);
+    encryptionActiveKey = encryptionContext.getString(
+        EncryptionConfiguration.ACTIVE_KEY);
     encryptionCipherProvider = encryptionContext.getString(
         EncryptionConfiguration.CIPHER_PROVIDER);
     if(encryptionKeyProviderName != null) {
-      Preconditions.checkState(!Strings.isNullOrEmpty(encryptionKeyAlias),
-          "encryptionKeyAlias");
+      Preconditions.checkState(!Strings.isNullOrEmpty(encryptionActiveKey),
+          "Encryption configuration problem: " +
+              EncryptionConfiguration.ACTIVE_KEY + " is missing");
       Preconditions.checkState(!Strings.isNullOrEmpty(encryptionCipherProvider),
-          "encryptionCipherProvider");
+          "Encryption configuration problem: " +
+              EncryptionConfiguration.CIPHER_PROVIDER + " is missing");
       Context keyProviderContext = new Context(encryptionContext.
-          getSubProperties(Joiner.on(".").
-              join(EncryptionConfiguration.KEY_PROVIDER,
-                  encryptionKeyProviderName.trim(), "")));
+          getSubProperties(EncryptionConfiguration.KEY_PROVIDER + "."));
       encryptionKeyProvider = KeyProviderFactory.
-          getInstance(keyProviderContext);
+          getInstance(encryptionKeyProviderName, keyProviderContext);
     } else {
-      Preconditions.checkState(encryptionKeyAlias == null, "encryptionKeyAlias");
+      Preconditions.checkState(encryptionActiveKey == null,
+          "Encryption configuration problem: " +
+              EncryptionConfiguration.ACTIVE_KEY + " is present while key " +
+          "provider name is not.");
       Preconditions.checkState(encryptionCipherProvider == null,
-          "encryptionCipherProvider");
+          "Encryption configuration problem: " +
+              EncryptionConfiguration.CIPHER_PROVIDER + " is present while " +
+          "key provider name is not.");
     }
 
     if(queueRemaining == null) {
@@ -262,7 +266,7 @@ public class FileChannel extends BasicChannelSemantics {
       builder.setUseLogReplayV1(useLogReplayV1);
       builder.setUseFastReplay(useFastReplay);
       builder.setEncryptionKeyProvider(encryptionKeyProvider);
-      builder.setEncryptionKeyAlias(encryptionKeyAlias);
+      builder.setEncryptionKeyAlias(encryptionActiveKey);
       builder.setEncryptionCipherProvider(encryptionCipherProvider);
       log = builder.build();
       log.replay();

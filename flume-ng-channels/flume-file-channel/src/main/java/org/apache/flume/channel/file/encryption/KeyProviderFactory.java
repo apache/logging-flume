@@ -30,9 +30,7 @@ public class KeyProviderFactory {
       LoggerFactory.getLogger(KeyProviderFactory.class);
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  public static KeyProvider getInstance(Context context) {
-    String keyProviderType = context.getString(
-        EncryptionConfiguration.KEY_PROVIDER_TYPE);
+  public static KeyProvider getInstance(String keyProviderType, Context context) {
     Preconditions.checkNotNull(keyProviderType,
         "key provider type must not be null");
 
