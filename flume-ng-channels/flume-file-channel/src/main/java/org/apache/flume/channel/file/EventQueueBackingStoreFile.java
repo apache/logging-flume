@@ -103,6 +103,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
 
     // Start checkpoint
     elementsBuffer.put(INDEX_CHECKPOINT_MARKER, CHECKPOINT_INCOMPLETE);
+    mappedBuffer.force();
 
     setLogWriteOrderID(WriteOrderOracle.next());
     LOG.info("Updating checkpoint metadata: logWriteOrderID: "
