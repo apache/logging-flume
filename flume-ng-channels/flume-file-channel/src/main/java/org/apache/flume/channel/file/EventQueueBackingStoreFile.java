@@ -62,15 +62,22 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     super(capacity, name);
     this.checkpointFile = checkpointFile;
     checkpointFileHandle = new RandomAccessFile(checkpointFile, "rw");
-
+    int totalBytes = (capacity + HEADER_SIZE) * Serialization.SIZE_OF_LONG;
     if(checkpointFileHandle.length() == 0) {
-      int totalBytes = (capacity + HEADER_SIZE) * Serialization.SIZE_OF_LONG;
       allocate(checkpointFile, totalBytes);
       checkpointFileHandle.seek(INDEX_VERSION * Serialization.SIZE_OF_LONG);
       checkpointFileHandle.writeLong(getVersion());
       checkpointFileHandle.getChannel().force(true);
       LOG.info("Preallocated " + checkpointFile + " to " + checkpointFileHandle.length()
           + " for capacity " + capacity);
+    }
+    if(checkpointFile.length() != totalBytes) {
+      String msg = "Configured capacity is " + capacity + " but the "
+          + " checkpoint file capacity is " +
+          ((checkpointFile.length() / Serialization.SIZE_OF_LONG) - HEADER_SIZE)
+          + ". See FileChannel documentation on how to change a channels" +
+          " capacity.";
+      throw new IllegalStateException(msg);
     }
     mappedBuffer = checkpointFileHandle.getChannel().map(MapMode.READ_WRITE, 0,
         checkpointFile.length());
