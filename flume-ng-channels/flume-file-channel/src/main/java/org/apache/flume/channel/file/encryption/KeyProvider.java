@@ -24,6 +24,9 @@ import org.apache.flume.Context;
 
 public abstract class KeyProvider {
 
+  /**
+   * Returns a non-null Key
+   */
   public abstract Key getKey(String alias);
 
   public interface Builder {

@@ -72,11 +72,13 @@ public class JCEFileKeyProvider extends KeyProvider {
         passwordFile = keyPasswordFile.getAbsolutePath();
       }
       Key key = ks.getKey(alias, keyPassword);
+      if(key == null) {
+        throw new IllegalStateException("KeyStore returned null for " + alias);
+      }
       return key;
     } catch (Exception e) {
       String msg = e.getClass().getName() + ": " + e.getMessage() + ". " +
-          "Key = " + alias + ", passwordFile = " + passwordFile +": " +
-          e.getMessage();
+          "Key = " + alias + ", passwordFile = " + passwordFile;
       throw new RuntimeException(msg, e);
     }
   }
