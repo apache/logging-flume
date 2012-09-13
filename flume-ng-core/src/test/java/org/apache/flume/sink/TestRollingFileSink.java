@@ -84,6 +84,7 @@ public class TestRollingFileSink {
 
     context.put("sink.directory", tmpDir.getPath());
     context.put("sink.rollInterval", "1");
+    context.put("sink.batchSize", "1");
 
     Configurables.configure(sink, context);
 
@@ -131,6 +132,8 @@ public class TestRollingFileSink {
 
     context.put("sink.directory", tmpDir.getPath());
     context.put("sink.rollInterval", "0");
+    context.put("sink.batchSize", "1");
+
 
     Configurables.configure(sink, context);
 

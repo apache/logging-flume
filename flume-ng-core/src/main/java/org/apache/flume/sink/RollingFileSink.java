@@ -47,6 +47,9 @@ public class RollingFileSink extends AbstractSink implements Configurable {
   private static final Logger logger = LoggerFactory
       .getLogger(RollingFileSink.class);
   private static final long defaultRollInterval = 30;
+  private static final int defaultBatchSize = 100;
+
+  private int batchSize = defaultBatchSize;
 
   private File directory;
   private long rollInterval;
@@ -89,6 +92,8 @@ public class RollingFileSink extends AbstractSink implements Configurable {
     } else {
       this.rollInterval = Long.parseLong(rollInterval);
     }
+
+    batchSize = context.getInteger("sink.batchSize", defaultBatchSize);
 
     this.directory = new File(directory);
   }
@@ -175,30 +180,32 @@ public class RollingFileSink extends AbstractSink implements Configurable {
 
     try {
       transaction.begin();
-      event = channel.take();
+      for (int i = 0; i < batchSize; i++) {
+        event = channel.take();
+        if (event != null) {
+          serializer.write(event);
 
-      if (event != null) {
-        serializer.write(event);
+          /*
+           * FIXME: Feature: Rotate on size and time by checking bytes written and
+           * setting shouldRotate = true if we're past a threshold.
+           */
 
-        /*
-         * FIXME: Feature: Rotate on size and time by checking bytes written and
-         * setting shouldRotate = true if we're past a threshold.
-         */
-
-        /*
-         * FIXME: Feature: Control flush interval based on time or number of
-         * events. For now, we're super-conservative and flush on each write.
-         */
-        serializer.flush();
-        outputStream.flush();
-      } else {
-        // No events found, request back-off semantics from runner
-        result = Status.BACKOFF;
+          /*
+           * FIXME: Feature: Control flush interval based on time or number of
+           * events. For now, we're super-conservative and flush on each write.
+           */
+        } else {
+          // No events found, request back-off semantics from runner
+          result = Status.BACKOFF;
+          break;
+        }
       }
+      serializer.flush();
+      outputStream.flush();
       transaction.commit();
     } catch (Exception ex) {
       transaction.rollback();
-      throw new EventDeliveryException("Failed to process event: " + event, ex);
+      throw new EventDeliveryException("Failed to process transaction", ex);
     } finally {
       transaction.close();
     }
