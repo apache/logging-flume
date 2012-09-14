@@ -69,15 +69,11 @@ class ReplayHandler {
    * finding the put and commit in logdir2.
    */
   private final List<Long> pendingTakes;
-  private final boolean useFastReplay;
-  private final File cpDir;
 
-  ReplayHandler(FlumeEventQueue queue, @Nullable KeyProvider encryptionKeyProvider,
-      boolean useFastReplay, File cpDir) {
+  ReplayHandler(FlumeEventQueue queue,
+      @Nullable KeyProvider encryptionKeyProvider) {
     this.queue = queue;
-    this.useFastReplay = useFastReplay;
     this.lastCheckpoint = queue.getLogWriteOrderID();
-    this.cpDir = cpDir;
     pendingTakes = Lists.newArrayList();
     readers = Maps.newHashMap();
     logRecordBuffer = new PriorityQueue<LogRecord>();
@@ -89,14 +85,6 @@ class ReplayHandler {
    */
   @Deprecated
   void replayLogv1(List<File> logs) throws Exception {
-    if(useFastReplay) {
-      CheckpointRebuilder rebuilder = new CheckpointRebuilder(cpDir, logs,
-              queue);
-      if(rebuilder.rebuild()){
-        LOG.info("Fast replay successful.");
-        return;
-      }
-    }
     int total = 0;
     int count = 0;
     MultiMap transactionMap = new MultiValueMap();
@@ -228,14 +216,6 @@ class ReplayHandler {
    * @throws IOException
    */
   void replayLog(List<File> logs) throws Exception {
-    if (useFastReplay) {
-      CheckpointRebuilder rebuilder = new CheckpointRebuilder(cpDir, logs,
-              queue);
-      if (rebuilder.rebuild()) {
-        LOG.info("Fast replay successful.");
-        return;
-      }
-    }
     int count = 0;
     MultiMap transactionMap = new MultiValueMap();
     // seed both with the highest known sequence of either the tnxid or woid

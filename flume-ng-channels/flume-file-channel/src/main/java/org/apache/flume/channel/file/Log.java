@@ -309,11 +309,22 @@ class Log {
        */
       LogUtils.sort(dataFiles);
 
+      boolean useFastReplay = this.useFastReplay;
       /*
        * Read the checkpoint (in memory queue) from one of two alternating
        * locations. We will read the last one written to disk.
        */
       File checkpointFile = new File(checkpointDir, "checkpoint");
+      if(useFastReplay) {
+        if(checkpointFile.exists()) {
+          LOGGER.debug("Disabling fast full replay because checkpoint " +
+              "exists: " + checkpointFile);
+          useFastReplay = false;
+        } else {
+          LOGGER.debug("Not disabling fast full replay because checkpoint " +
+              " does not exist: " + checkpointFile);
+        }
+      }
       File inflightTakesFile = new File(checkpointDir, "inflighttakes");
       File inflightPutsFile = new File(checkpointDir, "inflightputs");
       EventQueueBackingStore backingStore =
@@ -329,15 +340,22 @@ class Log {
        * the queue, the timestamp the queue was written to disk, and
        * the list of data files.
        */
-      ReplayHandler replayHandler = new ReplayHandler(queue,
-          encryptionKeyProvider, useFastReplay, checkpointFile);
-      if(useLogReplayV1) {
-        LOGGER.info("Replaying logs with v1 replay logic");
-        replayHandler.replayLogv1(dataFiles);
+      CheckpointRebuilder rebuilder = new CheckpointRebuilder(dataFiles,
+          queue);
+      if(useFastReplay && rebuilder.rebuild()) {
+        LOGGER.info("Fast replay successful.");
       } else {
-        LOGGER.info("Replaying logs with v2 replay logic");
-        replayHandler.replayLog(dataFiles);
+        ReplayHandler replayHandler = new ReplayHandler(queue,
+            encryptionKeyProvider);
+        if(useLogReplayV1) {
+          LOGGER.info("Replaying logs with v1 replay logic");
+          replayHandler.replayLogv1(dataFiles);
+        } else {
+          LOGGER.info("Replaying logs with v2 replay logic");
+          replayHandler.replayLog(dataFiles);
+        }
       }
+
 
       for (int index = 0; index < logDirs.length; index++) {
         LOGGER.info("Rolling " + logDirs[index]);
