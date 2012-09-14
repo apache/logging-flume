@@ -22,6 +22,11 @@ public final class SyslogSourceConfigurationConstants {
 
   public static final String CONFIG_PORT = "port";
 
+  /**
+   * List of ports to listen to.
+   */
+  public static final String CONFIG_PORTS = "ports";
+
   public static final String CONFIG_HOST = "host";
 
   public static final String CONFIG_FORMAT_PREFIX = "format.";
@@ -34,6 +39,32 @@ public final class SyslogSourceConfigurationConstants {
 
   public static final String CONFIG_DATEFORMAT = "dateFormat";
 
+  /**
+   * Number of processors used to calculate number of threads to spawn.
+   */
+  public static final String CONFIG_NUMPROCESSORS = "numProcessors";
+
+  /**
+   * Maximum allowable size of events.
+   */
+  public static final String CONFIG_EVENTSIZE = "eventSize";
+
+  public static final String CONFIG_BATCHSIZE = "batchSize";
+
+  public static final String CONFIG_CHARSET = "charset.default";
+
+  public static final String DEFAULT_CHARSET = "UTF-8";
+
+  public static final String CONFIG_PORT_CHARSET_PREFIX = "charset.port.";
+
+  public static final int DEFAULT_BATCHSIZE = 100;
+
+  public static final String CONFIG_PORT_HEADER = "portHeader";
+
+  public static final String DEFAULT_PORT_HEADER = "port";
+
+  public static final String CONFIG_READBUF_SIZE = "readBufferBytes";
+  public static final int DEFAULT_READBUF_SIZE = 1024;
 
   private SyslogSourceConfigurationConstants() {
     // Disable explicit creation of objects.
