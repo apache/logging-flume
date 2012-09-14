@@ -66,6 +66,16 @@ public class TestFileChannelRestart extends TestFileChannelBase {
   }
 
   @Test
+  public void testFastReplayNegativeTestV1() throws Exception {
+    doTestRestart(true, true, false, true);
+  }
+
+  @Test
+  public void testFastReplayNegativeTestV2() throws Exception {
+    doTestRestart(false, true, false, true);
+  }
+
+  @Test
   public void testNormalReplayV1() throws Exception {
     doTestRestart(true, true, true, false);
   }

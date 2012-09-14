@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -45,6 +46,7 @@ import org.apache.hadoop.io.Writable;
 import org.junit.Assert;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
@@ -103,6 +105,14 @@ public class TestUtils {
       events.add(new String(e.getBody()));
     }
     return events;
+  }
+
+  public static List<File> getAllLogs(File[] dataDirs) {
+    List<File> result = Lists.newArrayList();
+    for(File dataDir : dataDirs) {
+      result.addAll(LogUtils.getLogs(dataDir));
+    }
+    return result;
   }
 
   public static void forceCheckpoint(FileChannel channel) {

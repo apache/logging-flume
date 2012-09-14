@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 
 public class CheckpointRebuilder {
 
-  private final File checkpointDir;
   private final List<File> logFiles;
   private final FlumeEventQueue queue;
   private final Set<ComparableFlumeEventPointer> committedPuts =
@@ -53,19 +52,13 @@ public class CheckpointRebuilder {
   private static Logger LOG =
           LoggerFactory.getLogger(CheckpointRebuilder.class);
 
-  public CheckpointRebuilder(File checkpointDir, List<File> logFiles,
+  public CheckpointRebuilder(List<File> logFiles,
           FlumeEventQueue queue) throws IOException {
-    this.checkpointDir = checkpointDir;
     this.logFiles = logFiles;
     this.queue = queue;
   }
 
   public boolean rebuild() throws IOException, Exception {
-    File checkpointFile = new File(checkpointDir, "checkpoint");
-    if (checkpointFile.exists()) {
-      LOG.info("Checkpoint file found, will not replay with fast logic.");
-      return false;
-    }
     LOG.info("Attempting to fast replay the log files.");
     List<LogFile.SequentialReader> logReaders = Lists.newArrayList();
     for (File logFile : logFiles) {
@@ -243,18 +236,23 @@ public class CheckpointRebuilder {
       logFiles.addAll(Arrays.asList(files));
     }
     int capacity = Integer.parseInt(cli.getOptionValue("t"));
-    EventQueueBackingStore backingStore =
-        EventQueueBackingStoreFactory.get(new File(checkpointDir, "checkpoint"),
-            capacity, "channel");
-    FlumeEventQueue queue = new FlumeEventQueue(backingStore,
-            new File(checkpointDir, "inflighttakes"),
-            new File(checkpointDir, "inflightputs"));
-    CheckpointRebuilder rebuilder = new CheckpointRebuilder(checkpointDir,
-            logFiles, queue);
-    if(rebuilder.rebuild()) {
-      rebuilder.writeCheckpoint();
+    File checkpointFile = new File(checkpointDir, "checkpoint");
+    if(checkpointFile.exists()) {
+      LOG.error("Cannot execute fast replay",
+          new IllegalStateException("Checkpoint exists" + checkpointFile));
     } else {
-      LOG.error("Could not rebuild the checkpoint due to errors.");
+      EventQueueBackingStore backingStore =
+          EventQueueBackingStoreFactory.get(checkpointFile,
+              capacity, "channel");
+      FlumeEventQueue queue = new FlumeEventQueue(backingStore,
+              new File(checkpointDir, "inflighttakes"),
+              new File(checkpointDir, "inflightputs"));
+      CheckpointRebuilder rebuilder = new CheckpointRebuilder(logFiles, queue);
+      if(rebuilder.rebuild()) {
+        rebuilder.writeCheckpoint();
+      } else {
+        LOG.error("Could not rebuild the checkpoint due to errors.");
+      }
     }
   }
 }
