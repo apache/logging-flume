@@ -160,6 +160,14 @@ add_HBASE_paths() {
   fi
 }
 
+set_LD_LIBRARY_PATH(){
+#Append the FLUME_JAVA_LIBRARY_PATH to whatever the user may have specified in
+#flume-env.sh
+  if [ -n "${FLUME_JAVA_LIBRARY_PATH}" ]; then
+    export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${FLUME_JAVA_LIBRARY_PATH}"
+  fi
+}
+
 display_help() {
   cat <<EOF
 Usage: $0 <command> [options]...
@@ -219,6 +227,7 @@ run_flume() {
 FLUME_CLASSPATH=""
 FLUME_JAVA_LIBRARY_PATH=""
 JAVA_OPTS="-Xmx20m"
+LD_LIBRARY_PATH=""
 
 opt_conf=""
 opt_classpath=""
@@ -350,6 +359,7 @@ if [ -n "$opt_conf" ]; then
   FLUME_CLASSPATH="$opt_conf:$FLUME_CLASSPATH"
 fi
 
+set_LD_LIBRARY_PATH
 # allow dryrun
 EXEC="exec"
 if [ -n "${opt_dryrun}" ]; then
