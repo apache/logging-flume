@@ -21,6 +21,7 @@ package org.apache.flume.source;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
@@ -51,7 +52,8 @@ public class StressSource extends AbstractSource implements
   private int batchSize;
   private long lastSent = 0;
   private Event event;
-  private ArrayList<Event> eventBatchList;
+  private List<Event> eventBatchList;
+  private List<Event> eventBatchListToProcess;
 
   public StressSource() {
     counterGroup = new CounterGroup();
@@ -115,12 +117,13 @@ public class StressSource extends AbstractSource implements
       } else {
         long eventsLeft = maxTotalEvents - totalEventSent;
 
-        if (eventsLeft < batchSize) {
-          eventBatchList.subList(0, (int)eventsLeft - 1);
-          lastSent = eventsLeft;
+        if (maxTotalEvents >= 0 && eventsLeft < batchSize) {
+          eventBatchListToProcess = eventBatchList.subList(0, (int)eventsLeft);
+        } else {
+          eventBatchListToProcess = eventBatchList;
         }
-
-        getChannelProcessor().processEventBatch(eventBatchList);
+        lastSent = eventBatchListToProcess.size();
+        getChannelProcessor().processEventBatch(eventBatchListToProcess);
       }
 
       counterGroup.addAndGet("events.successful", lastSent);

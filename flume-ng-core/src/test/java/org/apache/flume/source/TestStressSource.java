@@ -29,6 +29,7 @@ import static org.mockito.Mockito.verify;
 import java.util.ArrayList;
 import java.util.List;
 
+import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import org.apache.flume.ChannelException;
@@ -57,8 +58,8 @@ public class TestStressSource {
   }
 
   @SuppressWarnings("unchecked")
-  private List<Event> getEventList(StressSource source) {
-    return field("eventBatchList").ofType(List.class).in(source).get();
+  private List<Event> getLastProcessedEventList(StressSource source) {
+    return field("eventBatchListToProcess").ofType(List.class).in(source).get();
   }
 
   private CounterGroup getCounterGroup(StressSource source) {
@@ -96,10 +97,45 @@ public class TestStressSource {
         TestCase.assertTrue("Source should have sent all events in 4 batches", i == 4);
         break;
       }
+      if (i < 3) {
+        verify(mockProcessor,
+            times(i+1)).processEventBatch(getLastProcessedEventList(source));
+      } else {
+        verify(mockProcessor,
+            times(1)).processEventBatch(getLastProcessedEventList(source));
+      }
     }
-    verify(mockProcessor, times(4)).processEventBatch(getEventList(source));
-    TestCase.assertTrue("Number of successful events should be 35", getCounterGroup(source).get("events.successful") == 35);
-    TestCase.assertTrue("Number of failure events should be 0", getCounterGroup(source).get("events.failed") == 0);
+    long successfulEvents = getCounterGroup(source).get("events.successful");
+    TestCase.assertTrue("Number of successful events should be 35 but was " +
+        successfulEvents, successfulEvents == 35);
+    long failedEvents = getCounterGroup(source).get("events.failed");
+    TestCase.assertTrue("Number of failure events should be 0 but was " +
+        failedEvents, failedEvents == 0);
+  }
+
+  @Test
+  public void testBatchEventsWithoutMatTotalEvents() throws InterruptedException,
+      EventDeliveryException {
+    StressSource source = new StressSource();
+    source.setChannelProcessor(mockProcessor);
+    Context context = new Context();
+    context.put("batchSize", "10");
+    source.configure(context);
+
+    for (int i = 0; i < 10; i++) {
+      Assert.assertFalse("StressSource with no maxTotalEvents should not return " +
+          Status.BACKOFF, source.process() == Status.BACKOFF);
+    }
+    verify(mockProcessor,
+        times(10)).processEventBatch(getLastProcessedEventList(source));
+
+    long successfulEvents = getCounterGroup(source).get("events.successful");
+    TestCase.assertTrue("Number of successful events should be 100 but was " +
+        successfulEvents, successfulEvents == 100);
+
+    long failedEvents = getCounterGroup(source).get("events.failed");
+    TestCase.assertTrue("Number of failure events should be 0 but was " +
+        failedEvents, failedEvents == 0);
   }
 
   @Test
