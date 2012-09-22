@@ -425,16 +425,23 @@ class Log {
     Put put = new Put(transactionID, WriteOrderOracle.next(), flumeEvent);
     ByteBuffer buffer = TransactionEventRecord.toByteBuffer(put);
     int logFileIndex = nextLogWriter(transactionID);
-    if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
-      roll(logFileIndex, buffer);
-    }
     boolean error = true;
     try {
-      FlumeEventPointer ptr = logFiles.get(logFileIndex).put(buffer);
-      error = false;
-      return ptr;
+      try {
+        FlumeEventPointer ptr = logFiles.get(logFileIndex).put(buffer);
+        error = false;
+        return ptr;
+      } catch (LogFileRetryableIOException e) {
+        if(!open) {
+          throw e;
+        }
+        roll(logFileIndex, buffer);
+        FlumeEventPointer ptr = logFiles.get(logFileIndex).put(buffer);
+        error = false;
+        return ptr;
+      }
     } finally {
-      if (error) {
+      if(error && open) {
         roll(logFileIndex);
       }
     }
@@ -455,15 +462,21 @@ class Log {
         pointer.getOffset(), pointer.getFileID());
     ByteBuffer buffer = TransactionEventRecord.toByteBuffer(take);
     int logFileIndex = nextLogWriter(transactionID);
-    if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
-      roll(logFileIndex, buffer);
-    }
     boolean error = true;
     try {
-      logFiles.get(logFileIndex).take(buffer);
-      error = false;
+      try {
+        logFiles.get(logFileIndex).take(buffer);
+        error = false;
+      } catch (LogFileRetryableIOException e) {
+        if(!open) {
+          throw e;
+        }
+        roll(logFileIndex, buffer);
+        logFiles.get(logFileIndex).take(buffer);
+        error = false;
+      }
     } finally {
-      if (error) {
+      if(error && open) {
         roll(logFileIndex);
       }
     }
@@ -485,15 +498,21 @@ class Log {
     Rollback rollback = new Rollback(transactionID, WriteOrderOracle.next());
     ByteBuffer buffer = TransactionEventRecord.toByteBuffer(rollback);
     int logFileIndex = nextLogWriter(transactionID);
-    if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
-      roll(logFileIndex, buffer);
-    }
     boolean error = true;
     try {
-      logFiles.get(logFileIndex).rollback(buffer);
-      error = false;
+      try {
+        logFiles.get(logFileIndex).rollback(buffer);
+        error = false;
+      } catch (LogFileRetryableIOException e) {
+        if(!open) {
+          throw e;
+        }
+        roll(logFileIndex, buffer);
+        logFiles.get(logFileIndex).rollback(buffer);
+        error = false;
+      }
     } finally {
-      if (error) {
+      if(error && open) {
         roll(logFileIndex);
       }
     }
@@ -631,24 +650,30 @@ class Log {
    * @throws IOException
    */
   private void commit(long transactionID, short type) throws IOException {
-
     Preconditions.checkState(open, "Log is closed");
     Commit commit = new Commit(transactionID, WriteOrderOracle.next(), type);
     ByteBuffer buffer = TransactionEventRecord.toByteBuffer(commit);
     int logFileIndex = nextLogWriter(transactionID);
-    if (logFiles.get(logFileIndex).isRollRequired(buffer)) {
-      roll(logFileIndex, buffer);
-    }
     boolean error = true;
     try {
-      logFiles.get(logFileIndex).commit(buffer);
-      error = false;
+      try {
+        logFiles.get(logFileIndex).commit(buffer);
+        error = false;
+      } catch (LogFileRetryableIOException e) {
+        if(!open) {
+          throw e;
+        }
+        roll(logFileIndex, buffer);
+        logFiles.get(logFileIndex).commit(buffer);
+        error = false;
+      }
     } finally {
-      if (error) {
+      if(error && open) {
         roll(logFileIndex);
       }
     }
   }
+
 
   /**
    * Atomic so not synchronization required.
@@ -660,6 +685,7 @@ class Log {
   /**
    * Unconditionally roll
    * Synchronization done internally
+   *
    * @param index
    * @throws IOException
    */
@@ -677,10 +703,11 @@ class Log {
    * methods call this method, and this method acquires only a
    * read lock. The synchronization guarantees that multiple threads don't
    * roll at the same time.
+   *
    * @param index
    * @throws IOException
    */
-  private synchronized void roll(int index, ByteBuffer buffer)
+    private synchronized void roll(int index, ByteBuffer buffer)
       throws IOException {
     if (!tryLockShared()) {
       throw new IOException("Failed to obtain lock for writing to the log. "
