@@ -187,10 +187,15 @@ abstract class LogFile {
       sync();
     }
     private Pair<Integer, Integer> write(ByteBuffer buffer) throws IOException {
-      Preconditions.checkState(isOpen(), "File closed");
+      if(!isOpen()) {
+        throw new LogFileRetryableIOException("File closed " + file);
+      }
       long length = position();
       long expectedLength = length + (long) buffer.limit();
-      Preconditions.checkArgument(expectedLength < (long) Integer.MAX_VALUE);
+      if(expectedLength > maxFileSize) {
+        throw new LogFileRetryableIOException(expectedLength + " > " +
+            maxFileSize);
+      }
       int offset = (int)length;
       Preconditions.checkState(offset >= 0, String.valueOf(offset));
       // OP_RECORD + size + buffer
@@ -208,7 +213,9 @@ abstract class LogFile {
       return isOpen() && position() + (long) buffer.limit() > getMaxSize();
     }
     private void sync() throws IOException {
-      Preconditions.checkState(isOpen(), "File closed");
+      if(!isOpen()) {
+        throw new LogFileRetryableIOException("File closed " + file);
+      }
       getFileChannel().force(false);
     }
 

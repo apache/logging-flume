@@ -52,8 +52,8 @@ public class TestLogFile {
     dataDir = Files.createTempDir();
     dataFile = new File(dataDir, String.valueOf(fileID));
     Assert.assertTrue(dataDir.isDirectory());
-    logFileWriter = LogFileFactory.getWriter(dataFile, fileID, 1000, null, null,
-        null);
+    logFileWriter = LogFileFactory.getWriter(dataFile, fileID,
+        Integer.MAX_VALUE, null, null, null);
   }
   @After
   public void cleanup() throws IOException {
@@ -69,7 +69,7 @@ public class TestLogFile {
   public void testWriterRefusesToOverwriteFile() throws IOException {
     Assert.assertTrue(dataFile.isFile() || dataFile.createNewFile());
     try {
-      LogFileFactory.getWriter(dataFile, fileID, 1000, null, null,
+      LogFileFactory.getWriter(dataFile, fileID, Integer.MAX_VALUE, null, null,
           null);
       Assert.fail();
     } catch (IllegalStateException e) {
@@ -83,7 +83,7 @@ public class TestLogFile {
     Assert.assertFalse(dataFile.exists());
     Assert.assertTrue(dataFile.mkdirs());
     try {
-      LogFileFactory.getWriter(dataFile, fileID, 1000, null, null,
+      LogFileFactory.getWriter(dataFile, fileID, Integer.MAX_VALUE, null, null,
           null);
       Assert.fail();
     } catch (IllegalStateException e) {
@@ -138,7 +138,6 @@ public class TestLogFile {
     for(Throwable throwable : errors) {
       Throwables.propagate(throwable);
     }
-    Assert.assertTrue(logFileWriter.isRollRequired(ByteBuffer.allocate(0)));
   }
   @Test
   public void testReader() throws InterruptedException, IOException {

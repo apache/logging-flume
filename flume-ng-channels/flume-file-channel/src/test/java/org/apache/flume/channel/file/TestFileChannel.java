@@ -450,7 +450,7 @@ public class TestFileChannel extends TestFileChannelBase {
   public void testReferenceCounts() throws Exception {
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, "10000");
-    overrides.put(FileChannelConfiguration.MAX_FILE_SIZE, "20");
+    overrides.put(FileChannelConfiguration.MAX_FILE_SIZE, "100");
     final FileChannel channel = createFileChannel(overrides);
     channel.start();
     putEvents(channel, "testing-reference-counting", 1, 15);
