@@ -179,6 +179,7 @@ Configurable {
 
     if(runner != null) {
       runner.setRestart(false);
+      runner.kill();
     }
     if (runnerFuture != null) {
       logger.debug("Stopping exec runner");
@@ -246,13 +247,13 @@ Configurable {
     private long restartThrottle;
     private int bufferCount;
     private boolean logStderr;
+    private Process process = null;
 
     @Override
     public void run() {
       do {
         String exitCode = "unknown";
         BufferedReader reader = null;
-        Process process = null;
         try {
           String[] commandArgs = command.split("\\s+");
           process = new ProcessBuilder(commandArgs).start();
@@ -292,24 +293,34 @@ Configurable {
               logger.error("Failed to close reader for exec source", ex);
             }
           }
-          if(process != null) {
-            process.destroy();
-            try {
-              exitCode = String.valueOf(process.waitFor());
-            } catch (InterruptedException ex) {
-              Thread.currentThread().interrupt();
-            }
-          }
+          exitCode = String.valueOf(kill());
         }
         if(restart) {
-          logger.info("Restarting in {}ms, exit code {}", restartThrottle, exitCode);
+          logger.info("Restarting in {}ms, exit code {}", restartThrottle,
+              exitCode);
           try {
             Thread.sleep(restartThrottle);
           } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
           }
+        } else {
+          logger.info("Command [" + command + "] exited with " + exitCode);
         }
       } while(restart);
+    }
+    public int kill() {
+      if(process != null) {
+        synchronized (process) {
+          process.destroy();
+          try {
+            return process.waitFor();
+          } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+          }
+        }
+        return Integer.MIN_VALUE;
+      }
+      return Integer.MIN_VALUE / 2;
     }
     public void setRestart(boolean restart) {
       this.restart = restart;

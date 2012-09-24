@@ -22,9 +22,14 @@ package org.apache.flume.source;
 
 import static org.junit.Assert.*;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.List;
+import java.util.Random;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.Channel;
@@ -142,5 +147,88 @@ public class TestExecSource {
     transaction.close();
 
     source.stop();
+  }
+
+
+  /**
+   * Tests to make sure that the shutdown mechanism works. There are races
+   * in this test if the system has another sleep command running with the
+   * same sleep interval but we pick rarely used sleep times and make an
+   * effort to detect if our sleep time is already in use. Note the
+   * ps -ef command should work on both macs and linux.
+   */
+  @Test
+  public void testShutdown() throws Exception {
+    int seconds = 272; // pick a rare sleep time
+
+    // now find one that is not in use
+    boolean searchForCommand = true;
+    while(searchForCommand) {
+      searchForCommand = false;
+      String command = "sleep " + seconds;
+      Pattern pattern = Pattern.compile("\b" + command + "\b");
+      for(String line : exec("ps -ef")) {
+        if(pattern.matcher(line).find()) {
+          seconds++;
+          searchForCommand = true;
+          break;
+        }
+      }
+    }
+
+    // yes in the mean time someone could use our sleep time
+    // but this should be a fairly rare scenerio
+
+    String command = "sleep " + seconds;
+    Pattern pattern = Pattern.compile("\b" + command + "\b");
+
+    Channel channel = new MemoryChannel();
+    Context context = new Context();
+
+    context.put(ExecSourceConfigurationConstants.CONFIG_RESTART, "false");
+
+    context.put("command", command);
+    Configurables.configure(source, context);
+    Configurables.configure(channel, context);
+
+    ChannelSelector rcs = new ReplicatingChannelSelector();
+    rcs.setChannels(Lists.newArrayList(channel));
+
+    source.setChannelProcessor(new ChannelProcessor(rcs));
+    source.start();
+    Thread.sleep(1000L);
+    source.stop();
+    Thread.sleep(1000L);
+    for(String line : exec("ps -ef")) {
+      if(pattern.matcher(line).find()) {
+        Assert.fail("Found [" + line + "]");
+      }
+    }
+  }
+
+  private static List<String> exec(String command) throws Exception {
+    String[] commandArgs = command.split("\\s+");
+    Process process = new ProcessBuilder(commandArgs).start();
+    BufferedReader reader = null;
+    try {
+      reader = new BufferedReader(
+          new InputStreamReader(process.getInputStream()));
+      List<String> result = Lists.newArrayList();
+      String line;
+      while((line = reader.readLine()) != null) {
+        result.add(line);
+      }
+      return result;
+    } finally {
+      process.destroy();
+      if(reader != null) {
+        reader.close();
+      }
+      int exit = process.waitFor();
+      if(exit != 0) {
+        throw new IllegalStateException("Command [" + command + "] exited with "
+            + exit);
+      }
+    }
   }
 }
