@@ -19,6 +19,7 @@
 package org.apache.flume.channel.file;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.flume.channel.file.proto.ProtosFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -164,5 +166,25 @@ public class TestLogFile {
       Assert.assertEquals(eventIn.getHeaders(), eventOut.getHeaders());
       Assert.assertTrue(Arrays.equals(eventIn.getBody(), eventOut.getBody()));
     }
+  }
+  @Test
+  public void testWriteDelimitedTo() throws IOException {
+    if(dataFile.isFile()) {
+      Assert.assertTrue(dataFile.delete());
+    }
+    Assert.assertTrue(dataFile.createNewFile());
+    ProtosFactory.LogFileMetaData.Builder metaDataBuilder =
+        ProtosFactory.LogFileMetaData.newBuilder();
+    metaDataBuilder.setVersion(1);
+    metaDataBuilder.setLogFileID(2);
+    metaDataBuilder.setCheckpointPosition(3);
+    metaDataBuilder.setCheckpointWriteOrderID(4);
+    LogFileV3.writeDelimitedTo(metaDataBuilder.build(), dataFile);
+    ProtosFactory.LogFileMetaData metaData = ProtosFactory.LogFileMetaData.
+        parseDelimitedFrom(new FileInputStream(dataFile));
+    Assert.assertEquals(1, metaData.getVersion());
+    Assert.assertEquals(2, metaData.getLogFileID());
+    Assert.assertEquals(3, metaData.getCheckpointPosition());
+    Assert.assertEquals(4, metaData.getCheckpointWriteOrderID());
   }
 }

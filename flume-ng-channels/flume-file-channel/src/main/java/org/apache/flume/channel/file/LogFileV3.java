@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.GeneratedMessage;
 
 /**
  * Represents a single data file on disk. Has methods to write,
@@ -83,17 +84,7 @@ class LogFileV3 extends LogFile {
       logFileMetaData = metaDataBuilder.build();
       LOGGER.info("Updating " + metaDataFile.getName()  + " currentPosition = "
           + currentPosition + ", logWriteOrderID = " + logWriteOrderID);
-      FileOutputStream outputStream = new FileOutputStream(metaDataFile);
-      try {
-        logFileMetaData.writeDelimitedTo(outputStream);
-        outputStream.getChannel().force(true);
-      } finally {
-        try {
-          outputStream.close();
-        } catch(IOException e) {
-          LOGGER.warn("Unable to close " + metaDataFile, e);
-        }
-      }
+      writeDelimitedTo(logFileMetaData, metaDataFile);
     }
   }
 
@@ -128,6 +119,39 @@ class LogFileV3 extends LogFile {
     }
   }
 
+  /**
+   * Writes a GeneratedMessage to a temp file, synchronizes it to disk
+   * and then renames the file over file.
+   * @param msg GeneratedMessage to write to the file
+   * @param file destination file
+   * @throws IOException if a write error occurs or the File.renameTo
+   * method returns false meaning the file could not be overwritten.
+   */
+  public static void writeDelimitedTo(GeneratedMessage msg, File file)
+  throws IOException {
+    File tmp = new File(file.getParentFile(), file.getName() + ".tmp");
+    FileOutputStream outputStream = new FileOutputStream(tmp);
+    boolean closed = false;
+    try {
+      msg.writeDelimitedTo(outputStream);
+      outputStream.getChannel().force(true);
+      outputStream.close();
+      closed = true;
+      if(!tmp.renameTo(file)) {
+        throw new IOException("Unable to move " + tmp + " over " + file);
+      }
+    } finally {
+      if(!closed) {
+        try {
+          outputStream.close();
+        } catch(IOException e) {
+          LOGGER.warn("Unable to close " + tmp, e);
+        }
+      }
+    }
+
+  }
+
   static class Writer extends LogFile.Writer {
     Writer(File file, int logFileID, long maxFileSize,
         @Nullable Key encryptionKey,
@@ -155,17 +179,7 @@ class LogFileV3 extends LogFile {
       metaDataBuilder.setCheckpointPosition(0L);
       metaDataBuilder.setCheckpointWriteOrderID(0L);
       File metaDataFile = Serialization.getMetaDataFile(file);
-      FileOutputStream outputStream = new FileOutputStream(metaDataFile);
-      try {
-        metaDataBuilder.build().writeDelimitedTo(outputStream);
-        outputStream.getChannel().force(true);
-      } finally {
-        try {
-          outputStream.close();
-        } catch(IOException e) {
-          LOGGER.warn("Unable to close " + metaDataFile, e);
-        }
-      }
+      writeDelimitedTo(metaDataBuilder.build(), metaDataFile);
     }
     @Override
     int getVersion() {
