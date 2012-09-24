@@ -51,21 +51,7 @@ import com.google.common.base.Strings;
  * <p>
  * FileChannel works by writing all transactions to a set of directories
  * specified in the configuration. Additionally, when a commit occurs
- * the transaction is synced to disk. Pointers to events put on the
- * channel are stored in memory. As such, each event on the queue
- * will require 8 bytes of DirectMemory (non-heap). However, the channel
- * will only allow a configurable number messages into the channel.
- * The appropriate amount of direct memory for said capacity,
- * must be allocated to the JVM via the JVM property: -XX:MaxDirectMemorySize
- * </p>
- * <br>
- * <p>
- * Memory Consumption:
- * <ol>
- * <li>200GB of data in queue at 100 byte messages: 16GB</li>
- * <li>200GB of data in queue at 500 byte messages: 3.2GB</li>
- * <li>200GB of data in queue at 1000 byte messages: 1.6GB</li>
- * </ol>
+ * the transaction is synced to disk.
  * </p>
  */
 public class FileChannel extends BasicChannelSemantics {
@@ -408,9 +394,9 @@ public class FileChannel extends BasicChannelSemantics {
       boolean lockAcquired = log.tryLockShared();
       try {
         if(!lockAcquired) {
-          throw new ChannelException("Failed to obtain lock for writing to the log. "
-              + "Try increasing the log write timeout value or disabling it by "
-              + "setting it to 0. " + channelNameDescriptor);
+          throw new ChannelException("Failed to obtain lock for writing to the "
+              + "log. Try increasing the log write timeout value. " +
+              channelNameDescriptor);
         }
         FlumeEventPointer ptr = log.put(transactionID, event);
         Preconditions.checkState(putList.offer(ptr), "putList offer failed "
@@ -442,9 +428,9 @@ public class FileChannel extends BasicChannelSemantics {
                + channelNameDescriptor);
       }
       if(!log.tryLockShared()) {
-        throw new ChannelException("Failed to obtain lock for writing to the log. "
-            + "Try increasing the log write timeout value or disabling it by "
-            + "setting it to 0. " + channelNameDescriptor);
+        throw new ChannelException("Failed to obtain lock for writing to the "
+            + "log. Try increasing the log write timeout value. " +
+            channelNameDescriptor);
       }
       try {
         FlumeEventPointer ptr = queue.removeHead(transactionID);
@@ -475,9 +461,9 @@ public class FileChannel extends BasicChannelSemantics {
         Preconditions.checkState(takes == 0, "nonzero puts and takes "
                 + channelNameDescriptor);
         if(!log.tryLockShared()) {
-          throw new ChannelException("Failed to obtain lock for writing to the log. "
-              + "Try increasing the log write timeout value or disabling it by "
-              + "setting it to 0. " + channelNameDescriptor);
+          throw new ChannelException("Failed to obtain lock for writing to the "
+              + "log. Try increasing the log write timeout value. " +
+              channelNameDescriptor);
         }
         try {
           log.commitPut(transactionID);
@@ -507,9 +493,9 @@ public class FileChannel extends BasicChannelSemantics {
 
       } else if (takes > 0) {
         if(!log.tryLockShared()) {
-          throw new ChannelException("Failed to obtain lock for writing to the log. "
-              + "Try increasing the log write timeout value or disabling it by "
-              + "setting it to 0. " + channelNameDescriptor);
+          throw new ChannelException("Failed to obtain lock for writing to the "
+              + "log. Try increasing the log write timeout value. " +
+              channelNameDescriptor);
         }
         try {
           log.commitTake(transactionID);
@@ -534,9 +520,9 @@ public class FileChannel extends BasicChannelSemantics {
       boolean lockAcquired = log.tryLockShared();
       try {
         if(!lockAcquired) {
-          throw new ChannelException("Failed to obtain lock for writing to the log. "
-              + "Try increasing the log write timeout value or disabling it by "
-              + "setting it to 0. " + channelNameDescriptor);
+          throw new ChannelException("Failed to obtain lock for writing to the "
+              + "log. Try increasing the log write timeout value. " +
+              channelNameDescriptor);
         }
         log.rollback(transactionID);
         if(takes > 0) {

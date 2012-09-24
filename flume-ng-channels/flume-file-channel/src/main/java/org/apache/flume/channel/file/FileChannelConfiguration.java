@@ -46,9 +46,8 @@ public class FileChannelConfiguration {
   public static final long DEFAULT_MAX_FILE_SIZE =
         Integer.MAX_VALUE - (500L * 1024L * 1024L); // ~1.52 G
   /**
-   * Maximum capacity of the channel. This number needs to be configured
-   * in line with -XX:MaxDirectMemorySize. {@link FileChannel}
-   * Default: 1,000,000 which will consume 8MB of direct memory
+   * Maximum capacity of the channel.
+   * Default: 1,000,000
    */
   public static final String CAPACITY = "capacity";
   public static final int DEFAULT_CAPACITY = 1000000;

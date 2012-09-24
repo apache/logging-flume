@@ -42,6 +42,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import javax.annotation.Nullable;
 
+import org.apache.flume.ChannelException;
 import org.apache.flume.Event;
 import org.apache.flume.channel.file.encryption.KeyProvider;
 import org.slf4j.Logger;
@@ -710,9 +711,9 @@ class Log {
     private synchronized void roll(int index, ByteBuffer buffer)
       throws IOException {
     if (!tryLockShared()) {
-      throw new IOException("Failed to obtain lock for writing to the log. "
-          + "Try increasing the log write timeout value or disabling it by "
-          + "setting it to 0. "+ channelNameDescriptor);
+      throw new ChannelException("Failed to obtain lock for writing to the "
+          + "log. Try increasing the log write timeout value. " +
+          channelNameDescriptor);
     }
 
     try {
