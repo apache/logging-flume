@@ -387,7 +387,10 @@ public class FileChannel extends BasicChannelSemantics {
       // this does not need to be in the critical section as it does not
       // modify the structure of the log or queue.
       if(!queueRemaining.tryAcquire(keepAlive, TimeUnit.SECONDS)) {
-        throw new ChannelException("Cannot acquire capacity. "
+        throw new ChannelException("The channel has reached it's capacity. " 
+            + "This might be the result of a sink on the channel having too "
+            + "low of batch size, a downstream system running slower than "
+            + "normal, or that the channel capacity is just too low. "
             + channelNameDescriptor);
       }
       boolean success = false;

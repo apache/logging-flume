@@ -194,8 +194,11 @@ public class TestUtils {
           result.addAll(batch);
         }
       } catch (ChannelException e) {
-        Assert.assertEquals("Cannot acquire capacity. [channel="
-            +channel.getName()+"]", e.getMessage());
+        Assert.assertEquals("The channel has reached it's capacity. This might "
+            + "be the result of a sink on the channel having too low of batch "
+            + "size, a downstream system running slower than normal, or that "
+            + "the channel capacity is just too low. [channel="
+            + channel.getName()+"]", e.getMessage());
       }
     }
     return result;
@@ -224,7 +227,11 @@ public class TestUtils {
       } catch (Exception ex) {
         transaction.rollback();
         if(untilCapacityIsReached && ex instanceof ChannelException &&
-            ("Cannot acquire capacity. [channel=" +channel.getName() + "]").
+            ("The channel has reached it's capacity. " 
+                + "This might be the result of a sink on the channel having too "
+                + "low of batch size, a downstream system running slower than "
+                + "normal, or that the channel capacity is just too low. "
+                + "[channel=" +channel.getName() + "]").
               equals(ex.getMessage())) {
           break;
         }
