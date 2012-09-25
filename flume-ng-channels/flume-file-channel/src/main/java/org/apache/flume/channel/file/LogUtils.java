@@ -22,6 +22,7 @@ import java.io.File;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import com.google.common.collect.Lists;
 
@@ -58,15 +59,14 @@ public class LogUtils {
    * @return List of data files within logDir
    */
   static List<File> getLogs(File logDir) {
+    Pattern pattern = Pattern.compile("^" + Log.PREFIX + "\\d+$");
     List<File> result = Lists.newArrayList();
     for (File file : logDir.listFiles()) {
       String name = file.getName();
-      if (name.startsWith(Log.PREFIX) &&
-          !name.endsWith(Serialization.METADATA_FILENAME)) {
+      if (pattern.matcher(name).matches()) {
         result.add(file);
       }
     }
     return result;
   }
-
 }
