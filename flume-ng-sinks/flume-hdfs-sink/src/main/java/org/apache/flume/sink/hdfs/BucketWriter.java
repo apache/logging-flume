@@ -236,6 +236,7 @@ class BucketWriter {
    * @throws IOException On failure to rename if temp file exists.
    */
   public synchronized void close() throws IOException, InterruptedException {
+    flush();
     runPrivileged(new PrivilegedExceptionAction<Void>() {
       @Override
       public Void run() throws Exception {
@@ -281,13 +282,15 @@ class BucketWriter {
    * flush the data
    */
   public synchronized void flush() throws IOException, InterruptedException {
-    runPrivileged(new PrivilegedExceptionAction<Void>() {
-      @Override
-      public Void run() throws Exception {
-        doFlush();
-        return null;
-      }
-    });
+    if (!isBatchComplete()) {
+      runPrivileged(new PrivilegedExceptionAction<Void>() {
+        @Override
+        public Void run() throws Exception {
+          doFlush();
+          return null;
+        }
+      });
+    }
   }
 
   /**
@@ -384,7 +387,7 @@ class BucketWriter {
         ", bucketPath = " + bucketPath + " ]";
   }
 
-  public boolean isBatchComplete() {
+  private boolean isBatchComplete() {
     return (batchCounter == 0);
   }
 }

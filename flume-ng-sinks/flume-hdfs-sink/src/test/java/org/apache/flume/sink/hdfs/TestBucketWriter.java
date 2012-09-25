@@ -27,7 +27,10 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.SinkCounter;
+import org.apache.flume.sink.FlumeFormatter;
 import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.SequenceFile.CompressionType;
+import org.apache.hadoop.io.compress.CompressionCodec;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -36,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
+import java.io.File;
 
 public class TestBucketWriter {
 
@@ -153,6 +157,61 @@ public class TestBucketWriter {
 
     logger.info("Number of files closed: {}", hdfsWriter.getFilesClosed());
     Assert.assertEquals("files closed", 2, hdfsWriter.getFilesClosed());
+  }
+
+  @Test
+  public void testIntervalRollerBug() throws IOException, InterruptedException {
+    final int ROLL_INTERVAL = 1; // seconds
+    final int NUM_EVENTS = 10;
+
+    HDFSWriter hdfsWriter = new HDFSWriter() {
+      private volatile boolean open = false;
+      @Override
+      public void configure(Context context) {
+
+      }
+      @Override
+      public void sync() throws IOException {
+        if(!open) {
+          throw new IOException("closed");
+        }
+      }
+      @Override
+      public void open(String filePath, CompressionCodec codec,
+          CompressionType cType, FlumeFormatter fmt) throws IOException {
+        open = true;
+      }
+      @Override
+      public void open(String filePath, FlumeFormatter fmt) throws IOException {
+        open = true;
+      }
+      @Override
+      public void close() throws IOException {
+        open = false;
+      }
+      @Override
+      public void append(Event e, FlumeFormatter fmt) throws IOException {
+        // we just re-open in append if closed
+        open = true;
+      }
+    };
+    HDFSTextFormatter formatter = new HDFSTextFormatter();
+    File tmpFile = File.createTempFile("flume", "test");
+    tmpFile.deleteOnExit();
+    BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
+        tmpFile.getName(), null, SequenceFile.CompressionType.NONE, hdfsWriter,
+        formatter, timedRollerPool, null,
+        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()));
+
+    Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
+    for (int i = 0; i < NUM_EVENTS - 1; i++) {
+      bucketWriter.append(e);
+    }
+
+    // sleep to force a roll... wait 2x interval just to be sure
+    Thread.sleep(2 * ROLL_INTERVAL * 1000L);
+
+    bucketWriter.flush(); // throws closed exception
   }
 
 }
