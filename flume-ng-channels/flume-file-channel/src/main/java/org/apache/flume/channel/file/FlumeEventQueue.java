@@ -331,7 +331,7 @@ final class FlumeEventQueue {
    * None of the methods are thread safe, and should be called from thread
    * safe methods only.
    */
-  private class InflightEventWrapper {
+  class InflightEventWrapper {
     private SetMultimap<Long, Long> inflightEvents = HashMultimap.create();
     private RandomAccessFile file;
     private volatile java.nio.channels.FileChannel fileChannel;
@@ -515,6 +515,11 @@ final class FlumeEventQueue {
 
     public Collection<Integer> getFileIDs(){
       return inflightFileIDs.values();
+    }
+
+    //Needed for testing.
+    public Collection<Long> getInFlightPointers() {
+      return inflightEvents.values();
     }
   }
 }

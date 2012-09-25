@@ -19,6 +19,7 @@
 package org.apache.flume.channel.file;
 
 import static org.apache.flume.channel.file.TestUtils.*;
+import static org.fest.reflect.core.Reflection.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -49,6 +50,9 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.flume.channel.file.FileChannel.FileBackedTransaction;
+import org.apache.flume.channel.file.FlumeEventQueue.InflightEventWrapper;
+import org.apache.flume.event.EventBuilder;
 
 public class TestFileChannel extends TestFileChannelBase {
 
@@ -171,7 +175,7 @@ public class TestFileChannel extends TestFileChannelBase {
         in.addAll(putEvents(channel, "reconfig", 1, 1));
       }
     } catch (ChannelException e) {
-      Assert.assertEquals("The channel has reached it's capacity. " 
+      Assert.assertEquals("The channel has reached it's capacity. "
           + "This might be the result of a sink on the channel having too "
           + "low of batch size, a downstream system running slower than "
           + "normal, or that the channel capacity is just too low. [channel="
@@ -476,4 +480,62 @@ public class TestFileChannel extends TestFileChannelBase {
     }).get();
     Assert.assertEquals(15, takenEvents.size());
   }
+
+  // This test will fail without FLUME-1606.
+  @Test
+  public void testRollbackIncompleteTransaction() throws Exception {
+    Map<String, String> overrides = Maps.newHashMap();
+    overrides.put(FileChannelConfiguration.CHECKPOINT_INTERVAL,
+            String.valueOf(Integer.MAX_VALUE));
+    final FileChannel channel = createFileChannel(overrides);
+    channel.start();
+    FileBackedTransaction tx = (FileBackedTransaction) channel.getTransaction();
+
+    InflightEventWrapper inflightPuts =
+            field("inflightPuts").ofType(InflightEventWrapper.class).in(
+            field("queue").ofType(FlumeEventQueue.class).in(tx).get()).get();
+
+    tx.begin();
+
+    for (int i = 0; i < 100; i++) {
+      channel.put(EventBuilder.withBody("TestEvent".getBytes()));
+    }
+
+    Assert.assertFalse(inflightPuts.getFileIDs().isEmpty());
+    Assert.assertFalse(inflightPuts.getInFlightPointers().isEmpty());
+
+    tx.rollback();
+    tx.close();
+
+    Assert.assertTrue(inflightPuts.getFileIDs().isEmpty());
+    Assert.assertTrue(inflightPuts.getInFlightPointers().isEmpty());
+    Assert.assertTrue(channel.getDepth() == 0);
+
+    Set<String> in = putEvents(channel, "testing-rollbacks", 100, 100);
+
+    tx = (FileBackedTransaction) channel.getTransaction();
+
+    InflightEventWrapper inflightTakes =
+            field("inflightTakes").ofType(InflightEventWrapper.class).in(
+            field("queue").ofType(FlumeEventQueue.class).in(tx).get()).get();
+
+    tx.begin();
+
+    for (int i = 0; i < 100; i++) {
+      channel.take();
+    }
+
+    Assert.assertFalse(inflightTakes.getFileIDs().isEmpty());
+    Assert.assertFalse(inflightTakes.getInFlightPointers().isEmpty());
+
+    tx.rollback();
+    tx.close();
+
+
+    Assert.assertTrue(inflightTakes.getFileIDs().isEmpty());
+    Assert.assertTrue(inflightTakes.getInFlightPointers().isEmpty());
+    Assert.assertTrue(channel.getDepth() == in.size());
+
+  }
+
 }
