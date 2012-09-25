@@ -150,4 +150,28 @@ public class TestFileChannelRestart extends TestFileChannelBase {
     channel.start();
     Assert.assertFalse(channel.isOpen());
   }
+  @Test
+  public void testWithExtraLogs()
+      throws Exception {
+    Map<String, String> overrides = Maps.newHashMap();
+    overrides.put(FileChannelConfiguration.CAPACITY, "10");
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> in = fillChannel(channel, "extralogs");
+    for (int i = 0; i < dataDirs.length; i++) {
+      File file = new File(dataDirs[i], Log.PREFIX + (1000 + i));
+      Assert.assertTrue(file.createNewFile());
+      Assert.assertTrue(file.length() == 0);
+      File metaDataFile = Serialization.getMetaDataFile(file);
+      File metaDataTempFile = Serialization.getMetaDataTempFile(metaDataFile);
+      Assert.assertTrue(metaDataTempFile.createNewFile());
+    }
+    channel.stop();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> out = consumeChannel(channel);
+    compareInputAndOut(in, out);
+  }
 }

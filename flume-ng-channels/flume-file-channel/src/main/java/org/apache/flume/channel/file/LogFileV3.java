@@ -129,7 +129,7 @@ class LogFileV3 extends LogFile {
    */
   public static void writeDelimitedTo(GeneratedMessage msg, File file)
   throws IOException {
-    File tmp = new File(file.getParentFile(), file.getName() + ".tmp");
+    File tmp = Serialization.getMetaDataTempFile(file);
     FileOutputStream outputStream = new FileOutputStream(tmp);
     boolean closed = false;
     try {

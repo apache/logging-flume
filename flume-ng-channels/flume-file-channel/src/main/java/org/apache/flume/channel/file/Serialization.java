@@ -31,8 +31,13 @@ class Serialization {
   static final int VERSION_3 = 3;
 
   static final String METADATA_FILENAME = ".meta";
+  static final String METADATA_TMP_FILENAME = ".tmp";
 
+  static File getMetaDataTempFile(File metaDataFile) {
+    String metaDataFileName = metaDataFile.getName() + METADATA_TMP_FILENAME;
+    return new File(metaDataFile.getParentFile(), metaDataFileName);
 
+  }
   static File getMetaDataFile(File file) {
     String metaDataFileName = file.getName() + METADATA_FILENAME;
     return new File(file.getParentFile(), metaDataFileName);

@@ -20,6 +20,7 @@ package org.apache.flume.channel.file;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -27,6 +28,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 
 public class TestLog {
@@ -248,6 +250,27 @@ public class TestLog {
     Assert.assertNull(eventPointerOut);
   }
 
+  @Test
+  public void testGetLogs() throws IOException {
+    File logDir = dataDirs[0];
+    List<File> expected = Lists.newArrayList();
+    for (int i = 0; i < 10; i++) {
+      File log = new File(logDir, Log.PREFIX + i);
+      expected.add(log);
+      Assert.assertTrue(log.isFile() || log.createNewFile());
+      File metaDataFile = Serialization.getMetaDataFile(log);
+      File metaDataTempFile = Serialization.getMetaDataTempFile(metaDataFile);
+      File logGzip = new File(logDir, Log.PREFIX + i + ".gz");
+      Assert.assertTrue(metaDataFile.isFile() || metaDataFile.createNewFile());
+      Assert.assertTrue(metaDataTempFile.isFile() ||
+          metaDataTempFile.createNewFile());
+      Assert.assertTrue(log.isFile() || logGzip.createNewFile());
+    }
+    List<File> actual = LogUtils.getLogs(logDir);
+    LogUtils.sort(actual);
+    LogUtils.sort(expected);
+    Assert.assertEquals(expected, actual);
+  }
   private void takeAndVerify(FlumeEventPointer eventPointerIn,
       FlumeEvent eventIn) throws IOException, InterruptedException {
     FlumeEventQueue queue = log.getFlumeEventQueue();
