@@ -28,6 +28,9 @@ import com.google.common.collect.Lists;
 
 public class LogUtils {
 
+  private static final Pattern pattern =
+          Pattern.compile("^" + Log.PREFIX + "\\d+$");
+
   /**
    * Sort a list of files by the number after Log.PREFIX.
    */
@@ -59,7 +62,6 @@ public class LogUtils {
    * @return List of data files within logDir
    */
   static List<File> getLogs(File logDir) {
-    Pattern pattern = Pattern.compile("^" + Log.PREFIX + "\\d+$");
     List<File> result = Lists.newArrayList();
     for (File file : logDir.listFiles()) {
       String name = file.getName();
