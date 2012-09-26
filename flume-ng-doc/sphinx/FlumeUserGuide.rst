@@ -1021,7 +1021,7 @@ Example for agent named **agent_foo**:
   agent_foo.channels = memoryChannel-1
   agent_foo.sinks = hdfsSink-1
   agent_foo.sinks.hdfsSink-1.type = hdfs
-  agent_foo.sinks.hdfsSink-1.channels = memoryChannel-1
+  agent_foo.sinks.hdfsSink-1.channel = memoryChannel-1
   agent_foo.sinks.hdfsSink-1.hdfs.path = /flume/events/%y-%m-%d/%H%M/%S
   agent_foo.sinks.hdfsSink-1.hdfs.filePrefix = events-
   agent_foo.sinks.hdfsSink-1.hdfs.round = true
@@ -1051,7 +1051,7 @@ Example for agent named **agent_foo**:
   agent_foo.channels = memoryChannel-1
   agent_foo.sinks = loggerSink-1
   agent_foo.sinks.loggerSink-1.type = logger
-  agent_foo.sinks.loggerSink-1.channels = memoryChannel-1
+  agent_foo.sinks.loggerSink-1.channel = memoryChannel-1
 
 Avro Sink
 ~~~~~~~~~
@@ -1117,7 +1117,7 @@ Example for agent named **agent_foo**:
   agent_foo.channels = memoryChannel-1
   agent_foo.sinks = ircSink-1
   agent_foo.sinks.ircSink-1.type = irc
-  agent_foo.sinks.ircSink-1.channels = memoryChannel-1
+  agent_foo.sinks.ircSink-1.channel = memoryChannel-1
   agent_foo.sinks.ircSink-1.hostname = irc.yourdomain.com
   agent_foo.sinks.ircSink-1.nick = flume
   agent_foo.sinks.ircSink-1.chan = #flume
@@ -1145,7 +1145,7 @@ Example for agent named **agent_foo**:
   agent_foo.channels = memoryChannel-1
   agent_foo.sinks = fileSink-1
   agent_foo.sinks.fileSink-1.type = FILE_ROLL
-  agent_foo.sinks.fileSink-1.channels = memoryChannel-1
+  agent_foo.sinks.fileSink-1.channel = memoryChannel-1
   agent_foo.sinks.fileSink-1.sink.directory = /var/log/flume
 
 Null Sink
@@ -1168,7 +1168,7 @@ Example for agent named **agent_foo**:
   agent_foo.channels = memoryChannel-1
   agent_foo.sinks = nullSink-1
   agent_foo.sinks.nullSink-1.type = NULL
-  agent_foo.sinks.nullSink-1.channels = memoryChannel-1
+  agent_foo.sinks.nullSink-1.channel = memoryChannel-1
 
 HBaseSinks
 ~~~~~~~~~~
@@ -1216,7 +1216,7 @@ Example for agent named **agent_foo**:
   agent_foo.sinks.hbaseSink-1.table = foo_table
   agent_foo.sinks.hbaseSink-1.columnFamily = bar_cf
   agent_foo.sinks.hbaseSink-1.serializer = org.apache.flume.sink.hbase.RegexHbaseEventSerializer
-  agent_foo.sinks.hbaseSink-1.channels = memoryChannel-1
+  agent_foo.sinks.hbaseSink-1.channel = memoryChannel-1
 
 AsyncHBaseSink
 ''''''''''''''
@@ -1256,7 +1256,7 @@ Example for agent named **agent_foo**:
   agent_foo.sinks.hbaseSink-1.table = foo_table
   agent_foo.sinks.hbaseSink-1.columnFamily = bar_cf
   agent_foo.sinks.hbaseSink-1.serializer = org.apache.flume.sink.hbase.SimpleAsyncHbaseEventSerializer
-  agent_foo.sinks.hbaseSink-1.channels = memoryChannel-1
+  agent_foo.sinks.hbaseSink-1.channel = memoryChannel-1
 
 Custom Sink
 ~~~~~~~~~~~
@@ -1280,7 +1280,7 @@ Example for agent named **agent_foo**:
   agent_foo.channels = memoryChannel-1
   agent_foo.sinks = customSink-1
   agent_foo.sinks.customSink-1.type = your.namespace.YourClass
-  agent_foo.sinks.customSink-1.channels = memoryChannel-1
+  agent_foo.sinks.customSink-1.channel = memoryChannel-1
 
 Flume Channels
 --------------
