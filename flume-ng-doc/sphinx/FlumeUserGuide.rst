@@ -1081,7 +1081,7 @@ Example for agent named **agent_foo**:
   agent_foo.channels = memoryChannel-1
   agent_foo.sinks = avroSink-1
   agent_foo.sinks.avroSink-1.type = avro
-  agent_foo.sinks.avroSink-1.channels = memoryChannel-1
+  agent_foo.sinks.avroSink-1.channel = memoryChannel-1
   agent_foo.sinks.avroSink-1.hostname = 10.10.10.10
   agent_foo.sinks.avroSink-1.port = 4545
 
