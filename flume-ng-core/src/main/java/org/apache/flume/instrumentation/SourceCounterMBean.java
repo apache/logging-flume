@@ -43,4 +43,6 @@ public interface SourceCounterMBean {
   long getStopTime();
 
   String getType();
+
+  long getOpenConnectionCount();
 }

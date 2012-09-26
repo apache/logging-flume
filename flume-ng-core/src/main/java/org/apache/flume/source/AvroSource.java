@@ -19,12 +19,15 @@
 
 package org.apache.flume.source;
 
+import com.google.common.base.Throwables;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Responder;
@@ -116,6 +119,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   private SourceCounter sourceCounter;
 
   private int maxThreads;
+  private ScheduledExecutorService connectionCountUpdater;
 
   @Override
   public void configure(Context context) {
@@ -147,10 +151,19 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
                       Executors.newCachedThreadPool(),
                       Executors.newFixedThreadPool(maxThreads)));
     }
-
+    connectionCountUpdater = Executors.newSingleThreadScheduledExecutor();
     server.start();
     sourceCounter.start();
     super.start();
+    final NettyServer srv = (NettyServer)server;
+    connectionCountUpdater.scheduleWithFixedDelay(new Runnable(){
+
+      @Override
+      public void run() {
+        sourceCounter.setOpenConnectionCount(
+                Long.valueOf(srv.getNumActiveConnections()));
+      }
+    }, 0, 60, TimeUnit.SECONDS);
 
     logger.info("Avro source {} started.", getName());
   }
@@ -168,8 +181,17 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
           "for Avro server to stop. Exiting. Exception follows.", e);
     }
     sourceCounter.stop();
+    connectionCountUpdater.shutdown();
+    while(!connectionCountUpdater.isTerminated()){
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException ex) {
+        logger.error("Interrupted while waiting for connection count executor "
+                + "to terminate", ex);
+        Throwables.propagate(ex);
+      }
+    }
     super.stop();
-
     logger.info("Avro source {} stopped. Metrics: {}", getName(),
         sourceCounter);
   }

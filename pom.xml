@@ -652,19 +652,19 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro</artifactId>
-        <version>1.7.1</version>
+        <version>1.7.2</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro-compiler</artifactId>
-        <version>1.7.1</version>
+        <version>1.7.2</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro-ipc</artifactId>
-        <version>1.7.1</version>
+        <version>1.7.2</version>
         <exclusions>
           <exclusion>
             <groupId>org.mortbay.jetty</groupId>
