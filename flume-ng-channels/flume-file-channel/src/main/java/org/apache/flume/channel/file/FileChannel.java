@@ -527,7 +527,6 @@ public class FileChannel extends BasicChannelSemantics {
               + "log. Try increasing the log write timeout value. " +
               channelNameDescriptor);
         }
-        log.rollback(transactionID);
         if(takes > 0) {
           Preconditions.checkState(puts == 0, "nonzero puts and takes "
               + channelNameDescriptor);
@@ -543,6 +542,7 @@ public class FileChannel extends BasicChannelSemantics {
         takeList.clear();
         queue.completeTransaction(transactionID);
         channelCounter.setChannelSize(queue.getSize());
+        log.rollback(transactionID);
       } catch (IOException e) {
         throw new ChannelException("Commit failed due to IO error "
             + channelNameDescriptor, e);
