@@ -36,6 +36,7 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Row;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,14 +118,14 @@ public class HBaseSink extends AbstractSink implements Configurable {
     try {
       if(!table.getTableDescriptor().hasFamily(columnFamily)) {
         throw new IOException("Table " + tableName +
-            " has no such column family " + columnFamily);
+            " has no such column family " + Bytes.toString(columnFamily));
       }
     } catch (IOException e) {
       //Get getTableDescriptor also throws IOException, so catch the IOException
       //thrown above or by the getTableDescriptor() call.
       throw new FlumeException("Error getting column family from HBase." +
-          "Please verify that the table "+ tableName +" and Column Family,  "
-          + columnFamily + " exists in HBase.", e);
+          "Please verify that the table "+ tableName +" and Column Family, "
+          + Bytes.toString(columnFamily) + " exists in HBase.", e);
     }
 
     super.start();
