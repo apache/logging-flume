@@ -166,7 +166,7 @@ public class MemoryChannel extends BasicChannelSemantics {
 
   // lock to guard queue, mainly needed to keep it locked down during resizes
   // it should never be held through a blocking operation
-  private Integer queueLock;
+  private Object queueLock = new Object();
 
   @GuardedBy(value = "queueLock")
   private LinkedBlockingDeque<Event> queue;
@@ -192,7 +192,6 @@ public class MemoryChannel extends BasicChannelSemantics {
 
   public MemoryChannel() {
     super();
-    queueLock = 0;
   }
 
   /**
