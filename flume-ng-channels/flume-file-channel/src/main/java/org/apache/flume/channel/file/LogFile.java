@@ -154,6 +154,11 @@ abstract class LogFile {
     String getParent() {
       return file.getParent();
     }
+
+    long getUsableSpace() {
+      return file.getUsableSpace();
+    }
+
     long getMaxSize() {
       return maxFileSize;
     }
