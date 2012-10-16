@@ -984,23 +984,21 @@ Name                    Default       Description
 **channel**             --
 **type**                --            The component type name, needs to be ``hdfs``
 **hdfs.path**           --            HDFS directory path (eg hdfs://namenode/flume/webdata/)
-hdfs.timeZone           Local Time    Name of the timezone that should be used for resolving the directory path, e.g. America/Los_Angeles.
 hdfs.filePrefix         FlumeData     Name prefixed to files created by Flume in hdfs directory
 hdfs.rollInterval       30            Number of seconds to wait before rolling current file
                                       (0 = never roll based on time interval)
 hdfs.rollSize           1024          File size to trigger roll, in bytes (0: never roll based on file size)
 hdfs.rollCount          10            Number of events written to file before it rolled
                                       (0 = never roll based on number of events)
-hdfs.batchSize          1             number of events written to file before it flushed to HDFS
-hdfs.txnEventMax        100
+hdfs.batchSize          100           number of events written to file before it is flushed to HDFS
 hdfs.codeC              --            Compression codec. one of following : gzip, bzip2, lzo, snappy
 hdfs.fileType           SequenceFile  File format: currently ``SequenceFile``, ``DataStream`` or ``CompressedStream``
                                       (1)DataStream will not compress output file and please don't set codeC
                                       (2)CompressedStream requires set hdfs.codeC with an available codeC
-hdfs.maxOpenFiles       5000
+hdfs.maxOpenFiles       5000          Allow only this number of open files. If this number is exceeded, the oldest file is closed.
 hdfs.writeFormat        --            "Text" or "Writable"
-hdfs.appendTimeout      1000
-hdfs.callTimeout        10000
+hdfs.callTimeout        10000         Number of milliseconds allowed for HDFS operations, such as open, write, flush, close.
+                                      This number should be increased if many HDFS timeout operations are occurring.
 hdfs.threadsPoolSize    10            Number of threads per HDFS sink for HDFS IO ops (open, write, etc.)
 hdfs.rollTimerPoolSize  1             Number of threads per HDFS sink for scheduling timed file rolling
 hdfs.kerberosPrincipal  --            Kerberos user principal for accessing secure HDFS
@@ -1008,6 +1006,7 @@ hdfs.kerberosKeytab     --            Kerberos keytab for accessing secure HDFS
 hdfs.round              false         Should the timestamp be rounded down (if true, affects all time based escape sequences except %t)
 hdfs.roundValue         1             Rounded down to the highest multiple of this (in the unit configured using ``hdfs.roundUnit``), less than current time.
 hdfs.roundUnit          second        The unit of the round down value - ``second``, ``minute`` or ``hour``.
+hdfs.timeZone           Local Time    Name of the timezone that should be used for resolving the directory path, e.g. America/Los_Angeles.
 serializer              ``TEXT``      Other possible options include ``AVRO_EVENT`` or the
                                       fully-qualified class name of an implementation of the
                                       ``EventSerializer.Builder`` interface.

@@ -69,7 +69,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private static final long defaultRollSize = 1024;
   private static final long defaultRollCount = 10;
   private static final String defaultFileName = "FlumeData";
-  private static final long defaultBatchSize = 1;
+  private static final long defaultBatchSize = 100;
   private static final long defaultTxnEventMax = 100;
   private static final String defaultFileType = HDFSWriterFactory.SequenceFileType;
   private static final int defaultMaxOpenFiles = 5000;
@@ -101,7 +101,6 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private long rollInterval;
   private long rollSize;
   private long rollCount;
-  private long txnEventMax;
   private long batchSize;
   private int threadsPoolSize;
   private int rollTimerPoolSize;
@@ -185,7 +184,6 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     rollSize = context.getLong("hdfs.rollSize", defaultRollSize);
     rollCount = context.getLong("hdfs.rollCount", defaultRollCount);
     batchSize = context.getLong("hdfs.batchSize", defaultBatchSize);
-    txnEventMax = context.getLong("hdfs.txnEventMax", defaultTxnEventMax);
     String codecName = context.getString("hdfs.codeC");
     fileType = context.getString("hdfs.fileType", defaultFileType);
     maxOpenFiles = context.getInteger("hdfs.maxOpenFiles", defaultMaxOpenFiles);
@@ -201,8 +199,6 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
     Preconditions.checkArgument(batchSize > 0,
         "batchSize must be greater than 0");
-    Preconditions.checkArgument(txnEventMax > 0,
-        "txnEventMax must be greater than 0");
     if (codecName == null) {
       codeC = null;
       compType = CompressionType.NONE;
@@ -368,11 +364,11 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     }
   }
   /**
-   * Pull events out of channel and send it to HDFS - take at the most
-   * txnEventMax, that's the maximum #events to hold in channel for a given
-   * transaction - find the corresponding bucket for the event, ensure the file
-   * is open - extract the pay-load and append to HDFS file <br />
-   * WARNING: NOT THREAD SAFE
+   * Pull events out of channel and send it to HDFS. Take at most batchSize
+   * events per Transaction. Find the corresponding bucket for the event.
+   * Ensure the file is open. Serialize the data and write it to the file on
+   * HDFS. <br/>
+   * This method is not thread safe.
    */
   @Override
   public Status process() throws EventDeliveryException {
@@ -381,10 +377,9 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     List<BucketWriter> writers = Lists.newArrayList();
     transaction.begin();
     try {
-      Event event = null;
       int txnEventCount = 0;
-      for (txnEventCount = 0; txnEventCount < txnEventMax; txnEventCount++) {
-        event = channel.take();
+      for (txnEventCount = 0; txnEventCount < batchSize; txnEventCount++) {
+        Event event = channel.take();
         if (event == null) {
           break;
         }
@@ -418,7 +413,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
       if (txnEventCount == 0) {
         sinkCounter.incrementBatchEmptyCount();
-      } else if (txnEventCount == txnEventMax) {
+      } else if (txnEventCount == batchSize) {
         sinkCounter.incrementBatchCompleteCount();
       } else {
         sinkCounter.incrementBatchUnderflowCount();
@@ -431,14 +426,12 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
       transaction.commit();
 
-      if (txnEventCount > 0) {
-        sinkCounter.addToEventDrainSuccessCount(txnEventCount);
-      }
-
-      if(event == null) {
+      if (txnEventCount < 1) {
         return Status.BACKOFF;
+      } else {
+        sinkCounter.addToEventDrainSuccessCount(txnEventCount);
+        return Status.READY;
       }
-      return Status.READY;
     } catch (IOException eIO) {
       transaction.rollback();
       LOG.warn("HDFS IO error", eIO);
