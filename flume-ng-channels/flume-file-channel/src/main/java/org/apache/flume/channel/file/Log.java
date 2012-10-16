@@ -69,6 +69,10 @@ class Log {
   private static final Logger LOGGER = LoggerFactory.getLogger(Log.class);
   private static final int MIN_NUM_LOGS = 2;
   private static final String FILE_LOCK = "in_use.lock";
+  /**
+   * Each file system in use must have at least 10MB of space.
+   */
+  private static final long ABSOLUTE_MINIMUM_REQURED_SPACE = 10L * 1024L * 1024L;
   // for reader
   private final Map<Integer, LogFile.RandomReader> idLogFileMap = Collections
       .synchronizedMap(new HashMap<Integer, LogFile.RandomReader>());
@@ -426,6 +430,12 @@ class Log {
     Put put = new Put(transactionID, WriteOrderOracle.next(), flumeEvent);
     ByteBuffer buffer = TransactionEventRecord.toByteBuffer(put);
     int logFileIndex = nextLogWriter(transactionID);
+    long usableSpace = logFiles.get(logFileIndex).getUsableSpace();
+    long requiredSpace = ABSOLUTE_MINIMUM_REQURED_SPACE + buffer.limit();
+    if(usableSpace <= requiredSpace) {
+      throw new IOException("Usable space exhaused, only " + usableSpace +
+          " bytes remaining, required " + requiredSpace + " bytes");
+    }
     boolean error = true;
     try {
       try {
@@ -463,6 +473,12 @@ class Log {
         pointer.getOffset(), pointer.getFileID());
     ByteBuffer buffer = TransactionEventRecord.toByteBuffer(take);
     int logFileIndex = nextLogWriter(transactionID);
+    long usableSpace = logFiles.get(logFileIndex).getUsableSpace();
+    long requiredSpace = ABSOLUTE_MINIMUM_REQURED_SPACE + buffer.limit();
+    if(usableSpace <= requiredSpace) {
+      throw new IOException("Usable space exhaused, only " + usableSpace +
+          " bytes remaining, required " + requiredSpace + " bytes");
+    }
     boolean error = true;
     try {
       try {
@@ -499,6 +515,12 @@ class Log {
     Rollback rollback = new Rollback(transactionID, WriteOrderOracle.next());
     ByteBuffer buffer = TransactionEventRecord.toByteBuffer(rollback);
     int logFileIndex = nextLogWriter(transactionID);
+    long usableSpace = logFiles.get(logFileIndex).getUsableSpace();
+    long requiredSpace = ABSOLUTE_MINIMUM_REQURED_SPACE + buffer.limit();
+    if(usableSpace <= requiredSpace) {
+      throw new IOException("Usable space exhaused, only " + usableSpace +
+          " bytes remaining, required " + requiredSpace + " bytes");
+    }
     boolean error = true;
     try {
       try {
@@ -655,6 +677,12 @@ class Log {
     Commit commit = new Commit(transactionID, WriteOrderOracle.next(), type);
     ByteBuffer buffer = TransactionEventRecord.toByteBuffer(commit);
     int logFileIndex = nextLogWriter(transactionID);
+    long usableSpace = logFiles.get(logFileIndex).getUsableSpace();
+    long requiredSpace = ABSOLUTE_MINIMUM_REQURED_SPACE + buffer.limit();
+    if(usableSpace <= requiredSpace) {
+      throw new IOException("Usable space exhaused, only " + usableSpace +
+          " bytes remaining, required " + requiredSpace + " bytes");
+    }
     boolean error = true;
     try {
       try {
