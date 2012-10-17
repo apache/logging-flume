@@ -68,6 +68,7 @@ limitations under the License.
       </activation>
       <properties>
         <hadoop.version>1.0.1</hadoop.version>
+        <hbase.version>0.92.1</hbase.version>
         <hadoop.common.artifact.id>hadoop-core</hadoop.common.artifact.id>
       </properties>
       <dependencyManagement>
@@ -96,6 +97,7 @@ limitations under the License.
       </activation>
       <properties>
         <hadoop.version>0.23.1</hadoop.version>
+        <hbase.version>0.94.2</hbase.version>
         <hadoop.common.artifact.id>hadoop-common</hadoop.common.artifact.id>
       </properties>
       <dependencyManagement>
@@ -113,6 +115,16 @@ limitations under the License.
           <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-minicluster</artifactId>
+            <version>${hadoop.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
+            <version>${hadoop.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-annotations</artifactId>
             <version>${hadoop.version}</version>
           </dependency>
           <dependency>
@@ -755,13 +767,13 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase</artifactId>
-        <version>0.92.1</version>
+        <version>${hbase.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase</artifactId>
-        <version>0.92.1</version>
+        <version>${hbase.version}</version>
         <classifier>tests</classifier>
         <scope>test</scope>
       </dependency>
