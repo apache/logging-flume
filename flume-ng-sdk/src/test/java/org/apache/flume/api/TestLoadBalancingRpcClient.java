@@ -18,8 +18,6 @@
  */
 package org.apache.flume.api;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -35,7 +33,6 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.api.RpcTestUtils.LoadBalancedAvroHandler;
 import org.apache.flume.api.RpcTestUtils.OKAvroHandler;
 import org.apache.flume.event.EventBuilder;
-import org.apache.flume.source.avro.Status;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -389,8 +386,9 @@ public class TestLoadBalancingRpcClient {
   @Test
   public void testRandomBackoff() throws Exception {
     Properties p = new Properties();
-    List<LoadBalancedAvroHandler> hosts = Lists.newArrayList();
-    List<Server> servers = Lists.newArrayList();
+    List<LoadBalancedAvroHandler> hosts =
+            new ArrayList<LoadBalancedAvroHandler>();
+    List<Server> servers = new ArrayList<Server>();
     StringBuilder hostList = new StringBuilder("");
     for(int i = 0; i < 3;i++){
       LoadBalancedAvroHandler s = new LoadBalancedAvroHandler();
@@ -443,8 +441,9 @@ public class TestLoadBalancingRpcClient {
   @Test
   public void testRoundRobinBackoffInitialFailure() throws EventDeliveryException {
     Properties p = new Properties();
-    List<LoadBalancedAvroHandler> hosts = Lists.newArrayList();
-    List<Server> servers = Lists.newArrayList();
+    List<LoadBalancedAvroHandler> hosts =
+            new ArrayList<LoadBalancedAvroHandler>();
+    List<Server> servers = new ArrayList<Server>();
     StringBuilder hostList = new StringBuilder("");
     for (int i = 0; i < 3; i++) {
       LoadBalancedAvroHandler s = new LoadBalancedAvroHandler();
@@ -485,8 +484,9 @@ public class TestLoadBalancingRpcClient {
   @Test
   public void testRoundRobinBackoffIncreasingBackoffs() throws Exception {
     Properties p = new Properties();
-    List<LoadBalancedAvroHandler> hosts = Lists.newArrayList();
-    List<Server> servers = Lists.newArrayList();
+    List<LoadBalancedAvroHandler> hosts =
+            new ArrayList<LoadBalancedAvroHandler>();
+    List<Server> servers = new ArrayList<Server>();
     StringBuilder hostList = new StringBuilder("");
     for (int i = 0; i < 3; i++) {
       LoadBalancedAvroHandler s = new LoadBalancedAvroHandler();
@@ -541,8 +541,9 @@ public class TestLoadBalancingRpcClient {
   @Test
   public void testRoundRobinBackoffFailureRecovery() throws EventDeliveryException, InterruptedException {
     Properties p = new Properties();
-    List<LoadBalancedAvroHandler> hosts = Lists.newArrayList();
-    List<Server> servers = Lists.newArrayList();
+    List<LoadBalancedAvroHandler> hosts =
+            new ArrayList<LoadBalancedAvroHandler>();
+    List<Server> servers = new ArrayList<Server>();
     StringBuilder hostList = new StringBuilder("");
     for (int i = 0; i < 3; i++) {
       LoadBalancedAvroHandler s = new LoadBalancedAvroHandler();

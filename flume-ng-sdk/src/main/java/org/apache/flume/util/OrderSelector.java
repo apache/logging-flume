@@ -17,9 +17,9 @@
  */
 package org.apache.flume.util;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,7 +41,8 @@ public abstract class OrderSelector<T> {
   private static final int EXP_BACKOFF_COUNTER_LIMIT = 16;
   private static final long CONSIDER_SEQUENTIAL_RANGE = 2000l;
   private static final long MAX_TIMEOUT = 30000l;
-  private final Map<T, FailureState> stateMap = Maps.newLinkedHashMap();
+  private final Map<T, FailureState> stateMap =
+          new LinkedHashMap<T, FailureState>();
   private long maxTimeout = MAX_TIMEOUT;
   private final boolean shouldBackOff;
 
@@ -69,7 +70,7 @@ public abstract class OrderSelector<T> {
    * @return - list of objects to be ordered.
    */
   public List<T> getObjects() {
-    return Lists.newArrayList(stateMap.keySet());
+    return new ArrayList<T>(stateMap.keySet());
   }
 
   /**
@@ -120,7 +121,7 @@ public abstract class OrderSelector<T> {
   protected List<Integer> getIndexList() {
     long now = System.currentTimeMillis();
 
-    List<Integer> indexList = Lists.newArrayList();
+    List<Integer> indexList = new ArrayList<Integer>();
 
     int i = 0;
     for (T obj : stateMap.keySet()) {
