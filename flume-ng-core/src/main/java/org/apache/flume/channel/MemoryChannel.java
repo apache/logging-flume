@@ -330,6 +330,11 @@ public class MemoryChannel extends BasicChannelSemantics {
 
   private long estimateEventSize(Event event)
   {
-    return event.getBody().length;
+    byte[] body = event.getBody();
+    if(body != null && body.length != 0) {
+      return body.length;
+    }
+    //Each event occupies at least 1 slot, so return 1.
+    return 1;
   }
 }
