@@ -894,11 +894,11 @@ Example for agent named **agent_foo**:
   agent_foo.channels = memoryChannel-1
   agent_foo.sources.legacysource-1.type = your.namespace.YourClass
   agent_foo.sources.legacysource-1.channels = memoryChannel-1
-  
+
 Scribe Source
 ~~~~~~~~~~~~~
 
-Scribe is another type of ingest system. To adopt existing Scribe ingest system, 
+Scribe is another type of ingest system. To adopt existing Scribe ingest system,
 Flume should use ScribeSource based on Thrift with compatible transfering protocol.
 The deployment of Scribe please following guide from Facebook.
 Required properties are in **bold**.
@@ -1602,11 +1602,10 @@ Load balancing Sink Processor
 Load balancing sink processor provides the ability to load-balance flow over
 multiple sinks. It maintains an indexed list of active sinks on which the
 load must be distributed. Implementation supports distributing load using
-either via ``ROUND_ROBIN``, ``RANDOM``, ``ROUND_ROBIN_BACKOFF``, or
-``RANDOM_BACKOFF`` selection mechanisms. The choice of selection mechanism
-defaults to ``ROUND_ROBIN`` type, but can be overridden
-via configuration. Custom selection mechanisms are supported via custom
-classes that inherits from ``LoadBalancingSelector``.
+either via ``ROUND_ROBIN`` or ``RANDOM`` selection mechanisms.
+The choice of selection mechanism defaults to ``ROUND_ROBIN`` type,
+but can be overridden via configuration. Custom selection mechanisms are
+supported via custom classes that inherits from ``AbstractSinkSelector``.
 
 When invoked, this selector picks the next sink using its configured selection
 mechanism and invokes it. For ROUND_ROBIN and RANDOM In case the selected sink
@@ -1614,7 +1613,9 @@ fails to deliver the event, the processor picks the next available sink via
 its configured selection mechanism. This implementation does not blacklist
 the failing sink and instead continues to optimistically attempt every
 available sink. If all sinks invocations result in failure, the selector
-propagates the failure to the sink runner. The BACKOFF variants will blacklist
+propagates the failure to the sink runner.
+
+If ``backoff`` is enabled, the sink processor will blacklist
 sinks that fail, removing them for selection for a given timeout. When the
 timeout ends, if the sink is still unresponsive timeout is increased
 exponentially to avoid potentially getting stuck in long waits on unresponsive
@@ -1624,16 +1625,16 @@ sinks.
 
 Required properties are in **bold**.
 
-====================================  ===============  ===============================================================
+====================================  ===============  ==========================================================================
 Property Name                         Default          Description
-====================================  ===============  ===============================================================
-**processor.sinks**            --                      Space separated list of sinks that are participating in the group
+====================================  ===============  ==========================================================================
+**processor.sinks**                   --               Space separated list of sinks that are participating in the group
 **processor.type**                    ``default``      The component type name, needs to be ``load_balance``
+processor.backoff                     true             Should failed sinks be backed off exponentially.
 processor.selector                    ``ROUND_ROBIN``  Selection mechanism. Must be either ``ROUND_ROBIN``, ``RANDOM``
-                                                       ``ROUND_ROBIN_BACKOFF``, ``RANDOM_BACKOFF`` or custom FQDN to
-                                                       class that inherits from ``LoadBalancingSelector``
+                                                       or custom FQDN to class that inherits from ``AbstractSinkSelector``
 processor.selector.maxBackoffMillis   30000            used by backoff selectors to limit exponential backoff in miliseconds
-====================================  ===============  ===============================================================
+====================================  ===============  ==========================================================================
 
 Example for agent named **agent_foo**:
 
@@ -1642,7 +1643,9 @@ Example for agent named **agent_foo**:
   agent_foo.sinkgroups = group1
   agent_foo.sinkgroups.group1.sinks = sink1 sink2
   agent_foo.sinkgroups.group1.processor.type = load_balance
+  agent_foo.sinkgroups.group1.processor.backoff = true
   agent_foo.sinkgroups.group1.processor.selector = random
+
 
 Custom Sink Processor
 ~~~~~~~~~~~~~~~~~~~~~
@@ -1679,8 +1682,8 @@ are named components, here is an example of how they are created through configu
 Note that the interceptor builders are passed to the type config parameter. The interceptors are themselves
 configurable and can be passed configuration values just like they are passed to any other configurable component.
 In the above example, events are passed to the HostInterceptor first and the events returned by the HostInterceptor
-are then passed along to the TimestampInterceptor. You can specify either the fully qualified class name (FQCN) 
-or the alias ``TIMESTAMP``. If you have multiple collectors writing to the same HDFS path then you could also use 
+are then passed along to the TimestampInterceptor. You can specify either the fully qualified class name (FQCN)
+or the alias ``TIMESTAMP``. If you have multiple collectors writing to the same HDFS path then you could also use
 the HostInterceptor.
 
 Timestamp Interceptor
