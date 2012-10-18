@@ -197,7 +197,7 @@ Failover handler
 ''''''''''''''''
 
 This class wraps the Avro RPC client to provide failover handling capability to
-clients. This takes a list of host/ports of the Flume agent. If there’s an
+clients. This takes a whitespace separated list of host/ports of the Flume agents. If there’s an
 error in communicating the current agent, then it automatically falls back to
 the next agent in the list:
 
@@ -212,13 +212,53 @@ the next agent in the list:
 
   // address/port pair for each host
   props.put("hosts.host1", host1 + ":" + port1);
-  props.put("hosts.host1", host2 + ":" + port2);
-  props.put("hosts.host1", host3 + ":" + port3);
+  props.put("hosts.host2", host2 + ":" + port2);
+  props.put("hosts.host3", host3 + ":" + port3);
 
   // create the client with failover properties
-  client = (FailoverRpcClient);
-  RpcClientFactory.getInstance(props);
+  client = RpcClientFactory.getInstance(props);
 
+LoadBalancing Rpc Client
+''''''''''''''''''''''''
+
+Flume SDK also supports an RpcClient which load balances between multiple
+hosts. This takes a whitespace separated list of host:port of Flume agents. This
+client can be configured to either load balance or randomly select among the
+configured agents. You can also specify a class that implements the
+``LoadBalancingRpcClient$HostSelector`` interface in the properties object to
+generate the selection order.
+
+If ``backoff`` is enabled, the client will blacklist
+hosts that fail, removing them for selection for a given timeout. When the
+timeout ends, if the host is still unresponsive timeout is increased
+exponentially to avoid potentially getting stuck in long waits on unresponsive
+hosts.
+The maximum backoff time can be configured by setting ``maxBackoff`` - in milliseconds.
+There is currently no default maximum back off time, so the backoff will increase
+exponentially unless this property is set.
+
+.. code-block:: java
+
+  // Setup properties for the load balancing
+  Properties props = new Properties();
+  props.put("client.type", "DEFAULT_LOADBALANCE");
+
+  // list of hosts
+  props.put("hosts", "host1 host2 host3");
+
+  // address/port pair for each host
+  props.put("hosts.host1", host1 + ":" + port1);
+  props.put("hosts.host2", host2 + ":" + port2);
+  props.put("hosts.host3", host3 + ":" + port3);
+
+  props.put("host-selector","random"); //for random order
+  //props.put("host-selector","round_robin"); //for round robin order
+  props.put("backoff", "true"); //disabled by default.
+
+  props.put("maxBackoff", "10000"); //default = No Maximum.
+
+  // create the client with load balancing properties
+  client = RpcClientFactory.getInstance(props);
 
 Transaction interface
 ~~~~~~~~~~~~~~~~~~~~~
@@ -280,7 +320,7 @@ configuration settings:
   public class FooSink extends AbstractSink implements Configurable {
     @Override
     public void configure(Context context) {
-      some_Param = context.get("some_param", String.class);
+      some_Param = context.getString("some_param", "default_value");
       // process some_param …
     }
     @Override
@@ -336,7 +376,7 @@ data:
   public class BarSource extends AbstractSource implements Configurable, PollableSource {
     @Override
     public void configure(Context context) {
-      some_Param = context.get("some_param", String.class);
+      some_Param = context.getString("some_param", "default_value");
       // process some_param …
     }
     @Override
