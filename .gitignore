@@ -13,3 +13,5 @@ pmd_report.html
 */bin
 target
 derby.log
+.idea
+*.iml
