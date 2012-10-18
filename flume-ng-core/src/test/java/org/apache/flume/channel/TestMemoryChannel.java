@@ -411,4 +411,32 @@ public class TestMemoryChannel {
       //success
     }
   }
+
+  /*
+   * This would cause a NPE without FLUME-1622.
+   */
+  @Test
+  public void testNullEmptyEvent() {
+    Context context = new Context();
+    Map<String, String> parms = new HashMap<String, String>();
+    parms.put("byteCapacity", "2000");
+    parms.put("byteCapacityBufferPercentage", "20");
+    context.putAll(parms);
+    Configurables.configure(channel,  context);
+
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+    //This line would cause a NPE without FLUME-1622.
+    channel.put(EventBuilder.withBody(null));
+    tx.commit();
+    tx.close();
+
+    tx = channel.getTransaction();
+    tx.begin();
+    channel.put(EventBuilder.withBody(new byte[0]));
+    tx.commit();
+    tx.close();
+
+
+  }
 }
