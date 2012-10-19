@@ -791,6 +791,87 @@ For example, a syslog UDP source for agent named **agent_foo**:
   agent_foo.sources.syslogsource-1.host = localhost
   agent_foo.sources.syslogsource-1.channels = memoryChannel-1
 
+HTTP Source
+~~~~~~~~~~~
+A source which accepts Flume Events by HTTP POST and GET. GET should be used
+for experimentation only. HTTP requests are converted into flume events by
+a pluggable "handler" which must implement the HTTPSourceHandler interface.
+This handler takes a HttpServletRequest and returns a list of
+flume events. All events handler from one Http request are committed to the channel
+in one transaction, thus allowing for increased efficiency on channels like
+the file channel. If the handler throws an exception this source will
+return a HTTP status of 400. If the channel is full, or the source is unable to
+append events to the channel, the source will return a HTTP 503 - Temporarily
+unavailable status.
+
+All events sent in one post request are considered to be one batch and
+inserted into the channel in one transaction.
+
+==============  ===========================================  ====================================================================
+Property Name   Default                                      Description
+==============  ===========================================  ====================================================================
+**type**                                                     The FQCN of this class:  ``org.apache.flume.source.http.HTTPSource``
+**port**        --                                           The port the source should bind to.
+handler         ``org.apache.flume.http.JSONHandler``        The FQCN of the handler class.
+handler.*       --                                           Config parameters for the handler
+selector.type   replicating                                  replicating or multiplexing
+selector.*                                                   Depends on the selector.type value
+interceptors    --                                           Space separated list of interceptors
+interceptors.*
+=================================================================================================================================
+
+For example, a http source for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.sources = httpsource-1
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sources.httpsource-1.type = org.apache.flume.source.http.HTTPSource
+  agent_foo.sources.httpsource-1.port = 5140
+  agent_foo.sources.httpsource-1.channels = memoryChannel-1
+  agent_foo.sources.httpsource-1.handler = org.example.rest.RestHandler
+  agent_foo.sources.httpsource-1.handler.nickname = random props
+
+JSONHandler
+'''''''''''
+A handler is provided out of the box which can handle events represented in
+JSON format, and supports UTF-8, UTF-16 and UTF-32 character sets. The handler
+accepts an array of events (even if there is only one event, the event has to be
+sent in an array) and converts them to a Flume event based on the
+encoding specified in the request. If no encoding is specified, UTF-8 is assumed.
+The JSON handler supports UTF-8, UTF-16 and UTF-32.
+Events are represented as follows.
+
+.. code-block:: javascript
+
+  [{
+    "headers" : {
+               "timestamp" : "434324343",
+               "host" : "random_host.example.com"
+               },
+    "body" : "random_body"
+    },
+    {
+    "headers" : {
+               "namenode" : "namenode.example.com",
+               "datanode" : "random_datanode.example.com"
+               },
+    "body" : "really_random_body"
+    }]
+
+To set the charset, the request must have content type specified as
+``application/json; charset=UTF-8`` (replace UTF-8 with UTF-16 or UTF-32 as
+required).
+
+One way to create an event in the format expected by this handler, is to
+use JSONEvent provided in the Flume SDK and use Google Gson to create the JSON
+string using the Gson#fromJson(Object, Type)
+method. The type token to pass as the 2nd argument of this method
+for list of events can be created by:
+
+.. code-block:: java
+
+  Type type = new TypeToken<List<JSONEvent>>() {}.getType();
 
 Legacy Sources
 ~~~~~~~~~~~~~~
