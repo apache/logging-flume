@@ -37,6 +37,9 @@ public class EventBuilder {
   public static Event withBody(byte[] body, Map<String, String> headers) {
     Event event = new SimpleEvent();
 
+    if(body == null) {
+      body = new byte[0];
+    }
     event.setBody(body);
 
     if (headers != null) {
