@@ -50,14 +50,18 @@ public class JSONEvent implements Event{
         return null;
       }
     } else {
-      return null;
+      return new byte[0];
     }
 
   }
 
   @Override
   public void setBody(byte[] body) {
-    this.body = new String(body);
+    if(body != null) {
+      this.body = new String(body);
+    } else {
+      this.body = "";
+    }
   }
 
   public void setCharset(String charset) {
