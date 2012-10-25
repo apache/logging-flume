@@ -113,7 +113,7 @@ public class TestJSONHandler {
     List<Event> deserialized = handler.getEvents(req);
     Event e = deserialized.get(0);
     Assert.assertEquals("b", e.getHeaders().get("a"));
-    Assert.assertTrue(e.getBody() == null);
+    Assert.assertTrue(e.getBody().length == 0);
     e = deserialized.get(1);
     Assert.assertEquals("f", e.getHeaders().get("e"));
     Assert.assertEquals("rand\"om_body2", new String(e.getBody(),"UTF-8"));
@@ -127,7 +127,7 @@ public class TestJSONHandler {
     List<Event> deserialized = handler.getEvents(req);
     Event e = deserialized.get(0);
     Assert.assertEquals("b", e.getHeaders().get("a"));
-    Assert.assertTrue(e.getBody() == null);
+    Assert.assertTrue(e.getBody().length == 0);
     e = deserialized.get(1);
     Assert.assertEquals("f", e.getHeaders().get("e"));
     Assert.assertEquals("random_body2", new String(e.getBody(),"UTF-8"));
