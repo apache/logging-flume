@@ -23,6 +23,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.flume.Clock;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
@@ -67,7 +68,7 @@ public class TestBucketWriter {
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
     HDFSTextFormatter formatter = new HDFSTextFormatter();
     BucketWriter bucketWriter = new BucketWriter(0, 0, maxEvents, 0, ctx,
-        "/tmp/file", null, SequenceFile.CompressionType.NONE, hdfsWriter,
+        "/tmp/file", null, null, SequenceFile.CompressionType.NONE, hdfsWriter,
         formatter, timedRollerPool, null,
         new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()));
 
@@ -91,7 +92,7 @@ public class TestBucketWriter {
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
     HDFSTextFormatter formatter = new HDFSTextFormatter();
     BucketWriter bucketWriter = new BucketWriter(0, maxBytes, 0, 0, ctx,
-        "/tmp/file", null, SequenceFile.CompressionType.NONE, hdfsWriter,
+        "/tmp/file", null, null, SequenceFile.CompressionType.NONE, hdfsWriter,
         formatter, timedRollerPool, null,
         new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()));
 
@@ -117,7 +118,7 @@ public class TestBucketWriter {
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
     HDFSTextFormatter formatter = new HDFSTextFormatter();
     BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
-        "/tmp/file", null, SequenceFile.CompressionType.NONE, hdfsWriter,
+        "/tmp/file", null, null, SequenceFile.CompressionType.NONE, hdfsWriter,
         formatter, timedRollerPool, null,
         new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()));
 
@@ -166,30 +167,30 @@ public class TestBucketWriter {
 
     HDFSWriter hdfsWriter = new HDFSWriter() {
       private volatile boolean open = false;
-      @Override
+
       public void configure(Context context) {
 
       }
-      @Override
+
       public void sync() throws IOException {
         if(!open) {
           throw new IOException("closed");
         }
       }
-      @Override
+
       public void open(String filePath, CompressionCodec codec,
           CompressionType cType, FlumeFormatter fmt) throws IOException {
         open = true;
       }
-      @Override
+
       public void open(String filePath, FlumeFormatter fmt) throws IOException {
         open = true;
       }
-      @Override
+
       public void close() throws IOException {
         open = false;
       }
-      @Override
+
       public void append(Event e, FlumeFormatter fmt) throws IOException {
         // we just re-open in append if closed
         open = true;
@@ -199,7 +200,7 @@ public class TestBucketWriter {
     File tmpFile = File.createTempFile("flume", "test");
     tmpFile.deleteOnExit();
     BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
-        tmpFile.getName(), null, SequenceFile.CompressionType.NONE, hdfsWriter,
+        tmpFile.getName(), null, null, SequenceFile.CompressionType.NONE, hdfsWriter,
         formatter, timedRollerPool, null,
         new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()));
 
@@ -214,4 +215,59 @@ public class TestBucketWriter {
     bucketWriter.flush(); // throws closed exception
   }
 
+  @Test
+  public void testFileSuffixNotGiven() throws IOException, InterruptedException {
+      final int ROLL_INTERVAL = 1000; // seconds. Make sure it doesn't change in course of test
+      final String suffix = null;
+
+      MockHDFSWriter hdfsWriter = new MockHDFSWriter();
+      HDFSTextFormatter formatter = new HDFSTextFormatter();
+      BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
+          "/tmp/file", suffix, null, SequenceFile.CompressionType.NONE, hdfsWriter,
+          formatter, timedRollerPool, null,
+          new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()));
+
+      // Need to override system time use for test so we know what to expect
+      final long testTime = System.currentTimeMillis();
+      Clock testClock = new Clock() {
+          public long currentTimeMillis() {
+              return testTime;
+          }
+      };
+      bucketWriter.setClock(testClock);
+
+      Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
+      bucketWriter.append(e);
+
+      Assert.assertTrue("Incorrect suffix", hdfsWriter.getOpenedFilePath().endsWith(Long.toString(testTime+1) + BucketWriter.IN_USE_EXT));
+  }
+
+    @Test
+    public void testFileSuffixGiven() throws IOException, InterruptedException {
+        final int ROLL_INTERVAL = 1000; // seconds. Make sure it doesn't change in course of test
+        final String suffix = ".avro";
+
+        MockHDFSWriter hdfsWriter = new MockHDFSWriter();
+        HDFSTextFormatter formatter = new HDFSTextFormatter();
+        BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
+            "/tmp/file", suffix, null, SequenceFile.CompressionType.NONE, hdfsWriter,
+            formatter, timedRollerPool, null,
+            new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()));
+
+        // Need to override system time use for test so we know what to expect
+
+        final long testTime = System.currentTimeMillis();
+
+        Clock testClock = new Clock() {
+            public long currentTimeMillis() {
+                return testTime;
+            }
+        };
+        bucketWriter.setClock(testClock);
+
+        Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
+        bucketWriter.append(e);
+
+        Assert.assertTrue("Incorrect suffix", hdfsWriter.getOpenedFilePath().endsWith(Long.toString(testTime+1) + suffix + BucketWriter.IN_USE_EXT));
+    }
 }
