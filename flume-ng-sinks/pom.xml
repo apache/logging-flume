@@ -44,5 +44,6 @@ limitations under the License.
     <module>flume-hdfs-sink</module>
     <module>flume-irc-sink</module>
     <module>flume-ng-hbase-sink</module>
+    <module>flume-ng-elasticsearch-sink</module>
   </modules>
 </project>
