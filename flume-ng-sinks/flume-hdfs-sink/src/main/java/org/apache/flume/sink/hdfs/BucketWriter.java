@@ -27,8 +27,10 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.flume.Clock;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.SystemClock;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.FlumeFormatter;
 import org.apache.hadoop.conf.Configuration;
@@ -52,7 +54,7 @@ class BucketWriter {
   private static final Logger LOG = LoggerFactory
       .getLogger(BucketWriter.class);
 
-  private static final String IN_USE_EXT = ".tmp";
+  static final String IN_USE_EXT = ".tmp";
   /**
    * This lock ensures that only one thread can open a file at a time.
    */
@@ -78,14 +80,17 @@ class BucketWriter {
   private FileSystem fileSystem;
 
   private volatile String filePath;
+  private volatile String fileSuffix;
   private volatile String bucketPath;
   private volatile long batchCounter;
   private volatile boolean isOpen;
   private volatile ScheduledFuture<Void> timedRollFuture;
   private SinkCounter sinkCounter;
 
+  private Clock clock = new SystemClock();
+
   BucketWriter(long rollInterval, long rollSize, long rollCount, long batchSize,
-      Context context, String filePath, CompressionCodec codeC,
+      Context context, String filePath, String fileSuffix, CompressionCodec codeC,
       CompressionType compType, HDFSWriter writer, FlumeFormatter formatter,
       ScheduledExecutorService timedRollerPool, UserGroupInformation user,
       SinkCounter sinkCounter) {
@@ -95,6 +100,7 @@ class BucketWriter {
     this.batchSize = batchSize;
     this.context = context;
     this.filePath = filePath;
+    this.fileSuffix = fileSuffix;
     this.codeC = codeC;
     this.compType = compType;
     this.writer = writer;
@@ -103,7 +109,7 @@ class BucketWriter {
     this.user = user;
     this.sinkCounter = sinkCounter;
 
-    fileExtensionCounter = new AtomicLong(System.currentTimeMillis());
+    fileExtensionCounter = new AtomicLong(clock.currentTimeMillis());
 
     isOpen = false;
     writer.configure(context);
@@ -152,7 +158,6 @@ class BucketWriter {
    */
   private void open() throws IOException, InterruptedException {
     runPrivileged(new PrivilegedExceptionAction<Void>() {
-      @Override
       public Void run() throws Exception {
         doOpen();
         return null;
@@ -183,6 +188,10 @@ class BucketWriter {
         long counter = fileExtensionCounter.incrementAndGet();
         if (codeC == null) {
           bucketPath = filePath + "." + counter;
+          // FLUME-1645 - add suffix if specified
+          if (fileSuffix != null && fileSuffix.length() > 0) {
+            bucketPath += fileSuffix;
+          }
           // Need to get reference to FS using above config before underlying
           // writer does in order to avoid shutdown hook & IllegalStateExceptions
           fileSystem = new Path(bucketPath).getFileSystem(config);
@@ -211,7 +220,6 @@ class BucketWriter {
     // if time-based rolling is enabled, schedule the roll
     if (rollInterval > 0) {
       Callable<Void> action = new Callable<Void>() {
-        @Override
         public Void call() throws Exception {
           LOG.debug("Rolling file ({}): Roll scheduled after {} sec elapsed.",
               bucketPath + IN_USE_EXT, rollInterval);
@@ -238,7 +246,6 @@ class BucketWriter {
   public synchronized void close() throws IOException, InterruptedException {
     flush();
     runPrivileged(new PrivilegedExceptionAction<Void>() {
-      @Override
       public Void run() throws Exception {
         doClose();
         return null;
@@ -284,7 +291,6 @@ class BucketWriter {
   public synchronized void flush() throws IOException, InterruptedException {
     if (!isBatchComplete()) {
       runPrivileged(new PrivilegedExceptionAction<Void>() {
-        @Override
         public Void run() throws Exception {
           doFlush();
           return null;
@@ -389,5 +395,9 @@ class BucketWriter {
 
   private boolean isBatchComplete() {
     return (batchCounter == 0);
+  }
+
+  void setClock(Clock clock) {
+      this.clock = clock;
   }
 }
