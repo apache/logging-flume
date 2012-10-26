@@ -65,14 +65,11 @@ public class LogUtils {
     List<File> result = Lists.newArrayList();
     File[] files = logDir.listFiles();
     if(files == null) {
-      if(!logDir.isDirectory()) {
-        String msg = "Path " + logDir + " is not a directory: ";
-        msg += "File = " + logDir.isFile() + ", ";
-        msg += "Exists = " + logDir.exists() + ", ";
-        msg += "Writable = " + logDir.canWrite();
-        throw new IllegalStateException(msg);
-      }
-      return result;
+      String msg = logDir + ".listFiles() returned null: ";
+      msg += "File = " + logDir.isFile() + ", ";
+      msg += "Exists = " + logDir.exists() + ", ";
+      msg += "Writable = " + logDir.canWrite();
+      throw new IllegalStateException(msg);
     }
     for (File file : files) {
       String name = file.getName();
