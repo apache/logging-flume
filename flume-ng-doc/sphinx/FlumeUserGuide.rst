@@ -1338,6 +1338,49 @@ Example for agent named **agent_foo**:
   agent_foo.sinks.hbaseSink-1.serializer = org.apache.flume.sink.hbase.SimpleAsyncHbaseEventSerializer
   agent_foo.sinks.hbaseSink-1.channel = memoryChannel-1
 
+ElasticSearchSink
+'''''''''''''''''
+
+This sink writes data to ElasticSearch. A class implementing
+ElasticSearchEventSerializer which is specified by the configuration is used to convert the events into
+XContentBuilder which detail the fields and mappings which will be indexed. These are then then written
+to ElasticSearch. The sink will generate an index per day allowing easier management instead of dealing with 
+a single large index
+The type is the FQCN: org.apache.flume.sink.elasticsearch.ElasticSearchSink
+Required properties are in **bold**.
+
+================  ==================================================================  =======================================================================================================
+Property Name     Default                                                             Description
+================  ==================================================================  =======================================================================================================
+**channel**       --
+**type**          --                                                                  The component type name, needs to be ``org.apache.flume.sink.elasticsearch.ElasticSearchSink``
+**hostNames**     --								      Comma separated list of hostname:port, if the port is not present the default port '9300' will be used
+indexName         flume                                                               The name of the index which the date will be appended to. Example 'flume' -> 'flume-yyyy-MM-dd'
+indexType	  logs                                                                The type to index the document to, defaults to 'log'
+clusterName       elasticsearch							      Name of the ElasticSearch cluster to connect to
+batchSize         100                                                                 Number of events to be written per txn.
+ttl               --                                                                  TTL in days, when set will cause the expired documents to be deleted automatically, 
+                                                                                      if not set documents will never be automatically deleted
+serializer        org.apache.flume.sink.elasticsearch.ElasticSearchDynamicSerializer
+serializer.*      --                                                                  Properties to be passed to the serializer.
+================  ==================================================================  =======================================================================================================
+
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sinks = esSink-1
+  agent_foo.sinks.esSink-1.type = org.apache.flume.sink.elasticsearch.ElasticSearchSink
+  agent_foo.sinks.esSink-1.hostNames = 127.0.0.1:9200,127.0.0.2:9300
+  agent_foo.sinks.esSink-1.indexName = foo_index
+  agent_foo.sinks.esSink-1.indexType = bar_type
+  agent_foo.sinks.esSink-1.clusterName = foobar_cluster
+  agent_foo.sinks.esSink-1.batchSize = 500
+  agent_foo.sinks.esSink-1.ttl = 5
+  agent_foo.sinks.esSink-1.serializer = org.apache.flume.sink.elasticsearch.ElasticSearchDynamicSerializer
+  agent_foo.sinks.esSink-1.channel = memoryChannel-1
+
 Custom Sink
 ~~~~~~~~~~~
 
@@ -2197,6 +2240,7 @@ org.apache.flume.Sink                     AVRO                org.apache.flume.s
 org.apache.flume.Sink                     HDFS                org.apache.flume.sink.hdfs.HDFSEventSink
 org.apache.flume.Sink                     --                  org.apache.flume.sink.hbase.HBaseSink
 org.apache.flume.Sink                     --                  org.apache.flume.sink.hbase.AsyncHBaseSink
+org.apache.flume.Sink                     --                  org.apache.flume.sink.elasticsearch.ElasticSearchSink
 org.apache.flume.Sink                     FILE_ROLL           org.apache.flume.sink.RollingFileSink
 org.apache.flume.Sink                     IRC                 org.apache.flume.sink.irc.IRCSink
 org.apache.flume.Sink                     --                  org.example.MySink
