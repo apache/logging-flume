@@ -31,6 +31,7 @@ public class MockHDFSWriter implements HDFSWriter {
   private int filesClosed = 0;
   private int bytesWritten = 0;
   private int eventsWritten = 0;
+  private String filePath = null;
 
   public int getFilesOpened() {
     return filesOpened;
@@ -48,6 +49,10 @@ public class MockHDFSWriter implements HDFSWriter {
     return eventsWritten;
   }
 
+  public String getOpenedFilePath() {
+    return filePath;
+  }
+
   public void clear() {
     filesOpened = 0;
     filesClosed = 0;
@@ -55,33 +60,29 @@ public class MockHDFSWriter implements HDFSWriter {
     eventsWritten = 0;
   }
 
-  @Override
   public void configure(Context context) {
     // no-op
   }
 
-  @Override
   public void open(String filePath, FlumeFormatter fmt) throws IOException {
+    this.filePath = filePath;
     filesOpened++;
   }
 
-  @Override
   public void open(String filePath, CompressionCodec codec, CompressionType cType, FlumeFormatter fmt) throws IOException {
+    this.filePath = filePath;
     filesOpened++;
   }
 
-  @Override
   public void append(Event e, FlumeFormatter fmt) throws IOException {
     eventsWritten++;
     bytesWritten += e.getBody().length;
   }
 
-  @Override
   public void sync() throws IOException {
     // does nothing
   }
 
-  @Override
   public void close() throws IOException {
     filesClosed++;
   }

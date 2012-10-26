@@ -69,6 +69,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private static final long defaultRollSize = 1024;
   private static final long defaultRollCount = 10;
   private static final String defaultFileName = "FlumeData";
+  private static final String defaultSuffix = "";
   private static final long defaultBatchSize = 100;
   private static final long defaultTxnEventMax = 100;
   private static final String defaultFileType = HDFSWriterFactory.SequenceFileType;
@@ -108,6 +109,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private CompressionType compType;
   private String fileType;
   private String path;
+  private String suffix;
   private TimeZone timeZone;
   private int maxOpenFiles;
   private String writeFormat;
@@ -170,13 +172,14 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   }
 
     // read configuration and setup thresholds
-  @Override
   public void configure(Context context) {
     this.context = context;
 
     String dirpath = Preconditions.checkNotNull(
         context.getString("hdfs.path"), "hdfs.path is required");
     String fileName = context.getString("hdfs.filePrefix", defaultFileName);
+    // FLUME-1645: add suffix support
+    this.suffix = context.getString("hdfs.fileSuffix", defaultSuffix);
     this.path = dirpath + System.getProperty("file.separator") + fileName;
     String tzName = context.getString("hdfs.timeZone");
     timeZone = tzName == null ? null : TimeZone.getTimeZone(tzName);
@@ -370,7 +373,6 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
    * HDFS. <br/>
    * This method is not thread safe.
    */
-  @Override
   public Status process() throws EventDeliveryException {
     Channel channel = getChannel();
     Transaction transaction = channel.getTransaction();
@@ -396,7 +398,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
               .getFormatter(writeFormat);
 
           bucketWriter = new BucketWriter(rollInterval, rollSize, rollCount,
-              batchSize, context, realPath, codeC, compType, hdfsWriter,
+              batchSize, context, realPath, suffix, codeC, compType, hdfsWriter,
               formatter, timedRollerPool, proxyTicket, sinkCounter);
 
           sfWriters.put(realPath, bucketWriter);
@@ -706,7 +708,6 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
     // Write the data to HDFS
     callWithTimeout(new Callable<Void>() {
-      @Override
       public Void call() throws Exception {
         bucketWriter.append(event);
         return null;
@@ -721,7 +722,6 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       throws IOException, InterruptedException {
 
     callWithTimeout(new Callable<Void>() {
-      @Override
       public Void call() throws Exception {
         bucketWriter.flush();
         return null;
@@ -736,7 +736,6 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       throws IOException, InterruptedException {
 
     callWithTimeout(new Callable<Void>() {
-      @Override
       public Void call() throws Exception {
         bucketWriter.close();
         return null;
