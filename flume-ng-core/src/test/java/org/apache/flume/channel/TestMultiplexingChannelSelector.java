@@ -51,6 +51,9 @@ public class TestMultiplexingChannelSelector {
     config.put("mapping.bar", "ch2 ch3");
     config.put("mapping.xyz", "ch1 ch2 ch3");
     config.put("default", "ch1 ch3");
+    config.put("optional.foo", "ch2 ch3");
+    config.put("optional.xyz", "ch1 ch3");
+    config.put("optional.zebra", "ch1 ch2");
 
     selector = ChannelSelectorFactory.create(channels, config);
   }
@@ -69,7 +72,11 @@ public class TestMultiplexingChannelSelector {
     Assert.assertTrue(reqCh1.get(0).getName().equals("ch1"));
     Assert.assertTrue(reqCh1.get(1).getName().equals("ch2"));
     List<Channel> optCh1 = selector.getOptionalChannels(event1);
-    Assert.assertTrue(optCh1.size() == 0);
+    Assert.assertTrue(optCh1.size() == 1);
+    //ch2 should not be there -- since it is a required channel
+    Assert.assertTrue(optCh1.get(0).getName().equals("ch3"));
+
+
 
     Event event2 = new MockEvent();
     Map<String, String> header2 = new HashMap<String, String>();
@@ -94,7 +101,9 @@ public class TestMultiplexingChannelSelector {
     Assert.assertTrue(reqCh3.get(1).getName().equals("ch2"));
     Assert.assertTrue(reqCh3.get(2).getName().equals("ch3"));
     List<Channel> optCh3 = selector.getOptionalChannels(event3);
+    //All of the optional channels should go away.
     Assert.assertTrue(optCh3.size() == 0);
+
   }
 
   //If the header information cannot map the event to any of the channels
@@ -136,6 +145,20 @@ public class TestMultiplexingChannelSelector {
     Assert.assertTrue(reqCh3.get(1).getName().equals("ch3"));
     Assert.assertTrue(optCh3.size() == 0);
 
+    Map<String, String> header4 = new HashMap<String, String>();
+    header4.put("myheader", "zebra");
+    Event zebraEvent = new MockEvent();
+    zebraEvent.setHeaders(header4);
+
+    List<Channel> reqCh4 = selector.getRequiredChannels(zebraEvent);
+    List<Channel> optCh4 = selector.getOptionalChannels(zebraEvent);
+    Assert.assertEquals(2, reqCh4.size());
+    Assert.assertTrue(reqCh4.get(0).getName().equals("ch1"));
+    Assert.assertTrue(reqCh4.get(1).getName().equals("ch3"));
+    System.out.println(optCh4.size());
+    //Since ch1 is also in default list, it is removed.
+    Assert.assertTrue(optCh4.size() == 1);
+    Assert.assertTrue(optCh4.get(0).getName().equals("ch2"));
 
     List<Channel> allChannels = selector.getAllChannels();
     Assert.assertTrue(allChannels.size() == 3);
