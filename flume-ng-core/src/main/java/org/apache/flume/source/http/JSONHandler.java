@@ -29,6 +29,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.event.EventBuilder;
 import org.apache.flume.event.JSONEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -121,10 +122,18 @@ public class JSONHandler implements HTTPSourceHandler {
     for (Event e : eventList) {
       ((JSONEvent) e).setCharset(charset);
     }
-    return eventList;
+    return getSimpleEvents(eventList);
   }
 
   @Override
   public void configure(Context context) {
+  }
+
+  private List<Event> getSimpleEvents(List<Event> events) {
+    List<Event> newEvents = new ArrayList<Event>(events.size());
+    for(Event e:events) {
+      newEvents.add(EventBuilder.withBody(e.getBody(), e.getHeaders()));
+    }
+    return newEvents;
   }
 }
