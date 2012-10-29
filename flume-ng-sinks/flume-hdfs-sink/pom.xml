@@ -125,15 +125,15 @@ limitations under the License.
     </profile>
 
     <profile>
-      <id>hadoop-0.23</id>
+      <id>hadoop-2</id>
       <activation>
         <property>
           <name>hadoop.profile</name>
-          <value>23</value>
+          <value>2</value>
         </property>
       </activation>
       <properties>
-        <hadoop.version>0.23.1</hadoop.version>
+        <hadoop.version>2.0.0-alpha</hadoop.version>
         <hadoop.common.artifact.id>hadoop-common</hadoop.common.artifact.id>
       </properties>
       <dependencies>
