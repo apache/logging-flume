@@ -85,11 +85,11 @@
   <profiles>
 
     <profile>
-      <id>hadoop-0.23</id>
+      <id>hadoop-2</id>
       <activation>
         <property>
           <name>hadoop.profile</name>
-          <value>23</value>
+          <value>2</value>
         </property>
       </activation>
       <dependencies>
