@@ -38,6 +38,8 @@ public class MultiplexingChannelSelector extends AbstractChannelSelector {
       "flume.selector.header";
   public static final String CONFIG_PREFIX_MAPPING = "mapping.";
   public static final String CONFIG_DEFAULT_CHANNEL = "default";
+  public static final String CONFIG_PREFIX_OPTIONAL = "optional";
+
   @SuppressWarnings("unused")
   private static final Logger LOG = LoggerFactory
     .getLogger(MultiplexingChannelSelector.class);
@@ -48,7 +50,7 @@ public class MultiplexingChannelSelector extends AbstractChannelSelector {
   private String headerName;
 
   private Map<String, List<Channel>> channelMapping;
-
+  private Map<String, List<Channel>> optionalChannels;
   private List<Channel> defaultChannels;
   @Override
   public List<Channel> getRequiredChannels(Event event) {
@@ -70,7 +72,13 @@ public class MultiplexingChannelSelector extends AbstractChannelSelector {
 
   @Override
   public List<Channel> getOptionalChannels(Event event) {
-    return EMPTY_LIST;
+    String hdr = event.getHeaders().get(headerName);
+    List<Channel> channels = optionalChannels.get(hdr);
+
+    if(channels == null) {
+      channels = EMPTY_LIST;
+    }
+    return channels;
   }
 
   @Override
@@ -113,6 +121,34 @@ public class MultiplexingChannelSelector extends AbstractChannelSelector {
     }
     //If no mapping is configured, it is ok.
     //All events will go to the default channel(s).
+    Map<String, String> optionalChannelsMapping =
+        context.getSubProperties(CONFIG_PREFIX_OPTIONAL + ".");
+
+    optionalChannels = new HashMap<String, List<Channel>>();
+    for (String hdr : optionalChannelsMapping.keySet()) {
+      List<Channel> confChannels = getChannelListFromNames(
+              optionalChannelsMapping.get(hdr), channelNameMap);
+      if (confChannels.isEmpty()) {
+        confChannels = EMPTY_LIST;
+      }
+      //Remove channels from optional channels, which are already
+      //configured to be required channels.
+
+      List<Channel> reqdChannels = channelMapping.get(hdr);
+      //Check if there are required channels, else defaults to default channels
+      if(reqdChannels == null || reqdChannels.isEmpty()) {
+        reqdChannels = defaultChannels;
+      }
+      for (Channel c : reqdChannels) {
+        if (confChannels.contains(c)) {
+          confChannels.remove(c);
+        }
+      }
+
+      if (optionalChannels.put(hdr, confChannels) != null) {
+        throw new FlumeException("Selector channel configured twice");
+      }
+    }
 
   }
 
