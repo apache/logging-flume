@@ -567,6 +567,42 @@ sent to mem-channel-1, if its "AZ" then it goes to jdbc-channel-2 or if its
 "NY" then both. If the "State" header is not set or doesn't match any of the
 three, then it goes to mem-channel-1 which is designated as 'default'.
 
+The selector also supports optional channels. To specify optional channels for
+a header, the config parameter 'optional' is used in the following way:
+
+.. code-block:: properties
+
+  # channel selector configuration
+  agent_foo.sources.avro-AppSrv-source1.selector.type = multiplexing
+  agent_foo.sources.avro-AppSrv-source1.selector.header = State
+  agent_foo.sources.avro-AppSrv-source1.selector.mapping.CA = mem-channel-1
+  agent_foo.sources.avro-AppSrv-source1.selector.mapping.AZ = jdbc-channel-2
+  agent_foo.sources.avro-AppSrv-source1.selector.mapping.NY = mem-channel-1 jdbc-channel-2
+  agent_foo.sources.avro-AppSrv-source1.selector.optional.CA = mem-channel-1 jdbc-channel-2
+  agent_foo.sources.avro-AppSrv-source1.selector.mapping.AZ = jdbc-channel-2
+  agent_foo.sources.avro-AppSrv-source1.selector.default = mem-channel-1
+
+The selector will attempt to write to the required channels first and will fail
+the transaction if even one of these channels fails to consume the events. The
+transaction is reattempted on **all** of the channels. Once all required
+channels have consumed the events, then the selector will attempt to write to
+the optional channels. A failure by any of the optional channels to consume the
+event is simply ignored and not retried.
+
+If there is an overlap between the optional channels and required channels for a
+specific header, the channel is considered to be required, and a failure in the
+channel will cause the entire set of required channels to be retried. For
+instance, in the above example, for the header "CA" mem-channel-1 is considered
+to be a required channel even though it is marked both as required and optional,
+ and a failure to write to this channel will cause that
+event to be retried on **all** channels configured for the selector.
+
+Note that if a header does not have any required channels, then the event will
+be written to the default channels and will be attempted to be written to the
+optional channels for that header. Specifying optional channels will still cause
+the event to be written to the default channels, if no required channels are
+specified.
+
 
 Flume Sources
 -------------
@@ -1345,7 +1381,7 @@ ElasticSearchSink
 This sink writes data to ElasticSearch. A class implementing
 ElasticSearchEventSerializer which is specified by the configuration is used to convert the events into
 XContentBuilder which detail the fields and mappings which will be indexed. These are then then written
-to ElasticSearch. The sink will generate an index per day allowing easier management instead of dealing with 
+to ElasticSearch. The sink will generate an index per day allowing easier management instead of dealing with
 a single large index
 The type is the FQCN: org.apache.flume.sink.elasticsearch.ElasticSearchSink
 Required properties are in **bold**.
@@ -1360,7 +1396,7 @@ indexName         flume                                                         
 indexType	  logs                                                                The type to index the document to, defaults to 'log'
 clusterName       elasticsearch							      Name of the ElasticSearch cluster to connect to
 batchSize         100                                                                 Number of events to be written per txn.
-ttl               --                                                                  TTL in days, when set will cause the expired documents to be deleted automatically, 
+ttl               --                                                                  TTL in days, when set will cause the expired documents to be deleted automatically,
                                                                                       if not set documents will never be automatically deleted
 serializer        org.apache.flume.sink.elasticsearch.ElasticSearchDynamicSerializer
 serializer.*      --                                                                  Properties to be passed to the serializer.
