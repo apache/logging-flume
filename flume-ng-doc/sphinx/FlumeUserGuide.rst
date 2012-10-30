@@ -174,7 +174,7 @@ Here, we give an example configuration file, describing a single-node Flume depl
   # Use a channel which buffers events in memory
   agent1.channels.channel1.type = memory
   agent1.channels.channel1.capacity = 1000
-  agent1.channels.channel1.transactionCapactiy = 100
+  agent1.channels.channel1.transactionCapacity = 100
 
   # Bind the source and sink to the channel
   agent1.sources.source1.channels = channel1
