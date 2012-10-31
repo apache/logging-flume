@@ -137,7 +137,10 @@ public abstract class MonitoredCounterGroup {
     CHANNEL_PROCESSOR,
     CHANNEL,
     SINK_PROCESSOR,
-    SINK
+    SINK,
+    INTERCEPTOR,
+    SERIALIZER,
+    OTHER
   };
 
   public String getType(){
