@@ -103,6 +103,7 @@ public class TestMonitoredCounterGroup {
     String name = getRandomName();
 
     SinkCounter skc = new SinkCounter(name);
+    skc.register();
     ObjectName on = new ObjectName(SINK_OBJ_NAME_PREFIX + name);
     assertSkCounterState(on, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
 
@@ -182,6 +183,7 @@ public class TestMonitoredCounterGroup {
     String name = getRandomName();
 
     ChannelCounter chc = new ChannelCounter(name);
+    chc.register();
     ObjectName on = new ObjectName(CHANNEL_OBJ_NAME_PREFIX + name);
     assertChCounterState(on, 0L, 0L, 0L, 0L, 0L);
 
@@ -238,6 +240,7 @@ public class TestMonitoredCounterGroup {
     String name = getRandomName();
 
     SourceCounter srcc = new SourceCounter(name);
+    srcc.register();
     ObjectName on = new ObjectName(SOURCE_OBJ_NAME_PREFIX + name);
 
     assertSrcCounterState(on, 0L, 0L, 0L, 0L, 0L, 0L);

@@ -41,6 +41,7 @@ public abstract class MonitoredCounterGroup {
 
   private AtomicLong startTime;
   private AtomicLong stopTime;
+  private volatile boolean registered = false;
 
 
   protected MonitoredCounterGroup(Type type, String name, String... attrs) {
@@ -59,27 +60,39 @@ public abstract class MonitoredCounterGroup {
     startTime = new AtomicLong(0L);
     stopTime = new AtomicLong(0L);
 
-    try {
-      ObjectName objName = new ObjectName("org.apache.flume."
-          + type.name().toLowerCase() + ":type=" + this.name);
-
-      ManagementFactory.getPlatformMBeanServer().registerMBean(this, objName);
-
-      LOG.info("Monitoried counter group for type: " + type + ", name: " + name
-          + ", registered successfully.");
-    } catch (Exception ex) {
-      LOG.error("Failed to register monitored counter group for type: "
-          + type + ", name: " + name, ex);
-    }
   }
 
   public void start() {
+
+    register();
     stopTime.set(0L);
     for (String counter : counterMap.keySet()) {
       counterMap.get(counter).set(0L);
     }
     startTime.set(System.currentTimeMillis());
     LOG.info("Component type: " + type + ", name: " + name + " started");
+  }
+
+  /**
+   * Registers the counter. This method should be used only for testing, and
+   * there should be no need for any implementations to directly call this
+   * method.
+   */
+  void register() {
+    if (!registered) {
+      try {
+        ObjectName objName = new ObjectName("org.apache.flume."
+                + type.name().toLowerCase() + ":type=" + this.name);
+
+        ManagementFactory.getPlatformMBeanServer().registerMBean(this, objName);
+        registered = true;
+        LOG.info("Monitoried counter group for type: " + type + ", name: " + name
+                + ", registered successfully.");
+      } catch (Exception ex) {
+        LOG.error("Failed to register monitored counter group for type: "
+                + type + ", name: " + name, ex);
+      }
+    }
   }
 
   public void stop() {
