@@ -170,8 +170,14 @@ public class SourceConfiguration extends ComponentConfiguration {
      *
      * @see org.apache.flume.source.SyslogUDPSource
      */
+    SYSLOGUDP("org.apache.flume.conf.source.SyslogUDPSourceConfiguration"),
 
-    SYSLOGUDP("org.apache.flume.conf.source.SyslogUDPSourceConfiguration");
+    /**
+     * Spool directory source
+     *
+     * @see org.apache.flume.source.SpoolDirectorySource
+     */
+    SPOOLDIR("org.apache.flume.conf.source.SpoolDirectorySourceConfiguration");
 
     private String srcConfigurationName;
 
