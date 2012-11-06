@@ -19,6 +19,8 @@
 
 package org.apache.flume;
 
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.lifecycle.LifecycleAware;
 
 /**
@@ -45,6 +47,8 @@ import org.apache.flume.lifecycle.LifecycleAware;
  * @see org.apache.flume.SinkProcessor
  * @see org.apache.flume.SinkRunner
  */
+@InterfaceAudience.Public
+@InterfaceStability.Stable
 public interface Sink extends LifecycleAware, NamedComponent {
   /**
    * <p>Sets the channel the sink will consume from</p>
