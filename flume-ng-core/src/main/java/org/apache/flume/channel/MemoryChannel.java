@@ -27,12 +27,27 @@ import javax.annotation.concurrent.GuardedBy;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.instrumentation.ChannelCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
+/**
+ * <p>
+ * MemoryChannel is the recommended channel to use when speeds which
+ * writing to disk is impractical is required or durability of data is not
+ * required.
+ * </p>
+ * <p>
+ * Additionally, MemoryChannel should be used when a channel is required for
+ * unit testing purposes.
+ * </p>
+ */
+@InterfaceAudience.Public
+@InterfaceStability.Stable
 public class MemoryChannel extends BasicChannelSemantics {
   private static Logger LOGGER = LoggerFactory.getLogger(MemoryChannel.class);
   private static final Integer defaultCapacity = 100;
@@ -43,7 +58,7 @@ public class MemoryChannel extends BasicChannelSemantics {
 
   private static final Integer defaultKeepAlive = 3;
 
-  public class MemoryTransaction extends BasicTransactionSemantics {
+  private class MemoryTransaction extends BasicTransactionSemantics {
     private LinkedBlockingDeque<Event> takeList;
     private LinkedBlockingDeque<Event> putList;
     private final ChannelCounter channelCounter;

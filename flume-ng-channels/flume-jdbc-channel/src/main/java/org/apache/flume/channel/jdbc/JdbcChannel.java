@@ -21,12 +21,27 @@ import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.channel.AbstractChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
- * <p>A JDBC based channel implementation.</p>
+ * <p>
+ * A JDBC based channel implementation.
+ * </p>
+ * <p>
+ * JdbcChannel is marked
+ * {@link org.apache.flume.annotations.InterfaceAudience.Private} because it
+ * should only be instantiated via a configuration. For example, users should
+ * certainly use JdbcChannel but not by instantiating JdbcChannel objects.
+ * Meaning the label Private applies to user-developers not user-operators.
+ * In cases where a Channel is required by instantiated by user-developers
+ * {@link org.apache.flume.channel.MemoryChannel} should be used.
+ * <p>
  */
+@InterfaceAudience.Private
+@InterfaceStability.Stable
 public class JdbcChannel extends AbstractChannel {
 
   private static final Logger LOG = LoggerFactory.getLogger(JdbcChannel.class);

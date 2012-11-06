@@ -19,6 +19,9 @@
 
 package org.apache.flume.lifecycle;
 
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
+
 
 /**
  * <p>
@@ -80,6 +83,8 @@ package org.apache.flume.lifecycle;
  *  }
  * </code>
  */
+@InterfaceAudience.Public
+@InterfaceStability.Stable
 public interface LifecycleAware {
 
   /**

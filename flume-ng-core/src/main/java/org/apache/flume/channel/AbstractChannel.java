@@ -20,10 +20,14 @@ package org.apache.flume.channel;
 
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
 
+@InterfaceAudience.Public
+@InterfaceStability.Stable
 public abstract class AbstractChannel
     implements Channel, LifecycleAware, Configurable {
 

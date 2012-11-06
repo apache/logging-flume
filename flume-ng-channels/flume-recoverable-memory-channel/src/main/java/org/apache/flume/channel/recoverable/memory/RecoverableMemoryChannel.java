@@ -31,6 +31,8 @@ import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.channel.BasicChannelSemantics;
 import org.apache.flume.channel.BasicTransactionSemantics;
 import org.apache.flume.channel.MemoryChannel;
@@ -56,6 +58,8 @@ import com.google.common.collect.Lists;
  */
 
 @Deprecated
+@InterfaceAudience.Private
+@InterfaceStability.Unstable
 public class RecoverableMemoryChannel extends BasicChannelSemantics {
 
   private static final Logger LOG = LoggerFactory

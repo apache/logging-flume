@@ -44,6 +44,8 @@ import javax.annotation.Nullable;
 
 import org.apache.flume.ChannelException;
 import org.apache.flume.Event;
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.channel.file.encryption.KeyProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +66,8 @@ import com.google.common.collect.Maps;
  * the operation and any additional modifications of the
  * FlumeEventQueue, the Log.unlockShared method should be called.
  */
+@InterfaceAudience.Private
+@InterfaceStability.Unstable
 class Log {
   public static final String PREFIX = "log-";
   private static final Logger LOGGER = LoggerFactory.getLogger(Log.class);
