@@ -20,6 +20,8 @@
 package org.apache.flume.conf;
 
 import org.apache.flume.Context;
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
 
 /**
  * <p>
@@ -27,6 +29,8 @@ import org.apache.flume.Context;
  * sub-configuration passed to it, requesting it configure itself.
  * </p>
  */
+@InterfaceAudience.Public
+@InterfaceStability.Stable
 public interface Configurable {
   /**
    * <p>

@@ -23,6 +23,8 @@ import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
 
 import com.google.common.base.Preconditions;
 
@@ -33,6 +35,8 @@ import com.google.common.base.Preconditions;
  * which is required to extend {@link BasicTransactionSemantics}.
  * </p>
  */
+@InterfaceAudience.Public
+@InterfaceStability.Stable
 public abstract class BasicChannelSemantics extends AbstractChannel {
 
   private ThreadLocal<BasicTransactionSemantics> currentTransaction

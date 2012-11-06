@@ -18,10 +18,15 @@
  */
 package org.apache.flume;
 
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
+
 /**
  * Enables a component to be tagged with a name so that it can be referred
  * to uniquely within the configuration system.
  */
+@InterfaceAudience.Public
+@InterfaceStability.Stable
 public interface NamedComponent {
 
   public void setName(String name);

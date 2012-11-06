@@ -19,6 +19,8 @@
 
 package org.apache.flume;
 
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.lifecycle.LifecycleAware;
 
@@ -41,6 +43,8 @@ import org.apache.flume.lifecycle.LifecycleAware;
  * @see org.apache.flume.Channel
  * @see org.apache.flume.Sink
  */
+@InterfaceAudience.Public
+@InterfaceStability.Stable
 public interface Source extends LifecycleAware, NamedComponent {
 
   /**

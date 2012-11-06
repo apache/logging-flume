@@ -30,6 +30,8 @@ import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.channel.BasicChannelSemantics;
 import org.apache.flume.channel.BasicTransactionSemantics;
 import org.apache.flume.channel.file.Log.Builder;
@@ -53,7 +55,18 @@ import com.google.common.base.Strings;
  * specified in the configuration. Additionally, when a commit occurs
  * the transaction is synced to disk.
  * </p>
+ * <p>
+ * FileChannel is marked
+ * {@link org.apache.flume.annotations.InterfaceAudience.Private} because it
+ * should only be instantiated via a configuration. For example, users should
+ * certainly use FileChannel but not by instantiating FileChannel objects.
+ * Meaning the label Private applies to user-developers not user-operators.
+ * In cases where a Channel is required by instantiated by user-developers
+ * {@link org.apache.flume.channel.MemoryChannel} should be used.
+ * </p>
  */
+@InterfaceAudience.Private
+@InterfaceStability.Stable
 public class FileChannel extends BasicChannelSemantics {
 
   private static final Logger LOG = LoggerFactory

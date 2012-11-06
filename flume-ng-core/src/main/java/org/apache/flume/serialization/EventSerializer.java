@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
 
 /**
  * <p>
@@ -73,6 +75,8 @@ import org.apache.flume.Event;
  *
  * </p>
  */
+@InterfaceAudience.Public
+@InterfaceStability.Stable
 public interface EventSerializer {
 
   /**
