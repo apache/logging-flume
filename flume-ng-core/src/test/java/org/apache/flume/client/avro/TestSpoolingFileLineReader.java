@@ -399,7 +399,7 @@ public class TestSpoolingFileLineReader {
     List<File> outFiles = Lists.newArrayList(tmpDir.listFiles());
     assertEquals(2, outFiles.size());
     assertTrue(outFiles.contains(
-        new File(tmpDir + "/file1")));
+        new File(tmpDir + "/file1" + completedSuffix)));
     assertTrue(outFiles.contains(
         new File(tmpDir + "/file2" + completedSuffix)));
   }
