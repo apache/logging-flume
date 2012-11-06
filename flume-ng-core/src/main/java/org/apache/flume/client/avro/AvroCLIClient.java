@@ -19,7 +19,6 @@
 
 package org.apache.flume.client.avro;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
@@ -31,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import com.google.common.collect.Lists;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -47,16 +45,21 @@ import org.apache.flume.event.EventBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
+
 public class AvroCLIClient {
 
   private static final Logger logger = LoggerFactory
       .getLogger(AvroCLIClient.class);
 
   private static final int BATCH_SIZE = 5;
+  private static final int MAX_LINE_LENGTH = 2000;
 
   private String hostname;
   private int port;
   private String fileName;
+  private String dirName;
   private Map<String, String> headers = new HashMap<String, String>();
   private int sent;
 
@@ -121,6 +124,7 @@ public class AvroCLIClient {
     options.addOption("p", "port", true, "port of the avro source")
         .addOption("H", "host", true, "hostname of the avro source")
         .addOption("F", "filename", true, "file to stream to avro source")
+        .addOption("D", "dirname", true, "directory to stream to avro source")
         .addOption("R", "headerFile", true, ("file containing headers as " +
             "key/value pairs on each new line"))
         .addOption("h", "help", false, "display help text");
@@ -129,9 +133,16 @@ public class AvroCLIClient {
     CommandLine commandLine = parser.parse(options, args);
 
     if (commandLine.hasOption('h')) {
-      new HelpFormatter().printHelp("flume-ng avro-client", options, true);
+      new HelpFormatter().printHelp("flume-ng avro-client", "", options,
+          "The --dirname option assumes that a spooling directory exists " +
+          "where immutable log files are dropped.", true);
 
       return false;
+    }
+
+    if (commandLine.hasOption("filename") && commandLine.hasOption("dirname")) {
+      throw new ParseException(
+          "--filename and --dirname options cannot be used simultaneously");
     }
 
     if (!commandLine.hasOption("port")) {
@@ -148,6 +159,7 @@ public class AvroCLIClient {
 
     hostname = commandLine.getOptionValue("host");
     fileName = commandLine.getOptionValue("filename");
+    dirName = commandLine.getOptionValue("dirname");
 
     if (commandLine.hasOption("headerFile")){
       parseHeaders(commandLine);
@@ -163,51 +175,44 @@ public class AvroCLIClient {
   private void run() throws IOException, FlumeException,
       EventDeliveryException {
 
-    BufferedReader reader = null;
+    LineReader reader = null;
 
-    RpcClient rpcClient = RpcClientFactory.getDefaultInstance(hostname, port, BATCH_SIZE);
+    RpcClient rpcClient = RpcClientFactory.getDefaultInstance(hostname, port,
+        BATCH_SIZE);
     try {
-      List<Event> eventBuffer = Lists.newArrayList();
-
       if (fileName != null) {
-        reader = new BufferedReader(new FileReader(new File(fileName)));
-      } else {
-        reader = new BufferedReader(new InputStreamReader(System.in));
+        reader = new BufferedLineReader(new FileReader(new File(fileName)));
+      } else if (dirName != null) {
+        reader = new SpoolingFileLineReader(new File(dirName), ".COMPLETED",
+            BATCH_SIZE, MAX_LINE_LENGTH);
+      }
+      else {
+        reader = new BufferedLineReader(new InputStreamReader(System.in));
       }
 
-      String line;
+
       long lastCheck = System.currentTimeMillis();
       long sentBytes = 0;
 
       int batchSize = rpcClient.getBatchSize();
-      while ((line = reader.readLine()) != null) {
-        // logger.debug("read:{}", line);
+      List<String> lines = Lists.newLinkedList();
+      while (!(lines = reader.readLines(batchSize)).isEmpty()) {
+        List<Event> eventBuffer = Lists.newArrayList();
+        for (String line : lines) {
+          Event event = EventBuilder.withBody(line, Charsets.UTF_8);
+          setHeaders(event);
+          eventBuffer.add(event);
+          sentBytes += event.getBody().length;
+          sent++;
 
-        int size = eventBuffer.size();
-        if (size == batchSize) {
-          rpcClient.appendBatch(eventBuffer);
-          eventBuffer.clear();
+          long now = System.currentTimeMillis();
+          if (now >= lastCheck + 5000) {
+            logger.debug("Packed {} bytes, {} events", sentBytes, sent);
+            lastCheck = now;
+          }
         }
-
-        Event event = EventBuilder.withBody(line, Charset.forName("UTF8"));
-        setHeaders(event);
-        eventBuffer.add(event);
-
-        sentBytes += event.getBody().length;
-        sent++;
-
-        long now = System.currentTimeMillis();
-
-        if (now >= lastCheck + 5000) {
-          logger.debug("Packed {} bytes, {} events", sentBytes, sent);
-          lastCheck = now;
-        }
-      }
-
-      if (!eventBuffer.isEmpty()) {
         rpcClient.appendBatch(eventBuffer);
       }
-
       logger.debug("Finished");
     } finally {
       if (reader != null) {

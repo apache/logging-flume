@@ -682,7 +682,9 @@ interceptors.*
              never guarantee data has been received when using a unidirectional
              asynchronous interface such as ExecSource! As an extension of this
              warning - and to be completely clear - there is absolutely zero guarantee
-             of event delivery when using this source. You have been warned.
+             of event delivery when using this source. For stronger reliability
+             guarantees, consider the Spooling Directory Source or direct integration
+             with Flume via the SDK.
 
 .. note:: You can use ExecSource to emulate TailSource from Flume 0.9x (flume og).
           Just use unix command ``tail -F /full/path/to/your/file``. Parameter
@@ -697,6 +699,57 @@ Example for agent named **agent_foo**:
   agent_foo.sources.tailsource-1.type = exec
   agent_foo.sources.tailsource-1.command = tail -F /var/log/secure
   agent_foo.sources.tailsource-1.channels = memoryChannel-1
+
+Spooling Directory Source
+~~~~~~~~~~~~~~~~~~~~~~~~~
+This source lets you ingest data by dropping files in a spooling directory on
+disk. **Unlike other asynchronous sources, this source
+avoids data loss even if Flume is restarted or fails.**
+Flume will watch the directory for new files and read then ingest them
+as they appear. After a given file has been fully read into the channel,
+it is renamed to indicate completion. This allows a cleaner process to remove
+completed files periodically. Note, however,
+that events may be duplicated if failures occur, consistent with the semantics
+offered by other Flume components. The channel optionally inserts the full path of
+the origin file into a header field of each event. This source buffers file data
+in memory during reads; be sure to set the `bufferMaxLineLength` option to a number
+greater than the longest line you expect to see in your input data.
+
+.. warning:: This channel expects that only immutable, uniquely named files
+             are dropped in the spooling directory. If duplicate names are
+             used, or files are modified while being read, the source will
+             fail with an error message. For some use cases this may require
+             adding unique identifiers (such as a timestamp) to log file names
+             when they are copied into the spooling directory.
+
+=================    ============   ==========================================================
+Property Name        Default        Description
+=================    ============   ==========================================================
+**channels**         --
+**type**             --             The component type name, needs to be ``spooldir``
+**spoolDir**         --             The directory where log files will be spooled
+fileSuffix           .COMPLETED     Suffix to append to completely ingested files
+fileHeader           false	   Whether to add a header storing the filename
+fileHeaderKey        file           Header key to use when appending filename to header
+batchSize            10             Granularity at which to batch transfer to the channel
+bufferMaxLines       100            Maximum number of lines the commit buffer can hold
+bufferMaxLineLength  5000           Maximum length of a line in the commit buffer
+selector.type        replicating    replicating or multiplexing
+selector.*                          Depends on the selector.type value
+interceptors         --             Space separated list of interceptors
+interceptors.*
+=================    ============   ==========================================================
+
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.sources = spooldir-1
+  agent_foo.channels = memoryChannel-1
+  agent_foo.sources.spooldir-1.type = spooldir
+  agent_foo.sources.spooldir-1.spoolDir = /var/log/apache/flumeSpool
+  agent_foo.sources.spooldir-1.fileHeader = true
+  agent_foo.sources.spooldir-1.channels = memoryChannel-1
 
 NetCat Source
 ~~~~~~~~~~~~~
