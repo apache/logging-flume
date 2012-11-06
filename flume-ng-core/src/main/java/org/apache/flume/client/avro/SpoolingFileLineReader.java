@@ -285,8 +285,9 @@ public class SpoolingFileLineReader implements LineReader {
   }
 
   /**
-   * Find and open the oldest file in the chosen directory. If the directory is
-   * empty, this will return an absent option.
+   * Find and open the oldest file in the chosen directory. If two or more
+   * files are equally old, the file name with lower lexicographical value is
+   * returned. If the directory is empty, this will return an absent option.
    */
   private Optional<FileInfo> getNextFile() {
     /* Filter to exclude finished or hidden files */
@@ -305,8 +306,14 @@ public class SpoolingFileLineReader implements LineReader {
     } else {
       Collections.sort(candidateFiles, new Comparator<File>() {
         public int compare(File a, File b) {
-          return new Long(a.lastModified()).compareTo(
+          int timeComparison = new Long(a.lastModified()).compareTo(
               new Long(b.lastModified()));
+          if (timeComparison != 0) {
+            return timeComparison;
+          }
+          else {
+            return a.getName().compareTo(b.getName());
+          }
         }
       });
       File nextFile = candidateFiles.get(0);
