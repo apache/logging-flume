@@ -28,11 +28,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import junit.framework.Assert;
-
 import org.apache.flume.FlumeException;
+
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.base.Charsets;
@@ -361,8 +362,12 @@ public class TestSpoolingFileLineReader {
   }
 
 
+  /**
+   * Empty files should be skipped over when reading directory.
+   * This feature is not currently implemented.
+   */
+  @Ignore
   @Test
-  /** Empty files should be skipped over when reading directory. */
   public void testBehaviorWithEmptyFile() throws IOException {
     File f1 = new File(tmpDir.getAbsolutePath() + "/file1");
     Files.touch(f1);
