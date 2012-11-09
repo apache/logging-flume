@@ -44,7 +44,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class ElasticSearchSinkTest extends AbstractElasticSearchSinkTest {
+public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
 
   private ElasticSearchSink fixture;
 
