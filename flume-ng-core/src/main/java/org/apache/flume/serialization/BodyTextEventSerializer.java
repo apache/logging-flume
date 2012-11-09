@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
-import org.apache.flume.conf.Configurable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,20 +29,21 @@ import org.slf4j.LoggerFactory;
  * This class simply writes the body of the event to the output stream
  * and appends a newline after each event.
  */
-public class BodyTextEventSerializer implements EventSerializer, Configurable {
+public class BodyTextEventSerializer implements EventSerializer {
 
   private final static Logger logger =
       LoggerFactory.getLogger(BodyTextEventSerializer.class);
 
+  // for legacy reasons, by default, append a newline to each event written out
+  private final String APPEND_NEWLINE = "appendNewline";
+  private final boolean APPEND_NEWLINE_DFLT = true;
+
   private final OutputStream out;
+  private final boolean appendNewline;
 
-  private BodyTextEventSerializer(OutputStream out) {
+  private BodyTextEventSerializer(OutputStream out, Context ctx) {
+    this.appendNewline = ctx.getBoolean(APPEND_NEWLINE, APPEND_NEWLINE_DFLT);
     this.out = out;
-  }
-
-  @Override
-  public void configure(Context context) {
-    // noop
   }
 
   @Override
@@ -69,7 +69,9 @@ public class BodyTextEventSerializer implements EventSerializer, Configurable {
   @Override
   public void write(Event e) throws IOException {
     out.write(e.getBody());
-    out.write('\n');
+    if (appendNewline) {
+      out.write('\n');
+    }
   }
 
   @Override
@@ -81,8 +83,7 @@ public class BodyTextEventSerializer implements EventSerializer, Configurable {
 
     @Override
     public EventSerializer build(Context context, OutputStream out) {
-      BodyTextEventSerializer s = new BodyTextEventSerializer(out);
-      s.configure(context);
+      BodyTextEventSerializer s = new BodyTextEventSerializer(out, context);
       return s;
     }
 
