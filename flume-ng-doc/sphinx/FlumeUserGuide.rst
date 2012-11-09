@@ -1866,6 +1866,64 @@ Custom Sink Processor
 
 Custom sink processors are not supported at the moment.
 
+Event Serializers
+-----------------
+
+The ``FILE_ROLL`` sink and the ``HDFS`` sink both support the
+``EventSerializer`` interface. Details of the EventSerializers that ship with
+Flume are provided below.
+
+Body Text Serializer
+~~~~~~~~~~~~~~~~~~~~
+
+Alias: ``TEXT``. This interceptor writes the body of the event to an output
+stream without any transformation or modification. The event headers are
+ignored. Configuration options are as follows:
+
+=========================  ================  ===========================================================================
+Property Name              Default           Description
+=========================  ================  ===========================================================================
+appendNewline              true              Whether a newline will be appended to each event at write time. The default
+                                             of true assumes that events do not contain newlines, for legacy reasons.
+=========================  ================  ===========================================================================
+
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.sinks = fileSink-1
+  agent_foo.sinks.fileSink-1.type = FILE_ROLL
+  agent_foo.sinks.fileSink-1.channel = memoryChannel-1
+  agent_foo.sinks.fileSink-1.sink.directory = /var/log/flume
+  agent_foo.sinks.fileSink-1.sink.serializer = TEXT
+  agent_foo.sinks.fileSink-1.sink.serializer.appendNewline = false
+
+Avro Event Serializer
+~~~~~~~~~~~~~~~~~~~~~
+
+Alias: ``AVRO_EVENT``. This interceptor serializes Flume events into an Avro
+container file. The schema used is the same schema used for Flume events
+in the Avro RPC mechanism. This serializers inherits from the
+``AbstractAvroEventSerializer`` class. Configuration options are as follows:
+
+==========================  ================  ===========================================================================
+Property Name               Default           Description
+==========================  ================  ===========================================================================
+syncIntervalBytes           2048000           Avro sync interval, in approximate bytes.
+compressionCodec            null              Avro compression codec. For supported codecs, see Avro's CodecFactory docs.
+==========================  ================  ===========================================================================
+
+Example for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.sinks.hdfsSink-1.type = hdfs
+  agent_foo.sinks.hdfsSink-1.channel = memoryChannel-1
+  agent_foo.sinks.hdfsSink-1.hdfs.path = /flume/events/%y-%m-%d/%H%M/%S
+  agent_foo.sinks.hdfsSink-1.serializer = AVRO_EVENT
+  agent_foo.sinks.hdfsSink-1.serializer.compressionCodec = snappy
+
+
 Flume Interceptors
 ------------------
 
