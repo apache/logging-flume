@@ -27,6 +27,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import org.apache.commons.io.FileUtils;
+import org.apache.flume.Context;
 import org.apache.flume.event.EventBuilder;
 import org.junit.Assert;
 import org.junit.Test;
@@ -34,13 +35,14 @@ import org.junit.Test;
 public class TestBodyTextEventSerializer {
 
   File testFile = new File("src/test/resources/events.txt");
+  File expectedFile = new File("src/test/resources/events.txt");
 
   @Test
-  public void test() throws FileNotFoundException, IOException {
+  public void testWithNewline() throws FileNotFoundException, IOException {
 
     OutputStream out = new FileOutputStream(testFile);
     EventSerializer serializer =
-        EventSerializerFactory.getInstance("text", null, out);
+        EventSerializerFactory.getInstance("text", new Context(), out);
     serializer.afterCreate();
     serializer.write(EventBuilder.withBody("event 1", Charsets.UTF_8));
     serializer.write(EventBuilder.withBody("event 2", Charsets.UTF_8));
@@ -51,14 +53,36 @@ public class TestBodyTextEventSerializer {
     out.close();
 
     BufferedReader reader = new BufferedReader(new FileReader(testFile));
-    String line;
-    int num = 0;
-    while ((line = reader.readLine()) != null) {
-      System.out.println(line);
-      num++;
-    }
+    Assert.assertEquals("event 1", reader.readLine());
+    Assert.assertEquals("event 2", reader.readLine());
+    Assert.assertEquals("event 3", reader.readLine());
+    Assert.assertNull(reader.readLine());
 
-    Assert.assertEquals(3, num);
+    FileUtils.forceDelete(testFile);
+  }
+
+  @Test
+  public void testNoNewline() throws FileNotFoundException, IOException {
+
+    OutputStream out = new FileOutputStream(testFile);
+    Context context = new Context();
+    context.put("appendNewline", "false");
+    EventSerializer serializer =
+        EventSerializerFactory.getInstance("text", context, out);
+    serializer.afterCreate();
+    serializer.write(EventBuilder.withBody("event 1\n", Charsets.UTF_8));
+    serializer.write(EventBuilder.withBody("event 2\n", Charsets.UTF_8));
+    serializer.write(EventBuilder.withBody("event 3\n", Charsets.UTF_8));
+    serializer.flush();
+    serializer.beforeClose();
+    out.flush();
+    out.close();
+
+    BufferedReader reader = new BufferedReader(new FileReader(testFile));
+    Assert.assertEquals("event 1", reader.readLine());
+    Assert.assertEquals("event 2", reader.readLine());
+    Assert.assertEquals("event 3", reader.readLine());
+    Assert.assertNull(reader.readLine());
 
     FileUtils.forceDelete(testFile);
   }
