@@ -31,7 +31,7 @@ import org.elasticsearch.common.collect.Maps;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.junit.Test;
 
-public class ElasticSearchDynamicSerializerTest {
+public class TestElasticSearchDynamicSerializer {
 
   @Test
   public void testRoundTrip() throws Exception {
