@@ -71,7 +71,7 @@ add_hadoop_paths() {
     local HADOOP_CLASSPATH=""
     local HADOOP_JAVA_LIBRARY_PATH=$(HADOOP_CLASSPATH="$FLUME_CLASSPATH" \
         ${HADOOP_IN_PATH} org.apache.flume.tools.GetJavaProperty \
-        java.library.path 2>/dev/null)
+        java.library.path)
 
     # look for the line that has the desired property value
     # (considering extraneous output from some GC options that write to stdout)
@@ -90,7 +90,7 @@ add_hadoop_paths() {
     fi
 
     # determine hadoop classpath
-    HADOOP_CLASSPATH=$($HADOOP_IN_PATH classpath 2>/dev/null)
+    HADOOP_CLASSPATH=$($HADOOP_IN_PATH classpath)
 
     # hack up and filter hadoop classpath
     local ELEMENTS=$(sed -e 's/:/ /g' <<<${HADOOP_CLASSPATH})
@@ -120,7 +120,7 @@ add_HBASE_paths() {
     local HBASE_CLASSPATH=""
     local HBASE_JAVA_LIBRARY_PATH=$(HBASE_CLASSPATH="$FLUME_CLASSPATH" \
         ${HBASE_IN_PATH} org.apache.flume.tools.GetJavaProperty \
-        java.library.path 2>/dev/null)
+        java.library.path)
 
     # look for the line that has the desired property value
     # (considering extraneous output from some GC options that write to stdout)
@@ -139,7 +139,7 @@ add_HBASE_paths() {
     fi
 
     # determine HBASE classpath
-    HBASE_CLASSPATH=$($HBASE_IN_PATH classpath 2>/dev/null)
+    HBASE_CLASSPATH=$($HBASE_IN_PATH classpath)
 
     # hack up and filter HBASE classpath
     local ELEMENTS=$(sed -e 's/:/ /g' <<<${HBASE_CLASSPATH})
