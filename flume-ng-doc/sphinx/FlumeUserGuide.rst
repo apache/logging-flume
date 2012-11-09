@@ -1990,7 +1990,7 @@ Property Name     Default  Description
 ================  =======  ========================================================================
 **type**          --       The component type name has to be ``REGEX_FILTER``
 regex             ".*"     Regular expression for matching against events
-excludeRegex      false    If true, regex determines events to exclude, otherwise regex determines events to include.
+excludeEvents     false    If true, regex determines events to exclude, otherwise regex determines events to include.
 ================  =======  ========================================================================
 
 Flume Properties
