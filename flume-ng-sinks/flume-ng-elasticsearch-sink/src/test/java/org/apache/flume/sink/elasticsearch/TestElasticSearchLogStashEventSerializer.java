@@ -32,7 +32,7 @@ import org.elasticsearch.common.collect.Maps;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.junit.Test;
 
-public class ElasticSearchLogStashEventSerializerTest {
+public class TestElasticSearchLogStashEventSerializer {
 
   @Test
   public void testRoundTrip() throws Exception {
