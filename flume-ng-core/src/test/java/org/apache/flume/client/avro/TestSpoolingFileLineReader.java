@@ -33,7 +33,6 @@ import org.apache.flume.FlumeException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.base.Charsets;
@@ -363,10 +362,8 @@ public class TestSpoolingFileLineReader {
 
 
   /**
-   * Empty files should be skipped over when reading directory.
-   * This feature is not currently implemented.
+   * Empty files should be treated the same as other files and rolled.
    */
-  @Ignore
   @Test
   public void testBehaviorWithEmptyFile() throws IOException {
     File f1 = new File(tmpDir.getAbsolutePath() + "/file1");
