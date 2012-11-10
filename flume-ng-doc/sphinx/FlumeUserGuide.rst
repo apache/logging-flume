@@ -818,13 +818,15 @@ Syslog Sources
 ~~~~~~~~~~~~~~
 
 Reads syslog data and generate Flume events. The UDP source treats an entire
-message as a single event. The TCP source on creates a new event for a string
-of characters separated by carriage return ('\n').
+message as a single event. The TCP sources create a new event for each string
+of characters separated by a newline ('\n').
 
 Required properties are in **bold**.
 
 Syslog TCP Source
 '''''''''''''''''
+
+The original, tried-and-true syslog TCP source.
 
 ==============   ===========  ==============================================
 Property Name    Default      Description
@@ -833,13 +835,12 @@ Property Name    Default      Description
 **type**         --           The component type name, needs to be ``syslogtcp``
 **host**         --           Host name or IP address to bind to
 **port**         --           Port # to bind to
-eventSize        2500
+eventSize        2500         Maximum size of a single event line, in bytes
 selector.type                 replicating or multiplexing
 selector.*       replicating  Depends on the selector.type value
 interceptors     --           Space separated list of interceptors
 interceptors.*
 ==============   ===========  ==============================================
-
 
 For example, a syslog TCP source for agent named **agent_foo**:
 
@@ -851,6 +852,49 @@ For example, a syslog TCP source for agent named **agent_foo**:
   agent_foo.sources.syslogsource-1.port = 5140
   agent_foo.sources.syslogsource-1.host = localhost
   agent_foo.sources.syslogsource-1.channels = memoryChannel-1
+
+Multiport Syslog TCP Source
+'''''''''''''''''''''''''''
+
+This is a newer, faster, multi-port capable version of the Syslog TCP source.
+Note that the ``ports`` configuration setting has replaced ``port``.
+Multi-port capability means that it can listen on many ports at once in an
+efficient manner. This source uses the Apache Mina library to do that.
+Provides support for RFC-3164 and many common RFC-5424 formatted messages.
+Also provides the capability to configure the character set used on a per-port
+basis.
+
+====================  ================  ==============================================
+Property Name         Default           Description
+====================  ================  ==============================================
+**channels**          --
+**type**              --                The component type name, needs to be ``multiport_syslogtcp``
+**host**              --                Host name or IP address to bind to.
+**ports**             --                Space-separated list (one or more) of ports to bind to.
+eventSize             2500              Maximum size of a single event line, in bytes.
+portHeader            --                If specified, the port number will be stored in the header of each event using the header name specified here. This allows for interceptors and channel selectors to customize routing logic based on the incoming port.
+charset.default       UTF-8             Default character set used while parsing syslog events into strings.
+charset.port.<port>   --                Character set is configurable on a per-port basis.
+batchSize             100               Maximum number of events to attempt to process per request loop. Using the default is usually fine.
+readBufferSize        1024              Size of the internal Mina read buffer. Provided for performance tuning. Using the default is usually fine.
+numProcessors         (auto-detected)   Number of processors available on the system for use while processing messages. Default is to auto-detect # of CPUs using the Java Runtime API. Mina will spawn 2 request-processing threads per detected CPU, which is often reasonable.
+selector.type         replicating       replicating, multiplexing, or custom
+selector.*            --                Depends on the ``selector.type`` value
+interceptors          --                Space separated list of interceptors.
+interceptors.*
+====================  ================  ==============================================
+
+For example, a multiport syslog TCP source for agent named **agent_foo**:
+
+.. code-block:: properties
+
+  agent_foo.sources = src-0
+  agent_foo.channels = ch-0
+  agent_foo.sources.src-0.type = multiport_syslogtcp
+  agent_foo.sources.src-0.channels = ch-0
+  agent_foo.sources.src-0.host = 0.0.0.0
+  agent_foo.sources.src-0.ports = 10001 10002 10003
+  agent_foo.sources.src-0.portHeader = port
 
 Syslog UDP Source
 '''''''''''''''''
@@ -2428,6 +2472,7 @@ org.apache.flume.Source                   NETCAT              org.apache.flume.s
 org.apache.flume.Source                   SEQ                 org.apache.flume.source.SequenceGeneratorSource
 org.apache.flume.Source                   EXEC                org.apache.flume.source.ExecSource
 org.apache.flume.Source                   SYSLOGTCP           org.apache.flume.source.SyslogTcpSource
+org.apache.flume.Source                   MULTIPORT_SYSLOGTCP org.apache.flume.source.MultiportSyslogTCPSource
 org.apache.flume.Source                   SYSLOGUDP           org.apache.flume.source.SyslogUDPSource
 org.apache.flume.Source                   --                  org.apache.flume.source.avroLegacy.AvroLegacySource
 org.apache.flume.Source                   --                  org.apache.flume.source.thriftLegacy.ThriftLegacySource
