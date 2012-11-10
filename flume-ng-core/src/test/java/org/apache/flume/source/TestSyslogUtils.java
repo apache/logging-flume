@@ -19,15 +19,16 @@
 package org.apache.flume.source;
 
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Map;
 import org.apache.flume.Event;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Map;
 
 public class TestSyslogUtils {
   @Test
@@ -150,9 +151,20 @@ public class TestSyslogUtils {
         format1, host1, data1);
   }
 
+  @Test
+  public void TestRfc3164HeaderApacheLogWithNulls() throws ParseException {
+    String stamp1 = "Apr  1 13:14:04";
+    String format1 = "yyyyMMM d HH:mm:ss";
+    String host1 = "ubuntu-11.cloudera.com";
+    String data1 = "- hyphen_null_breaks_5424_pattern [07/Jun/2012:14:46:44 -0600]";
+    String msg1 = "<10>" + stamp1 + " " + host1 + " " + data1 + "\n";
+    checkHeader(msg1, String.valueOf(Calendar.getInstance().get(Calendar.YEAR)) + stamp1,
+            format1, host1, data1);
+  }
+
   public void checkHeader(String msg1, String stamp1, String format1, String host1, String data1) throws ParseException {
     SyslogUtils util = new SyslogUtils(false);
-    ChannelBuffer buff = ChannelBuffers.buffer(100);
+    ChannelBuffer buff = ChannelBuffers.buffer(200);
 
     buff.writeBytes(msg1.getBytes());
     Event e = util.extractEvent(buff);

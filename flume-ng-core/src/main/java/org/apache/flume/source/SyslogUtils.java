@@ -19,6 +19,12 @@
 
 package org.apache.flume.source;
 
+import org.apache.flume.Event;
+import org.apache.flume.event.EventBuilder;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.ParseException;
@@ -27,14 +33,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.regex.MatchResult;
-
-import org.apache.flume.Event;
-import org.apache.flume.event.EventBuilder;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SyslogUtils {
   final public static String SYSLOG_TIMESTAMP_FORMAT_RFC5424_2 = "yyyy-MM-dd'T'HH:mm:ss.SZ";
@@ -44,7 +45,7 @@ public class SyslogUtils {
   final public static String SYSLOG_TIMESTAMP_FORMAT_RFC3164_1 = "yyyyMMM d HH:mm:ss";
 
   final public static String SYSLOG_MSG_RFC5424_0 =
-      "[(?:\\d\\s)]?" +// version
+      "(?:\\d\\s)?" +// version
   // yyyy-MM-dd'T'HH:mm:ss.SZ or yyyy-MM-dd'T'HH:mm:ss.S+hh:mm or - (null stamp)
       "(?:(\\d{4}[-]\\d{2}[-]\\d{2}[T]\\d{2}[:]\\d{2}[:]\\d{2}(?:\\.\\d{1,6})?(?:[+-]\\d{2}[:]\\d{2}|Z)?)|-)" + // stamp
       "\\s" + // separator
@@ -79,14 +80,14 @@ public class SyslogUtils {
   private boolean isIncompleteEvent;
   private Integer maxSize;
 
-  private class SyslogFormater {
-    public String regexPattern;
+  private class SyslogFormatter {
+    public Pattern regexPattern;
     public ArrayList<String> searchPattern = new ArrayList<String>();
     public ArrayList<String> replacePattern = new ArrayList<String>();
     public ArrayList<SimpleDateFormat> dateFormat = new ArrayList<SimpleDateFormat>();
     public boolean addYear;
   }
-  private ArrayList<SyslogFormater> formats = new ArrayList<SyslogFormater>();
+  private ArrayList<SyslogFormatter> formats = new ArrayList<SyslogFormatter>();
 
   private String timeStamp = null;
   private String hostName = null;
@@ -115,9 +116,9 @@ public class SyslogUtils {
         SyslogSourceConfigurationConstants.CONFIG_REGEX)) {
       return;
     }
-    SyslogFormater fmt1 = new SyslogFormater();
-    fmt1.regexPattern = formatProp.get(
-        SyslogSourceConfigurationConstants.CONFIG_REGEX);
+    SyslogFormatter fmt1 = new SyslogFormatter();
+    fmt1.regexPattern = Pattern.compile( formatProp.get(
+        SyslogSourceConfigurationConstants.CONFIG_REGEX) );
     if (formatProp.containsKey(
         SyslogSourceConfigurationConstants.CONFIG_SEARCH)) {
       fmt1.searchPattern.add(formatProp.get(
@@ -139,8 +140,8 @@ public class SyslogUtils {
   // setup built-in formats
   private void initHeaderFormats() {
     // setup RFC5424 formater
-    SyslogFormater fmt1 = new SyslogFormater();
-    fmt1.regexPattern = SYSLOG_MSG_RFC5424_0;
+    SyslogFormatter fmt1 = new SyslogFormatter();
+    fmt1.regexPattern = Pattern.compile(SYSLOG_MSG_RFC5424_0);
     // 'Z' in timestamp indicates UTC zone, so replace it it with '+0000' for date formatting
     fmt1.searchPattern.add("Z");
     fmt1.replacePattern.add("+0000");
@@ -154,8 +155,8 @@ public class SyslogUtils {
     fmt1.addYear = false;
 
     // setup RFC3164 formater
-    SyslogFormater fmt2 = new SyslogFormater();
-    fmt2.regexPattern = SYSLOG_MSG_RFC3164_0;
+    SyslogFormatter fmt2 = new SyslogFormatter();
+    fmt2.regexPattern = Pattern.compile(SYSLOG_MSG_RFC3164_0);
     // the single digit date has two spaces, so trim it
     fmt2.searchPattern.add("  ");
     fmt2.replacePattern.add(" ");
@@ -230,18 +231,15 @@ public class SyslogUtils {
 
   // Apply each known pattern to message
   private void formatHeaders() {
-    Scanner scanner = new Scanner(baos.toString());
-    MatchResult res = null;
-
+    String eventStr = baos.toString();
     for(int p=0; p < formats.size(); p++) {
-      SyslogFormater fmt = formats.get(p);
-      try {
-        scanner.findInLine(fmt.regexPattern);
-        res = scanner.match();
-      } catch (IllegalStateException e) {
-        // Ignore and move on ..
+      SyslogFormatter fmt = formats.get(p);
+      Pattern pattern = fmt.regexPattern;
+      Matcher matcher = pattern.matcher(eventStr);
+      if (! matcher.matches()) {
         continue;
       }
+      MatchResult res = matcher.toMatchResult();
       for (int grp=1; grp <= res.groupCount(); grp++) {
         String value = res.group(grp);
         if (grp == SYSLOG_TIMESTAMP_POS) {
