@@ -4,6 +4,7 @@ Release Notes - Flume - Version v1.3.0
     * [FLUME-1199] - Add HTTP Post Source
     * [FLUME-1371] - ElasticSearch Sink
     * [FLUME-1385] - Add a multiport syslog source
+    * [FLUME-1424] - File Channel should support encryption
     * [FLUME-1488] - Load Balancing RPC client should support exponential backoff of failed nodes
     * [FLUME-1537] - Dump RollingFileSink's counter status when agent stops
 
@@ -79,7 +80,6 @@ Release Notes - Flume - Version v1.3.0
     * [FLUME-1420] - Exception should be thrown if we cannot instaniate an EventSerializer
     * [FLUME-1421] - PollableSourceRunner does not name it's thread
     * [FLUME-1422] - Fix "BarSource" Class Signature in Flume Developer Guide
-    * [FLUME-1424] - File Channel should support encryption
     * [FLUME-1426] - FileChannel Replay could be faster
     * [FLUME-1428] - File Channel should not consider a file as inactive until all takes are committed.
     * [FLUME-1432] - FileChannel should replay logs in the order they were written
