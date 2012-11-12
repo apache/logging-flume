@@ -148,6 +148,10 @@ Release Notes - Flume - Version v1.3.0
 ** Sub-task
     * [FLUME-897] - Implement write ahead log library
     * [FLUME-1629] - Add Audience/Stability annotations
+    * [FLUME-1694] - Fix LICENSE file for binary artifacts
+    * [FLUME-1695] - Fix tarball names and directories
+    * [FLUME-1696] - Update build instructions as Flume build requires more memory
+    * [FLUME-1697] - Update CHANGELOG after 1.3.0 RC0
 
 
 Release Notes - Flume - Version v1.2.0
