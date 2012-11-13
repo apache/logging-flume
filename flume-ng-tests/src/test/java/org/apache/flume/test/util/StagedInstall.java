@@ -328,7 +328,7 @@ public class StagedInstall {
     try {
       tarballInputStream = new GZIPInputStream(
           new FileInputStream(tarballFile));
-      File temp2File = File.createTempFile("flume", "-dist", destDir);
+      File temp2File = File.createTempFile("flume", "-bin", destDir);
       String temp2FilePath = temp2File.getCanonicalPath();
       temp2File.delete();
 
@@ -407,7 +407,7 @@ public class StagedInstall {
           public boolean accept(File pathname) {
             String name = pathname.getName();
             if (name != null && name.startsWith("apache-flume-")
-                && name.endsWith("-dist.tar.gz")) {
+                && name.endsWith("-bin.tar.gz")) {
               return true;
             }
             return false;
