@@ -15,26 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.flume.interceptor;
 
-public enum InterceptorType {
+import junit.framework.Assert;
 
-  TIMESTAMP(org.apache.flume.interceptor.TimestampInterceptor.Builder.class),
-  HOST(org.apache.flume.interceptor.HostInterceptor.Builder.class),
-  STATIC(org.apache.flume.interceptor.StaticInterceptor.Builder.class),
-  REGEX_FILTER(
-      org.apache.flume.interceptor.RegexFilteringInterceptor.Builder.class),
-  REGEX_EXTRACTOR(org.apache.flume.interceptor.RegexExtractorInterceptor.Builder.class);
+import org.apache.flume.Context;
+import org.junit.Test;
 
-  private final Class<? extends Interceptor.Builder> builderClass;
+public class TestRegexExtractorInterceptorPassThroughSerializer {
 
-  private InterceptorType(Class<? extends Interceptor.Builder> builderClass) {
-    this.builderClass = builderClass;
+  @Test
+  public void shouldReturnSameValue() {
+    RegexExtractorInterceptorPassThroughSerializer fixture = new RegexExtractorInterceptorPassThroughSerializer();
+    fixture.configure(new Context());
+    String input = "testing (1,2,3,4)";
+    Assert.assertEquals(input, fixture.serialize(input));
   }
-
-  public Class<? extends Interceptor.Builder> getBuilderClass() {
-    return builderClass;
-  }
-
 }

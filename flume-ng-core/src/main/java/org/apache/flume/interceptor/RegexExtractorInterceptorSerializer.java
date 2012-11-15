@@ -15,26 +15,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.flume.interceptor;
 
-public enum InterceptorType {
+import org.apache.flume.conf.Configurable;
+import org.apache.flume.conf.ConfigurableComponent;
 
-  TIMESTAMP(org.apache.flume.interceptor.TimestampInterceptor.Builder.class),
-  HOST(org.apache.flume.interceptor.HostInterceptor.Builder.class),
-  STATIC(org.apache.flume.interceptor.StaticInterceptor.Builder.class),
-  REGEX_FILTER(
-      org.apache.flume.interceptor.RegexFilteringInterceptor.Builder.class),
-  REGEX_EXTRACTOR(org.apache.flume.interceptor.RegexExtractorInterceptor.Builder.class);
+/**
+ * Serializer for serializing groups matched by the
+ * {@link RegexExtractorInterceptor}
+ */
+public interface RegexExtractorInterceptorSerializer extends Configurable,
+    ConfigurableComponent {
 
-  private final Class<? extends Interceptor.Builder> builderClass;
-
-  private InterceptorType(Class<? extends Interceptor.Builder> builderClass) {
-    this.builderClass = builderClass;
-  }
-
-  public Class<? extends Interceptor.Builder> getBuilderClass() {
-    return builderClass;
-  }
+  /**
+   * @param value
+   *          The value extracted by the {@link RegexExtractorInterceptor}
+   * @return The serialized version of the specified value
+   */
+  String serialize(String value);
 
 }
