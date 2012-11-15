@@ -20,6 +20,8 @@ package org.apache.flume.interceptor;
 import junit.framework.Assert;
 
 import org.apache.flume.Context;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.junit.Test;
 
 public class TestRegexExtractorInterceptorMillisSerializer {
@@ -52,10 +54,13 @@ public class TestRegexExtractorInterceptorMillisSerializer {
   public void shouldReturnMillisFromPattern() {
     RegexExtractorInterceptorMillisSerializer fixture = new RegexExtractorInterceptorMillisSerializer();
     Context context = new Context();
-    context.put("pattern", "yyyy-MM-dd HH:mm:ss");
+    String pattern = "yyyy-MM-dd HH:mm:ss";
+    context.put("pattern", pattern);
     fixture.configure(context);
 
-    Assert.assertEquals("1269616953000",
-        fixture.serialize("2010-03-26 08:22:33"));
+    DateTimeFormatter formatter = DateTimeFormat.forPattern(pattern);
+    long time = (System.currentTimeMillis() / 1000L) * 1000L;
+    Assert.assertEquals(String.valueOf(time),
+        fixture.serialize(formatter.print(time)));
   }
 }

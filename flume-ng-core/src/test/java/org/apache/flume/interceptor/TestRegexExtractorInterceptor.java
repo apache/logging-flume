@@ -21,6 +21,8 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.interceptor.Interceptor.Builder;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -159,7 +161,11 @@ public class TestRegexExtractorInterceptor {
   @Test
   public void shouldExtractAddHeadersUsingSpecifiedSerializer()
       throws Exception {
-    String body = "2012-10-17 14:34:44,338";
+    long now = (System.currentTimeMillis() / 60000L) * 60000L;
+    String pattern = "yyyy-MM-dd HH:mm:ss,SSS";
+    DateTimeFormatter formatter = DateTimeFormat.forPattern(pattern);
+    String body = formatter.print(now);
+    System.out.println(body);
     Context context = new Context();
     // Skip the second group
     context.put(RegexExtractorInterceptor.REGEX,
@@ -179,8 +185,8 @@ public class TestRegexExtractorInterceptor {
 
     Event event = EventBuilder.withBody(body, Charsets.UTF_8);
     Event expected = EventBuilder.withBody(body, Charsets.UTF_8);
-    expected.getHeaders().put("timestamp", "1350509640000");
-    expected.getHeaders().put("data", ":44,338");
+    expected.getHeaders().put("timestamp", String.valueOf(now));
+    expected.getHeaders().put("data", ":00,000");
 
     Event actual = fixture.intercept(event);
 
