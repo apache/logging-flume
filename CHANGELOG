@@ -7,6 +7,7 @@ Release Notes - Flume - Version v1.3.0
     * [FLUME-1424] - File Channel should support encryption
     * [FLUME-1488] - Load Balancing RPC client should support exponential backoff of failed nodes
     * [FLUME-1537] - Dump RollingFileSink's counter status when agent stops
+    * [FLUME-1657] - Regex Extractor Interceptor
 
 ** Improvement
     * [FLUME-946] - Allow multiplexing channel selector to specify optional channels.
@@ -53,6 +54,10 @@ Release Notes - Flume - Version v1.3.0
     * [FLUME-1684] - Re-enable empty file unit test
     * [FLUME-1689] - BodyTextSerializer should allow an option not to add a newline to each serialized event
     * [FLUME-1692] - MultiportSyslogTCPSource user documentation and nickname
+    * [FLUME-1707] - Update FlumeDevGuide
+    * [FLUME-1706] - Website for 1.3 fails to build
+    * [FLUME-1698] - Update RELEASE-NOTES
+    * [FLUME-1711] - Update Flume User Guide
 
 ** Bug
     * [FLUME-1208] - Hbase sink should be built only in Hadoop-1.0  profile
@@ -138,6 +143,8 @@ Release Notes - Flume - Version v1.3.0
     * [FLUME-1673] - MonitoredCounterGroup publishes this reference to platform MBean server in constructor
     * [FLUME-1683] - Fix Time Granularity Bug in SpoolingFileLineReader
     * [FLUME-1690] - Elastic Search Sink doesn't run it's unit tests
+    * [FLUME-1712] - Regex Extractor Interceptor tests have timezone issues
+    * [FLUME-1705] - SpoolDirectory short name points at the wrong class
 
 ** Test
     * [FLUME-1492] - Create integration test for file channel
