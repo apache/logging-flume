@@ -23,9 +23,8 @@ public enum InterceptorType {
   TIMESTAMP(org.apache.flume.interceptor.TimestampInterceptor.Builder.class),
   HOST(org.apache.flume.interceptor.HostInterceptor.Builder.class),
   STATIC(org.apache.flume.interceptor.StaticInterceptor.Builder.class),
-  REGEX_FILTER(
-      org.apache.flume.interceptor.RegexFilteringInterceptor.Builder.class),
-  REGEX_EXTRACTOR(org.apache.flume.interceptor.RegexExtractorInterceptor.Builder.class);
+  REGEX_FILTER(org.apache.flume.interceptor.RegexFilteringInterceptor.Builder.class)
+  ;
 
   private final Class<? extends Interceptor.Builder> builderClass;
 
