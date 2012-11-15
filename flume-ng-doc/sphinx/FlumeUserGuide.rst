@@ -594,7 +594,7 @@ specific header, the channel is considered to be required, and a failure in the
 channel will cause the entire set of required channels to be retried. For
 instance, in the above example, for the header "CA" mem-channel-1 is considered
 to be a required channel even though it is marked both as required and optional,
- and a failure to write to this channel will cause that
+and a failure to write to this channel will cause that
 event to be retried on **all** channels configured for the selector.
 
 Note that if a header does not have any required channels, then the event will
@@ -722,23 +722,23 @@ greater than the longest line you expect to see in your input data.
              adding unique identifiers (such as a timestamp) to log file names
              when they are copied into the spooling directory.
 
-=================    ============   ==========================================================
-Property Name        Default        Description
-=================    ============   ==========================================================
-**channels**         --
-**type**             --             The component type name, needs to be ``spooldir``
-**spoolDir**         --             The directory where log files will be spooled
-fileSuffix           .COMPLETED     Suffix to append to completely ingested files
-fileHeader           false	   Whether to add a header storing the filename
-fileHeaderKey        file           Header key to use when appending filename to header
-batchSize            10             Granularity at which to batch transfer to the channel
-bufferMaxLines       100            Maximum number of lines the commit buffer can hold
-bufferMaxLineLength  5000           Maximum length of a line in the commit buffer
-selector.type        replicating    replicating or multiplexing
-selector.*                          Depends on the selector.type value
-interceptors         --             Space separated list of interceptors
+====================  ==============  ==========================================================
+Property Name         Default         Description
+====================  ==============  ==========================================================
+**channels**          --
+**type**              --              The component type name, needs to be ``spooldir``
+**spoolDir**          --              The directory where log files will be spooled
+fileSuffix            .COMPLETED      Suffix to append to completely ingested files
+fileHeader            false           Whether to add a header storing the filename
+fileHeaderKey         file            Header key to use when appending filename to header
+batchSize             10              Granularity at which to batch transfer to the channel
+bufferMaxLines        100             Maximum number of lines the commit buffer can hold
+bufferMaxLineLength   5000            Maximum length of a line in the commit buffer
+selector.type         replicating     replicating or multiplexing
+selector.*                            Depends on the selector.type value
+interceptors          --              Space separated list of interceptors
 interceptors.*
-=================    ============   ==========================================================
+====================  ==============  ==========================================================
 
 Example for agent named **agent_foo**:
 
@@ -1122,7 +1122,7 @@ Property Name   Default      Description
 ==============  ===========  ==============================================
 **type**        --           The component type name, needs to be ``org.apache.flume.source.scribe.ScribeSource``
 port            1499         Port that Scribe should be connected
-workerThreads   5			 Handing threads number in Thrift
+workerThreads   5            Handing threads number in Thrift
 ==============  ===========  ==============================================
 
 Example for agent named **agent_foo**:
@@ -1488,10 +1488,10 @@ Property Name     Default                                                       
 ================  ==================================================================  =======================================================================================================
 **channel**       --
 **type**          --                                                                  The component type name, needs to be ``org.apache.flume.sink.elasticsearch.ElasticSearchSink``
-**hostNames**     --								      Comma separated list of hostname:port, if the port is not present the default port '9300' will be used
+**hostNames**     --                                                                  Comma separated list of hostname:port, if the port is not present the default port '9300' will be used
 indexName         flume                                                               The name of the index which the date will be appended to. Example 'flume' -> 'flume-yyyy-MM-dd'
-indexType	  logs                                                                The type to index the document to, defaults to 'log'
-clusterName       elasticsearch							      Name of the ElasticSearch cluster to connect to
+indexType         logs                                                                The type to index the document to, defaults to 'log'
+clusterName       elasticsearch                                                       Name of the ElasticSearch cluster to connect to
 batchSize         100                                                                 Number of events to be written per txn.
 ttl               --                                                                  TTL in days, when set will cause the expired documents to be deleted automatically,
                                                                                       if not set documents will never be automatically deleted
@@ -2458,42 +2458,42 @@ TBD
 Component Summary
 =================
 
-========================================  ==================  ====================================================================
-Component Interface                       Type                Implementation Class
-========================================  ==================  ====================================================================
-org.apache.flume.Channel                  MEMORY              org.apache.flume.channel.MemoryChannel
-org.apache.flume.Channel                  JDBC                org.apache.flume.channel.jdbc.JdbcChannel
-org.apache.flume.Channel                  --                  org.apache.flume.channel.recoverable.memory.RecoverableMemoryChannel
-org.apache.flume.Channel                  FILE                org.apache.flume.channel.file.FileChannel
-org.apache.flume.Channel                  --                  org.apache.flume.channel.PseudoTxnMemoryChannel
-org.apache.flume.Channel                  --                  org.example.MyChannel
-org.apache.flume.Source                   AVRO                org.apache.flume.source.AvroSource
-org.apache.flume.Source                   NETCAT              org.apache.flume.source.NetcatSource
-org.apache.flume.Source                   SEQ                 org.apache.flume.source.SequenceGeneratorSource
-org.apache.flume.Source                   EXEC                org.apache.flume.source.ExecSource
-org.apache.flume.Source                   SYSLOGTCP           org.apache.flume.source.SyslogTcpSource
-org.apache.flume.Source                   MULTIPORT_SYSLOGTCP org.apache.flume.source.MultiportSyslogTCPSource
-org.apache.flume.Source                   SYSLOGUDP           org.apache.flume.source.SyslogUDPSource
-org.apache.flume.Source                   --                  org.apache.flume.source.avroLegacy.AvroLegacySource
-org.apache.flume.Source                   --                  org.apache.flume.source.thriftLegacy.ThriftLegacySource
-org.apache.flume.Source                   --                  org.example.MySource
-org.apache.flume.Sink                     NULL                org.apache.flume.sink.NullSink
-org.apache.flume.Sink                     LOGGER              org.apache.flume.sink.LoggerSink
-org.apache.flume.Sink                     AVRO                org.apache.flume.sink.AvroSink
-org.apache.flume.Sink                     HDFS                org.apache.flume.sink.hdfs.HDFSEventSink
-org.apache.flume.Sink                     --                  org.apache.flume.sink.hbase.HBaseSink
-org.apache.flume.Sink                     --                  org.apache.flume.sink.hbase.AsyncHBaseSink
-org.apache.flume.Sink                     --                  org.apache.flume.sink.elasticsearch.ElasticSearchSink
-org.apache.flume.Sink                     FILE_ROLL           org.apache.flume.sink.RollingFileSink
-org.apache.flume.Sink                     IRC                 org.apache.flume.sink.irc.IRCSink
-org.apache.flume.Sink                     --                  org.example.MySink
-org.apache.flume.ChannelSelector          REPLICATING         org.apache.flume.channel.ReplicatingChannelSelector
-org.apache.flume.ChannelSelector          MULTIPLEXING        org.apache.flume.channel.MultiplexingChannelSelector
-org.apache.flume.ChannelSelector          --                  org.example.MyChannelSelector
-org.apache.flume.SinkProcessor            DEFAULT             org.apache.flume.sink.DefaultSinkProcessor
-org.apache.flume.SinkProcessor            FAILOVER            org.apache.flume.sink.FailoverSinkProcessor
-org.apache.flume.SinkProcessor            LOAD_BALANCE        org.apache.flume.sink.LoadBalancingSinkProcessor
-org.apache.flume.interceptor.Interceptor  TIMESTAMP           org.apache.flume.interceptor.TimestampInterceptor$Builder
-org.apache.flume.interceptor.Interceptor  HOST                org.apache.flume.interceptor.HostInterceptor$Builder
-org.apache.flume.interceptor.Interceptor  STATIC              org.apache.flume.interceptor.StaticInterceptor$Builder
-========================================  ==================  ====================================================================
+========================================  ======================  ====================================================================
+Component Interface                       Type                    Implementation Class
+========================================  ======================  ====================================================================
+org.apache.flume.Channel                  MEMORY                  org.apache.flume.channel.MemoryChannel
+org.apache.flume.Channel                  JDBC                    org.apache.flume.channel.jdbc.JdbcChannel
+org.apache.flume.Channel                  --                      org.apache.flume.channel.recoverable.memory.RecoverableMemoryChannel
+org.apache.flume.Channel                  FILE                    org.apache.flume.channel.file.FileChannel
+org.apache.flume.Channel                  --                      org.apache.flume.channel.PseudoTxnMemoryChannel
+org.apache.flume.Channel                  --                      org.example.MyChannel
+org.apache.flume.Source                   AVRO                    org.apache.flume.source.AvroSource
+org.apache.flume.Source                   NETCAT                  org.apache.flume.source.NetcatSource
+org.apache.flume.Source                   SEQ                     org.apache.flume.source.SequenceGeneratorSource
+org.apache.flume.Source                   EXEC                    org.apache.flume.source.ExecSource
+org.apache.flume.Source                   SYSLOGTCP               org.apache.flume.source.SyslogTcpSource
+org.apache.flume.Source                   MULTIPORT_SYSLOGTCP     org.apache.flume.source.MultiportSyslogTCPSource
+org.apache.flume.Source                   SYSLOGUDP               org.apache.flume.source.SyslogUDPSource
+org.apache.flume.Source                   --                      org.apache.flume.source.avroLegacy.AvroLegacySource
+org.apache.flume.Source                   --                      org.apache.flume.source.thriftLegacy.ThriftLegacySource
+org.apache.flume.Source                   --                      org.example.MySource
+org.apache.flume.Sink                     NULL                    org.apache.flume.sink.NullSink
+org.apache.flume.Sink                     LOGGER                  org.apache.flume.sink.LoggerSink
+org.apache.flume.Sink                     AVRO                    org.apache.flume.sink.AvroSink
+org.apache.flume.Sink                     HDFS                    org.apache.flume.sink.hdfs.HDFSEventSink
+org.apache.flume.Sink                     --                      org.apache.flume.sink.hbase.HBaseSink
+org.apache.flume.Sink                     --                      org.apache.flume.sink.hbase.AsyncHBaseSink
+org.apache.flume.Sink                     --                      org.apache.flume.sink.elasticsearch.ElasticSearchSink
+org.apache.flume.Sink                     FILE_ROLL               org.apache.flume.sink.RollingFileSink
+org.apache.flume.Sink                     IRC                     org.apache.flume.sink.irc.IRCSink
+org.apache.flume.Sink                     --                      org.example.MySink
+org.apache.flume.ChannelSelector          REPLICATING             org.apache.flume.channel.ReplicatingChannelSelector
+org.apache.flume.ChannelSelector          MULTIPLEXING            org.apache.flume.channel.MultiplexingChannelSelector
+org.apache.flume.ChannelSelector          --                      org.example.MyChannelSelector
+org.apache.flume.SinkProcessor            DEFAULT                 org.apache.flume.sink.DefaultSinkProcessor
+org.apache.flume.SinkProcessor            FAILOVER                org.apache.flume.sink.FailoverSinkProcessor
+org.apache.flume.SinkProcessor            LOAD_BALANCE            org.apache.flume.sink.LoadBalancingSinkProcessor
+org.apache.flume.interceptor.Interceptor  TIMESTAMP               org.apache.flume.interceptor.TimestampInterceptor$Builder
+org.apache.flume.interceptor.Interceptor  HOST                    org.apache.flume.interceptor.HostInterceptor$Builder
+org.apache.flume.interceptor.Interceptor  STATIC                  org.apache.flume.interceptor.StaticInterceptor$Builder
+========================================  ======================  ====================================================================
