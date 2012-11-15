@@ -60,8 +60,8 @@ recognized by the target Flume source. For example, an Avro Flume source can be
 used to receive Avro events from Avro clients or other Flume agents in the flow
 that send events from an Avro sink. When a Flume source receives an event, it
 stores it into one or more channels. The channel is a passive store that keeps
-the event until it's consumed by a Flume sink. The JDBC channel is one example
--- it uses a filesystem backed embedded database. The sink removes the event
+the event until it's consumed by a Flume sink. The file channel is one example
+-- it is backed by the local filesystem. The sink removes the event
 from the channel and puts it into an external repository like HDFS (via Flume
 HDFS sink) or forwards it to the Flume source of the next Flume agent (next
 hop) in the flow. The source and sink within the given agent run asynchronously
@@ -97,7 +97,7 @@ Recoverability
 ~~~~~~~~~~~~~~
 
 The events are staged in the channel, which manages recovery from failure.
-Flume supports a durable JDBC channel which is backed by a relational database.
+Flume supports a durable file channel which is backed by the local file system.
 There's also a memory channel which simply stores the events in an in-memory
 queue, which is faster but any events still left in the memory channel when an
 agent process dies can't be recovered.
@@ -132,10 +132,10 @@ Wiring the pieces together
 The agent needs to know what individual components to load and how they are
 connected in order to constitute the flow. This is done by listing the names of
 each of the sources, sinks and channels in the agent, and then specifying the
-connecting channel for each sink and source. For example, a agent flows events
-from an Avro source called avroWeb to HDFS sink hdfs-cluster1 via a JDBC
-channel called jdbc-channel. The configuration file will contain names of these
-components and jdbc-channel as a shared channel for both avroWeb source and
+connecting channel for each sink and source. For example, an agent flows events
+from an Avro source called avroWeb to HDFS sink hdfs-cluster1 via a file
+channel called file-channel. The configuration file will contain names of these
+components and file-channel as a shared channel for both avroWeb source and
 hdfs-cluster1 sink.
 
 Starting an agent
@@ -152,41 +152,47 @@ properties file.
 
 A simple example
 ~~~~~~~~~~~~~~~~
-Here, we give an example configuration file, describing a single-node Flume deployment. This configuration lets a user generate events and subsequently logs them to the console.
+Here, we give an example configuration file, describing a single-node Flume deployment.
+This configuration lets a user generate events and subsequently logs them to the console.
 
 .. code-block:: properties
 
   # example.conf: A single-node Flume configuration
 
   # Name the components on this agent
-  agent1.sources = source1
-  agent1.sinks = sink1
-  agent1.channels = channel1
+  a1.sources = r1
+  a1.sinks = k1
+  a1.channels = c1
 
-  # Describe/configure source1
-  agent1.sources.source1.type = netcat
-  agent1.sources.source1.bind = localhost
-  agent1.sources.source1.port = 44444
+  # Describe/configure the source
+  a1.sources.r1.type = netcat
+  a1.sources.r1.bind = localhost
+  a1.sources.r1.port = 44444
 
-  # Describe sink1
-  agent1.sinks.sink1.type = logger
+  # Describe the sink
+  a1.sinks.k1.type = logger
 
   # Use a channel which buffers events in memory
-  agent1.channels.channel1.type = memory
-  agent1.channels.channel1.capacity = 1000
-  agent1.channels.channel1.transactionCapactiy = 100
+  a1.channels.c1.type = memory
+  a1.channels.c1.capacity = 1000
+  a1.channels.c1.transactionCapacity = 100
 
   # Bind the source and sink to the channel
-  agent1.sources.source1.channels = channel1
-  agent1.sinks.sink1.channel = channel1
+  a1.sources.r1.channels = c1
+  a1.sinks.k1.channel = c1
 
-This configuration defines a single agent, called *agent1*. *agent1* has a source that listens for data on port 44444, a channel that buffers event data in memory, and a sink that logs event data to the console. The configuration file names the various components, then describes their types and configuration parameters. A given configuration file might define several named agents; when a given Flume process is launched a flag is passed telling it which named agent to manifest.
+This configuration defines a single agent named a1. a1 has a source that listens for data on port 44444, a channel
+that buffers event data in memory, and a sink that logs event data to the console. The configuration file names the
+various components, then describes their types and configuration parameters. A given configuration file might define 
+several named agents; when a given Flume process is launched a flag is passed telling it which named agent to manifest.
 
 Given this configuration file, we can start Flume as follows::
 
-  $ bin/flume-ng agent --conf-file example.conf --name agent1 -Dflume.root.logger=INFO,console
+  $ bin/flume-ng agent --conf-file example.conf --name a1 -Dflume.root.logger=INFO,console
 
-Note that in a full deployment we would typically include one more option: ``--conf=<conf-dir>``. The ``<conf-dir>`` directory would include a shell script *flume-env.sh* and potentially a log4j properties file. In this example, we pass a Java option to force Flume to log to the console and we go without a custom environment script.
+Note that in a full deployment we would typically include one more option: ``--conf=<conf-dir>``.
+The ``<conf-dir>`` directory would include a shell script *flume-env.sh* and potentially a log4j properties file.
+In this example, we pass a Java option to force Flume to log to the console and we go without a custom environment script.
 
 From a separate terminal, we can then telnet port 44444 and send Flume an event:
 
@@ -417,15 +423,15 @@ config to do that:
   # list the sources, sinks and channels in the agent
   agent_foo.sources = avro-AppSrv-source1 exec-tail-source2
   agent_foo.sinks = hdfs-Cluster1-sink1 avro-forward-sink2
-  agent_foo.channels = mem-channel-1 jdbc-channel-2
+  agent_foo.channels = mem-channel-1 file-channel-2
 
   # flow #1 configuration
   agent_foo.sources.avro-AppSrv-source1.channels = mem-channel-1
   agent_foo.sinks.hdfs-Cluster1-sink1.channel = mem-channel-1
 
   # flow #2 configuration
-  agent_foo.sources.exec-tail-source2.channels = jdbc-channel-2
-  agent_foo.sinks.avro-forward-sink2.channel = jdbc-channel-2
+  agent_foo.sources.exec-tail-source2.channels = file-channel-2
+  agent_foo.sinks.avro-forward-sink2.channel = file-channel-2
 
 Configuring a multi agent flow
 ------------------------------
@@ -444,11 +450,11 @@ Weblog agent config:
   # list sources, sinks and channels in the agent
   agent_foo.sources = avro-AppSrv-source
   agent_foo.sinks = avro-forward-sink
-  agent_foo.channels = jdbc-channel
+  agent_foo.channels = file-channel
 
   # define the flow
-  agent_foo.sources.avro-AppSrv-source.channels = jdbc-channel
-  agent_foo.sinks.avro-forward-sink.channel = jdbc-channel
+  agent_foo.sources.avro-AppSrv-source.channels = file-channel
+  agent_foo.sinks.avro-forward-sink.channel = file-channel
 
   # avro sink properties
   agent_foo.sources.avro-forward-sink.type = avro
@@ -545,25 +551,25 @@ agent named agent_foo has a single avro source and two channels linked to two si
   # list the sources, sinks and channels in the agent
   agent_foo.sources = avro-AppSrv-source1
   agent_foo.sinks = hdfs-Cluster1-sink1 avro-forward-sink2
-  agent_foo.channels = mem-channel-1 jdbc-channel-2
+  agent_foo.channels = mem-channel-1 file-channel-2
 
   # set channels for source
-  agent_foo.sources.avro-AppSrv-source1.channels = mem-channel-1 jdbc-channel-2
+  agent_foo.sources.avro-AppSrv-source1.channels = mem-channel-1 file-channel-2
 
   # set channel for sinks
   agent_foo.sinks.hdfs-Cluster1-sink1.channel = mem-channel-1
-  agent_foo.sinks.avro-forward-sink2.channel = jdbc-channel-2
+  agent_foo.sinks.avro-forward-sink2.channel = file-channel-2
 
   # channel selector configuration
   agent_foo.sources.avro-AppSrv-source1.selector.type = multiplexing
   agent_foo.sources.avro-AppSrv-source1.selector.header = State
   agent_foo.sources.avro-AppSrv-source1.selector.mapping.CA = mem-channel-1
-  agent_foo.sources.avro-AppSrv-source1.selector.mapping.AZ = jdbc-channel-2
-  agent_foo.sources.avro-AppSrv-source1.selector.mapping.NY = mem-channel-1 jdbc-channel-2
+  agent_foo.sources.avro-AppSrv-source1.selector.mapping.AZ = file-channel-2
+  agent_foo.sources.avro-AppSrv-source1.selector.mapping.NY = mem-channel-1 file-channel-2
   agent_foo.sources.avro-AppSrv-source1.selector.default = mem-channel-1
 
 The selector checks for a header called "State". If the value is "CA" then its
-sent to mem-channel-1, if its "AZ" then it goes to jdbc-channel-2 or if its
+sent to mem-channel-1, if its "AZ" then it goes to file-channel-2 or if its
 "NY" then both. If the "State" header is not set or doesn't match any of the
 three, then it goes to mem-channel-1 which is designated as 'default'.
 
@@ -576,10 +582,10 @@ a header, the config parameter 'optional' is used in the following way:
   agent_foo.sources.avro-AppSrv-source1.selector.type = multiplexing
   agent_foo.sources.avro-AppSrv-source1.selector.header = State
   agent_foo.sources.avro-AppSrv-source1.selector.mapping.CA = mem-channel-1
-  agent_foo.sources.avro-AppSrv-source1.selector.mapping.AZ = jdbc-channel-2
-  agent_foo.sources.avro-AppSrv-source1.selector.mapping.NY = mem-channel-1 jdbc-channel-2
-  agent_foo.sources.avro-AppSrv-source1.selector.optional.CA = mem-channel-1 jdbc-channel-2
-  agent_foo.sources.avro-AppSrv-source1.selector.mapping.AZ = jdbc-channel-2
+  agent_foo.sources.avro-AppSrv-source1.selector.mapping.AZ = file-channel-2
+  agent_foo.sources.avro-AppSrv-source1.selector.mapping.NY = mem-channel-1 file-channel-2
+  agent_foo.sources.avro-AppSrv-source1.selector.optional.CA = mem-channel-1 file-channel-2
+  agent_foo.sources.avro-AppSrv-source1.selector.mapping.AZ = file-channel-2
   agent_foo.sources.avro-AppSrv-source1.selector.default = mem-channel-1
 
 The selector will attempt to write to the required channels first and will fail
@@ -623,20 +629,22 @@ Property Name   Default      Description
 **bind**        --           hostname or IP address to listen on
 **port**        --           Port # to bind to
 threads         --           Maximum number of worker threads to spawn
+selector.type
+selector.*
 interceptors    --           Space separated list of interceptors
 interceptors.*
 ==============  ===========  ===================================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sources = avrosource-1
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sources.avrosource-1.type = avro
-  agent_foo.sources.avrosource-1.channels = memoryChannel-1
-  agent_foo.sources.avrosource-1.bind = 0.0.0.0
-  agent_foo.sources.avrosource-1.port = 4141
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.type = avro
+  a1.sources.r1.channels = c1
+  a1.sources.r1.bind = 0.0.0.0
+  a1.sources.r1.port = 4141
 
 Exec Source
 ~~~~~~~~~~~
@@ -690,15 +698,15 @@ interceptors.*
           Just use unix command ``tail -F /full/path/to/your/file``. Parameter
           -F is better in this case than -f as it will also follow file rotation.
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sources = tailsource-1
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sources.tailsource-1.type = exec
-  agent_foo.sources.tailsource-1.command = tail -F /var/log/secure
-  agent_foo.sources.tailsource-1.channels = memoryChannel-1
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.type = exec
+  a1.sources.r1.command = tail -F /var/log/secure
+  a1.sources.r1.channels = c1
 
 Spooling Directory Source
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -740,16 +748,16 @@ interceptors          --              Space separated list of interceptors
 interceptors.*
 ====================  ==============  ==========================================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sources = spooldir-1
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sources.spooldir-1.type = spooldir
-  agent_foo.sources.spooldir-1.spoolDir = /var/log/apache/flumeSpool
-  agent_foo.sources.spooldir-1.fileHeader = true
-  agent_foo.sources.spooldir-1.channels = memoryChannel-1
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.type = spooldir
+  a1.sources.r1.spoolDir = /var/log/apache/flumeSpool
+  a1.sources.r1.fileHeader = true
+  a1.sources.r1.channels = c1
 
 NetCat Source
 ~~~~~~~~~~~~~
@@ -776,16 +784,16 @@ interceptors     --           Space separated list of interceptors
 interceptors.*
 ===============  ===========  ===========================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sources = ncsource-1
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sources.ncsource-1.type = netcat
-  agent_foo.sources.ncsource-1.bind = 0.0.0.0
-  agent_foo.sources.ncsource-1.bind = 6666
-  agent_foo.sources.ncsource-1.channels = memoryChannel-1
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.type = netcat
+  a1.sources.r1.bind = 0.0.0.0
+  a1.sources.r1.bind = 6666
+  a1.sources.r1.channels = c1
 
 Sequence Generator Source
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -803,16 +811,17 @@ selector.type                replicating or multiplexing
 selector.*      replicating  Depends on the selector.type value
 interceptors    --           Space separated list of interceptors
 interceptors.*
+batchSize       1
 ==============  ===========  ========================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sources = ncsource-1
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sources.ncsource-1.type = seq
-  agent_foo.sources.ncsource-1.channels = memoryChannel-1
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.type = seq
+  a1.sources.r1.channels = c1
 
 Syslog Sources
 ~~~~~~~~~~~~~~
@@ -842,16 +851,16 @@ interceptors     --           Space separated list of interceptors
 interceptors.*
 ==============   ===========  ==============================================
 
-For example, a syslog TCP source for agent named **agent_foo**:
+For example, a syslog TCP source for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sources = syslogsource-1
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sources.syslogsource-1.type = syslogtcp
-  agent_foo.sources.syslogsource-1.port = 5140
-  agent_foo.sources.syslogsource-1.host = localhost
-  agent_foo.sources.syslogsource-1.channels = memoryChannel-1
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.type = syslogtcp
+  a1.sources.r1.port = 5140
+  a1.sources.r1.host = localhost
+  a1.sources.r1.channels = c1
 
 Multiport Syslog TCP Source
 '''''''''''''''''''''''''''
@@ -884,17 +893,17 @@ interceptors          --                Space separated list of interceptors.
 interceptors.*
 ====================  ================  ==============================================
 
-For example, a multiport syslog TCP source for agent named **agent_foo**:
+For example, a multiport syslog TCP source for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sources = src-0
-  agent_foo.channels = ch-0
-  agent_foo.sources.src-0.type = multiport_syslogtcp
-  agent_foo.sources.src-0.channels = ch-0
-  agent_foo.sources.src-0.host = 0.0.0.0
-  agent_foo.sources.src-0.ports = 10001 10002 10003
-  agent_foo.sources.src-0.portHeader = port
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.type = multiport_syslogtcp
+  a1.sources.r1.channels = c1
+  a1.sources.r1.host = 0.0.0.0
+  a1.sources.r1.ports = 10001 10002 10003
+  a1.sources.r1.portHeader = port
 
 Syslog UDP Source
 '''''''''''''''''
@@ -913,16 +922,16 @@ interceptors.*
 ==============  ===========  ==============================================
 
 
-For example, a syslog UDP source for agent named **agent_foo**:
+For example, a syslog UDP source for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sources = syslogsource-1
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sources.syslogsource-1.type = syslogudp
-  agent_foo.sources.syslogsource-1.port = 5140
-  agent_foo.sources.syslogsource-1.host = localhost
-  agent_foo.sources.syslogsource-1.channels = memoryChannel-1
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.type = syslogudp
+  a1.sources.r1.port = 5140
+  a1.sources.r1.host = localhost
+  a1.sources.r1.channels = c1
 
 HTTP Source
 ~~~~~~~~~~~
@@ -953,17 +962,17 @@ interceptors    --                                           Space separated lis
 interceptors.*
 =================================================================================================================================
 
-For example, a http source for agent named **agent_foo**:
+For example, a http source for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sources = httpsource-1
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sources.httpsource-1.type = org.apache.flume.source.http.HTTPSource
-  agent_foo.sources.httpsource-1.port = 5140
-  agent_foo.sources.httpsource-1.channels = memoryChannel-1
-  agent_foo.sources.httpsource-1.handler = org.example.rest.RestHandler
-  agent_foo.sources.httpsource-1.handler.nickname = random props
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.type = org.apache.flume.source.http.HTTPSource
+  a1.sources.r1.port = 5140
+  a1.sources.r1.channels = c1
+  a1.sources.r1.handler = org.example.rest.RestHandler
+  a1.sources.r1.handler.nickname = random props
 
 JSONHandler
 '''''''''''
@@ -1044,16 +1053,16 @@ interceptors    --           Space separated list of interceptors
 interceptors.*
 ==============  ===========  ========================================================================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sources = legacysource-1
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sources.legacysource-1.type = org.apache.flume.source.avroLegacy.AvroLegacySource
-  agent_foo.sources.legacysource-1.host = 0.0.0.0
-  agent_foo.sources.legacysource-1.bind = 6666
-  agent_foo.sources.legacysource-1.channels = memoryChannel-1
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.type = org.apache.flume.source.avroLegacy.AvroLegacySource
+  a1.sources.r1.host = 0.0.0.0
+  a1.sources.r1.bind = 6666
+  a1.sources.r1.channels = c1
 
 Thrift Legacy Source
 ''''''''''''''''''''
@@ -1062,7 +1071,7 @@ Thrift Legacy Source
 Property Name   Default      Description
 ==============  ===========  ======================================================================================
 **channels**    --
-**type**        --           The component type name, needs to be ``org.apache.source.thriftLegacy.ThriftLegacySource``
+**type**        --           The component type name, needs to be ``org.apache.flume.source.thriftLegacy.ThriftLegacySource``
 **host**        --           The hostname or IP address to bind to
 **port**        --           The port # to listen on
 selector.type                replicating or multiplexing
@@ -1071,16 +1080,16 @@ interceptors    --           Space separated list of interceptors
 interceptors.*
 ==============  ===========  ======================================================================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sources = legacysource-1
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sources.legacysource-1.type = org.apache.source.thriftLegacy.ThriftLegacySource
-  agent_foo.sources.legacysource-1.host = 0.0.0.0
-  agent_foo.sources.legacysource-1.bind = 6666
-  agent_foo.sources.legacysource-1.channels = memoryChannel-1
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.type = org.apache.flume.source.thriftLegacy.ThriftLegacySource
+  a1.sources.r1.host = 0.0.0.0
+  a1.sources.r1.bind = 6666
+  a1.sources.r1.channels = c1
 
 Custom Source
 ~~~~~~~~~~~~~
@@ -1094,20 +1103,20 @@ Property Name   Default      Description
 ==============  ===========  ==============================================
 **channels**    --
 **type**        --           The component type name, needs to be your FQCN
-selector.type                replicating or multiplexing
+selector.type                ``replicating`` or ``multiplexing``
 selector.*      replicating  Depends on the selector.type value
 interceptors    --           Space separated list of interceptors
 interceptors.*
 ==============  ===========  ==============================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sources = legacysource-1
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sources.legacysource-1.type = your.namespace.YourClass
-  agent_foo.sources.legacysource-1.channels = memoryChannel-1
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.type = org.example.MySource
+  a1.sources.r1.channels = c1
 
 Scribe Source
 ~~~~~~~~~~~~~
@@ -1123,18 +1132,20 @@ Property Name   Default      Description
 **type**        --           The component type name, needs to be ``org.apache.flume.source.scribe.ScribeSource``
 port            1499         Port that Scribe should be connected
 workerThreads   5            Handing threads number in Thrift
+selector.type
+selector.*
 ==============  ===========  ==============================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sources = scribesource-1
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sources.scribesource-1.type = org.apache.flume.source.scribe.ScribeSource
-  agent_foo.sources.scribesource-1.port = 1463
-  agent_foo.sources.scribesource-1.workerThreads = 5
-  agent_foo.sources.scribesource-1.channels = memoryChannel-1
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.type = org.apache.flume.source.scribe.ScribeSource
+  a1.sources.r1.port = 1463
+  a1.sources.r1.workerThreads = 5
+  a1.sources.r1.channels = c1
 
 Flume Sinks
 -----------
@@ -1218,31 +1229,33 @@ hdfs.threadsPoolSize    10            Number of threads per HDFS sink for HDFS I
 hdfs.rollTimerPoolSize  1             Number of threads per HDFS sink for scheduling timed file rolling
 hdfs.kerberosPrincipal  --            Kerberos user principal for accessing secure HDFS
 hdfs.kerberosKeytab     --            Kerberos keytab for accessing secure HDFS
+hdfs.proxyUser
 hdfs.round              false         Should the timestamp be rounded down (if true, affects all time based escape sequences except %t)
 hdfs.roundValue         1             Rounded down to the highest multiple of this (in the unit configured using ``hdfs.roundUnit``), less than current time.
 hdfs.roundUnit          second        The unit of the round down value - ``second``, ``minute`` or ``hour``.
 hdfs.timeZone           Local Time    Name of the timezone that should be used for resolving the directory path, e.g. America/Los_Angeles.
-serializer              ``TEXT``      Other possible options include ``AVRO_EVENT`` or the
+serializer              ``TEXT``      Other possible options include ``avro_event`` or the
                                       fully-qualified class name of an implementation of the
                                       ``EventSerializer.Builder`` interface.
 serializer.*
 ======================  ============  ======================================================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sinks = hdfsSink-1
-  agent_foo.sinks.hdfsSink-1.type = hdfs
-  agent_foo.sinks.hdfsSink-1.channel = memoryChannel-1
-  agent_foo.sinks.hdfsSink-1.hdfs.path = /flume/events/%y-%m-%d/%H%M/%S
-  agent_foo.sinks.hdfsSink-1.hdfs.filePrefix = events-
-  agent_foo.sinks.hdfsSink-1.hdfs.round = true
-  agent_foo.sinks.hdfsSink-1.hdfs.roundValue = 10
-  agent_foo.sinks.hdfsSink-1.hdfs.roundUnit = minute
+  a1.channels = c1
+  a1.sinks = k1 
+  a1.sinks.k1.type = hdfs
+  a1.sinks.k1.channel = c1
+  a1.sinks.k1.hdfs.path = /flume/events/%y-%m-%d/%H%M/%S
+  a1.sinks.k1.hdfs.filePrefix = events-
+  a1.sinks.k1.hdfs.round = true
+  a1.sinks.k1.hdfs.roundValue = 10
+  a1.sinks.k1.hdfs.roundUnit = minute
 
-The above configuration will round down the timestamp to the last 10th minute. For example, an event with timestamp 11:54:34 AM, June 12, 2012 will cause the hdfs path to become ``/flume/events/2012-06-12/1150/00``.
+The above configuration will round down the timestamp to the last 10th minute. For example, an event with
+timestamp 11:54:34 AM, June 12, 2012 will cause the hdfs path to become ``/flume/events/2012-06-12/1150/00``.
 
 
 Logger Sink
@@ -1258,14 +1271,14 @@ Property Name   Default  Description
 **type**        --       The component type name, needs to be ``logger``
 ==============  =======  ===========================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sinks = loggerSink-1
-  agent_foo.sinks.loggerSink-1.type = logger
-  agent_foo.sinks.loggerSink-1.channel = memoryChannel-1
+  a1.channels = c1
+  a1.sinks = k1 
+  a1.sinks.k1.type = logger
+  a1.sinks.k1.channel = c1
 
 Avro Sink
 ~~~~~~~~~
@@ -1286,18 +1299,19 @@ Property Name    Default  Description
 batch-size       100      number of event to batch together for send.
 connect-timeout  20000    Amount of time (ms) to allow for the first (handshake) request.
 request-timeout  20000    Amount of time (ms) to allow for requests after the first.
+
 ===============  =======  ==============================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sinks = avroSink-1
-  agent_foo.sinks.avroSink-1.type = avro
-  agent_foo.sinks.avroSink-1.channel = memoryChannel-1
-  agent_foo.sinks.avroSink-1.hostname = 10.10.10.10
-  agent_foo.sinks.avroSink-1.port = 4545
+  a1.channels = c1
+  a1.sinks = k1 
+  a1.sinks.k1.type = avro
+  a1.sinks.k1.channel = c1
+  a1.sinks.k1.hostname = 10.10.10.10
+  a1.sinks.k1.port = 4545
 
 IRC Sink
 ~~~~~~~~
@@ -1324,17 +1338,17 @@ splitchars       \n       line separator (if you were to enter the default value
                           backslash, like this: "\\n")
 ===============  =======  ========================================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sinks = ircSink-1
-  agent_foo.sinks.ircSink-1.type = irc
-  agent_foo.sinks.ircSink-1.channel = memoryChannel-1
-  agent_foo.sinks.ircSink-1.hostname = irc.yourdomain.com
-  agent_foo.sinks.ircSink-1.nick = flume
-  agent_foo.sinks.ircSink-1.chan = #flume
+  a1.channels = c1
+  a1.sinks = k1 
+  a1.sinks.k1.type = irc
+  a1.sinks.k1.channel = c1
+  a1.sinks.k1.hostname = irc.yourdomain.com
+  a1.sinks.k1.nick = flume
+  a1.sinks.k1.chan = #flume
 
 File Roll Sink
 ~~~~~~~~~~~~~~
@@ -1346,21 +1360,22 @@ Required properties are in **bold**.
 Property Name        Default  Description
 ===================  =======  ======================================================================================================================
 **channel**          --
-**type**             --       The component type name, needs to be ``FILE_ROLL``.
+**type**             --       The component type name, needs to be ``file_roll``.
 **sink.directory**   --       The directory where files will be stored
 sink.rollInterval    30       Roll the file every 30 seconds. Specifying 0 will disable rolling and cause all events to be written to a single file.
-sink.serializer      TEXT     Other possible options include AVRO_EVENT or the FQCN of an implementation of EventSerializer.Builder interface.
+sink.serializer      TEXT     Other possible options include ``avro_event`` or the FQCN of an implementation of EventSerializer.Builder interface.
+batchSize            100
 ===================  =======  ======================================================================================================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sinks = fileSink-1
-  agent_foo.sinks.fileSink-1.type = FILE_ROLL
-  agent_foo.sinks.fileSink-1.channel = memoryChannel-1
-  agent_foo.sinks.fileSink-1.sink.directory = /var/log/flume
+  a1.channels = c1
+  a1.sinks = k1 
+  a1.sinks.k1.type = file_roll
+  a1.sinks.k1.channel = c1
+  a1.sinks.k1.sink.directory = /var/log/flume
 
 Null Sink
 ~~~~~~~~~
@@ -1372,17 +1387,18 @@ Required properties are in **bold**.
 Property Name  Default  Description
 =============  =======  ==============================================
 **channel**    --
-**type**       --       The component type name, needs to be ``NULL``.
+**type**       --       The component type name, needs to be ``null``.
+batchSize      100
 =============  =======  ==============================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sinks = nullSink-1
-  agent_foo.sinks.nullSink-1.type = NULL
-  agent_foo.sinks.nullSink-1.channel = memoryChannel-1
+  a1.channels = c1
+  a1.sinks = k1 
+  a1.sinks.k1.type = null
+  a1.sinks.k1.channel = c1
 
 HBaseSinks
 ~~~~~~~~~~
@@ -1412,7 +1428,7 @@ Required properties are in **bold**.
 Property Name     Default                                                 Description
 ================  ======================================================  ========================================================================
 **channel**       --
-**type**          --                                                      The component type name, needs to be ``org.apache.flume.sink.HBaseSink``
+**type**          --                                                      The component type name, needs to be ``org.apache.flume.sink.hbase.HBaseSink``
 **table**         --                                                      The name of the table in Hbase to write to.
 **columnFamily**  --                                                      The column family in Hbase to write to.
 batchSize         100                                                     Number of events to be written per txn.
@@ -1420,17 +1436,17 @@ serializer        org.apache.flume.sink.hbase.SimpleHbaseEventSerializer
 serializer.*      --                                                      Properties to be passed to the serializer.
 ================  ======================================================  ========================================================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sinks = hbaseSink-1
-  agent_foo.sinks.hbaseSink-1.type = org.apache.flume.sink.hbase.HBaseSink
-  agent_foo.sinks.hbaseSink-1.table = foo_table
-  agent_foo.sinks.hbaseSink-1.columnFamily = bar_cf
-  agent_foo.sinks.hbaseSink-1.serializer = org.apache.flume.sink.hbase.RegexHbaseEventSerializer
-  agent_foo.sinks.hbaseSink-1.channel = memoryChannel-1
+  a1.channels = c1
+  a1.sinks = k1 
+  a1.sinks.k1.type = org.apache.flume.sink.hbase.HBaseSink
+  a1.sinks.k1.table = foo_table
+  a1.sinks.k1.columnFamily = bar_cf
+  a1.sinks.k1.serializer = org.apache.flume.sink.hbase.RegexHbaseEventSerializer
+  a1.sinks.k1.channel = c1
 
 AsyncHBaseSink
 ''''''''''''''
@@ -1450,7 +1466,7 @@ Required properties are in **bold**.
 Property Name     Default                                                       Description
 ================  ============================================================  ====================================================================================
 **channel**       --
-**type**          --                                                            The component type name, needs to be ``org.apache.flume.sink.AsyncHBaseSink``
+**type**          --                                                            The component type name, needs to be ``org.apache.flume.sink.hbase.AsyncHBaseSink``
 **table**         --                                                            The name of the table in Hbase to write to.
 **columnFamily**  --                                                            The column family in Hbase to write to.
 batchSize         100                                                           Number of events to be written per txn.
@@ -1460,17 +1476,17 @@ serializer        org.apache.flume.sink.hbase.SimpleAsyncHbaseEventSerializer
 serializer.*      --                                                            Properties to be passed to the serializer.
 ================  ============================================================  ====================================================================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sinks = hbaseSink-1
-  agent_foo.sinks.hbaseSink-1.type = org.apache.flume.sink.hbase.AsyncHBaseSink
-  agent_foo.sinks.hbaseSink-1.table = foo_table
-  agent_foo.sinks.hbaseSink-1.columnFamily = bar_cf
-  agent_foo.sinks.hbaseSink-1.serializer = org.apache.flume.sink.hbase.SimpleAsyncHbaseEventSerializer
-  agent_foo.sinks.hbaseSink-1.channel = memoryChannel-1
+  a1.channels = c1
+  a1.sinks = k1 
+  a1.sinks.k1.type = org.apache.flume.sink.hbase.AsyncHBaseSink
+  a1.sinks.k1.table = foo_table
+  a1.sinks.k1.columnFamily = bar_cf
+  a1.sinks.k1.serializer = org.apache.flume.sink.hbase.SimpleAsyncHbaseEventSerializer
+  a1.sinks.k1.channel = c1
 
 ElasticSearchSink
 '''''''''''''''''
@@ -1499,21 +1515,21 @@ serializer        org.apache.flume.sink.elasticsearch.ElasticSearchDynamicSerial
 serializer.*      --                                                                  Properties to be passed to the serializer.
 ================  ==================================================================  =======================================================================================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sinks = esSink-1
-  agent_foo.sinks.esSink-1.type = org.apache.flume.sink.elasticsearch.ElasticSearchSink
-  agent_foo.sinks.esSink-1.hostNames = 127.0.0.1:9200,127.0.0.2:9300
-  agent_foo.sinks.esSink-1.indexName = foo_index
-  agent_foo.sinks.esSink-1.indexType = bar_type
-  agent_foo.sinks.esSink-1.clusterName = foobar_cluster
-  agent_foo.sinks.esSink-1.batchSize = 500
-  agent_foo.sinks.esSink-1.ttl = 5
-  agent_foo.sinks.esSink-1.serializer = org.apache.flume.sink.elasticsearch.ElasticSearchDynamicSerializer
-  agent_foo.sinks.esSink-1.channel = memoryChannel-1
+  a1.channels = c1
+  a1.sinks = k1 
+  a1.sinks.k1.type = org.apache.flume.sink.elasticsearch.ElasticSearchSink
+  a1.sinks.k1.hostNames = 127.0.0.1:9200,127.0.0.2:9300
+  a1.sinks.k1.indexName = foo_index
+  a1.sinks.k1.indexType = bar_type
+  a1.sinks.k1.clusterName = foobar_cluster
+  a1.sinks.k1.batchSize = 500
+  a1.sinks.k1.ttl = 5
+  a1.sinks.k1.serializer = org.apache.flume.sink.elasticsearch.ElasticSearchDynamicSerializer
+  a1.sinks.k1.channel = c1
 
 Custom Sink
 ~~~~~~~~~~~
@@ -1530,14 +1546,14 @@ Property Name  Default  Description
 **type**       --       The component type name, needs to be your FQCN
 =============  =======  ==============================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.channels = memoryChannel-1
-  agent_foo.sinks = customSink-1
-  agent_foo.sinks.customSink-1.type = your.namespace.YourClass
-  agent_foo.sinks.customSink-1.channel = memoryChannel-1
+  a1.channels = c1
+  a1.sinks = k1 
+  a1.sinks.k1.type = org.example.MySink
+  a1.sinks.k1.channel = c1
 
 Flume Channels
 --------------
@@ -1562,13 +1578,13 @@ transactionCapacity  100      The max number of events stored in the channel per
 keep-alive           3        Timeout in seconds for adding or removing an event
 ===================  =======  ==============================================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.channels = memoryChannel-1
-  agent_foo.channels.memoryChannel-1.type = memory
-  agent_foo.channels.memoryChannel-1.capacity = 1000
+  a1.channels = c1
+  a1.channels.c1.type = memory
+  a1.channels.c1.capacity = 1000
 
 JDBC Channel
 ~~~~~~~~~~~~
@@ -1599,12 +1615,12 @@ sysprop.*                                                         DB Vendor spec
 sysprop.user.home                                                 Home path to store embedded Derby database
 ==========================  ====================================  =================================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.channels = jdbcChannel-1
-  agent_foo.channels.jdbcChannel-1.type = jdbc
+  a1.channels = c1
+  a1.channels.c1.type = jdbc
 
 Recoverable Memory Channel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1626,6 +1642,9 @@ wal.rollSize            (0x04000000)                                     Max siz
 wal.minRetentionPeriod  300000                                           Min amount of time (in millis) to keep a log
 wal.workerInterval      60000                                            How often (in millis) the background worker checks for old logs
 wal.maxLogsSize         (0x20000000)                                     Total amt (in bytes) of logs to keep, excluding the current log
+capacity                100
+transactionCapacity     100
+keep-alive              3
 ======================  ===============================================  =========================================================================
 
 
@@ -1634,19 +1653,29 @@ File Channel
 
 Required properties are in **bold**.
 
-====================  ================================  ========================================================
+================================================  ================================  ========================================================
 Property Name         Default                           Description
-====================  ================================  ========================================================
-**type**              --                                The component type name, needs to be ``FILE``.
-checkpointDir         ~/.flume/file-channel/checkpoint  The directory where checkpoint file will be stored
-dataDirs              ~/.flume/file-channel/data        The directory where log files will be stored
-transactionCapacity   1000                              The maximum size of transaction supported by the channel
-checkpointInterval    30000                             Amount of time (in millis) between checkpoints
-maxFileSize           2146435071                        Max size (in bytes) of a single log file
-capacity              1000000                           Maximum capacity of the channel
-keep-alive            3                                 Amount of time (in sec) to wait for a put operation
-write-timeout         3                                 Amount of time (in sec) to wait for a write operation
-====================  ================================  ========================================================
+================================================  ================================  ========================================================
+**type**                                          --                                The component type name, needs to be ``file``.
+checkpointDir                                     ~/.flume/file-channel/checkpoint  The directory where checkpoint file will be stored
+dataDirs                                          ~/.flume/file-channel/data        The directory where log files will be stored
+transactionCapacity                               1000                              The maximum size of transaction supported by the channel
+checkpointInterval                                30000                             Amount of time (in millis) between checkpoints
+maxFileSize                                       2146435071                        Max size (in bytes) of a single log file
+capacity                                          1000000                           Maximum capacity of the channel
+keep-alive                                        3                                 Amount of time (in sec) to wait for a put operation
+write-timeout                                     3                                 Amount of time (in sec) to wait for a write operation
+checkpoint-timeout                                600                               Expert: Amount of time (in sec) to wait for a checkpoint
+use-log-replay-v1                                 false                             Expert: Use old replay logic
+use-fast-replay                                   false                             Expert: Replay without using queue
+encryption.activeKey                              --                                Key name used to encrypt new data
+encryption.cipherProvider                         --                                Cipher provider type, supported types: AESCTRNOPADDING
+encryption.keyProvider                            --                                Key provider type, supported types: JCEKSFILE
+encryption.keyProvider.keyStoreFile               --                                Path to the keystore file
+encrpytion.keyProvider.keyStorePasswordFile       --                                Path to the keystore password file
+encryption.keyProvider.keys                       --                                List of all keys (e.g. history of the activeKey setting)
+encyption.keyProvider.keys.*.passwordFile         --                                Path to the optional key password file
+================================================  ================================  ========================================================
 
 .. note:: By default the File Channel uses paths for checkpoint and data
           directories that are within the user home as specified above.
@@ -1660,14 +1689,71 @@ write-timeout         3                                 Amount of time (in sec) 
           be necessary to provide good performance where multiple disks are
           not available for checkpoint and data directories.
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.channels = fileChannel-1
-  agent_foo.channels.fileChannel-1.type = file
-  agent_foo.channels.fileChannel-1.checkpointDir = /mnt/flume/checkpoint
-  agent_foo.channels.fileChannel-1.dataDirs = /mnt/flume/data
+  a1.channels = c1
+  a1.channels.c1.type = file
+  a1.channels.c1.checkpointDir = /mnt/flume/checkpoint
+  a1.channels.c1.dataDirs = /mnt/flume/data
+
+**Encryption**
+
+Below is a few sample configurations:
+
+Generating a key with a password seperate from the key store password:
+
+.. code-block:: bash
+
+ keytool -genseckey -alias key-0 -keypass keyPassword -keyalg AES \
+   -keysize 128 -validity 9000 -keystore test.keystore \
+   -storetype jceks -storepass keyStorePassword
+
+Generating a key with the password the same as the key store password:      
+
+.. code-block:: bash
+
+  keytool -genseckey -alias key-1 -keyalg AES -keysize 128 -validity 9000 \
+    -keystore src/test/resources/test.keystore -storetype jceks \
+    -storepass keyStorePassword
+      
+
+.. code-block:: properties
+
+  a1.channels.c1.encryption.activeKey = key-0
+  a1.channels.c1.encryption.cipherProvider = AESCTRNOPADDING
+  a1.channels.c1.encryption.keyProvider = key-provider-0
+  a1.channels.c1.encryption.keyProvider.key-provider-0.type = JCEKSFILE
+  a1.channels.c1.encryption.keyProvider.key-provider-0.keyStoreFile = /path/to/my.keystore
+  a1.channels.c1.encryption.keyProvider.key-provider-0.keyStorePasswordFile = /path/to/my.keystore.password
+  a1.channels.c1.encryption.keyProvider.key-provider-0.keys = key-0
+
+Let's say you have aged key-0 out and new files should be encrypted with key-1:
+
+.. code-block:: properties
+
+  a1.channels.c1.encryption.activeKey = key-1
+  a1.channels.c1.encryption.cipherProvider = AESCTRNOPADDING
+  a1.channels.c1.encryption.keyProvider = key-provider-0
+  a1.channels.c1.encryption.keyProvider.key-provider-0.type = JCEKSFILE
+  a1.channels.c1.encryption.keyProvider.key-provider-0.keyStoreFile = /path/to/my.keystore
+  a1.channels.c1.encryption.keyProvider.key-provider-0.keyStorePasswordFile = /path/to/my.keystore.password
+  a1.channels.c1.encryption.keyProvider.key-provider-0.keys = key-0 key-1
+
+The same scenerio as above, however key-0 has it's own password:
+
+.. code-block:: properties
+
+  a1.channels.c1.encryption.activeKey = key-1
+  a1.channels.c1.encryption.cipherProvider = AESCTRNOPADDING
+  a1.channels.c1.encryption.keyProvider = key-provider-0
+  a1.channels.c1.encryption.keyProvider.key-provider-0.type = JCEKSFILE
+  a1.channels.c1.encryption.keyProvider.key-provider-0.keyStoreFile = /path/to/my.keystore
+  a1.channels.c1.encryption.keyProvider.key-provider-0.keyStorePasswordFile = /path/to/my.keystore.password
+  a1.channels.c1.encryption.keyProvider.key-provider-0.keys = key-0 key-1
+  a1.channels.c1.encryption.keyProvider.key-provider-0.keys.key-0.passwordFile = /path/to/key-0.password
+
 
 Pseudo Transaction Channel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1698,15 +1784,15 @@ Required properties are in **bold**.
 =============  =======  =================================================================
 Property Name  Default  Description
 =============  =======  =================================================================
-**type**       --       The component type name, needs to be a fully-qualified class name
+**type**       --       The component type name, needs to be a FQCN
 =============  =======  =================================================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.channels = customChannel-1
-  agent_foo.channels.customChannel-1.type = your.domain.YourClass
+  a1.channels = c1
+  a1.channels.c1.type = org.example.MyChannel
 
 Flume Channel Selectors
 -----------------------
@@ -1724,14 +1810,14 @@ Property Name  Default      Description
 selector.type  replicating  The component type name, needs to be ``replicating``
 =============  ===========  ================================================
 
-Example for agent named **agent_foo** and it's source called **source_foo**:
+Example for agent named a1 and it's source called r1:
 
 .. code-block:: properties
 
-  agent_foo.sources = source_foo
-  agent_foo.channels = channel-1 channel-2 channel-3
-  agent_foo.source.source_foo.selector.type = replicating
-  agent_foo.source.source_foo.channels = channel-1 channel-2 channel-3
+  a1.sources = r1
+  a1.channels = c1 c2 c3
+  a1.source.r1.selector.type = replicating
+  a1.source.r1.channels = c1 c2 c3
 
 Multiplexing Channel Selector
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1747,17 +1833,17 @@ selector.default    --
 selector.mapping.*  --
 ==================  =====================  =================================================
 
-Example for agent named **agent_foo** and it's source called **source_foo**:
+Example for agent named a1 and it's source called r1:
 
 .. code-block:: properties
 
-  agent_foo.sources = source_foo
-  agent_foo.channels = channel-1 channel-2 channel-3 channel-4
-  agent_foo.sources.source_foo.selector.type = multiplexing
-  agent_foo.sources.source_foo.selector.header = state
-  agent_foo.sources.source_foo.selector.mapping.CZ = channel-1
-  agent_foo.sources.source_foo.selector.mapping.US = channel-2 channel-3
-  agent_foo.sources.source_foo.selector.default = channel-4
+  a1.sources = r1
+  a1.channels = c1 c2 c3 c4
+  a1.sources.r1.selector.type = multiplexing
+  a1.sources.r1.selector.header = state
+  a1.sources.r1.selector.mapping.CZ = c1
+  a1.sources.r1.selector.mapping.US = c2 c3
+  a1.sources.r1.selector.default = c4
 
 Custom Channel Selector
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -1773,13 +1859,13 @@ Property Name  Default  Description
 selector.type  --       The component type name, needs to be your FQCN
 =============  =======  ==============================================
 
-Example for agent named **agent_foo** and it's source called **source_foo**:
+Example for agent named a1 and it's source called r1:
 
 .. code-block:: properties
 
-  agent_foo.sources = source_foo
-  agent_foo.channels = channel-1
-  agent_foo.sources.source_foo.selector.type = your.namespace.YourClass
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.selector.type = org.example.MyChannelSelector
 
 Flume Sink Processors
 ---------------------
@@ -1794,18 +1880,18 @@ Required properties are in **bold**.
 ===================  ===========  =================================================================================
 Property Name        Default      Description
 ===================  ===========  =================================================================================
-**processor.sinks**  --           Space separated list of sinks that are participating in the group
+**sinks**            --           Space separated list of sinks that are participating in the group
 **processor.type**   ``default``  The component type name, needs to be ``default``, ``failover`` or ``load_balance``
 ===================  ===========  =================================================================================
 
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sinkgroups = group1
-  agent_foo.sinkgroups.group1.sinks = sink1 sink2
-  agent_foo.sinkgroups.group1.processor.type = load_balance
+  a1.sinkgroups = g1
+  a1.sinkgroups.g1.sinks = k1 k2
+  a1.sinkgroups.g1.processor.type = load_balance
 
 Default Sink Processor
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -1836,22 +1922,22 @@ Required properties are in **bold**.
 =================================  ===========  ===================================================================================
 Property Name                      Default      Description
 =================================  ===========  ===================================================================================
-**processor.sinks**                --           Space separated list of sinks that are participating in the group
+**sinks**                          --           Space separated list of sinks that are participating in the group
 **processor.type**                 ``default``  The component type name, needs to be ``failover``
 **processor.priority.<sinkName>**  --             <sinkName> must be one of the sink instances associated with the current sink group
 processor.maxpenalty               30000        (in millis)
 =================================  ===========  ===================================================================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sinkgroups = group1
-  agent_foo.sinkgroups.group1.sinks = sink1 sink2
-  agent_foo.sinkgroups.group1.processor.type = failover
-  agent_foo.sinkgroups.group1.processor.priority.sink1 = 5
-  agent_foo.sinkgroups.group1.processor.priority.sink2 = 10
-  agent_foo.sinkgroups.group1.processor.maxpenalty = 10000
+  a1.sinkgroups = g1
+  a1.sinkgroups.g1.sinks = k1 k2
+  a1.sinkgroups.g1.processor.type = failover
+  a1.sinkgroups.g1.processor.priority.k1 = 5
+  a1.sinkgroups.g1.processor.priority.k2 = 10
+  a1.sinkgroups.g1.processor.maxpenalty = 10000
 
 
 Load balancing Sink Processor
@@ -1860,13 +1946,13 @@ Load balancing Sink Processor
 Load balancing sink processor provides the ability to load-balance flow over
 multiple sinks. It maintains an indexed list of active sinks on which the
 load must be distributed. Implementation supports distributing load using
-either via ``ROUND_ROBIN`` or ``RANDOM`` selection mechanisms.
-The choice of selection mechanism defaults to ``ROUND_ROBIN`` type,
+either via ``round_robin`` or ``random`` selection mechanisms.
+The choice of selection mechanism defaults to ``round_robin`` type,
 but can be overridden via configuration. Custom selection mechanisms are
 supported via custom classes that inherits from ``AbstractSinkSelector``.
 
 When invoked, this selector picks the next sink using its configured selection
-mechanism and invokes it. For ROUND_ROBIN and RANDOM In case the selected sink
+mechanism and invokes it. For ``round_robin`` and ``random`` In case the selected sink
 fails to deliver the event, the processor picks the next available sink via
 its configured selection mechanism. This implementation does not blacklist
 the failing sink and instead continues to optimistically attempt every
@@ -1889,20 +1975,20 @@ Property Name                         Default          Description
 **processor.sinks**                   --               Space separated list of sinks that are participating in the group
 **processor.type**                    ``default``      The component type name, needs to be ``load_balance``
 processor.backoff                     true             Should failed sinks be backed off exponentially.
-processor.selector                    ``ROUND_ROBIN``  Selection mechanism. Must be either ``ROUND_ROBIN``, ``RANDOM``
-                                                       or custom FQDN to class that inherits from ``AbstractSinkSelector``
+processor.selector                    ``round_robin``  Selection mechanism. Must be either ``round_robin``, ``random``
+                                                       or FQCN of custom class that inherits from ``AbstractSinkSelector``
 processor.selector.maxBackoffMillis   30000            used by backoff selectors to limit exponential backoff in miliseconds
 ====================================  ===============  ==========================================================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sinkgroups = group1
-  agent_foo.sinkgroups.group1.sinks = sink1 sink2
-  agent_foo.sinkgroups.group1.processor.type = load_balance
-  agent_foo.sinkgroups.group1.processor.backoff = true
-  agent_foo.sinkgroups.group1.processor.selector = random
+  a1.sinkgroups = g1
+  a1.sinkgroups.g1.sinks = k1 k2
+  a1.sinkgroups.g1.processor.type = load_balance
+  a1.sinkgroups.g1.processor.backoff = true
+  a1.sinkgroups.g1.processor.selector = random
 
 
 Custom Sink Processor
@@ -1913,14 +1999,14 @@ Custom sink processors are not supported at the moment.
 Event Serializers
 -----------------
 
-The ``FILE_ROLL`` sink and the ``HDFS`` sink both support the
+The ``file_roll`` sink and the ``hdfs`` sink both support the
 ``EventSerializer`` interface. Details of the EventSerializers that ship with
 Flume are provided below.
 
 Body Text Serializer
 ~~~~~~~~~~~~~~~~~~~~
 
-Alias: ``TEXT``. This interceptor writes the body of the event to an output
+Alias: ``text``. This interceptor writes the body of the event to an output
 stream without any transformation or modification. The event headers are
 ignored. Configuration options are as follows:
 
@@ -1931,21 +2017,21 @@ appendNewline              true              Whether a newline will be appended 
                                              of true assumes that events do not contain newlines, for legacy reasons.
 =========================  ================  ===========================================================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sinks = fileSink-1
-  agent_foo.sinks.fileSink-1.type = FILE_ROLL
-  agent_foo.sinks.fileSink-1.channel = memoryChannel-1
-  agent_foo.sinks.fileSink-1.sink.directory = /var/log/flume
-  agent_foo.sinks.fileSink-1.sink.serializer = TEXT
-  agent_foo.sinks.fileSink-1.sink.serializer.appendNewline = false
+  a1.sinks = k1 
+  a1.sinks.k1.type = file_roll
+  a1.sinks.k1.channel = c1
+  a1.sinks.k1.sink.directory = /var/log/flume
+  a1.sinks.k1.sink.serializer = text
+  a1.sinks.k1.sink.serializer.appendNewline = false
 
 Avro Event Serializer
 ~~~~~~~~~~~~~~~~~~~~~
 
-Alias: ``AVRO_EVENT``. This interceptor serializes Flume events into an Avro
+Alias: ``avro_event``. This interceptor serializes Flume events into an Avro
 container file. The schema used is the same schema used for Flume events
 in the Avro RPC mechanism. This serializers inherits from the
 ``AbstractAvroEventSerializer`` class. Configuration options are as follows:
@@ -1957,15 +2043,15 @@ syncIntervalBytes           2048000           Avro sync interval, in approximate
 compressionCodec            null              Avro compression codec. For supported codecs, see Avro's CodecFactory docs.
 ==========================  ================  ===========================================================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sinks.hdfsSink-1.type = hdfs
-  agent_foo.sinks.hdfsSink-1.channel = memoryChannel-1
-  agent_foo.sinks.hdfsSink-1.hdfs.path = /flume/events/%y-%m-%d/%H%M/%S
-  agent_foo.sinks.hdfsSink-1.serializer = AVRO_EVENT
-  agent_foo.sinks.hdfsSink-1.serializer.compressionCodec = snappy
+  a1.sinks.k1.type = hdfs
+  a1.sinks.k1.channel = c1
+  a1.sinks.k1.hdfs.path = /flume/events/%y-%m-%d/%H%M/%S
+  a1.sinks.k1.serializer = avro_event
+  a1.sinks.k1.serializer.compressionCodec = snappy
 
 
 Flume Interceptors
@@ -1984,22 +2070,22 @@ are named components, here is an example of how they are created through configu
 
 .. code-block:: properties
 
-  agent_foo.sources = source_foo
-  agent_foo.sinks = hdfs
-  agent_foo.channels = channel-1
-  agent_foo.sources.source_foo.interceptors = a b
-  agent_foo.sources.source_foo.interceptors.a.type = org.apache.flume.interceptor.HostInterceptor$Builder
-  agent_foo.sources.source_foo.interceptors.a.preserveExisting = false
-  agent_foo.sources.source_foo.interceptors.a.hostHeader = hostname
-  agent_foo.sources.source_foo.interceptors.b.type = org.apache.flume.interceptor.TimestampInterceptor$Builder
-  agent_foo.sinks.hdfs.filePrefix = FlumeData.%{CollectorHost}.%Y-%m-%d
-  agent_foo.sinks.hdfs.channel = channel-1
+  a1.sources = r1
+  a1.sinks = k1 
+  a1.channels = c1
+  a1.sources.r1.interceptors = i1 i2
+  a1.sources.r1.interceptors.i1.type = org.apache.flume.interceptor.HostInterceptor$Builder
+  a1.sources.r1.interceptors.i1.preserveExisting = false
+  a1.sources.r1.interceptors.i1.hostHeader = hostname
+  a1.sources.r1.interceptors.i2.type = org.apache.flume.interceptor.TimestampInterceptor$Builder
+  a1.sinks.k1.filePrefix = FlumeData.%{CollectorHost}.%Y-%m-%d
+  a1.sinks.k1.channel = c1
 
 Note that the interceptor builders are passed to the type config parameter. The interceptors are themselves
 configurable and can be passed configuration values just like they are passed to any other configurable component.
 In the above example, events are passed to the HostInterceptor first and the events returned by the HostInterceptor
 are then passed along to the TimestampInterceptor. You can specify either the fully qualified class name (FQCN)
-or the alias ``TIMESTAMP``. If you have multiple collectors writing to the same HDFS path then you could also use
+or the alias ``timestamp``. If you have multiple collectors writing to the same HDFS path then you could also use
 the HostInterceptor.
 
 Timestamp Interceptor
@@ -2012,20 +2098,20 @@ can preserve an existing timestamp if it is already present in the configuration
 ================  =======  ========================================================================
 Property Name     Default  Description
 ================  =======  ========================================================================
-**type**          --       The component type name, has to be ``TIMESTAMP`` or the FQCN
+**type**          --       The component type name, has to be ``timestamp`` or the FQCN
 preserveExisting  false    If the timestamp already exists, should it be preserved - true or false
 ================  =======  ========================================================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sources = source1
-  agent_foo.channels = channel1
-  agent_foo.sources.source1.channels =  channel1
-  agent_foo.sources.source1.type = SEQ
-  agent_foo.sources.source1.interceptors = inter1
-  agent_foo.sources.source1.interceptors.inter1.type = timestamp
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.channels =  c1
+  a1.sources.r1.type = seq
+  a1.sources.r1.interceptors = i1
+  a1.sources.r1.interceptors.i1.type = timestamp
 
 Host Interceptor
 ~~~~~~~~~~~~~~~~
@@ -2036,21 +2122,21 @@ with key ``host`` or a configured key whose value is the hostname or IP address 
 ================  =======  ========================================================================
 Property Name     Default  Description
 ================  =======  ========================================================================
-**type**          --       The component type name, has to be ``HOST``
+**type**          --       The component type name, has to be ``host``
 preserveExisting  false    If the host header already exists, should it be preserved - true or false
 useIP             true     Use the IP Address if true, else use hostname.
 hostHeader        host     The header key to be used.
 ================  =======  ========================================================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sources = source_foo
-  agent_foo.channels = channel-1
-  agent_foo.sources.source_foo.interceptors = host_int
-  agent_foo.sources.source_foo.interceptors.host_int.type = host
-  agent_foo.sources.source_foo.interceptors.host_int.hostHeader = hostname
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.interceptors = i1
+  a1.sources.r1.interceptors.i1.type = host
+  a1.sources.r1.interceptors.i1.hostHeader = hostname
 
 Static Interceptor
 ~~~~~~~~~~~~~~~~~~
@@ -2063,53 +2149,62 @@ multiple static interceptors each defining one static header.
 ================  =======  ========================================================================
 Property Name     Default  Description
 ================  =======  ========================================================================
-**type**          --       The component type name, has to be ``STATIC``
+**type**          --       The component type name, has to be ``static``
 preserveExisting  true     If configured header already exists, should it be preserved - true or false
 key               key      Name of header that should be created
 value             value    Static value that should be created
 ================  =======  ========================================================================
 
-Example for agent named **agent_foo**:
+Example for agent named a1:
 
 .. code-block:: properties
 
-  agent_foo.sources = source1
-  agent_foo.channels = channel1
-  agent_foo.sources.source1.channels =  channel1
-  agent_foo.sources.source1.type = SEQ
-  agent_foo.sources.source1.interceptors = inter1
-  agent_foo.sources.source1.interceptors.inter1.type = static
-  agent_foo.sources.source1.interceptors.inter1.key = datacenter
-  agent_foo.sources.source1.interceptors.inter1.value = NEW_YORK
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.channels =  c1
+  a1.sources.r1.type = seq
+  a1.sources.r1.interceptors = i1
+  a1.sources.r1.interceptors.i1.type = static
+  a1.sources.r1.interceptors.i1.key = datacenter
+  a1.sources.r1.interceptors.i1.value = NEW_YORK
 
 Regex Filtering Interceptor
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This interceptor filters events selectively by interpreting the event body as text and matching the text against a configured regular expression. The supplied regular expression can be used to include events or exclude events.
+This interceptor filters events selectively by interpreting the event body as text and matching the text against a configured regular expression.
+The supplied regular expression can be used to include events or exclude events.
 
 ================  =======  ========================================================================
 Property Name     Default  Description
 ================  =======  ========================================================================
-**type**          --       The component type name has to be ``REGEX_FILTER``
+**type**          --       The component type name has to be ``regex_filter``
 regex             ".*"     Regular expression for matching against events
-excludeEvents     false    If true, regex determines events to exclude, otherwise regex determines events to include.
+excludeEvents     false    If true, regex determines events to exclude, otherwise regex determines
+                           events to include.
 ================  =======  ========================================================================
 
 Regex Extractor Interceptor
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This interceptor extracts regex match groups using a specified regular expression and appends the match groups as headers on the event. It also supports pluggable serializers for formatting the match groups before adding them as event headers.
+This interceptor extracts regex match groups using a specified regular expression and appends the match groups as headers on the event.
+It also supports pluggable serializers for formatting the match groups before adding them as event headers.
 
-================  ============================== =================================================================================================
-Property Name     Default                        Description
-================  ============================== =================================================================================================
-**type**          --                             The component type name has to be ``REGEX_EXTRACTOR``
-**regex**         --                             Regular expression for matching against events
-**serializer**    --                             Serializers for mapping matches to header names and serializing their values. (See example below)
-                                                 The following are support serializers out of the box
-                                                 ``org.apache.flume.interceptor.RegexExtractorInterceptorPassThroughSerializer``
-                                                 ``org.apache.flume.interceptor.RegexExtractorInterceptorMillisSerializer``
-================  ============================== =================================================================================================
+================================ ========== =================================================================================================
+Property Name                    Default                        Description
+================================ ========== =================================================================================================
+**type**                         --         The component type name has to be ``regex_extractor``
+**regex**                        --         Regular expression for matching against events
+**serializers**                  --         Space-separated list of serializers for mapping matches to header names and serializing their
+                                            values. (See example below)
+                                            Flume provides built-in support for the following serializers:
+                                            ``org.apache.flume.interceptor.RegexExtractorInterceptorPassThroughSerializer``
+                                            ``org.apache.flume.interceptor.RegexExtractorInterceptorMillisSerializer``
+serializers.<s1>.type            default    Must be ``default`` (org.apache.flume.interceptor.RegexExtractorInterceptorPassThroughSerializer),
+                                            ``org.apache.flume.interceptor.RegexExtractorInterceptorMillisSerializer``,
+                                            or the FQCN of a custom class that implements ``org.apache.flume.interceptor.RegexExtractorInterceptorSerializer``
+serializers.<s1>.\ **name**      --
+serializers.*                    --         Serializer-specific properties
+================================ ========== =================================================================================================
 
 The serializers are used to map the matches to a header name and a formatted header value, by default you only need to specify
 the header name and the default ``org.apache.flume.interceptor.RegexExtractorInterceptorPassThroughSerializer`` will be used. 
@@ -2130,7 +2225,7 @@ If the Flume event body contained ``1:2:3.4foobar5`` and the following configura
   agent.sources.r1.interceptors.i1.serializers.s2.name = two
   agent.sources.r1.interceptors.i1.serializers.s3.name = three
 
-the extracted event will contain the same body but the following headers will have been added ``one=>1, two=>2, three=>3``
+The extracted event will contain the same body but the following headers will have been added ``one=>1, two=>2, three=>3``
 
 Example 2:
 ~~~~~~~~~~
@@ -2234,7 +2329,7 @@ and can be specified in the flume-env.sh:
 =======================  =======  =====================================================================================
 Property Name            Default  Description
 =======================  =======  =====================================================================================
-**type**                 --       The component type name, has to be ``GANGLIA``
+**type**                 --       The component type name, has to be ``ganglia``
 **hosts**                --       Comma separated list of ``hostname:port``
 pollInterval             60       Time, in seconds, between consecutive reporting to ganglia server
 isGanglia3               false    Ganglia server version is 3. By default, Flume sends in ganglia 3.1 format
@@ -2242,7 +2337,7 @@ isGanglia3               false    Ganglia server version is 3. By default, Flume
 
 We can start Flume with Ganglia support as follows::
 
-  $ bin/flume-ng agent --conf-file example.conf --name agent1 -Dflume.monitoring.type=GANGLIA -Dflume.monitoring.hosts=com.example:1234,com.example2:5455
+  $ bin/flume-ng agent --conf-file example.conf --name a1 -Dflume.monitoring.type=ganglia -Dflume.monitoring.hosts=com.example:1234,com.example2:5455
 
 JSON Reporting
 --------------
@@ -2284,13 +2379,13 @@ Here is an example:
 =======================  =======  =====================================================================================
 Property Name            Default  Description
 =======================  =======  =====================================================================================
-**type**                 --       The component type name, has to be ``HTTP``
+**type**                 --       The component type name, has to be ``http``
 port                     41414    The port to start the server on.
 =======================  =======  =====================================================================================
 
 We can start Flume with Ganglia support as follows::
 
-  $ bin/flume-ng agent --conf-file example.conf --name agent1 -Dflume.monitoring.type=HTTP -Dflume.monitoring.port=34545
+  $ bin/flume-ng agent --conf-file example.conf --name a1 -Dflume.monitoring.type=http -Dflume.monitoring.port=34545
 
 Metrics will then be available at **http://<hostname>:<port>/metrics** webpage.
 Custom components can report metrics as mentioned in the Ganglia section above.
@@ -2304,7 +2399,7 @@ the same way the GangliaServer is used for reporting. They can poll the platform
 mbean server to poll the mbeans for metrics. For example, if an HTTP
 monitoring service called ``HTTPReporting`` can be used as follows::
 
-  $ bin/flume-ng agent --conf-file example.conf --name agent1 -Dflume.monitoring.type=com.example.reporting.HTTPReporting -Dflume.monitoring.node=com.example:332
+  $ bin/flume-ng agent --conf-file example.conf --name a1 -Dflume.monitoring.type=com.example.reporting.HTTPReporting -Dflume.monitoring.node=com.example:332
 
 =======================  =======  ========================================
 Property Name            Default  Description
@@ -2473,7 +2568,7 @@ Handling agent failures
 
 If the Flume agent goes down then the all the flows hosted on that agent are
 aborted. Once the agent is restarted, then flow will resume. The flow using
-jdbc or other stable channel will resume processing events where it left
+file channel or other stable channel will resume processing events where it left
 off. If the agent can't be restarted on the same, then there an option to
 migrate the database to another hardware and setup a new Flume agent that
 can resume processing the events saved in the db. The database HA futures
@@ -2510,42 +2605,79 @@ TBD
 Component Summary
 =================
 
-========================================  ======================  ====================================================================
-Component Interface                       Type                    Implementation Class
-========================================  ======================  ====================================================================
-org.apache.flume.Channel                  MEMORY                  org.apache.flume.channel.MemoryChannel
-org.apache.flume.Channel                  JDBC                    org.apache.flume.channel.jdbc.JdbcChannel
-org.apache.flume.Channel                  --                      org.apache.flume.channel.recoverable.memory.RecoverableMemoryChannel
-org.apache.flume.Channel                  FILE                    org.apache.flume.channel.file.FileChannel
-org.apache.flume.Channel                  --                      org.apache.flume.channel.PseudoTxnMemoryChannel
-org.apache.flume.Channel                  --                      org.example.MyChannel
-org.apache.flume.Source                   AVRO                    org.apache.flume.source.AvroSource
-org.apache.flume.Source                   NETCAT                  org.apache.flume.source.NetcatSource
-org.apache.flume.Source                   SEQ                     org.apache.flume.source.SequenceGeneratorSource
-org.apache.flume.Source                   EXEC                    org.apache.flume.source.ExecSource
-org.apache.flume.Source                   SYSLOGTCP               org.apache.flume.source.SyslogTcpSource
-org.apache.flume.Source                   MULTIPORT_SYSLOGTCP     org.apache.flume.source.MultiportSyslogTCPSource
-org.apache.flume.Source                   SYSLOGUDP               org.apache.flume.source.SyslogUDPSource
-org.apache.flume.Source                   --                      org.apache.flume.source.avroLegacy.AvroLegacySource
-org.apache.flume.Source                   --                      org.apache.flume.source.thriftLegacy.ThriftLegacySource
-org.apache.flume.Source                   --                      org.example.MySource
-org.apache.flume.Sink                     NULL                    org.apache.flume.sink.NullSink
-org.apache.flume.Sink                     LOGGER                  org.apache.flume.sink.LoggerSink
-org.apache.flume.Sink                     AVRO                    org.apache.flume.sink.AvroSink
-org.apache.flume.Sink                     HDFS                    org.apache.flume.sink.hdfs.HDFSEventSink
-org.apache.flume.Sink                     --                      org.apache.flume.sink.hbase.HBaseSink
-org.apache.flume.Sink                     --                      org.apache.flume.sink.hbase.AsyncHBaseSink
-org.apache.flume.Sink                     --                      org.apache.flume.sink.elasticsearch.ElasticSearchSink
-org.apache.flume.Sink                     FILE_ROLL               org.apache.flume.sink.RollingFileSink
-org.apache.flume.Sink                     IRC                     org.apache.flume.sink.irc.IRCSink
-org.apache.flume.Sink                     --                      org.example.MySink
-org.apache.flume.ChannelSelector          REPLICATING             org.apache.flume.channel.ReplicatingChannelSelector
-org.apache.flume.ChannelSelector          MULTIPLEXING            org.apache.flume.channel.MultiplexingChannelSelector
-org.apache.flume.ChannelSelector          --                      org.example.MyChannelSelector
-org.apache.flume.SinkProcessor            DEFAULT                 org.apache.flume.sink.DefaultSinkProcessor
-org.apache.flume.SinkProcessor            FAILOVER                org.apache.flume.sink.FailoverSinkProcessor
-org.apache.flume.SinkProcessor            LOAD_BALANCE            org.apache.flume.sink.LoadBalancingSinkProcessor
-org.apache.flume.interceptor.Interceptor  TIMESTAMP               org.apache.flume.interceptor.TimestampInterceptor$Builder
-org.apache.flume.interceptor.Interceptor  HOST                    org.apache.flume.interceptor.HostInterceptor$Builder
-org.apache.flume.interceptor.Interceptor  STATIC                  org.apache.flume.interceptor.StaticInterceptor$Builder
-========================================  ======================  ====================================================================
+============================================================  ======================  ====================================================================
+Component Interface                                           Type Alias              Implementation Class
+============================================================  ======================  ====================================================================
+org.apache.flume.Channel                                      memory                  org.apache.flume.channel.MemoryChannel
+org.apache.flume.Channel                                      jdbc                    org.apache.flume.channel.jdbc.JdbcChannel
+org.apache.flume.Channel                                      recoverablememory       org.apache.flume.channel.recoverable.memory.RecoverableMemoryChannel
+org.apache.flume.Channel                                      file                    org.apache.flume.channel.file.FileChannel
+org.apache.flume.Channel                                      --                      org.apache.flume.channel.PseudoTxnMemoryChannel
+org.apache.flume.Channel                                      --                      org.example.MyChannel
+
+org.apache.flume.Source                                       avro                    org.apache.flume.source.AvroSource
+org.apache.flume.Source                                       netcat                  org.apache.flume.source.NetcatSource
+org.apache.flume.Source                                       seq                     org.apache.flume.source.SequenceGeneratorSource
+org.apache.flume.Source                                       exec                    org.apache.flume.source.ExecSource
+org.apache.flume.Source                                       syslogtcp               org.apache.flume.source.SyslogTcpSource
+org.apache.flume.Source                                       multiport_syslogtcp     org.apache.flume.source.MultiportSyslogTCPSource
+org.apache.flume.Source                                       syslogudp               org.apache.flume.source.SyslogUDPSource
+org.apache.flume.Source                                       --                      org.apache.flume.source.avroLegacy.AvroLegacySource
+org.apache.flume.Source                                       --                      org.apache.flume.source.thriftLegacy.ThriftLegacySource
+org.apache.flume.Source                                       --                      org.example.MySource
+
+org.apache.flume.Sink                                         null                    org.apache.flume.sink.NullSink
+org.apache.flume.Sink                                         logger                  org.apache.flume.sink.LoggerSink
+org.apache.flume.Sink                                         avro                    org.apache.flume.sink.AvroSink
+org.apache.flume.Sink                                         hdfs                    org.apache.flume.sink.hdfs.HDFSEventSink
+org.apache.flume.Sink                                         --                      org.apache.flume.sink.hbase.HBaseSink
+org.apache.flume.Sink                                         --                      org.apache.flume.sink.hbase.AsyncHBaseSink
+org.apache.flume.Sink                                         --                      org.apache.flume.sink.elasticsearch.ElasticSearchSink
+org.apache.flume.Sink                                         file_roll               org.apache.flume.sink.RollingFileSink
+org.apache.flume.Sink                                         irc                     org.apache.flume.sink.irc.IRCSink
+org.apache.flume.Sink                                         --                      org.example.MySink
+
+org.apache.flume.ChannelSelector                              replicating             org.apache.flume.channel.ReplicatingChannelSelector
+org.apache.flume.ChannelSelector                              multiplexing            org.apache.flume.channel.MultiplexingChannelSelector
+org.apache.flume.ChannelSelector                              --                      org.example.MyChannelSelector
+
+org.apache.flume.SinkProcessor                                default                 org.apache.flume.sink.DefaultSinkProcessor
+org.apache.flume.SinkProcessor                                failover                org.apache.flume.sink.FailoverSinkProcessor
+org.apache.flume.SinkProcessor                                load_balance            org.apache.flume.sink.LoadBalancingSinkProcessor
+org.apache.flume.SinkProcessor                                --                      
+
+org.apache.flume.interceptor.Interceptor                      timestamp               org.apache.flume.interceptor.TimestampInterceptor$Builder
+org.apache.flume.interceptor.Interceptor                      host                    org.apache.flume.interceptor.HostInterceptor$Builder
+org.apache.flume.interceptor.Interceptor                      static                  org.apache.flume.interceptor.StaticInterceptor$Builder
+org.apache.flume.interceptor.Interceptor                      regex_filter            org.apache.flume.interceptor.RegexFilteringInterceptor$Builder
+org.apache.flume.interceptor.Interceptor                      regex_extractor         org.apache.flume.interceptor.RegexFilteringInterceptor$Builder
+
+org.apache.flume.channel.file.encryption.KeyProvider$Builder  jceksfile               org.apache.flume.channel.file.encryption.JCEFileKeyProvider
+org.apache.flume.channel.file.encryption.KeyProvider$Builder  --                      org.example.MyKeyProvider
+
+org.apache.flume.channel.file.encryption.CipherProvider       aesctrnopadding         org.apache.flume.channel.file.encryption.AESCTRNoPaddingProvider
+org.apache.flume.channel.file.encryption.CipherProvider       --                      org.example.MyCipherProvider
+
+org.apache.flume.serialization.EventSerializer$Builder        text                    org.apache.flume.serialization.BodyTextEventSerializer$Builder
+org.apache.flume.serialization.EventSerializer$Builder        avro_event              org.apache.flume.serialization.FlumeEventAvroEventSerializer$Builder
+org.apache.flume.serialization.EventSerializer$Builder        --                      org.example.MyEventSerializer$Builder
+============================================================  ======================  ====================================================================
+
+Alias Conventions
+=================
+
+These conventions for alias names are used in the component-specific examples above, to keep the names short and consistent across all examples.
+
+==========  =================
+Alias Name  Alias Type
+==========  =================
+a           **a**\ gent
+c           **c**\ hannel
+r           sou\ **r**\ce
+k           sin\ **k**
+g           sink **g**\ roup
+i           **i**\ nterceptor
+y           ke\ **y**
+h           **h**\ ost
+s           **s**\ erializer
+==========  =================
