@@ -2095,6 +2095,53 @@ regex             ".*"     Regular expression for matching against events
 excludeEvents     false    If true, regex determines events to exclude, otherwise regex determines events to include.
 ================  =======  ========================================================================
 
+Regex Extractor Interceptor
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This interceptor extracts regex match groups using a specified regular expression and appends the match groups as headers on the event. It also supports pluggable serializers for formatting the match groups before adding them as event headers.
+
+================  ============================== ================================================================================
+Property Name     Default                        Description
+================  ============================== ================================================================================
+**type**          --                             The component type name has to be ``REGEX_EXTRACTOR``
+**regex**         --                             Regular expression for matching against events
+**serializer**    --                             Comma separated list of header name colon serializer. (See example below)
+                                                 The following are support serializers out of the box
+                                                 ``org.apache.flume.interceptor.RegexExtractorInterceptorPassThroughSerializer``
+                                                 ``org.apache.flume.interceptor.RegexExtractorInterceptorMillisSerializer``
+================  ============================== ================================================================================
+
+The serializers are used to map the matches to a header name and a formatted header value, by default you only need to specify
+the header name and the default ``org.apache.flume.interceptor.RegexExtractorInterceptorPassThroughSerializer`` will be used. 
+This serializer simply maps the matches to the specified header name and passes the value through as it was extracted by the regex. 
+You can plug custom serializer implementations into the extractor using the fully qualified class name (FQCN) to format the matches
+in anyway you like.
+
+Example 1:
+~~~~~~~~~~
+
+If the Flume event body contained ``1:2:3.4foobar5`` and the following configuration was used
+
+.. code-block:: properties
+
+  agent.sources.r1.interceptors.i1.regex = (\\d):(\\d):(\\d)
+  agent.sources.r1.interceptors.i1.serializer = one,two,three
+
+the extracted event will contain the same body but the following headers will have been added ``one=>1, two=>2, three=>3``
+
+Example 2:
+~~~~~~~~~~
+
+If the Flume event body contained ``2012-10-18 18:47:57,614 some log line`` and the following configuration was used
+
+.. code-block:: properties
+
+  agent.sources.r1.interceptors.i1.regex = ^(?:\\n)?(\\d\\d\\d\\d-\\d\\d-\\d\\d\\s\\d\\d:\\d\\d)
+  agent.sources.r1.interceptors.i1.serializer = timestamp:org.apache.flume.interceptor.RegexExtractorInterceptorMillisSerializer
+  agent.sources.r1.interceptors.i1.serializer.org.apache.flume.interceptor.RegexExtractorInterceptorMillisSerializer.pattern = yyyy-MM-dd HH:mm
+
+the extracted event will contain the same body but the following headers will have been added ``timestamp=>1350611220000``
+
 Flume Properties
 ----------------
 
