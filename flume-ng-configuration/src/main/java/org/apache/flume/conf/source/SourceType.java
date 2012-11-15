@@ -82,7 +82,7 @@ public enum SourceType {
    *
    * @see org.apache.flume.source.SpoolDirectorySource
    */
-  SPOOLDIR("org.apache.flume.conf.source.SpoolDirectorySource");
+  SPOOLDIR("org.apache.flume.source.SpoolDirectorySource");
 
   private final String sourceClassName;
 
