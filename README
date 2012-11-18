@@ -42,7 +42,7 @@ Compiling Flume requires the following tools:
 Note: The Apache Flume build requires more memory than the default configuration.
 We recommend you set the following Maven options:
 
-export MAVEN_OPTS="-Xms512m -Xmx1024m -XX:PermSize=256m -XX:MaxPermSize=512m
+export MAVEN_OPTS="-Xms512m -Xmx1024m -XX:PermSize=256m -XX:MaxPermSize=512m"
 
 To compile Flume, run `mvn compile`.
 To build a distribution, run `mvn install`.
