@@ -100,5 +100,10 @@ limitations under the License.
       <artifactId>avro-ipc</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty</artifactId>
+    </dependency>
+
   </dependencies>
 </project>
