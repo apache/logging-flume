@@ -1216,6 +1216,8 @@ hdfs.rollInterval       30            Number of seconds to wait before rolling c
 hdfs.rollSize           1024          File size to trigger roll, in bytes (0: never roll based on file size)
 hdfs.rollCount          10            Number of events written to file before it rolled
                                       (0 = never roll based on number of events)
+hdfs.idleTimeout        0             Timeout after which inactive files get closed
+                                      (0 = disable automatic closing of idle files)
 hdfs.batchSize          100           number of events written to file before it is flushed to HDFS
 hdfs.codeC              --            Compression codec. one of following : gzip, bzip2, lzo, snappy
 hdfs.fileType           SequenceFile  File format: currently ``SequenceFile``, ``DataStream`` or ``CompressedStream``

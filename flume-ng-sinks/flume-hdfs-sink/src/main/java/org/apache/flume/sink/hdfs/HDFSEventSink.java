@@ -62,6 +62,10 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public class HDFSEventSink extends AbstractSink implements Configurable {
+  public interface WriterCallback {
+    public void run(String filePath);
+  }
+
   private static final Logger LOG = LoggerFactory
       .getLogger(HDFSEventSink.class);
 
@@ -129,6 +133,8 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private Context context;
   private SinkCounter sinkCounter;
 
+  private volatile int idleTimeout;
+
   /*
    * Extended Java LinkedHashMap for open file handle LRU queue.
    * We want to clear the oldest file handle if there are too many open ones.
@@ -187,6 +193,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     rollSize = context.getLong("hdfs.rollSize", defaultRollSize);
     rollCount = context.getLong("hdfs.rollCount", defaultRollCount);
     batchSize = context.getLong("hdfs.batchSize", defaultBatchSize);
+    idleTimeout = context.getInteger("hdfs.idleTimeout", 0);
     String codecName = context.getString("hdfs.codeC");
     fileType = context.getString("hdfs.fileType", defaultFileType);
     maxOpenFiles = context.getInteger("hdfs.maxOpenFiles", defaultMaxOpenFiles);
@@ -397,9 +404,19 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
           FlumeFormatter formatter = HDFSFormatterFactory
               .getFormatter(writeFormat);
 
+          WriterCallback idleCallback = null;
+          if(idleTimeout != 0) {
+            idleCallback = new WriterCallback() {
+              @Override
+              public void run(String bucketPath) {
+                sfWriters.remove(bucketPath);
+              }
+            };
+          }
           bucketWriter = new BucketWriter(rollInterval, rollSize, rollCount,
               batchSize, context, realPath, suffix, codeC, compType, hdfsWriter,
-              formatter, timedRollerPool, proxyTicket, sinkCounter);
+              formatter, timedRollerPool, proxyTicket, sinkCounter, idleTimeout,
+              idleCallback);
 
           sfWriters.put(realPath, bucketWriter);
         }
