@@ -70,7 +70,7 @@ public class TestBucketWriter {
     BucketWriter bucketWriter = new BucketWriter(0, 0, maxEvents, 0, ctx,
         "/tmp/file", null, null, SequenceFile.CompressionType.NONE, hdfsWriter,
         formatter, timedRollerPool, null,
-        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()));
+        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()), 0, null);
 
     Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
     for (int i = 0; i < 1000; i++) {
@@ -94,7 +94,8 @@ public class TestBucketWriter {
     BucketWriter bucketWriter = new BucketWriter(0, maxBytes, 0, 0, ctx,
         "/tmp/file", null, null, SequenceFile.CompressionType.NONE, hdfsWriter,
         formatter, timedRollerPool, null,
-        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()));
+        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
+        0, null);
 
     Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
     for (int i = 0; i < 1000; i++) {
@@ -120,7 +121,8 @@ public class TestBucketWriter {
     BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
         "/tmp/file", null, null, SequenceFile.CompressionType.NONE, hdfsWriter,
         formatter, timedRollerPool, null,
-        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()));
+        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
+        0, null);
 
     Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
     long startNanos = System.nanoTime();
@@ -202,7 +204,8 @@ public class TestBucketWriter {
     BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
         tmpFile.getName(), null, null, SequenceFile.CompressionType.NONE, hdfsWriter,
         formatter, timedRollerPool, null,
-        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()));
+        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
+        0, null);
 
     Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
     for (int i = 0; i < NUM_EVENTS - 1; i++) {
@@ -225,7 +228,8 @@ public class TestBucketWriter {
       BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
           "/tmp/file", suffix, null, SequenceFile.CompressionType.NONE, hdfsWriter,
           formatter, timedRollerPool, null,
-          new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()));
+          new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
+          0, null);
 
       // Need to override system time use for test so we know what to expect
       final long testTime = System.currentTimeMillis();
@@ -252,7 +256,8 @@ public class TestBucketWriter {
         BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
             "/tmp/file", suffix, null, SequenceFile.CompressionType.NONE, hdfsWriter,
             formatter, timedRollerPool, null,
-            new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()));
+            new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
+            0, null);
 
         // Need to override system time use for test so we know what to expect
 

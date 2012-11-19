@@ -33,6 +33,7 @@ import org.apache.flume.Event;
 import org.apache.flume.SystemClock;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.FlumeFormatter;
+import org.apache.flume.sink.hdfs.HDFSEventSink.WriterCallback;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -86,14 +87,21 @@ class BucketWriter {
   private volatile boolean isOpen;
   private volatile ScheduledFuture<Void> timedRollFuture;
   private SinkCounter sinkCounter;
+  private final WriterCallback onIdleCallback;
+  private final int idleTimeout;
+  private volatile ScheduledFuture<Void> idleFuture;
 
   private Clock clock = new SystemClock();
+
+  // flag that the bucket writer was closed due to idling and thus shouldn't be
+  // reopened. Not ideal, but avoids internals of owners
+  protected boolean idleClosed = false;
 
   BucketWriter(long rollInterval, long rollSize, long rollCount, long batchSize,
       Context context, String filePath, String fileSuffix, CompressionCodec codeC,
       CompressionType compType, HDFSWriter writer, FlumeFormatter formatter,
       ScheduledExecutorService timedRollerPool, UserGroupInformation user,
-      SinkCounter sinkCounter) {
+      SinkCounter sinkCounter, int idleTimeout, WriterCallback onIdleCallback) {
     this.rollInterval = rollInterval;
     this.rollSize = rollSize;
     this.rollCount = rollCount;
@@ -108,6 +116,8 @@ class BucketWriter {
     this.timedRollerPool = timedRollerPool;
     this.user = user;
     this.sinkCounter = sinkCounter;
+    this.onIdleCallback = onIdleCallback;
+    this.idleTimeout = idleTimeout;
 
     fileExtensionCounter = new AtomicLong(clock.currentTimeMillis());
 
@@ -279,6 +289,11 @@ class BucketWriter {
       timedRollFuture = null;
     }
 
+    if(idleFuture != null && !idleFuture.isDone()) {
+      idleFuture.cancel(false);
+      idleFuture = null;
+    }
+
     if (bucketPath != null && fileSystem != null) {
       renameBucket(); // could block or throw IOException
       fileSystem = null;
@@ -296,6 +311,29 @@ class BucketWriter {
           return null;
         }
       });
+
+      if(idleTimeout > 0) {
+        // if the future exists and couldn't be cancelled, that would mean it has already run
+        // or been cancelled
+        if(idleFuture == null || idleFuture.cancel(false)) {
+          Callable<Void> idleAction = new Callable<Void>() {
+            public Void call() throws Exception {
+              try {
+                LOG.info("Closing idle bucketWriter {}", filePath);
+                idleClosed = true;
+                close();
+                if(onIdleCallback != null)
+                  onIdleCallback.run(filePath);
+              } catch(Throwable t) {
+                LOG.error("Unexpected error", t);
+              }
+              return null;
+            }
+          };
+          idleFuture = timedRollerPool.schedule(idleAction, idleTimeout,
+              TimeUnit.SECONDS);
+        }
+      }
     }
   }
 
@@ -319,6 +357,10 @@ class BucketWriter {
    */
   public synchronized void append(Event event) throws IOException, InterruptedException {
     if (!isOpen) {
+      if(idleClosed) {
+        throw new IOException("This bucket writer was closed due to idling and this handle " +
+            "is thus no longer valid");
+      }
       open();
     }
 

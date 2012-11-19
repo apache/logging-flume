@@ -979,4 +979,69 @@ public class TestHDFSEventSink {
     LOG.debug("Starting...");
     slowAppendTestHelper(0);
   }
+
+  @Test
+  public void testCloseOnIdle() throws IOException, EventDeliveryException, InterruptedException {
+    String hdfsPath = testPath + "/idleClose";
+
+    Configuration conf = new Configuration();
+    FileSystem fs = FileSystem.get(conf);
+    Path dirPath = new Path(hdfsPath);
+    fs.delete(dirPath, true);
+    fs.mkdirs(dirPath);
+    sink = new HDFSEventSink(new HDFSWriterFactory());
+    Context context = new Context();
+    context.put("hdfs.path", hdfsPath);
+    context.put("hdfs.rollCount", "0");
+    context.put("hdfs.rollSize", "0");
+    context.put("hdfs.rollInterval", "0");
+    context.put("hdfs.batchSize", "2");
+    context.put("hdfs.idleTimeout", "1");
+    Configurables.configure(sink, context);
+
+    Channel channel = new MemoryChannel();
+    Configurables.configure(channel, context);
+
+    sink.setChannel(channel);
+    sink.start();
+
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    for(int i=0; i < 10; i++) {
+      Event event = new SimpleEvent();
+      event.setBody(("test event " + i).getBytes());
+      channel.put(event);
+    }
+    txn.commit();
+    txn.close();
+
+    sink.process();
+    sink.process();
+    Thread.sleep(1001);
+    // previous file should have timed out now
+    // this can throw an IOException(from the bucketWriter having idleClosed)
+    // this is not an issue as the sink will retry and get a fresh bucketWriter
+    // so long as the onIdleClose handler properly removes bucket writers that
+    // were closed due to idling
+    sink.process();
+    sink.process();
+    Thread.sleep(500); // shouldn't be enough for a timeout to occur
+    sink.process();
+    sink.process();
+
+    FileStatus[] dirStat = fs.listStatus(dirPath);
+    Path[] fList = FileUtil.stat2Paths(dirStat);
+    Assert.assertEquals(2, fList.length);
+    // one should be tmp and the other not
+    Assert.assertTrue(fList[0].getName().endsWith(".tmp") ^
+        fList[1].getName().endsWith(".tmp"));
+
+    sink.stop();
+    dirStat = fs.listStatus(dirPath);
+    fList = FileUtil.stat2Paths(dirStat);
+    Assert.assertEquals(2, fList.length);
+    Assert.assertTrue(!fList[0].getName().endsWith(".tmp") &&
+        !fList[1].getName().endsWith(".tmp"));
+    fs.close();
+  }
 }
