@@ -32,6 +32,7 @@ class Serialization {
 
   static final String METADATA_FILENAME = ".meta";
   static final String METADATA_TMP_FILENAME = ".tmp";
+  static final String OLD_METADATA_FILENAME = METADATA_FILENAME + ".old";
 
   static File getMetaDataTempFile(File metaDataFile) {
     String metaDataFileName = metaDataFile.getName() + METADATA_TMP_FILENAME;
@@ -42,5 +43,11 @@ class Serialization {
     String metaDataFileName = file.getName() + METADATA_FILENAME;
     return new File(file.getParentFile(), metaDataFileName);
 
+  }
+
+  // Support platforms that cannot do atomic renames - FLUME-1699
+  static File getOldMetaDataFile(File file) {
+    String oldMetaDataFileName = file.getName() + OLD_METADATA_FILENAME;
+    return new File(file.getParentFile(), oldMetaDataFileName);
   }
 }

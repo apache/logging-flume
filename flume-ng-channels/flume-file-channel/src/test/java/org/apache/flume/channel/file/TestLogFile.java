@@ -167,6 +167,79 @@ public class TestLogFile {
       Assert.assertTrue(Arrays.equals(eventIn.getBody(), eventOut.getBody()));
     }
   }
+
+  @Test
+  public void testReaderOldMetaFile() throws InterruptedException, IOException {
+    Map<Integer, Put> puts = Maps.newHashMap();
+    for (int i = 0; i < 1000; i++) {
+      FlumeEvent eventIn = TestUtils.newPersistableEvent();
+      Put put = new Put(++transactionID, WriteOrderOracle.next(),
+              eventIn);
+      ByteBuffer bytes = TransactionEventRecord.toByteBuffer(put);
+      FlumeEventPointer ptr = logFileWriter.put(bytes);
+      puts.put(ptr.getOffset(), put);
+    }
+    //rename the meta file to meta.old
+    File metadataFile = Serialization.getMetaDataFile(dataFile);
+    File oldMetadataFile = Serialization.getOldMetaDataFile(dataFile);
+    if (!metadataFile.renameTo(oldMetadataFile)) {
+      Assert.fail("Renaming to meta.old failed");
+    }
+    LogFile.SequentialReader reader =
+            LogFileFactory.getSequentialReader(dataFile, null);
+    Assert.assertTrue(metadataFile.exists());
+    Assert.assertFalse(oldMetadataFile.exists());
+    LogRecord entry;
+    while ((entry = reader.next()) != null) {
+      Integer offset = entry.getOffset();
+      TransactionEventRecord record = entry.getEvent();
+      Put put = puts.get(offset);
+      FlumeEvent eventIn = put.getEvent();
+      Assert.assertEquals(put.getTransactionID(), record.getTransactionID());
+      Assert.assertTrue(record instanceof Put);
+      FlumeEvent eventOut = ((Put) record).getEvent();
+      Assert.assertEquals(eventIn.getHeaders(), eventOut.getHeaders());
+      Assert.assertTrue(Arrays.equals(eventIn.getBody(), eventOut.getBody()));
+    }
+  }
+
+    @Test
+  public void testReaderTempMetaFile() throws InterruptedException, IOException {
+    Map<Integer, Put> puts = Maps.newHashMap();
+    for (int i = 0; i < 1000; i++) {
+      FlumeEvent eventIn = TestUtils.newPersistableEvent();
+      Put put = new Put(++transactionID, WriteOrderOracle.next(),
+              eventIn);
+      ByteBuffer bytes = TransactionEventRecord.toByteBuffer(put);
+      FlumeEventPointer ptr = logFileWriter.put(bytes);
+      puts.put(ptr.getOffset(), put);
+    }
+    //rename the meta file to meta.old
+    File metadataFile = Serialization.getMetaDataFile(dataFile);
+    File tempMetadataFile = Serialization.getMetaDataTempFile(dataFile);
+    File oldMetadataFile = Serialization.getOldMetaDataFile(dataFile);
+    oldMetadataFile.createNewFile(); //Make sure temp file is picked up.
+    if (!metadataFile.renameTo(tempMetadataFile)) {
+      Assert.fail("Renaming to meta.temp failed");
+    }
+    LogFile.SequentialReader reader =
+            LogFileFactory.getSequentialReader(dataFile, null);
+    Assert.assertTrue(metadataFile.exists());
+    Assert.assertFalse(tempMetadataFile.exists());
+    Assert.assertFalse(oldMetadataFile.exists());
+    LogRecord entry;
+    while ((entry = reader.next()) != null) {
+      Integer offset = entry.getOffset();
+      TransactionEventRecord record = entry.getEvent();
+      Put put = puts.get(offset);
+      FlumeEvent eventIn = put.getEvent();
+      Assert.assertEquals(put.getTransactionID(), record.getTransactionID());
+      Assert.assertTrue(record instanceof Put);
+      FlumeEvent eventOut = ((Put) record).getEvent();
+      Assert.assertEquals(eventIn.getHeaders(), eventOut.getHeaders());
+      Assert.assertTrue(Arrays.equals(eventIn.getBody(), eventOut.getBody()));
+    }
+  }
   @Test
   public void testWriteDelimitedTo() throws IOException {
     if(dataFile.isFile()) {
