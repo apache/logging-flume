@@ -49,6 +49,7 @@ Release Notes - Flume - Version v1.3.0
     * [FLUME-1609] - FileChannel detecting when the underlying file systems are full could provide cleaner error recovery
     * [FLUME-1631] - Retire hdfs.txnEventMax in HDFS sink
     * [FLUME-1645] - add hdfs.fileSuffix property to HDFSEventSink
+    * [FLUME-1660] - Close "idle" hdfs handles
     * [FLUME-1675] - Ignore netbeans config files in rat & git
     * [FLUME-1681] - Disable empty-file unit test for Spooling File Reader
     * [FLUME-1684] - Re-enable empty file unit test
