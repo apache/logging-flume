@@ -3,8 +3,10 @@ Release Notes - Flume - Version v1.3.0
 ** New Feature
     * [FLUME-1199] - Add HTTP Post Source
     * [FLUME-1371] - ElasticSearch Sink
+    * [FLUME-1382] - Flume adopt message from existing local Scribe
     * [FLUME-1385] - Add a multiport syslog source
     * [FLUME-1424] - File Channel should support encryption
+    * [FLUME-1425] - Create a SpoolDirectory Source and Client
     * [FLUME-1488] - Load Balancing RPC client should support exponential backoff of failed nodes
     * [FLUME-1537] - Dump RollingFileSink's counter status when agent stops
     * [FLUME-1657] - Regex Extractor Interceptor
@@ -13,12 +15,10 @@ Release Notes - Flume - Version v1.3.0
     * [FLUME-946] - Allow multiplexing channel selector to specify optional channels.
     * [FLUME-1337] - Add IDEA files to .gitignore
     * [FLUME-1358] - Add a regex-based filtering interceptor
-    * [FLUME-1382] - Flume adopt message from existing local Scribe
     * [FLUME-1383] - Improve various log messages in FileChannel and HDFSSink
     * [FLUME-1408] - ScheduledExecutorService does not log uncaught Throwables, we should log them
     * [FLUME-1418] - Improvement for Log4j configuration
     * [FLUME-1419] - Using system time if 'timestamp' property is absent in event header
-    * [FLUME-1425] - Create a SpoolDirectory Source and Client
     * [FLUME-1434] - Distinguish background worker with channel name 
     * [FLUME-1480] - Replace object descriptor with detailed component type plus name
     * [FLUME-1487] - FileChannel format needs to be extensible
@@ -145,6 +145,9 @@ Release Notes - Flume - Version v1.3.0
     * [FLUME-1690] - Elastic Search Sink doesn't run it's unit tests
     * [FLUME-1712] - Regex Extractor Interceptor tests have timezone issues
     * [FLUME-1705] - SpoolDirectory short name points at the wrong class
+    * [FLUME-1719] - Example export command in README do not properly close the string
+    * [FLUME-1723] - AsyncHBase and Avro bring in different versions of Netty
+    * [FLUME-1726] - SpoolingFileLineReader must close the reader before renaming
 
 ** Test
     * [FLUME-1492] - Create integration test for file channel
@@ -159,6 +162,7 @@ Release Notes - Flume - Version v1.3.0
     * [FLUME-1695] - Fix tarball names and directories
     * [FLUME-1696] - Update build instructions as Flume build requires more memory
     * [FLUME-1697] - Update CHANGELOG after 1.3.0 RC0
+    * [FLUME-1727] - Update CHANGELOG for rc4
 
 
 Release Notes - Flume - Version v1.2.0
