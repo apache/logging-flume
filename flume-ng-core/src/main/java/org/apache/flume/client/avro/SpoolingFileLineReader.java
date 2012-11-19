@@ -228,6 +228,7 @@ public class SpoolingFileLineReader implements LineReader {
     String newPath = currPath + completedSuffix;
     logger.info("Preparing to move file " + currPath + " to " + newPath);
 
+    currentFile.get().reader.close();
     File newFile = new File(currPath);
 
     // Verify that spooling assumptions hold
@@ -281,7 +282,6 @@ public class SpoolingFileLineReader implements LineReader {
         throw new FlumeException(message);
       }
     }
-    currentFile.get().reader.close();
   }
 
   /**
