@@ -138,7 +138,19 @@ class LogFileV3 extends LogFile {
       outputStream.close();
       closed = true;
       if(!tmp.renameTo(file)) {
-        throw new IOException("Unable to move " + tmp + " over " + file);
+        //Some platforms don't support moving over an existing file.
+        //So:
+        //log.meta -> log.meta.old
+        //log.meta.tmp -> log.meta
+        //delete log.meta.old
+        File oldFile = Serialization.getOldMetaDataFile(file);
+        if(!file.renameTo(oldFile)){
+          throw new IOException("Unable to rename " + file + " to " + oldFile);
+        }
+        if(!tmp.renameTo(file)) {
+          throw new IOException("Unable to rename " + tmp + " over " + file);
+        }
+        oldFile.delete();
       }
     } finally {
       if(!closed) {

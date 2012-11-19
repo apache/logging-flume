@@ -109,7 +109,45 @@ class LogFileFactory {
     RandomAccessFile logFile = null;
     try {
       File metaDataFile = Serialization.getMetaDataFile(file);
-      if(metaDataFile.exists()) {
+      File oldMetadataFile = Serialization.getOldMetaDataFile(file);
+      File tempMetadataFile = Serialization.getMetaDataTempFile(file);
+      boolean hasMeta = false;
+      // FLUME-1699:
+      // If the platform does not support atomic rename, then we
+      // renamed log.meta -> log.meta.old followed by log.meta.tmp -> log.meta
+      // I am not sure if all platforms maintain file integrity during
+      // file metadata update operations. So:
+      // 1. check if meta file exists
+      // 2. If 1 returns false, check if temp exists
+      // 3. if 2 is also false (maybe the machine died during temp->meta,
+      //    then check if old exists.
+      // In the above, we assume that if a file exists, it's integrity is ok.
+      if (metaDataFile.exists()) {
+        hasMeta = true;
+      } else if (tempMetadataFile.exists()) {
+        if (tempMetadataFile.renameTo(metaDataFile)) {
+          hasMeta = true;
+        } else {
+          throw new IOException("Renaming of " + tempMetadataFile.getName()
+                  + " to " + metaDataFile.getName() + " failed");
+        }
+      } else if (oldMetadataFile.exists()) {
+        if (oldMetadataFile.renameTo(metaDataFile)) {
+          hasMeta = true;
+        } else {
+          throw new IOException("Renaming of " + oldMetadataFile.getName()
+                  + " to " + metaDataFile.getName() + " failed");
+        }
+      }
+      if (hasMeta) {
+        // Now the metadata file has been found, delete old or temp files
+        // so it does not interfere with normal operation.
+        if(oldMetadataFile.exists()) {
+          oldMetadataFile.delete();
+        }
+        if(tempMetadataFile.exists()) {
+          tempMetadataFile.delete();
+        }
         return new LogFileV3.SequentialReader(file, encryptionKeyProvider);
       }
       logFile = new RandomAccessFile(file, "r");
