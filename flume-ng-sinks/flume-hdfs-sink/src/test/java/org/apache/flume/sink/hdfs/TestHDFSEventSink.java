@@ -23,8 +23,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharsetDecoder;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericData;
@@ -98,6 +100,7 @@ public class TestHDFSEventSink {
         + Thread.currentThread().getId();
 
     sink = new HDFSEventSink();
+    sink.setName("HDFSEventSink-" + UUID.randomUUID().toString());
     dirCleanup();
   }
 
@@ -979,7 +982,6 @@ public class TestHDFSEventSink {
     LOG.debug("Starting...");
     slowAppendTestHelper(0);
   }
-
   @Test
   public void testCloseOnIdle() throws IOException, EventDeliveryException, InterruptedException {
     String hdfsPath = testPath + "/idleClose";
@@ -989,9 +991,12 @@ public class TestHDFSEventSink {
     Path dirPath = new Path(hdfsPath);
     fs.delete(dirPath, true);
     fs.mkdirs(dirPath);
-    sink = new HDFSEventSink(new HDFSWriterFactory());
     Context context = new Context();
     context.put("hdfs.path", hdfsPath);
+    /*
+     * All three rolling methods are disabled so the only
+     * way a file can roll is through the idle timeout.
+     */
     context.put("hdfs.rollCount", "0");
     context.put("hdfs.rollSize", "0");
     context.put("hdfs.rollInterval", "0");
@@ -1028,17 +1033,9 @@ public class TestHDFSEventSink {
     Thread.sleep(500); // shouldn't be enough for a timeout to occur
     sink.process();
     sink.process();
-
+    sink.stop();
     FileStatus[] dirStat = fs.listStatus(dirPath);
     Path[] fList = FileUtil.stat2Paths(dirStat);
-    Assert.assertEquals(2, fList.length);
-    // one should be tmp and the other not
-    Assert.assertTrue(fList[0].getName().endsWith(".tmp") ^
-        fList[1].getName().endsWith(".tmp"));
-
-    sink.stop();
-    dirStat = fs.listStatus(dirPath);
-    fList = FileUtil.stat2Paths(dirStat);
     Assert.assertEquals(2, fList.length);
     Assert.assertTrue(!fList[0].getName().endsWith(".tmp") &&
         !fList[1].getName().endsWith(".tmp"));
