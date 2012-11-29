@@ -124,7 +124,7 @@ public class AvroCLIClient {
     options.addOption("p", "port", true, "port of the avro source")
         .addOption("H", "host", true, "hostname of the avro source")
         .addOption("F", "filename", true, "file to stream to avro source")
-        .addOption("D", "dirname", true, "directory to stream to avro source")
+        .addOption(null, "dirname", true, "directory to stream to avro source")
         .addOption("R", "headerFile", true, ("file containing headers as " +
             "key/value pairs on each new line"))
         .addOption("h", "help", false, "display help text");
