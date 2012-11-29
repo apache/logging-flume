@@ -173,6 +173,15 @@ public class SourceConfiguration extends ComponentConfiguration {
     SYSLOGUDP("org.apache.flume.conf.source.SyslogUDPSourceConfiguration"),
 
     /**
+     * Multiport Syslog TCP Source
+     *
+     * @see org.apache.flume.source.MultiportSyslogTCPSource
+     * 
+     */
+
+    MULTIPORT_SYSLOGTCP("org.apache.flume.source.MultiportSyslogTCPSourceConfiguration"),
+
+    /**
      * Spool directory source
      *
      * @see org.apache.flume.source.SpoolDirectorySource
