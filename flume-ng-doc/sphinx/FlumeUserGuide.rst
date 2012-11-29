@@ -778,6 +778,7 @@ Property Name    Default      Description
 **bind**         --           Host name or IP address to bind to
 **port**         --           Port # to bind to
 max-line-length  512          Max line length per event body (in bytes)
+ack-every-event  true         Respond with an "OK" for every event received
 selector.type    replicating  replicating or multiplexing
 selector.*                    Depends on the selector.type value
 interceptors     --           Space separated list of interceptors
