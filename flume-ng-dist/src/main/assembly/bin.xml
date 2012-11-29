@@ -99,10 +99,14 @@
         <exclude>flume-ng-clients/**</exclude>
         <exclude>flume-ng-dist/**</exclude>
         <exclude>**/target/**</exclude>
+        <exclude>**/.classpath</exclude>
+        <exclude>**/.project</exclude>
+        <exclude>**/.settings/**</exclude>
         <exclude>lib/**</exclude>
       </excludes>
 
       <includes>
+        <include>.gitignore</include>
         <include>DEVNOTES</include>
         <include>README</include>
         <include>LICENSE</include>
