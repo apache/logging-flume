@@ -60,6 +60,7 @@ Release Notes - Flume - Version v1.3.0
     * [FLUME-1698] - Update RELEASE-NOTES
     * [FLUME-1711] - Update Flume User Guide
     * [FLUME-1713] - Netcat source should allow for *not* returning "OK" upon receipt of each message.
+    * [FLUME-1740] - Remove contrib/ directory from Flume NG
 
 ** Bug
     * [FLUME-1208] - Hbase sink should be built only in Hadoop-1.0  profile
