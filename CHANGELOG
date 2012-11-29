@@ -59,6 +59,7 @@ Release Notes - Flume - Version v1.3.0
     * [FLUME-1706] - Website for 1.3 fails to build
     * [FLUME-1698] - Update RELEASE-NOTES
     * [FLUME-1711] - Update Flume User Guide
+    * [FLUME-1713] - Netcat source should allow for *not* returning "OK" upon receipt of each message.
 
 ** Bug
     * [FLUME-1208] - Hbase sink should be built only in Hadoop-1.0  profile
@@ -149,6 +150,8 @@ Release Notes - Flume - Version v1.3.0
     * [FLUME-1719] - Example export command in README do not properly close the string
     * [FLUME-1723] - AsyncHBase and Avro bring in different versions of Netty
     * [FLUME-1726] - SpoolingFileLineReader must close the reader before renaming
+    * [FLUME-1743] - Multiport syslog tcp source does not load (v1.3 rc5)
+
 
 ** Test
     * [FLUME-1492] - Create integration test for file channel
