@@ -1727,10 +1727,10 @@ Generating a key with the password the same as the key store password:
   a1.channels.c1.encryption.activeKey = key-0
   a1.channels.c1.encryption.cipherProvider = AESCTRNOPADDING
   a1.channels.c1.encryption.keyProvider = key-provider-0
-  a1.channels.c1.encryption.keyProvider.key-provider-0.type = JCEKSFILE
-  a1.channels.c1.encryption.keyProvider.key-provider-0.keyStoreFile = /path/to/my.keystore
-  a1.channels.c1.encryption.keyProvider.key-provider-0.keyStorePasswordFile = /path/to/my.keystore.password
-  a1.channels.c1.encryption.keyProvider.key-provider-0.keys = key-0
+  a1.channels.c1.encryption.keyProvider = JCEKSFILE
+  a1.channels.c1.encryption.keyProvider.keyStoreFile = /path/to/my.keystore
+  a1.channels.c1.encryption.keyProvider.keyStorePasswordFile = /path/to/my.keystore.password
+  a1.channels.c1.encryption.keyProvider.keys = key-0
 
 Let's say you have aged key-0 out and new files should be encrypted with key-1:
 
@@ -1738,11 +1738,10 @@ Let's say you have aged key-0 out and new files should be encrypted with key-1:
 
   a1.channels.c1.encryption.activeKey = key-1
   a1.channels.c1.encryption.cipherProvider = AESCTRNOPADDING
-  a1.channels.c1.encryption.keyProvider = key-provider-0
-  a1.channels.c1.encryption.keyProvider.key-provider-0.type = JCEKSFILE
-  a1.channels.c1.encryption.keyProvider.key-provider-0.keyStoreFile = /path/to/my.keystore
-  a1.channels.c1.encryption.keyProvider.key-provider-0.keyStorePasswordFile = /path/to/my.keystore.password
-  a1.channels.c1.encryption.keyProvider.key-provider-0.keys = key-0 key-1
+  a1.channels.c1.encryption.keyProvider = JCEKSFILE
+  a1.channels.c1.encryption.keyProvider.keyStoreFile = /path/to/my.keystore
+  a1.channels.c1.encryption.keyProvider.keyStorePasswordFile = /path/to/my.keystore.password
+  a1.channels.c1.encryption.keyProvider.keys = key-0 key-1
 
 The same scenerio as above, however key-0 has it's own password:
 
@@ -1750,12 +1749,11 @@ The same scenerio as above, however key-0 has it's own password:
 
   a1.channels.c1.encryption.activeKey = key-1
   a1.channels.c1.encryption.cipherProvider = AESCTRNOPADDING
-  a1.channels.c1.encryption.keyProvider = key-provider-0
-  a1.channels.c1.encryption.keyProvider.key-provider-0.type = JCEKSFILE
-  a1.channels.c1.encryption.keyProvider.key-provider-0.keyStoreFile = /path/to/my.keystore
-  a1.channels.c1.encryption.keyProvider.key-provider-0.keyStorePasswordFile = /path/to/my.keystore.password
-  a1.channels.c1.encryption.keyProvider.key-provider-0.keys = key-0 key-1
-  a1.channels.c1.encryption.keyProvider.key-provider-0.keys.key-0.passwordFile = /path/to/key-0.password
+  a1.channels.c1.encryption.keyProvider = JCEKSFILE
+  a1.channels.c1.encryption.keyProvider.keyStoreFile = /path/to/my.keystore
+  a1.channels.c1.encryption.keyProvider.keyStorePasswordFile = /path/to/my.keystore.password
+  a1.channels.c1.encryption.keyProvider.keys = key-0 key-1
+  a1.channels.c1.encryption.keyProvider.keys.key-0.passwordFile = /path/to/key-0.password
 
 
 Pseudo Transaction Channel
