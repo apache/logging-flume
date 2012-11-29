@@ -61,6 +61,11 @@ Release Notes - Flume - Version v1.3.0
     * [FLUME-1711] - Update Flume User Guide
     * [FLUME-1713] - Netcat source should allow for *not* returning "OK" upon receipt of each message.
     * [FLUME-1740] - Remove contrib/ directory from Flume NG
+    * [FLUME-1750] - File spooling client uses -D as command line option
+    * [FLUME-1751] - User Guide Examples for File Channel encryption are broken in 1.3 rc5
+    * [FLUME-1749] - .gitignore and elipse related files should not be included in source tarball
+    * [FLUME-1752] - Update CHANGELOG for flume 1.3.0 rc6 to include latest changes
+
 
 ** Bug
     * [FLUME-1208] - Hbase sink should be built only in Hadoop-1.0  profile
