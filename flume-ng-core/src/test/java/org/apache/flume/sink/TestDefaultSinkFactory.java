@@ -19,8 +19,6 @@
 
 package org.apache.flume.sink;
 
-import java.util.Map;
-
 import org.apache.flume.Sink;
 import org.apache.flume.SinkFactory;
 import org.junit.Assert;
@@ -52,8 +50,8 @@ public class TestDefaultSinkFactory {
     Sink s1 = sinkFactory.create("avroSink1", "avro");
     Sink s2 = sinkFactory.create("avroSink2", "avro");
 
-    Assert.assertSame(avroSink1, s1);
-    Assert.assertSame(avroSink2, s2);
+    Assert.assertNotSame(avroSink1, s1);
+    Assert.assertNotSame(avroSink2, s2);
   }
 
   private void verifySinkCreation(String name, String type, Class<?> typeClass)
@@ -69,23 +67,6 @@ public class TestDefaultSinkFactory {
     verifySinkCreation("logger-sink", "logger", LoggerSink.class);
     verifySinkCreation("file-roll-sink", "file_roll", RollingFileSink.class);
     verifySinkCreation("avro-sink", "avro", AvroSink.class);
-  }
-
-
-  @Test
-  public void testSinkRegistry() {
-    Sink s1 = sinkFactory.create("s1", "avro");
-    Map<Class<?>, Map<String, Sink>> sr =
-        ((DefaultSinkFactory) sinkFactory).getRegistryClone();
-
-    Assert.assertEquals(1, sr.size());
-    Map<String, Sink> sinkMap = sr.get(AvroSink.class);
-    Assert.assertNotNull(sinkMap);
-    Assert.assertEquals(1, sinkMap.size());
-
-    Sink sink = sinkMap.get("s1");
-    Assert.assertNotNull(sink);
-    Assert.assertSame(s1, sink);
   }
 
 }

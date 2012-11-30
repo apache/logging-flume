@@ -19,9 +19,6 @@
 
 package org.apache.flume.channel;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelFactory;
 import org.apache.flume.FlumeException;
@@ -36,93 +33,39 @@ public class DefaultChannelFactory implements ChannelFactory {
   private static final Logger logger = LoggerFactory
       .getLogger(DefaultChannelFactory.class);
 
-  private Map<Class<?>, Map<String, Channel>> channels;
-
-  public DefaultChannelFactory() {
-    channels = new HashMap<Class<?>, Map<String, Channel>>();
-  }
-
   @Override
-  public boolean unregister(Channel channel) {
-    Preconditions.checkNotNull(channel);
-    logger.info("Unregister channel {}", channel);
-    boolean removed = false;
-
-    Map<String, Channel> channelMap = channels.get(channel.getClass());
-    if (channelMap != null) {
-      removed = (channelMap.remove(channel.getName()) != null);
-
-      if (channelMap.size() == 0) {
-        channels.remove(channel.getClass());
-      }
+  public Channel create(String name, String type) throws FlumeException {
+    Preconditions.checkNotNull(name, "name");
+    Preconditions.checkNotNull(type, "type");
+    logger.info("Creating instance of channel {} type {}", name, type);
+    Class<? extends Channel> channelClass = getClass(type);
+    try {
+      return channelClass.newInstance();
+    } catch (Exception ex) {
+      throw new FlumeException("Unable to create channel: " + name
+          + ", type: " + type + ", class: " + channelClass.getName(), ex);
     }
-
-    return removed;
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public Channel create(String name, String type) throws FlumeException {
-    Preconditions.checkNotNull(name);
-    Preconditions.checkNotNull(type);
-    logger.debug("Creating instance of channel {} type {}", name, type);
-
+  public Class<? extends Channel> getClass(String type)
+  throws FlumeException {
     String channelClassName = type;
-
     ChannelType channelType = ChannelType.OTHER;
     try {
       channelType = ChannelType.valueOf(type.toUpperCase());
     } catch (IllegalArgumentException ex) {
       logger.debug("Channel type {} is a custom type", type);
     }
-
     if (!channelType.equals(ChannelType.OTHER)) {
       channelClassName = channelType.getChannelClassName();
     }
-
-    Class<? extends Channel> channelClass = null;
     try {
-      channelClass = (Class<? extends Channel>) Class.forName(channelClassName);
+      return (Class<? extends Channel>) Class.forName(channelClassName);
     } catch (Exception ex) {
       throw new FlumeException("Unable to load channel type: " + type
           + ", class: " + channelClassName, ex);
     }
-
-    Map<String, Channel> channelMap = channels.get(channelClass);
-    if (channelMap == null) {
-      channelMap = new HashMap<String, Channel>();
-      channels.put(channelClass, channelMap);
-    }
-
-    Channel channel = channelMap.get(name);
-
-    if (channel == null) {
-      try {
-        channel = channelClass.newInstance();
-        channel.setName(name);
-        channelMap.put(name, channel);
-      } catch (Exception ex) {
-        // Clean up channel map
-        channels.remove(channelClass);
-        throw new FlumeException("Unable to create channel: " + name
-            + ", type: " + type + ", class: " + channelClassName, ex);
-      }
-    }
-
-    return channel;
-  }
-
-  public Map<Class<?>, Map<String, Channel>> getRegistryClone() {
-    Map<Class<?>, Map<String, Channel>> result =
-        new HashMap<Class<?>, Map<String, Channel>>();
-
-    for (Class<?> klass : channels.keySet()) {
-      Map<String, Channel> channelMap = channels.get(klass);
-      Map<String, Channel> resultChannelMap = new HashMap<String, Channel>();
-      resultChannelMap.putAll(channelMap);
-      result.put(klass, resultChannelMap);
-    }
-
-    return result;
   }
 }

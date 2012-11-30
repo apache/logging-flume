@@ -19,8 +19,6 @@
 
 package org.apache.flume.source;
 
-import java.util.Map;
-
 import org.apache.flume.Source;
 import org.apache.flume.SourceFactory;
 import org.junit.Assert;
@@ -51,8 +49,8 @@ public class TestDefaultSourceFactory {
     Source s1 = sourceFactory.create("avroSource1", "avro");
     Source s2 = sourceFactory.create("avroSource2", "avro");
 
-    Assert.assertSame(avroSource1, s1);
-    Assert.assertSame(avroSource2, s2);
+    Assert.assertNotSame(avroSource1, s1);
+    Assert.assertNotSame(avroSource2, s2);
 
   }
 
@@ -73,20 +71,4 @@ public class TestDefaultSourceFactory {
         MockSource.class);
   }
 
-  @Test
-  public void testSourceRegistry() throws Exception {
-    Source s1 = sourceFactory.create("s1", "avro");
-    Map<Class<?>, Map<String, Source>> sr =
-        ((DefaultSourceFactory) sourceFactory).getRegistryClone();
-
-    Assert.assertEquals(1, sr.size());
-
-    Map<String, Source> srMap = sr.get(AvroSource.class);
-    Assert.assertNotNull(srMap);
-    Assert.assertEquals(1, srMap.size());
-
-    Source src = srMap.get("s1");
-    Assert.assertNotNull(src);
-    Assert.assertSame(s1, src);
-  }
 }

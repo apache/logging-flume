@@ -33,6 +33,7 @@ import org.apache.flume.Event;
 import org.apache.flume.Transaction;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
+import org.apache.flume.annotations.Disposable;
 import org.apache.flume.channel.BasicChannelSemantics;
 import org.apache.flume.channel.BasicTransactionSemantics;
 import org.apache.flume.channel.MemoryChannel;
@@ -56,7 +57,7 @@ import com.google.common.collect.Lists;
  * {@link org.apache.flume.channel.file.FileChannel}, which gives better
  * performance and is also durable.
  */
-
+@Disposable
 @Deprecated
 @InterfaceAudience.Private
 @InterfaceStability.Unstable

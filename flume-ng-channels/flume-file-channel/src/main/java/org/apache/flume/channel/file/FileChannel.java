@@ -32,6 +32,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
+import org.apache.flume.annotations.Disposable;
 import org.apache.flume.channel.BasicChannelSemantics;
 import org.apache.flume.channel.BasicTransactionSemantics;
 import org.apache.flume.channel.file.Log.Builder;
@@ -67,6 +68,7 @@ import com.google.common.base.Strings;
  */
 @InterfaceAudience.Private
 @InterfaceStability.Stable
+@Disposable
 public class FileChannel extends BasicChannelSemantics {
 
   private static final Logger LOG = LoggerFactory

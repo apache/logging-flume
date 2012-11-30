@@ -17,26 +17,26 @@
  * under the License.
  */
 
-package org.apache.flume.source;
+package org.apache.flume.node;
 
-import org.apache.flume.EventDeliveryException;
+import org.apache.flume.Channel;
+import org.apache.flume.SinkRunner;
+import org.apache.flume.SourceRunner;
 
-public class FlakeySequenceGeneratorSource extends SequenceGeneratorSource {
+import com.google.common.collect.ImmutableMap;
 
-  @Override
-  public Status process() throws EventDeliveryException {
+public interface MaterializedConfiguration {
 
-    if (Math.round(Math.random()) == 1) {
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException e) {
-        // Do nothing.
-      }
+  public void addSourceRunner(String name, SourceRunner sourceRunner);
 
-      throw new EventDeliveryException("I'm broken!");
-    } else {
-      return super.process();
-    }
-  }
+  public void addSinkRunner(String name, SinkRunner sinkRunner);
+
+  public void addChannel(String name, Channel channel);
+
+  public ImmutableMap<String, SourceRunner> getSourceRunners();
+
+  public ImmutableMap<String, SinkRunner> getSinkRunners();
+
+  public ImmutableMap<String, Channel> getChannels();
 
 }

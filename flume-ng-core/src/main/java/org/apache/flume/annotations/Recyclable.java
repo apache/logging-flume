@@ -17,20 +17,11 @@
  * under the License.
  */
 
-package org.apache.flume.node;
+package org.apache.flume.annotations;
+import java.lang.annotation.Target;
+import java.lang.annotation.Retention;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import static java.lang.annotation.ElementType.TYPE;
 
-import java.util.Set;
-
-import org.apache.flume.lifecycle.LifecycleAware;
-
-public interface NodeManager extends LifecycleAware {
-
-  public boolean add(LifecycleAware node);
-
-  public boolean remove(LifecycleAware node);
-
-  public Set<LifecycleAware> getNodes();
-
-  public void setNodes(Set<LifecycleAware> nodes);
-
-}
+@Target({ TYPE }) @Retention(RUNTIME)
+public @interface Recyclable {}

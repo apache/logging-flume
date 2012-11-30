@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.apache.flume.conf.file;
+package org.apache.flume.node;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,15 +25,16 @@ import java.util.Map;
 import org.apache.flume.Channel;
 import org.apache.flume.SinkRunner;
 import org.apache.flume.SourceRunner;
-import org.apache.flume.node.NodeConfiguration;
 
-public class SimpleNodeConfiguration implements NodeConfiguration {
+import com.google.common.collect.ImmutableMap;
 
-  private Map<String, Channel> channels;
-  private Map<String, SourceRunner> sourceRunners;
-  private Map<String, SinkRunner> sinkRunners;
+public class SimpleMaterializedConfiguration implements MaterializedConfiguration {
 
-  public SimpleNodeConfiguration() {
+  private final Map<String, Channel> channels;
+  private final Map<String, SourceRunner> sourceRunners;
+  private final Map<String, SinkRunner> sinkRunners;
+
+  public SimpleMaterializedConfiguration() {
     channels = new HashMap<String, Channel>();
     sourceRunners = new HashMap<String, SourceRunner>();
     sinkRunners = new HashMap<String, SinkRunner>();
@@ -44,32 +45,34 @@ public class SimpleNodeConfiguration implements NodeConfiguration {
     return "{ sourceRunners:" + sourceRunners + " sinkRunners:" + sinkRunners
         + " channels:" + channels + " }";
   }
-
   @Override
-  public Map<String, Channel> getChannels() {
-    return channels;
-  }
-
-  public void setChannels(Map<String, Channel> channels) {
-    this.channels = channels;
+  public void addSourceRunner(String name, SourceRunner sourceRunner) {
+    sourceRunners.put(name, sourceRunner);
   }
 
   @Override
-  public Map<String, SourceRunner> getSourceRunners() {
-    return sourceRunners;
-  }
-
-  public void setSourceRunners(Map<String, SourceRunner> sourceRunners) {
-    this.sourceRunners = sourceRunners;
+  public void addSinkRunner(String name, SinkRunner sinkRunner) {
+    sinkRunners.put(name, sinkRunner);
   }
 
   @Override
-  public Map<String, SinkRunner> getSinkRunners() {
-    return sinkRunners;
+  public void addChannel(String name, Channel channel){
+    channels.put(name, channel);
   }
 
-  public void setSinkRunners(Map<String, SinkRunner> sinkRunners) {
-    this.sinkRunners = sinkRunners;
+  @Override
+  public ImmutableMap<String, Channel> getChannels() {
+    return ImmutableMap.copyOf(channels);
+  }
+
+  @Override
+  public ImmutableMap<String, SourceRunner> getSourceRunners() {
+    return ImmutableMap.copyOf(sourceRunners);
+  }
+
+  @Override
+  public ImmutableMap<String, SinkRunner> getSinkRunners() {
+    return ImmutableMap.copyOf(sinkRunners);
   }
 
 }
