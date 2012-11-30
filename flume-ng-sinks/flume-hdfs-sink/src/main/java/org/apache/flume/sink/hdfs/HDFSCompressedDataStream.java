@@ -21,6 +21,8 @@ package org.apache.flume.sink.hdfs;
 import java.io.IOException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.serialization.EventSerializer;
+import org.apache.flume.serialization.EventSerializerFactory;
 import org.apache.flume.sink.FlumeFormatter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -42,9 +44,15 @@ public class HDFSCompressedDataStream implements HDFSWriter {
   private CompressionOutputStream cmpOut;
   private boolean isFinished = false;
 
+  private String serializerType;
+  private Context serializerContext;
+  private EventSerializer serializer;
+
   @Override
   public void configure(Context context) {
-    // no-op
+    serializerType = context.getString("serializer", "TEXT");
+    serializerContext = new Context(
+        context.getSubProperties(EventSerializer.CTX_PREFIX));
   }
 
   @Override
@@ -61,13 +69,28 @@ public class HDFSCompressedDataStream implements HDFSWriter {
     Path dstPath = new Path(filePath);
     FileSystem hdfs = dstPath.getFileSystem(conf);
 
+    boolean appending = false;
     if (conf.getBoolean("hdfs.append.support", false) == true && hdfs.isFile
     (dstPath)) {
       fsOut = hdfs.append(dstPath);
+      appending = true;
     } else {
       fsOut = hdfs.create(dstPath);
     }
     cmpOut = codec.createOutputStream(fsOut);
+    serializer = EventSerializerFactory.getInstance(serializerType,
+        serializerContext, cmpOut);
+    if (appending && !serializer.supportsReopen()) {
+      cmpOut.close();
+      serializer = null;
+      throw new IOException("serializer (" + serializerType
+          + ") does not support append");
+    }
+    if (appending) {
+      serializer.afterReopen();
+    } else {
+      serializer.afterCreate();
+    }
     isFinished = false;
   }
 
@@ -77,8 +100,7 @@ public class HDFSCompressedDataStream implements HDFSWriter {
       cmpOut.resetState();
       isFinished = false;
     }
-    byte[] bValue = fmt.getBytes(e);
-    cmpOut.write(bValue);
+    serializer.write(e);
   }
 
   @Override
@@ -88,6 +110,7 @@ public class HDFSCompressedDataStream implements HDFSWriter {
     // Also, since resetState() writes headers, avoid calling it without an
     // additional write/append operation.
     // Note: There are bugs in Hadoop & JDK w/ pure-java gzip; see HADOOP-8522.
+    serializer.flush();
     if (!isFinished) {
       cmpOut.finish();
       isFinished = true;
@@ -98,7 +121,14 @@ public class HDFSCompressedDataStream implements HDFSWriter {
 
   @Override
   public void close() throws IOException {
-    sync();
+    serializer.flush();
+    serializer.beforeClose();
+    if (!isFinished) {
+      cmpOut.finish();
+      isFinished = true;
+    }
+    fsOut.flush();
+    fsOut.sync();
     cmpOut.close();
   }
 
