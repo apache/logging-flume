@@ -19,7 +19,6 @@ package org.apache.flume.conf;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -66,18 +65,37 @@ public class FlumeConfiguration {
   public static final String NEWLINE = System.getProperty("line.separator",
       "\n");
   public static final String INDENTSTEP = "  ";
-
   /**
    * Creates a populated Flume Configuration object.
+   * @deprecated please use the other constructor
    */
+  @Deprecated
   public FlumeConfiguration(Properties properties) {
     agentConfigMap = new HashMap<String, AgentConfiguration>();
     errors = new LinkedList<FlumeConfigurationError>();
     // Construct the in-memory component hierarchy
-    Enumeration<?> propertyNames = properties.propertyNames();
-    while (propertyNames.hasMoreElements()) {
-      String name = (String) propertyNames.nextElement();
-      String value = properties.getProperty(name);
+    for(Object name : properties.keySet()) {
+      Object value = properties.get(name);
+      if (!addRawProperty(name.toString(), value.toString())) {
+        logger.warn("Configuration property ignored: " + name + " = " + value);
+      }
+    }
+    // Now iterate thru the agentContext and create agent configs and add them
+    // to agentConfigMap
+
+    // validate and remove improperly configured components
+    validateConfiguration();
+
+  }
+  /**
+   * Creates a populated Flume Configuration object.
+   */
+  public FlumeConfiguration(Map<String, String> properties) {
+    agentConfigMap = new HashMap<String, AgentConfiguration>();
+    errors = new LinkedList<FlumeConfigurationError>();
+    // Construct the in-memory component hierarchy
+    for(String name : properties.keySet()) {
+      String value = properties.get(name);
 
       if (!addRawProperty(name, value)) {
         logger.warn("Configuration property ignored: " + name + " = " + value);

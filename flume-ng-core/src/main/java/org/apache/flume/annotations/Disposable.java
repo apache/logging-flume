@@ -17,20 +17,11 @@
  * under the License.
  */
 
-package org.apache.flume.node;
+package org.apache.flume.annotations;
+import java.lang.annotation.Target;
+import java.lang.annotation.Retention;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import static java.lang.annotation.ElementType.TYPE;
 
-import java.util.Map;
-
-import org.apache.flume.Channel;
-import org.apache.flume.SinkRunner;
-import org.apache.flume.SourceRunner;
-
-public interface NodeConfiguration {
-
-  public Map<String, SourceRunner> getSourceRunners();
-
-  public Map<String, SinkRunner> getSinkRunners();
-
-  public Map<String, Channel> getChannels();
-
-}
+@Target({ TYPE }) @Retention(RUNTIME)
+public @interface Disposable {}

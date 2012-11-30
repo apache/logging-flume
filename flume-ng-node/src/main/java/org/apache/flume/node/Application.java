@@ -21,6 +21,11 @@ package org.apache.flume.node;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -29,78 +34,235 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.flume.ChannelFactory;
+import org.apache.flume.Channel;
 import org.apache.flume.Constants;
-import org.apache.flume.SinkFactory;
-import org.apache.flume.SourceFactory;
-import org.apache.flume.channel.DefaultChannelFactory;
-import org.apache.flume.conf.file.AbstractFileConfigurationProvider;
-import org.apache.flume.conf.properties.PropertiesFileConfigurationProvider;
-import org.apache.flume.lifecycle.LifecycleController;
-import org.apache.flume.lifecycle.LifecycleException;
+import org.apache.flume.Context;
+import org.apache.flume.SinkRunner;
+import org.apache.flume.SourceRunner;
+import org.apache.flume.instrumentation.MonitorService;
+import org.apache.flume.instrumentation.MonitoringType;
+import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
-import org.apache.flume.node.nodemanager.DefaultLogicalNodeManager;
-import org.apache.flume.sink.DefaultSinkFactory;
-import org.apache.flume.source.DefaultSourceFactory;
+import org.apache.flume.lifecycle.LifecycleSupervisor;
+import org.apache.flume.lifecycle.LifecycleSupervisor.SupervisorPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 
-public class Application {
+public class Application  {
 
   private static final Logger logger = LoggerFactory
       .getLogger(Application.class);
 
-  private String[] args;
-  private File configurationFile;
-  private String nodeName;
+  public static final String CONF_MONITOR_CLASS = "flume.monitoring.type";
+  public static final String CONF_MONITOR_PREFIX = "flume.monitoring.";
 
-  private SourceFactory sourceFactory;
-  private SinkFactory sinkFactory;
-  private ChannelFactory channelFactory;
+  private final List<LifecycleAware> components;
+  private final LifecycleSupervisor supervisor;
+  private MaterializedConfiguration materializedConfiguration;
+  private MonitorService monitorServer;
 
-  public static void main(String[] args) {
-    Application application = new Application();
+  public Application() {
+    this(new ArrayList<LifecycleAware>(0));
+  }
+  public Application(List<LifecycleAware> components) {
+    this.components = components;
+    supervisor = new LifecycleSupervisor();
+  }
 
-    application.setArgs(args);
-
-    try {
-      if (application.parseOptions()) {
-        application.run();
-      }
-    } catch (ParseException e) {
-      logger.error(e.getMessage());
-    } catch (Exception e) {
-      logger.error("A fatal error occurred while running. Exception follows.",
-          e);
+  public void start() {
+    for(LifecycleAware component : components) {
+      supervisor.supervise(component,
+          new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
     }
   }
 
-  public Application() {
-    sourceFactory = new DefaultSourceFactory();
-    sinkFactory = new DefaultSinkFactory();
-    channelFactory = new DefaultChannelFactory();
+
+  @Subscribe
+  public synchronized void handleConfigurationEvent(MaterializedConfiguration conf) {
+    stopAllComponents();
+    startAllComponents(conf);
   }
 
-  public boolean parseOptions() throws ParseException {
-    Options options = new Options();
+  public void stop() {
+    supervisor.stop();
+    if(monitorServer != null) {
+      monitorServer.stop();
+    }
+  }
 
-    Option option = new Option("n", "name", true, "the name of this node");
-    options.addOption(option);
 
-    option = new Option("f", "conf-file", true, "specify a conf file");
-    options.addOption(option);
+  private void stopAllComponents() {
+    if (this.materializedConfiguration != null) {
+      logger.info("Shutting down configuration: {}", this.materializedConfiguration);
+      for (Entry<String, SourceRunner> entry : this.materializedConfiguration
+          .getSourceRunners().entrySet()) {
+        try{
+          logger.info("Stopping Source " + entry.getKey());
+          supervisor.unsupervise(entry.getValue());
+        } catch (Exception e){
+          logger.error("Error while stopping {}", entry.getValue(), e);
+        }
+      }
 
-    option = new Option("h", "help", false, "display help text");
-    options.addOption(option);
+      for (Entry<String, SinkRunner> entry :
+        this.materializedConfiguration.getSinkRunners().entrySet()) {
+        try{
+          logger.info("Stopping Sink " + entry.getKey());
+          supervisor.unsupervise(entry.getValue());
+        } catch (Exception e){
+          logger.error("Error while stopping {}", entry.getValue(), e);
+        }
+      }
 
-    CommandLineParser parser = new GnuParser();
-    CommandLine commandLine = parser.parse(options, args);
+      for (Entry<String, Channel> entry :
+        this.materializedConfiguration.getChannels().entrySet()) {
+        try{
+          logger.info("Stopping Channel " + entry.getKey());
+          supervisor.unsupervise(entry.getValue());
+        } catch (Exception e){
+          logger.error("Error while stopping {}", entry.getValue(), e);
+        }
+      }
+    }
+    if(monitorServer != null) {
+      monitorServer.stop();
+    }
+  }
 
-    if (commandLine.hasOption('f')) {
-      configurationFile = new File(commandLine.getOptionValue('f'));
+  private void startAllComponents(MaterializedConfiguration materializedConfiguration) {
+    logger.info("Starting new configuration:{}", materializedConfiguration);
 
+    this.materializedConfiguration = materializedConfiguration;
+
+    for (Entry<String, Channel> entry :
+      materializedConfiguration.getChannels().entrySet()) {
+      try{
+        logger.info("Starting Channel " + entry.getKey());
+        supervisor.supervise(entry.getValue(),
+            new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
+      } catch (Exception e){
+        logger.error("Error while starting {}", entry.getValue(), e);
+      }
+    }
+
+    /*
+     * Wait for all channels to start.
+     */
+    for(Channel ch: materializedConfiguration.getChannels().values()){
+      while(ch.getLifecycleState() != LifecycleState.START
+          && !supervisor.isComponentInErrorState(ch)){
+        try {
+          logger.info("Waiting for channel: " + ch.getName() +
+              " to start. Sleeping for 500 ms");
+          Thread.sleep(500);
+        } catch (InterruptedException e) {
+          logger.error("Interrupted while waiting for channel to start.", e);
+          Throwables.propagate(e);
+        }
+      }
+    }
+
+    for (Entry<String, SinkRunner> entry : materializedConfiguration.getSinkRunners()
+        .entrySet()) {
+      try{
+        logger.info("Starting Sink " + entry.getKey());
+        supervisor.supervise(entry.getValue(),
+          new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
+      } catch (Exception e) {
+        logger.error("Error while starting {}", entry.getValue(), e);
+      }
+    }
+
+    for (Entry<String, SourceRunner> entry : materializedConfiguration
+        .getSourceRunners().entrySet()) {
+      try{
+        logger.info("Starting Source " + entry.getKey());
+        supervisor.supervise(entry.getValue(),
+          new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
+      } catch (Exception e) {
+        logger.error("Error while starting {}", entry.getValue(), e);
+      }
+    }
+
+    this.loadMonitoring();
+  }
+
+
+  @SuppressWarnings("unchecked")
+  private void loadMonitoring() {
+    Properties systemProps = System.getProperties();
+    Set<String> keys = systemProps.stringPropertyNames();
+    try {
+      if (keys.contains(CONF_MONITOR_CLASS)) {
+        String monitorType = systemProps.getProperty(CONF_MONITOR_CLASS);
+        Class<? extends MonitorService> klass;
+        try {
+          //Is it a known type?
+          klass = MonitoringType.valueOf(
+                  monitorType.toUpperCase()).getMonitorClass();
+        } catch (Exception e) {
+          //Not a known type, use FQCN
+          klass = (Class<? extends MonitorService>) Class.forName(monitorType);
+        }
+        this.monitorServer = klass.newInstance();
+        Context context = new Context();
+        for (String key : keys) {
+          if (key.startsWith(CONF_MONITOR_PREFIX)) {
+            context.put(key.substring(CONF_MONITOR_PREFIX.length()),
+                    systemProps.getProperty(key));
+          }
+        }
+        monitorServer.configure(context);
+        monitorServer.start();
+      }
+    } catch (Exception e) {
+      logger.warn("Error starting monitoring. "
+              + "Monitoring might not be available.", e);
+    }
+
+  }
+
+  public static void main(String[] args) {
+
+    try {
+
+      Options options = new Options();
+
+      Option option = new Option("n", "name", true, "the name of this agent");
+      option.setRequired(true);
+      options.addOption(option);
+
+      option = new Option("f", "conf-file", true, "specify a conf file");
+      option.setRequired(true);
+      options.addOption(option);
+
+      option = new Option(null, "no-reload-conf", false, "do not reload " +
+        "conf file if changed");
+      options.addOption(option);
+
+      option = new Option("h", "help", false, "display help text");
+      options.addOption(option);
+
+      CommandLineParser parser = new GnuParser();
+      CommandLine commandLine = parser.parse(options, args);
+
+      File configurationFile = new File(commandLine.getOptionValue('f'));
+      String agentName = commandLine.getOptionValue('n');
+      boolean reload = !commandLine.hasOption("no-reload");
+
+      if (commandLine.hasOption('h')) {
+        new HelpFormatter().printHelp("flume-ng agent", options, true);
+        return;
+      }
+      /*
+       * The following is to ensure that by default the agent
+       * will fail on startup if the file does not exist.
+       */
       if (!configurationFile.exists()) {
         // If command line invocation, then need to fail fast
         if (System.getProperty(Constants.SYSPROP_CALLED_FROM_SERVICE) == null) {
@@ -114,65 +276,36 @@ public class Application {
               "The specified configuration file does not exist: " + path);
         }
       }
-    }
-
-    if (commandLine.hasOption('n')) {
-      nodeName = commandLine.getOptionValue('n');
-    }
-
-    if (commandLine.hasOption('h')) {
-      new HelpFormatter().printHelp("flume-ng node", options, true);
-
-      return false;
-    }
-
-    return true;
-  }
-
-  public void run() throws LifecycleException, InterruptedException,
-      InstantiationException {
-
-    final FlumeNode node = new FlumeNode();
-    DefaultLogicalNodeManager nodeManager = new DefaultLogicalNodeManager();
-    AbstractFileConfigurationProvider configurationProvider =
-        new PropertiesFileConfigurationProvider();
-
-    configurationProvider.setChannelFactory(channelFactory);
-    configurationProvider.setSourceFactory(sourceFactory);
-    configurationProvider.setSinkFactory(sinkFactory);
-
-    configurationProvider.setNodeName(nodeName);
-    configurationProvider.setConfigurationAware(nodeManager);
-    configurationProvider.setFile(configurationFile);
-
-    Preconditions.checkState(configurationFile != null,
-        "Configuration file not specified");
-    Preconditions.checkState(nodeName != null, "Node name not specified");
-
-    node.setName(nodeName);
-    node.setNodeManager(nodeManager);
-    node.setConfigurationProvider(configurationProvider);
-
-    Runtime.getRuntime().addShutdownHook(new Thread("node-shutdownHook") {
-
-      @Override
-      public void run() {
-        node.stop();
+      List<LifecycleAware> components = Lists.newArrayList();
+      Application application;
+      if(reload) {
+        EventBus eventBus = new EventBus(agentName + "-event-bus");
+        PollingPropertiesFileConfigurationProvider configurationProvider =
+            new PollingPropertiesFileConfigurationProvider(agentName,
+                configurationFile, eventBus, 30);
+        components.add(configurationProvider);
+        application = new Application(components);
+        eventBus.register(application);
+      } else {
+        PropertiesFileConfigurationProvider configurationProvider =
+            new PropertiesFileConfigurationProvider(agentName,
+                configurationFile);
+        application = new Application();
+        application.handleConfigurationEvent(configurationProvider.getConfiguration());
       }
+      application.start();
 
-    });
+      final Application appReference = application;
+      Runtime.getRuntime().addShutdownHook(new Thread("agent-shutdown-hook") {
+        @Override
+        public void run() {
+          appReference.stop();
+        }
+      });
 
-    node.start();
-    LifecycleController.waitForOneOf(node, LifecycleState.START_OR_ERROR);
-    LifecycleController.waitForOneOf(node, LifecycleState.STOP_OR_ERROR);
+    } catch (Exception e) {
+      logger.error("A fatal error occurred while running. Exception follows.",
+          e);
+    }
   }
-
-  public String[] getArgs() {
-    return args;
-  }
-
-  public void setArgs(String[] args) {
-    this.args = args;
-  }
-
 }

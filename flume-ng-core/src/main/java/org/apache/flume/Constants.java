@@ -20,6 +20,11 @@ package org.apache.flume;
 
 public final class Constants {
 
+  /**
+   * Disables the fail-fast startup behavior. This would be used in the
+   * scenario where the agent is expected to start, but the config
+   * file be populated at a later point in time.
+   */
   public static final String SYSPROP_CALLED_FROM_SERVICE
           = "flume.called.from.service";
 
