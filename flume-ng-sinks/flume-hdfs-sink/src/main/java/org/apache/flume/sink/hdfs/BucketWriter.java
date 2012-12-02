@@ -165,6 +165,7 @@ class BucketWriter {
   /**
    * open() is called by append()
    * @throws IOException
+   * @throws InterruptedException
    */
   private void open() throws IOException, InterruptedException {
     runPrivileged(new PrivilegedExceptionAction<Void>() {
@@ -178,8 +179,9 @@ class BucketWriter {
   /**
    * doOpen() must only be called by open()
    * @throws IOException
+   * @throws InterruptedException
    */
-  private void doOpen() throws IOException {
+  private void doOpen() throws IOException, InterruptedException {
     if ((filePath == null) || (writer == null) || (formatter == null)) {
       throw new IOException("Invalid file settings");
     }
@@ -194,6 +196,7 @@ class BucketWriter {
     // NOTE: tried synchronizing on the underlying Kerberos principal previously
     // which caused deadlocks. See FLUME-1231.
     synchronized (staticLock) {
+      checkAndThrowInterruptedException();
       try {
         long counter = fileExtensionCounter.incrementAndGet();
         if (codeC == null) {
@@ -252,8 +255,10 @@ class BucketWriter {
    * Close the file handle and rename the temp file to the permanent filename.
    * Safe to call multiple times. Logs HDFSWriter.close() exceptions.
    * @throws IOException On failure to rename if temp file exists.
+   * @throws InterruptedException
    */
   public synchronized void close() throws IOException, InterruptedException {
+    checkAndThrowInterruptedException();
     flush();
     runPrivileged(new PrivilegedExceptionAction<Void>() {
       public Void run() throws Exception {
@@ -302,8 +307,11 @@ class BucketWriter {
 
   /**
    * flush the data
+   * @throws IOException
+   * @throws InterruptedException
    */
   public synchronized void flush() throws IOException, InterruptedException {
+    checkAndThrowInterruptedException();
     if (!isBatchComplete()) {
       runPrivileged(new PrivilegedExceptionAction<Void>() {
         public Void run() throws Exception {
@@ -354,8 +362,13 @@ class BucketWriter {
    * We rotate before append, and not after, so that the active file rolling
    * mechanism will never roll an empty file. This also ensures that the file
    * creation time reflects when the first event was written.
+   *
+   * @throws IOException
+   * @throws InterruptedException
    */
-  public synchronized void append(Event event) throws IOException, InterruptedException {
+  public synchronized void append(Event event)
+          throws IOException, InterruptedException {
+    checkAndThrowInterruptedException();
     if (!isOpen) {
       if(idleClosed) {
         throw new IOException("This bucket writer was closed due to idling and this handle " +
@@ -441,5 +454,19 @@ class BucketWriter {
 
   void setClock(Clock clock) {
       this.clock = clock;
+  }
+
+  /**
+   * This method if the current thread has been interrupted and throws an
+   * exception.
+   * @throws InterruptedException
+   */
+  private static void checkAndThrowInterruptedException()
+          throws InterruptedException {
+    if (Thread.currentThread().interrupted()) {
+      throw new InterruptedException("Timed out before HDFS call was made. "
+              + "Your hdfs.callTimeout might be set too low or HDFS calls are "
+              + "taking too long.");
+    }
   }
 }
