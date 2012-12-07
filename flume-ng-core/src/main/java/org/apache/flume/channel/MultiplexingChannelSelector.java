@@ -94,10 +94,6 @@ public class MultiplexingChannelSelector extends AbstractChannelSelector {
     defaultChannels = getChannelListFromNames(
         context.getString(CONFIG_DEFAULT_CHANNEL), channelNameMap);
 
-    if(defaultChannels.isEmpty()){
-      throw new FlumeException("Default channel list empty");
-    }
-
     Map<String, String> mapConfig =
         context.getSubProperties(CONFIG_PREFIX_MAPPING);
 
@@ -157,6 +153,9 @@ public class MultiplexingChannelSelector extends AbstractChannelSelector {
   private List<Channel> getChannelListFromNames(String channels,
       Map<String, Channel> channelNameMap){
     List<Channel> configuredChannels = new ArrayList<Channel>();
+    if(channels == null || channels.isEmpty()) {
+      return configuredChannels;
+    }
     String[] chNames = channels.split(" ");
     for (String name : chNames) {
       Channel ch = channelNameMap.get(name);
