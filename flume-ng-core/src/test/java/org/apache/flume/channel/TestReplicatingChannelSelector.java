@@ -26,6 +26,8 @@ import junit.framework.Assert;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
+import org.apache.flume.Context;
+import org.apache.flume.conf.Configurables;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -41,22 +43,76 @@ public class TestReplicatingChannelSelector {
     channels.add(MockChannel.createMockChannel("ch1"));
     channels.add(MockChannel.createMockChannel("ch2"));
     channels.add(MockChannel.createMockChannel("ch3"));
-
+    channels.add(MockChannel.createMockChannel("ch4"));
     selector = ChannelSelectorFactory.create(
         channels, new HashMap<String, String>());
   }
 
   @Test
   public void testReplicatingSelector() throws Exception {
+    selector.configure(new Context());
     List<Channel> channels = selector.getRequiredChannels(new MockEvent());
     Assert.assertNotNull(channels);
-    Assert.assertTrue(channels.size() == 3);
-    Assert.assertTrue(channels.get(0).getName().equals("ch1"));
-    Assert.assertTrue(channels.get(1).getName().equals("ch2"));
-    Assert.assertTrue(channels.get(2).getName().equals("ch3"));
+    Assert.assertEquals(4, channels.size());
+    Assert.assertEquals("ch1", channels.get(0).getName());
+    Assert.assertEquals("ch2", channels.get(1).getName());
+    Assert.assertEquals("ch3", channels.get(2).getName());
+    Assert.assertEquals("ch4", channels.get(3).getName());
 
     List<Channel> optCh = selector.getOptionalChannels(new MockEvent());
-    Assert.assertTrue(optCh.size() == 0);
+    Assert.assertEquals(0, optCh.size());
   }
 
+  @Test
+  public void testOptionalChannels() throws Exception {
+    Context context = new Context();
+    context.put(ReplicatingChannelSelector.CONFIG_OPTIONAL, "ch1");
+    Configurables.configure(selector, context);
+    List<Channel> channels = selector.getRequiredChannels(new MockEvent());
+    Assert.assertNotNull(channels);
+    Assert.assertEquals(3, channels.size());
+    Assert.assertEquals("ch2", channels.get(0).getName());
+    Assert.assertEquals("ch3", channels.get(1).getName());
+    Assert.assertEquals("ch4", channels.get(2).getName());
+
+    List<Channel> optCh = selector.getOptionalChannels(new MockEvent());
+    Assert.assertEquals(1, optCh.size());
+    Assert.assertEquals("ch1", optCh.get(0).getName());
+
+  }
+
+
+  @Test
+  public void testMultipleOptionalChannels() throws Exception {
+    Context context = new Context();
+    context.put(ReplicatingChannelSelector.CONFIG_OPTIONAL, "ch1 ch4");
+    Configurables.configure(selector, context);
+    List<Channel> channels = selector.getRequiredChannels(new MockEvent());
+    Assert.assertNotNull(channels);
+    Assert.assertEquals(2, channels.size());
+    Assert.assertEquals("ch2", channels.get(0).getName());
+    Assert.assertEquals("ch3", channels.get(1).getName());
+
+    List<Channel> optCh = selector.getOptionalChannels(new MockEvent());
+    Assert.assertEquals(2, optCh.size());
+    Assert.assertEquals("ch1", optCh.get(0).getName());
+    Assert.assertEquals("ch4", optCh.get(1).getName());
+  }
+
+  @Test
+  public void testMultipleOptionalChannelsSameChannelTwice() throws Exception {
+    Context context = new Context();
+    context.put(ReplicatingChannelSelector.CONFIG_OPTIONAL, "ch1 ch4 ch1");
+    Configurables.configure(selector, context);
+    List<Channel> channels = selector.getRequiredChannels(new MockEvent());
+    Assert.assertNotNull(channels);
+    Assert.assertEquals(2, channels.size());
+    Assert.assertEquals("ch2", channels.get(0).getName());
+    Assert.assertEquals("ch3", channels.get(1).getName());
+
+    List<Channel> optCh = selector.getOptionalChannels(new MockEvent());
+    Assert.assertEquals(2, optCh.size());
+    Assert.assertEquals("ch1", optCh.get(0).getName());
+    Assert.assertEquals("ch4", optCh.get(1).getName());
+  }
 }

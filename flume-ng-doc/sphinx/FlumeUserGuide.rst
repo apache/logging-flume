@@ -1806,11 +1806,12 @@ Replicating Channel Selector (default)
 
 Required properties are in **bold**.
 
-=============  ===========  ================================================
-Property Name  Default      Description
-=============  ===========  ================================================
-selector.type  replicating  The component type name, needs to be ``replicating``
-=============  ===========  ================================================
+==================  ===========  ====================================================
+Property Name       Default      Description
+==================  ===========  ====================================================
+selector.type       replicating  The component type name, needs to be ``replicating``
+selector.optional   --           Set of channels to be marked as ``optional``
+==================  ===========  ====================================================
 
 Example for agent named a1 and it's source called r1:
 
@@ -1820,6 +1821,12 @@ Example for agent named a1 and it's source called r1:
   a1.channels = c1 c2 c3
   a1.source.r1.selector.type = replicating
   a1.source.r1.channels = c1 c2 c3
+  a1.source.r1.selector.optional = c3
+
+In the above configuration, c3 is an optional channel. Failure to write to c3 is
+simply ignored. Since c1 and c2 are not marked optional, failure to write to
+those channels will cause the transaction to fail.
+
 
 Multiplexing Channel Selector
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
