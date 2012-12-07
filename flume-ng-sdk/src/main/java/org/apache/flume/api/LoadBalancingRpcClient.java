@@ -65,9 +65,8 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
 
     while (it.hasNext()) {
       HostInfo host = it.next();
-      RpcClient client;
       try {
-        client = getClient(host);
+        RpcClient client = getClient(host);
         client.append(event);
         eventSent = true;
         break;
@@ -89,8 +88,8 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
 
     while (it.hasNext()) {
       HostInfo host = it.next();
-      RpcClient client = getClient(host);
       try {
+        RpcClient client = getClient(host);
         client.appendBatch(events);
         batchSent = true;
         break;
@@ -180,7 +179,9 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
     selector.setHosts(hosts);
   }
 
-  private synchronized RpcClient getClient(HostInfo info) {
+  private synchronized RpcClient getClient(HostInfo info)
+      throws FlumeException {
+
     String name = info.getReferenceName();
     RpcClient client = clientMap.get(name);
     if (client == null) {
@@ -199,7 +200,7 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
     return client;
   }
 
-  private RpcClient createClient(String referenceName) {
+  private RpcClient createClient(String referenceName) throws FlumeException {
     Properties props = getClientConfigurationProperties(referenceName);
     return RpcClientFactory.getInstance(props);
   }
