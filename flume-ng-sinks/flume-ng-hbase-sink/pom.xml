@@ -109,6 +109,11 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.apache.flume.flume-ng-sinks</groupId>
+      <artifactId>flume-hdfs-sink</artifactId>
+    </dependency>
+
   </dependencies>
 
   <profiles>
