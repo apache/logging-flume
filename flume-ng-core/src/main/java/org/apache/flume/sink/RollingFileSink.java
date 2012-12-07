@@ -146,7 +146,6 @@ public class RollingFileSink extends AbstractSink implements Configurable {
         try {
           serializer.flush();
           serializer.beforeClose();
-          outputStream.flush();
           outputStream.close();
           sinkCounter.incrementConnectionClosedCount();
           shouldRotate = false;
@@ -154,10 +153,10 @@ public class RollingFileSink extends AbstractSink implements Configurable {
           sinkCounter.incrementConnectionFailedCount();
           throw new EventDeliveryException("Unable to rotate file "
               + pathController.getCurrentFile() + " while delivering event", e);
+        } finally {
+          serializer = null;
+          outputStream = null;
         }
-
-        serializer = null;
-        outputStream = null;
         pathController.rotate();
       }
     }
@@ -235,12 +234,14 @@ public class RollingFileSink extends AbstractSink implements Configurable {
       try {
         serializer.flush();
         serializer.beforeClose();
-        outputStream.flush();
         outputStream.close();
         sinkCounter.incrementConnectionClosedCount();
       } catch (IOException e) {
         sinkCounter.incrementConnectionFailedCount();
         logger.error("Unable to close output stream. Exception follows.", e);
+      } finally {
+        outputStream = null;
+        serializer = null;
       }
     }
     if(rollInterval > 0){
