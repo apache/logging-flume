@@ -18,7 +18,6 @@
  */
 package org.apache.flume.channel;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -86,10 +85,7 @@ public class MultiplexingChannelSelector extends AbstractChannelSelector {
     this.headerName = context.getString(CONFIG_MULTIPLEX_HEADER_NAME,
         DEFAULT_MULTIPLEX_HEADER);
 
-    Map<String, Channel> channelNameMap = new HashMap<String, Channel>();
-    for (Channel ch : getAllChannels()) {
-      channelNameMap.put(ch.getName(), ch);
-    }
+    Map<String, Channel> channelNameMap = getChannelNameMap();
 
     defaultChannels = getChannelListFromNames(
         context.getString(CONFIG_DEFAULT_CHANNEL), channelNameMap);
@@ -146,27 +142,6 @@ public class MultiplexingChannelSelector extends AbstractChannelSelector {
       }
     }
 
-  }
-
-  //Given a list of channel names as space delimited string,
-  //returns list of channels.
-  private List<Channel> getChannelListFromNames(String channels,
-      Map<String, Channel> channelNameMap){
-    List<Channel> configuredChannels = new ArrayList<Channel>();
-    if(channels == null || channels.isEmpty()) {
-      return configuredChannels;
-    }
-    String[] chNames = channels.split(" ");
-    for (String name : chNames) {
-      Channel ch = channelNameMap.get(name);
-      if (ch != null) {
-        configuredChannels.add(ch);
-      } else {
-        throw new FlumeException("Selector channel not found: "
-            + name);
-      }
-    }
-    return configuredChannels;
   }
 
 }
