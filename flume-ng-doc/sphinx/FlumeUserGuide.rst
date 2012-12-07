@@ -183,7 +183,7 @@ This configuration lets a user generate events and subsequently logs them to the
 
 This configuration defines a single agent named a1. a1 has a source that listens for data on port 44444, a channel
 that buffers event data in memory, and a sink that logs event data to the console. The configuration file names the
-various components, then describes their types and configuration parameters. A given configuration file might define 
+various components, then describes their types and configuration parameters. A given configuration file might define
 several named agents; when a given Flume process is launched a flag is passed telling it which named agent to manifest.
 
 Given this configuration file, we can start Flume as follows::
@@ -540,8 +540,7 @@ configured as default:
 
   <Agent>.sources.<Source1>.selector.default = <Channel2>
 
-The mapping allows overlapping the channels for each value. The default must be
-set for a multiplexing select which can also contain any number of channels.
+The mapping allows overlapping the channels for each value.
 
 The following example has a single flow that multiplexed to two paths. The
 agent named agent_foo has a single avro source and two channels linked to two sinks:
@@ -607,7 +606,9 @@ Note that if a header does not have any required channels, then the event will
 be written to the default channels and will be attempted to be written to the
 optional channels for that header. Specifying optional channels will still cause
 the event to be written to the default channels, if no required channels are
-specified.
+specified. If no channels are designated as default and there are no required,
+ the selector will attempt to write the events to the optional channels. Any
+failures are simply ignored in that case.
 
 
 Flume Sources
@@ -1248,7 +1249,7 @@ Example for agent named a1:
 .. code-block:: properties
 
   a1.channels = c1
-  a1.sinks = k1 
+  a1.sinks = k1
   a1.sinks.k1.type = hdfs
   a1.sinks.k1.channel = c1
   a1.sinks.k1.hdfs.path = /flume/events/%y-%m-%d/%H%M/%S
@@ -1279,7 +1280,7 @@ Example for agent named a1:
 .. code-block:: properties
 
   a1.channels = c1
-  a1.sinks = k1 
+  a1.sinks = k1
   a1.sinks.k1.type = logger
   a1.sinks.k1.channel = c1
 
@@ -1310,7 +1311,7 @@ Example for agent named a1:
 .. code-block:: properties
 
   a1.channels = c1
-  a1.sinks = k1 
+  a1.sinks = k1
   a1.sinks.k1.type = avro
   a1.sinks.k1.channel = c1
   a1.sinks.k1.hostname = 10.10.10.10
@@ -1346,7 +1347,7 @@ Example for agent named a1:
 .. code-block:: properties
 
   a1.channels = c1
-  a1.sinks = k1 
+  a1.sinks = k1
   a1.sinks.k1.type = irc
   a1.sinks.k1.channel = c1
   a1.sinks.k1.hostname = irc.yourdomain.com
@@ -1375,7 +1376,7 @@ Example for agent named a1:
 .. code-block:: properties
 
   a1.channels = c1
-  a1.sinks = k1 
+  a1.sinks = k1
   a1.sinks.k1.type = file_roll
   a1.sinks.k1.channel = c1
   a1.sinks.k1.sink.directory = /var/log/flume
@@ -1399,7 +1400,7 @@ Example for agent named a1:
 .. code-block:: properties
 
   a1.channels = c1
-  a1.sinks = k1 
+  a1.sinks = k1
   a1.sinks.k1.type = null
   a1.sinks.k1.channel = c1
 
@@ -1444,7 +1445,7 @@ Example for agent named a1:
 .. code-block:: properties
 
   a1.channels = c1
-  a1.sinks = k1 
+  a1.sinks = k1
   a1.sinks.k1.type = org.apache.flume.sink.hbase.HBaseSink
   a1.sinks.k1.table = foo_table
   a1.sinks.k1.columnFamily = bar_cf
@@ -1484,7 +1485,7 @@ Example for agent named a1:
 .. code-block:: properties
 
   a1.channels = c1
-  a1.sinks = k1 
+  a1.sinks = k1
   a1.sinks.k1.type = org.apache.flume.sink.hbase.AsyncHBaseSink
   a1.sinks.k1.table = foo_table
   a1.sinks.k1.columnFamily = bar_cf
@@ -1523,7 +1524,7 @@ Example for agent named a1:
 .. code-block:: properties
 
   a1.channels = c1
-  a1.sinks = k1 
+  a1.sinks = k1
   a1.sinks.k1.type = org.apache.flume.sink.elasticsearch.ElasticSearchSink
   a1.sinks.k1.hostNames = 127.0.0.1:9200,127.0.0.2:9300
   a1.sinks.k1.indexName = foo_index
@@ -1554,7 +1555,7 @@ Example for agent named a1:
 .. code-block:: properties
 
   a1.channels = c1
-  a1.sinks = k1 
+  a1.sinks = k1
   a1.sinks.k1.type = org.example.MySink
   a1.sinks.k1.channel = c1
 
@@ -1713,14 +1714,14 @@ Generating a key with a password seperate from the key store password:
    -keysize 128 -validity 9000 -keystore test.keystore \
    -storetype jceks -storepass keyStorePassword
 
-Generating a key with the password the same as the key store password:      
+Generating a key with the password the same as the key store password:
 
 .. code-block:: bash
 
   keytool -genseckey -alias key-1 -keyalg AES -keysize 128 -validity 9000 \
     -keystore src/test/resources/test.keystore -storetype jceks \
     -storepass keyStorePassword
-      
+
 
 .. code-block:: properties
 
@@ -2022,7 +2023,7 @@ Example for agent named a1:
 
 .. code-block:: properties
 
-  a1.sinks = k1 
+  a1.sinks = k1
   a1.sinks.k1.type = file_roll
   a1.sinks.k1.channel = c1
   a1.sinks.k1.sink.directory = /var/log/flume
@@ -2072,7 +2073,7 @@ are named components, here is an example of how they are created through configu
 .. code-block:: properties
 
   a1.sources = r1
-  a1.sinks = k1 
+  a1.sinks = k1
   a1.channels = c1
   a1.sources.r1.interceptors = i1 i2
   a1.sources.r1.interceptors.i1.type = org.apache.flume.interceptor.HostInterceptor$Builder
@@ -2208,8 +2209,8 @@ serializers.*                    --         Serializer-specific properties
 ================================ ========== =================================================================================================
 
 The serializers are used to map the matches to a header name and a formatted header value, by default you only need to specify
-the header name and the default ``org.apache.flume.interceptor.RegexExtractorInterceptorPassThroughSerializer`` will be used. 
-This serializer simply maps the matches to the specified header name and passes the value through as it was extracted by the regex. 
+the header name and the default ``org.apache.flume.interceptor.RegexExtractorInterceptorPassThroughSerializer`` will be used.
+This serializer simply maps the matches to the specified header name and passes the value through as it was extracted by the regex.
 You can plug custom serializer implementations into the extractor using the fully qualified class name (FQCN) to format the matches
 in anyway you like.
 
@@ -2645,7 +2646,7 @@ org.apache.flume.ChannelSelector                              --                
 org.apache.flume.SinkProcessor                                default                 org.apache.flume.sink.DefaultSinkProcessor
 org.apache.flume.SinkProcessor                                failover                org.apache.flume.sink.FailoverSinkProcessor
 org.apache.flume.SinkProcessor                                load_balance            org.apache.flume.sink.LoadBalancingSinkProcessor
-org.apache.flume.SinkProcessor                                --                      
+org.apache.flume.SinkProcessor                                --
 
 org.apache.flume.interceptor.Interceptor                      timestamp               org.apache.flume.interceptor.TimestampInterceptor$Builder
 org.apache.flume.interceptor.Interceptor                      host                    org.apache.flume.interceptor.HostInterceptor$Builder
