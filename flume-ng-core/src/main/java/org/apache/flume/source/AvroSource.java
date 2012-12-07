@@ -40,6 +40,7 @@ import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.Source;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.avro.AvroFlumeEvent;
@@ -112,6 +113,8 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   private static final Logger logger = LoggerFactory
       .getLogger(AvroSource.class);
 
+  private static final String PORT_KEY = "port";
+  private static final String BIND_KEY = "bind";
   private int port;
   private String bindAddress;
 
@@ -123,8 +126,10 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
 
   @Override
   public void configure(Context context) {
-    port = Integer.parseInt(context.getString("port"));
-    bindAddress = context.getString("bind");
+    Configurables.ensureRequiredNonNull(context, PORT_KEY, BIND_KEY);
+
+    port = context.getInteger(PORT_KEY);
+    bindAddress = context.getString(BIND_KEY);
     try {
       maxThreads = context.getInteger(THREADS, 0);
     } catch (NumberFormatException e) {
