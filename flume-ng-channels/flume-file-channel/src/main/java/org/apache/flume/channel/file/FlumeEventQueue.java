@@ -79,11 +79,13 @@ final class FlumeEventQueue {
     }
   }
 
-  SetMultimap<Long, Long> deserializeInflightPuts() throws IOException{
+  SetMultimap<Long, Long> deserializeInflightPuts()
+          throws IOException, BadCheckpointException{
     return inflightPuts.deserialize();
   }
 
-  SetMultimap<Long, Long> deserializeInflightTakes() throws IOException{
+  SetMultimap<Long, Long> deserializeInflightTakes()
+          throws IOException, BadCheckpointException{
     return inflightTakes.deserialize();
   }
 
@@ -467,7 +469,8 @@ final class FlumeEventQueue {
      * @return - map of inflight events per txnID.
      *
      */
-    public SetMultimap<Long, Long> deserialize() throws IOException {
+    public SetMultimap<Long, Long> deserialize()
+            throws IOException, BadCheckpointException {
       SetMultimap<Long, Long> inflights = HashMultimap.create();
       if (!fileChannel.isOpen()) {
         file = new RandomAccessFile(inflightEventsFile, "rw");
@@ -484,7 +487,7 @@ final class FlumeEventQueue {
       fileChannel.read(buffer);
       byte[] fileChecksum = digest.digest(buffer.array());
       if (!Arrays.equals(checksum, fileChecksum)) {
-        throw new IllegalStateException("Checksum of inflights file differs"
+        throw new BadCheckpointException("Checksum of inflights file differs"
                 + " from the checksum expected.");
       }
       buffer.position(0);
