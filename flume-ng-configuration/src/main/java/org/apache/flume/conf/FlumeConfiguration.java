@@ -484,7 +484,7 @@ public class FlumeConfiguration {
             if (conf != null) errorList.addAll(conf.getErrors());
             iter.remove();
             logger.warn("Could not configure channel " + channelName
-                + ". Skipping it");
+                + " due to: " + e.getMessage(), e);
 
           }
         } else {
@@ -586,7 +586,8 @@ public class FlumeConfiguration {
           } catch (ConfigurationException e) {
             if (srcConf != null) errorList.addAll(srcConf.getErrors());
             iter.remove();
-            logger.warn("Removed " + sourceName + " due to " + e.getMessage());
+            logger.warn("Could not configure source  " + sourceName
+                + " due to: " + e.getMessage(), e);
           }
         } else {
           iter.remove();
@@ -693,8 +694,8 @@ public class FlumeConfiguration {
           } catch (ConfigurationException e) {
             iter.remove();
             if (sinkConf != null) errorList.addAll(sinkConf.getErrors());
-            logger.warn("Configuration for : " + sinkName
-                    + " has errors, and will be removed: ", e);
+            logger.warn("Could not configure sink  " + sinkName
+                + " due to: " + e.getMessage(), e);
           }
         }
         // Filter out any sinks that have invalid channel
@@ -760,9 +761,8 @@ public class FlumeConfiguration {
             .add(new FlumeConfigurationError(agentName, sinkgroupName,
                 FlumeConfigurationErrorType.CONFIG_ERROR,
                 ErrorOrWarning.ERROR));
-            logger.warn("Configuration error for: " + sinkgroupName
-                + ".Removed.");
-
+            logger.warn("Could not configure sink group " + sinkgroupName
+                + " due to: " + e.getMessage(), e);
           }
         } else {
           iter.remove();
