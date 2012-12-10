@@ -18,6 +18,10 @@
  */
 package org.apache.flume.channel.file;
 
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 
 class Serialization {
@@ -34,6 +38,8 @@ class Serialization {
   static final String METADATA_TMP_FILENAME = ".tmp";
   static final String OLD_METADATA_FILENAME = METADATA_FILENAME + ".old";
 
+  public static final Logger LOG = LoggerFactory.getLogger(Serialization.class);
+
   static File getMetaDataTempFile(File metaDataFile) {
     String metaDataFileName = metaDataFile.getName() + METADATA_TMP_FILENAME;
     return new File(metaDataFile.getParentFile(), metaDataFileName);
@@ -49,5 +55,31 @@ class Serialization {
   static File getOldMetaDataFile(File file) {
     String oldMetaDataFileName = file.getName() + OLD_METADATA_FILENAME;
     return new File(file.getParentFile(), oldMetaDataFileName);
+  }
+
+  /**
+   * Deletes all files in given directory.
+   * @param checkpointDir - The directory whose files are to be deleted
+   * @return - true if all files were successfully deleted, false otherwise.
+   */
+  static boolean deleteAllFiles(File checkpointDir) {
+    if (!checkpointDir.isDirectory()) {
+      return false;
+    }
+    StringBuilder builder = new StringBuilder("Deleted the following files from"
+        + " the checkpoint directory: ");
+    File[] files = checkpointDir.listFiles();
+    for (File file : files) {
+      if (!FileUtils.deleteQuietly(file)) {
+        LOG.info(builder.toString());
+        LOG.error("Error while attempting to delete: " +
+            file.getName());
+        return false;
+      }
+      builder.append(", ").append(file.getName());
+    }
+    builder.append(".");
+    LOG.info(builder.toString());
+    return true;
   }
 }

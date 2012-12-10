@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
+import com.google.protobuf.InvalidProtocolBufferException;
 
 final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
   private static final Logger LOG = LoggerFactory
@@ -38,7 +39,7 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
   private final File metaDataFile;
 
   EventQueueBackingStoreFileV3(File checkpointFile, int capacity, String name)
-      throws IOException {
+      throws IOException, BadCheckpointException {
     super(capacity, name, checkpointFile);
     Preconditions.checkArgument(capacity > 0,
         "capacity must be greater than 0 " + capacity);
@@ -50,20 +51,22 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
         LOG.info("Reading checkpoint metadata from " + metaDataFile);
         ProtosFactory.Checkpoint checkpoint =
             ProtosFactory.Checkpoint.parseDelimitedFrom(inputStream);
+        if(checkpoint == null) {
+          throw new BadCheckpointException("The checkpoint metadata file does "
+                  + "not exist or has zero length");
+        }
         int version = checkpoint.getVersion();
-        Preconditions.checkState(version == getVersion(),
-            "Invalid version: " + version + " " + name + ", expected "
-                + getVersion());
+        if(version != getVersion()) {
+          throw new BadCheckpointException("Invalid version: " + version +
+                  " " + name + ", expected " + getVersion());
+        }
         long logWriteOrderID = checkpoint.getWriteOrderID();
         if(logWriteOrderID != getCheckpointLogWriteOrderID()) {
-          LOG.error("Checkpoint and Meta files have differing " +
+          String msg = "Checkpoint and Meta files have differing " +
               "logWriteOrderIDs " + getCheckpointLogWriteOrderID() + ", and "
-              + logWriteOrderID);
-          throw new IllegalStateException(
-              "The last checkpoint was not completed correctly. Please delete "
-                  + "the checkpoint files: " + checkpointFile + " and "
-                  + Serialization.getMetaDataFile(checkpointFile)
-                  + " to rebuild the checkpoint and start again. " + name);
+              + logWriteOrderID;
+          LOG.warn(msg);
+          throw new BadCheckpointException(msg);
         }
         WriteOrderOracle.setSeed(logWriteOrderID);
         setLogWriteOrderID(logWriteOrderID);
@@ -74,6 +77,10 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
           Integer count = activeLog.getCount();
           logFileIDReferenceCounts.put(logFileID, new AtomicInteger(count));
         }
+      } catch (InvalidProtocolBufferException ex) {
+        throw new BadCheckpointException("Checkpoint metadata file is invalid. "
+                + "The agent might have been stopped while it was being "
+                + "written", ex);
       } finally {
         try {
           inputStream.close();

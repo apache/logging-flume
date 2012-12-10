@@ -32,6 +32,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.RandomAccessFile;
+import java.util.Random;
+import org.apache.flume.channel.file.proto.ProtosFactory;
 
 public class TestFileChannelRestart extends TestFileChannelBase {
   protected static final Logger LOG = LoggerFactory
@@ -115,13 +120,14 @@ public class TestFileChannelRestart extends TestFileChannelBase {
     compareInputAndOut(in, out);
   }
   @Test
-  public void testRestartFailsWhenMetaDataExistsButCheckpointDoesNot()
+  public void testRestartWhenMetaDataExistsButCheckpointDoesNot()
       throws Exception {
     Map<String, String> overrides = Maps.newHashMap();
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
-    Assert.assertEquals(1,  putEvents(channel, "restart", 1, 1).size());
+    Set<String> in = putEvents(channel, "restart", 10, 100);
+    Assert.assertEquals(100, in.size());
     forceCheckpoint(channel);
     channel.stop();
     File checkpoint = new File(checkpointDir, "checkpoint");
@@ -130,16 +136,21 @@ public class TestFileChannelRestart extends TestFileChannelBase {
     Assert.assertTrue(checkpointMetaData.exists());
     channel = createFileChannel(overrides);
     channel.start();
-    Assert.assertFalse(channel.isOpen());
+    Assert.assertTrue(channel.isOpen());
+    Assert.assertTrue(checkpoint.exists());
+    Assert.assertTrue(checkpointMetaData.exists());
+    Set<String> out = consumeChannel(channel);
+    compareInputAndOut(in, out);
   }
   @Test
-  public void testRestartFailsWhenCheckpointExistsButMetaDoesNot()
+  public void testRestartWhenCheckpointExistsButMetaDoesNot()
       throws Exception {
     Map<String, String> overrides = Maps.newHashMap();
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
-    Assert.assertEquals(1,  putEvents(channel, "restart", 1, 1).size());
+    Set<String> in = putEvents(channel, "restart", 10, 100);
+    Assert.assertEquals(100, in.size());
     forceCheckpoint(channel);
     channel.stop();
     File checkpoint = new File(checkpointDir, "checkpoint");
@@ -148,8 +159,213 @@ public class TestFileChannelRestart extends TestFileChannelBase {
     Assert.assertTrue(checkpoint.exists());
     channel = createFileChannel(overrides);
     channel.start();
-    Assert.assertFalse(channel.isOpen());
+    Assert.assertTrue(channel.isOpen());
+    Assert.assertTrue(checkpoint.exists());
+    Assert.assertTrue(checkpointMetaData.exists());
+    Set<String> out = consumeChannel(channel);
+    compareInputAndOut(in, out);
   }
+
+  @Test
+  public void testRestartWhenNoCheckpointExists() throws Exception {
+    Map<String, String> overrides = Maps.newHashMap();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> in = putEvents(channel, "restart", 10, 100);
+    Assert.assertEquals(100, in.size());
+    forceCheckpoint(channel);
+    channel.stop();
+    File checkpoint = new File(checkpointDir, "checkpoint");
+    File checkpointMetaData = Serialization.getMetaDataFile(checkpoint);
+    Assert.assertTrue(checkpointMetaData.delete());
+    Assert.assertTrue(checkpoint.delete());
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Assert.assertTrue(checkpoint.exists());
+    Assert.assertTrue(checkpointMetaData.exists());
+    Set<String> out = consumeChannel(channel);
+    compareInputAndOut(in, out);
+  }
+
+  @Test
+  public void testBadCheckpointVersion() throws Exception{
+    Map<String, String> overrides = Maps.newHashMap();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> in = putEvents(channel, "restart", 10, 100);
+    Assert.assertEquals(100, in.size());
+    forceCheckpoint(channel);
+    channel.stop();
+    File checkpoint = new File(checkpointDir, "checkpoint");
+    RandomAccessFile writer = new RandomAccessFile(checkpoint, "rw");
+    writer.seek(EventQueueBackingStoreFile.INDEX_VERSION *
+            Serialization.SIZE_OF_LONG);
+    writer.writeLong(2L);
+    writer.getFD().sync();
+    writer.close();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> out = consumeChannel(channel);
+    compareInputAndOut(in, out);
+  }
+
+  @Test
+  public void testBadCheckpointMetaVersion() throws Exception {
+    Map<String, String> overrides = Maps.newHashMap();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> in = putEvents(channel, "restart", 10, 100);
+    Assert.assertEquals(100, in.size());
+    forceCheckpoint(channel);
+    channel.stop();
+    File checkpoint = new File(checkpointDir, "checkpoint");
+    FileInputStream is = new FileInputStream(Serialization.getMetaDataFile(checkpoint));
+    ProtosFactory.Checkpoint meta = ProtosFactory.Checkpoint.parseDelimitedFrom(is);
+    Assert.assertNotNull(meta);
+    is.close();
+    FileOutputStream os = new FileOutputStream(
+            Serialization.getMetaDataFile(checkpoint));
+    meta.toBuilder().setVersion(2).build().writeDelimitedTo(os);
+    os.flush();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> out = consumeChannel(channel);
+    compareInputAndOut(in, out);
+  }
+
+  @Test
+  public void testDifferingOrderIDCheckpointAndMetaVersion() throws Exception {
+    Map<String, String> overrides = Maps.newHashMap();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> in = putEvents(channel, "restart", 10, 100);
+    Assert.assertEquals(100, in.size());
+    forceCheckpoint(channel);
+    channel.stop();
+    File checkpoint = new File(checkpointDir, "checkpoint");
+    FileInputStream is = new FileInputStream(Serialization.getMetaDataFile(checkpoint));
+    ProtosFactory.Checkpoint meta = ProtosFactory.Checkpoint.parseDelimitedFrom(is);
+    Assert.assertNotNull(meta);
+    is.close();
+    FileOutputStream os = new FileOutputStream(
+            Serialization.getMetaDataFile(checkpoint));
+    meta.toBuilder().setWriteOrderID(12).build().writeDelimitedTo(os);
+    os.flush();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> out = consumeChannel(channel);
+    compareInputAndOut(in, out);
+  }
+
+  @Test
+  public void testIncompleteCheckpoint() throws Exception {
+    Map<String, String> overrides = Maps.newHashMap();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> in = putEvents(channel, "restart", 10, 100);
+    Assert.assertEquals(100, in.size());
+    forceCheckpoint(channel);
+    channel.stop();
+    File checkpoint = new File(checkpointDir, "checkpoint");
+    RandomAccessFile writer = new RandomAccessFile(checkpoint, "rw");
+    writer.seek(EventQueueBackingStoreFile.INDEX_CHECKPOINT_MARKER
+            * Serialization.SIZE_OF_LONG);
+    writer.writeLong(EventQueueBackingStoreFile.CHECKPOINT_INCOMPLETE);
+    writer.getFD().sync();
+    writer.close();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> out = consumeChannel(channel);
+    compareInputAndOut(in, out);
+  }
+
+  @Test
+  public void testCorruptInflightPuts() throws Exception {
+    testCorruptInflights("inflightPuts");
+  }
+
+  @Test
+  public void testCorruptInflightTakes() throws Exception {
+    testCorruptInflights("inflightTakes");
+  }
+
+  private void testCorruptInflights(String name) throws Exception {
+    Map<String, String> overrides = Maps.newHashMap();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> in = putEvents(channel, "restart", 10, 100);
+    Assert.assertEquals(100, in.size());
+    forceCheckpoint(channel);
+    channel.stop();
+    File inflight = new File(checkpointDir, name);
+    RandomAccessFile writer = new RandomAccessFile(inflight, "rw");
+    writer.write(new Random().nextInt());
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> out = consumeChannel(channel);
+    compareInputAndOut(in, out);
+  }
+
+  @Test
+  public void testTruncatedCheckpointMeta() throws Exception {
+    Map<String, String> overrides = Maps.newHashMap();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> in = putEvents(channel, "restart", 10, 100);
+    Assert.assertEquals(100, in.size());
+    forceCheckpoint(channel);
+    channel.stop();
+    File checkpoint = new File(checkpointDir, "checkpoint");
+    RandomAccessFile writer = new RandomAccessFile(
+            Serialization.getMetaDataFile(checkpoint), "rw");
+    writer.setLength(0);
+    writer.getFD().sync();
+    writer.close();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> out = consumeChannel(channel);
+    compareInputAndOut(in, out);
+  }
+
+  @Test
+  public void testCorruptCheckpointMeta() throws Exception {
+    Map<String, String> overrides = Maps.newHashMap();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> in = putEvents(channel, "restart", 10, 100);
+    Assert.assertEquals(100, in.size());
+    forceCheckpoint(channel);
+    channel.stop();
+    File checkpoint = new File(checkpointDir, "checkpoint");
+    RandomAccessFile writer = new RandomAccessFile(
+            Serialization.getMetaDataFile(checkpoint), "rw");
+    writer.seek(10);
+    writer.writeLong(new Random().nextLong());
+    writer.getFD().sync();
+    writer.close();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> out = consumeChannel(channel);
+    compareInputAndOut(in, out);
+  }
+
+
   @Test
   public void testWithExtraLogs()
       throws Exception {

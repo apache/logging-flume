@@ -44,15 +44,16 @@ class EventQueueBackingStoreFactory {
       boolean metaDataExists = metaDataFile.exists();
       if(metaDataExists) {
         // if we have a metadata file but no checkpoint file, we have a problem
+        // delete everything in the checkpoint directory and force
+        // a full replay.
         if(!checkpointExists || checkpointFile.length() == 0) {
-          LOG.error("MetaData file for checkpoint " +
-              " exists but checkpoint does not. Checkpoint = " + checkpointFile +
-              ", metaDataFile = " + metaDataFile);
-          throw new IllegalStateException(
-              "The last checkpoint was not completed correctly. Please delete "
-                  + "the checkpoint files: " + checkpointFile + " and "
-                  + Serialization.getMetaDataFile(checkpointFile)
-                  + " to rebuild the checkpoint and start again. " + name);
+          LOG.warn("MetaData file for checkpoint "
+                  + " exists but checkpoint does not. Checkpoint = " + checkpointFile
+                  + ", metaDataFile = " + metaDataFile);
+          throw new BadCheckpointException(
+                  "The last checkpoint was not completed correctly. "
+                  + "Please delete all files in the checkpoint directory: "
+                  + checkpointFile.getParentFile());
         }
       }
       // brand new, use v3
@@ -76,11 +77,8 @@ class EventQueueBackingStoreFactory {
       }
       LOG.error("Found version " + Integer.toHexString(version) + " in " +
           checkpointFile);
-      throw new IllegalStateException(
-          "The last checkpoint was not completed correctly. Please delete "
-              + "the checkpoint files: " + checkpointFile + " and "
-              + Serialization.getMetaDataFile(checkpointFile)
-              + " to rebuild the checkpoint and start again. " + name);
+      throw new BadCheckpointException("Checkpoint file exists with " +
+              Serialization.VERSION_3 + " but no metadata file found.");
     } finally {
       if(checkpointFileHandle != null) {
         try {
@@ -107,4 +105,5 @@ class EventQueueBackingStoreFactory {
         metaDataFile);
     return new EventQueueBackingStoreFileV3(checkpointFile, capacity, name);
   }
+
 }
