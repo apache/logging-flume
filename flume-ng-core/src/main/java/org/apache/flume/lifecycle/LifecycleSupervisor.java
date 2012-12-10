@@ -27,6 +27,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.flume.FlumeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,13 +81,19 @@ public class LifecycleSupervisor implements LifecycleAware {
 
     if (monitorService != null) {
       monitorService.shutdown();
-
-      while (!monitorService.isTerminated()) {
+      try{
+        monitorService.awaitTermination(10, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        logger.error("Interrupted while waiting for monitor service to stop");
+      }
+      if(!monitorService.isTerminated()) {
+        monitorService.shutdownNow();
         try {
-          monitorService.awaitTermination(500, TimeUnit.MILLISECONDS);
+          while(!monitorService.isTerminated()) {
+            monitorService.awaitTermination(10, TimeUnit.SECONDS);
+          }
         } catch (InterruptedException e) {
-          logger.debug("Interrupted while waiting for monitor service to stop");
-          monitorService.shutdownNow();
+          logger.error("Interrupted while waiting for monitor service to stop");
         }
       }
     }
@@ -95,6 +102,7 @@ public class LifecycleSupervisor implements LifecycleAware {
         .entrySet()) {
 
       if (entry.getKey().getLifecycleState().equals(LifecycleState.START)) {
+        entry.getValue().status.desiredState = LifecycleState.STOP;
         entry.getKey().stop();
       }
     }
@@ -114,6 +122,13 @@ public class LifecycleSupervisor implements LifecycleAware {
 
   public synchronized void supervise(LifecycleAware lifecycleAware,
       SupervisorPolicy policy, LifecycleState desiredState) {
+    if(this.monitorService.isShutdown()
+        || this.monitorService.isTerminated()
+        || this.monitorService.isTerminating()){
+      throw new FlumeException("Supervise called on " + lifecycleAware + " " +
+          "after shutdown has been initiated. " + lifecycleAware + " will not" +
+          " be started");
+    }
 
     Preconditions.checkState(!supervisedProcesses.containsKey(lifecycleAware),
         "Refusing to supervise " + lifecycleAware + " more than once");
