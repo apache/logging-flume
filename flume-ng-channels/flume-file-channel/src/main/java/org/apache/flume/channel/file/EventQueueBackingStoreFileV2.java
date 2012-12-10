@@ -35,7 +35,7 @@ final class EventQueueBackingStoreFileV2 extends EventQueueBackingStoreFile {
   private static final int MAX_ACTIVE_LOGS = 1024;
 
   EventQueueBackingStoreFileV2(File checkpointFile, int capacity, String name)
-      throws IOException {
+      throws IOException, BadCheckpointException {
     super(capacity, name, checkpointFile);
     Preconditions.checkArgument(capacity > 0,
         "capacity must be greater than 0 " + capacity);

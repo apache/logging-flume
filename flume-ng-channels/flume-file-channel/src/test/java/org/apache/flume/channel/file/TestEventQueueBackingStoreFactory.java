@@ -35,6 +35,11 @@ import org.junit.Test;
 
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
+import com.google.protobuf.InvalidProtocolBufferException;
+import java.io.FileOutputStream;
+import java.io.RandomAccessFile;
+import java.util.Random;
+import org.apache.flume.channel.file.proto.ProtosFactory;
 
 public class TestEventQueueBackingStoreFactory {
   static final List<Long> pointersInTestCheckpoint = Arrays.asList(new Long[] {
@@ -81,44 +86,190 @@ public class TestEventQueueBackingStoreFactory {
     verify(EventQueueBackingStoreFactory.get(checkpoint, 10, "test", false),
         Serialization.VERSION_2, pointersInTestCheckpoint);
   }
-  @Test
+  @Test (expected = BadCheckpointException.class)
   public void testDecreaseCapacity() throws Exception {
     Assert.assertTrue(checkpoint.delete());
     EventQueueBackingStore backingStore = EventQueueBackingStoreFactory.
-        get(checkpoint, 10, "test");
+            get(checkpoint, 10, "test");
     backingStore.close();
-    try {
-      EventQueueBackingStoreFactory.get(checkpoint, 9, "test");
-      Assert.fail();
-    } catch (IllegalStateException e) {
-      String expected = "Configured capacity is 9 but the  checkpoint file " +
-            "capacity is 10. See FileChannel documentation on how to change " +
-            "a channels capacity.";
-      Assert.assertEquals(expected, e.getMessage());
-    }
+    EventQueueBackingStoreFactory.get(checkpoint, 9, "test");
+    Assert.fail();
   }
-  @Test
+
+  @Test (expected = BadCheckpointException.class)
   public void testIncreaseCapacity() throws Exception {
     Assert.assertTrue(checkpoint.delete());
     EventQueueBackingStore backingStore = EventQueueBackingStoreFactory.
-        get(checkpoint, 10, "test");
+            get(checkpoint, 10, "test");
     backingStore.close();
-    try {
-      EventQueueBackingStoreFactory.get(checkpoint, 11, "test");
-      Assert.fail();
-    } catch (IllegalStateException e) {
-      String expected = "Configured capacity is 11 but the  checkpoint file " +
-      		"capacity is 10. See FileChannel documentation on how to change " +
-      		"a channels capacity.";
-      Assert.assertEquals(expected, e.getMessage());
-    }
+    EventQueueBackingStoreFactory.get(checkpoint, 11, "test");
+    Assert.fail();
   }
+
   @Test
   public void testNewCheckpoint() throws Exception {
     Assert.assertTrue(checkpoint.delete());
     verify(EventQueueBackingStoreFactory.get(checkpoint, 10, "test", false),
         Serialization.VERSION_3, Collections.<Long>emptyList());
   }
+
+  @Test (expected = BadCheckpointException.class)
+  public void testCheckpointBadVersion() throws Exception {
+     RandomAccessFile writer = new RandomAccessFile(checkpoint, "rw");
+    try {
+    EventQueueBackingStore backingStore = EventQueueBackingStoreFactory.
+            get(checkpoint, 10, "test");
+    backingStore.close();
+    writer.seek(
+            EventQueueBackingStoreFile.INDEX_VERSION * Serialization.SIZE_OF_LONG);
+    writer.writeLong(94L);
+    writer.getFD().sync();
+
+    backingStore = EventQueueBackingStoreFactory.get(checkpoint, 10, "test");
+    } finally {
+      writer.close();
+    }
+  }
+
+  @Test(expected = BadCheckpointException.class)
+  public void testIncompleteCheckpoint() throws Exception {
+    RandomAccessFile writer = new RandomAccessFile(checkpoint, "rw");
+
+    try {
+    EventQueueBackingStore backingStore = EventQueueBackingStoreFactory.
+            get(checkpoint, 10, "test");
+    backingStore.close();
+    writer.seek(
+            EventQueueBackingStoreFile.INDEX_CHECKPOINT_MARKER *
+            Serialization.SIZE_OF_LONG);
+    writer.writeLong(EventQueueBackingStoreFile.CHECKPOINT_INCOMPLETE);
+    writer.getFD().sync();
+    backingStore = EventQueueBackingStoreFactory.get(checkpoint, 10, "test");
+    } finally {
+      writer.close();
+    }
+  }
+
+  @Test(expected = BadCheckpointException.class)
+  public void testCheckpointVersionNotEqualToMeta() throws Exception {
+    RandomAccessFile writer = new RandomAccessFile(checkpoint, "rw");
+    try {
+      EventQueueBackingStore backingStore = EventQueueBackingStoreFactory.
+              get(checkpoint, 10, "test");
+      backingStore.close();
+      writer.seek(
+              EventQueueBackingStoreFile.INDEX_VERSION
+              * Serialization.SIZE_OF_LONG);
+      writer.writeLong(2L);
+      writer.getFD().sync();
+      backingStore = EventQueueBackingStoreFactory.get(checkpoint, 10, "test");
+    } finally {
+      writer.close();
+    }
+  }
+
+  @Test(expected = BadCheckpointException.class)
+  public void testCheckpointVersionNotEqualToMeta2() throws Exception {
+    FileOutputStream os = null;
+    try {
+      EventQueueBackingStore backingStore = EventQueueBackingStoreFactory.
+              get(checkpoint, 10, "test");
+      backingStore.close();
+      Assert.assertTrue(checkpoint.exists());
+      Assert.assertTrue(Serialization.getMetaDataFile(checkpoint).length() != 0);
+      FileInputStream is = new FileInputStream(Serialization.getMetaDataFile(checkpoint));
+      ProtosFactory.Checkpoint meta = ProtosFactory.Checkpoint.parseDelimitedFrom(is);
+      Assert.assertNotNull(meta);
+      is.close();
+      os = new FileOutputStream(
+              Serialization.getMetaDataFile(checkpoint));
+      meta.toBuilder().setVersion(2).build().writeDelimitedTo(os);
+      os.flush();
+      backingStore = EventQueueBackingStoreFactory.get(checkpoint, 10, "test");
+    } finally {
+      os.close();
+    }
+  }
+
+  @Test(expected = BadCheckpointException.class)
+  public void testCheckpointOrderIdNotEqualToMeta() throws Exception {
+    RandomAccessFile writer = new RandomAccessFile(checkpoint, "rw");
+    try {
+      EventQueueBackingStore backingStore = EventQueueBackingStoreFactory.
+              get(checkpoint, 10, "test");
+      backingStore.close();
+      writer.seek(
+              EventQueueBackingStoreFile.INDEX_WRITE_ORDER_ID
+              * Serialization.SIZE_OF_LONG);
+      writer.writeLong(2L);
+      writer.getFD().sync();
+      backingStore = EventQueueBackingStoreFactory.get(checkpoint, 10, "test");
+    } finally {
+      writer.close();
+    }
+  }
+
+  @Test(expected = BadCheckpointException.class)
+  public void testCheckpointOrderIdNotEqualToMeta2() throws Exception {
+    FileOutputStream os = null;
+    try {
+      EventQueueBackingStore backingStore = EventQueueBackingStoreFactory.
+              get(checkpoint, 10, "test");
+      backingStore.close();
+      Assert.assertTrue(checkpoint.exists());
+      Assert.assertTrue(Serialization.getMetaDataFile(checkpoint).length() != 0);
+      FileInputStream is = new FileInputStream(Serialization.getMetaDataFile(checkpoint));
+      ProtosFactory.Checkpoint meta = ProtosFactory.Checkpoint.parseDelimitedFrom(is);
+      Assert.assertNotNull(meta);
+      is.close();
+      os = new FileOutputStream(
+              Serialization.getMetaDataFile(checkpoint));
+      meta.toBuilder().setWriteOrderID(1).build().writeDelimitedTo(os);
+      os.flush();
+      backingStore = EventQueueBackingStoreFactory.get(checkpoint, 10, "test");
+    } finally {
+      os.close();
+    }
+  }
+
+
+  @Test(expected = BadCheckpointException.class)
+  public void testTruncateMeta() throws Exception {
+    EventQueueBackingStore backingStore = EventQueueBackingStoreFactory.
+            get(checkpoint, 10, "test");
+    backingStore.close();
+    Assert.assertTrue(checkpoint.exists());
+    File metaFile = Serialization.getMetaDataFile(checkpoint);
+    Assert.assertTrue(metaFile.length() != 0);
+    RandomAccessFile writer = new RandomAccessFile(metaFile, "rw");
+    writer.setLength(0);
+    writer.getFD().sync();
+    writer.close();
+    backingStore = EventQueueBackingStoreFactory.get(checkpoint, 10, "test");
+  }
+
+  @Test (expected = InvalidProtocolBufferException.class)
+  public void testCorruptMeta() throws Throwable {
+    EventQueueBackingStore backingStore = EventQueueBackingStoreFactory.
+            get(checkpoint, 10, "test");
+    backingStore.close();
+    Assert.assertTrue(checkpoint.exists());
+    File metaFile = Serialization.getMetaDataFile(checkpoint);
+    Assert.assertTrue(metaFile.length() != 0);
+    RandomAccessFile writer = new RandomAccessFile(metaFile, "rw");
+    writer.seek(10);
+    writer.writeLong(new Random().nextLong());
+    writer.getFD().sync();
+    writer.close();
+    try {
+      backingStore = EventQueueBackingStoreFactory.get(checkpoint, 10, "test");
+    } catch (BadCheckpointException ex) {
+      throw ex.getCause();
+    }
+  }
+
+
+
 
   private void verify(EventQueueBackingStore backingStore, long expectedVersion,
       List<Long> expectedPointers)

@@ -336,33 +336,40 @@ class Log {
       }
       File inflightTakesFile = new File(checkpointDir, "inflighttakes");
       File inflightPutsFile = new File(checkpointDir, "inflightputs");
-      EventQueueBackingStore backingStore =
-          EventQueueBackingStoreFactory.get(checkpointFile, queueCapacity,
-              channelNameDescriptor);
-      queue = new FlumeEventQueue(backingStore, inflightTakesFile,
-            inflightPutsFile);
-      LOGGER.info("Last Checkpoint " + new Date(checkpointFile.lastModified())
-        + ", queue depth = " + queue.getSize());
+      EventQueueBackingStore backingStore = null;
 
-      /*
-       * We now have everything we need to actually replay the log files
-       * the queue, the timestamp the queue was written to disk, and
-       * the list of data files.
-       */
-      CheckpointRebuilder rebuilder = new CheckpointRebuilder(dataFiles,
-          queue);
-      if(useFastReplay && rebuilder.rebuild()) {
-        LOGGER.info("Fast replay successful.");
-      } else {
-        ReplayHandler replayHandler = new ReplayHandler(queue,
-            encryptionKeyProvider);
-        if(useLogReplayV1) {
-          LOGGER.info("Replaying logs with v1 replay logic");
-          replayHandler.replayLogv1(dataFiles);
-        } else {
-          LOGGER.info("Replaying logs with v2 replay logic");
-          replayHandler.replayLog(dataFiles);
+
+      try {
+        backingStore =
+                EventQueueBackingStoreFactory.get(checkpointFile, queueCapacity,
+                channelNameDescriptor);
+        queue = new FlumeEventQueue(backingStore, inflightTakesFile,
+                inflightPutsFile);
+        LOGGER.info("Last Checkpoint " + new Date(checkpointFile.lastModified())
+                + ", queue depth = " + queue.getSize());
+
+        /*
+         * We now have everything we need to actually replay the log files
+         * the queue, the timestamp the queue was written to disk, and
+         * the list of data files.
+         *
+         * This will throw if and only if checkpoint file was fine,
+         * but the inflights were not. If the checkpoint was bad, the backing
+         * store factory would have thrown.
+         */
+        doReplay(queue, dataFiles, encryptionKeyProvider);
+      } catch (BadCheckpointException ex) {
+        LOGGER.warn("Checkpoint may not have completed successfully. "
+                + "Forcing full replay, this may take a while.", ex);
+        if(!Serialization.deleteAllFiles(checkpointDir)) {
+          throw new IOException("Could not delete files in checkpoint " +
+              "directory to recover from a corrupt or incomplete checkpoint");
         }
+        backingStore = EventQueueBackingStoreFactory.get(checkpointFile,
+                queueCapacity, channelNameDescriptor);
+        queue = new FlumeEventQueue(backingStore, inflightTakesFile,
+                inflightPutsFile);
+        doReplay(queue, dataFiles, encryptionKeyProvider);
       }
 
 
@@ -385,6 +392,25 @@ class Log {
       Throwables.propagate(ex);
     } finally {
       unlockExclusive();
+    }
+  }
+
+  private void doReplay(FlumeEventQueue queue, List<File> dataFiles,
+          KeyProvider encryptionKeyProvider) throws Exception {
+    CheckpointRebuilder rebuilder = new CheckpointRebuilder(dataFiles,
+            queue);
+    if (useFastReplay && rebuilder.rebuild()) {
+      LOGGER.info("Fast replay successful.");
+    } else {
+      ReplayHandler replayHandler = new ReplayHandler(queue,
+              encryptionKeyProvider);
+      if (useLogReplayV1) {
+        LOGGER.info("Replaying logs with v1 replay logic");
+        replayHandler.replayLogv1(dataFiles);
+      } else {
+        LOGGER.info("Replaying logs with v2 replay logic");
+        replayHandler.replayLog(dataFiles);
+      }
     }
   }
 

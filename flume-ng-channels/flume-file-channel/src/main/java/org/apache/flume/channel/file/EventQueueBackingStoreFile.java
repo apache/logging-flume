@@ -58,7 +58,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
   protected final File checkpointFile;
 
   protected EventQueueBackingStoreFile(int capacity, String name,
-      File checkpointFile) throws IOException {
+      File checkpointFile) throws IOException, BadCheckpointException {
     super(capacity, name);
     this.checkpointFile = checkpointFile;
     checkpointFileHandle = new RandomAccessFile(checkpointFile, "rw");
@@ -77,23 +77,24 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
           ((checkpointFile.length() / Serialization.SIZE_OF_LONG) - HEADER_SIZE)
           + ". See FileChannel documentation on how to change a channels" +
           " capacity.";
-      throw new IllegalStateException(msg);
+      throw new BadCheckpointException(msg);
     }
     mappedBuffer = checkpointFileHandle.getChannel().map(MapMode.READ_WRITE, 0,
         checkpointFile.length());
     elementsBuffer = mappedBuffer.asLongBuffer();
 
     int version = (int) elementsBuffer.get(INDEX_VERSION);
-    Preconditions.checkState(version == getVersion(),
-        "Invalid version: " + version + " " + name + ", expected " + getVersion());
-
+    if(version != getVersion()) {
+      throw new BadCheckpointException("Invalid version: " + version + " " +
+              name + ", expected " + getVersion());
+    }
     long checkpointComplete =
         (int) elementsBuffer.get(INDEX_CHECKPOINT_MARKER);
-    Preconditions.checkState(checkpointComplete == CHECKPOINT_COMPLETE,
-        "The last checkpoint was not completed correctly. Please delete "
-            + "the checkpoint files: " + checkpointFile + " and "
-            + Serialization.getMetaDataFile(checkpointFile)
-            + " to rebuild the checkpoint and start again. " + name);
+    if(checkpointComplete != CHECKPOINT_COMPLETE) {
+      throw new BadCheckpointException("Checkpoint was not completed correctly,"
+              + " probably because the agent stopped while the channel was"
+              + " checkpointing.");
+    }
   }
 
   protected long getCheckpointLogWriteOrderID() {

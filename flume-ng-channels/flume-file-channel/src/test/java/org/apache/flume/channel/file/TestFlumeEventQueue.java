@@ -38,6 +38,7 @@ import org.junit.runners.Parameterized.Parameters;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
+import java.io.RandomAccessFile;
 
 @RunWith(value = Parameterized.class)
 public class TestFlumeEventQueue {
@@ -74,11 +75,11 @@ public class TestFlumeEventQueue {
   }
 
   @Parameters
-  public static Collection<Object[]> data() throws IOException {
+  public static Collection<Object[]> data() throws Exception {
     Object[][] data = new Object[][] { {
       new EventQueueBackingStoreSupplier() {
         @Override
-        public EventQueueBackingStore get() throws IOException {
+        public EventQueueBackingStore get() throws Exception {
           Assert.assertTrue(baseDir.isDirectory() || baseDir.mkdirs());
           return new EventQueueBackingStoreFileV2(getCheckpoint(), 1000,
               "test");
@@ -87,7 +88,7 @@ public class TestFlumeEventQueue {
     }, {
       new EventQueueBackingStoreSupplier() {
         @Override
-        public EventQueueBackingStore get() throws IOException {
+        public EventQueueBackingStore get() throws Exception {
           Assert.assertTrue(baseDir.isDirectory() || baseDir.mkdirs());
           return new EventQueueBackingStoreFileV3(getCheckpoint(), 1000,
               "test");
@@ -345,5 +346,70 @@ public class TestFlumeEventQueue {
             txnID2).contains(new FlumeEventPointer(2, 2).toLong()));
 
   }
-}
 
+  @Test(expected = BadCheckpointException.class)
+  public void testCorruptInflightPuts() throws Exception {
+    RandomAccessFile inflight = null;
+    try {
+      queue = new FlumeEventQueue(backingStore,
+              backingStoreSupplier.getInflightTakes(),
+              backingStoreSupplier.getInflightPuts());
+      long txnID1 = new Random().nextInt(Integer.MAX_VALUE - 1);
+      long txnID2 = txnID1 + 1;
+      queue.addWithoutCommit(new FlumeEventPointer(1, 1), txnID1);
+      queue.addWithoutCommit(new FlumeEventPointer(2, 1), txnID1);
+      queue.addWithoutCommit(new FlumeEventPointer(2, 2), txnID2);
+      queue.checkpoint(true);
+      TimeUnit.SECONDS.sleep(3L);
+      inflight = new RandomAccessFile(
+              backingStoreSupplier.getInflightPuts(), "rw");
+      inflight.seek(0);
+      inflight.writeInt(new Random().nextInt());
+      queue = new FlumeEventQueue(backingStore,
+              backingStoreSupplier.getInflightTakes(),
+              backingStoreSupplier.getInflightPuts());
+      SetMultimap<Long, Long> deserializedMap = queue.deserializeInflightPuts();
+      Assert.assertTrue(deserializedMap.get(
+              txnID1).contains(new FlumeEventPointer(1, 1).toLong()));
+      Assert.assertTrue(deserializedMap.get(
+              txnID1).contains(new FlumeEventPointer(2, 1).toLong()));
+      Assert.assertTrue(deserializedMap.get(
+              txnID2).contains(new FlumeEventPointer(2, 2).toLong()));
+    } finally {
+      inflight.close();
+    }
+  }
+
+  @Test(expected = BadCheckpointException.class)
+  public void testCorruptInflightTakes() throws Exception {
+    RandomAccessFile inflight = null;
+    try {
+      queue = new FlumeEventQueue(backingStore,
+              backingStoreSupplier.getInflightTakes(),
+              backingStoreSupplier.getInflightPuts());
+      long txnID1 = new Random().nextInt(Integer.MAX_VALUE - 1);
+      long txnID2 = txnID1 + 1;
+      queue.addWithoutCommit(new FlumeEventPointer(1, 1), txnID1);
+      queue.addWithoutCommit(new FlumeEventPointer(2, 1), txnID1);
+      queue.addWithoutCommit(new FlumeEventPointer(2, 2), txnID2);
+      queue.checkpoint(true);
+      TimeUnit.SECONDS.sleep(3L);
+      inflight = new RandomAccessFile(
+              backingStoreSupplier.getInflightTakes(), "rw");
+      inflight.seek(0);
+      inflight.writeInt(new Random().nextInt());
+      queue = new FlumeEventQueue(backingStore,
+              backingStoreSupplier.getInflightTakes(),
+              backingStoreSupplier.getInflightPuts());
+      SetMultimap<Long, Long> deserializedMap = queue.deserializeInflightTakes();
+      Assert.assertTrue(deserializedMap.get(
+              txnID1).contains(new FlumeEventPointer(1, 1).toLong()));
+      Assert.assertTrue(deserializedMap.get(
+              txnID1).contains(new FlumeEventPointer(2, 1).toLong()));
+      Assert.assertTrue(deserializedMap.get(
+              txnID2).contains(new FlumeEventPointer(2, 2).toLong()));
+    } finally {
+      inflight.close();
+    }
+  }
+}
