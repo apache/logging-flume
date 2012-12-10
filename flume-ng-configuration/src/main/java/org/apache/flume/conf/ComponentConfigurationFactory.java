@@ -17,12 +17,12 @@
 package org.apache.flume.conf;
 
 import org.apache.flume.conf.ComponentConfiguration.ComponentType;
-import org.apache.flume.conf.source.SourceConfiguration.SourceConfigurationType;
-import org.apache.flume.conf.sink.SinkGroupConfiguration;
-import org.apache.flume.conf.sink.SinkConfiguration.SinkConfigurationType;
-import org.apache.flume.conf.sink.SinkProcessorConfiguration.SinkProcessorConfigurationType;
-import org.apache.flume.conf.channel.ChannelSelectorConfiguration.ChannelSelectorConfigurationType;
 import org.apache.flume.conf.channel.ChannelConfiguration.ChannelConfigurationType;
+import org.apache.flume.conf.channel.ChannelSelectorConfiguration.ChannelSelectorConfigurationType;
+import org.apache.flume.conf.sink.SinkConfiguration.SinkConfigurationType;
+import org.apache.flume.conf.sink.SinkGroupConfiguration;
+import org.apache.flume.conf.sink.SinkProcessorConfiguration.SinkProcessorConfigurationType;
+import org.apache.flume.conf.source.SourceConfiguration.SourceConfigurationType;
 
 public class ComponentConfigurationFactory {
   @SuppressWarnings("unchecked")
@@ -38,7 +38,7 @@ public class ComponentConfigurationFactory {
     try {
       confType = (Class<? extends ComponentConfiguration>) Class.forName(type);
       return confType.getConstructor(String.class).newInstance(type);
-    } catch (Exception e) {
+    } catch (Exception ignored) {
       try {
         type = type.toUpperCase();
         switch(component){
@@ -64,8 +64,12 @@ public class ComponentConfigurationFactory {
                 "Cannot create configuration. Unknown Type specified: " +
                     type);
         }
-      } catch (Exception e2) {
-        throw new ConfigurationException("Could not create configuration!", e);
+      } catch (ConfigurationException e) {
+        throw e;
+      } catch (Exception e) {
+        throw new ConfigurationException("Could not create configuration! " +
+            " Due to " + e.getClass().getSimpleName() + ": " + e.getMessage(),
+            e);
       }
     }
   }
