@@ -371,6 +371,7 @@ public class TestFileChannelRestart extends TestFileChannelBase {
       throws Exception {
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.CAPACITY, "10");
+    overrides.put(FileChannelConfiguration.TRANSACTION_CAPACITY, "10");
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());

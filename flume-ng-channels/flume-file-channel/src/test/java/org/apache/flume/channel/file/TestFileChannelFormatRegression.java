@@ -65,6 +65,8 @@ public class TestFileChannelFormatRegression extends TestFileChannelBase {
     }
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(10));
+    overrides.put(FileChannelConfiguration.TRANSACTION_CAPACITY,
+        String.valueOf(10));
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());

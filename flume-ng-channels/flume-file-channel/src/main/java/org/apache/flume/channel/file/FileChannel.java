@@ -72,10 +72,10 @@ public class FileChannel extends BasicChannelSemantics {
   private static final Logger LOG = LoggerFactory
       .getLogger(FileChannel.class);
 
-  private int capacity;
+  private Integer capacity = 0;
   private int keepAlive;
-  private int transactionCapacity;
-  private long checkpointInterval;
+  private Integer transactionCapacity = 0;
+  private Long checkpointInterval = 0L;
   private long maxFileSize;
   private long minimumRequiredSpace;
   private File checkpointDir;
@@ -147,6 +147,11 @@ public class FileChannel extends BasicChannelSemantics {
 
     int newCapacity = context.getInteger(FileChannelConfiguration.CAPACITY,
         FileChannelConfiguration.DEFAULT_CAPACITY);
+    if(newCapacity <= 0 && capacity == 0) {
+      newCapacity = FileChannelConfiguration.DEFAULT_CAPACITY;
+      LOG.warn("Invalid capacity specified, initializing channel to "
+              + "default capacity of {}", newCapacity);
+    }
     if(capacity > 0 && newCapacity != capacity) {
       LOG.warn("Capacity of this channel cannot be sized on the fly due " +
           "the requirement we have enough DirectMemory for the queue and " +
@@ -163,9 +168,29 @@ public class FileChannel extends BasicChannelSemantics {
         context.getInteger(FileChannelConfiguration.TRANSACTION_CAPACITY,
             FileChannelConfiguration.DEFAULT_TRANSACTION_CAPACITY);
 
+    if(transactionCapacity <= 0) {
+      transactionCapacity =
+              FileChannelConfiguration.DEFAULT_TRANSACTION_CAPACITY;
+      LOG.warn("Invalid transaction capacity specified, " +
+          "initializing channel to default " +
+          "capacity of {}", transactionCapacity);
+    }
+
+    Preconditions.checkState(transactionCapacity <= capacity,
+        "File Channel transaction capacity cannot be greater than the " +
+            "capacity of the channel.");
+
     checkpointInterval =
-        context.getLong(FileChannelConfiguration.CHECKPOINT_INTERVAL,
+            context.getLong(FileChannelConfiguration.CHECKPOINT_INTERVAL,
             FileChannelConfiguration.DEFAULT_CHECKPOINT_INTERVAL);
+    if (checkpointInterval <= 0) {
+      LOG.warn("Checkpoint interval is invalid: " + checkpointInterval
+              + ", using default: "
+              + FileChannelConfiguration.DEFAULT_CHECKPOINT_INTERVAL);
+
+      checkpointInterval =
+              FileChannelConfiguration.DEFAULT_CHECKPOINT_INTERVAL;
+    }
 
     // cannot be over FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE
     maxFileSize = Math.min(

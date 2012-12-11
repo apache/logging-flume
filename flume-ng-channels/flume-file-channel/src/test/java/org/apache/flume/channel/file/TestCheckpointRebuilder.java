@@ -52,6 +52,8 @@ public class TestCheckpointRebuilder extends TestFileChannelBase {
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.CAPACITY,
         String.valueOf(50));
+    overrides.put(FileChannelConfiguration.TRANSACTION_CAPACITY,
+        String.valueOf(50));
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());

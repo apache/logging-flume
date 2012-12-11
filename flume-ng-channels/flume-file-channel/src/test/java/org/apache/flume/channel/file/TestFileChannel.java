@@ -67,6 +67,28 @@ public class TestFileChannel extends TestFileChannelBase {
   public void teardown() {
     super.teardown();
   }
+
+  @Test
+  public void testNegativeCapacities() {
+    Map<String, String> parms = Maps.newHashMap();
+    parms.put(FileChannelConfiguration.CAPACITY, "-3");
+    parms.put(FileChannelConfiguration.TRANSACTION_CAPACITY, "-1");
+    parms.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, "-2");
+    FileChannel channel = createFileChannel(parms);
+
+    Assert.assertTrue(field("capacity")
+            .ofType(Integer.class)
+            .in(channel).get() > 0);
+
+    Assert.assertTrue(field("transactionCapacity")
+            .ofType(Integer.class)
+            .in(channel).get() > 0);
+
+    Assert.assertTrue(field("checkpointInterval")
+            .ofType(Long.class)
+            .in(channel).get() > 0);
+  }
+
   @Test
   public void testFailAfterTakeBeforeCommit() throws Throwable {
     final FileChannel channel = createFileChannel();
@@ -223,6 +245,8 @@ public class TestFileChannel extends TestFileChannelBase {
   public void testCapacity() throws Exception {
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(5));
+    overrides.put(FileChannelConfiguration.TRANSACTION_CAPACITY,
+        String.valueOf(5));
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
@@ -259,6 +283,8 @@ public class TestFileChannel extends TestFileChannelBase {
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.KEEP_ALIVE, String.valueOf(10L));
     overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(10));
+    overrides.put(FileChannelConfiguration.TRANSACTION_CAPACITY,
+        String.valueOf(10));
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
@@ -409,6 +435,8 @@ public class TestFileChannel extends TestFileChannelBase {
   public void testPutForceCheckpointCommitReplay() throws Exception{
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(2));
+    overrides.put(FileChannelConfiguration.TRANSACTION_CAPACITY,
+        String.valueOf(2));
     overrides.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, "10000");
     FileChannel channel = createFileChannel(overrides);
     channel.start();
@@ -433,6 +461,8 @@ public class TestFileChannel extends TestFileChannelBase {
   public void testPutCheckpointCommitCheckpointReplay() throws Exception {
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(2));
+    overrides.put(FileChannelConfiguration.TRANSACTION_CAPACITY,
+        String.valueOf(2));
     overrides.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, "10000");
     FileChannel channel = createFileChannel(overrides);
     channel.start();
