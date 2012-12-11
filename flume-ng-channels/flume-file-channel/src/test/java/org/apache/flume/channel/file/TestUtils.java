@@ -142,7 +142,15 @@ public class TestUtils {
       try {
         transaction.begin();
         for (int j = 0; j < batchSize; j++) {
-          Event event = channel.take();
+          Event event = null;
+          try {
+            event = channel.take();
+          } catch (ChannelException ex) {
+            Assert.assertTrue(ex.getMessage().startsWith(
+                "Take list for FileBackedTransaction, capacity"));
+            transaction.commit();
+            return result;
+          }
           if (event == null) {
             transaction.commit();
             return result;
@@ -194,11 +202,13 @@ public class TestUtils {
           result.addAll(batch);
         }
       } catch (ChannelException e) {
-        Assert.assertEquals("The channel has reached it's capacity. This might "
+        Assert.assertTrue(("The channel has reached it's capacity. This might "
             + "be the result of a sink on the channel having too low of batch "
             + "size, a downstream system running slower than normal, or that "
             + "the channel capacity is just too low. [channel="
-            + channel.getName()+"]", e.getMessage());
+            + channel.getName() + "]").equals(e.getMessage())
+            || e.getMessage().startsWith("Put queue for FileBackedTransaction " +
+            "of capacity "));
       }
     }
     return result;

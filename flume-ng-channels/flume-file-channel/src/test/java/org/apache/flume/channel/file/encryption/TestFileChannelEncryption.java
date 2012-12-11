@@ -72,6 +72,8 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
   private Map<String, String> getOverrides() throws Exception {
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(100));
+    overrides.put(FileChannelConfiguration.TRANSACTION_CAPACITY,
+        String.valueOf(100));
     return overrides;
   }
   private Map<String, String> getOverridesForEncryption() throws Exception {
@@ -98,6 +100,8 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
     int numThreads = 20;
     Map<String, String> overrides = getOverridesForEncryption();
     overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(10000));
+    overrides.put(FileChannelConfiguration.TRANSACTION_CAPACITY,
+        String.valueOf(100));
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
@@ -133,6 +137,8 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
     int numThreads = 20;
     Map<String, String> overrides = getOverridesForEncryption();
     overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(10000));
+    overrides.put(FileChannelConfiguration.TRANSACTION_CAPACITY,
+        String.valueOf(100));
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());

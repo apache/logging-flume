@@ -21,6 +21,7 @@ package org.apache.flume.channel;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
@@ -33,6 +34,8 @@ import org.apache.flume.event.EventBuilder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import static org.fest.reflect.core.Reflection.*;
+
 
 public class TestMemoryChannel {
 
@@ -438,5 +441,24 @@ public class TestMemoryChannel {
     tx.close();
 
 
+  }
+
+  @Test
+  public void testNegativeCapacities() {
+    Context context = new Context();
+    Map<String, String> parms = new HashMap<String, String>();
+    parms.put("capacity", "-3");
+    parms.put("transactionCapacity", "-1");
+    context.putAll(parms);
+    Configurables.configure(channel, context);
+
+    Assert.assertTrue(field("queue")
+            .ofType(LinkedBlockingDeque.class)
+            .in(channel).get()
+            .remainingCapacity() > 0);
+
+    Assert.assertTrue(field("transCapacity")
+            .ofType(Integer.class)
+            .in(channel).get() > 0);
   }
 }
