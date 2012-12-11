@@ -226,15 +226,31 @@ public class MemoryChannel extends BasicChannelSemantics {
       capacity = context.getInteger("capacity", defaultCapacity);
     } catch(NumberFormatException e) {
       capacity = defaultCapacity;
+      LOGGER.warn("Invalid capacity specified, initializing channel to "
+          + "default capacity of {}", defaultCapacity);
     }
 
+    if (capacity <= 0) {
+      capacity = defaultCapacity;
+      LOGGER.warn("Invalid capacity specified, initializing channel to "
+          + "default capacity of {}", defaultCapacity);
+    }
     try {
       transCapacity = context.getInteger("transactionCapacity", defaultTransCapacity);
     } catch(NumberFormatException e) {
       transCapacity = defaultTransCapacity;
+      LOGGER.warn("Invalid transation capacity specified, initializing channel"
+          + " to default capacity of {}", defaultTransCapacity);
     }
 
-    Preconditions.checkState(transCapacity <= capacity);
+    if (transCapacity <= 0) {
+      transCapacity = defaultTransCapacity;
+      LOGGER.warn("Invalid transation capacity specified, initializing channel"
+          + " to default capacity of {}", defaultTransCapacity);
+    }
+    Preconditions.checkState(transCapacity <= capacity,
+        "Transaction Capacity of Memory Channel cannot be higher than " +
+            "the capacity.");
 
     try {
       byteCapacityBufferPercentage = context.getInteger("byteCapacityBufferPercentage", defaultByteCapacityBufferPercentage);
