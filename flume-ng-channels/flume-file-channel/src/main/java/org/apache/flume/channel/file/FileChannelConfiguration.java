@@ -45,6 +45,17 @@ public class FileChannelConfiguration {
   public static final String MAX_FILE_SIZE = "maxFileSize";
   public static final long DEFAULT_MAX_FILE_SIZE =
         Integer.MAX_VALUE - (500L * 1024L * 1024L); // ~1.52 G
+
+  public static final String MINIMUM_REQUIRED_SPACE = "minimumRequiredSpace";
+  /**
+   * Minimum space required defaults to 500MB
+   */
+  public static final long DEFAULT_MINIMUM_REQUIRED_SPACE = 500L * 1024L * 1024L;
+  /**
+   * Minimum space floor is 1MB
+   */
+  public static final long FLOOR_MINIMUM_REQUIRED_SPACE = 1L * 1024L * 1024L;
+
   /**
    * Maximum capacity of the channel.
    * Default: 1,000,000
