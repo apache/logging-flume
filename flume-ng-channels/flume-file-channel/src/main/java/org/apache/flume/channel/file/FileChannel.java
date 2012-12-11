@@ -79,6 +79,7 @@ public class FileChannel extends BasicChannelSemantics {
   private int transactionCapacity;
   private long checkpointInterval;
   private long maxFileSize;
+  private long minimumRequiredSpace;
   private File checkpointDir;
   private File[] dataDirs;
   private Log log;
@@ -174,6 +175,11 @@ public class FileChannel extends BasicChannelSemantics {
             FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE),
             FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE);
 
+    minimumRequiredSpace = Math.max(
+        context.getLong(FileChannelConfiguration.MINIMUM_REQUIRED_SPACE,
+            FileChannelConfiguration.DEFAULT_MINIMUM_REQUIRED_SPACE),
+            FileChannelConfiguration.FLOOR_MINIMUM_REQUIRED_SPACE);
+
     logWriteTimeout = context.getInteger(
         FileChannelConfiguration.LOG_WRITE_TIMEOUT,
         FileChannelConfiguration.DEFAULT_WRITE_TIMEOUT);
@@ -258,6 +264,7 @@ public class FileChannel extends BasicChannelSemantics {
       Builder builder = new Log.Builder();
       builder.setCheckpointInterval(checkpointInterval);
       builder.setMaxFileSize(maxFileSize);
+      builder.setMinimumRequiredSpace(minimumRequiredSpace);
       builder.setQueueSize(capacity);
       builder.setLogWriteTimeout(logWriteTimeout);
       builder.setCheckpointDir(checkpointDir);
