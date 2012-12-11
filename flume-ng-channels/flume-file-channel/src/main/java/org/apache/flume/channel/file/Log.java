@@ -76,10 +76,6 @@ class Log {
   private static final Logger LOGGER = LoggerFactory.getLogger(Log.class);
   private static final int MIN_NUM_LOGS = 2;
   private static final String FILE_LOCK = "in_use.lock";
-  /**
-   * Each file system in use must have at least 10MB of space.
-   */
-  private static final long ABSOLUTE_MINIMUM_REQURED_SPACE = 10L * 1024L * 1024L;
   // for reader
   private final Map<Integer, LogFile.RandomReader> idLogFileMap = Collections
       .synchronizedMap(new HashMap<Integer, LogFile.RandomReader>());
@@ -96,6 +92,7 @@ class Log {
   private long checkpointInterval;
   private long maxFileSize;
   private final boolean useFastReplay;
+  private final long minimumRequiredSpace;
   private final Map<String, FileLock> locks;
   private final ReentrantReadWriteLock checkpointLock =
       new ReentrantReadWriteLock(true);
@@ -118,6 +115,7 @@ class Log {
 
   static class Builder {
     private long bCheckpointInterval;
+    private long bMinimumRequiredSpace;
     private long bMaxFileSize;
     private int bQueueCapacity;
     private File bCheckpointDir;
@@ -168,6 +166,11 @@ class Log {
       return this;
     }
 
+    Builder setMinimumRequiredSpace(long minimumRequiredSpace) {
+      bMinimumRequiredSpace = minimumRequiredSpace;
+      return this;
+    }
+
     Builder setCheckpointWriteTimeout(int checkpointTimeout){
       bCheckpointWriteTimeout = checkpointTimeout;
       return this;
@@ -201,15 +204,16 @@ class Log {
     Log build() throws IOException {
       return new Log(bCheckpointInterval, bMaxFileSize, bQueueCapacity,
           bLogWriteTimeout, bCheckpointWriteTimeout, bCheckpointDir, bName,
-          useLogReplayV1, useFastReplay, bEncryptionKeyProvider,
-          bEncryptionKeyAlias, bEncryptionCipherProvider, bLogDirs);
+          useLogReplayV1, useFastReplay, bMinimumRequiredSpace,
+          bEncryptionKeyProvider, bEncryptionKeyAlias,
+          bEncryptionCipherProvider, bLogDirs);
     }
   }
 
   private Log(long checkpointInterval, long maxFileSize, int queueCapacity,
       int logWriteTimeout, int checkpointWriteTimeout, File checkpointDir,
       String name, boolean useLogReplayV1, boolean useFastReplay,
-      @Nullable KeyProvider encryptionKeyProvider,
+      long minimumRequiredSpace, @Nullable KeyProvider encryptionKeyProvider,
       @Nullable String encryptionKeyAlias,
       @Nullable String encryptionCipherProvider, File... logDirs)
           throws IOException {
@@ -229,6 +233,7 @@ class Log {
     this.channelNameDescriptor = "[channel=" + name + "]";
     this.useLogReplayV1 = useLogReplayV1;
     this.useFastReplay = useFastReplay;
+    this.minimumRequiredSpace = minimumRequiredSpace;
     for (File logDir : logDirs) {
       Preconditions.checkArgument(logDir.isDirectory() || logDir.mkdirs(),
           "LogDir " + logDir + " could not be created");
@@ -467,7 +472,7 @@ class Log {
     ByteBuffer buffer = TransactionEventRecord.toByteBuffer(put);
     int logFileIndex = nextLogWriter(transactionID);
     long usableSpace = logFiles.get(logFileIndex).getUsableSpace();
-    long requiredSpace = ABSOLUTE_MINIMUM_REQURED_SPACE + buffer.limit();
+    long requiredSpace = minimumRequiredSpace + buffer.limit();
     if(usableSpace <= requiredSpace) {
       throw new IOException("Usable space exhaused, only " + usableSpace +
           " bytes remaining, required " + requiredSpace + " bytes");
@@ -510,7 +515,7 @@ class Log {
     ByteBuffer buffer = TransactionEventRecord.toByteBuffer(take);
     int logFileIndex = nextLogWriter(transactionID);
     long usableSpace = logFiles.get(logFileIndex).getUsableSpace();
-    long requiredSpace = ABSOLUTE_MINIMUM_REQURED_SPACE + buffer.limit();
+    long requiredSpace = minimumRequiredSpace + buffer.limit();
     if(usableSpace <= requiredSpace) {
       throw new IOException("Usable space exhaused, only " + usableSpace +
           " bytes remaining, required " + requiredSpace + " bytes");
@@ -552,7 +557,7 @@ class Log {
     ByteBuffer buffer = TransactionEventRecord.toByteBuffer(rollback);
     int logFileIndex = nextLogWriter(transactionID);
     long usableSpace = logFiles.get(logFileIndex).getUsableSpace();
-    long requiredSpace = ABSOLUTE_MINIMUM_REQURED_SPACE + buffer.limit();
+    long requiredSpace = minimumRequiredSpace + buffer.limit();
     if(usableSpace <= requiredSpace) {
       throw new IOException("Usable space exhaused, only " + usableSpace +
           " bytes remaining, required " + requiredSpace + " bytes");
@@ -718,7 +723,7 @@ class Log {
     ByteBuffer buffer = TransactionEventRecord.toByteBuffer(commit);
     int logFileIndex = nextLogWriter(transactionID);
     long usableSpace = logFiles.get(logFileIndex).getUsableSpace();
-    long requiredSpace = ABSOLUTE_MINIMUM_REQURED_SPACE + buffer.limit();
+    long requiredSpace = minimumRequiredSpace + buffer.limit();
     if(usableSpace <= requiredSpace) {
       throw new IOException("Usable space exhaused, only " + usableSpace +
           " bytes remaining, required " + requiredSpace + " bytes");
@@ -830,6 +835,11 @@ class Log {
    */
   private Boolean writeCheckpoint(Boolean force) throws Exception {
     boolean checkpointCompleted = false;
+    long usableSpace = checkpointDir.getUsableSpace();
+    if(usableSpace <= minimumRequiredSpace) {
+      throw new IOException("Usable space exhaused, only " + usableSpace +
+          " bytes remaining, required " + minimumRequiredSpace + " bytes");
+    }
     boolean lockAcquired = tryLockExclusive();
     if(!lockAcquired) {
       return false;

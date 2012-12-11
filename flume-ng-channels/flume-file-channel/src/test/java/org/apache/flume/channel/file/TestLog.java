@@ -19,6 +19,7 @@
 package org.apache.flume.channel.file;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -27,11 +28,14 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 
 public class TestLog {
+  private static final Logger LOGGER = LoggerFactory.getLogger(TestLog.class);
   private static final long MAX_FILE_SIZE = 1000;
   private static final int CAPACITY = 10000;
   private Log log;
@@ -144,7 +148,69 @@ public class TestLog {
     FlumeEventQueue queue = log.getFlumeEventQueue();
     Assert.assertNull(queue.removeHead(transactionID));
   }
-
+  @Test
+  public void testMinimumRequiredSpaceTooSmallOnStartup() throws IOException,
+    InterruptedException {
+    log.close();
+    log = new Log.Builder().setCheckpointInterval(
+        Long.MAX_VALUE).setMaxFileSize(
+            FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE).setQueueSize(
+            CAPACITY).setCheckpointDir(checkpointDir).setLogDirs(
+                dataDirs).setChannelName("testlog").
+                setMinimumRequiredSpace(Long.MAX_VALUE).build();
+    try {
+      log.replay();
+      Assert.fail();
+    } catch (IOException e) {
+      Assert.assertTrue(e.getMessage(), e.getMessage()
+          .startsWith("Usable space exhaused"));
+    }
+  }
+  /**
+   * There is a race here in that someone could take up some space
+   */
+  @Test
+  public void testMinimumRequiredSpaceTooSmallForPut() throws IOException,
+    InterruptedException {
+    try {
+      doTestMinimumRequiredSpaceTooSmallForPut();
+    } catch (IOException e) {
+      LOGGER.info("Error during test, retrying", e);
+      doTestMinimumRequiredSpaceTooSmallForPut();
+    } catch (AssertionError e) {
+      LOGGER.info("Test failed, let's be sure it failed for good reason", e);
+      doTestMinimumRequiredSpaceTooSmallForPut();
+    }
+  }
+  public void doTestMinimumRequiredSpaceTooSmallForPut() throws IOException,
+    InterruptedException {
+    long minimumRequireSpace = checkpointDir.getUsableSpace() -
+        (10L* 1024L * 1024L);
+    log.close();
+    log = new Log.Builder().setCheckpointInterval(
+        Long.MAX_VALUE).setMaxFileSize(
+            FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE).setQueueSize(
+            CAPACITY).setCheckpointDir(checkpointDir).setLogDirs(
+                dataDirs).setChannelName("testlog").
+                setMinimumRequiredSpace(minimumRequireSpace).build();
+    log.replay();
+    File filler = new File(checkpointDir, "filler");
+    byte[] buffer = new byte[64 * 1024];
+    FileOutputStream out = new FileOutputStream(filler);
+    while(checkpointDir.getUsableSpace() > minimumRequireSpace) {
+      out.write(buffer);
+    }
+    out.close();
+    try {
+      FlumeEvent eventIn = TestUtils.newPersistableEvent();
+      long transactionID = ++this.transactionID;
+      log.put(transactionID, eventIn);
+      Assert.fail();
+    } catch (IOException e) {
+      Assert.assertTrue(e.getMessage(), e.getMessage()
+          .startsWith("Usable space exhaused"));
+    }
+  }
   /**
    * After replay of the log, we should not find the event because the take
    * was committed
