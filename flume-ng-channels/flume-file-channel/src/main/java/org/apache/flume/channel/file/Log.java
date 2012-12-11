@@ -1035,7 +1035,7 @@ class Log {
         }
       } catch (IOException e) {
         LOG.error("Error doing checkpoint", e);
-      } catch (Exception e) {
+      } catch (Throwable e) {
         LOG.error("General error in checkpoint worker", e);
       }
     }
