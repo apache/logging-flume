@@ -67,7 +67,7 @@ public class SinkProcessorFactory {
     try {
       type = SinkProcessorType.valueOf(typeStr.toUpperCase());
     } catch (Exception ex) {
-      logger.warn("Sink type {} is a custom type", typeStr);
+      logger.warn("Sink Processor type {} is a custom type", typeStr);
     }
 
     if(!type.equals(SinkProcessorType.OTHER)) {

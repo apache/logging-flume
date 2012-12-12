@@ -16,32 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-package org.apache.flume.node;
-
-import org.apache.flume.Channel;
-import org.apache.flume.SinkRunner;
-import org.apache.flume.SourceRunner;
-
-import com.google.common.collect.ImmutableMap;
-
 /**
- * MaterializedConfiguration represents the materialization of a Flume
- * properties file. That is it's the actual Source, Sink, and Channels
- * represented in the configuration file.
+ * This package provides Flume users the ability to embed simple agents
+ * in applications. For specific and up to date information, please see
+ * the Flume User Guide.
  */
-public interface MaterializedConfiguration {
-
-  public void addSourceRunner(String name, SourceRunner sourceRunner);
-
-  public void addSinkRunner(String name, SinkRunner sinkRunner);
-
-  public void addChannel(String name, Channel channel);
-
-  public ImmutableMap<String, SourceRunner> getSourceRunners();
-
-  public ImmutableMap<String, SinkRunner> getSinkRunners();
-
-  public ImmutableMap<String, Channel> getChannels();
-
-}
+package org.apache.flume.agent.embedded;
