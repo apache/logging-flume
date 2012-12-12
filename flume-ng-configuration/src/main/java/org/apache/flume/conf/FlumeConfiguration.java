@@ -137,7 +137,7 @@ public class FlumeConfiguration {
       logger.debug("Sources " + aconf.sources + "\n");
     }
 
-    logger.info("Post-validation flume configuration contains configuration "
+    logger.info("Post-validation flume configuration contains configuration"
         + " for agents: " + agentConfigMap.keySet());
   }
 
@@ -752,7 +752,7 @@ public class FlumeConfiguration {
               if (conf != null) errorList.addAll(conf.getErrors());
               throw new ConfigurationException(
                   "No available sinks for sinkgroup: " + sinkgroupName
-                  + ". " + "Sinkgroup will be removed");
+                  + ". Sinkgroup will be removed");
             }
 
           } catch (ConfigurationException e) {

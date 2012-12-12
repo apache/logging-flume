@@ -429,7 +429,71 @@ For more flexibility, the load-balancing Flume client implementation
 
   connect-timeout = 20000              # Must be >=1000 (default: 20000)
 
-  request-timeout = 20000              # Must be >=1000 (default: 20000)  
+  request-timeout = 20000              # Must be >=1000 (default: 20000)
+
+Embedded agent
+~~~~~~~~~~~~~~
+
+Flume has an embedded agent api which allows users to embed an agent in their
+application. This agent is meant to be lightweight and as such not all
+sources, sinks, and channels are allowed. Specifically the source used
+is a special embedded source and events should be send to the source
+via the put, putAll methods on the EmbeddedAgent object. Only File Channel
+and Memory Channel are allowed as channels while Avro Sink is the only
+supported sink.
+
+Configuration of an Embedded Agent is similar to configuration of a
+full Agent. The following is an exhaustive list of configration options:
+
+Required properties are in **bold**.
+
+====================  ================  ==============================================
+Property Name         Default           Description
+====================  ================  ==============================================
+source.type           embedded          The only available source is the embedded source.
+**channel.type**      --                Either ``memory`` or ``file`` which correspond to MemoryChannel and FileChannel respectively.
+channel.*             --                Configuration options for the channel type requested, see MemoryChannel or FileChannel user guide for an exhaustive list.
+**sinks**             --                List of sink names
+**sink.type**         --                Property name must match a name in the list of sinks. Value must be ``avro``
+sink.*                --                Configuration options for the sink. See AvroSink user guide for an exhaustive list, however note AvroSink requires at least hostname and port.
+**processor.type**    --                Either ``failover`` or ``load_balance`` which correspond to FailoverSinksProcessor and LoadBalancingSinkProcessor respectively.
+processor.*           --                Configuration options for the sink processor selected. See FailoverSinksProcessor and LoadBalancingSinkProcessor user guide for an exhaustive list.
+====================  ================  ==============================================
+
+Below is an example of how to use the agent:
+
+.. code-block:: java
+
+    Map<String, String> properties = new HashMap<String, String>();
+    properties.put("channel.type", "memory");
+    properties.put("channel.capacity", "200");
+    properties.put("sinks", "sink1 sink2");
+    properties.put("sink1.type", "avro");
+    properties.put("sink2.type", "avro");
+    properties.put("sink1.hostname", "collector1.apache.org");
+    properties.put("sink1.port", "5564");
+    properties.put("sink2.hostname", "collector2.apache.org");
+    properties.put("sink2.port",  "5565");
+    properties.put("processor.type", "load_balance");
+
+    EmbeddedAgent agent = new EmbeddedAgent("myagent");
+
+    agent.configure(properties);
+    agent.start();
+
+    List<Event> events = Lists.newArrayList();
+
+    events.add(event);
+    events.add(event);
+    events.add(event);
+    events.add(event);
+
+    agent.putAll(events);
+
+    ...
+
+    agent.stop();
+
 
 Transaction interface
 ~~~~~~~~~~~~~~~~~~~~~
