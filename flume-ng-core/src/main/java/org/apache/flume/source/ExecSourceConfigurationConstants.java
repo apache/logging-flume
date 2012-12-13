@@ -18,6 +18,8 @@
  */
 package org.apache.flume.source;
 
+import java.nio.charset.Charset;
+
 public class ExecSourceConfigurationConstants {
 
   /**
@@ -43,4 +45,10 @@ public class ExecSourceConfigurationConstants {
    */
   public static final String CONFIG_BATCH_SIZE = "batchSize";
   public static final int DEFAULT_BATCH_SIZE = 20;
+
+  /**
+   * Charset for reading input
+   */
+  public static final String CHARSET = "charset";
+  public static final String DEFAULT_CHARSET = "UTF-8";
 }
