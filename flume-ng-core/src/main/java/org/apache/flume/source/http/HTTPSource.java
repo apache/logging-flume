@@ -179,7 +179,7 @@ public class HTTPSource extends AbstractSource implements
         getChannelProcessor().processEventBatch(events);
       } catch (ChannelException ex) {
         LOG.warn("Error appending event to channel. "
-                + "Channel might be full. Consider increasing the channel"
+                + "Channel might be full. Consider increasing the channel "
                 + "capacity or make sure the sinks perform faster.", ex);
         response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
                 "Error appending event to channel. Channel might be full."
