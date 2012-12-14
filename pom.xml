@@ -42,6 +42,8 @@ limitations under the License.
     <siteUrlDeployment>file://people.apache.org/www/incubator.apache.org/flume</siteUrlDeployment>
     <stagingDirectory>${project.basedir}/target/docs</stagingDirectory>
 
+    <avro.version>1.7.3</avro.version>
+
   </properties>
 
   <modules>
@@ -557,7 +559,7 @@ limitations under the License.
             <stringType>String</stringType>
           </configuration>
           -->
-          <version>1.7.1</version>
+          <version>${avro.version}</version>
         </plugin>
 
         <plugin>
@@ -688,19 +690,19 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro</artifactId>
-        <version>1.7.2</version>
+        <version>${avro.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro-compiler</artifactId>
-        <version>1.7.2</version>
+        <version>${avro.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro-ipc</artifactId>
-        <version>1.7.2</version>
+        <version>${avro.version}</version>
         <exclusions>
           <exclusion>
             <groupId>org.mortbay.jetty</groupId>
