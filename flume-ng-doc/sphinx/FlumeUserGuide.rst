@@ -709,6 +709,68 @@ Example for agent named a1:
   a1.sources.r1.command = tail -F /var/log/secure
   a1.sources.r1.channels = c1
 
+JMS Source
+~~~~~~~~~~~
+
+JMS Source reads messages from a JMS destination such as a queue or topic. Being a JMS
+application it should work with any JMS provider but has only been tested with ActiveMQ.
+The JMS source provides configurable batch size, message selector, user/pass, and message
+to flume event converter.
+
+Required properties are in **bold**.
+
+=========================   ===========  ==============================================================
+Property Name               Default      Description
+=========================   ===========  ==============================================================
+**channels**                --
+**type**                    --           The component type name, needs to be ``jms``
+**initialContextFactory**   --           Inital Context Factory, e.g: org.apache.activemq.jndi.ActiveMQInitialContextFactory
+**providerURL**             --           The JMS provider URL
+**destinationName**         --           Destination name
+**destinationType**         --           Destination type (queue or topic)
+messageSelector             --           Message selector to use when creating the consumer
+userName                    --           Username for the destination/provider
+passwordFile                --           File containing the password for the destination/provider
+batchSize                   100          Number of messages to consume in one batch
+converter                   DEFAULT      Class to use to convert messages to flume events. See below.
+converter.*                 --           Converter properties.
+converter.charset           UTF-8        Default converter only. Charset to use when converting JMS TextMessages to byte arrays.
+=========================   ===========  ==============================================================
+
+
+Converter
+'''''''''''
+The JMS source allows pluggable converters, though it's likely the default converter will work
+for most purposes. The default converter is able to convert Bytes, Text, and Object messages
+to FlumeEvents. In all cases the properties in the message are added as headers to the
+FlumeEvent.
+
+BytesMessage:
+  Bytes of message are copied to body of the FlumeEvent. Cannot convert more than 2GB
+  of data per message.
+
+TextMessage:
+  Text of message is converted to a UTF-8 byte array and copied to the body of the
+  FlumeEvent.
+
+ObjectMessage:
+  Object is written out to a ByteArrayOutputStream wrapped in an ObjectOutputStream and
+  the resulting array is copied to the body of the FlumeEvent.
+
+
+Example for agent named a1:
+
+.. code-block:: properties
+
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.type = jms
+  a1.sources.r1.channels = c1
+  a1.sources.r1.initialContextFactory = org.apache.activemq.jndi.ActiveMQInitialContextFactory
+  a1.sources.r1.providerURL = tcp://mqserver:61616
+  a1.sources.r1.destinationName = BUSINESS_DATA
+  a1.sources.r1.destinationType = QUEUE
+
 Spooling Directory Source
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 This source lets you ingest data by dropping files in a spooling directory on

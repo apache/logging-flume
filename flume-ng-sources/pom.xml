@@ -42,6 +42,7 @@ limitations under the License.
 
   <modules>
     <module>flume-scribe-source</module>
+    <module>flume-jms-source</module>
   </modules>
 
 </project>
