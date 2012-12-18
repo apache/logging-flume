@@ -145,6 +145,7 @@ public class TestThriftLegacySource {
   @Test
   public void testLifecycle() throws InterruptedException {
     bind();
+    Thread.sleep(1000);
     stop();
   }
 
