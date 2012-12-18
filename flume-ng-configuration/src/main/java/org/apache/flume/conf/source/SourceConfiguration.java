@@ -72,7 +72,6 @@ public class SourceConfiguration extends ComponentConfiguration {
       String selType;
       if (selectorParams != null && !selectorParams.isEmpty()) {
         selType = selectorParams.get(BasicConfigurationConstants.CONFIG_TYPE);
-        System.out.println("Loading selector: " + selType);
       } else {
         selType = ChannelSelectorConfigurationType.REPLICATING.toString();
       }
