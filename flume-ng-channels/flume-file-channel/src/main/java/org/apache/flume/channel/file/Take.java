@@ -26,6 +26,8 @@ import java.io.OutputStream;
 
 import org.apache.flume.channel.file.proto.ProtosFactory;
 
+import com.google.common.base.Preconditions;
+
 /**
  * Represents a Take on disk
  */
@@ -70,7 +72,8 @@ class Take extends TransactionEventRecord {
   }
   @Override
   void readProtos(InputStream in) throws IOException {
-    ProtosFactory.Take take = ProtosFactory.Take.parseDelimitedFrom(in);
+    ProtosFactory.Take take = Preconditions.checkNotNull(ProtosFactory.
+        Take.parseDelimitedFrom(in), "Take cannot be null");
     fileID = take.getFileID();
     offset = take.getOffset();
   }

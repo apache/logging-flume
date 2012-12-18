@@ -26,6 +26,8 @@ import java.io.OutputStream;
 
 import org.apache.flume.channel.file.proto.ProtosFactory;
 
+import com.google.common.base.Preconditions;
+
 /**
  * Represents a Commit on disk
  */
@@ -55,7 +57,8 @@ class Commit extends TransactionEventRecord {
   }
   @Override
   void readProtos(InputStream in) throws IOException {
-    ProtosFactory.Commit commit = ProtosFactory.Commit.parseDelimitedFrom(in);
+    ProtosFactory.Commit commit = Preconditions.checkNotNull(ProtosFactory.
+        Commit.parseDelimitedFrom(in), "Commit cannot be null");
     type = (short) commit.getType();
   }
 

@@ -27,6 +27,7 @@ import java.util.Map;
 
 import org.apache.flume.channel.file.proto.ProtosFactory;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 
@@ -82,7 +83,8 @@ class Put extends TransactionEventRecord {
   }
   @Override
   void readProtos(InputStream in) throws IOException {
-    ProtosFactory.Put put = ProtosFactory.Put.parseDelimitedFrom(in);
+    ProtosFactory.Put put = Preconditions.checkNotNull(ProtosFactory.
+        Put.parseDelimitedFrom(in), "Put cannot be null");
     Map<String, String> headers = Maps.newHashMap();
     ProtosFactory.FlumeEvent protosEvent = put.getEvent();
     for(ProtosFactory.FlumeEventHeader header : protosEvent.getHeadersList()) {
