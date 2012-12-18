@@ -14,13 +14,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.apache.flume.conf;
+package org.apache.flume.conf;
 
 import java.util.Properties;
 
 import junit.framework.Assert;
 
-import org.apache.flume.conf.FlumeConfiguration;
 import org.apache.flume.conf.FlumeConfiguration.AgentConfiguration;
 import org.junit.Test;
 
