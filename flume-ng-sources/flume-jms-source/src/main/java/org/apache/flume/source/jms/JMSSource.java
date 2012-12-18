@@ -132,10 +132,10 @@ public class JMSSource extends AbstractPollableSource {
     }
 
     String converterClassName = context.getString(
-        JMSSourceConfiguration.CONVERTER,
-        JMSSourceConfiguration.CONVERTER_DEFAULT)
+        JMSSourceConfiguration.CONVERTER_TYPE,
+        JMSSourceConfiguration.CONVERTER_TYPE_DEFAULT)
         .trim();
-    if(JMSSourceConfiguration.CONVERTER_DEFAULT.
+    if(JMSSourceConfiguration.CONVERTER_TYPE_DEFAULT.
         equalsIgnoreCase(converterClassName)) {
       converterClassName = DefaultJMSMessageConverter.Builder.class.getName();
     }

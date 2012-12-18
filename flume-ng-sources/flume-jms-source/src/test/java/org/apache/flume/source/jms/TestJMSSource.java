@@ -193,7 +193,7 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
   }
   @Test(expected = FlumeException.class)
   public void testConfigureWithInvalidConverterClass() throws Exception {
-    context.put(JMSSourceConfiguration.CONVERTER, "not a valid classname");
+    context.put(JMSSourceConfiguration.CONVERTER_TYPE, "not a valid classname");
     source.configure(context);
   }
   @Test
@@ -208,7 +208,7 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
   @Test
   public void testNonDefaultConverter() throws Exception {
     // tests that a classname can be specified
-    context.put(JMSSourceConfiguration.CONVERTER,
+    context.put(JMSSourceConfiguration.CONVERTER_TYPE,
         DefaultJMSMessageConverter.Builder.class.getName());
     source.configure(context);
     source.start();
@@ -238,7 +238,7 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
   @Test
   public void testNonBuilderConfigurableConverter() throws Exception {
     // tests that a non builder by configurable converter works
-    context.put(JMSSourceConfiguration.CONVERTER,
+    context.put(JMSSourceConfiguration.CONVERTER_TYPE,
         NonBuilderConfigurableConverter.class.getName());
     source.configure(context);
     source.start();
@@ -250,7 +250,7 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
   @Test
   public void testNonBuilderNonConfigurableConverter() throws Exception {
     // tests that a non builder non configurable converter
-    context.put(JMSSourceConfiguration.CONVERTER,
+    context.put(JMSSourceConfiguration.CONVERTER_TYPE,
         NonBuilderNonConfigurableConverter.class.getName());
     source.configure(context);
     source.start();
