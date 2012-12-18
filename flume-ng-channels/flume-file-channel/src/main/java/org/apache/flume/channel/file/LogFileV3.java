@@ -100,8 +100,9 @@ class LogFileV3 extends LogFile {
     ProtosFactory.LogFileMetaData read() throws IOException {
       FileInputStream inputStream = new FileInputStream(metaDataFile);
       try {
-        ProtosFactory.LogFileMetaData metaData =
-            ProtosFactory.LogFileMetaData.parseDelimitedFrom(inputStream);
+        ProtosFactory.LogFileMetaData metaData = Preconditions.checkNotNull(
+            ProtosFactory.LogFileMetaData.
+            parseDelimitedFrom(inputStream), "Metadata cannot be null");
         if (metaData.getLogFileID() != logFileID) {
           throw new IOException("The file id of log file: "
               + logFile + " is different from expected "
@@ -216,7 +217,8 @@ class LogFileV3 extends LogFile {
       FileInputStream inputStream = new FileInputStream(metaDataFile);
       try {
         ProtosFactory.LogFileMetaData metaData =
-            ProtosFactory.LogFileMetaData.parseDelimitedFrom(inputStream);
+            Preconditions.checkNotNull(ProtosFactory.LogFileMetaData.
+                parseDelimitedFrom(inputStream), "MetaData cannot be null");
         int version = metaData.getVersion();
         if(version != getVersion()) {
           throw new IOException("Version is " + Integer.toHexString(version) +
@@ -295,8 +297,9 @@ class LogFileV3 extends LogFile {
       File metaDataFile = Serialization.getMetaDataFile(file);
       FileInputStream inputStream = new FileInputStream(metaDataFile);
       try {
-        ProtosFactory.LogFileMetaData metaData =
-            ProtosFactory.LogFileMetaData.parseDelimitedFrom(inputStream);
+        ProtosFactory.LogFileMetaData metaData = Preconditions.checkNotNull(
+            ProtosFactory.LogFileMetaData.parseDelimitedFrom(inputStream),
+            "MetaData cannot be null");
         int version = metaData.getVersion();
         if(version != getVersion()) {
           throw new IOException("Version is " + Integer.toHexString(version) +

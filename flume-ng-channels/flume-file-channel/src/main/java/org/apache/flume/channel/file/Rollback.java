@@ -26,6 +26,8 @@ import java.io.OutputStream;
 
 import org.apache.flume.channel.file.proto.ProtosFactory;
 
+import com.google.common.base.Preconditions;
+
 /**
  * Represents a Rollback on disk
  */
@@ -51,8 +53,8 @@ class Rollback extends TransactionEventRecord {
   @Override
   void readProtos(InputStream in) throws IOException {
     @SuppressWarnings("unused")
-    ProtosFactory.Rollback rollback =
-      ProtosFactory.Rollback.parseDelimitedFrom(in);
+    ProtosFactory.Rollback rollback = Preconditions.checkNotNull(ProtosFactory.
+        Rollback.parseDelimitedFrom(in), "Rollback cannot be null");
   }
   @Override
   short getRecordType() {

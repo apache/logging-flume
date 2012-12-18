@@ -337,6 +337,105 @@ public class TestLog {
     LogUtils.sort(expected);
     Assert.assertEquals(expected, actual);
   }
+  @Test
+  public void testReplayFailsWithAllEmptyLogMetaDataNormalReplay()
+      throws IOException, InterruptedException {
+    doTestReplayFailsWithAllEmptyLogMetaData(false);
+  }
+  @Test
+  public void testReplayFailsWithAllEmptyLogMetaDataFastReplay()
+      throws IOException, InterruptedException {
+    doTestReplayFailsWithAllEmptyLogMetaData(true);
+  }
+  public void doTestReplayFailsWithAllEmptyLogMetaData(boolean useFastReplay)
+      throws IOException, InterruptedException {
+    // setup log with correct fast replay parameter
+    log.close();
+    log = new Log.Builder().setCheckpointInterval(1L).setMaxFileSize(
+        MAX_FILE_SIZE).setQueueSize(CAPACITY).setCheckpointDir(
+            checkpointDir).setLogDirs(dataDirs)
+            .setChannelName("testlog").setUseFastReplay(useFastReplay).build();
+    log.replay();
+    FlumeEvent eventIn = TestUtils.newPersistableEvent();
+    long transactionID = ++this.transactionID;
+    log.put(transactionID, eventIn);
+    log.commitPut(transactionID);
+    log.close();
+    if(useFastReplay) {
+      FileUtils.deleteQuietly(checkpointDir);
+      Assert.assertTrue(checkpointDir.mkdir());
+    }
+    List<File> logFiles = Lists.newArrayList();
+    for (int i = 0; i < dataDirs.length; i++) {
+      logFiles.addAll(LogUtils.getLogs(dataDirs[i]));
+    }
+    Assert.assertTrue(logFiles.size() > 0);
+    for(File logFile : logFiles) {
+      File logFileMeta = Serialization.getMetaDataFile(logFile);
+      Assert.assertTrue(logFileMeta.delete());
+      Assert.assertTrue(logFileMeta.createNewFile());
+    }
+    log = new Log.Builder().setCheckpointInterval(1L).setMaxFileSize(
+        MAX_FILE_SIZE).setQueueSize(CAPACITY).setCheckpointDir(
+            checkpointDir).setLogDirs(dataDirs)
+            .setChannelName("testlog").setUseFastReplay(useFastReplay).build();
+    try {
+      log.replay();
+      Assert.fail();
+    } catch(IllegalStateException expected) {
+      String msg = expected.getMessage();
+      Assert.assertNotNull(msg);
+      Assert.assertTrue(msg, msg.contains(".meta is empty, but log"));
+    }
+  }
+  @Test
+  public void testReplaySucceedsWithUnusedEmptyLogMetaDataNormalReplay()
+      throws IOException, InterruptedException {
+    FlumeEvent eventIn = TestUtils.newPersistableEvent();
+    long transactionID = ++this.transactionID;
+    FlumeEventPointer eventPointer = log.put(transactionID, eventIn);
+    log.commitPut(transactionID); // this is not required since
+    log.close();
+    log = new Log.Builder().setCheckpointInterval(1L).setMaxFileSize(
+        MAX_FILE_SIZE).setQueueSize(CAPACITY).setCheckpointDir(
+            checkpointDir).setLogDirs(dataDirs)
+            .setChannelName("testlog").build();
+    doTestReplaySucceedsWithUnusedEmptyLogMetaData(eventIn, eventPointer);
+  }
+  @Test
+  public void testReplaySucceedsWithUnusedEmptyLogMetaDataFastReplay()
+      throws IOException, InterruptedException {
+    FlumeEvent eventIn = TestUtils.newPersistableEvent();
+    long transactionID = ++this.transactionID;
+    FlumeEventPointer eventPointer = log.put(transactionID, eventIn);
+    log.commitPut(transactionID); // this is not required since
+    log.close();
+    FileUtils.deleteDirectory(checkpointDir);
+    Assert.assertTrue(checkpointDir.mkdir());
+    log = new Log.Builder().setCheckpointInterval(1L).setMaxFileSize(
+        MAX_FILE_SIZE).setQueueSize(CAPACITY).setCheckpointDir(
+            checkpointDir).setLogDirs(dataDirs)
+            .setChannelName("testlog").setUseFastReplay(true).build();
+    doTestReplaySucceedsWithUnusedEmptyLogMetaData(eventIn, eventPointer);
+  }
+  public void doTestReplaySucceedsWithUnusedEmptyLogMetaData(FlumeEvent eventIn,
+      FlumeEventPointer eventPointer) throws IOException,
+      InterruptedException {
+    for (int i = 0; i < dataDirs.length; i++) {
+      for(File logFile : LogUtils.getLogs(dataDirs[i])) {
+        if(logFile.length() == 0L) {
+          File logFileMeta = Serialization.getMetaDataFile(logFile);
+          Assert.assertTrue(logFileMeta.delete());
+          Assert.assertTrue(logFileMeta.createNewFile());
+        }
+      }
+    }
+    log.replay();
+    FlumeEvent eventOut = log.get(eventPointer);
+    Assert.assertNotNull(eventOut);
+    Assert.assertEquals(eventIn.getHeaders(), eventOut.getHeaders());
+    Assert.assertArrayEquals(eventIn.getBody(), eventOut.getBody());
+  }
   private void takeAndVerify(FlumeEventPointer eventPointerIn,
       FlumeEvent eventIn) throws IOException, InterruptedException {
     FlumeEventQueue queue = log.getFlumeEventQueue();
