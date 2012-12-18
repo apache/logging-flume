@@ -190,8 +190,9 @@ abstract class TransactionEventRecord implements Writable {
       throws IOException {
     ByteArrayInputStream in = new ByteArrayInputStream(buffer);
     try {
-      ProtosFactory.TransactionEventHeader header =
-          ProtosFactory.TransactionEventHeader.parseDelimitedFrom(in);
+      ProtosFactory.TransactionEventHeader header = Preconditions.
+          checkNotNull(ProtosFactory.TransactionEventHeader.
+              parseDelimitedFrom(in), "Header cannot be null");
       short type = (short)header.getType();
       long transactionID = header.getTransactionID();
       long writeOrderID = header.getWriteOrderID();
@@ -199,8 +200,9 @@ abstract class TransactionEventRecord implements Writable {
           newRecordForType(type, transactionID, writeOrderID);
       transactionEvent.readProtos(in);
       @SuppressWarnings("unused")
-      ProtosFactory.TransactionEventFooter footer =
-          ProtosFactory.TransactionEventFooter.parseDelimitedFrom(in);
+      ProtosFactory.TransactionEventFooter footer = Preconditions.checkNotNull(
+          ProtosFactory.TransactionEventFooter.
+          parseDelimitedFrom(in), "Footer cannot be null");
       return transactionEvent;
     } finally {
       try {

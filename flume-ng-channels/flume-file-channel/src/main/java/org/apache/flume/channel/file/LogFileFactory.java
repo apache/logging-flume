@@ -18,6 +18,7 @@
  */
 package org.apache.flume.channel.file;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -147,6 +148,15 @@ class LogFileFactory {
         }
         if(tempMetadataFile.exists()) {
           tempMetadataFile.delete();
+        }
+        if(metaDataFile.length() == 0L) {
+          if(file.length() != 0L) {
+            String msg = String.format("MetaData file %s is empty, but log %s" +
+                " is of size %d", metaDataFile, file, file.length());
+            throw new IllegalStateException(msg);
+          }
+          throw new EOFException(String.format("MetaData file %s is empty",
+              metaDataFile));
         }
         return new LogFileV3.SequentialReader(file, encryptionKeyProvider);
       }

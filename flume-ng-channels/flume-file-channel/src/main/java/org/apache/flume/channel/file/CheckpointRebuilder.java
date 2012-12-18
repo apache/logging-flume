@@ -23,6 +23,8 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
+
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -62,7 +64,11 @@ public class CheckpointRebuilder {
     LOG.info("Attempting to fast replay the log files.");
     List<LogFile.SequentialReader> logReaders = Lists.newArrayList();
     for (File logFile : logFiles) {
-      logReaders.add(LogFileFactory.getSequentialReader(logFile, null));
+      try {
+        logReaders.add(LogFileFactory.getSequentialReader(logFile, null));
+      } catch(EOFException e) {
+        LOG.warn("Ignoring " + logFile + " due to EOF", e);
+      }
     }
     long transactionIDSeed = 0;
     long writeOrderIDSeed = 0;
