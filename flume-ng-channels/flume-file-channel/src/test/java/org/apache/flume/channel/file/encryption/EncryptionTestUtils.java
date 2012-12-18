@@ -83,9 +83,9 @@ public class EncryptionTestUtils {
     /*
     Commands below:
     keytool -genseckey -alias key-0 -keypass keyPassword -keyalg AES \
-      -keysize 192 -validity 9000 -keystore src/test/resources/test.keystore \
+      -keysize 128 -validity 9000 -keystore src/test/resources/test.keystore \
       -storetype jceks -storepass keyStorePassword
-    keytool -genseckey -alias key-1 -keyalg AES -keysize 192 -validity 9000 \
+    keytool -genseckey -alias key-1 -keyalg AES -keysize 128 -validity 9000 \
       -keystore src/test/resources/test.keystore -storetype jceks \
       -storepass keyStorePassword
      */
