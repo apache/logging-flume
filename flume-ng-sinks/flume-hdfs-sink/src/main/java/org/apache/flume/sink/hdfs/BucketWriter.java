@@ -1,4 +1,3 @@
-
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -55,7 +54,8 @@ class BucketWriter {
   private static final Logger LOG = LoggerFactory
       .getLogger(BucketWriter.class);
 
-  static final String IN_USE_EXT = ".tmp";
+  private static String DIRECTORY_DELIMITER = System.getProperty("file.separator");
+
   /**
    * This lock ensures that only one thread can open a file at a time.
    */
@@ -69,7 +69,6 @@ class BucketWriter {
   private final long batchSize;
   private final CompressionCodec codeC;
   private final CompressionType compType;
-  private final Context context;
   private final ScheduledExecutorService timedRollerPool;
   private final UserGroupInformation user;
 
@@ -81,15 +80,20 @@ class BucketWriter {
   private FileSystem fileSystem;
 
   private volatile String filePath;
+  private volatile String fileName;
+  private volatile String inUsePrefix;
+  private volatile String inUseSuffix;
   private volatile String fileSuffix;
   private volatile String bucketPath;
+  private volatile String targetPath;
   private volatile long batchCounter;
   private volatile boolean isOpen;
   private volatile ScheduledFuture<Void> timedRollFuture;
   private SinkCounter sinkCounter;
-  private final WriterCallback onIdleCallback;
   private final int idleTimeout;
   private volatile ScheduledFuture<Void> idleFuture;
+  private final WriterCallback onIdleCallback;
+  private final String onIdleCallbackPath;
 
   private Clock clock = new SystemClock();
 
@@ -98,16 +102,20 @@ class BucketWriter {
   protected boolean idleClosed = false;
 
   BucketWriter(long rollInterval, long rollSize, long rollCount, long batchSize,
-      Context context, String filePath, String fileSuffix, CompressionCodec codeC,
+      Context context, String filePath, String fileName, String inUsePrefix,
+      String inUseSuffix, String fileSuffix, CompressionCodec codeC,
       CompressionType compType, HDFSWriter writer, FlumeFormatter formatter,
       ScheduledExecutorService timedRollerPool, UserGroupInformation user,
-      SinkCounter sinkCounter, int idleTimeout, WriterCallback onIdleCallback) {
+      SinkCounter sinkCounter, int idleTimeout, WriterCallback onIdleCallback,
+      String onIdleCallbackPath) {
     this.rollInterval = rollInterval;
     this.rollSize = rollSize;
     this.rollCount = rollCount;
     this.batchSize = batchSize;
-    this.context = context;
     this.filePath = filePath;
+    this.fileName = fileName;
+    this.inUsePrefix = inUsePrefix;
+    this.inUseSuffix = inUseSuffix;
     this.fileSuffix = fileSuffix;
     this.codeC = codeC;
     this.compType = compType;
@@ -116,8 +124,9 @@ class BucketWriter {
     this.timedRollerPool = timedRollerPool;
     this.user = user;
     this.sinkCounter = sinkCounter;
-    this.onIdleCallback = onIdleCallback;
     this.idleTimeout = idleTimeout;
+    this.onIdleCallback = onIdleCallback;
+    this.onIdleCallbackPath = onIdleCallbackPath;
 
     fileExtensionCounter = new AtomicLong(clock.currentTimeMillis());
 
@@ -197,26 +206,34 @@ class BucketWriter {
     // which caused deadlocks. See FLUME-1231.
     synchronized (staticLock) {
       checkAndThrowInterruptedException();
+
       try {
         long counter = fileExtensionCounter.incrementAndGet();
+
+        String fullFileName = fileName + "." + counter;
+
+        if (codeC == null && fileSuffix != null && fileSuffix.length() > 0) {
+          fullFileName += fileSuffix;
+        }
+
+        if(codeC != null) {
+          fullFileName += codeC.getDefaultExtension();
+        }
+
+        bucketPath = filePath + DIRECTORY_DELIMITER + inUsePrefix
+          + fullFileName + inUseSuffix;
+        targetPath = filePath + DIRECTORY_DELIMITER + fullFileName;
+
+        LOG.info("Creating " + bucketPath);
         if (codeC == null) {
-          bucketPath = filePath + "." + counter;
-          // FLUME-1645 - add suffix if specified
-          if (fileSuffix != null && fileSuffix.length() > 0) {
-            bucketPath += fileSuffix;
-          }
           // Need to get reference to FS using above config before underlying
           // writer does in order to avoid shutdown hook & IllegalStateExceptions
           fileSystem = new Path(bucketPath).getFileSystem(config);
-          LOG.info("Creating " + bucketPath + IN_USE_EXT);
-          writer.open(bucketPath + IN_USE_EXT, formatter);
+          writer.open(bucketPath, formatter);
         } else {
-          bucketPath = filePath + "." + counter
-              + codeC.getDefaultExtension();
           // need to get reference to FS before writer does to avoid shutdown hook
           fileSystem = new Path(bucketPath).getFileSystem(config);
-          LOG.info("Creating " + bucketPath + IN_USE_EXT);
-          writer.open(bucketPath + IN_USE_EXT, codeC, compType, formatter);
+          writer.open(bucketPath, codeC, compType, formatter);
         }
       } catch (Exception ex) {
         sinkCounter.incrementConnectionFailedCount();
@@ -235,7 +252,7 @@ class BucketWriter {
       Callable<Void> action = new Callable<Void>() {
         public Void call() throws Exception {
           LOG.debug("Rolling file ({}): Roll scheduled after {} sec elapsed.",
-              bucketPath + IN_USE_EXT, rollInterval);
+              bucketPath, rollInterval);
           try {
             close();
           } catch(Throwable t) {
@@ -273,19 +290,19 @@ class BucketWriter {
    * @throws IOException
    */
   private void doClose() throws IOException {
-    LOG.debug("Closing {}", bucketPath + IN_USE_EXT);
+    LOG.debug("Closing {}", bucketPath);
     if (isOpen) {
       try {
         writer.close(); // could block
         sinkCounter.incrementConnectionClosedCount();
       } catch (IOException e) {
         LOG.warn("failed to close() HDFSWriter for file (" + bucketPath +
-            IN_USE_EXT + "). Exception follows.", e);
+            "). Exception follows.", e);
         sinkCounter.incrementConnectionFailedCount();
       }
       isOpen = false;
     } else {
-      LOG.info("HDFSWriter is already closed: {}", bucketPath + IN_USE_EXT);
+      LOG.info("HDFSWriter is already closed: {}", bucketPath);
     }
 
     // NOTE: timed rolls go through this codepath as well as other roll types
@@ -327,11 +344,11 @@ class BucketWriter {
           Callable<Void> idleAction = new Callable<Void>() {
             public Void call() throws Exception {
               try {
-                LOG.info("Closing idle bucketWriter {}", filePath);
+                LOG.info("Closing idle bucketWriter {}", bucketPath);
                 idleClosed = true;
                 close();
                 if(onIdleCallback != null)
-                  onIdleCallback.run(filePath);
+                  onIdleCallback.run(onIdleCallbackPath);
               } catch(Throwable t) {
                 LOG.error("Unexpected error", t);
               }
@@ -389,13 +406,13 @@ class BucketWriter {
       writer.append(event, formatter); // could block
     } catch (IOException e) {
       LOG.warn("Caught IOException writing to HDFSWriter ({}). Closing file (" +
-          bucketPath + IN_USE_EXT + ") and rethrowing exception.",
+          bucketPath + ") and rethrowing exception.",
           e.getMessage());
       try {
         close();
       } catch (IOException e2) {
         LOG.warn("Caught IOException while closing file (" +
-             bucketPath + IN_USE_EXT + "). Exception follows.", e2);
+             bucketPath + "). Exception follows.", e2);
       }
       throw e;
     }
@@ -433,8 +450,12 @@ class BucketWriter {
    * Rename bucketPath file from .tmp to permanent location.
    */
   private void renameBucket() throws IOException {
-    Path srcPath = new Path(bucketPath + IN_USE_EXT);
-    Path dstPath = new Path(bucketPath);
+    if(bucketPath.equals(targetPath)) {
+      return;
+    }
+
+    Path srcPath = new Path(bucketPath);
+    Path dstPath = new Path(targetPath);
 
     if(fileSystem.exists(srcPath)) { // could block
       LOG.info("Renaming " + srcPath + " to " + dstPath);
@@ -444,7 +465,7 @@ class BucketWriter {
 
   @Override
   public String toString() {
-    return "[ " + this.getClass().getSimpleName() + " filePath = " + filePath +
+    return "[ " + this.getClass().getSimpleName() + " targetPath = " + targetPath +
         ", bucketPath = " + bucketPath + " ]";
   }
 

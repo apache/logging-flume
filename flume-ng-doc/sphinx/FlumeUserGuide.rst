@@ -1275,6 +1275,8 @@ Name                    Default       Description
 **hdfs.path**           --            HDFS directory path (eg hdfs://namenode/flume/webdata/)
 hdfs.filePrefix         FlumeData     Name prefixed to files created by Flume in hdfs directory
 hdfs.fileSuffix         --            Suffix to append to file (eg ``.avro`` - *NOTE: period is not automatically added*)
+hdfs.inUsePrefix        --            Prefix that is used for temporal files that flume actively writes into
+hdfs.inUseSuffix        ``.tmp``      Suffix that is used for temporal files that flume actively writes into
 hdfs.rollInterval       30            Number of seconds to wait before rolling current file
                                       (0 = never roll based on time interval)
 hdfs.rollSize           1024          File size to trigger roll, in bytes (0: never roll based on file size)

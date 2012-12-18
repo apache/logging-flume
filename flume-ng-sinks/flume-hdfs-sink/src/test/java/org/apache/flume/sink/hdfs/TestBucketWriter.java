@@ -68,9 +68,10 @@ public class TestBucketWriter {
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
     HDFSTextFormatter formatter = new HDFSTextFormatter();
     BucketWriter bucketWriter = new BucketWriter(0, 0, maxEvents, 0, ctx,
-        "/tmp/file", null, null, SequenceFile.CompressionType.NONE, hdfsWriter,
-        formatter, timedRollerPool, null,
-        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()), 0, null);
+        "/tmp", "file", "", ".tmp", null, null, SequenceFile.CompressionType.NONE,
+        hdfsWriter, formatter, timedRollerPool, null,
+        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()), 0,
+        null, null);
 
     Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
     for (int i = 0; i < 1000; i++) {
@@ -92,10 +93,10 @@ public class TestBucketWriter {
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
     HDFSTextFormatter formatter = new HDFSTextFormatter();
     BucketWriter bucketWriter = new BucketWriter(0, maxBytes, 0, 0, ctx,
-        "/tmp/file", null, null, SequenceFile.CompressionType.NONE, hdfsWriter,
-        formatter, timedRollerPool, null,
+        "/tmp", "file", "", ".tmp", null, null, SequenceFile.CompressionType.NONE,
+        hdfsWriter, formatter, timedRollerPool, null,
         new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
-        0, null);
+        0, null, null);
 
     Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
     for (int i = 0; i < 1000; i++) {
@@ -119,10 +120,10 @@ public class TestBucketWriter {
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
     HDFSTextFormatter formatter = new HDFSTextFormatter();
     BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
-        "/tmp/file", null, null, SequenceFile.CompressionType.NONE, hdfsWriter,
-        formatter, timedRollerPool, null,
+        "/tmp", "file", "", ".tmp", null, null, SequenceFile.CompressionType.NONE,
+        hdfsWriter, formatter, timedRollerPool, null,
         new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
-        0, null);
+        0, null, null);
 
     Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
     long startNanos = System.nanoTime();
@@ -201,11 +202,14 @@ public class TestBucketWriter {
     HDFSTextFormatter formatter = new HDFSTextFormatter();
     File tmpFile = File.createTempFile("flume", "test");
     tmpFile.deleteOnExit();
+    String path = tmpFile.getParent();
+    String name = tmpFile.getName();
+
     BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
-        tmpFile.getName(), null, null, SequenceFile.CompressionType.NONE, hdfsWriter,
+        path, name, "", ".tmp", null, null, SequenceFile.CompressionType.NONE, hdfsWriter,
         formatter, timedRollerPool, null,
         new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
-        0, null);
+        0, null, null);
 
     Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
     for (int i = 0; i < NUM_EVENTS - 1; i++) {
@@ -226,10 +230,10 @@ public class TestBucketWriter {
       MockHDFSWriter hdfsWriter = new MockHDFSWriter();
       HDFSTextFormatter formatter = new HDFSTextFormatter();
       BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
-          "/tmp/file", suffix, null, SequenceFile.CompressionType.NONE, hdfsWriter,
+          "/tmp", "file", "", ".tmp", suffix, null, SequenceFile.CompressionType.NONE, hdfsWriter,
           formatter, timedRollerPool, null,
           new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
-          0, null);
+          0, null, null);
 
       // Need to override system time use for test so we know what to expect
       final long testTime = System.currentTimeMillis();
@@ -243,7 +247,7 @@ public class TestBucketWriter {
       Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
       bucketWriter.append(e);
 
-      Assert.assertTrue("Incorrect suffix", hdfsWriter.getOpenedFilePath().endsWith(Long.toString(testTime+1) + BucketWriter.IN_USE_EXT));
+      Assert.assertTrue("Incorrect suffix", hdfsWriter.getOpenedFilePath().endsWith(Long.toString(testTime+1) + ".tmp"));
   }
 
     @Test
@@ -254,10 +258,10 @@ public class TestBucketWriter {
         MockHDFSWriter hdfsWriter = new MockHDFSWriter();
         HDFSTextFormatter formatter = new HDFSTextFormatter();
         BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
-            "/tmp/file", suffix, null, SequenceFile.CompressionType.NONE, hdfsWriter,
+            "/tmp", "file", "", ".tmp", suffix, null, SequenceFile.CompressionType.NONE, hdfsWriter,
             formatter, timedRollerPool, null,
             new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
-            0, null);
+            0, null, null);
 
         // Need to override system time use for test so we know what to expect
 
@@ -273,6 +277,45 @@ public class TestBucketWriter {
         Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
         bucketWriter.append(e);
 
-        Assert.assertTrue("Incorrect suffix", hdfsWriter.getOpenedFilePath().endsWith(Long.toString(testTime+1) + suffix + BucketWriter.IN_USE_EXT));
+        Assert.assertTrue("Incorrect suffix", hdfsWriter.getOpenedFilePath().endsWith(Long.toString(testTime+1) + suffix + ".tmp"));
     }
+
+  @Test
+  public void testInUsePrefix() throws IOException, InterruptedException {
+    final int ROLL_INTERVAL = 1000; // seconds. Make sure it doesn't change in course of test
+    final String PREFIX = "BRNO_IS_CITY_IN_CZECH_REPUBLIC";
+
+    MockHDFSWriter hdfsWriter = new MockHDFSWriter();
+    HDFSTextFormatter formatter = new HDFSTextFormatter();
+    BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
+        "/tmp", "file", PREFIX, ".tmp", null, null, SequenceFile.CompressionType.NONE, hdfsWriter,
+        formatter, timedRollerPool, null,
+        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
+        0, null, null);
+
+    Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
+    bucketWriter.append(e);
+
+    Assert.assertTrue("Incorrect in use prefix", hdfsWriter.getOpenedFilePath().contains(PREFIX));
+  }
+
+  @Test
+  public void testInUseSuffix() throws IOException, InterruptedException {
+    final int ROLL_INTERVAL = 1000; // seconds. Make sure it doesn't change in course of test
+    final String SUFFIX = "WELCOME_TO_THE_HELLMOUNTH";
+
+    MockHDFSWriter hdfsWriter = new MockHDFSWriter();
+    HDFSTextFormatter formatter = new HDFSTextFormatter();
+    BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
+        "/tmp", "file", "", SUFFIX, null, null, SequenceFile.CompressionType.NONE, hdfsWriter,
+        formatter, timedRollerPool, null,
+        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
+        0, null, null);
+
+    Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
+    bucketWriter.append(e);
+
+    Assert.assertTrue("Incorrect in use suffix", hdfsWriter.getOpenedFilePath().contains(SUFFIX));
+  }
+
 }

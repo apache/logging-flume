@@ -33,6 +33,7 @@ import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumReader;
+import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -222,7 +223,7 @@ public class TestHDFSEventSink {
     Assert.assertEquals(Status.BACKOFF, sink.process());
     sink.stop();
   }
-  
+
   @Test
   public void testKerbFileAccess() throws InterruptedException,
       LifecycleException, EventDeliveryException, IOException {
@@ -246,7 +247,7 @@ public class TestHDFSEventSink {
     context.put("hdfs.rollCount", String.valueOf(rollCount));
     context.put("hdfs.batchSize", String.valueOf(batchSize));
     context.put("hdfs.kerberosPrincipal", kerbConfPrincipal);
-    context.put("hdfs.kerberosKeytab", kerbKeytab);    
+    context.put("hdfs.kerberosKeytab", kerbKeytab);
 
     try {
       Configurables.configure(sink, context);
@@ -261,7 +262,7 @@ public class TestHDFSEventSink {
       UserGroupInformation.setConfiguration(conf);
     }
   }
-  
+
   @Test
   public void testTextAppend() throws InterruptedException, LifecycleException,
       EventDeliveryException, IOException {
@@ -1036,9 +1037,10 @@ public class TestHDFSEventSink {
     sink.stop();
     FileStatus[] dirStat = fs.listStatus(dirPath);
     Path[] fList = FileUtil.stat2Paths(dirStat);
-    Assert.assertEquals(2, fList.length);
+    Assert.assertEquals("Incorrect content of the directory " + StringUtils.join(fList, ","),
+      2, fList.length);
     Assert.assertTrue(!fList[0].getName().endsWith(".tmp") &&
-        !fList[1].getName().endsWith(".tmp"));
+      !fList[1].getName().endsWith(".tmp"));
     fs.close();
   }
 }

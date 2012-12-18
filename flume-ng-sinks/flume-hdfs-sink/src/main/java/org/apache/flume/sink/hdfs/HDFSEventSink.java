@@ -69,15 +69,20 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private static final Logger LOG = LoggerFactory
       .getLogger(HDFSEventSink.class);
 
+  private static String DIRECTORY_DELIMITER = System.getProperty("file.separator");
+
   private static final long defaultRollInterval = 30;
   private static final long defaultRollSize = 1024;
   private static final long defaultRollCount = 10;
   private static final String defaultFileName = "FlumeData";
   private static final String defaultSuffix = "";
+  private static final String defaultInUsePrefix = "";
+  private static final String defaultInUseSuffix = ".tmp";
   private static final long defaultBatchSize = 100;
   private static final long defaultTxnEventMax = 100;
   private static final String defaultFileType = HDFSWriterFactory.SequenceFileType;
   private static final int defaultMaxOpenFiles = 5000;
+
   /**
    * Default length of time we wait for blocking BucketWriter calls
    * before timing out the operation. Intended to prevent server hangs.
@@ -112,8 +117,11 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private CompressionCodec codeC;
   private CompressionType compType;
   private String fileType;
-  private String path;
+  private String filePath;
+  private String fileName;
   private String suffix;
+  private String inUsePrefix;
+  private String inUseSuffix;
   private TimeZone timeZone;
   private int maxOpenFiles;
   private String writeFormat;
@@ -181,12 +189,12 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   public void configure(Context context) {
     this.context = context;
 
-    String dirpath = Preconditions.checkNotNull(
+    filePath = Preconditions.checkNotNull(
         context.getString("hdfs.path"), "hdfs.path is required");
-    String fileName = context.getString("hdfs.filePrefix", defaultFileName);
-    // FLUME-1645: add suffix support
+    fileName = context.getString("hdfs.filePrefix", defaultFileName);
     this.suffix = context.getString("hdfs.fileSuffix", defaultSuffix);
-    this.path = dirpath + System.getProperty("file.separator") + fileName;
+    inUsePrefix = context.getString("hdfs.inUsePrefix", defaultInUsePrefix);
+    inUseSuffix = context.getString("hdfs.inUseSuffix", defaultInUseSuffix);
     String tzName = context.getString("hdfs.timeZone");
     timeZone = tzName == null ? null : TimeZone.getTimeZone(tzName);
     rollInterval = context.getLong("hdfs.rollInterval", defaultRollInterval);
@@ -244,7 +252,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       }
     }
 
-    if (!authenticate(path)) {
+    if (!authenticate()) {
       LOG.error("Failed to authenticate!");
     }
     needRounding = context.getBoolean("hdfs.round", false);
@@ -394,9 +402,13 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
         }
 
         // reconstruct the path name by substituting place holders
-        String realPath = BucketPath.escapeString(path, event.getHeaders(),
+        String realPath = BucketPath.escapeString(filePath, event.getHeaders(),
             timeZone, needRounding, roundUnit, roundValue);
-        BucketWriter bucketWriter = sfWriters.get(realPath);
+        String realName = BucketPath.escapeString(fileName, event.getHeaders(),
+          timeZone, needRounding, roundUnit, roundValue);
+
+        String lookupPath = realPath + DIRECTORY_DELIMITER + realName;
+        BucketWriter bucketWriter = sfWriters.get(lookupPath);
 
         // we haven't seen this file yet, so open it and cache the handle
         if (bucketWriter == null) {
@@ -414,11 +426,11 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
             };
           }
           bucketWriter = new BucketWriter(rollInterval, rollSize, rollCount,
-              batchSize, context, realPath, suffix, codeC, compType, hdfsWriter,
-              formatter, timedRollerPool, proxyTicket, sinkCounter, idleTimeout,
-              idleCallback);
+              batchSize, context, realPath, realName, inUsePrefix, inUseSuffix,
+              suffix, codeC, compType, hdfsWriter, formatter, timedRollerPool,
+              proxyTicket, sinkCounter, idleTimeout, idleCallback, lookupPath);
 
-          sfWriters.put(realPath, bucketWriter);
+          sfWriters.put(lookupPath, bucketWriter);
         }
 
         // track the buckets getting written in this transaction
@@ -523,7 +535,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     super.start();
   }
 
-  private boolean authenticate(String hdfsPath) {
+  private boolean authenticate() {
 
     // logic for kerberos login
     boolean useSecurity = UserGroupInformation.isSecurityEnabled();
