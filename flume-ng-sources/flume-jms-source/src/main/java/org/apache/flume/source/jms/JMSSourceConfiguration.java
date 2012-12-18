@@ -48,9 +48,11 @@ public class JMSSourceConfiguration {
   public static final long POLL_TIMEOUT_DEFAULT = 1000L;
 
   public static final String CONVERTER = "converter";
-  public static final String CONVERTER_DEFAULT = "DEFAULT";
 
-  public static final String CONVERTER_CHARSET = CONVERTER + ".converter";
+  public static final String CONVERTER_TYPE = CONVERTER + ".type";
+  public static final String CONVERTER_TYPE_DEFAULT = "DEFAULT";
+
+  public static final String CONVERTER_CHARSET = CONVERTER + ".charset";
   public static final String CONVERTER_CHARSET_DEFAULT = "UTF-8";
 
 }

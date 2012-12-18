@@ -732,7 +732,7 @@ messageSelector             --           Message selector to use when creating t
 userName                    --           Username for the destination/provider
 passwordFile                --           File containing the password for the destination/provider
 batchSize                   100          Number of messages to consume in one batch
-converter                   DEFAULT      Class to use to convert messages to flume events. See below.
+converter.type              DEFAULT      Class to use to convert messages to flume events. See below.
 converter.*                 --           Converter properties.
 converter.charset           UTF-8        Default converter only. Charset to use when converting JMS TextMessages to byte arrays.
 =========================   ===========  ==============================================================
@@ -750,8 +750,8 @@ BytesMessage:
   of data per message.
 
 TextMessage:
-  Text of message is converted to a UTF-8 byte array and copied to the body of the
-  FlumeEvent.
+  Text of message is converted to a byte array and copied to the body of the
+  FlumeEvent. The default converter uses UTF-8 by default but this is configurable.
 
 ObjectMessage:
   Object is written out to a ByteArrayOutputStream wrapped in an ObjectOutputStream and
