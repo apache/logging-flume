@@ -112,6 +112,7 @@ class Log {
   private String encryptionCipherProvider;
   private String encryptionKeyAlias;
   private Key encryptionKey;
+  private final long usableSpaceRefreshInterval;
 
   static class Builder {
     private long bCheckpointInterval;
@@ -130,6 +131,12 @@ class Log {
     private KeyProvider bEncryptionKeyProvider;
     private String bEncryptionKeyAlias;
     private String bEncryptionCipherProvider;
+    private long bUsableSpaceRefreshInterval = 15L * 1000L;
+
+    Builder setUsableSpaceRefreshInterval(long usableSpaceRefreshInterval) {
+      bUsableSpaceRefreshInterval = usableSpaceRefreshInterval;
+      return this;
+    }
 
     Builder setCheckpointInterval(long interval) {
       bCheckpointInterval = interval;
@@ -206,7 +213,8 @@ class Log {
           bLogWriteTimeout, bCheckpointWriteTimeout, bCheckpointDir, bName,
           useLogReplayV1, useFastReplay, bMinimumRequiredSpace,
           bEncryptionKeyProvider, bEncryptionKeyAlias,
-          bEncryptionCipherProvider, bLogDirs);
+          bEncryptionCipherProvider, bUsableSpaceRefreshInterval,
+          bLogDirs);
     }
   }
 
@@ -215,13 +223,16 @@ class Log {
       String name, boolean useLogReplayV1, boolean useFastReplay,
       long minimumRequiredSpace, @Nullable KeyProvider encryptionKeyProvider,
       @Nullable String encryptionKeyAlias,
-      @Nullable String encryptionCipherProvider, File... logDirs)
+      @Nullable String encryptionCipherProvider,
+      long usableSpaceRefreshInterval, File... logDirs)
           throws IOException {
     Preconditions.checkArgument(checkpointInterval > 0,
         "checkpointInterval <= 0");
     Preconditions.checkArgument(queueCapacity > 0, "queueCapacity <= 0");
     Preconditions.checkArgument(maxFileSize > 0, "maxFileSize <= 0");
     Preconditions.checkNotNull(checkpointDir, "checkpointDir");
+    Preconditions.checkArgument(usableSpaceRefreshInterval > 0,
+        "usableSpaceRefreshInterval <= 0");
     Preconditions.checkArgument(
         checkpointDir.isDirectory() || checkpointDir.mkdirs(), "CheckpointDir "
             + checkpointDir + " could not be created");
@@ -234,6 +245,7 @@ class Log {
     this.useLogReplayV1 = useLogReplayV1;
     this.useFastReplay = useFastReplay;
     this.minimumRequiredSpace = minimumRequiredSpace;
+    this.usableSpaceRefreshInterval = usableSpaceRefreshInterval;
     for (File logDir : logDirs) {
       Preconditions.checkArgument(logDir.isDirectory() || logDir.mkdirs(),
           "LogDir " + logDir + " could not be created");
@@ -292,7 +304,6 @@ class Log {
    * directly before the shutdown or crash.
    * @throws IOException
    */
-  @SuppressWarnings("deprecation")
   void replay() throws IOException {
     Preconditions.checkState(!open, "Cannot replay after Log has been opened");
 
@@ -406,6 +417,7 @@ class Log {
     }
   }
 
+  @SuppressWarnings("deprecation")
   private void doReplay(FlumeEventQueue queue, List<File> dataFiles,
           KeyProvider encryptionKeyProvider) throws Exception {
     CheckpointRebuilder rebuilder = new CheckpointRebuilder(dataFiles,
@@ -801,7 +813,7 @@ class Log {
           File file = new File(logDirs[index], PREFIX + fileID);
           LogFile.Writer writer = LogFileFactory.getWriter(file, fileID,
               maxFileSize, encryptionKey, encryptionKeyAlias,
-              encryptionCipherProvider);
+              encryptionCipherProvider, usableSpaceRefreshInterval);
           idLogFileMap.put(fileID, LogFileFactory.getRandomReader(file,
               encryptionKeyProvider));
           // writer from this point on will get new reference
@@ -1021,7 +1033,6 @@ class Log {
     private static final Logger LOG = LoggerFactory
         .getLogger(BackgroundWorker.class);
     private final Log log;
-    private volatile boolean run = true;
 
     public BackgroundWorker(Log log) {
       this.log = log;

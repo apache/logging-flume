@@ -67,13 +67,14 @@ class LogFileFactory {
   static LogFile.Writer getWriter(File file, int logFileID,
       long maxFileSize, @Nullable Key encryptionKey,
       @Nullable String encryptionKeyAlias,
-      @Nullable String encryptionCipherProvider) throws IOException {
+      @Nullable String encryptionCipherProvider,
+      long usableSpaceRefreshInterval) throws IOException {
     Preconditions.checkState(!file.exists(), "File already exists "  +
       file.getAbsolutePath());
     Preconditions.checkState(file.createNewFile(), "File could not be created "
         + file.getAbsolutePath());
     return new LogFileV3.Writer(file, logFileID, maxFileSize, encryptionKey,
-        encryptionKeyAlias, encryptionCipherProvider);
+        encryptionKeyAlias, encryptionCipherProvider, usableSpaceRefreshInterval);
   }
 
   static LogFile.RandomReader getRandomReader(File file,

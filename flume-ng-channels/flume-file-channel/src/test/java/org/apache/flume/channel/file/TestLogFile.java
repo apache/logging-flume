@@ -55,7 +55,7 @@ public class TestLogFile {
     dataFile = new File(dataDir, String.valueOf(fileID));
     Assert.assertTrue(dataDir.isDirectory());
     logFileWriter = LogFileFactory.getWriter(dataFile, fileID,
-        Integer.MAX_VALUE, null, null, null);
+        Integer.MAX_VALUE, null, null, null, Long.MAX_VALUE);
   }
   @After
   public void cleanup() throws IOException {
@@ -72,7 +72,7 @@ public class TestLogFile {
     Assert.assertTrue(dataFile.isFile() || dataFile.createNewFile());
     try {
       LogFileFactory.getWriter(dataFile, fileID, Integer.MAX_VALUE, null, null,
-          null);
+          null, Long.MAX_VALUE);
       Assert.fail();
     } catch (IllegalStateException e) {
       Assert.assertEquals("File already exists " + dataFile.getAbsolutePath(),
@@ -86,7 +86,7 @@ public class TestLogFile {
     Assert.assertTrue(dataFile.mkdirs());
     try {
       LogFileFactory.getWriter(dataFile, fileID, Integer.MAX_VALUE, null, null,
-          null);
+          null, Long.MAX_VALUE);
       Assert.fail();
     } catch (IllegalStateException e) {
       Assert.assertEquals("File already exists " + dataFile.getAbsolutePath(),

@@ -27,6 +27,7 @@ import java.nio.channels.FileChannel;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.annotation.Nullable;
 
@@ -36,6 +37,7 @@ import org.apache.flume.tools.DirectMemoryUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -116,6 +118,34 @@ abstract class LogFile {
     }
   }
 
+  @VisibleForTesting
+  static class CachedFSUsableSpace {
+    private final File fs;
+    private final long interval;
+    private final AtomicLong lastRefresh;
+    private final AtomicLong value;
+
+    CachedFSUsableSpace(File fs, long interval) {
+      this.fs = fs;
+      this.interval = interval;
+      this.value = new AtomicLong(fs.getUsableSpace());
+      this.lastRefresh = new AtomicLong(System.currentTimeMillis());
+    }
+
+    void decrement(long numBytes) {
+      Preconditions.checkArgument(numBytes >= 0, "numBytes less than zero");
+      value.addAndGet(-numBytes);
+    }
+    long getUsableSpace() {
+      long now = System.currentTimeMillis();
+      if(now - interval > lastRefresh.get()) {
+        value.set(fs.getUsableSpace());
+        lastRefresh.set(now);
+      }
+      return Math.max(value.get(), 0L);
+    }
+  }
+
   static abstract class Writer {
     private final int logFileID;
     private final File file;
@@ -123,10 +153,12 @@ abstract class LogFile {
     private final RandomAccessFile writeFileHandle;
     private final FileChannel writeFileChannel;
     private final CipherProvider.Encryptor encryptor;
+    private final CachedFSUsableSpace usableSpace;
     private volatile boolean open;
 
+
     Writer(File file, int logFileID, long maxFileSize,
-        CipherProvider.Encryptor encryptor)
+        CipherProvider.Encryptor encryptor, long usableSpaceRefreshInterval)
         throws IOException {
       this.file = file;
       this.logFileID = logFileID;
@@ -135,6 +167,7 @@ abstract class LogFile {
       this.encryptor = encryptor;
       writeFileHandle = new RandomAccessFile(file, "rw");
       writeFileChannel = writeFileHandle.getChannel();
+      usableSpace = new CachedFSUsableSpace(file, usableSpaceRefreshInterval);
       LOG.info("Opened " + file);
       open = true;
     }
@@ -156,7 +189,7 @@ abstract class LogFile {
     }
 
     long getUsableSpace() {
-      return file.getUsableSpace();
+      return usableSpace.getUsableSpace();
     }
 
     long getMaxSize() {
@@ -205,6 +238,7 @@ abstract class LogFile {
       Preconditions.checkState(offset >= 0, String.valueOf(offset));
       // OP_RECORD + size + buffer
       int recordLength = 1 + (int)Serialization.SIZE_OF_INT + buffer.limit();
+      usableSpace.decrement(recordLength);
       preallocate(recordLength);
       ByteBuffer toWrite = ByteBuffer.allocate(recordLength);
       toWrite.put(OP_RECORD);
