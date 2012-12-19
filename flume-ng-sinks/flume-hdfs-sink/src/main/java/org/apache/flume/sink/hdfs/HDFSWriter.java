@@ -22,23 +22,17 @@ import java.io.IOException;
 
 import org.apache.flume.Event;
 import org.apache.flume.conf.Configurable;
-import org.apache.flume.sink.FlumeFormatter;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.compress.CompressionCodec;
 
 public interface HDFSWriter extends Configurable {
 
-  public void open(String filePath, FlumeFormatter fmt) throws IOException;
-
-  // public void open(String filePath, CompressionCodec codec, CompressionType
-  // cType) throws IOException;
+  public void open(String filePath) throws IOException;
 
   public void open(String filePath, CompressionCodec codec,
-      CompressionType cType, FlumeFormatter fmt) throws IOException;
+      CompressionType cType) throws IOException;
 
-  // public void append(long key, byte [] val) throws IOException;
-
-  public void append(Event e, FlumeFormatter fmt) throws IOException;
+  public void append(Event e) throws IOException;
 
   public void sync() throws IOException;
 

@@ -20,10 +20,8 @@ package org.apache.flume.sink.hdfs;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharsetDecoder;
-import java.util.Arrays;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 
@@ -35,7 +33,6 @@ import org.apache.avro.io.DatumReader;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
-import org.apache.flume.sink.FlumeFormatter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile;
@@ -57,7 +54,6 @@ public class TestHDFSCompressedDataStream {
   private File file;
   private String fileURI;
   private CompressionCodecFactory factory;
-  private FlumeFormatter fmt;
 
   @Before
   public void init() throws Exception {
@@ -72,7 +68,6 @@ public class TestHDFSCompressedDataStream {
     path.getFileSystem(conf); // get FS with our conf cached
 
     this.factory = new CompressionCodecFactory(conf);
-    this.fmt = new HDFSTextFormatter();
   }
 
   // make sure the data makes it to disk if we sync() the data stream
@@ -82,7 +77,7 @@ public class TestHDFSCompressedDataStream {
     HDFSCompressedDataStream writer = new HDFSCompressedDataStream();
     writer.configure(context);
     writer.open(fileURI, factory.getCodec(new Path(fileURI)),
-        SequenceFile.CompressionType.BLOCK, fmt);
+        SequenceFile.CompressionType.BLOCK);
 
     String[] bodies = { "yarf!" };
     writeBodies(writer, bodies);
@@ -91,7 +86,7 @@ public class TestHDFSCompressedDataStream {
     GZIPInputStream cmpIn = new GZIPInputStream(new FileInputStream(file));
     int len = cmpIn.read(buf);
     String result = new String(buf, 0, len, Charsets.UTF_8);
-    result = result.trim(); // HDFSTextFormatter adds a newline
+    result = result.trim(); // BodyTextEventSerializer adds a newline
 
     Assert.assertEquals("input and output must match", bodies[0], result);
   }
@@ -104,9 +99,8 @@ public class TestHDFSCompressedDataStream {
     HDFSCompressedDataStream writer = new HDFSCompressedDataStream();
     writer.configure(context);
 
-    FlumeFormatter fmt = new HDFSTextFormatter();
     writer.open(fileURI, factory.getCodec(new Path(fileURI)),
-        SequenceFile.CompressionType.BLOCK, fmt);
+        SequenceFile.CompressionType.BLOCK);
 
     String[] bodies = { "yarf!", "yarfing!" };
     writeBodies(writer, bodies);
@@ -140,7 +134,7 @@ public class TestHDFSCompressedDataStream {
       throws Exception {
     for (String body : bodies) {
       Event evt = EventBuilder.withBody(body, Charsets.UTF_8);
-      writer.append(evt, fmt);
+      writer.append(evt);
     }
     writer.sync();
   }

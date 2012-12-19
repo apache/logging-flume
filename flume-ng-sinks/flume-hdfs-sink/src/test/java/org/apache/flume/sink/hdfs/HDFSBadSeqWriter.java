@@ -19,27 +19,26 @@
 
 package org.apache.flume.sink.hdfs;
 
-
 import java.io.IOException;
 
 import org.apache.flume.Event;
-import org.apache.flume.sink.FlumeFormatter;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.compress.CompressionCodec;
 
 public class HDFSBadSeqWriter extends HDFSSequenceFile {
   protected volatile boolean closed, opened;
+
   @Override
   public void open(String filePath, CompressionCodec codeC,
-      CompressionType compType, FlumeFormatter fmt) throws IOException {
-    super.open(filePath, codeC, compType, fmt);
+      CompressionType compType) throws IOException {
+    super.open(filePath, codeC, compType);
     if(closed) {
       opened = true;
     }
   }
 
   @Override
-  public void append(Event e, FlumeFormatter fmt) throws IOException {
+  public void append(Event e) throws IOException {
 
     if (e.getHeaders().containsKey("fault")) {
       throw new IOException("Injected fault");
@@ -59,7 +58,7 @@ public class HDFSBadSeqWriter extends HDFSSequenceFile {
       }
     }
 
-    super.append(e, fmt);
+    super.append(e);
   }
 
   @Override

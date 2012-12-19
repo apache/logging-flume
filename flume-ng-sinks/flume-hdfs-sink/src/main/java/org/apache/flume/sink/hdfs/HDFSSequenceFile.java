@@ -20,9 +20,7 @@ package org.apache.flume.sink.hdfs;
 
 import java.io.IOException;
 import org.apache.flume.Context;
-
 import org.apache.flume.Event;
-import org.apache.flume.sink.FlumeFormatter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -34,6 +32,9 @@ import org.apache.hadoop.io.compress.CompressionCodec;
 public class HDFSSequenceFile implements HDFSWriter {
 
   private SequenceFile.Writer writer;
+  private String writeFormat;
+  private Context serializerContext;
+  private SeqFileFormatter formatter;
 
   public HDFSSequenceFile() {
     writer = null;
@@ -41,17 +42,22 @@ public class HDFSSequenceFile implements HDFSWriter {
 
   @Override
   public void configure(Context context) {
-    // no-op
+    // use binary writable format by default
+    writeFormat = context.getString("hdfs.writeFormat", SeqFileFormatterType.Writable.name());
+    serializerContext = new Context(
+            context.getSubProperties(SeqFileFormatterFactory.CTX_PREFIX));
+    formatter = SeqFileFormatterFactory
+            .getFormatter(writeFormat, serializerContext);
   }
 
   @Override
-  public void open(String filePath, FlumeFormatter fmt) throws IOException {
-    open(filePath, null, CompressionType.NONE, fmt);
+  public void open(String filePath) throws IOException {
+    open(filePath, null, CompressionType.NONE);
   }
 
   @Override
   public void open(String filePath, CompressionCodec codeC,
-      CompressionType compType, FlumeFormatter fmt) throws IOException {
+      CompressionType compType) throws IOException {
     Configuration conf = new Configuration();
     Path dstPath = new Path(filePath);
     FileSystem hdfs = dstPath.getFileSystem(conf);
@@ -59,17 +65,19 @@ public class HDFSSequenceFile implements HDFSWriter {
     if (conf.getBoolean("hdfs.append.support", false) == true && hdfs.isFile
             (dstPath)) {
       FSDataOutputStream outStream = hdfs.append(dstPath);
-      writer = SequenceFile.createWriter(conf, outStream, fmt.getKeyClass(),
-          fmt.getValueClass(), compType, codeC);
+      writer = SequenceFile.createWriter(conf, outStream, formatter.getKeyClass(),
+          formatter.getValueClass(), compType, codeC);
     } else {
       writer = SequenceFile.createWriter(hdfs, conf, dstPath,
-          fmt.getKeyClass(), fmt.getValueClass(), compType, codeC);
+          formatter.getKeyClass(), formatter.getValueClass(), compType, codeC);
     }
   }
 
   @Override
-  public void append(Event e, FlumeFormatter formatter) throws IOException {
-    writer.append(formatter.getKey(e), formatter.getValue(e));
+  public void append(Event e) throws IOException {
+    for (SeqFileFormatter.Record record : formatter.format(e)) {
+      writer.append(record.getKey(), record.getValue());
+    }
   }
 
   @Override
