@@ -24,7 +24,6 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,18 +35,19 @@ import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientFactory;
-import org.apache.flume.event.EventBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
-
+@InterfaceAudience.Private
+@InterfaceStability.Evolving
 public class AvroCLIClient {
 
   private static final Logger logger = LoggerFactory
@@ -73,8 +73,7 @@ public class AvroCLIClient {
     } catch (ParseException e) {
       logger.error("Unable to parse command line options - {}", e.getMessage());
     } catch (IOException e) {
-      logger.error("Unable to send data to Flume - {}", e.getMessage());
-      logger.debug("Exception follows.", e);
+      logger.error("Unable to send data to Flume. Exception follows.",  e);
     } catch (FlumeException e) {
       logger.error("Unable to open connection to Flume. Exception follows.", e);
     } catch (EventDeliveryException e) {
@@ -168,40 +167,34 @@ public class AvroCLIClient {
     return true;
   }
 
-  private void setHeaders(Event event) {
-    event.setHeaders(headers);
-  }
-
   private void run() throws IOException, FlumeException,
       EventDeliveryException {
 
-    LineReader reader = null;
+    EventReader reader = null;
 
     RpcClient rpcClient = RpcClientFactory.getDefaultInstance(hostname, port,
         BATCH_SIZE);
     try {
       if (fileName != null) {
-        reader = new BufferedLineReader(new FileReader(new File(fileName)));
+        reader = new SimpleTextLineEventReader(new FileReader(new File(fileName)));
       } else if (dirName != null) {
-        reader = new SpoolingFileLineReader(new File(dirName), ".COMPLETED",
-            BATCH_SIZE, MAX_LINE_LENGTH);
+        reader = new ReliableSpoolingFileEventReader(
+            new File(dirName), ".COMPLETED",
+            "^$", new File(new File(dirName), ".flumespool"),
+            false, "",
+            "LINE", new Context());
+      } else {
+        reader = new SimpleTextLineEventReader(new InputStreamReader(System.in));
       }
-      else {
-        reader = new BufferedLineReader(new InputStreamReader(System.in));
-      }
-
 
       long lastCheck = System.currentTimeMillis();
       long sentBytes = 0;
 
       int batchSize = rpcClient.getBatchSize();
-      List<String> lines = Lists.newLinkedList();
-      while (!(lines = reader.readLines(batchSize)).isEmpty()) {
-        List<Event> eventBuffer = Lists.newArrayList();
-        for (String line : lines) {
-          Event event = EventBuilder.withBody(line, Charsets.UTF_8);
-          setHeaders(event);
-          eventBuffer.add(event);
+      List<Event> events;
+      while (!(events = reader.readEvents(batchSize)).isEmpty()) {
+        for (Event event : events) {
+          event.setHeaders(headers);
           sentBytes += event.getBody().length;
           sent++;
 
@@ -211,7 +204,10 @@ public class AvroCLIClient {
             lastCheck = now;
           }
         }
-        rpcClient.appendBatch(eventBuffer);
+        rpcClient.appendBatch(events);
+        if (reader instanceof ReliableEventReader) {
+          ((ReliableEventReader) reader).commit();
+        }
       }
       logger.debug("Finished");
     } finally {

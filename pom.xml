@@ -515,8 +515,8 @@ limitations under the License.
           <version>0.7</version>
           <executions>
             <execution>
-              <id>test.rat</id>
-              <phase>test</phase>
+              <id>verify.rat</id>
+              <phase>verify</phase>
               <goals>
                 <goal>check</goal>
               </goals>
@@ -532,6 +532,7 @@ limitations under the License.
                   <exclude>**/*.diff</exclude>
                   <exclude>**/*.patch</exclude>
                   <exclude>**/*.avsc</exclude>
+                  <exclude>**/*.avro</exclude>
                   <exclude>**/docs/**</exclude>
                 </excludes>
               </configuration>

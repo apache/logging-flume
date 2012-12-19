@@ -19,6 +19,11 @@
 
 package org.apache.flume.client.avro;
 
+import org.apache.flume.Event;
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
+
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 
@@ -26,7 +31,9 @@ import java.util.List;
  * A line reader produces a stream of lines for the {@link AvroCLIClient} to
  * ingest into Flume. The stream may be finite or infinite.
  */
-public interface LineReader {
+@InterfaceAudience.Private
+@InterfaceStability.Evolving
+public interface EventReader extends Closeable {
 
   /**
    * Get the next line associated with the input stream. If this returns
@@ -34,7 +41,7 @@ public interface LineReader {
    * Note that this is allowed to block for indefinite amounts of time waiting
    * to generate a new line.
    */
-  public String readLine() throws IOException;
+  public Event readEvent() throws IOException;
 
   /**
    * Get up to {@code n} lines associated with the input stream. If this returns
@@ -42,10 +49,10 @@ public interface LineReader {
    * finished. Note that this is allowed to block for indefinite amounts of
    * time waiting to generate a new line.
    */
-  public List<String> readLines(int n) throws IOException;
+  public List<Event> readEvents(int n) throws IOException;
 
   /**
    * Clean-up any state associated with this reader.
    */
-  public void close() throws IOException ;
+  public void close() throws IOException;
 }

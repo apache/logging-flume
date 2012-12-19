@@ -93,10 +93,11 @@ public class TestSpoolDirectorySource {
     Transaction txn = channel.getTransaction();
     txn.begin();
     Event e = channel.take();
-    Assert.assertNotNull(e.getHeaders());
+    Assert.assertNotNull("Event must not be null", e);
+    Assert.assertNotNull("Event headers must not be null", e.getHeaders());
     Assert.assertNotNull(e.getHeaders().get("fileHeaderKeyTest"));
-    Assert.assertEquals(e.getHeaders().get("fileHeaderKeyTest"),
-        f1.getAbsolutePath());
+    Assert.assertEquals(f1.getAbsolutePath(),
+        e.getHeaders().get("fileHeaderKeyTest"));
     txn.commit();
     txn.close();
   }
