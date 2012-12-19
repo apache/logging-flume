@@ -333,6 +333,45 @@ else
   FLUME_CLASSPATH="${FLUME_HOME}/lib/*"
 fi
 
+# load plugins.d
+unset plugin_lib plugin_libext plugin_native
+PLUGINS_DIR=${FLUME_HOME}/plugins.d
+if [[ -d ${PLUGINS_DIR} ]]
+then
+  for plugin in ${PLUGINS_DIR}/*
+  do
+    if [[ -d $plugin/lib ]]
+    then
+      plugin_lib="${plugin_lib}${plugin_lib+:}${plugin}/lib/*"
+    fi 
+    if [[ -d $plugin/libext ]]
+    then
+      plugin_libext="${plugin_libext}${plugin_libext+:}${plugin}/libext/*"
+    fi 
+    if [[ -d $plugin/native ]]
+    then
+      plugin_native="${plugin_native}${plugin_native+:}${plugin}/native"
+    fi 
+  done
+fi
+if [[ -n "${plugin_lib}" ]]
+then
+  FLUME_CLASSPATH="${FLUME_CLASSPATH}:${plugin_lib}"
+fi
+if [[ -n "${plugin_libext}" ]]
+then
+  FLUME_CLASSPATH="${FLUME_CLASSPATH}:${plugin_libext}"
+fi
+if [[ -n "${plugin_native}" ]]
+then
+  if [[ -n "${FLUME_JAVA_LIBRARY_PATH}" ]]
+  then
+    FLUME_JAVA_LIBRARY_PATH="${FLUME_JAVA_LIBRARY_PATH}:${plugin_native}"
+  else
+    FLUME_JAVA_LIBRARY_PATH="${plugin_native}"
+  fi
+fi
+
 # find java
 if [ -z "${JAVA_HOME}" ] ; then
   warn "JAVA_HOME is not set!"
