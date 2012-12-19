@@ -78,8 +78,14 @@ public class EncryptionTestUtils {
   public static Map<String, File> configureTestKeyStore(File baseDir,
       File keyStoreFile) throws IOException {
     Map<String, File> result = Maps.newHashMap();
-    Resources.copy(Resources.getResource("test.keystore"),
-        new FileOutputStream(keyStoreFile));
+
+    if (System.getProperty("java.vendor").contains("IBM")) {
+      Resources.copy(Resources.getResource("ibm-test.keystore"),
+          new FileOutputStream(keyStoreFile));
+    } else {
+      Resources.copy(Resources.getResource("sun-test.keystore"),
+          new FileOutputStream(keyStoreFile));
+    }
     /*
     Commands below:
     keytool -genseckey -alias key-0 -keypass keyPassword -keyalg AES \
