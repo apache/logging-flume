@@ -311,6 +311,7 @@ public class TestFileChannelRestart extends TestFileChannelBase {
     File inflight = new File(checkpointDir, name);
     RandomAccessFile writer = new RandomAccessFile(inflight, "rw");
     writer.write(new Random().nextInt());
+    writer.close();
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());

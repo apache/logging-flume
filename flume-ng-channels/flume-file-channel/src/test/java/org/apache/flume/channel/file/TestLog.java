@@ -18,6 +18,7 @@
  */
 package org.apache.flume.channel.file;
 
+import static org.mockito.Mockito.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -184,7 +185,7 @@ public class TestLog {
   }
   public void doTestMinimumRequiredSpaceTooSmallForPut() throws IOException,
     InterruptedException {
-    long minimumRequireSpace = checkpointDir.getUsableSpace() -
+    long minimumRequiredSpace = checkpointDir.getUsableSpace() -
         (10L* 1024L * 1024L);
     log.close();
     log = new Log.Builder().setCheckpointInterval(
@@ -192,12 +193,13 @@ public class TestLog {
             FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE).setQueueSize(
             CAPACITY).setCheckpointDir(checkpointDir).setLogDirs(
                 dataDirs).setChannelName("testlog").
-                setMinimumRequiredSpace(minimumRequireSpace).build();
+                setMinimumRequiredSpace(minimumRequiredSpace)
+                .setUsableSpaceRefreshInterval(1L).build();
     log.replay();
     File filler = new File(checkpointDir, "filler");
     byte[] buffer = new byte[64 * 1024];
     FileOutputStream out = new FileOutputStream(filler);
-    while(checkpointDir.getUsableSpace() > minimumRequireSpace) {
+    while(checkpointDir.getUsableSpace() > minimumRequiredSpace) {
       out.write(buffer);
     }
     out.close();
@@ -436,6 +438,28 @@ public class TestLog {
     Assert.assertEquals(eventIn.getHeaders(), eventOut.getHeaders());
     Assert.assertArrayEquals(eventIn.getBody(), eventOut.getBody());
   }
+  @Test
+  public void testCachedFSUsableSpace() throws Exception {
+    File fs = mock(File.class);
+    when(fs.getUsableSpace()).thenReturn(Long.MAX_VALUE);
+    LogFile.CachedFSUsableSpace cachedFS =
+        new LogFile.CachedFSUsableSpace(fs, 1000L);
+    Assert.assertEquals(cachedFS.getUsableSpace(), Long.MAX_VALUE);
+    cachedFS.decrement(Integer.MAX_VALUE);
+    Assert.assertEquals(cachedFS.getUsableSpace(),
+        Long.MAX_VALUE - Integer.MAX_VALUE);
+    try {
+      cachedFS.decrement(-1);
+      Assert.fail();
+    } catch (IllegalArgumentException expected) {
+
+    }
+    when(fs.getUsableSpace()).thenReturn(Long.MAX_VALUE - 1L);
+    Thread.sleep(1100);
+    Assert.assertEquals(cachedFS.getUsableSpace(),
+        Long.MAX_VALUE - 1L);
+  }
+
   private void takeAndVerify(FlumeEventPointer eventPointerIn,
       FlumeEvent eventIn) throws IOException, InterruptedException {
     FlumeEventQueue queue = log.getFlumeEventQueue();

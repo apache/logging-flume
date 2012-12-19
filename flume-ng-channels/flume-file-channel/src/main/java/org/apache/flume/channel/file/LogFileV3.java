@@ -169,10 +169,12 @@ class LogFileV3 extends LogFile {
     Writer(File file, int logFileID, long maxFileSize,
         @Nullable Key encryptionKey,
         @Nullable String encryptionKeyAlias,
-        @Nullable String encryptionCipherProvider)
+        @Nullable String encryptionCipherProvider,
+        long usableSpaceRefreshInterval)
         throws IOException {
       super(file, logFileID, maxFileSize, CipherProviderFactory.
-          getEncrypter(encryptionCipherProvider, encryptionKey));
+          getEncrypter(encryptionCipherProvider, encryptionKey),
+          usableSpaceRefreshInterval);
       ProtosFactory.LogFileMetaData.Builder metaDataBuilder =
           ProtosFactory.LogFileMetaData.newBuilder();
       if(encryptionKey != null) {

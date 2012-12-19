@@ -93,9 +93,10 @@ class LogFileV2 extends LogFile {
 
   static class Writer extends LogFile.Writer {
 
-    Writer(File file, int logFileID, long maxFileSize)
+    Writer(File file, int logFileID, long maxFileSize,
+        long usableSpaceRefreshInterval)
         throws IOException {
-      super(file, logFileID, maxFileSize, null);
+      super(file, logFileID, maxFileSize, null, usableSpaceRefreshInterval);
       RandomAccessFile writeFileHandle = getFileHandle();
       writeFileHandle.writeInt(getVersion());
       writeFileHandle.writeInt(logFileID);
