@@ -188,7 +188,7 @@ several named agents; when a given Flume process is launched a flag is passed te
 
 Given this configuration file, we can start Flume as follows::
 
-  $ bin/flume-ng agent --conf-file example.conf --name a1 -Dflume.root.logger=INFO,console
+  $ bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger=INFO,console
 
 Note that in a full deployment we would typically include one more option: ``--conf=<conf-dir>``.
 The ``<conf-dir>`` directory would include a shell script *flume-env.sh* and potentially a log4j properties file.
