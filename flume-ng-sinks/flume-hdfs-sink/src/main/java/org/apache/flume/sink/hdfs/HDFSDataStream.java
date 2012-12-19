@@ -23,7 +23,6 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.serialization.EventSerializer;
 import org.apache.flume.serialization.EventSerializerFactory;
-import org.apache.flume.sink.FlumeFormatter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -46,7 +45,7 @@ public class HDFSDataStream implements HDFSWriter {
   }
 
   @Override
-  public void open(String filePath, FlumeFormatter fmt) throws IOException {
+  public void open(String filePath) throws IOException {
     Configuration conf = new Configuration();
     Path dstPath = new Path(filePath);
     FileSystem hdfs = dstPath.getFileSystem(conf);
@@ -78,12 +77,12 @@ public class HDFSDataStream implements HDFSWriter {
 
   @Override
   public void open(String filePath, CompressionCodec codec,
-      CompressionType cType, FlumeFormatter fmt) throws IOException {
-    open(filePath, fmt);
+                   CompressionType cType) throws IOException {
+    open(filePath);
   }
 
   @Override
-  public void append(Event e, FlumeFormatter fmt) throws IOException {
+  public void append(Event e) throws IOException {
     // shun flumeformatter...
     serializer.write(e);
   }

@@ -31,7 +31,6 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.SystemClock;
 import org.apache.flume.instrumentation.SinkCounter;
-import org.apache.flume.sink.FlumeFormatter;
 import org.apache.flume.sink.hdfs.HDFSEventSink.WriterCallback;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -62,7 +61,6 @@ class BucketWriter {
   private static final Integer staticLock = new Integer(1);
 
   private final HDFSWriter writer;
-  private final FlumeFormatter formatter;
   private final long rollInterval;
   private final long rollSize;
   private final long rollCount;
@@ -104,7 +102,7 @@ class BucketWriter {
   BucketWriter(long rollInterval, long rollSize, long rollCount, long batchSize,
       Context context, String filePath, String fileName, String inUsePrefix,
       String inUseSuffix, String fileSuffix, CompressionCodec codeC,
-      CompressionType compType, HDFSWriter writer, FlumeFormatter formatter,
+      CompressionType compType, HDFSWriter writer,
       ScheduledExecutorService timedRollerPool, UserGroupInformation user,
       SinkCounter sinkCounter, int idleTimeout, WriterCallback onIdleCallback,
       String onIdleCallbackPath) {
@@ -120,7 +118,6 @@ class BucketWriter {
     this.codeC = codeC;
     this.compType = compType;
     this.writer = writer;
-    this.formatter = formatter;
     this.timedRollerPool = timedRollerPool;
     this.user = user;
     this.sinkCounter = sinkCounter;
@@ -191,7 +188,7 @@ class BucketWriter {
    * @throws InterruptedException
    */
   private void doOpen() throws IOException, InterruptedException {
-    if ((filePath == null) || (writer == null) || (formatter == null)) {
+    if ((filePath == null) || (writer == null)) {
       throw new IOException("Invalid file settings");
     }
 
@@ -229,11 +226,13 @@ class BucketWriter {
           // Need to get reference to FS using above config before underlying
           // writer does in order to avoid shutdown hook & IllegalStateExceptions
           fileSystem = new Path(bucketPath).getFileSystem(config);
-          writer.open(bucketPath, formatter);
+          LOG.info("Creating " + bucketPath);
+          writer.open(bucketPath);
         } else {
           // need to get reference to FS before writer does to avoid shutdown hook
           fileSystem = new Path(bucketPath).getFileSystem(config);
-          writer.open(bucketPath, codeC, compType, formatter);
+          LOG.info("Creating " + bucketPath);
+          writer.open(bucketPath, codeC, compType);
         }
       } catch (Exception ex) {
         sinkCounter.incrementConnectionFailedCount();
@@ -403,7 +402,7 @@ class BucketWriter {
     // write the event
     try {
       sinkCounter.incrementEventDrainAttemptCount();
-      writer.append(event, formatter); // could block
+      writer.append(event); // could block
     } catch (IOException e) {
       LOG.warn("Caught IOException writing to HDFSWriter ({}). Closing file (" +
           bucketPath + ") and rethrowing exception.",

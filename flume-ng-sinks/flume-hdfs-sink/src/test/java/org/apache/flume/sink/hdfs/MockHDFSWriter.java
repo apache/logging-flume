@@ -21,7 +21,6 @@ package org.apache.flume.sink.hdfs;
 import java.io.IOException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
-import org.apache.flume.sink.FlumeFormatter;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.compress.CompressionCodec;
 
@@ -64,17 +63,17 @@ public class MockHDFSWriter implements HDFSWriter {
     // no-op
   }
 
-  public void open(String filePath, FlumeFormatter fmt) throws IOException {
+  public void open(String filePath) throws IOException {
     this.filePath = filePath;
     filesOpened++;
   }
 
-  public void open(String filePath, CompressionCodec codec, CompressionType cType, FlumeFormatter fmt) throws IOException {
+  public void open(String filePath, CompressionCodec codec, CompressionType cType) throws IOException {
     this.filePath = filePath;
     filesOpened++;
   }
 
-  public void append(Event e, FlumeFormatter fmt) throws IOException {
+  public void append(Event e) throws IOException {
     eventsWritten++;
     bytesWritten += e.getBody().length;
   }

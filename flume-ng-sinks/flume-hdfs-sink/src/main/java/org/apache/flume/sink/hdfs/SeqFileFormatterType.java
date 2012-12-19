@@ -16,30 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.flume.sink.hdfs;
 
-import java.io.IOException;
-import org.apache.flume.Event;
+public enum SeqFileFormatterType {
+  Writable(HDFSWritableFormatter.Builder.class),
+  Text(HDFSTextFormatter.Builder.class),
+  Other(null);
 
-public class HDFSBadDataStream extends HDFSDataStream {
-  public class HDFSBadSeqWriter extends HDFSSequenceFile {
-    @Override
-    public void append(Event e) throws IOException {
+  private final Class<? extends SeqFileFormatter.Builder> builderClass;
 
-      if (e.getHeaders().containsKey("fault")) {
-        throw new IOException("Injected fault");
-      } else if (e.getHeaders().containsKey("slow")) {
-        long waitTime = Long.parseLong(e.getHeaders().get("slow"));
-        try {
-          Thread.sleep(waitTime);
-        } catch (InterruptedException eT) {
-          throw new IOException("append interrupted", eT);
-        }
-      }
-      super.append(e);
-    }
+  SeqFileFormatterType(Class<? extends SeqFileFormatter.Builder> builderClass) {
+    this.builderClass = builderClass;
+  }
 
+  public Class<? extends SeqFileFormatter.Builder> getBuilderClass() {
+    return builderClass;
   }
 
 }
+

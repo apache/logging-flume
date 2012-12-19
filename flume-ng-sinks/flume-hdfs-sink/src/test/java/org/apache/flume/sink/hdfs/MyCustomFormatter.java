@@ -19,19 +19,14 @@
 
 package org.apache.flume.sink.hdfs;
 
-import java.util.Collections;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
-import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 
-public class HDFSTextFormatter implements SeqFileFormatter {
+import java.util.Arrays;
 
-  private Text makeText(Event e) {
-    Text textObject = new Text();
-    textObject.set(e.getBody(), 0, e.getBody().length);
-    return textObject;
-  }
+public class MyCustomFormatter implements SeqFileFormatter {
 
   @Override
   public Class<LongWritable> getKeyClass() {
@@ -39,39 +34,23 @@ public class HDFSTextFormatter implements SeqFileFormatter {
   }
 
   @Override
-  public Class<Text> getValueClass() {
-    return Text.class;
+  public Class<BytesWritable> getValueClass() {
+    return BytesWritable.class;
   }
 
   @Override
   public Iterable<Record> format(Event e) {
-    Object key = getKey(e);
-    Object value = getValue(e);
-    return Collections.singletonList(new Record(key, value));
-  }
-
-  private Object getKey(Event e) {
-    // Write the data to HDFS
-    String timestamp = e.getHeaders().get("timestamp");
-    long eventStamp;
-
-    if (timestamp == null) {
-      eventStamp = System.currentTimeMillis();
-    } else {
-      eventStamp = Long.valueOf(timestamp);
-    }
-    return new LongWritable(eventStamp);
-  }
-
-  private Object getValue(Event e) {
-    return makeText(e);
+    return Arrays.asList(
+        new Record(new LongWritable(1234L), new BytesWritable(new byte[10])),
+        new Record(new LongWritable(4567L), new BytesWritable(new byte[20]))
+    );
   }
 
   public static class Builder implements SeqFileFormatter.Builder {
 
     @Override
     public SeqFileFormatter build(Context context) {
-      return new HDFSTextFormatter();
+      return new MyCustomFormatter();
     }
 
   }

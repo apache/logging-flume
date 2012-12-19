@@ -23,7 +23,6 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.serialization.EventSerializer;
 import org.apache.flume.serialization.EventSerializerFactory;
-import org.apache.flume.sink.FlumeFormatter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -56,15 +55,15 @@ public class HDFSCompressedDataStream implements HDFSWriter {
   }
 
   @Override
-  public void open(String filePath, FlumeFormatter fmt) throws IOException {
+  public void open(String filePath) throws IOException {
     DefaultCodec defCodec = new DefaultCodec();
     CompressionType cType = CompressionType.BLOCK;
-    open(filePath, defCodec, cType, fmt);
+    open(filePath, defCodec, cType);
   }
 
   @Override
   public void open(String filePath, CompressionCodec codec,
-      CompressionType cType, FlumeFormatter fmt) throws IOException {
+      CompressionType cType) throws IOException {
     Configuration conf = new Configuration();
     Path dstPath = new Path(filePath);
     FileSystem hdfs = dstPath.getFileSystem(conf);
@@ -95,7 +94,7 @@ public class HDFSCompressedDataStream implements HDFSWriter {
   }
 
   @Override
-  public void append(Event e, FlumeFormatter fmt) throws IOException {
+  public void append(Event e) throws IOException {
     if (isFinished) {
       cmpOut.resetState();
       isFinished = false;

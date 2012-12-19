@@ -18,6 +18,7 @@
  */
 package org.apache.flume.sink.hdfs;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -28,7 +29,6 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.SinkCounter;
-import org.apache.flume.sink.FlumeFormatter;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.compress.CompressionCodec;
@@ -40,7 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
-import java.io.File;
 
 public class TestBucketWriter {
 
@@ -66,10 +65,9 @@ public class TestBucketWriter {
   public void testEventCountingRoller() throws IOException, InterruptedException {
     int maxEvents = 100;
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
-    HDFSTextFormatter formatter = new HDFSTextFormatter();
     BucketWriter bucketWriter = new BucketWriter(0, 0, maxEvents, 0, ctx,
         "/tmp", "file", "", ".tmp", null, null, SequenceFile.CompressionType.NONE,
-        hdfsWriter, formatter, timedRollerPool, null,
+        hdfsWriter, timedRollerPool, null,
         new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()), 0,
         null, null);
 
@@ -91,10 +89,9 @@ public class TestBucketWriter {
   public void testSizeRoller() throws IOException, InterruptedException {
     int maxBytes = 300;
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
-    HDFSTextFormatter formatter = new HDFSTextFormatter();
     BucketWriter bucketWriter = new BucketWriter(0, maxBytes, 0, 0, ctx,
         "/tmp", "file", "", ".tmp", null, null, SequenceFile.CompressionType.NONE,
-        hdfsWriter, formatter, timedRollerPool, null,
+        hdfsWriter, timedRollerPool, null,
         new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
         0, null, null);
 
@@ -118,10 +115,9 @@ public class TestBucketWriter {
     final int NUM_EVENTS = 10;
 
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
-    HDFSTextFormatter formatter = new HDFSTextFormatter();
     BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
         "/tmp", "file", "", ".tmp", null, null, SequenceFile.CompressionType.NONE,
-        hdfsWriter, formatter, timedRollerPool, null,
+        hdfsWriter, timedRollerPool, null,
         new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
         0, null, null);
 
@@ -182,11 +178,11 @@ public class TestBucketWriter {
       }
 
       public void open(String filePath, CompressionCodec codec,
-          CompressionType cType, FlumeFormatter fmt) throws IOException {
+          CompressionType cType) throws IOException {
         open = true;
       }
 
-      public void open(String filePath, FlumeFormatter fmt) throws IOException {
+      public void open(String filePath) throws IOException {
         open = true;
       }
 
@@ -194,7 +190,7 @@ public class TestBucketWriter {
         open = false;
       }
 
-      public void append(Event e, FlumeFormatter fmt) throws IOException {
+      public void append(Event e) throws IOException {
         // we just re-open in append if closed
         open = true;
       }
@@ -207,7 +203,7 @@ public class TestBucketWriter {
 
     BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
         path, name, "", ".tmp", null, null, SequenceFile.CompressionType.NONE, hdfsWriter,
-        formatter, timedRollerPool, null,
+        timedRollerPool, null,
         new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
         0, null, null);
 
@@ -228,10 +224,9 @@ public class TestBucketWriter {
       final String suffix = null;
 
       MockHDFSWriter hdfsWriter = new MockHDFSWriter();
-      HDFSTextFormatter formatter = new HDFSTextFormatter();
       BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
           "/tmp", "file", "", ".tmp", suffix, null, SequenceFile.CompressionType.NONE, hdfsWriter,
-          formatter, timedRollerPool, null,
+          timedRollerPool, null,
           new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
           0, null, null);
 
@@ -256,10 +251,9 @@ public class TestBucketWriter {
         final String suffix = ".avro";
 
         MockHDFSWriter hdfsWriter = new MockHDFSWriter();
-        HDFSTextFormatter formatter = new HDFSTextFormatter();
         BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
             "/tmp", "file", "", ".tmp", suffix, null, SequenceFile.CompressionType.NONE, hdfsWriter,
-            formatter, timedRollerPool, null,
+            timedRollerPool, null,
             new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
             0, null, null);
 
@@ -289,7 +283,7 @@ public class TestBucketWriter {
     HDFSTextFormatter formatter = new HDFSTextFormatter();
     BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
         "/tmp", "file", PREFIX, ".tmp", null, null, SequenceFile.CompressionType.NONE, hdfsWriter,
-        formatter, timedRollerPool, null,
+        timedRollerPool, null,
         new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
         0, null, null);
 
@@ -308,7 +302,7 @@ public class TestBucketWriter {
     HDFSTextFormatter formatter = new HDFSTextFormatter();
     BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
         "/tmp", "file", "", SUFFIX, null, null, SequenceFile.CompressionType.NONE, hdfsWriter,
-        formatter, timedRollerPool, null,
+        timedRollerPool, null,
         new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
         0, null, null);
 
