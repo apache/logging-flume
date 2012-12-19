@@ -46,6 +46,7 @@
         <include>org.apache.flume:flume-ng-legacy-sources</include>
         <include>org.apache.flume:flume-ng-clients</include>
         <include>org.apache.flume:flume-ng-sources</include>
+        <include>org.apache.flume:flume-ng-embedded-agent</include>
       </includes>
 
       <binaries>
@@ -98,6 +99,7 @@
         <exclude>flume-ng-legacy-sources/**</exclude>
         <exclude>flume-ng-clients/**</exclude>
         <exclude>flume-ng-dist/**</exclude>
+        <exclude>flume-ng-embedded-agent/**</exclude>
         <exclude>**/target/**</exclude>
         <exclude>**/.classpath</exclude>
         <exclude>**/.project</exclude>
