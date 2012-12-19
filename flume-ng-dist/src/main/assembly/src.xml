@@ -46,6 +46,7 @@
         <include>org.apache.flume:flume-ng-legacy-sources</include>
         <include>org.apache.flume:flume-ng-clients</include>
         <include>org.apache.flume:flume-ng-sources</include>
+        <include>org.apache.flume:flume-ng-embedded-agent</include>
       </includes>
 
       <sources>
