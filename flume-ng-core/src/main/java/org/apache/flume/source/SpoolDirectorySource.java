@@ -18,23 +18,23 @@
 package org.apache.flume.source;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.flume.Context;
-import org.apache.flume.CounterGroup;
-import org.apache.flume.Event;
-import org.apache.flume.EventDrivenSource;
-import org.apache.flume.client.avro.SpoolingFileLineReader;
+import org.apache.flume.*;
+import org.apache.flume.client.avro.ReliableSpoolingFileEventReader;
 import org.apache.flume.conf.Configurable;
-import org.apache.flume.event.EventBuilder;
+import org.apache.flume.serialization.LineDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
+
+import static org.apache.flume.source
+    .SpoolDirectorySourceConfigurationConstants.*;
 
 public class SpoolDirectorySource extends AbstractSource implements
 Configurable, EventDrivenSource {
@@ -43,7 +43,7 @@ Configurable, EventDrivenSource {
       .getLogger(SpoolDirectorySource.class);
 
   // Delay used when polling for new files
-  private static int POLL_DELAY_MS = 500;
+  private static final int POLL_DELAY_MS = 500;
 
   /* Config options */
   private String completedSuffix;
@@ -51,27 +51,34 @@ Configurable, EventDrivenSource {
   private boolean fileHeader;
   private String fileHeaderKey;
   private int batchSize;
-  private int bufferMaxLines;
-  private int bufferMaxLineLength;
+  private String ignorePattern;
+  private File metaDirectory;
+  private String deserializerType;
+  private Context deserializerContext;
 
-  private ScheduledExecutorService executor;
   private CounterGroup counterGroup;
-  private Runnable runner;
-  SpoolingFileLineReader reader;
+  ReliableSpoolingFileEventReader reader;
 
   @Override
   public void start() {
-    logger.info("SpoolDirectorySource source starting with directory:{}",
+    logger.info("SpoolDirectorySource source starting with directory: {}",
         spoolDirectory);
 
-    executor = Executors.newSingleThreadScheduledExecutor();
+    ScheduledExecutorService executor =
+        Executors.newSingleThreadScheduledExecutor();
     counterGroup = new CounterGroup();
 
     File directory = new File(spoolDirectory);
-    reader = new SpoolingFileLineReader(directory, completedSuffix,
-        bufferMaxLines, bufferMaxLineLength);
-    runner = new SpoolDirectoryRunnable(reader, counterGroup);
+    try {
+    reader = new ReliableSpoolingFileEventReader(directory, completedSuffix,
+        ignorePattern, metaDirectory, fileHeader, fileHeaderKey,
+        deserializerType, deserializerContext);
+    } catch (IOException ioe) {
+      throw new FlumeException("Error instantiating spooling event parser",
+          ioe);
+    }
 
+    Runnable runner = new SpoolDirectoryRunnable(reader, counterGroup);
     executor.scheduleWithFixedDelay(
         runner, 0, POLL_DELAY_MS, TimeUnit.MILLISECONDS);
 
@@ -86,65 +93,70 @@ Configurable, EventDrivenSource {
 
   @Override
   public void configure(Context context) {
-    spoolDirectory = context.getString(
-        SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY);
+    spoolDirectory = context.getString(SPOOL_DIRECTORY);
     Preconditions.checkState(spoolDirectory != null,
         "Configuration must specify a spooling directory");
 
-    completedSuffix = context.getString(
-        SpoolDirectorySourceConfigurationConstants.SPOOLED_FILE_SUFFIX,
-        SpoolDirectorySourceConfigurationConstants.DEFAULT_SPOOLED_FILE_SUFFIX);
-    fileHeader = context.getBoolean(
-        SpoolDirectorySourceConfigurationConstants.FILENAME_HEADER,
-        SpoolDirectorySourceConfigurationConstants.DEFAULT_FILE_HEADER);
-    fileHeaderKey = context.getString(
-        SpoolDirectorySourceConfigurationConstants.FILENAME_HEADER_KEY,
-        SpoolDirectorySourceConfigurationConstants.DEFAULT_FILENAME_HEADER_KEY);
-    batchSize = context.getInteger(
-        SpoolDirectorySourceConfigurationConstants.BATCH_SIZE,
-        SpoolDirectorySourceConfigurationConstants.DEFAULT_BATCH_SIZE);
-    bufferMaxLines = context.getInteger(
-        SpoolDirectorySourceConfigurationConstants.BUFFER_MAX_LINES,
-        SpoolDirectorySourceConfigurationConstants.DEFAULT_BUFFER_MAX_LINES);
-    bufferMaxLineLength = context.getInteger(
-        SpoolDirectorySourceConfigurationConstants.BUFFER_MAX_LINE_LENGTH,
-        SpoolDirectorySourceConfigurationConstants.DEFAULT_BUFFER_MAX_LINE_LENGTH);
-  }
+    completedSuffix = context.getString(SPOOLED_FILE_SUFFIX,
+        DEFAULT_SPOOLED_FILE_SUFFIX);
+    fileHeader = context.getBoolean(FILENAME_HEADER,
+        DEFAULT_FILE_HEADER);
+    fileHeaderKey = context.getString(FILENAME_HEADER_KEY,
+        DEFAULT_FILENAME_HEADER_KEY);
+    batchSize = context.getInteger(BATCH_SIZE,
+        DEFAULT_BATCH_SIZE);
 
-  private Event createEvent(String lineEntry, String filename) {
-    Event out = EventBuilder.withBody(lineEntry.getBytes());
-    if (fileHeader) {
-      out.getHeaders().put(fileHeaderKey, filename);
+    ignorePattern = context.getString(IGNORE_PAT, DFLT_IGNORE_PAT);
+    String metaDirLoc = context.getString(META_DIR, DEFAULT_META_DIR);
+
+    // if absolute path, treat as absolute
+    if (metaDirLoc.charAt(0) == '/') {
+      metaDirectory = new File(metaDirLoc);
+
+    // if relative path, treat as relative to spool directory
+    } else {
+      metaDirectory = new File(spoolDirectory, DEFAULT_META_DIR);
     }
-    return out;
+
+    deserializerType = context.getString(DESERIALIZER, DEFAULT_DESERIALIZER);
+    deserializerContext = new Context(context.getSubProperties(DESERIALIZER +
+        "."));
+
+    // "Hack" to support backwards compatibility with previous generation of
+    // spooling directory source, which did not support deserializers
+    Integer bufferMaxLineLength = context.getInteger(BUFFER_MAX_LINE_LENGTH);
+    if (bufferMaxLineLength != null && deserializerType != null &&
+        deserializerType.equals(DEFAULT_DESERIALIZER)) {
+      deserializerContext.put(LineDeserializer.MAXLINE_KEY,
+          bufferMaxLineLength.toString());
+    }
+
   }
 
   private class SpoolDirectoryRunnable implements Runnable {
-    private SpoolingFileLineReader reader;
+    private ReliableSpoolingFileEventReader reader;
     private CounterGroup counterGroup;
 
-    public SpoolDirectoryRunnable(SpoolingFileLineReader reader,
+    public SpoolDirectoryRunnable(ReliableSpoolingFileEventReader reader,
         CounterGroup counterGroup) {
       this.reader = reader;
       this.counterGroup = counterGroup;
     }
+
     @Override
     public void run() {
       try {
         while (true) {
-          List<String> strings = reader.readLines(batchSize);
-          if (strings.size() == 0) { break; }
-          String file = reader.getLastFileRead();
-          List<Event> events = Lists.newArrayList();
-          for (String s: strings) {
-            counterGroup.incrementAndGet("spooler.lines.read");
-            events.add(createEvent(s, file));
+          List<Event> events = reader.readEvents(batchSize);
+          if (events.isEmpty()) {
+            break;
           }
+          counterGroup.addAndGet("spooler.events.read", (long) events.size());
+
           getChannelProcessor().processEventBatch(events);
           reader.commit();
         }
-      }
-      catch (Throwable t) {
+      } catch (Throwable t) {
         logger.error("Uncaught exception in Runnable", t);
         if (t instanceof Error) {
           throw (Error) t;
