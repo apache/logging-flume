@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import com.google.common.base.Preconditions;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -59,6 +60,7 @@ public class AvroCLIClient {
   private String hostname;
   private int port;
   private String fileName;
+  private String rpcClientPropsFile;
   private String dirName;
   private Map<String, String> headers = new HashMap<String, String>();
   private int sent;
@@ -73,7 +75,7 @@ public class AvroCLIClient {
     } catch (ParseException e) {
       logger.error("Unable to parse command line options - {}", e.getMessage());
     } catch (IOException e) {
-      logger.error("Unable to send data to Flume. Exception follows.",  e);
+      logger.error("Unable to send data to Flume. Exception follows.", e);
     } catch (FlumeException e) {
       logger.error("Unable to open connection to Flume. Exception follows.", e);
     } catch (EventDeliveryException e) {
@@ -120,7 +122,10 @@ public class AvroCLIClient {
   private boolean parseCommandLine(String[] args) throws ParseException {
     Options options = new Options();
 
-    options.addOption("p", "port", true, "port of the avro source")
+    options
+        .addOption("P", "rpcProps", true, "RPC client properties file with " +
+            "server connection params")
+        .addOption("p", "port", true, "port of the avro source")
         .addOption("H", "host", true, "hostname of the avro source")
         .addOption("F", "filename", true, "file to stream to avro source")
         .addOption(null, "dirname", true, "directory to stream to avro source")
@@ -144,19 +149,34 @@ public class AvroCLIClient {
           "--filename and --dirname options cannot be used simultaneously");
     }
 
-    if (!commandLine.hasOption("port")) {
-      throw new ParseException(
-          "You must specify a port to connect to with --port");
+    if (!commandLine.hasOption("port") && !commandLine.hasOption("host") &&
+        !commandLine.hasOption("rpcProps")) {
+      throw new ParseException("Either --rpcProps or both --host and --port " +
+          "must be specified.");
     }
 
-    port = Integer.parseInt(commandLine.getOptionValue("port"));
-
-    if (!commandLine.hasOption("host")) {
-      throw new ParseException(
-          "You must specify a hostname to connect to with --host");
+    if (commandLine.hasOption("rpcProps")) {
+      rpcClientPropsFile = commandLine.getOptionValue("rpcProps");
+      Preconditions.checkNotNull(rpcClientPropsFile, "RPC client properties " +
+          "file must be specified after --rpcProps argument.");
+      Preconditions.checkArgument(new File(rpcClientPropsFile).exists(),
+          "RPC client properties file %s does not exist!", rpcClientPropsFile);
     }
 
-    hostname = commandLine.getOptionValue("host");
+    if (rpcClientPropsFile == null) {
+      if (!commandLine.hasOption("port")) {
+        throw new ParseException(
+            "You must specify a port to connect to with --port");
+      }
+      port = Integer.parseInt(commandLine.getOptionValue("port"));
+
+      if (!commandLine.hasOption("host")) {
+        throw new ParseException(
+            "You must specify a hostname to connect to with --host");
+      }
+      hostname = commandLine.getOptionValue("host");
+    }
+
     fileName = commandLine.getOptionValue("filename");
     dirName = commandLine.getOptionValue("dirname");
 
@@ -172,8 +192,14 @@ public class AvroCLIClient {
 
     EventReader reader = null;
 
-    RpcClient rpcClient = RpcClientFactory.getDefaultInstance(hostname, port,
-        BATCH_SIZE);
+    RpcClient rpcClient;
+    if (rpcClientPropsFile != null) {
+      rpcClient = RpcClientFactory.getInstance(new File(rpcClientPropsFile));
+    } else {
+      rpcClient = RpcClientFactory.getDefaultInstance(hostname, port,
+          BATCH_SIZE);
+    }
+
     try {
       if (fileName != null) {
         reader = new SimpleTextLineEventReader(new FileReader(new File(fileName)));
