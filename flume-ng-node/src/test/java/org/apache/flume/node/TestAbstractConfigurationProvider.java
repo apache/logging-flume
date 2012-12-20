@@ -23,12 +23,17 @@ import junit.framework.Assert;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
+import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
 import org.apache.flume.annotations.Disposable;
 import org.apache.flume.annotations.Recyclable;
 import org.apache.flume.channel.AbstractChannel;
+import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.FlumeConfiguration;
+import org.apache.flume.sink.AbstractSink;
+import org.apache.flume.source.AbstractSource;
 import org.junit.Test;
 
 import com.google.common.collect.Maps;
@@ -115,19 +120,83 @@ public class TestAbstractConfigurationProvider {
     Assert.assertNotSame(channel1, channel3);
   }
 
-
-  private Map<String, String> getPropertiesForChannel(String agentName, String channelType) {
+  @Test
+  public void testSourceThrowsExceptionDuringConfiguration() throws Exception {
+    String agentName = "agent1";
+    String sourceType = UnconfigurableSource.class.getName();
+    String channelType = "memory";
+    String sinkType = "null";
+    Map<String, String> properties = getProperties(agentName, sourceType,
+        channelType, sinkType);
+    MemoryConfigurationProvider provider =
+        new MemoryConfigurationProvider(agentName, properties);
+    MaterializedConfiguration config = provider.getConfiguration();
+    Assert.assertTrue(config.getSourceRunners().size() == 0);
+    Assert.assertTrue(config.getChannels().size() == 1);
+    Assert.assertTrue(config.getSinkRunners().size() == 1);
+  }
+  @Test
+  public void testChannelThrowsExceptionDuringConfiguration() throws Exception {
+    String agentName = "agent1";
+    String sourceType = "seq";
+    String channelType = UnconfigurableChannel.class.getName();
+    String sinkType = "null";
+    Map<String, String> properties = getProperties(agentName, sourceType,
+        channelType, sinkType);
+    MemoryConfigurationProvider provider =
+        new MemoryConfigurationProvider(agentName, properties);
+    MaterializedConfiguration config = provider.getConfiguration();
+    Assert.assertTrue(config.getSourceRunners().size() == 0);
+    Assert.assertTrue(config.getChannels().size() == 0);
+    Assert.assertTrue(config.getSinkRunners().size() == 0);
+  }
+  @Test
+  public void testSinkThrowsExceptionDuringConfiguration() throws Exception {
+    String agentName = "agent1";
+    String sourceType = "seq";
+    String channelType = "memory";
+    String sinkType = UnconfigurableSink.class.getName();
+    Map<String, String> properties = getProperties(agentName, sourceType,
+        channelType, sinkType);
+    MemoryConfigurationProvider provider =
+        new MemoryConfigurationProvider(agentName, properties);
+    MaterializedConfiguration config = provider.getConfiguration();
+    Assert.assertTrue(config.getSourceRunners().size() == 1);
+    Assert.assertTrue(config.getChannels().size() == 1);
+    Assert.assertTrue(config.getSinkRunners().size() == 0);
+  }
+  @Test
+  public void testSourceAndSinkThrowExceptionDuringConfiguration()
+      throws Exception {
+    String agentName = "agent1";
+    String sourceType = UnconfigurableSource.class.getName();
+    String channelType = "memory";
+    String sinkType = UnconfigurableSink.class.getName();
+    Map<String, String> properties = getProperties(agentName, sourceType,
+        channelType, sinkType);
+    MemoryConfigurationProvider provider =
+        new MemoryConfigurationProvider(agentName, properties);
+    MaterializedConfiguration config = provider.getConfiguration();
+    Assert.assertTrue(config.getSourceRunners().size() == 0);
+    Assert.assertTrue(config.getChannels().size() == 0);
+    Assert.assertTrue(config.getSinkRunners().size() == 0);
+  }
+  private Map<String, String> getProperties(String agentName,
+      String sourceType, String channelType, String sinkType) {
     Map<String, String> properties = Maps.newHashMap();
     properties.put(agentName + ".sources", "source1");
     properties.put(agentName + ".channels", "channel1");
     properties.put(agentName + ".sinks", "sink1");
-    properties.put(agentName + ".sources.source1.type", "seq");
+    properties.put(agentName + ".sources.source1.type", sourceType);
     properties.put(agentName + ".sources.source1.channels", "channel1");
     properties.put(agentName + ".channels.channel1.type", channelType);
     properties.put(agentName + ".channels.channel1.capacity", "100");
-    properties.put(agentName + ".sinks.sink1.type", "null");
+    properties.put(agentName + ".sinks.sink1.type", sinkType);
     properties.put(agentName + ".sinks.sink1.channel", "channel1");
     return properties;
+  }
+  private Map<String, String> getPropertiesForChannel(String agentName, String channelType) {
+    return getProperties(agentName, "seq", channelType, "null");
   }
 
   public static class MemoryConfigurationProvider extends AbstractConfigurationProvider {
@@ -187,6 +256,42 @@ public class TestAbstractConfigurationProvider {
      }
     @Override
     public Transaction getTransaction() {
+      throw new UnsupportedOperationException();
+    }
+  }
+  public static class UnconfigurableChannel extends AbstractChannel {
+    @Override
+    public void configure(Context context) {
+      throw new RuntimeException("expected");
+    }
+    @Override
+    public void put(Event event) throws ChannelException {
+      throw new UnsupportedOperationException();
+    }
+    @Override
+    public Event take() throws ChannelException {
+      throw new UnsupportedOperationException();
+     }
+    @Override
+    public Transaction getTransaction() {
+      throw new UnsupportedOperationException();
+    }
+  }
+  public static class UnconfigurableSource extends AbstractSource
+  implements Configurable {
+    @Override
+    public void configure(Context context) {
+      throw new RuntimeException("expected");
+    }
+  }
+  public static class UnconfigurableSink extends AbstractSink
+  implements Configurable {
+    @Override
+    public void configure(Context context) {
+      throw new RuntimeException("expected");
+    }
+    @Override
+    public Status process() throws EventDeliveryException {
       throw new UnsupportedOperationException();
     }
   }
