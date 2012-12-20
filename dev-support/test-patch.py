@@ -295,6 +295,6 @@ mvn_install(result, output_dir)
 if run_tests:
   mvn_test(result, output_dir)
 else:
-  result.info.append("patch applied and built but tests did not execute")
+  result.info("patch applied and built but tests did not execute")
 
 result.exit_handler()
