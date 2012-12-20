@@ -17,10 +17,10 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-import sys, os, re, urllib2, base64, subprocess, tempfile
+import sys, os, re, urllib2, base64, subprocess, tempfile, shutil
 from optparse import OptionParser
 
-tempfile = tempfile.NamedTemporaryFile(delete=False)
+tmp_dir = None
 BASE_JIRA_URL = 'https://issues.apache.org/jira'
 
 def execute(cmd, log=True):
@@ -61,11 +61,11 @@ def jira_post_comment(result, defect, branch, username, password):
     body += [ "{color:green}Overall:{color} +1 all checks pass" ]
   body += [ "" ]
   for error in result._error:
-    body += [ "{color:red}ERROR:{color} %s" % (error) ]
+    body += [ "{color:red}ERROR:{color} %s" % (error.replace("\n", "\\n")) ]
   for info in result._info:
-    body += [ "INFO: %s" % (info) ]
+    body += [ "INFO: %s" % (info.replace("\n", "\\n")) ]
   for success in result._success:
-    body += [ "{color:green}SUCCESS:{color} %s" % (success) ]
+    body += [ "{color:green}SUCCESS:{color} %s" % (success.replace("\n", "\\n")) ]
   if "BUILD_URL" in os.environ:
     body += [ "" ]
     body += [ "Console output: %sconsole" % (os.environ['BUILD_URL']) ]
@@ -117,10 +117,15 @@ def git_checkout(result, branch):
   if execute("git merge --ff-only origin/trunk"):
     result.fatal("git merge failed")
 
-def git_apply(result, patch):
-  rc = execute("git apply %s" % (patch))
-  if rc != 0:
-    result.fatal("failed to apply patch (exit code %d)" % (rc))
+def git_apply(result, cmd, patch_file, strip, output_dir):
+  output_file = "%s/apply.out" % (output_dir)
+  rc = execute("%s -p%s < %s 1>%s 2>&1" % (cmd, strip, patch_file, output_file))
+  with open(output_file) as fh:
+    output = fh.read()
+  if rc == 0:
+    print output
+  else:
+    result.fatal("failed to apply patch (exit code %d):\n%s\n" % (rc, output))
 
 def mvn_clean(result, output_dir):
   if output_dir:
@@ -186,7 +191,11 @@ class Result(object):
     self.exit()
   def exit(self):
     git_cleanup()
-    os.remove(tempfile.name)
+    if self._fatal or self._error:
+      if tmp_dir:
+        print "INFO: output is located %s" % (tmp_dir)
+    elif tmp_dir:
+      shutil.rmtree(tmp_dir)
     sys.exit(0)
 
 usage = "usage: %prog [options]"
@@ -207,6 +216,10 @@ parser.add_option("--post-results", dest="post_results",
                   help="Post results to JIRA (only works in defect mode)", action="store_true")
 parser.add_option("--password", dest="password",
                   help="JIRA Password", metavar="PASSWORD")
+parser.add_option("--patch-command", dest="patch_cmd", default="git apply",
+                  help="Patch command such as `git apply' or `patch'", metavar="COMMAND")
+parser.add_option("-p", "--strip", dest="strip", default="1",
+                  help="Remove <n> leading slashes from diff paths", metavar="N")
 
 (options, args) = parser.parse_args()
 if not (options.defect or options.filename):
@@ -232,6 +245,8 @@ username = options.username
 password = options.password
 run_tests = options.run_tests
 post_results = options.post_results
+strip = options.strip
+patch_cmd = options.patch_cmd
 result = Result()
 
 def log_and_exit():
@@ -253,11 +268,14 @@ if post_results:
     result.exit()
   result.exit_handler = post_jira_comment_and_exit
 
-if output_dir and output_dir.endswith("/"):
+if not output_dir:
+  tmp_dir = tempfile.mkdtemp()
+  output_dir = tmp_dir
+
+if output_dir.endswith("/"):
   output_dir = output_dir[:-1]
 
-patch = tempfile.name
-if options.defect:
+if defect:
   jira_json = jira_get_defect(result, defect, username, password)
   if '"Patch Available"' not in jira_json:
     print "ERROR: Defect %s not in patch available state" % (defect)
@@ -268,16 +286,17 @@ if options.defect:
     sys.exit(1)
   result.attachment = attachments.pop()
   patch_contents = jira_request(result, result.attachment, username, password, None, {}).read()
-  tempfile.write(patch_contents)
-  tempfile.close()
+  patch_file = "%s/%s.patch" % (output_dir, defect)
+  with open(patch_file, 'a') as fh:
+    fh.write(patch_contents)
 elif options.filename:
-  patch = options.filename
+  patch_file = options.filename
 else:
   raise Exception("Not reachable")
 
 mvn_clean(result, output_dir)
 git_checkout(result, branch)
-git_apply(result, patch)
+git_apply(result, patch_cmd, patch_file, strip, output_dir)
 mvn_install(result, output_dir)
 if run_tests:
   mvn_test(result, output_dir)
