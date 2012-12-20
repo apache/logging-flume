@@ -86,16 +86,16 @@ def jira_post_comment(result, defect, branch, username, password):
     sys.exit(1)
 
 # hack (from hadoop) but REST api doesn't list attachments?
-def jira_get_attachments(result, defect, username, password):
+def jira_get_attachment(result, defect, username, password):
   html = jira_get_defect_html(result, defect, username, password)
   pattern = "(/secure/attachment/[0-9]+/%s[0-9\-]*\.(patch|txt|patch\.txt))" % (re.escape(defect))
-  matcher = re.findall(pattern, html, re.IGNORECASE)
-  attachments = []
-  for match in matcher:
-    attachment = "%s%s" % (BASE_JIRA_URL, match[0])
-    if attachment not in attachments:
-      attachments += [attachment]
-  return attachments
+  matches = []
+  for match in re.findall(pattern, html, re.IGNORECASE):
+    matches += [ match[0] ]
+  if matches:
+    matches.sort()
+    return  "%s%s" % (BASE_JIRA_URL, matches.pop())
+  return None
 
 def git_cleanup():
   rc = execute("git clean -d -f", False)
@@ -272,11 +272,11 @@ if defect:
   if '"Patch Available"' not in jira_json:
     print "ERROR: Defect %s not in patch available state" % (defect)
     sys.exit(1)
-  attachments = jira_get_attachments(result, defect, username, password)
-  if not attachments:
+  attachment = jira_get_attachment(result, defect, username, password)
+  if not attachment:
     print "ERROR: No attachments found for %s" % (defect)
     sys.exit(1)
-  result.attachment = attachments.pop()
+  result.attachment = attachment
   patch_contents = jira_request(result, result.attachment, username, password, None, {}).read()
   patch_file = "%s/%s.patch" % (output_dir, defect)
   with open(patch_file, 'a') as fh:
