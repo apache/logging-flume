@@ -90,7 +90,6 @@ def git_cleanup():
 def git_checkout(result, branch):
   if execute("git checkout %s" % (branch)) != 0:
     result.fatal("git checkout %s failed" % branch)
-  execute("git clean -d -n")
   if execute("git clean -d -f") != 0:
     result.fatal("git clean failed")
   if execute("git reset --hard HEAD") != 0:
