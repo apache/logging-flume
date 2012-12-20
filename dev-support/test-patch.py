@@ -49,8 +49,8 @@ def jira_post_comment(result, defect, branch, username, password):
   for success in result._success:
     body += [ "{color:green}SUCCESS:{color} %s" % (success) ]
   if "BUILD_URL" in os.environ:
-    body += [ "Console output: %s/console" % (os.environ['BUILD_URL']) ]
     body += [ "" ]
+    body += [ "Console output: %sconsole" % (os.environ['BUILD_URL']) ]
   body += [ "" ]
   body += [ "This message is automatically generated." ]
   body = "{\"body\": \"%s\"}" % ("\\n".join(body))
@@ -90,6 +90,7 @@ def git_cleanup():
 def git_checkout(result, branch):
   if execute("git checkout %s" % (branch)) != 0:
     result.fatal("git checkout %s failed" % branch)
+  execute("git clean -d -n")
   if execute("git clean -d -f") != 0:
     result.fatal("git clean failed")
   if execute("git reset --hard HEAD") != 0:
