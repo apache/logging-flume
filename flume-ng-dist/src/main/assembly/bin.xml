@@ -43,9 +43,9 @@
         <include>org.apache.flume:flume-ng-dist</include>
         <include>org.apache.flume:flume-ng-channels</include>
         <include>org.apache.flume:flume-ng-sinks</include>
+        <include>org.apache.flume:flume-ng-sources</include>
         <include>org.apache.flume:flume-ng-legacy-sources</include>
         <include>org.apache.flume:flume-ng-clients</include>
-        <include>org.apache.flume:flume-ng-sources</include>
         <include>org.apache.flume:flume-ng-embedded-agent</include>
       </includes>
 
@@ -94,11 +94,12 @@
         <exclude>flume-ng-sdk/**</exclude>
         <exclude>flume-ng-core/**</exclude>
         <exclude>flume-ng-node/**</exclude>
+        <exclude>flume-ng-dist/**</exclude>
         <exclude>flume-ng-channels/**</exclude>
         <exclude>flume-ng-sinks/**</exclude>
+        <exclude>flume-ng-sources/**</exclude>
         <exclude>flume-ng-legacy-sources/**</exclude>
         <exclude>flume-ng-clients/**</exclude>
-        <exclude>flume-ng-dist/**</exclude>
         <exclude>flume-ng-embedded-agent/**</exclude>
         <exclude>**/target/**</exclude>
         <exclude>**/.classpath</exclude>
