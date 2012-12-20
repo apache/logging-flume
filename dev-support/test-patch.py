@@ -46,7 +46,7 @@ def jira_get_defect(result, defect, username, password):
 
 def jira_post_comment(result, defect, branch, username, password):
   url = "%s/rest/api/2/issue/%s/comment" % (BASE_JIRA_URL, defect)
-  body = [ "Here are the results of testing the latest attachement " ]
+  body = [ "Here are the results of testing the latest attachment" ]
   body += [ "%s against %s." % (result.attachment, branch) ]
   body += [ "" ]
   if result._fatal:
@@ -85,7 +85,7 @@ def jira_post_comment(result, defect, branch, username, password):
     print "FATAL: %s" % (msg)
     sys.exit(1)
 
-# hack (from hadoop) but REST api doesn't list attachements?
+# hack (from hadoop) but REST api doesn't list attachments?
 def jira_get_attachments(result, defect, username, password):
   html = jira_get_defect_html(result, defect, username, password)
   pattern = "(/secure/attachment/[0-9]+/%s[0-9\-]*\.(patch|txt|patch\.txt))" % (re.escape(defect))
@@ -264,7 +264,7 @@ if options.defect:
     sys.exit(1)
   attachments = jira_get_attachments(result, defect, username, password)
   if not attachments:
-    print "ERROR: No attachements found for %s" % (defect)
+    print "ERROR: No attachments found for %s" % (defect)
     sys.exit(1)
   result.attachment = attachments.pop()
   patch_contents = jira_request(result, result.attachment, username, password, None, {}).read()
@@ -285,10 +285,3 @@ else:
   result.info.append("patch applied and built but tests did not execute")
 
 result.exit_handler()
-
-#import readline # optional, will allow Up/Down/History in the console
-#import code
-#vars = globals().copy()
-#vars.update(locals())
-#shell = code.InteractiveConsole(vars)
-#shell.interact()
