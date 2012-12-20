@@ -123,7 +123,8 @@ def git_apply(result, cmd, patch_file, strip, output_dir):
   with open(output_file) as fh:
     output = fh.read()
   if rc == 0:
-    print output
+    if output:
+      print output
   else:
     result.fatal("failed to apply patch (exit code %d):\n%s\n" % (rc, output))
 
