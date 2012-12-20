@@ -48,7 +48,7 @@ def jira_post_comment(result, defect, branch, username, password):
     body += [ "INFO: %s" % (info) ]
   for success in result._success:
     body += [ "{color:green}SUCCESS:{color} %s" % (success) ]
-  if "BUILD_URL" in os.enivron:
+  if "BUILD_URL" in os.environ:
     body += [ "Console output: %s/console" % (os.environ['BUILD_URL']) ]
     body += [ "" ]
   body += [ "" ]
