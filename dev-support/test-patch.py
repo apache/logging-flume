@@ -128,18 +128,12 @@ def git_apply(result, cmd, patch_file, strip, output_dir):
     result.fatal("failed to apply patch (exit code %d):\n%s\n" % (rc, output))
 
 def mvn_clean(result, output_dir):
-  if output_dir:
-    rc = execute("mvn clean 1>%s/clean.out 2>&1" % output_dir)
-  else:
-    rc = execute("mvn clean")
+  rc = execute("mvn clean 1>%s/clean.out 2>&1" % output_dir)
   if rc != 0:
-    result.fatal("failed to clean project (exit code %d" % (rc))
+    result.fatal("failed to clean project (exit code %d)" % (rc))
 
 def mvn_install(result, output_dir):
-  if output_dir:
-    rc = execute("mvn install -DskipTests 1>%s/install.out 2>&1" % output_dir)
-  else:
-    rc = execute("mvn install -DskipTests")
+  rc = execute("mvn install -DskipTests 1>%s/install.out 2>&1" % output_dir)
   if rc != 0:
     result.fatal("failed to build with patch (exit code %d)" % (rc))
 
@@ -149,10 +143,7 @@ def find_all_files(top):
             yield os.path.join(root, f)
 
 def mvn_test(result, output_dir):
-  if output_dir:
-    rc = execute("mvn test 1>%s/test.out 2>&1" % output_dir)
-  else:
-    rc = execute("mvn test")
+  rc = execute("mvn test 1>%s/test.out 2>&1" % output_dir)
   if rc == 0:
     result.success("all tests passed")
   else:
