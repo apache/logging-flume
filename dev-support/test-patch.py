@@ -49,7 +49,7 @@ def jira_post_comment(result, defect, branch, username, password):
   for success in result._success:
     body += [ "{color:green}SUCCESS:{color} %s" % (success) ]
   if "BUILD_URL" in os.enivron:
-    body += [ "Console output: %s/console" % (os.environ['BUILD_URL'] ]
+    body += [ "Console output: %s/console" % (os.environ['BUILD_URL']) ]
     body += [ "" ]
   body += [ "" ]
   body += [ "This message is automatically generated." ]
