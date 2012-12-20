@@ -120,8 +120,10 @@ def git_checkout(result, branch):
 def git_apply(result, cmd, patch_file, strip, output_dir):
   output_file = "%s/apply.txt" % (output_dir)
   rc = execute("%s -p%s < %s 1>%s 2>&1" % (cmd, strip, patch_file, output_file))
-  with open(output_file) as fh:
-    output = fh.read()
+  output = ""
+  if os.path.exists(output_file):
+    with open(output_file) as fh:
+      output = fh.read()
   if rc == 0:
     if output:
       print output
