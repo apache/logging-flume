@@ -25,6 +25,7 @@ import org.apache.flume.annotations.InterfaceStability;
 @InterfaceStability.Unstable
 public enum EventSerializerType {
   TEXT(BodyTextEventSerializer.Builder.class),
+  HEADER_AND_TEXT(HeaderAndBodyTextEventSerializer.Builder.class),
   AVRO_EVENT(FlumeEventAvroEventSerializer.Builder.class),
   OTHER(null);
 
