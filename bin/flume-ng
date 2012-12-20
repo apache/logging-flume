@@ -190,12 +190,15 @@ agent options:
   --help,-h             display help text
 
 avro-client options:
-  --dirname <dir>       directory to stream to avro source
-  --host,-H <host>      hostname to which events will be sent (required)
-  --port,-p <port>      port of the avro source (required)
-  --filename,-F <file>  text file to stream to avro source [default: std input]
-  --headerFile,-R <file> headerFile containing headers as key/value pairs on each new line
-  --help,-h             display help text
+  --rpcProps,-P <file>   RPC client properties file with server connection params
+  --host,-H <host>       hostname to which events will be sent
+  --port,-p <port>       port of the avro source
+  --dirname <dir>        directory to stream to avro source
+  --filename,-F <file>   text file to stream to avro source (default: std input)
+  --headerFile,-R <file> File containing event headers as key/value pairs on each new line
+  --help,-h              display help text
+
+  Either --rpcProps or both --host and --port must be specified.
 
 Note that if <conf> directory is specified, then it is always included first
 in the classpath.
