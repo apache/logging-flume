@@ -39,6 +39,7 @@ import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.elasticsearch.client.Requests;
+import org.elasticsearch.common.UUID;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.junit.After;
 import org.junit.Before;
@@ -53,6 +54,7 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     initDefaults();
     createNodes();
     fixture = new ElasticSearchSink(true);
+    fixture.setName("ElasticSearchSink-" + UUID.randomUUID().toString());
   }
 
   @After
@@ -110,7 +112,6 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     assertMatchAllQuery(numberOfEvents, events);
     assertBodyQuery(5, events);
   }
-
   @Test
   public void shouldIndexFiveEventsOverThreeBatches() throws Exception {
     parameters.put(BATCH_SIZE, "2");
