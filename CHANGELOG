@@ -1,3 +1,21 @@
+Release Notes - Flume - Version v1.3.1
+
+** Improvement
+    * [FLUME-1571] - Channels should check for positive capacity and transaction capacity values
+    * [FLUME-1699] - Make the rename of the meta file platform neutral
+    * [FLUME-1762] - File Channel should recover automatically if the checkpoint is incomplete or bad by deleting the contents of the checkpoint directory
+    * [FLUME-1790] - Commands in EncryptionTestUtils comments require high encryption pack to be installed
+    * [FLUME-1794] - FileChannel check for full disks in the background
+
+** Bug
+    * [FLUME-1761] - FileChannel can NPE when log metadata file is empty
+    * [FLUME-1763] - FileChannel Checkpoints should not be done without free space
+    * [FLUME-1773] - File Channel worker thread should not be daemon
+    * [FLUME-1774] - EventBackingStoreFactory error message asks user to delete checkpoint which is now done automatically
+    * [FLUME-1775] - FileChannel Log Background worker should catch Throwable
+    * [FLUME-1789] - Unit tests TestJCEFileKeyProvider and TestFileChannelEncryption fail with IBM JDK and flume-1.3.0
+
+
 Release Notes - Flume - Version v1.3.0
 
 ** New Feature
