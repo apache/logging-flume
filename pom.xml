@@ -27,7 +27,7 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.flume</groupId>
   <artifactId>flume-parent</artifactId>
-  <version>1.3.0</version>
+  <version>1.3.1</version>
   <packaging>pom</packaging>
 
   <name>Apache Flume</name>
@@ -849,90 +849,90 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-configuration</artifactId>
-        <version>1.3.0</version>
+        <version>1.3.1</version>
       </dependency>
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-core</artifactId>
-        <version>1.3.0</version>
+        <version>1.3.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-node</artifactId>
-        <version>1.3.0</version>
+        <version>1.3.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-channels</groupId>
         <artifactId>flume-file-channel</artifactId>
-        <version>1.3.0</version>
+        <version>1.3.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-channels</groupId>
         <artifactId>flume-jdbc-channel</artifactId>
-        <version>1.3.0</version>
+        <version>1.3.1</version>
       </dependency>
 
      <dependency>
        <groupId>org.apache.flume.flume-ng-channels</groupId>
        <artifactId>flume-recoverable-memory-channel</artifactId>
-       <version>1.3.0</version>
+       <version>1.3.1</version>
      </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-hdfs-sink</artifactId>
-        <version>1.3.0</version>
+        <version>1.3.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-irc-sink</artifactId>
-        <version>1.3.0</version>
+        <version>1.3.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-ng-hbase-sink</artifactId>
-        <version>1.3.0</version>
+        <version>1.3.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-ng-elasticsearch-sink</artifactId>
-        <version>1.3.0</version>
+        <version>1.3.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sources</groupId>
         <artifactId>flume-scribe-source</artifactId>
-        <version>1.3.0</version>
+        <version>1.3.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
         <artifactId>flume-thrift-source</artifactId>
-        <version>1.3.0</version>
+        <version>1.3.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
         <artifactId>flume-avro-source</artifactId>
-        <version>1.3.0</version>
+        <version>1.3.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-sdk</artifactId>
-        <version>1.3.0</version>
+        <version>1.3.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-clients</groupId>
         <artifactId>flume-ng-log4jappender</artifactId>
-        <version>1.3.0</version>
+        <version>1.3.1</version>
       </dependency>
 
       <dependency>
