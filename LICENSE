@@ -212,18 +212,14 @@ For
  avro-<version>.jar:
  avro-ipc-<version>.jar:
  commons-cli-<version>.jar:
- commons-codec-<version>.jar:
  commons-collections-<version>.jar:
  commons-dbcp-<version>.jar:
  commons-io-<version>.jar:
  commons-lang-<version>.jar:
- commons-logging-<version>.jar:
  commons-pool-<version>.jar:
  derby-<version>.jar:
+ gson-<version>.jar:
  guava-<version>.jar:
- gson-<version>.jar
- httpclient-<version>.jar:
- httpcore-<version>.jar:
  irclib-<version>.jar:
  jackson-core-asl-<version>.jar:
  jackson-mapper-asl-<version>.jar:
