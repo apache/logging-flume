@@ -13,7 +13,9 @@ Release Notes - Flume - Version v1.3.1
     * [FLUME-1773] - File Channel worker thread should not be daemon
     * [FLUME-1774] - EventBackingStoreFactory error message asks user to delete checkpoint which is now done automatically
     * [FLUME-1775] - FileChannel Log Background worker should catch Throwable
+    * [FLUME-1788] - Flume Thrift source can fail intermittently because of a race condition in Thrift server implementation on some Linux systems
     * [FLUME-1789] - Unit tests TestJCEFileKeyProvider and TestFileChannelEncryption fail with IBM JDK and flume-1.3.0
+    * [FLUME-1795] - Flume thrift legacy source does not have proper logging configured
 
 
 Release Notes - Flume - Version v1.3.0
