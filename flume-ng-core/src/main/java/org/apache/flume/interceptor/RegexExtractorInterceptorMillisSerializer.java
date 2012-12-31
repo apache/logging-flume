@@ -45,8 +45,7 @@ public class RegexExtractorInterceptorMillisSerializer implements
 
   @Override
   public String serialize(String value) {
-    DateTime dateTime = formatter.parseDateTime(value);
-    return Long.toString(dateTime.getMillis());
+    return Long.toString(formatter.parseMillis(value));
   }
 
   @Override
