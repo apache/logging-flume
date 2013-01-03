@@ -96,7 +96,9 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
   private boolean isLocal = false;
   private final CounterGroup counterGroup = new CounterGroup();
 
-  private int batchSize;
+  private static final int defaultBatchSize = 100;
+
+  private int batchSize = defaultBatchSize;
   private long ttlMs = DEFAULT_TTL;
   private String clusterName = DEFAULT_CLUSTER_NAME;
   private String indexName = DEFAULT_INDEX_NAME;
