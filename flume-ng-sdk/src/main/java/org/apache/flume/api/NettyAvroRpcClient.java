@@ -124,17 +124,24 @@ implements RpcClient {
   public void close() throws FlumeException {
     if (callTimeoutPool != null) {
       callTimeoutPool.shutdown();
-      while (!callTimeoutPool.isTerminated()) {
-        try {
-          callTimeoutPool.awaitTermination(requestTimeout,
-              TimeUnit.MILLISECONDS);
-        } catch (InterruptedException ex) {
-          logger.warn(this + ": Interrupted during close", ex);
+      try {
+        if (!callTimeoutPool.awaitTermination(requestTimeout,
+            TimeUnit.MILLISECONDS)) {
           callTimeoutPool.shutdownNow();
-          Thread.currentThread().interrupt();
-          break;
+          if (!callTimeoutPool.awaitTermination(requestTimeout,
+              TimeUnit.MILLISECONDS)) {
+            logger.warn(this + ": Unable to cleanly shut down call timeout " +
+                "pool");
+          }
         }
+      } catch (InterruptedException ex) {
+        logger.warn(this + ": Interrupted during close", ex);
+        // re-cancel if current thread also interrupted
+        callTimeoutPool.shutdownNow();
+        // preserve interrupt status
+        Thread.currentThread().interrupt();
       }
+
       callTimeoutPool = null;
     }
     try {
