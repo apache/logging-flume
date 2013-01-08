@@ -101,6 +101,7 @@ final class FlumeEventQueue {
       LOG.debug("Checkpoint not required");
       return false;
     }
+    backingStore.beginCheckpoint();
     inflightPuts.serializeAndWrite();
     inflightTakes.serializeAndWrite();
     backingStore.checkpoint();
