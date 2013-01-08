@@ -104,14 +104,17 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
   protected abstract void writeCheckpointMetaData() throws IOException;
 
   @Override
-  void checkpoint()  throws IOException {
-
+  void beginCheckpoint() throws IOException {
     LOG.info("Start checkpoint for " + checkpointFile +
         ", elements to sync = " + overwriteMap.size());
 
     // Start checkpoint
     elementsBuffer.put(INDEX_CHECKPOINT_MARKER, CHECKPOINT_INCOMPLETE);
     mappedBuffer.force();
+  }
+
+  @Override
+  void checkpoint()  throws IOException {
 
     setLogWriteOrderID(WriteOrderOracle.next());
     LOG.info("Updating checkpoint metadata: logWriteOrderID: "

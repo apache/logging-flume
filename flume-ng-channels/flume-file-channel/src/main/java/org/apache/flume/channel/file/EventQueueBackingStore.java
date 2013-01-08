@@ -36,6 +36,7 @@ abstract class EventQueueBackingStore {
   }
 
 
+  abstract void beginCheckpoint() throws IOException;
   abstract void checkpoint() throws IOException;
   abstract void incrementFileID(int fileID);
   abstract void decrementFileID(int fileID);
