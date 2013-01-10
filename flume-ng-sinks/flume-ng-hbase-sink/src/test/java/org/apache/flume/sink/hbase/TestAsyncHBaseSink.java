@@ -167,7 +167,7 @@ public class TestAsyncHBaseSink {
     channel.put(e);
     tx.commit();
     tx.close();
-
+    Assert.assertFalse(sink.isConfNull());
     sink.process();
     sink.stop();
     HTable table = new HTable(testUtility.getConfiguration(), tableName);
@@ -196,6 +196,7 @@ public class TestAsyncHBaseSink {
     }
     tx.commit();
     tx.close();
+    Assert.assertFalse(sink.isConfNull());
     sink.process();
     sink.stop();
     HTable table = new HTable(testUtility.getConfiguration(), tableName);
@@ -242,6 +243,64 @@ public class TestAsyncHBaseSink {
       count++;
       status = sink.process();
     }
+    Assert.assertFalse(sink.isConfNull());
+    sink.stop();
+    Assert.assertEquals(2, count);
+    HTable table = new HTable(testUtility.getConfiguration(), tableName);
+    byte[][] results = getResults(table, 3);
+    byte[] out;
+    int found = 0;
+    for(int i = 0; i < 3; i++){
+      for(int j = 0; j < 3; j++){
+        if(Arrays.equals(results[j],Bytes.toBytes(valBase + "-" + i))){
+          found++;
+          break;
+        }
+      }
+    }
+    Assert.assertEquals(3, found);
+    out = results[3];
+    Assert.assertArrayEquals(Longs.toByteArray(3), out);
+    testUtility.deleteTable(tableName.getBytes());
+  }
+
+  @Test
+  public void testWithoutConfigurationObject() throws Exception{
+    testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
+    ctx.put("batchSize", "2");
+    ctx.put(HBaseSinkConfigurationConstants.ZK_QUORUM,
+        testUtility.getConfiguration().get(HConstants.ZOOKEEPER_QUORUM));
+    ctx.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,
+        testUtility.getConfiguration().get(HConstants.ZOOKEEPER_ZNODE_PARENT));
+    AsyncHBaseSink sink = new AsyncHBaseSink();
+    Configurables.configure(sink, ctx);
+    // Reset context to values usable by other tests.
+    ctx.put(HBaseSinkConfigurationConstants.ZK_QUORUM, null);
+    ctx.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,null);
+    ctx.put("batchSize", "100");
+    Channel channel = new MemoryChannel();
+    Configurables.configure(channel, new Context());
+    sink.setChannel(channel);
+    sink.start();
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+    for(int i = 0; i < 3; i++){
+      Event e = EventBuilder.withBody(Bytes.toBytes(valBase + "-" + i));
+      channel.put(e);
+    }
+    tx.commit();
+    tx.close();
+    int count = 0;
+    Status status = Status.READY;
+    while(status != Status.BACKOFF){
+      count++;
+      status = sink.process();
+    }
+    /*
+     * Make sure that the configuration was picked up from the context itself
+     * and not from a configuration object which was created by the sink.
+     */
+    Assert.assertTrue(sink.isConfNull());
     sink.stop();
     Assert.assertEquals(2, count);
     HTable table = new HTable(testUtility.getConfiguration(), tableName);
@@ -282,6 +341,7 @@ public class TestAsyncHBaseSink {
     tx.commit();
     tx.close();
     sink.process();
+    Assert.assertFalse(sink.isConfNull());
     HTable table = new HTable(testUtility.getConfiguration(), tableName);
     byte[][] results = getResults(table, 2);
     byte[] out;
@@ -330,6 +390,7 @@ public class TestAsyncHBaseSink {
     tx.commit();
     tx.close();
     sink.process();
+    Assert.assertFalse(sink.isConfNull());
     HTable table = new HTable(testUtility.getConfiguration(), tableName);
     byte[][] results = getResults(table, 2);
     byte[] out;
