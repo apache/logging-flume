@@ -1526,7 +1526,6 @@ HBase puts and/or increments. These puts and increments are then written
 to HBase. This sink provides the same consistency guarantees as HBase,
 which is currently row-wise atomicity. In the event of Hbase failing to
 write certain events, the sink will replay all events in that transaction.
-This sink is still experimental.
 The type is the FQCN: org.apache.flume.sink.hbase.AsyncHBaseSink.
 Required properties are in **bold**.
 
@@ -1536,6 +1535,8 @@ Property Name     Default                                                       
 **channel**       --
 **type**          --                                                            The component type name, needs to be ``org.apache.flume.sink.hbase.AsyncHBaseSink``
 **table**         --                                                            The name of the table in Hbase to write to.
+zookeeperQuorum   --                                                            The quorum spec. This is the value for the property ``hbase.zookeeper.quorum`` in hbase-site.xml
+znodeParent       /hbase                                                        The base path for the znode for the -ROOT- region. Value of ``zookeeper.znode.parent`` in hbase-site.xml
 **columnFamily**  --                                                            The column family in Hbase to write to.
 batchSize         100                                                           Number of events to be written per txn.
 timeout           --                                                            The length of time (in milliseconds) the sink waits for acks from hbase for
@@ -1543,6 +1544,14 @@ timeout           --                                                            
 serializer        org.apache.flume.sink.hbase.SimpleAsyncHbaseEventSerializer
 serializer.*      --                                                            Properties to be passed to the serializer.
 ================  ============================================================  ====================================================================================
+
+Note that this sink takes the Zookeeper Quorum and parent znode information in
+the configuration. Zookeeper Quorum and parent node configuration may be
+specified in the flume configuration file, alternatively these configuration
+values are taken from the first hbase-site.xml file in the classpath.
+
+If these are not provided in the configuration, then the sink
+will read this information from the first hbase-site.xml file in the classpath.
 
 Example for agent named a1:
 

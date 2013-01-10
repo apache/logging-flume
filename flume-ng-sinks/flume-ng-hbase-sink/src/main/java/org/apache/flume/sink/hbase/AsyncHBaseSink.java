@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -105,14 +106,17 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
   private volatile boolean open = false;
   private SinkCounter sinkCounter;
   private long timeout;
+  private String zkQuorum;
+  private String zkBaseDir;
 
   public AsyncHBaseSink(){
-    conf = HBaseConfiguration.create();
+    this(null);
   }
 
   public AsyncHBaseSink(Configuration conf) {
     this.conf = conf;
   }
+
   @Override
   public Status process() throws EventDeliveryException {
     /*
@@ -284,6 +288,27 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
               + "Sink will not timeout.");
       timeout = HBaseSinkConfigurationConstants.DEFAULT_TIMEOUT;
     }
+
+    zkQuorum = context.getString(
+        HBaseSinkConfigurationConstants.ZK_QUORUM, "").trim();
+    if(!zkQuorum.isEmpty()) {
+      zkBaseDir = context.getString(
+          HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,
+          HBaseSinkConfigurationConstants.DEFAULT_ZK_ZNODE_PARENT);
+    } else {
+      if (conf == null) { //In tests, we pass the conf in.
+        conf = HBaseConfiguration.create();
+      }
+      zkQuorum = conf.get(HConstants.ZOOKEEPER_QUORUM);
+      zkBaseDir = conf.get(HConstants.ZOOKEEPER_ZNODE_PARENT);
+    }
+    Preconditions.checkState(zkQuorum != null && !zkQuorum.isEmpty(),
+        "The Zookeeper quorum cannot be null and should be specified.");
+  }
+
+  @VisibleForTesting
+  boolean isConfNull() {
+    return conf == null;
   }
   @Override
   public void start(){
@@ -291,8 +316,6 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
             + "before calling start on an old instance.");
     sinkCounter.start();
     sinkCounter.incrementConnectionCreatedCount();
-    String zkQuorum = conf.get(HConstants.ZOOKEEPER_QUORUM);
-    String zkBaseDir = conf.get(HConstants.ZOOKEEPER_ZNODE_PARENT);
     if(zkBaseDir != null){
       client = new HBaseClient(zkQuorum, zkBaseDir);
     } else {
@@ -344,6 +367,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
     sinkCounter.incrementConnectionClosedCount();
     sinkCounter.stop();
     client = null;
+    conf = null;
     open = false;
     super.stop();
   }
