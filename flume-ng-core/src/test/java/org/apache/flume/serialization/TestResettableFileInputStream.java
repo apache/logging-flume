@@ -30,8 +30,11 @@ import org.slf4j.LoggerFactory;
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.List;
 
@@ -102,7 +105,7 @@ public class TestResettableFileInputStream {
     assertEquals(output, result2);
 
     String result3 = readLine(in, output.length());
-    assertNull(result3);
+    assertNull("Should be null: " + result3, result3);
 
     in.close();
   }
@@ -173,6 +176,59 @@ public class TestResettableFileInputStream {
     Assert.assertEquals(result3, result3a);
   }
 
+  @Test
+  public void testSeek() throws IOException {
+    int NUM_LINES = 1000;
+    int LINE_LEN = 1000;
+    generateData(file, Charsets.UTF_8, NUM_LINES, LINE_LEN);
+
+    PositionTracker tracker = new DurablePositionTracker(meta, file.getPath());
+    ResettableInputStream in = new ResettableFileInputStream(file, tracker,
+        10 * LINE_LEN, Charsets.UTF_8);
+
+    String line = "";
+    for (int i = 0; i < 9; i++) {
+      line = readLine(in, LINE_LEN);
+    }
+    int lineNum = Integer.parseInt(line.substring(0, 10));
+    assertEquals(8, lineNum);
+
+    // seek back within our buffer
+    long pos = in.tell();
+    in.seek(pos - 2 * LINE_LEN); // jump back 2 lines
+
+    line = readLine(in, LINE_LEN);
+    lineNum = Integer.parseInt(line.substring(0, 10));
+    assertEquals(7, lineNum);
+
+    // seek forward within our buffer
+    in.seek(in.tell() + LINE_LEN);
+    line = readLine(in, LINE_LEN);
+    lineNum = Integer.parseInt(line.substring(0, 10));
+    assertEquals(9, lineNum);
+
+    // seek forward outside our buffer
+    in.seek(in.tell() + 20 * LINE_LEN);
+    line = readLine(in, LINE_LEN);
+    lineNum = Integer.parseInt(line.substring(0, 10));
+    assertEquals(30, lineNum);
+
+    // seek backward outside our buffer
+    in.seek(in.tell() - 25 * LINE_LEN);
+    line = readLine(in, LINE_LEN);
+    lineNum = Integer.parseInt(line.substring(0, 10));
+    assertEquals(6, lineNum);
+
+    // test a corner-case seek which requires a buffer refill
+    in.seek(100 * LINE_LEN);
+    in.seek(0); // reset buffer
+
+    in.seek(9 * LINE_LEN);
+    assertEquals(9, Integer.parseInt(readLine(in, LINE_LEN).substring(0, 10)));
+    assertEquals(10, Integer.parseInt(readLine(in, LINE_LEN).substring(0, 10)));
+    assertEquals(11, Integer.parseInt(readLine(in, LINE_LEN).substring(0, 10)));
+  }
+
   /**
    * Helper function to read a line from a character stream.
    * @param in
@@ -227,6 +283,30 @@ public class TestResettableFileInputStream {
     }
     Files.write(sb.toString().getBytes(charset), file);
     return lines;
+  }
+
+  private static void generateData(File file, Charset charset,
+      int numLines, int lineLen) throws IOException {
+
+    OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
+    StringBuilder junk = new StringBuilder();
+    for (int x = 0; x < lineLen - 13; x++) {
+      junk.append('x');
+    }
+    String payload = junk.toString();
+    StringBuilder builder = new StringBuilder();
+    for (int i = 0; i < numLines; i++) {
+      builder.append(String.format("%010d: %s\n", i, payload));
+      if (i % 1000 == 0 && i != 0) {
+        out.write(builder.toString().getBytes(charset));
+        builder.setLength(0);
+      }
+    }
+
+    out.write(builder.toString().getBytes(charset));
+    out.close();
+
+    Assert.assertEquals(lineLen * numLines, file.length());
   }
 
 }
