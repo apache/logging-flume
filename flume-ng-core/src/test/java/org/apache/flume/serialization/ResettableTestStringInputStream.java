@@ -19,7 +19,7 @@ package org.apache.flume.serialization;
 
 import java.io.IOException;
 
-public class ResettableTestStringInputStream implements ResettableInputStream {
+public class ResettableTestStringInputStream extends ResettableInputStream {
 
   private String str;
   int markPos = 0;
@@ -49,6 +49,16 @@ public class ResettableTestStringInputStream implements ResettableInputStream {
   @Override
   public void reset() throws IOException {
     curPos = markPos;
+  }
+
+  @Override
+  public void seek(long position) throws IOException {
+    throw new UnsupportedOperationException("Unimplemented in test class");
+  }
+
+  @Override
+  public long tell() throws IOException {
+    throw new UnsupportedOperationException("Unimplemented in test class");
   }
 
   @Override

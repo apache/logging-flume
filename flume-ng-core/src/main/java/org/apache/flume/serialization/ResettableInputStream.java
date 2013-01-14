@@ -24,16 +24,20 @@ import java.io.Closeable;
 import java.io.IOException;
 
 /**
- * <p> This abstract class defines an interface on top of InputStream for which
+ * <p> This abstract class defines an interface for which
  * the stream may be <code>mark</code>ed and <code>reset</code> with no limit to
  * the number of bytes which may have been read between the calls.
  *
  * <p> Any implementation of this interface guarantees that the mark position
  * will not be invalidated by reading any number of bytes.
+ *
+ * <p> Warning: We reserve the right to add public methods to this class in
+ * the future. Third-party subclasses beware.
  */
 @InterfaceAudience.Public
-@InterfaceStability.Evolving
-public interface ResettableInputStream extends Resettable, Closeable {
+@InterfaceStability.Unstable
+public abstract class ResettableInputStream implements Resettable, Seekable,
+    Closeable {
 
   /**
    * Read a single byte of data from the stream.
@@ -41,7 +45,7 @@ public interface ResettableInputStream extends Resettable, Closeable {
    * been reached.
    * @throws IOException
    */
-  public int read() throws IOException;
+  public abstract int read() throws IOException;
 
   /**
    * Read multiple bytes of data from the stream.
@@ -52,7 +56,7 @@ public interface ResettableInputStream extends Resettable, Closeable {
    * the end of the stream has been reached.
    * @throws IOException
    */
-  public int read(byte[] b, int off, int len) throws IOException;
+  public abstract int read(byte[] b, int off, int len) throws IOException;
 
   /**
    * <p>Read a single character.
@@ -66,7 +70,7 @@ public interface ResettableInputStream extends Resettable, Closeable {
    *         (0x00-0xffff), or -1 if the end of the stream has been reached
    * @throws IOException
    */
-  public int readChar() throws IOException;
+  public abstract int readChar() throws IOException;
 
   /**
    * Marks the current position in this input stream. A subsequent call to the
@@ -81,16 +85,30 @@ public interface ResettableInputStream extends Resettable, Closeable {
    * @see java.io.InputStream#reset()
    */
   @Override
-  public void mark() throws IOException;
+  public abstract void mark() throws IOException;
 
   /**
    * Reset stream position to that set by {@link #mark()}
    * @throws IOException
    */
   @Override
-  public void reset() throws IOException;
+  public abstract void reset() throws IOException;
+
+  /**
+   * Seek to the specified byte position in the stream.
+   * @param position Absolute byte offset to seek to
+   */
+  @Override
+  public abstract void seek(long position) throws IOException;
+
+  /**
+   * Tell the current byte position.
+   * @return the current absolute byte position in the stream
+   */
+  @Override
+  public abstract long tell() throws IOException;
 
   @Override
-  public void close() throws IOException;
+  public abstract void close() throws IOException;
 
 }

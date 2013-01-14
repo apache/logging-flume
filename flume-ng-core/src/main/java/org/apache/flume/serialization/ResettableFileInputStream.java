@@ -44,7 +44,7 @@ import java.nio.charset.CoderResult;
  */
 @InterfaceAudience.Private
 @InterfaceStability.Evolving
-public class ResettableFileInputStream implements ResettableInputStream {
+public class ResettableFileInputStream extends ResettableInputStream {
 
   public static final int DEFAULT_BUF_SIZE = 16384;
 
@@ -183,6 +183,7 @@ public class ResettableFileInputStream implements ResettableInputStream {
 
   private void refillBuf() throws IOException {
     buf.compact();
+    chan.position(position); // ensure we read from the proper offset
     chan.read(buf);
     buf.flip();
   }
@@ -197,27 +198,40 @@ public class ResettableFileInputStream implements ResettableInputStream {
     seek(tracker.getPosition());
   }
 
-  private long tell() throws IOException {
+  @Override
+  public long tell() throws IOException {
     return syncPosition;
   }
 
-  private synchronized void seek(long position) throws IOException {
-    // perform underlying file seek
-    chan.position(position);
+  @Override
+  public synchronized void seek(long newPos) throws IOException {
 
-    // invalidate cache
-    buf.clear();
-    buf.flip();
+    // check to see if we can seek within our existing buffer
+    long relativeChange = newPos - position;
+    if (relativeChange == 0) return; // seek to current pos => no-op
+
+    long newBufPos = buf.position() + relativeChange;
+    if (newBufPos >= 0 && newBufPos < buf.limit()) {
+      // we can reuse the read buffer
+      buf.position((int)newBufPos);
+    } else {
+      // otherwise, we have to invalidate the read buffer
+      buf.clear();
+      buf.flip();
+    }
 
     // clear decoder state
     decoder.reset();
 
+    // perform underlying file seek
+    chan.position(newPos);
+
     // reset position pointers
-    this.position = this.syncPosition = position;
+    position = syncPosition = newPos;
   }
 
   private void incrPosition(int incr, boolean updateSyncPosition) {
-    this.position += incr;
+    position += incr;
     if (updateSyncPosition) {
       syncPosition = position;
     }
