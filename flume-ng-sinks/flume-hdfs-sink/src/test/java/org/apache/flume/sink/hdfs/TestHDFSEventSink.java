@@ -112,8 +112,17 @@ public class TestHDFSEventSink {
   }
 
   @Test
-  public void testTextBatchAppend() throws InterruptedException, LifecycleException,
-      EventDeliveryException, IOException {
+  public void testTextBatchAppend() throws Exception {
+    doTestTextBatchAppend(false);
+  }
+
+  @Test
+  public void testTextBatchAppendRawFS() throws Exception {
+    doTestTextBatchAppend(true);
+  }
+
+  public void doTestTextBatchAppend(boolean useRawLocalFileSystem)
+      throws Exception {
     LOG.debug("Starting...");
 
     final long rollCount = 10;
@@ -140,6 +149,8 @@ public class TestHDFSEventSink {
     context.put("hdfs.rollSize", "0");
     context.put("hdfs.batchSize", String.valueOf(batchSize));
     context.put("hdfs.writeFormat", "Text");
+    context.put("hdfs.useRawLocalFileSystem",
+        Boolean.toString(useRawLocalFileSystem));
     context.put("hdfs.fileType", "DataStream");
 
     Configurables.configure(sink, context);
@@ -154,7 +165,7 @@ public class TestHDFSEventSink {
     List<String> bodies = Lists.newArrayList();
 
     // push the event batches into channel to roll twice
-    for (i = 1; i <= rollCount*2/batchSize; i++) {
+    for (i = 1; i <= (rollCount*10)/batchSize; i++) {
       Transaction txn = channel.getTransaction();
       txn.begin();
       for (j = 1; j <= batchSize; j++) {

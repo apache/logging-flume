@@ -24,17 +24,23 @@ import org.apache.flume.Event;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.compress.CompressionCodec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HDFSSequenceFile implements HDFSWriter {
 
+  private static final Logger logger =
+      LoggerFactory.getLogger(HDFSSequenceFile.class);
   private SequenceFile.Writer writer;
   private String writeFormat;
   private Context serializerContext;
   private SeqFileFormatter formatter;
+  private boolean useRawLocalFileSystem;
 
   public HDFSSequenceFile() {
     writer = null;
@@ -44,10 +50,14 @@ public class HDFSSequenceFile implements HDFSWriter {
   public void configure(Context context) {
     // use binary writable format by default
     writeFormat = context.getString("hdfs.writeFormat", SeqFileFormatterType.Writable.name());
+    useRawLocalFileSystem = context.getBoolean("hdfs.useRawLocalFileSystem",
+        false);
     serializerContext = new Context(
             context.getSubProperties(SeqFileFormatterFactory.CTX_PREFIX));
     formatter = SeqFileFormatterFactory
             .getFormatter(writeFormat, serializerContext);
+    logger.info("writeFormat = " + writeFormat + ", UseRawLocalFileSystem = "
+        + useRawLocalFileSystem);
   }
 
   @Override
@@ -61,7 +71,14 @@ public class HDFSSequenceFile implements HDFSWriter {
     Configuration conf = new Configuration();
     Path dstPath = new Path(filePath);
     FileSystem hdfs = dstPath.getFileSystem(conf);
-
+    if(useRawLocalFileSystem) {
+      if(hdfs instanceof LocalFileSystem) {
+        hdfs = ((LocalFileSystem)hdfs).getRaw();
+      } else {
+        logger.warn("useRawLocalFileSystem is set to true but file system " +
+            "is not of type LocalFileSystem: " + hdfs.getClass().getName());
+      }
+    }
     if (conf.getBoolean("hdfs.append.support", false) == true && hdfs.isFile
             (dstPath)) {
       FSDataOutputStream outStream = hdfs.append(dstPath);
