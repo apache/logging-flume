@@ -26,6 +26,7 @@ import com.google.common.io.Files;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.serialization.LineDeserializer;
+import org.apache.flume.source.SpoolDirectorySourceConfigurationConstants;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,9 +44,9 @@ public class TestSpoolingFileLineReader {
 
   Logger logger = LoggerFactory.getLogger(TestSpoolingFileLineReader.class);
 
-  private static String completedSuffix = ".COMPLETE";
+  private static String completedSuffix =
+      SpoolDirectorySourceConfigurationConstants.DEFAULT_SPOOLED_FILE_SUFFIX;
   private static int bufferMaxLineLength = 500;
-  private static int bufferMaxLines = 30;
 
   private File tmpDir;
 
@@ -66,8 +67,11 @@ public class TestSpoolingFileLineReader {
     ctx.put(LineDeserializer.MAXLINE_KEY, Integer.toString(maxLineLength));
     ReliableSpoolingFileEventReader parser;
     try {
-      parser = new ReliableSpoolingFileEventReader(tmpDir, completedSuffix, "^$",
-          new File(tmpDir, ".flumespool"), false, "^$", "LINE", ctx);
+      parser = new ReliableSpoolingFileEventReader.Builder()
+          .spoolDirectory(tmpDir)
+          .completedSuffix(completedSuffix)
+          .deserializerContext(ctx)
+          .build();
     } catch (IOException ioe) {
       throw Throwables.propagate(ioe);
     }

@@ -36,7 +36,6 @@ import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
@@ -204,11 +203,8 @@ public class AvroCLIClient {
       if (fileName != null) {
         reader = new SimpleTextLineEventReader(new FileReader(new File(fileName)));
       } else if (dirName != null) {
-        reader = new ReliableSpoolingFileEventReader(
-            new File(dirName), ".COMPLETED",
-            "^$", new File(new File(dirName), ".flumespool"),
-            false, "",
-            "LINE", new Context());
+        reader = new ReliableSpoolingFileEventReader.Builder()
+            .spoolDirectory(new File(dirName)).build();
       } else {
         reader = new SimpleTextLineEventReader(new InputStreamReader(System.in));
       }
