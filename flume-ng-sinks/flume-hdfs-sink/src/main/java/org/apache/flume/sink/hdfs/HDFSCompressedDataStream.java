@@ -26,6 +26,7 @@ import org.apache.flume.serialization.EventSerializerFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.compress.CompressionCodec;
@@ -46,12 +47,17 @@ public class HDFSCompressedDataStream implements HDFSWriter {
   private String serializerType;
   private Context serializerContext;
   private EventSerializer serializer;
+  private boolean useRawLocalFileSystem;
 
   @Override
   public void configure(Context context) {
     serializerType = context.getString("serializer", "TEXT");
+    useRawLocalFileSystem = context.getBoolean("hdfs.useRawLocalFileSystem",
+        false);
     serializerContext = new Context(
         context.getSubProperties(EventSerializer.CTX_PREFIX));
+    logger.info("Serializer = " + serializerType + ", UseRawLocalFileSystem = "
+        + useRawLocalFileSystem);
   }
 
   @Override
@@ -67,6 +73,14 @@ public class HDFSCompressedDataStream implements HDFSWriter {
     Configuration conf = new Configuration();
     Path dstPath = new Path(filePath);
     FileSystem hdfs = dstPath.getFileSystem(conf);
+    if(useRawLocalFileSystem) {
+      if(hdfs instanceof LocalFileSystem) {
+        hdfs = ((LocalFileSystem)hdfs).getRaw();
+      } else {
+        logger.warn("useRawLocalFileSystem is set to true but file system " +
+            "is not of type LocalFileSystem: " + hdfs.getClass().getName());
+      }
+    }
 
     boolean appending = false;
     if (conf.getBoolean("hdfs.append.support", false) == true && hdfs.isFile
@@ -76,6 +90,7 @@ public class HDFSCompressedDataStream implements HDFSWriter {
     } else {
       fsOut = hdfs.create(dstPath);
     }
+    System.out.println("fsOut " + fsOut);
     cmpOut = codec.createOutputStream(fsOut);
     serializer = EventSerializerFactory.getInstance(serializerType,
         serializerContext, cmpOut);
