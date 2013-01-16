@@ -47,7 +47,7 @@ public class SpoolDirectorySourceConfigurationConstants {
 
   /** Pattern of files to ignore */
   public static final String IGNORE_PAT = "ignorePattern";
-  public static final String DFLT_IGNORE_PAT = "^$"; // no effect
+  public static final String DEFAULT_IGNORE_PAT = "^$"; // no effect
 
   /** Directory to store metadata about files being processed */
   public static final String META_DIR = "metaDir";
@@ -56,4 +56,7 @@ public class SpoolDirectorySourceConfigurationConstants {
   /** Deserializer to use to parse the file data into Flume Events */
   public static final String DESERIALIZER = "deserializer";
   public static final String DEFAULT_DESERIALIZER = "LINE";
+
+  public static final String DELETE_POLICY = "deletePolicy";
+  public static final String DEFAULT_DELETE_POLICY = "never";
 }

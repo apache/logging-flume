@@ -32,6 +32,7 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.serialization.*;
+import org.apache.flume.source.SpoolDirectorySourceConfigurationConstants;
 import org.apache.flume.tools.PlatformDetect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +75,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
 
   static final String metaFileName = ".flumespool-main.meta";
 
-  private final File directory;
+  private final File spoolDirectory;
   private final String completedSuffix;
   private final String deserializerType;
   private final Context deserializerContext;
@@ -82,6 +83,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
   private final File metaFile;
   private final boolean annotateFileName;
   private final String fileNameHeader;
+  private final String deletePolicy;
 
   private Optional<FileInfo> currentFile = Optional.absent();
   /** Always contains the last file from which lines have been read. **/
@@ -91,35 +93,44 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
   /**
    * Create a ReliableSpoolingFileEventReader to watch the given directory.
    */
-  public ReliableSpoolingFileEventReader(File directory, String completedSuffix,
-      String ignorePattern, File trackerDirectory,
+  private ReliableSpoolingFileEventReader(File spoolDirectory,
+      String completedSuffix, String ignorePattern, String trackerDirPath,
       boolean annotateFileName, String fileNameHeader,
-      String deserializerType, Context deserializerContext) throws IOException {
+      String deserializerType, Context deserializerContext,
+      String deletePolicy) throws IOException {
 
     // Sanity checks
-    Preconditions.checkNotNull(directory);
+    Preconditions.checkNotNull(spoolDirectory);
     Preconditions.checkNotNull(completedSuffix);
     Preconditions.checkNotNull(ignorePattern);
-    Preconditions.checkNotNull(trackerDirectory);
+    Preconditions.checkNotNull(trackerDirPath);
     Preconditions.checkNotNull(deserializerType);
     Preconditions.checkNotNull(deserializerContext);
+    Preconditions.checkNotNull(deletePolicy);
+
+    // validate delete policy
+    if (!deletePolicy.equalsIgnoreCase(DeletePolicy.NEVER.name()) &&
+        !deletePolicy.equalsIgnoreCase(DeletePolicy.IMMEDIATE.name())) {
+      throw new IllegalArgumentException("Delete policies other than " +
+          "NEVER and IMMEDIATE are not yet supported");
+    }
 
     if (logger.isDebugEnabled()) {
       logger.debug("Initializing {} with directory={}, metaDir={}, " +
           "deserializer={}",
           new Object[] { ReliableSpoolingFileEventReader.class.getSimpleName(),
-          directory, trackerDirectory, deserializerType });
+          spoolDirectory, trackerDirPath, deserializerType });
     }
 
     // Verify directory exists and is readable/writable
-    Preconditions.checkState(directory.exists(),
-        "Directory does not exist: " + directory.getAbsolutePath());
-    Preconditions.checkState(directory.isDirectory(),
-        "Path is not a directory: " + directory.getAbsolutePath());
+    Preconditions.checkState(spoolDirectory.exists(),
+        "Directory does not exist: " + spoolDirectory.getAbsolutePath());
+    Preconditions.checkState(spoolDirectory.isDirectory(),
+        "Path is not a directory: " + spoolDirectory.getAbsolutePath());
 
     // Do a canary test to make sure we have access to spooling directory
     try {
-      File f1 = File.createTempFile("flume", "test", directory);
+      File f1 = File.createTempFile("flume", "test", spoolDirectory);
       Files.write("testing flume file permissions\n", f1, Charsets.UTF_8);
       Files.readLines(f1, Charsets.UTF_8);
       if (!f1.delete()) {
@@ -127,15 +138,24 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       }
     } catch (IOException e) {
       throw new FlumeException("Unable to read and modify files" +
-          " in the spooling directory: " + directory, e);
+          " in the spooling directory: " + spoolDirectory, e);
     }
-    this.directory = directory;
+
+    this.spoolDirectory = spoolDirectory;
     this.completedSuffix = completedSuffix;
     this.deserializerType = deserializerType;
     this.deserializerContext = deserializerContext;
     this.annotateFileName = annotateFileName;
     this.fileNameHeader = fileNameHeader;
     this.ignorePattern = Pattern.compile(ignorePattern);
+    this.deletePolicy = deletePolicy;
+
+    File trackerDirectory = new File(trackerDirPath);
+
+    // if relative path, treat as relative to spool directory
+    if (!trackerDirectory.isAbsolute()) {
+      trackerDirectory = new File(spoolDirectory, trackerDirPath);
+    }
 
     // ensure that meta directory exists
     if (!trackerDirectory.exists()) {
@@ -248,27 +268,43 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
   private void retireCurrentFile() throws IOException {
     Preconditions.checkState(currentFile.isPresent());
 
-    String currPath = currentFile.get().getFile().getAbsolutePath();
-    String newPath = currPath + completedSuffix;
-    logger.info("Preparing to move file {} to {}", currPath, newPath);
+    File fileToRoll = new File(currentFile.get().getFile().getAbsolutePath());
 
     currentFile.get().getDeserializer().close();
-    File fileToRoll = new File(currPath);
 
     // Verify that spooling assumptions hold
     if (fileToRoll.lastModified() != currentFile.get().getLastModified()) {
-      String message = "File has been modified since being read: " + currPath;
+      String message = "File has been modified since being read: " + fileToRoll;
       throw new IllegalStateException(message);
     }
     if (fileToRoll.length() != currentFile.get().getLength()) {
-      String message = "File has changed size since being read: " + currPath;
+      String message = "File has changed size since being read: " + fileToRoll;
       throw new IllegalStateException(message);
     }
 
-    File destination = new File(newPath);
+    if (deletePolicy.equalsIgnoreCase(DeletePolicy.NEVER.name())) {
+      rollCurrentFile(fileToRoll);
+    } else if (deletePolicy.equalsIgnoreCase(DeletePolicy.IMMEDIATE.name())) {
+      deleteCurrentFile(fileToRoll);
+    } else {
+      // TODO: implement delay in the future
+      throw new IllegalArgumentException("Unsupported delete policy: " +
+          deletePolicy);
+    }
+  }
+
+  /**
+   * Rename the given spooled file
+   * @param fileToRoll
+   * @throws IOException
+   */
+  private void rollCurrentFile(File fileToRoll) throws IOException {
+
+    File dest = new File(fileToRoll.getPath() + completedSuffix);
+    logger.info("Preparing to move file {} to {}", fileToRoll, dest);
 
     // Before renaming, check whether destination file name exists
-    if (destination.exists() && PlatformDetect.isWindows()) {
+    if (dest.exists() && PlatformDetect.isWindows()) {
       /*
        * If we are here, it means the completed file already exists. In almost
        * every case this means the user is violating an assumption of Flume
@@ -277,8 +313,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
        * file was already rolled but the rename was not atomic. If that seems
        * likely, we let it pass with only a warning.
        */
-      if (Files.equal(currentFile.get().getFile(), destination)) {
-        logger.warn("Completed file " + newPath +
+      if (Files.equal(currentFile.get().getFile(), dest)) {
+        logger.warn("Completed file " + dest +
             " already exists, but files match, so continuing.");
         boolean deleted = fileToRoll.delete();
         if (!deleted) {
@@ -287,21 +323,21 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
         }
       } else {
         String message = "File name has been re-used with different" +
-            " files. Spooling assumptions violated for " + newPath;
+            " files. Spooling assumptions violated for " + dest;
         throw new IllegalStateException(message);
       }
 
     // Dest file exists and not on windows
-    } else if (destination.exists()) {
+    } else if (dest.exists()) {
       String message = "File name has been re-used with different" +
-          " files. Spooling assumptions violated for " + newPath;
+          " files. Spooling assumptions violated for " + dest;
       throw new IllegalStateException(message);
 
     // Destination file does not already exist. We are good to go!
     } else {
-      boolean renamed = fileToRoll.renameTo(new File(newPath));
+      boolean renamed = fileToRoll.renameTo(dest);
       if (renamed) {
-        logger.debug("Successfully rolled file {} to {}", fileToRoll, newPath);
+        logger.debug("Successfully rolled file {} to {}", fileToRoll, dest);
 
         // now we no longer need the meta file
         deleteMetaFile();
@@ -309,11 +345,27 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
         /* If we are here then the file cannot be renamed for a reason other
          * than that the destination file exists (actually, that remains
          * possible w/ small probability due to TOC-TOU conditions).*/
-        String message = "Unable to move " + currPath + " to " + newPath +
+        String message = "Unable to move " + fileToRoll + " to " + dest +
             ". This will likely cause duplicate events. Please verify that " +
             "flume has sufficient permissions to perform these operations.";
         throw new FlumeException(message);
       }
+    }
+  }
+
+  /**
+   * Delete the given spooled file
+   * @param fileToDelete
+   * @throws IOException
+   */
+  private void deleteCurrentFile(File fileToDelete) throws IOException {
+    logger.info("Preparing to delete file {}", fileToDelete);
+    if (!fileToDelete.exists()) {
+      logger.warn("Unable to delete nonexistent file: {}", fileToDelete);
+      return;
+    }
+    if (!fileToDelete.delete()) {
+      throw new IOException("Unable to delete spool file: " + fileToDelete);
     }
   }
 
@@ -336,7 +388,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
         return true;
       }
     };
-    List<File> candidateFiles = Arrays.asList(directory.listFiles(filter));
+    List<File> candidateFiles = Arrays.asList(spoolDirectory.listFiles(filter));
     if (candidateFiles.isEmpty()) {
       return Optional.absent();
     } else {
@@ -410,6 +462,87 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     public long getLastModified() { return lastModified; }
     public EventDeserializer getDeserializer() { return deserializer; }
     public File getFile() { return file; }
+  }
+
+  @InterfaceAudience.Private
+  @InterfaceStability.Unstable
+  static enum DeletePolicy {
+    NEVER,
+    IMMEDIATE,
+    DELAY
+  }
+
+  /**
+   * Special builder class for ReliableSpoolingFileEventReader
+   */
+  public static class Builder {
+    private File spoolDirectory;
+    private String completedSuffix =
+        SpoolDirectorySourceConfigurationConstants.SPOOLED_FILE_SUFFIX;
+    private String ignorePattern =
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_IGNORE_PAT;
+    private String trackerDirPath =
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_META_DIR;
+    private Boolean annotateFileName =
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_FILE_HEADER;
+    private String fileNameHeader =
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_FILENAME_HEADER_KEY;
+    private String deserializerType =
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_DESERIALIZER;
+    private Context deserializerContext = new Context();
+    private String deletePolicy =
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_DELETE_POLICY;
+
+    public Builder spoolDirectory(File directory) {
+      this.spoolDirectory = directory;
+      return this;
+    }
+
+    public Builder completedSuffix(String completedSuffix) {
+      this.completedSuffix = completedSuffix;
+      return this;
+    }
+
+    public Builder ignorePattern(String ignorePattern) {
+      this.ignorePattern = ignorePattern;
+      return this;
+    }
+
+    public Builder trackerDirPath(String trackerDirPath) {
+      this.trackerDirPath = trackerDirPath;
+      return this;
+    }
+
+    public Builder annotateFileName(Boolean annotateFileName) {
+      this.annotateFileName = annotateFileName;
+      return this;
+    }
+
+    public Builder fileNameHeader(String fileNameHeader) {
+      this.fileNameHeader = fileNameHeader;
+      return this;
+    }
+
+    public Builder deserializerType(String deserializerType) {
+      this.deserializerType = deserializerType;
+      return this;
+    }
+
+    public Builder deserializerContext(Context deserializerContext) {
+      this.deserializerContext = deserializerContext;
+      return this;
+    }
+
+    public Builder deletePolicy(String deletePolicy) {
+      this.deletePolicy = deletePolicy;
+      return this;
+    }
+
+    public ReliableSpoolingFileEventReader build() throws IOException {
+      return new ReliableSpoolingFileEventReader(spoolDirectory, completedSuffix,
+          ignorePattern, trackerDirPath, annotateFileName, fileNameHeader,
+          deserializerType, deserializerContext, deletePolicy);
+    }
   }
 
 }

@@ -52,9 +52,10 @@ Configurable, EventDrivenSource {
   private String fileHeaderKey;
   private int batchSize;
   private String ignorePattern;
-  private File metaDirectory;
+  private String trackerDirPath;
   private String deserializerType;
   private Context deserializerContext;
+  private String deletePolicy;
 
   private CounterGroup counterGroup;
   ReliableSpoolingFileEventReader reader;
@@ -70,9 +71,17 @@ Configurable, EventDrivenSource {
 
     File directory = new File(spoolDirectory);
     try {
-    reader = new ReliableSpoolingFileEventReader(directory, completedSuffix,
-        ignorePattern, metaDirectory, fileHeader, fileHeaderKey,
-        deserializerType, deserializerContext);
+      reader = new ReliableSpoolingFileEventReader.Builder()
+          .spoolDirectory(directory)
+          .completedSuffix(completedSuffix)
+          .ignorePattern(ignorePattern)
+          .trackerDirPath(trackerDirPath)
+          .annotateFileName(fileHeader)
+          .fileNameHeader(fileHeaderKey)
+          .deserializerType(deserializerType)
+          .deserializerContext(deserializerContext)
+          .deletePolicy(deletePolicy)
+          .build();
     } catch (IOException ioe) {
       throw new FlumeException("Error instantiating spooling event parser",
           ioe);
@@ -99,6 +108,7 @@ Configurable, EventDrivenSource {
 
     completedSuffix = context.getString(SPOOLED_FILE_SUFFIX,
         DEFAULT_SPOOLED_FILE_SUFFIX);
+    deletePolicy = context.getString(DELETE_POLICY, DEFAULT_DELETE_POLICY);
     fileHeader = context.getBoolean(FILENAME_HEADER,
         DEFAULT_FILE_HEADER);
     fileHeaderKey = context.getString(FILENAME_HEADER_KEY,
@@ -106,17 +116,8 @@ Configurable, EventDrivenSource {
     batchSize = context.getInteger(BATCH_SIZE,
         DEFAULT_BATCH_SIZE);
 
-    ignorePattern = context.getString(IGNORE_PAT, DFLT_IGNORE_PAT);
-    String metaDirLoc = context.getString(META_DIR, DEFAULT_META_DIR);
-
-    // if absolute path, treat as absolute
-    if (metaDirLoc.charAt(0) == '/') {
-      metaDirectory = new File(metaDirLoc);
-
-    // if relative path, treat as relative to spool directory
-    } else {
-      metaDirectory = new File(spoolDirectory, DEFAULT_META_DIR);
-    }
+    ignorePattern = context.getString(IGNORE_PAT, DEFAULT_IGNORE_PAT);
+    trackerDirPath = context.getString(META_DIR, DEFAULT_META_DIR);
 
     deserializerType = context.getString(DESERIALIZER, DEFAULT_DESERIALIZER);
     deserializerContext = new Context(context.getSubProperties(DESERIALIZER +

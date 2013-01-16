@@ -15,17 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.serialization;
+package org.apache.flume.client.avro;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import junit.framework.Assert;
-import org.apache.flume.Context;
 import org.apache.flume.Event;
-import org.apache.flume.client.avro.ReliableEventReader;
-import org.apache.flume.client.avro.ReliableSpoolingFileEventReader;
 import org.apache.flume.source.SpoolDirectorySourceConfigurationConstants;
+import org.apache.flume.client.avro.ReliableSpoolingFileEventReader.DeletePolicy;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -34,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.List;
 
@@ -103,14 +102,8 @@ public class TestReliableSpoolingFileEventReader {
 
   @Test
   public void testRepeatedCallsWithCommitAlways() throws IOException {
-    File trackerDir = new File(WORK_DIR,
-        SpoolDirectorySourceConfigurationConstants.DEFAULT_META_DIR);
-    ReliableEventReader reader = new ReliableSpoolingFileEventReader(WORK_DIR,
-        SpoolDirectorySourceConfigurationConstants.DEFAULT_SPOOLED_FILE_SUFFIX,
-        SpoolDirectorySourceConfigurationConstants.DFLT_IGNORE_PAT,
-        trackerDir, false, "file",
-        SpoolDirectorySourceConfigurationConstants.DEFAULT_DESERIALIZER,
-        new Context());
+    ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
+        .spoolDirectory(WORK_DIR).build();
 
     final int expectedLines = 0 + 1 + 2 + 3 + 1;
     int seenLines = 0;
@@ -125,14 +118,12 @@ public class TestReliableSpoolingFileEventReader {
 
   @Test
   public void testRepeatedCallsWithCommitOnSuccess() throws IOException {
-    File trackerDir = new File(WORK_DIR,
-        SpoolDirectorySourceConfigurationConstants.DEFAULT_META_DIR);
-    ReliableEventReader reader = new ReliableSpoolingFileEventReader(WORK_DIR,
-        SpoolDirectorySourceConfigurationConstants.DEFAULT_SPOOLED_FILE_SUFFIX,
-        SpoolDirectorySourceConfigurationConstants.DFLT_IGNORE_PAT,
-        trackerDir, false, "file",
-        SpoolDirectorySourceConfigurationConstants.DEFAULT_DESERIALIZER,
-        new Context());
+    String trackerDirPath =
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_META_DIR;
+    File trackerDir = new File(WORK_DIR, trackerDirPath);
+
+    ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
+        .spoolDirectory(WORK_DIR).trackerDirPath(trackerDirPath).build();
 
     final int expectedLines = 0 + 1 + 2 + 3 + 1;
     int seenLines = 0;
@@ -152,6 +143,37 @@ public class TestReliableSpoolingFileEventReader {
     }
 
     Assert.assertEquals(expectedLines, seenLines);
+  }
+
+  @Test
+  public void testFileDeletion() throws IOException {
+    ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
+        .spoolDirectory(WORK_DIR)
+        .deletePolicy(DeletePolicy.IMMEDIATE.name())
+        .build();
+
+    List<File> before = listFiles(WORK_DIR);
+    Assert.assertEquals("Expected 5, not: " + before, 5, before.size());
+
+    List<Event> events;
+    do {
+      events = reader.readEvents(10);
+      reader.commit();
+    } while (!events.isEmpty());
+
+    List<File> after = listFiles(WORK_DIR);
+    Assert.assertEquals("Expected 0, not: " + after, 0, after.size());
+  }
+
+  private static List<File> listFiles(File dir) {
+    List<File> files = Lists.newArrayList(dir.listFiles(new FileFilter
+        () {
+      @Override
+      public boolean accept(File pathname) {
+        return !pathname.isDirectory();
+      }
+    }));
+    return files;
   }
 
 }
