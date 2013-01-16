@@ -165,34 +165,6 @@ public class TestEmbeddedAgentEmbeddedSource {
     private static final long serialVersionUID = 116546244849853151L;
   }
   @Test
-  public void testStopSourceThrowsException() {
-    doThrow(new LocalRuntimeException()).when(sourceRunner).stop();
-    stopExpectingLocalRuntimeException();
-  }
-  @Test
-  public void testStopChannelThrowsException() {
-    doThrow(new LocalRuntimeException()).when(channel).stop();
-    stopExpectingLocalRuntimeException();
-  }
-  @Test
-  public void testStopSinkThrowsException() {
-    doThrow(new LocalRuntimeException()).when(sinkRunner).stop();
-    stopExpectingLocalRuntimeException();
-  }
-  private void stopExpectingLocalRuntimeException() {
-    agent.configure(properties);
-    agent.start();
-    try {
-      agent.stop();
-      Assert.fail();
-    } catch (FlumeException e) {
-      Assert.assertTrue(e.getCause() instanceof LocalRuntimeException);
-    }
-    verify(sourceRunner, times(1)).stop();
-    verify(channel, times(1)).stop();
-    verify(sinkRunner, times(1)).stop();
-  }
-  @Test
   public void testPut() throws EventDeliveryException {
     Event event = new SimpleEvent();
     agent.configure(properties);

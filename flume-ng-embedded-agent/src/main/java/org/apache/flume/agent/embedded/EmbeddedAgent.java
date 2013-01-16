@@ -42,7 +42,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 
 /**
  * EmbeddedAgent gives Flume users the ability to embed simple agents in
@@ -136,7 +135,7 @@ public class EmbeddedAgent {
     if(state != State.STARTED) {
       throw new IllegalStateException("Cannot be stopped unless started");
     }
-    doStop();
+    supervisor.stop();
     embeddedSource = null;
     state = State.STOPPED;
   }
@@ -212,7 +211,6 @@ public class EmbeddedAgent {
 
   private void doStart() {
     boolean error = true;
-    List<LifecycleAware> supervised = Lists.newArrayList();
     try {
       channel.start();
       sinkRunner.start();
@@ -220,28 +218,17 @@ public class EmbeddedAgent {
 
       supervisor.supervise(channel,
           new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
-      supervised.add(channel);
       supervisor.supervise(sinkRunner,
           new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
-      supervised.add(sinkRunner);
       supervisor.supervise(sourceRunner,
           new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
-      supervised.add(sourceRunner);
-
       error = false;
     } finally {
       if(error) {
-        for(LifecycleAware lifeCycleAware : supervised) {
-          try {
-            supervisor.unsupervise(lifeCycleAware);
-          } catch (Exception e) {
-            LOGGER.warn("Exception while stopping " + lifeCycleAware +
-                " due to error on startup", e);
-          }
-        }
         stopLogError(sourceRunner);
         stopLogError(channel);
         stopLogError(sinkRunner);
+        supervisor.stop();
       }
     }
   }
@@ -252,40 +239,6 @@ public class EmbeddedAgent {
       }
     } catch (Exception e) {
       LOGGER.warn("Exception while stopping " + lifeCycleAware, e);
-    }
-  }
-  private void doStop() {
-    Exception exception = null;
-    // source
-    try {
-      if(LifecycleState.START.equals(sourceRunner.getLifecycleState())) {
-        sourceRunner.stop();
-      }
-    } catch (Exception e) {
-      exception = e;
-      LOGGER.error("Caught exception stopping source " + sourceRunner, e);
-    }
-    // sink
-    try {
-      if(LifecycleState.START.equals(sinkRunner.getLifecycleState())) {
-        sinkRunner.stop();
-      }
-    } catch (Exception e) {
-      exception = e;
-      LOGGER.error("Caught exception stopping sink " + sinkRunner, e);
-    }
-    // channel
-    try {
-      if(LifecycleState.START.equals(channel.getLifecycleState())) {
-        channel.stop();
-      }
-    } catch (Exception e) {
-      exception = e;
-      LOGGER.error("Caught exception stopping channel " + channel, e);
-    }
-    if(exception != null) {
-      throw new FlumeException("Error stopping one or more components " +
-          "check the logs for an exhaustive list of errors", exception);
     }
   }
 
