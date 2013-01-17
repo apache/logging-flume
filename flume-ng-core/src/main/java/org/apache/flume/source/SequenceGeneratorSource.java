@@ -42,6 +42,8 @@ public class SequenceGeneratorSource extends AbstractSource implements
   private int batchSize;
   private CounterGroup counterGroup;
   private List<Event> batchArrayList;
+  private long totalEvents;
+  private long eventsSent = 0;
 
   public SequenceGeneratorSource() {
     sequence = 0;
@@ -58,28 +60,45 @@ public class SequenceGeneratorSource extends AbstractSource implements
     if (batchSize > 1) {
       batchArrayList = new ArrayList<Event>(batchSize);
     }
+    totalEvents = context.getLong("totalEvents", Long.MAX_VALUE);
   }
 
   @Override
   public Status process() throws EventDeliveryException {
 
+    Status status = Status.READY;
+    int i = 0;
     try {
       if (batchSize <= 1) {
-        getChannelProcessor().processEvent(
+        if(eventsSent < totalEvents) {
+          getChannelProcessor().processEvent(
             EventBuilder.withBody(String.valueOf(sequence++).getBytes()));
+          eventsSent++;
+        } else {
+          status = Status.BACKOFF;
+        }
       } else {
         batchArrayList.clear();
-        for (int i = 0; i < batchSize; i++) {
-          batchArrayList.add(i, EventBuilder.withBody(String.valueOf(sequence++).getBytes()));
+        for (i = 0; i < batchSize; i++) {
+          if(eventsSent < totalEvents){
+            batchArrayList.add(i, EventBuilder.withBody(String
+              .valueOf(sequence++).getBytes()));
+            eventsSent++;
+          } else {
+            status = Status.BACKOFF;
+          }
         }
-        getChannelProcessor().processEventBatch(batchArrayList);
+        if(!batchArrayList.isEmpty()) {
+          getChannelProcessor().processEventBatch(batchArrayList);
+        }
       }
       counterGroup.incrementAndGet("events.successful");
     } catch (ChannelException ex) {
       counterGroup.incrementAndGet("events.failed");
+      eventsSent -= i;
     }
 
-    return Status.READY;
+    return status;
   }
 
   @Override
