@@ -1539,8 +1539,8 @@ zookeeperQuorum   --                                                            
 znodeParent       /hbase                                                        The base path for the znode for the -ROOT- region. Value of ``zookeeper.znode.parent`` in hbase-site.xml
 **columnFamily**  --                                                            The column family in Hbase to write to.
 batchSize         100                                                           Number of events to be written per txn.
-timeout           --                                                            The length of time (in milliseconds) the sink waits for acks from hbase for
-                                                                                all events in a transaction. If no timeout is specified, the sink will wait forever.
+timeout           60000                                                         The length of time (in milliseconds) the sink waits for acks from hbase for
+                                                                                all events in a transaction.
 serializer        org.apache.flume.sink.hbase.SimpleAsyncHbaseEventSerializer
 serializer.*      --                                                            Properties to be passed to the serializer.
 ================  ============================================================  ====================================================================================

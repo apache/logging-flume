@@ -49,7 +49,7 @@ public class HBaseSinkConfigurationConstants {
 
   public static final String CONFIG_TIMEOUT = "timeout";
 
-  public static final long DEFAULT_TIMEOUT = Long.MAX_VALUE;
+  public static final long DEFAULT_TIMEOUT = 60000;
 
   public static final String CONFIG_KEYTAB = "kerberosKeytab";
 

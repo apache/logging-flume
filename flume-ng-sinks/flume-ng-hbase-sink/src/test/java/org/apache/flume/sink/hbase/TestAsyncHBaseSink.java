@@ -59,6 +59,8 @@ import com.google.common.io.Files;
 import com.google.common.primitives.Longs;
 import java.lang.reflect.Method;
 
+import org.junit.After;
+
 public class TestAsyncHBaseSink {
   private static HBaseTestingUtility testUtility;
   private static MiniZooKeeperCluster zookeeperCluster;
@@ -71,6 +73,7 @@ public class TestAsyncHBaseSink {
   private static String plCol = "pc";
   private static Context ctx = new Context();
   private static String valBase = "testing hbase sink: jham";
+  private boolean deleteTable = true;
 
 
   @BeforeClass
@@ -141,6 +144,8 @@ public class TestAsyncHBaseSink {
         "org.apache.flume.sink.hbase.SimpleAsyncHbaseEventSerializer");
     ctxMap.put("serializer.payloadColumn", plCol);
     ctxMap.put("serializer.incrementColumn", inColumn);
+    ctxMap.put("keep-alive", "0");
+    ctxMap.put("timeout", "10000");
     ctx.putAll(ctxMap);
   }
 
@@ -151,13 +156,21 @@ public class TestAsyncHBaseSink {
     FileUtils.deleteDirectory(new File(workDir));
   }
 
+  @After
+  public void tearDownTest() throws Exception {
+    if (deleteTable) {
+      testUtility.deleteTable(tableName.getBytes());
+    }
+  }
+
   @Test
   public void testOneEvent() throws Exception {
     testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
+    deleteTable = true;
     AsyncHBaseSink sink = new AsyncHBaseSink(testUtility.getConfiguration());
     Configurables.configure(sink, ctx);
     Channel channel = new MemoryChannel();
-    Configurables.configure(channel, new Context());
+    Configurables.configure(channel, ctx);
     sink.setChannel(channel);
     sink.start();
     Transaction tx = channel.getTransaction();
@@ -176,16 +189,16 @@ public class TestAsyncHBaseSink {
     Assert.assertArrayEquals(e.getBody(), out);
     out = results[1];
     Assert.assertArrayEquals(Longs.toByteArray(1), out);
-    testUtility.deleteTable(tableName.getBytes());
   }
 
   @Test
   public void testThreeEvents() throws Exception {
     testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
+    deleteTable = true;
     AsyncHBaseSink sink = new AsyncHBaseSink(testUtility.getConfiguration());
     Configurables.configure(sink, ctx);
     Channel channel = new MemoryChannel();
-    Configurables.configure(channel, new Context());
+    Configurables.configure(channel, ctx);
     sink.setChannel(channel);
     sink.start();
     Transaction tx = channel.getTransaction();
@@ -214,19 +227,46 @@ public class TestAsyncHBaseSink {
     Assert.assertEquals(3, found);
     out = results[3];
     Assert.assertArrayEquals(Longs.toByteArray(3), out);
-    testUtility.deleteTable(tableName.getBytes());
+  }
+
+  //This will without FLUME-1842's timeout fix - but with FLUME-1842's testing
+  //oriented changes to the callback classes and using single threaded executor
+  //for tests.
+  @Test (expected = EventDeliveryException.class)
+  public void testTimeOut() throws Exception {
+    testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
+    deleteTable = true;
+    AsyncHBaseSink sink = new AsyncHBaseSink(testUtility.getConfiguration(),
+      true);
+    Configurables.configure(sink, ctx);
+    Channel channel = new MemoryChannel();
+    Configurables.configure(channel, ctx);
+    sink.setChannel(channel);
+    sink.start();
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+    for(int i = 0; i < 3; i++){
+      Event e = EventBuilder.withBody(Bytes.toBytes(valBase + "-" + i));
+      channel.put(e);
+    }
+    tx.commit();
+    tx.close();
+    Assert.assertFalse(sink.isConfNull());
+    sink.process();
+    Assert.fail();
   }
 
   @Test
   public void testMultipleBatches() throws Exception {
     testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
+    deleteTable = true;
     ctx.put("batchSize", "2");
     AsyncHBaseSink sink = new AsyncHBaseSink(testUtility.getConfiguration());
     Configurables.configure(sink, ctx);
     //Reset the context to a higher batchSize
     ctx.put("batchSize", "100");
     Channel channel = new MemoryChannel();
-    Configurables.configure(channel, new Context());
+    Configurables.configure(channel, ctx);
     sink.setChannel(channel);
     sink.start();
     Transaction tx = channel.getTransaction();
@@ -261,17 +301,17 @@ public class TestAsyncHBaseSink {
     Assert.assertEquals(3, found);
     out = results[3];
     Assert.assertArrayEquals(Longs.toByteArray(3), out);
-    testUtility.deleteTable(tableName.getBytes());
   }
 
   @Test
   public void testWithoutConfigurationObject() throws Exception{
     testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
+    deleteTable = true;
     ctx.put("batchSize", "2");
     ctx.put(HBaseSinkConfigurationConstants.ZK_QUORUM,
         testUtility.getConfiguration().get(HConstants.ZOOKEEPER_QUORUM));
     ctx.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,
-        testUtility.getConfiguration().get(HConstants.ZOOKEEPER_ZNODE_PARENT));
+      testUtility.getConfiguration().get(HConstants.ZOOKEEPER_ZNODE_PARENT));
     AsyncHBaseSink sink = new AsyncHBaseSink();
     Configurables.configure(sink, ctx);
     // Reset context to values usable by other tests.
@@ -279,7 +319,7 @@ public class TestAsyncHBaseSink {
     ctx.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,null);
     ctx.put("batchSize", "100");
     Channel channel = new MemoryChannel();
-    Configurables.configure(channel, new Context());
+    Configurables.configure(channel, ctx);
     sink.setChannel(channel);
     sink.start();
     Transaction tx = channel.getTransaction();
@@ -318,18 +358,18 @@ public class TestAsyncHBaseSink {
     Assert.assertEquals(3, found);
     out = results[3];
     Assert.assertArrayEquals(Longs.toByteArray(3), out);
-    testUtility.deleteTable(tableName.getBytes());
   }
 
   @Test(expected = FlumeException.class)
   public void testMissingTable() throws Exception {
+    deleteTable = false;
     ctx.put("batchSize", "2");
     AsyncHBaseSink sink = new AsyncHBaseSink(testUtility.getConfiguration());
     Configurables.configure(sink, ctx);
     //Reset the context to a higher batchSize
     ctx.put("batchSize", "100");
     Channel channel = new MemoryChannel();
-    Configurables.configure(channel, new Context());
+    Configurables.configure(channel, ctx);
     sink.setChannel(channel);
     sink.start();
     Transaction tx = channel.getTransaction();
@@ -373,12 +413,13 @@ public class TestAsyncHBaseSink {
   public void testHBaseFailure() throws Exception {
     ctx.put("batchSize", "2");
     testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
+    deleteTable = false;
     AsyncHBaseSink sink = new AsyncHBaseSink(testUtility.getConfiguration());
     Configurables.configure(sink, ctx);
     //Reset the context to a higher batchSize
     ctx.put("batchSize", "100");
     Channel channel = new MemoryChannel();
-    Configurables.configure(channel, new Context());
+    Configurables.configure(channel, ctx);
     sink.setChannel(channel);
     sink.start();
     Transaction tx = channel.getTransaction();

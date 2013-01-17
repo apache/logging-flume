@@ -20,9 +20,12 @@ package org.apache.flume.sink.hbase;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -108,13 +111,20 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
   private long timeout;
   private String zkQuorum;
   private String zkBaseDir;
+  private ExecutorService sinkCallbackPool;
+  private boolean isTest;
 
   public AsyncHBaseSink(){
     this(null);
   }
 
   public AsyncHBaseSink(Configuration conf) {
+    this(conf, false);
+  }
+
+  AsyncHBaseSink(Configuration conf, boolean isTimeoutTesting) {
     this.conf = conf;
+    isTest = isTimeoutTesting;
   }
 
   @Override
@@ -184,6 +194,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
           }
         }
       }
+      client.flush();
     } catch (Throwable e) {
       this.handleTransactionFailure(txn);
       this.checkIfChannelExceptionAndThrow(e);
@@ -194,11 +205,15 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
     sinkCounter.addToEventDrainAttemptCount(i);
 
     lock.lock();
+    long startTime = System.nanoTime();
+    long timeRemaining;
     try {
       while ((callbacksReceived.get() < callbacksExpected.get())
               && !txnFail.get()) {
+        timeRemaining = timeout - (System.nanoTime() - startTime);
+        timeRemaining = (timeRemaining >= 0) ? timeRemaining : 0;
         try {
-          if(!condition.await(timeout, TimeUnit.MILLISECONDS)){
+          if(!condition.await(timeRemaining, TimeUnit.NANOSECONDS)){
             txnFail.set(true);
             logger.warn("HBase callbacks timed out. "
                     + "Transaction will be rolled back.");
@@ -288,6 +303,8 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
               + "Sink will not timeout.");
       timeout = HBaseSinkConfigurationConstants.DEFAULT_TIMEOUT;
     }
+    //Convert to nanos.
+    timeout = TimeUnit.MILLISECONDS.toNanos(timeout);
 
     zkQuorum = context.getString(
         HBaseSinkConfigurationConstants.ZK_QUORUM, "").trim();
@@ -300,7 +317,8 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
         conf = HBaseConfiguration.create();
       }
       zkQuorum = conf.get(HConstants.ZOOKEEPER_QUORUM);
-      zkBaseDir = conf.get(HConstants.ZOOKEEPER_ZNODE_PARENT);
+      zkBaseDir = conf.get(HConstants.ZOOKEEPER_ZNODE_PARENT,
+        HConstants.DEFAULT_ZOOKEEPER_ZNODE_PARENT);
     }
     Preconditions.checkState(zkQuorum != null && !zkQuorum.isEmpty(),
         "The Zookeeper quorum cannot be null and should be specified.");
@@ -316,11 +334,13 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
             + "before calling start on an old instance.");
     sinkCounter.start();
     sinkCounter.incrementConnectionCreatedCount();
-    if(zkBaseDir != null){
-      client = new HBaseClient(zkQuorum, zkBaseDir);
+    if (!isTest) {
+      sinkCallbackPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
+        .setNameFormat(this.getName() + " HBase Call Pool").build());
     } else {
-      client = new HBaseClient(zkQuorum);
+      sinkCallbackPool = Executors.newSingleThreadExecutor();
     }
+    client = new HBaseClient(zkQuorum, zkBaseDir, sinkCallbackPool);
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean fail = new AtomicBoolean(false);
     client.ensureTableFamilyExists(
@@ -366,6 +386,17 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
     client.shutdown();
     sinkCounter.incrementConnectionClosedCount();
     sinkCounter.stop();
+    sinkCallbackPool.shutdown();
+    try {
+      if(!sinkCallbackPool.awaitTermination(5, TimeUnit.SECONDS)) {
+        sinkCallbackPool.shutdownNow();
+      }
+    } catch (InterruptedException e) {
+      logger.error("Interrupted while waiting for asynchbase sink pool to " +
+        "die", e);
+      sinkCallbackPool.shutdownNow();
+    }
+    sinkCallbackPool = null;
     client = null;
     conf = null;
     open = false;
@@ -397,15 +428,31 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
     private Lock lock;
     private AtomicInteger callbacksReceived;
     private Condition condition;
+    private final boolean isTimeoutTesting;
 
     public SuccessCallback(Lock lck, AtomicInteger callbacksReceived,
             Condition condition) {
       lock = lck;
       this.callbacksReceived = callbacksReceived;
       this.condition = condition;
+      isTimeoutTesting = isTest;
     }
+
     @Override
     public R call(T arg) throws Exception {
+      if (isTimeoutTesting) {
+        try {
+          //tests set timeout to 10 seconds, so sleep for 4 seconds
+          TimeUnit.NANOSECONDS.sleep(TimeUnit.SECONDS.toNanos(4));
+        } catch (InterruptedException e) {
+          //ignore
+        }
+      }
+      doCall();
+      return null;
+    }
+
+    private void doCall() throws Exception {
       callbacksReceived.incrementAndGet();
       lock.lock();
       try{
@@ -413,7 +460,6 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
       } finally {
         lock.unlock();
       }
-      return null;
     }
   }
 
@@ -422,17 +468,31 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
     private AtomicInteger callbacksReceived;
     private AtomicBoolean txnFail;
     private Condition condition;
-
+    private final boolean isTimeoutTesting;
     public FailureCallback(Lock lck, AtomicInteger callbacksReceived,
             AtomicBoolean txnFail, Condition condition){
       this.lock = lck;
       this.callbacksReceived = callbacksReceived;
       this.txnFail = txnFail;
       this.condition = condition;
+      isTimeoutTesting = isTest;
     }
 
     @Override
     public R call(T arg) throws Exception {
+      if (isTimeoutTesting) {
+        //tests set timeout to 10 seconds, so sleep for 4 seconds
+        try {
+          TimeUnit.NANOSECONDS.sleep(TimeUnit.SECONDS.toNanos(4));
+        } catch (InterruptedException e) {
+          //ignore
+        }
+      }
+      doCall();
+      return null;
+    }
+
+    private void doCall() throws Exception {
       callbacksReceived.incrementAndGet();
       this.txnFail.set(true);
       lock.lock();
@@ -441,7 +501,6 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
       } finally {
         lock.unlock();
       }
-      return null;
     }
   }
 
