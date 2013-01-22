@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 public class HDFSDataStream implements HDFSWriter {
 
   private static final Logger logger =
-      LoggerFactory.getLogger(HDFSSequenceFile.class);
+      LoggerFactory.getLogger(HDFSDataStream.class);
 
   private FSDataOutputStream outStream;
   private String serializerType;

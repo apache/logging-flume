@@ -90,7 +90,6 @@ public class HDFSCompressedDataStream implements HDFSWriter {
     } else {
       fsOut = hdfs.create(dstPath);
     }
-    System.out.println("fsOut " + fsOut);
     cmpOut = codec.createOutputStream(fsOut);
     serializer = EventSerializerFactory.getInstance(serializerType,
         serializerContext, cmpOut);
