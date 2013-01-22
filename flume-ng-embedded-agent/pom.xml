@@ -26,7 +26,7 @@ limitations under the License.
 
   <artifactId>flume-ng-embedded-agent</artifactId>
   <name>Flume NG Embedded Agent</name>
-  <description>Flume Embedded Agent: Stable public API for Embeddeding a Flume 1.x Agent</description>
+  <description>Flume Embedded Agent: Stable public API for Embedding a Flume 1.x Agent</description>
 
   <dependencies>
 
@@ -48,6 +48,11 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-ng-node</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.flume.flume-ng-channels</groupId>
+      <artifactId>flume-file-channel</artifactId>
     </dependency>
 
     <dependency>
