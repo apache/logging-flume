@@ -38,6 +38,8 @@ import org.apache.flume.conf.Configurables;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.collect.Maps;
+import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.gateway.Gateway;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -71,7 +73,15 @@ public abstract class AbstractElasticSearchSinkTest {
   }
 
   void createNodes() throws Exception {
-    node = NodeBuilder.nodeBuilder().local(true).node();
+    Settings settings = ImmutableSettings
+        .settingsBuilder()
+        .put("number_of_shards", 1)
+        .put("number_of_replicas", 0)
+        .put("routing.hash.type", "simple")
+        .put("gateway.type", "none")
+        .build();
+
+    node = NodeBuilder.nodeBuilder().settings(settings).local(true).node();
     client = node.client();
 
     client.admin().cluster().prepareHealth().setWaitForGreenStatus().execute()
