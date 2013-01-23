@@ -1016,7 +1016,7 @@ inserted into the channel in one transaction.
 ==============  ===========================================  ====================================================================
 Property Name   Default                                      Description
 ==============  ===========================================  ====================================================================
-**type**                                                     The FQCN of this class:  ``org.apache.flume.source.http.HTTPSource``
+**type**                                                     The component type name, needs to be ``http``
 **port**        --                                           The port the source should bind to.
 handler         ``org.apache.flume.http.JSONHandler``        The FQCN of the handler class.
 handler.*       --                                           Config parameters for the handler
