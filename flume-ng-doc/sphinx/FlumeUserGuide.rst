@@ -1013,18 +1013,18 @@ unavailable status.
 All events sent in one post request are considered to be one batch and
 inserted into the channel in one transaction.
 
-==============  ===========================================  ====================================================================
-Property Name   Default                                      Description
-==============  ===========================================  ====================================================================
-**type**                                                     The component type name, needs to be ``http``
-**port**        --                                           The port the source should bind to.
-handler         ``org.apache.flume.http.JSONHandler``        The FQCN of the handler class.
-handler.*       --                                           Config parameters for the handler
-selector.type   replicating                                  replicating or multiplexing
-selector.*                                                   Depends on the selector.type value
-interceptors    --                                           Space separated list of interceptors
+==============  ============================================  ====================================================================
+Property Name   Default                                       Description
+==============  ============================================  ====================================================================
+**type**                                                      The component type name, needs to be ``http``
+**port**        --                                            The port the source should bind to.
+handler         ``org.apache.flume.source.http.JSONHandler``  The FQCN of the handler class.
+handler.*       --                                            Config parameters for the handler
+selector.type   replicating                                   replicating or multiplexing
+selector.*                                                    Depends on the selector.type value
+interceptors    --                                            Space separated list of interceptors
 interceptors.*
-=================================================================================================================================
+==================================================================================================================================
 
 For example, a http source for agent named a1:
 
