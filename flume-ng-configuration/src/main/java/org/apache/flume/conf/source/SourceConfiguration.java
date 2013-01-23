@@ -175,7 +175,7 @@ public class SourceConfiguration extends ComponentConfiguration {
      * Multiport Syslog TCP Source
      *
      * @see org.apache.flume.source.MultiportSyslogTCPSource
-     * 
+     *
      */
 
     MULTIPORT_SYSLOGTCP("org.apache.flume.source.MultiportSyslogTCPSourceConfiguration"),
@@ -185,7 +185,14 @@ public class SourceConfiguration extends ComponentConfiguration {
      *
      * @see org.apache.flume.source.SpoolDirectorySource
      */
-    SPOOLDIR("org.apache.flume.conf.source.SpoolDirectorySourceConfiguration");
+    SPOOLDIR("org.apache.flume.conf.source.SpoolDirectorySourceConfiguration"),
+
+    /**
+     * HTTP Source
+     *
+     * @see org.apache.flume.source.http.HTTPSource
+     */
+    HTTP("org.apache.flume.source.http.HTTPSourceConfiguration");
 
     private String srcConfigurationName;
 
