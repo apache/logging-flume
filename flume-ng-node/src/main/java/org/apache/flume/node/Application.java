@@ -74,7 +74,7 @@ public class Application  {
     supervisor = new LifecycleSupervisor();
   }
 
-  public void start() {
+  public synchronized void start() {
     for(LifecycleAware component : components) {
       supervisor.supervise(component,
           new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
@@ -88,7 +88,7 @@ public class Application  {
     startAllComponents(conf);
   }
 
-  public void stop() {
+  public synchronized void stop() {
     supervisor.stop();
     if(monitorServer != null) {
       monitorServer.stop();
