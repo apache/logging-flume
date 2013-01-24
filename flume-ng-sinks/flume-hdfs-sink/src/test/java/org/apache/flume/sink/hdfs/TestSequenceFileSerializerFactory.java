@@ -23,36 +23,37 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
 
-public class TestSeqFileFormatterFactory {
+public class TestSequenceFileSerializerFactory {
 
   @Test
   public void getTextFormatter() {
-    SeqFileFormatter formatter =
-        SeqFileFormatterFactory.getFormatter("Text", new Context());
+    SequenceFileSerializer formatter =
+        SequenceFileSerializerFactory.getSerializer("Text", new Context());
 
     assertTrue(formatter != null);
     assertTrue(formatter.getClass().getName(),
-        formatter instanceof HDFSTextFormatter);
+        formatter instanceof HDFSTextSerializer);
   }
 
   @Test
   public void getWritableFormatter() {
-    SeqFileFormatter formatter =
-        SeqFileFormatterFactory.getFormatter("Writable", new Context());
+    SequenceFileSerializer formatter =
+        SequenceFileSerializerFactory.getSerializer("Writable", new Context());
 
     assertTrue(formatter != null);
     assertTrue(formatter.getClass().getName(),
-        formatter instanceof HDFSWritableFormatter);
+        formatter instanceof HDFSWritableSerializer);
   }
 
   @Test
   public void getCustomFormatter() {
-    SeqFileFormatter formatter = SeqFileFormatterFactory.getFormatter(
-        "org.apache.flume.sink.hdfs.MyCustomFormatter$Builder", new Context());
+    SequenceFileSerializer formatter = SequenceFileSerializerFactory
+      .getSerializer(
+        "org.apache.flume.sink.hdfs.MyCustomSerializer$Builder", new Context());
 
     assertTrue(formatter != null);
     assertTrue(formatter.getClass().getName(),
-        formatter instanceof MyCustomFormatter);
+        formatter instanceof MyCustomSerializer);
   }
 
 }

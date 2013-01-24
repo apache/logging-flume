@@ -21,7 +21,7 @@ package org.apache.flume.sink.hdfs;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 
-public interface SeqFileFormatter {
+public interface SequenceFileSerializer {
 
   Class<?> getKeyClass();
 
@@ -34,14 +34,14 @@ public interface SeqFileFormatter {
    *         event
    * @return a list of records corresponding to the given event
    */
-  Iterable<Record> format(Event e);
+  Iterable<Record> serialize(Event e);
 
   /**
    * Knows how to construct this output formatter.<br/>
    * <b>Note: Implementations MUST provide a public a no-arg constructor.</b>
    */
   public interface Builder {
-    public SeqFileFormatter build(Context context);
+    public SequenceFileSerializer build(Context context);
   }
 
   /**

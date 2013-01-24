@@ -195,7 +195,7 @@ public class TestBucketWriter {
         open = true;
       }
     };
-    HDFSTextFormatter formatter = new HDFSTextFormatter();
+    HDFSTextSerializer serializer = new HDFSTextSerializer();
     File tmpFile = File.createTempFile("flume", "test");
     tmpFile.deleteOnExit();
     String path = tmpFile.getParent();
@@ -280,7 +280,7 @@ public class TestBucketWriter {
     final String PREFIX = "BRNO_IS_CITY_IN_CZECH_REPUBLIC";
 
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
-    HDFSTextFormatter formatter = new HDFSTextFormatter();
+    HDFSTextSerializer formatter = new HDFSTextSerializer();
     BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
         "/tmp", "file", PREFIX, ".tmp", null, null, SequenceFile.CompressionType.NONE, hdfsWriter,
         timedRollerPool, null,
@@ -299,7 +299,7 @@ public class TestBucketWriter {
     final String SUFFIX = "WELCOME_TO_THE_HELLMOUNTH";
 
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
-    HDFSTextFormatter formatter = new HDFSTextFormatter();
+    HDFSTextSerializer serializer = new HDFSTextSerializer();
     BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
         "/tmp", "file", "", SUFFIX, null, null, SequenceFile.CompressionType.NONE, hdfsWriter,
         timedRollerPool, null,
