@@ -24,7 +24,7 @@ import org.apache.hadoop.io.LongWritable;
 
 import java.util.Collections;
 
-public class HDFSWritableFormatter implements SeqFileFormatter {
+public class HDFSWritableSerializer implements SequenceFileSerializer {
 
   private BytesWritable makeByteWritable(Event e) {
     BytesWritable bytesObject = new BytesWritable();
@@ -43,7 +43,7 @@ public class HDFSWritableFormatter implements SeqFileFormatter {
   }
 
   @Override
-  public Iterable<Record> format(Event e) {
+  public Iterable<Record> serialize(Event e) {
     Object key = getKey(e);
     Object value = getValue(e);
     return Collections.singletonList(new Record(key, value));
@@ -65,11 +65,11 @@ public class HDFSWritableFormatter implements SeqFileFormatter {
     return makeByteWritable(e);
   }
 
-  public static class Builder implements SeqFileFormatter.Builder {
+  public static class Builder implements SequenceFileSerializer.Builder {
 
     @Override
-    public SeqFileFormatter build(Context context) {
-      return new HDFSWritableFormatter();
+    public SequenceFileSerializer build(Context context) {
+      return new HDFSWritableSerializer();
     }
 
   }

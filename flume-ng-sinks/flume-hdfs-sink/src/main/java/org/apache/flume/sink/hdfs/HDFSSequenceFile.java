@@ -39,7 +39,7 @@ public class HDFSSequenceFile implements HDFSWriter {
   private SequenceFile.Writer writer;
   private String writeFormat;
   private Context serializerContext;
-  private SeqFileFormatter formatter;
+  private SequenceFileSerializer serializer;
   private boolean useRawLocalFileSystem;
 
   public HDFSSequenceFile() {
@@ -48,14 +48,15 @@ public class HDFSSequenceFile implements HDFSWriter {
 
   @Override
   public void configure(Context context) {
-    // use binary writable format by default
-    writeFormat = context.getString("hdfs.writeFormat", SeqFileFormatterType.Writable.name());
+    // use binary writable serialize by default
+    writeFormat = context.getString("hdfs.writeFormat",
+      SequenceFileSerializerType.Writable.name());
     useRawLocalFileSystem = context.getBoolean("hdfs.useRawLocalFileSystem",
         false);
     serializerContext = new Context(
-            context.getSubProperties(SeqFileFormatterFactory.CTX_PREFIX));
-    formatter = SeqFileFormatterFactory
-            .getFormatter(writeFormat, serializerContext);
+            context.getSubProperties(SequenceFileSerializerFactory.CTX_PREFIX));
+    serializer = SequenceFileSerializerFactory
+            .getSerializer(writeFormat, serializerContext);
     logger.info("writeFormat = " + writeFormat + ", UseRawLocalFileSystem = "
         + useRawLocalFileSystem);
   }
@@ -82,17 +83,18 @@ public class HDFSSequenceFile implements HDFSWriter {
     if (conf.getBoolean("hdfs.append.support", false) == true && hdfs.isFile
             (dstPath)) {
       FSDataOutputStream outStream = hdfs.append(dstPath);
-      writer = SequenceFile.createWriter(conf, outStream, formatter.getKeyClass(),
-          formatter.getValueClass(), compType, codeC);
+      writer = SequenceFile.createWriter(conf, outStream, serializer
+        .getKeyClass(),
+        serializer.getValueClass(), compType, codeC);
     } else {
       writer = SequenceFile.createWriter(hdfs, conf, dstPath,
-          formatter.getKeyClass(), formatter.getValueClass(), compType, codeC);
+        serializer.getKeyClass(), serializer.getValueClass(), compType, codeC);
     }
   }
 
   @Override
   public void append(Event e) throws IOException {
-    for (SeqFileFormatter.Record record : formatter.format(e)) {
+    for (SequenceFileSerializer.Record record : serializer.serialize(e)) {
       writer.append(record.getKey(), record.getValue());
     }
   }

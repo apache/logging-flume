@@ -25,7 +25,7 @@ import org.apache.flume.Event;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.LongWritable;
 
-public class HDFSTextFormatter implements SeqFileFormatter {
+public class HDFSTextSerializer implements SequenceFileSerializer {
 
   private Text makeText(Event e) {
     Text textObject = new Text();
@@ -44,7 +44,7 @@ public class HDFSTextFormatter implements SeqFileFormatter {
   }
 
   @Override
-  public Iterable<Record> format(Event e) {
+  public Iterable<Record> serialize(Event e) {
     Object key = getKey(e);
     Object value = getValue(e);
     return Collections.singletonList(new Record(key, value));
@@ -67,11 +67,11 @@ public class HDFSTextFormatter implements SeqFileFormatter {
     return makeText(e);
   }
 
-  public static class Builder implements SeqFileFormatter.Builder {
+  public static class Builder implements SequenceFileSerializer.Builder {
 
     @Override
-    public SeqFileFormatter build(Context context) {
-      return new HDFSTextFormatter();
+    public SequenceFileSerializer build(Context context) {
+      return new HDFSTextSerializer();
     }
 
   }

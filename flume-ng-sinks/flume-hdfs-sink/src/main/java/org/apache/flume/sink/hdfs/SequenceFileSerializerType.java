@@ -16,43 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.flume.sink.hdfs;
 
-import org.apache.flume.Context;
-import org.apache.flume.Event;
-import org.apache.hadoop.io.BytesWritable;
-import org.apache.hadoop.io.LongWritable;
+public enum SequenceFileSerializerType {
+  Writable(HDFSWritableSerializer.Builder.class),
+  Text(HDFSTextSerializer.Builder.class),
+  Other(null);
 
-import java.util.Arrays;
+  private final Class<? extends SequenceFileSerializer.Builder> builderClass;
 
-public class MyCustomFormatter implements SeqFileFormatter {
-
-  @Override
-  public Class<LongWritable> getKeyClass() {
-    return LongWritable.class;
+  SequenceFileSerializerType(
+    Class<? extends SequenceFileSerializer.Builder> builderClass) {
+    this.builderClass = builderClass;
   }
 
-  @Override
-  public Class<BytesWritable> getValueClass() {
-    return BytesWritable.class;
-  }
-
-  @Override
-  public Iterable<Record> format(Event e) {
-    return Arrays.asList(
-        new Record(new LongWritable(1234L), new BytesWritable(new byte[10])),
-        new Record(new LongWritable(4567L), new BytesWritable(new byte[20]))
-    );
-  }
-
-  public static class Builder implements SeqFileFormatter.Builder {
-
-    @Override
-    public SeqFileFormatter build(Context context) {
-      return new MyCustomFormatter();
-    }
-
+  public Class<? extends SequenceFileSerializer.Builder> getBuilderClass() {
+    return builderClass;
   }
 
 }
+

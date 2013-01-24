@@ -23,10 +23,10 @@ import org.apache.flume.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SeqFileFormatterFactory {
+public class SequenceFileSerializerFactory {
 
   private static final Logger logger =
-      LoggerFactory.getLogger(SeqFileFormatterFactory.class);
+      LoggerFactory.getLogger(SequenceFileSerializerFactory.class);
 
   /**
    * {@link Context} prefix
@@ -34,28 +34,29 @@ public class SeqFileFormatterFactory {
   static final String CTX_PREFIX = "writeFormat.";
 
   @SuppressWarnings("unchecked")
-  static SeqFileFormatter getFormatter(String formatType, Context context) {
+  static SequenceFileSerializer getSerializer(String formatType,
+                                              Context context) {
 
     Preconditions.checkNotNull(formatType,
-        "format type must not be null");
+        "serialize type must not be null");
 
     // try to find builder class in enum of known formatters
-    SeqFileFormatterType type;
+    SequenceFileSerializerType type;
     try {
-      type = SeqFileFormatterType.valueOf(formatType);
+      type = SequenceFileSerializerType.valueOf(formatType);
     } catch (IllegalArgumentException e) {
       logger.debug("Not in enum, loading builder class: {}", formatType);
-      type = SeqFileFormatterType.Other;
+      type = SequenceFileSerializerType.Other;
     }
-    Class<? extends SeqFileFormatter.Builder> builderClass =
+    Class<? extends SequenceFileSerializer.Builder> builderClass =
         type.getBuilderClass();
 
     // handle the case where they have specified their own builder in the config
     if (builderClass == null) {
       try {
         Class c = Class.forName(formatType);
-        if (c != null && SeqFileFormatter.Builder.class.isAssignableFrom(c)) {
-          builderClass = (Class<? extends SeqFileFormatter.Builder>) c;
+        if (c != null && SequenceFileSerializer.Builder.class.isAssignableFrom(c)) {
+          builderClass = (Class<? extends SequenceFileSerializer.Builder>) c;
         } else {
           logger.error("Unable to instantiate Builder from {}", formatType);
           return null;
@@ -65,14 +66,14 @@ public class SeqFileFormatterFactory {
         return null;
       } catch (ClassCastException ex) {
         logger.error("Class does not extend " +
-            SeqFileFormatter.Builder.class.getCanonicalName() + ": " +
+            SequenceFileSerializer.Builder.class.getCanonicalName() + ": " +
             formatType, ex);
         return null;
       }
     }
 
     // build the builder
-    SeqFileFormatter.Builder builder;
+    SequenceFileSerializer.Builder builder;
     try {
       builder = builderClass.newInstance();
     } catch (InstantiationException ex) {
