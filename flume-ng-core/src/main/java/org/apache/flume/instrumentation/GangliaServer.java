@@ -18,8 +18,6 @@
  */
 package org.apache.flume.instrumentation;
 
-import com.google.common.base.Throwables;
-import java.lang.management.ManagementFactory;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -29,15 +27,9 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import javax.management.Attribute;
-import javax.management.AttributeList;
-import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanServer;
-import javax.management.ObjectInstance;
 import org.apache.flume.Context;
 import org.apache.flume.FlumeException;
 import org.apache.flume.api.HostInfo;
@@ -239,7 +231,14 @@ public class GangliaServer implements MonitorService {
             + name + ": " + value);
     name = hostname + "." + name;
     xdr_int(0);
-    xdr_string("float");
+    String type = "string";
+    try {
+      Float.parseFloat(value);
+      type = "float";
+    } catch (NumberFormatException ex) {
+      // The param is a string, and so leave the type as is.
+    }
+    xdr_string(type); // metric type
     xdr_string(name);
     xdr_string(value);
     xdr_string(DEFAULT_UNITS);
@@ -255,7 +254,14 @@ public class GangliaServer implements MonitorService {
     xdr_string(hostname); // hostname
     xdr_string(name); // metric name
     xdr_int(0); // spoof = False
-    xdr_string("float"); // metric type
+    String type = "string";
+    try {
+      Float.parseFloat(value);
+      type = "float";
+    } catch (NumberFormatException ex) {
+      // The param is a string, and so leave the type as is.
+    }
+    xdr_string(type); // metric type
     xdr_string(name); // metric name
     xdr_string(DEFAULT_UNITS); // units
     xdr_int(DEFAULT_SLOPE); // slope
@@ -325,8 +331,6 @@ public class GangliaServer implements MonitorService {
   protected class GangliaCollector implements Runnable {
 
     private GangliaServer server;
-    private final MBeanServer mbeanServer = ManagementFactory.
-            getPlatformMBeanServer();
 
     @Override
     public void run() {
