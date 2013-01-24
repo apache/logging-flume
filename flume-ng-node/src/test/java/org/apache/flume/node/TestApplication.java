@@ -21,26 +21,39 @@ package org.apache.flume.node;
 
 import static org.mockito.Mockito.*;
 
+import java.io.File;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.flume.Channel;
 import org.apache.flume.SinkRunner;
 import org.apache.flume.SourceRunner;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import com.google.common.collect.Lists;
 import com.google.common.eventbus.EventBus;
+import com.google.common.io.Files;
 
 public class TestApplication {
 
 
+  private File baseDir;
+
   @Before
   public void setup() throws Exception {
-
+    baseDir = Files.createTempDir();
+  }
+  @After
+  public void tearDown() throws Exception {
+    FileUtils.deleteDirectory(baseDir);
   }
 
   private <T extends LifecycleAware> T mockLifeCycle(Class<T> klass) {
@@ -118,6 +131,26 @@ public class TestApplication {
     verify(sourceRunner).stop();
     verify(sinkRunner).stop();
     verify(channel).stop();
+  }
 
+  @Test
+  public void testFLUME1854() throws Exception {
+    File configFile = new File(baseDir, "flume-conf.properties");
+    Files.copy(new File(getClass().getClassLoader()
+        .getResource("flume-conf.properties").getFile()), configFile);
+    Random random = new Random();
+    for (int i = 0; i < 3; i++) {
+      EventBus eventBus = new EventBus("test-event-bus");
+      PollingPropertiesFileConfigurationProvider configurationProvider =
+          new PollingPropertiesFileConfigurationProvider("host1",
+              configFile, eventBus, 1);
+      List<LifecycleAware> components = Lists.newArrayList();
+      components.add(configurationProvider);
+      Application application = new Application(components);
+      eventBus.register(application);
+      application.start();
+      Thread.sleep(random.nextInt(10000));
+      application.stop();
+    }
   }
 }
