@@ -442,6 +442,8 @@ via the put, putAll methods on the EmbeddedAgent object. Only File Channel
 and Memory Channel are allowed as channels while Avro Sink is the only
 supported sink.
 
+Note: The embedded agent has a dependency on hadoop-core.jar.
+
 Configuration of an Embedded Agent is similar to configuration of a
 full Agent. The following is an exhaustive list of configration options:
 
