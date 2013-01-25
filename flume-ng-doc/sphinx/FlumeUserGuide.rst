@@ -773,54 +773,90 @@ Example for agent named a1:
 
 Spooling Directory Source
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-This source lets you ingest data by dropping files in a spooling directory on
-disk. **Unlike other asynchronous sources, this source
-avoids data loss even if Flume is restarted or fails.**
-Flume will watch the directory for new files and read then ingest them
-as they appear. After a given file has been fully read into the channel,
-it is renamed to indicate completion. This allows a cleaner process to remove
-completed files periodically. Note, however,
-that events may be duplicated if failures occur, consistent with the semantics
-offered by other Flume components. The channel optionally inserts the full path of
-the origin file into a header field of each event. This source buffers file data
-in memory during reads; be sure to set the `bufferMaxLineLength` option to a number
-greater than the longest line you expect to see in your input data.
+This source lets you ingest data by placing files to be ingested into a
+"spooling" directory on disk.
+This source will watch the specified directory for new files, and will parse
+events out of new files as they appear.
+The event parsing logic is pluggable.
+After a given file has been fully read
+into the channel, it is renamed to indicate completion (or optionally deleted).
 
-.. warning:: This channel expects that only immutable, uniquely named files
-             are dropped in the spooling directory. If duplicate names are
-             used, or files are modified while being read, the source will
-             fail with an error message. For some use cases this may require
-             adding unique identifiers (such as a timestamp) to log file names
-             when they are copied into the spooling directory.
+Unlike the Exec source, this source is reliable and will not miss data, even if
+Flume is restarted or killed. In exchange for this reliability, only immutable,
+uniquely-named files must be dropped into the spooling directory. Flume tries
+to detect these problem conditions and will fail loudly if they are violated:
+
+#. If a file is written to after being placed into the spooling directory,
+   Flume will print an error to its log file and stop processing.
+#. If a file name is reused at a later time, Flume will print an error to its
+   log file and stop processing.
+
+To avoid the above issues, it may be useful to add a unique identifier
+(such as a timestamp) to log file names when they are moved into the spooling
+directory.
+
+Despite the reliability guarantees of this source, there are still
+cases in which events may be duplicated if certain downstream failures occur.
+This is consistent with the guarantees offered by other Flume components.
 
 ====================  ==============  ==========================================================
 Property Name         Default         Description
 ====================  ==============  ==========================================================
 **channels**          --
-**type**              --              The component type name, needs to be ``spooldir``
-**spoolDir**          --              The directory where log files will be spooled
+**type**              --              The component type name, needs to be ``spooldir``.
+**spoolDir**          --              The directory from which to read files from.
 fileSuffix            .COMPLETED      Suffix to append to completely ingested files
+deletePolicy          never           When to delete completed files: ``never`` or ``immediate``
 fileHeader            false           Whether to add a header storing the filename
 fileHeaderKey         file            Header key to use when appending filename to header
-batchSize             10              Granularity at which to batch transfer to the channel
-bufferMaxLines        100             Maximum number of lines the commit buffer can hold
-bufferMaxLineLength   5000            Maximum length of a line in the commit buffer
+ignorePattern         ^$              Regular expression specifying which files to ignore (skip)
+trackerDir            .flumespool     Directory to store metadata related to processing of files.
+                                      If this path is not an absolute path, then it is interpreted as relative to the spoolDir.
+batchSize             100             Granularity at which to batch transfer to the channel
+inputCharset          UTF-8           Character set used by deserializers that treat the input file as text.
+deserializer          ``LINE``        Specify the deserializer used to parse the file into events.
+                                      Defaults to parsing each line as an event. The class specified must implement
+                                      ``EventDeserializer.Builder``.
+deserializer.*                        Varies per event deserializer.
+bufferMaxLines        --              (Obselete) This option is now ignored.
+bufferMaxLineLength   5000            (Deprecated) Maximum length of a line in the commit buffer. Use deserializer.maxLineLength instead.
 selector.type         replicating     replicating or multiplexing
 selector.*                            Depends on the selector.type value
 interceptors          --              Space separated list of interceptors
 interceptors.*
 ====================  ==============  ==========================================================
 
-Example for agent named a1:
+Example for an agent named agent-1:
 
 .. code-block:: properties
 
-  a1.sources = r1
-  a1.channels = c1
-  a1.sources.r1.type = spooldir
-  a1.sources.r1.spoolDir = /var/log/apache/flumeSpool
-  a1.sources.r1.fileHeader = true
-  a1.sources.r1.channels = c1
+  agent-1.channels = ch-1
+  agent-1.sources = src-1
+
+  agent-1.sources.src-1.type = spooldir
+  agent-1.sources.src-1.channels = ch-1
+  agent-1.sources.src-1.spoolDir = /var/log/apache/flumeSpool
+  agent-1.sources.src-1.fileHeader = true
+
+Event Deserializers
+'''''''''''''''''''
+
+The following event deserializers ship with Flume.
+
+LINE
+^^^^
+
+This deserializer generates one event per line of text input.
+
+==============================  ==============  ==========================================================
+Property Name                   Default         Description
+==============================  ==============  ==========================================================
+deserializer.maxLineLength      2048            Maximum number of characters to include in a single event.
+                                                If a line exceeds this length, it is truncated, and the
+                                                remaining characters on the line will appear in a
+                                                subsequent event.
+deserializer.outputCharset      UTF-8           Charset to use for encoding events put into the channel.
+==============================  ==============  ==========================================================
 
 NetCat Source
 ~~~~~~~~~~~~~
