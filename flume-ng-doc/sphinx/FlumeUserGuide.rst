@@ -2088,16 +2088,16 @@ sinks.
 
 Required properties are in **bold**.
 
-====================================  ===============  ==========================================================================
-Property Name                         Default          Description
-====================================  ===============  ==========================================================================
-**processor.sinks**                   --               Space separated list of sinks that are participating in the group
-**processor.type**                    ``default``      The component type name, needs to be ``load_balance``
-processor.backoff                     true             Should failed sinks be backed off exponentially.
-processor.selector                    ``round_robin``  Selection mechanism. Must be either ``round_robin``, ``random``
-                                                       or FQCN of custom class that inherits from ``AbstractSinkSelector``
-processor.selector.maxBackoffMillis   30000            used by backoff selectors to limit exponential backoff in miliseconds
-====================================  ===============  ==========================================================================
+=============================  ===============  ==========================================================================
+Property Name                  Default          Description
+=============================  ===============  ==========================================================================
+**processor.sinks**            --               Space separated list of sinks that are participating in the group
+**processor.type**             ``default``      The component type name, needs to be ``load_balance``
+processor.backoff              true             Should failed sinks be backed off exponentially.
+processor.selector             ``round_robin``  Selection mechanism. Must be either ``round_robin``, ``random``
+                                                or FQCN of custom class that inherits from ``AbstractSinkSelector``
+processor.selector.maxTimeOut  30000            Used by backoff selectors to limit exponential backoff (in milliseconds)
+=============================  ===============  ==========================================================================
 
 Example for agent named a1:
 
