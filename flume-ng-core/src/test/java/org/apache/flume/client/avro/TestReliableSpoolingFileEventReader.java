@@ -93,11 +93,30 @@ public class TestReliableSpoolingFileEventReader {
 
   }
 
-  // FIXME: implement ignore pattern test
-  @Ignore
   @Test
-  public void testIgnorePattern() {
-    ReliableSpoolingFileEventReader parser;
+  public void testIgnorePattern() throws IOException {
+    ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
+        .spoolDirectory(WORK_DIR)
+        .ignorePattern("^file2$")
+        .deletePolicy(DeletePolicy.IMMEDIATE.toString())
+        .build();
+
+    List<File> before = listFiles(WORK_DIR);
+    Assert.assertEquals("Expected 5, not: " + before, 5, before.size());
+
+    List<Event> events;
+    do {
+      events = reader.readEvents(10);
+      reader.commit();
+    } while (!events.isEmpty());
+
+    List<File> after = listFiles(WORK_DIR);
+    Assert.assertEquals("Expected 1, not: " + after, 1, after.size());
+    Assert.assertEquals("file2", after.get(0).getName());
+    List<File> trackerFiles = listFiles(new File(WORK_DIR,
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_TRACKER_DIR));
+    Assert.assertEquals("Expected 0, not: " + trackerFiles, 0,
+        trackerFiles.size());
   }
 
   @Test
@@ -163,6 +182,10 @@ public class TestReliableSpoolingFileEventReader {
 
     List<File> after = listFiles(WORK_DIR);
     Assert.assertEquals("Expected 0, not: " + after, 0, after.size());
+    List<File> trackerFiles = listFiles(new File(WORK_DIR,
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_TRACKER_DIR));
+    Assert.assertEquals("Expected 0, not: " + trackerFiles, 0,
+        trackerFiles.size());
   }
 
   private static List<File> listFiles(File dir) {
