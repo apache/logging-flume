@@ -40,6 +40,7 @@ public class SourceConfiguration extends ComponentConfiguration {
 
   public SourceConfiguration(String componentName) {
     super(componentName);
+    channels = new HashSet<String>();
   }
 
   public Set<String> getChannels() {
