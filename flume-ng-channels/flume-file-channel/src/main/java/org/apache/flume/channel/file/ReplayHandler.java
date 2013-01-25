@@ -273,6 +273,9 @@ class ReplayHandler {
         writeOrderIDSeed = Math.max(writeOrderIDSeed,
             record.getLogWriteOrderID());
         readCount++;
+        if(readCount % 10000 == 0 && readCount > 0) {
+          LOG.info("Read " + readCount + " records");
+        }
         if (record.getLogWriteOrderID() > lastCheckpoint) {
           if (type == TransactionEventRecord.Type.PUT.get()) {
             putCount++;
