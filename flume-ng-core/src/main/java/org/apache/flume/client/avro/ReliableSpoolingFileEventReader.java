@@ -371,6 +371,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     if (!fileToDelete.delete()) {
       throw new IOException("Unable to delete spool file: " + fileToDelete);
     }
+    // now we no longer need the meta file
+    deleteMetaFile();
   }
 
   /**
