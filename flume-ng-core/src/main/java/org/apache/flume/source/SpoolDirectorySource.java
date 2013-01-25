@@ -56,6 +56,7 @@ Configurable, EventDrivenSource {
   private String deserializerType;
   private Context deserializerContext;
   private String deletePolicy;
+  private String inputCharset;
 
   private CounterGroup counterGroup;
   ReliableSpoolingFileEventReader reader;
@@ -81,6 +82,7 @@ Configurable, EventDrivenSource {
           .deserializerType(deserializerType)
           .deserializerContext(deserializerContext)
           .deletePolicy(deletePolicy)
+          .inputCharset(inputCharset)
           .build();
     } catch (IOException ioe) {
       throw new FlumeException("Error instantiating spooling event parser",
@@ -115,9 +117,10 @@ Configurable, EventDrivenSource {
         DEFAULT_FILENAME_HEADER_KEY);
     batchSize = context.getInteger(BATCH_SIZE,
         DEFAULT_BATCH_SIZE);
+    inputCharset = context.getString(INPUT_CHARSET, DEFAULT_INPUT_CHARSET);
 
     ignorePattern = context.getString(IGNORE_PAT, DEFAULT_IGNORE_PAT);
-    trackerDirPath = context.getString(META_DIR, DEFAULT_META_DIR);
+    trackerDirPath = context.getString(TRACKER_DIR, DEFAULT_TRACKER_DIR);
 
     deserializerType = context.getString(DESERIALIZER, DEFAULT_DESERIALIZER);
     deserializerContext = new Context(context.getSubProperties(DESERIALIZER +

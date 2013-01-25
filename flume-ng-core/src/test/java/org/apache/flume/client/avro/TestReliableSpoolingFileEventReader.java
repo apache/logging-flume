@@ -119,7 +119,7 @@ public class TestReliableSpoolingFileEventReader {
   @Test
   public void testRepeatedCallsWithCommitOnSuccess() throws IOException {
     String trackerDirPath =
-        SpoolDirectorySourceConfigurationConstants.DEFAULT_META_DIR;
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_TRACKER_DIR;
     File trackerDir = new File(WORK_DIR, trackerDirPath);
 
     ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()

@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -84,6 +85,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
   private final boolean annotateFileName;
   private final String fileNameHeader;
   private final String deletePolicy;
+  private final Charset inputCharset;
 
   private Optional<FileInfo> currentFile = Optional.absent();
   /** Always contains the last file from which lines have been read. **/
@@ -97,7 +99,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       String completedSuffix, String ignorePattern, String trackerDirPath,
       boolean annotateFileName, String fileNameHeader,
       String deserializerType, Context deserializerContext,
-      String deletePolicy) throws IOException {
+      String deletePolicy, String inputCharset) throws IOException {
 
     // Sanity checks
     Preconditions.checkNotNull(spoolDirectory);
@@ -107,6 +109,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     Preconditions.checkNotNull(deserializerType);
     Preconditions.checkNotNull(deserializerContext);
     Preconditions.checkNotNull(deletePolicy);
+    Preconditions.checkNotNull(inputCharset);
 
     // validate delete policy
     if (!deletePolicy.equalsIgnoreCase(DeletePolicy.NEVER.name()) &&
@@ -149,6 +152,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     this.fileNameHeader = fileNameHeader;
     this.ignorePattern = Pattern.compile(ignorePattern);
     this.deletePolicy = deletePolicy;
+    this.inputCharset = Charset.forName(inputCharset);
 
     File trackerDirectory = new File(trackerDirPath);
 
@@ -422,7 +426,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
             tracker.getTarget(), nextPath);
 
         ResettableInputStream in =
-            new ResettableFileInputStream(nextFile, tracker);
+            new ResettableFileInputStream(nextFile, tracker,
+                ResettableFileInputStream.DEFAULT_BUF_SIZE, inputCharset);
         EventDeserializer deserializer = EventDeserializerFactory.getInstance
             (deserializerType, deserializerContext, in);
 
@@ -482,7 +487,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     private String ignorePattern =
         SpoolDirectorySourceConfigurationConstants.DEFAULT_IGNORE_PAT;
     private String trackerDirPath =
-        SpoolDirectorySourceConfigurationConstants.DEFAULT_META_DIR;
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_TRACKER_DIR;
     private Boolean annotateFileName =
         SpoolDirectorySourceConfigurationConstants.DEFAULT_FILE_HEADER;
     private String fileNameHeader =
@@ -492,6 +497,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     private Context deserializerContext = new Context();
     private String deletePolicy =
         SpoolDirectorySourceConfigurationConstants.DEFAULT_DELETE_POLICY;
+    private String inputCharset =
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_INPUT_CHARSET;
 
     public Builder spoolDirectory(File directory) {
       this.spoolDirectory = directory;
@@ -538,10 +545,15 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       return this;
     }
 
+    public Builder inputCharset(String inputCharset) {
+      this.inputCharset = inputCharset;
+      return this;
+    }
+
     public ReliableSpoolingFileEventReader build() throws IOException {
       return new ReliableSpoolingFileEventReader(spoolDirectory, completedSuffix,
           ignorePattern, trackerDirPath, annotateFileName, fileNameHeader,
-          deserializerType, deserializerContext, deletePolicy);
+          deserializerType, deserializerContext, deletePolicy, inputCharset);
     }
   }
 
