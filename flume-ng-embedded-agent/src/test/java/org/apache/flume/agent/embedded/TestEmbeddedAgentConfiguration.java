@@ -47,10 +47,30 @@ public class TestEmbeddedAgentConfiguration {
     properties.put("sink2.port", "2");
     properties.put("processor.type", "load_balance");
   }
+
+
   @Test
-  public void testBasic() throws Exception {
-    Map<String, String> actual = EmbeddedAgentConfiguration.
-        configure("test1", properties);
+  public void testFullSourceType() throws Exception {
+    doTestExcepted(EmbeddedAgentConfiguration.
+        configure("test1", properties));
+  }
+
+  @Test
+  public void testMissingSourceType() throws Exception {
+    Assert.assertNotNull(properties.remove("source.type"));
+    doTestExcepted(EmbeddedAgentConfiguration.
+        configure("test1", properties));
+  }
+
+  @Test
+  public void testShortSourceType() throws Exception {
+    properties.put("source.type", "EMBEDDED");
+    doTestExcepted(EmbeddedAgentConfiguration.
+        configure("test1", properties));
+  }
+
+
+  public void doTestExcepted(Map<String, String> actual) throws Exception {
     Map<String, String> expected = Maps.newHashMap();
     expected.put("test1.channels", "channel-test1");
     expected.put("test1.channels.channel-test1.capacity", "200");
@@ -71,7 +91,6 @@ public class TestEmbeddedAgentConfiguration {
     expected.put("test1.sources.source-test1.channels", "channel-test1");
     expected.put("test1.sources.source-test1.type", EmbeddedAgentConfiguration.
         SOURCE_TYPE_EMBEDDED);
-
     Assert.assertEquals(expected, actual);
   }
 
@@ -114,6 +133,21 @@ public class TestEmbeddedAgentConfiguration {
   @Test(expected = FlumeException.class)
   public void testBadKey() throws Exception {
     properties.put("bad.key.name", "bad");
+    EmbeddedAgentConfiguration.configure("test1", properties);
+  }
+  @Test(expected = FlumeException.class)
+  public void testSinkNamedLikeSource() throws Exception {
+    properties.put("sinks", "source");
+    EmbeddedAgentConfiguration.configure("test1", properties);
+  }
+  @Test(expected = FlumeException.class)
+  public void testSinkNamedLikeChannel() throws Exception {
+    properties.put("sinks", "channel");
+    EmbeddedAgentConfiguration.configure("test1", properties);
+  }
+  @Test(expected = FlumeException.class)
+  public void testSinkNamedLikeProcessor() throws Exception {
+    properties.put("sinks", "processor");
     EmbeddedAgentConfiguration.configure("test1", properties);
   }
 }

@@ -19,6 +19,6 @@
 /**
  * This package provides Flume users the ability to embed simple agents
  * in applications. For specific and up to date information, please see
- * the Flume User Guide.
+ * the Flume Developer Guide.
  */
 package org.apache.flume.agent.embedded;

@@ -33,6 +33,7 @@ import org.apache.flume.conf.sink.SinkProcessorType;
 import org.apache.flume.conf.sink.SinkType;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 
 /**
@@ -65,7 +66,7 @@ public class EmbeddedAgentConfiguration {
 
   public static final String SINKS_PREFIX = join(SINKS, "");
   /**
-   * Source type, choices are `embedded' or `avro'
+   * Source type, choices are `embedded'
    */
   public static final String SOURCE_TYPE = join(SOURCE, TYPE);
   /**
@@ -81,7 +82,7 @@ public class EmbeddedAgentConfiguration {
    */
   public static final String CHANNEL_PREFIX = join(CHANNEL, "");
   /**
-   * Sink processor type, choices are `default' (failover) or `load_balance'
+   * Sink processor type, choices are `default', `failover' or `load_balance'
    */
   public static final String SINK_PROCESSOR_TYPE = join(SINK_PROCESSOR, TYPE);
   /**
@@ -90,10 +91,11 @@ public class EmbeddedAgentConfiguration {
   public static final String SINK_PROCESSOR_PREFIX = join(SINK_PROCESSOR, "");
   /**
    * Embedded source which provides simple in-memory transfer to channel.
-   * Use this source via the put,pulAll methods on the EmbeddedAgent. This
-   * is the recommended source to use for Embedded Agents.
+   * Use this source via the put,putAll methods on the EmbeddedAgent. This
+   * is the only supported source to use for Embedded Agents.
    */
   public static final String SOURCE_TYPE_EMBEDDED = EmbeddedSource.class.getName();
+  private static final String SOURCE_TYPE_EMBEDDED_ALIAS = "EMBEDDED";
   /**
    * Memory channel which stores events in heap. See Flume User Guide for
    * configuration information. This is the recommended channel to use for
@@ -101,8 +103,8 @@ public class EmbeddedAgentConfiguration {
    */
   public static final String CHANNEL_TYPE_MEMORY = ChannelType.MEMORY.name();
   /**
-   * File based channel which stores events in heap. See Flume User Guide for
-   * configuration information.
+   * File based channel which stores events in on local disk. See Flume User
+   * Guide for configuration information.
    */
   public static final String CHANNEL_TYPE_FILE = ChannelType.FILE.name();
 
@@ -129,6 +131,7 @@ public class EmbeddedAgentConfiguration {
 
 
   private static final String[] ALLOWED_SOURCES = {
+    SOURCE_TYPE_EMBEDDED_ALIAS,
     SOURCE_TYPE_EMBEDDED,
   };
 
@@ -147,6 +150,9 @@ public class EmbeddedAgentConfiguration {
     SINK_PROCESSOR_TYPE_LOAD_BALANCE
   };
 
+  private static final ImmutableList<String> DISALLOWED_SINK_NAMES =
+      ImmutableList.of("source", "channel", "processor");
+
   private static void validate(String name,
       Map<String, String> properties) throws FlumeException {
 
@@ -158,6 +164,10 @@ public class EmbeddedAgentConfiguration {
     checkRequired(properties, SINKS);
     String sinkNames = properties.get(SINKS);
     for(String sink : sinkNames.split("\\s+")) {
+      if(DISALLOWED_SINK_NAMES.contains(sink.toLowerCase())) {
+        throw new FlumeException("Sink name " + sink + " is one of the" +
+            " disallowed sink names: " + DISALLOWED_SINK_NAMES);
+      }
       String key = join(sink, TYPE);
       checkRequired(properties, key);
       checkAllowed(ALLOWED_SINKS, properties.get(key));
@@ -182,7 +192,8 @@ public class EmbeddedAgentConfiguration {
     // we are going to modify the properties as we parse the config
     properties = new HashMap<String, String>(properties);
 
-    if(!properties.containsKey(SOURCE_TYPE)) {
+    if(!properties.containsKey(SOURCE_TYPE) || SOURCE_TYPE_EMBEDDED_ALIAS.
+        equalsIgnoreCase(properties.get(SOURCE_TYPE))) {
       properties.put(SOURCE_TYPE, SOURCE_TYPE_EMBEDDED);
     }
     String sinkNames = properties.remove(SINKS);
@@ -199,7 +210,6 @@ public class EmbeddedAgentConfiguration {
     // user supplied config -> agent configuration
     Map<String, String> result = Maps.newHashMap();
 
-    Joiner joiner = Joiner.on(SEPERATOR);
     // properties will be modified during iteration so we need a
     // copy of the keys
     Set<String> userProvidedKeys;
@@ -209,42 +219,40 @@ public class EmbeddedAgentConfiguration {
      * source at the channel.
      */
     // point agent at source
-    result.put(joiner.
-        join(name, BasicConfigurationConstants.CONFIG_SOURCES), sourceName);
+    result.put(join(name, BasicConfigurationConstants.CONFIG_SOURCES),
+        sourceName);
     // point agent at channel
-    result.put(joiner.
-        join(name, BasicConfigurationConstants.CONFIG_CHANNELS), channelName);
-    // point agent at source
-    result.put(joiner.
-        join(name, BasicConfigurationConstants.CONFIG_SINKS), sinkNames);
+    result.put(join(name, BasicConfigurationConstants.CONFIG_CHANNELS),
+        channelName);
+    // point agent at sinks
+    result.put(join(name, BasicConfigurationConstants.CONFIG_SINKS),
+        sinkNames);
     // points the agent at the sinkgroup
-    result.put(joiner.
-        join(name, BasicConfigurationConstants.CONFIG_SINKGROUPS),
+    result.put(join(name, BasicConfigurationConstants.CONFIG_SINKGROUPS),
         sinkGroupName);
     // points the sinkgroup at the sinks
-    result.put(joiner.
-        join(name, BasicConfigurationConstants.CONFIG_SINKGROUPS,
+    result.put(join(name, BasicConfigurationConstants.CONFIG_SINKGROUPS,
             sinkGroupName, SINKS), sinkNames);
     // points the source at the channel
-    result.put(joiner.join(name,
+    result.put(join(name,
         BasicConfigurationConstants.CONFIG_SOURCES, sourceName,
         BasicConfigurationConstants.CONFIG_CHANNELS), channelName);
     /*
-     * Second process the the sink configuration and point the sinks
+     * Second process the sink configuration and point the sinks
      * at the channel.
      */
     userProvidedKeys = new HashSet<String>(properties.keySet());
     for(String sink :  sinkNames.split("\\s+")) {
       for(String key : userProvidedKeys) {
         String value = properties.get(key);
-        if(key.startsWith(sink)) {
+        if(key.startsWith(sink + SEPERATOR)) {
           properties.remove(key);
-          result.put(joiner.join(name,
+          result.put(join(name,
               BasicConfigurationConstants.CONFIG_SINKS, key), value);
         }
       }
       // point the sink at the channel
-      result.put(joiner.join(name,
+      result.put(join(name,
           BasicConfigurationConstants.CONFIG_SINKS, sink,
           BasicConfigurationConstants.CONFIG_CHANNEL), channelName);
     }
@@ -255,20 +263,19 @@ public class EmbeddedAgentConfiguration {
     userProvidedKeys = new HashSet<String>(properties.keySet());
     for(String key : userProvidedKeys) {
       String value = properties.get(key);
-      if(key.startsWith(SOURCE)) {
+      if(key.startsWith(SOURCE_PREFIX)) {
         // users use `source' but agent needs the actual source name
-        key = key.replace(SOURCE, sourceName);
-        result.put(joiner.join(name,
+        key = key.replaceFirst(SOURCE, sourceName);
+        result.put(join(name,
             BasicConfigurationConstants.CONFIG_SOURCES, key), value);
-      } else if(key.startsWith(CHANNEL)) {
+      } else if(key.startsWith(CHANNEL_PREFIX)) {
         // users use `channel' but agent needs the actual channel name
-        key = key.replace(CHANNEL, channelName);
-        result.put(joiner.join(name,
+        key = key.replaceFirst(CHANNEL, channelName);
+        result.put(join(name,
             BasicConfigurationConstants.CONFIG_CHANNELS, key), value);
-      } else if(key.startsWith(SINK_PROCESSOR)) {
+      } else if(key.startsWith(SINK_PROCESSOR_PREFIX)) {
         // agent.sinkgroups.sinkgroup.processor.*
-        result.put(joiner.
-            join(name, BasicConfigurationConstants.CONFIG_SINKGROUPS,
+        result.put(join(name, BasicConfigurationConstants.CONFIG_SINKGROUPS,
                 sinkGroupName, key), value);
       } else {
         // XXX should we simply ignore this?
