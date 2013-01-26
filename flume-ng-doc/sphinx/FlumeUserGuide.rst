@@ -1517,28 +1517,39 @@ HBase puts and/or increments. These puts and increments are then written
 to HBase. This sink provides the same consistency guarantees as HBase,
 which is currently row-wise atomicity. In the event of Hbase failing to
 write certain events, the sink will replay all events in that transaction.
-For convenience two serializers are provided with flume. The
+
+The HBaseSink supports writing data to secure HBase. To write to secure HBase, the user
+the agent is running as must have write permissions to the table the sink is configured
+to write to. The principal and keytab to use to authenticate against the KDC can be specified
+in the configuration. The hbase-site.xml in the Flume agent's classpath
+must have authentication set to ``kerberos`` (For details on how to do this, please refer to
+HBase documentation).
+
+For convenience, two serializers are provided with Flume. The
 SimpleHbaseEventSerializer (org.apache.flume.sink.hbase.SimpleHbaseEventSerializer)
 writes the event body
-as is to HBase, and optionally increments a column in Hbase. This is primarily
+as-is to HBase, and optionally increments a column in Hbase. This is primarily
 an example implementation. The RegexHbaseEventSerializer
 (org.apache.flume.sink.hbase.RegexHbaseEventSerializer) breaks the event body
 based on the given regex and writes each part into different columns.
 
 The type is the FQCN: org.apache.flume.sink.hbase.HBaseSink.
+
 Required properties are in **bold**.
 
-================  ======================================================  ========================================================================
-Property Name     Default                                                 Description
-================  ======================================================  ========================================================================
-**channel**       --
-**type**          --                                                      The component type name, needs to be ``org.apache.flume.sink.hbase.HBaseSink``
-**table**         --                                                      The name of the table in Hbase to write to.
-**columnFamily**  --                                                      The column family in Hbase to write to.
-batchSize         100                                                     Number of events to be written per txn.
-serializer        org.apache.flume.sink.hbase.SimpleHbaseEventSerializer
-serializer.*      --                                                      Properties to be passed to the serializer.
-================  ======================================================  ========================================================================
+==================  ======================================================  ==============================================================================
+Property Name       Default                                                 Description
+==================  ======================================================  ==============================================================================
+**channel**         --
+**type**            --                                                      The component type name, needs to be ``org.apache.flume.sink.hbase.HBaseSink``
+**table**           --                                                      The name of the table in Hbase to write to.
+**columnFamily**    --                                                      The column family in Hbase to write to.
+batchSize           100                                                     Number of events to be written per txn.
+serializer          org.apache.flume.sink.hbase.SimpleHbaseEventSerializer
+serializer.*        --                                                      Properties to be passed to the serializer.
+kerberosPrincipal   --                                                      Kerberos user principal for accessing secure HBase
+kerberosKeytab      --                                                      Kerberos keytab for accessing secure HBase
+==================  ======================================================  ==============================================================================
 
 Example for agent named a1:
 
