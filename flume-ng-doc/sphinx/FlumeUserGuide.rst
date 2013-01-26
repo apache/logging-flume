@@ -1693,14 +1693,27 @@ ideal for flow that needs higher throughput and prepared to lose the staged
 data in the event of a agent failures.
 Required properties are in **bold**.
 
-===================  =======  ==============================================================
-Property Name        Default  Description
-===================  =======  ==============================================================
-**type**             --       The component type name, needs to be ``memory``
-capacity             100      The max number of events stored in the channel
-transactionCapacity  100      The max number of events stored in the channel per transaction
-keep-alive           3        Timeout in seconds for adding or removing an event
-===================  =======  ==============================================================
+============================  ================  ===============================================================================
+Property Name                 Default           Description
+============================  ================  ===============================================================================
+**type**                      --                The component type name, needs to be ``memory``
+capacity                      100               The max number of events stored in the channel
+transactionCapacity           100               The max number of events stored in the channel per transaction
+keep-alive                    3                 Timeout in seconds for adding or removing an event
+byteCapacityBufferPercentage  20                Defines the percent of buffer between byteCapacity and the estimated total size
+                                                of all events in the channel, to account for data in headers. See below.
+byteCapacity                  see description   Maximum total **bytes** of memory allowed as a sum of all events in this channel.
+                                                The implementation only counts the Event ``body``, which is the reason for
+                                                providing the ``byteCapacityBufferPercentage`` configuration parameter as well.
+                                                Defaults to a computed value equal to 80% of the maximum memory available to
+                                                the JVM (i.e. 80% of the -Xmx value passed on the command line).
+                                                Note that if you have multiple memory channels on a single JVM, and they happen
+                                                to hold the same physical events (i.e. if you are using a replicating channel
+                                                selector from a single source) then those event sizes may be double-counted for
+                                                channel byteCapacity purposes.
+                                                Setting this value to ``0`` will cause this value to fall back to a hard
+                                                internal limit of about 200 GB.
+============================  ================  ===============================================================================
 
 Example for agent named a1:
 
