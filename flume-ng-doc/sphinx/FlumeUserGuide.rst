@@ -215,6 +215,51 @@ The original Flume terminal will output the event in a log message.
 
 Congratulations - you've successfully configured and deployed a Flume agent! Subsequent sections cover agent configuration in much more detail.
 
+Installing third-party plugins
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Flume has a fully plugin-based architecture. While Flume ships with many
+out-of-the-box sources, channels, sinks, serializers, and the like, many
+implementations exist which ship separately from Flume.
+
+While it has always been possible to include custom Flume components by
+adding their jars to the FLUME_CLASSPATH variable in the flume-env.sh file,
+Flume now supports a special directory called ``plugins.d`` which automatically
+picks up plugins that are packaged in a specific format. This allows for easier
+management of plugin packaging issues as well as simpler debugging and
+troubleshooting of several classes of issues, especially library dependency
+conflicts.
+
+The plugins.d directory
+'''''''''''''''''''''''
+
+The ``plugins.d`` directory is located at ``$FLUME_HOME/plugins.d``. At startup
+time, the ``flume-ng`` start script looks in the ``plugins.d`` directory for
+plugins that conform to the below format and includes them in proper paths when
+starting up ``java``.
+
+Directory layout for plugins
+''''''''''''''''''''''''''''
+
+Each plugin (subdirectory) within ``plugins.d`` can have up to three
+sub-directories:
+
+#. lib - the plugin's jar(s)
+#. libext - the plugin's dependency jar(s)
+#. native - any required native libraries, such as ``.so`` files
+
+Example of two plugins within the plugins.d directory:
+
+.. code-block:: none
+
+  plugins.d/
+  plugins.d/custom-source-1/
+  plugins.d/custom-source-1/lib/my-source.jar
+  plugins.d/custom-source-1/libext/spring-core-2.5.6.jar
+  plugins.d/custom-source-2/
+  plugins.d/custom-source-2/lib/custom.jar
+  plugins.d/custom-source-2/native/gettext.so
+
 Data ingestion
 --------------
 
