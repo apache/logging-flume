@@ -227,12 +227,10 @@ class BucketWriter {
           // Need to get reference to FS using above config before underlying
           // writer does in order to avoid shutdown hook & IllegalStateExceptions
           fileSystem = new Path(bucketPath).getFileSystem(config);
-          LOG.info("Creating " + bucketPath);
           writer.open(bucketPath);
         } else {
           // need to get reference to FS before writer does to avoid shutdown hook
           fileSystem = new Path(bucketPath).getFileSystem(config);
-          LOG.info("Creating " + bucketPath);
           writer.open(bucketPath, codeC, compType);
         }
       } catch (Exception ex) {
