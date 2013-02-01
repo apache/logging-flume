@@ -26,6 +26,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
@@ -383,6 +384,11 @@ public class FileChannel extends BasicChannelSemantics {
       log = null;
       queueRemaining = null;
     }
+  }
+
+  @VisibleForTesting
+  boolean didFastReplay() {
+    return log.didFastReplay();
   }
 
   public boolean isOpen() {

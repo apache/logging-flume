@@ -44,6 +44,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import javax.annotation.Nullable;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Event;
@@ -113,6 +114,7 @@ class Log {
   private String encryptionKeyAlias;
   private Key encryptionKey;
   private final long usableSpaceRefreshInterval;
+  private boolean didFastReplay = false;
 
   static class Builder {
     private long bCheckpointInterval;
@@ -340,17 +342,17 @@ class Log {
        */
       LogUtils.sort(dataFiles);
 
-      boolean useFastReplay = this.useFastReplay;
+      boolean shouldFastReplay = this.useFastReplay;
       /*
        * Read the checkpoint (in memory queue) from one of two alternating
        * locations. We will read the last one written to disk.
        */
       File checkpointFile = new File(checkpointDir, "checkpoint");
-      if(useFastReplay) {
+      if(shouldFastReplay) {
         if(checkpointFile.exists()) {
           LOGGER.debug("Disabling fast full replay because checkpoint " +
               "exists: " + checkpointFile);
-          useFastReplay = false;
+          shouldFastReplay = false;
         } else {
           LOGGER.debug("Not disabling fast full replay because checkpoint " +
               " does not exist: " + checkpointFile);
@@ -379,7 +381,7 @@ class Log {
          * but the inflights were not. If the checkpoint was bad, the backing
          * store factory would have thrown.
          */
-        doReplay(queue, dataFiles, encryptionKeyProvider);
+        doReplay(queue, dataFiles, encryptionKeyProvider, shouldFastReplay);
       } catch (BadCheckpointException ex) {
         LOGGER.warn("Checkpoint may not have completed successfully. "
                 + "Forcing full replay, this may take a while.", ex);
@@ -391,7 +393,10 @@ class Log {
                 queueCapacity, channelNameDescriptor);
         queue = new FlumeEventQueue(backingStore, inflightTakesFile,
                 inflightPutsFile);
-        doReplay(queue, dataFiles, encryptionKeyProvider);
+        // If the checkpoint was deleted due to BadCheckpointException, then
+        // trigger fast replay if the channel is configured to.
+        shouldFastReplay = this.useFastReplay;
+        doReplay(queue, dataFiles, encryptionKeyProvider, shouldFastReplay);
       }
 
 
@@ -419,10 +424,12 @@ class Log {
 
   @SuppressWarnings("deprecation")
   private void doReplay(FlumeEventQueue queue, List<File> dataFiles,
-          KeyProvider encryptionKeyProvider) throws Exception {
+                        KeyProvider encryptionKeyProvider,
+                        boolean useFastReplay) throws Exception {
     CheckpointRebuilder rebuilder = new CheckpointRebuilder(dataFiles,
             queue);
     if (useFastReplay && rebuilder.rebuild()) {
+      didFastReplay = true;
       LOGGER.info("Fast replay successful.");
     } else {
       ReplayHandler replayHandler = new ReplayHandler(queue,
@@ -435,6 +442,11 @@ class Log {
         replayHandler.replayLog(dataFiles);
       }
     }
+  }
+
+  @VisibleForTesting
+  boolean didFastReplay() {
+    return didFastReplay;
   }
 
   int getNextFileID() {
