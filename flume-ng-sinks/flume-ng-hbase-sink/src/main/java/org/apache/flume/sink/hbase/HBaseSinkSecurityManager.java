@@ -41,6 +41,8 @@ public class HBaseSinkSecurityManager {
    * this can just be volatile, no need of Atomic reference.
    */
   private volatile static KerberosUser loggedInUser;
+  private static final String FLUME_KEYTAB_KEY = "flume.keytab.key";
+  private static final String FLUME_PRINCIPAL_KEY = "flume.principal.key";
   private static final Logger LOG =
           LoggerFactory.getLogger(HBaseSinkSecurityManager.class);
 
@@ -119,7 +121,9 @@ public class HBaseSinkSecurityManager {
       if (hostname == null || hostname.isEmpty()) {
         hostname = InetAddress.getLocalHost().getCanonicalHostName();
       }
-      User.login(conf, kerberosKeytab, principal, hostname);
+      conf.set(FLUME_KEYTAB_KEY, kerberosKeytab);
+      conf.set(FLUME_PRINCIPAL_KEY, principal);
+      User.login(conf, FLUME_KEYTAB_KEY, FLUME_PRINCIPAL_KEY, hostname);
       hbaseUser = User.create(UserGroupInformation.getLoginUser());
       loggedInUser = newUser;
       //TODO: Set the loggedInUser to the current user.
