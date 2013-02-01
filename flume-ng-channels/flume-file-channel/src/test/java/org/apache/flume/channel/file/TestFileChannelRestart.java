@@ -299,6 +299,59 @@ public class TestFileChannelRestart extends TestFileChannelBase {
     testCorruptInflights("inflightTakes");
   }
 
+  @Test
+  public void testFastReplayWithCheckpoint() throws Exception{
+    testFastReplay(false, true);
+  }
+
+  @Test
+  public void testFastReplayWithBadCheckpoint() throws Exception{
+    testFastReplay(true, true);
+  }
+
+  @Test
+  public void testNoFastReplayWithCheckpoint() throws Exception{
+    testFastReplay(false, false);
+  }
+
+  @Test
+  public void testNoFastReplayWithBadCheckpoint() throws Exception{
+    testFastReplay(true, false);
+  }
+
+  private void testFastReplay(boolean shouldCorruptCheckpoint,
+                             boolean useFastReplay) throws Exception{
+    Map<String, String> overrides = Maps.newHashMap();
+    overrides.put(FileChannelConfiguration.USE_FAST_REPLAY,
+      String.valueOf(useFastReplay));
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> in = putEvents(channel, "restart", 10, 100);
+    Assert.assertEquals(100, in.size());
+    forceCheckpoint(channel);
+    channel.stop();
+    if (shouldCorruptCheckpoint) {
+      File checkpoint = new File(checkpointDir, "checkpoint");
+      RandomAccessFile writer = new RandomAccessFile(
+        Serialization.getMetaDataFile(checkpoint), "rw");
+      writer.seek(10);
+      writer.writeLong(new Random().nextLong());
+      writer.getFD().sync();
+      writer.close();
+    }
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> out = consumeChannel(channel);
+    if (useFastReplay && shouldCorruptCheckpoint) {
+      Assert.assertTrue(channel.didFastReplay());
+    } else {
+      Assert.assertFalse(channel.didFastReplay());
+    }
+    compareInputAndOut(in, out);
+  }
+
   private void testCorruptInflights(String name) throws Exception {
     Map<String, String> overrides = Maps.newHashMap();
     channel = createFileChannel(overrides);
