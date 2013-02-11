@@ -193,7 +193,14 @@ public class SourceConfiguration extends ComponentConfiguration {
      *
      * @see org.apache.flume.source.http.HTTPSource
      */
-    HTTP("org.apache.flume.source.http.HTTPSourceConfiguration");
+    HTTP("org.apache.flume.source.http.HTTPSourceConfiguration"),
+
+    /**
+     * HTTP Source
+     *
+     * @see org.apache.flume.source.ThriftSource
+     */
+    THRIFT("org.apache.flume.source.http.ThriftSourceConfiguration");
 
     private String srcConfigurationName;
 
