@@ -16,49 +16,31 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.flume.sink;
 
-import java.util.List;
-import java.util.Properties;
-
-import org.apache.flume.Channel;
-import org.apache.flume.ChannelException;
-import org.apache.flume.Context;
-import org.apache.flume.Event;
-import org.apache.flume.EventDeliveryException;
-import org.apache.flume.FlumeException;
-import org.apache.flume.Sink;
-import org.apache.flume.Transaction;
 import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientConfigurationConstants;
 import org.apache.flume.api.RpcClientFactory;
-import org.apache.flume.conf.Configurable;
-import org.apache.flume.instrumentation.SinkCounter;
-import org.apache.flume.source.AvroSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-
+import java.util.Properties;
 /**
  * <p>
- * A {@link Sink} implementation that can send events to an RPC server (such as
- * Flume's {@link AvroSource}).
+ * A {@link org.apache.flume.Sink} implementation that can send events to an RPC server (such as
+ * Flume's {@link org.apache.flume.source.ThriftSource}).
  * </p>
  * <p>
  * This sink forms one half of Flume's tiered collection support. Events sent to
  * this sink are transported over the network to the hostname / port pair using
  * the RPC implementation encapsulated in {@link RpcClient}.
- * The destination is an instance of Flume's {@link AvroSource}, which
+ * The destination is an instance of Flume's
+ * {@link org.apache.flume.source.ThriftSource}, which
  * allows Flume agents to forward to other Flume agents, forming a tiered
  * collection infrastructure. Of course, nothing prevents one from using this
  * sink to speak to other custom built infrastructure that implements the same
  * RPC protocol.
  * </p>
  * <p>
- * Events are taken from the configured {@link Channel} in batches of the
+ * Events are taken from the configured {@link org.apache.flume.Channel} in batches of the
  * configured <tt>batch-size</tt>. The batch size has no theoretical limits
  * although all events in the batch <b>must</b> fit in memory. Generally, larger
  * batches are far more efficient, but introduce a slight delay (measured in
@@ -117,13 +99,15 @@ import com.google.common.collect.Lists;
  * TODO
  * </p>
  */
-public class AvroSink extends AbstractRpcSink {
-
-  private static final Logger logger = LoggerFactory.getLogger(AvroSink.class);
-
+public class ThriftSink extends AbstractRpcSink {
   @Override
   protected RpcClient initializeRpcClient(Properties props) {
-    logger.info("Attempting to create Avro Rpc client.");
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE,
+      RpcClientFactory.ClientType.THRIFT.name());
+    // Only one thread is enough, since only one sink thread processes
+    // transactions at any given time. Each sink owns its own Rpc client.
+    props.setProperty(RpcClientConfigurationConstants
+      .CONFIG_CONNECTION_POOL_SIZE, String.valueOf(1));
     return RpcClientFactory.getInstance(props);
   }
 }
