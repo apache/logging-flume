@@ -63,7 +63,7 @@ public class HostInfo {
     return referenceName + "{" + hostName + ":" + portNumber + "}";
   }
 
-  static List<HostInfo> getHostInfoList(Properties properties) {
+  public static List<HostInfo> getHostInfoList(Properties properties) {
     List<HostInfo> hosts = new ArrayList<HostInfo>();
     String hostNames = properties.getProperty(
         RpcClientConfigurationConstants.CONFIG_HOSTS);

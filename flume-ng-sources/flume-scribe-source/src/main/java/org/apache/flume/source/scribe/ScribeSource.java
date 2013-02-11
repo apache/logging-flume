@@ -151,15 +151,7 @@ public class ScribeSource extends AbstractSource implements
             Map<String, String> headers = new HashMap<String, String>(1, 1);
             headers.put(SCRIBE_CATEGORY, entry.getCategory());
 
-            ByteBuffer buffer = entry.getMessage();
-            int limit = buffer.limit();
-            int pos = buffer.position();
-
-            //Obtains actual data
-            byte[] buf = new byte[limit - pos];
-            System.arraycopy(buffer.array(), pos, buf, 0, buf.length);
-
-            Event event = EventBuilder.withBody(buf, headers);
+            Event event = EventBuilder.withBody(entry.getMessage().getBytes(), headers);
             events.add(event);
           }
 
