@@ -22,20 +22,22 @@
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  *  @generated
  */
-package org.apache.flume.source.scribe;
+package org.apache.flume.thrift;
 
 
 import java.util.Map;
 import java.util.HashMap;
 import org.apache.thrift.TEnum;
 
-public enum ResultCode implements org.apache.thrift.TEnum {
+public enum Status implements org.apache.thrift.TEnum {
   OK(0),
-  TRY_LATER(1);
+  FAILED(1),
+  ERROR(2),
+  UNKNOWN(3);
 
   private final int value;
 
-  private ResultCode(int value) {
+  private Status(int value) {
     this.value = value;
   }
 
@@ -50,12 +52,16 @@ public enum ResultCode implements org.apache.thrift.TEnum {
    * Find a the enum type by its integer value, as defined in the Thrift IDL.
    * @return null if the value is not found.
    */
-  public static ResultCode findByValue(int value) { 
+  public static Status findByValue(int value) { 
     switch (value) {
       case 0:
         return OK;
       case 1:
-        return TRY_LATER;
+        return FAILED;
+      case 2:
+        return ERROR;
+      case 3:
+        return UNKNOWN;
       default:
         return null;
     }

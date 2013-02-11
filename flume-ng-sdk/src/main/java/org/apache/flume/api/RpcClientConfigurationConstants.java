@@ -119,6 +119,13 @@ public final class RpcClientConfigurationConstants {
   public static final String CONFIG_BACKOFF = "backoff";
   public static final String DEFAULT_BACKOFF = "false";
 
+  /**
+   * Maximum number of connections each Thrift Rpc client can open to a given
+   * host.
+   */
+  public static final String CONFIG_CONNECTION_POOL_SIZE = "maxConnections";
+  public static final int DEFAULT_CONNECTION_POOL_SIZE = 5;
+
   private RpcClientConfigurationConstants() {
     // disable explicit object creation
   }
