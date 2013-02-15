@@ -62,7 +62,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     super(capacity, name);
     this.checkpointFile = checkpointFile;
     checkpointFileHandle = new RandomAccessFile(checkpointFile, "rw");
-    int totalBytes = (capacity + HEADER_SIZE) * Serialization.SIZE_OF_LONG;
+    long totalBytes = (capacity + HEADER_SIZE) * Serialization.SIZE_OF_LONG;
     if(checkpointFileHandle.length() == 0) {
       allocate(checkpointFile, totalBytes);
       checkpointFileHandle.seek(INDEX_VERSION * Serialization.SIZE_OF_LONG);
@@ -210,6 +210,10 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     boolean success = false;
     try {
       if (totalBytes <= MAX_ALLOC_BUFFER_SIZE) {
+        /*
+         * totalBytes <= MAX_ALLOC_BUFFER_SIZE, so this can be cast to int
+         * without a problem.
+         */
         checkpointFile.write(new byte[(int)totalBytes]);
       } else {
         byte[] initBuffer = new byte[MAX_ALLOC_BUFFER_SIZE];
@@ -218,6 +222,10 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
           checkpointFile.write(initBuffer);
           remainingBytes -= MAX_ALLOC_BUFFER_SIZE;
         }
+        /*
+         * At this point, remainingBytes is < MAX_ALLOC_BUFFER_SIZE,
+         * so casting to int is fine.
+         */
         if (remainingBytes > 0) {
           checkpointFile.write(initBuffer, 0, (int)remainingBytes);
         }
