@@ -309,11 +309,6 @@ class BucketWriter {
       timedRollFuture = null;
     }
 
-    if(idleFuture != null && !idleFuture.isDone()) {
-      idleFuture.cancel(false);
-      idleFuture = null;
-    }
-
     if (bucketPath != null && fileSystem != null) {
       renameBucket(); // could block or throw IOException
       fileSystem = null;
@@ -342,9 +337,11 @@ class BucketWriter {
           Callable<Void> idleAction = new Callable<Void>() {
             public Void call() throws Exception {
               try {
-                LOG.info("Closing idle bucketWriter {}", bucketPath);
-                idleClosed = true;
-                close();
+                if(isOpen) {
+                  LOG.info("Closing idle bucketWriter {}", bucketPath);
+                  idleClosed = true;
+                  close();
+                }
                 if(onIdleCallback != null)
                   onIdleCallback.run(onIdleCallbackPath);
               } catch(Throwable t) {
