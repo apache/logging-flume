@@ -49,6 +49,10 @@ public class HBaseSinkConfigurationConstants {
 
   public static final String CONFIG_TIMEOUT = "timeout";
 
+  public static final String CONFIG_ENABLE_WAL = "enableWal";
+
+  public static final boolean DEFAULT_ENABLE_WAL = true;
+
   public static final long DEFAULT_TIMEOUT = 60000;
 
   public static final String CONFIG_KEYTAB = "kerberosKeytab";

@@ -35,6 +35,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
@@ -95,6 +96,7 @@ public class HBaseSink extends AbstractSink implements Configurable {
   private String kerberosPrincipal;
   private String kerberosKeytab;
   private User hbaseUser;
+  private boolean enableWal = true;
 
   public HBaseSink(){
     this(HBaseConfiguration.create());
@@ -197,6 +199,15 @@ public class HBaseSink extends AbstractSink implements Configurable {
     }
     kerberosKeytab = context.getString(HBaseSinkConfigurationConstants.CONFIG_KEYTAB, "");
     kerberosPrincipal = context.getString(HBaseSinkConfigurationConstants.CONFIG_PRINCIPAL, "");
+
+    enableWal = context.getBoolean(HBaseSinkConfigurationConstants
+      .CONFIG_ENABLE_WAL, HBaseSinkConfigurationConstants.DEFAULT_ENABLE_WAL);
+    logger.info("The write to WAL option is set to: " + String.valueOf(enableWal));
+    if(!enableWal) {
+      logger.warn("HBase Sink's enableWal configuration is set to false. All " +
+        "writes to HBase will have WAL disabled, and any data in the " +
+        "memstore of this region in the Region Server could be lost!");
+    }
   }
 
   @Override
@@ -229,6 +240,15 @@ public class HBaseSink extends AbstractSink implements Configurable {
       runPrivileged(new PrivilegedExceptionAction<Void>() {
         @Override
         public Void run() throws Exception {
+          for(Row r : actions) {
+            if(r instanceof Put) {
+              ((Put)r).setWriteToWAL(enableWal);
+            }
+            // Newer versions of HBase - Increment implements Row.
+            if(r instanceof Increment) {
+              ((Increment)r).setWriteToWAL(enableWal);
+            }
+          }
           table.batch(actions);
           return null;
         }
@@ -238,6 +258,7 @@ public class HBaseSink extends AbstractSink implements Configurable {
         @Override
         public Void run() throws Exception {
           for (final Increment i : incs) {
+            i.setWriteToWAL(enableWal);
             table.increment(i);
           }
           return null;
