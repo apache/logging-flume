@@ -113,6 +113,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
   private String zkBaseDir;
   private ExecutorService sinkCallbackPool;
   private boolean isTest;
+  private boolean enableWal = true;
 
   public AsyncHBaseSink(){
     this(null);
@@ -186,6 +187,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
           callbacksExpected.addAndGet(actions.size() + increments.size());
 
           for (PutRequest action : actions) {
+            action.setDurable(enableWal);
             client.put(action).addCallbacks(putSuccessCallback, putFailureCallback);
           }
           for (AtomicIncrementRequest increment : increments) {
@@ -322,6 +324,15 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
     }
     Preconditions.checkState(zkQuorum != null && !zkQuorum.isEmpty(),
         "The Zookeeper quorum cannot be null and should be specified.");
+
+    enableWal = context.getBoolean(HBaseSinkConfigurationConstants
+      .CONFIG_ENABLE_WAL, HBaseSinkConfigurationConstants.DEFAULT_ENABLE_WAL);
+    logger.info("The write to WAL option is set to: " + String.valueOf(enableWal));
+    if(!enableWal) {
+      logger.warn("AsyncHBaseSink's enableWal configuration is set to false. " +
+        "All writes to HBase will have WAL disabled, and any data in the " +
+        "memstore of this region in the Region Server could be lost!");
+    }
   }
 
   @VisibleForTesting
