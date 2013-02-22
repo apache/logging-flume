@@ -63,7 +63,8 @@ public class Log4jAppender extends AppenderSkeleton {
 
   private String hostname;
   private int port;
-  private RpcClient rpcClient = null;
+
+  RpcClient rpcClient = null;
 
 
   /**
