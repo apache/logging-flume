@@ -2491,6 +2491,67 @@ Sample log4j.properties file:
   log4j.logger.org.example.MyClass = DEBUG,flume
   #...
 
+Load Balancing Log4J Appender
+=============================
+
+Appends Log4j events to a list of flume agent's avro source. A client using this
+appender must have the flume-ng-sdk in the classpath (eg,
+flume-ng-sdk-1.4.0-SNAPSHOT.jar). This appender supports a round-robin and random
+scheme for performing the load balancing. It also supports a configurable backoff
+timeout so that down agents are removed temporarily from the set of hosts
+Required properties are in **bold**.
+
+=============  ===========  ==========================================================================
+Property Name  Default      Description
+=============  ===========  ==========================================================================
+**Hosts**      --           A space separated list of host:port
+                            at which Flume (through an AvroSource) is listening for events
+Selector       ROUND_ROBIN  Selection mechanism. Must be either ROUND_ROBIN,
+                            RANDOM or custom FQDN to class that inherits from LoadBalancingSelector.
+MaxBackoff     --           A long value representing the maximum amount of time in milliseconds
+                            the Load balancing client will backoff from a node that has failed to
+                            consume an event. Defaults to no backoff
+=============  ===========  ==========================================================================
+
+
+Sample log4j.properties file configured using defaults:
+
+.. code-block:: properties
+
+  #...
+  log4j.appender.out2 = org.apache.flume.clients.log4jappender.LoadBalancingLog4jAppender
+  log4j.appender.out2.Hosts = localhost:25430 localhost:25431
+
+  # configure a class's logger to output to the flume appender
+  log4j.logger.org.example.MyClass = DEBUG,flume
+  #...
+
+Sample log4j.properties file configured using RANDOM load balancing:
+
+.. code-block:: properties
+
+  #...
+  log4j.appender.out2 = org.apache.flume.clients.log4jappender.LoadBalancingLog4jAppender
+  log4j.appender.out2.Hosts = localhost:25430 localhost:25431
+  log4j.appender.out2.Selector = RANDOM
+
+  # configure a class's logger to output to the flume appender
+  log4j.logger.org.example.MyClass = DEBUG,flume
+  #...
+
+Sample log4j.properties file configured using backoff:
+
+.. code-block:: properties
+
+  #...
+  log4j.appender.out2 = org.apache.flume.clients.log4jappender.LoadBalancingLog4jAppender
+  log4j.appender.out2.Hosts = localhost:25430 localhost:25431 localhost:25432
+  log4j.appender.out2.Selector = ROUND_ROBIN
+  log4j.appender.out2.MaxBackoff = 30000
+
+  # configure a class's logger to output to the flume appender
+  log4j.logger.org.example.MyClass = DEBUG,flume
+  #...
 
 Security
 ========
