@@ -37,10 +37,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.flume.Channel;
+import org.apache.flume.Clock;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
+import org.apache.flume.SystemClock;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.formatter.output.BucketPath;
@@ -134,12 +137,14 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private boolean needRounding = false;
   private int roundUnit = Calendar.SECOND;
   private int roundValue = 1;
+  private boolean useLocalTime = false;
 
   private long callTimeout;
   private Context context;
   private SinkCounter sinkCounter;
 
   private volatile int idleTimeout;
+  private Clock clock;
 
   /*
    * Extended Java LinkedHashMap for open file handle LRU queue.
@@ -268,6 +273,11 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       }
     }
 
+    this.useLocalTime = context.getBoolean("hdfs.useLocalTimeStamp", false);
+    if(useLocalTime) {
+      clock = new SystemClock();
+    }
+
     if (sinkCounter == null) {
       sinkCounter = new SinkCounter(getName());
     }
@@ -390,9 +400,9 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
         // reconstruct the path name by substituting place holders
         String realPath = BucketPath.escapeString(filePath, event.getHeaders(),
-            timeZone, needRounding, roundUnit, roundValue);
+            timeZone, needRounding, roundUnit, roundValue, useLocalTime);
         String realName = BucketPath.escapeString(fileName, event.getHeaders(),
-          timeZone, needRounding, roundUnit, roundValue);
+          timeZone, needRounding, roundUnit, roundValue, useLocalTime);
 
         String lookupPath = realPath + DIRECTORY_DELIMITER + realName;
         BucketWriter bucketWriter = sfWriters.get(lookupPath);
@@ -758,5 +768,10 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
         return null;
       }
     });
+  }
+
+  @VisibleForTesting
+  void setBucketClock(Clock clock) {
+    BucketPath.setClock(clock);
   }
 }

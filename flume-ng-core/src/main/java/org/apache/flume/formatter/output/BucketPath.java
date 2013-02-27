@@ -27,6 +27,9 @@ import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.flume.Clock;
+import org.apache.flume.SystemClock;
 import org.apache.flume.tools.TimestampRoundDownUtil;
 
 import com.google.common.base.Preconditions;
@@ -39,6 +42,8 @@ public class BucketPath {
    */
   final public static String TAG_REGEX = "\\%(\\w|\\%)|\\%\\{([\\w\\.-]+)\\}";
   final public static Pattern tagPattern = Pattern.compile(TAG_REGEX);
+
+  private static Clock clock = new SystemClock();
 
   /**
    * Returns true if in contains a substring matching TAG_REGEX (i.e. of the
@@ -123,7 +128,8 @@ public class BucketPath {
    */
   public static String replaceShorthand(char c, Map<String, String> headers,
       boolean needRounding, int unit, int roundDown) {
-    return replaceShorthand(c, headers, null, needRounding, unit, roundDown);
+    return replaceShorthand(c, headers, null, needRounding, unit, roundDown,
+      false);
   }
 
   /**
@@ -150,11 +156,18 @@ public class BucketPath {
    * @return
    */
   public static String replaceShorthand(char c, Map<String, String> headers,
-      TimeZone timeZone, boolean needRounding, int unit, int roundDown) {
-
-    String timestampHeader = headers.get("timestamp");
+    TimeZone timeZone, boolean needRounding, int unit, int roundDown,
+    boolean useLocalTimestamp) {
     long ts;
+    String timestampHeader;
     try {
+      if(!useLocalTimestamp) {
+        timestampHeader = headers.get("timestamp");
+        Preconditions.checkNotNull(timestampHeader, "Expected timestamp in " +
+          "the Flume event headers, but it was null");
+      } else {
+        timestampHeader = String.valueOf(clock.currentTimeMillis());
+      }
       ts = Long.valueOf(timestampHeader);
     } catch (NumberFormatException e) {
       throw new RuntimeException("Flume wasn't able to parse timestamp header"
@@ -294,7 +307,8 @@ public class BucketPath {
    */
   public static String escapeString(String in, Map<String, String> headers,
       boolean needRounding, int unit, int roundDown) {
-    return escapeString(in, headers, null, needRounding, unit, roundDown);
+    return escapeString(in, headers, null, needRounding, unit, roundDown,
+      false);
   }
 
   /**
@@ -319,7 +333,8 @@ public class BucketPath {
    * @return Escaped string.
    */
   public static String escapeString(String in, Map<String, String> headers,
-      TimeZone timeZone, boolean needRounding, int unit, int roundDown) {
+    TimeZone timeZone, boolean needRounding, int unit, int roundDown,
+    boolean useLocalTimeStamp) {
     Matcher matcher = tagPattern.matcher(in);
     StringBuffer sb = new StringBuffer();
     while (matcher.find()) {
@@ -341,7 +356,7 @@ public class BucketPath {
             "Expected to match single character tag in string " + in);
         char c = matcher.group(1).charAt(0);
         replacement = replaceShorthand(c, headers, timeZone,
-            needRounding, unit, roundDown);
+            needRounding, unit, roundDown, useLocalTimeStamp);
       }
 
       // The replacement string must have '$' and '\' chars escaped. This
@@ -404,6 +419,12 @@ public class BucketPath {
     }
     return mapping;
 
+  }
+
+  //Should not be called from outside unit tests.
+  @VisibleForTesting
+  public static void setClock(Clock clk) {
+    clock = clk;
   }
 }
 

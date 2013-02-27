@@ -1345,7 +1345,7 @@ complete files in the directory.
 Required properties are in **bold**.
 
 .. note:: For all of the time related escape sequences, a header with the key
-          "timestamp" must exist among the headers of the event. One way to add
+          "timestamp" must exist among the headers of the event (unless ``hdfs.useLocalTimeStamp`` is set to ``true``). One way to add
           this automatically is to use the TimestampInterceptor.
 
 ======================  ============  ======================================================================
@@ -1383,6 +1383,7 @@ hdfs.round              false         Should the timestamp be rounded down (if t
 hdfs.roundValue         1             Rounded down to the highest multiple of this (in the unit configured using ``hdfs.roundUnit``), less than current time.
 hdfs.roundUnit          second        The unit of the round down value - ``second``, ``minute`` or ``hour``.
 hdfs.timeZone           Local Time    Name of the timezone that should be used for resolving the directory path, e.g. America/Los_Angeles.
+hdfs.useLocalTimeStamp  false         Use the local time (instead of the timestamp from the event header) while replacing the escape sequences.
 serializer              ``TEXT``      Other possible options include ``avro_event`` or the
                                       fully-qualified class name of an implementation of the
                                       ``EventSerializer.Builder`` interface.

@@ -103,7 +103,7 @@ public class TestBucketPath {
     TimeZone utcTimeZone = TimeZone.getTimeZone("UTC");
     String test = "%c";
     String escapedString = BucketPath.escapeString(
-        test, headers, utcTimeZone, false, Calendar.HOUR_OF_DAY, 12);
+        test, headers, utcTimeZone, false, Calendar.HOUR_OF_DAY, 12, false);
     System.out.println("Escaped String: " + escapedString);
     SimpleDateFormat format = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy");
     format.setTimeZone(utcTimeZone);
