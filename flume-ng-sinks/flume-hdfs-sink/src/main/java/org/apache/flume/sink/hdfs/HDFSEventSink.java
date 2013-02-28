@@ -26,15 +26,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -81,7 +76,6 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private static final String defaultInUsePrefix = "";
   private static final String defaultInUseSuffix = ".tmp";
   private static final long defaultBatchSize = 100;
-  private static final long defaultTxnEventMax = 100;
   private static final String defaultFileType = HDFSWriterFactory.SequenceFileType;
   private static final int defaultMaxOpenFiles = 5000;
 
@@ -336,47 +330,6 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     return codec;
   }
 
-  /**
-   * Execute the callable on a separate thread and wait for the completion
-   * for the specified amount of time in milliseconds. In case of timeout
-   * cancel the callable and throw an IOException
-   */
-  private <T> T callWithTimeout(Callable<T> callable)
-      throws IOException, InterruptedException {
-    Future<T> future = callTimeoutPool.submit(callable);
-    try {
-      if (callTimeout > 0) {
-        return future.get(callTimeout, TimeUnit.MILLISECONDS);
-      } else {
-        return future.get();
-      }
-    } catch (TimeoutException eT) {
-      future.cancel(true);
-      sinkCounter.incrementConnectionFailedCount();
-      throw new IOException("Callable timed out after " + callTimeout + " ms",
-          eT);
-    } catch (ExecutionException e1) {
-      sinkCounter.incrementConnectionFailedCount();
-      Throwable cause = e1.getCause();
-      if (cause instanceof IOException) {
-        throw (IOException) cause;
-      } else if (cause instanceof InterruptedException) {
-        throw (InterruptedException) cause;
-      } else if (cause instanceof RuntimeException) {
-        throw (RuntimeException) cause;
-      } else if (cause instanceof Error) {
-        throw (Error)cause;
-      } else {
-        throw new RuntimeException(e1);
-      }
-    } catch (CancellationException ce) {
-      throw new InterruptedException(
-          "Blocked callable interrupted by rotation event");
-    } catch (InterruptedException ex) {
-      LOG.warn("Unexpected Exception " + ex.getMessage(), ex);
-      throw ex;
-    }
-  }
 
   /**
    * Pull events out of channel and send it to HDFS. Take at most batchSize
@@ -423,7 +376,8 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
           bucketWriter = new BucketWriter(rollInterval, rollSize, rollCount,
               batchSize, context, realPath, realName, inUsePrefix, inUseSuffix,
               suffix, codeC, compType, hdfsWriter, timedRollerPool,
-              proxyTicket, sinkCounter, idleTimeout, idleCallback, lookupPath);
+              proxyTicket, sinkCounter, idleTimeout, idleCallback,
+              lookupPath, callTimeout, callTimeoutPool);
 
           sfWriters.put(lookupPath, bucketWriter);
         }
@@ -434,7 +388,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
         }
 
         // Write the data to HDFS
-        append(bucketWriter, event);
+        bucketWriter.append(event);
       }
 
       if (txnEventCount == 0) {
@@ -447,7 +401,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
       // flush all pending buckets before committing the transaction
       for (BucketWriter bucketWriter : writers) {
-        flush(bucketWriter);
+        bucketWriter.flush();
       }
 
       transaction.commit();
@@ -482,7 +436,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       LOG.info("Closing {}", entry.getKey());
 
       try {
-        close(entry.getValue());
+        entry.getValue().close();
       } catch (Exception ex) {
         LOG.warn("Exception while closing " + entry.getKey() + ". " +
                 "Exception follows.", ex);
@@ -725,49 +679,6 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   public String toString() {
     return "{ Sink type:" + getClass().getSimpleName() + ", name:" + getName() +
             " }";
-  }
-
-  /**
-   * Append to bucket writer with timeout enforced
-   */
-  private void append(final BucketWriter bucketWriter, final Event event)
-          throws IOException, InterruptedException {
-
-    // Write the data to HDFS
-    callWithTimeout(new Callable<Void>() {
-      public Void call() throws Exception {
-        bucketWriter.append(event);
-        return null;
-      }
-    });
-  }
-
-  /**
-   * Flush bucket writer with timeout enforced
-   */
-  private void flush(final BucketWriter bucketWriter)
-          throws IOException, InterruptedException {
-
-    callWithTimeout(new Callable<Void>() {
-      public Void call() throws Exception {
-        bucketWriter.flush();
-        return null;
-      }
-    });
-  }
-
-  /**
-   * Close bucket writer with timeout enforced
-   */
-  private void close(final BucketWriter bucketWriter)
-          throws IOException, InterruptedException {
-
-    callWithTimeout(new Callable<Void>() {
-      public Void call() throws Exception {
-        bucketWriter.close();
-        return null;
-      }
-    });
   }
 
   @VisibleForTesting
