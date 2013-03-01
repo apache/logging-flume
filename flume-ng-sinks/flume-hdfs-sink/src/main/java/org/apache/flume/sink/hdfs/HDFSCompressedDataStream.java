@@ -35,7 +35,7 @@ import org.apache.hadoop.io.compress.DefaultCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class HDFSCompressedDataStream implements HDFSWriter {
+public class HDFSCompressedDataStream extends AbstractHDFSWriter {
 
   private static final Logger logger =
       LoggerFactory.getLogger(HDFSCompressedDataStream.class);
@@ -51,6 +51,8 @@ public class HDFSCompressedDataStream implements HDFSWriter {
 
   @Override
   public void configure(Context context) {
+    super.configure(context);
+
     serializerType = context.getString("serializer", "TEXT");
     useRawLocalFileSystem = context.getBoolean("hdfs.useRawLocalFileSystem",
         false);
@@ -99,6 +101,9 @@ public class HDFSCompressedDataStream implements HDFSWriter {
       throw new IOException("serializer (" + serializerType
           + ") does not support append");
     }
+
+    registerCurrentStream(fsOut, hdfs);
+
     if (appending) {
       serializer.afterReopen();
     } else {
@@ -143,6 +148,8 @@ public class HDFSCompressedDataStream implements HDFSWriter {
     fsOut.flush();
     fsOut.sync();
     cmpOut.close();
+
+    unregisterCurrentStream();
   }
 
 }

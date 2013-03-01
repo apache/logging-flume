@@ -190,6 +190,11 @@ public class TestBucketWriter {
         open = false;
       }
 
+      @Override
+      public boolean isUnderReplicated() {
+        return false;
+      }
+
       public void append(Event e) throws IOException {
         // we just re-open in append if closed
         open = true;
