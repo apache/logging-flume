@@ -35,9 +35,11 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,14 +55,13 @@ public class TestHDFSEventSinkOnMiniCluster {
 
   private static final boolean KEEP_DATA = false;
   private static final String DFS_DIR = "target/test/dfs";
-  private static final Configuration CONF = new Configuration();
   private static final String TEST_BUILD_DATA_KEY = "test.build.data";
 
   private static MiniDFSCluster cluster = null;
   private static String oldTestBuildDataProp = null;
 
   @BeforeClass
-  public static void setup() throws IOException {
+  public static void setupClass() throws IOException {
     // set up data dir for HDFS
     File dfsDir = new File(DFS_DIR);
     if (!dfsDir.isDirectory()) {
@@ -69,9 +70,6 @@ public class TestHDFSEventSinkOnMiniCluster {
     // save off system prop to restore later
     oldTestBuildDataProp = System.getProperty(TEST_BUILD_DATA_KEY);
     System.setProperty(TEST_BUILD_DATA_KEY, DFS_DIR);
-
-    cluster = new MiniDFSCluster(CONF, 1, true, null);
-    cluster.waitActive();
   }
 
   private static String getNameNodeURL(MiniDFSCluster cluster) {
@@ -84,6 +82,9 @@ public class TestHDFSEventSinkOnMiniCluster {
    */
   @Test
   public void simpleHDFSTest() throws EventDeliveryException, IOException {
+    cluster = new MiniDFSCluster(new Configuration(), 1, true, null);
+    cluster.waitActive();
+
     String outputDir = "/flume/simpleHDFSTest";
     Path outputDirPath = new Path(outputDir);
 
@@ -150,6 +151,9 @@ public class TestHDFSEventSinkOnMiniCluster {
     if (!KEEP_DATA) {
       fs.delete(outputDirPath, true);
     }
+
+    cluster.shutdown();
+    cluster = null;
   }
 
   /**
@@ -157,6 +161,9 @@ public class TestHDFSEventSinkOnMiniCluster {
    */
   @Test
   public void simpleHDFSGZipCompressedTest() throws EventDeliveryException, IOException {
+    cluster = new MiniDFSCluster(new Configuration(), 1, true, null);
+    cluster.waitActive();
+
     String outputDir = "/flume/simpleHDFSGZipCompressedTest";
     Path outputDirPath = new Path(outputDir);
 
@@ -241,13 +248,125 @@ public class TestHDFSEventSinkOnMiniCluster {
     if (!KEEP_DATA) {
       fs.delete(outputDirPath, true);
     }
+
+    cluster.shutdown();
+    cluster = null;
+  }
+
+  /**
+   * This is a very basic test that writes one event to HDFS and reads it back.
+   */
+  @Test
+  public void underReplicationTest() throws EventDeliveryException,
+      IOException {
+    Configuration conf = new Configuration();
+    conf.set("dfs.replication", String.valueOf(3));
+    cluster = new MiniDFSCluster(conf, 3, true, null);
+    cluster.waitActive();
+
+    String outputDir = "/flume/underReplicationTest";
+    Path outputDirPath = new Path(outputDir);
+
+    logger.info("Running test with output dir: {}", outputDir);
+
+    FileSystem fs = cluster.getFileSystem();
+    // ensure output directory is empty
+    if (fs.exists(outputDirPath)) {
+      fs.delete(outputDirPath, true);
+    }
+
+    String nnURL = getNameNodeURL(cluster);
+    logger.info("Namenode address: {}", nnURL);
+
+    Context chanCtx = new Context();
+    MemoryChannel channel = new MemoryChannel();
+    channel.setName("simpleHDFSTest-mem-chan");
+    channel.configure(chanCtx);
+    channel.start();
+
+    Context sinkCtx = new Context();
+    sinkCtx.put("hdfs.path", nnURL + outputDir);
+    sinkCtx.put("hdfs.fileType", HDFSWriterFactory.DataStreamType);
+    sinkCtx.put("hdfs.batchSize", Integer.toString(1));
+
+    HDFSEventSink sink = new HDFSEventSink();
+    sink.setName("simpleHDFSTest-hdfs-sink");
+    sink.configure(sinkCtx);
+    sink.setChannel(channel);
+    sink.start();
+
+    // create an event
+    channel.getTransaction().begin();
+    try {
+      channel.put(EventBuilder.withBody("yarg 1", Charsets.UTF_8));
+      channel.put(EventBuilder.withBody("yarg 2", Charsets.UTF_8));
+      channel.put(EventBuilder.withBody("yarg 3", Charsets.UTF_8));
+      channel.put(EventBuilder.withBody("yarg 4", Charsets.UTF_8));
+      channel.put(EventBuilder.withBody("yarg 5", Charsets.UTF_8));
+      channel.put(EventBuilder.withBody("yarg 5", Charsets.UTF_8));
+      channel.getTransaction().commit();
+    } finally {
+      channel.getTransaction().close();
+    }
+
+    // store events to HDFS
+    logger.info("Running process(). Create new file.");
+    sink.process(); // create new file;
+    logger.info("Running process(). Same file.");
+    sink.process();
+
+    // kill a datanode
+    logger.info("Killing datanode #1...");
+    cluster.stopDataNode(0);
+
+    // there is a race here.. the client may or may not notice that the
+    // datanode is dead before it next sync()s.
+    // so, this next call may or may not roll a new file.
+
+    logger.info("Running process(). Create new file? (racy)");
+    sink.process();
+
+    logger.info("Running process(). Create new file.");
+    sink.process();
+
+    logger.info("Running process(). Create new file.");
+    sink.process();
+
+    logger.info("Running process(). Create new file.");
+    sink.process();
+
+    // shut down flume
+    sink.stop();
+    channel.stop();
+
+    // verify that it's in HDFS and that its content is what we say it should be
+    FileStatus[] statuses = fs.listStatus(outputDirPath);
+    Assert.assertNotNull("No files found written to HDFS", statuses);
+
+    for (FileStatus status : statuses) {
+      Path filePath = status.getPath();
+      logger.info("Found file on DFS: {}", filePath);
+      FSDataInputStream stream = fs.open(filePath);
+      BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+      String line = reader.readLine();
+      logger.info("First line in file {}: {}", filePath, line);
+      Assert.assertTrue(line.startsWith("yarg"));
+    }
+
+    Assert.assertTrue("4 or 5 files expected",
+        statuses.length == 4 || statuses.length == 5);
+    System.out.println("There are " + statuses.length + " files.");
+
+    if (!KEEP_DATA) {
+      fs.delete(outputDirPath, true);
+    }
+
+    cluster.shutdown();
+    cluster = null;
   }
 
   @AfterClass
-  public static void teardown() {
-    cluster.shutdown();
-    cluster = null;
-
+  public static void teardownClass() {
     // restore system state, if needed
     if (oldTestBuildDataProp != null) {
       System.setProperty(TEST_BUILD_DATA_KEY, oldTestBuildDataProp);

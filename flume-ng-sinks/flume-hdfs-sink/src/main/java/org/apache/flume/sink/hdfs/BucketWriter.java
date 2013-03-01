@@ -91,6 +91,8 @@ class BucketWriter {
   private volatile String targetPath;
   private volatile long batchCounter;
   private volatile boolean isOpen;
+  private volatile boolean isUnderReplicated;
+  private volatile int consecutiveUnderReplRotateCount;
   private volatile ScheduledFuture<Void> timedRollFuture;
   private SinkCounter sinkCounter;
   private final int idleTimeout;
@@ -99,6 +101,7 @@ class BucketWriter {
   private final String onIdleCallbackPath;
   private final long callTimeout;
   private final ExecutorService callTimeoutPool;
+  private final int maxConsecUnderReplRotations = 30; // make this config'able?
 
   private Clock clock = new SystemClock();
 
@@ -137,6 +140,7 @@ class BucketWriter {
     fileExtensionCounter = new AtomicLong(clock.currentTimeMillis());
 
     isOpen = false;
+    isUnderReplicated = false;
     this.writer.configure(context);
   }
 
@@ -189,6 +193,9 @@ class BucketWriter {
         return null;
       }
     });
+
+    // ensure new files reset under-rep rotate count
+    consecutiveUnderReplRotateCount = 0;
   }
 
   /**
@@ -417,8 +424,29 @@ class BucketWriter {
 
     // check if it's time to rotate the file
     if (shouldRotate()) {
-      close();
-      open();
+      boolean doRotate = true;
+
+      if (isUnderReplicated) {
+        if (maxConsecUnderReplRotations > 0 &&
+            consecutiveUnderReplRotateCount >= maxConsecUnderReplRotations) {
+          doRotate = false;
+          if (consecutiveUnderReplRotateCount == maxConsecUnderReplRotations) {
+            LOG.error("Hit max consecutive under-replication rotations ({}); " +
+                "will not continue rolling files under this path due to " +
+                "under-replication", maxConsecUnderReplRotations);
+          }
+        } else {
+          LOG.warn("Block Under-replication detected. Rotating file.");
+        }
+        consecutiveUnderReplRotateCount++;
+      } else {
+        consecutiveUnderReplRotateCount = 0;
+      }
+
+      if (doRotate) {
+        close();
+        open();
+      }
     }
 
     // write the event
@@ -459,6 +487,13 @@ class BucketWriter {
    */
   private boolean shouldRotate() {
     boolean doRotate = false;
+
+    if (writer.isUnderReplicated()) {
+      this.isUnderReplicated = true;
+      doRotate = true;
+    } else {
+      this.isUnderReplicated = false;
+    }
 
     if ((rollCount > 0) && (rollCount <= eventCounter)) {
       LOG.debug("rolling: rollCount: {}, events: {}", rollCount, eventCounter);

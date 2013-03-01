@@ -86,4 +86,9 @@ public class MockHDFSWriter implements HDFSWriter {
     filesClosed++;
   }
 
+  @Override
+  public boolean isUnderReplicated() {
+    return false;
+  }
+
 }
