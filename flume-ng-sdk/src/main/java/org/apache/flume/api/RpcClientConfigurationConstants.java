@@ -126,6 +126,15 @@ public final class RpcClientConfigurationConstants {
   public static final String CONFIG_CONNECTION_POOL_SIZE = "maxConnections";
   public static final int DEFAULT_CONNECTION_POOL_SIZE = 5;
 
+  /**
+   * The following are const for the NettyAvro Client.  To enable compression
+   * and set a compression level
+   */
+  public static final String CONFIG_COMPRESSION_TYPE = "compression-type";
+  public static final String CONFIG_COMPRESSION_LEVEL = "compression-level";
+  public static final int DEFAULT_COMPRESSION_LEVEL = 6;
+
+
   private RpcClientConfigurationConstants() {
     // disable explicit object creation
   }

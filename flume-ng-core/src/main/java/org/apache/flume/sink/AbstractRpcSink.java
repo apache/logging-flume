@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 /**
@@ -103,6 +104,19 @@ import java.util.Properties;
  * <td>milliseconds (long)</td>
  * <td>20000</td>
  * </tr>
+ * <tr>
+ * <td><tt>compression-type</tt></td>
+ * <td>Select compression type.  Default is "none" and the only compression type available is "deflate"</td>
+ * <td>compression type</td>
+ * <td>none</td>
+ * </tr>
+ * <tr>
+ * <td><tt>compression-level</tt></td>
+ * <td>In the case compression type is "deflate" this value can be between 0-9.  0 being no compression and
+ * 1-9 is compression.  The higher the number the better the compression.  6 is the default.</td>
+ * <td>compression level</td>
+ * <td>6</td>
+ * </tr>
  * </table>
  * <p>
  * <b>Metrics</b>
@@ -141,24 +155,8 @@ public abstract class AbstractRpcSink extends AbstractSink
     clientProps.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX +
         "h1", hostname + ":" + port);
 
-    Integer batchSize = context.getInteger("batch-size");
-    if (batchSize != null) {
-      clientProps.setProperty(RpcClientConfigurationConstants.CONFIG_BATCH_SIZE,
-          String.valueOf(batchSize));
-    }
-
-    Long connectTimeout = context.getLong("connect-timeout");
-    if (connectTimeout != null) {
-      clientProps.setProperty(
-          RpcClientConfigurationConstants.CONFIG_CONNECT_TIMEOUT,
-          String.valueOf(connectTimeout));
-    }
-
-    Long requestTimeout = context.getLong("request-timeout");
-    if (requestTimeout != null) {
-      clientProps.setProperty(
-          RpcClientConfigurationConstants.CONFIG_REQUEST_TIMEOUT,
-          String.valueOf(requestTimeout));
+    for (Entry<String, String> entry: context.getParameters().entrySet()) {
+      clientProps.setProperty(entry.getKey(), entry.getValue());
     }
 
     if (sinkCounter == null) {

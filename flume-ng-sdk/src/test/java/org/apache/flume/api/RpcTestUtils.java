@@ -23,6 +23,8 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.Executors;
+
 import junit.framework.Assert;
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.NettyServer;
@@ -36,6 +38,12 @@ import org.apache.flume.event.EventBuilder;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.jboss.netty.handler.codec.compression.ZlibDecoder;
+import org.jboss.netty.handler.codec.compression.ZlibEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,10 +66,28 @@ public class RpcTestUtils {
    */
   public static void handlerSimpleAppendTest(AvroSourceProtocol handler)
       throws FlumeException, EventDeliveryException {
+    handlerSimpleAppendTest(handler, false, false, 0);
+  }
+
+  /**
+   * Helper method for testing simple (single) with compression level 6 appends on handlers
+   * @param handler
+   * @throws FlumeException
+   * @throws EventDeliveryException
+   */
+  public static void handlerSimpleAppendTest(AvroSourceProtocol handler, boolean enableServerCompression, boolean enableClientCompression, int compressionLevel)
+      throws FlumeException, EventDeliveryException {
     NettyAvroRpcClient client = null;
-    Server server = startServer(handler);
+    Server server = startServer(handler, 0, enableServerCompression);
     try {
-      client = getStockLocalClient(server.getPort());
+      Properties starterProp = new Properties();
+      if (enableClientCompression) {
+        starterProp.setProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_TYPE, "deflate");
+        starterProp.setProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_LEVEL, "" + compressionLevel);
+      } else {
+        starterProp.setProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_TYPE, "none");
+      }
+      client = getStockLocalClient(server.getPort(), starterProp);
       boolean isActive = client.isActive();
       Assert.assertTrue("Client should be active", isActive);
       client.append(EventBuilder.withBody("wheee!!!", Charset.forName("UTF8")));
@@ -71,18 +97,32 @@ public class RpcTestUtils {
     }
   }
 
+  public static void handlerBatchAppendTest(AvroSourceProtocol handler)
+      throws FlumeException, EventDeliveryException {
+    handlerBatchAppendTest(handler, false, false, 0);
+  }
+
   /**
    * Helper method for testing batch appends on handlers
    * @param handler
    * @throws FlumeException
    * @throws EventDeliveryException
    */
-  public static void handlerBatchAppendTest(AvroSourceProtocol handler)
+  public static void handlerBatchAppendTest(AvroSourceProtocol handler, boolean enableServerCompression, boolean enableClientCompression, int compressionLevel)
       throws FlumeException, EventDeliveryException {
     NettyAvroRpcClient client = null;
-    Server server = startServer(handler);
+    Server server = startServer(handler, 0 , enableServerCompression);
     try {
-      client = getStockLocalClient(server.getPort());
+
+      Properties starterProp = new Properties();
+      if (enableClientCompression) {
+        starterProp.setProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_TYPE, "deflate");
+        starterProp.setProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_LEVEL, "" + compressionLevel);
+      } else {
+        starterProp.setProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_TYPE, "none");
+      }
+
+      client = getStockLocalClient(server.getPort(), starterProp);
       boolean isActive = client.isActive();
       Assert.assertTrue("Client should be active", isActive);
 
@@ -104,11 +144,16 @@ public class RpcTestUtils {
    */
   public static NettyAvroRpcClient getStockLocalClient(int port) {
     Properties props = new Properties();
-    props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS, "h1");
-    props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX + "h1",
+
+    return getStockLocalClient(port, props);
+  }
+
+  public static NettyAvroRpcClient getStockLocalClient(int port, Properties starterProp) {
+    starterProp.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS, "h1");
+    starterProp.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX + "h1",
         "127.0.0.1" + ":" + port);
     NettyAvroRpcClient client = new NettyAvroRpcClient();
-    client.configure(props);
+    client.configure(starterProp);
 
     return client;
   }
@@ -116,11 +161,20 @@ public class RpcTestUtils {
   /**
    * Start a NettyServer, wait a moment for it to spin up, and return it.
    */
-  public static Server startServer(AvroSourceProtocol handler, int port) {
+  public static Server startServer(AvroSourceProtocol handler, int port, boolean enableCompression) {
     Responder responder = new SpecificResponder(AvroSourceProtocol.class,
         handler);
-    Server server = new NettyServer(responder,
+    Server server;
+    if (enableCompression) {
+      server = new NettyServer(responder,
+          new InetSocketAddress(localhost, port),
+          new NioServerSocketChannelFactory
+          (Executors .newCachedThreadPool(), Executors.newCachedThreadPool()),
+          new CompressionChannelPipelineFactory(), null);
+    } else {
+      server = new NettyServer(responder,
         new InetSocketAddress(localhost, port));
+    }
     server.start();
     logger.info("Server started on hostname: {}, port: {}",
         new Object[] { localhost, Integer.toString(server.getPort()) });
@@ -138,8 +192,13 @@ public class RpcTestUtils {
   }
 
   public static Server startServer(AvroSourceProtocol handler) {
-    return startServer(handler, 0);
+    return startServer(handler, 0, false);
   }
+
+  public static Server startServer(AvroSourceProtocol handler, int port) {
+    return startServer(handler, port, false);
+  }
+
 
   /**
    * Request that the specified Server stop, and attempt to wait for it to exit.
@@ -295,6 +354,19 @@ public class RpcTestUtils {
       throw new AvroRemoteException("Handler smash!");
     }
 
+  }
+
+  private static class CompressionChannelPipelineFactory implements
+  ChannelPipelineFactory {
+
+    @Override
+    public ChannelPipeline getPipeline() throws Exception {
+      ChannelPipeline pipeline = Channels.pipeline();
+      ZlibEncoder encoder = new ZlibEncoder(6);
+      pipeline.addFirst("deflater", encoder);
+      pipeline.addFirst("inflater", new ZlibDecoder());
+      return pipeline;
+    }
   }
 
 }

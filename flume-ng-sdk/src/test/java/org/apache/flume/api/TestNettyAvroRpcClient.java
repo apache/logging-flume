@@ -62,6 +62,52 @@ public class TestNettyAvroRpcClient {
   }
 
   /**
+   * Simple request with compression on the server and client with compression level 6
+   * @throws FlumeException
+   * @throws EventDeliveryException
+   */
+  @Test
+  public void testOKServerSimpleCompressionLevel6() throws FlumeException,
+      EventDeliveryException {
+    RpcTestUtils.handlerSimpleAppendTest(new OKAvroHandler(), true, true, 6);
+  }
+
+  /**
+   * Simple request with compression on the server and client with compression level 0
+   *
+   * Compression level 0 = no compression
+   * @throws FlumeException
+   * @throws EventDeliveryException
+   */
+  @Test
+  public void testOKServerSimpleCompressionLevel0() throws FlumeException,
+      EventDeliveryException {
+    RpcTestUtils.handlerSimpleAppendTest(new OKAvroHandler(), true, true, 0);
+  }
+
+  /**
+   * Simple request with compression on the client only
+   * @throws FlumeException
+   * @throws EventDeliveryException
+   */
+  @Test(expected=org.apache.flume.EventDeliveryException.class)
+  public void testOKServerSimpleCompressionClientOnly() throws FlumeException,
+      EventDeliveryException {
+    RpcTestUtils.handlerSimpleAppendTest(new OKAvroHandler(), false, true, 6);
+  }
+
+  /**
+   * Simple request with compression on the server only
+   * @throws FlumeException
+   * @throws EventDeliveryException
+   */
+  @Test(expected=org.apache.flume.EventDeliveryException.class)
+  public void testOKServerSimpleCompressionServerOnly() throws FlumeException,
+      EventDeliveryException {
+    RpcTestUtils.handlerSimpleAppendTest(new OKAvroHandler(), true, false, 6);
+  }
+
+  /**
    * Simple batch request
    * @throws FlumeException
    * @throws EventDeliveryException
@@ -70,6 +116,50 @@ public class TestNettyAvroRpcClient {
   public void testOKServerBatch() throws FlumeException,
       EventDeliveryException {
     RpcTestUtils.handlerBatchAppendTest(new OKAvroHandler());
+  }
+
+  /**
+   * Simple batch request with compression deflate level 0
+   * @throws FlumeException
+   * @throws EventDeliveryException
+   */
+  @Test
+  public void testOKServerBatchCompressionLevel0() throws FlumeException,
+      EventDeliveryException {
+    RpcTestUtils.handlerBatchAppendTest(new OKAvroHandler(), true, true, 0);
+  }
+
+  /**
+   * Simple batch request with compression deflate level 6
+   * @throws FlumeException
+   * @throws EventDeliveryException
+   */
+  @Test
+  public void testOKServerBatchCompressionLevel6() throws FlumeException,
+      EventDeliveryException {
+    RpcTestUtils.handlerBatchAppendTest(new OKAvroHandler(), true, true, 6);
+  }
+
+  /**
+   * Simple batch request where the server only is using compression
+   * @throws FlumeException
+   * @throws EventDeliveryException
+   */
+  @Test(expected=org.apache.flume.EventDeliveryException.class)
+  public void testOKServerBatchCompressionServerOnly() throws FlumeException,
+      EventDeliveryException {
+    RpcTestUtils.handlerBatchAppendTest(new OKAvroHandler(), true, false, 6);
+  }
+
+  /**
+   * Simple batch request where the client only is using compression
+   * @throws FlumeException
+   * @throws EventDeliveryException
+   */
+  @Test(expected=org.apache.flume.EventDeliveryException.class)
+  public void testOKServerBatchCompressionClientOnly() throws FlumeException,
+      EventDeliveryException {
+    RpcTestUtils.handlerBatchAppendTest(new OKAvroHandler(), false, true, 6);
   }
 
   /**

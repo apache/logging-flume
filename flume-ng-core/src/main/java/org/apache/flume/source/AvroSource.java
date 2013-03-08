@@ -46,7 +46,12 @@ import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.jboss.netty.channel.Channels;
+import org.jboss.netty.handler.codec.compression.ZlibDecoder;
+import org.jboss.netty.handler.codec.compression.ZlibEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,8 +120,10 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
 
   private static final String PORT_KEY = "port";
   private static final String BIND_KEY = "bind";
+  private static final String COMPRESSION_TYPE = "compression-type";
   private int port;
   private String bindAddress;
+  private String compressionType;
 
   private Server server;
   private SourceCounter sourceCounter;
@@ -130,6 +137,8 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
 
     port = context.getInteger(PORT_KEY);
     bindAddress = context.getString(BIND_KEY);
+    compressionType = context.getString(COMPRESSION_TYPE, "none");
+
     try {
       maxThreads = context.getInteger(THREADS, 0);
     } catch (NumberFormatException e) {
@@ -147,15 +156,14 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     logger.info("Starting {}...", this);
 
     Responder responder = new SpecificResponder(AvroSourceProtocol.class, this);
-    if(maxThreads <= 0) {
-      server = new NettyServer(responder,
-              new InetSocketAddress(bindAddress, port));
-    } else {
-      server = new NettyServer(responder, new InetSocketAddress(bindAddress, port),
-              new NioServerSocketChannelFactory(
-                      Executors.newCachedThreadPool(),
-                      Executors.newFixedThreadPool(maxThreads)));
-    }
+
+    NioServerSocketChannelFactory socketChannelFactory = initSocketChannelFactory();
+
+    ChannelPipelineFactory pipelineFactory = initChannelPipelineFactory();
+
+    server = new NettyServer(responder, new InetSocketAddress(bindAddress, port),
+          socketChannelFactory, pipelineFactory, null);
+
     connectionCountUpdater = Executors.newSingleThreadScheduledExecutor();
     server.start();
     sourceCounter.start();
@@ -171,6 +179,34 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     }, 0, 60, TimeUnit.SECONDS);
 
     logger.info("Avro source {} started.", getName());
+  }
+
+  private NioServerSocketChannelFactory initSocketChannelFactory() {
+    NioServerSocketChannelFactory socketChannelFactory;
+    if (maxThreads <= 0) {
+      socketChannelFactory = new NioServerSocketChannelFactory
+          (Executors .newCachedThreadPool(), Executors.newCachedThreadPool());
+    } else {
+      socketChannelFactory = new NioServerSocketChannelFactory(
+          Executors.newCachedThreadPool(),
+          Executors.newFixedThreadPool(maxThreads));
+    }
+    return socketChannelFactory;
+  }
+
+  private ChannelPipelineFactory initChannelPipelineFactory() {
+    ChannelPipelineFactory pipelineFactory;
+    if (compressionType.equalsIgnoreCase("deflate")) {
+      pipelineFactory = new CompressionChannelPipelineFactory();
+    } else {
+      pipelineFactory = new ChannelPipelineFactory() {
+        @Override
+        public ChannelPipeline getPipeline() throws Exception {
+          return Channels.pipeline();
+        }
+      };
+    }
+    return pipelineFactory;
   }
 
   @Override
@@ -275,5 +311,18 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     sourceCounter.addToEventAcceptedCount(events.size());
 
     return Status.OK;
+  }
+
+  private static class CompressionChannelPipelineFactory implements
+  ChannelPipelineFactory {
+
+    @Override
+    public ChannelPipeline getPipeline() throws Exception {
+      ChannelPipeline pipeline = Channels.pipeline();
+      ZlibEncoder encoder = new ZlibEncoder(6);
+      pipeline.addFirst("deflater", encoder);
+      pipeline.addFirst("inflater", new ZlibDecoder());
+      return pipeline;
+    }
   }
 }

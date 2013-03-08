@@ -652,7 +652,7 @@ be written to the default channels and will be attempted to be written to the
 optional channels for that header. Specifying optional channels will still cause
 the event to be written to the default channels, if no required channels are
 specified. If no channels are designated as default and there are no required,
- the selector will attempt to write the events to the optional channels. Any
+the selector will attempt to write the events to the optional channels. Any
 failures are simply ignored in that case.
 
 
@@ -667,19 +667,20 @@ When paired with the built-in AvroSink on another (previous hop) Flume agent,
 it can create tiered collection topologies.
 Required properties are in **bold**.
 
-==============  ===========  ===================================================
-Property Name   Default      Description
-==============  ===========  ===================================================
-**channels**    --
-**type**        --           The component type name, needs to be ``avro``
-**bind**        --           hostname or IP address to listen on
-**port**        --           Port # to bind to
-threads         --           Maximum number of worker threads to spawn
+==================   ===========  ===================================================
+Property Name        Default      Description
+==================   ===========  ===================================================
+**channels**         --
+**type**             --           The component type name, needs to be ``avro``
+**bind**             --           hostname or IP address to listen on
+**port**             --           Port # to bind to
+threads              --           Maximum number of worker threads to spawn
 selector.type
 selector.*
-interceptors    --           Space separated list of interceptors
+interceptors         --           Space separated list of interceptors
 interceptors.*
-==============  ===========  ===================================================
+compression-type     none         This can be "none" or "deflate".  The compression-type must match the compression-type of matching AvroSource
+==================   ===========  ===================================================
 
 Example for agent named a1:
 
@@ -1440,18 +1441,19 @@ hostname / port pair. The events are taken from the configured Channel in
 batches of the configured batch size.
 Required properties are in **bold**.
 
-===============  =======  ==============================================
-Property Name    Default  Description
-===============  =======  ==============================================
-**channel**      --
-**type**         --       The component type name, needs to be ``avro``.
-**hostname**     --       The hostname or IP address to bind to.
-**port**         --       The port # to listen on.
-batch-size       100      number of event to batch together for send.
-connect-timeout  20000    Amount of time (ms) to allow for the first (handshake) request.
-request-timeout  20000    Amount of time (ms) to allow for requests after the first.
-
-===============  =======  ==============================================
+===================   =======  ==============================================
+Property Name         Default  Description
+===================   =======  ==============================================
+**channel**           --
+**type**              --       The component type name, needs to be ``avro``.
+**hostname**          --       The hostname or IP address to bind to.
+**port**              --       The port # to listen on.
+batch-size            100      number of event to batch together for send.
+connect-timeout       20000    Amount of time (ms) to allow for the first (handshake) request.
+request-timeout       20000    Amount of time (ms) to allow for requests after the first.
+compression-type      none     This can be "none" or "deflate".  The compression-type must match the compression-type of matching AvroSource
+compression-level     6	       The level of compression to compress event. 0 = no compression and 1-9 is compression.  The higher the number the more compression
+===================   =======  ==============================================
 
 Example for agent named a1:
 
