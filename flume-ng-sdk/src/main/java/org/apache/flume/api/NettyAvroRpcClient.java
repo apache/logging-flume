@@ -30,6 +30,7 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -51,7 +52,12 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
+import org.jboss.netty.channel.ChannelFactory;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.socket.SocketChannel;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.jboss.netty.handler.codec.compression.ZlibDecoder;
+import org.jboss.netty.handler.codec.compression.ZlibEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,6 +83,8 @@ implements RpcClient {
   private AvroSourceProtocol.Callback avroClient;
   private static final Logger logger = LoggerFactory
       .getLogger(NettyAvroRpcClient.class);
+  private boolean enableDeflateCompression;
+  private int compressionLevel;
 
   /**
    * This constructor is intended to be called from {@link RpcClientFactory}.
@@ -103,12 +111,25 @@ implements RpcClient {
     callTimeoutPool = Executors.newCachedThreadPool(
         new TransceiverThreadFactory("Flume Avro RPC Client Call Invoker"));
     try {
+
+      NioClientSocketChannelFactory socketChannelFactory;
+
+      if (enableDeflateCompression) {
+        socketChannelFactory = new CompressionChannelFactory(
+            Executors.newCachedThreadPool(new TransceiverThreadFactory(
+                "Avro " + NettyTransceiver.class.getSimpleName() + " Boss")),
+            Executors.newCachedThreadPool(new TransceiverThreadFactory(
+                "Avro " + NettyTransceiver.class.getSimpleName() + " I/O Worker")), compressionLevel);
+      } else {
+        socketChannelFactory = new NioClientSocketChannelFactory(
+            Executors.newCachedThreadPool(new TransceiverThreadFactory(
+                "Avro " + NettyTransceiver.class.getSimpleName() + " Boss")),
+            Executors.newCachedThreadPool(new TransceiverThreadFactory(
+                "Avro " + NettyTransceiver.class.getSimpleName() + " I/O Worker")));
+      }
+
       transceiver = new NettyTransceiver(this.address,
-          new NioClientSocketChannelFactory(
-        Executors.newCachedThreadPool(new TransceiverThreadFactory(
-            "Avro " + NettyTransceiver.class.getSimpleName() + " Boss")),
-        Executors.newCachedThreadPool(new TransceiverThreadFactory(
-            "Avro " + NettyTransceiver.class.getSimpleName() + " I/O Worker"))),
+          socketChannelFactory,
           tu.toMillis(timeout));
       avroClient =
           SpecificRequestor.getClient(AvroSourceProtocol.Callback.class,
@@ -511,6 +532,21 @@ implements RpcClient {
       }
     }
 
+    String enableCompressionStr = properties.getProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_TYPE);
+    if (enableCompressionStr != null && enableCompressionStr.equalsIgnoreCase("deflate")) {
+      this.enableDeflateCompression = true;
+      String compressionLvlStr = properties.getProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_LEVEL);
+      compressionLevel = RpcClientConfigurationConstants.DEFAULT_COMPRESSION_LEVEL;
+      if (compressionLvlStr != null) {
+        try {
+          compressionLevel = Integer.parseInt(compressionLvlStr);
+        } catch (NumberFormatException ex) {
+          logger.error("Invalid compression level: " + compressionLvlStr);
+        }
+      }
+    }
+
+
     this.connect();
   }
 
@@ -543,6 +579,30 @@ implements RpcClient {
       thread.setDaemon(true);
       thread.setName(prefix + " " + threadId.incrementAndGet());
       return thread;
+    }
+  }
+
+  private static class CompressionChannelFactory extends
+      NioClientSocketChannelFactory {
+    private int compressionLevel;
+
+    public CompressionChannelFactory(
+        Executor bossExecutor, Executor workerExecutor, int compressionLevel) {
+      super(bossExecutor, workerExecutor);
+      this.compressionLevel = compressionLevel;
+    }
+
+    @Override
+    public SocketChannel newChannel(ChannelPipeline pipeline) {
+      try {
+
+        ZlibEncoder encoder = new ZlibEncoder(compressionLevel);
+        pipeline.addFirst("deflater", encoder);
+        pipeline.addFirst("inflater", new ZlibDecoder());
+        return super.newChannel(pipeline);
+      } catch (Exception ex) {
+        throw new RuntimeException("Cannot create Compression channel", ex);
+      }
     }
   }
 }
