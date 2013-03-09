@@ -353,9 +353,114 @@ public class TestHDFSEventSinkOnMiniCluster {
       Assert.assertTrue(line.startsWith("yarg"));
     }
 
-    Assert.assertTrue("4 or 5 files expected",
+    Assert.assertTrue("4 or 5 files expected, found " + statuses.length,
         statuses.length == 4 || statuses.length == 5);
     System.out.println("There are " + statuses.length + " files.");
+
+    if (!KEEP_DATA) {
+      fs.delete(outputDirPath, true);
+    }
+
+    cluster.shutdown();
+    cluster = null;
+  }
+
+  /**
+   * This is a very basic test that writes one event to HDFS and reads it back.
+   */
+  @Test
+  public void maxUnderReplicationTest() throws EventDeliveryException,
+      IOException {
+    Configuration conf = new Configuration();
+    conf.set("dfs.replication", String.valueOf(3));
+    cluster = new MiniDFSCluster(conf, 3, true, null);
+    cluster.waitActive();
+
+    String outputDir = "/flume/underReplicationTest";
+    Path outputDirPath = new Path(outputDir);
+
+    logger.info("Running test with output dir: {}", outputDir);
+
+    FileSystem fs = cluster.getFileSystem();
+    // ensure output directory is empty
+    if (fs.exists(outputDirPath)) {
+      fs.delete(outputDirPath, true);
+    }
+
+    String nnURL = getNameNodeURL(cluster);
+    logger.info("Namenode address: {}", nnURL);
+
+    Context chanCtx = new Context();
+    MemoryChannel channel = new MemoryChannel();
+    channel.setName("simpleHDFSTest-mem-chan");
+    channel.configure(chanCtx);
+    channel.start();
+
+    Context sinkCtx = new Context();
+    sinkCtx.put("hdfs.path", nnURL + outputDir);
+    sinkCtx.put("hdfs.fileType", HDFSWriterFactory.DataStreamType);
+    sinkCtx.put("hdfs.batchSize", Integer.toString(1));
+
+    HDFSEventSink sink = new HDFSEventSink();
+    sink.setName("simpleHDFSTest-hdfs-sink");
+    sink.configure(sinkCtx);
+    sink.setChannel(channel);
+    sink.start();
+
+    // create an event
+    channel.getTransaction().begin();
+    try {
+      for (int i = 0; i < 50; i++) {
+        channel.put(EventBuilder.withBody("yarg " + i, Charsets.UTF_8));
+      }
+      channel.getTransaction().commit();
+    } finally {
+      channel.getTransaction().close();
+    }
+
+    // store events to HDFS
+    logger.info("Running process(). Create new file.");
+    sink.process(); // create new file;
+    logger.info("Running process(). Same file.");
+    sink.process();
+
+    // kill a datanode
+    logger.info("Killing datanode #1...");
+    cluster.stopDataNode(0);
+
+    // there is a race here.. the client may or may not notice that the
+    // datanode is dead before it next sync()s.
+    // so, this next call may or may not roll a new file.
+
+    logger.info("Running process(). Create new file? (racy)");
+    sink.process();
+
+    for (int i = 3; i < 50; i++) {
+      logger.info("Running process().");
+      sink.process();
+    }
+
+    // shut down flume
+    sink.stop();
+    channel.stop();
+
+    // verify that it's in HDFS and that its content is what we say it should be
+    FileStatus[] statuses = fs.listStatus(outputDirPath);
+    Assert.assertNotNull("No files found written to HDFS", statuses);
+
+    for (FileStatus status : statuses) {
+      Path filePath = status.getPath();
+      logger.info("Found file on DFS: {}", filePath);
+      FSDataInputStream stream = fs.open(filePath);
+      BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+      String line = reader.readLine();
+      logger.info("First line in file {}: {}", filePath, line);
+      Assert.assertTrue(line.startsWith("yarg"));
+    }
+
+    System.out.println("There are " + statuses.length + " files.");
+    Assert.assertEquals("31 files expected, found " + statuses.length,
+        31, statuses.length);
 
     if (!KEEP_DATA) {
       fs.delete(outputDirPath, true);
