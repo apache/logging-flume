@@ -92,7 +92,7 @@ class BucketWriter {
   private volatile long batchCounter;
   private volatile boolean isOpen;
   private volatile boolean isUnderReplicated;
-  private volatile int consecutiveUnderReplRotateCount;
+  private volatile int consecutiveUnderReplRotateCount = 0;
   private volatile ScheduledFuture<Void> timedRollFuture;
   private SinkCounter sinkCounter;
   private final int idleTimeout;
@@ -193,9 +193,6 @@ class BucketWriter {
         return null;
       }
     });
-
-    // ensure new files reset under-rep rotate count
-    consecutiveUnderReplRotateCount = 0;
   }
 
   /**
@@ -576,7 +573,8 @@ class BucketWriter {
     } catch (TimeoutException eT) {
       future.cancel(true);
       sinkCounter.incrementConnectionFailedCount();
-      throw new IOException("Callable timed out after " + callTimeout + " ms",
+      throw new IOException("Callable timed out after " + callTimeout + " ms" +
+          " on file: " + bucketPath,
         eT);
     } catch (ExecutionException e1) {
       sinkCounter.incrementConnectionFailedCount();
