@@ -140,7 +140,7 @@ Configurable {
   private static final Logger logger = LoggerFactory
       .getLogger(ExecSource.class);
 
-
+  private String shell;
   private String command;
   private CounterGroup counterGroup;
   private ExecutorService executor;
@@ -159,7 +159,7 @@ Configurable {
     executor = Executors.newSingleThreadExecutor();
     counterGroup = new CounterGroup();
 
-    runner = new ExecRunnable(command, getChannelProcessor(), counterGroup,
+    runner = new ExecRunnable(shell, command, getChannelProcessor(), counterGroup,
         restart, restartThrottle, logStderr, bufferCount, charset);
 
     // FIXME: Use a callback-like executor / future to signal us upon failure.
@@ -229,11 +229,13 @@ Configurable {
 
     charset = Charset.forName(context.getString(ExecSourceConfigurationConstants.CHARSET,
         ExecSourceConfigurationConstants.DEFAULT_CHARSET));
+
+    shell = context.getString(ExecSourceConfigurationConstants.CONFIG_SHELL, null);
   }
 
   private static class ExecRunnable implements Runnable {
 
-    public ExecRunnable(String command, ChannelProcessor channelProcessor,
+    public ExecRunnable(String shell, String command, ChannelProcessor channelProcessor,
         CounterGroup counterGroup, boolean restart, long restartThrottle,
         boolean logStderr, int bufferCount, Charset charset) {
       this.command = command;
@@ -244,16 +246,18 @@ Configurable {
       this.restart = restart;
       this.logStderr = logStderr;
       this.charset = charset;
+      this.shell = shell;
     }
 
-    private String command;
-    private ChannelProcessor channelProcessor;
-    private CounterGroup counterGroup;
+    private final String shell;
+    private final String command;
+    private final ChannelProcessor channelProcessor;
+    private final CounterGroup counterGroup;
     private volatile boolean restart;
-    private long restartThrottle;
-    private int bufferCount;
-    private boolean logStderr;
-    private Charset charset;
+    private final long restartThrottle;
+    private final int bufferCount;
+    private final boolean logStderr;
+    private final Charset charset;
     private Process process = null;
 
     @Override
@@ -262,8 +266,13 @@ Configurable {
         String exitCode = "unknown";
         BufferedReader reader = null;
         try {
-          String[] commandArgs = command.split("\\s+");
-          process = new ProcessBuilder(commandArgs).start();
+          if(shell != null) {
+            String[] commandArgs = formulateShellCommand(shell, command);
+            process = Runtime.getRuntime().exec(commandArgs);
+          }  else {
+            String[] commandArgs = command.split("\\s+");
+            process = new ProcessBuilder(commandArgs).start();
+          }
           reader = new BufferedReader(
               new InputStreamReader(process.getInputStream(), charset));
 
@@ -315,6 +324,15 @@ Configurable {
         }
       } while(restart);
     }
+
+    private static String[] formulateShellCommand(String shell, String command) {
+      String[] shellArgs = shell.split("\\s+");
+      String[] result = new String[shellArgs.length + 1];
+      System.arraycopy(shellArgs, 0, result, 0, shellArgs.length);
+      result[shellArgs.length] = command;
+      return result;
+    }
+
     public int kill() {
       if(process != null) {
         synchronized (process) {
@@ -336,10 +354,12 @@ Configurable {
   private static class StderrReader extends Thread {
     private BufferedReader input;
     private boolean logStderr;
+
     protected StderrReader(BufferedReader input, boolean logStderr) {
       this.input = input;
       this.logStderr = logStderr;
     }
+
     @Override
     public void run() {
       try {
