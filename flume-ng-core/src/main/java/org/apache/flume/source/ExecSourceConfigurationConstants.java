@@ -51,4 +51,9 @@ public class ExecSourceConfigurationConstants {
    */
   public static final String CHARSET = "charset";
   public static final String DEFAULT_CHARSET = "UTF-8";
+
+  /**
+   * Optional shell/command processor used to run command
+   */
+  public static final String CONFIG_SHELL = "shell";
 }

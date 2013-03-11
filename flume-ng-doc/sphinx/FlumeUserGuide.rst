@@ -712,6 +712,7 @@ Property Name    Default      Description
 **channels**     --
 **type**         --           The component type name, needs to be ``exec``
 **command**      --           The command to execute
+shell            --           A shell invocation used to run the command.  e.g. /bin/sh -c. Required only for commands relying on shell features like wildcards, back ticks, pipes etc.
 restartThrottle  10000        Amount of time (in millis) to wait before attempting a restart
 restart          false        Whether the executed cmd should be restarted if it dies
 logStdErr        false        Whether the command's stderr should be logged
@@ -754,6 +755,17 @@ Example for agent named a1:
   a1.sources.r1.type = exec
   a1.sources.r1.command = tail -F /var/log/secure
   a1.sources.r1.channels = c1
+
+The 'shell' config is used to invoke the 'command' through a command shell (such as Bash
+or Powershell). The 'command' is passed as argument to 'shell' for execution. This
+allows the 'command' to use features from the shell such as wildcards, back ticks, pipes,
+loops, conditionals etc. In the absence of the 'shell' config, the 'command' will be
+invoked directly.  Common values for 'shell' :  '/bin/sh -c', '/bin/ksh -c',
+'cmd /c',  'powershell -Command', etc.
+.. code-block:: properties
+  agent_foo.sources.tailsource-1.type = exec
+  agent_foo.sources.tailsource-1.shell = /bin/bash -c
+  agent_foo.sources.tailsource-1.command = for i in /path/*.txt; do cat $i; done
 
 JMS Source
 ~~~~~~~~~~~

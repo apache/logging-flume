@@ -22,13 +22,9 @@ package org.apache.flume.source;
 
 import static org.junit.Assert.*;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.List;
-import java.util.Random;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
@@ -43,40 +39,48 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.lifecycle.LifecycleException;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 
 public class TestExecSource {
 
   private AbstractSource source;
+  private Channel channel = new MemoryChannel();
+
+  private Context context = new Context();
+
+  private ChannelSelector rcs = new ReplicatingChannelSelector();
+
 
   @Before
   public void setUp() {
+    context.put("keep-alive", "1");
+    context.put("capacity", "1000");
+    context.put("transactionCapacity", "1000");
+    Configurables.configure(channel, context);
+    rcs.setChannels(Lists.newArrayList(channel));
+
     source = new ExecSource();
+    source.setChannelProcessor(new ChannelProcessor(rcs));
+  }
+
+  @After
+  public void tearDown() {
+    source.stop();
   }
 
   @Test
   public void testProcess() throws InterruptedException, LifecycleException,
   EventDeliveryException, IOException {
 
-    Channel channel = new MemoryChannel();
-    Context context = new Context();
-
     context.put("command", "cat /etc/passwd");
     context.put("keep-alive", "1");
     context.put("capacity", "1000");
     context.put("transactionCapacity", "1000");
     Configurables.configure(source, context);
-    Configurables.configure(channel, context);
-
-    ChannelSelector rcs = new ReplicatingChannelSelector();
-    rcs.setChannels(Lists.newArrayList(channel));
-
-    source.setChannelProcessor(new ChannelProcessor(rcs));
 
     source.start();
     Transaction transaction = channel.getTransaction();
@@ -96,8 +100,6 @@ public class TestExecSource {
     transaction.commit();
     transaction.close();
 
-    source.stop();
-
     File file1 = new File("/tmp/flume-execsource."
         + Thread.currentThread().getId());
     File file2 = new File("/etc/passwd");
@@ -106,25 +108,105 @@ public class TestExecSource {
     FileUtils.forceDelete(file1);
   }
 
+  @Test
+  public void testShellCommandSimple() throws InterruptedException, LifecycleException,
+  EventDeliveryException, IOException {
+    runTestShellCmdHelper("/bin/sh -c", "seq 5"
+            , new String[]{"1","2","3","4","5" } );
+  }
+
+  @Test
+  public void testShellCommandBackTicks() throws InterruptedException, LifecycleException,
+  EventDeliveryException, IOException {
+    // command with backticks
+    runTestShellCmdHelper("/bin/sh -c", "echo `seq 5`" , new String[]{"1 2 3 4 5" } );
+    runTestShellCmdHelper("/bin/sh -c", "echo $(seq 5)" , new String[]{"1 2 3 4 5" } );
+  }
+
+  @Test
+  public void testShellCommandComplex() throws InterruptedException, LifecycleException,
+  EventDeliveryException, IOException {
+    // command with wildcards & pipes
+    String[] expected = {"1234", "abcd", "ijk", "xyz", "zzz"};
+
+    // pipes
+    runTestShellCmdHelper("/bin/sh -c", "echo zzz 1234 xyz abcd ijk | xargs -n1 echo | sort -f"
+            ,  expected );
+  }
+
+  @Test
+  public void testShellCommandScript() throws InterruptedException, LifecycleException,
+  EventDeliveryException, IOException {
+    // mini script
+    runTestShellCmdHelper("/bin/sh -c", "for i in {1..5}; do echo $i;done"
+            , new String[]{"1","2","3","4","5" } );
+    // shell arithmetic
+    runTestShellCmdHelper("/bin/sh -c", "if ((2+2>3)); then  echo good; else echo not good; fi" , new String[]{"good"} );
+  }
+
+  @Test
+  public void testShellCommandEmbeddingAndEscaping() throws InterruptedException, LifecycleException,
+    EventDeliveryException, IOException {
+      System.out.println( "######### PWD = " + new java.io.File( "." ).getCanonicalPath() );
+    // mini script
+      BufferedReader reader = new BufferedReader(new FileReader("src/test/resources/test_command.txt") );
+      try {
+        String command1 = reader.readLine();
+        Assert.assertNotNull(command1);
+        String[] output1 = new String[] {"'1'", "\"2\"", "\\3", "\\4"};
+        runTestShellCmdHelper("/bin/sh -c", command1 , output1);
+        String command2 = reader.readLine();
+        Assert.assertNotNull(command2);
+        String[] output2 = new String[]{"1","2","3","4","5" };
+        runTestShellCmdHelper("/bin/sh -c", command2 , output2);
+        String command3 = reader.readLine();
+        Assert.assertNotNull(command3);
+        String[] output3 = new String[]{"2","3","4","5","6" };
+        runTestShellCmdHelper("/bin/sh -c", command3 , output3);
+      } finally {
+        reader.close();
+      }
+    }
+
+
+    private void runTestShellCmdHelper(String shell, String command, String[] expectedOutput)
+             throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
+      context.put("shell", shell);
+      context.put("command", command);
+      Configurables.configure(source, context);
+      source.start();
+      File outputFile = File.createTempFile("flumeExecSourceTest_", "");
+      FileOutputStream outputStream = new FileOutputStream(outputFile);
+      Transaction transaction = channel.getTransaction();
+      transaction.begin();
+      try {
+        Event event;
+        while ((event = channel.take()) != null) {
+          outputStream.write(event.getBody());
+          outputStream.write('\n');
+        }
+        outputStream.close();
+        transaction.commit();
+        List<String> output  = Files.readLines(outputFile, Charset.defaultCharset());
+
+        Assert.assertArrayEquals(expectedOutput, output.toArray(new String[]{}));
+      } finally {
+        FileUtils.forceDelete(outputFile);
+        transaction.close();
+        source.stop();
+      }
+    }
+
 
   @Test
   public void testRestart() throws InterruptedException, LifecycleException,
   EventDeliveryException, IOException {
-
-    Channel channel = new MemoryChannel();
-    Context context = new Context();
 
     context.put(ExecSourceConfigurationConstants.CONFIG_RESTART_THROTTLE, "10");
     context.put(ExecSourceConfigurationConstants.CONFIG_RESTART, "true");
 
     context.put("command", "echo flume");
     Configurables.configure(source, context);
-    Configurables.configure(channel, context);
-
-    ChannelSelector rcs = new ReplicatingChannelSelector();
-    rcs.setChannels(Lists.newArrayList(channel));
-
-    source.setChannelProcessor(new ChannelProcessor(rcs));
 
     source.start();
     Transaction transaction = channel.getTransaction();
@@ -182,19 +264,11 @@ public class TestExecSource {
     String command = "sleep " + seconds;
     Pattern pattern = Pattern.compile("\b" + command + "\b");
 
-    Channel channel = new MemoryChannel();
-    Context context = new Context();
-
     context.put(ExecSourceConfigurationConstants.CONFIG_RESTART, "false");
 
     context.put("command", command);
     Configurables.configure(source, context);
-    Configurables.configure(channel, context);
 
-    ChannelSelector rcs = new ReplicatingChannelSelector();
-    rcs.setChannels(Lists.newArrayList(channel));
-
-    source.setChannelProcessor(new ChannelProcessor(rcs));
     source.start();
     Thread.sleep(1000L);
     source.stop();
