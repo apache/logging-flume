@@ -336,7 +336,9 @@ final class FlumeEventQueue {
    */
   class InflightEventWrapper {
     private SetMultimap<Long, Long> inflightEvents = HashMultimap.create();
-    private RandomAccessFile file;
+    // Both these are volatile for safe publication, they are never accessed by
+    // more than 1 thread at a time.
+    private volatile RandomAccessFile file;
     private volatile java.nio.channels.FileChannel fileChannel;
     private final MessageDigest digest;
     private volatile Future<?> future;
@@ -402,12 +404,12 @@ final class FlumeEventQueue {
         }
       }
       Collection<Long> values = inflightEvents.values();
-      if(values.isEmpty()){
-        file.setLength(0L);
-      }
       if(!fileChannel.isOpen()){
         file = new RandomAccessFile(inflightEventsFile, "rw");
         fileChannel = file.getChannel();
+      }
+      if(values.isEmpty()){
+        file.setLength(0L);
       }
       //What is written out?
       //Checksum - 16 bytes
