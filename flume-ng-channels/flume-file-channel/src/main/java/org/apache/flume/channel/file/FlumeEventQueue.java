@@ -30,10 +30,12 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -322,9 +324,11 @@ final class FlumeEventQueue {
     return backingStore.getCapacity();
   }
 
-  synchronized void close() {
+  synchronized void close() throws IOException {
     try {
       backingStore.close();
+      inflightPuts.close();
+      inflightTakes.close();
     } catch (IOException e) {
       LOG.warn("Error closing backing store", e);
     }
@@ -442,21 +446,9 @@ final class FlumeEventQueue {
         }
         byte[] checksum = digest.digest(buffer.array());
         file.write(checksum);
-        future = Executors.newSingleThreadExecutor().submit(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    try {
-                      buffer.position(0);
-                      fileChannel.write(buffer);
-                      fileChannel.force(true);
-                    } catch (IOException ex) {
-                      LOG.error("Error while writing inflight events to "
-                              + "inflights file: "
-                              + inflightEventsFile.getName());
-                    }
-                  }
-                });
+        buffer.position(0);
+        fileChannel.write(buffer);
+        fileChannel.force(true);
         syncRequired = false;
       } catch (IOException ex) {
         LOG.error("Error while writing checkpoint to disk.", ex);
@@ -526,6 +518,10 @@ final class FlumeEventQueue {
     //Needed for testing.
     public Collection<Long> getInFlightPointers() {
       return inflightEvents.values();
+    }
+
+    public void close() throws IOException {
+      file.close();
     }
   }
 }

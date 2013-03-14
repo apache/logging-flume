@@ -27,6 +27,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
@@ -380,7 +381,12 @@ public class FileChannel extends BasicChannelSemantics {
   void close() {
     if(open) {
       open = false;
-      log.close();
+      try {
+        log.close();
+      } catch (Exception e) {
+        LOG.error("Error while trying to close the log.", e);
+        Throwables.propagate(e);
+      }
       log = null;
       queueRemaining = null;
     }

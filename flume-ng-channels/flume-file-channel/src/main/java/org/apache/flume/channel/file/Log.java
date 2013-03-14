@@ -677,7 +677,7 @@ class Log {
    * Synchronization not required since this method gets the write lock,
    * so checkpoint and this method cannot run at the same time.
    */
-  void close() {
+  void close() throws IOException{
     lockExclusive();
     try {
       open = false;
