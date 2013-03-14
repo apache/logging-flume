@@ -238,8 +238,7 @@ public class CheckpointRebuilder {
     String[] logDirs = cli.getOptionValue("l").split(",");
     List<File> logFiles = Lists.newArrayList();
     for (String logDir : logDirs) {
-      File[] files = new File(logDir).listFiles();
-      logFiles.addAll(Arrays.asList(files));
+      logFiles.addAll(LogUtils.getLogs(new File(logDir)));
     }
     int capacity = Integer.parseInt(cli.getOptionValue("t"));
     File checkpointFile = new File(checkpointDir, "checkpoint");
