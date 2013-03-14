@@ -43,6 +43,7 @@ import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Sink;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.ChannelProcessor;
+import org.apache.flume.api.RpcClient;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
@@ -261,6 +262,66 @@ public class TestAvroSink {
     sink.stop();
     Assert.assertTrue(LifecycleController.waitForOneOf(sink,
         LifecycleState.STOP_OR_ERROR, 5000));
+    server.close();
+  }
+
+  @Test
+  public void testReset() throws Exception {
+
+    setUp();
+    Server server = createServer(new MockAvroServer());
+
+    server.start();
+
+    Context context = new Context();
+
+    context.put("hostname", hostname);
+    context.put("port", String.valueOf(port));
+    context.put("batch-size", String.valueOf(2));
+    context.put("connect-timeout", String.valueOf(2000L));
+    context.put("request-timeout", String.valueOf(3000L));
+    context.put("reset-connection-interval", String.valueOf("5"));
+
+    sink.setChannel(channel);
+    Configurables.configure(sink, context);
+    sink.start();
+    RpcClient firstClient = sink.getUnderlyingClient();
+    Thread.sleep(6000);
+    // Make sure they are not the same object, connection should be reset
+    Assert.assertFalse(firstClient == sink.getUnderlyingClient());
+    sink.stop();
+
+    context.put("hostname", hostname);
+    context.put("port", String.valueOf(port));
+    context.put("batch-size", String.valueOf(2));
+    context.put("connect-timeout", String.valueOf(2000L));
+    context.put("request-timeout", String.valueOf(3000L));
+    context.put("reset-connection-interval", String.valueOf("0"));
+
+    sink.setChannel(channel);
+    Configurables.configure(sink, context);
+    sink.start();
+    firstClient = sink.getUnderlyingClient();
+    Thread.sleep(6000);
+    // Make sure they are the same object, since connection should not be reset
+    Assert.assertTrue(firstClient == sink.getUnderlyingClient());
+    sink.stop();
+
+    context.clear();
+    context.put("hostname", hostname);
+    context.put("port", String.valueOf(port));
+    context.put("batch-size", String.valueOf(2));
+    context.put("connect-timeout", String.valueOf(2000L));
+    context.put("request-timeout", String.valueOf(3000L));
+
+    sink.setChannel(channel);
+    Configurables.configure(sink, context);
+    sink.start();
+    firstClient = sink.getUnderlyingClient();
+    Thread.sleep(6000);
+    // Make sure they are the same object, since connection should not be reset
+    Assert.assertTrue(firstClient == sink.getUnderlyingClient());
+    sink.stop();
     server.close();
   }
 
