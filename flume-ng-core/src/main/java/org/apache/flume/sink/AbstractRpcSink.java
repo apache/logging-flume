@@ -18,8 +18,11 @@
  */
 package org.apache.flume.sink;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
@@ -37,6 +40,9 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This sink provides the basic RPC functionality for Flume. This sink takes
@@ -140,6 +146,11 @@ public abstract class AbstractRpcSink extends AbstractSink
   private RpcClient client;
   private Properties clientProps;
   private SinkCounter sinkCounter;
+  private int cxnResetInterval;
+  private final int DEFAULT_CXN_RESET_INTERVAL = 0;
+  private final ScheduledExecutorService cxnResetExecutor = Executors
+    .newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()
+      .setNameFormat("Rpc Sink Reset Thread").build());
 
   @Override
   public void configure(Context context) {
@@ -161,6 +172,13 @@ public abstract class AbstractRpcSink extends AbstractSink
 
     if (sinkCounter == null) {
       sinkCounter = new SinkCounter(getName());
+    }
+    cxnResetInterval = context.getInteger("reset-connection-interval",
+      DEFAULT_CXN_RESET_INTERVAL);
+    if(cxnResetInterval == DEFAULT_CXN_RESET_INTERVAL) {
+      logger.info("Connection reset is set to " + String.valueOf
+        (DEFAULT_CXN_RESET_INTERVAL) +". Will not reset connection to next " +
+        "hop");
     }
   }
 
@@ -189,6 +207,14 @@ public abstract class AbstractRpcSink extends AbstractSink
         Preconditions.checkNotNull(client, "Rpc Client could not be " +
           "initialized. " + getName() + " could not be started");
         sinkCounter.incrementConnectionCreatedCount();
+        if (cxnResetInterval > 0) {
+          cxnResetExecutor.schedule(new Runnable() {
+            @Override
+            public void run() {
+              destroyConnection();
+            }
+          }, cxnResetInterval, TimeUnit.SECONDS);
+        }
       } catch (Exception ex) {
         sinkCounter.incrementConnectionFailedCount();
         if (ex instanceof FlumeException) {
@@ -266,6 +292,15 @@ public abstract class AbstractRpcSink extends AbstractSink
     logger.info("Rpc sink {} stopping...", getName());
 
     destroyConnection();
+    cxnResetExecutor.shutdown();
+    try {
+      if (cxnResetExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+        cxnResetExecutor.shutdownNow();
+      }
+    } catch (Exception ex) {
+      logger.error("Interrupted while waiting for connection reset executor " +
+        "to shut down");
+    }
     sinkCounter.stop();
     super.stop();
 
@@ -337,5 +372,10 @@ public abstract class AbstractRpcSink extends AbstractSink
     }
 
     return status;
+  }
+
+  @VisibleForTesting
+  RpcClient getUnderlyingClient() {
+    return client;
   }
 }
