@@ -111,7 +111,7 @@ public class TestExecSource {
   @Test
   public void testShellCommandSimple() throws InterruptedException, LifecycleException,
   EventDeliveryException, IOException {
-    runTestShellCmdHelper("/bin/sh -c", "seq 5"
+    runTestShellCmdHelper("/bin/bash -c", "seq 5"
             , new String[]{"1","2","3","4","5" } );
   }
 
@@ -119,8 +119,8 @@ public class TestExecSource {
   public void testShellCommandBackTicks() throws InterruptedException, LifecycleException,
   EventDeliveryException, IOException {
     // command with backticks
-    runTestShellCmdHelper("/bin/sh -c", "echo `seq 5`" , new String[]{"1 2 3 4 5" } );
-    runTestShellCmdHelper("/bin/sh -c", "echo $(seq 5)" , new String[]{"1 2 3 4 5" } );
+    runTestShellCmdHelper("/bin/bash -c", "echo `seq 5`" , new String[]{"1 2 3 4 5" } );
+    runTestShellCmdHelper("/bin/bash -c", "echo $(seq 5)" , new String[]{"1 2 3 4 5" } );
   }
 
   @Test
@@ -130,7 +130,7 @@ public class TestExecSource {
     String[] expected = {"1234", "abcd", "ijk", "xyz", "zzz"};
 
     // pipes
-    runTestShellCmdHelper("/bin/sh -c", "echo zzz 1234 xyz abcd ijk | xargs -n1 echo | sort -f"
+    runTestShellCmdHelper("/bin/bash -c", "echo zzz 1234 xyz abcd ijk | xargs -n1 echo | sort -f"
             ,  expected );
   }
 
@@ -138,10 +138,10 @@ public class TestExecSource {
   public void testShellCommandScript() throws InterruptedException, LifecycleException,
   EventDeliveryException, IOException {
     // mini script
-    runTestShellCmdHelper("/bin/sh -c", "for i in {1..5}; do echo $i;done"
+    runTestShellCmdHelper("/bin/bash -c", "for i in {1..5}; do echo $i;done"
             , new String[]{"1","2","3","4","5" } );
     // shell arithmetic
-    runTestShellCmdHelper("/bin/sh -c", "if ((2+2>3)); then  echo good; else echo not good; fi" , new String[]{"good"} );
+    runTestShellCmdHelper("/bin/bash -c", "if ((2+2>3)); then  echo good; else echo not good; fi" , new String[]{"good"} );
   }
 
   @Test
@@ -154,15 +154,15 @@ public class TestExecSource {
         String command1 = reader.readLine();
         Assert.assertNotNull(command1);
         String[] output1 = new String[] {"'1'", "\"2\"", "\\3", "\\4"};
-        runTestShellCmdHelper("/bin/sh -c", command1 , output1);
+        runTestShellCmdHelper("/bin/bash -c", command1 , output1);
         String command2 = reader.readLine();
         Assert.assertNotNull(command2);
         String[] output2 = new String[]{"1","2","3","4","5" };
-        runTestShellCmdHelper("/bin/sh -c", command2 , output2);
+        runTestShellCmdHelper("/bin/bash -c", command2 , output2);
         String command3 = reader.readLine();
         Assert.assertNotNull(command3);
         String[] output3 = new String[]{"2","3","4","5","6" };
-        runTestShellCmdHelper("/bin/sh -c", command3 , output3);
+        runTestShellCmdHelper("/bin/bash -c", command3 , output3);
       } finally {
         reader.close();
       }
@@ -188,7 +188,10 @@ public class TestExecSource {
         outputStream.close();
         transaction.commit();
         List<String> output  = Files.readLines(outputFile, Charset.defaultCharset());
-
+        System.out.println("command : " + command);
+        System.out.println("output : ");
+        for( String line : output )
+          System.out.println();
         Assert.assertArrayEquals(expectedOutput, output.toArray(new String[]{}));
       } finally {
         FileUtils.forceDelete(outputFile);
