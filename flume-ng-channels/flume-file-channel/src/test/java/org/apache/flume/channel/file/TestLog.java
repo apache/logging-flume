@@ -60,7 +60,7 @@ public class TestLog {
     log.replay();
   }
   @After
-  public void cleanup() {
+  public void cleanup() throws Exception{
     if(log != null) {
       log.close();
     }
