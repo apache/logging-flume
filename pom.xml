@@ -535,6 +535,10 @@ limitations under the License.
                   <exclude>**/*.avro</exclude>
                   <exclude>**/docs/**</exclude>
                   <exclude>**/test/resources/test_command.txt</exclude>
+                  <exclude>**/.settings/*</exclude>
+                  <exclude>**/.classpath</exclude>
+                  <exclude>**/.project</exclude>
+                  <exclude>**/target/**</exclude>
                 </excludes>
               </configuration>
             </execution>
