@@ -130,7 +130,7 @@ Configurable, EventDrivenSource {
     // spooling directory source, which did not support deserializers
     Integer bufferMaxLineLength = context.getInteger(BUFFER_MAX_LINE_LENGTH);
     if (bufferMaxLineLength != null && deserializerType != null &&
-        deserializerType.equals(DEFAULT_DESERIALIZER)) {
+        deserializerType.equalsIgnoreCase(DEFAULT_DESERIALIZER)) {
       deserializerContext.put(LineDeserializer.MAXLINE_KEY,
           bufferMaxLineLength.toString());
     }
