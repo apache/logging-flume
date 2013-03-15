@@ -1466,7 +1466,7 @@ request-timeout              20000    Amount of time (ms) to allow for requests 
 connection-reset-interval    none     Amount of time (s) before the connection to the next hop is reset. This will force the Avro Sink to reconnect to the next hop. This will allow the sink to connect to hosts behind a hardware load-balancer when news hosts are added without having to restart the agent.
 compression-type             none     This can be "none" or "deflate".  The compression-type must match the compression-type of matching AvroSource
 compression-level            6	      The level of compression to compress event. 0 = no compression and 1-9 is compression.  The higher the number the more compression
-===================   =======  ==============================================
+==========================   =======  ==============================================
 
 Example for agent named a1:
 
@@ -2168,7 +2168,8 @@ If ``backoff`` is enabled, the sink processor will blacklist
 sinks that fail, removing them for selection for a given timeout. When the
 timeout ends, if the sink is still unresponsive timeout is increased
 exponentially to avoid potentially getting stuck in long waits on unresponsive
-sinks.
+sinks. With this disabled, in round-robin all the failed sinks load will be
+passed to the next sink in line and thus not evenly balanced
 
 
 
@@ -2179,7 +2180,7 @@ Property Name                  Default          Description
 =============================  ===============  ==========================================================================
 **processor.sinks**            --               Space separated list of sinks that are participating in the group
 **processor.type**             ``default``      The component type name, needs to be ``load_balance``
-processor.backoff              true             Should failed sinks be backed off exponentially.
+processor.backoff              false            Should failed sinks be backed off exponentially.
 processor.selector             ``round_robin``  Selection mechanism. Must be either ``round_robin``, ``random``
                                                 or FQCN of custom class that inherits from ``AbstractSinkSelector``
 processor.selector.maxTimeOut  30000            Used by backoff selectors to limit exponential backoff (in milliseconds)
