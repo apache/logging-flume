@@ -45,14 +45,14 @@ import org.slf4j.LoggerFactory;
 /**
  * <p>
  * FlumeConfiguration is an in memory representation of the hierarchical
- * configuration namespace required by the PropertiesFileConfigurationProvider.
- * This class is instantiated with a properties object which is parsed to
- * construct the hierarchy in memory. Once the entire set of properties have
+ * configuration namespace required by the ConfigurationProvider.
+ * This class is instantiated with a map or properties object which is parsed
+ * to construct the hierarchy in memory. Once the entire set of properties have
  * been parsed and populated, a validation routine is run that identifies and
  * removes invalid components.
  * </p>
  *
- * @see org.apache.flume.conf.properties.PropertiesFileConfigurationProvider
+ * @see org.apache.flume.node.ConfigurationProvider
  *
  */
 public class FlumeConfiguration {
