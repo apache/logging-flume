@@ -253,7 +253,7 @@ public class Application  {
 
       File configurationFile = new File(commandLine.getOptionValue('f'));
       String agentName = commandLine.getOptionValue('n');
-      boolean reload = !commandLine.hasOption("no-reload");
+      boolean reload = !commandLine.hasOption("no-reload-conf");
 
       if (commandLine.hasOption('h')) {
         new HelpFormatter().printHelp("flume-ng agent", options, true);
