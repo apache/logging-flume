@@ -141,7 +141,7 @@ public class ScribeSource extends AbstractSource implements
   class Receiver implements Iface {
 
     public ResultCode Log(List<LogEntry> list) throws TException {
-      if (list != null && list.size() > 0) {
+      if (list != null) {
         sourceCounter.addToEventReceivedCount(list.size());
 
         try {
@@ -155,7 +155,9 @@ public class ScribeSource extends AbstractSource implements
             events.add(event);
           }
 
-          getChannelProcessor().processEventBatch(events);
+          if (events.size() > 0) {
+            getChannelProcessor().processEventBatch(events);
+          }
 
           sourceCounter.addToEventAcceptedCount(list.size());
           return ResultCode.OK;
