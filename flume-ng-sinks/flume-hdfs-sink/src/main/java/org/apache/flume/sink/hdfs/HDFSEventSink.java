@@ -294,7 +294,8 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     return false;
   }
 
-  private static CompressionCodec getCodec(String codecName) {
+  @VisibleForTesting
+  static CompressionCodec getCodec(String codecName) {
     Configuration conf = new Configuration();
     List<Class<? extends CompressionCodec>> codecs = CompressionCodecFactory
         .getCodecClasses(conf);

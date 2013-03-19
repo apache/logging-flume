@@ -222,11 +222,9 @@ class BucketWriter {
 
         String fullFileName = fileName + "." + counter;
 
-        if (codeC == null && fileSuffix != null && fileSuffix.length() > 0) {
+        if (fileSuffix != null && fileSuffix.length() > 0) {
           fullFileName += fileSuffix;
-        }
-
-        if(codeC != null) {
+        } else if (codeC != null) {
           fullFileName += codeC.getDefaultExtension();
         }
 
