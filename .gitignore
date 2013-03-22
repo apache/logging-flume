@@ -12,6 +12,7 @@ bin/.settings
 pmd_report.html
 */bin
 target
+patchprocess
 derby.log
 .idea
 *.iml
