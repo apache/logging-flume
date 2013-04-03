@@ -160,15 +160,15 @@ by using a convenience implementation such as the SimpleEvent class, or by using
 ``EventBuilder``\ 's overloaded ``withBody()`` static helper methods.
 
 
-Avro RPC default client
-'''''''''''''''''''''''
+RPC clients - Avro and Thrift
+'''''''''''''''''''''''''''''
 
-As of Flume 1.1.0, Avro is the only supported RPC protocol.  The
-``NettyAvroRpcClient`` implements the ``RpcClient`` interface. The client needs
-to create this object with the host and port of the target Flume agent, and can
-then use the ``RpcClient`` to send data into the agent. The following example
-shows how to use the Flume Client SDK API within a user's data-generating
-application:
+As of Flume 1.4.0, Avro is the default RPC protocol.  The
+``NettyAvroRpcClient`` and ``ThriftRpcClient`` implement the ``RpcClient``
+interface. The client needs to create this object with the host and port of
+the target Flume agent, and canthen use the ``RpcClient`` to send data into
+the agent. The following example shows how to use the Flume Client SDK API
+within a user's data-generating application:
 
 .. code-block:: java
 
@@ -206,6 +206,8 @@ application:
       this.hostname = hostname;
       this.port = port;
       this.client = RpcClientFactory.getDefaultInstance(hostname, port);
+      // Use the following method to create a thrift client (instead of the above line):
+      // this.client = RpcClientFactory.getThriftInstance(hostname, port);
     }
 
     public void sendDataToFlume(String data) {
@@ -220,6 +222,8 @@ application:
         client.close();
         client = null;
         client = RpcClientFactory.getDefaultInstance(hostname, port);
+        // Use the following method to create a thrift client (instead of the above line):
+        // this.client = RpcClientFactory.getThriftInstance(hostname, port);
       }
     }
 
@@ -230,7 +234,8 @@ application:
 
   }
 
-The remote Flume agent needs to have an ``AvroSource`` listening on some port.
+The remote Flume agent needs to have an ``AvroSource`` (or a
+``ThriftSource`` if you are using a Thrift client) listening on some port.
 Below is an example Flume agent configuration that's waiting for a connection
 from MyApp:
 
@@ -244,18 +249,21 @@ from MyApp:
 
   a1.sources.r1.channels = c1
   a1.sources.r1.type = avro
+  # For using a thrift source set the following instead of the above line.
+  # a1.source.r1.type = thrift
   a1.sources.r1.bind = 0.0.0.0
   a1.sources.r1.port = 41414
 
   a1.sinks.k1.channel = c1
   a1.sinks.k1.type = logger
 
-For more flexibility, the default Flume client implementation
-(``NettyAvroRpcClient``) can be configured with these properties:
+For more flexibility, the default Flume client implementations
+(``NettyAvroRpcClient`` and ``ThriftRpcClient``) can be configured with these
+properties:
 
 .. code-block:: properties
 
-  client.type = default
+  client.type = default (for avro) or thrift (for thrift)
 
   hosts = h1                           # default client accepts only 1 host
                                        # (additional hosts will be ignored)
@@ -274,7 +282,8 @@ Failover Client
 
 This class wraps the default Avro RPC client to provide failover handling
 capability to clients. This takes a whitespace-separated list of <host>:<port>
-representing the Flume agents that make-up a failover group. If there’s a
+representing the Flume agents that make-up a failover group. The Failover RPC
+Client currently does not support thrift. If there’s a
 communication error with the currently selected host (i.e. agent) agent,
 then the failover client automatically fails-over to the next host in the list.
 For example:
@@ -306,7 +315,7 @@ For more flexibility, the failover Flume client implementation
 
   client.type = default_failover
 
-  hosts = h1 h2 h3                     # at least one is required, but 2 or 
+  hosts = h1 h2 h3                     # at least one is required, but 2 or
                                        # more makes better sense
 
   hosts.h1 = host1.example.org:41414
@@ -324,7 +333,7 @@ For more flexibility, the failover Flume client implementation
                                        # once to send the Event, and if it
                                        # fails then there will be no failover
                                        # to a second client, so this value
-                                       # causes the failover client to 
+                                       # causes the failover client to
                                        # degenerate into just a default client.
                                        # It makes sense to set this value to at
                                        # least the number of hosts that you
@@ -339,7 +348,7 @@ For more flexibility, the failover Flume client implementation
 LoadBalancing RPC client
 ''''''''''''''''''''''''
 
-The Flume Client SDK also supports an RpcClient which load-balances among 
+The Flume Client SDK also supports an RpcClient which load-balances among
 multiple hosts. This type of client takes a whitespace-separated list of
 <host>:<port> representing the Flume agents that make-up a load-balancing group.
 This client can be configured with a load balancing strategy that either
@@ -347,7 +356,8 @@ randomly selects one of the configured hosts, or selects a host in a round-robin
 fashion. You can also specify your own custom class that implements the
 ``LoadBalancingRpcClient$HostSelector`` interface so that a custom selection
 order is used. In that case, the FQCN of the custom class needs to be specified
-as the value of the ``host-selector`` property.
+as the value of the ``host-selector`` property. The LoadBalancing RPC Client
+currently does not support thrift.
 
 If ``backoff`` is enabled then the client will temporarily blacklist
 hosts that fail, causing them to be excluded from being selected as a failover
@@ -578,7 +588,7 @@ processing its own configuration settings. For example:
 
       // Process the myProp value (e.g. validation)
 
-      // Store myProp for later retrieval by process() method 
+      // Store myProp for later retrieval by process() method
       this.myProp = myProp;
     }
 

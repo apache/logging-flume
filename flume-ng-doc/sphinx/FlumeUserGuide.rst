@@ -58,7 +58,10 @@ A Flume source consumes events delivered to it by an external source like a web
 server. The external source sends events to Flume in a format that is
 recognized by the target Flume source. For example, an Avro Flume source can be
 used to receive Avro events from Avro clients or other Flume agents in the flow
-that send events from an Avro sink. When a Flume source receives an event, it
+that send events from an Avro sink. A similar flow can be defined using
+a Thrift Flume Source to receive events from a Thrift Sink or a Flume
+Thrift Rpc Client or Thrift clients written in any language generated from
+the Flume thrift protocol.When a Flume source receives an event, it
 stores it into one or more channels. The channel is a passive store that keeps
 the event until it's consumed by a Flume sink. The file channel is one example
 -- it is backed by the local filesystem. The sink removes the event
@@ -292,6 +295,7 @@ Flume supports the following mechanisms to read data from popular log stream
 types, such as:
 
 #. Avro
+#. Thrift
 #. Syslog
 #. Netcat
 
@@ -319,9 +323,10 @@ dozen of agents that write to HDFS cluster.
    :alt: A fan-in flow using Avro RPC to consolidate events in one place
 
 This can be achieved in Flume by configuring a number of first tier agents with
-an avro sink, all pointing to an avro source of single agent. This source on
-the second tier agent consolidates the received events into a single channel
-which is consumed by a sink to its final destination.
+an avro sink, all pointing to an avro source of single agent (Again you could
+use the thrift sources/sinks/clients in such a scenario). This source
+on the second tier agent consolidates the received events into a single
+channel which is consumed by a sink to its final destination.
 
 Multiplexing the flow
 ---------------------
@@ -481,9 +486,9 @@ config to do that:
 Configuring a multi agent flow
 ------------------------------
 
-To setup a multi-tier flow, you need to have an avro sink of first hop pointing
-to avro source of the next hop. This will result in the first Flume agent
-forwarding events to the next Flume agent. For example, if you are
+To setup a multi-tier flow, you need to have an avro/thrift sink of first hop
+pointing to avro/thrift source of the next hop. This will result in the first
+Flume agent forwarding events to the next Flume agent. For example, if you are
 periodically sending files (1 file per event) using avro client to a local
 Flume agent, then this local agent can forward it to another agent that has the
 mounted for storage.
@@ -693,6 +698,39 @@ Example for agent named a1:
   a1.sources.r1.bind = 0.0.0.0
   a1.sources.r1.port = 4141
 
+Thrift Source
+~~~~~~~~~~~~~
+
+Listens on Thrift port and receives events from external Thrift client streams.
+When paired with the built-in ThriftSink on another (previous hop) Flume agent,
+it can create tiered collection topologies.
+Required properties are in **bold**.
+
+==================   ===========  ===================================================
+Property Name        Default      Description
+==================   ===========  ===================================================
+**channels**         --
+**type**             --           The component type name, needs to be ``thrift``
+**bind**             --           hostname or IP address to listen on
+**port**             --           Port # to bind to
+threads              --           Maximum number of worker threads to spawn
+selector.type
+selector.*
+interceptors         --           Space separated list of interceptors
+interceptors.*
+==================   ===========  ===================================================
+
+Example for agent named a1:
+
+.. code-block:: properties
+
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.type = thrift
+  a1.sources.r1.channels = c1
+  a1.sources.r1.bind = 0.0.0.0
+  a1.sources.r1.port = 4141
+
 Exec Source
 ~~~~~~~~~~~
 
@@ -762,6 +800,7 @@ allows the 'command' to use features from the shell such as wildcards, back tick
 loops, conditionals etc. In the absence of the 'shell' config, the 'command' will be
 invoked directly.  Common values for 'shell' :  '/bin/sh -c', '/bin/ksh -c',
 'cmd /c',  'powershell -Command', etc.
+
 .. code-block:: properties
   agent_foo.sources.tailsource-1.type = exec
   agent_foo.sources.tailsource-1.shell = /bin/bash -c
@@ -1475,6 +1514,39 @@ Example for agent named a1:
   a1.channels = c1
   a1.sinks = k1
   a1.sinks.k1.type = avro
+  a1.sinks.k1.channel = c1
+  a1.sinks.k1.hostname = 10.10.10.10
+  a1.sinks.k1.port = 4545
+
+Thrift Sink
+~~~~~~~~~~~
+
+This sink forms one half of Flume's tiered collection support. Flume events
+sent to this sink are turned into Thrift events and sent to the configured
+hostname / port pair. The events are taken from the configured Channel in
+batches of the configured batch size.
+Required properties are in **bold**.
+
+==========================   =======  ==============================================
+Property Name                Default  Description
+==========================   =======  ==============================================
+**channel**                  --
+**type**                     --       The component type name, needs to be ``thrift``.
+**hostname**                 --       The hostname or IP address to bind to.
+**port**                     --       The port # to listen on.
+batch-size                   100      number of event to batch together for send.
+connect-timeout              20000    Amount of time (ms) to allow for the first (handshake) request.
+request-timeout              20000    Amount of time (ms) to allow for requests after the first.
+connection-reset-interval    none     Amount of time (s) before the connection to the next hop is reset. This will force the Thrift Sink to reconnect to the next hop. This will allow the sink to connect to hosts behind a hardware load-balancer when news hosts are added without having to restart the agent.
+==========================   =======  ==============================================
+
+Example for agent named a1:
+
+.. code-block:: properties
+
+  a1.channels = c1
+  a1.sinks = k1
+  a1.sinks.k1.type = thrift
   a1.sinks.k1.channel = c1
   a1.sinks.k1.hostname = 10.10.10.10
   a1.sinks.k1.port = 4545
