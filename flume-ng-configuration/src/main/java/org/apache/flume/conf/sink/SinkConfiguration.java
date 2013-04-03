@@ -111,7 +111,14 @@ public class SinkConfiguration extends ComponentConfiguration {
      *
      * @see AvroSink
      */
-    AVRO("org.apache.flume.conf.sink.AvroSinkConfiguration");
+    AVRO("org.apache.flume.conf.sink.AvroSinkConfiguration"),
+
+    /**
+     * Thrift sink
+     *
+     * @see ThriftSink
+     */
+    THRIFT("org.apache.flume.conf.sink.ThriftSinkConfiguration");
 
     private final String sinkConfigurationName;
 
