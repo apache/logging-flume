@@ -562,7 +562,7 @@ Sink
 
 The purpose of a ``Sink`` to extract ``Event``\ s from the ``Channel`` and
 forward them to the next Flume Agent in the flow or store them in an external
-repository. A ``Sink`` is associated with one or more ``Channel``\ s, as
+repository. A ``Sink`` is associated with exactly one ``Channel``\ s, as
 configured in the Flume properties file. There’s one ``SinkRunner`` instance
 associated with every configured ``Sink``, and when the Flume framework calls
 ``SinkRunner.start()``, a new thread is created to drive the ``Sink`` (using
