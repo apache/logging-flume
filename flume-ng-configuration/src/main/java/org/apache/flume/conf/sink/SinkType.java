@@ -64,7 +64,14 @@ public enum SinkType {
    *
    * @see AvroSink
    */
-  AVRO("org.apache.flume.sink.AvroSink");
+  AVRO("org.apache.flume.sink.AvroSink"),
+
+  /**
+   * Thrift sink
+   *
+   * @see ThriftSink
+   */
+  THRIFT("org.apache.flume.sink.ThriftSink");
 
   private final String sinkClassName;
 
