@@ -315,7 +315,7 @@ Consolidation
 
 A very common scenario in log collection is a large number of log producing
 clients sending data to a few consumer agents that are attached to the storage
-subsystem. For examples, logs collected from hundreds of web servers sent to a
+subsystem. For example, logs collected from hundreds of web servers sent to a
 dozen of agents that write to HDFS cluster.
 
 .. figure:: images/UserGuide_image02.png
@@ -361,7 +361,7 @@ Defining the flow
 To define the flow within a single agent, you need to link the sources and
 sinks via a channel. You need to list the sources, sinks and channels for the
 given agent, and then point the source and sink to a channel. A source instance
-can specify multiple channels, but a sink instance can only specify on channel.
+can specify multiple channels, but a sink instance can only specify one channel.
 The format is as follows:
 
 .. code-block:: properties
@@ -377,7 +377,7 @@ The format is as follows:
   # set channel for sink
   <Agent>.sinks.<Sink>.channel = <Channel1>
 
-For example an agent named agent_foo is reading data from an external avro client and sending
+For example, an agent named agent_foo is reading data from an external avro client and sending
 it to HDFS via a memory channel. The config file weblog.config could look like:
 
 .. code-block:: properties
@@ -545,15 +545,15 @@ from the external appserver source eventually getting stored in HDFS.
 Fan out flow
 ------------
 
-As discussed in previous section, Flume support fanning out the flow from one
+As discussed in previous section, Flume supports fanning out the flow from one
 source to multiple channels. There are two modes of fan out, replicating and
-multiplexing. In the replicating flow the event is sent to all the configured
+multiplexing. In the replicating flow, the event is sent to all the configured
 channels. In case of multiplexing, the event is sent to only a subset of
 qualifying channels. To fan out the flow, one needs to specify a list of
 channels for a source and the policy for the fanning it out. This is done by
 adding a channel "selector" that can be replicating or multiplexing. Then
 further specify the selection rules if it's a multiplexer. If you don't specify
-an selector, then by default it's replicating:
+a selector, then by default it's replicating:
 
 .. code-block:: properties
 
@@ -682,7 +682,7 @@ Property Name        Default      Description
 threads              --           Maximum number of worker threads to spawn
 selector.type
 selector.*
-interceptors         --           Space separated list of interceptors
+interceptors         --           Space-separated list of interceptors
 interceptors.*
 compression-type     none         This can be "none" or "deflate".  The compression-type must match the compression-type of matching AvroSource
 ==================   ===========  ===================================================
@@ -757,7 +757,7 @@ logStdErr        false        Whether the command's stderr should be logged
 batchSize        20           The max number of lines to read and send to the channel at a time
 selector.type    replicating  replicating or multiplexing
 selector.*                    Depends on the selector.type value
-interceptors     --           Space separated list of interceptors
+interceptors     --           Space-separated list of interceptors
 interceptors.*
 ===============  ===========  ==============================================================
 
@@ -795,13 +795,14 @@ Example for agent named a1:
   a1.sources.r1.channels = c1
 
 The 'shell' config is used to invoke the 'command' through a command shell (such as Bash
-or Powershell). The 'command' is passed as argument to 'shell' for execution. This
+or Powershell). The 'command' is passed as an argument to 'shell' for execution. This
 allows the 'command' to use features from the shell such as wildcards, back ticks, pipes,
 loops, conditionals etc. In the absence of the 'shell' config, the 'command' will be
 invoked directly.  Common values for 'shell' :  '/bin/sh -c', '/bin/ksh -c',
 'cmd /c',  'powershell -Command', etc.
 
 .. code-block:: properties
+
   agent_foo.sources.tailsource-1.type = exec
   agent_foo.sources.tailsource-1.shell = /bin/bash -c
   agent_foo.sources.tailsource-1.command = for i in /path/*.txt; do cat $i; done
@@ -839,7 +840,7 @@ Converter
 '''''''''''
 The JMS source allows pluggable converters, though it's likely the default converter will work
 for most purposes. The default converter is able to convert Bytes, Text, and Object messages
-to FlumeEvents. In all cases the properties in the message are added as headers to the
+to FlumeEvents. In all cases, the properties in the message are added as headers to the
 FlumeEvent.
 
 BytesMessage:
@@ -919,7 +920,7 @@ bufferMaxLines        --              (Obselete) This option is now ignored.
 bufferMaxLineLength   5000            (Deprecated) Maximum length of a line in the commit buffer. Use deserializer.maxLineLength instead.
 selector.type         replicating     replicating or multiplexing
 selector.*                            Depends on the selector.type value
-interceptors          --              Space separated list of interceptors
+interceptors          --              Space-separated list of interceptors
 interceptors.*
 ====================  ==============  ==========================================================
 
@@ -977,7 +978,7 @@ max-line-length  512          Max line length per event body (in bytes)
 ack-every-event  true         Respond with an "OK" for every event received
 selector.type    replicating  replicating or multiplexing
 selector.*                    Depends on the selector.type value
-interceptors     --           Space separated list of interceptors
+interceptors     --           Space-separated list of interceptors
 interceptors.*
 ===============  ===========  ===========================================
 
@@ -1006,7 +1007,7 @@ Property Name   Default      Description
 **type**        --           The component type name, needs to be ``seq``
 selector.type                replicating or multiplexing
 selector.*      replicating  Depends on the selector.type value
-interceptors    --           Space separated list of interceptors
+interceptors    --           Space-separated list of interceptors
 interceptors.*
 batchSize       1
 ==============  ===========  ========================================
@@ -1044,7 +1045,7 @@ Property Name    Default      Description
 eventSize        2500         Maximum size of a single event line, in bytes
 selector.type                 replicating or multiplexing
 selector.*       replicating  Depends on the selector.type value
-interceptors     --           Space separated list of interceptors
+interceptors     --           Space-separated list of interceptors
 interceptors.*
 ==============   ===========  ==============================================
 
@@ -1086,7 +1087,7 @@ readBufferSize        1024              Size of the internal Mina read buffer. P
 numProcessors         (auto-detected)   Number of processors available on the system for use while processing messages. Default is to auto-detect # of CPUs using the Java Runtime API. Mina will spawn 2 request-processing threads per detected CPU, which is often reasonable.
 selector.type         replicating       replicating, multiplexing, or custom
 selector.*            --                Depends on the ``selector.type`` value
-interceptors          --                Space separated list of interceptors.
+interceptors          --                Space-separated list of interceptors.
 interceptors.*
 ====================  ================  ==============================================
 
@@ -1114,7 +1115,7 @@ Property Name   Default      Description
 **port**        --           Port # to bind to
 selector.type                replicating or multiplexing
 selector.*      replicating  Depends on the selector.type value
-interceptors    --           Space separated list of interceptors
+interceptors    --           Space-separated list of interceptors
 interceptors.*
 ==============  ===========  ==============================================
 
@@ -1136,9 +1137,9 @@ A source which accepts Flume Events by HTTP POST and GET. GET should be used
 for experimentation only. HTTP requests are converted into flume events by
 a pluggable "handler" which must implement the HTTPSourceHandler interface.
 This handler takes a HttpServletRequest and returns a list of
-flume events. All events handler from one Http request are committed to the channel
+flume events. All events handled from one Http request are committed to the channel
 in one transaction, thus allowing for increased efficiency on channels like
-the file channel. If the handler throws an exception this source will
+the file channel. If the handler throws an exception, this source will
 return a HTTP status of 400. If the channel is full, or the source is unable to
 append events to the channel, the source will return a HTTP 503 - Temporarily
 unavailable status.
@@ -1155,7 +1156,7 @@ handler         ``org.apache.flume.source.http.JSONHandler``  The FQCN of the ha
 handler.*       --                                            Config parameters for the handler
 selector.type   replicating                                   replicating or multiplexing
 selector.*                                                    Depends on the selector.type value
-interceptors    --                                            Space separated list of interceptors
+interceptors    --                                            Space-separated list of interceptors
 interceptors.*
 ==================================================================================================================================
 
@@ -1202,7 +1203,7 @@ To set the charset, the request must have content type specified as
 ``application/json; charset=UTF-8`` (replace UTF-8 with UTF-16 or UTF-32 as
 required).
 
-One way to create an event in the format expected by this handler, is to
+One way to create an event in the format expected by this handler is to
 use JSONEvent provided in the Flume SDK and use Google Gson to create the JSON
 string using the Gson#fromJson(Object, Type)
 method. The type token to pass as the 2nd argument of this method
@@ -1246,7 +1247,7 @@ Property Name   Default      Description
 **port**        --           The port # to listen on
 selector.type                replicating or multiplexing
 selector.*      replicating  Depends on the selector.type value
-interceptors    --           Space separated list of interceptors
+interceptors    --           Space-separated list of interceptors
 interceptors.*
 ==============  ===========  ========================================================================================
 
@@ -1273,7 +1274,7 @@ Property Name   Default      Description
 **port**        --           The port # to listen on
 selector.type                replicating or multiplexing
 selector.*      replicating  Depends on the selector.type value
-interceptors    --           Space separated list of interceptors
+interceptors    --           Space-separated list of interceptors
 interceptors.*
 ==============  ===========  ======================================================================================
 
@@ -1302,7 +1303,7 @@ Property Name   Default      Description
 **type**        --           The component type name, needs to be your FQCN
 selector.type                ``replicating`` or ``multiplexing``
 selector.*      replicating  Depends on the selector.type value
-interceptors    --           Space separated list of interceptors
+interceptors    --           Space-separated list of interceptors
 interceptors.*
 ==============  ===========  ==============================================
 
@@ -1728,7 +1729,7 @@ serializer.*      --                                                            
 
 Note that this sink takes the Zookeeper Quorum and parent znode information in
 the configuration. Zookeeper Quorum and parent node configuration may be
-specified in the flume configuration file, alternatively these configuration
+specified in the flume configuration file. Alternatively, these configuration
 values are taken from the first hbase-site.xml file in the classpath.
 
 If these are not provided in the configuration, then the sink
@@ -1822,8 +1823,8 @@ Source adds the events and Sink removes it.
 Memory Channel
 ~~~~~~~~~~~~~~
 
-The events are stored in a an in-memory queue with configurable max size. It's
-ideal for flow that needs higher throughput and prepared to lose the staged
+The events are stored in an in-memory queue with configurable max size. It's
+ideal for flows that need higher throughput and are prepared to lose the staged
 data in the event of a agent failures.
 Required properties are in **bold**.
 
@@ -1862,7 +1863,7 @@ JDBC Channel
 
 The events are stored in a persistent storage that's backed by a database.
 The JDBC channel currently supports embedded Derby. This is a durable channel
-that's ideal for the flows where recoverability is important.
+that's ideal for flows where recoverability is important.
 Required properties are in **bold**.
 
 ==========================  ====================================  =================================================
@@ -2012,7 +2013,7 @@ Let's say you have aged key-0 out and new files should be encrypted with key-1:
   a1.channels.c1.encryption.keyProvider.keyStorePasswordFile = /path/to/my.keystore.password
   a1.channels.c1.encryption.keyProvider.keys = key-0 key-1
 
-The same scenerio as above, however key-0 has it's own password:
+The same scenerio as above, however key-0 has its own password:
 
 .. code-block:: properties
 
@@ -2136,7 +2137,7 @@ Property Name  Default  Description
 selector.type  --       The component type name, needs to be your FQCN
 =============  =======  ==============================================
 
-Example for agent named a1 and it's source called r1:
+Example for agent named a1 and its source called r1:
 
 .. code-block:: properties
 
@@ -2157,7 +2158,7 @@ Required properties are in **bold**.
 ===================  ===========  =================================================================================
 Property Name        Default      Description
 ===================  ===========  =================================================================================
-**sinks**            --           Space separated list of sinks that are participating in the group
+**sinks**            --           Space-separated list of sinks that are participating in the group
 **processor.type**   ``default``  The component type name, needs to be ``default``, ``failover`` or ``load_balance``
 ===================  ===========  =================================================================================
 
@@ -2184,14 +2185,14 @@ Failover Sink Processor
 Failover Sink Processor maintains a prioritized list of sinks, guaranteeing
 that so long as one is available events will be processed (delivered).
 
-The fail over mechanism works by relegating failed sinks to a pool where
+The failover mechanism works by relegating failed sinks to a pool where
 they are assigned a cool down period, increasing with sequential failures
-before they are retried. Once a sink successfully sends an event it is
+before they are retried. Once a sink successfully sends an event, it is
 restored to the live pool.
 
 To configure, set a sink groups processor to ``failover`` and set
 priorities for all individual sinks. All specified priorities must
-be unique. Furthermore, upper limit to fail over time can be set
+be unique. Furthermore, upper limit to failover time can be set
 (in milliseconds) using ``maxpenalty`` property.
 
 Required properties are in **bold**.
@@ -2199,7 +2200,7 @@ Required properties are in **bold**.
 =================================  ===========  ===================================================================================
 Property Name                      Default      Description
 =================================  ===========  ===================================================================================
-**sinks**                          --           Space separated list of sinks that are participating in the group
+**sinks**                          --           Space-separated list of sinks that are participating in the group
 **processor.type**                 ``default``  The component type name, needs to be ``failover``
 **processor.priority.<sinkName>**  --             <sinkName> must be one of the sink instances associated with the current sink group
 processor.maxpenalty               30000        (in millis)
@@ -2250,7 +2251,7 @@ Required properties are in **bold**.
 =============================  ===============  ==========================================================================
 Property Name                  Default          Description
 =============================  ===============  ==========================================================================
-**processor.sinks**            --               Space separated list of sinks that are participating in the group
+**processor.sinks**            --               Space-separated list of sinks that are participating in the group
 **processor.type**             ``default``      The component type name, needs to be ``load_balance``
 processor.backoff              false            Should failed sinks be backed off exponentially.
 processor.selector             ``round_robin``  Selection mechanism. Must be either ``round_robin``, ``random``
@@ -2363,7 +2364,7 @@ Note that the interceptor builders are passed to the type config parameter. The 
 configurable and can be passed configuration values just like they are passed to any other configurable component.
 In the above example, events are passed to the HostInterceptor first and the events returned by the HostInterceptor
 are then passed along to the TimestampInterceptor. You can specify either the fully qualified class name (FQCN)
-or the alias ``timestamp``. If you have multiple collectors writing to the same HDFS path then you could also use
+or the alias ``timestamp``. If you have multiple collectors writing to the same HDFS path, then you could also use
 the HostInterceptor.
 
 Timestamp Interceptor
@@ -2484,7 +2485,7 @@ serializers.<s1>.\ **name**      --
 serializers.*                    --         Serializer-specific properties
 ================================ ========== =================================================================================================
 
-The serializers are used to map the matches to a header name and a formatted header value, by default you only need to specify
+The serializers are used to map the matches to a header name and a formatted header value; by default, you only need to specify
 the header name and the default ``org.apache.flume.interceptor.RegexExtractorInterceptorPassThroughSerializer`` will be used.
 This serializer simply maps the matches to the specified header name and passes the value through as it was extracted by the regex.
 You can plug custom serializer implementations into the extractor using the fully qualified class name (FQCN) to format the matches
@@ -2594,7 +2595,7 @@ Required properties are in **bold**.
 =============  ===========  ==========================================================================
 Property Name  Default      Description
 =============  ===========  ==========================================================================
-**Hosts**      --           A space separated list of host:port
+**Hosts**      --           A space-separated list of host:port
                             at which Flume (through an AvroSource) is listening for events
 Selector       ROUND_ROBIN  Selection mechanism. Must be either ROUND_ROBIN,
                             RANDOM or custom FQDN to class that inherits from LoadBalancingSelector.
@@ -2669,7 +2670,7 @@ and can be specified in the flume-env.sh:
 Property Name            Default  Description
 =======================  =======  =====================================================================================
 **type**                 --       The component type name, has to be ``ganglia``
-**hosts**                --       Comma separated list of ``hostname:port``
+**hosts**                --       Comma-separated list of ``hostname:port``
 pollInterval             60       Time, in seconds, between consecutive reporting to ganglia server
 isGanglia3               false    Ganglia server version is 3. By default, Flume sends in ganglia 3.1 format
 =======================  =======  =====================================================================================
@@ -2821,12 +2822,12 @@ If you need to ingest textual log data into Hadoop/HDFS then Flume is the
 right fit for your problem, full stop. For other use cases, here are some
 guidelines:
 
-Flume is designed to transport and ingest regularly generated event data over
+Flume is designed to transport and ingest regularly-generated event data over
 relatively stable, potentially complex topologies. The notion of "event data"
 is very broadly defined. To Flume, an event is just a generic blob of bytes.
 There are some limitations on how large an event can be - for instance, it
-cannot be larger than you can store in memory or on disk on a single machine -
-but in practice flume events can be everything from textual log entries to
+cannot be larger than what you can store in memory or on disk on a single machine -
+but in practice, flume events can be everything from textual log entries to
 image files. The key property of an event  is that they are generated in a
 continuous, streaming fashion. If your data is not regularly generated
 (i.e. you are trying to do a single bulk load of data into a Hadoop cluster)
@@ -2905,10 +2906,10 @@ Troubleshooting
 Handling agent failures
 -----------------------
 
-If the Flume agent goes down then the all the flows hosted on that agent are
+If the Flume agent goes down, then the all the flows hosted on that agent are
 aborted. Once the agent is restarted, then flow will resume. The flow using
 file channel or other stable channel will resume processing events where it left
-off. If the agent can't be restarted on the same, then there an option to
+off. If the agent can't be restarted on the same hardware, then there is an option to
 migrate the database to another hardware and setup a new Flume agent that
 can resume processing the events saved in the db. The database HA futures
 can be leveraged to move the Flume agent to another host.
