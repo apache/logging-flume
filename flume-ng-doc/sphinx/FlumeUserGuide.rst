@@ -1418,7 +1418,7 @@ hdfs.rollCount          10            Number of events written to file before it
 hdfs.idleTimeout        0             Timeout after which inactive files get closed
                                       (0 = disable automatic closing of idle files)
 hdfs.batchSize          100           number of events written to file before it is flushed to HDFS
-hdfs.codeC              --            Compression codec. one of following : gzip, bzip2, lzo, snappy
+hdfs.codeC              --            Compression codec. one of following : gzip, bzip2, lzo, lzop, snappy
 hdfs.fileType           SequenceFile  File format: currently ``SequenceFile``, ``DataStream`` or ``CompressedStream``
                                       (1)DataStream will not compress output file and please don't set codeC
                                       (2)CompressedStream requires set hdfs.codeC with an available codeC
