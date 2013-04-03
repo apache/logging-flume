@@ -95,6 +95,11 @@ limitations under the License.
       <artifactId>commons-lang</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+    </dependency>
+
   </dependencies>
 
   <profiles>
