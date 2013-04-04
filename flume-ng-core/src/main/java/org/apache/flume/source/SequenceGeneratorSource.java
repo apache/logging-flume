@@ -96,6 +96,7 @@ public class SequenceGeneratorSource extends AbstractSource implements
     } catch (ChannelException ex) {
       counterGroup.incrementAndGet("events.failed");
       eventsSent -= i;
+      logger.error( getName() + " source could not write to channel.", ex);
     }
 
     return status;
