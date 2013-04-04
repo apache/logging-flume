@@ -1934,7 +1934,7 @@ dataDirs                                          ~/.flume/file-channel/data    
 transactionCapacity                               1000                              The maximum size of transaction supported by the channel
 checkpointInterval                                30000                             Amount of time (in millis) between checkpoints
 maxFileSize                                       2146435071                        Max size (in bytes) of a single log file
-minimumRequiredSpace                              524288000                         Minimum Required free space (in bytes)
+minimumRequiredSpace                              524288000                         Minimum Required free space (in bytes). To avoid data corruption, File Channel stops accepting take/put requests when free space drops below this value
 capacity                                          1000000                           Maximum capacity of the channel
 keep-alive                                        3                                 Amount of time (in sec) to wait for a put operation
 write-timeout                                     3                                 Amount of time (in sec) to wait for a write operation
