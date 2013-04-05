@@ -18,6 +18,23 @@
  */
 package org.apache.flume.channel.file;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.apache.commons.io.FileUtils;
+import org.apache.flume.ChannelException;
+import org.apache.flume.Event;
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
+import org.apache.flume.channel.file.encryption.KeyProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -31,6 +48,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.Executors;
@@ -41,23 +59,6 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
-
-import javax.annotation.Nullable;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.apache.flume.ChannelException;
-import org.apache.flume.Event;
-import org.apache.flume.annotations.InterfaceAudience;
-import org.apache.flume.annotations.InterfaceStability;
-import org.apache.flume.channel.file.encryption.KeyProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 /**
  * Stores FlumeEvents on disk and pointers to the events in a in memory queue.
@@ -76,12 +77,13 @@ class Log {
   public static final String PREFIX = "log-";
   private static final Logger LOGGER = LoggerFactory.getLogger(Log.class);
   private static final int MIN_NUM_LOGS = 2;
-  private static final String FILE_LOCK = "in_use.lock";
+  public static final String FILE_LOCK = "in_use.lock";
   // for reader
   private final Map<Integer, LogFile.RandomReader> idLogFileMap = Collections
       .synchronizedMap(new HashMap<Integer, LogFile.RandomReader>());
   private final AtomicInteger nextFileID = new AtomicInteger(0);
   private final File checkpointDir;
+  private final File backupCheckpointDir;
   private final File[] logDirs;
   private final int queueCapacity;
   private final AtomicReferenceArray<LogFile.Writer> logFiles;
@@ -97,6 +99,11 @@ class Log {
   private final Map<String, FileLock> locks;
   private final ReentrantReadWriteLock checkpointLock =
       new ReentrantReadWriteLock(true);
+
+  /**
+   * Set of files that should be excluded from backup and restores.
+   */
+  public static final Set<String> EXCLUDES = Sets.newHashSet(FILE_LOCK);
   /**
    * Shared lock
    */
@@ -115,6 +122,16 @@ class Log {
   private Key encryptionKey;
   private final long usableSpaceRefreshInterval;
   private boolean didFastReplay = false;
+  private final boolean useDualCheckpoints;
+  private volatile boolean backupRestored = false;
+
+  private int readCount;
+  private int putCount;
+  private int takeCount;
+  private int committedCount;
+  private int rollbackCount;
+
+  private final List<File> pendingDeletes = Lists.newArrayList();
 
   static class Builder {
     private long bCheckpointInterval;
@@ -134,6 +151,8 @@ class Log {
     private String bEncryptionKeyAlias;
     private String bEncryptionCipherProvider;
     private long bUsableSpaceRefreshInterval = 15L * 1000L;
+    private boolean bUseDualCheckpoints = false;
+    private File bBackupCheckpointDir = null;
 
     Builder setUsableSpaceRefreshInterval(long usableSpaceRefreshInterval) {
       bUsableSpaceRefreshInterval = usableSpaceRefreshInterval;
@@ -210,9 +229,20 @@ class Log {
       return this;
     }
 
+    Builder setUseDualCheckpoints(boolean UseDualCheckpoints) {
+      this.bUseDualCheckpoints = UseDualCheckpoints;
+      return this;
+    }
+
+    Builder setBackupCheckpointDir(File backupCheckpointDir) {
+      this.bBackupCheckpointDir = backupCheckpointDir;
+      return this;
+    }
+
     Log build() throws IOException {
       return new Log(bCheckpointInterval, bMaxFileSize, bQueueCapacity,
-          bLogWriteTimeout, bCheckpointWriteTimeout, bCheckpointDir, bName,
+          bLogWriteTimeout, bCheckpointWriteTimeout, bUseDualCheckpoints,
+          bCheckpointDir, bBackupCheckpointDir, bName,
           useLogReplayV1, useFastReplay, bMinimumRequiredSpace,
           bEncryptionKeyProvider, bEncryptionKeyAlias,
           bEncryptionCipherProvider, bUsableSpaceRefreshInterval,
@@ -221,7 +251,8 @@ class Log {
   }
 
   private Log(long checkpointInterval, long maxFileSize, int queueCapacity,
-      int logWriteTimeout, int checkpointWriteTimeout, File checkpointDir,
+      int logWriteTimeout, int checkpointWriteTimeout,
+      boolean useDualCheckpoints, File checkpointDir, File backupCheckpointDir,
       String name, boolean useLogReplayV1, boolean useFastReplay,
       long minimumRequiredSpace, @Nullable KeyProvider encryptionKeyProvider,
       @Nullable String encryptionKeyAlias,
@@ -229,15 +260,23 @@ class Log {
       long usableSpaceRefreshInterval, File... logDirs)
           throws IOException {
     Preconditions.checkArgument(checkpointInterval > 0,
-        "checkpointInterval <= 0");
+      "checkpointInterval <= 0");
     Preconditions.checkArgument(queueCapacity > 0, "queueCapacity <= 0");
     Preconditions.checkArgument(maxFileSize > 0, "maxFileSize <= 0");
     Preconditions.checkNotNull(checkpointDir, "checkpointDir");
     Preconditions.checkArgument(usableSpaceRefreshInterval > 0,
         "usableSpaceRefreshInterval <= 0");
     Preconditions.checkArgument(
-        checkpointDir.isDirectory() || checkpointDir.mkdirs(), "CheckpointDir "
-            + checkpointDir + " could not be created");
+      checkpointDir.isDirectory() || checkpointDir.mkdirs(), "CheckpointDir "
+      + checkpointDir + " could not be created");
+    if (useDualCheckpoints) {
+      Preconditions.checkNotNull(backupCheckpointDir, "backupCheckpointDir is" +
+        " null while dual checkpointing is enabled.");
+      Preconditions.checkArgument(
+        backupCheckpointDir.isDirectory() || backupCheckpointDir.mkdirs(),
+        "Backup CheckpointDir " + backupCheckpointDir +
+          " could not be created");
+    }
     Preconditions.checkNotNull(logDirs, "logDirs");
     Preconditions.checkArgument(logDirs.length > 0, "logDirs empty");
     Preconditions.checkArgument(name != null && !name.trim().isEmpty(),
@@ -255,6 +294,9 @@ class Log {
     locks = Maps.newHashMap();
     try {
       lock(checkpointDir);
+      if(useDualCheckpoints) {
+        lock(backupCheckpointDir);
+      }
       for (File logDir : logDirs) {
         lock(logDir);
       }
@@ -288,13 +330,15 @@ class Log {
     this.checkpointInterval = Math.max(checkpointInterval, 1000);
     this.maxFileSize = maxFileSize;
     this.queueCapacity = queueCapacity;
+    this.useDualCheckpoints = useDualCheckpoints;
     this.checkpointDir = checkpointDir;
+    this.backupCheckpointDir = backupCheckpointDir;
     this.logDirs = logDirs;
     this.logWriteTimeout = logWriteTimeout;
     this.checkpointWriteTimeout = checkpointWriteTimeout;
     logFiles = new AtomicReferenceArray<LogFile.Writer>(this.logDirs.length);
     workerExecutor = Executors.newSingleThreadScheduledExecutor(new
-        ThreadFactoryBuilder().setNameFormat("Log-BackgroundWorker-" + name)
+      ThreadFactoryBuilder().setNameFormat("Log-BackgroundWorker-" + name)
         .build());
     workerExecutor.scheduleWithFixedDelay(new BackgroundWorker(this),
         this.checkpointInterval, this.checkpointInterval,
@@ -365,8 +409,9 @@ class Log {
 
       try {
         backingStore =
-                EventQueueBackingStoreFactory.get(checkpointFile, queueCapacity,
-                channelNameDescriptor);
+            EventQueueBackingStoreFactory.get(checkpointFile,
+                backupCheckpointDir, queueCapacity, channelNameDescriptor,
+                true, this.useDualCheckpoints);
         queue = new FlumeEventQueue(backingStore, inflightTakesFile,
                 inflightPutsFile);
         LOGGER.info("Last Checkpoint " + new Date(checkpointFile.lastModified())
@@ -383,14 +428,26 @@ class Log {
          */
         doReplay(queue, dataFiles, encryptionKeyProvider, shouldFastReplay);
       } catch (BadCheckpointException ex) {
-        LOGGER.warn("Checkpoint may not have completed successfully. "
-                + "Forcing full replay, this may take a while.", ex);
-        if(!Serialization.deleteAllFiles(checkpointDir)) {
-          throw new IOException("Could not delete files in checkpoint " +
-              "directory to recover from a corrupt or incomplete checkpoint");
+        backupRestored = false;
+        if (useDualCheckpoints) {
+          LOGGER.warn("Checkpoint may not have completed successfully. "
+              + "Restoring checkpoint and starting up.", ex);
+          if (EventQueueBackingStoreFile.backupExists(backupCheckpointDir)) {
+            backupRestored = EventQueueBackingStoreFile.restoreBackup(
+              checkpointDir, backupCheckpointDir);
+          }
+        }
+        if (!backupRestored) {
+          LOGGER.warn("Checkpoint may not have completed successfully. "
+              + "Forcing full replay, this may take a while.", ex);
+          if (!Serialization.deleteAllFiles(checkpointDir, EXCLUDES)) {
+            throw new IOException("Could not delete files in checkpoint " +
+                "directory to recover from a corrupt or incomplete checkpoint");
+          }
         }
         backingStore = EventQueueBackingStoreFactory.get(checkpointFile,
-                queueCapacity, channelNameDescriptor);
+            backupCheckpointDir,
+            queueCapacity, channelNameDescriptor, true, useDualCheckpoints);
         queue = new FlumeEventQueue(backingStore, inflightTakesFile,
                 inflightPutsFile);
         // If the checkpoint was deleted due to BadCheckpointException, then
@@ -441,12 +498,47 @@ class Log {
         LOGGER.info("Replaying logs with v2 replay logic");
         replayHandler.replayLog(dataFiles);
       }
+      readCount = replayHandler.getReadCount();
+      putCount = replayHandler.getPutCount();
+      takeCount = replayHandler.getTakeCount();
+      rollbackCount = replayHandler.getRollbackCount();
+      committedCount = replayHandler.getCommitCount();
     }
   }
 
   @VisibleForTesting
   boolean didFastReplay() {
     return didFastReplay;
+  }
+  @VisibleForTesting
+  public int getReadCount() {
+    return readCount;
+  }
+  @VisibleForTesting
+  public int getPutCount() {
+    return putCount;
+  }
+
+  @VisibleForTesting
+  public int getTakeCount() {
+    return takeCount;
+  }
+  @VisibleForTesting
+  public int getCommittedCount() {
+    return committedCount;
+  }
+  @VisibleForTesting
+  public int getRollbackCount() {
+    return rollbackCount;
+  }
+
+  /**
+   * Was a checkpoint backup used to replay?
+   * @return true if a checkpoint backup was used to replay.
+   */
+  @VisibleForTesting
+  boolean backupRestored() {
+    return backupRestored;
   }
 
   int getNextFileID() {
@@ -704,6 +796,13 @@ class Log {
       } catch (IOException ex) {
         LOGGER.warn("Error unlocking " + checkpointDir, ex);
       }
+      if (useDualCheckpoints) {
+        try {
+          unlock(backupCheckpointDir);
+        } catch (IOException ex) {
+          LOGGER.warn("Error unlocking " + checkpointDir, ex);
+        }
+      }
       for (File logDir : logDirs) {
         try {
           unlock(logDir);
@@ -942,6 +1041,17 @@ class Log {
 
   private void removeOldLogs(SortedSet<Integer> fileIDs) {
     Preconditions.checkState(open, "Log is closed");
+    // To maintain a single code path for deletes, if backup of checkpoint is
+    // enabled or not, we will track the files which can be deleted after the
+    // current checkpoint (since the one which just got backed up still needs
+    // these files) and delete them only after the next (since the current
+    // checkpoint will become the backup at that time,
+    // and thus these files are no longer needed).
+    for(File fileToDelete : pendingDeletes) {
+      LOGGER.info("Removing old file: " + fileToDelete);
+      FileUtils.deleteQuietly(fileToDelete);
+    }
+    pendingDeletes.clear();
     // we will find the smallest fileID currently in use and
     // won't delete any files with an id larger than the min
     int minFileID = fileIDs.first();
@@ -960,14 +1070,9 @@ class Log {
           if(reader != null) {
             reader.close();
           }
-          LOGGER.info("Removing old log " + logFile +
-              ", result = " + logFile.delete() + ", minFileID "
-              + minFileID);
           File metaDataFile = Serialization.getMetaDataFile(logFile);
-          if(metaDataFile.exists() && !metaDataFile.delete()) {
-            LOGGER.warn("Could not remove metadata file "
-                + metaDataFile + " for " + logFile);
-          }
+          pendingDeletes.add(logFile);
+          pendingDeletes.add(metaDataFile);
         }
       }
     }

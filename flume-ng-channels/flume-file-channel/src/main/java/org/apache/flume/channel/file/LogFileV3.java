@@ -18,6 +18,17 @@
  */
 package org.apache.flume.channel.file;
 
+import com.google.common.base.Preconditions;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.GeneratedMessage;
+import org.apache.flume.channel.file.encryption.CipherProvider;
+import org.apache.flume.channel.file.encryption.CipherProviderFactory;
+import org.apache.flume.channel.file.encryption.KeyProvider;
+import org.apache.flume.channel.file.proto.ProtosFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -27,19 +38,6 @@ import java.io.RandomAccessFile;
 import java.security.Key;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
-
-import javax.annotation.Nullable;
-
-import org.apache.flume.channel.file.proto.ProtosFactory;
-import org.apache.flume.channel.file.encryption.CipherProvider;
-import org.apache.flume.channel.file.encryption.CipherProviderFactory;
-import org.apache.flume.channel.file.encryption.KeyProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Preconditions;
-import com.google.protobuf.ByteString;
-import com.google.protobuf.GeneratedMessage;
 
 /**
  * Represents a single data file on disk. Has methods to write,
@@ -81,9 +79,15 @@ class LogFileV3 extends LogFile {
           ProtosFactory.LogFileMetaData.newBuilder(logFileMetaData);
       metaDataBuilder.setCheckpointPosition(currentPosition);
       metaDataBuilder.setCheckpointWriteOrderID(logWriteOrderID);
+      /*
+       * Set the previous checkpoint position and write order id so that it
+       * would be possible to recover from a backup.
+       */
+      metaDataBuilder.setBackupCheckpointPosition(logFileMetaData
+        .getCheckpointPosition());
+      metaDataBuilder.setBackupCheckpointWriteOrderID(logFileMetaData
+        .getCheckpointWriteOrderID());
       logFileMetaData = metaDataBuilder.build();
-      LOGGER.info("Updating " + metaDataFile.getName()  + " currentPosition = "
-          + currentPosition + ", logWriteOrderID = " + logWriteOrderID);
       writeDelimitedTo(logFileMetaData, metaDataFile);
     }
   }
@@ -101,7 +105,7 @@ class LogFileV3 extends LogFile {
       FileInputStream inputStream = new FileInputStream(metaDataFile);
       try {
         ProtosFactory.LogFileMetaData metaData = Preconditions.checkNotNull(
-            ProtosFactory.LogFileMetaData.
+          ProtosFactory.LogFileMetaData.
             parseDelimitedFrom(inputStream), "Metadata cannot be null");
         if (metaData.getLogFileID() != logFileID) {
           throw new IOException("The file id of log file: "
@@ -193,6 +197,8 @@ class LogFileV3 extends LogFile {
       metaDataBuilder.setLogFileID(logFileID);
       metaDataBuilder.setCheckpointPosition(0L);
       metaDataBuilder.setCheckpointWriteOrderID(0L);
+      metaDataBuilder.setBackupCheckpointPosition(0L);
+      metaDataBuilder.setBackupCheckpointWriteOrderID(0L);
       File metaDataFile = Serialization.getMetaDataFile(file);
       writeDelimitedTo(metaDataBuilder.build(), metaDataFile);
     }
@@ -322,6 +328,9 @@ class LogFileV3 extends LogFile {
         setLogFileID(metaData.getLogFileID());
         setLastCheckpointPosition(metaData.getCheckpointPosition());
         setLastCheckpointWriteOrderID(metaData.getCheckpointWriteOrderID());
+        setPreviousCheckpointPosition(metaData.getBackupCheckpointPosition());
+        setPreviousCheckpointWriteOrderID(
+          metaData.getBackupCheckpointWriteOrderID());
       } finally {
         try {
           inputStream.close();

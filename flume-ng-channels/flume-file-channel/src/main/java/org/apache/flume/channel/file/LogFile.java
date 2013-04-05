@@ -18,6 +18,17 @@
  */
 package org.apache.flume.channel.file;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import org.apache.flume.channel.file.encryption.CipherProvider;
+import org.apache.flume.channel.file.encryption.KeyProvider;
+import org.apache.flume.tools.DirectMemoryUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
@@ -28,19 +39,6 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
-
-import javax.annotation.Nullable;
-
-import org.apache.flume.channel.file.encryption.CipherProvider;
-import org.apache.flume.channel.file.encryption.KeyProvider;
-import org.apache.flume.tools.DirectMemoryUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 
 abstract class LogFile {
 
@@ -420,6 +418,8 @@ abstract class LogFile {
     private int logFileID;
     private long lastCheckpointPosition;
     private long lastCheckpointWriteOrderID;
+    private long backupCheckpointPosition;
+    private long backupCheckpointWriteOrderID;
 
     /**
      * Construct a Sequential Log Reader object
@@ -444,6 +444,14 @@ abstract class LogFile {
     protected void setLastCheckpointWriteOrderID(long lastCheckpointWriteOrderID) {
       this.lastCheckpointWriteOrderID = lastCheckpointWriteOrderID;
     }
+    protected void setPreviousCheckpointPosition(
+      long backupCheckpointPosition) {
+      this.backupCheckpointPosition = backupCheckpointPosition;
+    }
+    protected void setPreviousCheckpointWriteOrderID(
+      long backupCheckpointWriteOrderID) {
+      this.backupCheckpointWriteOrderID = backupCheckpointWriteOrderID;
+    }
     protected void setLogFileID(int logFileID) {
       this.logFileID = logFileID;
       Preconditions.checkArgument(logFileID >= 0, "LogFileID is not positive: "
@@ -459,18 +467,24 @@ abstract class LogFile {
     int getLogFileID() {
       return logFileID;
     }
+
     void skipToLastCheckpointPosition(long checkpointWriteOrderID)
-        throws IOException {
-      if (lastCheckpointPosition > 0L
-          && lastCheckpointWriteOrderID <= checkpointWriteOrderID) {
-        LOG.info("fast-forward to checkpoint position: "
-                  + lastCheckpointPosition);
-        fileChannel.position(lastCheckpointPosition);
+      throws IOException {
+      if (lastCheckpointPosition > 0L) {
+        long position = 0;
+        if (lastCheckpointWriteOrderID <= checkpointWriteOrderID) {
+          position = lastCheckpointPosition;
+        } else if (backupCheckpointWriteOrderID <= checkpointWriteOrderID
+          && backupCheckpointPosition > 0) {
+          position = backupCheckpointPosition;
+        }
+        fileChannel.position(position);
+        LOG.info("fast-forward to checkpoint position: " + position);
       } else {
-        LOG.warn("Checkpoint for file(" + file.getAbsolutePath() + ") "
-            + "is: " + lastCheckpointWriteOrderID + ", which is beyond the "
-            + "requested checkpoint time: " + checkpointWriteOrderID
-            + " and position " + lastCheckpointPosition);
+        LOG.info("Checkpoint for file(" + file.getAbsolutePath() + ") "
+          + "is: " + lastCheckpointWriteOrderID + ", which is beyond the "
+          + "requested checkpoint time: " + checkpointWriteOrderID
+          + " and position " + lastCheckpointPosition);
       }
     }
 

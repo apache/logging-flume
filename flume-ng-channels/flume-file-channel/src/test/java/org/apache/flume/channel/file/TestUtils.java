@@ -237,7 +237,7 @@ public class TestUtils {
       } catch (Exception ex) {
         transaction.rollback();
         if(untilCapacityIsReached && ex instanceof ChannelException &&
-            ("The channel has reached it's capacity. " 
+            ("The channel has reached it's capacity. "
                 + "This might be the result of a sink on the channel having too "
                 + "low of batch size, a downstream system running slower than "
                 + "normal, or that the channel capacity is just too low. "
@@ -260,10 +260,13 @@ public class TestUtils {
   }
 
   public static Context createFileChannelContext(String checkpointDir,
-      String dataDir, Map<String, String> overrides) {
+      String dataDir, String backupDir, Map<String, String> overrides) {
     Context context = new Context();
     context.put(FileChannelConfiguration.CHECKPOINT_DIR,
             checkpointDir);
+    if(backupDir != null) {
+      context.put(FileChannelConfiguration.BACKUP_CHECKPOINT_DIR, backupDir);
+    }
     context.put(FileChannelConfiguration.DATA_DIRS, dataDir);
     context.put(FileChannelConfiguration.KEEP_ALIVE, String.valueOf(1));
     context.put(FileChannelConfiguration.CAPACITY, String.valueOf(10000));
@@ -273,10 +276,16 @@ public class TestUtils {
     return context;
   }
   public static FileChannel createFileChannel(String checkpointDir,
-      String dataDir, Map<String, String> overrides) {
+    String dataDir, Map<String, String> overrides) {
+    return createFileChannel(checkpointDir, dataDir, null, overrides);
+  }
+
+  public static FileChannel createFileChannel(String checkpointDir,
+      String dataDir, String backupDir, Map<String, String> overrides) {
     FileChannel channel = new FileChannel();
     channel.setName("FileChannel-" + UUID.randomUUID());
-    Context context = createFileChannelContext(checkpointDir, dataDir, overrides);
+    Context context = createFileChannelContext(checkpointDir, dataDir,
+      backupDir, overrides);
     Configurables.configure(channel, context);
     return channel;
   }

@@ -38,6 +38,8 @@ message LogFileMetaData {
   required sfixed64 checkpointPosition = 3;
   required sfixed64 checkpointWriteOrderID = 4;
   optional LogFileEncryption encryption = 5;
+  optional sfixed64 backupCheckpointPosition = 6;
+  optional sfixed64 backupCheckpointWriteOrderID = 7;
 }
 
 message LogFileEncryption {
