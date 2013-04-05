@@ -28,8 +28,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,11 +62,25 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
   protected final MappedByteBuffer mappedBuffer;
   protected final RandomAccessFile checkpointFileHandle;
   protected final File checkpointFile;
+  private final Semaphore backupCompletedSema = new Semaphore(1);
+  protected final boolean shouldBackup;
+  private final File backupDir;
+  private final ExecutorService checkpointBackUpExecutor;
 
   protected EventQueueBackingStoreFile(int capacity, String name,
-      File checkpointFile) throws IOException, BadCheckpointException {
+      File checkpointFile) throws IOException,
+      BadCheckpointException {
+    this(capacity, name, checkpointFile, null, false);
+  }
+
+  protected EventQueueBackingStoreFile(int capacity, String name,
+      File checkpointFile, File checkpointBackupDir,
+      boolean backupCheckpoint) throws IOException,
+      BadCheckpointException {
     super(capacity, name);
     this.checkpointFile = checkpointFile;
+    this.shouldBackup = backupCheckpoint;
+    this.backupDir = checkpointBackupDir;
     checkpointFileHandle = new RandomAccessFile(checkpointFile, "rw");
     long totalBytes = (capacity + HEADER_SIZE) * Serialization.SIZE_OF_LONG;
     if(checkpointFileHandle.length() == 0) {
@@ -95,6 +115,13 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
               + " probably because the agent stopped while the channel was"
               + " checkpointing.");
     }
+    if (shouldBackup) {
+      checkpointBackUpExecutor = Executors.newSingleThreadExecutor(
+        new ThreadFactoryBuilder().setNameFormat(
+          getName() + " - CheckpointBackUpThread").build());
+    } else {
+      checkpointBackUpExecutor = null;
+    }
   }
 
   protected long getCheckpointLogWriteOrderID() {
@@ -103,11 +130,104 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
 
   protected abstract void writeCheckpointMetaData() throws IOException;
 
+  /**
+   * This method backs up the checkpoint and its metadata files. This method
+   * is called once the checkpoint is completely written and is called
+   * from a separate thread which runs in the background while the file channel
+   * continues operation.
+   *
+   * @param backupDirectory - the directory to which the backup files should be
+   *                        copied.
+   * @throws IOException - if the copy failed, or if there is not enough disk
+   * space to copy the checkpoint files over.
+   */
+  protected void backupCheckpoint(File backupDirectory) throws IOException {
+    int availablePermits = backupCompletedSema.drainPermits();
+    Preconditions.checkState(availablePermits == 0,
+      "Expected no permits to be available in the backup semaphore, " +
+        "but " + availablePermits + " permits were available.");
+    if (slowdownBackup) {
+      try {
+        TimeUnit.SECONDS.sleep(10);
+      } catch (Exception ex) {
+        Throwables.propagate(ex);
+      }
+    }
+    File backupFile = new File(backupDirectory, BACKUP_COMPLETE_FILENAME);
+    if (backupExists(backupDirectory)) {
+      if (!backupFile.delete()) {
+        throw new IOException("Error while doing backup of checkpoint. Could " +
+          "not remove" + backupFile.toString() + ".");
+      }
+    }
+    Serialization.deleteAllFiles(backupDirectory, Log.EXCLUDES);
+    File checkpointDir = checkpointFile.getParentFile();
+    File[] checkpointFiles = checkpointDir.listFiles();
+    Preconditions.checkNotNull(checkpointFiles, "Could not retrieve files " +
+      "from the checkpoint directory. Cannot complete backup of the " +
+      "checkpoint.");
+    for (File origFile : checkpointFiles) {
+      if(origFile.getName().equals(Log.FILE_LOCK)) {
+        continue;
+      }
+      Serialization.copyFile(origFile, new File(backupDirectory,
+        origFile.getName()));
+    }
+    Preconditions.checkState(!backupFile.exists(), "The backup file exists " +
+      "while it is not supposed to. Are multiple channels configured to use " +
+      "this directory: " + backupDirectory.toString() + " as backup?");
+    if (!backupFile.createNewFile()) {
+      LOG.error("Could not create backup file. Backup of checkpoint will " +
+        "not be used during replay even if checkpoint is bad.");
+    }
+  }
+
+  /**
+   * Restore the checkpoint, if it is found to be bad.
+   * @return true - if the previous backup was successfully completed and
+   * restore was successfully completed.
+   * @throws IOException - If restore failed due to IOException
+   *
+   */
+  public static boolean restoreBackup(File checkpointDir, File backupDir)
+    throws IOException {
+    if (!backupExists(backupDir)) {
+      return false;
+    }
+    Serialization.deleteAllFiles(checkpointDir, Log.EXCLUDES);
+    File[] backupFiles = backupDir.listFiles();
+    if (backupFiles == null) {
+      return false;
+    } else {
+      for (File backupFile : backupFiles) {
+        String fileName = backupFile.getName();
+        if (!fileName.equals(BACKUP_COMPLETE_FILENAME) &&
+          !fileName.equals(Log.FILE_LOCK)) {
+          Serialization.copyFile(backupFile, new File(checkpointDir, fileName));
+        }
+      }
+      return true;
+    }
+  }
+
   @Override
   void beginCheckpoint() throws IOException {
     LOG.info("Start checkpoint for " + checkpointFile +
         ", elements to sync = " + overwriteMap.size());
 
+    if (shouldBackup) {
+      int permits = backupCompletedSema.drainPermits();
+      Preconditions.checkState(permits <= 1, "Expected only one or less " +
+        "permits to checkpoint, but got " + String.valueOf(permits) +
+        " permits");
+      if(permits < 1) {
+        // Force the checkpoint to not happen by throwing an exception.
+        throw new IOException("Previous backup of checkpoint files is still " +
+          "in progress. Will attempt to checkpoint only at the end of the " +
+          "next checkpoint interval. Try increasing the checkpoint interval " +
+          "if this error happens often.");
+      }
+    }
     // Start checkpoint
     elementsBuffer.put(INDEX_CHECKPOINT_MARKER, CHECKPOINT_INCOMPLETE);
     mappedBuffer.force();
@@ -141,8 +261,38 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     // Finish checkpoint
     elementsBuffer.put(INDEX_CHECKPOINT_MARKER, CHECKPOINT_COMPLETE);
     mappedBuffer.force();
+    if (shouldBackup) {
+      startBackupThread();
+    }
   }
 
+  /**
+   * This method starts backing up the checkpoint in the background.
+   */
+  private void startBackupThread() {
+    Preconditions.checkNotNull(checkpointBackUpExecutor,
+      "Expected the checkpoint backup exector to be non-null, " +
+        "but it is null. Checkpoint will not be backed up.");
+    LOG.info("Attempting to back up checkpoint.");
+    checkpointBackUpExecutor.submit(new Runnable() {
+
+      @Override
+      public void run() {
+        boolean error = false;
+        try {
+          backupCheckpoint(backupDir);
+        } catch (Throwable throwable) {
+          error = true;
+          LOG.error("Backing up of checkpoint directory failed.", throwable);
+        } finally {
+          backupCompletedSema.release();
+        }
+        if (!error) {
+          LOG.info("Checkpoint backup completed.");
+        }
+      }
+    });
+  }
 
   @Override
   void close() {
@@ -240,6 +390,10 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
         }
       }
     }
+  }
+
+  public static boolean backupExists(File backupDir) {
+    return new File(backupDir, BACKUP_COMPLETE_FILENAME).exists();
   }
 
   public static void main(String[] args) throws Exception {

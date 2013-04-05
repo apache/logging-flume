@@ -30,12 +30,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -394,19 +389,6 @@ final class FlumeEventQueue {
      * asynchronously written to disk.
      */
     public void serializeAndWrite() throws Exception {
-      //Check if there is a current write happening, if there is abort it.
-      if (future != null) {
-        try {
-          future.cancel(true);
-        } catch (Exception e) {
-          LOG.warn("Interrupted a write to inflights "
-                  + "file: " + inflightEventsFile.getName()
-                  + " to start a new write.");
-        }
-        while (!future.isDone()) {
-          TimeUnit.MILLISECONDS.sleep(100);
-        }
-      }
       Collection<Long> values = inflightEvents.values();
       if(!fileChannel.isOpen()){
         file = new RandomAccessFile(inflightEventsFile, "rw");

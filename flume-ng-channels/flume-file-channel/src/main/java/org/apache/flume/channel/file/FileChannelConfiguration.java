@@ -23,6 +23,12 @@ public class FileChannelConfiguration {
    * Directory Checkpoints will be written in
    */
   public static final String CHECKPOINT_DIR = "checkpointDir";
+
+  /**
+   * The directory to which the checkpoint must be backed up
+   */
+  public static final String BACKUP_CHECKPOINT_DIR = "backupCheckpointDir";
+
   /**
    * Directories data files will be written in. Multiple directories
    * can be specified as comma separated values. Writes will
@@ -90,4 +96,8 @@ public class FileChannelConfiguration {
 
   public static final String USE_FAST_REPLAY = "use-fast-replay";
   public static final boolean DEFAULT_USE_FAST_REPLAY = false;
+
+  public static final String USE_DUAL_CHECKPOINTS = "useDualCheckpoints";
+  public static final boolean DEFAULT_USE_DUAL_CHECKPOINTS = false;
+
 }

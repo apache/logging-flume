@@ -1286,6 +1286,14 @@ public final class ProtosFactory {
     boolean hasEncryption();
     org.apache.flume.channel.file.proto.ProtosFactory.LogFileEncryption getEncryption();
     org.apache.flume.channel.file.proto.ProtosFactory.LogFileEncryptionOrBuilder getEncryptionOrBuilder();
+
+    // optional sfixed64 backupCheckpointPosition = 6;
+    boolean hasBackupCheckpointPosition();
+    long getBackupCheckpointPosition();
+
+    // optional sfixed64 backupCheckpointWriteOrderID = 7;
+    boolean hasBackupCheckpointWriteOrderID();
+    long getBackupCheckpointWriteOrderID();
   }
   public static final class LogFileMetaData extends
       com.google.protobuf.GeneratedMessage
@@ -1369,12 +1377,34 @@ public final class ProtosFactory {
       return encryption_;
     }
 
+    // optional sfixed64 backupCheckpointPosition = 6;
+    public static final int BACKUPCHECKPOINTPOSITION_FIELD_NUMBER = 6;
+    private long backupCheckpointPosition_;
+    public boolean hasBackupCheckpointPosition() {
+      return ((bitField0_ & 0x00000020) == 0x00000020);
+    }
+    public long getBackupCheckpointPosition() {
+      return backupCheckpointPosition_;
+    }
+
+    // optional sfixed64 backupCheckpointWriteOrderID = 7;
+    public static final int BACKUPCHECKPOINTWRITEORDERID_FIELD_NUMBER = 7;
+    private long backupCheckpointWriteOrderID_;
+    public boolean hasBackupCheckpointWriteOrderID() {
+      return ((bitField0_ & 0x00000040) == 0x00000040);
+    }
+    public long getBackupCheckpointWriteOrderID() {
+      return backupCheckpointWriteOrderID_;
+    }
+
     private void initFields() {
       version_ = 0;
       logFileID_ = 0;
       checkpointPosition_ = 0L;
       checkpointWriteOrderID_ = 0L;
       encryption_ = org.apache.flume.channel.file.proto.ProtosFactory.LogFileEncryption.getDefaultInstance();
+      backupCheckpointPosition_ = 0L;
+      backupCheckpointWriteOrderID_ = 0L;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -1425,6 +1455,12 @@ public final class ProtosFactory {
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
         output.writeMessage(5, encryption_);
       }
+      if (((bitField0_ & 0x00000020) == 0x00000020)) {
+        output.writeSFixed64(6, backupCheckpointPosition_);
+      }
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
+        output.writeSFixed64(7, backupCheckpointWriteOrderID_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -1453,6 +1489,14 @@ public final class ProtosFactory {
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(5, encryption_);
+      }
+      if (((bitField0_ & 0x00000020) == 0x00000020)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeSFixed64Size(6, backupCheckpointPosition_);
+      }
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeSFixed64Size(7, backupCheckpointWriteOrderID_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -1593,6 +1637,10 @@ public final class ProtosFactory {
           encryptionBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000010);
+        backupCheckpointPosition_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000020);
+        backupCheckpointWriteOrderID_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000040);
         return this;
       }
 
@@ -1655,6 +1703,14 @@ public final class ProtosFactory {
         } else {
           result.encryption_ = encryptionBuilder_.build();
         }
+        if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
+          to_bitField0_ |= 0x00000020;
+        }
+        result.backupCheckpointPosition_ = backupCheckpointPosition_;
+        if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
+          to_bitField0_ |= 0x00000040;
+        }
+        result.backupCheckpointWriteOrderID_ = backupCheckpointWriteOrderID_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -1685,6 +1741,12 @@ public final class ProtosFactory {
         }
         if (other.hasEncryption()) {
           mergeEncryption(other.getEncryption());
+        }
+        if (other.hasBackupCheckpointPosition()) {
+          setBackupCheckpointPosition(other.getBackupCheckpointPosition());
+        }
+        if (other.hasBackupCheckpointWriteOrderID()) {
+          setBackupCheckpointWriteOrderID(other.getBackupCheckpointWriteOrderID());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -1766,6 +1828,16 @@ public final class ProtosFactory {
               }
               input.readMessage(subBuilder, extensionRegistry);
               setEncryption(subBuilder.buildPartial());
+              break;
+            }
+            case 49: {
+              bitField0_ |= 0x00000020;
+              backupCheckpointPosition_ = input.readSFixed64();
+              break;
+            }
+            case 57: {
+              bitField0_ |= 0x00000040;
+              backupCheckpointWriteOrderID_ = input.readSFixed64();
               break;
             }
           }
@@ -1946,6 +2018,48 @@ public final class ProtosFactory {
           encryption_ = null;
         }
         return encryptionBuilder_;
+      }
+
+      // optional sfixed64 backupCheckpointPosition = 6;
+      private long backupCheckpointPosition_ ;
+      public boolean hasBackupCheckpointPosition() {
+        return ((bitField0_ & 0x00000020) == 0x00000020);
+      }
+      public long getBackupCheckpointPosition() {
+        return backupCheckpointPosition_;
+      }
+      public Builder setBackupCheckpointPosition(long value) {
+        bitField0_ |= 0x00000020;
+        backupCheckpointPosition_ = value;
+        onChanged();
+        return this;
+      }
+      public Builder clearBackupCheckpointPosition() {
+        bitField0_ = (bitField0_ & ~0x00000020);
+        backupCheckpointPosition_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      // optional sfixed64 backupCheckpointWriteOrderID = 7;
+      private long backupCheckpointWriteOrderID_ ;
+      public boolean hasBackupCheckpointWriteOrderID() {
+        return ((bitField0_ & 0x00000040) == 0x00000040);
+      }
+      public long getBackupCheckpointWriteOrderID() {
+        return backupCheckpointWriteOrderID_;
+      }
+      public Builder setBackupCheckpointWriteOrderID(long value) {
+        bitField0_ |= 0x00000040;
+        backupCheckpointWriteOrderID_ = value;
+        onChanged();
+        return this;
+      }
+      public Builder clearBackupCheckpointWriteOrderID() {
+        bitField0_ = (bitField0_ & ~0x00000040);
+        backupCheckpointWriteOrderID_ = 0L;
+        onChanged();
+        return this;
       }
 
       // @@protoc_insertion_point(builder_scope:LogFileMetaData)
@@ -5921,23 +6035,25 @@ public final class ProtosFactory {
       "sion\030\001 \002(\017\022\024\n\014writeOrderID\030\002 \002(\020\022\021\n\tqueu" +
       "eSize\030\003 \002(\017\022\021\n\tqueueHead\030\004 \002(\017\022\036\n\nactive" +
       "Logs\030\005 \003(\0132\n.ActiveLog\"-\n\tActiveLog\022\021\n\tl" +
-      "ogFileID\030\001 \002(\017\022\r\n\005count\030\002 \002(\017\"\231\001\n\017LogFil" +
+      "ogFileID\030\001 \002(\017\022\r\n\005count\030\002 \002(\017\"\341\001\n\017LogFil" +
       "eMetaData\022\017\n\007version\030\001 \002(\017\022\021\n\tlogFileID\030" +
       "\002 \002(\017\022\032\n\022checkpointPosition\030\003 \002(\020\022\036\n\026che" +
       "ckpointWriteOrderID\030\004 \002(\020\022&\n\nencryption\030" +
-      "\005 \001(\0132\022.LogFileEncryption\"Q\n\021LogFileEncr" +
-      "yption\022\026\n\016cipherProvider\030\001 \002(\t\022\020\n\010keyAli",
-      "as\030\002 \002(\t\022\022\n\nparameters\030\003 \001(\014\"S\n\026Transact" +
-      "ionEventHeader\022\014\n\004type\030\001 \002(\017\022\025\n\rtransact" +
-      "ionID\030\002 \002(\020\022\024\n\014writeOrderID\030\003 \002(\020\"!\n\003Put" +
-      "\022\032\n\005event\030\001 \002(\0132\013.FlumeEvent\"&\n\004Take\022\016\n\006" +
-      "fileID\030\001 \002(\017\022\016\n\006offset\030\002 \002(\017\"\n\n\010Rollback" +
-      "\"\026\n\006Commit\022\014\n\004type\030\001 \002(\017\"\030\n\026TransactionE" +
-      "ventFooter\">\n\nFlumeEvent\022\"\n\007headers\030\001 \003(" +
-      "\0132\021.FlumeEventHeader\022\014\n\004body\030\002 \002(\014\".\n\020Fl" +
-      "umeEventHeader\022\013\n\003key\030\001 \002(\t\022\r\n\005value\030\002 \002" +
-      "(\tB4\n#org.apache.flume.channel.file.prot",
-      "oB\rProtosFactory"
+      "\005 \001(\0132\022.LogFileEncryption\022 \n\030backupCheck" +
+      "pointPosition\030\006 \001(\020\022$\n\034backupCheckpointW",
+      "riteOrderID\030\007 \001(\020\"Q\n\021LogFileEncryption\022\026" +
+      "\n\016cipherProvider\030\001 \002(\t\022\020\n\010keyAlias\030\002 \002(\t" +
+      "\022\022\n\nparameters\030\003 \001(\014\"S\n\026TransactionEvent" +
+      "Header\022\014\n\004type\030\001 \002(\017\022\025\n\rtransactionID\030\002 " +
+      "\002(\020\022\024\n\014writeOrderID\030\003 \002(\020\"!\n\003Put\022\032\n\005even" +
+      "t\030\001 \002(\0132\013.FlumeEvent\"&\n\004Take\022\016\n\006fileID\030\001" +
+      " \002(\017\022\016\n\006offset\030\002 \002(\017\"\n\n\010Rollback\"\026\n\006Comm" +
+      "it\022\014\n\004type\030\001 \002(\017\"\030\n\026TransactionEventFoot" +
+      "er\">\n\nFlumeEvent\022\"\n\007headers\030\001 \003(\0132\021.Flum" +
+      "eEventHeader\022\014\n\004body\030\002 \002(\014\".\n\020FlumeEvent",
+      "Header\022\013\n\003key\030\001 \002(\t\022\r\n\005value\030\002 \002(\tB4\n#or" +
+      "g.apache.flume.channel.file.protoB\rProto" +
+      "sFactory"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -5965,7 +6081,7 @@ public final class ProtosFactory {
           internal_static_LogFileMetaData_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_LogFileMetaData_descriptor,
-              new java.lang.String[] { "Version", "LogFileID", "CheckpointPosition", "CheckpointWriteOrderID", "Encryption", },
+              new java.lang.String[] { "Version", "LogFileID", "CheckpointPosition", "CheckpointWriteOrderID", "Encryption", "BackupCheckpointPosition", "BackupCheckpointWriteOrderID", },
               org.apache.flume.channel.file.proto.ProtosFactory.LogFileMetaData.class,
               org.apache.flume.channel.file.proto.ProtosFactory.LogFileMetaData.Builder.class);
           internal_static_LogFileEncryption_descriptor =

@@ -18,6 +18,19 @@
  */
 package org.apache.flume.channel.file;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Sets;
+import org.apache.commons.collections.MultiMap;
+import org.apache.commons.collections.map.MultiValueMap;
+import org.apache.flume.channel.file.encryption.KeyProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
@@ -27,20 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
-
-import javax.annotation.Nullable;
-
-import org.apache.commons.collections.MultiMap;
-import org.apache.commons.collections.map.MultiValueMap;
-import org.apache.flume.channel.file.encryption.KeyProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.SetMultimap;
-import com.google.common.collect.Sets;
 
 /**
  * Processes a set of data logs, replaying said logs into the queue.
@@ -69,6 +68,33 @@ class ReplayHandler {
    * finding the put and commit in logdir2.
    */
   private final List<Long> pendingTakes;
+  int readCount = 0;
+  int putCount = 0;
+  int takeCount = 0;
+  int rollbackCount = 0;
+  int commitCount = 0;
+  int skipCount = 0;
+
+  @VisibleForTesting
+  public int getReadCount() {
+    return readCount;
+  }
+  @VisibleForTesting
+  public int getPutCount() {
+    return putCount;
+  }
+  @VisibleForTesting
+  public int getTakeCount() {
+    return takeCount;
+  }
+  @VisibleForTesting
+  public int getCommitCount() {
+    return commitCount;
+  }
+  @VisibleForTesting
+  public int getRollbackCount() {
+    return rollbackCount;
+  }
 
   ReplayHandler(FlumeEventQueue queue,
       @Nullable KeyProvider encryptionKeyProvider) {
@@ -110,12 +136,7 @@ class ReplayHandler {
         // for puts the fileId is the fileID of the file they exist in
         // for takes the fileId and offset are pointers to a put
         int fileId = reader.getLogFileID();
-        int readCount = 0;
-        int putCount = 0;
-        int takeCount = 0;
-        int rollbackCount = 0;
-        int commitCount = 0;
-        int skipCount = 0;
+
         while ((entry = reader.next()) != null) {
           int offset = entry.getOffset();
           TransactionEventRecord record = entry.getEvent();
@@ -160,7 +181,7 @@ class ReplayHandler {
               }
             } else {
               Preconditions.checkArgument(false, "Unknown record type: "
-                  + Integer.toHexString(type));
+                + Integer.toHexString(type));
             }
 
           } else {
@@ -255,12 +276,6 @@ class ReplayHandler {
       }
       LogRecord entry = null;
       FlumeEventPointer ptr = null;
-      int readCount = 0;
-      int putCount = 0;
-      int takeCount = 0;
-      int rollbackCount = 0;
-      int commitCount = 0;
-      int skipCount = 0;
       while ((entry = next()) != null) {
         // for puts the fileId is the fileID of the file they exist in
         // for takes the fileId and offset are pointers to a put

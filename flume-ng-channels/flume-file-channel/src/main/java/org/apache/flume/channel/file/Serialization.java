@@ -18,11 +18,20 @@
  */
 package org.apache.flume.channel.file;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.Collections;
+import java.util.Set;
 
 class Serialization {
   private Serialization() {}
@@ -37,6 +46,9 @@ class Serialization {
   static final String METADATA_FILENAME = ".meta";
   static final String METADATA_TMP_FILENAME = ".tmp";
   static final String OLD_METADATA_FILENAME = METADATA_FILENAME + ".old";
+
+  // 64 K buffer to copy files.
+  private static final int FILE_COPY_BUFFER_SIZE = 64 * 1024;
 
   public static final Logger LOG = LoggerFactory.getLogger(Serialization.class);
 
@@ -60,20 +72,39 @@ class Serialization {
   /**
    * Deletes all files in given directory.
    * @param checkpointDir - The directory whose files are to be deleted
+   * @param excludes - Names of files which should not be deleted from this
+   *                 directory.
    * @return - true if all files were successfully deleted, false otherwise.
    */
-  static boolean deleteAllFiles(File checkpointDir) {
+  static boolean deleteAllFiles(File checkpointDir,
+    @Nullable Set<String> excludes) {
     if (!checkpointDir.isDirectory()) {
       return false;
     }
-    StringBuilder builder = new StringBuilder("Deleted the following files from"
-        + " the checkpoint directory: ");
+
     File[] files = checkpointDir.listFiles();
+    if(files == null) {
+      return false;
+    }
+    StringBuilder builder;
+    if (files.length == 0) {
+      return true;
+    } else {
+      builder = new StringBuilder("Deleted the following files: ");
+    }
+    if(excludes == null) {
+      excludes = Collections.EMPTY_SET;
+    }
     for (File file : files) {
+      if(excludes.contains(file.getName())) {
+        LOG.info("Skipping " + file.getName() + " because it is in excludes " +
+          "set");
+        continue;
+      }
       if (!FileUtils.deleteQuietly(file)) {
         LOG.info(builder.toString());
         LOG.error("Error while attempting to delete: " +
-            file.getName());
+            file.getAbsolutePath());
         return false;
       }
       builder.append(", ").append(file.getName());
@@ -81,5 +112,71 @@ class Serialization {
     builder.append(".");
     LOG.info(builder.toString());
     return true;
+  }
+
+  /**
+   * Copy a file using a 64K size buffer. This method will copy the file and
+   * then fsync to disk
+   * @param from File to copy - this file should exist
+   * @param to Destination file - this file should not exist
+   * @return true if the copy was successful
+   */
+  static boolean copyFile(File from, File to) throws IOException {
+    Preconditions.checkNotNull(from, "Source file is null, file copy failed.");
+    Preconditions.checkNotNull(to, "Destination file is null, " +
+      "file copy failed.");
+    Preconditions.checkState(from.exists(), "Source file: " + from.toString() +
+      " does not exist.");
+    Preconditions.checkState(!to.exists(), "Destination file: "
+      + to.toString() + " unexpectedly exists.");
+
+    BufferedInputStream in = null;
+    RandomAccessFile out = null; //use a RandomAccessFile for easy fsync
+    try {
+      in = new BufferedInputStream(new FileInputStream(from));
+      out = new RandomAccessFile(to, "rw");
+      byte[] buf = new byte[FILE_COPY_BUFFER_SIZE];
+      int total = 0;
+      while(true) {
+        int read = in.read(buf);
+        if (read == -1) {
+          break;
+        }
+        out.write(buf, 0, read);
+        total += read;
+      }
+      out.getFD().sync();
+      Preconditions.checkState(total == from.length(),
+        "The size of the origin file and destination file are not equal.");
+      return true;
+    } catch (Exception ex) {
+      LOG.error("Error while attempting to copy " + from.toString() + " to "
+        + to.toString() + ".", ex);
+      Throwables.propagate(ex);
+    } finally {
+      Throwable th = null;
+      try {
+        if (in != null) {
+          in.close();
+        }
+      } catch (Throwable ex) {
+        LOG.error("Error while closing input file.", ex);
+        th = ex;
+      }
+      try {
+        if (out != null) {
+          out.close();
+        }
+      } catch (IOException ex) {
+        LOG.error("Error while closing output file.", ex);
+        Throwables.propagate(ex);
+      }
+      if (th != null) {
+        Throwables.propagate(th);
+      }
+    }
+    // Should never reach here.
+    throw new IOException("Copying file: " + from.toString() + " to: " + to
+      .toString() + " may have failed.");
   }
 }
