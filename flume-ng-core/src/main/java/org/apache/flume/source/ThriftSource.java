@@ -29,15 +29,16 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.SourceCounter;
-import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.thrift.Status;
 import org.apache.flume.thrift.ThriftSourceProtocol;
 import org.apache.flume.thrift.ThriftFlumeEvent;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.server.TServer;
-import org.apache.thrift.server.TThreadedSelectorServer;
-import org.apache.thrift.transport.TNonblockingServerSocket;
+import org.apache.thrift.server.TThreadPoolServer;
+import org.apache.thrift.transport.TFastFramedTransport;
+import org.apache.thrift.transport.TServerSocket;
+import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +47,6 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 public class ThriftSource extends AbstractSource implements Configurable,
@@ -72,7 +72,7 @@ public class ThriftSource extends AbstractSource implements Configurable,
   private int maxThreads = 0;
   private SourceCounter sourceCounter;
   private TServer server;
-  private TNonblockingServerSocket serverTransport;
+  private TServerTransport serverTransport;
   private ExecutorService servingExecutor;
 
   @Override
@@ -100,29 +100,27 @@ public class ThriftSource extends AbstractSource implements Configurable,
   @Override
   public void start() {
     logger.info("Starting thrift source");
-    ExecutorService sourceService;
-    ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat(
-      "Flume Thrift IPC Thread %d").build();
-    if (maxThreads == 0) {
-      sourceService = Executors.newCachedThreadPool(threadFactory);
-    } else {
-      sourceService = Executors.newFixedThreadPool(maxThreads, threadFactory);
-    }
+    maxThreads = (maxThreads <= 0) ? Integer.MAX_VALUE : maxThreads;
     try {
-      serverTransport = new TNonblockingServerSocket(new InetSocketAddress
+      serverTransport = new TServerSocket(new InetSocketAddress
         (bindAddress, port));
     } catch (TTransportException e) {
       throw new FlumeException("Failed to start Thrift Source.", e);
     }
-    server = new TThreadedSelectorServer(
-      new TThreadedSelectorServer.Args(serverTransport).protocolFactory(
-        new TCompactProtocol.Factory()).processor(
-        new ThriftSourceProtocol.Processor<ThriftSourceHandler>(
-          new ThriftSourceHandler())).executorService(sourceService));
+
+    TThreadPoolServer.Args args = new TThreadPoolServer.Args(serverTransport);
+    args.protocolFactory(new TCompactProtocol.Factory());
+    args.inputTransportFactory(new TFastFramedTransport.Factory());
+    args.outputTransportFactory(new TFastFramedTransport.Factory());
+    args.processor(new ThriftSourceProtocol.Processor<ThriftSourceHandler>(
+      new ThriftSourceHandler())).maxWorkerThreads(maxThreads);
+
+    server = new TThreadPoolServer(args);
 
     servingExecutor = Executors.newSingleThreadExecutor(new
       ThreadFactoryBuilder().setNameFormat("Flume Thrift Source I/O Boss")
       .build());
+
     /**
      * Start serving.
      */
@@ -165,7 +163,6 @@ public class ThriftSource extends AbstractSource implements Configurable,
         "shutdown.");
     }
     sourceCounter.stop();
-    // Thrift will shutdown the executor passed to it.
     super.stop();
   }
 
