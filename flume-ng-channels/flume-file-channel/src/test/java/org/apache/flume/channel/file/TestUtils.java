@@ -270,8 +270,6 @@ public class TestUtils {
     context.put(FileChannelConfiguration.DATA_DIRS, dataDir);
     context.put(FileChannelConfiguration.KEEP_ALIVE, String.valueOf(1));
     context.put(FileChannelConfiguration.CAPACITY, String.valueOf(10000));
-    // Set checkpoint for 5 seconds otherwise test will run out of memory
-    context.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, "5000");
     context.putAll(overrides);
     return context;
   }
