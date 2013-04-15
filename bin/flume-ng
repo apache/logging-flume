@@ -182,7 +182,11 @@ global options:
   --conf,-c <conf>      use configs in <conf> directory
   --classpath,-C <cp>   append to the classpath
   --dryrun,-d           do not actually start Flume, just print the command
-  -Dproperty=value      sets a JDK system property value
+  --plugins-path <dirs> colon-separated list of plugins.d directories. See the
+                        plugins.d section in the user guide for more details.
+                        Default: \$FLUME_HOME/plugins.d
+  -Dproperty=value      sets a Java system property value
+  -Xproperty=value      sets a Java -X option
 
 agent options:
   --conf-file,-f <file> specify a config file (required)
@@ -235,6 +239,7 @@ LD_LIBRARY_PATH=""
 
 opt_conf=""
 opt_classpath=""
+opt_plugins_dirs=""
 opt_java_props=""
 opt_dryrun=""
 
@@ -268,6 +273,7 @@ case "$mode" in
     ;;
 esac
 
+args=""
 while [ -n "$*" ] ; do
   arg=$1
   shift
@@ -285,6 +291,10 @@ while [ -n "$*" ] ; do
       ;;
     --dryrun|-d)
       opt_dryrun="1"
+      ;;
+    --plugins-path)
+      opt_plugins_dirs=$1
+      shift
       ;;
     -D*)
       opt_java_props="$opt_java_props $arg"
@@ -336,35 +346,41 @@ else
   FLUME_CLASSPATH="${FLUME_HOME}/lib/*"
 fi
 
-# load plugins.d
-unset plugin_lib plugin_libext plugin_native
-PLUGINS_DIR=${FLUME_HOME}/plugins.d
-if [[ -d ${PLUGINS_DIR} ]]
-then
-  for plugin in ${PLUGINS_DIR}/*
-  do
-    if [[ -d $plugin/lib ]]
-    then
-      plugin_lib="${plugin_lib}${plugin_lib+:}${plugin}/lib/*"
-    fi 
-    if [[ -d $plugin/libext ]]
-    then
-      plugin_libext="${plugin_libext}${plugin_libext+:}${plugin}/libext/*"
-    fi 
-    if [[ -d $plugin/native ]]
-    then
-      plugin_native="${plugin_native}${plugin_native+:}${plugin}/native"
-    fi 
-  done
+# load plugins.d directories
+PLUGINS_DIRS=""
+if [ -n "${opt_plugins_dirs}" ]; then
+  PLUGINS_DIRS=$(sed -e 's/:/ /g' <<<${opt_plugins_dirs})
+else
+  PLUGINS_DIRS="${FLUME_HOME}/plugins.d"
 fi
+
+unset plugin_lib plugin_libext plugin_native
+for PLUGINS_DIR in $PLUGINS_DIRS; do
+  if [[ -d ${PLUGINS_DIR} ]]; then
+    for plugin in ${PLUGINS_DIR}/*; do
+      if [[ -d "$plugin/lib" ]]; then
+        plugin_lib="${plugin_lib}${plugin_lib+:}${plugin}/lib/*"
+      fi
+      if [[ -d "$plugin/libext" ]]; then
+        plugin_libext="${plugin_libext}${plugin_libext+:}${plugin}/libext/*"
+      fi
+      if [[ -d "$plugin/native" ]]; then
+        plugin_native="${plugin_native}${plugin_native+:}${plugin}/native"
+      fi
+    done
+  fi
+done
+
 if [[ -n "${plugin_lib}" ]]
 then
   FLUME_CLASSPATH="${FLUME_CLASSPATH}:${plugin_lib}"
 fi
+
 if [[ -n "${plugin_libext}" ]]
 then
   FLUME_CLASSPATH="${FLUME_CLASSPATH}:${plugin_libext}"
 fi
+
 if [[ -n "${plugin_native}" ]]
 then
   if [[ -n "${FLUME_JAVA_LIBRARY_PATH}" ]]
