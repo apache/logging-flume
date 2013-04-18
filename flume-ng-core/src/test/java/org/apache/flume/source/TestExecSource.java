@@ -23,9 +23,15 @@ package org.apache.flume.source;
 import static org.junit.Assert.*;
 
 import java.io.*;
+import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.regex.Pattern;
+
+import javax.management.Attribute;
+import javax.management.AttributeList;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.Channel;
@@ -70,6 +76,18 @@ public class TestExecSource {
   @After
   public void tearDown() {
     source.stop();
+
+    // Remove the MBean registered for Monitoring
+    ObjectName objName = null;
+    try {
+        objName = new ObjectName("org.apache.flume.source"
+          + ":type=" + source.getName());
+
+        ManagementFactory.getPlatformMBeanServer().unregisterMBean(objName);
+    } catch (Exception ex) {
+      System.out.println("Failed to unregister the monitored counter: "
+          + objName + ex.getMessage());
+    }
   }
 
   @Test
@@ -168,6 +186,46 @@ public class TestExecSource {
       }
     }
 
+  @Test
+  public void testMonitoredCounterGroup() throws InterruptedException, LifecycleException,
+  EventDeliveryException, IOException {
+    // mini script
+    runTestShellCmdHelper("/bin/bash -c", "for i in {1..5}; do echo $i;done"
+            , new String[]{"1","2","3","4","5" } );
+
+    ObjectName objName = null;
+
+    try {
+        objName = new ObjectName("org.apache.flume.source"
+          + ":type=" + source.getName());
+
+        MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+        String strAtts[] = {"Type", "EventReceivedCount", "EventAcceptedCount"};
+        AttributeList attrList = mbeanServer.getAttributes(objName, strAtts);
+
+        Assert.assertNotNull(attrList.get(0));
+        Assert.assertEquals("Expected Value: Type", "Type",
+                ((Attribute) attrList.get(0)).getName());
+        Assert.assertEquals("Expected Value: SOURCE", "SOURCE",
+                ((Attribute) attrList.get(0)).getValue());
+
+        Assert.assertNotNull(attrList.get(1));
+        Assert.assertEquals("Expected Value: EventReceivedCount", "EventReceivedCount",
+                ((Attribute) attrList.get(1)).getName());
+        Assert.assertEquals("Expected Value: 5", "5",
+                ((Attribute) attrList.get(1)).getValue().toString());
+
+        Assert.assertNotNull(attrList.get(2));
+        Assert.assertEquals("Expected Value: EventAcceptedCount", "EventAcceptedCount",
+                ((Attribute) attrList.get(2)).getName());
+        Assert.assertEquals("Expected Value: 5", "5",
+                ((Attribute) attrList.get(2)).getValue().toString());
+
+    } catch (Exception ex) {
+      System.out.println("Unable to retreive the monitored counter: "
+          + objName + ex.getMessage());
+    }
+  }
 
     private void runTestShellCmdHelper(String shell, String command, String[] expectedOutput)
              throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
