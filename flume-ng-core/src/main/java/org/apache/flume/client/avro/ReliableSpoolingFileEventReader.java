@@ -419,8 +419,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
         if (!tracker.getTarget().equals(nextPath)) {
           tracker.close();
           deleteMetaFile();
+          tracker = DurablePositionTracker.getInstance(metaFile, nextPath);
         }
-        tracker = DurablePositionTracker.getInstance(metaFile, nextPath);
 
         // sanity check
         Preconditions.checkState(tracker.getTarget().equals(nextPath),
