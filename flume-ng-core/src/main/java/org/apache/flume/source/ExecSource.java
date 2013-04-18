@@ -31,13 +31,13 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
-import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.Source;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -142,7 +142,7 @@ Configurable {
 
   private String shell;
   private String command;
-  private CounterGroup counterGroup;
+  private SourceCounter sourceCounter;
   private ExecutorService executor;
   private Future<?> runnerFuture;
   private long restartThrottle;
@@ -157,9 +157,8 @@ Configurable {
     logger.info("Exec source starting with command:{}", command);
 
     executor = Executors.newSingleThreadExecutor();
-    counterGroup = new CounterGroup();
 
-    runner = new ExecRunnable(shell, command, getChannelProcessor(), counterGroup,
+    runner = new ExecRunnable(shell, command, getChannelProcessor(), sourceCounter,
         restart, restartThrottle, logStderr, bufferCount, charset);
 
     // FIXME: Use a callback-like executor / future to signal us upon failure.
@@ -170,6 +169,7 @@ Configurable {
      * it sets our state to running. We want to make sure the executor is alive
      * and well first.
      */
+    sourceCounter.start();
     super.start();
 
     logger.debug("Exec source started");
@@ -202,10 +202,11 @@ Configurable {
       }
     }
 
+    sourceCounter.stop();
     super.stop();
 
     logger.debug("Exec source with command:{} stopped. Metrics:{}", command,
-        counterGroup);
+        sourceCounter);
   }
 
   @Override
@@ -231,16 +232,20 @@ Configurable {
         ExecSourceConfigurationConstants.DEFAULT_CHARSET));
 
     shell = context.getString(ExecSourceConfigurationConstants.CONFIG_SHELL, null);
+
+    if (sourceCounter == null) {
+      sourceCounter = new SourceCounter(getName());
+    }
   }
 
   private static class ExecRunnable implements Runnable {
 
     public ExecRunnable(String shell, String command, ChannelProcessor channelProcessor,
-        CounterGroup counterGroup, boolean restart, long restartThrottle,
+        SourceCounter sourceCounter, boolean restart, long restartThrottle,
         boolean logStderr, int bufferCount, Charset charset) {
       this.command = command;
       this.channelProcessor = channelProcessor;
-      this.counterGroup = counterGroup;
+      this.sourceCounter = sourceCounter;
       this.restartThrottle = restartThrottle;
       this.bufferCount = bufferCount;
       this.restart = restart;
@@ -252,7 +257,7 @@ Configurable {
     private final String shell;
     private final String command;
     private final ChannelProcessor channelProcessor;
-    private final CounterGroup counterGroup;
+    private final SourceCounter sourceCounter;
     private volatile boolean restart;
     private final long restartThrottle;
     private final int bufferCount;
@@ -286,15 +291,17 @@ Configurable {
           String line = null;
           List<Event> eventList = new ArrayList<Event>();
           while ((line = reader.readLine()) != null) {
-            counterGroup.incrementAndGet("exec.lines.read");
+            sourceCounter.incrementEventReceivedCount();
             eventList.add(EventBuilder.withBody(line.getBytes(charset)));
             if(eventList.size() >= bufferCount) {
               channelProcessor.processEventBatch(eventList);
+              sourceCounter.addToEventAcceptedCount(eventList.size());
               eventList.clear();
             }
           }
           if(!eventList.isEmpty()) {
             channelProcessor.processEventBatch(eventList);
+            sourceCounter.addToEventAcceptedCount(eventList.size());
           }
         } catch (Exception e) {
           logger.error("Failed while running command: " + command, e);
