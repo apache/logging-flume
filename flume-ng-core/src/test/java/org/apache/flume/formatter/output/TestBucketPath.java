@@ -26,9 +26,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 
+import org.apache.flume.Clock;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class TestBucketPath {
   Calendar cal;
@@ -111,5 +117,28 @@ public class TestBucketPath {
     String expectedString = format.format(d);
     System.out.println("Expected String: "+ expectedString);
     Assert.assertEquals(expectedString, escapedString);
+  }
+
+  @Test
+  public void testDateRace() {
+    Clock mockClock = mock(Clock.class);
+    DateTimeFormatter parser = ISODateTimeFormat.dateTimeParser();
+    long two = parser.parseMillis("2013-04-21T02:59:59-00:00");
+    long three = parser.parseMillis("2013-04-21T03:00:00-00:00");
+    when(mockClock.currentTimeMillis()).thenReturn(two, three);
+
+    // save & modify static state (yuck)
+    Clock origClock = BucketPath.getClock();
+    BucketPath.setClock(mockClock);
+
+    String pat = "%H:%M";
+    String escaped = BucketPath.escapeString(pat,
+        new HashMap<String, String>(),
+        TimeZone.getTimeZone("UTC"), true, Calendar.MINUTE, 10, true);
+
+    // restore static state
+    BucketPath.setClock(origClock);
+
+    Assert.assertEquals("Race condition detected", "02:50", escaped);
   }
 }
