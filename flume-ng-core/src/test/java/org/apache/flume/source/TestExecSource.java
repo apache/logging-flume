@@ -227,6 +227,48 @@ public class TestExecSource {
     }
   }
 
+  @Test
+  public void testBatchTimeout() throws InterruptedException, LifecycleException,
+  EventDeliveryException, IOException {
+
+    String filePath = "/tmp/flume-execsource." + Thread.currentThread().getId();
+    String eventBody = "TestMessage";
+    FileOutputStream outputStream = new FileOutputStream(filePath);
+
+    context.put(ExecSourceConfigurationConstants.CONFIG_BATCH_SIZE, "50000");
+    context.put(ExecSourceConfigurationConstants.CONFIG_BATCH_TIME_OUT, "750");
+    context.put("shell", "/bin/bash -c");
+    context.put("command", "tail -f " + filePath);
+
+    Configurables.configure(source, context);
+    source.start();
+
+    Transaction transaction = channel.getTransaction();
+    transaction.begin();
+
+    for (int lineNumber = 0; lineNumber < 3; lineNumber++) {
+        outputStream.write((eventBody).getBytes());
+        outputStream.write(String.valueOf(lineNumber).getBytes());
+        outputStream.write('\n');
+        outputStream.flush();
+    }
+    outputStream.close();
+    Thread.sleep(1500);
+
+    for(int i = 0; i < 3; i++) {
+      Event event = channel.take();
+      assertNotNull(event);
+      assertNotNull(event.getBody());
+      assertEquals(eventBody + String.valueOf(i), new String(event.getBody()));
+    }
+
+    transaction.commit();
+    transaction.close();
+    source.stop();
+    File file = new File(filePath);
+    FileUtils.forceDelete(file);
+  }
+
     private void runTestShellCmdHelper(String shell, String command, String[] expectedOutput)
              throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
       context.put("shell", shell);
