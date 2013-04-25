@@ -111,24 +111,30 @@ public class HBaseSink extends AbstractSink implements Configurable {
     Preconditions.checkArgument(table == null, "Please call stop " +
         "before calling start on an old instance.");
     try {
-      table = new HTable(config, tableName);
-      //flush is controlled by us. This ensures that HBase changing
-      //their criteria for flushing does not change how we flush.
-      table.setAutoFlush(false);
-    } catch (IOException e) {
+      if (HBaseSinkSecurityManager.isSecurityEnabled(config)) {
+        hbaseUser = HBaseSinkSecurityManager.login(config, null,
+          kerberosPrincipal, kerberosKeytab);
+      }
+    } catch (Exception ex) {
+      throw new FlumeException("Failed to login to HBase using "
+        + "provided credentials.", ex);
+    }
+    try {
+      table = runPrivileged(new PrivilegedExceptionAction<HTable>() {
+        @Override
+        public HTable run() throws Exception {
+          HTable table = new HTable(config, tableName);
+          table.setAutoFlush(false);
+          // Flush is controlled by us. This ensures that HBase changing
+          // their criteria for flushing does not change how we flush.
+          return table;
+        }
+      });
+    } catch (Exception e) {
       logger.error("Could not load table, " + tableName +
           " from HBase", e);
       throw new FlumeException("Could not load table, " + tableName +
           " from HBase", e);
-    }
-    try {
-      if (HBaseSinkSecurityManager.isSecurityEnabled(config)) {
-        hbaseUser = HBaseSinkSecurityManager.login(config, null,
-                kerberosPrincipal, kerberosKeytab);
-      }
-    } catch (Exception ex) {
-      throw new FlumeException("Failed to login to HBase using "
-              + "provided credentials.", ex);
     }
     try {
       if (!runPrivileged(new PrivilegedExceptionAction<Boolean>() {
