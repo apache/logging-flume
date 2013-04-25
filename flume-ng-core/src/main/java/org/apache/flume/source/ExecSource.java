@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.flume.Channel;
@@ -34,6 +36,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.Source;
+import org.apache.flume.SystemClock;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
@@ -42,6 +45,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import java.nio.charset.Charset;
 
 /**
@@ -149,6 +154,7 @@ Configurable {
   private boolean restart;
   private boolean logStderr;
   private Integer bufferCount;
+  private long batchTimeout;
   private ExecRunnable runner;
   private Charset charset;
 
@@ -159,7 +165,7 @@ Configurable {
     executor = Executors.newSingleThreadExecutor();
 
     runner = new ExecRunnable(shell, command, getChannelProcessor(), sourceCounter,
-        restart, restartThrottle, logStderr, bufferCount, charset);
+        restart, restartThrottle, logStderr, bufferCount, batchTimeout, charset);
 
     // FIXME: Use a callback-like executor / future to signal us upon failure.
     runnerFuture = executor.submit(runner);
@@ -178,17 +184,16 @@ Configurable {
   @Override
   public void stop() {
     logger.info("Stopping exec source with command:{}", command);
-
     if(runner != null) {
       runner.setRestart(false);
       runner.kill();
     }
+
     if (runnerFuture != null) {
       logger.debug("Stopping exec runner");
       runnerFuture.cancel(true);
       logger.debug("Exec runner stopped");
     }
-
     executor.shutdown();
 
     while (!executor.isTerminated()) {
@@ -228,6 +233,9 @@ Configurable {
     bufferCount = context.getInteger(ExecSourceConfigurationConstants.CONFIG_BATCH_SIZE,
         ExecSourceConfigurationConstants.DEFAULT_BATCH_SIZE);
 
+    batchTimeout = context.getLong(ExecSourceConfigurationConstants.CONFIG_BATCH_TIME_OUT,
+        ExecSourceConfigurationConstants.DEFAULT_BATCH_TIME_OUT);
+
     charset = Charset.forName(context.getString(ExecSourceConfigurationConstants.CHARSET,
         ExecSourceConfigurationConstants.DEFAULT_CHARSET));
 
@@ -242,12 +250,13 @@ Configurable {
 
     public ExecRunnable(String shell, String command, ChannelProcessor channelProcessor,
         SourceCounter sourceCounter, boolean restart, long restartThrottle,
-        boolean logStderr, int bufferCount, Charset charset) {
+        boolean logStderr, int bufferCount, long batchTimeout, Charset charset) {
       this.command = command;
       this.channelProcessor = channelProcessor;
       this.sourceCounter = sourceCounter;
       this.restartThrottle = restartThrottle;
       this.bufferCount = bufferCount;
+      this.batchTimeout = batchTimeout;
       this.restart = restart;
       this.logStderr = logStderr;
       this.charset = charset;
@@ -261,15 +270,27 @@ Configurable {
     private volatile boolean restart;
     private final long restartThrottle;
     private final int bufferCount;
+    private long batchTimeout;
     private final boolean logStderr;
     private final Charset charset;
     private Process process = null;
+    private SystemClock systemClock = new SystemClock();
+    private Long lastPushToChannel = systemClock.currentTimeMillis();
+    ScheduledExecutorService timedFlushService;
+    ScheduledFuture<?> future;
 
     @Override
     public void run() {
       do {
         String exitCode = "unknown";
         BufferedReader reader = null;
+        String line = null;
+        final List<Event> eventList = new ArrayList<Event>();
+
+        timedFlushService = Executors.newSingleThreadScheduledExecutor(
+                new ThreadFactoryBuilder().setNameFormat(
+                "timedFlushExecService" +
+                Thread.currentThread().getId() + "-%d").build());
         try {
           if(shell != null) {
             String[] commandArgs = formulateShellCommand(shell, command);
@@ -288,20 +309,39 @@ Configurable {
           stderrReader.setDaemon(true);
           stderrReader.start();
 
-          String line = null;
-          List<Event> eventList = new ArrayList<Event>();
+          future = timedFlushService.scheduleWithFixedDelay(new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  synchronized (eventList) {
+                    if(!eventList.isEmpty() && timeout()) {
+                      flushEventBatch(eventList);
+                    }
+                  }
+                } catch (Exception e) {
+                  logger.error("Exception occured when processing event batch", e);
+                  if(e instanceof InterruptedException) {
+                      Thread.currentThread().interrupt();
+                  }
+                }
+              }
+          },
+          batchTimeout, batchTimeout, TimeUnit.MILLISECONDS);
+
           while ((line = reader.readLine()) != null) {
-            sourceCounter.incrementEventReceivedCount();
-            eventList.add(EventBuilder.withBody(line.getBytes(charset)));
-            if(eventList.size() >= bufferCount) {
-              channelProcessor.processEventBatch(eventList);
-              sourceCounter.addToEventAcceptedCount(eventList.size());
-              eventList.clear();
+            synchronized (eventList) {
+              sourceCounter.incrementEventReceivedCount();
+              eventList.add(EventBuilder.withBody(line.getBytes(charset)));
+              if(eventList.size() >= bufferCount || timeout()) {
+                flushEventBatch(eventList);
+              }
             }
           }
-          if(!eventList.isEmpty()) {
-            channelProcessor.processEventBatch(eventList);
-            sourceCounter.addToEventAcceptedCount(eventList.size());
+
+          synchronized (eventList) {
+              if(!eventList.isEmpty()) {
+                flushEventBatch(eventList);
+              }
           }
         } catch (Exception e) {
           logger.error("Failed while running command: " + command, e);
@@ -332,6 +372,17 @@ Configurable {
       } while(restart);
     }
 
+    private void flushEventBatch(List<Event> eventList){
+      channelProcessor.processEventBatch(eventList);
+      sourceCounter.addToEventAcceptedCount(eventList.size());
+      eventList.clear();
+      lastPushToChannel = systemClock.currentTimeMillis();
+    }
+
+    private boolean timeout(){
+      return (systemClock.currentTimeMillis() - lastPushToChannel) >= batchTimeout;
+    }
+
     private static String[] formulateShellCommand(String shell, String command) {
       String[] shellArgs = shell.split("\\s+");
       String[] result = new String[shellArgs.length + 1];
@@ -344,8 +395,28 @@ Configurable {
       if(process != null) {
         synchronized (process) {
           process.destroy();
+
           try {
-            return process.waitFor();
+            int exitValue = process.waitFor();
+
+            // Stop the Thread that flushes periodically
+            if (future != null) {
+                future.cancel(true);
+            }
+
+            if (timedFlushService != null) {
+              timedFlushService.shutdown();
+              while (!timedFlushService.isTerminated()) {
+                try {
+                  timedFlushService.awaitTermination(500, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                  logger.debug("Interrupted while waiting for exec executor service "
+                    + "to stop. Just exiting.");
+                  Thread.currentThread().interrupt();
+                }
+              }
+            }
+            return exitValue;
           } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
           }
@@ -392,6 +463,5 @@ Configurable {
         }
       }
     }
-
   }
 }

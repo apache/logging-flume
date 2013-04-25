@@ -18,7 +18,6 @@
  */
 package org.apache.flume.source;
 
-import java.nio.charset.Charset;
 
 public class ExecSourceConfigurationConstants {
 
@@ -45,6 +44,13 @@ public class ExecSourceConfigurationConstants {
    */
   public static final String CONFIG_BATCH_SIZE = "batchSize";
   public static final int DEFAULT_BATCH_SIZE = 20;
+
+  /**
+   * Amount of time to wait, if the buffer size was not reached, before 
+   * to data is pushed downstream: : default 3000 ms
+   */
+  public static final String CONFIG_BATCH_TIME_OUT = "batchTimeout";
+  public static final long DEFAULT_BATCH_TIME_OUT = 3000l;
 
   /**
    * Charset for reading input
