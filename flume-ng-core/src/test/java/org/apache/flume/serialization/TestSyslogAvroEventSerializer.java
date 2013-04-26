@@ -18,14 +18,13 @@
  */
 package org.apache.flume.serialization;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
+
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
@@ -37,7 +36,11 @@ import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.source.SyslogUtils;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
+
+import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
 
 public class TestSyslogAvroEventSerializer {
 
@@ -70,6 +73,9 @@ public class TestSyslogAvroEventSerializer {
 
   @Test
   public void test() throws FileNotFoundException, IOException {
+    // Snappy currently broken on Mac in OpenJDK 7 per FLUME-2012
+    Assume.assumeTrue(!"Mac OS X".equals(System.getProperty("os.name")) ||
+      !System.getProperty("java.version").startsWith("1.7."));
 
     //Schema schema = new Schema.Parser().parse(schemaFile);
 
