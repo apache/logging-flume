@@ -36,6 +36,10 @@ limitations under the License.
     <!-- Set default encoding to UTF-8 to remove maven complaints -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
+    <!-- Java compiler configuration -->
+    <sourceJavaVersion>1.6</sourceJavaVersion>
+    <targetJavaVersion>1.6</targetJavaVersion>
+
     <!-- defaults for flaky test and focused test exclusions -->
     <test.exclude.pattern>$</test.exclude.pattern> <!-- junk pattern -->
     <test.include.pattern>**/Test*.java</test.include.pattern>
@@ -487,8 +491,8 @@ limitations under the License.
           <artifactId>maven-compiler-plugin</artifactId>
           <version>2.3.2</version>
           <configuration>
-            <source>1.6</source>
-            <target>1.6</target>
+            <source>${sourceJavaVersion}</source>
+            <target>${targetJavaVersion}</target>
           </configuration>
         </plugin>
 
