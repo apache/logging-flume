@@ -71,7 +71,28 @@ public enum SinkType {
    *
    * @see ThriftSink
    */
-  THRIFT("org.apache.flume.sink.ThriftSink");
+  THRIFT("org.apache.flume.sink.ThriftSink"),
+
+  /**
+   * ElasticSearch sink
+   *
+   * @see org.apache.flume.sink.elasticsearch.ElasticSearchSink
+   */
+  ELASTICSEARCH("org.apache.flume.sink.elasticsearch.ElasticSearchSink"),
+
+  /**
+   * HBase sink
+   *
+   * @see org.apache.flume.sink.hbase.HBaseSink
+   */
+  HBASE("org.apache.flume.sink.hbase.HBaseSink"),
+
+  /**
+   * AsyncHBase sink
+   *
+   * @see org.apache.flume.sink.hbase.AsyncHBaseSink
+   */
+  ASYNCHBASE("org.apache.flume.sink.hbase.AsyncHBaseSink");
 
   private final String sinkClassName;
 
