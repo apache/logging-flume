@@ -110,9 +110,9 @@ implements RpcClient {
   private void connect(long timeout, TimeUnit tu) throws FlumeException {
     callTimeoutPool = Executors.newCachedThreadPool(
         new TransceiverThreadFactory("Flume Avro RPC Client Call Invoker"));
-    try {
+    NioClientSocketChannelFactory socketChannelFactory = null;
 
-      NioClientSocketChannelFactory socketChannelFactory;
+    try {
 
       if (enableDeflateCompression) {
         socketChannelFactory = new CompressionChannelFactory(
@@ -134,8 +134,22 @@ implements RpcClient {
       avroClient =
           SpecificRequestor.getClient(AvroSourceProtocol.Callback.class,
           transceiver);
-    } catch (IOException ex) {
-      throw new FlumeException(this + ": RPC connection error", ex);
+    } catch (Throwable t) {
+      if (callTimeoutPool != null) {
+        callTimeoutPool.shutdownNow();
+      }
+      if (socketChannelFactory != null) {
+        socketChannelFactory.releaseExternalResources();
+      }
+      if (t instanceof IOException) {
+        throw new FlumeException(this + ": RPC connection error", t);
+      } else if (t instanceof FlumeException) {
+        throw (FlumeException) t;
+      } else if (t instanceof Error) {
+        throw (Error) t;
+      } else {
+        throw new FlumeException(this + ": Unexpected exception", t);
+      }
     }
 
     setState(ConnState.READY);

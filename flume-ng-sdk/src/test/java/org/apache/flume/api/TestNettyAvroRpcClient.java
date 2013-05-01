@@ -18,7 +18,10 @@
  */
 package org.apache.flume.api;
 
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -329,6 +332,50 @@ public class TestNettyAvroRpcClient {
 
     RpcTestUtils.handlerBatchAppendTest(new ThrowingAvroHandler());
     logger.error("Throwing: I should never have gotten here!");
+  }
+
+  @Test
+  public void spinThreadsCrazily() throws IOException {
+
+    int initThreadCount = ManagementFactory.getThreadMXBean().getThreadCount();
+
+    // find a port we know is closed by opening a free one then closing it
+    ServerSocket sock = new ServerSocket(0);
+    int port = sock.getLocalPort();
+    sock.close();
+
+    Properties props = new Properties();
+    props.put(RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE,
+        RpcClientConfigurationConstants.DEFAULT_CLIENT_TYPE);
+    props.put(RpcClientConfigurationConstants.CONFIG_HOSTS, "h1");
+    props.put(RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX + "h1",
+        "localhost:" + port);
+    props.put(RpcClientConfigurationConstants.CONFIG_CONNECT_TIMEOUT, "20");
+    props.put(RpcClientConfigurationConstants.CONFIG_REQUEST_TIMEOUT, "20");
+    props.put(RpcClientConfigurationConstants.CONFIG_BATCH_SIZE, "1");
+
+    for (int i = 0; i < 1000; i++) {
+      RpcClient client = null;
+      try {
+        client = RpcClientFactory.getDefaultInstance("localhost", port);
+        client.append(EventBuilder.withBody("Hello", Charset.forName("UTF-8")));
+      } catch (FlumeException e) {
+        logger.warn("Unexpected error", e);
+      } catch (EventDeliveryException e) {
+        logger.warn("Expected error", e);
+      } finally {
+        if (client != null) {
+          client.close();
+        }
+      }
+    }
+
+    int threadCount = ManagementFactory.getThreadMXBean().getThreadCount();
+    logger.warn("Init thread count: {}, thread count: {}",
+        initThreadCount, threadCount);
+    Assert.assertEquals("Thread leak in RPC client",
+        initThreadCount, threadCount);
+
   }
 
 }
