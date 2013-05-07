@@ -102,7 +102,7 @@ public class HDFSCompressedDataStream extends AbstractHDFSWriter {
           + ") does not support append");
     }
 
-    registerCurrentStream(fsOut, hdfs);
+    registerCurrentStream(fsOut, hdfs, dstPath);
 
     if (appending) {
       serializer.afterReopen();

@@ -92,7 +92,7 @@ public class HDFSSequenceFile extends AbstractHDFSWriter {
     writer = SequenceFile.createWriter(conf, outStream,
         serializer.getKeyClass(), serializer.getValueClass(), compType, codeC);
 
-    registerCurrentStream(outStream, hdfs);
+    registerCurrentStream(outStream, hdfs, dstPath);
   }
 
   @Override
