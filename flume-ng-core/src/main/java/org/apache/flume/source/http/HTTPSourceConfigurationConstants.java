@@ -27,6 +27,7 @@ public class HTTPSourceConfigurationConstants {
   public static final String CONFIG_HANDLER = "handler";
   public static final String CONFIG_HANDLER_PREFIX =
           CONFIG_HANDLER + ".";
+  public static final String CONFIG_HOST = "host";
 
   public static final String DEFAULT_HANDLER =
           "org.apache.flume.source.http.JSONHandler";
