@@ -28,16 +28,32 @@ Apache Flume is a distributed, reliable, and available system for efficiently
 collecting, aggregating and moving large amounts of log data from many
 different sources to a centralized data store.
 
+The use of Apache Flume is not only restricted to log data aggregation. 
+Since data sources are customizable, Flume can be used to transport massive quantities
+of event data including but not limited to network traffic data, social-media-generated data, 
+email messages and pretty much any data source possible.
+
 Apache Flume is a top level project at the Apache Software Foundation.
+
 There are currently two release code lines available, versions 0.9.x and 1.x.
-This documentation applies to the 1.x codeline.
-Please click here for
+
+Documentation for the 0.9.x track is available at 
 `the Flume 0.9.x User Guide <http://archive.cloudera.com/cdh/3/flume/UserGuide/>`_.
+
+This documentation applies to the 1.4.x track.
+
+New and existing users are encouraged to use the 1.x releases so as to 
+leverage the performance improvements and configuration flexibilities available 
+in the latest architecture.
+
 
 System Requirements
 -------------------
 
-TBD
+#. Java Runtime Environment - Java 1.6 or later (Java 1.7 Recommended)
+#. Memory - Sufficient memory for configurations used by sources, channels or sinks
+#. Disk Space - Sufficient disk space for configurations used by channels or sinks
+#. Directory Permissions - Read/Write permissions for directories used by agent
 
 Architecture
 ------------
@@ -1166,7 +1182,7 @@ For example, a http source for agent named a1:
 
   a1.sources = r1
   a1.channels = c1
-  a1.sources.r1.type = org.apache.flume.source.http.HTTPSource
+  a1.sources.r1.type = http
   a1.sources.r1.port = 5140
   a1.sources.r1.channels = c1
   a1.sources.r1.handler = org.example.rest.RestHandler
@@ -1676,7 +1692,7 @@ Required properties are in **bold**.
 Property Name       Default                                                 Description
 ==================  ======================================================  ==============================================================================
 **channel**         --
-**type**            --                                                      The component type name, needs to be ``org.apache.flume.sink.hbase.HBaseSink``
+**type**            --                                                      The component type name, needs to be ``hbase``
 **table**           --                                                      The name of the table in Hbase to write to.
 **columnFamily**    --                                                      The column family in Hbase to write to.
 batchSize           100                                                     Number of events to be written per txn.
@@ -1692,7 +1708,7 @@ Example for agent named a1:
 
   a1.channels = c1
   a1.sinks = k1
-  a1.sinks.k1.type = org.apache.flume.sink.hbase.HBaseSink
+  a1.sinks.k1.type = hbase
   a1.sinks.k1.table = foo_table
   a1.sinks.k1.columnFamily = bar_cf
   a1.sinks.k1.serializer = org.apache.flume.sink.hbase.RegexHbaseEventSerializer
@@ -1715,7 +1731,7 @@ Required properties are in **bold**.
 Property Name     Default                                                       Description
 ================  ============================================================  ====================================================================================
 **channel**       --
-**type**          --                                                            The component type name, needs to be ``org.apache.flume.sink.hbase.AsyncHBaseSink``
+**type**          --                                                            The component type name, needs to be ``asynchbase``
 **table**         --                                                            The name of the table in Hbase to write to.
 zookeeperQuorum   --                                                            The quorum spec. This is the value for the property ``hbase.zookeeper.quorum`` in hbase-site.xml
 znodeParent       /hbase                                                        The base path for the znode for the -ROOT- region. Value of ``zookeeper.znode.parent`` in hbase-site.xml
@@ -1741,7 +1757,7 @@ Example for agent named a1:
 
   a1.channels = c1
   a1.sinks = k1
-  a1.sinks.k1.type = org.apache.flume.sink.hbase.AsyncHBaseSink
+  a1.sinks.k1.type = asynchbase
   a1.sinks.k1.table = foo_table
   a1.sinks.k1.columnFamily = bar_cf
   a1.sinks.k1.serializer = org.apache.flume.sink.hbase.SimpleAsyncHbaseEventSerializer
@@ -1762,7 +1778,7 @@ Required properties are in **bold**.
 Property Name     Default                                                             Description
 ================  ==================================================================  =======================================================================================================
 **channel**       --
-**type**          --                                                                  The component type name, needs to be ``org.apache.flume.sink.elasticsearch.ElasticSearchSink``
+**type**          --                                                                  The component type name, needs to be ``elasticsearch``
 **hostNames**     --                                                                  Comma separated list of hostname:port, if the port is not present the default port '9300' will be used
 indexName         flume                                                               The name of the index which the date will be appended to. Example 'flume' -> 'flume-yyyy-MM-dd'
 indexType         logs                                                                The type to index the document to, defaults to 'log'
@@ -1780,7 +1796,7 @@ Example for agent named a1:
 
   a1.channels = c1
   a1.sinks = k1
-  a1.sinks.k1.type = org.apache.flume.sink.elasticsearch.ElasticSearchSink
+  a1.sinks.k1.type = elasticsearch
   a1.sinks.k1.hostNames = 127.0.0.1:9200,127.0.0.2:9300
   a1.sinks.k1.indexName = foo_index
   a1.sinks.k1.indexType = bar_type
@@ -2964,6 +2980,10 @@ org.apache.flume.Source                                       exec              
 org.apache.flume.Source                                       syslogtcp               org.apache.flume.source.SyslogTcpSource
 org.apache.flume.Source                                       multiport_syslogtcp     org.apache.flume.source.MultiportSyslogTCPSource
 org.apache.flume.Source                                       syslogudp               org.apache.flume.source.SyslogUDPSource
+org.apache.flume.Source                                       spooldir                org.apache.flume.source.SpoolDirectorySource
+org.apache.flume.Source                                       http                    org.apache.flume.source.http.HTTPSource
+org.apache.flume.Source                                       thrift                  org.apache.flume.source.ThriftSource
+org.apache.flume.Source                                       jms                     org.apache.flume.source.jms.JMSSource
 org.apache.flume.Source                                       --                      org.apache.flume.source.avroLegacy.AvroLegacySource
 org.apache.flume.Source                                       --                      org.apache.flume.source.thriftLegacy.ThriftLegacySource
 org.apache.flume.Source                                       --                      org.example.MySource
@@ -2972,11 +2992,12 @@ org.apache.flume.Sink                                         null              
 org.apache.flume.Sink                                         logger                  org.apache.flume.sink.LoggerSink
 org.apache.flume.Sink                                         avro                    org.apache.flume.sink.AvroSink
 org.apache.flume.Sink                                         hdfs                    org.apache.flume.sink.hdfs.HDFSEventSink
-org.apache.flume.Sink                                         --                      org.apache.flume.sink.hbase.HBaseSink
-org.apache.flume.Sink                                         --                      org.apache.flume.sink.hbase.AsyncHBaseSink
-org.apache.flume.Sink                                         --                      org.apache.flume.sink.elasticsearch.ElasticSearchSink
+org.apache.flume.Sink                                         hbase                   org.apache.flume.sink.hbase.HBaseSink
+org.apache.flume.Sink                                         asynchbase              org.apache.flume.sink.hbase.AsyncHBaseSink
+org.apache.flume.Sink                                         elasticsearch           org.apache.flume.sink.elasticsearch.ElasticSearchSink
 org.apache.flume.Sink                                         file_roll               org.apache.flume.sink.RollingFileSink
 org.apache.flume.Sink                                         irc                     org.apache.flume.sink.irc.IRCSink
+org.apache.flume.Sink                                         thrift                  org.apache.flume.sink.ThriftSink
 org.apache.flume.Sink                                         --                      org.example.MySink
 
 org.apache.flume.ChannelSelector                              replicating             org.apache.flume.channel.ReplicatingChannelSelector
