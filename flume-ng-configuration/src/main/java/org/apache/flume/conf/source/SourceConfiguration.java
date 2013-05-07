@@ -28,8 +28,8 @@ import org.apache.flume.conf.ComponentConfigurationFactory;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.conf.FlumeConfiguration;
 import org.apache.flume.conf.FlumeConfigurationError;
-import org.apache.flume.conf.FlumeConfigurationErrorType;
 import org.apache.flume.conf.FlumeConfigurationError.ErrorOrWarning;
+import org.apache.flume.conf.FlumeConfigurationErrorType;
 import org.apache.flume.conf.channel.ChannelSelectorConfiguration;
 import org.apache.flume.conf.channel.ChannelSelectorConfiguration.ChannelSelectorConfigurationType;
 import org.apache.flume.conf.channel.ChannelSelectorType;
@@ -178,7 +178,6 @@ public class SourceConfiguration extends ComponentConfiguration {
      * @see org.apache.flume.source.MultiportSyslogTCPSource
      *
      */
-
     MULTIPORT_SYSLOGTCP("org.apache.flume.source.MultiportSyslogTCPSourceConfiguration"),
 
     /**
@@ -200,7 +199,14 @@ public class SourceConfiguration extends ComponentConfiguration {
      *
      * @see org.apache.flume.source.ThriftSource
      */
-    THRIFT("org.apache.flume.source.http.ThriftSourceConfiguration");
+    THRIFT("org.apache.flume.source.http.ThriftSourceConfiguration"),
+
+    /**
+     * JMS Source
+     *
+     * @see org.apache.flume.source.jms.JMSSource
+     */
+    JMS("org.apache.flume.source.jms.JMSSourceConfiguration");
 
     private String srcConfigurationName;
 

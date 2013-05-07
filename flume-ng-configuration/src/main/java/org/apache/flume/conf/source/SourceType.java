@@ -92,11 +92,18 @@ public enum SourceType {
   HTTP("org.apache.flume.source.http.HTTPSource"),
 
   /**
-   * Spool directory source
+   * Thrift Source
    *
    * @see org.apache.flume.source.ThriftSource
    */
-  THRIFT("org.apache.flume.source.ThriftSource");
+  THRIFT("org.apache.flume.source.ThriftSource"),
+
+  /**
+   * JMS Source
+   *
+   * @see org.apache.flume.source.jms.JMSSource
+   */
+  JMS("org.apache.flume.source.jms.JMSSource");
 
   private final String sourceClassName;
 
