@@ -23,6 +23,7 @@ import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +40,9 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
 
   private FSDataOutputStream outputStream;
   private FileSystem fs;
+  private Path destPath;
   private Method refGetNumCurrentReplicas = null;
+  private Method refGetDefaultReplication = null;
   private Integer configuredMinReplicas = null;
 
   final static Object [] NO_ARGS = new Object []{};
@@ -84,26 +87,43 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
   }
 
   protected void registerCurrentStream(FSDataOutputStream outputStream,
-                                      FileSystem fs) {
+                                      FileSystem fs, Path destPath) {
     Preconditions.checkNotNull(outputStream, "outputStream must not be null");
     Preconditions.checkNotNull(fs, "fs must not be null");
+    Preconditions.checkNotNull(destPath, "destPath must not be null");
 
     this.outputStream = outputStream;
     this.fs = fs;
+    this.destPath = destPath;
     this.refGetNumCurrentReplicas = reflectGetNumCurrentReplicas(outputStream);
+    this.refGetDefaultReplication = reflectGetDefaultReplication(fs);
   }
 
   protected void unregisterCurrentStream() {
     this.outputStream = null;
     this.fs = null;
+    this.destPath = null;
     this.refGetNumCurrentReplicas = null;
+    this.refGetDefaultReplication = null;
   }
 
   public int getFsDesiredReplication() {
-    if (fs != null) {
-      return fs.getDefaultReplication();
+    short replication = 0;
+    if (fs != null && destPath != null) {
+      if (refGetDefaultReplication != null) {
+        try {
+          replication = (Short) refGetDefaultReplication.invoke(fs, destPath);
+        } catch (IllegalAccessException e) {
+          logger.warn("Unexpected error calling getDefaultReplication(Path)", e);
+        } catch (InvocationTargetException e) {
+          logger.warn("Unexpected error calling getDefaultReplication(Path)", e);
+        }
+      } else {
+        // will not work on Federated HDFS (see HADOOP-8014)
+        replication = fs.getDefaultReplication();
+      }
     }
-    return 0;
+    return replication;
   }
 
   /**
@@ -159,6 +179,35 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
     }
     if (m != null) {
       logger.debug("Using getNumCurrentReplicas--HDFS-826");
+    }
+    return m;
+  }
+
+  /**
+   * Find the 'getDefaultReplication' method on the passed <code>fs</code>
+   * FileSystem that takes a Path argument.
+   * @return Method or null.
+   */
+  private Method reflectGetDefaultReplication(FileSystem fileSystem) {
+    Method m = null;
+    if (fileSystem != null) {
+      Class<?> fsClass = fileSystem.getClass();
+      try {
+        m = fsClass.getMethod("getDefaultReplication",
+            new Class<?>[] { Path.class });
+      } catch (NoSuchMethodException e) {
+        logger.debug("FileSystem implementation doesn't support"
+            + " getDefaultReplication(Path); -- HADOOP-8014 not available; " +
+            "className = " + fsClass.getName() + "; err = " + e);
+      } catch (SecurityException e) {
+        logger.debug("No access to getDefaultReplication(Path) on "
+            + "FileSystem implementation -- HADOOP-8014 not available; " +
+            "className = " + fsClass.getName() + "; err = " + e);
+      }
+    }
+    if (m != null) {
+      logger.debug("Using FileSystem.getDefaultReplication(Path) from " +
+          "HADOOP-8014");
     }
     return m;
   }

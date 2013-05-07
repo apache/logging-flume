@@ -90,7 +90,7 @@ public class HDFSDataStream extends AbstractHDFSWriter {
     }
 
     // must call superclass to check for replication issues
-    registerCurrentStream(outStream, hdfs);
+    registerCurrentStream(outStream, hdfs, dstPath);
 
     if (appending) {
       serializer.afterReopen();
