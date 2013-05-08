@@ -57,9 +57,11 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
   private HostSelector selector;
   private Map<String, RpcClient> clientMap;
   private Properties configurationProperties;
+  private volatile boolean isOpen = false;
 
   @Override
   public void append(Event event) throws EventDeliveryException {
+    throwIfClosed();
     boolean eventSent = false;
     Iterator<HostInfo> it = selector.createHostIterator();
 
@@ -83,6 +85,7 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
 
   @Override
   public void appendBatch(List<Event> events) throws EventDeliveryException {
+    throwIfClosed();
     boolean batchSent = false;
     Iterator<HostInfo> it = selector.createHostIterator();
 
@@ -106,13 +109,18 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
 
   @Override
   public boolean isActive() {
-    // This client is always active and does not need to be replaced.
-    // Internally it will test the delegates and replace them where needed.
-    return true;
+    return isOpen;
+  }
+
+  private void throwIfClosed() throws EventDeliveryException {
+    if (!isOpen) {
+      throw new EventDeliveryException("Rpc Client is closed");
+    }
   }
 
   @Override
   public void close() throws FlumeException {
+    isOpen = false;
     synchronized (this) {
       Iterator<String> it = clientMap.keySet().iterator();
       while (it.hasNext()) {
@@ -177,11 +185,12 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
     }
 
     selector.setHosts(hosts);
+    isOpen = true;
   }
 
   private synchronized RpcClient getClient(HostInfo info)
-      throws FlumeException {
-
+      throws FlumeException, EventDeliveryException {
+    throwIfClosed();
     String name = info.getReferenceName();
     RpcClient client = clientMap.get(name);
     if (client == null) {

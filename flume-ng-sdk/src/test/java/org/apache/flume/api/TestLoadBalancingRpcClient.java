@@ -97,6 +97,47 @@ public class TestLoadBalancingRpcClient {
     }
   }
 
+  // This will fail without FLUME-1823
+  @Test(expected = EventDeliveryException.class)
+  public void testTwoHostFailoverThrowAfterClose() throws Exception {
+    Server s1 = null, s2 = null;
+    RpcClient c = null;
+    try{
+      LoadBalancedAvroHandler h1 = new LoadBalancedAvroHandler();
+      LoadBalancedAvroHandler h2 = new LoadBalancedAvroHandler();
+
+      s1 = RpcTestUtils.startServer(h1);
+      s2 = RpcTestUtils.startServer(h2);
+
+      Properties p = new Properties();
+      p.put("hosts", "h1 h2");
+      p.put("client.type", "default_loadbalance");
+      p.put("hosts.h1", "127.0.0.1:" + s1.getPort());
+      p.put("hosts.h2", "127.0.0.1:" + s2.getPort());
+
+      c = RpcClientFactory.getInstance(p);
+      Assert.assertTrue(c instanceof LoadBalancingRpcClient);
+
+      for (int i = 0; i < 100; i++) {
+        if (i == 20) {
+          h2.setFailed();
+        } else if (i == 40) {
+          h2.setOK();
+        }
+        c.append(getEvent(i));
+      }
+
+      Assert.assertEquals(60, h1.getAppendCount());
+      Assert.assertEquals(40, h2.getAppendCount());
+      if (c != null) c.close();
+      c.append(getEvent(3));
+      Assert.fail();
+    } finally {
+      if (s1 != null) s1.close();
+      if (s2 != null) s2.close();
+    }
+  }
+
   /**
    * Ensure that we can tolerate a host that is completely down.
    * @throws Exception
