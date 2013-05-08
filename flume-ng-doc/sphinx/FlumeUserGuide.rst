@@ -1168,6 +1168,7 @@ Property Name   Default                                       Description
 ==============  ============================================  ====================================================================
 **type**                                                      The component type name, needs to be ``http``
 **port**        --                                            The port the source should bind to.
+bind            0.0.0.0                                       The hostname or IP address to listen on
 handler         ``org.apache.flume.source.http.JSONHandler``  The FQCN of the handler class.
 handler.*       --                                            Config parameters for the handler
 selector.type   replicating                                   replicating or multiplexing
