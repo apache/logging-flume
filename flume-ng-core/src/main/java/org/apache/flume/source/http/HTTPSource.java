@@ -37,6 +37,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -89,12 +90,12 @@ public class HTTPSource extends AbstractSource implements
   public void configure(Context context) {
     try {
       port = context.getInteger(HTTPSourceConfigurationConstants.CONFIG_PORT);
-      checkPort();
-      host = context.getString(HTTPSourceConfigurationConstants.CONFIG_HOST);
-      checkHost();
+      host = context.getString(HTTPSourceConfigurationConstants.CONFIG_BIND,
+        HTTPSourceConfigurationConstants.DEFAULT_BIND);
+      checkHostAndPort();
       String handlerClassName = context.getString(
               HTTPSourceConfigurationConstants.CONFIG_HANDLER,
-              HTTPSourceConfigurationConstants.DEFAULT_HANDLER);
+              HTTPSourceConfigurationConstants.DEFAULT_HANDLER).trim();
       @SuppressWarnings("unchecked")
       Class<? extends HTTPSourceHandler> clazz =
               (Class<? extends HTTPSourceHandler>)
@@ -119,14 +120,15 @@ public class HTTPSource extends AbstractSource implements
     }
   }
 
-    private void checkHost() {
-        Preconditions.checkNotNull(host, "HTTPSource requires a hostname to be"
-                + "specified");
-    }
+  private void checkHostAndPort() {
+    Preconditions.checkState(host != null && !host.isEmpty(),
+      "HTTPSource hostname specified is empty");
+    Preconditions.checkNotNull(port, "HTTPSource requires a port number to be"
+      + " specified");
+  }
 
     @Override
   public void start() {
-    checkPort();
     Preconditions.checkState(srv == null,
             "Running HTTP Server found in source: " + getName()
             + " before I started one."
@@ -162,11 +164,6 @@ public class HTTPSource extends AbstractSource implements
     }
   }
 
-  private void checkPort() {
-    Preconditions.checkNotNull(port, "HTTPSource requires a port number to be"
-            + "specified");
-  }
-
   private class FlumeHTTPServlet extends HttpServlet {
 
     private static final long serialVersionUID = 4891924863218790344L;
@@ -174,7 +171,7 @@ public class HTTPSource extends AbstractSource implements
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-      List<Event> events = new ArrayList<Event>(0); //create empty list
+      List<Event> events = Collections.emptyList(); //create empty list
       try {
         events = handler.getEvents(request);
       } catch (HTTPBadRequestException ex) {
