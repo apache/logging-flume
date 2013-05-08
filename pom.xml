@@ -997,7 +997,7 @@ limitations under the License.
       <dependency>
         <groupId>org.hbase</groupId>
         <artifactId>asynchbase</artifactId>
-        <version>1.2.0</version>
+        <version>1.4.1</version>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
