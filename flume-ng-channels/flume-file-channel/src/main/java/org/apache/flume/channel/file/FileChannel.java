@@ -391,6 +391,12 @@ public class FileChannel extends BasicChannelSemantics {
     return log.didFastReplay();
   }
 
+
+  @VisibleForTesting
+  boolean didFullReplayDueToBadCheckpointException() {
+    return log.didFullReplayDueToBadCheckpointException();
+  }
+
   public boolean isOpen() {
     return open;
   }

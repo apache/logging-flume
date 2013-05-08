@@ -103,14 +103,13 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
         checkpointFile.length());
     elementsBuffer = mappedBuffer.asLongBuffer();
 
-    int version = (int) elementsBuffer.get(INDEX_VERSION);
-    if(version != getVersion()) {
+    long version = elementsBuffer.get(INDEX_VERSION);
+    if(version != (long) getVersion()) {
       throw new BadCheckpointException("Invalid version: " + version + " " +
               name + ", expected " + getVersion());
     }
-    long checkpointComplete =
-        (int) elementsBuffer.get(INDEX_CHECKPOINT_MARKER);
-    if(checkpointComplete != CHECKPOINT_COMPLETE) {
+    long checkpointComplete = elementsBuffer.get(INDEX_CHECKPOINT_MARKER);
+    if(checkpointComplete != (long) CHECKPOINT_COMPLETE) {
       throw new BadCheckpointException("Checkpoint was not completed correctly,"
               + " probably because the agent stopped while the channel was"
               + " checkpointing.");
