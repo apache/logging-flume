@@ -122,6 +122,7 @@ class Log {
   private Key encryptionKey;
   private final long usableSpaceRefreshInterval;
   private boolean didFastReplay = false;
+  private boolean didFullReplayDueToBadCheckpointException = false;
   private final boolean useDualCheckpoints;
   private volatile boolean backupRestored = false;
 
@@ -454,6 +455,9 @@ class Log {
         // trigger fast replay if the channel is configured to.
         shouldFastReplay = this.useFastReplay;
         doReplay(queue, dataFiles, encryptionKeyProvider, shouldFastReplay);
+        if(!shouldFastReplay) {
+          didFullReplayDueToBadCheckpointException = true;
+        }
       }
 
 
@@ -539,6 +543,11 @@ class Log {
   @VisibleForTesting
   boolean backupRestored() {
     return backupRestored;
+  }
+
+  @VisibleForTesting
+  boolean didFullReplayDueToBadCheckpointException() {
+    return didFullReplayDueToBadCheckpointException;
   }
 
   int getNextFileID() {

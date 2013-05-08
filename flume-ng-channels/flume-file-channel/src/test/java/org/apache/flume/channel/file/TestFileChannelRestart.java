@@ -401,7 +401,7 @@ public class TestFileChannelRestart extends TestFileChannelBase {
     File checkpoint = new File(checkpointDir, "checkpoint");
     RandomAccessFile writer = new RandomAccessFile(checkpoint, "rw");
     writer.seek(EventQueueBackingStoreFile.INDEX_CHECKPOINT_MARKER
-            * Serialization.SIZE_OF_LONG);
+      * Serialization.SIZE_OF_LONG);
     writer.writeLong(EventQueueBackingStoreFile.CHECKPOINT_INCOMPLETE);
     writer.getFD().sync();
     writer.close();
@@ -608,6 +608,60 @@ public class TestFileChannelRestart extends TestFileChannelBase {
     } else {
       Assert.assertFalse(backupRestored);
     }
+  }
+ 
+  //This test will fail without FLUME-1893
+  @Test
+  public void testCorruptCheckpointVersionMostSignificant4Bytes()
+    throws Exception {
+    Map<String, String> overrides = Maps.newHashMap();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> in = putEvents(channel, "restart", 10, 100);
+    Assert.assertEquals(100, in.size());
+    forceCheckpoint(channel);
+    channel.stop();
+    File checkpoint = new File(checkpointDir, "checkpoint");
+    RandomAccessFile writer = new RandomAccessFile(checkpoint, "rw");
+    writer.seek(EventQueueBackingStoreFile.INDEX_VERSION *
+      Serialization.SIZE_OF_LONG);
+    writer.write(new byte[]{(byte)1, (byte)5});
+    writer.getFD().sync();
+    writer.close();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> out = consumeChannel(channel);
+    Assert.assertTrue(channel.didFullReplayDueToBadCheckpointException());
+    compareInputAndOut(in, out);
+  }
+
+  //This test will fail without FLUME-1893
+  @Test
+  public void testCorruptCheckpointCompleteMarkerMostSignificant4Bytes()
+    throws Exception {
+    Map<String, String> overrides = Maps.newHashMap();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> in = putEvents(channel, "restart", 10, 100);
+    Assert.assertEquals(100, in.size());
+    forceCheckpoint(channel);
+    channel.stop();
+    File checkpoint = new File(checkpointDir, "checkpoint");
+    RandomAccessFile writer = new RandomAccessFile(checkpoint, "rw");
+    writer.seek(EventQueueBackingStoreFile.INDEX_CHECKPOINT_MARKER *
+      Serialization.SIZE_OF_LONG);
+    writer.write(new byte[]{(byte) 1, (byte) 5});
+    writer.getFD().sync();
+    writer.close();
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> out = consumeChannel(channel);
+    Assert.assertTrue(channel.didFullReplayDueToBadCheckpointException());
+    compareInputAndOut(in, out);
   }
 
   @Test
