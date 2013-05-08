@@ -43,6 +43,8 @@ import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This sink provides the basic RPC functionality for Flume. This sink takes
@@ -151,6 +153,7 @@ public abstract class AbstractRpcSink extends AbstractSink
   private final ScheduledExecutorService cxnResetExecutor = Executors
     .newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()
       .setNameFormat("Rpc Sink Reset Thread").build());
+  private final Lock resetLock = new ReentrantLock();
 
   @Override
   public void configure(Context context) {
@@ -211,7 +214,17 @@ public abstract class AbstractRpcSink extends AbstractSink
           cxnResetExecutor.schedule(new Runnable() {
             @Override
             public void run() {
-              destroyConnection();
+              resetLock.lock();
+              try {
+                destroyConnection();
+                createConnection();
+              } catch (Throwable throwable) {
+                //Don't rethrow, else this runnable won't get scheduled again.
+                logger.error("Error while trying to expire connection",
+                  throwable);
+              } finally {
+                resetLock.unlock();
+              }
             }
           }, cxnResetInterval, TimeUnit.SECONDS);
         }
@@ -319,6 +332,7 @@ public abstract class AbstractRpcSink extends AbstractSink
     Channel channel = getChannel();
     Transaction transaction = channel.getTransaction();
 
+    resetLock.lock();
     try {
       transaction.begin();
 
@@ -368,6 +382,7 @@ public abstract class AbstractRpcSink extends AbstractSink
         throw new EventDeliveryException("Failed to send events", t);
       }
     } finally {
+      resetLock.unlock();
       transaction.close();
     }
 
