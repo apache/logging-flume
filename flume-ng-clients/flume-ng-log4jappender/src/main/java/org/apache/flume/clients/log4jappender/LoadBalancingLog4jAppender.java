@@ -26,6 +26,7 @@ import org.apache.flume.api.RpcClientConfigurationConstants;
 import org.apache.flume.api.RpcClientFactory;
 import org.apache.flume.api.RpcClientFactory.ClientType;
 import org.apache.log4j.helpers.LogLog;
+import org.apache.log4j.spi.LoggingEvent;
 
 /**
  *
@@ -82,6 +83,7 @@ public class LoadBalancingLog4jAppender extends Log4jAppender {
   private String hosts;
   private String selector;
   private String maxBackoff;
+  private boolean configured = false;
 
   public void setHosts(String hostNames) {
     this.hosts = hostNames;
@@ -93,6 +95,20 @@ public class LoadBalancingLog4jAppender extends Log4jAppender {
 
   public void setMaxBackoff(String maxBackoff) {
     this.maxBackoff = maxBackoff;
+  }
+
+  @Override
+  public synchronized void append(LoggingEvent event) {
+    if(!configured) {
+      String errorMsg = "Flume Log4jAppender not configured correctly! Cannot" +
+        " send events to Flume.";
+      LogLog.error(errorMsg);
+      if(getUnsafeMode()) {
+        return;
+      }
+      throw new FlumeException(errorMsg);
+    }
+    super.append(event);
   }
 
   /**
@@ -107,18 +123,26 @@ public class LoadBalancingLog4jAppender extends Log4jAppender {
     try {
       final Properties properties = getProperties(hosts, selector, maxBackoff);
       rpcClient = RpcClientFactory.getInstance(properties);
-    } catch (FlumeException e) {
+      if(layout != null) {
+        layout.activateOptions();
+      }
+      configured = true;
+    } catch (Exception e) {
       String errormsg = "RPC client creation failed! " + e.getMessage();
       LogLog.error(errormsg);
-      throw e;
+      if (getUnsafeMode()) {
+        return;
+      }
+      throw new FlumeException(e);
     }
+
   }
 
   private Properties getProperties(String hosts, String selector,
       String maxBackoff) throws FlumeException {
 
     if (StringUtils.isEmpty(hosts)) {
-      throw new IllegalArgumentException("hosts must not be null");
+      throw new FlumeException("hosts must not be null");
     }
 
     Properties props = new Properties();
@@ -141,7 +165,7 @@ public class LoadBalancingLog4jAppender extends Log4jAppender {
     if (!StringUtils.isEmpty(maxBackoff)) {
       long millis = Long.parseLong(maxBackoff.trim());
       if (millis <= 0) {
-        throw new IllegalArgumentException(
+        throw new FlumeException(
             "Misconfigured max backoff, value must be greater than 0");
       }
       props.put(RpcClientConfigurationConstants.CONFIG_BACKOFF,

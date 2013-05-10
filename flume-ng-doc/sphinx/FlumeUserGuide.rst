@@ -2601,6 +2601,7 @@ Property Name  Default  Description
 =============  =======  ==========================================================================
 Hostname       --       The hostname on which a remote Flume agent is running with an avro source.
 Port           --       The port at which the remote Flume agent's avro source is listening.
+UnsafeMode     false    If true, the appender will not throw exceptions on failure to send the events.
 =============  =======  ==========================================================================
 
 
@@ -2612,6 +2613,7 @@ Sample log4j.properties file:
   log4j.appender.flume = org.apache.flume.clients.log4jappender.Log4jAppender
   log4j.appender.flume.Hostname = example.com
   log4j.appender.flume.Port = 41414
+  log4j.appender.flume.UnsafeMode = true
 
   # configure a class's logger to output to the flume appender
   log4j.logger.org.example.MyClass = DEBUG,flume
@@ -2637,6 +2639,7 @@ Selector       ROUND_ROBIN  Selection mechanism. Must be either ROUND_ROBIN,
 MaxBackoff     --           A long value representing the maximum amount of time in milliseconds
                             the Load balancing client will backoff from a node that has failed to
                             consume an event. Defaults to no backoff
+UnsafeMode     false        If true, the appender will not throw exceptions on failure to send the events.
 =============  ===========  ==========================================================================
 
 

@@ -30,7 +30,6 @@ import org.apache.flume.api.RpcClientFactory;
 import org.apache.flume.event.EventBuilder;
 
 import org.apache.log4j.AppenderSkeleton;
-import org.apache.log4j.Layout;
 import org.apache.log4j.helpers.LogLog;
 import org.apache.log4j.spi.LoggingEvent;
 
@@ -63,6 +62,7 @@ public class Log4jAppender extends AppenderSkeleton {
 
   private String hostname;
   private int port;
+  private boolean unsafeMode = false;
 
   RpcClient rpcClient = null;
 
@@ -101,9 +101,14 @@ public class Log4jAppender extends AppenderSkeleton {
     //setup by setting hostname and port and then calling activateOptions
     //or this appender object was closed by calling close(), so we throw an
     //exception to show the appender is no longer accessible.
-    if(rpcClient == null){
-      throw new FlumeException("Cannot Append to Appender!" +
-          "Appender either closed or not setup correctly!");
+    if (rpcClient == null) {
+      String errorMsg = "Cannot Append to Appender! Appender either closed or" +
+        " not setup correctly!";
+      LogLog.error(errorMsg);
+      if (unsafeMode) {
+        return;
+      }
+      throw new FlumeException(errorMsg);
     }
 
     if(!rpcClient.isActive()){
@@ -138,6 +143,9 @@ public class Log4jAppender extends AppenderSkeleton {
     } catch (EventDeliveryException e) {
       String msg = "Flume append() failed.";
       LogLog.error(msg);
+      if (unsafeMode) {
+        return;
+      }
       throw new FlumeException(msg + " Exception follows.", e);
     }
   }
@@ -152,11 +160,27 @@ public class Log4jAppender extends AppenderSkeleton {
    * @throws FlumeException if errors occur during close
    */
   @Override
-  public synchronized void close() throws FlumeException{
-    //Any append calls after this will result in an Exception.
+  public synchronized void close() throws FlumeException {
+    // Any append calls after this will result in an Exception.
     if (rpcClient != null) {
-      rpcClient.close();
-      rpcClient = null;
+      try {
+        rpcClient.close();
+      } catch (FlumeException ex) {
+        LogLog.error("Error while trying to close RpcClient.", ex);
+        if (unsafeMode) {
+          return;
+        }
+        throw ex;
+      } finally {
+        rpcClient = null;
+      }
+    } else {
+      String errorMsg = "Flume log4jappender already closed!";
+      LogLog.error(errorMsg);
+      if(unsafeMode) {
+        return;
+      }
+      throw new FlumeException(errorMsg);
     }
   }
 
@@ -184,24 +208,37 @@ public class Log4jAppender extends AppenderSkeleton {
   public void setPort(int port){
     this.port = port;
   }
+
+  public void setUnsafeMode(boolean unsafeMode) {
+    this.unsafeMode = unsafeMode;
+  }
+
+  public boolean getUnsafeMode() {
+    return unsafeMode;
+  }
+
   /**
    * Activate the options set using <tt>setPort()</tt>
    * and <tt>setHostname()</tt>
+   *
    * @throws FlumeException if the <tt>hostname</tt> and
-   *  <tt>port</tt> combination is invalid.
+   *                        <tt>port</tt> combination is invalid.
    */
   @Override
-  public void activateOptions() throws FlumeException{
+  public void activateOptions() throws FlumeException {
     try {
       rpcClient = RpcClientFactory.getDefaultInstance(hostname, port);
+      if (layout != null) {
+        layout.activateOptions();
+      }
     } catch (FlumeException e) {
       String errormsg = "RPC client creation failed! " +
-          e.getMessage();
+        e.getMessage();
       LogLog.error(errormsg);
+      if (unsafeMode) {
+        return;
+      }
       throw e;
-    }
-    if(layout != null) {
-      layout.activateOptions();
     }
   }
 
