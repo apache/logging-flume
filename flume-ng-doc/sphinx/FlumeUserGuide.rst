@@ -1765,31 +1765,47 @@ Example for agent named a1:
   a1.sinks.k1.channel = c1
 
 ElasticSearchSink
-'''''''''''''''''
+~~~~~~~~~~~~~~~~~
 
-This sink writes data to ElasticSearch. A class implementing
-ElasticSearchEventSerializer which is specified by the configuration is used to convert the events into
-XContentBuilder which detail the fields and mappings which will be indexed. These are then then written
-to ElasticSearch. The sink will generate an index per day allowing easier management instead of dealing with
-a single large index
+This sink writes data to an elasticsearch cluster. By default, events will be written so that the `Kibana <http://kibana.org>`_ graphical interface
+can display them - just as if `logstash <https://logstash.net>`_ wrote them. 
+
+The elasticsearch and lucene-core jars required for your environment must be placed in the lib directory of the Apache Flume installation. 
+Elasticsearch requires that the major version of the client JAR match that of the server and that both are running the same minor version
+of the JVM. SerializationExceptions will appear if this is incorrect. To 
+select the required version first determine the version of elasticsearch and the JVM version the target cluster is running. Then select an elasticsearch client
+library which matches the major version. A 0.19.x client can talk to a 0.19.x cluster; 0.20.x can talk to 0.20.x and 0.90.x can talk to 0.90.x. Once the
+elasticsearch version has been determined then read the pom.xml file to determine the correct lucene-core JAR version to use. The Flume agent
+which is running the ElasticSearchSink should also match the JVM the target cluster is running down to the minor version.
+
+Events will be written to a new index every day. The name will be <indexName>-yyyy-MM-dd where <indexName> is the indexName parameter. The sink
+will start writing to a new index at midnight UTC.
+
+Events are serialized for elasticsearch by the ElasticSearchLogStashEventSerializer by default. This behaviour can be
+overridden with the serializer parameter. This parameter accepts implementations of org.apache.flume.sink.elasticsearch.ElasticSearchEventSerializer
+or org.apache.flume.sink.elasticsearch.ElasticSearchIndexRequestBuilderFactory. Implementing ElasticSearchEventSerializer is deprecated in favour of
+the more powerful ElasticSearchIndexRequestBuilderFactory.
+
 The type is the FQCN: org.apache.flume.sink.elasticsearch.ElasticSearchSink
+
 Required properties are in **bold**.
 
-================  ==================================================================  =======================================================================================================
-Property Name     Default                                                             Description
-================  ==================================================================  =======================================================================================================
+================  ======================================================================== =======================================================================================================
+Property Name     Default                                                                  Description
+================  ======================================================================== =======================================================================================================
 **channel**       --
-**type**          --                                                                  The component type name, needs to be ``elasticsearch``
-**hostNames**     --                                                                  Comma separated list of hostname:port, if the port is not present the default port '9300' will be used
-indexName         flume                                                               The name of the index which the date will be appended to. Example 'flume' -> 'flume-yyyy-MM-dd'
-indexType         logs                                                                The type to index the document to, defaults to 'log'
-clusterName       elasticsearch                                                       Name of the ElasticSearch cluster to connect to
-batchSize         100                                                                 Number of events to be written per txn.
-ttl               --                                                                  TTL in days, when set will cause the expired documents to be deleted automatically,
-                                                                                      if not set documents will never be automatically deleted
-serializer        org.apache.flume.sink.elasticsearch.ElasticSearchDynamicSerializer
-serializer.*      --                                                                  Properties to be passed to the serializer.
-================  ==================================================================  =======================================================================================================
+**type**          --                                                                       The component type name, needs to be ``org.apache.flume.sink.elasticsearch.ElasticSearchSink``
+**hostNames**     --                                                                       Comma separated list of hostname:port, if the port is not present the default port '9300' will be used
+indexName         flume                                                                    The name of the index which the date will be appended to. Example 'flume' -> 'flume-yyyy-MM-dd'
+indexType         logs                                                                     The type to index the document to, defaults to 'log'
+clusterName       elasticsearch                                                            Name of the ElasticSearch cluster to connect to
+batchSize         100                                                                      Number of events to be written per txn.
+ttl               --                                                                       TTL in days, when set will cause the expired documents to be deleted automatically,
+                                                                                           if not set documents will never be automatically deleted
+serializer        org.apache.flume.sink.elasticsearch.ElasticSearchLogStashEventSerializer The ElasticSearchIndexRequestBuilderFactory or ElasticSearchEventSerializer to use. Implementations of
+                                                                                           either class are accepted but ElasticSearchIndexRequestBuilderFactory is preferred.
+serializer.*      --                                                                       Properties to be passed to the serializer.
+================  ======================================================================== =======================================================================================================
 
 Example for agent named a1:
 
