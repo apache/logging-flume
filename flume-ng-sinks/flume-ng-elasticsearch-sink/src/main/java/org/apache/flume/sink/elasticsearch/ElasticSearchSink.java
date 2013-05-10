@@ -33,11 +33,9 @@ import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.SER
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.TTL;
 
 import java.util.Arrays;
-import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
@@ -55,7 +53,6 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
-import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 import org.slf4j.Logger;
@@ -90,8 +87,6 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
   private static final Logger logger = LoggerFactory
       .getLogger(ElasticSearchSink.class);
 
-  static final FastDateFormat df = FastDateFormat.getInstance("yyyy-MM-dd");
-
   // Used for testing
   private boolean isLocal = false;
   private final CounterGroup counterGroup = new CounterGroup();
@@ -108,7 +103,7 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
 
   private Node node;
   private Client client;
-  private ElasticSearchEventSerializer serializer;
+  private ElasticSearchIndexRequestBuilderFactory indexRequestFactory;
   private SinkCounter sinkCounter;
 
   /**
@@ -145,7 +140,7 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
 
   @VisibleForTesting
   String getIndexName() {
-    return indexName + "-" + df.format(new Date());
+    return indexName;
   }
 
   @VisibleForTesting
@@ -166,7 +161,6 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
     Transaction txn = channel.getTransaction();
     try {
       txn.begin();
-      String indexName = getIndexName();
       BulkRequestBuilder bulkRequest = client.prepareBulk();
       for (int i = 0; i < batchSize; i++) {
         Event event = channel.take();
@@ -175,15 +169,15 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
           break;
         }
 
-        XContentBuilder builder = serializer.getContentBuilder(event);
-        IndexRequestBuilder request = client.prepareIndex(indexName, indexType)
-            .setSource(builder);
+        IndexRequestBuilder indexRequest =
+            indexRequestFactory.createIndexRequest(
+                client, indexName, indexType, event);
 
         if (ttlMs > 0) {
-          request.setTTL(ttlMs);
+          indexRequest.setTTL(ttlMs);
         }
 
-        bulkRequest.add(request);
+        bulkRequest.add(indexRequest);
       }
 
       int size = bulkRequest.numberOfActions();
@@ -291,10 +285,20 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
 
     try {
       @SuppressWarnings("unchecked")
-      Class<? extends ElasticSearchEventSerializer> clazz = (Class<? extends ElasticSearchEventSerializer>) Class
+      Class<? extends Configurable> clazz = (Class<? extends Configurable>) Class
           .forName(serializerClazz);
-      serializer = clazz.newInstance();
-      serializer.configure(serializerContext);
+      Configurable serializer = clazz.newInstance();
+      if (serializer instanceof ElasticSearchIndexRequestBuilderFactory) {
+        indexRequestFactory = (ElasticSearchIndexRequestBuilderFactory) serializer;
+      } else if (serializer instanceof ElasticSearchEventSerializer){
+        indexRequestFactory = new EventSerializerIndexRequestBuilderFactory(
+            (ElasticSearchEventSerializer) serializer);
+      } else {
+          throw new IllegalArgumentException(
+              serializerClazz + " is neither an ElasticSearchEventSerializer"
+              + " nor an ElasticSearchIndexRequestBuilderFactory.");
+      }
+      indexRequestFactory.configure(serializerContext);
     } catch (Exception e) {
       logger.error("Could not instantiate event serializer.", e);
       Throwables.propagate(e);
