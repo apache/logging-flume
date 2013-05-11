@@ -62,10 +62,16 @@ public class TestLoadBalancingLog4jAppender {
   private Channel ch;
   private ChannelSelector rcs;
   private Logger fixture;
+  private boolean slowDown = false;
 
   @Before
   public void initiate() throws InterruptedException{
     ch = new MemoryChannel();
+    configureChannel();
+
+  }
+
+  private void configureChannel() {
     Configurables.configure(ch, new Context());
 
     List<Channel> channels = new ArrayList<Channel>();
@@ -170,6 +176,27 @@ public class TestLoadBalancingLog4jAppender {
 
   }
 
+  @Test (expected = EventDeliveryException.class)
+  public void testTimeout() throws Throwable {
+    File TESTFILE = new File(TestLoadBalancingLog4jAppender.class
+      .getClassLoader()
+      .getResource("flume-loadbalancinglog4jtest.properties")
+      .getFile());
+
+    ch = new TestLog4jAppender.SlowMemoryChannel(2000);
+    configureChannel();
+    slowDown = true;
+    startSources(TESTFILE, false, new int[]{25430, 25431, 25432});
+    int level = 20000;
+    String msg = "This is log message number" + String.valueOf(level);
+    try {
+      fixture.log(Level.toLevel(level), msg);
+    } catch (FlumeException ex) {
+      throw ex.getCause();
+    }
+
+  }
+
   @Test(expected = EventDeliveryException.class)
   public void testRandomBackoffNotUnsafeMode() throws Throwable {
     File TESTFILE = new File(TestLoadBalancingLog4jAppender.class
@@ -271,6 +298,9 @@ public class TestLoadBalancingLog4jAppender {
     props.load(reader);
     props.setProperty("log4j.appender.out2.UnsafeMode",
       String.valueOf(unsafeMode));
+    if(slowDown) {
+      props.setProperty("log4j.appender.out2.Timeout", String.valueOf(1000));
+    }
     PropertyConfigurator.configure(props);
     fixture = LogManager.getLogger(TestLoadBalancingLog4jAppender.class);
   }
