@@ -121,7 +121,8 @@ public class LoadBalancingLog4jAppender extends Log4jAppender {
   @Override
   public void activateOptions() throws FlumeException {
     try {
-      final Properties properties = getProperties(hosts, selector, maxBackoff);
+      final Properties properties = getProperties(hosts, selector,
+        maxBackoff, getTimeout());
       rpcClient = RpcClientFactory.getInstance(properties);
       if(layout != null) {
         layout.activateOptions();
@@ -139,7 +140,7 @@ public class LoadBalancingLog4jAppender extends Log4jAppender {
   }
 
   private Properties getProperties(String hosts, String selector,
-      String maxBackoff) throws FlumeException {
+      String maxBackoff, long timeout) throws FlumeException {
 
     if (StringUtils.isEmpty(hosts)) {
       throw new FlumeException("hosts must not be null");
@@ -172,6 +173,10 @@ public class LoadBalancingLog4jAppender extends Log4jAppender {
           String.valueOf(true));
       props.put(RpcClientConfigurationConstants.CONFIG_MAX_BACKOFF, maxBackoff);
     }
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_CONNECT_TIMEOUT,
+      String.valueOf(timeout));
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_REQUEST_TIMEOUT,
+      String.valueOf(timeout));
     return props;
   }
 }

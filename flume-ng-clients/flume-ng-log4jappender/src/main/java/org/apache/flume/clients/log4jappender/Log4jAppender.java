@@ -21,11 +21,13 @@ package org.apache.flume.clients.log4jappender;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
 import org.apache.flume.api.RpcClient;
+import org.apache.flume.api.RpcClientConfigurationConstants;
 import org.apache.flume.api.RpcClientFactory;
 import org.apache.flume.event.EventBuilder;
 
@@ -63,6 +65,8 @@ public class Log4jAppender extends AppenderSkeleton {
   private String hostname;
   private int port;
   private boolean unsafeMode = false;
+  private long timeout = RpcClientConfigurationConstants
+    .DEFAULT_REQUEST_TIMEOUT_MILLIS;
 
   RpcClient rpcClient = null;
 
@@ -217,6 +221,15 @@ public class Log4jAppender extends AppenderSkeleton {
     return unsafeMode;
   }
 
+  public void setTimeout(long timeout) {
+    this.timeout = timeout;
+  }
+
+  public long getTimeout() {
+    return this.timeout;
+  }
+
+
   /**
    * Activate the options set using <tt>setPort()</tt>
    * and <tt>setHostname()</tt>
@@ -226,8 +239,16 @@ public class Log4jAppender extends AppenderSkeleton {
    */
   @Override
   public void activateOptions() throws FlumeException {
+    Properties props = new Properties();
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS, "h1");
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX + "h1",
+      hostname + ":" + port);
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_CONNECT_TIMEOUT,
+     String.valueOf(timeout));
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_REQUEST_TIMEOUT,
+      String.valueOf(timeout));
     try {
-      rpcClient = RpcClientFactory.getDefaultInstance(hostname, port);
+      rpcClient = RpcClientFactory.getInstance(props);
       if (layout != null) {
         layout.activateOptions();
       }
