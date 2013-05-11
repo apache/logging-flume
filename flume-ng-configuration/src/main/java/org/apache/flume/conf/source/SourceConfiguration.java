@@ -206,7 +206,7 @@ public class SourceConfiguration extends ComponentConfiguration {
      *
      * @see org.apache.flume.source.jms.JMSSource
      */
-    JMS("org.apache.flume.source.jms.JMSSourceConfiguration");
+    JMS("org.apache.flume.conf.source.jms.JMSSourceConfiguration");
 
     private String srcConfigurationName;
 
