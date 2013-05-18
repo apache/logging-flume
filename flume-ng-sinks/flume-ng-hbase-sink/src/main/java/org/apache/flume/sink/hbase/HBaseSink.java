@@ -62,7 +62,7 @@ import org.apache.hadoop.hbase.security.User;
  * reached or if the number of events in the current transaction reaches the
  * batch size, whichever comes first.<p>
  * Other optional parameters are:<p>
- * <tt>serializer:</tt> A class implementing {@link HBaseEventSerializer}.
+ * <tt>serializer:</tt> A class implementing {@link HbaseEventSerializer}.
  *  An instance of
  * this class will be used to write out events to hbase.<p>
  * <tt>serializer.*:</tt> Passed in the configure() method to serializer
