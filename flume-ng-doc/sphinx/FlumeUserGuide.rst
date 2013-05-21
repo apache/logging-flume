@@ -1697,7 +1697,7 @@ Property Name       Default                                                 Desc
 **table**           --                                                      The name of the table in Hbase to write to.
 **columnFamily**    --                                                      The column family in Hbase to write to.
 batchSize           100                                                     Number of events to be written per txn.
-serializer          org.apache.flume.sink.hbase.SimpleHbaseEventSerializer
+serializer          org.apache.flume.sink.hbase.SimpleHbaseEventSerializer  Default increment column = "iCol", payload column = "pCol".
 serializer.*        --                                                      Properties to be passed to the serializer.
 kerberosPrincipal   --                                                      Kerberos user principal for accessing secure HBase
 kerberosKeytab      --                                                      Kerberos keytab for accessing secure HBase

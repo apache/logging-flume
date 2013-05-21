@@ -115,8 +115,8 @@ public class SimpleAsyncHbaseEventSerializer implements AsyncHbaseEventSerialize
 
   @Override
   public void configure(Context context) {
-    String pCol = context.getString("payloadColumn");
-    String iCol = context.getString("incrementColumn");
+    String pCol = context.getString("payloadColumn", "pCol");
+    String iCol = context.getString("incrementColumn", "iCol");
     rowPrefix = context.getString("rowPrefix", "default");
     String suffix = context.getString("suffix", "uuid");
     if(pCol != null && !pCol.isEmpty()) {
