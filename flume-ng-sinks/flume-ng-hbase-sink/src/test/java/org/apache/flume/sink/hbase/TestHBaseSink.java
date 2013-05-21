@@ -55,8 +55,8 @@ public class TestHBaseSink {
   private static HBaseTestingUtility testUtility = new HBaseTestingUtility();
   private static String tableName = "TestHbaseSink";
   private static String columnFamily = "TestColumnFamily";
-  private static String inColumn = "Increment";
-  private static String plCol = "pc";
+  private static String inColumn = "iCol";
+  private static String plCol = "pCol";
   private static Context ctx = new Context();
   private static String valBase = "testing hbase sink: jham";
 
@@ -77,6 +77,43 @@ public class TestHBaseSink {
   @AfterClass
   public static void tearDown() throws Exception {
     testUtility.shutdownMiniCluster();
+  }
+
+  @Test
+  public void testOneEventWithDefaults() throws Exception {
+    //Create a context without setting increment column and payload Column
+    Map<String,String> ctxMap = new HashMap<String,String>();
+    ctxMap.put("table", tableName);
+    ctxMap.put("columnFamily", columnFamily);
+    ctxMap.put("serializer",
+            "org.apache.flume.sink.hbase.SimpleHbaseEventSerializer");
+    Context tmpctx = new Context();
+    tmpctx.putAll(ctxMap);
+
+    testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
+    HBaseSink sink = new HBaseSink(testUtility.getConfiguration());
+    Configurables.configure(sink, tmpctx);
+    Channel channel = new MemoryChannel();
+    Configurables.configure(channel, new Context());
+    sink.setChannel(channel);
+    sink.start();
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+    Event e = EventBuilder.withBody(
+            Bytes.toBytes(valBase));
+    channel.put(e);
+    tx.commit();
+    tx.close();
+
+    sink.process();
+    sink.stop();
+    HTable table = new HTable(testUtility.getConfiguration(), tableName);
+    byte[][] results = getResults(table, 1);
+    byte[] out = results[0];
+    Assert.assertArrayEquals(e.getBody(), out);
+    out = results[1];
+    Assert.assertArrayEquals(Longs.toByteArray(1), out);
+    testUtility.deleteTable(tableName.getBytes());
   }
 
   @Test

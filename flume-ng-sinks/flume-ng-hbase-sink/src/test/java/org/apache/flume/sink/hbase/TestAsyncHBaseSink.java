@@ -69,8 +69,8 @@ public class TestAsyncHBaseSink {
 
   private static String tableName = "TestHbaseSink";
   private static String columnFamily = "TestColumnFamily";
-  private static String inColumn = "Increment";
-  private static String plCol = "pc";
+  private static String inColumn = "iCol";
+  private static String plCol = "pCol";
   private static Context ctx = new Context();
   private static String valBase = "testing hbase sink: jham";
   private boolean deleteTable = true;
@@ -161,6 +161,44 @@ public class TestAsyncHBaseSink {
     if (deleteTable) {
       testUtility.deleteTable(tableName.getBytes());
     }
+  }
+
+  @Test
+  public void testOneEventWithDefaults() throws Exception {
+    Map<String,String> ctxMap = new HashMap<String,String>();
+    ctxMap.put("table", tableName);
+    ctxMap.put("columnFamily", columnFamily);
+    ctxMap.put("serializer",
+            "org.apache.flume.sink.hbase.SimpleAsyncHbaseEventSerializer");
+    ctxMap.put("keep-alive", "0");
+    ctxMap.put("timeout", "10000");
+    Context tmpctx = new Context();
+    tmpctx.putAll(ctxMap);
+
+    testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
+    deleteTable = true;
+    AsyncHBaseSink sink = new AsyncHBaseSink(testUtility.getConfiguration());
+    Configurables.configure(sink, tmpctx);
+    Channel channel = new MemoryChannel();
+    Configurables.configure(channel, tmpctx);
+    sink.setChannel(channel);
+    sink.start();
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+    Event e = EventBuilder.withBody(
+            Bytes.toBytes(valBase));
+    channel.put(e);
+    tx.commit();
+    tx.close();
+    Assert.assertFalse(sink.isConfNull());
+    sink.process();
+    sink.stop();
+    HTable table = new HTable(testUtility.getConfiguration(), tableName);
+    byte[][] results = getResults(table, 1);
+    byte[] out = results[0];
+    Assert.assertArrayEquals(e.getBody(), out);
+    out = results[1];
+    Assert.assertArrayEquals(Longs.toByteArray(1), out);
   }
 
   @Test

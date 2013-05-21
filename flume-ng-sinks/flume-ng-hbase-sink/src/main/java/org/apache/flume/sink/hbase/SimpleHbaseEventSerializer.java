@@ -70,8 +70,8 @@ public class SimpleHbaseEventSerializer implements HbaseEventSerializer {
         context.getString("incrementRow", "incRow").getBytes(Charsets.UTF_8);
     String suffix = context.getString("suffix", "uuid");
 
-    String payloadColumn = context.getString("payloadColumn");
-    String incColumn = context.getString("incrementColumn");
+    String payloadColumn = context.getString("payloadColumn","pCol");
+    String incColumn = context.getString("incrementColumn","iCol");
     if(payloadColumn != null && !payloadColumn.isEmpty()) {
       if(suffix.equals("timestamp")){
         keyType = KeyType.TS;
