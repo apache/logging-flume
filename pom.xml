@@ -163,6 +163,14 @@ limitations under the License.
       </activation>
     </profile>
 
+    <profile>
+      <id>windows</id>
+      <activation>
+        <os>
+          <family>Windows</family>
+        </os>
+      </activation>
+    </profile>
 
     <profile>
       <id>sign</id>
