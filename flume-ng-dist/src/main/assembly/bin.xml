@@ -35,32 +35,6 @@
     <moduleSet>
       <useAllReactorProjects>true</useAllReactorProjects>
 
-      <includes>
-        <include>org.apache.flume:flume-ng-configuration</include>
-        <include>org.apache.flume:flume-ng-sdk</include>
-        <include>org.apache.flume:flume-ng-core</include>
-        <include>org.apache.flume:flume-ng-node</include>
-        <include>org.apache.flume:flume-ng-dist</include>
-        <include>org.apache.flume:flume-ng-channels</include>
-        <include>org.apache.flume:flume-ng-sinks</include>
-        <include>org.apache.flume:flume-ng-sources</include>
-        <include>org.apache.flume:flume-ng-legacy-sources</include>
-        <include>org.apache.flume:flume-ng-clients</include>
-        <include>org.apache.flume:flume-ng-embedded-agent</include>
-      </includes>
-
-      <binaries>
-        <unpack>false</unpack>
-        <outputDirectory>lib</outputDirectory>
-
-        <dependencySets>
-          <dependencySet>
-            <useProjectArtifact>false</useProjectArtifact>
-            <outputDirectory>lib</outputDirectory>
-          </dependencySet>
-        </dependencySets>
-      </binaries>
-
       <sources>
         <includeModuleDirectory>true</includeModuleDirectory>
         <excludeSubModuleDirectories>false</excludeSubModuleDirectories>
@@ -84,6 +58,26 @@
     </moduleSet>
 
   </moduleSets>
+
+  <dependencySets>
+    <dependencySet>
+      <outputDirectory>lib</outputDirectory>
+      <unpack>false</unpack>
+      <useProjectArtifact>false</useProjectArtifact>
+      <excludes>
+        <exclude>org.apache.flume.flume-ng-clients:flume-ng-log4jappender:jar:jar-with-dependencies</exclude>
+      </excludes>
+    </dependencySet>
+    <dependencySet>
+      <outputDirectory>tools</outputDirectory>
+      <unpack>false</unpack>
+      <useProjectArtifact>false</useProjectArtifact>
+      <includes>
+        <include>org.apache.flume.flume-ng-clients:flume-ng-log4jappender:jar:jar-with-dependencies</include>
+      </includes>
+    </dependencySet>
+  </dependencySets>
+
 
    <fileSets>
     <fileSet>

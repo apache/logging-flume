@@ -132,6 +132,11 @@
       <groupId>org.apache.flume.flume-ng-clients</groupId>
       <artifactId>flume-ng-log4jappender</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.flume.flume-ng-clients</groupId>
+      <artifactId>flume-ng-log4jappender</artifactId>
+      <classifier>jar-with-dependencies</classifier>
+    </dependency>
   </dependencies>
 
 </project>
