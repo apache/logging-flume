@@ -20,6 +20,7 @@ package org.apache.flume.sink.hbase;
 
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -63,6 +64,9 @@ public class RegexHbaseEventSerializer implements HbaseEventSerializer {
   public static final String COL_NAME_CONFIG = "colNames";
   public static final String COLUMN_NAME_DEFAULT = "payload";
 
+  /** Whether to deposit event headers into corresponding column qualifiers */
+  public static final String DEPOSIT_HEADERS_CONFIG = "depositHeaders";
+  public static final boolean DEPOSIT_HEADERS_DEFAULT = false;
   
   /* This is a nonce used in HBase row-keys, such that the same row-key
    * never gets written more than once from within this JVM. */
@@ -72,7 +76,9 @@ public class RegexHbaseEventSerializer implements HbaseEventSerializer {
   protected byte[] cf;
   private byte[] payload;
   private List<byte[]> colNames = Lists.newArrayList();
+  private Map<String, String> headers;
   private boolean regexIgnoreCase;
+  private boolean depositHeaders;
   private Pattern inputPattern;
   
   @Override
@@ -80,6 +86,8 @@ public class RegexHbaseEventSerializer implements HbaseEventSerializer {
     String regex = context.getString(REGEX_CONFIG, REGEX_DEFAULT);
     regexIgnoreCase = context.getBoolean(IGNORE_CASE_CONFIG, 
         INGORE_CASE_DEFAULT);
+    depositHeaders = context.getBoolean(DEPOSIT_HEADERS_CONFIG,
+        DEPOSIT_HEADERS_DEFAULT);
     inputPattern = Pattern.compile(regex, Pattern.DOTALL
         + (regexIgnoreCase ? Pattern.CASE_INSENSITIVE : 0));
     
@@ -96,6 +104,7 @@ public class RegexHbaseEventSerializer implements HbaseEventSerializer {
 
   @Override
   public void initialize(Event event, byte[] columnFamily) {
+    this.headers = event.getHeaders();
     this.payload = event.getBody();
     this.cf = columnFamily;
   }
@@ -142,19 +151,23 @@ public class RegexHbaseEventSerializer implements HbaseEventSerializer {
       return Lists.newArrayList();
     }
     
-  	try {
+    try {
       rowKey = getRowKey();
       Put put = new Put(rowKey);
       
       for (int i = 0; i < colNames.size(); i++) {
         put.add(cf, colNames.get(i), m.group(i + 1).getBytes(Charsets.UTF_8));
       }
+      if (depositHeaders) {
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+          put.add(cf, entry.getKey().getBytes(Charsets.UTF_8), entry.getValue().getBytes(Charsets.UTF_8));
+        }
+      }
       actions.add(put);
-  	}
-  	catch (Exception e) {
-  	  throw new FlumeException("Could not get row key!", e);
-  	}
-  	return actions;
+    } catch (Exception e) {
+      throw new FlumeException("Could not get row key!", e);
+    }
+    return actions;
   }
 
   @Override
