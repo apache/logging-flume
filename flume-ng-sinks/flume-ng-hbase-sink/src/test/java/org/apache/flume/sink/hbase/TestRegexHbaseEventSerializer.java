@@ -158,4 +158,42 @@ public class TestRegexHbaseEventSerializer {
     assertEquals("100-" + randomString + "-2", rk3);
     
   }
+
+   @Test
+  /** Test depositing of the header information. */
+  public void testDepositHeaders() throws Exception {
+    RegexHbaseEventSerializer s = new RegexHbaseEventSerializer();
+    Context context = new Context();
+    context.put(RegexHbaseEventSerializer.DEPOSIT_HEADERS_CONFIG,
+        "true");
+    s.configure(context);
+
+    String body = "body";
+    Map<String, String> headers = Maps.newHashMap();
+    headers.put("header1", "value1");
+    headers.put("header2", "value2");
+
+    Event e = EventBuilder.withBody(Bytes.toBytes(body), headers);
+    s.initialize(e, "CF".getBytes());
+    List<Row> actions = s.getActions();
+    assertEquals(1, s.getActions().size());
+    assertTrue(actions.get(0) instanceof Put);
+
+    Put put = (Put) actions.get(0);
+    assertTrue(put.getFamilyMap().containsKey(s.cf));
+    List<KeyValue> kvPairs = put.getFamilyMap().get(s.cf);
+    assertTrue(kvPairs.size() == 3);
+
+    Map<String, String> resultMap = Maps.newHashMap();
+    for (KeyValue kv : kvPairs) {
+      resultMap.put(new String(kv.getQualifier()), new String(kv.getValue()));
+    }
+
+    assertEquals(body, resultMap.get("payload"));
+    assertEquals("value1", resultMap.get("header1"));
+    assertEquals("value2", resultMap.get("header2"));
+
+    List<Increment> increments = s.getIncrements();
+    assertEquals(0, increments.size());
+  }
 }
