@@ -18,11 +18,13 @@
  */
 package org.apache.flume.sink.hbase;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.nio.charset.Charset;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
@@ -162,16 +164,19 @@ public class TestRegexHbaseEventSerializer {
    @Test
   /** Test depositing of the header information. */
   public void testDepositHeaders() throws Exception {
+    Charset charset = Charset.forName("KOI8-R");
     RegexHbaseEventSerializer s = new RegexHbaseEventSerializer();
     Context context = new Context();
     context.put(RegexHbaseEventSerializer.DEPOSIT_HEADERS_CONFIG,
         "true");
+    context.put(RegexHbaseEventSerializer.CHARSET_CONFIG,
+               charset.toString());
     s.configure(context);
 
     String body = "body";
     Map<String, String> headers = Maps.newHashMap();
     headers.put("header1", "value1");
-    headers.put("header2", "value2");
+    headers.put("заголовок2", "значение2");
 
     Event e = EventBuilder.withBody(Bytes.toBytes(body), headers);
     s.initialize(e, "CF".getBytes());
@@ -184,14 +189,15 @@ public class TestRegexHbaseEventSerializer {
     List<KeyValue> kvPairs = put.getFamilyMap().get(s.cf);
     assertTrue(kvPairs.size() == 3);
 
-    Map<String, String> resultMap = Maps.newHashMap();
+    Map<String, byte[]> resultMap = Maps.newHashMap();
     for (KeyValue kv : kvPairs) {
-      resultMap.put(new String(kv.getQualifier()), new String(kv.getValue()));
+      resultMap.put(new String(kv.getQualifier(), charset), kv.getValue());
     }
 
-    assertEquals(body, resultMap.get("payload"));
-    assertEquals("value1", resultMap.get("header1"));
-    assertEquals("value2", resultMap.get("header2"));
+    assertEquals(body, new String(resultMap.get(RegexHbaseEventSerializer.COLUMN_NAME_DEFAULT), charset));
+    assertEquals("value1", new String(resultMap.get("header1"), charset));
+    assertArrayEquals("значение2".getBytes(charset), resultMap.get("заголовок2"));
+    assertEquals("значение2".length(), resultMap.get("заголовок2").length);
 
     List<Increment> increments = s.getIncrements();
     assertEquals(0, increments.size());

@@ -18,6 +18,7 @@
  */
 package org.apache.flume.sink.hbase;
 
+import java.nio.charset.Charset;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +68,10 @@ public class RegexHbaseEventSerializer implements HbaseEventSerializer {
   /** Whether to deposit event headers into corresponding column qualifiers */
   public static final String DEPOSIT_HEADERS_CONFIG = "depositHeaders";
   public static final boolean DEPOSIT_HEADERS_DEFAULT = false;
+
+  /** What charset to use when serializing into HBase's byte arrays */
+  public static final String CHARSET_CONFIG = "charset";
+  public static final String CHARSET_DEFAULT = "UTF-8";
   
   /* This is a nonce used in HBase row-keys, such that the same row-key
    * never gets written more than once from within this JVM. */
@@ -80,6 +85,7 @@ public class RegexHbaseEventSerializer implements HbaseEventSerializer {
   private boolean regexIgnoreCase;
   private boolean depositHeaders;
   private Pattern inputPattern;
+  private Charset charset;
   
   @Override
   public void configure(Context context) {
@@ -90,11 +96,13 @@ public class RegexHbaseEventSerializer implements HbaseEventSerializer {
         DEPOSIT_HEADERS_DEFAULT);
     inputPattern = Pattern.compile(regex, Pattern.DOTALL
         + (regexIgnoreCase ? Pattern.CASE_INSENSITIVE : 0));
+    charset = Charset.forName(context.getString(CHARSET_CONFIG,
+        CHARSET_DEFAULT));
     
     String colNameStr = context.getString(COL_NAME_CONFIG, COLUMN_NAME_DEFAULT);
     String[] columnNames = colNameStr.split(",");
     for (String s: columnNames) { 
-      colNames.add(s.getBytes(Charsets.UTF_8));
+      colNames.add(s.getBytes(charset));
     }
   }
 
@@ -131,7 +139,7 @@ public class RegexHbaseEventSerializer implements HbaseEventSerializer {
      *  data loss. */
     String rowKey = String.format("%s-%s-%s", cal.getTimeInMillis(),
         randomKey, nonce.getAndIncrement());
-    return rowKey.getBytes(Charsets.UTF_8);
+    return rowKey.getBytes(charset);
   }
   
   protected byte[] getRowKey() {
@@ -142,7 +150,7 @@ public class RegexHbaseEventSerializer implements HbaseEventSerializer {
   public List<Row> getActions() throws FlumeException {
     List<Row> actions = Lists.newArrayList();
     byte[] rowKey;
-    Matcher m = inputPattern.matcher(new String(payload));
+    Matcher m = inputPattern.matcher(new String(payload, charset));
     if (!m.matches()) {
       return Lists.newArrayList();
     }
@@ -156,11 +164,11 @@ public class RegexHbaseEventSerializer implements HbaseEventSerializer {
       Put put = new Put(rowKey);
       
       for (int i = 0; i < colNames.size(); i++) {
-        put.add(cf, colNames.get(i), m.group(i + 1).getBytes(Charsets.UTF_8));
+        put.add(cf, colNames.get(i), m.group(i + 1).getBytes(charset));
       }
       if (depositHeaders) {
         for (Map.Entry<String, String> entry : headers.entrySet()) {
-          put.add(cf, entry.getKey().getBytes(Charsets.UTF_8), entry.getValue().getBytes(Charsets.UTF_8));
+          put.add(cf, entry.getKey().getBytes(charset), entry.getValue().getBytes(charset));
         }
       }
       actions.add(put);
