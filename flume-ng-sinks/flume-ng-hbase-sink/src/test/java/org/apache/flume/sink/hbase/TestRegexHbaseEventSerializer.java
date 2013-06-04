@@ -72,15 +72,43 @@ public class TestRegexHbaseEventSerializer {
     assertEquals("The sky is falling!",
         resultMap.get(RegexHbaseEventSerializer.COLUMN_NAME_DEFAULT));
   }
-  
+  @Test
+  public void testRowIndexKey() throws Exception {
+    RegexHbaseEventSerializer s = new RegexHbaseEventSerializer();
+    Context context = new Context();
+    context.put(RegexHbaseEventSerializer.REGEX_CONFIG,"^([^\t]+)\t([^\t]+)\t" +
+      "([^\t]+)$");
+    context.put(RegexHbaseEventSerializer.COL_NAME_CONFIG, "col1,col2,ROW_KEY");
+    context.put("rowKeyIndex", "2");
+    s.configure(context);
+
+    String body = "val1\tval2\trow1";
+    Event e = EventBuilder.withBody(Bytes.toBytes(body));
+    s.initialize(e, "CF".getBytes());
+    List<Row> actions = s.getActions();
+
+    Put put = (Put)actions.get(0);
+
+    List<KeyValue> kvPairs = put.getFamilyMap().get(s.cf);
+    assertTrue(kvPairs.size() == 2);
+
+    Map<String, String> resultMap = Maps.newHashMap();
+    for (KeyValue kv : kvPairs) {
+      resultMap.put(new String(kv.getQualifier()), new String(kv.getValue()));
+    }
+    assertEquals("val1", resultMap.get("col1"));
+    assertEquals("val2", resultMap.get("col2"));
+    assertEquals("row1", Bytes.toString(put.getRow()));
+  }
+
   @Test
   /** Test a common case where regex is used to parse apache log format. */
   public void testApacheRegex() throws Exception {
     RegexHbaseEventSerializer s = new RegexHbaseEventSerializer();
     Context context = new Context();
-    context.put(RegexHbaseEventSerializer.REGEX_CONFIG, 
-        "([^ ]*) ([^ ]*) ([^ ]*) (-|\\[[^\\]]*\\]) \"([^ ]+) ([^ ]+)" + 
-        " ([^\"]+)\" (-|[0-9]*) (-|[0-9]*)(?: ([^ \"]*|\"[^\"]*\")" + 
+    context.put(RegexHbaseEventSerializer.REGEX_CONFIG,
+        "([^ ]*) ([^ ]*) ([^ ]*) (-|\\[[^\\]]*\\]) \"([^ ]+) ([^ ]+)" +
+        " ([^\"]+)\" (-|[0-9]*) (-|[0-9]*)(?: ([^ \"]*|\"[^\"]*\")" +
         " ([^ \"]*|\"[^\"]*\"))?");
     context.put(RegexHbaseEventSerializer.COL_NAME_CONFIG,
         "host,identity,user,time,method,request,protocol,status,size," +
