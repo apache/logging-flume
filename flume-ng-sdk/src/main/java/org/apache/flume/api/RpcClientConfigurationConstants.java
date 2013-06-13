@@ -135,6 +135,15 @@ public final class RpcClientConfigurationConstants {
   public static final int DEFAULT_COMPRESSION_LEVEL = 6;
 
 
+  /**
+   * Configuration constants for SSL support
+   */
+  public static final String CONFIG_SSL = "ssl";
+  public static final String CONFIG_TRUST_ALL_CERTS = "trust-all-certs";
+  public static final String CONFIG_TRUSTSTORE = "truststore";
+  public static final String CONFIG_TRUSTSTORE_PASSWORD = "truststore-password";
+  public static final String CONFIG_TRUSTSTORE_TYPE = "truststore-type";
+
   private RpcClientConfigurationConstants() {
     // disable explicit object creation
   }

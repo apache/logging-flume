@@ -701,6 +701,9 @@ selector.*
 interceptors         --           Space-separated list of interceptors
 interceptors.*
 compression-type     none         This can be "none" or "deflate".  The compression-type must match the compression-type of matching AvroSource
+keystore             --           The path to a Java keystore. If "keystore" and "keystore-password" are both set, then this AvroSource will us SSL.
+keystore-password    --           The password for the Java keystore.
+keystore-type        JKS          This can be "JKS" or "PKCS12". The type of the Java keystore.
 ==================   ===========  ===================================================
 
 Example for agent named a1:
@@ -1523,6 +1526,10 @@ request-timeout              20000    Amount of time (ms) to allow for requests 
 reset-connection-interval    none     Amount of time (s) before the connection to the next hop is reset. This will force the Avro Sink to reconnect to the next hop. This will allow the sink to connect to hosts behind a hardware load-balancer when news hosts are added without having to restart the agent.
 compression-type             none     This can be "none" or "deflate".  The compression-type must match the compression-type of matching AvroSource
 compression-level            6	      The level of compression to compress event. 0 = no compression and 1-9 is compression.  The higher the number the more compression
+ssl                   false    Set to true to enable SSL for this AvroSink. When configuring SSL, you can optionally set a "truststore", "truststore-password", and "truststore-type".
+truststore            --       The path to a Java truststore file. If you enable SSL without configuring a truststore, the AvroSink will automatically use a permisive trust setting and accept any server certifacte used by the AvroSource it is connected to.
+truststore-password   --       The password for the truststore.
+truststore-type       JKS      This can be "JKS" or other supported Java truststore type. The type of the Java truststore.
 ==========================   =======  ==============================================
 
 Example for agent named a1:

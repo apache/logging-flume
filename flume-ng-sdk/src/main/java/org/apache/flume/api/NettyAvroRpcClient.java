@@ -18,9 +18,13 @@
  */
 package org.apache.flume.api;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -41,6 +45,11 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 import org.apache.avro.ipc.CallFuture;
 import org.apache.avro.ipc.NettyTransceiver;
@@ -52,14 +61,15 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
-import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.socket.SocketChannel;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.codec.compression.ZlibDecoder;
 import org.jboss.netty.handler.codec.compression.ZlibEncoder;
+import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.security.validator.KeyStores;
 
 /**
  * Avro/Netty implementation of {@link RpcClient}.
@@ -78,6 +88,11 @@ implements RpcClient {
   private ConnState connState;
 
   private InetSocketAddress address;
+  private boolean enableSsl;
+  private boolean trustAllCerts;
+  private String truststore;
+  private String truststorePassword;
+  private String truststoreType;
 
   private Transceiver transceiver;
   private AvroSourceProtocol.Callback avroClient;
@@ -114,12 +129,14 @@ implements RpcClient {
 
     try {
 
-      if (enableDeflateCompression) {
-        socketChannelFactory = new CompressionChannelFactory(
+      if (enableDeflateCompression || enableSsl) {
+        socketChannelFactory = new SSLCompressionChannelFactory(
             Executors.newCachedThreadPool(new TransceiverThreadFactory(
                 "Avro " + NettyTransceiver.class.getSimpleName() + " Boss")),
             Executors.newCachedThreadPool(new TransceiverThreadFactory(
-                "Avro " + NettyTransceiver.class.getSimpleName() + " I/O Worker")), compressionLevel);
+                "Avro " + NettyTransceiver.class.getSimpleName() + " I/O Worker")),
+            enableDeflateCompression, enableSsl, trustAllCerts, compressionLevel,
+            truststore, truststorePassword, truststoreType);
       } else {
         socketChannelFactory = new NioClientSocketChannelFactory(
             Executors.newCachedThreadPool(new TransceiverThreadFactory(
@@ -560,6 +577,16 @@ implements RpcClient {
       }
     }
 
+    enableSsl = Boolean.parseBoolean(properties.getProperty(
+        RpcClientConfigurationConstants.CONFIG_SSL));
+    trustAllCerts = Boolean.parseBoolean(properties.getProperty(
+        RpcClientConfigurationConstants.CONFIG_TRUST_ALL_CERTS));
+    truststore = properties.getProperty(
+        RpcClientConfigurationConstants.CONFIG_TRUSTSTORE);
+    truststorePassword = properties.getProperty(
+        RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_PASSWORD);
+    truststoreType = properties.getProperty(
+        RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_TYPE, "JKS");
 
     this.connect();
   }
@@ -596,27 +623,101 @@ implements RpcClient {
     }
   }
 
-  private static class CompressionChannelFactory extends
-      NioClientSocketChannelFactory {
-    private int compressionLevel;
+  /**
+   * Factory of SSL-enabled client channels
+   * Copied from Avro's org.apache.avro.ipc.TestNettyServerWithSSL test
+   */
+  private static class SSLCompressionChannelFactory extends NioClientSocketChannelFactory {
 
-    public CompressionChannelFactory(
-        Executor bossExecutor, Executor workerExecutor, int compressionLevel) {
+    private boolean enableCompression;
+    private int compressionLevel;
+    private boolean enableSsl;
+    private boolean trustAllCerts;
+    private String truststore;
+    private String truststorePassword;
+    private String truststoreType;
+
+    public SSLCompressionChannelFactory(Executor bossExecutor, Executor workerExecutor,
+        boolean enableCompression, boolean enableSsl, boolean trustAllCerts,
+        int compressionLevel, String truststore, String truststorePassword,
+        String truststoreType) {
       super(bossExecutor, workerExecutor);
+      this.enableCompression = enableCompression;
+      this.enableSsl = enableSsl;
       this.compressionLevel = compressionLevel;
+      this.trustAllCerts = trustAllCerts;
+      this.truststore = truststore;
+      this.truststorePassword = truststorePassword;
+      this.truststoreType = truststoreType;
     }
 
     @Override
     public SocketChannel newChannel(ChannelPipeline pipeline) {
+      TrustManager[] managers;
       try {
+        if (enableCompression) {
+          ZlibEncoder encoder = new ZlibEncoder(compressionLevel);
+          pipeline.addFirst("deflater", encoder);
+          pipeline.addFirst("inflater", new ZlibDecoder());
+        }
+        if (enableSsl) {
+          if (trustAllCerts) {
+            logger.warn("No truststore configured, setting TrustManager to accept"
+                + " all server certificates");
+            managers = new TrustManager[] { new PermissiveTrustManager() };
+          } else {
+            InputStream truststoreStream = null;
+            if (truststore == null) {
+              truststoreType = "JKS";
+              truststoreStream = getClass().getClassLoader().getResourceAsStream("cacerts");
+              truststorePassword = "changeit";
+            } else {
+              truststoreStream = new FileInputStream(truststore);
+            }
+            KeyStore keystore = KeyStore.getInstance(truststoreType);
+            keystore.load(truststoreStream, truststorePassword.toCharArray());
 
-        ZlibEncoder encoder = new ZlibEncoder(compressionLevel);
-        pipeline.addFirst("deflater", encoder);
-        pipeline.addFirst("inflater", new ZlibDecoder());
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+            tmf.init(keystore);
+            managers = tmf.getTrustManagers();
+          }
+
+          SSLContext sslContext = SSLContext.getInstance("TLS");
+          sslContext.init(null, managers,
+                          null);
+          SSLEngine sslEngine = sslContext.createSSLEngine();
+          sslEngine.setUseClientMode(true);
+          // addFirst() will make SSL handling the first stage of decoding
+          // and the last stage of encoding this must be added after
+          // adding compression handling above
+          pipeline.addFirst("ssl", new SslHandler(sslEngine));
+        }
+
         return super.newChannel(pipeline);
       } catch (Exception ex) {
-        throw new RuntimeException("Cannot create Compression channel", ex);
+        logger.error("Cannot create SSL channel", ex);
+        throw new RuntimeException("Cannot create SSL channel", ex);
       }
+    }
+  }
+
+  /**
+   * Permissive trust manager accepting any certificate
+   */
+  private static class PermissiveTrustManager implements X509TrustManager {
+    @Override
+    public void checkClientTrusted(X509Certificate[] certs, String s) {
+      // nothing
+    }
+
+    @Override
+    public void checkServerTrusted(X509Certificate[] certs, String s) {
+      // nothing
+    }
+
+    @Override
+    public X509Certificate[] getAcceptedIssuers() {
+      return new X509Certificate[0];
     }
   }
 }
