@@ -74,7 +74,8 @@ public class TestLog {
    * not transactional so the commit is not required.
    */
   @Test
-  public void testPutGet() throws IOException, InterruptedException {
+  public void testPutGet()
+    throws IOException, InterruptedException, NoopRecordException {
     FlumeEvent eventIn = TestUtils.newPersistableEvent();
     long transactionID = ++this.transactionID;
     FlumeEventPointer eventPointer = log.put(transactionID, eventIn);
@@ -86,7 +87,8 @@ public class TestLog {
     Assert.assertArrayEquals(eventIn.getBody(), eventOut.getBody());
   }
   @Test
-  public void testRoll() throws IOException, InterruptedException {
+  public void testRoll()
+    throws IOException, InterruptedException, NoopRecordException {
     log.shutdownWorker();
     Thread.sleep(1000);
     for (int i = 0; i < 1000; i++) {
@@ -107,15 +109,16 @@ public class TestLog {
         }
       }
     }
-    // 78 (*2 for meta) files with TestLog.MAX_FILE_SIZE=1000
-    Assert.assertEquals(156, logCount);
+    // 93 (*2 for meta) files with TestLog.MAX_FILE_SIZE=1000
+    Assert.assertEquals(186, logCount);
   }
   /**
    * After replay of the log, we should find the event because the put
    * was committed
    */
   @Test
-  public void testPutCommit() throws IOException, InterruptedException {
+  public void testPutCommit()
+    throws IOException, InterruptedException, NoopRecordException {
     FlumeEvent eventIn = TestUtils.newPersistableEvent();
     long transactionID = ++this.transactionID;
     FlumeEventPointer eventPointerIn = log.put(transactionID, eventIn);
@@ -243,16 +246,16 @@ public class TestLog {
    */
   @Test
   public void testPutTakeRollbackLogReplayV1()
-      throws IOException, InterruptedException {
+    throws IOException, InterruptedException, NoopRecordException {
     doPutTakeRollback(true);
   }
   @Test
   public void testPutTakeRollbackLogReplayV2()
-      throws IOException, InterruptedException {
+    throws IOException, InterruptedException, NoopRecordException {
     doPutTakeRollback(false);
   }
   public void doPutTakeRollback(boolean useLogReplayV1)
-      throws IOException, InterruptedException {
+    throws IOException, InterruptedException, NoopRecordException {
     FlumeEvent eventIn = TestUtils.newPersistableEvent();
     long putTransactionID = ++transactionID;
     FlumeEventPointer eventPointerIn = log.put(putTransactionID, eventIn);
@@ -392,7 +395,7 @@ public class TestLog {
   }
   @Test
   public void testReplaySucceedsWithUnusedEmptyLogMetaDataNormalReplay()
-      throws IOException, InterruptedException {
+    throws IOException, InterruptedException, NoopRecordException {
     FlumeEvent eventIn = TestUtils.newPersistableEvent();
     long transactionID = ++this.transactionID;
     FlumeEventPointer eventPointer = log.put(transactionID, eventIn);
@@ -406,7 +409,7 @@ public class TestLog {
   }
   @Test
   public void testReplaySucceedsWithUnusedEmptyLogMetaDataFastReplay()
-      throws IOException, InterruptedException {
+    throws IOException, InterruptedException, NoopRecordException {
     FlumeEvent eventIn = TestUtils.newPersistableEvent();
     long transactionID = ++this.transactionID;
     FlumeEventPointer eventPointer = log.put(transactionID, eventIn);
@@ -422,7 +425,7 @@ public class TestLog {
   }
   public void doTestReplaySucceedsWithUnusedEmptyLogMetaData(FlumeEvent eventIn,
       FlumeEventPointer eventPointer) throws IOException,
-      InterruptedException {
+    InterruptedException, NoopRecordException {
     for (int i = 0; i < dataDirs.length; i++) {
       for(File logFile : LogUtils.getLogs(dataDirs[i])) {
         if(logFile.length() == 0L) {
@@ -461,7 +464,8 @@ public class TestLog {
   }
 
   private void takeAndVerify(FlumeEventPointer eventPointerIn,
-      FlumeEvent eventIn) throws IOException, InterruptedException {
+      FlumeEvent eventIn)
+    throws IOException, InterruptedException, NoopRecordException {
     FlumeEventQueue queue = log.getFlumeEventQueue();
     FlumeEventPointer eventPointerOut = queue.removeHead(0);
     Assert.assertNotNull(eventPointerOut);

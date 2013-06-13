@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,6 +62,16 @@ public class TestUtils {
     headers.put("timestamp", timestamp);
     FlumeEvent event = new FlumeEvent(headers,
             timestamp.getBytes());
+    return event;
+  }
+
+  public static FlumeEvent newPersistableEvent(int size) {
+    Map<String, String> headers = Maps.newHashMap();
+    String timestamp = String.valueOf(System.currentTimeMillis());
+    headers.put("timestamp", timestamp);
+    byte[] data = new byte[size];
+    Arrays.fill(data, (byte) 54);
+    FlumeEvent event = new FlumeEvent(headers, data);
     return event;
   }
 
@@ -129,25 +140,47 @@ public class TestUtils {
             .invoke(true));
   }
 
-  public static Set<String> takeEvents(Channel channel,
-          int batchSize) throws Exception {
-    return takeEvents(channel, batchSize, Integer.MAX_VALUE);
+  public static Set<String> takeEvents(Channel channel, int batchSize)
+    throws Exception {
+    return takeEvents(channel, batchSize, false);
   }
 
   public static Set<String> takeEvents(Channel channel,
-          int batchSize, int numEvents) throws Exception {
+          int batchSize, boolean checkForCorruption) throws Exception {
+    return takeEvents(channel, batchSize, Integer.MAX_VALUE, checkForCorruption);
+  }
+
+  public static Set<String> takeEvents(Channel channel,
+    int batchSize, int numEvents) throws Exception {
+    return takeEvents(channel, batchSize, numEvents, false);
+  }
+
+  public static Set<String> takeEvents(Channel channel,
+          int batchSize, int numEvents, boolean checkForCorruption) throws
+    Exception {
     Set<String> result = Sets.newHashSet();
     for (int i = 0; i < numEvents; i += batchSize) {
       Transaction transaction = channel.getTransaction();
       try {
         transaction.begin();
         for (int j = 0; j < batchSize; j++) {
-          Event event = null;
+          Event event;
           try {
             event = channel.take();
           } catch (ChannelException ex) {
-            Assert.assertTrue(ex.getMessage().startsWith(
-                "Take list for FileBackedTransaction, capacity"));
+            Throwable th = ex;
+            String msg;
+            if(checkForCorruption) {
+              msg = "Corrupt event found. Please run File Channel";
+              th = ex.getCause();
+            } else {
+              msg = "Take list for FileBackedTransaction, capacity";
+            }
+            Assert.assertTrue(th.getMessage().startsWith(
+                msg));
+            if(checkForCorruption) {
+              throw (Exception) th;
+            }
             transaction.commit();
             return result;
           }
@@ -168,15 +201,19 @@ public class TestUtils {
     }
     return result;
   }
-  public static Set<String> consumeChannel(Channel channel)
-      throws Exception {
+
+  public static Set<String> consumeChannel(Channel channel) throws Exception {
+    return consumeChannel(channel, false);
+  }
+  public static Set<String> consumeChannel(Channel channel,
+    boolean checkForCorruption) throws Exception {
     Set<String> result = Sets.newHashSet();
     int[] batchSizes = new int[] {
         1000, 100, 10, 1
     };
     for (int i = 0; i < batchSizes.length; i++) {
       while(true) {
-        Set<String> batch = takeEvents(channel, batchSizes[i]);
+        Set<String> batch = takeEvents(channel, batchSizes[i], checkForCorruption);
         if(batch.isEmpty()) {
           break;
         }

@@ -24,7 +24,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
+import java.util.zip.CRC32;
+import java.util.zip.Checksum;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.flume.channel.file.proto.ProtosFactory;
 
 import com.google.common.base.Preconditions;
@@ -36,13 +39,19 @@ import com.google.protobuf.ByteString;
  */
 class Put extends TransactionEventRecord {
   private FlumeEvent event;
+  // Should we move this to a higher level to not make multiple instances?
+  // Doing that might cause performance issues, since access to this would
+  // need to be synchronized (the whole reset-update-getValue cycle would
+  // need to be).
+  private final Checksum checksum = new CRC32();
 
+  @VisibleForTesting
   Put(Long transactionID, Long logWriteOrderID) {
-    super(transactionID, logWriteOrderID);
+    this(transactionID, logWriteOrderID, null);
   }
 
   Put(Long transactionID, Long logWriteOrderID, FlumeEvent event) {
-    this(transactionID, logWriteOrderID);
+    super(transactionID, logWriteOrderID);
     this.event = event;
   }
 
@@ -78,11 +87,14 @@ class Put extends TransactionEventRecord {
       }
     }
     eventBuilder.setBody(ByteString.copyFrom(event.getBody()));
-    putBuilder.setEvent(eventBuilder.build());
+    ProtosFactory.FlumeEvent protoEvent = eventBuilder.build();
+    putBuilder.setEvent(protoEvent);
+    putBuilder.setChecksum(calculateChecksum(event.getBody()));
     putBuilder.build().writeDelimitedTo(out);
   }
   @Override
-  void readProtos(InputStream in) throws IOException {
+  void readProtos(InputStream in) throws IOException,
+    CorruptEventException {
     ProtosFactory.Put put = Preconditions.checkNotNull(ProtosFactory.
         Put.parseDelimitedFrom(in), "Put cannot be null");
     Map<String, String> headers = Maps.newHashMap();
@@ -90,9 +102,25 @@ class Put extends TransactionEventRecord {
     for(ProtosFactory.FlumeEventHeader header : protosEvent.getHeadersList()) {
       headers.put(header.getKey(), header.getValue());
     }
+    byte[] eventBody = protosEvent.getBody().toByteArray();
+
+    if (put.hasChecksum()) {
+      long eventBodyChecksum = calculateChecksum(eventBody);
+      if (eventBodyChecksum != put.getChecksum()) {
+        throw new CorruptEventException("Expected checksum for event was " +
+          eventBodyChecksum + " but the checksum of the event is " + put.getChecksum());
+      }
+    }
     // TODO when we remove v2, remove FlumeEvent and use EventBuilder here
-    event = new FlumeEvent(headers, protosEvent.getBody().toByteArray());
+    event = new FlumeEvent(headers, eventBody);
   }
+
+  protected long calculateChecksum(byte[] body) {
+    checksum.reset();
+    checksum.update(body, 0, body.length);
+    return checksum.getValue();
+  }
+
   @Override
   public short getRecordType() {
     return Type.PUT.get();

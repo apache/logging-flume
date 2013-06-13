@@ -26,6 +26,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
+import org.apache.flume.ChannelException;
 import org.apache.flume.channel.file.encryption.KeyProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -373,7 +374,7 @@ class ReplayHandler {
       }
     }
   }
-  private LogRecord next() throws IOException {
+  private LogRecord next() throws IOException, CorruptEventException {
     LogRecord resultLogRecord = logRecordBuffer.poll();
     if(resultLogRecord != null) {
       // there is more log records to read

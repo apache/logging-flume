@@ -22,6 +22,9 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import org.apache.flume.ChannelException;
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.channel.file.encryption.CipherProvider;
 import org.apache.flume.channel.file.encryption.KeyProvider;
 import org.apache.flume.tools.DirectMemoryUtils;
@@ -31,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.io.EOFException;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -40,7 +44,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
-abstract class LogFile {
+@InterfaceAudience.Private
+@InterfaceStability.Unstable
+public abstract class LogFile {
 
   private static final Logger LOG = LoggerFactory
       .getLogger(LogFile.class);
@@ -54,13 +60,21 @@ abstract class LogFile {
   private static final ByteBuffer FILL = DirectMemoryUtils.
       allocate(1024 * 1024); // preallocation, 1MB
 
-  protected static final byte OP_RECORD = Byte.MAX_VALUE;
-  protected static final byte OP_EOF = Byte.MIN_VALUE;
+  public static final byte OP_RECORD = Byte.MAX_VALUE;
+  public static final byte OP_NOOP = (Byte.MAX_VALUE + Byte.MIN_VALUE)/2;
+  public static final byte OP_EOF = Byte.MIN_VALUE;
 
   static {
     for (int i = 0; i < FILL.capacity(); i++) {
       FILL.put(OP_EOF);
     }
+  }
+
+  protected static void skipRecord(RandomAccessFile fileHandle,
+    int offset) throws IOException {
+    fileHandle.seek(offset);
+    int length = fileHandle.readInt();
+    fileHandle.skipBytes(length);
   }
 
   abstract static class MetaDataWriter {
@@ -296,6 +310,48 @@ abstract class LogFile {
     }
   }
 
+  /**
+   * This is an class meant to be an internal Flume API,
+   * and can change at any time. Intended to be used only from File Channel  Integrity
+   * test tool. Not to be used for any other purpose.
+   */
+  public static class OperationRecordUpdater {
+    private final RandomAccessFile fileHandle;
+    private final File file;
+
+    public OperationRecordUpdater(File file) throws FileNotFoundException {
+      Preconditions.checkState(file.exists(), "File to update, " +
+        file.toString() + " does not exist.");
+      this.file = file;
+      fileHandle = new RandomAccessFile(file, "rw");
+    }
+
+    public void markRecordAsNoop(long offset) throws IOException {
+      // First ensure that the offset actually is an OP_RECORD. There is a
+      // small possibility that it still is OP_RECORD,
+      // but is not actually the beginning of a record. Is there anything we
+      // can do about it?
+      fileHandle.seek(offset);
+      byte byteRead = fileHandle.readByte();
+      Preconditions.checkState(byteRead == OP_RECORD || byteRead == OP_NOOP,
+        "Expected to read a record but the byte read indicates EOF");
+      fileHandle.seek(offset);
+      LOG.info("Marking event as " + OP_NOOP + " at " + offset + " for file " +
+        file.toString());
+      fileHandle.writeByte(OP_NOOP);
+    }
+
+    public void close() {
+      try {
+        fileHandle.getFD().sync();
+        fileHandle.close();
+      } catch (IOException e) {
+        LOG.error("Could not close file handle to file " +
+          fileHandle.toString(), e);
+      }
+    }
+  }
+
   static abstract class RandomReader {
     private final File file;
     private final BlockingQueue<RandomAccessFile> readFileHandles =
@@ -311,7 +367,7 @@ abstract class LogFile {
     }
 
     protected abstract TransactionEventRecord doGet(RandomAccessFile fileHandle)
-        throws IOException;
+        throws IOException, CorruptEventException;
 
     abstract int getVersion();
 
@@ -323,13 +379,18 @@ abstract class LogFile {
       return encryptionKeyProvider;
     }
 
-    FlumeEvent get(int offset) throws IOException, InterruptedException {
+    FlumeEvent get(int offset) throws IOException, InterruptedException,
+      CorruptEventException, NoopRecordException {
       Preconditions.checkState(open, "File closed");
       RandomAccessFile fileHandle = checkOut();
       boolean error = true;
       try {
         fileHandle.seek(offset);
         byte operation = fileHandle.readByte();
+        if(operation == OP_NOOP) {
+          throw new NoopRecordException("No op record found. Corrupt record " +
+            "may have been repaired by File Channel Integrity tool");
+        }
         Preconditions.checkState(operation == OP_RECORD,
             Integer.toHexString(operation));
         TransactionEventRecord record = doGet(fileHandle);
@@ -408,7 +469,7 @@ abstract class LogFile {
     }
   }
 
-  static abstract class SequentialReader {
+  public static abstract class SequentialReader {
 
     private final RandomAccessFile fileHandle;
     private final FileChannel fileChannel;
@@ -434,7 +495,7 @@ abstract class LogFile {
       fileHandle = new RandomAccessFile(file, "r");
       fileChannel = fileHandle.getChannel();
     }
-    abstract LogRecord doNext(int offset) throws IOException;
+    abstract LogRecord doNext(int offset) throws IOException, CorruptEventException;
 
     abstract int getVersion();
 
@@ -488,7 +549,7 @@ abstract class LogFile {
       }
     }
 
-    LogRecord next() throws IOException {
+    public LogRecord next() throws IOException, CorruptEventException {
       int offset = -1;
       try {
         long position = fileChannel.position();
@@ -499,14 +560,26 @@ abstract class LogFile {
         }
         offset = (int) position;
         Preconditions.checkState(offset >= 0);
-        byte operation = fileHandle.readByte();
-        if(operation != OP_RECORD) {
-          if(operation == OP_EOF) {
+        while (offset < fileHandle.length()) {
+          byte operation = fileHandle.readByte();
+          if (operation == OP_RECORD) {
+            break;
+          } else if (operation == OP_EOF) {
             LOG.info("Encountered EOF at " + offset + " in " + file);
+            return null;
+          } else if (operation == OP_NOOP) {
+            LOG.info("No op event found in file: " + file.toString() +
+              " at " + offset + ". Skipping event.");
+            skipRecord(fileHandle, offset + 1);
+            offset = (int) fileHandle.getFilePointer();
+            continue;
           } else {
             LOG.error("Encountered non op-record at " + offset + " " +
-                Integer.toHexString(operation) + " in " + file);
+              Integer.toHexString(operation) + " in " + file);
+            return null;
           }
+        }
+        if(offset >= fileHandle.length()) {
           return null;
         }
         return doNext(offset);
@@ -518,7 +591,10 @@ abstract class LogFile {
       }
     }
 
-    void close() {
+    public long getPosition() throws IOException {
+      return fileChannel.position();
+    }
+    public void close() {
       if(fileHandle != null) {
         try {
           fileHandle.close();
@@ -540,7 +616,7 @@ abstract class LogFile {
     return buffer;
   }
 
-  public static void main(String[] args) throws EOFException, IOException {
+  public static void main(String[] args) throws EOFException, IOException, CorruptEventException {
     File file = new File(args[0]);
     LogFile.SequentialReader reader = null;
     try {

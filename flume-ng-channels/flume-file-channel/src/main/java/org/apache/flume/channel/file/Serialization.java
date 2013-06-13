@@ -21,6 +21,8 @@ package org.apache.flume.channel.file;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.apache.commons.io.FileUtils;
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +35,9 @@ import java.io.RandomAccessFile;
 import java.util.Collections;
 import java.util.Set;
 
-class Serialization {
+@InterfaceAudience.Private
+@InterfaceStability.Unstable
+public class Serialization {
   private Serialization() {}
 
   static final long SIZE_OF_INT = 4;
@@ -43,9 +47,10 @@ class Serialization {
   static final int VERSION_2 = 2;
   static final int VERSION_3 = 3;
 
-  static final String METADATA_FILENAME = ".meta";
-  static final String METADATA_TMP_FILENAME = ".tmp";
-  static final String OLD_METADATA_FILENAME = METADATA_FILENAME + ".old";
+  public static final String METADATA_FILENAME = ".meta";
+  public static final String METADATA_TMP_FILENAME = ".tmp";
+  public static final String OLD_METADATA_FILENAME = METADATA_FILENAME +
+    ".old";
 
   // 64 K buffer to copy files.
   private static final int FILE_COPY_BUFFER_SIZE = 64 * 1024;
@@ -121,7 +126,7 @@ class Serialization {
    * @param to Destination file - this file should not exist
    * @return true if the copy was successful
    */
-  static boolean copyFile(File from, File to) throws IOException {
+  public static boolean copyFile(File from, File to) throws IOException {
     Preconditions.checkNotNull(from, "Source file is null, file copy failed.");
     Preconditions.checkNotNull(to, "Destination file is null, " +
       "file copy failed.");

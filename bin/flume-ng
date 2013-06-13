@@ -26,6 +26,7 @@
 FLUME_AGENT_CLASS="org.apache.flume.node.Application"
 FLUME_AVRO_CLIENT_CLASS="org.apache.flume.client.avro.AvroCLIClient"
 FLUME_VERSION_CLASS="org.apache.flume.tools.VersionInfo"
+FLUME_TOOLS_CLASS="org.apache.flume.tools.FlumeToolsMain"
 
 CLEAN_FLAG=1
 ################################
@@ -261,6 +262,9 @@ case "$mode" in
   avro-client)
     opt_avro_client=1
     ;;
+  tool)
+    opt_tool=1
+    ;;
   version)
    opt_version=1
    CLEAN_FLAG=0
@@ -433,6 +437,8 @@ elif [ -n "$opt_avro_client" ] ; then
   run_flume $FLUME_AVRO_CLIENT_CLASS $args
 elif [ -n "${opt_version}" ] ; then
   run_flume $FLUME_VERSION_CLASS $args
+elif [ -n "${opt_tool}" ] ; then
+  run_flume $FLUME_TOOLS_CLASS $args
 else
   error "This message should never appear" 1
 fi
