@@ -22,10 +22,16 @@ package org.apache.flume.source;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import org.apache.avro.ipc.NettyTransceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
@@ -49,6 +55,7 @@ import org.jboss.netty.channel.socket.SocketChannel;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.codec.compression.ZlibDecoder;
 import org.jboss.netty.handler.codec.compression.ZlibEncoder;
+import org.jboss.netty.handler.ssl.SslHandler;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -230,7 +237,6 @@ public class TestAvroSource {
         source.getLifecycleState());
   }
 
-
   private static class CompressionChannelFactory extends
       NioClientSocketChannelFactory {
     private int compressionLevel;
@@ -254,4 +260,116 @@ public class TestAvroSource {
     }
   }
 
+  @Test
+  public void testSslRequest() throws InterruptedException, IOException {
+    boolean bound = false;
+
+    for (int i = 0; i < 10 && !bound; i++) {
+      try {
+        Context context = new Context();
+
+        context.put("port", String.valueOf(selectedPort = 41414 + i));
+        context.put("bind", "0.0.0.0");
+        context.put("threads", "50");
+        context.put("keystore", "src/test/resources/server.p12");
+        context.put("keystore-password", "password");
+        context.put("keystore-type", "PKCS12");
+
+        Configurables.configure(source, context);
+
+        source.start();
+        bound = true;
+      } catch (ChannelException e) {
+        /*
+         * NB: This assume we're using the Netty server under the hood and the
+         * failure is to bind. Yucky.
+         */
+        Thread.sleep(100);
+      }
+    }
+
+    Assert
+        .assertTrue("Reached start or error", LifecycleController.waitForOneOf(
+            source, LifecycleState.START_OR_ERROR));
+    Assert.assertEquals("Server is started", LifecycleState.START,
+        source.getLifecycleState());
+
+    AvroSourceProtocol client = SpecificRequestor.getClient(
+        AvroSourceProtocol.class, new NettyTransceiver(new InetSocketAddress(
+        selectedPort), new SSLChannelFactory()));
+
+    AvroFlumeEvent avroEvent = new AvroFlumeEvent();
+
+    avroEvent.setHeaders(new HashMap<CharSequence, CharSequence>());
+    avroEvent.setBody(ByteBuffer.wrap("Hello avro ssl".getBytes()));
+
+    Status status = client.append(avroEvent);
+
+    Assert.assertEquals(Status.OK, status);
+
+    Transaction transaction = channel.getTransaction();
+    transaction.begin();
+
+    Event event = channel.take();
+    Assert.assertNotNull(event);
+    Assert.assertEquals("Channel contained our event", "Hello avro ssl",
+        new String(event.getBody()));
+    transaction.commit();
+    transaction.close();
+
+    logger.debug("Round trip event:{}", event);
+
+    source.stop();
+    Assert.assertTrue("Reached stop or error",
+        LifecycleController.waitForOneOf(source, LifecycleState.STOP_OR_ERROR));
+    Assert.assertEquals("Server is stopped", LifecycleState.STOP,
+        source.getLifecycleState());
+  }
+
+  /**
+   * Factory of SSL-enabled client channels
+   * Copied from Avro's org.apache.avro.ipc.TestNettyServerWithSSL test
+   */
+  private static class SSLChannelFactory extends NioClientSocketChannelFactory {
+    public SSLChannelFactory() {
+      super(Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
+    }
+
+    @Override
+    public SocketChannel newChannel(ChannelPipeline pipeline) {
+      try {
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, new TrustManager[]{new PermissiveTrustManager()},
+                        null);
+        SSLEngine sslEngine = sslContext.createSSLEngine();
+        sslEngine.setUseClientMode(true);
+        // addFirst() will make SSL handling the first stage of decoding
+        // and the last stage of encoding
+        pipeline.addFirst("ssl", new SslHandler(sslEngine));
+        return super.newChannel(pipeline);
+      } catch (Exception ex) {
+        throw new RuntimeException("Cannot create SSL channel", ex);
+      }
+    }
+  }
+
+  /**
+   * Bogus trust manager accepting any certificate
+   */
+  private static class PermissiveTrustManager implements X509TrustManager {
+    @Override
+    public void checkClientTrusted(X509Certificate[] certs, String s) {
+      // nothing
+    }
+
+    @Override
+    public void checkServerTrusted(X509Certificate[] certs, String s) {
+      // nothing
+    }
+
+    @Override
+    public X509Certificate[] getAcceptedIssuers() {
+      return new X509Certificate[0];
+    }
+  }
 }
