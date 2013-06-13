@@ -21,12 +21,16 @@ package org.apache.flume.channel.file;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -98,6 +102,8 @@ public class TestLogFile {
     final List<Throwable> errors =
         Collections.synchronizedList(new ArrayList<Throwable>());
     ExecutorService executorService = Executors.newFixedThreadPool(10);
+    CompletionService<Void> completionService = new ExecutorCompletionService
+      <Void>(executorService);
     final LogFile.RandomReader logFileReader =
         LogFileFactory.getRandomReader(dataFile, null);
     for (int i = 0; i < 1000; i++) {
@@ -117,7 +123,7 @@ public class TestLogFile {
       ByteBuffer bytes = TransactionEventRecord.toByteBuffer(put);
       FlumeEventPointer ptr = logFileWriter.put(bytes);
       final int offset = ptr.getOffset();
-      executorService.submit(new Runnable() {
+      completionService.submit(new Runnable() {
         @Override
         public void run() {
           try {
@@ -130,7 +136,11 @@ public class TestLogFile {
             }
           }
         }
-      });
+      }, null);
+    }
+
+    for(int i = 0; i < 1000; i++) {
+      completionService.take();
     }
     // first try and throw failures
     for(Throwable throwable : errors) {
@@ -142,7 +152,8 @@ public class TestLogFile {
     }
   }
   @Test
-  public void testReader() throws InterruptedException, IOException {
+  public void testReader() throws InterruptedException, IOException,
+    CorruptEventException {
     Map<Integer, Put> puts = Maps.newHashMap();
     for (int i = 0; i < 1000; i++) {
       FlumeEvent eventIn = TestUtils.newPersistableEvent();
@@ -169,7 +180,8 @@ public class TestLogFile {
   }
 
   @Test
-  public void testReaderOldMetaFile() throws InterruptedException, IOException {
+  public void testReaderOldMetaFile() throws InterruptedException,
+    IOException, CorruptEventException {
     Map<Integer, Put> puts = Maps.newHashMap();
     for (int i = 0; i < 1000; i++) {
       FlumeEvent eventIn = TestUtils.newPersistableEvent();
@@ -204,7 +216,8 @@ public class TestLogFile {
   }
 
     @Test
-  public void testReaderTempMetaFile() throws InterruptedException, IOException {
+  public void testReaderTempMetaFile() throws InterruptedException,
+      IOException, CorruptEventException {
     Map<Integer, Put> puts = Maps.newHashMap();
     for (int i = 0; i < 1000; i++) {
       FlumeEvent eventIn = TestUtils.newPersistableEvent();
@@ -259,5 +272,93 @@ public class TestLogFile {
     Assert.assertEquals(2, metaData.getLogFileID());
     Assert.assertEquals(3, metaData.getCheckpointPosition());
     Assert.assertEquals(4, metaData.getCheckpointWriteOrderID());
+  }
+
+  @Test (expected = CorruptEventException.class)
+  public void testPutGetCorruptEvent() throws Exception {
+    final LogFile.RandomReader logFileReader =
+      LogFileFactory.getRandomReader(dataFile, null);
+    final FlumeEvent eventIn = TestUtils.newPersistableEvent(2500);
+    final Put put = new Put(++transactionID, WriteOrderOracle.next(),
+      eventIn);
+    ByteBuffer bytes = TransactionEventRecord.toByteBuffer(put);
+    FlumeEventPointer ptr = logFileWriter.put(bytes);
+    logFileWriter.commit(TransactionEventRecord.toByteBuffer(new Commit
+      (transactionID, WriteOrderOracle.next())));
+    final int offset = ptr.getOffset();
+    RandomAccessFile writer = new RandomAccessFile(dataFile, "rw");
+    writer.seek(offset + 1500);
+    writer.write((byte) 45);
+    writer.write((byte) 12);
+    writer.getFD().sync();
+    logFileReader.get(offset);
+
+    // Should have thrown an exception by now.
+    Assert.fail();
+
+  }
+
+  @Test (expected = NoopRecordException.class)
+  public void testPutGetNoopEvent() throws Exception {
+    final LogFile.RandomReader logFileReader =
+      LogFileFactory.getRandomReader(dataFile, null);
+    final FlumeEvent eventIn = TestUtils.newPersistableEvent(2500);
+    final Put put = new Put(++transactionID, WriteOrderOracle.next(),
+      eventIn);
+    ByteBuffer bytes = TransactionEventRecord.toByteBuffer(put);
+    FlumeEventPointer ptr = logFileWriter.put(bytes);
+    logFileWriter.commit(TransactionEventRecord.toByteBuffer(new Commit
+      (transactionID, WriteOrderOracle.next())));
+    final int offset = ptr.getOffset();
+    LogFile.OperationRecordUpdater updater = new LogFile
+      .OperationRecordUpdater(dataFile);
+    updater.markRecordAsNoop(offset);
+    logFileReader.get(offset);
+
+    // Should have thrown an exception by now.
+    Assert.fail();
+  }
+
+  @Test
+  public void testOperationRecordUpdater() throws Exception {
+    File tempDir = Files.createTempDir();
+    File temp = new File(tempDir, "temp");
+    final RandomAccessFile tempFile = new RandomAccessFile(temp, "rw");
+    for(int i = 0; i < 5000; i++) {
+      tempFile.write(LogFile.OP_RECORD);
+    }
+    tempFile.seek(0);
+    LogFile.OperationRecordUpdater recordUpdater = new LogFile
+      .OperationRecordUpdater(temp);
+    //Convert every 10th byte into a noop byte
+    for(int i = 0; i < 5000; i+=10) {
+      recordUpdater.markRecordAsNoop(i);
+    }
+    recordUpdater.close();
+
+    tempFile.seek(0);
+    // Verify every 10th byte is actually a NOOP
+    for(int i = 0; i < 5000; i+=10) {
+      tempFile.seek(i);
+      Assert.assertEquals(LogFile.OP_NOOP, tempFile.readByte());
+    }
+
+  }
+
+  @Test
+  public void testOpRecordUpdaterWithFlumeEvents() throws Exception{
+    final FlumeEvent eventIn = TestUtils.newPersistableEvent(2500);
+    final Put put = new Put(++transactionID, WriteOrderOracle.next(),
+      eventIn);
+    ByteBuffer bytes = TransactionEventRecord.toByteBuffer(put);
+    FlumeEventPointer ptr = logFileWriter.put(bytes);
+    logFileWriter.commit(TransactionEventRecord.toByteBuffer(new Commit
+      (transactionID, WriteOrderOracle.next())));
+    final int offset = ptr.getOffset();
+    LogFile.OperationRecordUpdater updater = new LogFile
+      .OperationRecordUpdater(dataFile);
+    updater.markRecordAsNoop(offset);
+    RandomAccessFile fileReader = new RandomAccessFile(dataFile, "rw");
+    Assert.assertEquals(LogFile.OP_NOOP, fileReader.readByte());
   }
 }

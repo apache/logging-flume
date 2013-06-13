@@ -100,6 +100,7 @@ public class FileChannel extends BasicChannelSemantics {
   private String encryptionActiveKey;
   private String encryptionCipherProvider;
   private boolean useDualCheckpoints;
+  private boolean isTest = false;
 
   @Override
   public synchronized void setName(String name) {
@@ -451,6 +452,7 @@ public class FileChannel extends BasicChannelSemantics {
     private String getStateAsString() {
       return String.valueOf(getState());
     }
+
     @Override
     protected void doPut(Event event) throws InterruptedException {
       channelCounter.incrementEventPutAttemptCount();
@@ -511,23 +513,40 @@ public class FileChannel extends BasicChannelSemantics {
             + "log. Try increasing the log write timeout value. " +
             channelNameDescriptor);
       }
+
+      /*
+       * 1. Take an event which is in the queue.
+       * 2. If getting that event does not throw NoopRecordException,
+       *    then return it.
+       * 3. Else try to retrieve the next event from the queue
+       * 4. Repeat 2 and 3 until queue is empty or an event is returned.
+       */
+
       try {
-        FlumeEventPointer ptr = queue.removeHead(transactionID);
-        if(ptr != null) {
-          try {
-            // first add to takeList so that if write to disk
-            // fails rollback actually does it's work
-            Preconditions.checkState(takeList.offer(ptr), "takeList offer failed "
-                 + channelNameDescriptor);
-            log.take(transactionID, ptr); // write take to disk
-            Event event = log.get(ptr);
-            return event;
-          } catch (IOException e) {
-            throw new ChannelException("Take failed due to IO error "
-                    + channelNameDescriptor, e);
+        while (true) {
+          FlumeEventPointer ptr = queue.removeHead(transactionID);
+          if (ptr == null) {
+            return null;
+          } else {
+            try {
+              // first add to takeList so that if write to disk
+              // fails rollback actually does it's work
+              Preconditions.checkState(takeList.offer(ptr),
+                "takeList offer failed "
+                  + channelNameDescriptor);
+              log.take(transactionID, ptr); // write take to disk
+              Event event = log.get(ptr);
+              return event;
+            } catch (IOException e) {
+              throw new ChannelException("Take failed due to IO error "
+                + channelNameDescriptor, e);
+            } catch (NoopRecordException e) {
+              LOG.warn("Corrupt record replaced by File Channel Integrity " +
+                "tool found. Will retrieve next event", e);
+              takeList.remove(ptr);
+            }
           }
         }
-        return null;
       } finally {
         log.unlockShared();
       }

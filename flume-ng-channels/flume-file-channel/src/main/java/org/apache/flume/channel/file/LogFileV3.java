@@ -21,6 +21,8 @@ package org.apache.flume.channel.file;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessage;
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.channel.file.encryption.CipherProvider;
 import org.apache.flume.channel.file.encryption.CipherProviderFactory;
 import org.apache.flume.channel.file.encryption.KeyProvider;
@@ -43,7 +45,9 @@ import java.util.concurrent.LinkedBlockingDeque;
  * Represents a single data file on disk. Has methods to write,
  * read sequentially (replay), and read randomly (channel takes).
  */
-class LogFileV3 extends LogFile {
+@InterfaceAudience.Private
+@InterfaceStability.Unstable
+public class LogFileV3 extends LogFile {
   protected static final Logger LOGGER =
       LoggerFactory.getLogger(LogFileV3.class);
 
@@ -267,7 +271,7 @@ class LogFileV3 extends LogFile {
     }
     @Override
     protected TransactionEventRecord doGet(RandomAccessFile fileHandle)
-        throws IOException {
+        throws IOException, CorruptEventException {
       // readers are opened right when the file is created and thus
       // empty. As such we wait to initialize until there is some
       // data before we we initialize
@@ -297,10 +301,11 @@ class LogFileV3 extends LogFile {
     }
   }
 
-  static class SequentialReader extends LogFile.SequentialReader {
+  public static class SequentialReader extends LogFile.SequentialReader {
     private CipherProvider.Decryptor decryptor;
-    SequentialReader(File file, @Nullable KeyProvider encryptionKeyProvider)
-        throws EOFException, IOException {
+
+    public SequentialReader(File file, @Nullable KeyProvider
+      encryptionKeyProvider) throws EOFException, IOException {
       super(file, encryptionKeyProvider);
       File metaDataFile = Serialization.getMetaDataFile(file);
       FileInputStream inputStream = new FileInputStream(metaDataFile);
@@ -344,8 +349,9 @@ class LogFileV3 extends LogFile {
     public int getVersion() {
       return Serialization.VERSION_3;
     }
+
     @Override
-    LogRecord doNext(int offset) throws IOException {
+    LogRecord doNext(int offset) throws IOException, CorruptEventException {
       byte[] buffer = readDelimitedBuffer(getFileHandle());
       if(decryptor != null) {
         buffer = decryptor.decrypt(buffer);

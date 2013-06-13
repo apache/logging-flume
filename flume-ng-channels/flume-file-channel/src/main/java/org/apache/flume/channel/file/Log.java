@@ -73,7 +73,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
  */
 @InterfaceAudience.Private
 @InterfaceStability.Unstable
-class Log {
+public class Log {
   public static final String PREFIX = "log-";
   private static final Logger LOGGER = LoggerFactory.getLogger(Log.class);
   private static final int MIN_NUM_LOGS = 2;
@@ -571,12 +571,18 @@ class Log {
    * @throws InterruptedException
    */
   FlumeEvent get(FlumeEventPointer pointer) throws IOException,
-  InterruptedException {
+    InterruptedException, NoopRecordException {
     Preconditions.checkState(open, "Log is closed");
     int id = pointer.getFileID();
     LogFile.RandomReader logFile = idLogFileMap.get(id);
     Preconditions.checkNotNull(logFile, "LogFile is null for id " + id);
-    return logFile.get(pointer.getOffset());
+    try {
+      return logFile.get(pointer.getOffset());
+    } catch (CorruptEventException ex) {
+      open = false;
+      throw new IOException("Corrupt event found. Please run File Channel " +
+        "Integrity tool.", ex);
+    }
   }
 
   /**

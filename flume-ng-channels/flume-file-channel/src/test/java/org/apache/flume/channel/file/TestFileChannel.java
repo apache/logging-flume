@@ -21,13 +21,17 @@ package org.apache.flume.channel.file;
 import static org.apache.flume.channel.file.TestUtils.*;
 import static org.fest.reflect.core.Reflection.*;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -487,7 +491,7 @@ public class TestFileChannel extends TestFileChannelBase {
   public void testReferenceCounts() throws Exception {
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, "10000");
-    overrides.put(FileChannelConfiguration.MAX_FILE_SIZE, "100");
+    overrides.put(FileChannelConfiguration.MAX_FILE_SIZE, "150");
     final FileChannel channel = createFileChannel(overrides);
     channel.start();
     putEvents(channel, "testing-reference-counting", 1, 15);
@@ -565,6 +569,44 @@ public class TestFileChannel extends TestFileChannelBase {
     Assert.assertTrue(inflightTakes.getFileIDs().isEmpty());
     Assert.assertTrue(inflightTakes.getInFlightPointers().isEmpty());
     Assert.assertTrue(channel.getDepth() == in.size());
+
+  }
+
+  @Test (expected = IllegalStateException.class)
+  public void testChannelDiesOnCorruptEvent() throws Exception {
+    final FileChannel channel = createFileChannel();
+    channel.start();
+    putEvents(channel,"test-corrupt-event",100,100);
+    for(File dataDir : dataDirs) {
+      File[] files = dataDir.listFiles(new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+          if(!name.endsWith("meta") && !name.contains("lock")){
+            return true;
+          }
+          return false;
+        }
+      });
+      if (files != null && files.length > 0) {
+        for (int j = 0; j < files.length; j++) {
+          RandomAccessFile fileToCorrupt = new RandomAccessFile(files[0], "rw");
+          fileToCorrupt.seek(50);
+          fileToCorrupt.writeByte(234);
+          fileToCorrupt.close();
+        }
+      }
+    }
+    try {
+      consumeChannel(channel, true);
+    } catch (IllegalStateException ex) {
+      // The rollback call in takeEvents() in TestUtils will cause an
+      // IllegalArgumentException - and this should be tested to verify the
+      // channel is completely stopped.
+      Assert.assertTrue(ex.getMessage().contains("Log is closed"));
+      throw ex;
+    }
+    Assert.fail();
+
 
   }
 
