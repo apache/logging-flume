@@ -153,14 +153,16 @@ public class ThriftSource extends AbstractSource implements Configurable,
     if(server != null && server.isServing()) {
       server.stop();
     }
-    servingExecutor.shutdown();
-    try {
-      if(!servingExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
-        servingExecutor.shutdownNow();
+    if (servingExecutor != null) {
+      servingExecutor.shutdown();
+      try {
+        if (!servingExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+          servingExecutor.shutdownNow();
+        }
+      } catch (InterruptedException e) {
+        throw new FlumeException("Interrupted while waiting for server to be " +
+          "shutdown.");
       }
-    } catch (InterruptedException e) {
-      throw new FlumeException("Interrupted while waiting for server to be " +
-        "shutdown.");
     }
     sourceCounter.stop();
     super.stop();
