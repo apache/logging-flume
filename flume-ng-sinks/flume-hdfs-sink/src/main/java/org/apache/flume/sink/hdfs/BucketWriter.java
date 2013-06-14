@@ -58,8 +58,6 @@ class BucketWriter {
   private static final Logger LOG = LoggerFactory
       .getLogger(BucketWriter.class);
 
-  private static String DIRECTORY_DELIMITER = System.getProperty("file.separator");
-
   /**
    * This lock ensures that only one thread can open a file at a time.
    */
@@ -214,9 +212,9 @@ class BucketWriter {
           fullFileName += codeC.getDefaultExtension();
         }
 
-        bucketPath = filePath + DIRECTORY_DELIMITER + inUsePrefix
+        bucketPath = filePath + "/" + inUsePrefix
           + fullFileName + inUseSuffix;
-        targetPath = filePath + DIRECTORY_DELIMITER + fullFileName;
+        targetPath = filePath + "/" + fullFileName;
 
         LOG.info("Creating " + bucketPath);
         callWithTimeout(new CallRunner<Void>() {
