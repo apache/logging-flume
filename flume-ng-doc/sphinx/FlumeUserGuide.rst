@@ -844,6 +844,7 @@ Property Name               Default      Description
 **channels**                --
 **type**                    --           The component type name, needs to be ``jms``
 **initialContextFactory**   --           Inital Context Factory, e.g: org.apache.activemq.jndi.ActiveMQInitialContextFactory
+**connectionFactory**       --           The JNDI name the connection factory shoulld appear as
 **providerURL**             --           The JMS provider URL
 **destinationName**         --           Destination name
 **destinationType**         --           Destination type (queue or topic)
@@ -886,6 +887,7 @@ Example for agent named a1:
   a1.sources.r1.type = jms
   a1.sources.r1.channels = c1
   a1.sources.r1.initialContextFactory = org.apache.activemq.jndi.ActiveMQInitialContextFactory
+  a1.sources.r1.connectionFactory = GenericConnectionFactory
   a1.sources.r1.providerURL = tcp://mqserver:61616
   a1.sources.r1.destinationName = BUSINESS_DATA
   a1.sources.r1.destinationType = QUEUE
