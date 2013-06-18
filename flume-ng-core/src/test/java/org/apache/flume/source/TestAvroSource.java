@@ -270,7 +270,7 @@ public class TestAvroSource {
 
         context.put("port", String.valueOf(selectedPort = 41414 + i));
         context.put("bind", "0.0.0.0");
-        context.put("threads", "50");
+        context.put("ssl", "true");
         context.put("keystore", "src/test/resources/server.p12");
         context.put("keystore-password", "password");
         context.put("keystore-type", "PKCS12");

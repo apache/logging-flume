@@ -474,6 +474,7 @@ public class TestAvroSink {
     context.put("bind", hostname);
     context.put("threads", "50");
     context.put("compression-type", "deflate");
+    context.put("ssl", String.valueOf(true));
     context.put("keystore", "src/test/resources/server.p12");
     context.put("keystore-password", "password");
     context.put("keystore-type", "PKCS12");

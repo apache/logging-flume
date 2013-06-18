@@ -19,6 +19,7 @@
 
 package org.apache.flume.source;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import java.io.FileInputStream;
 import java.net.InetSocketAddress;
@@ -44,6 +45,7 @@ import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
+import org.apache.flume.FlumeException;
 import org.apache.flume.Source;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.Configurables;
@@ -128,6 +130,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   private static final String PORT_KEY = "port";
   private static final String BIND_KEY = "bind";
   private static final String COMPRESSION_TYPE = "compression-type";
+  private static final String SSL_KEY = "ssl";
   private static final String KEYSTORE_KEY = "keystore";
   private static final String KEYSTORE_PASSWORD_KEY = "keystore-password";
   private static final String KEYSTORE_TYPE_KEY = "keystore-type";
@@ -160,16 +163,22 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
               context.getString(THREADS));
     }
 
+    enableSsl = context.getBoolean(SSL_KEY, false);
     keystore = context.getString(KEYSTORE_KEY);
     keystorePassword = context.getString(KEYSTORE_PASSWORD_KEY);
     keystoreType = context.getString(KEYSTORE_TYPE_KEY, "JKS");
-    if (keystore != null && keystorePassword != null) {
+
+    if (enableSsl) {
+      Preconditions.checkNotNull(keystore,
+          KEYSTORE_KEY + " must be specified when SSL is enabled");
+      Preconditions.checkNotNull(keystorePassword,
+          KEYSTORE_PASSWORD_KEY + " must be specified when SSL is enabled");
       try {
         KeyStore ks = KeyStore.getInstance(keystoreType);
         ks.load(new FileInputStream(keystore), keystorePassword.toCharArray());
-        enableSsl = true;
       } catch (Exception ex) {
-        logger.warn("AVRO source configured with invalid keystore " + keystore, ex);
+        throw new FlumeException(
+            "Avro source configured with invalid keystore: " + keystore, ex);
       }
     }
 

@@ -69,7 +69,6 @@ import org.jboss.netty.handler.codec.compression.ZlibEncoder;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.security.validator.KeyStores;
 
 /**
  * Avro/Netty implementation of {@link RpcClient}.
@@ -666,25 +665,26 @@ implements RpcClient {
                 + " all server certificates");
             managers = new TrustManager[] { new PermissiveTrustManager() };
           } else {
-            InputStream truststoreStream = null;
-            if (truststore == null) {
-              truststoreType = "JKS";
-              truststoreStream = getClass().getClassLoader().getResourceAsStream("cacerts");
-              truststorePassword = "changeit";
-            } else {
-              truststoreStream = new FileInputStream(truststore);
+            KeyStore keystore = null;
+
+            if (truststore != null) {
+              if (truststorePassword == null) {
+                throw new NullPointerException("truststore password is null");
+              }
+              InputStream truststoreStream = new FileInputStream(truststore);
+              keystore = KeyStore.getInstance(truststoreType);
+              keystore.load(truststoreStream, truststorePassword.toCharArray());
             }
-            KeyStore keystore = KeyStore.getInstance(truststoreType);
-            keystore.load(truststoreStream, truststorePassword.toCharArray());
 
             TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+            // null keystore is OK, with SunX509 it defaults to system CA Certs
+            // see http://docs.oracle.com/javase/6/docs/technotes/guides/security/jsse/JSSERefGuide.html#X509TrustManager
             tmf.init(keystore);
             managers = tmf.getTrustManagers();
           }
 
           SSLContext sslContext = SSLContext.getInstance("TLS");
-          sslContext.init(null, managers,
-                          null);
+          sslContext.init(null, managers, null);
           SSLEngine sslEngine = sslContext.createSSLEngine();
           sslEngine.setUseClientMode(true);
           // addFirst() will make SSL handling the first stage of decoding

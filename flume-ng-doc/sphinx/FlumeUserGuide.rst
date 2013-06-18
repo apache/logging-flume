@@ -684,7 +684,7 @@ Avro Source
 ~~~~~~~~~~~
 
 Listens on Avro port and receives events from external Avro client streams.
-When paired with the built-in AvroSink on another (previous hop) Flume agent,
+When paired with the built-in Avro Sink on another (previous hop) Flume agent,
 it can create tiered collection topologies.
 Required properties are in **bold**.
 
@@ -701,9 +701,10 @@ selector.*
 interceptors         --           Space-separated list of interceptors
 interceptors.*
 compression-type     none         This can be "none" or "deflate".  The compression-type must match the compression-type of matching AvroSource
-keystore             --           The path to a Java keystore. If "keystore" and "keystore-password" are both set, then this AvroSource will us SSL.
-keystore-password    --           The password for the Java keystore.
-keystore-type        JKS          This can be "JKS" or "PKCS12". The type of the Java keystore.
+ssl                  false        Set this to true to enable SSL encryption. You must also specify a "keystore" and a "keystore-password".
+keystore             --           This is the path to a Java keystore file. Required for SSL.
+keystore-password    --           The password for the Java keystore. Required for SSL.
+keystore-type        JKS          The type of the Java keystore. This can be "JKS" or "PKCS12".
 ==================   ===========  ===================================================
 
 Example for agent named a1:
@@ -1529,11 +1530,12 @@ connect-timeout              20000    Amount of time (ms) to allow for the first
 request-timeout              20000    Amount of time (ms) to allow for requests after the first.
 reset-connection-interval    none     Amount of time (s) before the connection to the next hop is reset. This will force the Avro Sink to reconnect to the next hop. This will allow the sink to connect to hosts behind a hardware load-balancer when news hosts are added without having to restart the agent.
 compression-type             none     This can be "none" or "deflate".  The compression-type must match the compression-type of matching AvroSource
-compression-level            6	      The level of compression to compress event. 0 = no compression and 1-9 is compression.  The higher the number the more compression
-ssl                   false    Set to true to enable SSL for this AvroSink. When configuring SSL, you can optionally set a "truststore", "truststore-password", and "truststore-type".
-truststore            --       The path to a Java truststore file. If you enable SSL without configuring a truststore, the AvroSink will automatically use a permisive trust setting and accept any server certifacte used by the AvroSource it is connected to.
-truststore-password   --       The password for the truststore.
-truststore-type       JKS      This can be "JKS" or other supported Java truststore type. The type of the Java truststore.
+compression-level            6        The level of compression to compress event. 0 = no compression and 1-9 is compression.  The higher the number the more compression
+ssl                          false    Set to true to enable SSL for this AvroSink. When configuring SSL, you can optionally set a "truststore", "truststore-password", "truststore-type", and specify whether to "trust-all-certs".
+trust-all-certs              false    If this is set to true, SSL server certificates for remote servers (Avro Sources) will not be checked. This should NOT be used in production because it makes it easier for an attacker to execute a man-in-the-middle attack and "listen in" on the encrypted connection.
+truststore                   --       The path to a custom Java truststore file. Flume uses the certificate authority information in this file to determine whether the remote Avro Source's SSL authentication credentials should be trusted. If not specified, the default Java JSSE certificate authority files (typically "jssecacerts" or "cacerts" in the Oracle JRE) will be used.
+truststore-password          --       The password for the specified truststore.
+truststore-type              JKS      The type of the Java truststore. This can be "JKS" or other supported Java truststore type.
 ==========================   =======  ==============================================
 
 Example for agent named a1:
