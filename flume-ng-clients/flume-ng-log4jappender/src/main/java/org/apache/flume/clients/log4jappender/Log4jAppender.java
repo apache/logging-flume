@@ -18,11 +18,21 @@
  */
 package org.apache.flume.clients.log4jappender;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.BinaryEncoder;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.reflect.ReflectData;
+import org.apache.avro.reflect.ReflectDatumWriter;
+import org.apache.avro.specific.SpecificRecord;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
@@ -67,6 +77,8 @@ public class Log4jAppender extends AppenderSkeleton {
   private boolean unsafeMode = false;
   private long timeout = RpcClientConfigurationConstants
     .DEFAULT_REQUEST_TIMEOUT_MILLIS;
+  private boolean avroReflectionEnabled;
+  private String avroSchemaUrl;
 
   RpcClient rpcClient = null;
 
@@ -130,17 +142,22 @@ public class Log4jAppender extends AppenderSkeleton {
     //Log4jAvroHeaders.LOG_LEVEL.toString()))
     hdrs.put(Log4jAvroHeaders.LOG_LEVEL.toString(),
         String.valueOf(event.getLevel().toInt()));
-    hdrs.put(Log4jAvroHeaders.MESSAGE_ENCODING.toString(), "UTF8");
 
-    String message = null;
-    if(this.layout != null) {
-      message = this.layout.format(event);
+    Event flumeEvent;
+    Object message = event.getMessage();
+    if (message instanceof GenericRecord) {
+      GenericRecord record = (GenericRecord) message;
+      populateAvroHeaders(hdrs, record.getSchema(), message);
+      flumeEvent = EventBuilder.withBody(serialize(record, record.getSchema()), hdrs);
+    } else if (message instanceof SpecificRecord || avroReflectionEnabled) {
+      Schema schema = ReflectData.get().getSchema(message.getClass());
+      populateAvroHeaders(hdrs, schema, message);
+      flumeEvent = EventBuilder.withBody(serialize(message, schema), hdrs);
     } else {
-      message = event.getMessage().toString();
+      hdrs.put(Log4jAvroHeaders.MESSAGE_ENCODING.toString(), "UTF8");
+      String msg = layout != null ? layout.format(event) : message.toString();
+      flumeEvent = EventBuilder.withBody(msg, Charset.forName("UTF8"), hdrs);
     }
-
-    Event flumeEvent = EventBuilder.withBody(
-        message, Charset.forName("UTF8"), hdrs);
 
     try {
       rpcClient.append(flumeEvent);
@@ -151,6 +168,39 @@ public class Log4jAppender extends AppenderSkeleton {
         return;
       }
       throw new FlumeException(msg + " Exception follows.", e);
+    }
+  }
+
+  private Schema schema;
+  private ByteArrayOutputStream out;
+  private DatumWriter<Object> writer;
+  private BinaryEncoder encoder;
+
+  protected void populateAvroHeaders(Map<String, String> hdrs, Schema schema,
+      Object message) {
+    if (avroSchemaUrl != null) {
+      hdrs.put(Log4jAvroHeaders.AVRO_SCHEMA_URL.toString(), avroSchemaUrl);
+      return;
+    }
+    LogLog.warn("Cannot find ID for schema. Adding header for schema, " +
+        "which may be inefficient. Consider setting up an Avro Schema Cache.");
+    hdrs.put(Log4jAvroHeaders.AVRO_SCHEMA_LITERAL.toString(), schema.toString());
+  }
+
+  private byte[] serialize(Object datum, Schema datumSchema) throws FlumeException {
+    if (schema == null || !datumSchema.equals(schema)) {
+      schema = datumSchema;
+      out = new ByteArrayOutputStream();
+      writer = new ReflectDatumWriter<Object>(schema);
+      encoder = EncoderFactory.get().binaryEncoder(out, null);
+    }
+    out.reset();
+    try {
+      writer.write(datum, encoder);
+      encoder.flush();
+      return out.toByteArray();
+    } catch (IOException e) {
+      throw new FlumeException(e);
     }
   }
 
@@ -229,6 +279,13 @@ public class Log4jAppender extends AppenderSkeleton {
     return this.timeout;
   }
 
+  public void setAvroReflectionEnabled(boolean avroReflectionEnabled) {
+    this.avroReflectionEnabled = avroReflectionEnabled;
+  }
+
+  public void setAvroSchemaUrl(String avroSchemaUrl) {
+    this.avroSchemaUrl = avroSchemaUrl;
+  }
 
   /**
    * Activate the options set using <tt>setPort()</tt>
