@@ -549,7 +549,7 @@ limitations under the License.
                   <exclude>**/*.avsc</exclude>
                   <exclude>**/*.avro</exclude>
                   <exclude>**/docs/**</exclude>
-                  <exclude>**/test/resources/test_command.txt</exclude>
+                  <exclude>**/test/resources/**</exclude>
                   <exclude>**/.settings/*</exclude>
                   <exclude>**/.classpath</exclude>
                   <exclude>**/.project</exclude>
@@ -938,6 +938,12 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-ng-elasticsearch-sink</artifactId>
+        <version>1.4.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.flume.flume-ng-sinks</groupId>
+        <artifactId>flume-ng-morphline-solr-sink</artifactId>
         <version>1.4.0-SNAPSHOT</version>
       </dependency>
 
