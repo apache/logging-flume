@@ -1449,7 +1449,7 @@ hdfs.fileType           SequenceFile  File format: currently ``SequenceFile``, `
                                       (2)CompressedStream requires set hdfs.codeC with an available codeC
 hdfs.maxOpenFiles       5000          Allow only this number of open files. If this number is exceeded, the oldest file is closed.
 hdfs.minBlockReplicas   --            Specify minimum number of replicas per HDFS block. If not specified, it comes from the default Hadoop config in the classpath.
-hdfs.writeFormat        --            "Text" or "Writable"
+hdfs.writeFormat        --            Format for sequence file records. One of "Text" or "Writable" (the default).
 hdfs.callTimeout        10000         Number of milliseconds allowed for HDFS operations, such as open, write, flush, close.
                                       This number should be increased if many HDFS timeout operations are occurring.
 hdfs.threadsPoolSize    10            Number of threads per HDFS sink for HDFS IO ops (open, write, etc.)
@@ -2607,14 +2607,18 @@ appender must have the flume-ng-sdk in the classpath (eg,
 flume-ng-sdk-1.4.0-SNAPSHOT.jar).
 Required properties are in **bold**.
 
-=============  =======  ==========================================================================
-Property Name  Default  Description
-=============  =======  ==========================================================================
-Hostname       --       The hostname on which a remote Flume agent is running with an avro source.
-Port           --       The port at which the remote Flume agent's avro source is listening.
-UnsafeMode     false    If true, the appender will not throw exceptions on failure to send the events.
-=============  =======  ==========================================================================
-
+=====================  =======  ==============================================================
+Property Name          Default  Description
+=====================  =======  ==============================================================
+**Hostname**           --       The hostname on which a remote Flume agent is running with an
+                                avro source.
+**Port**               --       The port at which the remote Flume agent's avro source is
+                                listening.
+UnsafeMode             false    If true, the appender will not throw exceptions on failure to
+                                send the events.
+AvroReflectionEnabled  false    Use Avro Reflection to serialize Log4j events.
+AvroSchemaUrl          --       A URL from which the Avro schema can be retrieved.
+=====================  =======  ==============================================================
 
 Sample log4j.properties file:
 
@@ -2630,6 +2634,35 @@ Sample log4j.properties file:
   log4j.logger.org.example.MyClass = DEBUG,flume
   #...
 
+By default each event is converted to a string by calling ``toString()``,
+or by using the Log4j layout, if specified.
+
+If the event is an instance of
+``org.apache.avro.generic.GenericRecord``, ``org.apache.avro.specific.SpecificRecord``,
+or if the property ``AvroReflectionEnabled`` is set to ``true`` then the event will be
+serialized using Avro serialization.
+
+Serializing every event with its Avro schema is inefficient, so it is good practice to
+provide a schema URL from which the schema can be retrieved by the downstream sink,
+typically the HDFS sink. If ``AvroSchemaUrl`` is not specified,
+then the schema will be included as a Flume header.
+
+Sample log4j.properties file configured to use Avro serialization:
+
+.. code-block:: properties
+
+  #...
+  log4j.appender.flume = org.apache.flume.clients.log4jappender.Log4jAppender
+  log4j.appender.flume.Hostname = example.com
+  log4j.appender.flume.Port = 41414
+  log4j.appender.flume.AvroReflectionEnabled = true
+  log4j.appender.flume.AvroSchemaUrl = hdfs://namenode/path/to/schema.avsc
+
+  # configure a class's logger to output to the flume appender
+  log4j.logger.org.example.MyClass = DEBUG,flume
+  #...
+
+
 Load Balancing Log4J Appender
 =============================
 
@@ -2640,18 +2673,22 @@ scheme for performing the load balancing. It also supports a configurable backof
 timeout so that down agents are removed temporarily from the set of hosts
 Required properties are in **bold**.
 
-=============  ===========  ==========================================================================
-Property Name  Default      Description
-=============  ===========  ==========================================================================
-**Hosts**      --           A space-separated list of host:port
-                            at which Flume (through an AvroSource) is listening for events
-Selector       ROUND_ROBIN  Selection mechanism. Must be either ROUND_ROBIN,
-                            RANDOM or custom FQDN to class that inherits from LoadBalancingSelector.
-MaxBackoff     --           A long value representing the maximum amount of time in milliseconds
-                            the Load balancing client will backoff from a node that has failed to
-                            consume an event. Defaults to no backoff
-UnsafeMode     false        If true, the appender will not throw exceptions on failure to send the events.
-=============  ===========  ==========================================================================
+=====================  ===========  ==============================================================
+Property Name          Default      Description
+=====================  ===========  ==============================================================
+**Hosts**              --           A space-separated list of host:port at which Flume (through
+                                    an AvroSource) is listening for events
+Selector               ROUND_ROBIN  Selection mechanism. Must be either ROUND_ROBIN,
+                                    RANDOM or custom FQDN to class that inherits from
+                                    LoadBalancingSelector.
+MaxBackoff             --           A long value representing the maximum amount of time in
+                                    milliseconds the Load balancing client will backoff from a
+                                    node that has failed to consume an event. Defaults to no backoff
+UnsafeMode             false        If true, the appender will not throw exceptions on failure to
+                                    send the events.
+AvroReflectionEnabled  false        Use Avro Reflection to serialize Log4j events.
+AvroSchemaUrl          --           A URL from which the Avro schema can be retrieved.
+=====================  ===========  ==============================================================
 
 
 Sample log4j.properties file configured using defaults:
