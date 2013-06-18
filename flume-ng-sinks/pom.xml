@@ -45,5 +45,6 @@ limitations under the License.
     <module>flume-irc-sink</module>
     <module>flume-ng-hbase-sink</module>
     <module>flume-ng-elasticsearch-sink</module>
+    <module>flume-ng-morphline-solr-sink</module>
   </modules>
 </project>

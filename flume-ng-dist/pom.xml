@@ -113,6 +113,10 @@
       <artifactId>flume-ng-elasticsearch-sink</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.flume.flume-ng-sinks</groupId>
+      <artifactId>flume-ng-morphline-solr-sink</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.flume.flume-ng-sources</groupId>
       <artifactId>flume-scribe-source</artifactId>
     </dependency>
