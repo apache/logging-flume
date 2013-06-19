@@ -980,6 +980,33 @@ deserializer.maxLineLength      2048            Maximum number of characters to 
 deserializer.outputCharset      UTF-8           Charset to use for encoding events put into the channel.
 ==============================  ==============  ==========================================================
 
+AVRO
+^^^^
+
+This deserializer is able to read an Avro container file, and it generates
+one event per Avro record in the file.
+Each event is annotated with a header that indicates the schema used.
+The body of the event is the binary Avro record data, not
+including the schema or the rest of the container file elements.
+
+Note that if the spool directory source must retry putting one of these events
+onto a channel (for example, because the channel is full), then it will reset
+and retry from the most recent Avro container file sync point. To reduce
+potential event duplication in such a failure scenario, write sync markers more
+frequently in your Avro input files.
+
+==============================  ==============  ======================================================================
+Property Name                   Default         Description
+==============================  ==============  ======================================================================
+deserializer.schemaType         HASH            How the schema is represented. By default, or when the value ``HASH``
+                                                is specified, the Avro schema is hashed and
+                                                the hash is stored in every event in the event header
+                                                "flume.avro.schema.hash". If ``LITERAL`` is specified, the JSON-encoded
+                                                schema itself is stored in every event in the event header
+                                                "flume.avro.schema.literal". Using ``LITERAL`` mode is relatively
+                                                inefficient compared to ``HASH`` mode.
+==============================  ==============  ======================================================================
+
 NetCat Source
 ~~~~~~~~~~~~~
 
