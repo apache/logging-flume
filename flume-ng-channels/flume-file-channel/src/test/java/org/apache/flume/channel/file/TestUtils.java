@@ -292,8 +292,11 @@ public class TestUtils {
   public static void copyDecompressed(String resource, File output)
       throws IOException {
     URL input =  Resources.getResource(resource);
-    ByteStreams.copy(new GZIPInputStream(input.openStream()),
-        new FileOutputStream(output));
+    FileOutputStream fos = new FileOutputStream(output);
+    GZIPInputStream gzis = new GZIPInputStream(input.openStream());
+    ByteStreams.copy(gzis, fos);
+    fos.close();
+    gzis.close();
   }
 
   public static Context createFileChannelContext(String checkpointDir,
