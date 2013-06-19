@@ -21,6 +21,8 @@ package org.apache.flume.serialization;
 import com.google.common.base.Charsets;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,7 +46,10 @@ import java.nio.charset.CoderResult;
  */
 @InterfaceAudience.Private
 @InterfaceStability.Evolving
-public class ResettableFileInputStream extends ResettableInputStream {
+public class ResettableFileInputStream extends ResettableInputStream
+    implements RemoteMarkable, LengthMeasurable {
+
+  Logger logger = LoggerFactory.getLogger(ResettableFileInputStream.class);
 
   public static final int DEFAULT_BUF_SIZE = 16384;
 
@@ -126,6 +131,8 @@ public class ResettableFileInputStream extends ResettableInputStream {
 
   @Override
   public synchronized int read(byte[] b, int off, int len) throws IOException {
+    logger.trace("read(buf, {}, {})", off, len);
+
     if (position >= fileSize) {
       return -1;
     }
@@ -194,17 +201,35 @@ public class ResettableFileInputStream extends ResettableInputStream {
   }
 
   @Override
+  public void markPosition(long position) throws IOException {
+    tracker.storePosition(position);
+  }
+
+  @Override
+  public long getMarkPosition() throws IOException {
+    return tracker.getPosition();
+  }
+
+  @Override
   public void reset() throws IOException {
     seek(tracker.getPosition());
   }
 
   @Override
+  public long length() throws IOException {
+    return file.length();
+  }
+
+  @Override
   public long tell() throws IOException {
+    logger.trace("Tell position: {}", syncPosition);
+
     return syncPosition;
   }
 
   @Override
   public synchronized void seek(long newPos) throws IOException {
+    logger.trace("Seek to position: {}", newPos);
 
     // check to see if we can seek within our existing buffer
     long relativeChange = newPos - position;
