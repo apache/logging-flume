@@ -47,6 +47,7 @@ public class TestLog {
   public void setup() throws IOException {
     transactionID = 0;
     checkpointDir = Files.createTempDir();
+    FileUtils.forceDeleteOnExit(checkpointDir);
     Assert.assertTrue(checkpointDir.isDirectory());
     dataDirs = new File[3];
     for (int i = 0; i < dataDirs.length; i++) {
@@ -415,8 +416,9 @@ public class TestLog {
     FlumeEventPointer eventPointer = log.put(transactionID, eventIn);
     log.commitPut(transactionID); // this is not required since
     log.close();
-    FileUtils.deleteDirectory(checkpointDir);
-    Assert.assertTrue(checkpointDir.mkdir());
+    checkpointDir = Files.createTempDir();
+    FileUtils.forceDeleteOnExit(checkpointDir);
+    Assert.assertTrue(checkpointDir.isDirectory());
     log = new Log.Builder().setCheckpointInterval(1L).setMaxFileSize(
         MAX_FILE_SIZE).setQueueSize(CAPACITY).setCheckpointDir(
             checkpointDir).setLogDirs(dataDirs)
