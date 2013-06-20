@@ -30,35 +30,6 @@
 
   <baseDirectory>apache-flume-${project.version}-bin</baseDirectory>
 
-  <moduleSets>
-
-    <moduleSet>
-      <useAllReactorProjects>true</useAllReactorProjects>
-
-      <sources>
-        <includeModuleDirectory>true</includeModuleDirectory>
-        <excludeSubModuleDirectories>false</excludeSubModuleDirectories>
-
-        <fileSets>
-          <fileSet>
-            <excludes>
-              <exclude>target/**</exclude>
-              <exclude>*/target/**</exclude>
-              <exclude>.classpath</exclude>
-              <exclude>*/.classpath</exclude>
-              <exclude>.project</exclude>
-              <exclude>*/.project</exclude>
-              <exclude>.settings/**</exclude>
-              <exclude>*/.settings/**</exclude>
-            </excludes>
-          </fileSet>
-        </fileSets>
-      </sources>
-
-    </moduleSet>
-
-  </moduleSets>
-
   <dependencySets>
     <dependencySet>
       <outputDirectory>lib</outputDirectory>
@@ -104,7 +75,6 @@
       </excludes>
 
       <includes>
-        <include>.gitignore</include>
         <include>DEVNOTES</include>
         <include>README</include>
         <include>LICENSE</include>
@@ -113,9 +83,6 @@
         <include>RELEASE-NOTES</include>
         <include>bin/**</include>
         <include>conf/**</include>
-        <include>pom.xml</include>
-        <include>flume-ng-doc/**</include>
-        <include>flume-ng-tests/**</include>
       </includes>
     </fileSet>
 
