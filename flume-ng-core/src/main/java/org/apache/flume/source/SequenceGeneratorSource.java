@@ -23,12 +23,12 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
-import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.PollableSource;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,14 +40,13 @@ public class SequenceGeneratorSource extends AbstractSource implements
 
   private long sequence;
   private int batchSize;
-  private CounterGroup counterGroup;
+  private SourceCounter sourceCounter;
   private List<Event> batchArrayList;
   private long totalEvents;
   private long eventsSent = 0;
 
   public SequenceGeneratorSource() {
     sequence = 0;
-    counterGroup = new CounterGroup();
   }
 
   /**
@@ -61,6 +60,9 @@ public class SequenceGeneratorSource extends AbstractSource implements
       batchArrayList = new ArrayList<Event>(batchSize);
     }
     totalEvents = context.getLong("totalEvents", Long.MAX_VALUE);
+    if (sourceCounter == null) {
+      sourceCounter = new SourceCounter(getName());
+    }
   }
 
   @Override
@@ -73,6 +75,7 @@ public class SequenceGeneratorSource extends AbstractSource implements
         if(eventsSent < totalEvents) {
           getChannelProcessor().processEvent(
             EventBuilder.withBody(String.valueOf(sequence++).getBytes()));
+          sourceCounter.incrementEventAcceptedCount();
           eventsSent++;
         } else {
           status = Status.BACKOFF;
@@ -90,11 +93,12 @@ public class SequenceGeneratorSource extends AbstractSource implements
         }
         if(!batchArrayList.isEmpty()) {
           getChannelProcessor().processEventBatch(batchArrayList);
+          sourceCounter.incrementAppendBatchAcceptedCount();
+          sourceCounter.addToEventAcceptedCount(batchArrayList.size());
         }
       }
-      counterGroup.incrementAndGet("events.successful");
+
     } catch (ChannelException ex) {
-      counterGroup.incrementAndGet("events.failed");
       eventsSent -= i;
       logger.error( getName() + " source could not write to channel.", ex);
     }
@@ -107,7 +111,7 @@ public class SequenceGeneratorSource extends AbstractSource implements
     logger.info("Sequence generator source starting");
 
     super.start();
-
+    sourceCounter.start();
     logger.debug("Sequence generator source started");
   }
 
@@ -116,8 +120,9 @@ public class SequenceGeneratorSource extends AbstractSource implements
     logger.info("Sequence generator source stopping");
 
     super.stop();
+    sourceCounter.stop();
 
-    logger.info("Sequence generator source stopped. Metrics:{}", counterGroup);
+    logger.info("Sequence generator source stopped. Metrics:{}",getName(), sourceCounter);
   }
 
 }
