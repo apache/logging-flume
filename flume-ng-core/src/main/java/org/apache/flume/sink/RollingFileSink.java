@@ -78,7 +78,8 @@ public class RollingFileSink extends AbstractSink implements Configurable {
 
     serializerType = context.getString("sink.serializer", "TEXT");
     serializerContext =
-        new Context(context.getSubProperties(EventSerializer.CTX_PREFIX));
+        new Context(context.getSubProperties("sink." +
+            EventSerializer.CTX_PREFIX));
 
     Preconditions.checkArgument(directory != null, "Directory may not be null");
     Preconditions.checkNotNull(serializerType, "Serializer type is undefined");
