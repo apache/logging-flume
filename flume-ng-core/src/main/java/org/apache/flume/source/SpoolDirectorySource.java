@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.flume.*;
 import org.apache.flume.client.avro.ReliableSpoolingFileEventReader;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.serialization.LineDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +59,7 @@ Configurable, EventDrivenSource {
   private String deletePolicy;
   private String inputCharset;
 
-  private CounterGroup counterGroup;
+  private SourceCounter sourceCounter;
   ReliableSpoolingFileEventReader reader;
 
   @Override
@@ -68,7 +69,6 @@ Configurable, EventDrivenSource {
 
     ScheduledExecutorService executor =
         Executors.newSingleThreadScheduledExecutor();
-    counterGroup = new CounterGroup();
 
     File directory = new File(spoolDirectory);
     try {
@@ -89,17 +89,21 @@ Configurable, EventDrivenSource {
           ioe);
     }
 
-    Runnable runner = new SpoolDirectoryRunnable(reader, counterGroup);
+    Runnable runner = new SpoolDirectoryRunnable(reader, sourceCounter);
     executor.scheduleWithFixedDelay(
         runner, 0, POLL_DELAY_MS, TimeUnit.MILLISECONDS);
 
     super.start();
     logger.debug("SpoolDirectorySource source started");
+    sourceCounter.start();
   }
 
   @Override
   public void stop() {
     super.stop();
+    sourceCounter.stop();
+    logger.info("SpoolDir source {} stopped. Metrics: {}", getName(),
+      sourceCounter);
   }
 
   @Override
@@ -134,17 +138,19 @@ Configurable, EventDrivenSource {
       deserializerContext.put(LineDeserializer.MAXLINE_KEY,
           bufferMaxLineLength.toString());
     }
-
+    if (sourceCounter == null) {
+      sourceCounter = new SourceCounter(getName());
+    }
   }
 
   private class SpoolDirectoryRunnable implements Runnable {
     private ReliableSpoolingFileEventReader reader;
-    private CounterGroup counterGroup;
+    private SourceCounter sourceCounter;
 
     public SpoolDirectoryRunnable(ReliableSpoolingFileEventReader reader,
-        CounterGroup counterGroup) {
+        SourceCounter sourceCounter) {
       this.reader = reader;
-      this.counterGroup = counterGroup;
+      this.sourceCounter = sourceCounter;
     }
 
     @Override
@@ -155,10 +161,13 @@ Configurable, EventDrivenSource {
           if (events.isEmpty()) {
             break;
           }
-          counterGroup.addAndGet("spooler.events.read", (long) events.size());
+          sourceCounter.addToEventReceivedCount(events.size());
+          sourceCounter.incrementAppendBatchReceivedCount();
 
           getChannelProcessor().processEventBatch(events);
           reader.commit();
+          sourceCounter.addToEventAcceptedCount(events.size());
+          sourceCounter.incrementAppendBatchAcceptedCount();
         }
       } catch (Throwable t) {
         logger.error("Uncaught exception in Runnable", t);
