@@ -47,7 +47,7 @@ limitations under the License.
     <stagingDirectory>${project.basedir}/target/docs</stagingDirectory>
 
     <avro.version>1.7.3</avro.version>
-
+    <elasticsearch.version>0.90.1</elasticsearch.version>
   </properties>
 
   <modules>
@@ -858,14 +858,14 @@ limitations under the License.
       <dependency>
         <groupId>org.elasticsearch</groupId>
         <artifactId>elasticsearch</artifactId>
-        <version>0.19.10</version>
+        <version>${elasticsearch.version}</version>
         <optional>true</optional>
       </dependency>
 
       <dependency>
         <groupId>org.elasticsearch</groupId>
         <artifactId>elasticsearch</artifactId>
-        <version>0.19.10</version>
+        <version>${elasticsearch.version}</version>
         <classifier>tests</classifier>
         <scope>test</scope>
       </dependency>
