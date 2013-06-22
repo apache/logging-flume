@@ -34,19 +34,22 @@ import org.apache.flume.thrift.ThriftSourceProtocol;
 import org.apache.flume.thrift.ThriftFlumeEvent;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.server.TNonblockingServer;
 import org.apache.thrift.server.TServer;
-import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TFastFramedTransport;
+import org.apache.thrift.transport.TNonblockingServerSocket;
+import org.apache.thrift.transport.TNonblockingServerTransport;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TServerTransport;
-import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 public class ThriftSource extends AbstractSource implements Configurable,
@@ -100,22 +103,90 @@ public class ThriftSource extends AbstractSource implements Configurable,
   @Override
   public void start() {
     logger.info("Starting thrift source");
+
     maxThreads = (maxThreads <= 0) ? Integer.MAX_VALUE : maxThreads;
+    Class<?> serverClass = null;
+    Class<?> argsClass = null;
+    TServer.AbstractServerArgs args = null;
+    /*
+     * Use reflection to determine if TThreadedSelectServer is available. If
+     * it is not available, use TThreadPoolServer
+     */
     try {
-      serverTransport = new TServerSocket(new InetSocketAddress
-        (bindAddress, port));
-    } catch (TTransportException e) {
-      throw new FlumeException("Failed to start Thrift Source.", e);
+      serverClass = Class.forName("org.apache.thrift" +
+        ".server.TThreadedSelectorServer");
+
+      argsClass = Class.forName("org.apache.thrift" +
+        ".server.TThreadedSelectorServer$Args");
+
+      // Looks like TThreadedSelectorServer is available, so continue..
+      ExecutorService sourceService;
+      ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat(
+        "Flume Thrift IPC Thread %d").build();
+      if (maxThreads == 0) {
+        sourceService = Executors.newCachedThreadPool(threadFactory);
+      } else {
+        sourceService = Executors.newFixedThreadPool(maxThreads, threadFactory);
+      }
+      serverTransport = new TNonblockingServerSocket(
+        new InetSocketAddress(bindAddress, port));
+      args = (TNonblockingServer.AbstractNonblockingServerArgs) argsClass
+        .getConstructor(TNonblockingServerTransport.class)
+        .newInstance(serverTransport);
+      Method m = argsClass.getDeclaredMethod("executorService",
+        ExecutorService.class);
+      m.invoke(args, sourceService);
+    } catch (ClassNotFoundException e) {
+      logger.info("TThreadedSelectorServer not found, " +
+        "using TThreadPoolServer");
+      try {
+        // Looks like TThreadedSelectorServer is not available,
+        // so create a TThreadPoolServer instead.
+
+        serverTransport = new TServerSocket(new InetSocketAddress
+          (bindAddress, port));
+
+        serverClass = Class.forName("org.apache.thrift" +
+          ".server.TThreadPoolServer");
+        argsClass = Class.forName("org.apache.thrift.server" +
+          ".TThreadPoolServer$Args");
+        args = (TServer.AbstractServerArgs) argsClass
+          .getConstructor(TServerTransport.class)
+          .newInstance(serverTransport);
+        Method m = argsClass.getDeclaredMethod("maxWorkerThreads",int.class);
+        m.invoke(args, maxThreads);
+      } catch (ClassNotFoundException e1) {
+        throw new FlumeException("Cannot find TThreadSelectorServer or " +
+          "TThreadPoolServer. Please install a compatible version of thrift " +
+          "in the classpath", e1);
+      } catch (Throwable throwable) {
+        throw new FlumeException("Cannot start Thrift source.", throwable);
+      }
+    } catch (Throwable throwable) {
+      throw new FlumeException("Cannot start Thrift source.", throwable);
     }
 
-    TThreadPoolServer.Args args = new TThreadPoolServer.Args(serverTransport);
-    args.protocolFactory(new TCompactProtocol.Factory());
-    args.inputTransportFactory(new TFastFramedTransport.Factory());
-    args.outputTransportFactory(new TFastFramedTransport.Factory());
-    args.processor(new ThriftSourceProtocol.Processor<ThriftSourceHandler>(
-      new ThriftSourceHandler())).maxWorkerThreads(maxThreads);
+    try {
 
-    server = new TThreadPoolServer(args);
+      args.protocolFactory(new TCompactProtocol.Factory());
+      args.inputTransportFactory(new TFastFramedTransport.Factory());
+      args.outputTransportFactory(new TFastFramedTransport.Factory());
+      args.processor(new ThriftSourceProtocol
+        .Processor<ThriftSourceHandler>(new ThriftSourceHandler()));
+      /*
+       * Both THsHaServer and TThreadedSelectorServer allows us to pass in
+       * the executor service to use - unfortunately the "executorService"
+       * method does not exist in the parent abstract Args class,
+       * so use reflection to pass the executor in.
+       *
+       */
+
+      server = (TServer) serverClass.getConstructor(argsClass).newInstance
+        (args);
+    } catch (Throwable ex) {
+      throw new FlumeException("Cannot start Thrift Source.", ex);
+    }
+
 
     servingExecutor = Executors.newSingleThreadExecutor(new
       ThreadFactoryBuilder().setNameFormat("Flume Thrift Source I/O Boss")
