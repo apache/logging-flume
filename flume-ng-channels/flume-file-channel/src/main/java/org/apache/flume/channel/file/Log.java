@@ -869,14 +869,21 @@ public class Log {
     boolean error = true;
     try {
       try {
-        logFiles.get(logFileIndex).commit(buffer);
+        LogFile.Writer logFileWriter = logFiles.get(logFileIndex);
+        // If multiple transactions are committing at the same time,
+        // this ensures that the number of actual fsyncs is small and a
+        // number of them are grouped together into one.
+        logFileWriter.commit(buffer);
+        logFileWriter.sync();
         error = false;
       } catch (LogFileRetryableIOException e) {
         if(!open) {
           throw e;
         }
         roll(logFileIndex, buffer);
-        logFiles.get(logFileIndex).commit(buffer);
+        LogFile.Writer logFileWriter = logFiles.get(logFileIndex);
+        logFileWriter.commit(buffer);
+        logFileWriter.sync();
         error = false;
       }
     } finally {

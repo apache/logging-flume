@@ -29,10 +29,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.channel.file.proto.ProtosFactory;
@@ -285,6 +289,7 @@ public class TestLogFile {
     FlumeEventPointer ptr = logFileWriter.put(bytes);
     logFileWriter.commit(TransactionEventRecord.toByteBuffer(new Commit
       (transactionID, WriteOrderOracle.next())));
+    logFileWriter.sync();
     final int offset = ptr.getOffset();
     RandomAccessFile writer = new RandomAccessFile(dataFile, "rw");
     writer.seek(offset + 1500);
@@ -309,6 +314,7 @@ public class TestLogFile {
     FlumeEventPointer ptr = logFileWriter.put(bytes);
     logFileWriter.commit(TransactionEventRecord.toByteBuffer(new Commit
       (transactionID, WriteOrderOracle.next())));
+    logFileWriter.sync();
     final int offset = ptr.getOffset();
     LogFile.OperationRecordUpdater updater = new LogFile
       .OperationRecordUpdater(dataFile);
@@ -354,11 +360,56 @@ public class TestLogFile {
     FlumeEventPointer ptr = logFileWriter.put(bytes);
     logFileWriter.commit(TransactionEventRecord.toByteBuffer(new Commit
       (transactionID, WriteOrderOracle.next())));
+    logFileWriter.sync();
     final int offset = ptr.getOffset();
     LogFile.OperationRecordUpdater updater = new LogFile
       .OperationRecordUpdater(dataFile);
     updater.markRecordAsNoop(offset);
     RandomAccessFile fileReader = new RandomAccessFile(dataFile, "rw");
     Assert.assertEquals(LogFile.OP_NOOP, fileReader.readByte());
+  }
+
+  @Test
+  public void testGroupCommit() throws Exception {
+    final FlumeEvent eventIn = TestUtils.newPersistableEvent(250);
+    final CyclicBarrier barrier = new CyclicBarrier(20);
+    ExecutorService executorService = Executors.newFixedThreadPool(20);
+    ExecutorCompletionService<Void> completionService = new
+      ExecutorCompletionService<Void>(executorService);
+    final LogFile.Writer writer = logFileWriter;
+    final AtomicLong txnId = new AtomicLong(++transactionID);
+    for (int i = 0; i < 20; i++) {
+      completionService.submit(new Callable<Void>() {
+        @Override
+        public Void call() {
+          try {
+            Put put = new Put(txnId.incrementAndGet(),
+              WriteOrderOracle.next(), eventIn);
+            ByteBuffer bytes = TransactionEventRecord.toByteBuffer(put);
+            writer.put(bytes);
+            writer.commit(TransactionEventRecord.toByteBuffer(
+              new Commit(txnId.get(), WriteOrderOracle.next())));
+            barrier.await();
+            writer.sync();
+          } catch (Exception ex) {
+            Throwables.propagate(ex);
+          }
+          return null;
+        }
+      });
+    }
+
+    for(int i = 0; i < 20; i++) {
+      completionService.take().get();
+    }
+
+    //At least 250*20, but can be higher due to serialization overhead
+    Assert.assertTrue(logFileWriter.position() >= 5000);
+    Assert.assertEquals(1, writer.getSyncCount());
+    Assert.assertTrue(logFileWriter.getLastCommitPosition() ==
+      logFileWriter.getLastSyncPosition());
+
+    executorService.shutdown();
+
   }
 }
