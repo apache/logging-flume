@@ -24,6 +24,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.AbstractSource;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
@@ -52,7 +53,7 @@ import java.util.Map;
  * the server should bind. Mandatory <p> <tt>handler</tt>: the class that
  * deserializes a HttpServletRequest into a list of flume events. This class
  * must implement HTTPSourceHandler. Default:
- * {@linkplain JSONDeserializer}. <p> <tt>handler.*</tt> Any configuration
+ * {@linkplain JSONHandler}. <p> <tt>handler.*</tt> Any configuration
  * to be passed to the handler. <p>
  *
  * All events deserialized from one Http request are committed to the channel in
@@ -85,6 +86,7 @@ public class HTTPSource extends AbstractSource implements
   private volatile Server srv;
   private volatile String host;
   private HTTPSourceHandler handler;
+  private SourceCounter sourceCounter;
 
   @Override
   public void configure(Context context) {
@@ -118,6 +120,9 @@ public class HTTPSource extends AbstractSource implements
       LOG.error("Error configuring HTTPSource!", ex);
       Throwables.propagate(ex);
     }
+    if (sourceCounter == null) {
+      sourceCounter = new SourceCounter(getName());
+    }
   }
 
   private void checkHostAndPort() {
@@ -150,6 +155,7 @@ public class HTTPSource extends AbstractSource implements
       Throwables.propagate(ex);
     }
     Preconditions.checkArgument(srv.isRunning());
+    sourceCounter.start();
     super.start();
   }
 
@@ -162,6 +168,8 @@ public class HTTPSource extends AbstractSource implements
     } catch (Exception ex) {
       LOG.error("Error while stopping HTTPSource. Exception follows.", ex);
     }
+    sourceCounter.stop();
+    LOG.info("Http source {} stopped. Metrics: {}", getName(), sourceCounter);
   }
 
   private class FlumeHTTPServlet extends HttpServlet {
@@ -187,6 +195,8 @@ public class HTTPSource extends AbstractSource implements
                 + ex.getMessage());
         return;
       }
+      sourceCounter.incrementAppendBatchReceivedCount();
+      sourceCounter.addToEventReceivedCount(events.size());
       try {
         getChannelProcessor().processEventBatch(events);
       } catch (ChannelException ex) {
@@ -207,6 +217,8 @@ public class HTTPSource extends AbstractSource implements
       response.setCharacterEncoding(request.getCharacterEncoding());
       response.setStatus(HttpServletResponse.SC_OK);
       response.flushBuffer();
+      sourceCounter.incrementAppendBatchAcceptedCount();
+      sourceCounter.addToEventAcceptedCount(events.size());
     }
 
     @Override
