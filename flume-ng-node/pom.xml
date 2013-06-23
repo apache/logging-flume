@@ -88,6 +88,11 @@
     </dependency>
 
     <dependency>
+      <groupId>org.apache.flume.flume-ng-channels</groupId>
+      <artifactId>flume-file-channel</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
