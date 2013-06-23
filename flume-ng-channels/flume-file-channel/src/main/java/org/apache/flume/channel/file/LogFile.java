@@ -167,6 +167,11 @@ public abstract class LogFile {
     private final CipherProvider.Encryptor encryptor;
     private final CachedFSUsableSpace usableSpace;
     private volatile boolean open;
+    private long lastCommitPosition;
+    private long lastSyncPosition;
+
+    // To ensure we can count the number of fsyncs.
+    private long syncCount;
 
 
     Writer(File file, int logFileID, long maxFileSize,
@@ -207,9 +212,28 @@ public abstract class LogFile {
     long getMaxSize() {
       return maxFileSize;
     }
+
+    @VisibleForTesting
+    long getLastCommitPosition(){
+      return lastCommitPosition;
+    }
+
+    @VisibleForTesting
+    long getLastSyncPosition() {
+      return lastSyncPosition;
+    }
+
+    @VisibleForTesting
+    long getSyncCount() {
+      return syncCount;
+    }
     synchronized long position() throws IOException {
       return getFileChannel().position();
     }
+
+    // encrypt and write methods may not be thread safe in the following
+    // methods, so all methods need to be synchronized.
+
     synchronized FlumeEventPointer put(ByteBuffer buffer) throws IOException {
       if(encryptor != null) {
         buffer = ByteBuffer.wrap(encryptor.encrypt(buffer.array()));
@@ -229,14 +253,17 @@ public abstract class LogFile {
       }
       write(buffer);
     }
+
     synchronized void commit(ByteBuffer buffer) throws IOException {
-      if(encryptor != null) {
+      if (encryptor != null) {
         buffer = ByteBuffer.wrap(encryptor.encrypt(buffer.array()));
       }
       write(buffer);
-      sync();
+      lastCommitPosition = position();
     }
-    private Pair<Integer, Integer> write(ByteBuffer buffer) throws IOException {
+
+    private Pair<Integer, Integer> write(ByteBuffer buffer)
+      throws IOException {
       if(!isOpen()) {
         throw new LogFileRetryableIOException("File closed " + file);
       }
@@ -260,14 +287,27 @@ public abstract class LogFile {
       Preconditions.checkState(wrote == toWrite.limit());
       return Pair.of(getLogFileID(), offset);
     }
+
     synchronized boolean isRollRequired(ByteBuffer buffer) throws IOException {
       return isOpen() && position() + (long) buffer.limit() > getMaxSize();
     }
-    private void sync() throws IOException {
-      if(!isOpen()) {
+
+    /**
+     * Sync the underlying log file to disk. Expensive call,
+     * should be used only on commits. If a sync has already happened after
+     * the last commit, this method is a no-op
+     * @throws IOException
+     * @throws LogFileRetryableIOException - if this log file is closed.
+     */
+    synchronized void sync() throws IOException {
+      if (!isOpen()) {
         throw new LogFileRetryableIOException("File closed " + file);
       }
-      getFileChannel().force(false);
+      if (lastSyncPosition < lastCommitPosition) {
+        getFileChannel().force(false);
+        lastSyncPosition = position();
+        syncCount++;
+      }
     }
 
 
