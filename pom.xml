@@ -1052,6 +1052,12 @@ limitations under the License.
         <version>3.4.0.Final</version>
       </dependency>
 
+      <dependency>
+        <groupId>org.apache.solr</groupId>
+        <artifactId>solr-cell</artifactId>
+        <version>4.3.1</version>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
 
