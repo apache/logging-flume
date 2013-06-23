@@ -43,7 +43,6 @@ import org.apache.flume.Event;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
-import org.apache.hadoop.io.Writable;
 import org.junit.Assert;
 
 import com.google.common.base.Charsets;
