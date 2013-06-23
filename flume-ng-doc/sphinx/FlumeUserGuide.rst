@@ -1905,8 +1905,9 @@ Required properties are in **bold**.
 Property Name                 Default           Description
 ============================  ================  ===============================================================================
 **type**                      --                The component type name, needs to be ``memory``
-capacity                      100               The max number of events stored in the channel
-transactionCapacity           100               The max number of events stored in the channel per transaction
+capacity                      100               The maximum number of events stored in the channel
+transactionCapacity           100               The maximum number of events the channel will take from a source or give to a
+                                                sink per transaction
 keep-alive                    3                 Timeout in seconds for adding or removing an event
 byteCapacityBufferPercentage  20                Defines the percent of buffer between byteCapacity and the estimated total size
                                                 of all events in the channel, to account for data in headers. See below.
@@ -1929,7 +1930,11 @@ Example for agent named a1:
 
   a1.channels = c1
   a1.channels.c1.type = memory
-  a1.channels.c1.capacity = 1000
+  a1.channels.c1.capacity = 10000
+  a1.channels.c1.transactionCapacity = 10000
+  a1.channels.c1.byteCapacityBufferPercentage = 20
+  a1.channels.c1.byteCapacity = 800000
+  
 
 JDBC Channel
 ~~~~~~~~~~~~
