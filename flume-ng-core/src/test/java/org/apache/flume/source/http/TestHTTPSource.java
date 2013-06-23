@@ -44,6 +44,7 @@ import org.junit.Test;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,12 +59,21 @@ public class TestHTTPSource {
 
   private static HTTPSource source;
   private static Channel channel;
-  private int selectedPort;
+  private static int selectedPort;
   DefaultHttpClient httpClient;
   HttpPost postRequest;
 
+  private static int findFreePort() throws IOException {
+    ServerSocket socket = new ServerSocket(0);
+    int port = socket.getLocalPort();
+    socket.close();
+    return port;
+  }
+
   @BeforeClass
   public static void setUpClass() throws Exception {
+    selectedPort = findFreePort();
+
     source = new HTTPSource();
     channel = new MemoryChannel();
 
@@ -82,7 +92,7 @@ public class TestHTTPSource {
     channel.start();
     Context context = new Context();
 
-    context.put("port", String.valueOf(41404));
+    context.put("port", String.valueOf(selectedPort));
     context.put("host", "0.0.0.0");
 
     Configurables.configure(source, context);
@@ -98,7 +108,7 @@ public class TestHTTPSource {
   @Before
   public void setUp() {
     httpClient = new DefaultHttpClient();
-    postRequest = new HttpPost("http://0.0.0.0:41404");
+    postRequest = new HttpPost("http://0.0.0.0:" + selectedPort);
   }
 
   @Test
