@@ -82,6 +82,7 @@ public abstract class AbstractElasticSearchSinkTest {
         .put("number_of_replicas", 0)
         .put("routing.hash.type", "simple")
         .put("gateway.type", "none")
+        .put("path.data", "target/es-test")
         .build();
 
     node = NodeBuilder.nodeBuilder().settings(settings).local(true).node();
