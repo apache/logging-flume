@@ -1,4 +1,4 @@
-Apache Flume 1.3.0
+Apache Flume 1.4.0
 
 CONTENTS
 1. What is Apache Flume
@@ -9,17 +9,16 @@ CONTENTS
 
 1. What is Apache Flume
 Flume is a distributed, reliable, and available service for
-efficiently collecting, aggregating, and moving large amounts of log
+efficiently collecting, aggregating, and moving large amounts of event
 data. It has a simple and flexible architecture based on streaming
 data flows. It is robust and fault tolerant with tunable reliability
-mechanisms and many failover and recovery mechanisms. The system is
-centrally managed and allows for intelligent dynamic management. It
-uses a simple extensible data model that allows for online analytic
+mechanisms and many failover and recovery mechanisms. Flume uses a
+simple, extensible data model that allows for online analytic
 application.
 
 2. Status of this release
-Apache Flume 1.3.0 is the second release of Flume as an Apache top-level project
-(TLP). Apache Flume 1.3.0 is production-ready software.
+Apache Flume 1.4.0 is the fourth release of Flume as an Apache top-level project
+(TLP). Apache Flume 1.4.0 is production-ready software.
 
 3. Major changes in this Release
 For a detailed list of changes, please see the CHANGELOG file included
