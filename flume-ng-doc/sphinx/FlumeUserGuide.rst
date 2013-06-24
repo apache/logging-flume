@@ -1007,6 +1007,19 @@ deserializer.schemaType         HASH            How the schema is represented. B
                                                 inefficient compared to ``HASH`` mode.
 ==============================  ==============  ======================================================================
 
+BlobDeserializer
+^^^^^^^^^^^^^^^^
+
+This deserializer reads a Binary Large Object (BLOB) per event, typically one BLOB per file. For example a PDF or JPG file. Note that this approach is not suitable for very large objects because the entire BLOB is buffered in RAM.
+
+==========================  ==================  =======================================================================
+Property Name               Default             Description
+==========================  ==================  =======================================================================
+**deserializer**            --                  The FQCN of this class: ``org.apache.flume.sink.solr.morphline.BlobDeserializer$Builder``
+deserializer.maxBlobLength  100000000           The maximum number of bytes to read and buffer for a given request
+==========================  ==================  =======================================================================
+
+
 NetCat Source
 ~~~~~~~~~~~~~
 
@@ -1264,6 +1277,17 @@ for list of events can be created by:
 .. code-block:: java
 
   Type type = new TypeToken<List<JSONEvent>>() {}.getType();
+
+BlobHandler
+'''''''''''
+By default HTTPSource splits JSON input into Flume events. As an alternative, BlobHandler is a handler for HTTPSource that returns an event that contains the request parameters as well as the Binary Large Object (BLOB) uploaded with this request. For example a PDF or JPG file. Note that this approach is not suitable for very large objects because it buffers up the entire BLOB in RAM.
+
+=====================  ==================  ============================================================================
+Property Name          Default             Description
+=====================  ==================  ============================================================================
+**handler**            --                  The FQCN of this class: ``org.apache.flume.sink.solr.morphline.BlobHandler``
+handler.maxBlobLength  100000000           The maximum number of bytes to read and buffer for a given request
+=====================  ==================  ============================================================================
 
 Legacy Sources
 ~~~~~~~~~~~~~~
@@ -1803,6 +1827,56 @@ Example for agent named a1:
   a1.sinks.k1.columnFamily = bar_cf
   a1.sinks.k1.serializer = org.apache.flume.sink.hbase.SimpleAsyncHbaseEventSerializer
   a1.sinks.k1.channel = c1
+
+MorphlineSolrSink
+~~~~~~~~~~~~~~~~~
+
+This sink extracts data from Flume events, transforms it, and loads it in near-real-time into Apache Solr servers, which in turn serve queries to end users or search applications.
+
+This sink is well suited for use cases that stream raw data into HDFS (via the HdfsSink) and simultaneously extract, transform and load the same data into Solr (via MorphlineSolrSink). In particular, this sink can process arbitrary heterogeneous raw data from disparate data sources and turn it into a data model that is useful to Search applications.
+
+The ETL functionality is customizable using a `morphline configuration file <http://cloudera.github.io/cdk/docs/0.4.0/cdk-morphlines/index.html>`_ that defines a chain of transformation commands that pipe event records from one command to another. 
+
+Morphlines can be seen as an evolution of Unix pipelines where the data model is generalized to work with streams of generic records, including arbitrary binary payloads. A morphline command is a bit like a Flume Interceptor. Morphlines can be embedded into Hadoop components such as Flume.
+
+Commands to parse and transform a set of standard data formats such as log files, Avro, CSV, Text, HTML, XML, PDF, Word, Excel, etc. are provided out of the box, and additional custom commands and parsers for additional data formats can be added as morphline plugins. Any kind of data format can be indexed and any Solr documents for any kind of Solr schema can be generated, and any custom ETL logic can be registered and executed.
+
+Morphlines manipulate continuous streams of records. The data model can be described as follows: A record is a set of named fields where each field has an ordered list of one or more values. A value can be any Java Object. That is, a record is essentially a hash table where each hash table entry contains a String key and a list of Java Objects as values. (The implementation uses Guava's ``ArrayListMultimap``, which is a ``ListMultimap``). Note that a field can have multiple values and any two records need not use common field names. 
+
+This sink fills the body of the Flume event into the ``_attachment_body`` field of the morphline record, as well as copies the headers of the Flume event into record fields of the same name. The commands can then act on this data.
+
+Routing to a SolrCloud cluster is supported to improve scalability. Indexing load can be spread across a large number of MorphlineSolrSinks for improved scalability. Indexing load can be replicated across multiple MorphlineSolrSinks for high availability, for example using Flume features such as Load balancing Sink Processor. MorphlineInterceptor can also help to implement dynamic routing to multiple Solr collections (e.g. for multi-tenancy).
+
+The morphline and solr jars required for your environment must be placed in the lib directory of the Apache Flume installation. 
+
+The type is the FQCN: org.apache.flume.sink.solr.morphline.MorphlineSolrSink
+
+Required properties are in **bold**.
+
+===================  =======================================================================  ========================
+Property Name        Default                                                                  Description
+===================  =======================================================================  ========================
+**channel**          --
+**type**             --                                                                       The component type name, needs to be ``org.apache.flume.sink.solr.morphline.MorphlineSolrSink``
+**morphlineFile**    --                                                                       The relative or absolute path on the local file system to the morphline configuration file. Example: ``/etc/flume-ng/conf/morphline.conf``
+morphlineId          null                                                                     Optional name used to identify a morphline if there are multiple morphlines in a morphline config file
+batchSize            1000                                                                     The maximum number of events to take per flume transaction.
+batchDurationMillis  1000                                                                     The maximum duration per flume transaction (ms). The transaction commits after this duration or when batchSize is exceeded, whichever comes first.
+handlerClass         org.apache.flume.sink.solr.morphline.MorphlineHandlerImpl                The FQCN of a class implementing org.apache.flume.sink.solr.morphline.MorphlineHandler
+===================  =======================================================================  ========================
+
+Example for agent named a1:
+
+.. code-block:: properties
+
+  a1.channels = c1
+  a1.sinks = k1
+  a1.sinks.k1.type = org.apache.flume.sink.solr.morphline.MorphlineSolrSink
+  a1.sinks.k1.channel = c1
+  a1.sinks.k1.morphlineFile = /etc/flume-ng/conf/morphline.conf
+  # a1.sinks.k1.morphlineId = morphline1
+  # a1.sinks.k1.batchSize = 1000
+  # a1.sinks.k1.batchDurationMillis = 1000
 
 ElasticSearchSink
 ~~~~~~~~~~~~~~~~~
@@ -2501,6 +2575,50 @@ Example for agent named a1:
   a1.sources.r1.interceptors.i1.type = static
   a1.sources.r1.interceptors.i1.key = datacenter
   a1.sources.r1.interceptors.i1.value = NEW_YORK
+
+UUID Interceptor
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This interceptor sets a universally unique identifier on all events that are intercepted. An example UUID is ``b5755073-77a9-43c1-8fad-b7a586fc1b97``, which represents a 128-bit value.
+
+Consider using UUIDInterceptor to automatically assign a UUID to an event if no application level unique key for the event is available. It can be important to assign UUIDs to events as soon as they enter the Flume network; that is, in the first Flume Source of the flow. This enables subsequent deduplication of events in the face of replication and redelivery in a Flume network that is designed for high availability and high performance. If an application level key is available, this is preferable over an auto-generated UUID because it enables subsequent updates and deletes of event in data stores using said well known application level key.
+
+================  =======  ========================================================================
+Property Name     Default  Description
+================  =======  ========================================================================
+**type**          --       The component type name has to be ``org.apache.flume.sink.solr.morphline.UUIDInterceptor$Builder``
+headerName        id       The name of the Flume header to modify
+preserveExisting  true     If the UUID header already exists, should it be preserved - true or false
+prefix            ""       The prefix string constant to prepend to each generated UUID
+================  =======  ========================================================================
+
+Morphline Interceptor
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This interceptor filters the events through a `morphline configuration file <http://cloudera.github.io/cdk/docs/0.4.0/cdk-morphlines/index.html>`_ that defines a chain of transformation commands that pipe records from one command to another.
+For example the morphline can ignore certain events or alter or insert certain event headers via regular expression based pattern matching, or it can auto-detect and set a MIME type via Apache Tika on events that are intercepted. For example, this kind of packet sniffing can be used for content based dynamic routing in a Flume topology.
+MorphlineInterceptor can also help to implement dynamic routing to multiple Apache Solr collections (e.g. for multi-tenancy).
+
+Currently, there is a restriction in that the morphline of an interceptor must not generate more than one output record for each input event. This interceptor is not intended for heavy duty ETL processing - if you need this consider moving ETL processing from the Flume Source to a Flume Sink, e.g. to a MorphlineSolrSink.
+
+Required properties are in **bold**.
+
+=================  =======  ========================================================================
+Property Name      Default  Description
+=================  =======  ========================================================================
+**type**           --       The component type name has to be ``org.apache.flume.sink.solr.morphline.MorphlineInterceptor$Builder``
+**morphlineFile**  --       The relative or absolute path on the local file system to the morphline configuration file. Example: ``/etc/flume-ng/conf/morphline.conf``
+morphlineId        null     Optional name used to identify a morphline if there are multiple morphlines in a morphline config file
+=================  =======  ========================================================================
+
+Sample flume.conf file:
+
+.. code-block:: properties
+
+  a1.sources.avroSrc.interceptors = morphlineinterceptor
+  a1.sources.avroSrc.interceptors.morphlineinterceptor.type = org.apache.flume.sink.solr.morphline.MorphlineInterceptor$Builder
+  a1.sources.avroSrc.interceptors.morphlineinterceptor.morphlineFile = /etc/flume-ng/conf/morphline.conf
+  a1.sources.avroSrc.interceptors.morphlineinterceptor.morphlineId = morphline1
 
 Regex Filtering Interceptor
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
