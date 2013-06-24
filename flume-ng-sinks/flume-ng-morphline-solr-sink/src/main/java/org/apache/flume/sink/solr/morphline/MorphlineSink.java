@@ -37,7 +37,7 @@ import com.cloudera.cdk.morphline.api.Command;
  */
 public class MorphlineSink extends AbstractSink implements Configurable {
 
-  private int maxBatchSize = 100;
+  private int maxBatchSize = 1000;
   private long maxBatchDurationMillis = 1000;
   private String handlerClass;
   private MorphlineHandler handler;
