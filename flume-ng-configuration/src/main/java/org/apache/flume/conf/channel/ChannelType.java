@@ -44,15 +44,8 @@ public enum ChannelType {
   /**
    * JDBC channel provided by org.apache.flume.channel.jdbc.JdbcChannel
    */
-  JDBC("org.apache.flume.channel.jdbc.JdbcChannel"),
+  JDBC("org.apache.flume.channel.jdbc.JdbcChannel");
 
-  /**
-   * Recoverable Memory Channel
-   *
-   * @see org.apache.flume.channel.recoverable.memory.RecoverableMemoryChannel
-   */
-  RECOVERABLEMEMORY(
-      "org.apache.flume.channel.recoverable.memory.RecoverableMemoryChannel");
 
   private final String channelClassName;
 

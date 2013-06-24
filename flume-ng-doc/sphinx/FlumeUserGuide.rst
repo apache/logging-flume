@@ -1972,31 +1972,6 @@ Example for agent named a1:
   a1.channels = c1
   a1.channels.c1.type = jdbc
 
-Recoverable Memory Channel
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-.. warning:: The Recoverable Memory Channel has been deprecated
-             in favor of the FileChannel. FileChannel is durable channel
-             and performs better than the Recoverable Memory Channel.
-
-Required properties are in **bold**.
-
-======================  ===============================================  =========================================================================
-Property Name           Default                                          Description
-======================  ===============================================  =========================================================================
-**type**                --                                               The component type name, needs to be
-                                                                         ``org.apache.flume.channel.recoverable.memory.RecoverableMemoryChannel``
-wal.dataDir             ${user.home}/.flume/recoverable-memory-channel
-wal.rollSize            (0x04000000)                                     Max size (in bytes) of a single file before we roll
-wal.minRetentionPeriod  300000                                           Min amount of time (in millis) to keep a log
-wal.workerInterval      60000                                            How often (in millis) the background worker checks for old logs
-wal.maxLogsSize         (0x20000000)                                     Total amt (in bytes) of logs to keep, excluding the current log
-capacity                100
-transactionCapacity     100
-keep-alive              3
-======================  ===============================================  =========================================================================
-
 
 File Channel
 ~~~~~~~~~~~~
@@ -3070,7 +3045,6 @@ Component Interface                                           Type Alias        
 ============================================================  ======================  ====================================================================
 org.apache.flume.Channel                                      memory                  org.apache.flume.channel.MemoryChannel
 org.apache.flume.Channel                                      jdbc                    org.apache.flume.channel.jdbc.JdbcChannel
-org.apache.flume.Channel                                      recoverablememory       org.apache.flume.channel.recoverable.memory.RecoverableMemoryChannel
 org.apache.flume.Channel                                      file                    org.apache.flume.channel.file.FileChannel
 org.apache.flume.Channel                                      --                      org.apache.flume.channel.PseudoTxnMemoryChannel
 org.apache.flume.Channel                                      --                      org.example.MyChannel
