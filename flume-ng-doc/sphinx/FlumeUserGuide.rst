@@ -2936,7 +2936,7 @@ Property Name            Default  Description
 port                     41414    The port to start the server on.
 =======================  =======  =====================================================================================
 
-We can start Flume with Ganglia support as follows::
+We can start Flume with JSON Reporting support as follows::
 
   $ bin/flume-ng agent --conf-file example.conf --name a1 -Dflume.monitoring.type=http -Dflume.monitoring.port=34545
 
