@@ -149,7 +149,11 @@ public class ScribeSource extends AbstractSource implements
 
           for (LogEntry entry : list) {
             Map<String, String> headers = new HashMap<String, String>(1, 1);
-            headers.put(SCRIBE_CATEGORY, entry.getCategory());
+            String category = entry.getCategory();
+
+            if (category != null) {
+              headers.put(SCRIBE_CATEGORY, category);
+            }
 
             Event event = EventBuilder.withBody(entry.getMessage().getBytes(), headers);
             events.add(event);
