@@ -123,7 +123,7 @@ public class HDFSDataStream extends AbstractHDFSWriter {
     serializer.beforeClose();
     outStream.flush();
     outStream.sync();
-    outStream.close();
+    closeHDFSOutputStream(outStream);
 
     unregisterCurrentStream();
   }

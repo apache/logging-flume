@@ -75,6 +75,12 @@ public class HDFSSequenceFile extends AbstractHDFSWriter {
     Configuration conf = new Configuration();
     Path dstPath = new Path(filePath);
     FileSystem hdfs = dstPath.getFileSystem(conf);
+    open(dstPath, codeC, compType, conf, hdfs);
+  }
+
+  protected void open(Path dstPath, CompressionCodec codeC,
+      CompressionType compType, Configuration conf, FileSystem hdfs)
+          throws IOException {
     if(useRawLocalFileSystem) {
       if(hdfs instanceof LocalFileSystem) {
         hdfs = ((LocalFileSystem)hdfs).getRaw();
@@ -110,7 +116,7 @@ public class HDFSSequenceFile extends AbstractHDFSWriter {
   @Override
   public void close() throws IOException {
     writer.close();
-    outStream.close();
+    closeHDFSOutputStream(outStream);
 
     unregisterCurrentStream();
   }
