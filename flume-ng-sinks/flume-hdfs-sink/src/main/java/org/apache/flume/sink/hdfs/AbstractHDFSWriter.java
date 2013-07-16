@@ -27,6 +27,7 @@ import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -44,6 +45,8 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
   private Method refGetNumCurrentReplicas = null;
   private Method refGetDefaultReplication = null;
   private Integer configuredMinReplicas = null;
+  private Integer numberOfCloseRetries = null;
+  private long timeBetweenCloseRetries = Long.MAX_VALUE;
 
   final static Object [] NO_ARGS = new Object []{};
 
@@ -54,6 +57,17 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
       Preconditions.checkArgument(configuredMinReplicas >= 0,
           "hdfs.minBlockReplicas must be greater than or equal to 0");
     }
+    numberOfCloseRetries = context.getInteger("hdfs.closeTries", 1) - 1;
+
+    if (numberOfCloseRetries > 1) {
+      try {
+        timeBetweenCloseRetries = context.getLong("hdfs.callTimeout", 10000l);
+      } catch (NumberFormatException e) {
+        logger.warn("hdfs.callTimeout can not be parsed to a long: " + context.getLong("hdfs.callTimeout"));
+      }
+      timeBetweenCloseRetries = Math.max(timeBetweenCloseRetries/numberOfCloseRetries, 1000);
+    }
+
   }
 
   /**
@@ -97,6 +111,7 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
     this.destPath = destPath;
     this.refGetNumCurrentReplicas = reflectGetNumCurrentReplicas(outputStream);
     this.refGetDefaultReplication = reflectGetDefaultReplication(fs);
+
   }
 
   protected void unregisterCurrentStream() {
@@ -210,6 +225,55 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
           "HADOOP-8014");
     }
     return m;
+  }
+
+  /**
+   * This will
+   * @param outputStream
+   * @throws IOException
+   */
+  protected void closeHDFSOutputStream(OutputStream outputStream)
+      throws IOException {
+    try {
+      outputStream.close();
+
+      if (numberOfCloseRetries > 0) {
+        try {
+          Method isFileClosedMethod = getIsFileClosedMethod();
+          int closeAttemptsMade = 0;
+          if (isFileClosedMethod != null) {
+            while (closeAttemptsMade < numberOfCloseRetries.intValue() &&
+                Boolean.FALSE.equals(isFileClosedMethod.invoke(fs, destPath))) {
+              closeAttemptsMade++;
+              logger.debug("Waiting: '" + timeBetweenCloseRetries + "' before retry close");
+              Thread.sleep(timeBetweenCloseRetries);
+              try {
+                outputStream.close();
+              } catch (IOException e) {
+                logger.error("Unable to close HDFS file: '" + destPath + "'");
+              }
+            }
+            if (closeAttemptsMade == numberOfCloseRetries.intValue()) {
+              logger.warn("Failed to close '" + destPath + "' is " +
+                numberOfCloseRetries + " retries, over " + (timeBetweenCloseRetries * numberOfCloseRetries) + " millseconds");
+            }
+          }
+        } catch (Exception e) {
+          logger.error("Failed to close '" + destPath + "' is " +
+              numberOfCloseRetries + " retries, over " + (timeBetweenCloseRetries * numberOfCloseRetries) + " millseconds", e);
+        }
+      }
+    } catch (IOException e) {
+      logger.error("Unable to close HDFS file: '" + destPath + "'");
+    }
+  }
+
+  private Method getIsFileClosedMethod() {
+    try {
+      return fs.getClass().getMethod("isFileClosed", Path.class);
+    } catch (Exception e) {
+      return null;
+    }
   }
 
 }
