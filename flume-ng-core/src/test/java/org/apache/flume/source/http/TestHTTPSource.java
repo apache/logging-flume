@@ -22,11 +22,7 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import junit.framework.Assert;
-import org.apache.flume.Channel;
-import org.apache.flume.ChannelSelector;
-import org.apache.flume.Context;
-import org.apache.flume.Event;
-import org.apache.flume.Transaction;
+import org.apache.flume.*;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
@@ -34,6 +30,7 @@ import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.JSONEvent;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.AfterClass;
@@ -41,10 +38,14 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import javax.net.ssl.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.ServerSocket;
+import java.net.URL;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,8 +59,12 @@ import static org.fest.reflect.core.Reflection.field;
 public class TestHTTPSource {
 
   private static HTTPSource source;
+  private static HTTPSource httpsSource;
+//  private static Channel httpsChannel;
+
   private static Channel channel;
   private static int selectedPort;
+  private static int sslPort;
   DefaultHttpClient httpClient;
   HttpPost postRequest;
 
@@ -77,9 +82,13 @@ public class TestHTTPSource {
     source = new HTTPSource();
     channel = new MemoryChannel();
 
+    httpsSource = new HTTPSource();
+//    httpsChannel = new MemoryChannel();
+
     Context ctx = new Context();
     ctx.put("capacity", "100");
     Configurables.configure(channel, ctx);
+//    Configurables.configure(httpsChannel, ctx);
 
     List<Channel> channels = new ArrayList<Channel>(1);
     channels.add(channel);
@@ -90,19 +99,43 @@ public class TestHTTPSource {
     source.setChannelProcessor(new ChannelProcessor(rcs));
 
     channel.start();
+
+    // Channel for HTTPS source
+//    List<Channel> sslChannels = new ArrayList<Channel>(1);
+//    channels.add(httpsChannel);
+//
+//    ChannelSelector sslRcs = new ReplicatingChannelSelector();
+//    rcs.setChannels(sslChannels);
+
+    httpsSource.setChannelProcessor(new ChannelProcessor(rcs));
+//    httpsChannel.start();
+
+    // HTTP context
     Context context = new Context();
 
     context.put("port", String.valueOf(selectedPort));
     context.put("host", "0.0.0.0");
 
+    // SSL context props
+    Context sslContext = new Context();
+    sslContext.put(HTTPSourceConfigurationConstants.SSL_ENABLED, "true");
+    sslPort = findFreePort();
+    sslContext.put(HTTPSourceConfigurationConstants.SSL_PORT, String.valueOf(sslPort));
+    sslContext.put(HTTPSourceConfigurationConstants.SSL_KEYSTORE_PASSWORD, "password");
+    sslContext.put(HTTPSourceConfigurationConstants.SSL_KEYSTORE, "src/test/resources/jettykeystore");
+
     Configurables.configure(source, context);
+    Configurables.configure(httpsSource, sslContext);
     source.start();
+    httpsSource.start();
   }
 
   @AfterClass
   public static void tearDownClass() throws Exception {
     source.stop();
     channel.stop();
+    httpsSource.stop();
+//    httpsChannel.stop();
   }
 
   @Before
@@ -266,6 +299,73 @@ public class TestHTTPSource {
     postRequest.setEntity(input);
     HttpResponse resp = httpClient.execute(postRequest);
     return new ResultWrapper(resp, events);
+  }
+
+  @Test
+  public void testHttps() throws Exception {
+    Type listType = new TypeToken<List<JSONEvent>>() {
+    }.getType();
+    List<JSONEvent> events = Lists.newArrayList();
+    Random rand = new Random();
+    for (int i = 0; i < 10; i++) {
+      Map<String, String> input = Maps.newHashMap();
+      for (int j = 0; j < 10; j++) {
+        input.put(String.valueOf(i) + String.valueOf(j), String.valueOf(i));
+      }
+      JSONEvent e = new JSONEvent();
+      e.setHeaders(input);
+      e.setBody(String.valueOf(rand.nextGaussian()).getBytes("UTF-8"));
+      events.add(e);
+    }
+    Gson gson = new Gson();
+    String json = gson.toJson(events, listType);
+    HttpsURLConnection httpsURLConnection = null;
+    try {
+      TrustManager[] trustAllCerts = {new X509TrustManager() {
+        @Override
+        public void checkClientTrusted(
+          java.security.cert.X509Certificate[] x509Certificates, String s)
+          throws CertificateException {
+          // noop
+        }
+
+        @Override
+        public void checkServerTrusted(
+          java.security.cert.X509Certificate[] x509Certificates, String s)
+          throws CertificateException {
+          // noop
+        }
+
+        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+          return null;
+        }
+      }};
+      SSLContext sc = SSLContext.getInstance("SSL");
+
+      HostnameVerifier hv = new HostnameVerifier() {
+        public boolean verify(String arg0, SSLSession arg1) {
+          return true;
+        }
+      };
+      sc.init(null, trustAllCerts, new SecureRandom());
+      HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+      HttpsURLConnection.setDefaultHostnameVerifier(
+        SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+      URL sslUrl = new URL("https://0.0.0.0:" + sslPort);
+      httpsURLConnection = (HttpsURLConnection) sslUrl.openConnection();
+      httpsURLConnection.setDoInput(true);
+      httpsURLConnection.setDoOutput(true);
+      httpsURLConnection.setRequestMethod("POST");
+      httpsURLConnection.getOutputStream().write(json.getBytes());
+
+      int statusCode = httpsURLConnection.getResponseCode();
+      Assert.assertEquals(200, statusCode);
+    } catch (Exception exception) {
+      Assert.fail("Exception not expected");
+      exception.printStackTrace();
+    } finally {
+      httpsURLConnection.disconnect();
+    }
   }
 
   private void takeWithEncoding(String encoding, int n, List<JSONEvent> events)

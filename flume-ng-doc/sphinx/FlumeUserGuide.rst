@@ -1223,6 +1223,10 @@ selector.type   replicating                                   replicating or mul
 selector.*                                                    Depends on the selector.type value
 interceptors    --                                            Space-separated list of interceptors
 interceptors.*
+enableSSL       false                                         Set the property true, to enable SSL
+sslPort                                                       The port to be used for SSL
+keystore                                                      Location of the keystore includng keystore file name
+keystorePassword                                              Keystore password
 ==================================================================================================================================
 
 For example, a http source for agent named a1:

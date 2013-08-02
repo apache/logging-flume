@@ -29,6 +29,7 @@ import org.apache.flume.source.AbstractSource;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.bio.SocketConnector;
+import org.mortbay.jetty.security.SslSocketConnector;
 import org.mortbay.jetty.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,16 +89,46 @@ public class HTTPSource extends AbstractSource implements
   private HTTPSourceHandler handler;
   private SourceCounter sourceCounter;
 
+  // SSL configuration variable
+  private volatile Integer sslPort;
+  private volatile String keyStorePath;
+  private volatile String keyStorePassword;
+  private volatile Boolean sslEnabled;
+
+
   @Override
   public void configure(Context context) {
     try {
+      // SSL related config
+      sslEnabled = context.getBoolean(HTTPSourceConfigurationConstants.SSL_ENABLED, false);
+
       port = context.getInteger(HTTPSourceConfigurationConstants.CONFIG_PORT);
       host = context.getString(HTTPSourceConfigurationConstants.CONFIG_BIND,
         HTTPSourceConfigurationConstants.DEFAULT_BIND);
-      checkHostAndPort();
+
+      Preconditions.checkState(host != null && !host.isEmpty(),
+                "HTTPSource hostname specified is empty");
+      // verify port only if its not ssl
+      if(!sslEnabled) {
+        Preconditions.checkNotNull(port, "HTTPSource requires a port number to be"
+                + " specified");
+      }
+
       String handlerClassName = context.getString(
               HTTPSourceConfigurationConstants.CONFIG_HANDLER,
               HTTPSourceConfigurationConstants.DEFAULT_HANDLER).trim();
+
+      if(sslEnabled) {
+        LOG.debug("SSL configuration enabled");
+        sslPort = context.getInteger(HTTPSourceConfigurationConstants.SSL_PORT);
+        Preconditions.checkArgument(sslPort != null && sslPort > 0, "SSL Port cannot be null or less than 0" );
+        keyStorePath = context.getString(HTTPSourceConfigurationConstants.SSL_KEYSTORE);
+        Preconditions.checkArgument(keyStorePath != null && !keyStorePath.isEmpty(),
+                                        "Keystore is required for SSL Conifguration" );
+        keyStorePassword = context.getString(HTTPSourceConfigurationConstants.SSL_KEYSTORE_PASSWORD);
+        Preconditions.checkArgument(keyStorePassword != null, "Keystore password is required for SSL Configuration");
+      }
+
       @SuppressWarnings("unchecked")
       Class<? extends HTTPSourceHandler> clazz =
               (Class<? extends HTTPSourceHandler>)
@@ -139,10 +170,25 @@ public class HTTPSource extends AbstractSource implements
             + " before I started one."
             + "Will not attempt to start.");
     srv = new Server();
-    SocketConnector connector = new SocketConnector();
-    connector.setPort(port);
-    connector.setHost(host);
-    srv.setConnectors(new Connector[] { connector });
+
+    // Connector Array
+    Connector[] connectors = new Connector[1];
+
+
+    if(sslEnabled) {
+      SslSocketConnector sslSocketConnector = new SslSocketConnector();
+      sslSocketConnector.setKeystore(keyStorePath);
+      sslSocketConnector.setKeyPassword(keyStorePassword);
+      sslSocketConnector.setPort(sslPort);
+      connectors[0] = sslSocketConnector;
+    } else {
+        SocketConnector connector = new SocketConnector();
+        connector.setPort(port);
+        connector.setHost(host);
+        connectors[0] = connector;
+    }
+
+    srv.setConnectors(connectors);
     try {
       org.mortbay.jetty.servlet.Context root =
               new org.mortbay.jetty.servlet.Context(
