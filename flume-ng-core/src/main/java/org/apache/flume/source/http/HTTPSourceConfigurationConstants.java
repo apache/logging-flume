@@ -34,4 +34,9 @@ public class HTTPSourceConfigurationConstants {
   public static final String DEFAULT_HANDLER =
           "org.apache.flume.source.http.JSONHandler";
 
+  public static final String SSL_PORT = "sslPort";
+  public static final String SSL_KEYSTORE = "keystore";
+  public static final String SSL_KEYSTORE_PASSWORD = "keystorePassword";
+  public static final String SSL_ENABLED = "enableSSL";
+
 }
