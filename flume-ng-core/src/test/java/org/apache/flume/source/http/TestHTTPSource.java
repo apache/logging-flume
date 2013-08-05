@@ -42,6 +42,7 @@ import javax.net.ssl.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
 import java.net.ServerSocket;
 import java.net.URL;
 import java.security.SecureRandom;
@@ -83,12 +84,11 @@ public class TestHTTPSource {
     channel = new MemoryChannel();
 
     httpsSource = new HTTPSource();
-//    httpsChannel = new MemoryChannel();
+    httpsSource.setName("HTTPS Source");
 
     Context ctx = new Context();
     ctx.put("capacity", "100");
     Configurables.configure(channel, ctx);
-//    Configurables.configure(httpsChannel, ctx);
 
     List<Channel> channels = new ArrayList<Channel>(1);
     channels.add(channel);
@@ -100,15 +100,7 @@ public class TestHTTPSource {
 
     channel.start();
 
-    // Channel for HTTPS source
-//    List<Channel> sslChannels = new ArrayList<Channel>(1);
-//    channels.add(httpsChannel);
-//
-//    ChannelSelector sslRcs = new ReplicatingChannelSelector();
-//    rcs.setChannels(sslChannels);
-
     httpsSource.setChannelProcessor(new ChannelProcessor(rcs));
-//    httpsChannel.start();
 
     // HTTP context
     Context context = new Context();
@@ -135,7 +127,6 @@ public class TestHTTPSource {
     source.stop();
     channel.stop();
     httpsSource.stop();
-//    httpsChannel.stop();
   }
 
   @Before
@@ -312,6 +303,7 @@ public class TestHTTPSource {
       for (int j = 0; j < 10; j++) {
         input.put(String.valueOf(i) + String.valueOf(j), String.valueOf(i));
       }
+      input.put("MsgNum", String.valueOf(i));
       JSONEvent e = new JSONEvent();
       e.setHeaders(input);
       e.setBody(String.valueOf(rand.nextGaussian()).getBytes("UTF-8"));
@@ -360,11 +352,58 @@ public class TestHTTPSource {
 
       int statusCode = httpsURLConnection.getResponseCode();
       Assert.assertEquals(200, statusCode);
+
+      Transaction transaction = channel.getTransaction();
+      transaction.begin();
+      for(int i = 0; i < 10; i++) {
+        Event e = channel.take();
+        Assert.assertNotNull(e);
+        Assert.assertEquals(String.valueOf(i), e.getHeaders().get("MsgNum"));
+      }
+
+    transaction.commit();
+    transaction.close();
     } catch (Exception exception) {
       Assert.fail("Exception not expected");
-      exception.printStackTrace();
     } finally {
       httpsURLConnection.disconnect();
+    }
+  }
+
+  @Test
+  public void testHttpsSourceNonHttpsClient() throws Exception {
+    Type listType = new TypeToken<List<JSONEvent>>() {
+    }.getType();
+    List<JSONEvent> events = Lists.newArrayList();
+    Random rand = new Random();
+    for (int i = 0; i < 10; i++) {
+        Map<String, String> input = Maps.newHashMap();
+        for (int j = 0; j < 10; j++) {
+            input.put(String.valueOf(i) + String.valueOf(j), String.valueOf(i));
+        }
+        input.put("MsgNum", String.valueOf(i));
+        JSONEvent e = new JSONEvent();
+        e.setHeaders(input);
+        e.setBody(String.valueOf(rand.nextGaussian()).getBytes("UTF-8"));
+        events.add(e);
+    }
+    Gson gson = new Gson();
+    String json = gson.toJson(events, listType);
+    HttpURLConnection httpURLConnection = null;
+    try {
+        URL url = new URL("http://0.0.0.0:" + sslPort);
+        httpURLConnection = (HttpURLConnection) url.openConnection();
+        httpURLConnection.setDoInput(true);
+        httpURLConnection.setDoOutput(true);
+        httpURLConnection.setRequestMethod("POST");
+        httpURLConnection.getOutputStream().write(json.getBytes());
+        httpURLConnection.getResponseCode();
+
+        Assert.fail("HTTP Client cannot connect to HTTPS source");
+    } catch (Exception exception) {
+        Assert.assertTrue("Exception expected", true);
+    } finally {
+        httpURLConnection.disconnect();
     }
   }
 
