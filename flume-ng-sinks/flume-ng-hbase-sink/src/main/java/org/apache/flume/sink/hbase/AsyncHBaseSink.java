@@ -37,6 +37,7 @@ import org.apache.flume.sink.AbstractSink;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.zookeeper.ZKConfig;
 import org.hbase.async.AtomicIncrementRequest;
 import org.hbase.async.HBaseClient;
 import org.hbase.async.PutRequest;
@@ -318,7 +319,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
       if (conf == null) { //In tests, we pass the conf in.
         conf = HBaseConfiguration.create();
       }
-      zkQuorum = conf.get(HConstants.ZOOKEEPER_QUORUM);
+      zkQuorum = ZKConfig.getZKQuorumServersString(conf);
       zkBaseDir = conf.get(HConstants.ZOOKEEPER_ZNODE_PARENT,
         HConstants.DEFAULT_ZOOKEEPER_ZNODE_PARENT);
     }
