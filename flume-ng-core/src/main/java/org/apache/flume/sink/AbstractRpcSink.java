@@ -43,6 +43,7 @@ import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -149,11 +150,11 @@ public abstract class AbstractRpcSink extends AbstractSink
   private Properties clientProps;
   private SinkCounter sinkCounter;
   private int cxnResetInterval;
+  private AtomicBoolean resetConnectionFlag;
   private final int DEFAULT_CXN_RESET_INTERVAL = 0;
   private final ScheduledExecutorService cxnResetExecutor = Executors
     .newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()
       .setNameFormat("Rpc Sink Reset Thread").build());
-  private final Lock resetLock = new ReentrantLock();
 
   @Override
   public void configure(Context context) {
@@ -206,6 +207,7 @@ public abstract class AbstractRpcSink extends AbstractSink
           "port: {}",
           new Object[] { getName(), hostname, port });
       try {
+        resetConnectionFlag = new AtomicBoolean(false);
         client = initializeRpcClient(clientProps);
         Preconditions.checkNotNull(client, "Rpc Client could not be " +
           "initialized. " + getName() + " could not be started");
@@ -214,17 +216,7 @@ public abstract class AbstractRpcSink extends AbstractSink
           cxnResetExecutor.schedule(new Runnable() {
             @Override
             public void run() {
-              resetLock.lock();
-              try {
-                destroyConnection();
-                createConnection();
-              } catch (Throwable throwable) {
-                //Don't rethrow, else this runnable won't get scheduled again.
-                logger.error("Error while trying to expire connection",
-                  throwable);
-              } finally {
-                resetLock.unlock();
-              }
+              resetConnectionFlag.set(true);
             }
           }, cxnResetInterval, TimeUnit.SECONDS);
         }
@@ -239,6 +231,17 @@ public abstract class AbstractRpcSink extends AbstractSink
        logger.debug("Rpc sink {}: Created RpcClient: {}", getName(), client);
     }
 
+  }
+
+  private void resetConnection() {
+      try {
+        destroyConnection();
+        createConnection();
+      } catch (Throwable throwable) {
+        //Don't rethrow, else this runnable won't get scheduled again.
+        logger.error("Error while trying to expire connection",
+          throwable);
+      }
   }
 
   private void destroyConnection() {
@@ -332,7 +335,14 @@ public abstract class AbstractRpcSink extends AbstractSink
     Channel channel = getChannel();
     Transaction transaction = channel.getTransaction();
 
-    resetLock.lock();
+    if(resetConnectionFlag.get()) {
+      resetConnection();
+      // if the time to reset is long and the timeout is short
+      // this may cancel the next reset request
+      // this should however not be an issue
+      resetConnectionFlag.set(false);
+    }
+
     try {
       transaction.begin();
 
@@ -382,7 +392,6 @@ public abstract class AbstractRpcSink extends AbstractSink
         throw new EventDeliveryException("Failed to send events", t);
       }
     } finally {
-      resetLock.unlock();
       transaction.close();
     }
 

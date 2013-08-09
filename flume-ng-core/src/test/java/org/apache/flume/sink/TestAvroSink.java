@@ -300,6 +300,12 @@ public class TestAvroSink {
     sink.start();
     RpcClient firstClient = sink.getUnderlyingClient();
     Thread.sleep(6000);
+    Transaction t = channel.getTransaction();
+    t.begin();
+    channel.put(EventBuilder.withBody("This is a test", Charset.defaultCharset()));
+    t.commit();
+    t.close();
+    sink.process();
     // Make sure they are not the same object, connection should be reset
     Assert.assertFalse(firstClient == sink.getUnderlyingClient());
     sink.stop();
