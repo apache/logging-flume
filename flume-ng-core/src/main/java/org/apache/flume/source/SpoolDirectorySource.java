@@ -24,6 +24,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import org.apache.flume.*;
 import org.apache.flume.client.avro.ReliableSpoolingFileEventReader;
 import org.apache.flume.conf.Configurable;
@@ -58,17 +60,18 @@ Configurable, EventDrivenSource {
   private Context deserializerContext;
   private String deletePolicy;
   private String inputCharset;
+  private volatile boolean hasFatalError = false;
 
   private SourceCounter sourceCounter;
   ReliableSpoolingFileEventReader reader;
+  private ScheduledExecutorService executor;
 
   @Override
-  public void start() {
+  public synchronized void start() {
     logger.info("SpoolDirectorySource source starting with directory: {}",
         spoolDirectory);
 
-    ScheduledExecutorService executor =
-        Executors.newSingleThreadScheduledExecutor();
+    executor = Executors.newSingleThreadScheduledExecutor();
 
     File directory = new File(spoolDirectory);
     try {
@@ -99,7 +102,15 @@ Configurable, EventDrivenSource {
   }
 
   @Override
-  public void stop() {
+  public synchronized void stop() {
+    executor.shutdown();
+    try {
+      executor.awaitTermination(10L, TimeUnit.SECONDS);
+    } catch (InterruptedException ex) {
+      logger.info("Interrupted while awaiting termination", ex);
+    }
+    executor.shutdownNow();
+
     super.stop();
     sourceCounter.stop();
     logger.info("SpoolDir source {} stopped. Metrics: {}", getName(),
@@ -107,7 +118,13 @@ Configurable, EventDrivenSource {
   }
 
   @Override
-  public void configure(Context context) {
+  public String toString() {
+    return "Spool Directory source " + getName() +
+        ": { spoolDir: " + spoolDirectory + " }";
+  }
+
+  @Override
+  public synchronized void configure(Context context) {
     spoolDirectory = context.getString(SPOOL_DIRECTORY);
     Preconditions.checkState(spoolDirectory != null,
         "Configuration must specify a spooling directory");
@@ -143,6 +160,11 @@ Configurable, EventDrivenSource {
     }
   }
 
+  @VisibleForTesting
+  protected boolean hasFatalError() {
+    return hasFatalError;
+  }
+
   private class SpoolDirectoryRunnable implements Runnable {
     private ReliableSpoolingFileEventReader reader;
     private SourceCounter sourceCounter;
@@ -170,10 +192,11 @@ Configurable, EventDrivenSource {
           sourceCounter.incrementAppendBatchAcceptedCount();
         }
       } catch (Throwable t) {
-        logger.error("Uncaught exception in Runnable", t);
-        if (t instanceof Error) {
-          throw (Error) t;
-        }
+        logger.error("FATAL: " + SpoolDirectorySource.this.toString() + ": " +
+            "Uncaught exception in SpoolDirectorySource thread. " +
+            "Restart or reconfigure Flume to continue processing.", t);
+        hasFatalError = true;
+        Throwables.propagate(t);
       }
     }
   }

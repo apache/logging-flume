@@ -21,8 +21,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -130,6 +132,35 @@ public class TestSpoolDirectorySource {
           LifecycleController.waitForOneOf(source, LifecycleState.STOP_OR_ERROR));
       Assert.assertEquals("Server is stopped", LifecycleState.STOP,
           source.getLifecycleState());
+    }
+  }
+
+  @Test
+  public void testReconfigure() throws InterruptedException, IOException {
+    final int NUM_RECONFIGS = 20;
+    for (int i = 0; i < NUM_RECONFIGS; i++) {
+      Context context = new Context();
+      File file = new File(tmpDir.getAbsolutePath() + "/file-" + i);
+      Files.write("File " + i, file, Charsets.UTF_8);
+      context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
+          tmpDir.getAbsolutePath());
+      Configurables.configure(source, context);
+      source.start();
+      Thread.sleep(TimeUnit.SECONDS.toMillis(1));
+      Transaction txn = channel.getTransaction();
+      txn.begin();
+      try {
+        Event event = channel.take();
+        String content = new String(event.getBody(), Charsets.UTF_8);
+        Assert.assertEquals("File " + i, content);
+        txn.commit();
+      } catch (Throwable t) {
+        txn.rollback();
+      } finally {
+        txn.close();
+      }
+      source.stop();
+      Assert.assertFalse("Fatal error on iteration " + i, source.hasFatalError());
     }
   }
 }
