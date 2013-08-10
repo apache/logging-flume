@@ -133,12 +133,15 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
 
     // Do a canary test to make sure we have access to spooling directory
     try {
-      File f1 = File.createTempFile("flume", "test", spoolDirectory);
-      Files.write("testing flume file permissions\n", f1, Charsets.UTF_8);
-      Files.readLines(f1, Charsets.UTF_8);
-      if (!f1.delete()) {
-        throw new IOException("Unable to delete canary file " + f1);
+      File canary = File.createTempFile("flume-spooldir-perm-check-", ".canary",
+          spoolDirectory);
+      Files.write("testing flume file permissions\n", canary, Charsets.UTF_8);
+      List<String> lines = Files.readLines(canary, Charsets.UTF_8);
+      Preconditions.checkState(!lines.isEmpty(), "Empty canary file %s", canary);
+      if (!canary.delete()) {
+        throw new IOException("Unable to delete canary file " + canary);
       }
+      logger.debug("Successfully created and deleted canary file: {}", canary);
     } catch (IOException e) {
       throw new FlumeException("Unable to read and modify files" +
           " in the spooling directory: " + spoolDirectory, e);
