@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.ObjectName;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,20 +96,29 @@ public abstract class MonitoredCounterGroup {
   }
 
   /**
-   * Registers the counter. This method should be used only for testing, and
-   * there should be no need for any implementations to directly call this
-   * method.
+   * Registers the counter.
+   * This method is exposed only for testing, and there should be no need for
+   * any implementations to call this method directly.
    */
+  @VisibleForTesting
   void register() {
     if (!registered) {
       try {
         ObjectName objName = new ObjectName("org.apache.flume."
                 + type.name().toLowerCase() + ":type=" + this.name);
 
+        if (ManagementFactory.getPlatformMBeanServer().isRegistered(objName)) {
+          logger.debug("Monitored counter group for type: " + type + ", name: "
+              + name + ": Another MBean is already registered with this name. "
+              + "Unregistering that pre-existing MBean now...");
+          ManagementFactory.getPlatformMBeanServer().unregisterMBean(objName);
+          logger.debug("Monitored counter group for type: " + type + ", name: "
+              + name + ": Successfully unregistered pre-existing MBean.");
+        }
         ManagementFactory.getPlatformMBeanServer().registerMBean(this, objName);
+        logger.info("Monitored counter group for type: " + type + ", name: "
+            + name + ": Successfully registered new MBean.");
         registered = true;
-        logger.info("Monitoried counter group for type: " + type + ", name: " + name
-                + ", registered successfully.");
       } catch (Exception ex) {
         logger.error("Failed to register monitored counter group for type: "
                 + type + ", name: " + name, ex);
