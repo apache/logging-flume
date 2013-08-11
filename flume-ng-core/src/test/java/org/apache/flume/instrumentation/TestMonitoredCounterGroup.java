@@ -314,6 +314,28 @@ public class TestMonitoredCounterGroup {
         0L, 0L, 0L, 0L);
   }
 
+  @Test
+  public void testRegisterTwice() throws Exception {
+    String name = "re-register-" + getRandomName();
+
+    SourceCounter c1 = new SourceCounter(name);
+    c1.register();
+    ObjectName on = new ObjectName(SOURCE_OBJ_NAME_PREFIX + name);
+
+    Assert.assertEquals("StartTime", 0L, getStartTime(on));
+    Assert.assertEquals("StopTime", 0L, getStopTime(on));
+    c1.start();
+    c1.stop();
+    Assert.assertTrue("StartTime", getStartTime(on) > 0L);
+    Assert.assertTrue("StopTime", getStopTime(on) > 0L);
+
+    SourceCounter c2 = new SourceCounter(name);
+    c2.register();
+
+    Assert.assertEquals("StartTime", 0L, getStartTime(on));
+    Assert.assertEquals("StopTime", 0L, getStopTime(on));
+  }
+
   private void assertSrcCounterState(ObjectName on, long eventReceivedCount,
       long eventAcceptedCount, long appendReceivedCount,
       long appendAcceptedCount, long appendBatchReceivedCount,
