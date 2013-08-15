@@ -224,7 +224,7 @@ run_flume() {
   if [ ${CLEAN_FLAG} -ne 0 ]; then
     set -x
   fi
-  $EXEC $JAVA_HOME/bin/java $JAVA_OPTS -cp "$FLUME_CLASSPATH" \
+  $EXEC $JAVA_HOME/bin/java $JAVA_OPTS "${arr_java_props[@]}" -cp "$FLUME_CLASSPATH" \
       -Djava.library.path=$FLUME_JAVA_LIBRARY_PATH "$FLUME_APPLICATION_CLASS" $*
 }
 
@@ -241,7 +241,8 @@ LD_LIBRARY_PATH=""
 opt_conf=""
 opt_classpath=""
 opt_plugins_dirs=""
-opt_java_props=""
+arr_java_props=()
+arr_java_props_ct=0
 opt_dryrun=""
 
 mode=$1
@@ -301,10 +302,12 @@ while [ -n "$*" ] ; do
       shift
       ;;
     -D*)
-      opt_java_props="$opt_java_props $arg"
+      arr_java_props[arr_java_props_ct]=$arg
+      ((++arr_java_props_ct))
       ;;
     -X*)
-      opt_java_props="$opt_java_props $arg"
+      arr_java_props[arr_java_props_ct]=$arg
+      ((++arr_java_props_ct))
       ;;
     *)
       args="$args $arg"
@@ -323,11 +326,6 @@ if [ -z "$opt_conf" ]; then
 elif [ -f "$opt_conf/flume-env.sh" ]; then
   info "Sourcing environment configuration script $opt_conf/flume-env.sh"
   source "$opt_conf/flume-env.sh"
-fi
-
-# append command-line java options to stock or env script JAVA_OPTS
-if [ -n "${opt_java_props}" ]; then
-  JAVA_OPTS="${JAVA_OPTS} ${opt_java_props}"
 fi
 
 # prepend command-line classpath to env script classpath
