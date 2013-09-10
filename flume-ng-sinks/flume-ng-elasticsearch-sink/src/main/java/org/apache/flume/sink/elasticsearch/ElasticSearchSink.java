@@ -159,24 +159,23 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
     Status status = Status.READY;
     Channel channel = getChannel();
     Transaction txn = channel.getTransaction();
-    BulkRequestBuilder bulkRequest = null;
-    IndexRequestBuilder indexRequest = null;
-    BulkResponse bulkResponse = null;
     try {
       txn.begin();
-      bulkRequest = client.prepareBulk();
+      BulkRequestBuilder bulkRequest = client.prepareBulk();
       for (int i = 0; i < batchSize; i++) {
         Event event = channel.take();
 
         if (event == null) {
           break;
         }
+        IndexRequestBuilder indexRequest = null;
         try {
         	indexRequest =
         		indexRequestFactory.createIndexRequest(
         			client, indexName, indexType, event);
         } catch (Exception e) {
         	logger.warn("Error in createIndexRequest: " + new String(event.getBody()));
+        	continue;
         }
         if (ttlMs > 0) {
           indexRequest.setTTL(ttlMs);
@@ -200,7 +199,7 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
 
         sinkCounter.addToEventDrainAttemptCount(size);
 
-        bulkResponse = bulkRequest.execute().actionGet();
+        BulkResponse bulkResponse = bulkRequest.execute().actionGet();
         if (bulkResponse.hasFailures()) {
           throw new EventDeliveryException(bulkResponse.buildFailureMessage());
         }
