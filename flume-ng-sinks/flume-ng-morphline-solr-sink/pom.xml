@@ -33,8 +33,7 @@ limitations under the License.
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <solr.version>4.3.0</solr.version>
     <solr.expected.version>4.3.0</solr.expected.version> <!-- sanity check to verify we actually run against the expected version rather than some outdated version -->
-    <tika.version>1.3</tika.version>
-    <cdk.version>0.6.0</cdk.version>
+    <cdk.version>0.7.0</cdk.version>
     <slf4j.version>1.6.1</slf4j.version>
     <surefire.version>2.12.4</surefire.version>
   </properties>
@@ -104,23 +103,6 @@ limitations under the License.
         <exclusion>
           <groupId>org.slf4j</groupId>
           <artifactId>slf4j-jdk14</artifactId> <!-- instead use slf4j on top of log4j or logback  -->
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <dependency> <!-- see http://tika.apache.org -->
-      <groupId>org.apache.tika</groupId>
-      <artifactId>tika-xmp</artifactId>
-      <version>${tika.version}</version>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.geronimo.specs</groupId>
-          <artifactId>geronimo-stax-api_1.0_spec</artifactId> <!-- needed by tika-parsers but already provided by JDK -->
-        </exclusion>
-        <exclusion>
-          <groupId>xerces</groupId>
-          <artifactId>xercesImpl</artifactId> <!-- used by com.drewnoakes:metadata-extractor:jar but replacing built-in XML parser with legacy xerces is scary and probably don't need it -->
         </exclusion>
       </exclusions>
     </dependency>
