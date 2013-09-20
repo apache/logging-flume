@@ -705,6 +705,8 @@ ssl                  false        Set this to true to enable SSL encryption. You
 keystore             --           This is the path to a Java keystore file. Required for SSL.
 keystore-password    --           The password for the Java keystore. Required for SSL.
 keystore-type        JKS          The type of the Java keystore. This can be "JKS" or "PKCS12".
+ipFilter             false        Set this to true to enable ipFiltering for netty
+ipFilter.rules       --           Define N netty ipFilter pattern rules with this config.
 ==================   ===========  ===================================================
 
 Example for agent named a1:
@@ -717,6 +719,21 @@ Example for agent named a1:
   a1.sources.r1.channels = c1
   a1.sources.r1.bind = 0.0.0.0
   a1.sources.r1.port = 4141
+
+Example of ipFilter.rules
+
+ipFilter.rules defines N netty ipFilters separated by a comma a pattern rule must be in this format.
+
+<'allow' or deny>:<'ip' or 'name' for computer name>:<pattern>
+or
+allow/deny:ip/name:pattern
+
+example: ipFilter.rules=allow:ip:127.*,allow:name:localhost,deny:ip:*
+
+Note that the first rule to match will apply as the example below shows from a client on the localhost
+
+This will Allow the client on localhost be deny clients from any other ip "allow:name:localhost,deny:ip:*"
+This will deny the client on localhost be allow clients from any other ip "deny:name:localhost,allow:ip:*"
 
 Thrift Source
 ~~~~~~~~~~~~~

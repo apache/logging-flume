@@ -35,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
-
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Responder;
 import org.apache.avro.ipc.Server;
@@ -60,6 +59,8 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.handler.codec.compression.ZlibDecoder;
 import org.jboss.netty.handler.codec.compression.ZlibEncoder;
+import org.jboss.netty.handler.ipfilter.IpFilterRuleHandler;
+import org.jboss.netty.handler.ipfilter.PatternRule;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,6 +132,8 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   private static final String BIND_KEY = "bind";
   private static final String COMPRESSION_TYPE = "compression-type";
   private static final String SSL_KEY = "ssl";
+  private static final String IP_FILTER_KEY = "ipFilter";
+  private static final String IP_FILTER_RULES_KEY = "ipFilterRules";
   private static final String KEYSTORE_KEY = "keystore";
   private static final String KEYSTORE_PASSWORD_KEY = "keystore-password";
   private static final String KEYSTORE_TYPE_KEY = "keystore-type";
@@ -141,6 +144,8 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   private String keystorePassword;
   private String keystoreType;
   private boolean enableSsl = false;
+  private boolean enableIpFilter;
+  private String patternRuleConfigDefinition;
 
   private Server server;
   private SourceCounter sourceCounter;
@@ -179,6 +184,17 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
       } catch (Exception ex) {
         throw new FlumeException(
             "Avro source configured with invalid keystore: " + keystore, ex);
+      }
+    }
+
+    enableIpFilter = context.getBoolean(IP_FILTER_KEY, false);
+    if (enableIpFilter) {
+      patternRuleConfigDefinition = context.getString(IP_FILTER_RULES_KEY);
+      if (patternRuleConfigDefinition == null ||
+        patternRuleConfigDefinition.isEmpty()) {
+        throw new FlumeException(
+          "ipFilter is configured with true but ipFilterRules is not defined:" +
+            " ");
       }
     }
 
@@ -233,10 +249,11 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   private ChannelPipelineFactory initChannelPipelineFactory() {
     ChannelPipelineFactory pipelineFactory;
     boolean enableCompression = compressionType.equalsIgnoreCase("deflate");
-    if (enableCompression || enableSsl) {
-      pipelineFactory = new SSLCompressionChannelPipelineFactory(
-          enableCompression, enableSsl, keystore,
-          keystorePassword, keystoreType);
+    if (enableCompression || enableSsl || enableIpFilter) {
+      pipelineFactory = new AdvancedChannelPipelineFactory(
+        enableCompression, enableSsl, keystore,
+        keystorePassword, keystoreType, enableIpFilter,
+        patternRuleConfigDefinition);
     } else {
       pipelineFactory = new ChannelPipelineFactory() {
         @Override
@@ -356,7 +373,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
    * Factory of SSL-enabled server worker channel pipelines
    * Copied from Avro's org.apache.avro.ipc.TestNettyServerWithSSL test
    */
-  private static class SSLCompressionChannelPipelineFactory
+  private static class AdvancedChannelPipelineFactory
       implements ChannelPipelineFactory {
 
     private boolean enableCompression;
@@ -365,12 +382,20 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     private String keystorePassword;
     private String keystoreType;
 
-    public SSLCompressionChannelPipelineFactory(boolean enableCompression, boolean enableSsl, String keystore, String keystorePassword, String keystoreType) {
+    private boolean enableIpFilter;
+    private String patternRuleConfigDefinition;
+
+    public AdvancedChannelPipelineFactory(boolean enableCompression,
+      boolean enableSsl, String keystore, String keystorePassword,
+      String keystoreType, boolean enableIpFilter,
+      String patternRuleConfigDefinition) {
       this.enableCompression = enableCompression;
       this.enableSsl = enableSsl;
       this.keystore = keystore;
       this.keystorePassword = keystorePassword;
       this.keystoreType = keystoreType;
+      this.enableIpFilter = enableIpFilter;
+      this.patternRuleConfigDefinition = patternRuleConfigDefinition;
     }
 
     private SSLContext createServerSSLContext() {
@@ -407,6 +432,8 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
         pipeline.addFirst("deflater", encoder);
         pipeline.addFirst("inflater", new ZlibDecoder());
       }
+
+
       if (enableSsl) {
         SSLEngine sslEngine = createServerSSLContext().createSSLEngine();
         sslEngine.setUseClientMode(false);
@@ -415,7 +442,88 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
         // adding compression handling above
         pipeline.addFirst("ssl", new SslHandler(sslEngine));
       }
+
+      if (enableIpFilter) {
+
+        logger.info("Setting up ipFilter with the following rule definition: " +
+          patternRuleConfigDefinition);
+        IpFilterRuleHandler ipFilterHandler = new IpFilterRuleHandler();
+
+        if (patternRuleConfigDefinition != null &&
+          !patternRuleConfigDefinition.isEmpty()) {
+          String[] patternRuleDefinitions = patternRuleConfigDefinition.split(
+            ",");
+          for (String patternRuleDefinition : patternRuleDefinitions) {
+
+            PatternRule patternRule
+              = PatternRuleBuilder.withConfigRuleDefinition(
+              patternRuleDefinition);
+
+            if (patternRule != null) {
+              ipFilterHandler.add(patternRule);
+            }
+          }
+        }
+
+        logger.info(
+          "Adding ipFilter with " + ipFilterHandler.size() + " rules");
+
+        pipeline.addFirst("ipFilter", ipFilterHandler);
+      }
+
       return pipeline;
     }
+
+    public static class PatternRuleBuilder {
+      public static PatternRule withConfigRuleDefinition(
+        String patternRuleDefinition) throws FlumeException {
+        patternRuleDefinition = patternRuleDefinition.trim();
+        //first validation the format
+
+        int firstColonIndex = patternRuleDefinition.indexOf(":");
+        if (firstColonIndex == -1) {
+          logger.error(
+            "Invalid ipFilter patternRule '" + patternRuleDefinition +
+              "' should look like <'allow'  or 'deny'>:<'ip' or " +
+              "'name'>:<pattern>");
+          return null;
+        } else {
+
+          String ruleAccessFlag = patternRuleDefinition.substring(0,
+            firstColonIndex);
+          int secondColonIndex = patternRuleDefinition.indexOf(":",
+            firstColonIndex + 1);
+          if ((!ruleAccessFlag.equals("allow") &&
+            !ruleAccessFlag.equals("deny")) || secondColonIndex == -1) {
+            logger.error(
+              "Invalid ipFilter patternRule '" + patternRuleDefinition +
+                "' should look like <'allow'  or 'deny'>:<'ip' or " +
+                "'name'>:<pattern>");
+            return null;
+          }
+
+          String patternTypeFlag = patternRuleDefinition.substring(
+            firstColonIndex + 1, secondColonIndex);
+          if ((!patternTypeFlag.equals("ip") &&
+            !patternTypeFlag.equals("name"))) {
+            logger.error(
+              "Invalid ipFilter patternRule '" + patternRuleDefinition +
+                "' should look like <'allow'  or 'deny'>:<'ip' or " +
+                "'name'>:<pattern>");
+            return null;
+          }
+
+          boolean isAllow = ruleAccessFlag.equals("allow");
+          String patternRuleString =
+            (patternTypeFlag.equals("ip") ? "i" : "n") + ":" +
+              patternRuleDefinition.substring(secondColonIndex + 1);
+          logger.info("Adding ipFilter PatternRule: "
+            + (isAllow ? "Allow" : "deny") +
+            " " + patternRuleString);
+          return new PatternRule(isAllow, patternRuleString);
+        }
+      }
+    }
+
   }
 }
