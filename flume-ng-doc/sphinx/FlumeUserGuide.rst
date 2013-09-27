@@ -977,6 +977,47 @@ Example for an agent named agent-1:
   agent-1.sources.src-1.spoolDir = /var/log/apache/flumeSpool
   agent-1.sources.src-1.fileHeader = true
 
+Twitter 1% firehose Source (experimental)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. warning::
+  This source is hightly experimental and may change between minor versions of Flume.
+  Use at your own risk.
+
+Experimental source that connects via Streaming API to the 1% sample twitter
+firehose, continously downloads tweets, converts them to Avro format and
+sends Avro events to a downstream Flume sink. Requires the consumer and 
+access tokens and secrets of a Twitter developer account.
+Required properties are in **bold**.
+
+==================     ===========  ===================================================
+Property Name          Default      Description
+==================     ===========  ===================================================
+**channels**           --
+**type**               --           The component type name, needs to be ``org.apache.flume.source.twitter.TwitterSource``
+**consumerKey**        --           OAuth consumer key
+**consumerSecret**     --           OAuth consumer secret
+**accessToken**        --           OAuth access token
+**accessTokenSecret**  --           OAuth toekn secret 
+maxBatchSize           1000         Maximum number of twitter messages to put in a single batch
+maxBatchDurationMillis 1000         Maximum number of milliseconds to wait before closing a batch
+==================     ===========  ===================================================
+
+Example for agent named a1:
+
+.. code-block:: properties
+
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.type = org.apache.flume.source.twitter.TwitterSource
+  a1.sources.r1.channels = c1
+  a1.sources.r1.consumerKey = YOUR_TWITTER_CONSUMER_KEY
+  a1.sources.r1.consumerSecret = YOUR_TWITTER_CONSUMER_SECRET
+  a1.sources.r1.accessToken = YOUR_TWITTER_ACCESS_TOKEN
+  a1.sources.r1.accessTokenSecret = YOUR_TWITTER_ACCESS_TOKEN_SECRET
+  a1.sources.r1.maxBatchSize = 10
+  a1.sources.r1.maxBatchDurationMillis = 200
+
 Event Deserializers
 '''''''''''''''''''
 
