@@ -968,6 +968,12 @@ limitations under the License.
       </dependency>
 
       <dependency>
+        <groupId>org.apache.flume.flume-ng-sources</groupId>
+        <artifactId>flume-twitter-source</artifactId>
+        <version>1.5.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
         <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
         <artifactId>flume-thrift-source</artifactId>
         <version>1.5.0-SNAPSHOT</version>
@@ -1056,6 +1062,23 @@ limitations under the License.
         <groupId>org.apache.solr</groupId>
         <artifactId>solr-cell</artifactId>
         <version>4.3.0</version>
+      </dependency>
+
+      <!-- Dependencies of the Twitter source -->
+      <dependency>
+        <groupId>org.twitter4j</groupId>
+        <artifactId>twitter4j-core</artifactId>
+        <version>3.0.3</version>
+      </dependency>
+      <dependency>
+        <groupId>org.twitter4j</groupId>
+        <artifactId>twitter4j-media-support</artifactId>
+        <version>3.0.3</version>
+      </dependency>
+      <dependency>
+        <groupId>org.twitter4j</groupId>
+        <artifactId>twitter4j-stream</artifactId>
+        <version>3.0.3</version>
       </dependency>
 
     </dependencies>

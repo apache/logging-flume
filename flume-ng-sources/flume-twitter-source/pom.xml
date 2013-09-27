@@ -21,29 +21,41 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <artifactId>flume-parent</artifactId>
+    <artifactId>flume-ng-sources</artifactId>
     <groupId>org.apache.flume</groupId>
     <version>1.5.0-SNAPSHOT</version>
   </parent>
 
-  <groupId>org.apache.flume</groupId>
-  <artifactId>flume-ng-sources</artifactId>
-  <name>Flume Sources</name>
-  <packaging>pom</packaging>
+  <groupId>org.apache.flume.flume-ng-sources</groupId>
+  <artifactId>flume-twitter-source</artifactId>
+  <name>Flume Twitter Source</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-ng-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.twitter4j</groupId>
+      <artifactId>twitter4j-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.twitter4j</groupId>
+      <artifactId>twitter4j-media-support</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.twitter4j</groupId>
+      <artifactId>twitter4j-stream</artifactId>
+    </dependency>
+  </dependencies>
 
   <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-    </plugins>
   </build>
-
-  <modules>
-    <module>flume-scribe-source</module>
-    <module>flume-jms-source</module>
-    <module>flume-twitter-source</module>
-  </modules>
-
 </project>
