@@ -953,6 +953,11 @@ trackerDir            .flumespool     Directory to store metadata related to pro
                                       If this path is not an absolute path, then it is interpreted as relative to the spoolDir.
 batchSize             100             Granularity at which to batch transfer to the channel
 inputCharset          UTF-8           Character set used by deserializers that treat the input file as text.
+decodeErrorPolicy     ``FAIL``        What to do when we see a non-decodable character in the input file.
+                                      ``FAIL``: Throw an exception and fail to parse the file.
+                                      ``REPLACE``: Replace the unparseable character with the "replacement character" char,
+                                      typically Unicode U+FFFD.
+                                      ``IGNORE``: Drop the unparseable character sequence.
 deserializer          ``LINE``        Specify the deserializer used to parse the file into events.
                                       Defaults to parsing each line as an event. The class specified must implement
                                       ``EventDeserializer.Builder``.

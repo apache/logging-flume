@@ -24,7 +24,10 @@ import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import org.apache.flume.Context;
@@ -32,7 +35,13 @@ import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
-import org.apache.flume.serialization.*;
+import org.apache.flume.serialization.DecodeErrorPolicy;
+import org.apache.flume.serialization.DurablePositionTracker;
+import org.apache.flume.serialization.EventDeserializer;
+import org.apache.flume.serialization.EventDeserializerFactory;
+import org.apache.flume.serialization.PositionTracker;
+import org.apache.flume.serialization.ResettableFileInputStream;
+import org.apache.flume.serialization.ResettableInputStream;
 import org.apache.flume.source.SpoolDirectorySourceConfigurationConstants;
 import org.apache.flume.tools.PlatformDetect;
 import org.slf4j.Logger;
@@ -86,6 +95,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
   private final String fileNameHeader;
   private final String deletePolicy;
   private final Charset inputCharset;
+  private final DecodeErrorPolicy decodeErrorPolicy;
 
   private Optional<FileInfo> currentFile = Optional.absent();
   /** Always contains the last file from which lines have been read. **/
@@ -99,7 +109,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       String completedSuffix, String ignorePattern, String trackerDirPath,
       boolean annotateFileName, String fileNameHeader,
       String deserializerType, Context deserializerContext,
-      String deletePolicy, String inputCharset) throws IOException {
+      String deletePolicy, String inputCharset,
+      DecodeErrorPolicy decodeErrorPolicy) throws IOException {
 
     // Sanity checks
     Preconditions.checkNotNull(spoolDirectory);
@@ -156,6 +167,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     this.ignorePattern = Pattern.compile(ignorePattern);
     this.deletePolicy = deletePolicy;
     this.inputCharset = Charset.forName(inputCharset);
+    this.decodeErrorPolicy = Preconditions.checkNotNull(decodeErrorPolicy);
 
     File trackerDirectory = new File(trackerDirPath);
 
@@ -432,7 +444,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
 
         ResettableInputStream in =
             new ResettableFileInputStream(nextFile, tracker,
-                ResettableFileInputStream.DEFAULT_BUF_SIZE, inputCharset);
+                ResettableFileInputStream.DEFAULT_BUF_SIZE, inputCharset,
+                decodeErrorPolicy);
         EventDeserializer deserializer = EventDeserializerFactory.getInstance
             (deserializerType, deserializerContext, in);
 
@@ -504,6 +517,9 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
         SpoolDirectorySourceConfigurationConstants.DEFAULT_DELETE_POLICY;
     private String inputCharset =
         SpoolDirectorySourceConfigurationConstants.DEFAULT_INPUT_CHARSET;
+    private DecodeErrorPolicy decodeErrorPolicy = DecodeErrorPolicy.valueOf(
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_DECODE_ERROR_POLICY
+            .toUpperCase());
 
     public Builder spoolDirectory(File directory) {
       this.spoolDirectory = directory;
@@ -555,10 +571,16 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       return this;
     }
 
+    public Builder decodeErrorPolicy(DecodeErrorPolicy decodeErrorPolicy) {
+      this.decodeErrorPolicy = decodeErrorPolicy;
+      return this;
+    }
+
     public ReliableSpoolingFileEventReader build() throws IOException {
       return new ReliableSpoolingFileEventReader(spoolDirectory, completedSuffix,
           ignorePattern, trackerDirPath, annotateFileName, fileNameHeader,
-          deserializerType, deserializerContext, deletePolicy, inputCharset);
+          deserializerType, deserializerContext, deletePolicy, inputCharset,
+          decodeErrorPolicy);
     }
   }
 

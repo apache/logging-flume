@@ -17,6 +17,8 @@
 
 package org.apache.flume.source;
 
+import org.apache.flume.serialization.DecodeErrorPolicy;
+
 public class SpoolDirectorySourceConfigurationConstants {
   /** Directory where files are deposited. */
   public static final String SPOOL_DIRECTORY = "spoolDir";
@@ -64,6 +66,12 @@ public class SpoolDirectorySourceConfigurationConstants {
   public static final String DELETE_POLICY = "deletePolicy";
   public static final String DEFAULT_DELETE_POLICY = "never";
 
+  /** Character set used when reading the input. */
   public static final String INPUT_CHARSET = "inputCharset";
   public static final String DEFAULT_INPUT_CHARSET = "UTF-8";
+
+  /** What to do when there is a character set decoding error. */
+  public static final String DECODE_ERROR_POLICY = "decodeErrorPolicy";
+  public static final String DEFAULT_DECODE_ERROR_POLICY =
+      DecodeErrorPolicy.FAIL.name();
 }

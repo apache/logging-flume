@@ -34,6 +34,7 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
+import java.nio.charset.CodingErrorAction;
 
 /**
  * <p/>This class makes the following assumptions:
@@ -78,7 +79,7 @@ public class ResettableFileInputStream extends ResettableInputStream
    */
   public ResettableFileInputStream(File file, PositionTracker tracker)
       throws IOException {
-    this(file, tracker, DEFAULT_BUF_SIZE, Charsets.UTF_8);
+    this(file, tracker, DEFAULT_BUF_SIZE, Charsets.UTF_8, DecodeErrorPolicy.FAIL);
   }
 
   /**
@@ -98,7 +99,7 @@ public class ResettableFileInputStream extends ResettableInputStream
    * @throws FileNotFoundException
    */
   public ResettableFileInputStream(File file, PositionTracker tracker,
-                                   int bufSize, Charset charset)
+      int bufSize, Charset charset, DecodeErrorPolicy decodeErrorPolicy)
       throws IOException {
     this.file = file;
     this.tracker = tracker;
@@ -114,6 +115,24 @@ public class ResettableFileInputStream extends ResettableInputStream
     this.position = 0;
     this.syncPosition = 0;
     this.maxCharWidth = (int)Math.ceil(charset.newEncoder().maxBytesPerChar());
+
+    CodingErrorAction errorAction;
+    switch (decodeErrorPolicy) {
+      case FAIL:
+        errorAction = CodingErrorAction.REPORT;
+        break;
+      case REPLACE:
+        errorAction = CodingErrorAction.REPLACE;
+        break;
+      case IGNORE:
+        errorAction = CodingErrorAction.IGNORE;
+        break;
+      default:
+        throw new IllegalArgumentException(
+            "Unexpected value for decode error policy: " + decodeErrorPolicy);
+    }
+    decoder.onMalformedInput(errorAction);
+    decoder.onUnmappableCharacter(errorAction);
 
     seek(tracker.getPosition());
   }
