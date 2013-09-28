@@ -30,6 +30,7 @@ import org.apache.flume.*;
 import org.apache.flume.client.avro.ReliableSpoolingFileEventReader;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.instrumentation.SourceCounter;
+import org.apache.flume.serialization.DecodeErrorPolicy;
 import org.apache.flume.serialization.LineDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +61,7 @@ Configurable, EventDrivenSource {
   private Context deserializerContext;
   private String deletePolicy;
   private String inputCharset;
+  private DecodeErrorPolicy decodeErrorPolicy;
   private volatile boolean hasFatalError = false;
 
   private SourceCounter sourceCounter;
@@ -86,6 +88,7 @@ Configurable, EventDrivenSource {
           .deserializerContext(deserializerContext)
           .deletePolicy(deletePolicy)
           .inputCharset(inputCharset)
+          .decodeErrorPolicy(decodeErrorPolicy)
           .build();
     } catch (IOException ioe) {
       throw new FlumeException("Error instantiating spooling event parser",
@@ -139,6 +142,9 @@ Configurable, EventDrivenSource {
     batchSize = context.getInteger(BATCH_SIZE,
         DEFAULT_BATCH_SIZE);
     inputCharset = context.getString(INPUT_CHARSET, DEFAULT_INPUT_CHARSET);
+    decodeErrorPolicy = DecodeErrorPolicy.valueOf(
+        context.getString(DECODE_ERROR_POLICY, DEFAULT_DECODE_ERROR_POLICY)
+        .toUpperCase());
 
     ignorePattern = context.getString(IGNORE_PAT, DEFAULT_IGNORE_PAT);
     trackerDirPath = context.getString(TRACKER_DIR, DEFAULT_TRACKER_DIR);

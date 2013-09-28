@@ -32,11 +32,13 @@ import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.MalformedInputException;
 import java.util.List;
 
 public class TestResettableFileInputStream {
@@ -106,6 +108,120 @@ public class TestResettableFileInputStream {
     assertNull(afterEOF);
 
     in.close();
+  }
+
+  @Test(expected = MalformedInputException.class)
+  public void testUtf8DecodeErrorHandlingFailMalformed() throws IOException {
+    ResettableInputStream in = initUtf8DecodeTest(DecodeErrorPolicy.FAIL);
+    while (in.readChar() != -1) {
+      // Do nothing... read the whole file and throw away the bytes.
+    }
+    fail("Expected MalformedInputException!");
+  }
+
+
+  @Test
+  public void testUtf8DecodeErrorHandlingIgnore() throws IOException {
+    ResettableInputStream in = initUtf8DecodeTest(DecodeErrorPolicy.IGNORE);
+    int c;
+    StringBuilder sb = new StringBuilder();
+    while ((c = in.readChar()) != -1) {
+      sb.append((char)c);
+    }
+    assertEquals("Latin1: ()\nLong: ()\nNonUnicode: ()\n", sb.toString());
+  }
+
+  @Test
+  public void testUtf8DecodeErrorHandlingReplace() throws IOException {
+    ResettableInputStream in = initUtf8DecodeTest(DecodeErrorPolicy.REPLACE);
+    int c;
+    StringBuilder sb = new StringBuilder();
+    while ((c = in.readChar()) != -1) {
+      sb.append((char)c);
+    }
+    assertEquals("Latin1: (X)\nLong: (XXX)\nNonUnicode: (X)\n"
+        .replaceAll("X", "\ufffd"), sb.toString());
+  }
+
+  @Test(expected = MalformedInputException.class)
+  public void testLatin1DecodeErrorHandlingFailMalformed() throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    generateLatin1InvalidSequence(out);
+    Files.write(out.toByteArray(), file);
+    ResettableInputStream in = initInputStream(DecodeErrorPolicy.FAIL);
+    while (in.readChar() != -1) {
+      // Do nothing... read the whole file and throw away the bytes.
+    }
+    fail("Expected MalformedInputException!");
+  }
+
+  @Test
+  public void testLatin1DecodeErrorHandlingReplace() throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    generateLatin1InvalidSequence(out);
+    Files.write(out.toByteArray(), file);
+    ResettableInputStream in = initInputStream(DecodeErrorPolicy.REPLACE);
+
+    int c;
+    StringBuilder sb = new StringBuilder();
+    while ((c = in.readChar()) != -1) {
+      sb.append((char)c);
+    }
+    assertEquals("Invalid: (X)\n".replaceAll("X", "\ufffd"), sb.toString());
+  }
+
+  private ResettableInputStream initUtf8DecodeTest(DecodeErrorPolicy policy)
+      throws IOException {
+    writeBigBadUtf8Sequence(file);
+    return initInputStream(policy);
+  }
+
+  private ResettableInputStream initInputStream(DecodeErrorPolicy policy)
+      throws IOException {
+    PositionTracker tracker = new DurablePositionTracker(meta, file.getPath());
+    ResettableInputStream in = new ResettableFileInputStream(file, tracker,
+        2048, Charsets.UTF_8, policy);
+    return in;
+  }
+
+  private void writeBigBadUtf8Sequence(File file) throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    generateUtf8Latin1Sequence(out);
+    generateUtf8OverlyLongSequence(out);
+    generateUtf8NonUnicodeSequence(out);
+    Files.write(out.toByteArray(), file);
+  }
+
+  private void generateUtf8OverlyLongSequence(OutputStream out)
+      throws IOException {
+    out.write("Long: (".getBytes(Charsets.UTF_8));
+    // Overly-long slash character should not be accepted.
+    out.write(new byte[] { (byte)0xe0, (byte)0x80, (byte)0xaf });
+    out.write(")\n".getBytes(Charsets.UTF_8));
+  }
+
+  private void generateUtf8NonUnicodeSequence(OutputStream out)
+      throws IOException {
+    out.write("NonUnicode: (".getBytes(Charsets.UTF_8));
+    // This is a valid 5-octet sequence but is not Unicode
+    out.write(new byte[] { (byte)0xf8, (byte)0xa1, (byte)0xa1, (byte)0xa1,
+        (byte)0xa1 } );
+    out.write(")\n".getBytes(Charsets.UTF_8));
+  }
+
+  private void generateUtf8Latin1Sequence(OutputStream out) throws IOException {
+    out.write("Latin1: (".getBytes(Charsets.UTF_8));
+    // This is "e" with an accent in Latin-1
+    out.write(new byte[] { (byte)0xe9 } );
+    out.write(")\n".getBytes(Charsets.UTF_8));
+  }
+
+  private void generateLatin1InvalidSequence(OutputStream out)
+      throws IOException {
+    out.write("Invalid: (".getBytes(Charsets.UTF_8));
+    // Not a valid character in Latin 1.
+    out.write(new byte[] { (byte)0x81 } );
+    out.write(")\n".getBytes(Charsets.UTF_8));
   }
 
   /**
@@ -206,7 +322,7 @@ public class TestResettableFileInputStream {
 
     PositionTracker tracker = new DurablePositionTracker(meta, file.getPath());
     ResettableInputStream in = new ResettableFileInputStream(file, tracker,
-        10 * LINE_LEN, Charsets.UTF_8);
+        10 * LINE_LEN, Charsets.UTF_8, DecodeErrorPolicy.FAIL);
 
     String line = "";
     for (int i = 0; i < 9; i++) {
