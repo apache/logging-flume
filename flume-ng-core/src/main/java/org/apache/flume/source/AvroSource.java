@@ -59,6 +59,7 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.handler.codec.compression.ZlibDecoder;
 import org.jboss.netty.handler.codec.compression.ZlibEncoder;
+import org.jboss.netty.handler.ipfilter.IpFilterRule;
 import org.jboss.netty.handler.ipfilter.IpFilterRuleHandler;
 import org.jboss.netty.handler.ipfilter.PatternRule;
 import org.jboss.netty.handler.ssl.SslHandler;
@@ -153,6 +154,8 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   private int maxThreads;
   private ScheduledExecutorService connectionCountUpdater;
 
+  private List<IpFilterRule> rules;
+
   @Override
   public void configure(Context context) {
     Configurables.ensureRequiredNonNull(context, PORT_KEY, BIND_KEY);
@@ -191,10 +194,16 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     if (enableIpFilter) {
       patternRuleConfigDefinition = context.getString(IP_FILTER_RULES_KEY);
       if (patternRuleConfigDefinition == null ||
-        patternRuleConfigDefinition.isEmpty()) {
+        patternRuleConfigDefinition.trim().isEmpty()) {
         throw new FlumeException(
           "ipFilter is configured with true but ipFilterRules is not defined:" +
             " ");
+      }
+      String[] patternRuleDefinitions = patternRuleConfigDefinition.split(
+        ",");
+      rules = new ArrayList<IpFilterRule>(patternRuleDefinitions.length);
+      for (String patternRuleDefinition : patternRuleDefinitions) {
+        rules.add(generateRule(patternRuleDefinition));
       }
     }
 
@@ -369,11 +378,53 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     return Status.OK;
   }
 
+  private PatternRule generateRule(
+    String patternRuleDefinition) throws FlumeException {
+    patternRuleDefinition = patternRuleDefinition.trim();
+    //first validate the format
+    int firstColonIndex = patternRuleDefinition.indexOf(":");
+    if (firstColonIndex == -1) {
+      throw new FlumeException(
+        "Invalid ipFilter patternRule '" + patternRuleDefinition +
+          "' should look like <'allow'  or 'deny'>:<'ip' or " +
+          "'name'>:<pattern>");
+    } else {
+      String ruleAccessFlag = patternRuleDefinition.substring(0,
+        firstColonIndex);
+      int secondColonIndex = patternRuleDefinition.indexOf(":",
+        firstColonIndex + 1);
+      if ((!ruleAccessFlag.equals("allow") &&
+        !ruleAccessFlag.equals("deny")) || secondColonIndex == -1) {
+        throw new FlumeException(
+          "Invalid ipFilter patternRule '" + patternRuleDefinition +
+            "' should look like <'allow'  or 'deny'>:<'ip' or " +
+            "'name'>:<pattern>");
+      }
+
+      String patternTypeFlag = patternRuleDefinition.substring(
+        firstColonIndex + 1, secondColonIndex);
+      if ((!patternTypeFlag.equals("ip") &&
+        !patternTypeFlag.equals("name"))) {
+        throw new FlumeException(
+          "Invalid ipFilter patternRule '" + patternRuleDefinition +
+            "' should look like <'allow'  or 'deny'>:<'ip' or " +
+            "'name'>:<pattern>");
+      }
+
+      boolean isAllow = ruleAccessFlag.equals("allow");
+      String patternRuleString = (patternTypeFlag.equals("ip") ? "i" : "n")
+        + ":" + patternRuleDefinition.substring(secondColonIndex + 1);
+      logger.info("Adding ipFilter PatternRule: "
+        + (isAllow ? "Allow" : "deny") + " " + patternRuleString);
+      return new PatternRule(isAllow, patternRuleString);
+    }
+  }
+
   /**
    * Factory of SSL-enabled server worker channel pipelines
    * Copied from Avro's org.apache.avro.ipc.TestNettyServerWithSSL test
    */
-  private static class AdvancedChannelPipelineFactory
+  private class AdvancedChannelPipelineFactory
       implements ChannelPipelineFactory {
 
     private boolean enableCompression;
@@ -448,23 +499,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
         logger.info("Setting up ipFilter with the following rule definition: " +
           patternRuleConfigDefinition);
         IpFilterRuleHandler ipFilterHandler = new IpFilterRuleHandler();
-
-        if (patternRuleConfigDefinition != null &&
-          !patternRuleConfigDefinition.isEmpty()) {
-          String[] patternRuleDefinitions = patternRuleConfigDefinition.split(
-            ",");
-          for (String patternRuleDefinition : patternRuleDefinitions) {
-
-            PatternRule patternRule
-              = PatternRuleBuilder.withConfigRuleDefinition(
-              patternRuleDefinition);
-
-            if (patternRule != null) {
-              ipFilterHandler.add(patternRule);
-            }
-          }
-        }
-
+        ipFilterHandler.addAll(rules);
         logger.info(
           "Adding ipFilter with " + ipFilterHandler.size() + " rules");
 
@@ -473,57 +508,5 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
 
       return pipeline;
     }
-
-    public static class PatternRuleBuilder {
-      public static PatternRule withConfigRuleDefinition(
-        String patternRuleDefinition) throws FlumeException {
-        patternRuleDefinition = patternRuleDefinition.trim();
-        //first validation the format
-
-        int firstColonIndex = patternRuleDefinition.indexOf(":");
-        if (firstColonIndex == -1) {
-          logger.error(
-            "Invalid ipFilter patternRule '" + patternRuleDefinition +
-              "' should look like <'allow'  or 'deny'>:<'ip' or " +
-              "'name'>:<pattern>");
-          return null;
-        } else {
-
-          String ruleAccessFlag = patternRuleDefinition.substring(0,
-            firstColonIndex);
-          int secondColonIndex = patternRuleDefinition.indexOf(":",
-            firstColonIndex + 1);
-          if ((!ruleAccessFlag.equals("allow") &&
-            !ruleAccessFlag.equals("deny")) || secondColonIndex == -1) {
-            logger.error(
-              "Invalid ipFilter patternRule '" + patternRuleDefinition +
-                "' should look like <'allow'  or 'deny'>:<'ip' or " +
-                "'name'>:<pattern>");
-            return null;
-          }
-
-          String patternTypeFlag = patternRuleDefinition.substring(
-            firstColonIndex + 1, secondColonIndex);
-          if ((!patternTypeFlag.equals("ip") &&
-            !patternTypeFlag.equals("name"))) {
-            logger.error(
-              "Invalid ipFilter patternRule '" + patternRuleDefinition +
-                "' should look like <'allow'  or 'deny'>:<'ip' or " +
-                "'name'>:<pattern>");
-            return null;
-          }
-
-          boolean isAllow = ruleAccessFlag.equals("allow");
-          String patternRuleString =
-            (patternTypeFlag.equals("ip") ? "i" : "n") + ":" +
-              patternRuleDefinition.substring(secondColonIndex + 1);
-          logger.info("Adding ipFilter PatternRule: "
-            + (isAllow ? "Allow" : "deny") +
-            " " + patternRuleString);
-          return new PatternRule(isAllow, patternRuleString);
-        }
-      }
-    }
-
   }
 }
