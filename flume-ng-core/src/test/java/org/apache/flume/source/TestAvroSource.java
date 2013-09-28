@@ -21,13 +21,14 @@ package org.apache.flume.source;
 
 import java.io.IOException;
 import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -72,9 +73,11 @@ public class TestAvroSource {
   private int selectedPort;
   private AvroSource source;
   private Channel channel;
+  private InetAddress localhost;
 
   @Before
-  public void setUp() {
+  public void setUp() throws UnknownHostException {
+    localhost = InetAddress.getByName("127.0.0.1");
     source = new AvroSource();
     channel = new MemoryChannel();
 
@@ -383,65 +386,84 @@ public class TestAvroSource {
   }
 
   @Test
-  public void testValidIpFilterAllows() throws InterruptedException, IOException {
-
-    doIpFilterTest("allow:name:localhost,deny:ip:*", true, false);
-    doIpFilterTest("allow:ip:" + Inet4Address.getLocalHost().getHostAddress() + ",deny:ip:*", true, false);
-    doIpFilterTest("allow:ip:*", true, false);
-    doIpFilterTest("allow:ip:" + Inet4Address.getLocalHost().getHostAddress().substring(0, 3) + "*,deny:ip:*", true, false);
-    doIpFilterTest("allow:ip:127.0.0.2,allow:ip:" + Inet4Address.getLocalHost().getHostAddress().substring(0, 3) + "*,deny:ip:*", true, false);
-
-    doIpFilterTest("allow:name:localhost,deny:ip:*", true, true);
-    doIpFilterTest("allow:ip:*", true, true);
-
+  public void testValidIpFilterAllows()
+      throws InterruptedException, IOException {
+    doIpFilterTest(localhost, "allow:name:localhost,deny:ip:*", true, false);
+    doIpFilterTest(localhost, "allow:ip:" + localhost.getHostAddress() +
+        ",deny:ip:*", true, false);
+    doIpFilterTest(localhost, "allow:ip:*", true, false);
+    doIpFilterTest(localhost, "allow:ip:" +
+        localhost.getHostAddress().substring(0, 3) +
+        "*,deny:ip:*", true, false);
+    doIpFilterTest(localhost, "allow:ip:127.0.0.2,allow:ip:" +
+        localhost.getHostAddress().substring(0, 3) +
+        "*,deny:ip:*", true, false);
+    doIpFilterTest(localhost, "allow:name:localhost,deny:ip:*", true, true);
+    doIpFilterTest(localhost, "allow:ip:*", true, true);
   }
 
   @Test
-  public void testValidIpFilterDenys() throws InterruptedException, IOException {
-
-    doIpFilterTest("deny:ip:*", false, false);
-    doIpFilterTest("deny:name:localhost", false, false);
-    doIpFilterTest("deny:ip:" + Inet4Address.getLocalHost().getHostAddress() + ",allow:ip:*", false, false);
-    doIpFilterTest("deny:ip:*", false, false);
-    doIpFilterTest("allow:ip:45.2.2.2,deny:ip:*", false, false);
-    doIpFilterTest("deny:ip:" + Inet4Address.getLocalHost().getHostAddress().substring(0, 3) + "*,allow:ip:*", false, false);
-
-
-    doIpFilterTest("deny:ip:*", false, true);
+  public void testValidIpFilterDenys()
+      throws InterruptedException, IOException {
+    doIpFilterTest(localhost, "deny:ip:*", false, false);
+    doIpFilterTest(localhost, "deny:name:localhost", false, false);
+    doIpFilterTest(localhost, "deny:ip:" + localhost.getHostAddress() +
+        ",allow:ip:*", false, false);
+    doIpFilterTest(localhost, "deny:ip:*", false, false);
+    doIpFilterTest(localhost, "allow:ip:45.2.2.2,deny:ip:*", false, false);
+    doIpFilterTest(localhost, "deny:ip:" +
+        localhost.getHostAddress().substring(0, 3) +
+        "*,allow:ip:*", false, false);
+    doIpFilterTest(localhost, "deny:ip:*", false, true);
   }
 
   @Test
   public void testInvalidIpFilter() throws InterruptedException, IOException {
-
-    doIpFilterTest("deny:ip?*", true, false);
-    doIpFilterTest("deny?name:localhost", true, false);
-    doIpFilterTest("deny:ip:127.0.0.2,allow:ip?*,deny:ip:" + Inet4Address.getLocalHost().getHostAddress() + "", false, false);
-    doIpFilterTest("deny:*", true, false);
-    doIpFilterTest("deny:id:" + Inet4Address.getLocalHost().getHostAddress().substring(0, 3) + "*,allow:ip:*", true, false);
+    doIpFilterTest(localhost, "deny:ip:*", false, false);
+    doIpFilterTest(localhost, "allow:name:localhost", true, false);
+    doIpFilterTest(localhost, "deny:ip:127.0.0.2,allow:ip:*,deny:ip:" +
+        localhost.getHostAddress(), true, false);
+    doIpFilterTest(localhost, "deny:ip:" +
+        localhost.getHostAddress().substring(0, 3) + "*,allow:ip:*",
+        false, false);
     try {
-      doIpFilterTest(null, true, false);
-      Assert.fail("The null ipFilterRules config should had thrown an exception.");
+      doIpFilterTest(localhost, null, false, false);
+      Assert.fail(
+        "The null ipFilterRules config should have thrown an exception.");
     } catch (FlumeException e) {
       //Do nothing
     }
 
-    try{
-      doIpFilterTest("", true, false);
-      Assert.fail("The empty string ipFilterRules config should had thrown an exception.");
-    }  catch (FlumeException e) {
+    try {
+      doIpFilterTest(localhost, "", true, false);
+      Assert.fail("The empty string ipFilterRules config should have thrown "
+          + "an exception");
+    } catch (FlumeException e) {
       //Do nothing
     }
 
-
+    try {
+      doIpFilterTest(localhost, "homer:ip:45.4.23.1", true, false);
+      Assert.fail("Bad ipFilterRules config should have thrown an exception.");
+    } catch (FlumeException e) {
+      //Do nothing
+    }
+    try {
+      doIpFilterTest(localhost, "allow:sleeps:45.4.23.1", true, false);
+      Assert.fail("Bad ipFilterRules config should have thrown an exception.");
+    } catch (FlumeException e) {
+      //Do nothing
+    }
   }
 
-  public void doIpFilterTest(String ruleDefinition, boolean eventShouldBeAllowed, boolean testWithSSL) throws InterruptedException, IOException {
+  public void doIpFilterTest(InetAddress dest, String ruleDefinition,
+      boolean eventShouldBeAllowed, boolean testWithSSL)
+      throws InterruptedException, IOException {
     boolean bound = false;
 
     for (int i = 0; i < 100 && !bound; i++) {
       try {
         Context context = new Context();
-
         context.put("port", String.valueOf(selectedPort = 41414 + i));
         context.put("bind", "0.0.0.0");
         context.put("ipFilter", "true");
@@ -476,34 +498,41 @@ public class TestAvroSource {
         source.getLifecycleState());
 
     AvroSourceProtocol client;
-    NettyTransceiver nettyTransceiver;
-
-    if (testWithSSL) {
-      nettyTransceiver = new NettyTransceiver(new InetSocketAddress(selectedPort), new SSLChannelFactory());
-      client = SpecificRequestor.getClient(
-          AvroSourceProtocol.class, nettyTransceiver );
-    } else {
-      nettyTransceiver = new NettyTransceiver(new InetSocketAddress(selectedPort));
-      client = SpecificRequestor.getClient(
-          AvroSourceProtocol.class, nettyTransceiver);
-    }
-
-    AvroFlumeEvent avroEvent = new AvroFlumeEvent();
-    avroEvent.setHeaders(new HashMap<CharSequence, CharSequence>());
-    avroEvent.setBody(ByteBuffer.wrap("Hello avro ipFilter".getBytes()));
-
+    NettyTransceiver nettyTransceiver = null;
     try {
+      if (testWithSSL) {
+        nettyTransceiver = new NettyTransceiver(
+          new InetSocketAddress (dest, selectedPort),
+          new SSLChannelFactory());
+        client = SpecificRequestor.getClient(
+          AvroSourceProtocol.class, nettyTransceiver);
+      } else {
+        nettyTransceiver = new NettyTransceiver(
+          new InetSocketAddress (dest, selectedPort));
+        client = SpecificRequestor.getClient(
+          AvroSourceProtocol.class, nettyTransceiver);
+      }
+
+      AvroFlumeEvent avroEvent = new AvroFlumeEvent();
+      avroEvent.setHeaders(new HashMap<CharSequence, CharSequence>());
+      avroEvent.setBody(ByteBuffer.wrap("Hello avro ipFilter".getBytes()));
+
       logger.info("Client about to append");
       Status status = client.append(avroEvent);
       logger.info("Client appended");
       Assert.assertEquals(Status.OK, status);
-    } catch(IOException e) {
-      Assert.assertTrue("Should have been Allowed:" + ruleDefinition, !eventShouldBeAllowed);
+    } catch (IOException e) {
+      Assert.assertTrue("Should have been allowed: " + ruleDefinition,
+        !eventShouldBeAllowed);
       return;
+    } finally {
+      if (nettyTransceiver != null) {
+        nettyTransceiver.close();
+      }
+      source.stop();
     }
-    Assert.assertTrue("Should have been denied:" + ruleDefinition, eventShouldBeAllowed);
-
-
+    Assert.assertTrue("Should have been denied: " + ruleDefinition,
+        eventShouldBeAllowed);
 
     Transaction transaction = channel.getTransaction();
     transaction.begin();
@@ -514,17 +543,11 @@ public class TestAvroSource {
         new String(event.getBody()));
     transaction.commit();
     transaction.close();
-
     logger.debug("Round trip event:{}", event);
 
-    nettyTransceiver.close();
-    source.stop();
     Assert.assertTrue("Reached stop or error",
         LifecycleController.waitForOneOf(source, LifecycleState.STOP_OR_ERROR));
     Assert.assertEquals("Server is stopped", LifecycleState.STOP,
         source.getLifecycleState());
-
-
   }
-
 }
