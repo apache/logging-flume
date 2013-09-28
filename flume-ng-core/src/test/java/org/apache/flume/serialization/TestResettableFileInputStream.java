@@ -18,6 +18,7 @@
 package org.apache.flume.serialization;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import junit.framework.Assert;
@@ -73,6 +74,27 @@ public class TestResettableFileInputStream {
   @Test
   public void testBasicRead() throws IOException {
     String output = singleLineFileInit(file, Charsets.UTF_8);
+
+    PositionTracker tracker = new DurablePositionTracker(meta, file.getPath());
+    ResettableInputStream in = new ResettableFileInputStream(file,  tracker);
+
+    String result = readLine(in, output.length());
+    assertEquals(output, result);
+
+    String afterEOF = readLine(in, output.length());
+    assertNull(afterEOF);
+
+    in.close();
+  }
+
+  /**
+   * Ensure that we can process lines that contain multi byte characters in weird places
+   * such as at the end of a buffer.
+   * @throws IOException
+   */
+  @Test
+  public void testWideCharRead() throws IOException {
+    String output = wideCharFileInit(file, Charsets.UTF_8);
 
     PositionTracker tracker = new DurablePositionTracker(meta, file.getPath());
     ResettableInputStream in = new ResettableFileInputStream(file,  tracker);
@@ -227,6 +249,30 @@ public class TestResettableFileInputStream {
     assertEquals(9, Integer.parseInt(readLine(in, LINE_LEN).substring(0, 10)));
     assertEquals(10, Integer.parseInt(readLine(in, LINE_LEN).substring(0, 10)));
     assertEquals(11, Integer.parseInt(readLine(in, LINE_LEN).substring(0, 10)));
+  }
+
+  /**
+   * Helper method that generates a line to test if parts of multi-byte characters on the
+   * edge of a buffer are handled properly.
+   */
+  private static String generateWideCharLine(){
+    String s = "éllo Wörld!\n";
+    int size = (ResettableFileInputStream.DEFAULT_BUF_SIZE - 1) + s.length();
+    return Strings.padStart(s, size , 'H');
+  }
+
+  /**
+   * Creates a file that contains a line that contains wide characters
+   * @param file
+   * @param charset
+   * @return
+   * @throws IOException
+   */
+  private static String wideCharFileInit(File file, Charset charset)
+      throws IOException {
+    String output = generateWideCharLine();
+    Files.write(output.getBytes(charset), file);
+    return output;
   }
 
   /**

@@ -64,6 +64,7 @@ public class ResettableFileInputStream extends ResettableInputStream
   private final CharsetDecoder decoder;
   private long position;
   private long syncPosition;
+  private int maxCharWidth;
 
   /**
    *
@@ -112,6 +113,7 @@ public class ResettableFileInputStream extends ResettableInputStream
     this.decoder = charset.newDecoder();
     this.position = 0;
     this.syncPosition = 0;
+    this.maxCharWidth = (int)Math.ceil(charset.newEncoder().maxBytesPerChar());
 
     seek(tracker.getPosition());
   }
@@ -152,7 +154,12 @@ public class ResettableFileInputStream extends ResettableInputStream
 
   @Override
   public synchronized int readChar() throws IOException {
-    if (!buf.hasRemaining()) {
+    // The decoder can have issues with multi-byte characters.
+    // This check ensures that there are at least maxCharWidth bytes in the buffer
+    // before reaching EOF.
+    if (buf.remaining() < maxCharWidth) {
+      buf.clear();
+      buf.flip();
       refillBuf();
     }
 
