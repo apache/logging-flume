@@ -1850,30 +1850,32 @@ AsyncHBaseSink
 ''''''''''''''
 
 This sink writes data to HBase using an asynchronous model. A class implementing
-AsyncHbaseEventSerializer
-which is specified by the configuration is used to convert the events into
+AsyncHbaseEventSerializer which is specified by the configuration is used to convert the events into
 HBase puts and/or increments. These puts and increments are then written
-to HBase. This sink provides the same consistency guarantees as HBase,
+to HBase. This sink uses the `Asynchbase API <https://github.com/OpenTSDB/asynchbase>`_ to write to
+HBase. This sink provides the same consistency guarantees as HBase,
 which is currently row-wise atomicity. In the event of Hbase failing to
 write certain events, the sink will replay all events in that transaction.
 The type is the FQCN: org.apache.flume.sink.hbase.AsyncHBaseSink.
 Required properties are in **bold**.
 
-================  ============================================================  ====================================================================================
-Property Name     Default                                                       Description
-================  ============================================================  ====================================================================================
-**channel**       --
-**type**          --                                                            The component type name, needs to be ``asynchbase``
-**table**         --                                                            The name of the table in Hbase to write to.
-zookeeperQuorum   --                                                            The quorum spec. This is the value for the property ``hbase.zookeeper.quorum`` in hbase-site.xml
-znodeParent       /hbase                                                        The base path for the znode for the -ROOT- region. Value of ``zookeeper.znode.parent`` in hbase-site.xml
-**columnFamily**  --                                                            The column family in Hbase to write to.
-batchSize         100                                                           Number of events to be written per txn.
-timeout           60000                                                         The length of time (in milliseconds) the sink waits for acks from hbase for
-                                                                                all events in a transaction.
-serializer        org.apache.flume.sink.hbase.SimpleAsyncHbaseEventSerializer
-serializer.*      --                                                            Properties to be passed to the serializer.
-================  ============================================================  ====================================================================================
+===================  ============================================================  ====================================================================================
+Property Name        Default                                                       Description
+===================  ============================================================  ====================================================================================
+**channel**          --
+**type**             --                                                            The component type name, needs to be ``asynchbase``
+**table**            --                                                            The name of the table in Hbase to write to.
+zookeeperQuorum      --                                                            The quorum spec. This is the value for the property ``hbase.zookeeper.quorum`` in hbase-site.xml
+znodeParent          /hbase                                                        The base path for the znode for the -ROOT- region. Value of ``zookeeper.znode.parent`` in hbase-site.xml
+**columnFamily**     --                                                            The column family in Hbase to write to.
+batchSize            100                                                           Number of events to be written per txn.
+coalesceIncrements   false                                                         Should the sink coalesce multiple increments to a cell per batch. This might give
+                                                                                   better performance if there are multiple increments to a limited number of cells.
+timeout              60000                                                         The length of time (in milliseconds) the sink waits for acks from hbase for
+                                                                                   all events in a transaction.
+serializer           org.apache.flume.sink.hbase.SimpleAsyncHbaseEventSerializer
+serializer.*         --                                                            Properties to be passed to the serializer.
+===================  ============================================================  ====================================================================================
 
 Note that this sink takes the Zookeeper Quorum and parent znode information in
 the configuration. Zookeeper Quorum and parent node configuration may be

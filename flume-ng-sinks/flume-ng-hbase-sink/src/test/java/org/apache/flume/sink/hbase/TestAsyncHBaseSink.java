@@ -204,7 +204,7 @@ public class TestAsyncHBaseSink {
     testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
     deleteTable = true;
     AsyncHBaseSink sink = new AsyncHBaseSink(testUtility.getConfiguration(),
-      true);
+      true, false);
     Configurables.configure(sink, ctx);
     Channel channel = new MemoryChannel();
     Configurables.configure(channel, ctx);
@@ -268,6 +268,86 @@ public class TestAsyncHBaseSink {
     Assert.assertEquals(3, found);
     out = results[3];
     Assert.assertArrayEquals(Longs.toByteArray(3), out);
+  }
+
+  @Test
+  public void testMultipleBatchesBatchIncrementsWithCoalescing()
+    throws Exception {
+    doTestMultipleBatchesBatchIncrements(true);
+  }
+
+  @Test
+  public void testMultipleBatchesBatchIncrementsNoCoalescing()
+    throws Exception {
+    doTestMultipleBatchesBatchIncrements(false);
+  }
+
+  public void doTestMultipleBatchesBatchIncrements(boolean coalesce) throws
+    Exception {
+    testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
+    deleteTable = true;
+    AsyncHBaseSink sink = new AsyncHBaseSink(testUtility.getConfiguration(),
+      false, true);
+    if (coalesce) {
+      ctx.put(HBaseSinkConfigurationConstants.CONFIG_COALESCE_INCREMENTS,
+        "true");
+    }
+    ctx.put("batchSize", "2");
+    ctx.put("serializer", IncrementAsyncHBaseSerializer.class.getName());
+    ctx.put("serializer.column", "test");
+    Configurables.configure(sink, ctx);
+    //Reset the context to a higher batchSize
+    ctx.put("batchSize", "100");
+    // Restore the original serializer
+    ctx.put("serializer", SimpleAsyncHbaseEventSerializer.class.getName());
+    //Restore the no coalescing behavior
+    ctx.put(HBaseSinkConfigurationConstants.CONFIG_COALESCE_INCREMENTS,
+      "false");
+    Channel channel = new MemoryChannel();
+    Configurables.configure(channel, ctx);
+    sink.setChannel(channel);
+    sink.start();
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+    for (int i = 0; i < 4; i++) {
+      for (int j = 0; j < 3; j++) {
+        Event e = EventBuilder.withBody(Bytes.toBytes(valBase + "-" + i));
+        channel.put(e);
+      }
+    }
+    tx.commit();
+    tx.close();
+    int count = 0;
+    Status status = Status.READY;
+    while (status != Status.BACKOFF) {
+      count++;
+      status = sink.process();
+    }
+    Assert.assertFalse(sink.isConfNull());
+    sink.stop();
+    Assert.assertEquals(7, count);
+    HTable table = new HTable(testUtility.getConfiguration(), tableName);
+    Scan scan = new Scan();
+    scan.addColumn(columnFamily.getBytes(),"test".getBytes());
+    scan.setStartRow(Bytes.toBytes(valBase));
+    ResultScanner rs = table.getScanner(scan);
+    int i = 0;
+    try {
+      for (Result r = rs.next(); r != null; r = rs.next()) {
+        byte[] out = r.getValue(columnFamily.getBytes(), "test".getBytes());
+        Assert.assertArrayEquals(Longs.toByteArray(3), out);
+        Assert.assertTrue(new String(r.getRow()).startsWith(valBase));
+        i++;
+      }
+    } finally {
+      rs.close();
+    }
+    Assert.assertEquals(4, i);
+    if (coalesce) {
+      Assert.assertEquals(8, sink.getTotalCallbacksReceived());
+    } else {
+      Assert.assertEquals(12, sink.getTotalCallbacksReceived());
+    }
   }
 
   @Test

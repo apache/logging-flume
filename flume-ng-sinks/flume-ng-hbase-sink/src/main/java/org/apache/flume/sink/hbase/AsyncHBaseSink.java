@@ -18,13 +18,19 @@
  */
 package org.apache.flume.sink.hbase;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Maps;
+import com.google.common.primitives.UnsignedBytes;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
@@ -113,20 +119,32 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
   private String zkQuorum;
   private String zkBaseDir;
   private ExecutorService sinkCallbackPool;
-  private boolean isTest;
+  private boolean isTimeoutTest;
+  private boolean isCoalesceTest;
   private boolean enableWal = true;
+  private boolean batchIncrements = false;
+  private volatile int totalCallbacksReceived = 0;
+  private Map<CellIdentifier, AtomicIncrementRequest> incrementBuffer;
+
+  // Does not need to be thread-safe. Always called only from the sink's
+  // process method.
+  private final Comparator<byte[]> COMPARATOR = UnsignedBytes
+    .lexicographicalComparator();
 
   public AsyncHBaseSink(){
     this(null);
   }
 
   public AsyncHBaseSink(Configuration conf) {
-    this(conf, false);
+    this(conf, false, false);
   }
 
-  AsyncHBaseSink(Configuration conf, boolean isTimeoutTesting) {
+  @VisibleForTesting
+  AsyncHBaseSink(Configuration conf, boolean isTimeoutTest,
+    boolean isCoalesceTest) {
     this.conf = conf;
-    isTest = isTimeoutTesting;
+    this.isTimeoutTest = isTimeoutTest;
+    this.isCoalesceTest = isCoalesceTest;
   }
 
   @Override
@@ -138,7 +156,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
      * the next one is being processed.
      *
      */
-    if(!open){
+    if (!open) {
       throw new EventDeliveryException("Sink was never opened. " +
           "Please fix the configuration.");
     }
@@ -147,6 +165,9 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
     AtomicInteger callbacksExpected = new AtomicInteger(0);
     final Lock lock = new ReentrantLock();
     final Condition condition = lock.newCondition();
+    if (incrementBuffer != null) {
+      incrementBuffer.clear();
+    }
     /*
      * Callbacks can be reused per transaction, since they share the same
      * locks and conditions.
@@ -185,17 +206,40 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
           serializer.setEvent(event);
           List<PutRequest> actions = serializer.getActions();
           List<AtomicIncrementRequest> increments = serializer.getIncrements();
-          callbacksExpected.addAndGet(actions.size() + increments.size());
+          callbacksExpected.addAndGet(actions.size());
+          if (!batchIncrements) {
+            callbacksExpected.addAndGet(increments.size());
+          }
 
           for (PutRequest action : actions) {
             action.setDurable(enableWal);
             client.put(action).addCallbacks(putSuccessCallback, putFailureCallback);
           }
           for (AtomicIncrementRequest increment : increments) {
-            client.atomicIncrement(increment).addCallbacks(
-                    incrementSuccessCallback, incrementFailureCallback);
+            if (batchIncrements) {
+              CellIdentifier identifier = new CellIdentifier(increment.key(),
+                increment.qualifier());
+              AtomicIncrementRequest request
+                = incrementBuffer.get(identifier);
+              if (request == null) {
+                incrementBuffer.put(identifier, increment);
+              } else {
+                request.setAmount(request.getAmount() + increment.getAmount());
+              }
+            } else {
+              client.atomicIncrement(increment).addCallbacks(
+                incrementSuccessCallback, incrementFailureCallback);
+            }
           }
         }
+      }
+      if (batchIncrements) {
+        Collection<AtomicIncrementRequest> increments = incrementBuffer.values();
+        for (AtomicIncrementRequest increment : increments) {
+          client.atomicIncrement(increment).addCallbacks(
+            incrementSuccessCallback, incrementFailureCallback);
+        }
+        callbacksExpected.addAndGet(increments.size());
       }
       client.flush();
     } catch (Throwable e) {
@@ -216,7 +260,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
         timeRemaining = timeout - (System.nanoTime() - startTime);
         timeRemaining = (timeRemaining >= 0) ? timeRemaining : 0;
         try {
-          if(!condition.await(timeRemaining, TimeUnit.NANOSECONDS)){
+          if (!condition.await(timeRemaining, TimeUnit.NANOSECONDS)) {
             txnFail.set(true);
             logger.warn("HBase callbacks timed out. "
                     + "Transaction will be rolled back.");
@@ -229,6 +273,10 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
       }
     } finally {
       lock.unlock();
+    }
+
+    if (isCoalesceTest) {
+      totalCallbacksReceived += callbacksReceived.get();
     }
 
     /*
@@ -246,7 +294,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
       throw new EventDeliveryException("Could not write events to Hbase. " +
           "Transaction failed, and rolled back.");
     } else {
-      try{
+      try {
         txn.commit();
         txn.close();
         sinkCounter.addToEventDrainSuccessCount(i);
@@ -334,6 +382,21 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
         "All writes to HBase will have WAL disabled, and any data in the " +
         "memstore of this region in the Region Server could be lost!");
     }
+
+    batchIncrements = context.getBoolean(
+      HBaseSinkConfigurationConstants.CONFIG_COALESCE_INCREMENTS,
+      HBaseSinkConfigurationConstants.DEFAULT_COALESCE_INCREMENTS);
+
+    if(batchIncrements) {
+      incrementBuffer = Maps.newHashMap();
+      logger.info("Increment coalescing is enabled. Increments will be " +
+        "buffered.");
+    }
+  }
+
+  @VisibleForTesting
+  int getTotalCallbacksReceived() {
+    return totalCallbacksReceived;
   }
 
   @VisibleForTesting
@@ -346,7 +409,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
             + "before calling start on an old instance.");
     sinkCounter.start();
     sinkCounter.incrementConnectionCreatedCount();
-    if (!isTest) {
+    if (!isTimeoutTest) {
       sinkCallbackPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
         .setNameFormat(this.getName() + " HBase Call Pool").build());
     } else {
@@ -447,7 +510,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
       lock = lck;
       this.callbacksReceived = callbacksReceived;
       this.condition = condition;
-      isTimeoutTesting = isTest;
+      isTimeoutTesting = isTimeoutTest;
     }
 
     @Override
@@ -487,7 +550,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
       this.callbacksReceived = callbacksReceived;
       this.txnFail = txnFail;
       this.condition = condition;
-      isTimeoutTesting = isTest;
+      isTimeoutTesting = isTimeoutTest;
     }
 
     @Override
@@ -524,5 +587,37 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
       Throwables.propagate(e);
     }
     throw new EventDeliveryException("Error in processing transaction.", e);
+  }
+
+  private class CellIdentifier {
+    private final byte[] row;
+    private final byte[] column;
+    private final int hashCode;
+    // Since the sink operates only on one table and one cf,
+    // we use the data from the owning sink
+    public CellIdentifier(byte[] row, byte[] column) {
+      this.row = row;
+      this.column = column;
+      this.hashCode =
+        (Arrays.hashCode(row) * 31) * (Arrays.hashCode(column) * 31);
+    }
+
+    @Override
+    public int hashCode() {
+      return hashCode;
+    }
+
+    // Since we know that this class is used from only this class,
+    // skip the class comparison to save time
+    @Override
+    public boolean equals(Object other) {
+      CellIdentifier o = (CellIdentifier) other;
+      if (other == null) {
+        return false;
+      } else {
+        return (COMPARATOR.compare(row, o.row) == 0
+          && COMPARATOR.compare(column, o.column) == 0);
+      }
+    }
   }
 }

@@ -66,4 +66,8 @@ public class HBaseSinkConfigurationConstants {
   public static final String DEFAULT_ZK_ZNODE_PARENT =
       HConstants.DEFAULT_ZOOKEEPER_ZNODE_PARENT;
 
+  public static final String CONFIG_COALESCE_INCREMENTS = "coalesceIncrements";
+
+  public static final Boolean DEFAULT_COALESCE_INCREMENTS = false;
+
 }
