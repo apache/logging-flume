@@ -142,10 +142,6 @@ limitations under the License.
           <value>2</value>
         </property>
       </activation>
-      <properties>
-        <hadoop.version>2.0.0-alpha</hadoop.version>
-        <hadoop.common.artifact.id>hadoop-common</hadoop.common.artifact.id>
-      </properties>
       <dependencies>
 
         <dependency>
