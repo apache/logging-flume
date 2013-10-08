@@ -38,7 +38,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -90,7 +89,6 @@ public class HTTPSource extends AbstractSource implements
   private SourceCounter sourceCounter;
 
   // SSL configuration variable
-  private volatile Integer sslPort;
   private volatile String keyStorePath;
   private volatile String keyStorePassword;
   private volatile Boolean sslEnabled;
@@ -108,11 +106,8 @@ public class HTTPSource extends AbstractSource implements
 
       Preconditions.checkState(host != null && !host.isEmpty(),
                 "HTTPSource hostname specified is empty");
-      // verify port only if its not ssl
-      if(!sslEnabled) {
-        Preconditions.checkNotNull(port, "HTTPSource requires a port number to be"
-                + " specified");
-      }
+      Preconditions.checkNotNull(port, "HTTPSource requires a port number to be"
+        + " specified");
 
       String handlerClassName = context.getString(
               HTTPSourceConfigurationConstants.CONFIG_HANDLER,
@@ -120,14 +115,14 @@ public class HTTPSource extends AbstractSource implements
 
       if(sslEnabled) {
         LOG.debug("SSL configuration enabled");
-        sslPort = context.getInteger(HTTPSourceConfigurationConstants.SSL_PORT);
-        Preconditions.checkArgument(sslPort != null && sslPort > 0, "SSL Port cannot be null or less than 0" );
         keyStorePath = context.getString(HTTPSourceConfigurationConstants.SSL_KEYSTORE);
         Preconditions.checkArgument(keyStorePath != null && !keyStorePath.isEmpty(),
                                         "Keystore is required for SSL Conifguration" );
         keyStorePassword = context.getString(HTTPSourceConfigurationConstants.SSL_KEYSTORE_PASSWORD);
         Preconditions.checkArgument(keyStorePassword != null, "Keystore password is required for SSL Configuration");
       }
+
+
 
       @SuppressWarnings("unchecked")
       Class<? extends HTTPSourceHandler> clazz =
@@ -163,7 +158,7 @@ public class HTTPSource extends AbstractSource implements
       + " specified");
   }
 
-    @Override
+  @Override
   public void start() {
     Preconditions.checkState(srv == null,
             "Running HTTP Server found in source: " + getName()
@@ -175,24 +170,23 @@ public class HTTPSource extends AbstractSource implements
     Connector[] connectors = new Connector[1];
 
 
-    if(sslEnabled) {
+    if (sslEnabled) {
       SslSocketConnector sslSocketConnector = new SslSocketConnector();
       sslSocketConnector.setKeystore(keyStorePath);
       sslSocketConnector.setKeyPassword(keyStorePassword);
-      sslSocketConnector.setPort(sslPort);
       connectors[0] = sslSocketConnector;
     } else {
-        SocketConnector connector = new SocketConnector();
-        connector.setPort(port);
-        connector.setHost(host);
-        connectors[0] = connector;
+      SocketConnector connector = new SocketConnector();
+      connectors[0] = connector;
     }
 
+    connectors[0].setHost(host);
+    connectors[0].setPort(port);
     srv.setConnectors(connectors);
     try {
       org.mortbay.jetty.servlet.Context root =
-              new org.mortbay.jetty.servlet.Context(
-              srv, "/", org.mortbay.jetty.servlet.Context.SESSIONS);
+        new org.mortbay.jetty.servlet.Context(
+          srv, "/", org.mortbay.jetty.servlet.Context.SESSIONS);
       root.addServlet(new ServletHolder(new FlumeHTTPServlet()), "/");
       srv.start();
       Preconditions.checkArgument(srv.getHandler().equals(root));

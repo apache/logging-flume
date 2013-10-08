@@ -1287,7 +1287,6 @@ selector.*                                                    Depends on the sel
 interceptors    --                                            Space-separated list of interceptors
 interceptors.*
 enableSSL       false                                         Set the property true, to enable SSL
-sslPort                                                       The port to be used for SSL
 keystore                                                      Location of the keystore includng keystore file name
 keystorePassword                                              Keystore password
 ==================================================================================================================================
