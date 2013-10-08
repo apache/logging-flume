@@ -112,7 +112,8 @@ public class TestHTTPSource {
     Context sslContext = new Context();
     sslContext.put(HTTPSourceConfigurationConstants.SSL_ENABLED, "true");
     sslPort = findFreePort();
-    sslContext.put(HTTPSourceConfigurationConstants.SSL_PORT, String.valueOf(sslPort));
+    sslContext.put(HTTPSourceConfigurationConstants.CONFIG_PORT,
+      String.valueOf(sslPort));
     sslContext.put(HTTPSourceConfigurationConstants.SSL_KEYSTORE_PASSWORD, "password");
     sslContext.put(HTTPSourceConfigurationConstants.SSL_KEYSTORE, "src/test/resources/jettykeystore");
 
