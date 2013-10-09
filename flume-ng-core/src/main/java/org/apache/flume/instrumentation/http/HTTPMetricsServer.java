@@ -29,9 +29,11 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.flume.Context;
 import org.apache.flume.instrumentation.MonitorService;
 import org.apache.flume.instrumentation.util.JMXPollUtil;
+import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Request;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.handler.AbstractHandler;
+import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,9 +57,13 @@ public class HTTPMetricsServer implements MonitorService {
 
   @Override
   public void start() {
-    jettyServer = new Server(port);
+    jettyServer = new Server();
     //We can use Contexts etc if we have many urls to handle. For one url,
     //specifying a handler directly is the most efficient.
+    SelectChannelConnector connector = new SelectChannelConnector();
+    connector.setReuseAddress(true);
+    connector.setPort(port);
+    jettyServer.setConnectors(new Connector[] {connector});
     jettyServer.setHandler(new HTTPMetricsHandler());
     try {
       jettyServer.start();
