@@ -28,7 +28,7 @@ import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.AbstractSource;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
-import org.mortbay.jetty.bio.SocketConnector;
+import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.security.SslSocketConnector;
 import org.mortbay.jetty.servlet.ServletHolder;
 import org.slf4j.Logger;
@@ -174,9 +174,11 @@ public class HTTPSource extends AbstractSource implements
       SslSocketConnector sslSocketConnector = new SslSocketConnector();
       sslSocketConnector.setKeystore(keyStorePath);
       sslSocketConnector.setKeyPassword(keyStorePassword);
+      sslSocketConnector.setReuseAddress(true);
       connectors[0] = sslSocketConnector;
     } else {
-      SocketConnector connector = new SocketConnector();
+      SelectChannelConnector connector = new SelectChannelConnector();
+      connector.setReuseAddress(true);
       connectors[0] = connector;
     }
 
