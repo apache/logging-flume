@@ -20,6 +20,8 @@ package org.apache.flume.source;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import com.google.common.base.Charsets;
 import org.apache.log4j.Logger;
 import org.apache.log4j.net.SyslogAppender;
 
@@ -91,6 +93,8 @@ public class TestSyslogUdpSource {
     source.stop();
     logger.removeAppender(appender);
 
+    String str = new String(e.getBody(), Charsets.UTF_8);
+    logger.info(str);
     Assert.assertNotNull(e);
     Assert.assertEquals(String.valueOf(SyslogAppender.LOG_FTP / 8),
         e.getHeaders().get(SyslogUtils.SYSLOG_FACILITY));

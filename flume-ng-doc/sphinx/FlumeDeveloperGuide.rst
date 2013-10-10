@@ -166,7 +166,7 @@ RPC clients - Avro and Thrift
 As of Flume 1.4.0, Avro is the default RPC protocol.  The
 ``NettyAvroRpcClient`` and ``ThriftRpcClient`` implement the ``RpcClient``
 interface. The client needs to create this object with the host and port of
-the target Flume agent, and canthen use the ``RpcClient`` to send data into
+the target Flume agent, and can then use the ``RpcClient`` to send data into
 the agent. The following example shows how to use the Flume Client SDK API
 within a user's data-generating application:
 
