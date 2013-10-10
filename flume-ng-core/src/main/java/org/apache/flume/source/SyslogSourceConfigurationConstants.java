@@ -66,6 +66,9 @@ public final class SyslogSourceConfigurationConstants {
   public static final String CONFIG_READBUF_SIZE = "readBufferBytes";
   public static final int DEFAULT_READBUF_SIZE = 1024;
 
+  public static final String CONFIG_KEEP_FIELDS = "keepFields";
+  public static final boolean DEFAULT_KEEP_FIELDS = false;
+
   private SyslogSourceConfigurationConstants() {
     // Disable explicit creation of objects.
   }

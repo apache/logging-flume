@@ -20,6 +20,8 @@
 package org.apache.flume.source;
 
 import org.apache.flume.Event;
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.event.EventBuilder;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.slf4j.Logger;
@@ -37,6 +39,8 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@InterfaceAudience.Private
+@InterfaceStability.Evolving
 public class SyslogUtils {
   final public static String SYSLOG_TIMESTAMP_FORMAT_RFC5424_2 = "yyyy-MM-dd'T'HH:mm:ss.SZ";
   final public static String SYSLOG_TIMESTAMP_FORMAT_RFC5424_1 = "yyyy-MM-dd'T'HH:mm:ss.S";
@@ -79,6 +83,7 @@ public class SyslogUtils {
   private boolean isBadEvent;
   private boolean isIncompleteEvent;
   private Integer maxSize;
+  private boolean keepFields;
 
   private class SyslogFormatter {
     public Pattern regexPattern;
@@ -98,15 +103,16 @@ public class SyslogUtils {
   }
 
   public SyslogUtils(boolean isUdp) {
-    this(DEFAULT_SIZE, isUdp);
+    this(DEFAULT_SIZE, SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS, isUdp);
   }
 
-  public SyslogUtils(Integer eventSize, boolean isUdp){
+  public SyslogUtils(Integer eventSize, boolean keepFields, boolean isUdp) {
     this.isUdp = isUdp;
     isBadEvent = false;
     isIncompleteEvent = false;
     maxSize = (eventSize < MIN_SIZE) ? MIN_SIZE : eventSize;
     baos = new ByteArrayOutputStream(eventSize);
+    this.keepFields = keepFields;
     initHeaderFormats();
   }
 
@@ -219,7 +225,7 @@ public class SyslogUtils {
       headers.put(EVENT_STATUS, SyslogStatus.INCOMPLETE.getSyslogStatus());
     }
 
-    if ((msgBody != null) && (msgBody.length() > 0)) {
+    if ((msgBody != null) && (msgBody.length() > 0) && !keepFields) {
       body = msgBody.getBytes();
     } else {
       body = baos.toByteArray();
@@ -380,4 +386,9 @@ public class SyslogUtils {
     this.maxSize = eventSize;
   }
 
-}
+  public void setKeepFields(Boolean keepFields) {
+    this.keepFields= keepFields;
+  }
+  }
+
+

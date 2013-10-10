@@ -1170,6 +1170,8 @@ Property Name    Default      Description
 **host**         --           Host name or IP address to bind to
 **port**         --           Port # to bind to
 eventSize        2500         Maximum size of a single event line, in bytes
+keepFields       false        Setting this to true will preserve the
+                              Timestamp and Hostname in the body of the event.
 selector.type                 replicating or multiplexing
 selector.*       replicating  Depends on the selector.type value
 interceptors     --           Space-separated list of interceptors

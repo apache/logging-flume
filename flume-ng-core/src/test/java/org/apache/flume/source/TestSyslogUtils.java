@@ -162,7 +162,8 @@ public class TestSyslogUtils {
             format1, host1, data1);
   }
 
-  public void checkHeader(String msg1, String stamp1, String format1, String host1, String data1) throws ParseException {
+  public void checkHeader(String msg1, String stamp1, String format1,
+      String host1, String data1) throws ParseException {
     SyslogUtils util = new SyslogUtils(false);
     ChannelBuffer buff = ChannelBuffers.buffer(200);
 
@@ -397,7 +398,7 @@ public class TestSyslogUtils {
   @Test
   public void testExtractBadEventLarge() {
     String badData1 = "<10> bad bad data bad bad\n";
-    SyslogUtils util = new SyslogUtils(5, false);
+    SyslogUtils util = new SyslogUtils(5, true, false);
     ChannelBuffer buff = ChannelBuffers.buffer(100);
     buff.writeBytes(badData1.getBytes());
     Event e = util.extractEvent(buff);
