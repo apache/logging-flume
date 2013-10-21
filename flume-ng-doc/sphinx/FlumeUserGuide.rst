@@ -1465,7 +1465,7 @@ Scribe Source
 
 Scribe is another type of ingest system. To adopt existing Scribe ingest system,
 Flume should use ScribeSource based on Thrift with compatible transfering protocol.
-The deployment of Scribe please following guide from Facebook.
+For deployment of Scribe please follow the guide from Facebook.
 Required properties are in **bold**.
 
 ==============  ===========  ==============================================
