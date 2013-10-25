@@ -241,9 +241,9 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
 
       serverAddresses = new InetSocketTransportAddress[hostNames.length];
       for (int i = 0; i < hostNames.length; i++) {
-        String[] hostPort = hostNames[i].split(":");
-        String host = hostPort[0];
-        int port = hostPort.length == 2 ? Integer.parseInt(hostPort[1])
+        String[] hostPort = hostNames[i].trim().split(":");
+        String host = hostPort[0].trim();
+        int port = hostPort.length == 2 ? Integer.parseInt(hostPort[1].trim())
             : DEFAULT_PORT;
         serverAddresses[i] = new InetSocketTransportAddress(host, port);
       }

@@ -212,6 +212,21 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
   }
 
   @Test
+  public void shouldParseMultipleHostWithWhitespacesUsingDefaultPorts() {
+    parameters.put(HOSTNAMES, " 10.5.5.27 , 10.5.5.28 , 10.5.5.29 ");
+
+    fixture = new ElasticSearchSink();
+    fixture.configure(new Context(parameters));
+
+    InetSocketTransportAddress[] expected = {
+      new InetSocketTransportAddress("10.5.5.27", DEFAULT_PORT),
+      new InetSocketTransportAddress("10.5.5.28", DEFAULT_PORT),
+      new InetSocketTransportAddress("10.5.5.29", DEFAULT_PORT) };
+
+    assertArrayEquals(expected, fixture.getServerAddresses());
+  }
+
+  @Test
   public void shouldParseMultipleHostAndPorts() {
     parameters.put(HOSTNAMES, "10.5.5.27:9300,10.5.5.28:9301,10.5.5.29:9302");
 
@@ -222,6 +237,21 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
         new InetSocketTransportAddress("10.5.5.27", 9300),
         new InetSocketTransportAddress("10.5.5.28", 9301),
         new InetSocketTransportAddress("10.5.5.29", 9302) };
+
+    assertArrayEquals(expected, fixture.getServerAddresses());
+  }
+
+  @Test
+  public void shouldParseMultipleHostAndPortsWithWhitespaces() {
+    parameters.put(HOSTNAMES, " 10.5.5.27 : 9300 , 10.5.5.28 : 9301 , 10.5.5.29 : 9302 ");
+
+    fixture = new ElasticSearchSink();
+    fixture.configure(new Context(parameters));
+
+    InetSocketTransportAddress[] expected = {
+      new InetSocketTransportAddress("10.5.5.27", 9300),
+      new InetSocketTransportAddress("10.5.5.28", 9301),
+      new InetSocketTransportAddress("10.5.5.29", 9302) };
 
     assertArrayEquals(expected, fixture.getServerAddresses());
   }
