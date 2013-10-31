@@ -78,4 +78,5 @@ public class ElasticSearchSinkConstants {
   public static final String DEFAULT_INDEX_NAME = "flume";
   public static final String DEFAULT_INDEX_TYPE = "log";
   public static final String DEFAULT_CLUSTER_NAME = "elasticsearch";
+  public static final String TTL_REGEX = "^(\\d+)(\\D*)";
 }
