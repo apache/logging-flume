@@ -1985,7 +1985,10 @@ indexType         logs                                                          
 clusterName       elasticsearch                                                            Name of the ElasticSearch cluster to connect to
 batchSize         100                                                                      Number of events to be written per txn.
 ttl               --                                                                       TTL in days, when set will cause the expired documents to be deleted automatically,
-                                                                                           if not set documents will never be automatically deleted
+                                                                                           if not set documents will never be automatically deleted. TTL is accepted both in the earlier form of
+                                                                                           integer only e.g. a1.sinks.k1.ttl = 5 and also with a qualifier ms (millisecond), s (second), m (minute),
+                                                                                           h (hour), d (day) and w (week). Example a1.sinks.k1.ttl = 5d will set TTL to 5 days. Follow
+                                                                                           http://www.elasticsearch.org/guide/reference/mapping/ttl-field/ for more information.
 serializer        org.apache.flume.sink.elasticsearch.ElasticSearchLogStashEventSerializer The ElasticSearchIndexRequestBuilderFactory or ElasticSearchEventSerializer to use. Implementations of
                                                                                            either class are accepted but ElasticSearchIndexRequestBuilderFactory is preferred.
 serializer.*      --                                                                       Properties to be passed to the serializer.
@@ -2003,7 +2006,7 @@ Example for agent named a1:
   a1.sinks.k1.indexType = bar_type
   a1.sinks.k1.clusterName = foobar_cluster
   a1.sinks.k1.batchSize = 500
-  a1.sinks.k1.ttl = 5
+  a1.sinks.k1.ttl = 5d
   a1.sinks.k1.serializer = org.apache.flume.sink.elasticsearch.ElasticSearchDynamicSerializer
   a1.sinks.k1.channel = c1
 

@@ -31,9 +31,12 @@ import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.IND
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.SERIALIZER;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.SERIALIZER_PREFIX;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.TTL;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.TTL_REGEX;
 
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Channel;
@@ -98,6 +101,9 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
   private String clusterName = DEFAULT_CLUSTER_NAME;
   private String indexName = DEFAULT_INDEX_NAME;
   private String indexType = DEFAULT_INDEX_TYPE;
+  private final Pattern pattern
+    = Pattern.compile(TTL_REGEX, Pattern.CASE_INSENSITIVE);
+  private Matcher matcher = pattern.matcher("");
 
   private InetSocketTransportAddress[] serverAddresses;
 
@@ -269,8 +275,7 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
     }
 
     if (StringUtils.isNotBlank(context.getString(TTL))) {
-      this.ttlMs = TimeUnit.DAYS.toMillis(Integer.parseInt(context
-          .getString(TTL)));
+      this.ttlMs = parseTTL(context.getString(TTL));
       Preconditions.checkState(ttlMs > 0, TTL
           + " must be greater than 0 or not set.");
     }
@@ -351,6 +356,47 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
       openClient();
     }
     sinkCounter.incrementConnectionCreatedCount();
+  }
+
+  /*
+   * Returns TTL value of ElasticSearch index in milliseconds
+   * when TTL specifier is "ms" / "s" / "m" / "h" / "d" / "w".
+   * In case of unknown specifier TTL is not set. When specifier
+   * is not provided it defaults to days in milliseconds where the number
+   * of days is parsed integer from TTL string provided by user.
+   * <p>
+   *     Elasticsearch supports ttl values being provided in the format: 1d / 1w / 1ms / 1s / 1h / 1m
+   *     specify a time unit like d (days), m (minutes), h (hours), ms (milliseconds) or w (weeks),
+   *     milliseconds is used as default unit.
+   *     http://www.elasticsearch.org/guide/reference/mapping/ttl-field/.
+   * @param   ttl TTL value provided by user in flume configuration file for the sink
+   * @return  the ttl value in milliseconds
+  */
+  private long parseTTL(String ttl){
+    matcher = matcher.reset(ttl);
+    while (matcher.find()) {
+      if (matcher.group(2).equals("ms")) {
+        return Long.parseLong(matcher.group(1));
+      } else if (matcher.group(2).equals("s")) {
+        return TimeUnit.SECONDS.toMillis(Integer.parseInt(matcher.group(1)));
+      } else if (matcher.group(2).equals("m")) {
+        return TimeUnit.MINUTES.toMillis(Integer.parseInt(matcher.group(1)));
+      } else if (matcher.group(2).equals("h")) {
+        return TimeUnit.HOURS.toMillis(Integer.parseInt(matcher.group(1)));
+      } else if (matcher.group(2).equals("d")) {
+        return TimeUnit.DAYS.toMillis(Integer.parseInt(matcher.group(1)));
+      } else if (matcher.group(2).equals("w")) {
+        return TimeUnit.DAYS.toMillis(7 * Integer.parseInt(matcher.group(1)));
+      } else if (matcher.group(2).equals("")) {
+        logger.info("TTL qualifier is empty. Defaulting to day qualifier.");
+        return TimeUnit.DAYS.toMillis(Integer.parseInt(matcher.group(1)));
+      } else {
+        logger.debug("Unknown TTL qualifier provided. Setting TTL to 0.");
+        return 0;
+      }
+    }
+    logger.info("TTL not provided. Skipping the TTL config by returning 0.");
+    return 0;
   }
 
   /*

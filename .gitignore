@@ -17,3 +17,4 @@ derby.log
 .idea
 *.iml
 nb-configuration.xml
+.DS_Store

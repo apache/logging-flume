@@ -31,6 +31,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
@@ -284,6 +286,40 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     assertArrayEquals(event.getBody(),
         CustomElasticSearchIndexRequestBuilderFactory.actualEventBody);
     assertTrue(CustomElasticSearchIndexRequestBuilderFactory.hasContext);
+  }
+
+  @Test
+  public void shouldParseFullyQualifiedTTLs(){
+    Map<String, Long> testTTLMap = new HashMap<String, Long>();
+    testTTLMap.put("1ms", Long.valueOf(1));
+    testTTLMap.put("1s", Long.valueOf(1000));
+    testTTLMap.put("1m", Long.valueOf(60000));
+    testTTLMap.put("1h", Long.valueOf(3600000));
+    testTTLMap.put("1d", Long.valueOf(86400000));
+    testTTLMap.put("1w", Long.valueOf(604800000));
+    testTTLMap.put("1",  Long.valueOf(86400000));
+
+    parameters.put(HOSTNAMES, "10.5.5.27");
+    parameters.put(CLUSTER_NAME, "testing-cluster-name");
+    parameters.put(INDEX_NAME, "testing-index-name");
+    parameters.put(INDEX_TYPE, "testing-index-type");
+
+    for (String ttl : testTTLMap.keySet()) {
+      parameters.put(TTL, ttl);
+      fixture = new ElasticSearchSink();
+      fixture.configure(new Context(parameters));
+
+      InetSocketTransportAddress[] expected = {new InetSocketTransportAddress(
+        "10.5.5.27", DEFAULT_PORT)};
+
+      assertEquals("testing-cluster-name", fixture.getClusterName());
+      assertEquals("testing-index-name", fixture.getIndexName());
+      assertEquals("testing-index-type", fixture.getIndexType());
+      System.out.println("TTL MS" + Long.toString(testTTLMap.get(ttl)));
+      assertEquals((long) testTTLMap.get(ttl), fixture.getTTLMs());
+      assertArrayEquals(expected, fixture.getServerAddresses());
+
+    }
   }
 
   public static final class CustomElasticSearchIndexRequestBuilderFactory
