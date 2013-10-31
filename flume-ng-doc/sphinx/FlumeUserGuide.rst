@@ -128,7 +128,7 @@ Setting up an agent
 -------------------
 
 Flume agent configuration is stored in a local configuration file.  This is a
-text file which has a format follows the Java properties file format.
+text file that follows the Java properties file format.
 Configurations for one or more agents can be specified in the same
 configuration file. The configuration file includes properties of each source,
 sink and channel in an agent and how they are wired together to form data
