@@ -356,63 +356,100 @@ public class TestMemoryChannel {
     Transaction tx = channel.getTransaction();
     tx.begin();
     channel.put(EventBuilder.withBody(eventBody));
-
+    tx.commit();
+    tx.close();
+    channel.stop();
     parms.put("byteCapacity", "1500");
     context.putAll(parms);
     Configurables.configure(channel,  context);
-
+    channel.start();
+    tx = channel.getTransaction();
+    tx.begin();
     channel.put(EventBuilder.withBody(eventBody));
     try {
       channel.put(EventBuilder.withBody(eventBody));
+      tx.commit();
       Assert.fail();
     } catch ( ChannelException e ) {
       //success
+      tx.rollback();
+    } finally {
+      tx.close();
     }
 
-    parms.put("byteCapacity", "2500");
+    channel.stop();
+    parms.put("byteCapacity", "250");
     parms.put("byteCapacityBufferPercentage", "20");
     context.putAll(parms);
     Configurables.configure(channel,  context);
-
+    channel.start();
+    tx = channel.getTransaction();
+    tx.begin();
     channel.put(EventBuilder.withBody(eventBody));
+    tx.commit();
+    tx.close();
+    channel.stop();
 
     parms.put("byteCapacity", "300");
     context.putAll(parms);
     Configurables.configure(channel,  context);
-
-    channel.put(EventBuilder.withBody(eventBody));
+    channel.start();
+    tx = channel.getTransaction();
+    tx.begin();
     try {
-      channel.put(EventBuilder.withBody(eventBody));
+      for(int i = 0; i < 2; i++) {
+        channel.put(EventBuilder.withBody(eventBody));
+      }
+      tx.commit();
       Assert.fail();
     } catch ( ChannelException e ) {
       //success
+      tx.rollback();
+    } finally {
+      tx.close();
     }
 
+    channel.stop();
     parms.put("byteCapacity", "3300");
     context.putAll(parms);
     Configurables.configure(channel,  context);
-
-    channel.put(EventBuilder.withBody(eventBody));
+    channel.start();
+    tx = channel.getTransaction();
+    tx.begin();
 
     try {
-      channel.put(EventBuilder.withBody(eventBody));
+      for(int i = 0; i < 15; i++) {
+        channel.put(EventBuilder.withBody(eventBody));
+      }
+      tx.commit();
       Assert.fail();
     } catch ( ChannelException e ) {
       //success
+      tx.rollback();
+    } finally {
+      tx.close();
     }
-
+    channel.stop();
     parms.put("byteCapacity", "4000");
     context.putAll(parms);
     Configurables.configure(channel,  context);
-
-    channel.put(EventBuilder.withBody(eventBody));
+    channel.start();
+    tx = channel.getTransaction();
+    tx.begin();
 
     try {
-      channel.put(EventBuilder.withBody(eventBody));
+      for(int i = 0; i < 25; i++) {
+        channel.put(EventBuilder.withBody(eventBody));
+      }
+      tx.commit();
       Assert.fail();
     } catch ( ChannelException e ) {
       //success
+      tx.rollback();
+    } finally {
+      tx.close();
     }
+    channel.stop();
   }
 
   /*
