@@ -2956,9 +2956,9 @@ and can be specified in the flume-env.sh:
 Property Name            Default  Description
 =======================  =======  =====================================================================================
 **type**                 --       The component type name, has to be ``ganglia``
-**hosts**                --       Comma-separated list of ``hostname:port``
-pollInterval             60       Time, in seconds, between consecutive reporting to ganglia server
-isGanglia3               false    Ganglia server version is 3. By default, Flume sends in ganglia 3.1 format
+**hosts**                --       Comma-separated list of ``hostname:port`` of Ganglia servers
+pollInterval             60       Time, in seconds, between consecutive reporting to Ganglia server
+isGanglia3               false    Ganglia server version is 3. By default, Flume sends in Ganglia 3.1 format
 =======================  =======  =====================================================================================
 
 We can start Flume with Ganglia support as follows::
