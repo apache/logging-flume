@@ -2744,11 +2744,11 @@ If the Flume event body contained ``1:2:3.4foobar5`` and the following configura
 
 .. code-block:: properties
 
-  agent.sources.r1.interceptors.i1.regex = (\\d):(\\d):(\\d)
-  agent.sources.r1.interceptors.i1.serializers = s1 s2 s3
-  agent.sources.r1.interceptors.i1.serializers.s1.name = one
-  agent.sources.r1.interceptors.i1.serializers.s2.name = two
-  agent.sources.r1.interceptors.i1.serializers.s3.name = three
+  a1.sources.r1.interceptors.i1.regex = (\\d):(\\d):(\\d)
+  a1.sources.r1.interceptors.i1.serializers = s1 s2 s3
+  a1.sources.r1.interceptors.i1.serializers.s1.name = one
+  a1.sources.r1.interceptors.i1.serializers.s2.name = two
+  a1.sources.r1.interceptors.i1.serializers.s3.name = three
 
 The extracted event will contain the same body but the following headers will have been added ``one=>1, two=>2, three=>3``
 
@@ -2759,11 +2759,11 @@ If the Flume event body contained ``2012-10-18 18:47:57,614 some log line`` and 
 
 .. code-block:: properties
 
-  agent.sources.r1.interceptors.i1.regex = ^(?:\\n)?(\\d\\d\\d\\d-\\d\\d-\\d\\d\\s\\d\\d:\\d\\d)
-  agent.sources.r1.interceptors.i1.serializers = s1
-  agent.sources.r1.interceptors.i1.serializers.s1.type = org.apache.flume.interceptor.RegexExtractorInterceptorMillisSerializer
-  agent.sources.r1.interceptors.i1.serializers.s1.name = timestamp
-  agent.sources.r1.interceptors.i1.serializers.s1.pattern = yyyy-MM-dd HH:mm
+  a1.sources.r1.interceptors.i1.regex = ^(?:\\n)?(\\d\\d\\d\\d-\\d\\d-\\d\\d\\s\\d\\d:\\d\\d)
+  a1.sources.r1.interceptors.i1.serializers = s1
+  a1.sources.r1.interceptors.i1.serializers.s1.type = org.apache.flume.interceptor.RegexExtractorInterceptorMillisSerializer
+  a1.sources.r1.interceptors.i1.serializers.s1.name = timestamp
+  a1.sources.r1.interceptors.i1.serializers.s1.pattern = yyyy-MM-dd HH:mm
 
 the extracted event will contain the same body but the following headers will have been added ``timestamp=>1350611220000``
 
