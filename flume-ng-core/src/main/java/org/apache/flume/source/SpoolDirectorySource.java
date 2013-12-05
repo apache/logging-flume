@@ -67,6 +67,9 @@ Configurable, EventDrivenSource {
   private SourceCounter sourceCounter;
   ReliableSpoolingFileEventReader reader;
   private ScheduledExecutorService executor;
+  private boolean backoff = true;
+  private boolean hitChannelException = false;
+  private int maxBackoff;
 
   @Override
   public synchronized void start() {
@@ -161,6 +164,8 @@ Configurable, EventDrivenSource {
       deserializerContext.put(LineDeserializer.MAXLINE_KEY,
           bufferMaxLineLength.toString());
     }
+
+    maxBackoff = context.getInteger(MAX_BACKOFF, DEFAULT_MAX_BACKOFF);
     if (sourceCounter == null) {
       sourceCounter = new SourceCounter(getName());
     }
@@ -169,6 +174,28 @@ Configurable, EventDrivenSource {
   @VisibleForTesting
   protected boolean hasFatalError() {
     return hasFatalError;
+  }
+
+
+
+  /**
+   * The class always backs off, this exists only so that we can test without
+   * taking a really long time.
+   * @param backoff - whether the source should backoff if the channel is full
+   */
+  @VisibleForTesting
+  protected void setBackOff(boolean backoff) {
+    this.backoff = backoff;
+  }
+
+  @VisibleForTesting
+  protected boolean hitChannelException() {
+    return hitChannelException;
+  }
+
+  @VisibleForTesting
+  protected SourceCounter getSourceCounter() {
+    return sourceCounter;
   }
 
   private class SpoolDirectoryRunnable implements Runnable {
@@ -183,6 +210,7 @@ Configurable, EventDrivenSource {
 
     @Override
     public void run() {
+      int backoffInterval = 250;
       try {
         while (true) {
           List<Event> events = reader.readEvents(batchSize);
@@ -192,8 +220,23 @@ Configurable, EventDrivenSource {
           sourceCounter.addToEventReceivedCount(events.size());
           sourceCounter.incrementAppendBatchReceivedCount();
 
-          getChannelProcessor().processEventBatch(events);
-          reader.commit();
+          try {
+            getChannelProcessor().processEventBatch(events);
+            reader.commit();
+          } catch (ChannelException ex) {
+            logger.warn("The channel is full, and cannot write data now. The " +
+              "source will try again after " + String.valueOf(backoffInterval) +
+              " milliseconds");
+            hitChannelException = true;
+            if (backoff) {
+              TimeUnit.MILLISECONDS.sleep(backoffInterval);
+              backoffInterval = backoffInterval << 1;
+              backoffInterval = backoffInterval >= maxBackoff ? maxBackoff :
+                                backoffInterval;
+            }
+            continue;
+          }
+          backoffInterval = 250;
           sourceCounter.addToEventAcceptedCount(events.size());
           sourceCounter.incrementAppendBatchAcceptedCount();
         }

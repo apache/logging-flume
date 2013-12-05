@@ -951,6 +951,7 @@ fileHeaderKey         file            Header key to use when appending filename 
 ignorePattern         ^$              Regular expression specifying which files to ignore (skip)
 trackerDir            .flumespool     Directory to store metadata related to processing of files.
                                       If this path is not an absolute path, then it is interpreted as relative to the spoolDir.
+maxBackoff            4000            The maximum time (in millis) to wait between consecutive attempts to write to the channel(s) if the channel is full. The source will start at a low backoff and increase it exponentially each time the channel throws a ChannelException, upto the value specified by this parameter.
 batchSize             100             Granularity at which to batch transfer to the channel
 inputCharset          UTF-8           Character set used by deserializers that treat the input file as text.
 decodeErrorPolicy     ``FAIL``        What to do when we see a non-decodable character in the input file.

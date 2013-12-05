@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.collect.Lists;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
@@ -33,6 +34,7 @@ import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.junit.After;
@@ -162,5 +164,61 @@ public class TestSpoolDirectorySource {
       source.stop();
       Assert.assertFalse("Fatal error on iteration " + i, source.hasFatalError());
     }
+  }
+
+  @Test
+  public void testSourceDoesNotDieOnFullChannel() throws Exception {
+
+    Context chContext = new Context();
+    chContext.put("capacity", "2");
+    chContext.put("transactionCapacity", "2");
+    chContext.put("keep-alive", "0");
+    channel.stop();
+    Configurables.configure(channel, chContext);
+
+    channel.start();
+    Context context = new Context();
+    File f1 = new File(tmpDir.getAbsolutePath() + "/file1");
+
+    Files.write("file1line1\nfile1line2\nfile1line3\nfile1line4\n" +
+      "file1line5\nfile1line6\nfile1line7\nfile1line8\n",
+      f1, Charsets.UTF_8);
+
+
+    context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
+      tmpDir.getAbsolutePath());
+
+    context.put(SpoolDirectorySourceConfigurationConstants.BATCH_SIZE, "2");
+    Configurables.configure(source, context);
+    source.setBackOff(false);
+    source.start();
+
+    // Wait for the source to read enough events to fill up the channel.
+    while(!source.hitChannelException()) {
+      Thread.sleep(50);
+    }
+
+    List<String> dataOut = Lists.newArrayList();
+
+    for (int i = 0; i < 8; ) {
+      Transaction tx = channel.getTransaction();
+      tx.begin();
+      Event e = channel.take();
+      if (e != null) {
+        dataOut.add(new String(e.getBody(), "UTF-8"));
+        i++;
+      }
+      e = channel.take();
+      if (e != null) {
+        dataOut.add(new String(e.getBody(), "UTF-8"));
+        i++;
+      }
+      tx.commit();
+      tx.close();
+    }
+    Assert.assertTrue("Expected to hit ChannelException, but did not!",
+      source.hitChannelException());
+    Assert.assertEquals(8, dataOut.size());
+    source.stop();
   }
 }
