@@ -74,4 +74,8 @@ public class SpoolDirectorySourceConfigurationConstants {
   public static final String DECODE_ERROR_POLICY = "decodeErrorPolicy";
   public static final String DEFAULT_DECODE_ERROR_POLICY =
       DecodeErrorPolicy.FAIL.name();
+
+  public static final String MAX_BACKOFF = "maxBackoff";
+
+  public static final Integer DEFAULT_MAX_BACKOFF = 4000;
 }
