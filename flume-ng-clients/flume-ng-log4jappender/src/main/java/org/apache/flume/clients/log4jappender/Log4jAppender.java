@@ -135,7 +135,7 @@ public class Log4jAppender extends AppenderSkeleton {
     Map<String, String> hdrs = new HashMap<String, String>();
     hdrs.put(Log4jAvroHeaders.LOGGER_NAME.toString(), event.getLoggerName());
     hdrs.put(Log4jAvroHeaders.TIMESTAMP.toString(),
-        String.valueOf(event.getTimeStamp()));
+        String.valueOf(event.timeStamp));
 
     //To get the level back simply use
     //LoggerEvent.toLevel(hdrs.get(Integer.parseInt(
