@@ -445,6 +445,8 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
     }
     if(fail.get()){
       sinkCounter.incrementConnectionFailedCount();
+      client.shutdown();
+      client = null;
       throw new FlumeException(
           "Could not start sink. " +
           "Table or column family does not exist in Hbase.");
