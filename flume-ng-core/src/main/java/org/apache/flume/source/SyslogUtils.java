@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -49,15 +48,18 @@ public class SyslogUtils {
   final public static String SYSLOG_TIMESTAMP_FORMAT_RFC3164_1 = "yyyyMMM d HH:mm:ss";
 
   final public static String SYSLOG_MSG_RFC5424_0 =
-      "(?:\\d\\s)?" +// version
-  // yyyy-MM-dd'T'HH:mm:ss.SZ or yyyy-MM-dd'T'HH:mm:ss.S+hh:mm or - (null stamp)
-      "(?:(\\d{4}[-]\\d{2}[-]\\d{2}[T]\\d{2}[:]\\d{2}[:]\\d{2}(?:\\.\\d{1,6})?(?:[+-]\\d{2}[:]\\d{2}|Z)?)|-)" + // stamp
+      "(?:\\<\\d{1,3}\\>\\d?\\s?)" + // priority
+      /* yyyy-MM-dd'T'HH:mm:ss.SZ or yyyy-MM-dd'T'HH:mm:ss.S+hh:mm or - (null stamp) */
+      "(?:" +
+        "(\\d{4}[-]\\d{2}[-]\\d{2}[T]\\d{2}[:]\\d{2}[:]\\d{2}" +
+        "(?:\\.\\d{1,6})?(?:[+-]\\d{2}[:]\\d{2}|Z)?)|-)" + // stamp
       "\\s" + // separator
       "(?:([\\w][\\w\\d\\.@-]*)|-)" + // host name or - (null)
       "\\s" + // separator
       "(.*)$"; // body
 
   final public static String SYSLOG_MSG_RFC3164_0 =
+      "(?:\\<\\d{1,3}\\>\\d?\\s?)" +
       // stamp MMM d HH:mm:ss, single digit date has two spaces
       "([A-Z][a-z][a-z]\\s{1,2}\\d{1,2}\\s\\d{2}[:]\\d{2}[:]\\d{2})" +
       "\\s" + // separator
@@ -225,8 +227,13 @@ public class SyslogUtils {
       headers.put(EVENT_STATUS, SyslogStatus.INCOMPLETE.getSyslogStatus());
     }
 
-    if ((msgBody != null) && (msgBody.length() > 0) && !keepFields) {
-      body = msgBody.getBytes();
+    if (!keepFields) {
+      if ((msgBody != null) && (msgBody.length() > 0)) {
+        body = msgBody.getBytes();
+      } else {
+        // Parse failed.
+        body = baos.toByteArray();
+      }
     } else {
       body = baos.toByteArray();
     }
@@ -311,14 +318,15 @@ public class SyslogUtils {
         switch (m) {
         case START:
           if (b == '<') {
+            baos.write(b);
             m = Mode.PRIO;
           } else if(b == '\n'){
-          //If the character is \n, it was because the last event was exactly
-          //as long  as the maximum size allowed and
-          //the only remaining character was the delimiter - '\n', or
-          //multiple delimiters were sent in a row.
-          //Just ignore it, and move forward, don't change the mode.
-          //This is a no-op, just ignore it.
+            //If the character is \n, it was because the last event was exactly
+            //as long  as the maximum size allowed and
+            //the only remaining character was the delimiter - '\n', or
+            //multiple delimiters were sent in a row.
+            //Just ignore it, and move forward, don't change the mode.
+            //This is a no-op, just ignore it.
             logger.debug("Delimiter found while in START mode, ignoring..");
 
           } else {
@@ -329,6 +337,7 @@ public class SyslogUtils {
           }
           break;
         case PRIO:
+          baos.write(b);
           if (b == '>') {
             m = Mode.DATA;
           } else {
@@ -336,9 +345,6 @@ public class SyslogUtils {
             prio.append(ch);
             if (!Character.isDigit(ch)) {
               isBadEvent = true;
-              //Append the priority to baos:
-              String badPrio = "<"+ prio;
-              baos.write(badPrio.getBytes());
               //If we hit a bad priority, just write as if everything is data.
               m = Mode.DATA;
             }
@@ -367,10 +373,6 @@ public class SyslogUtils {
         doneReading = true;
         e = buildEvent();
       }
-    //} catch (IndexOutOfBoundsException eF) {
-    //    e = buildEvent(prio, baos);
-    } catch (IOException e1) {
-      //no op
     } finally {
       // no-op
     }

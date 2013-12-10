@@ -251,7 +251,8 @@ public class TestSyslogUtils {
     Assert.assertEquals("1", headers.get(SyslogUtils.SYSLOG_FACILITY));
     Assert.assertEquals("2", headers.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(null, headers.get(SyslogUtils.EVENT_STATUS));
-    Assert.assertEquals(goodData1.trim(), new String(e.getBody()).trim());
+    Assert.assertEquals(priority + goodData1.trim(),
+        new String(e.getBody()).trim());
 
   }
 
@@ -277,7 +278,8 @@ public class TestSyslogUtils {
     Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(SyslogUtils.SyslogStatus.INVALID.getSyslogStatus(),
         headers.get(SyslogUtils.EVENT_STATUS));
-    Assert.assertEquals(badData1.trim(), new String(e.getBody()).trim());
+    Assert.assertEquals(badData1.trim(), new String(e.getBody())
+      .trim());
 
     Event e2 = util.extractEvent(buff);
     if(e2 == null){
@@ -288,7 +290,8 @@ public class TestSyslogUtils {
     Assert.assertEquals("2", headers2.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(null,
         headers2.get(SyslogUtils.EVENT_STATUS));
-    Assert.assertEquals(goodData1.trim(), new String(e2.getBody()).trim());
+    Assert.assertEquals(priority + goodData1.trim(),
+        new String(e2.getBody()).trim());
   }
 
   @Test
@@ -310,7 +313,8 @@ public class TestSyslogUtils {
     Assert.assertEquals("2", headers2.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(null,
         headers2.get(SyslogUtils.EVENT_STATUS));
-    Assert.assertEquals(goodData1.trim(), new String(e2.getBody()).trim());
+    Assert.assertEquals(priority + goodData1.trim(),
+        new String(e2.getBody()).trim());
 
     Event e = util.extractEvent(buff);
 
@@ -379,7 +383,8 @@ public class TestSyslogUtils {
     Assert.assertEquals("2", headers.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(null,
         headers.get(SyslogUtils.EVENT_STATUS));
-    Assert.assertEquals(goodData1.trim(), new String(e.getBody()).trim());
+    Assert.assertEquals(priority + goodData1.trim(),
+        new String(e.getBody()).trim());
 
 
     Event e2 = util.extractEvent(buff);
@@ -391,14 +396,16 @@ public class TestSyslogUtils {
     Assert.assertEquals("4", headers2.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(null,
         headers.get(SyslogUtils.EVENT_STATUS));
-    Assert.assertEquals(goodData2.trim(), new String(e2.getBody()).trim());
+    Assert.assertEquals(priority2 + goodData2.trim(),
+        new String(e2.getBody()).trim());
 
   }
 
   @Test
   public void testExtractBadEventLarge() {
     String badData1 = "<10> bad bad data bad bad\n";
-    SyslogUtils util = new SyslogUtils(5, true, false);
+    // The minimum size (which is 10) overrides the 5 specified here.
+    SyslogUtils util = new SyslogUtils(5, false, false);
     ChannelBuffer buff = ChannelBuffers.buffer(100);
     buff.writeBytes(badData1.getBytes());
     Event e = util.extractEvent(buff);
@@ -410,7 +417,7 @@ public class TestSyslogUtils {
     Assert.assertEquals("2", headers.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(SyslogUtils.SyslogStatus.INCOMPLETE.getSyslogStatus(),
         headers.get(SyslogUtils.EVENT_STATUS));
-    Assert.assertEquals("bad bad d".trim(), new String(e.getBody()).trim());
+    Assert.assertEquals("<10> bad b".trim(), new String(e.getBody()).trim());
 
     Event e2 = util.extractEvent(buff);
 
@@ -422,7 +429,7 @@ public class TestSyslogUtils {
     Assert.assertEquals("0", headers2.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(SyslogUtils.SyslogStatus.INVALID.getSyslogStatus(),
         headers2.get(SyslogUtils.EVENT_STATUS));
-    Assert.assertEquals("ata bad ba".trim(), new String(e2.getBody()).trim());
+    Assert.assertEquals("ad data ba".trim(), new String(e2.getBody()).trim());
 
   }
 

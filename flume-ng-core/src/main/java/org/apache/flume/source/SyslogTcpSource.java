@@ -68,8 +68,8 @@ implements EventDrivenSource, Configurable {
       syslogUtils.setEventSize(eventSize);
     }
 
-    public void setKeepFields(boolean removeFields){
-      syslogUtils.setKeepFields(removeFields);
+    public void setKeepFields(boolean keepFields){
+      syslogUtils.setKeepFields(keepFields);
     }
 
     public void setFormater(Map<String, String> prop) {

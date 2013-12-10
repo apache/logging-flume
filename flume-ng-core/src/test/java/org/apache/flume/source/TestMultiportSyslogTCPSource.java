@@ -70,6 +70,7 @@ public class TestMultiportSyslogTCPSource {
   private final String stamp1 = time.toString();
   private final String host1 = "localhost.localdomain";
   private final String data1 = "proc1 - some msg";
+  private final static boolean KEEP_FIELDS = false;
 
   /**
    * Helper function to generate a syslog message.
@@ -205,7 +206,8 @@ public class TestMultiportSyslogTCPSource {
         new MultiportSyslogTCPSource.MultiportSyslogHandler(maxLen, 100, null,
         null, SyslogSourceConfigurationConstants.DEFAULT_PORT_HEADER,
         new ThreadSafeDecoder(Charsets.UTF_8),
-        new ConcurrentHashMap<Integer, ThreadSafeDecoder>());
+        new ConcurrentHashMap<Integer, ThreadSafeDecoder>(),
+        KEEP_FIELDS);
 
     Event event = handler.parseEvent(parsedLine, Charsets.UTF_8.newDecoder());
     String body = new String(event.getBody(), Charsets.UTF_8);
@@ -231,7 +233,8 @@ public class TestMultiportSyslogTCPSource {
         1000, 10, new ChannelProcessor(new ReplicatingChannelSelector()),
         new SourceCounter("test"), "port",
         new ThreadSafeDecoder(Charsets.UTF_8),
-        new ConcurrentHashMap<Integer, ThreadSafeDecoder>());
+        new ConcurrentHashMap<Integer, ThreadSafeDecoder>(),
+        KEEP_FIELDS);
 
     ParsedBuffer parsedBuf = new ParsedBuffer();
     parsedBuf.incomplete = false;
@@ -331,7 +334,7 @@ public class TestMultiportSyslogTCPSource {
     // defaults to UTF-8
     MultiportSyslogHandler handler = new MultiportSyslogHandler(
         1000, 10, chanProc, new SourceCounter("test"), "port",
-        new ThreadSafeDecoder(Charsets.UTF_8), portCharsets);
+        new ThreadSafeDecoder(Charsets.UTF_8), portCharsets, KEEP_FIELDS);
 
     // initialize buffers
     handler.sessionCreated(session1);

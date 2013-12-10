@@ -29,7 +29,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class TestSyslogParser {
-
   @Test
   public void testRfc5424DateParsing() {
     final String[] examples = {
@@ -55,7 +54,7 @@ public class TestSyslogParser {
     Charset charset = Charsets.UTF_8;
     List<String> messages = Lists.newArrayList();
 
-    // supported examples from RFC 3161
+    // supported examples from RFC 3164
     messages.add("<34>Oct 11 22:14:15 mymachine su: 'su root' failed for " +
         "lonvick on /dev/pts/8");
     messages.add("<13>Feb  5 17:32:18 10.0.0.99 Use the BFG!");
@@ -76,8 +75,19 @@ public class TestSyslogParser {
     messages.add("<13>2003-08-24T05:14:15Z localhost snarf?");
     messages.add("<13>2012-08-16T14:34:03-08:00 127.0.0.1 test shnap!");
 
+    // test with default keepFields = false
     for (String msg : messages) {
-      Event event = parser.parseMessage(msg, charset);
+      boolean keepFields = false;
+      Event event = parser.parseMessage(msg, charset, keepFields);
+      Assert.assertNull("Failure to parse known-good syslog message",
+        event.getHeaders().get(SyslogUtils.EVENT_STATUS));
+    }
+
+    // test that priority, timestamp and hostname are preserved in event body
+    for (String msg : messages) {
+      boolean keepFields = true;
+      Event event = parser.parseMessage(msg, charset, keepFields);
+      Assert.assertArrayEquals(event.getBody(), msg.getBytes());
       Assert.assertNull("Failure to parse known-good syslog message",
           event.getHeaders().get(SyslogUtils.EVENT_STATUS));
     }

@@ -49,13 +49,8 @@ public class TestSyslogTcpSource {
   private final String stamp1 = time.toString();
   private final String host1 = "localhost.localdomain";
   private final String data1 = "test syslog data";
-  private final String bodyWithTandH = stamp1 + " " + host1 + " " + data1;
-  // Helper function to generate a syslog message.
-  private byte[] getEvent() {
-    // timestamp with 'Z' appended, translates to UTC
-    final String msg1 = "<10>" + stamp1 + " " + host1 + " " + data1 + "\n";
-    return msg1.getBytes();
-  }
+  private final String bodyWithTandH = "<10>" + stamp1 + " " + host1 + " " +
+      data1 + "\n";
 
   private void init(boolean keepFields){
     source = new SyslogTcpSource();
@@ -87,7 +82,7 @@ public class TestSyslogTcpSource {
     for (int i = 0; i < 10 ; i++) {
       syslogSocket = new Socket(
         InetAddress.getLocalHost(), source.getSourcePort());
-      syslogSocket.getOutputStream().write(getEvent());
+      syslogSocket.getOutputStream().write(bodyWithTandH.getBytes());
       syslogSocket.close();
     }
 
@@ -116,7 +111,8 @@ public class TestSyslogTcpSource {
       String str = new String(e.getBody(), Charsets.UTF_8);
       logger.info(str);
       if (keepFields) {
-        Assert.assertArrayEquals(bodyWithTandH.getBytes(), e.getBody());
+        Assert.assertArrayEquals(bodyWithTandH.trim().getBytes(),
+          e.getBody());
       } else if (!keepFields) {
         Assert.assertArrayEquals(data1.getBytes(), e.getBody());
       }
