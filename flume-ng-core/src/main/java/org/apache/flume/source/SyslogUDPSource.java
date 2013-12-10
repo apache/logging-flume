@@ -19,10 +19,12 @@
 package org.apache.flume.source;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
@@ -53,6 +55,7 @@ public class SyslogUDPSource extends AbstractSource
   private String host = null;
   private Channel nettyChannel;
   private Map<String, String> formaterProp;
+  private boolean keepFields;
 
   private static final Logger logger = LoggerFactory
       .getLogger(SyslogUDPSource.class);
@@ -63,6 +66,10 @@ public class SyslogUDPSource extends AbstractSource
 
     public void setFormater(Map<String, String> prop) {
       syslogUtils.addFormats(prop);
+    }
+
+    public void setKeepFields(boolean keepFields) {
+      syslogUtils.setKeepFields(keepFields);
     }
 
     @Override
@@ -90,6 +97,7 @@ public class SyslogUDPSource extends AbstractSource
         (new OioDatagramChannelFactory(Executors.newCachedThreadPool()));
     final syslogHandler handler = new syslogHandler();
     handler.setFormater(formaterProp);
+    handler.setKeepFields(keepFields);
     serverBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
       @Override
       public ChannelPipeline getPipeline() {
@@ -132,6 +140,17 @@ public class SyslogUDPSource extends AbstractSource
     host = context.getString(SyslogSourceConfigurationConstants.CONFIG_HOST);
     formaterProp = context.getSubProperties(
         SyslogSourceConfigurationConstants.CONFIG_FORMAT_PREFIX);
+    keepFields = context.getBoolean(SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS,
+      SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS);
   }
 
+  @VisibleForTesting
+  public int getSourcePort() {
+    SocketAddress localAddress = nettyChannel.getLocalAddress();
+    if (localAddress instanceof InetSocketAddress) {
+      InetSocketAddress addr = (InetSocketAddress) localAddress;
+      return addr.getPort();
+    }
+    return 0;
+  }
 }

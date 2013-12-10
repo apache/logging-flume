@@ -33,6 +33,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 import org.apache.flume.Event;
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.event.EventBuilder;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -40,6 +42,8 @@ import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@InterfaceAudience.Private
+@InterfaceStability.Evolving
 public class SyslogParser {
 
   private static final Logger logger =
@@ -53,7 +57,6 @@ public class SyslogParser {
   private static final String timePat = "yyyy-MM-dd'T'HH:mm:ss";
   private static final int RFC3164_LEN = 15;
   private static final int RFC5424_PREFIX_LEN = 19;
-
   private final DateTimeFormatter timeParser;
 
   private Cache<String, Long> timestampCache;
@@ -76,7 +79,7 @@ public class SyslogParser {
    * @return Parsed Flume Event
    * @throws IllegalArgumentException if unable to successfully parse message
    */
-  public Event parseMessage(String msg, Charset charset) {
+  public Event parseMessage(String msg, Charset charset, boolean keepFields) {
     Map<String, String> headers = Maps.newHashMap();
 
     int msgLen = msg.length();
@@ -164,9 +167,11 @@ public class SyslogParser {
 
     // EventBuilder will do a copy of its own, so no defensive copy of the body
     String data = "";
-    if (msgLen > nextSpace + 1) {
+    if (msgLen > nextSpace + 1 && !keepFields) {
       curPos = nextSpace + 1;
       data = msg.substring(curPos);
+    } else {
+      data = msg;
     }
 
     Event event = EventBuilder.withBody(data, charset, headers);

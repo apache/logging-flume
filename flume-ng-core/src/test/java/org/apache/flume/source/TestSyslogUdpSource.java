@@ -20,15 +20,11 @@ package org.apache.flume.source;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.DatagramSocket;
 import com.google.common.base.Charsets;
-import org.apache.log4j.Logger;
-import org.apache.log4j.net.SyslogAppender;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
@@ -38,16 +34,27 @@ import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
-import org.apache.flume.source.SyslogUtils;
+import org.joda.time.DateTime;
+import org.junit.Assert;
+import org.junit.Test;
+import org.slf4j.LoggerFactory;
+
 
 public class TestSyslogUdpSource {
+  private static final org.slf4j.Logger logger =
+    LoggerFactory.getLogger(TestSyslogUdpSource.class);
   private SyslogUDPSource source;
   private Channel channel;
-  private static final int TEST_SYSLOG_PORT = 14455;
+  private static final int TEST_SYSLOG_PORT = 0;
+  private final DateTime time = new DateTime();
+  private final String stamp1 = time.toString();
+  private final String host1 = "localhost.localdomain";
+  private final String data1 = "test UDP syslog data";
+  private final String bodyWithTandH = "<10>" + stamp1 + " " + host1 + " " +
+      data1;
 
-  @Before
-  public void setUp() {
-    source = new SyslogUDPSource(); //SyslogTcpSource();
+  private void init(boolean keepFields) {
+    source = new SyslogUDPSource();
     channel = new MemoryChannel();
 
     Configurables.configure(channel, new Context());
@@ -61,49 +68,69 @@ public class TestSyslogUdpSource {
     source.setChannelProcessor(new ChannelProcessor(rcs));
     Context context = new Context();
     context.put("port", String.valueOf(TEST_SYSLOG_PORT));
+    context.put("keepFields", String.valueOf(keepFields));
+
     source.configure(context);
+
   }
 
-  @Test
-  public void testAppend() throws InterruptedException {
-    Logger logger = Logger.getLogger(getClass());
-    // use the Apache syslog appender to write to syslog source
-    SyslogAppender appender = new SyslogAppender(null,
-        "localhost:"+TEST_SYSLOG_PORT, SyslogAppender.LOG_FTP);
-    logger.addAppender(appender);
-    Event e = null;
-    Event e2 = null;
+  /** Tests the keepFields configuration parameter (enabled or disabled)
+   using SyslogUDPSource.*/
 
+  private void runKeepFieldsTest(boolean keepFields) throws IOException {
+    init(keepFields);
     source.start();
+    // Write some message to the syslog port
+    DatagramSocket syslogSocket;
+    DatagramPacket datagramPacket;
+    datagramPacket = new DatagramPacket(bodyWithTandH.getBytes(),
+      bodyWithTandH.getBytes().length,
+      InetAddress.getLocalHost(), source.getSourcePort());
+    for (int i = 0; i < 10 ; i++) {
+      syslogSocket = new DatagramSocket();
+      syslogSocket.send(datagramPacket);
+      syslogSocket.close();
+    }
 
-    // write to syslog
-    logger.info("test flume syslog");
-    logger.info("");
-
+    List<Event> channelEvents = new ArrayList<Event>();
     Transaction txn = channel.getTransaction();
+    txn.begin();
+    for (int i = 0; i < 10; i++) {
+      Event e = channel.take();
+      Assert.assertNotNull(e);
+      channelEvents.add(e);
+    }
+
     try {
-      txn.begin();
-      e = channel.take();
-      e2 = channel.take();
       txn.commit();
+    } catch (Throwable t) {
+      txn.rollback();
     } finally {
       txn.close();
     }
 
     source.stop();
-    logger.removeAppender(appender);
-
-    String str = new String(e.getBody(), Charsets.UTF_8);
-    logger.info(str);
-    Assert.assertNotNull(e);
-    Assert.assertEquals(String.valueOf(SyslogAppender.LOG_FTP / 8),
-        e.getHeaders().get(SyslogUtils.SYSLOG_FACILITY));
-    Assert.assertArrayEquals(e.getBody(), "test flume syslog".getBytes());
-
-    Assert.assertNotNull(e2);
-    Assert.assertEquals(String.valueOf(SyslogAppender.LOG_FTP / 8),
-        e2.getHeaders().get(SyslogUtils.SYSLOG_FACILITY));
-    Assert.assertArrayEquals(e2.getBody(), "".getBytes());
+    for (Event e : channelEvents) {
+      Assert.assertNotNull(e);
+      String str = new String(e.getBody(), Charsets.UTF_8);
+      logger.info(str);
+      if (keepFields) {
+        Assert.assertArrayEquals(bodyWithTandH.getBytes(),
+          e.getBody());
+      } else if (!keepFields) {
+        Assert.assertArrayEquals(data1.getBytes(), e.getBody());
+      }
+    }
   }
 
+  @Test
+  public void testKeepFields() throws IOException {
+    runKeepFieldsTest(true);
+  }
+
+  @Test
+  public void testRemoveFields() throws IOException {
+    runKeepFieldsTest(false);
+  }
 }
+
