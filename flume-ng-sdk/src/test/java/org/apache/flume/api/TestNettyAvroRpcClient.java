@@ -18,28 +18,22 @@
  */
 package org.apache.flume.api;
 
-import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import org.junit.Test;
-
 import org.apache.avro.ipc.Server;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
-import org.apache.flume.event.EventBuilder;
-
 import org.apache.flume.api.RpcTestUtils.FailedAvroHandler;
 import org.apache.flume.api.RpcTestUtils.OKAvroHandler;
 import org.apache.flume.api.RpcTestUtils.ThrowingAvroHandler;
 import org.apache.flume.api.RpcTestUtils.UnknownAvroHandler;
+import org.apache.flume.event.EventBuilder;
 import org.junit.Assert;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -332,5 +326,74 @@ public class TestNettyAvroRpcClient {
 
     RpcTestUtils.handlerBatchAppendTest(new ThrowingAvroHandler());
     logger.error("Throwing: I should never have gotten here!");
+  }
+
+  /**
+   * configure the NettyAvroRpcClient with a non-default
+   * NioClientSocketChannelFactory number of io worker threads
+   *
+   * @throws FlumeException
+   * @throws EventDeliveryException
+   */
+  @Test
+  public void testAppendWithMaxIOWorkers() throws FlumeException, EventDeliveryException {
+    NettyAvroRpcClient client = null;
+    Server server = RpcTestUtils.startServer(new OKAvroHandler());
+    Properties props = new Properties();
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS, "localhost");
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX + "localhost", localhost
+        + ":" + server.getPort());
+    props.setProperty(RpcClientConfigurationConstants.MAX_IO_WORKERS, Integer.toString(2));
+    try {
+      client = new NettyAvroRpcClient();
+      client.configure(props);
+      for (int i = 0; i < 5; i++) {
+        client.append(EventBuilder.withBody("evt:" + i, Charset.forName("UTF8")));
+      }
+    } finally {
+      RpcTestUtils.stopServer(server);
+      if (client != null) {
+        client.close();
+      }
+    }
+  }
+
+  /**
+   * Simple request with compression on the server and client with compression
+   * level 0
+   *
+   * configure the NettyAvroRpcClient with a non-default
+   * NioClientSocketChannelFactory number of io worker threads
+   *
+   * Compression level 0 = no compression
+   *
+   * @throws FlumeException
+   * @throws EventDeliveryException
+   */
+  @Test
+  public void testAppendWithMaxIOWorkersSimpleCompressionLevel0() throws FlumeException,
+      EventDeliveryException {
+    NettyAvroRpcClient client = null;
+    Server server = RpcTestUtils.startServer(new OKAvroHandler(), 0, true);
+    Properties props = new Properties();
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS, "localhost");
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX + "localhost", localhost
+        + ":" + server.getPort());
+    props.setProperty(RpcClientConfigurationConstants.MAX_IO_WORKERS, Integer.toString(2));
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_TYPE, "deflate");
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_LEVEL, "" + 0);
+
+    try {
+      client = new NettyAvroRpcClient();
+      client.configure(props);
+      for (int i = 0; i < 5; i++) {
+        client.append(EventBuilder.withBody("evt:" + i, Charset.forName("UTF8")));
+      }
+    } finally {
+      RpcTestUtils.stopServer(server);
+      if (client != null) {
+        client.close();
+      }
+    }
   }
 }

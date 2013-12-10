@@ -45,6 +45,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
@@ -55,6 +56,7 @@ import org.apache.avro.ipc.CallFuture;
 import org.apache.avro.ipc.NettyTransceiver;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
+import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
@@ -99,6 +101,7 @@ implements RpcClient {
       .getLogger(NettyAvroRpcClient.class);
   private boolean enableDeflateCompression;
   private int compressionLevel;
+  private int maxIoWorkers;
 
   /**
    * This constructor is intended to be called from {@link RpcClientFactory}.
@@ -128,20 +131,34 @@ implements RpcClient {
 
     try {
 
+      ExecutorService bossExecutor =
+        Executors.newCachedThreadPool(new TransceiverThreadFactory(
+          "Avro " + NettyTransceiver.class.getSimpleName() + " Boss"));
+      ExecutorService workerExecutor =
+        Executors.newCachedThreadPool(new TransceiverThreadFactory(
+          "Avro " + NettyTransceiver.class.getSimpleName() + " I/O Worker"));
+
       if (enableDeflateCompression || enableSsl) {
-        socketChannelFactory = new SSLCompressionChannelFactory(
-            Executors.newCachedThreadPool(new TransceiverThreadFactory(
-                "Avro " + NettyTransceiver.class.getSimpleName() + " Boss")),
-            Executors.newCachedThreadPool(new TransceiverThreadFactory(
-                "Avro " + NettyTransceiver.class.getSimpleName() + " I/O Worker")),
-            enableDeflateCompression, enableSsl, trustAllCerts, compressionLevel,
-            truststore, truststorePassword, truststoreType);
+        if (maxIoWorkers >= 1) {
+          socketChannelFactory = new SSLCompressionChannelFactory(
+            bossExecutor, workerExecutor,
+            enableDeflateCompression, enableSsl, trustAllCerts,
+            compressionLevel, truststore, truststorePassword, truststoreType,
+            maxIoWorkers);
+        } else {
+          socketChannelFactory = new SSLCompressionChannelFactory(
+            bossExecutor, workerExecutor,
+            enableDeflateCompression, enableSsl, trustAllCerts,
+            compressionLevel, truststore, truststorePassword, truststoreType);
+        }
       } else {
-        socketChannelFactory = new NioClientSocketChannelFactory(
-            Executors.newCachedThreadPool(new TransceiverThreadFactory(
-                "Avro " + NettyTransceiver.class.getSimpleName() + " Boss")),
-            Executors.newCachedThreadPool(new TransceiverThreadFactory(
-                "Avro " + NettyTransceiver.class.getSimpleName() + " I/O Worker")));
+        if (maxIoWorkers >= 1) {
+          socketChannelFactory = new NioClientSocketChannelFactory(
+              bossExecutor, workerExecutor, maxIoWorkers);
+        } else {
+          socketChannelFactory = new NioClientSocketChannelFactory(
+              bossExecutor, workerExecutor);
+        }
       }
 
       transceiver = new NettyTransceiver(this.address,
@@ -587,6 +604,23 @@ implements RpcClient {
     truststoreType = properties.getProperty(
         RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_TYPE, "JKS");
 
+    String maxIoWorkersStr = properties.getProperty(
+      RpcClientConfigurationConstants.MAX_IO_WORKERS);
+    if (!StringUtils.isEmpty(maxIoWorkersStr)) {
+      try {
+        maxIoWorkers = Integer.parseInt(maxIoWorkersStr);
+      } catch (NumberFormatException ex) {
+        logger.warn ("Invalid maxIOWorkers:" + maxIoWorkersStr + " Using " +
+          "default maxIOWorkers.");
+        maxIoWorkers = -1;
+      }
+    }
+
+    if (maxIoWorkers < 1) {
+      logger.warn("Using default maxIOWorkers");
+      maxIoWorkers = -1;
+    }
+
     this.connect();
   }
 
@@ -628,19 +662,33 @@ implements RpcClient {
    */
   private static class SSLCompressionChannelFactory extends NioClientSocketChannelFactory {
 
-    private boolean enableCompression;
-    private int compressionLevel;
-    private boolean enableSsl;
-    private boolean trustAllCerts;
-    private String truststore;
-    private String truststorePassword;
-    private String truststoreType;
+    private final boolean enableCompression;
+    private final int compressionLevel;
+    private final boolean enableSsl;
+    private final boolean trustAllCerts;
+    private final String truststore;
+    private final String truststorePassword;
+    private final String truststoreType;
 
     public SSLCompressionChannelFactory(Executor bossExecutor, Executor workerExecutor,
         boolean enableCompression, boolean enableSsl, boolean trustAllCerts,
         int compressionLevel, String truststore, String truststorePassword,
         String truststoreType) {
       super(bossExecutor, workerExecutor);
+      this.enableCompression = enableCompression;
+      this.enableSsl = enableSsl;
+      this.compressionLevel = compressionLevel;
+      this.trustAllCerts = trustAllCerts;
+      this.truststore = truststore;
+      this.truststorePassword = truststorePassword;
+      this.truststoreType = truststoreType;
+    }
+
+    public SSLCompressionChannelFactory(Executor bossExecutor, Executor workerExecutor,
+        boolean enableCompression, boolean enableSsl, boolean trustAllCerts,
+        int compressionLevel, String truststore, String truststorePassword,
+        String truststoreType, int maxIOWorkers) {
+      super(bossExecutor, workerExecutor, maxIOWorkers);
       this.enableCompression = enableCompression;
       this.enableSsl = enableSsl;
       this.compressionLevel = compressionLevel;
