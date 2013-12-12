@@ -33,7 +33,7 @@ limitations under the License.
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <solr.version>4.3.0</solr.version>
     <solr.expected.version>4.3.0</solr.expected.version> <!-- sanity check to verify we actually run against the expected version rather than some outdated version -->
-    <cdk.version>0.8.0</cdk.version>
+    <kite.version>0.10.0</kite.version>
     <slf4j.version>1.6.1</slf4j.version>
     <surefire.version>2.12.4</surefire.version>
   </properties>
@@ -74,9 +74,9 @@ limitations under the License.
     </dependency>
 
     <dependency>
-      <groupId>com.cloudera.cdk</groupId>
-      <artifactId>cdk-morphlines-all</artifactId>
-      <version>${cdk.version}</version>
+      <groupId>org.kitesdk</groupId>
+      <artifactId>kite-morphlines-all</artifactId>
+      <version>${kite.version}</version>
       <exclusions>
         <exclusion>
             <groupId>org.apache.hadoop</groupId>
@@ -108,9 +108,9 @@ limitations under the License.
     </dependency>
 
     <dependency>
-      <groupId>com.cloudera.cdk</groupId>
-      <artifactId>cdk-morphlines-solr-core</artifactId>
-      <version>${cdk.version}</version>
+      <groupId>org.kitesdk</groupId>
+      <artifactId>kite-morphlines-solr-core</artifactId>
+      <version>${kite.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

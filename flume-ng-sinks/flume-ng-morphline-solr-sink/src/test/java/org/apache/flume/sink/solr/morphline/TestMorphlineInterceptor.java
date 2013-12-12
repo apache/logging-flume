@@ -28,7 +28,7 @@ import org.apache.flume.event.EventBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.cloudera.cdk.morphline.base.Fields;
+import org.kitesdk.morphline.base.Fields;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;

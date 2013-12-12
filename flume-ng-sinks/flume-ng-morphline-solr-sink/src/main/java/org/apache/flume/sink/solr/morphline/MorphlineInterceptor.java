@@ -32,9 +32,9 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.interceptor.Interceptor;
 
-import com.cloudera.cdk.morphline.api.Command;
-import com.cloudera.cdk.morphline.api.Record;
-import com.cloudera.cdk.morphline.base.Fields;
+import org.kitesdk.morphline.api.Command;
+import org.kitesdk.morphline.api.Record;
+import org.kitesdk.morphline.base.Fields;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 

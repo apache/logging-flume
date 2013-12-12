@@ -20,7 +20,7 @@ import java.net.UnknownHostException;
 
 import org.junit.Test;
 
-import com.cloudera.cdk.morphline.solr.EnvironmentTest;
+import org.kitesdk.morphline.solr.EnvironmentTest;
 
 /** Print and verify some info about the environment in which the unit tests are running */
 public class TestEnvironment extends EnvironmentTest {
