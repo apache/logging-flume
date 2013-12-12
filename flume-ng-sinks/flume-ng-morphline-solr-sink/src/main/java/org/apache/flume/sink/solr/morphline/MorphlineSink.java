@@ -29,7 +29,7 @@ import org.apache.flume.sink.AbstractSink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cloudera.cdk.morphline.api.Command;
+import org.kitesdk.morphline.api.Command;
 
 /**
  * Flume sink that extracts search documents from Flume events and processes them using a morphline

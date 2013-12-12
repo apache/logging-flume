@@ -18,8 +18,8 @@ package org.apache.flume.sink.solr.morphline;
 
 import org.apache.flume.Context;
 
-import com.cloudera.cdk.morphline.api.Command;
-import com.cloudera.cdk.morphline.base.FaultTolerance;
+import org.kitesdk.morphline.api.Command;
+import org.kitesdk.morphline.base.FaultTolerance;
 
 
 /**
