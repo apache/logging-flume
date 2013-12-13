@@ -63,6 +63,7 @@ public class TestCheckpointRebuilder extends TestFileChannelBase {
     File metaDataFile = Serialization.getMetaDataFile(checkpointFile);
     File inflightTakesFile = new File(checkpointDir, "inflighttakes");
     File inflightPutsFile = new File(checkpointDir, "inflightputs");
+    File queueSetDir = new File(checkpointDir, "queueset");
     Assert.assertTrue(checkpointFile.delete());
     Assert.assertTrue(metaDataFile.delete());
     Assert.assertTrue(inflightTakesFile.delete());
@@ -71,7 +72,7 @@ public class TestCheckpointRebuilder extends TestFileChannelBase {
         EventQueueBackingStoreFactory.get(checkpointFile, 50,
             "test");
     FlumeEventQueue queue = new FlumeEventQueue(backingStore, inflightTakesFile,
-          inflightPutsFile);
+          inflightPutsFile, queueSetDir);
     CheckpointRebuilder checkpointRebuilder =
         new CheckpointRebuilder(getAllLogs(dataDirs), queue);
     Assert.assertTrue(checkpointRebuilder.rebuild());

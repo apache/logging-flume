@@ -27,7 +27,6 @@ import com.google.common.collect.Sets;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.cli.CommandLine;
@@ -251,7 +250,8 @@ public class CheckpointRebuilder {
               capacity, "channel");
       FlumeEventQueue queue = new FlumeEventQueue(backingStore,
               new File(checkpointDir, "inflighttakes"),
-              new File(checkpointDir, "inflightputs"));
+              new File(checkpointDir, "inflightputs"),
+              new File(checkpointDir, Log.QUEUE_SET));
       CheckpointRebuilder rebuilder = new CheckpointRebuilder(logFiles, queue);
       if(rebuilder.rebuild()) {
         rebuilder.writeCheckpoint();

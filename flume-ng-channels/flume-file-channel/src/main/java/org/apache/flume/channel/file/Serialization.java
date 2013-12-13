@@ -98,7 +98,7 @@ public class Serialization {
       builder = new StringBuilder("Deleted the following files: ");
     }
     if(excludes == null) {
-      excludes = Collections.EMPTY_SET;
+      excludes = Collections.emptySet();
     }
     for (File file : files) {
       if(excludes.contains(file.getName())) {

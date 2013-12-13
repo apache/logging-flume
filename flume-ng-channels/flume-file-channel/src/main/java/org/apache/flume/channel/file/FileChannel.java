@@ -100,7 +100,6 @@ public class FileChannel extends BasicChannelSemantics {
   private String encryptionActiveKey;
   private String encryptionCipherProvider;
   private boolean useDualCheckpoints;
-  private boolean isTest = false;
 
   @Override
   public synchronized void setName(String name) {
