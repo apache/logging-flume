@@ -2813,18 +2813,18 @@ appender must have the flume-ng-sdk in the classpath (eg,
 flume-ng-sdk-1.5.0-SNAPSHOT.jar).
 Required properties are in **bold**.
 
-=====================  =======  ==============================================================
+=====================  =======  ==================================================================================
 Property Name          Default  Description
-=====================  =======  ==============================================================
+=====================  =======  ==================================================================================
 **Hostname**           --       The hostname on which a remote Flume agent is running with an
                                 avro source.
 **Port**               --       The port at which the remote Flume agent's avro source is
                                 listening.
 UnsafeMode             false    If true, the appender will not throw exceptions on failure to
                                 send the events.
-AvroReflectionEnabled  false    Use Avro Reflection to serialize Log4j events.
+AvroReflectionEnabled  false    Use Avro Reflection to serialize Log4j events. (Do not use when users log strings)
 AvroSchemaUrl          --       A URL from which the Avro schema can be retrieved.
-=====================  =======  ==============================================================
+=====================  =======  ==================================================================================
 
 Sample log4j.properties file:
 
