@@ -166,7 +166,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
       "from the checkpoint directory. Cannot complete backup of the " +
       "checkpoint.");
     for (File origFile : checkpointFiles) {
-      if(origFile.getName().equals(Log.FILE_LOCK)) {
+      if(Log.EXCLUDES.contains(origFile.getName())) {
         continue;
       }
       Serialization.copyFile(origFile, new File(backupDirectory,
@@ -399,6 +399,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     File file = new File(args[0]);
     File inflightTakesFile = new File(args[1]);
     File inflightPutsFile = new File(args[2]);
+    File queueSetDir = new File(args[3]);
     if (!file.exists()) {
       throw new IOException("File " + file + " does not exist");
     }
@@ -421,7 +422,8 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
               + fileID + ", offset = " + offset);
     }
     FlumeEventQueue queue =
-        new FlumeEventQueue(backingStore, inflightTakesFile, inflightPutsFile);
+        new FlumeEventQueue(backingStore, inflightTakesFile, inflightPutsFile,
+            queueSetDir);
     SetMultimap<Long, Long> putMap = queue.deserializeInflightPuts();
     System.out.println("Inflight Puts:");
 

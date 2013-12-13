@@ -26,7 +26,6 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
-import org.apache.flume.ChannelException;
 import org.apache.flume.channel.file.encryption.KeyProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -290,7 +289,9 @@ class ReplayHandler {
             record.getLogWriteOrderID());
         readCount++;
         if(readCount % 10000 == 0 && readCount > 0) {
-          LOG.info("Read " + readCount + " records");
+          LOG.info("read: " + readCount + ", put: " + putCount + ", take: "
+              + takeCount + ", rollback: " + rollbackCount + ", commit: "
+              + commitCount + ", skip: " + skipCount + ", eventCount:" + count);
         }
         if (record.getLogWriteOrderID() > lastCheckpoint) {
           if (type == TransactionEventRecord.Type.PUT.get()) {
@@ -339,6 +340,7 @@ class ReplayHandler {
       LOG.info("read: " + readCount + ", put: " + putCount + ", take: "
           + takeCount + ", rollback: " + rollbackCount + ", commit: "
           + commitCount + ", skip: " + skipCount + ", eventCount:" + count);
+      queue.replayComplete();
     } finally {
       TransactionIDOracle.setSeed(transactionIDSeed);
       WriteOrderOracle.setSeed(writeOrderIDSeed);
@@ -363,15 +365,9 @@ class ReplayHandler {
     count += uncommittedTakes;
     int pendingTakesSize = pendingTakes.size();
     if (pendingTakesSize > 0) {
-      String msg = "Pending takes " + pendingTakesSize
-          + " exist after the end of replay";
-      if (LOG.isDebugEnabled()) {
-        for (Long pointer : pendingTakes) {
-          LOG.debug("Pending take " + FlumeEventPointer.fromLong(pointer));
-        }
-      } else {
-        LOG.error(msg + ". Duplicate messages will exist in destination.");
-      }
+      LOG.info("Pending takes " + pendingTakesSize + " exist after the" +
+          " end of replay. Duplicate messages will exist in" +
+          " destination.");
     }
   }
   private LogRecord next() throws IOException, CorruptEventException {

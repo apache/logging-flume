@@ -78,6 +78,7 @@ public class Log {
   private static final Logger LOGGER = LoggerFactory.getLogger(Log.class);
   private static final int MIN_NUM_LOGS = 2;
   public static final String FILE_LOCK = "in_use.lock";
+  public static final String QUEUE_SET = "queueset";
   // for reader
   private final Map<Integer, LogFile.RandomReader> idLogFileMap = Collections
       .synchronizedMap(new HashMap<Integer, LogFile.RandomReader>());
@@ -103,7 +104,8 @@ public class Log {
   /**
    * Set of files that should be excluded from backup and restores.
    */
-  public static final Set<String> EXCLUDES = Sets.newHashSet(FILE_LOCK);
+  public static final Set<String> EXCLUDES = Sets.newHashSet(FILE_LOCK,
+      QUEUE_SET);
   /**
    * Shared lock
    */
@@ -405,6 +407,7 @@ public class Log {
       }
       File inflightTakesFile = new File(checkpointDir, "inflighttakes");
       File inflightPutsFile = new File(checkpointDir, "inflightputs");
+      File queueSetDir = new File(checkpointDir, QUEUE_SET);
       EventQueueBackingStore backingStore = null;
 
 
@@ -414,7 +417,7 @@ public class Log {
                 backupCheckpointDir, queueCapacity, channelNameDescriptor,
                 true, this.useDualCheckpoints);
         queue = new FlumeEventQueue(backingStore, inflightTakesFile,
-                inflightPutsFile);
+                inflightPutsFile, queueSetDir);
         LOGGER.info("Last Checkpoint " + new Date(checkpointFile.lastModified())
                 + ", queue depth = " + queue.getSize());
 
@@ -450,7 +453,7 @@ public class Log {
             backupCheckpointDir,
             queueCapacity, channelNameDescriptor, true, useDualCheckpoints);
         queue = new FlumeEventQueue(backingStore, inflightTakesFile,
-                inflightPutsFile);
+                inflightPutsFile, queueSetDir);
         // If the checkpoint was deleted due to BadCheckpointException, then
         // trigger fast replay if the channel is configured to.
         shouldFastReplay = this.useFastReplay;

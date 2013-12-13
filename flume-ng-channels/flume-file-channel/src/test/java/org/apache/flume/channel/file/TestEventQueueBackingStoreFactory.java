@@ -58,12 +58,14 @@ public class TestEventQueueBackingStoreFactory {
   File checkpoint;
   File inflightTakes;
   File inflightPuts;
+  File queueSetDir;
   @Before
   public void setup() throws IOException {
     baseDir = Files.createTempDir();
     checkpoint = new File(baseDir, "checkpoint");
     inflightTakes = new File(baseDir, "takes");
     inflightPuts = new File(baseDir, "puts");
+    queueSetDir = new File(baseDir, "queueset");
     TestUtils.copyDecompressed("fileformat-v2-checkpoint.gz", checkpoint);
 
   }
@@ -275,7 +277,7 @@ public class TestEventQueueBackingStoreFactory {
       List<Long> expectedPointers)
       throws Exception {
     FlumeEventQueue queue = new FlumeEventQueue(backingStore, inflightTakes,
-        inflightPuts);
+        inflightPuts, queueSetDir);
     List<Long> actualPointers = Lists.newArrayList();
     FlumeEventPointer ptr;
     while((ptr = queue.removeHead(0L)) != null) {
