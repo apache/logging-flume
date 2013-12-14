@@ -2139,7 +2139,7 @@ checkpointDir                                     ~/.flume/file-channel/checkpoi
 useDualCheckpoints                                false                             Backup the checkpoint. If this is set to ``true``, ``backupCheckpointDir`` **must** be set
 backupCheckpointDir                               --                                The directory where the checkpoint is backed up to. This directory **must not** be the same as the data directories or the checkpoint directory
 dataDirs                                          ~/.flume/file-channel/data        Comma separated list of directories for storing log files. Using multiple directories on separate disks can improve file channel peformance
-transactionCapacity                               1000                              The maximum size of transaction supported by the channel
+transactionCapacity                               10000                             The maximum size of transaction supported by the channel
 checkpointInterval                                30000                             Amount of time (in millis) between checkpoints
 maxFileSize                                       2146435071                        Max size (in bytes) of a single log file
 minimumRequiredSpace                              524288000                         Minimum Required free space (in bytes). To avoid data corruption, File Channel stops accepting take/put requests when free space drops below this value

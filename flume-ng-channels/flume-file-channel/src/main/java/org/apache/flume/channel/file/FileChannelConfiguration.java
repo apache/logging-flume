@@ -39,7 +39,7 @@ public class FileChannelConfiguration {
    * Maximum number of put/take events in a transaction. Default: 1000
    */
   public static final String TRANSACTION_CAPACITY = "transactionCapacity";
-  public static final int DEFAULT_TRANSACTION_CAPACITY = 1000;
+  public static final int DEFAULT_TRANSACTION_CAPACITY = 10000;
   /**
    * Interval at which checkpoints should be taken. Default 30s (ms)
    */
