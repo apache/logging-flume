@@ -27,13 +27,21 @@ public class SpoolDirectorySourceConfigurationConstants {
   public static final String SPOOLED_FILE_SUFFIX = "fileSuffix";
   public static final String DEFAULT_SPOOLED_FILE_SUFFIX = ".COMPLETED";
 
-  /** Header in which to put filename. */
+  /** Header in which to put absolute path filename. */
   public static final String FILENAME_HEADER_KEY = "fileHeaderKey";
   public static final String DEFAULT_FILENAME_HEADER_KEY = "file";
 
-  /** Whether to include filename in a header. */
+  /** Whether to include absolute path filename in a header. */
   public static final String FILENAME_HEADER = "fileHeader";
   public static final boolean DEFAULT_FILE_HEADER = false;
+
+  /** Header in which to put the basename of file. */
+  public static final String BASENAME_HEADER_KEY = "basenameHeaderKey";
+  public static final String DEFAULT_BASENAME_HEADER_KEY = "basename";
+
+  /** Whether to include the basename of a file in a header. */
+  public static final String BASENAME_HEADER = "basenameHeader";
+  public static final boolean DEFAULT_BASENAME_HEADER = false;
 
   /** What size to batch with before sending to ChannelProcessor. */
   public static final String BATCH_SIZE = "batchSize";

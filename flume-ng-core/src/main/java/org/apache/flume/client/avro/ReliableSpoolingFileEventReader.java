@@ -92,7 +92,9 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
   private final Pattern ignorePattern;
   private final File metaFile;
   private final boolean annotateFileName;
+  private final boolean annotateBaseName;
   private final String fileNameHeader;
+  private final String baseNameHeader;
   private final String deletePolicy;
   private final Charset inputCharset;
   private final DecodeErrorPolicy decodeErrorPolicy;
@@ -108,6 +110,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
   private ReliableSpoolingFileEventReader(File spoolDirectory,
       String completedSuffix, String ignorePattern, String trackerDirPath,
       boolean annotateFileName, String fileNameHeader,
+      boolean annotateBaseName, String baseNameHeader,
       String deserializerType, Context deserializerContext,
       String deletePolicy, String inputCharset,
       DecodeErrorPolicy decodeErrorPolicy) throws IOException {
@@ -164,6 +167,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     this.deserializerContext = deserializerContext;
     this.annotateFileName = annotateFileName;
     this.fileNameHeader = fileNameHeader;
+    this.annotateBaseName = annotateBaseName;
+    this.baseNameHeader = baseNameHeader;
     this.ignorePattern = Pattern.compile(ignorePattern);
     this.deletePolicy = deletePolicy;
     this.inputCharset = Charset.forName(inputCharset);
@@ -250,6 +255,13 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       String filename = currentFile.get().getFile().getAbsolutePath();
       for (Event event : events) {
         event.getHeaders().put(fileNameHeader, filename);
+      }
+    }
+
+    if (annotateBaseName) {
+      String basename = currentFile.get().getFile().getName();
+      for (Event event : events) {
+        event.getHeaders().put(baseNameHeader, basename);
       }
     }
 
@@ -510,6 +522,10 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
         SpoolDirectorySourceConfigurationConstants.DEFAULT_FILE_HEADER;
     private String fileNameHeader =
         SpoolDirectorySourceConfigurationConstants.DEFAULT_FILENAME_HEADER_KEY;
+    private Boolean annotateBaseName =
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_BASENAME_HEADER;
+    private String baseNameHeader =
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_BASENAME_HEADER_KEY;
     private String deserializerType =
         SpoolDirectorySourceConfigurationConstants.DEFAULT_DESERIALIZER;
     private Context deserializerContext = new Context();
@@ -551,6 +567,16 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       return this;
     }
 
+    public Builder annotateBaseName(Boolean annotateBaseName) {
+      this.annotateBaseName = annotateBaseName;
+      return this;
+    }
+
+    public Builder baseNameHeader(String baseNameHeader) {
+      this.baseNameHeader = baseNameHeader;
+      return this;
+    }
+
     public Builder deserializerType(String deserializerType) {
       this.deserializerType = deserializerType;
       return this;
@@ -579,8 +605,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     public ReliableSpoolingFileEventReader build() throws IOException {
       return new ReliableSpoolingFileEventReader(spoolDirectory, completedSuffix,
           ignorePattern, trackerDirPath, annotateFileName, fileNameHeader,
-          deserializerType, deserializerContext, deletePolicy, inputCharset,
-          decodeErrorPolicy);
+          annotateBaseName, baseNameHeader, deserializerType,
+          deserializerContext, deletePolicy, inputCharset, decodeErrorPolicy);
     }
   }
 
