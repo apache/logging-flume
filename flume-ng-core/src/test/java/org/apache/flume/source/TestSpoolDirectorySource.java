@@ -93,7 +93,9 @@ public class TestSpoolDirectorySource {
 
     Configurables.configure(source, context);
     source.start();
-    Thread.sleep(500);
+    while (source.getSourceCounter().getEventAcceptedCount() < 8) {
+      Thread.sleep(10);
+    }
     Transaction txn = channel.getTransaction();
     txn.begin();
     Event e = channel.take();
@@ -102,6 +104,40 @@ public class TestSpoolDirectorySource {
     Assert.assertNotNull(e.getHeaders().get("fileHeaderKeyTest"));
     Assert.assertEquals(f1.getAbsolutePath(),
         e.getHeaders().get("fileHeaderKeyTest"));
+    txn.commit();
+    txn.close();
+  }
+
+  @Test
+  public void testPutBasenameHeader() throws IOException,
+    InterruptedException {
+    Context context = new Context();
+    File f1 = new File(tmpDir.getAbsolutePath() + "/file1");
+
+    Files.write("file1line1\nfile1line2\nfile1line3\nfile1line4\n" +
+      "file1line5\nfile1line6\nfile1line7\nfile1line8\n",
+      f1, Charsets.UTF_8);
+
+    context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
+        tmpDir.getAbsolutePath());
+    context.put(SpoolDirectorySourceConfigurationConstants.BASENAME_HEADER,
+        "true");
+    context.put(SpoolDirectorySourceConfigurationConstants.BASENAME_HEADER_KEY,
+        "basenameHeaderKeyTest");
+
+    Configurables.configure(source, context);
+    source.start();
+    while (source.getSourceCounter().getEventAcceptedCount() < 8) {
+      Thread.sleep(10);
+    }
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    Event e = channel.take();
+    Assert.assertNotNull("Event must not be null", e);
+    Assert.assertNotNull("Event headers must not be null", e.getHeaders());
+    Assert.assertNotNull(e.getHeaders().get("basenameHeaderKeyTest"));
+    Assert.assertEquals(f1.getName(),
+      e.getHeaders().get("basenameHeaderKeyTest"));
     txn.commit();
     txn.close();
   }

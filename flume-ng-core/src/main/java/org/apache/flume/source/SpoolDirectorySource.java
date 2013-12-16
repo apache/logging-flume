@@ -54,6 +54,8 @@ Configurable, EventDrivenSource {
   private String spoolDirectory;
   private boolean fileHeader;
   private String fileHeaderKey;
+  private boolean basenameHeader;
+  private String basenameHeaderKey;
   private int batchSize;
   private String ignorePattern;
   private String trackerDirPath;
@@ -87,6 +89,8 @@ Configurable, EventDrivenSource {
           .trackerDirPath(trackerDirPath)
           .annotateFileName(fileHeader)
           .fileNameHeader(fileHeaderKey)
+          .annotateBaseName(basenameHeader)
+          .baseNameHeader(basenameHeaderKey)
           .deserializerType(deserializerType)
           .deserializerContext(deserializerContext)
           .deletePolicy(deletePolicy)
@@ -142,6 +146,10 @@ Configurable, EventDrivenSource {
         DEFAULT_FILE_HEADER);
     fileHeaderKey = context.getString(FILENAME_HEADER_KEY,
         DEFAULT_FILENAME_HEADER_KEY);
+    basenameHeader = context.getBoolean(BASENAME_HEADER,
+        DEFAULT_BASENAME_HEADER);
+    basenameHeaderKey = context.getString(BASENAME_HEADER_KEY,
+        DEFAULT_BASENAME_HEADER_KEY);
     batchSize = context.getInteger(BATCH_SIZE,
         DEFAULT_BATCH_SIZE);
     inputCharset = context.getString(INPUT_CHARSET, DEFAULT_INPUT_CHARSET);
