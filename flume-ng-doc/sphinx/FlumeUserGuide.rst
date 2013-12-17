@@ -998,9 +998,9 @@ sends Avro events to a downstream Flume sink. Requires the consumer and
 access tokens and secrets of a Twitter developer account.
 Required properties are in **bold**.
 
-==================     ===========  ===================================================
+====================== ===========  ===================================================
 Property Name          Default      Description
-==================     ===========  ===================================================
+====================== ===========  ===================================================
 **channels**           --
 **type**               --           The component type name, needs to be ``org.apache.flume.source.twitter.TwitterSource``
 **consumerKey**        --           OAuth consumer key
@@ -1009,7 +1009,7 @@ Property Name          Default      Description
 **accessTokenSecret**  --           OAuth toekn secret 
 maxBatchSize           1000         Maximum number of twitter messages to put in a single batch
 maxBatchDurationMillis 1000         Maximum number of milliseconds to wait before closing a batch
-==================     ===========  ===================================================
+====================== ===========  ===================================================
 
 Example for agent named a1:
 
