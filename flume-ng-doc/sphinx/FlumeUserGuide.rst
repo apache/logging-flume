@@ -2147,7 +2147,7 @@ maxFileSize                                       2146435071                    
 minimumRequiredSpace                              524288000                         Minimum Required free space (in bytes). To avoid data corruption, File Channel stops accepting take/put requests when free space drops below this value
 capacity                                          1000000                           Maximum capacity of the channel
 keep-alive                                        3                                 Amount of time (in sec) to wait for a put operation
-write-timeout                                     3                                 Amount of time (in sec) to wait for a write operation
+write-timeout                                     10                                Amount of time (in sec) to wait for a write operation
 checkpoint-timeout                                600                               Expert: Amount of time (in sec) to wait for a checkpoint
 use-log-replay-v1                                 false                             Expert: Use old replay logic
 use-fast-replay                                   false                             Expert: Replay without using queue
