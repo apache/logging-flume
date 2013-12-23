@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.flume.Clock;
 import org.apache.flume.Context;
@@ -113,13 +114,19 @@ public class TestBucketWriter {
   public void testIntervalRoller() throws IOException, InterruptedException {
     final int ROLL_INTERVAL = 1; // seconds
     final int NUM_EVENTS = 10;
+    final AtomicBoolean calledBack = new AtomicBoolean(false);
 
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
     BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
-        "/tmp", "file", "", ".tmp", null, null, SequenceFile.CompressionType.NONE,
-        hdfsWriter, timedRollerPool, null,
-        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
-        0, null, null, 30000, Executors.newSingleThreadExecutor());
+      "/tmp", "file", "", ".tmp", null, null, SequenceFile.CompressionType.NONE,
+      hdfsWriter, timedRollerPool, null,
+      new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
+      0, new HDFSEventSink.WriterCallback() {
+      @Override
+      public void run(String filePath) {
+        calledBack.set(true);
+      }
+    }, null, 30000, Executors.newSingleThreadExecutor());
 
     Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
     long startNanos = System.nanoTime();
@@ -130,6 +137,14 @@ public class TestBucketWriter {
     // sleep to force a roll... wait 2x interval just to be sure
     Thread.sleep(2 * ROLL_INTERVAL * 1000L);
 
+    Assert.assertTrue(bucketWriter.closed);
+    Assert.assertTrue(calledBack.get());
+
+    bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
+      "/tmp", "file", "", ".tmp", null, null, SequenceFile.CompressionType.NONE,
+      hdfsWriter, timedRollerPool, null,
+      new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
+      0, null, null, 30000, Executors.newSingleThreadExecutor());
     // write one more event (to reopen a new file so we will roll again later)
     bucketWriter.append(e);
 
@@ -348,4 +363,28 @@ public class TestBucketWriter {
     Assert.assertTrue("Incorrect in use suffix", hdfsWriter.getOpenedFilePath().contains(SUFFIX));
   }
 
+  @Test
+  public void testCallbackOnClose() throws IOException, InterruptedException {
+    final int ROLL_INTERVAL = 1000; // seconds. Make sure it doesn't change in course of test
+    final String SUFFIX = "WELCOME_TO_THE_EREBOR";
+    final AtomicBoolean callbackCalled = new AtomicBoolean(false);
+
+    MockHDFSWriter hdfsWriter = new MockHDFSWriter();
+    BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
+      "/tmp", "file", "", SUFFIX, null, null, SequenceFile.CompressionType.NONE,
+      hdfsWriter, timedRollerPool, null,
+      new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()), 0,
+      new HDFSEventSink.WriterCallback() {
+      @Override
+      public void run(String filePath) {
+        callbackCalled.set(true);
+      }
+    }, "blah", 30000, Executors.newSingleThreadExecutor());
+
+    Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
+    bucketWriter.append(e);
+    bucketWriter.close(true);
+
+    Assert.assertTrue(callbackCalled.get());
+  }
 }

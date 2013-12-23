@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.flume.Clock;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -95,8 +96,8 @@ class BucketWriter {
   private SinkCounter sinkCounter;
   private final int idleTimeout;
   private volatile ScheduledFuture<Void> idleFuture;
-  private final WriterCallback onIdleCallback;
-  private final String onIdleCallbackPath;
+  private final WriterCallback onCloseCallback;
+  private final String onCloseCallbackPath;
   private final long callTimeout;
   private final ExecutorService callTimeoutPool;
   private final int maxConsecUnderReplRotations = 30; // make this config'able?
@@ -105,15 +106,15 @@ class BucketWriter {
 
   // flag that the bucket writer was closed due to idling and thus shouldn't be
   // reopened. Not ideal, but avoids internals of owners
-  protected boolean idleClosed = false;
+  protected boolean closed = false;
 
   BucketWriter(long rollInterval, long rollSize, long rollCount, long batchSize,
     Context context, String filePath, String fileName, String inUsePrefix,
     String inUseSuffix, String fileSuffix, CompressionCodec codeC,
     CompressionType compType, HDFSWriter writer,
     ScheduledExecutorService timedRollerPool, UserGroupInformation user,
-    SinkCounter sinkCounter, int idleTimeout, WriterCallback onIdleCallback,
-    String onIdleCallbackPath, long callTimeout,
+    SinkCounter sinkCounter, int idleTimeout, WriterCallback onCloseCallback,
+    String onCloseCallbackPath, long callTimeout,
     ExecutorService callTimeoutPool) {
     this.rollInterval = rollInterval;
     this.rollSize = rollSize;
@@ -131,8 +132,8 @@ class BucketWriter {
     this.user = user;
     this.sinkCounter = sinkCounter;
     this.idleTimeout = idleTimeout;
-    this.onIdleCallback = onIdleCallback;
-    this.onIdleCallbackPath = onIdleCallbackPath;
+    this.onCloseCallback = onCloseCallback;
+    this.onCloseCallbackPath = onCloseCallbackPath;
     this.callTimeout = callTimeout;
     this.callTimeoutPool = callTimeoutPool;
     fileExtensionCounter = new AtomicLong(clock.currentTimeMillis());
@@ -252,7 +253,8 @@ class BucketWriter {
           LOG.debug("Rolling file ({}): Roll scheduled after {} sec elapsed.",
               bucketPath, rollInterval);
           try {
-            close();
+            // Roll the file and remove reference from sfWriters map.
+            close(true);
           } catch(Throwable t) {
             LOG.error("Unexpected error", t);
           }
@@ -268,11 +270,24 @@ class BucketWriter {
 
   /**
    * Close the file handle and rename the temp file to the permanent filename.
-   * Safe to call multiple times. Logs HDFSWriter.close() exceptions.
+   * Safe to call multiple times. Logs HDFSWriter.close() exceptions. This
+   * method will not cause the bucket writer to be dereferenced from the HDFS
+   * sink that owns it. This method should be used only when size or count
+   * based rolling closes this file.
    * @throws IOException On failure to rename if temp file exists.
    * @throws InterruptedException
    */
   public synchronized void close() throws IOException, InterruptedException {
+    close(false);
+  }
+  /**
+   * Close the file handle and rename the temp file to the permanent filename.
+   * Safe to call multiple times. Logs HDFSWriter.close() exceptions.
+   * @throws IOException On failure to rename if temp file exists.
+   * @throws InterruptedException
+   */
+  public synchronized void close(boolean callCloseCallback)
+    throws IOException, InterruptedException {
     checkAndThrowInterruptedException();
     flush();
     LOG.debug("Closing {}", bucketPath);
@@ -306,6 +321,10 @@ class BucketWriter {
       renameBucket(); // could block or throw IOException
       fileSystem = null;
     }
+    if (callCloseCallback) {
+      runCloseAction();
+    }
+    closed = true;
   }
 
   /**
@@ -324,16 +343,10 @@ class BucketWriter {
         if(idleFuture == null || idleFuture.cancel(false)) {
           Callable<Void> idleAction = new Callable<Void>() {
             public Void call() throws Exception {
-              try {
-                if(isOpen) {
-                  LOG.info("Closing idle bucketWriter {}", bucketPath);
-                  idleClosed = true;
-                  close();
-                }
-                if(onIdleCallback != null)
-                  onIdleCallback.run(onIdleCallbackPath);
-              } catch(Throwable t) {
-                LOG.error("Unexpected error", t);
+              LOG.info("Closing idle bucketWriter {} at {}", bucketPath,
+                System.currentTimeMillis());
+              if (isOpen) {
+                close(true);
               }
               return null;
             }
@@ -342,6 +355,16 @@ class BucketWriter {
               TimeUnit.SECONDS);
         }
       }
+    }
+  }
+
+  private void runCloseAction() {
+    try {
+      if(onCloseCallback != null) {
+        onCloseCallback.run(onCloseCallbackPath);
+      }
+    } catch(Throwable t) {
+      LOG.error("Unexpected error", t);
     }
   }
 
@@ -396,10 +419,14 @@ class BucketWriter {
       }
       idleFuture = null;
     }
+
+    // If the bucket writer was closed due to roll timeout or idle timeout,
+    // force a new bucket writer to be created. Roll count and roll size will
+    // just reuse this one
     if (!isOpen) {
-      if(idleClosed) {
-        throw new IOException("This bucket writer was closed due to idling and this handle " +
-            "is thus no longer valid");
+      if (closed) {
+        throw new BucketClosedException("This bucket writer was closed and " +
+          "this handle is thus no longer valid");
       }
       open();
     }
@@ -446,7 +473,7 @@ class BucketWriter {
           bucketPath + ") and rethrowing exception.",
           e.getMessage());
       try {
-        close();
+        close(true);
       } catch (IOException e2) {
         LOG.warn("Caught IOException while closing file (" +
              bucketPath + "). Exception follows.", e2);
