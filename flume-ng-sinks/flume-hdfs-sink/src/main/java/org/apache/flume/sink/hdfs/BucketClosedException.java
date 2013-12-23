@@ -16,27 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.flume.sink.hdfs;
 
-import java.io.IOException;
+import org.apache.flume.FlumeException;
 
-import org.apache.flume.sink.hdfs.HDFSBadSeqWriter;
-import org.apache.flume.sink.hdfs.HDFSBadDataStream;
+public class BucketClosedException extends FlumeException{
 
-public class HDFSBadWriterFactory extends HDFSWriterFactory {
-  static final String BadSequenceFileType = "SequenceFile";
-  static final String BadDataStreamType = "DataStream";
-  static final String BadCompStreamType = "CompressedStream";
+  private static final long serialVersionUID = -4216667125119540357L;
 
-  @Override
-  public HDFSWriter getWriter(String fileType) throws IOException {
-    if (fileType == BadSequenceFileType) {
-      return new HDFSBadSeqWriter();
-    } else if (fileType == BadDataStreamType) {
-      return new HDFSBadDataStream();
-    } else {
-      throw new IOException("File type " + fileType + " not supported");
-    }
+  public BucketClosedException(String msg) {
+    super(msg);
   }
 }

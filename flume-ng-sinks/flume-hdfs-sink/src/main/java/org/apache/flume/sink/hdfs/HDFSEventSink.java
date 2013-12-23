@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
@@ -139,6 +140,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
   private volatile int idleTimeout;
   private Clock clock;
+  private final Object sfWritersLock = new Object();
 
   /*
    * Extended Java LinkedHashMap for open file handle LRU queue.
@@ -180,6 +182,11 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
   public HDFSEventSink(HDFSWriterFactory writerFactory) {
     this.writerFactory = writerFactory;
+  }
+
+  @VisibleForTesting
+  Map<String, BucketWriter> getSfWriters() {
+    return sfWriters;
   }
 
   // read configuration and setup thresholds
@@ -359,28 +366,29 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
           timeZone, needRounding, roundUnit, roundValue, useLocalTime);
 
         String lookupPath = realPath + DIRECTORY_DELIMITER + realName;
-        BucketWriter bucketWriter = sfWriters.get(lookupPath);
-
-        // we haven't seen this file yet, so open it and cache the handle
-        if (bucketWriter == null) {
-          HDFSWriter hdfsWriter = writerFactory.getWriter(fileType);
-
-          WriterCallback idleCallback = null;
-          if(idleTimeout != 0) {
-            idleCallback = new WriterCallback() {
-              @Override
-              public void run(String bucketPath) {
-                sfWriters.remove(bucketPath);
-              }
-            };
+        BucketWriter bucketWriter;
+        HDFSWriter hdfsWriter = null;
+        // Callback to remove the reference to the bucket writer from the
+        // sfWriters map so that all buffers used by the HDFS file
+        // handles are garbage collected.
+        WriterCallback closeCallback = new WriterCallback() {
+          @Override
+          public void run(String bucketPath) {
+            LOG.info("Writer callback called.");
+            synchronized (sfWritersLock) {
+              sfWriters.remove(bucketPath);
+            }
           }
-          bucketWriter = new BucketWriter(rollInterval, rollSize, rollCount,
-              batchSize, context, realPath, realName, inUsePrefix, inUseSuffix,
-              suffix, codeC, compType, hdfsWriter, timedRollerPool,
-              proxyTicket, sinkCounter, idleTimeout, idleCallback,
-              lookupPath, callTimeout, callTimeoutPool);
-
-          sfWriters.put(lookupPath, bucketWriter);
+        };
+        synchronized (sfWritersLock) {
+          bucketWriter = sfWriters.get(lookupPath);
+          // we haven't seen this file yet, so open it and cache the handle
+          if (bucketWriter == null) {
+            hdfsWriter = writerFactory.getWriter(fileType);
+            bucketWriter = initializeBucketWriter(realPath, realName,
+              lookupPath, hdfsWriter, closeCallback);
+            sfWriters.put(lookupPath, bucketWriter);
+          }
         }
 
         // track the buckets getting written in this transaction
@@ -389,7 +397,19 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
         }
 
         // Write the data to HDFS
-        bucketWriter.append(event);
+        try {
+          bucketWriter.append(event);
+        } catch (BucketClosedException ex) {
+          LOG.info("Bucket was closed while trying to append, " +
+            "reinitializing bucket and writing event.");
+          hdfsWriter = writerFactory.getWriter(fileType);
+          bucketWriter = initializeBucketWriter(realPath, realName,
+            lookupPath, hdfsWriter, closeCallback);
+          synchronized (sfWritersLock) {
+            sfWriters.put(lookupPath, bucketWriter);
+          }
+          bucketWriter.append(event);
+        }
       }
 
       if (txnEventCount == 0) {
@@ -428,6 +448,16 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     } finally {
       transaction.close();
     }
+  }
+
+  private BucketWriter initializeBucketWriter(String realPath,
+    String realName, String lookupPath, HDFSWriter hdfsWriter,
+    WriterCallback closeCallback) {
+    return new BucketWriter(rollInterval, rollSize, rollCount,
+      batchSize, context, realPath, realName, inUsePrefix, inUseSuffix,
+      suffix, codeC, compType, hdfsWriter, timedRollerPool,
+      proxyTicket, sinkCounter, idleTimeout, closeCallback,
+      lookupPath, callTimeout, callTimeoutPool);
   }
 
   @Override
