@@ -293,5 +293,13 @@ public class ResettableFileInputStream extends ResettableInputStream
     tracker.close();
     in.close();
   }
+  
+  public String getFileName(){
+    return file.getName();
+  }
+  
+  public String getFilePath(){
+    return file.getAbsolutePath();
+  }
 
 }
