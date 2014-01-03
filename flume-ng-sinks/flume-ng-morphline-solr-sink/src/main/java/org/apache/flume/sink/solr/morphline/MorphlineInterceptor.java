@@ -23,18 +23,18 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.interceptor.Interceptor;
-
 import org.kitesdk.morphline.api.Command;
 import org.kitesdk.morphline.api.Record;
 import org.kitesdk.morphline.base.Fields;
+
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 
@@ -47,7 +47,7 @@ import com.google.common.io.ByteStreams;
 public class MorphlineInterceptor implements Interceptor {
 
   private final Context context;
-  private final BlockingQueue<LocalMorphlineInterceptor> pool = new LinkedBlockingQueue();
+  private final Queue<LocalMorphlineInterceptor> pool = new ConcurrentLinkedQueue<LocalMorphlineInterceptor>();
   
   protected MorphlineInterceptor(Context context) {
     Preconditions.checkNotNull(context);
@@ -61,9 +61,8 @@ public class MorphlineInterceptor implements Interceptor {
 
   @Override
   public void close() {
-    List<LocalMorphlineInterceptor> interceptors = new ArrayList();
-    pool.drainTo(interceptors);
-    for (LocalMorphlineInterceptor interceptor : interceptors) {
+    LocalMorphlineInterceptor interceptor;
+    while ((interceptor = pool.poll()) != null) {
       interceptor.close();
     }
   }
@@ -85,11 +84,7 @@ public class MorphlineInterceptor implements Interceptor {
   }
 
   private void returnToPool(LocalMorphlineInterceptor interceptor) {
-    try {
-      pool.put(interceptor);
-    } catch (InterruptedException e) {
-      throw new FlumeException(e);
-    }
+    pool.add(interceptor);
   }
   
   private LocalMorphlineInterceptor borrowFromPool() {
