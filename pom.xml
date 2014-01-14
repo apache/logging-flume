@@ -777,7 +777,7 @@ limitations under the License.
       <dependency>
         <groupId>org.mapdb</groupId>
         <artifactId>mapdb</artifactId>
-        <version>0.9.7</version>
+        <version>0.9.8</version>
       </dependency>
 
       <!--  Gson: Java to Json conversion -->
