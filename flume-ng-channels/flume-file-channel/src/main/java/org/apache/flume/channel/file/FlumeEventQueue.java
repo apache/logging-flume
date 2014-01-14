@@ -105,7 +105,6 @@ final class FlumeEventQueue {
         .syncOnCommitDisable()
         .deleteFilesAfterClose()
         .cacheDisable()
-        .randomAccessFileEnableIfNeeded()
         .make();
     queueSet = db.createTreeSet("QueueSet").make();
     long start = System.currentTimeMillis();
