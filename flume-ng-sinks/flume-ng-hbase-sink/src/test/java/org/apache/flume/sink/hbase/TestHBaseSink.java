@@ -18,14 +18,15 @@
  */
 package org.apache.flume.sink.hbase;
 
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
@@ -35,14 +36,12 @@ import org.apache.flume.Transaction;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
-import org.apache.flume.sink.hbase.HBaseSink;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -59,7 +58,6 @@ public class TestHBaseSink {
   private static String plCol = "pCol";
   private static Context ctx = new Context();
   private static String valBase = "testing hbase sink: jham";
-
 
   @BeforeClass
   public static void setUp() throws Exception {
@@ -368,5 +366,81 @@ public class TestHBaseSink {
     }
     return results;
   }
+
+  @Test
+  public void testTransactionStateOnChannelException() throws Exception {
+    ctx.put("batchSize", "1");
+    testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
+    HBaseSink sink = new HBaseSink(testUtility.getConfiguration());
+    Configurables.configure(sink, ctx);
+    // Reset the context to a higher batchSize
+    Channel channel = spy(new MemoryChannel());
+    Configurables.configure(channel, new Context());
+    sink.setChannel(channel);
+    sink.start();
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+    Event e = EventBuilder.withBody(Bytes.toBytes(valBase + "-" + 0));
+    channel.put(e);
+    tx.commit();
+    tx.close();
+    doThrow(new ChannelException("Mock Exception")).when(channel).take();
+    try {
+      sink.process();
+      Assert.fail("take() method should throw exception");
+    } catch (ChannelException ex) {
+      Assert.assertEquals("Mock Exception", ex.getMessage());
+    }
+    doReturn(e).when(channel).take();
+    sink.process();
+    sink.stop();
+    HTable table = new HTable(testUtility.getConfiguration(), tableName);
+    byte[][] results = getResults(table, 1);
+    byte[] out = results[0];
+    Assert.assertArrayEquals(e.getBody(), out);
+    out = results[1];
+    Assert.assertArrayEquals(Longs.toByteArray(1), out);
+    testUtility.deleteTable(tableName.getBytes());
+  }
+
+  @Test
+  public void testTransactionStateOnSerializationException() throws Exception {
+    ctx.put("batchSize", "1");
+    ctx.put(HBaseSinkConfigurationConstants.CONFIG_SERIALIZER,
+        "org.apache.flume.sink.hbase.MockSimpleHbaseEventSerializer");
+    testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
+    HBaseSink sink = new HBaseSink(testUtility.getConfiguration());
+    Configurables.configure(sink, ctx);
+    // Reset the context to a higher batchSize
+    Channel channel = new MemoryChannel();
+    Configurables.configure(channel, new Context());
+    sink.setChannel(channel);
+    sink.start();
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+    Event e = EventBuilder.withBody(Bytes.toBytes(valBase + "-" + 0));
+    channel.put(e);
+    tx.commit();
+    tx.close();
+    try {
+      MockSimpleHbaseEventSerializer.throwException = true;
+      sink.process();
+      Assert.fail("FlumeException expected from serilazer");
+    } catch (FlumeException ex) {
+      Assert.assertEquals("Exception for testing", ex.getMessage());
+    }
+    MockSimpleHbaseEventSerializer.throwException = false;
+    sink.process();
+    sink.stop();
+    HTable table = new HTable(testUtility.getConfiguration(), tableName);
+    byte[][] results = getResults(table, 1);
+    byte[] out = results[0];
+    Assert.assertArrayEquals(e.getBody(), out);
+    out = results[1];
+    Assert.assertArrayEquals(Longs.toByteArray(1), out);
+    testUtility.deleteTable(tableName.getBytes());
+  }
+
+
 }
 
