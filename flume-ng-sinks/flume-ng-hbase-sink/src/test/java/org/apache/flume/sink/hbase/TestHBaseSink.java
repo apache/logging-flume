@@ -200,10 +200,8 @@ public class TestHBaseSink {
     tx.commit();
     tx.close();
     int count = 0;
-    Status status = Status.READY;
-    while(status != Status.BACKOFF){
+    while(sink.process() != Status.BACKOFF){
       count++;
-      status = sink.process();
     }
     sink.stop();
     Assert.assertEquals(2, count);
