@@ -231,66 +231,32 @@ public class HBaseSink extends AbstractSink implements Configurable {
     Transaction txn = channel.getTransaction();
     List<Row> actions = new LinkedList<Row>();
     List<Increment> incs = new LinkedList<Increment>();
-    txn.begin();
-    long i = 0;
-    for(; i < batchSize; i++) {
-      Event event = channel.take();
-      if(event == null){
-        status = Status.BACKOFF;
-        if (i == 0) {
-          sinkCounter.incrementBatchEmptyCount();
-        } else {
-          sinkCounter.incrementBatchUnderflowCount();
-        }
-        break;
-      } else {
-        serializer.initialize(event, columnFamily);
-        actions.addAll(serializer.getActions());
-        incs.addAll(serializer.getIncrements());
-      }
-    }
-    if (i == batchSize) {
-      sinkCounter.incrementBatchCompleteCount();
-    }
-    sinkCounter.addToEventDrainAttemptCount(i);
-
-    putEventsAndCommit(actions, incs, txn);
-    return status;
-  }
-
-  private void putEventsAndCommit(final List<Row> actions, final List<Increment> incs,
-      Transaction txn) throws EventDeliveryException {
     try {
-      runPrivileged(new PrivilegedExceptionAction<Void>() {
-        @Override
-        public Void run() throws Exception {
-          for(Row r : actions) {
-            if(r instanceof Put) {
-              ((Put)r).setWriteToWAL(enableWal);
-            }
-            // Newer versions of HBase - Increment implements Row.
-            if(r instanceof Increment) {
-              ((Increment)r).setWriteToWAL(enableWal);
-            }
+      txn.begin();
+      long i = 0;
+      for (; i < batchSize; i++) {
+        Event event = channel.take();
+        if (event == null) {
+          if (i == 0) {
+            status = Status.BACKOFF;
+            sinkCounter.incrementBatchEmptyCount();
+          } else {
+            sinkCounter.incrementBatchUnderflowCount();
           }
-          table.batch(actions);
-          return null;
+          break;
+        } else {
+          serializer.initialize(event, columnFamily);
+          actions.addAll(serializer.getActions());
+          incs.addAll(serializer.getIncrements());
         }
-      });
+      }
+      if (i == batchSize) {
+        sinkCounter.incrementBatchCompleteCount();
+      }
+      sinkCounter.addToEventDrainAttemptCount(i);
 
-      runPrivileged(new PrivilegedExceptionAction<Void>() {
-        @Override
-        public Void run() throws Exception {
-          for (final Increment i : incs) {
-            i.setWriteToWAL(enableWal);
-            table.increment(i);
-          }
-          return null;
-        }
-      });
+      putEventsAndCommit(actions, incs, txn);
 
-      txn.commit();
-      sinkCounter.addToEventDrainSuccessCount(actions.size());
     } catch (Throwable e) {
       try{
         txn.rollback();
@@ -313,6 +279,42 @@ public class HBaseSink extends AbstractSink implements Configurable {
     } finally {
       txn.close();
     }
+    return status;
+  }
+
+  private void putEventsAndCommit(final List<Row> actions,
+      final List<Increment> incs, Transaction txn) throws Exception {
+
+    runPrivileged(new PrivilegedExceptionAction<Void>() {
+      @Override
+      public Void run() throws Exception {
+        for (Row r : actions) {
+          if (r instanceof Put) {
+            ((Put) r).setWriteToWAL(enableWal);
+          }
+          // Newer versions of HBase - Increment implements Row.
+          if (r instanceof Increment) {
+            ((Increment) r).setWriteToWAL(enableWal);
+          }
+        }
+        table.batch(actions);
+        return null;
+      }
+    });
+
+    runPrivileged(new PrivilegedExceptionAction<Void>() {
+      @Override
+      public Void run() throws Exception {
+        for (final Increment i : incs) {
+          i.setWriteToWAL(enableWal);
+          table.increment(i);
+        }
+        return null;
+      }
+    });
+
+    txn.commit();
+    sinkCounter.addToEventDrainSuccessCount(actions.size());
   }
   private <T> T runPrivileged(final PrivilegedExceptionAction<T> action)
           throws Exception {
