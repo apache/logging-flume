@@ -145,6 +145,7 @@ public class TestHBaseSink {
   @Test
   public void testThreeEvents() throws Exception {
     testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
+    ctx.put("batchSize", "3");
     HBaseSink sink = new HBaseSink(testUtility.getConfiguration());
     Configurables.configure(sink, ctx);
     Channel channel = new MemoryChannel();
