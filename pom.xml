@@ -48,6 +48,8 @@ limitations under the License.
 
     <avro.version>1.7.3</avro.version>
     <elasticsearch.version>0.90.1</elasticsearch.version>
+
+    <hadoop2.version>2.1.0-beta</hadoop2.version>
   </properties>
 
   <modules>
@@ -106,7 +108,7 @@ limitations under the License.
         </property>
       </activation>
       <properties>
-        <hadoop.version>2.1.0-beta</hadoop.version>
+        <hadoop.version>${hadoop2.version}</hadoop.version>
         <hbase.version>0.94.2</hbase.version>
         <hadoop.common.artifact.id>hadoop-common</hadoop.common.artifact.id>
         <thrift.version>0.8.0</thrift.version>
@@ -142,6 +144,13 @@ limitations under the License.
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-auth</artifactId>
             <version>${hadoop.version}</version>
+          </dependency>
+
+          <!-- only compatible with hadoop-2 -->
+          <dependency>
+            <groupId>org.apache.flume.flume-ng-sinks</groupId>
+            <artifactId>flume-dataset-sink</artifactId>
+            <version>1.5.0-SNAPSHOT</version>
           </dependency>
         </dependencies>
       </dependencyManagement>
@@ -538,7 +547,7 @@ limitations under the License.
               </goals>
               <configuration>
                 <excludes>
-                  <exclude>.idea/</exclude>
+                  <exclude>**/.idea/</exclude>
                   <exclude>**/*.iml</exclude>
                   <exclude>**/nb-configuration.xml</exclude>
                   <exclude>.git/</exclude>
@@ -1085,6 +1094,12 @@ limitations under the License.
         <groupId>org.twitter4j</groupId>
         <artifactId>twitter4j-stream</artifactId>
         <version>3.0.3</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.kitesdk</groupId>
+        <artifactId>kite-data-core</artifactId>
+        <version>0.10.1</version>
       </dependency>
 
     </dependencies>
