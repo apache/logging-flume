@@ -74,6 +74,11 @@ public class TestHDFSEventSink {
   private static final Logger LOG = LoggerFactory
       .getLogger(HDFSEventSink.class);
 
+  static {
+    System.setProperty("java.security.krb5.realm", "flume");
+    System.setProperty("java.security.krb5.kdc", "blah");
+  }
+
   private void dirCleanup() {
     Configuration conf = new Configuration();
     try {
