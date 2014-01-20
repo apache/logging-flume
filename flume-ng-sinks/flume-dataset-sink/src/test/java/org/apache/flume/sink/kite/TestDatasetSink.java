@@ -270,7 +270,6 @@ public class TestDatasetSink {
     sink.start();
     sink.process();
 
-    Assert.assertEquals(Sets.<GenericData.Record>newHashSet(), read(records));
     Assert.assertEquals("Should have committed", 0, remaining(in));
 
     Thread.sleep(1100); // sleep longer than the roll interval
