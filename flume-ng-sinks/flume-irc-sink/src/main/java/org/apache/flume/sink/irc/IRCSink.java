@@ -132,7 +132,7 @@ public class IRCSink extends AbstractSink implements Configurable {
     user = context.getString("user");
     name = context.getString("name");
     chan = context.getString("chan");
-    splitLines = context.getBoolean("splitlines");
+    splitLines = context.getBoolean("splitlines", false);
     splitChars = context.getString("splitchars");
 
     if (portStr != null) {
