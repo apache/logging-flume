@@ -317,6 +317,11 @@ class BucketWriter {
       timedRollFuture = null;
     }
 
+    if (idleFuture != null && !idleFuture.isDone()) {
+      idleFuture.cancel(false); // do not cancel myself if running!
+      idleFuture = null;
+    }
+
     if (bucketPath != null && fileSystem != null) {
       renameBucket(); // could block or throw IOException
       fileSystem = null;
