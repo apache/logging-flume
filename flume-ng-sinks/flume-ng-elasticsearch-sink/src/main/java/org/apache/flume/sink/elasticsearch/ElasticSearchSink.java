@@ -174,11 +174,15 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
         if (event == null) {
           break;
         }
-
-        IndexRequestBuilder indexRequest =
-            indexRequestFactory.createIndexRequest(
-                client, indexName, indexType, event);
-
+        IndexRequestBuilder indexRequest = null;
+        try {
+        	indexRequest =
+        		indexRequestFactory.createIndexRequest(
+        			client, indexName, indexType, event);
+        } catch (Exception e) {
+        	logger.warn("Error in createIndexRequest: " + new String(event.getBody()));
+        	continue;
+        }
         if (ttlMs > 0) {
           indexRequest.setTTL(ttlMs);
         }
