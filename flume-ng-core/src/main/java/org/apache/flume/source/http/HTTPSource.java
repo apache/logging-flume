@@ -26,6 +26,7 @@ import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.AbstractSource;
+import org.apache.flume.tools.HTTPServerConstraintUtil;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.nio.SelectChannelConnector;
@@ -190,6 +191,7 @@ public class HTTPSource extends AbstractSource implements
         new org.mortbay.jetty.servlet.Context(
           srv, "/", org.mortbay.jetty.servlet.Context.SESSIONS);
       root.addServlet(new ServletHolder(new FlumeHTTPServlet()), "/");
+      HTTPServerConstraintUtil.enforceConstraints(root);
       srv.start();
       Preconditions.checkArgument(srv.getHandler().equals(root));
     } catch (Exception ex) {

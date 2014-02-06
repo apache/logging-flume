@@ -38,6 +38,8 @@ import org.apache.flume.instrumentation.util.JMXTestUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
+import javax.servlet.http.HttpServletResponse;
+
 /**
  *
  */
@@ -126,5 +128,34 @@ public class TestHTTPMetricsServer {
     JMXTestUtils.checkChannelCounterParams(pmemBean);
     srv.stop();
     System.out.println(String.valueOf(port) + "test success!");
+  }
+
+  @Test
+  public void testTrace() throws Exception {
+    doTestForbiddenMethods(4543,"TRACE");
+  }
+  @Test
+  public void testOptions() throws Exception {
+    doTestForbiddenMethods(4432,"OPTIONS");
+  }
+
+  public void doTestForbiddenMethods(int port, String method)
+    throws Exception {
+    MonitorService srv = new HTTPMetricsServer();
+    Context context = new Context();
+    if (port > 1024) {
+      context.put(HTTPMetricsServer.CONFIG_PORT, String.valueOf(port));
+    } else {
+      port = HTTPMetricsServer.DEFAULT_PORT;
+    }
+    srv.configure(context);
+    srv.start();
+    Thread.sleep(1000);
+    URL url = new URL("http://0.0.0.0:" + String.valueOf(port) + "/metrics");
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    conn.setRequestMethod(method);
+    Assert.assertEquals(HttpServletResponse.SC_FORBIDDEN,
+      conn.getResponseCode());
+    srv.stop();
   }
 }
