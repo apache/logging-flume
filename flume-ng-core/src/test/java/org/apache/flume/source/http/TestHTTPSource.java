@@ -29,7 +29,10 @@ import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.JSONEvent;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.HttpTrace;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -163,6 +166,23 @@ public class TestHTTPSource {
     Assert.assertEquals("random_body2", new String(e.getBody(), "UTF-8"));
     tx.commit();
     tx.close();
+  }
+
+  @Test
+  public void testTrace() throws Exception {
+    doTestForbidden(new HttpTrace("http://0.0.0.0:" + selectedPort));
+  }
+
+  @Test
+  public void testOptions() throws Exception {
+    doTestForbidden(new HttpOptions("http://0.0.0.0:" + selectedPort));
+  }
+
+
+  private void doTestForbidden(HttpRequestBase request) throws Exception {
+    HttpResponse response = httpClient.execute(request);
+    Assert.assertEquals(HttpServletResponse.SC_FORBIDDEN,
+      response.getStatusLine().getStatusCode());
   }
 
   @Test

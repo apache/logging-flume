@@ -108,6 +108,13 @@ public class HTTPMetricsServer implements MonitorService {
       //If we want to use any other url for something else, we should make sure
       //that for metrics only /metrics is used to prevent backward
       //compatibility issues.
+      if(request.getMethod().equalsIgnoreCase("TRACE") || request.getMethod()
+        .equalsIgnoreCase("OPTIONS")) {
+        response.sendError(HttpServletResponse.SC_FORBIDDEN);
+        response.flushBuffer();
+        ((Request) request).setHandled(true);
+        return;
+      }
       if (target.equals("/")) {
         response.setContentType("text/html;charset=utf-8");
         response.setStatus(HttpServletResponse.SC_OK);
