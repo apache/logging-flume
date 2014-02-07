@@ -64,6 +64,7 @@ public class JMSSource extends AbstractPollableSource {
   private String providerUrl;
   private String destinationName;
   private JMSDestinationType destinationType;
+  private JMSDestinationLocator destinationLocator;
   private String messageSelector;
   private Optional<String> userName;
   private Optional<String> password;
@@ -72,6 +73,7 @@ public class JMSSource extends AbstractPollableSource {
   private long pollTimeout;
 
   private int jmsExceptionCounter;
+  private InitialContext initialContext;
 
 
   public JMSSource() {
@@ -100,6 +102,10 @@ public class JMSSource extends AbstractPollableSource {
 
     String destinationTypeName = context.getString(JMSSourceConfiguration.
         DESTINATION_TYPE, "").trim().toUpperCase();
+
+    String destinationLocatorName = context.getString(JMSSourceConfiguration.
+        DESTINATION_LOCATOR, JMSSourceConfiguration.DESTINATION_LOCATOR_DEFAULT)
+      .trim().toUpperCase();
 
     messageSelector = context.getString(JMSSourceConfiguration.
         MESSAGE_SELECTOR, "").trim();
@@ -196,10 +202,15 @@ public class JMSSource extends AbstractPollableSource {
           "invalid.", destinationTypeName), e);
     }
 
+    try {
+      destinationLocator = JMSDestinationLocator.valueOf(destinationLocatorName);
+    } catch (IllegalArgumentException e) {
+      throw new FlumeException(String.format("Destination locator '%s' is " +
+          "invalid.", destinationLocatorName), e);
+    }
+
     Preconditions.checkArgument(batchSize > 0, "Batch size must be greater " +
         "than 0");
-
-    InitialContext initalContext;
 
     try {
       Properties contextProperties = new Properties();
@@ -208,7 +219,7 @@ public class JMSSource extends AbstractPollableSource {
           initialContextFactoryName);
       contextProperties.setProperty(
           javax.naming.Context.PROVIDER_URL, providerUrl);
-      initalContext = initialContextFactory.create(contextProperties);
+      initialContext = initialContextFactory.create(contextProperties);
     } catch (NamingException e) {
       throw new FlumeException(String.format(
           "Could not create initial context %s provider %s",
@@ -216,7 +227,7 @@ public class JMSSource extends AbstractPollableSource {
     }
 
     try {
-      connectionFactory = (ConnectionFactory) initalContext.
+      connectionFactory = (ConnectionFactory) initialContext.
           lookup(connectionFactoryName);
     } catch (NamingException e) {
       throw new FlumeException("Could not lookup ConnectionFactory", e);
@@ -302,8 +313,9 @@ public class JMSSource extends AbstractPollableSource {
   }
   private JMSMessageConsumer createConsumer() throws JMSException {
     logger.info("Creating new consumer for " + destinationName);
-    JMSMessageConsumer consumer = consumerFactory.create(connectionFactory,
-        destinationName, destinationType, messageSelector, batchSize,
+    JMSMessageConsumer consumer = consumerFactory.create(initialContext,
+    connectionFactory, destinationName, destinationType, destinationLocator,
+    messageSelector, batchSize,
         pollTimeout, converter, userName, password);
     jmsExceptionCounter = 0;
     return consumer;

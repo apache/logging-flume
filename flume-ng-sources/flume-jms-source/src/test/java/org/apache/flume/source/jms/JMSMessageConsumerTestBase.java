@@ -32,6 +32,7 @@ import javax.jms.Queue;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
+import javax.naming.InitialContext;
 
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -47,12 +48,14 @@ public abstract class JMSMessageConsumerTestBase {
   static final String DESTINATION_NAME = "destinationName";
   static final String SELECTOR = "selector";
   static final String TEXT = "text";
+  static final InitialContext WONT_USE = null;
 
   Context context;
   JMSMessageConsumer consumer;
   ConnectionFactory connectionFactory;
   String destinationName;
   JMSDestinationType destinationType;
+  JMSDestinationLocator destinationLocator;
   String messageSelector;
   int batchSize;
   long pollTimeout;
@@ -100,6 +103,7 @@ public abstract class JMSMessageConsumerTestBase {
     when(messageConsumer.receive(anyLong())).thenReturn(message);
     destinationName = DESTINATION_NAME;
     destinationType = JMSDestinationType.QUEUE;
+    destinationLocator = JMSDestinationLocator.CDI;
     messageSelector = SELECTOR;
     batchSize = 10;
     pollTimeout = 500L;
@@ -129,9 +133,9 @@ public abstract class JMSMessageConsumerTestBase {
   }
 
   JMSMessageConsumer create() {
-    return new JMSMessageConsumer(connectionFactory, destinationName,
-        destinationType, messageSelector, batchSize, pollTimeout, converter,
-        userName, password);
+    return new JMSMessageConsumer(WONT_USE, connectionFactory, destinationName,
+        destinationLocator, destinationType, messageSelector, batchSize,
+        pollTimeout, converter, userName, password);
   }
   @After
   public void tearDown() throws Exception {

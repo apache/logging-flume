@@ -55,11 +55,14 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 
 public class TestIntegrationActiveMQ {
+
   private final static String INITIAL_CONTEXT_FACTORY = "org.apache.activemq.jndi.ActiveMQInitialContextFactory";
   public static final String BROKER_BIND_URL = "tcp://localhost:61516";
   private final static  String DESTINATION_NAME = "test";
   private static final String USERNAME = "user";
   private static final String PASSWORD = "pass";
+  // specific for dynamic queues on ActiveMq
+  public static final String JNDI_PREFIX = "dynamicQueues/";
 
   private File baseDir;
   private File tmpDir;
@@ -168,6 +171,15 @@ public class TestIntegrationActiveMQ {
     session.commit();
     session.close();
     connection.close();
+  }
+
+  @Test
+  public void testQueueLocatedWithJndi() throws Exception {
+    context.put(JMSSourceConfiguration.DESTINATION_NAME,
+            JNDI_PREFIX + DESTINATION_NAME);
+    context.put(JMSSourceConfiguration.DESTINATION_LOCATOR,
+            JMSDestinationLocator.JNDI.name());
+    testQueue();
   }
 
   @Test
