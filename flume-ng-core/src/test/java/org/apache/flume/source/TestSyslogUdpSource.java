@@ -25,6 +25,7 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.DatagramSocket;
 import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
@@ -124,6 +125,49 @@ public class TestSyslogUdpSource {
   }
 
   @Test
+  public void testLargePayload() throws Exception {
+    init(true);
+    source.start();
+    // Write some message to the syslog port
+
+    byte[] largePayload = getPayload(1000).getBytes();
+
+    DatagramSocket syslogSocket;
+    DatagramPacket datagramPacket;
+    datagramPacket = new DatagramPacket(largePayload,
+            1000,
+            InetAddress.getLocalHost(), source.getSourcePort());
+    for (int i = 0; i < 10 ; i++) {
+      syslogSocket = new DatagramSocket();
+      syslogSocket.send(datagramPacket);
+      syslogSocket.close();
+    }
+
+    List<Event> channelEvents = new ArrayList<Event>();
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    for (int i = 0; i < 10; i++) {
+      Event e = channel.take();
+      Assert.assertNotNull(e);
+      channelEvents.add(e);
+    }
+
+    try {
+      txn.commit();
+    } catch (Throwable t) {
+      txn.rollback();
+    } finally {
+      txn.close();
+    }
+
+    source.stop();
+    for (Event e : channelEvents) {
+      Assert.assertNotNull(e);
+      Assert.assertArrayEquals(largePayload, e.getBody());
+    }
+  }
+
+  @Test
   public void testKeepFields() throws IOException {
     runKeepFieldsTest(true);
   }
@@ -131,6 +175,14 @@ public class TestSyslogUdpSource {
   @Test
   public void testRemoveFields() throws IOException {
     runKeepFieldsTest(false);
+  }
+
+  private String getPayload(int length) {
+    StringBuilder payload = new StringBuilder(length);
+    for (int n = 0; n < length; ++n) {
+      payload.append("x");
+    }
+    return payload.toString();
   }
 }
 
