@@ -28,6 +28,8 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.Session;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 
 import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
@@ -50,11 +52,11 @@ class JMSMessageConsumer {
   private final Destination destination;
   private final MessageConsumer messageConsumer;
 
-  JMSMessageConsumer(ConnectionFactory connectionFactory,
-      String destinationName, JMSDestinationType destinationType,
-      String messageSelector, int batchSize, long pollTimeout,
-      JMSMessageConverter messageConverter, Optional<String> userName,
-      Optional<String> password) {
+  JMSMessageConsumer(InitialContext initialContext, ConnectionFactory connectionFactory, String destinationName,
+    JMSDestinationLocator destinationLocator, JMSDestinationType destinationType,
+    String messageSelector, int batchSize, long pollTimeout,
+    JMSMessageConverter messageConverter,
+    Optional<String> userName, Optional<String> password) {
     this.batchSize = batchSize;
     this.pollTimeout = pollTimeout;
     this.messageConverter = messageConverter;
@@ -79,7 +81,9 @@ class JMSMessageConsumer {
     } catch (JMSException e) {
       throw new FlumeException("Could not create session", e);
     }
-    try {
+
+  try {
+    if (destinationLocator.equals(JMSDestinationLocator.CDI)) {
       switch (destinationType) {
         case QUEUE:
           destination = session.createQueue(destinationName);
@@ -90,12 +94,16 @@ class JMSMessageConsumer {
         default:
           throw new IllegalStateException(String.valueOf(destinationType));
       }
-    } catch (JMSException e) {
-      throw new FlumeException("Could not create destination "
-          + destinationName, e);
+    } else {
+      destination = (Destination) initialContext.lookup(destinationName);
     }
+  } catch (JMSException e) {
+    throw new FlumeException("Could not create destination " + destinationName, e);
+  } catch (NamingException e) {
+    throw new FlumeException("Could not find destination " + destinationName, e);
+  }
 
-    try {
+  try {
       messageConsumer = session.createConsumer(destination,
           messageSelector.isEmpty() ? null: messageSelector);
     } catch (JMSException e) {

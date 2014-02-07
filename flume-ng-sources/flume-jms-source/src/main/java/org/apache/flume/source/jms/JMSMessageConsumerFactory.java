@@ -18,19 +18,19 @@
 package org.apache.flume.source.jms;
 
 import javax.jms.ConnectionFactory;
+import javax.naming.InitialContext;
 
 import com.google.common.base.Optional;
 
 
 public class JMSMessageConsumerFactory {
 
-  JMSMessageConsumer create(ConnectionFactory connectionFactory,
-      String destinationName, JMSDestinationType destinationType,
-      String messageSelector, int batchSize, long pollTimeout,
-      JMSMessageConverter messageConverter, Optional<String> userName,
-      Optional<String> password) {
-    return new JMSMessageConsumer(connectionFactory, destinationName,
-        destinationType, messageSelector, batchSize, pollTimeout,
+  JMSMessageConsumer create(InitialContext initialContext, ConnectionFactory connectionFactory,
+    String destinationName, JMSDestinationType destinationType, JMSDestinationLocator destinationLocator,
+    String messageSelector, int batchSize, long pollTimeout, JMSMessageConverter messageConverter,
+    Optional<String> userName, Optional<String> password) {
+    return new JMSMessageConsumer(initialContext, connectionFactory, destinationName,
+      destinationLocator, destinationType, messageSelector, batchSize, pollTimeout,
         messageConverter, userName, password);
   }
 }

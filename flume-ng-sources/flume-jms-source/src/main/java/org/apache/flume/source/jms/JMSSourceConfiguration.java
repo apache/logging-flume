@@ -29,6 +29,9 @@ public class JMSSourceConfiguration {
   public static final String DESTINATION_NAME = "destinationName";
 
   public static final String DESTINATION_TYPE = "destinationType";
+  public static final String DESTINATION_LOCATOR = "destinationLocator";
+  public static final String DESTINATION_LOCATOR_DEFAULT = "CDI";
+
   public static final String DESTINATION_TYPE_QUEUE = "queue";
   public static final String DESTINATION_TYPE_TOPIC = "topic";
 
