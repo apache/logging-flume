@@ -26,7 +26,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.io.FileUtils;
-import org.apache.flume.ChannelException;
 import org.apache.flume.Event;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
@@ -66,8 +65,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
  * the on disk write ahead log with the last checkpoint of the queue.
  *
  * Before calling any of commitPut/commitTake/get/put/rollback/take
- * Log.tryLockShared should be called and the above operations
- * should only be called if tryLockShared returns true. After
+ * {@linkplain org.apache.flume.channel.file.Log#lockShared()}
+ * should be called. After
  * the operation and any additional modifications of the
  * FlumeEventQueue, the Log.unlockShared method should be called.
  */
@@ -114,9 +113,7 @@ public class Log {
    * Exclusive lock
    */
   private final WriteLock checkpointWriterLock = checkpointLock.writeLock();
-  private int logWriteTimeout;
   private final String channelNameDescriptor;
-  private int checkpointWriteTimeout;
   private boolean useLogReplayV1;
   private KeyProvider encryptionKeyProvider;
   private String encryptionCipherProvider;
@@ -143,11 +140,7 @@ public class Log {
     private int bQueueCapacity;
     private File bCheckpointDir;
     private File[] bLogDirs;
-    private int bLogWriteTimeout =
-        FileChannelConfiguration.DEFAULT_WRITE_TIMEOUT;
     private String bName;
-    private int bCheckpointWriteTimeout =
-        FileChannelConfiguration.DEFAULT_CHECKPOINT_WRITE_TIMEOUT;
     private boolean useLogReplayV1;
     private boolean useFastReplay;
     private KeyProvider bEncryptionKeyProvider;
@@ -187,11 +180,6 @@ public class Log {
       return this;
     }
 
-    Builder setLogWriteTimeout(int timeout) {
-      bLogWriteTimeout = timeout;
-      return this;
-    }
-
     Builder setChannelName(String name) {
       bName = name;
       return this;
@@ -199,11 +187,6 @@ public class Log {
 
     Builder setMinimumRequiredSpace(long minimumRequiredSpace) {
       bMinimumRequiredSpace = minimumRequiredSpace;
-      return this;
-    }
-
-    Builder setCheckpointWriteTimeout(int checkpointTimeout){
-      bCheckpointWriteTimeout = checkpointTimeout;
       return this;
     }
 
@@ -244,23 +227,21 @@ public class Log {
 
     Log build() throws IOException {
       return new Log(bCheckpointInterval, bMaxFileSize, bQueueCapacity,
-          bLogWriteTimeout, bCheckpointWriteTimeout, bUseDualCheckpoints,
-          bCheckpointDir, bBackupCheckpointDir, bName,
-          useLogReplayV1, useFastReplay, bMinimumRequiredSpace,
-          bEncryptionKeyProvider, bEncryptionKeyAlias,
-          bEncryptionCipherProvider, bUsableSpaceRefreshInterval,
-          bLogDirs);
+        bUseDualCheckpoints, bCheckpointDir, bBackupCheckpointDir, bName,
+        useLogReplayV1, useFastReplay, bMinimumRequiredSpace,
+        bEncryptionKeyProvider, bEncryptionKeyAlias,
+        bEncryptionCipherProvider, bUsableSpaceRefreshInterval,
+        bLogDirs);
     }
   }
 
   private Log(long checkpointInterval, long maxFileSize, int queueCapacity,
-      int logWriteTimeout, int checkpointWriteTimeout,
-      boolean useDualCheckpoints, File checkpointDir, File backupCheckpointDir,
-      String name, boolean useLogReplayV1, boolean useFastReplay,
-      long minimumRequiredSpace, @Nullable KeyProvider encryptionKeyProvider,
-      @Nullable String encryptionKeyAlias,
-      @Nullable String encryptionCipherProvider,
-      long usableSpaceRefreshInterval, File... logDirs)
+    boolean useDualCheckpoints, File checkpointDir, File backupCheckpointDir,
+    String name, boolean useLogReplayV1, boolean useFastReplay,
+    long minimumRequiredSpace, @Nullable KeyProvider encryptionKeyProvider,
+    @Nullable String encryptionKeyAlias,
+    @Nullable String encryptionCipherProvider,
+    long usableSpaceRefreshInterval, File... logDirs)
           throws IOException {
     Preconditions.checkArgument(checkpointInterval > 0,
       "checkpointInterval <= 0");
@@ -337,8 +318,6 @@ public class Log {
     this.checkpointDir = checkpointDir;
     this.backupCheckpointDir = backupCheckpointDir;
     this.logDirs = logDirs;
-    this.logWriteTimeout = logWriteTimeout;
-    this.checkpointWriteTimeout = checkpointWriteTimeout;
     logFiles = new AtomicReferenceArray<LogFile.Writer>(this.logDirs.length);
     workerExecutor = Executors.newSingleThreadScheduledExecutor(new
       ThreadFactoryBuilder().setNameFormat("Log-BackgroundWorker-" + name)
@@ -356,9 +335,7 @@ public class Log {
   void replay() throws IOException {
     Preconditions.checkState(!open, "Cannot replay after Log has been opened");
 
-    Preconditions.checkState(tryLockExclusive(), "Cannot obtain lock on "
-        + channelNameDescriptor);
-
+    lockExclusive();
     try {
       /*
        * First we are going to look through the data directories
@@ -751,28 +728,12 @@ public class Log {
   }
 
 
-  private boolean tryLockExclusive() {
-    try {
-      return checkpointWriterLock.tryLock(checkpointWriteTimeout,
-          TimeUnit.SECONDS);
-    } catch (InterruptedException ex) {
-      LOGGER.warn("Interrupted while waiting for log exclusive lock", ex);
-      Thread.currentThread().interrupt();
-    }
-    return false;
-  }
   private void unlockExclusive()  {
     checkpointWriterLock.unlock();
   }
 
-  boolean tryLockShared() {
-    try {
-      return checkpointReadLock.tryLock(logWriteTimeout, TimeUnit.SECONDS);
-    } catch (InterruptedException ex) {
-      LOGGER.warn("Interrupted while waiting for log shared lock", ex);
-      Thread.currentThread().interrupt();
-    }
-    return false;
+  void lockShared() {
+    checkpointReadLock.lock();
   }
 
   void unlockShared()  {
@@ -929,29 +890,25 @@ public class Log {
    * @param index
    * @throws IOException
    */
-    private synchronized void roll(int index, ByteBuffer buffer)
-      throws IOException {
-    if (!tryLockShared()) {
-      throw new ChannelException("Failed to obtain lock for writing to the "
-          + "log. Try increasing the log write timeout value. " +
-          channelNameDescriptor);
-    }
+  private synchronized void roll(int index, ByteBuffer buffer)
+    throws IOException {
+    lockShared();
 
     try {
       LogFile.Writer oldLogFile = logFiles.get(index);
       // check to make sure a roll is actually required due to
       // the possibility of multiple writes waiting on lock
-      if(oldLogFile == null || buffer == null ||
-          oldLogFile.isRollRequired(buffer)) {
+      if (oldLogFile == null || buffer == null ||
+        oldLogFile.isRollRequired(buffer)) {
         try {
           LOGGER.info("Roll start " + logDirs[index]);
           int fileID = nextFileID.incrementAndGet();
           File file = new File(logDirs[index], PREFIX + fileID);
           LogFile.Writer writer = LogFileFactory.getWriter(file, fileID,
-              maxFileSize, encryptionKey, encryptionKeyAlias,
-              encryptionCipherProvider, usableSpaceRefreshInterval);
+            maxFileSize, encryptionKey, encryptionKeyAlias,
+            encryptionCipherProvider, usableSpaceRefreshInterval);
           idLogFileMap.put(fileID, LogFileFactory.getRandomReader(file,
-              encryptionKeyProvider));
+            encryptionKeyProvider));
           // writer from this point on will get new reference
           logFiles.set(index, writer);
           // close out old log
@@ -988,10 +945,7 @@ public class Log {
       throw new IOException("Usable space exhaused, only " + usableSpace +
           " bytes remaining, required " + minimumRequiredSpace + " bytes");
     }
-    boolean lockAcquired = tryLockExclusive();
-    if(!lockAcquired) {
-      return false;
-    }
+    lockExclusive();
     SortedSet<Integer> logFileRefCountsAll = null, logFileRefCountsActive = null;
     try {
       if (queue.checkpoint(force)) {

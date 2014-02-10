@@ -76,19 +76,6 @@ public class FileChannelConfiguration {
   public static final int DEFAULT_KEEP_ALIVE = 3;
 
   /**
-   * The amount of time in seconds a writer will wait before failing when
-   * checkpoint is enqueued or in progress.
-   */
-  public static final String LOG_WRITE_TIMEOUT = "write-timeout";
-  public static final int DEFAULT_WRITE_TIMEOUT = 10;
-
-  /**
-   * The amount of time in seconds the channel should wait to write the
-   * checkpoint when some other operation(s) are enqueued or in progress.
-   */
-  public static final String CHECKPOINT_WRITE_TIMEOUT = "checkpoint-timeout";
-  public static final int DEFAULT_CHECKPOINT_WRITE_TIMEOUT = 600;
-  /**
    * Turn on Flume 1.2 log replay logic
    */
   public static final String USE_LOG_REPLAY_V1 = "use-log-replay-v1";

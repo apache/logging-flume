@@ -90,8 +90,6 @@ public class FileChannel extends BasicChannelSemantics {
   private Semaphore queueRemaining;
   private final ThreadLocal<FileBackedTransaction> transactions =
       new ThreadLocal<FileBackedTransaction>();
-  private int logWriteTimeout;
-  private int checkpointWriteTimeout;
   private String channelNameDescriptor = "[channel=unknown]";
   private ChannelCounter channelCounter;
   private boolean useLogReplayV1;
@@ -190,39 +188,14 @@ public class FileChannel extends BasicChannelSemantics {
 
     // cannot be over FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE
     maxFileSize = Math.min(
-        context.getLong(FileChannelConfiguration.MAX_FILE_SIZE,
-            FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE),
-            FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE);
+      context.getLong(FileChannelConfiguration.MAX_FILE_SIZE,
+        FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE),
+      FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE);
 
     minimumRequiredSpace = Math.max(
-        context.getLong(FileChannelConfiguration.MINIMUM_REQUIRED_SPACE,
-            FileChannelConfiguration.DEFAULT_MINIMUM_REQUIRED_SPACE),
-            FileChannelConfiguration.FLOOR_MINIMUM_REQUIRED_SPACE);
-
-    logWriteTimeout = context.getInteger(
-        FileChannelConfiguration.LOG_WRITE_TIMEOUT,
-        FileChannelConfiguration.DEFAULT_WRITE_TIMEOUT);
-
-    if (logWriteTimeout < 0) {
-      LOG.warn("Log write time out is invalid: " + logWriteTimeout
-          + ", using default: "
-          + FileChannelConfiguration.DEFAULT_WRITE_TIMEOUT);
-
-      logWriteTimeout = FileChannelConfiguration.DEFAULT_WRITE_TIMEOUT;
-    }
-
-    checkpointWriteTimeout = context.getInteger(
-        FileChannelConfiguration.CHECKPOINT_WRITE_TIMEOUT,
-        FileChannelConfiguration.DEFAULT_CHECKPOINT_WRITE_TIMEOUT);
-
-    if (checkpointWriteTimeout < 0) {
-      LOG.warn("Checkpoint write time out is invalid: " + checkpointWriteTimeout
-          + ", using default: "
-          + FileChannelConfiguration.DEFAULT_CHECKPOINT_WRITE_TIMEOUT);
-
-      checkpointWriteTimeout =
-          FileChannelConfiguration.DEFAULT_CHECKPOINT_WRITE_TIMEOUT;
-    }
+      context.getLong(FileChannelConfiguration.MINIMUM_REQUIRED_SPACE,
+        FileChannelConfiguration.DEFAULT_MINIMUM_REQUIRED_SPACE),
+      FileChannelConfiguration.FLOOR_MINIMUM_REQUIRED_SPACE);
 
     useLogReplayV1 = context.getBoolean(
         FileChannelConfiguration.USE_LOG_REPLAY_V1,
@@ -285,11 +258,9 @@ public class FileChannel extends BasicChannelSemantics {
       builder.setMaxFileSize(maxFileSize);
       builder.setMinimumRequiredSpace(minimumRequiredSpace);
       builder.setQueueSize(capacity);
-      builder.setLogWriteTimeout(logWriteTimeout);
       builder.setCheckpointDir(checkpointDir);
       builder.setLogDirs(dataDirs);
       builder.setChannelName(getName());
-      builder.setCheckpointWriteTimeout(checkpointWriteTimeout);
       builder.setUseLogReplayV1(useLogReplayV1);
       builder.setUseFastReplay(useFastReplay);
       builder.setEncryptionKeyProvider(encryptionKeyProvider);
@@ -471,13 +442,8 @@ public class FileChannel extends BasicChannelSemantics {
             + channelNameDescriptor);
       }
       boolean success = false;
-      boolean lockAcquired = log.tryLockShared();
+      log.lockShared();
       try {
-        if(!lockAcquired) {
-          throw new ChannelException("Failed to obtain lock for writing to the "
-              + "log. Try increasing the log write timeout value. " +
-              channelNameDescriptor);
-        }
         FlumeEventPointer ptr = log.put(transactionID, event);
         Preconditions.checkState(putList.offer(ptr), "putList offer failed "
           + channelNameDescriptor);
@@ -487,9 +453,7 @@ public class FileChannel extends BasicChannelSemantics {
         throw new ChannelException("Put failed due to IO error "
                 + channelNameDescriptor, e);
       } finally {
-        if(lockAcquired) {
-          log.unlockShared();
-        }
+        log.unlockShared();
         if(!success) {
           // release slot obtained in the case
           // the put fails for any reason
@@ -507,12 +471,7 @@ public class FileChannel extends BasicChannelSemantics {
             "increasing capacity, or increasing thread count. "
                + channelNameDescriptor);
       }
-      if(!log.tryLockShared()) {
-        throw new ChannelException("Failed to obtain lock for writing to the "
-            + "log. Try increasing the log write timeout value. " +
-            channelNameDescriptor);
-      }
-
+      log.lockShared();
       /*
        * 1. Take an event which is in the queue.
        * 2. If getting that event does not throw NoopRecordException,
@@ -557,11 +516,7 @@ public class FileChannel extends BasicChannelSemantics {
       if(puts > 0) {
         Preconditions.checkState(takes == 0, "nonzero puts and takes "
                 + channelNameDescriptor);
-        if(!log.tryLockShared()) {
-          throw new ChannelException("Failed to obtain lock for writing to the "
-              + "log. Try increasing the log write timeout value. " +
-              channelNameDescriptor);
-        }
+        log.lockShared();
         try {
           log.commitPut(transactionID);
           channelCounter.addToEventPutSuccessCount(puts);
@@ -589,11 +544,7 @@ public class FileChannel extends BasicChannelSemantics {
         }
 
       } else if (takes > 0) {
-        if(!log.tryLockShared()) {
-          throw new ChannelException("Failed to obtain lock for writing to the "
-              + "log. Try increasing the log write timeout value. " +
-              channelNameDescriptor);
-        }
+        log.lockShared();
         try {
           log.commitTake(transactionID);
           queue.completeTransaction(transactionID);
@@ -614,13 +565,8 @@ public class FileChannel extends BasicChannelSemantics {
     protected void doRollback() throws InterruptedException {
       int puts = putList.size();
       int takes = takeList.size();
-      boolean lockAcquired = log.tryLockShared();
+      log.lockShared();
       try {
-        if(!lockAcquired) {
-          throw new ChannelException("Failed to obtain lock for writing to the "
-              + "log. Try increasing the log write timeout value. " +
-              channelNameDescriptor);
-        }
         if(takes > 0) {
           Preconditions.checkState(puts == 0, "nonzero puts and takes "
               + channelNameDescriptor);
@@ -641,9 +587,7 @@ public class FileChannel extends BasicChannelSemantics {
         throw new ChannelException("Commit failed due to IO error "
             + channelNameDescriptor, e);
       } finally {
-        if(lockAcquired) {
-          log.unlockShared();
-        }
+        log.unlockShared();
         // since rollback is being called, puts will never make it on
         // to the queue and we need to be sure to release the resources
         queueRemaining.release(puts);
