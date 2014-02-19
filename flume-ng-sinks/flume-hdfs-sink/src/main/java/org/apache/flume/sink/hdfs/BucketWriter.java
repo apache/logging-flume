@@ -328,8 +328,8 @@ class BucketWriter {
     }
     if (callCloseCallback) {
       runCloseAction();
-    }
-    closed = true;
+      closed = true;
+    }    
   }
 
   /**
