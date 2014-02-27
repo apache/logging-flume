@@ -941,6 +941,18 @@ limitations under the License.
       </dependency>
 
       <dependency>
+        <groupId>org.apache.flume.flume-ng-channels</groupId>
+        <artifactId>flume-spillable-memory-channel</artifactId>
+        <version>1.5.0-SNAPSHOT</version>
+      </dependency>
+
+     <dependency>
+       <groupId>org.apache.flume.flume-ng-channels</groupId>
+       <artifactId>flume-recoverable-memory-channel</artifactId>
+       <version>1.5.0-SNAPSHOT</version>
+     </dependency>
+
+      <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-hdfs-sink</artifactId>
         <version>1.5.0-SNAPSHOT</version>

@@ -102,6 +102,14 @@ public class EmbeddedAgentConfiguration {
    * Embedded Agents.
    */
   public static final String CHANNEL_TYPE_MEMORY = ChannelType.MEMORY.name();
+
+  /**
+  * Spillable Memory channel which stores events in heap. See Flume User Guide for
+  * configuration information. This is the recommended channel to use for
+  * Embedded Agents.
+   */
+  public static final String CHANNEL_TYPE_SPILLABLEMEMORY = ChannelType.SPILLABLEMEMORY.name();
+
   /**
    * File based channel which stores events in on local disk. See Flume User
    * Guide for configuration information.
