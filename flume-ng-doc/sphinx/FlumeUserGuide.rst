@@ -2038,7 +2038,10 @@ may be found (``hdfs:/...`` URIs are supported). This is compatible with the
 Log4jAppender flume client and the spooling directory source's Avro
 deserializer using ``deserializer.schemaType = LITERAL``.
 
-Note: The ``flume.avro.schema.hash`` header is **not supported**.
+Note 1: The ``flume.avro.schema.hash`` header is **not supported**.
+Note 2: In some cases, file rolling may occur slightly after the roll interval
+has been exceeded. However, this delay will not exceed 5 seconds. In most
+cases, the delay is neglegible.
 
 =====================  =======  ===========================================================
 Property Name          Default  Description

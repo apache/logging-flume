@@ -18,13 +18,13 @@
 
 package org.apache.flume.sink.kite;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -32,10 +32,6 @@ import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 import org.apache.avro.Schema;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
@@ -70,11 +66,6 @@ public class DatasetSink extends AbstractSink implements Configurable {
 
   static Configuration conf = new Configuration();
 
-  /**
-   * Lock used to protect access to the current writer
-   */
-  private final ReentrantLock writerLock = new ReentrantLock(true);
-
   private String repositoryURI = null;
   private String datasetName = null;
   private long batchSize = DatasetSinkConstants.DEFAULT_BATCH_SIZE;
@@ -83,8 +74,8 @@ public class DatasetSink extends AbstractSink implements Configurable {
   private SinkCounter counter = null;
 
   // for rolling files at a given interval
-  private ScheduledExecutorService rollTimer;
-  private int rollInterval = DatasetSinkConstants.DEFAULT_ROLL_INTERVAL;
+  private int rollIntervalS = DatasetSinkConstants.DEFAULT_ROLL_INTERVAL;
+  private long lastRolledMs = 0l;
 
   // for working with avro serialized records
   private Object datum = null;
@@ -156,7 +147,7 @@ public class DatasetSink extends AbstractSink implements Configurable {
     this.batchSize = context.getLong(
         DatasetSinkConstants.CONFIG_KITE_BATCH_SIZE,
         DatasetSinkConstants.DEFAULT_BATCH_SIZE);
-    this.rollInterval = context.getInteger(
+    this.rollIntervalS = context.getInteger(
         DatasetSinkConstants.CONFIG_KITE_ROLL_INTERVAL,
         DatasetSinkConstants.DEFAULT_ROLL_INTERVAL);
 
@@ -166,67 +157,30 @@ public class DatasetSink extends AbstractSink implements Configurable {
   @Override
   public synchronized void start() {
     this.writer = openWriter(targetDataset);
-    if (rollInterval > 0) {
-      this.rollTimer = Executors.newSingleThreadScheduledExecutor(
-          new ThreadFactoryBuilder()
-              .setNameFormat(getName() + "-timed-roll-thread")
-              .build());
-      rollTimer.scheduleWithFixedDelay(new Runnable() {
-        @Override
-        public void run() {
-          roll();
-        }
-      }, rollInterval, rollInterval, TimeUnit.SECONDS);
-    }
+    this.lastRolledMs = System.currentTimeMillis();
     counter.start();
     // signal that this sink is ready to process
     LOG.info("Started DatasetSink " + getName());
     super.start();
   }
 
-  void roll() {
-    // if the writer is null, nothing to do
-    if (writer == null) {
-      return;
-    }
-
-    // no need to open/close while the lock is held, just replace the reference
-    DatasetWriter toClose = null;
-    DatasetWriter newWriter = openWriter(targetDataset);
-
-    writerLock.lock();
-    try {
-      toClose = writer;
-      this.writer = newWriter;
-    } finally {
-      writerLock.unlock();
-    }
-
-    LOG.info("Rolled writer for dataset: " + datasetName);
-    toClose.close();
+  /**
+   * Causes the sink to roll at the next {@link #process()} call.
+   */
+  @VisibleForTesting
+  public void roll() {
+    this.lastRolledMs = 0l;
   }
 
   @Override
   public synchronized void stop() {
     counter.stop();
-    if (rollTimer != null) {
-      rollTimer.shutdown();
-      try {
-        while (!rollTimer.isTerminated()) {
-          rollTimer.awaitTermination(
-              DatasetSinkConstants.DEFAULT_TERMINATION_INTERVAL,
-              TimeUnit.MILLISECONDS);
-        }
-      } catch (InterruptedException ex) {
-        LOG.warn("Interrupted while waiting for shutdown: " + rollTimer);
-        Thread.interrupted();
-      }
-    }
 
     if (writer != null) {
       // any write problems invalidate the writer, which is immediately closed
       writer.close();
       this.writer = null;
+      this.lastRolledMs = System.currentTimeMillis();
     }
 
     // signal that this sink has stopped
@@ -241,36 +195,40 @@ public class DatasetSink extends AbstractSink implements Configurable {
           "Cannot recover after previous failure");
     }
 
+    // handle file rolling
+    if ((System.currentTimeMillis() - lastRolledMs) / 1000 > rollIntervalS) {
+      // close the current writer and get a new one
+      writer.close();
+      this.writer = openWriter(targetDataset);
+      this.lastRolledMs = System.currentTimeMillis();
+      LOG.info("Rolled writer for dataset: " + datasetName);
+    }
+
     Channel channel = getChannel();
     Transaction transaction = null;
     try {
       long processedEvents = 0;
 
-      // coarse locking to avoid waiting within the loop
-      writerLock.lock();
       transaction = channel.getTransaction();
       transaction.begin();
-      try {
-        for (; processedEvents < batchSize; processedEvents += 1) {
-          Event event = channel.take();
-          if (event == null) {
-            // no events available in the channel
-            break;
-          }
-
-          this.datum = deserialize(event, datum);
-
-          // writeEncoded would be an optimization in some cases, but HBase
-          // will not support it and partitioned Datasets need to get partition
-          // info from the entity Object. We may be able to avoid the
-          // serialization round-trip otherwise.
-          writer.write(datum);
+      for (; processedEvents < batchSize; processedEvents += 1) {
+        Event event = channel.take();
+        if (event == null) {
+          // no events available in the channel
+          break;
         }
-        // TODO: Add option to sync, depends on CDK-203
-        writer.flush();
-      } finally {
-        writerLock.unlock();
+
+        this.datum = deserialize(event, datum);
+
+        // writeEncoded would be an optimization in some cases, but HBase
+        // will not support it and partitioned Datasets need to get partition
+        // info from the entity Object. We may be able to avoid the
+        // serialization round-trip otherwise.
+        writer.write(datum);
       }
+
+      // TODO: Add option to sync, depends on CDK-203
+      writer.flush();
 
       // commit after data has been written and flushed
       transaction.commit();
@@ -300,16 +258,10 @@ public class DatasetSink extends AbstractSink implements Configurable {
         }
       }
 
-      // remove the writer's reference and close it
-      DatasetWriter toClose = null;
-      writerLock.lock();
-      try {
-        toClose = writer;
-        this.writer = null;
-      } finally {
-        writerLock.unlock();
-      }
-      toClose.close();
+      // close the writer and remove the its reference
+      writer.close();
+      this.writer = null;
+      this.lastRolledMs = System.currentTimeMillis();
 
       // handle the exception
       Throwables.propagateIfInstanceOf(th, Error.class);

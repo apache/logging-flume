@@ -42,11 +42,6 @@ public class DatasetSinkConstants {
   public static int DEFAULT_ROLL_INTERVAL = 30; // seconds
 
   /**
-   * Interval to wait for thread termination
-   */
-  public static final int DEFAULT_TERMINATION_INTERVAL = 10000; // milliseconds
-
-  /**
    * Headers with avro schema information is expected.
    */
   public static final String AVRO_SCHEMA_LITERAL_HEADER =
