@@ -301,6 +301,18 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     } catch (IOException e) {
       LOG.info("Error closing " + checkpointFile, e);
     }
+    if(checkpointBackUpExecutor != null && !checkpointBackUpExecutor
+      .isShutdown()) {
+      checkpointBackUpExecutor.shutdown();
+      try {
+        // Wait till the executor dies.
+        while (!checkpointBackUpExecutor.awaitTermination(1,
+          TimeUnit.SECONDS));
+      } catch (InterruptedException ex) {
+        LOG.warn("Interrupted while waiting for checkpoint backup to " +
+          "complete");
+      }
+    }
   }
 
   @Override
