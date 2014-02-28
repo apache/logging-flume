@@ -134,8 +134,9 @@ public class MorphlineSink extends AbstractSink implements Configurable {
         if (event == null) {
           break;
         }
+        sinkCounter.incrementEventDrainAttemptCount();
         numEventsTaken++;
-        LOGGER.debug("Flume event: {}", event);      
+        LOGGER.debug("Flume event: {}", event);
         //StreamEvent streamEvent = createStreamEvent(event);
         handler.process(event);
         if (System.currentTimeMillis() >= batchEndTime) {
@@ -152,12 +153,10 @@ public class MorphlineSink extends AbstractSink implements Configurable {
       } else {
         sinkCounter.incrementBatchCompleteCount();
       }
-      sinkCounter.addToEventDrainAttemptCount(numEventsTaken);
-      sinkCounter.addToEventDrainSuccessCount(numEventsTaken);
-
       handler.commitTransaction();
       isMorphlineTransactionCommitted = true;
       txn.commit();
+      sinkCounter.addToEventDrainSuccessCount(numEventsTaken);
       return numEventsTaken == 0 ? Status.BACKOFF : Status.READY;
     } catch (Throwable t) {
       // Ooops - need to rollback and back off
