@@ -42,6 +42,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.zookeeper.ZKConfig;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -77,6 +78,8 @@ public class TestHBaseSink {
     testUtility.shutdownMiniCluster();
   }
 
+
+
   @Test
   public void testOneEventWithDefaults() throws Exception {
     //Create a context without setting increment column and payload Column
@@ -90,7 +93,7 @@ public class TestHBaseSink {
 
     testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
     HBaseSink sink = new HBaseSink(testUtility.getConfiguration());
-    Configurables.configure(sink, tmpctx);
+    Configurables.configure(sink, ctx);
     Channel channel = new MemoryChannel();
     Configurables.configure(channel, new Context());
     sink.setChannel(channel);
@@ -440,6 +443,82 @@ public class TestHBaseSink {
     testUtility.deleteTable(tableName.getBytes());
   }
 
+  @Test
+  public void testWithoutConfigurationObject() throws Exception{
+    ctx.put("batchSize", "2");
+    ctx.put(HBaseSinkConfigurationConstants.ZK_QUORUM,
+      ZKConfig.getZKQuorumServersString(testUtility.getConfiguration()) );
+    System.out.print(ctx.getString(HBaseSinkConfigurationConstants.ZK_QUORUM));
+    ctx.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,
+      testUtility.getConfiguration().get(HConstants.ZOOKEEPER_ZNODE_PARENT));
+    testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
+    HBaseSink sink = new HBaseSink();
+    Configurables.configure(sink, ctx);
+    // Reset context to values usable by other tests.
+    ctx.put(HBaseSinkConfigurationConstants.ZK_QUORUM, null);
+    ctx.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,null);
+    ctx.put("batchSize", "100");
+    Channel channel = new MemoryChannel();
+    Configurables.configure(channel, ctx);
+    sink.setChannel(channel);
+    sink.start();
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+    for(int i = 0; i < 3; i++){
+      Event e = EventBuilder.withBody(Bytes.toBytes(valBase + "-" + i));
+      channel.put(e);
+    }
+    tx.commit();
+    tx.close();
+    Status status = Status.READY;
+    while(status != Status.BACKOFF){
+      status = sink.process();
+    }
+    sink.stop();
+    HTable table = new HTable(testUtility.getConfiguration(), tableName);
+    byte[][] results = getResults(table, 3);
+    byte[] out;
+    int found = 0;
+    for(int i = 0; i < 3; i++){
+      for(int j = 0; j < 3; j++){
+        if(Arrays.equals(results[j],Bytes.toBytes(valBase + "-" + i))){
+          found++;
+          break;
+        }
+      }
+    }
+    Assert.assertEquals(3, found);
+    out = results[3];
+    Assert.assertArrayEquals(Longs.toByteArray(3), out);
+  }
 
+  @Test
+  public void testZKQuorum() throws Exception{
+    String zkQuorum = "zk1.flume.apache.org:3342, zk2.flume.apache.org:3342, " +
+      "zk3.flume.apache.org:3342";
+    ctx.put("batchSize", "2");
+    ctx.put(HBaseSinkConfigurationConstants.ZK_QUORUM, zkQuorum);
+    ctx.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,
+      testUtility.getConfiguration().get(HConstants.ZOOKEEPER_ZNODE_PARENT));
+    HBaseSink sink = new HBaseSink();
+    Configurables.configure(sink, ctx);
+    Assert.assertEquals("zk1.flume.apache.org,zk2.flume.apache.org," +
+      "zk3.flume.apache.org", sink.getConfig().get(HConstants
+      .ZOOKEEPER_QUORUM));
+    Assert.assertEquals(String.valueOf(3342), sink.getConfig().get(HConstants
+      .ZOOKEEPER_CLIENT_PORT));
+  }
+
+  @Test (expected = FlumeException.class)
+  public void testZKQuorumIncorrectPorts() throws Exception{
+    String zkQuorum = "zk1.flume.apache.org:3345, zk2.flume.apache.org:3342, " +
+      "zk3.flume.apache.org:3342";
+    ctx.put("batchSize", "2");
+    ctx.put(HBaseSinkConfigurationConstants.ZK_QUORUM, zkQuorum);
+    ctx.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,
+      testUtility.getConfiguration().get(HConstants.ZOOKEEPER_ZNODE_PARENT));
+    HBaseSink sink = new HBaseSink();
+    Configurables.configure(sink, ctx);
+    Assert.fail();
+  }
 }
-
