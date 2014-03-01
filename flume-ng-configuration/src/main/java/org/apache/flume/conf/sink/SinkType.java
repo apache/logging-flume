@@ -92,7 +92,14 @@ public enum SinkType {
    *
    * @see org.apache.flume.sink.hbase.AsyncHBaseSink
    */
-  ASYNCHBASE("org.apache.flume.sink.hbase.AsyncHBaseSink");
+  ASYNCHBASE("org.apache.flume.sink.hbase.AsyncHBaseSink"),
+
+  /**
+   * MorphlineSolr sink
+   *
+   * @see org.apache.flume.sink.solr.morphline.MorphlineSolrSink
+   */
+  MORPHLINE_SOLR("org.apache.flume.sink.solr.morphline.MorphlineSolrSink");
 
   private final String sinkClassName;
 
