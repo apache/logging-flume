@@ -417,6 +417,7 @@ public class TestHBaseSink {
     HBaseSink sink = new HBaseSink(conf);
     Configurables.configure(sink, ctx);
     // Reset the context to a higher batchSize
+    ctx.put("batchSize", "100");
     Channel channel = new MemoryChannel();
     Configurables.configure(channel, new Context());
     sink.setChannel(channel);
@@ -448,19 +449,17 @@ public class TestHBaseSink {
 
   @Test
   public void testWithoutConfigurationObject() throws Exception{
-    ctx.put("batchSize", "2");
-    ctx.put(HBaseSinkConfigurationConstants.ZK_QUORUM,
+    Context tmpContext = new Context(ctx.getParameters());
+    tmpContext.put("batchSize", "2");
+    tmpContext.put(HBaseSinkConfigurationConstants.ZK_QUORUM,
       ZKConfig.getZKQuorumServersString(conf) );
     System.out.print(ctx.getString(HBaseSinkConfigurationConstants.ZK_QUORUM));
-    ctx.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,
-      conf.get(HConstants.ZOOKEEPER_ZNODE_PARENT));
+    tmpContext.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,
+      conf.get(HConstants.ZOOKEEPER_ZNODE_PARENT,
+        HConstants.DEFAULT_ZOOKEEPER_ZNODE_PARENT));
     testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
     HBaseSink sink = new HBaseSink();
-    Configurables.configure(sink, ctx);
-    // Reset context to values usable by other tests.
-    ctx.put(HBaseSinkConfigurationConstants.ZK_QUORUM, null);
-    ctx.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,null);
-    ctx.put("batchSize", "100");
+    Configurables.configure(sink, tmpContext);
     Channel channel = new MemoryChannel();
     Configurables.configure(channel, ctx);
     sink.setChannel(channel);
@@ -498,14 +497,16 @@ public class TestHBaseSink {
 
   @Test
   public void testZKQuorum() throws Exception{
+    Context tmpContext = new Context(ctx.getParameters());
     String zkQuorum = "zk1.flume.apache.org:3342, zk2.flume.apache.org:3342, " +
       "zk3.flume.apache.org:3342";
-    ctx.put("batchSize", "2");
-    ctx.put(HBaseSinkConfigurationConstants.ZK_QUORUM, zkQuorum);
-    ctx.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,
-      conf.get(HConstants.ZOOKEEPER_ZNODE_PARENT));
+    tmpContext.put("batchSize", "2");
+    tmpContext.put(HBaseSinkConfigurationConstants.ZK_QUORUM, zkQuorum);
+    tmpContext.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,
+      conf.get(HConstants.ZOOKEEPER_ZNODE_PARENT,
+        HConstants.DEFAULT_ZOOKEEPER_ZNODE_PARENT));
     HBaseSink sink = new HBaseSink();
-    Configurables.configure(sink, ctx);
+    Configurables.configure(sink, tmpContext);
     Assert.assertEquals("zk1.flume.apache.org,zk2.flume.apache.org," +
       "zk3.flume.apache.org", sink.getConfig().get(HConstants
       .ZOOKEEPER_QUORUM));
@@ -515,14 +516,17 @@ public class TestHBaseSink {
 
   @Test (expected = FlumeException.class)
   public void testZKQuorumIncorrectPorts() throws Exception{
+    Context tmpContext = new Context(ctx.getParameters());
+
     String zkQuorum = "zk1.flume.apache.org:3345, zk2.flume.apache.org:3342, " +
       "zk3.flume.apache.org:3342";
-    ctx.put("batchSize", "2");
-    ctx.put(HBaseSinkConfigurationConstants.ZK_QUORUM, zkQuorum);
-    ctx.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,
-      conf.get(HConstants.ZOOKEEPER_ZNODE_PARENT));
+    tmpContext.put("batchSize", "2");
+    tmpContext.put(HBaseSinkConfigurationConstants.ZK_QUORUM, zkQuorum);
+    tmpContext.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,
+      conf.get(HConstants.ZOOKEEPER_ZNODE_PARENT,
+        HConstants.DEFAULT_ZOOKEEPER_ZNODE_PARENT));
     HBaseSink sink = new HBaseSink();
-    Configurables.configure(sink, ctx);
+    Configurables.configure(sink, tmpContext);
     Assert.fail();
   }
 }
