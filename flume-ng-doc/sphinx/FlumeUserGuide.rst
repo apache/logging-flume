@@ -1839,6 +1839,8 @@ Property Name       Default                                                 Desc
 zookeeperQuorum     --                                                      The quorum spec. This is the value for the property ``hbase.zookeeper.quorum`` in hbase-site.xml
 znodeParent         /hbase                                                  The base path for the znode for the -ROOT- region. Value of ``zookeeper.znode.parent`` in hbase-site.xml
 batchSize           100                                                     Number of events to be written per txn.
+coalesceIncrements  false                                                   Should the sink coalesce multiple increments to a cell per batch. This might give
+                                                                            better performance if there are multiple increments to a limited number of cells.
 serializer          org.apache.flume.sink.hbase.SimpleHbaseEventSerializer  Default increment column = "iCol", payload column = "pCol".
 serializer.*        --                                                      Properties to be passed to the serializer.
 kerberosPrincipal   --                                                      Kerberos user principal for accessing secure HBase
