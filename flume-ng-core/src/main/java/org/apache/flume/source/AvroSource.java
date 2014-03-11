@@ -35,7 +35,10 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.avro.ipc.NettyServer;
+import org.apache.avro.ipc.NettyTransceiver;
 import org.apache.avro.ipc.Responder;
 import org.apache.avro.ipc.Server;
 import org.apache.avro.ipc.specific.SpecificResponder;
@@ -246,11 +249,21 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     NioServerSocketChannelFactory socketChannelFactory;
     if (maxThreads <= 0) {
       socketChannelFactory = new NioServerSocketChannelFactory
-          (Executors .newCachedThreadPool(), Executors.newCachedThreadPool());
+        (Executors.newCachedThreadPool(new ThreadFactoryBuilder().
+          setNameFormat("Avro " + NettyTransceiver.class.getSimpleName()
+            + " Boss-%d").build()),
+          Executors.newCachedThreadPool(new ThreadFactoryBuilder().
+            setNameFormat("Avro " + NettyTransceiver.class.getSimpleName()
+              + "  I/O Worker-%d").build()));
     } else {
       socketChannelFactory = new NioServerSocketChannelFactory(
-          Executors.newCachedThreadPool(),
-          Executors.newFixedThreadPool(maxThreads));
+        Executors.newCachedThreadPool(new ThreadFactoryBuilder().
+          setNameFormat(
+            "Avro " + NettyTransceiver.class.getSimpleName()
+              + " Boss-%d").build()),
+        Executors.newFixedThreadPool(maxThreads, new ThreadFactoryBuilder().
+          setNameFormat("Avro " + NettyTransceiver.class.getSimpleName() +
+            "  I/O Worker-%d").build()));
     }
     return socketChannelFactory;
   }
