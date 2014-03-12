@@ -460,7 +460,9 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
   @Override
   public void stop(){
     serializer.cleanUp();
-    client.shutdown();
+    if (client != null) {
+      client.shutdown();
+    }
     sinkCounter.incrementConnectionClosedCount();
     sinkCounter.stop();
     sinkCallbackPool.shutdown();
