@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
+import java.security.PrivilegedExceptionAction;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -47,6 +48,7 @@ import org.apache.flume.sink.AbstractSink;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.kitesdk.data.Dataset;
 import org.kitesdk.data.DatasetRepositories;
 import org.kitesdk.data.DatasetWriter;
@@ -69,8 +71,10 @@ public class DatasetSink extends AbstractSink implements Configurable {
   private String repositoryURI = null;
   private String datasetName = null;
   private long batchSize = DatasetSinkConstants.DEFAULT_BATCH_SIZE;
+
   private Dataset<Object> targetDataset = null;
   private DatasetWriter<Object> writer = null;
+  private UserGroupInformation login = null;
   private SinkCounter counter = null;
 
   // for rolling files at a given interval
@@ -130,14 +134,30 @@ public class DatasetSink extends AbstractSink implements Configurable {
 
   @Override
   public void configure(Context context) {
+    // initialize login credentials
+    this.login = KerberosUtil.login(
+        context.getString(DatasetSinkConstants.AUTH_PRINCIPAL),
+        context.getString(DatasetSinkConstants.AUTH_KEYTAB));
+    String effectiveUser =
+        context.getString(DatasetSinkConstants.AUTH_PROXY_USER);
+    if (effectiveUser != null) {
+      this.login = KerberosUtil.proxyAs(effectiveUser, login);
+    }
+
     this.repositoryURI = context.getString(
         DatasetSinkConstants.CONFIG_KITE_REPO_URI);
     Preconditions.checkNotNull(repositoryURI, "Repository URI is missing");
     this.datasetName = context.getString(
         DatasetSinkConstants.CONFIG_KITE_DATASET_NAME);
     Preconditions.checkNotNull(datasetName, "Dataset name is missing");
-    this.targetDataset = DatasetRepositories.open(repositoryURI)
-        .load(datasetName);
+
+    this.targetDataset = KerberosUtil.runPrivileged(login,
+        new PrivilegedExceptionAction<Dataset<Object>>() {
+      @Override
+      public Dataset<Object> run() {
+        return DatasetRepositories.open(repositoryURI).load(datasetName);
+      }
+    });
 
     String formatName = targetDataset.getDescriptor().getFormat().getName();
     Preconditions.checkArgument(allowedFormats().contains(formatName),
