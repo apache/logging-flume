@@ -187,7 +187,9 @@ public class HBaseSink extends AbstractSink implements Configurable {
   @Override
   public void stop(){
     try {
-      table.close();
+      if (table != null) {
+        table.close();
+      }
       table = null;
     } catch (IOException e) {
       throw new FlumeException("Error closing table.", e);
