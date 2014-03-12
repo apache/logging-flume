@@ -48,4 +48,10 @@ public class DatasetSinkConstants {
       "flume.avro.schema.literal";
   public static final String AVRO_SCHEMA_URL_HEADER = "flume.avro.schema.url";
 
+  /**
+   * Hadoop authentication settings
+   */
+  public static final String AUTH_PROXY_USER = "auth.proxyUser";
+  public static final String AUTH_PRINCIPAL = "auth.kerberosPrincipal";
+  public static final String AUTH_KEYTAB = "auth.kerberosKeytab";
 }

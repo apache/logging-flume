@@ -2047,16 +2047,20 @@ Note 2: In some cases, file rolling may occur slightly after the roll interval
 has been exceeded. However, this delay will not exceed 5 seconds. In most
 cases, the delay is neglegible.
 
-=====================  =======  ===========================================================
-Property Name          Default  Description
-=====================  =======  ===========================================================
-**channel**            --
-**type**               --       Must be org.apache.flume.sink.kite.DatasetSink
-**kite.repo.uri**      --       URI of the repository to open
-**kite.dataset.name**  --       Name of the Dataset where records will be written
-kite.batchSize         100      Number of records to process in each batch
-kite.rollInterval      30       Maximum wait time (seconds) before data files are released
-=====================  =======  ===========================================================
+=======================  =======  ===========================================================
+Property Name            Default  Description
+=======================  =======  ===========================================================
+**channel**              --
+**type**                 --       Must be org.apache.flume.sink.kite.DatasetSink
+**kite.repo.uri**        --       URI of the repository to open
+**kite.dataset.name**    --       Name of the Dataset where records will be written
+kite.batchSize           100      Number of records to process in each batch
+kite.rollInterval        30       Maximum wait time (seconds) before data files are released
+auth.kerberosPrincipal   --       Kerberos user principal for secure authentication to HDFS
+auth.kerberosKeytab      --       Kerberos keytab location (local FS) for the principal
+auth.proxyUser           --       The effective user for HDFS actions, if different from
+                                  the kerberos principal
+=======================  =======  ===========================================================
 
 Custom Sink
 ~~~~~~~~~~~
