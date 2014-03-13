@@ -33,7 +33,6 @@ limitations under the License.
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <solr.version>4.3.0</solr.version>
     <solr.expected.version>4.3.0</solr.expected.version> <!-- sanity check to verify we actually run against the expected version rather than some outdated version -->
-    <kite.version>0.10.0</kite.version>
     <slf4j.version>1.6.1</slf4j.version>
     <surefire.version>2.12.4</surefire.version>
   </properties>
