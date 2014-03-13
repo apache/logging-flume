@@ -50,6 +50,8 @@ limitations under the License.
     <elasticsearch.version>0.90.1</elasticsearch.version>
 
     <hadoop2.version>2.3.0</hadoop2.version>
+
+    <kite.version>0.12.0</kite.version>
   </properties>
 
   <modules>
@@ -1111,7 +1113,7 @@ limitations under the License.
       <dependency>
         <groupId>org.kitesdk</groupId>
         <artifactId>kite-data-core</artifactId>
-        <version>0.10.1</version>
+        <version>${kite.version}</version>
       </dependency>
 
     </dependencies>
