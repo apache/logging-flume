@@ -111,10 +111,6 @@ limitations under the License.
           <name>!hadoop.profile</name>
         </property>
       </activation>
-      <properties>
-        <hadoop.version>1.0.1</hadoop.version>
-        <hadoop.common.artifact.id>hadoop-core</hadoop.common.artifact.id>
-      </properties>
       <dependencies>
 
         <dependency>
