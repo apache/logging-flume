@@ -24,7 +24,7 @@
   <artifactId>flume-ng-elasticsearch-sink</artifactId>
   <name>Flume NG ElasticSearch Sink</name>
 
-    <build>
+  <build>
     <plugins>
       <plugin>
         <groupId>org.apache.rat</groupId>
@@ -51,9 +51,14 @@
     </dependency>
 
     <dependency>
-        <groupId>org.elasticsearch</groupId>
-        <artifactId>elasticsearch</artifactId>
-        <optional>true</optional>
+      <groupId>org.elasticsearch</groupId>
+      <artifactId>elasticsearch</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
     </dependency>
 
     <dependency>
@@ -76,6 +81,17 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <scope>test</scope>
     </dependency>
 
   </dependencies>

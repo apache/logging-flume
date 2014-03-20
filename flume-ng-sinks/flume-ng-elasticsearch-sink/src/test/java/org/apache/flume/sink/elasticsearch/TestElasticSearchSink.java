@@ -20,7 +20,6 @@ package org.apache.flume.sink.elasticsearch;
 
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.BATCH_SIZE;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.CLUSTER_NAME;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.DEFAULT_PORT;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.HOSTNAMES;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_NAME;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_TYPE;
@@ -29,14 +28,15 @@ import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.TTL
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.commons.lang.time.FastDateFormat;
+
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -49,7 +49,8 @@ import org.apache.flume.event.EventBuilder;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.common.UUID;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.common.io.BytesStream;
+import org.elasticsearch.common.io.FastByteArrayOutputStream;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -169,8 +170,7 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     fixture = new ElasticSearchSink();
     fixture.configure(new Context(parameters));
 
-    InetSocketTransportAddress[] expected = { new InetSocketTransportAddress(
-        "10.5.5.27", DEFAULT_PORT) };
+    String[] expected = { "10.5.5.27" };
 
     assertEquals("testing-cluster-name", fixture.getClusterName());
     assertEquals("testing-index-name", fixture.getIndexName());
@@ -189,8 +189,7 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     fixture = new ElasticSearchSink();
     fixture.configure(new Context(parameters));
 
-    InetSocketTransportAddress[] expected = { new InetSocketTransportAddress(
-        "10.5.5.27", DEFAULT_PORT) };
+    String[] expected = { "10.5.5.27" };
 
     assertEquals(DEFAULT_INDEX_NAME, fixture.getIndexName());
     assertEquals(DEFAULT_INDEX_TYPE, fixture.getIndexType());
@@ -205,10 +204,7 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     fixture = new ElasticSearchSink();
     fixture.configure(new Context(parameters));
 
-    InetSocketTransportAddress[] expected = {
-        new InetSocketTransportAddress("10.5.5.27", DEFAULT_PORT),
-        new InetSocketTransportAddress("10.5.5.28", DEFAULT_PORT),
-        new InetSocketTransportAddress("10.5.5.29", DEFAULT_PORT) };
+    String[] expected = { "10.5.5.27", "10.5.5.28", "10.5.5.29" };
 
     assertArrayEquals(expected, fixture.getServerAddresses());
   }
@@ -220,10 +216,7 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     fixture = new ElasticSearchSink();
     fixture.configure(new Context(parameters));
 
-    InetSocketTransportAddress[] expected = {
-      new InetSocketTransportAddress("10.5.5.27", DEFAULT_PORT),
-      new InetSocketTransportAddress("10.5.5.28", DEFAULT_PORT),
-      new InetSocketTransportAddress("10.5.5.29", DEFAULT_PORT) };
+    String[] expected = { "10.5.5.27", "10.5.5.28", "10.5.5.29" };
 
     assertArrayEquals(expected, fixture.getServerAddresses());
   }
@@ -235,25 +228,20 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     fixture = new ElasticSearchSink();
     fixture.configure(new Context(parameters));
 
-    InetSocketTransportAddress[] expected = {
-        new InetSocketTransportAddress("10.5.5.27", 9300),
-        new InetSocketTransportAddress("10.5.5.28", 9301),
-        new InetSocketTransportAddress("10.5.5.29", 9302) };
+    String[] expected = { "10.5.5.27:9300", "10.5.5.28:9301", "10.5.5.29:9302" };
 
     assertArrayEquals(expected, fixture.getServerAddresses());
   }
 
   @Test
   public void shouldParseMultipleHostAndPortsWithWhitespaces() {
-    parameters.put(HOSTNAMES, " 10.5.5.27 : 9300 , 10.5.5.28 : 9301 , 10.5.5.29 : 9302 ");
+    parameters.put(HOSTNAMES,
+        " 10.5.5.27 : 9300 , 10.5.5.28 : 9301 , 10.5.5.29 : 9302 ");
 
     fixture = new ElasticSearchSink();
     fixture.configure(new Context(parameters));
 
-    InetSocketTransportAddress[] expected = {
-      new InetSocketTransportAddress("10.5.5.27", 9300),
-      new InetSocketTransportAddress("10.5.5.28", 9301),
-      new InetSocketTransportAddress("10.5.5.29", 9302) };
+    String[] expected = { "10.5.5.27:9300", "10.5.5.28:9301", "10.5.5.29:9302" };
 
     assertArrayEquals(expected, fixture.getServerAddresses());
   }
@@ -261,11 +249,10 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
   @Test
   public void shouldAllowCustomElasticSearchIndexRequestBuilderFactory()
       throws Exception {
-
     parameters.put(SERIALIZER,
         CustomElasticSearchIndexRequestBuilderFactory.class.getName());
 
-    Configurables.configure(fixture, new Context(parameters));
+    fixture.configure(new Context(parameters));
 
     Channel channel = bindAndStartChannel(fixture);
     Transaction tx = channel.getTransaction();
@@ -279,7 +266,7 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     fixture.process();
     fixture.stop();
 
-    assertEquals(fixture.getIndexName()+"-05_17_36_789",
+    assertEquals(fixture.getIndexName() + "-05_17_36_789",
         CustomElasticSearchIndexRequestBuilderFactory.actualIndexName);
     assertEquals(fixture.getIndexType(),
         CustomElasticSearchIndexRequestBuilderFactory.actualIndexType);
@@ -289,7 +276,7 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
   }
 
   @Test
-  public void shouldParseFullyQualifiedTTLs(){
+  public void shouldParseFullyQualifiedTTLs() {
     Map<String, Long> testTTLMap = new HashMap<String, Long>();
     testTTLMap.put("1ms", Long.valueOf(1));
     testTTLMap.put("1s", Long.valueOf(1000));
@@ -297,7 +284,7 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     testTTLMap.put("1h", Long.valueOf(3600000));
     testTTLMap.put("1d", Long.valueOf(86400000));
     testTTLMap.put("1w", Long.valueOf(604800000));
-    testTTLMap.put("1",  Long.valueOf(86400000));
+    testTTLMap.put("1", Long.valueOf(86400000));
 
     parameters.put(HOSTNAMES, "10.5.5.27");
     parameters.put(CLUSTER_NAME, "testing-cluster-name");
@@ -309,13 +296,10 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
       fixture = new ElasticSearchSink();
       fixture.configure(new Context(parameters));
 
-      InetSocketTransportAddress[] expected = {new InetSocketTransportAddress(
-        "10.5.5.27", DEFAULT_PORT)};
-
+      String[] expected = { "10.5.5.27" };
       assertEquals("testing-cluster-name", fixture.getClusterName());
       assertEquals("testing-index-name", fixture.getIndexName());
       assertEquals("testing-index-type", fixture.getIndexType());
-      System.out.println("TTL MS" + Long.toString(testTTLMap.get(ttl)));
       assertEquals((long) testTTLMap.get(ttl), fixture.getTTLMs());
       assertArrayEquals(expected, fixture.getServerAddresses());
 
@@ -374,10 +358,84 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     }
   }
 
+  @Test
+  public void shouldUseSpecifiedSerializer() throws Exception {
+    Context context = new Context();
+    context.put(SERIALIZER,
+        "org.apache.flume.sink.elasticsearch.FakeEventSerializer");
+
+    assertNull(fixture.getEventSerializer());
+    fixture.configure(context);
+    assertTrue(fixture.getEventSerializer() instanceof FakeEventSerializer);
+  }
+
+  @Test
+  public void shouldUseSpecifiedIndexNameBuilder() throws Exception {
+    Context context = new Context();
+    context.put(ElasticSearchSinkConstants.INDEX_NAME_BUILDER,
+            "org.apache.flume.sink.elasticsearch.FakeIndexNameBuilder");
+
+    assertNull(fixture.getIndexNameBuilder());
+    fixture.configure(context);
+    assertTrue(fixture.getIndexNameBuilder() instanceof FakeIndexNameBuilder);
+  }
+
   public static class FakeConfigurable implements Configurable {
     @Override
     public void configure(Context arg0) {
-        // no-op
+      // no-op
     }
+  }
+}
+
+/**
+ * Internal class. Fake event serializer used for tests
+ */
+class FakeEventSerializer implements ElasticSearchEventSerializer {
+
+  static final byte[] FAKE_BYTES = new byte[] { 9, 8, 7, 6 };
+  boolean configuredWithContext, configuredWithComponentConfiguration;
+
+  @Override
+  public BytesStream getContentBuilder(Event event) throws IOException {
+    FastByteArrayOutputStream fbaos = new FastByteArrayOutputStream(4);
+    fbaos.write(FAKE_BYTES);
+    return fbaos;
+  }
+
+  @Override
+  public void configure(Context arg0) {
+    configuredWithContext = true;
+  }
+
+  @Override
+  public void configure(ComponentConfiguration arg0) {
+    configuredWithComponentConfiguration = true;
+  }
+}
+
+/**
+ * Internal class. Fake index name builder used only for tests.
+ */
+class FakeIndexNameBuilder implements IndexNameBuilder {
+
+  static final String INDEX_NAME = "index_name";
+
+  @Override
+  public String getIndexName(Event event) {
+    return INDEX_NAME;
+  }
+
+  @Override
+  public String getIndexPrefix(Event event) {
+    return INDEX_NAME;
+  }
+
+  @Override
+  public void configure(Context context) {
+  }
+
+  @Override
+  public void configure(ComponentConfiguration conf) {
   }
 }
