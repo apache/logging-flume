@@ -70,6 +70,30 @@ public class ElasticSearchSinkConstants {
   public static final String SERIALIZER_PREFIX = SERIALIZER + ".";
 
   /**
+   * The fully qualified class name of the index name builder the sink
+   * should use to determine name of index where the event should be sent.
+   */
+  public static final String INDEX_NAME_BUILDER = "indexNameBuilder";
+
+  /**
+   * The fully qualified class name of the index name builder the sink
+   * should use to determine name of index where the event should be sent.
+   */
+  public static final String INDEX_NAME_BUILDER_PREFIX
+          = INDEX_NAME_BUILDER + ".";
+
+  /**
+   * The client type used for sending bulks to ElasticSearch
+   */
+  public static final String CLIENT_TYPE = "client";
+
+  /**
+   * The client prefix to extract the configuration that will be passed to
+   * elasticsearch client.
+   */
+  public static final String CLIENT_PREFIX = CLIENT_TYPE + ".";
+
+  /**
    * DEFAULTS USED BY THE SINK
    */
 
@@ -78,5 +102,10 @@ public class ElasticSearchSinkConstants {
   public static final String DEFAULT_INDEX_NAME = "flume";
   public static final String DEFAULT_INDEX_TYPE = "log";
   public static final String DEFAULT_CLUSTER_NAME = "elasticsearch";
+  public static final String DEFAULT_CLIENT_TYPE = "transport";
   public static final String TTL_REGEX = "^(\\d+)(\\D*)";
+  public static final String DEFAULT_SERIALIZER_CLASS = "org.apache.flume." +
+          "sink.elasticsearch.ElasticSearchLogStashEventSerializer";
+  public static final String DEFAULT_INDEX_NAME_BUILDER_CLASS =
+          "org.apache.flume.sink.elasticsearch.TimeBasedIndexNameBuilder";
 }

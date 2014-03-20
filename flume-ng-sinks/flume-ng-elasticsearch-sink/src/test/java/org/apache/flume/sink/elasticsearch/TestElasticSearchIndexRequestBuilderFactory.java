@@ -168,27 +168,27 @@ public class TestElasticSearchIndexRequestBuilderFactory
     assertTrue(serializer.configuredWithComponentConfiguration);
   }
 
-}
+  static class FakeEventSerializer implements ElasticSearchEventSerializer {
 
-class FakeEventSerializer implements ElasticSearchEventSerializer {
+    static final byte[] FAKE_BYTES = new byte[]{9, 8, 7, 6};
+    boolean configuredWithContext, configuredWithComponentConfiguration;
 
-  static final byte[] FAKE_BYTES = new byte[] {9,8,7,6};
-  boolean configuredWithContext, configuredWithComponentConfiguration;
+    @Override
+    public BytesStream getContentBuilder(Event event) throws IOException {
+      FastByteArrayOutputStream fbaos = new FastByteArrayOutputStream(4);
+      fbaos.write(FAKE_BYTES);
+      return fbaos;
+    }
 
-  @Override
-  public BytesStream getContentBuilder(Event event) throws IOException {
-    FastByteArrayOutputStream fbaos = new FastByteArrayOutputStream(4);
-    fbaos.write(FAKE_BYTES);
-    return fbaos;
+    @Override
+    public void configure(Context arg0) {
+      configuredWithContext = true;
+    }
+
+    @Override
+    public void configure(ComponentConfiguration arg0) {
+      configuredWithComponentConfiguration = true;
+    }
   }
 
-  @Override
-  public void configure(Context arg0) {
-    configuredWithContext = true;
-  }
-
-  @Override
-  public void configure(ComponentConfiguration arg0) {
-    configuredWithComponentConfiguration = true;
-  }
 }
