@@ -75,6 +75,32 @@ public class TestSpoolDirectorySource {
     tmpDir.delete();
   }
 
+  @Test (expected = IllegalArgumentException.class)
+  public void testInvalidSortOrder() {
+    Context context = new Context();
+    context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY, 
+        tmpDir.getAbsolutePath());
+    context.put(SpoolDirectorySourceConfigurationConstants.CONSUME_ORDER, 
+        "undefined");
+    Configurables.configure(source, context);    
+  }
+  
+  @Test
+  public void testValidSortOrder() {
+    Context context = new Context();
+    context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY, 
+        tmpDir.getAbsolutePath());
+    context.put(SpoolDirectorySourceConfigurationConstants.CONSUME_ORDER, 
+        "oLdESt");
+    Configurables.configure(source, context);
+    context.put(SpoolDirectorySourceConfigurationConstants.CONSUME_ORDER, 
+        "yoUnGest");
+    Configurables.configure(source, context);
+    context.put(SpoolDirectorySourceConfigurationConstants.CONSUME_ORDER, 
+        "rAnDom");
+    Configurables.configure(source, context);    
+  }
+  
   @Test
   public void testPutFilenameHeader() throws IOException, InterruptedException {
     Context context = new Context();

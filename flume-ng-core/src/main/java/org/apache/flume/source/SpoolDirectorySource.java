@@ -17,14 +17,8 @@
 
 package org.apache.flume.source;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.apache.flume.*;
 import org.apache.flume.client.avro.ReliableSpoolingFileEventReader;
@@ -35,10 +29,14 @@ import org.apache.flume.serialization.LineDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Preconditions;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-import static org.apache.flume.source
-    .SpoolDirectorySourceConfigurationConstants.*;
+import static org.apache.flume.source.SpoolDirectorySourceConfigurationConstants.*;
 
 public class SpoolDirectorySource extends AbstractSource implements
 Configurable, EventDrivenSource {
@@ -72,6 +70,7 @@ Configurable, EventDrivenSource {
   private boolean backoff = true;
   private boolean hitChannelException = false;
   private int maxBackoff;
+  private ConsumeOrder consumeOrder;
 
   @Override
   public synchronized void start() {
@@ -96,6 +95,7 @@ Configurable, EventDrivenSource {
           .deletePolicy(deletePolicy)
           .inputCharset(inputCharset)
           .decodeErrorPolicy(decodeErrorPolicy)
+          .consumeOrder(consumeOrder)
           .build();
     } catch (IOException ioe) {
       throw new FlumeException("Error instantiating spooling event parser",
@@ -163,6 +163,9 @@ Configurable, EventDrivenSource {
     deserializerType = context.getString(DESERIALIZER, DEFAULT_DESERIALIZER);
     deserializerContext = new Context(context.getSubProperties(DESERIALIZER +
         "."));
+    
+    consumeOrder = ConsumeOrder.valueOf(context.getString(CONSUME_ORDER, 
+        DEFAULT_CONSUME_ORDER.toString()).toUpperCase());
 
     // "Hack" to support backwards compatibility with previous generation of
     // spooling directory source, which did not support deserializers
