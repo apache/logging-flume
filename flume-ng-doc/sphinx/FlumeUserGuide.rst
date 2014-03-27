@@ -953,6 +953,14 @@ basenameHeaderKey     basename        Header Key to use when appending  basename
 ignorePattern         ^$              Regular expression specifying which files to ignore (skip)
 trackerDir            .flumespool     Directory to store metadata related to processing of files.
                                       If this path is not an absolute path, then it is interpreted as relative to the spoolDir.
+consumeOrder          oldest          In which order files in the spooling directory will be consumed ``oldest``,
+                                      ``youngest`` and ``random``. In case of ``oldest`` and ``youngest``, the last modified
+                                      time of the files will be used to compare the files. In case of a tie, the file
+                                      with smallest laxicographical order will be consumed first. In case of ``random`` any
+                                      file will be picked randomly. When using ``oldest`` and ``youngest`` the whole
+                                      directory will be scanned to pick the oldest/youngest file, which might be slow if there
+                                      are a large number of files, while using ``random`` may cause old files to be consumed
+                                      very late if new files keep coming in the spooling directory.
 maxBackoff            4000            The maximum time (in millis) to wait between consecutive attempts to write to the channel(s) if the channel is full. The source will start at a low backoff and increase it exponentially each time the channel throws a ChannelException, upto the value specified by this parameter.
 batchSize             100             Granularity at which to batch transfer to the channel
 inputCharset          UTF-8           Character set used by deserializers that treat the input file as text.

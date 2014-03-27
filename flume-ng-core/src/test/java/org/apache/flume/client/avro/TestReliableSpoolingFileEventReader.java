@@ -19,14 +19,16 @@ package org.apache.flume.client.avro;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import junit.framework.Assert;
+import org.apache.commons.io.FileUtils;
 import org.apache.flume.Event;
-import org.apache.flume.source.SpoolDirectorySourceConfigurationConstants;
 import org.apache.flume.client.avro.ReliableSpoolingFileEventReader.DeletePolicy;
+import org.apache.flume.source.SpoolDirectorySourceConfigurationConstants;
+import org.apache.flume.source.SpoolDirectorySourceConfigurationConstants.ConsumeOrder;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +36,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.util.List;
+import java.util.*;
+import java.util.Map.Entry;
 
 public class TestReliableSpoolingFileEventReader {
 
@@ -67,9 +70,12 @@ public class TestReliableSpoolingFileEventReader {
 
   @After
   public void tearDown() {
+    deleteDir(WORK_DIR);
+  }
 
+  private void deleteDir(File dir) {
     // delete all the files & dirs we created
-    File[] files = WORK_DIR.listFiles();
+    File[] files = dir.listFiles();
     for (File f : files) {
       if (f.isDirectory()) {
         File[] subDirFiles = f.listFiles();
@@ -87,10 +93,9 @@ public class TestReliableSpoolingFileEventReader {
         }
       }
     }
-    if (!WORK_DIR.delete()) {
-      logger.warn("Cannot delete work directory {}", WORK_DIR.getAbsolutePath());
+    if (!dir.delete()) {
+      logger.warn("Cannot delete work directory {}", dir.getAbsolutePath());
     }
-
   }
 
   @Test
@@ -188,6 +193,173 @@ public class TestReliableSpoolingFileEventReader {
         trackerFiles.size());
   }
 
+  @Test(expected = NullPointerException.class)
+  public void testNullConsumeOrder() throws IOException {
+    new ReliableSpoolingFileEventReader.Builder()
+    .spoolDirectory(WORK_DIR)
+    .consumeOrder(null)
+    .build();
+  }
+  
+  @Test
+  public void testConsumeFileRandomly() throws IOException {
+    ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
+    .spoolDirectory(WORK_DIR)
+    .consumeOrder(ConsumeOrder.RANDOM)
+    .build();
+    File fileName = new File(WORK_DIR, "new-file");
+    FileUtils.write(fileName, "New file created in the end. Shoud be read randomly.\n");
+    Set<String> actual = Sets.newHashSet();     
+    readEventsForFilesInDir(WORK_DIR, reader, actual);      
+    Set<String> expected = Sets.newHashSet();
+    createExpectedFromFilesInSetup(expected);
+    expected.add("");
+    expected.add("New file created in the end. Shoud be read randomly.");
+    Assert.assertEquals(expected, actual);    
+  }
+
+
+  @Test
+  public void testConsumeFileOldest() throws IOException, InterruptedException {
+    ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
+    .spoolDirectory(WORK_DIR)
+    .consumeOrder(ConsumeOrder.OLDEST)
+    .build();
+    File file1 = new File(WORK_DIR, "new-file1");   
+    File file2 = new File(WORK_DIR, "new-file2");    
+    File file3 = new File(WORK_DIR, "new-file3");
+    FileUtils.write(file2, "New file2 created.\n"); // file2 becoming older than file1 & file3
+    Thread.sleep(1000L);
+    FileUtils.write(file1, "New file1 created.\n"); // file1 becoming older than file3
+    FileUtils.write(file3, "New file3 created.\n");
+    
+    List<String> actual = Lists.newLinkedList();    
+    readEventsForFilesInDir(WORK_DIR, reader, actual);        
+    List<String> expected = Lists.newLinkedList();
+    createExpectedFromFilesInSetup(expected);
+    expected.add(""); // Empty file was added in the last in setup.
+    expected.add("New file2 created.");
+    expected.add("New file1 created.");
+    expected.add("New file3 created.");    
+    Assert.assertEquals(expected, actual);
+  }
+  
+  @Test
+  public void testConsumeFileYoungest() throws IOException, InterruptedException {
+    ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
+    .spoolDirectory(WORK_DIR)
+    .consumeOrder(ConsumeOrder.YOUNGEST)
+    .build();
+    Thread.sleep(1000L);
+    File file1 = new File(WORK_DIR, "new-file1");   
+    File file2 = new File(WORK_DIR, "new-file2");    
+    File file3 = new File(WORK_DIR, "new-file3");
+    FileUtils.write(file2, "New file2 created.\n"); // file2 is oldest among file1 & file3.
+    Thread.sleep(1000L);      
+    FileUtils.write(file3, "New file3 created.\n"); // file3 becomes youngest then file2 but older from file1. 
+    FileUtils.write(file1, "New file1 created.\n"); // file1 becomes youngest in file2 & file3.
+    List<String> actual = Lists.newLinkedList();    
+    readEventsForFilesInDir(WORK_DIR, reader, actual);        
+    List<String> expected = Lists.newLinkedList();
+    createExpectedFromFilesInSetup(expected);
+    Collections.sort(expected);
+    expected.add(0, ""); // Empty Line file was added in the last in Setup.
+    expected.add(0, "New file2 created.");    
+    expected.add(0, "New file3 created.");
+    expected.add(0, "New file1 created.");
+        
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test public void testLargeNumberOfFilesOLDEST() throws IOException {    
+    templateTestForLargeNumberOfFiles(ConsumeOrder.OLDEST, null, 1000);
+  }
+  @Test public void testLargeNumberOfFilesYOUNGEST() throws IOException {    
+    templateTestForLargeNumberOfFiles(ConsumeOrder.YOUNGEST, new Comparator<Long>() {
+
+      @Override
+      public int compare(Long o1, Long o2) {
+        return o2.compareTo(o1);
+      }
+    }, 1000);
+  }
+  @Test public void testLargeNumberOfFilesRANDOM() throws IOException {    
+    templateTestForLargeNumberOfFiles(ConsumeOrder.RANDOM, null, 1000);
+  }
+  private void templateTestForLargeNumberOfFiles(ConsumeOrder order, 
+      Comparator<Long> comparator,
+      int N) throws IOException {
+    File dir = null;
+    try {
+      dir = new File("target/test/work/" + this.getClass().getSimpleName()+ "_large");
+      Files.createParentDirs(new File(dir, "dummy"));
+      ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
+      .spoolDirectory(dir).consumeOrder(order).build();
+      Map<Long, List<String>> expected;
+      if (comparator == null) {
+        expected = new TreeMap<Long, List<String>>();
+      } else {
+        expected = new TreeMap<Long, List<String>>(comparator);
+      }
+      for (int i = 0; i < N; i++) {
+        File f = new File(dir, "file-" + i);
+        String data = "file-" + i;
+        Files.write(data, f, Charsets.UTF_8);
+        if (expected.containsKey(f.lastModified())) {
+          expected.get(f.lastModified()).add(data);
+        } else {
+          expected.put(f.lastModified(), Lists.newArrayList(data));
+        }
+      }
+      Collection<String> expectedList;
+      if (order == ConsumeOrder.RANDOM) {
+        expectedList = Sets.newHashSet();
+      } else {
+        expectedList = Lists.newArrayList();
+      }
+      for (Entry<Long, List<String>> entry : expected.entrySet()) {
+        Collections.sort(entry.getValue());
+        expectedList.addAll(entry.getValue());
+      }
+      for (int i = 0; i < N; i++) {
+        List<Event> events;
+        events = reader.readEvents(10);
+        for (Event e : events) {
+          if (order == ConsumeOrder.RANDOM) {            
+            Assert.assertTrue(expectedList.remove(new String(e.getBody())));
+          } else {
+            Assert.assertEquals(((ArrayList<String>)expectedList).get(0), new String(e.getBody()));            
+            ((ArrayList<String>)expectedList).remove(0);
+          }
+        }
+        reader.commit();        
+      }
+    } finally {
+      deleteDir(dir);
+    }
+  }
+    
+  /* Read events, one for each file in the given directory. */
+  private void readEventsForFilesInDir(File dir, ReliableEventReader reader, 
+      Collection<String> actual) throws IOException {
+    List<Event> events;
+    for (int i=0; i < listFiles(dir).size(); i++) {
+      events = reader.readEvents(10);
+      for (Event e: events) {
+        actual.add(new String(e.getBody()));
+      }
+      reader.commit();
+    }
+  }    
+  /* Create expected results out of the files created in the setup method. */
+  private void createExpectedFromFilesInSetup(Collection<String> expected) {
+    for (int i = 0; i < 4; i++) {      
+      for (int j = 0; j < i; j++) {        
+        expected.add("file" + i + "line" + j);
+      }      
+    }
+  }
+  
   private static List<File> listFiles(File dir) {
     List<File> files = Lists.newArrayList(dir.listFiles(new FileFilter
         () {
@@ -198,5 +370,4 @@ public class TestReliableSpoolingFileEventReader {
     }));
     return files;
   }
-
 }

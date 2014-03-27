@@ -19,38 +19,31 @@
 
 package org.apache.flume.client.avro;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.regex.Pattern;
-
+import com.google.common.base.Charsets;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+import com.google.common.io.Files;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
-import org.apache.flume.serialization.DecodeErrorPolicy;
-import org.apache.flume.serialization.DurablePositionTracker;
-import org.apache.flume.serialization.EventDeserializer;
-import org.apache.flume.serialization.EventDeserializerFactory;
-import org.apache.flume.serialization.PositionTracker;
-import org.apache.flume.serialization.ResettableFileInputStream;
-import org.apache.flume.serialization.ResettableInputStream;
+import org.apache.flume.serialization.*;
 import org.apache.flume.source.SpoolDirectorySourceConfigurationConstants;
+import org.apache.flume.source.SpoolDirectorySourceConfigurationConstants.ConsumeOrder;
 import org.apache.flume.tools.PlatformDetect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
-import com.google.common.io.Files;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * <p/>A {@link ReliableEventReader} which reads log data from files stored
@@ -98,7 +91,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
   private final String deletePolicy;
   private final Charset inputCharset;
   private final DecodeErrorPolicy decodeErrorPolicy;
-
+  private final ConsumeOrder consumeOrder;    
+  
   private Optional<FileInfo> currentFile = Optional.absent();
   /** Always contains the last file from which lines have been read. **/
   private Optional<FileInfo> lastFileRead = Optional.absent();
@@ -113,7 +107,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       boolean annotateBaseName, String baseNameHeader,
       String deserializerType, Context deserializerContext,
       String deletePolicy, String inputCharset,
-      DecodeErrorPolicy decodeErrorPolicy) throws IOException {
+      DecodeErrorPolicy decodeErrorPolicy, 
+      ConsumeOrder consumeOrder) throws IOException {
 
     // Sanity checks
     Preconditions.checkNotNull(spoolDirectory);
@@ -173,6 +168,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     this.deletePolicy = deletePolicy;
     this.inputCharset = Charset.forName(inputCharset);
     this.decodeErrorPolicy = Preconditions.checkNotNull(decodeErrorPolicy);
+    this.consumeOrder = Preconditions.checkNotNull(consumeOrder);    
 
     File trackerDirectory = new File(trackerDirPath);
 
@@ -403,9 +399,16 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
   }
 
   /**
-   * Find and open the oldest file in the chosen directory. If two or more
-   * files are equally old, the file name with lower lexicographical value is
-   * returned. If the directory is empty, this will return an absent option.
+   * Returns the next file to be consumed from the chosen directory.
+   * If the directory is empty or the chosen file is not readable,
+   * this will return an absent option.
+   * If the {@link #consumeOrder} variable is {@link ConsumeOrder#OLDEST}
+   * then returns the oldest file. If the {@link #consumeOrder} variable
+   * is {@link ConsumeOrder#YOUNGEST} then returns the youngest file.
+   * If two or more files are equally old/young, then the file name with
+   * lower lexicographical value is returned.
+   * If the {@link #consumeOrder} variable is {@link ConsumeOrder#RANDOM}
+   * then returns any arbitrary file in the directory.
    */
   private Optional<FileInfo> getNextFile() {
     /* Filter to exclude finished or hidden files */
@@ -421,55 +424,72 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
         return true;
       }
     };
-    List<File> candidateFiles = Arrays.asList(spoolDirectory.listFiles(filter));
-    if (candidateFiles.isEmpty()) {
+    List<File> candidateFiles = Arrays.asList(
+      spoolDirectory.listFiles(filter));
+    if (candidateFiles.isEmpty()) { // No matching file in spooling directory.
       return Optional.absent();
-    } else {
-      Collections.sort(candidateFiles, new Comparator<File>() {
-        public int compare(File a, File b) {
-          int timeComparison = new Long(a.lastModified()).compareTo(
-              new Long(b.lastModified()));
-          if (timeComparison != 0) {
-            return timeComparison;
-          }
-          else {
-            return a.getName().compareTo(b.getName());
-          }
+    }
+    
+    File selectedFile = candidateFiles.get(0); // Select the first random file.
+    if (consumeOrder == ConsumeOrder.RANDOM) { // Selected file is random.
+      return openFile(selectedFile);
+    } else if (consumeOrder == ConsumeOrder.YOUNGEST) {
+      for (File candidateFile: candidateFiles) {
+        if (candidateFile.lastModified() >
+          selectedFile.lastModified()) {
+          selectedFile = candidateFile;
         }
-      });
-      File nextFile = candidateFiles.get(0);
-      try {
-        // roll the meta file, if needed
-        String nextPath = nextFile.getPath();
-        PositionTracker tracker =
-            DurablePositionTracker.getInstance(metaFile, nextPath);
-        if (!tracker.getTarget().equals(nextPath)) {
-          tracker.close();
-          deleteMetaFile();
-          tracker = DurablePositionTracker.getInstance(metaFile, nextPath);
-        }
-
-        // sanity check
-        Preconditions.checkState(tracker.getTarget().equals(nextPath),
-            "Tracker target %s does not equal expected filename %s",
-            tracker.getTarget(), nextPath);
-
-        ResettableInputStream in =
-            new ResettableFileInputStream(nextFile, tracker,
-                ResettableFileInputStream.DEFAULT_BUF_SIZE, inputCharset,
-                decodeErrorPolicy);
-        EventDeserializer deserializer = EventDeserializerFactory.getInstance
-            (deserializerType, deserializerContext, in);
-
-        return Optional.of(new FileInfo(nextFile, deserializer));
-      } catch (FileNotFoundException e) {
-        // File could have been deleted in the interim
-        logger.warn("Could not find file: " + nextFile, e);
-        return Optional.absent();
-      } catch (IOException e) {
-        logger.error("Exception opening file: " + nextFile, e);
-        return Optional.absent();
       }
+    } else { // default order is OLDEST
+      for (File candidateFile: candidateFiles) {
+        if (candidateFile.lastModified() <
+          selectedFile.lastModified()) {
+          selectedFile = candidateFile;
+        }
+      }
+    }
+
+    return openFile(selectedFile);
+  }
+  
+  /**
+   * Opens a file for consuming
+   * @param file
+   * @return {@link #FileInfo} for the file to consume or absent option if the
+   * file does not exists or readable.
+   */
+  private Optional<FileInfo> openFile(File file) {    
+    try {
+      // roll the meta file, if needed
+      String nextPath = file.getPath();
+      PositionTracker tracker =
+          DurablePositionTracker.getInstance(metaFile, nextPath);
+      if (!tracker.getTarget().equals(nextPath)) {
+        tracker.close();
+        deleteMetaFile();
+        tracker = DurablePositionTracker.getInstance(metaFile, nextPath);
+      }
+
+      // sanity check
+      Preconditions.checkState(tracker.getTarget().equals(nextPath),
+          "Tracker target %s does not equal expected filename %s",
+          tracker.getTarget(), nextPath);
+
+      ResettableInputStream in =
+          new ResettableFileInputStream(file, tracker,
+              ResettableFileInputStream.DEFAULT_BUF_SIZE, inputCharset,
+              decodeErrorPolicy);
+      EventDeserializer deserializer = EventDeserializerFactory.getInstance
+          (deserializerType, deserializerContext, in);
+
+      return Optional.of(new FileInfo(file, deserializer));
+    } catch (FileNotFoundException e) {
+      // File could have been deleted in the interim
+      logger.warn("Could not find file: " + file, e);
+      return Optional.absent();
+    } catch (IOException e) {
+      logger.error("Exception opening file: " + file, e);
+      return Optional.absent();
     }
   }
 
@@ -536,7 +556,9 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     private DecodeErrorPolicy decodeErrorPolicy = DecodeErrorPolicy.valueOf(
         SpoolDirectorySourceConfigurationConstants.DEFAULT_DECODE_ERROR_POLICY
             .toUpperCase());
-
+    private ConsumeOrder consumeOrder = 
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_CONSUME_ORDER;    
+    
     public Builder spoolDirectory(File directory) {
       this.spoolDirectory = directory;
       return this;
@@ -601,12 +623,18 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       this.decodeErrorPolicy = decodeErrorPolicy;
       return this;
     }
-
+    
+    public Builder consumeOrder(ConsumeOrder consumeOrder) {
+      this.consumeOrder = consumeOrder;
+      return this;
+    }        
+    
     public ReliableSpoolingFileEventReader build() throws IOException {
       return new ReliableSpoolingFileEventReader(spoolDirectory, completedSuffix,
           ignorePattern, trackerDirPath, annotateFileName, fileNameHeader,
           annotateBaseName, baseNameHeader, deserializerType,
-          deserializerContext, deletePolicy, inputCharset, decodeErrorPolicy);
+          deserializerContext, deletePolicy, inputCharset, decodeErrorPolicy,
+          consumeOrder);
     }
   }
 

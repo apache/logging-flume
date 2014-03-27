@@ -86,4 +86,11 @@ public class SpoolDirectorySourceConfigurationConstants {
   public static final String MAX_BACKOFF = "maxBackoff";
 
   public static final Integer DEFAULT_MAX_BACKOFF = 4000;
+  
+  /** Consume order. */
+  public enum ConsumeOrder {
+    OLDEST, YOUNGEST, RANDOM
+  }
+  public static final String CONSUME_ORDER = "consumeOrder";
+  public static final ConsumeOrder DEFAULT_CONSUME_ORDER = ConsumeOrder.OLDEST;    
 }
