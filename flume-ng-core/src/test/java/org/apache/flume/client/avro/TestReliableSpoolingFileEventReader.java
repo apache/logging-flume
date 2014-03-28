@@ -203,36 +203,42 @@ public class TestReliableSpoolingFileEventReader {
   
   @Test
   public void testConsumeFileRandomly() throws IOException {
-    ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
+    ReliableEventReader reader
+      = new ReliableSpoolingFileEventReader.Builder()
     .spoolDirectory(WORK_DIR)
     .consumeOrder(ConsumeOrder.RANDOM)
     .build();
     File fileName = new File(WORK_DIR, "new-file");
-    FileUtils.write(fileName, "New file created in the end. Shoud be read randomly.\n");
-    Set<String> actual = Sets.newHashSet();     
+    FileUtils.write(fileName,
+      "New file created in the end. Shoud be read randomly.\n");
+    Set<String> actual = Sets.newHashSet();
     readEventsForFilesInDir(WORK_DIR, reader, actual);      
     Set<String> expected = Sets.newHashSet();
     createExpectedFromFilesInSetup(expected);
     expected.add("");
-    expected.add("New file created in the end. Shoud be read randomly.");
+    expected.add(
+      "New file created in the end. Shoud be read randomly.");
     Assert.assertEquals(expected, actual);    
   }
 
 
   @Test
   public void testConsumeFileOldest() throws IOException, InterruptedException {
-    ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
-    .spoolDirectory(WORK_DIR)
-    .consumeOrder(ConsumeOrder.OLDEST)
-    .build();
+    ReliableEventReader reader
+      = new ReliableSpoolingFileEventReader.Builder()
+      .spoolDirectory(WORK_DIR)
+      .consumeOrder(ConsumeOrder.OLDEST)
+      .build();
     File file1 = new File(WORK_DIR, "new-file1");   
     File file2 = new File(WORK_DIR, "new-file2");    
     File file3 = new File(WORK_DIR, "new-file3");
-    FileUtils.write(file2, "New file2 created.\n"); // file2 becoming older than file1 & file3
     Thread.sleep(1000L);
-    FileUtils.write(file1, "New file1 created.\n"); // file1 becoming older than file3
+    FileUtils.write(file2, "New file2 created.\n");
+    Thread.sleep(1000L);
+    FileUtils.write(file1, "New file1 created.\n");
+    Thread.sleep(1000L);
     FileUtils.write(file3, "New file3 created.\n");
-    
+    // order of age oldest to youngest (file2, file1, file3)
     List<String> actual = Lists.newLinkedList();    
     readEventsForFilesInDir(WORK_DIR, reader, actual);        
     List<String> expected = Lists.newLinkedList();
@@ -245,29 +251,94 @@ public class TestReliableSpoolingFileEventReader {
   }
   
   @Test
-  public void testConsumeFileYoungest() throws IOException, InterruptedException {
-    ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
-    .spoolDirectory(WORK_DIR)
-    .consumeOrder(ConsumeOrder.YOUNGEST)
-    .build();
-    Thread.sleep(1000L);
-    File file1 = new File(WORK_DIR, "new-file1");   
-    File file2 = new File(WORK_DIR, "new-file2");    
+  public void testConsumeFileYoungest()
+    throws IOException, InterruptedException {
+    ReliableEventReader reader
+      = new ReliableSpoolingFileEventReader.Builder()
+      .spoolDirectory(WORK_DIR)
+      .consumeOrder(ConsumeOrder.YOUNGEST)
+      .build();
+    File file1 = new File(WORK_DIR, "new-file1");
+    File file2 = new File(WORK_DIR, "new-file2");
     File file3 = new File(WORK_DIR, "new-file3");
-    FileUtils.write(file2, "New file2 created.\n"); // file2 is oldest among file1 & file3.
-    Thread.sleep(1000L);      
-    FileUtils.write(file3, "New file3 created.\n"); // file3 becomes youngest then file2 but older from file1. 
-    FileUtils.write(file1, "New file1 created.\n"); // file1 becomes youngest in file2 & file3.
+    Thread.sleep(1000L);
+    FileUtils.write(file2, "New file2 created.\n");
+    Thread.sleep(1000L);
+    FileUtils.write(file3, "New file3 created.\n");
+    Thread.sleep(1000L);
+    FileUtils.write(file1, "New file1 created.\n");
+    // order of age youngest to oldest (file2, file3, file1)
     List<String> actual = Lists.newLinkedList();    
     readEventsForFilesInDir(WORK_DIR, reader, actual);        
     List<String> expected = Lists.newLinkedList();
     createExpectedFromFilesInSetup(expected);
     Collections.sort(expected);
-    expected.add(0, ""); // Empty Line file was added in the last in Setup.
+    // Empty Line file was added in the last in Setup.
+    expected.add(0, "");
     expected.add(0, "New file2 created.");    
     expected.add(0, "New file3 created.");
     expected.add(0, "New file1 created.");
         
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testConsumeFileOldestWithLexicographicalComparision()
+    throws IOException, InterruptedException {
+    ReliableEventReader reader
+      = new ReliableSpoolingFileEventReader.Builder()
+      .spoolDirectory(WORK_DIR)
+      .consumeOrder(ConsumeOrder.OLDEST)
+      .build();
+    File file1 = new File(WORK_DIR, "new-file1");
+    File file2 = new File(WORK_DIR, "new-file2");
+    File file3 = new File(WORK_DIR, "new-file3");
+    Thread.sleep(1000L);
+    FileUtils.write(file3, "New file3 created.\n");
+    FileUtils.write(file2, "New file2 created.\n");
+    FileUtils.write(file1, "New file1 created.\n");
+    file1.setLastModified(file3.lastModified());
+    file1.setLastModified(file2.lastModified());
+    // file ages are same now they need to be ordered
+    // lexicographically (file1, file2, file3).
+    List<String> actual = Lists.newLinkedList();
+    readEventsForFilesInDir(WORK_DIR, reader, actual);
+    List<String> expected = Lists.newLinkedList();
+    createExpectedFromFilesInSetup(expected);
+    expected.add(""); // Empty file was added in the last in setup.
+    expected.add("New file1 created.");
+    expected.add("New file2 created.");
+    expected.add("New file3 created.");
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testConsumeFileYoungestWithLexicographicalComparision()
+    throws IOException, InterruptedException {
+    ReliableEventReader reader
+      = new ReliableSpoolingFileEventReader.Builder()
+      .spoolDirectory(WORK_DIR)
+      .consumeOrder(ConsumeOrder.YOUNGEST)
+      .build();
+    File file1 = new File(WORK_DIR, "new-file1");
+    File file2 = new File(WORK_DIR, "new-file2");
+    File file3 = new File(WORK_DIR, "new-file3");
+    Thread.sleep(1000L);
+    FileUtils.write(file1, "New file1 created.\n");
+    FileUtils.write(file2, "New file2 created.\n");
+    FileUtils.write(file3, "New file3 created.\n");
+    file1.setLastModified(file3.lastModified());
+    file1.setLastModified(file2.lastModified());
+    // file ages are same now they need to be ordered
+    // lexicographically (file1, file2, file3).
+    List<String> actual = Lists.newLinkedList();
+    readEventsForFilesInDir(WORK_DIR, reader, actual);
+    List<String> expected = Lists.newLinkedList();
+    createExpectedFromFilesInSetup(expected);
+    expected.add(0, ""); // Empty file was added in the last in setup.
+    expected.add(0, "New file3 created.");
+    expected.add(0, "New file2 created.");
+    expected.add(0, "New file1 created.");
     Assert.assertEquals(expected, actual);
   }
 
@@ -291,9 +362,12 @@ public class TestReliableSpoolingFileEventReader {
       int N) throws IOException {
     File dir = null;
     try {
-      dir = new File("target/test/work/" + this.getClass().getSimpleName()+ "_large");
+      dir = new File(
+        "target/test/work/" + this.getClass().getSimpleName() +
+          "_large");
       Files.createParentDirs(new File(dir, "dummy"));
-      ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
+      ReliableEventReader reader
+        = new ReliableSpoolingFileEventReader.Builder()
       .spoolDirectory(dir).consumeOrder(order).build();
       Map<Long, List<String>> expected;
       if (comparator == null) {
@@ -328,8 +402,10 @@ public class TestReliableSpoolingFileEventReader {
           if (order == ConsumeOrder.RANDOM) {            
             Assert.assertTrue(expectedList.remove(new String(e.getBody())));
           } else {
-            Assert.assertEquals(((ArrayList<String>)expectedList).get(0), new String(e.getBody()));            
-            ((ArrayList<String>)expectedList).remove(0);
+            Assert.assertEquals(
+              ((ArrayList<String>) expectedList).get(0),
+              new String(e.getBody()));
+            ((ArrayList<String>) expectedList).remove(0);
           }
         }
         reader.commit();        
