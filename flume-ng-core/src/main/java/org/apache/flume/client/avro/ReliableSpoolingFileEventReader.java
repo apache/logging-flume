@@ -25,6 +25,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
@@ -429,21 +430,27 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     if (candidateFiles.isEmpty()) { // No matching file in spooling directory.
       return Optional.absent();
     }
-    
+
     File selectedFile = candidateFiles.get(0); // Select the first random file.
     if (consumeOrder == ConsumeOrder.RANDOM) { // Selected file is random.
       return openFile(selectedFile);
     } else if (consumeOrder == ConsumeOrder.YOUNGEST) {
       for (File candidateFile: candidateFiles) {
-        if (candidateFile.lastModified() >
-          selectedFile.lastModified()) {
+        long compare = selectedFile.lastModified() -
+            candidateFile.lastModified();
+        if (compare == 0) { // ts is same pick smallest lexicographically.
+          selectedFile = smallerLexicographical(selectedFile, candidateFile);
+        } else if (compare < 0) { // candidate is younger (cand-ts > selec-ts)
           selectedFile = candidateFile;
         }
       }
     } else { // default order is OLDEST
       for (File candidateFile: candidateFiles) {
-        if (candidateFile.lastModified() <
-          selectedFile.lastModified()) {
+        long compare = selectedFile.lastModified() -
+            candidateFile.lastModified();
+        if (compare == 0) { // ts is same pick smallest lexicographically.
+          selectedFile = smallerLexicographical(selectedFile, candidateFile);
+        } else if (compare > 0) { // candidate is older (cand-ts < selec-ts).
           selectedFile = candidateFile;
         }
       }
@@ -451,7 +458,13 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
 
     return openFile(selectedFile);
   }
-  
+
+  private File smallerLexicographical(File f1, File f2) {
+    if (f1.getName().compareTo(f2.getName()) < 0) {
+      return f1;
+    }
+    return f2;
+  }
   /**
    * Opens a file for consuming
    * @param file
