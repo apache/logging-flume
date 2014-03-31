@@ -248,12 +248,17 @@ public class Application  {
       option = new Option("h", "help", false, "display help text");
       options.addOption(option);
 
+      option = new Option("o", "override", true, "override any parameter in form of source/sink/channel name.param=value");
+      option.setRequired(false);
+      options.addOption(option);
+
       CommandLineParser parser = new GnuParser();
       CommandLine commandLine = parser.parse(options, args);
 
       File configurationFile = new File(commandLine.getOptionValue('f'));
       String agentName = commandLine.getOptionValue('n');
       boolean reload = !commandLine.hasOption("no-reload-conf");
+      String[] override = commandLine.getOptionValues("o");
 
       if (commandLine.hasOption('h')) {
         new HelpFormatter().printHelp("flume-ng agent", options, true);
@@ -282,14 +287,14 @@ public class Application  {
         EventBus eventBus = new EventBus(agentName + "-event-bus");
         PollingPropertiesFileConfigurationProvider configurationProvider =
             new PollingPropertiesFileConfigurationProvider(agentName,
-                configurationFile, eventBus, 30);
+                configurationFile, eventBus, 30, override);
         components.add(configurationProvider);
         application = new Application(components);
         eventBus.register(application);
       } else {
         PropertiesFileConfigurationProvider configurationProvider =
             new PropertiesFileConfigurationProvider(agentName,
-                configurationFile);
+                configurationFile, override);
         application = new Application();
         application.handleConfigurationEvent(configurationProvider.getConfiguration());
       }

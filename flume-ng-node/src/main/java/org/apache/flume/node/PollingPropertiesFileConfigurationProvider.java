@@ -47,8 +47,12 @@ public class PollingPropertiesFileConfigurationProvider extends
   private ScheduledExecutorService executorService;
 
   public PollingPropertiesFileConfigurationProvider(String agentName,
-      File file, EventBus eventBus, int interval) {
-    super(agentName, file);
+    File file, EventBus eventBus, int interval) {
+    this(agentName, file, eventBus, interval, null);
+  }
+
+  public PollingPropertiesFileConfigurationProvider(String agentName, File file, EventBus eventBus, int interval, String[] override) {
+    super(agentName, file, override);
     this.eventBus = eventBus;
     this.file = file;
     this.interval = interval;

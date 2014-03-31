@@ -179,7 +179,11 @@ public class PropertiesFileConfigurationProvider extends
   private final File file;
 
   public PropertiesFileConfigurationProvider(String agentName, File file) {
-    super(agentName);
+    this(agentName, file, null);
+  }
+
+  public PropertiesFileConfigurationProvider(String agentName, File file, String[] override) {
+    super(agentName, override);
     this.file = file;
   }
 
