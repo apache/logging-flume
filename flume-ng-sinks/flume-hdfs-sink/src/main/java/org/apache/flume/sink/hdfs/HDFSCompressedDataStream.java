@@ -147,8 +147,7 @@ public class HDFSCompressedDataStream extends AbstractHDFSWriter {
     }
     fsOut.flush();
     fsOut.sync();
-    closeHDFSOutputStream(cmpOut);
-
+    cmpOut.close();
     unregisterCurrentStream();
   }
 
