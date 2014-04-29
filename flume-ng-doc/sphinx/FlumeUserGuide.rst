@@ -1597,6 +1597,13 @@ hdfs.roundValue         1             Rounded down to the highest multiple of th
 hdfs.roundUnit          second        The unit of the round down value - ``second``, ``minute`` or ``hour``.
 hdfs.timeZone           Local Time    Name of the timezone that should be used for resolving the directory path, e.g. America/Los_Angeles.
 hdfs.useLocalTimeStamp  false         Use the local time (instead of the timestamp from the event header) while replacing the escape sequences.
+hdfs.closeTries         0             Number of times the sink must try to close a file. If set to 1, this sink will not re-try a failed close
+                                      (due to, for example, NameNode or DataNode failure), and may leave the file in an open state with a .tmp extension.
+                                      If set to 0, the sink will try to close the file until the file is eventually closed
+                                      (there is no limit on the number of times it would try).
+hdfs.retryInterval      180           Time in seconds between consecutive attempts to close a file. Each close call costs multiple RPC round-trips to the Namenode,
+                                      so setting this too low can cause a lot of load on the name node. If set to 0 or less, the sink will not
+                                      attempt to close the file if the first attempt fails, and may leave the file open or with a ".tmp" extension.
 serializer              ``TEXT``      Other possible options include ``avro_event`` or the
                                       fully-qualified class name of an implementation of the
                                       ``EventSerializer.Builder`` interface.

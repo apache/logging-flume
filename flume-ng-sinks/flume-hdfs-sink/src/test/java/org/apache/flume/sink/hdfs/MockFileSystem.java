@@ -31,32 +31,27 @@ import org.apache.hadoop.util.Progressable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MockFileSystemCloseRetryWrapper extends FileSystem{
+public class MockFileSystem extends FileSystem {
 
   private static final Logger logger =
-      LoggerFactory.getLogger(MockFileSystemCloseRetryWrapper.class);
+      LoggerFactory.getLogger(MockFileSystem.class);
 
   FileSystem fs;
   int numberOfClosesRequired;
-  boolean throwExceptionsOfFailedClose;
-  MockFsDataOutputStreamCloseRetryWrapper latestOutputStream;
+  MockFsDataOutputStream latestOutputStream;
 
-  public MockFileSystemCloseRetryWrapper (FileSystem fs,
-      int numberOfClosesRequired, boolean throwExceptionsOfFailedClose) {
+  public MockFileSystem(FileSystem fs,
+    int numberOfClosesRequired) {
     this.fs = fs;
-    this.throwExceptionsOfFailedClose = throwExceptionsOfFailedClose;
     this.numberOfClosesRequired = numberOfClosesRequired;
-  }
-
-  public MockFsDataOutputStreamCloseRetryWrapper getLastMockOutputStream() {
-    return latestOutputStream;
   }
 
   @Override
   public FSDataOutputStream append(Path arg0, int arg1, Progressable arg2)
       throws IOException {
 
-    latestOutputStream = new MockFsDataOutputStreamCloseRetryWrapper(fs.append(arg0, arg1, arg2), numberOfClosesRequired, throwExceptionsOfFailedClose);
+    latestOutputStream = new MockFsDataOutputStream(
+      fs.append(arg0, arg1, arg2), numberOfClosesRequired);
 
     return latestOutputStream;
   }
@@ -64,16 +59,17 @@ public class MockFileSystemCloseRetryWrapper extends FileSystem{
   @Override
   public FSDataOutputStream create(Path arg0) throws IOException {
     //throw new IOException ("HI there2");
-    latestOutputStream = new MockFsDataOutputStreamCloseRetryWrapper(fs.create(arg0), numberOfClosesRequired, throwExceptionsOfFailedClose);
+    latestOutputStream = new MockFsDataOutputStream(
+      fs.create(arg0), numberOfClosesRequired);
 
     return latestOutputStream;
   }
 
   @Override
-  public FSDataOutputStream create(Path arg0, FsPermission arg1, boolean arg2,
-      int arg3, short arg4, long arg5, Progressable arg6) throws IOException {
-    throw new IOException ("Not a real file system");
-    //return new MockFsDataOutputStreamCloseRetryWrapper(fs.create(arg0, arg1, arg2, arg3, arg4, arg5, arg6), numberOfClosesRequired, throwExceptionsOfFailedClose);
+  public FSDataOutputStream create(Path arg0, FsPermission arg1,
+    boolean arg2, int arg3, short arg4, long arg5, Progressable arg6)
+    throws IOException {
+    throw new IOException("Not a real file system");
   }
 
   @Override
@@ -132,9 +128,11 @@ public class MockFileSystemCloseRetryWrapper extends FileSystem{
 
   public boolean isFileClosed(Path path) {
 
-    logger.info("isFileClosed: '" + latestOutputStream.getCurrentCloseAttempts() + "' , '" + numberOfClosesRequired + "'");
-
-    return latestOutputStream.getCurrentCloseAttempts() >= numberOfClosesRequired || numberOfClosesRequired == 0;
+    logger.info("isFileClosed: '" +
+      latestOutputStream.getCurrentCloseAttempts() + "' , '" +
+      numberOfClosesRequired + "'");
+    return latestOutputStream.getCurrentCloseAttempts() >=
+      numberOfClosesRequired || numberOfClosesRequired == 0;
   }
 
 

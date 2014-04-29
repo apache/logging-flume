@@ -18,52 +18,40 @@
 package org.apache.flume.sink.hdfs;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileSystem.Statistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MockFsDataOutputStreamCloseRetryWrapper extends FSDataOutputStream{
+public class MockFsDataOutputStream extends FSDataOutputStream{
 
   private static final Logger logger =
-      LoggerFactory.getLogger(MockFsDataOutputStreamCloseRetryWrapper.class);
+      LoggerFactory.getLogger(MockFsDataOutputStream.class);
 
   int currentCloseAttempts = 0;
   int numberOfClosesRequired;
-  boolean throwExceptionsOfFailedClose;
 
-  public MockFsDataOutputStreamCloseRetryWrapper(FSDataOutputStream wrapMe,
-      int numberOfClosesRequired, boolean throwExceptionsOfFailedClose)
+  public MockFsDataOutputStream(FSDataOutputStream wrapMe,
+    int numberOfClosesRequired)
       throws IOException {
     super(wrapMe.getWrappedStream(), null);
 
     this.numberOfClosesRequired = numberOfClosesRequired;
-    this.throwExceptionsOfFailedClose = throwExceptionsOfFailedClose;
-
-  }
-
-  public MockFsDataOutputStreamCloseRetryWrapper(OutputStream out,
-      Statistics stats) throws IOException {
-    super(out, stats);
 
   }
 
   @Override
   public void close() throws IOException {
     currentCloseAttempts++;
-    logger.info("Attempting to Close: '" + currentCloseAttempts + "' of '" + numberOfClosesRequired + "'");
-    if (currentCloseAttempts > numberOfClosesRequired || numberOfClosesRequired == 0) {
+    logger.info(
+      "Attempting to Close: '" + currentCloseAttempts + "' of '" +
+        numberOfClosesRequired + "'");
+    if (currentCloseAttempts >= numberOfClosesRequired ||
+      numberOfClosesRequired == 0) {
       logger.info("closing file");
       super.close();
     } else {
-      if (throwExceptionsOfFailedClose) {
-        logger.info("no closed and throwing exception");
-        throw new IOException("MockIOException");
-      } else {
-        logger.info("no closed and doing nothing");
-      }
+      throw new IOException("MockIOException");
     }
   }
 

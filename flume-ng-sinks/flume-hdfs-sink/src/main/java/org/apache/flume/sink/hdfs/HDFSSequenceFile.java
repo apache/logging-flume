@@ -116,8 +116,7 @@ public class HDFSSequenceFile extends AbstractHDFSWriter {
   @Override
   public void close() throws IOException {
     writer.close();
-    closeHDFSOutputStream(outStream);
-
+    outStream.close();
     unregisterCurrentStream();
   }
 }

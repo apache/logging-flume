@@ -24,9 +24,13 @@ import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
+import com.google.common.collect.Maps;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
@@ -43,6 +47,7 @@ import org.apache.flume.SystemClock;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
+import org.apache.flume.event.EventBuilder;
 import org.apache.flume.event.SimpleEvent;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.hadoop.conf.Configuration;
@@ -1316,5 +1321,128 @@ public class TestHDFSEventSink {
     Assert.assertTrue(!fList[0].getName().endsWith(".tmp") &&
       !fList[1].getName().endsWith(".tmp"));
     fs.close();
+  }
+
+  private Context getContextForRetryTests() {
+    Context context = new Context();
+
+    context.put("hdfs.path", testPath + "/%{retryHeader}");
+    context.put("hdfs.filePrefix", "test");
+    context.put("hdfs.batchSize", String.valueOf(100));
+    context.put("hdfs.fileType", "DataStream");
+    context.put("hdfs.serializer", "text");
+    context.put("hdfs.closeTries","3");
+    context.put("hdfs.rollCount", "1");
+    context.put("hdfs.retryInterval", "1");
+    return context;
+  }
+
+  @Test
+  public void testBadConfigurationForRetryIntervalZero() throws
+    Exception {
+    Context context = getContextForRetryTests();
+    context.put("hdfs.retryInterval", "0");
+
+    Configurables.configure(sink, context);
+    Assert.assertEquals(1, sink.getTryCount());
+  }
+
+  @Test
+  public void testBadConfigurationForRetryIntervalNegative() throws
+    Exception {
+    Context context = getContextForRetryTests();
+    context.put("hdfs.retryInterval", "-1");
+
+    Configurables.configure(sink, context);
+    Assert.assertEquals(1, sink.getTryCount());
+  }
+  @Test
+  public void testBadConfigurationForRetryCountZero() throws
+    Exception {
+    Context context = getContextForRetryTests();
+    context.put("hdfs.closeTries" ,"0");
+
+    Configurables.configure(sink, context);
+    Assert.assertEquals(Integer.MAX_VALUE, sink.getTryCount());
+  }
+  @Test
+  public void testBadConfigurationForRetryCountNegative() throws
+    Exception {
+    Context context = getContextForRetryTests();
+    context.put("hdfs.closeTries" ,"-4");
+
+    Configurables.configure(sink, context);
+    Assert.assertEquals(Integer.MAX_VALUE, sink.getTryCount());
+  }
+  @Test
+  public void testRetryClose() throws InterruptedException,
+    LifecycleException,
+    EventDeliveryException, IOException {
+
+    LOG.debug("Starting...");
+    String newPath = testPath + "/retryBucket";
+
+    // clear the test directory
+    Configuration conf = new Configuration();
+    FileSystem fs = FileSystem.get(conf);
+    Path dirPath = new Path(newPath);
+    fs.delete(dirPath, true);
+    fs.mkdirs(dirPath);
+    MockFileSystem mockFs = new MockFileSystem(fs, 3);
+
+    Context context = getContextForRetryTests();
+    Configurables.configure(sink, context);
+
+    Channel channel = new MemoryChannel();
+    Configurables.configure(channel, context);
+
+    sink.setChannel(channel);
+    sink.setMockFs(mockFs);
+    HDFSWriter hdfsWriter = new MockDataStream(mockFs);
+    hdfsWriter.configure(context);
+    sink.setMockWriter(hdfsWriter);
+    sink.start();
+
+    // push the event batches into channel
+    for (int i = 0; i < 2; i++) {
+      Transaction txn = channel.getTransaction();
+      txn.begin();
+      Map<String, String> hdr = Maps.newHashMap();
+      hdr.put("retryHeader", "v1");
+
+      channel.put(EventBuilder.withBody("random".getBytes(), hdr));
+      txn.commit();
+      txn.close();
+
+      // execute sink to process the events
+      sink.process();
+    }
+    // push the event batches into channel
+    for (int i = 0; i < 2; i++) {
+      Transaction txn = channel.getTransaction();
+      txn.begin();
+      Map<String, String> hdr = Maps.newHashMap();
+      hdr.put("retryHeader", "v2");
+      channel.put(EventBuilder.withBody("random".getBytes(), hdr));
+      txn.commit();
+      txn.close();
+      // execute sink to process the events
+      sink.process();
+    }
+
+    TimeUnit.SECONDS.sleep(5); //Sleep till all retries are done.
+
+    Collection<BucketWriter> writers = sink.getSfWriters().values();
+
+    int totalCloseAttempts = 0;
+    for(BucketWriter writer: writers) {
+      LOG.info("Close tries = "+ writer.closeTries.get());
+      totalCloseAttempts += writer.closeTries.get();
+    }
+    // stop clears the sfWriters map, so we need to compute the
+    // close tries count before stopping the sink.
+    sink.stop();
+    Assert.assertEquals(6, totalCloseAttempts);
+
   }
 }

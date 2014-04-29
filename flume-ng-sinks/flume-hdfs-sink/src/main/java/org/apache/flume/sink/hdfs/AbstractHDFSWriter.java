@@ -27,7 +27,6 @@ import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -226,54 +225,4 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
     }
     return m;
   }
-
-  /**
-   * This will
-   * @param outputStream
-   * @throws IOException
-   */
-  protected void closeHDFSOutputStream(OutputStream outputStream)
-      throws IOException {
-    try {
-      outputStream.close();
-
-      if (numberOfCloseRetries > 0) {
-        try {
-          Method isFileClosedMethod = getIsFileClosedMethod();
-          int closeAttemptsMade = 0;
-          if (isFileClosedMethod != null) {
-            while (closeAttemptsMade < numberOfCloseRetries.intValue() &&
-                Boolean.FALSE.equals(isFileClosedMethod.invoke(fs, destPath))) {
-              closeAttemptsMade++;
-              logger.debug("Waiting: '" + timeBetweenCloseRetries + "' before retry close");
-              Thread.sleep(timeBetweenCloseRetries);
-              try {
-                outputStream.close();
-              } catch (IOException e) {
-                logger.error("Unable to close HDFS file: '" + destPath + "'");
-              }
-            }
-            if (closeAttemptsMade == numberOfCloseRetries.intValue()) {
-              logger.warn("Failed to close '" + destPath + "' is " +
-                numberOfCloseRetries + " retries, over " + (timeBetweenCloseRetries * numberOfCloseRetries) + " millseconds");
-            }
-          }
-        } catch (Exception e) {
-          logger.error("Failed to close '" + destPath + "' is " +
-              numberOfCloseRetries + " retries, over " + (timeBetweenCloseRetries * numberOfCloseRetries) + " millseconds", e);
-        }
-      }
-    } catch (IOException e) {
-      logger.error("Unable to close HDFS file: '" + destPath + "'");
-    }
-  }
-
-  private Method getIsFileClosedMethod() {
-    try {
-      return fs.getClass().getMethod("isFileClosed", Path.class);
-    } catch (Exception e) {
-      return null;
-    }
-  }
-
 }

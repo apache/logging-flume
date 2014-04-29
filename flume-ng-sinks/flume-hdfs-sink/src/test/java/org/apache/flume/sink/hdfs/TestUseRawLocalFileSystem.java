@@ -19,29 +19,15 @@
 package org.apache.flume.sink.hdfs;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import org.apache.commons.io.FileUtils;
-import org.apache.flume.Clock;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
-import org.apache.flume.instrumentation.SinkCounter;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
-import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.GzipCodec;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,53 +91,5 @@ public class TestUseRawLocalFileSystem {
     stream.sync();
     Assert.assertTrue(testFile.length() > 0);
   }
-
-  @Test
-  public void testSequenceFileCloseRetries() throws Exception {
-    SequenceFileCloseRetryCoreTest(3, 0, false);
-    SequenceFileCloseRetryCoreTest(3, 1, false);
-    SequenceFileCloseRetryCoreTest(3, 5, false);
-
-    SequenceFileCloseRetryCoreTest(3, 0, true);
-    SequenceFileCloseRetryCoreTest(3, 1, true);
-    SequenceFileCloseRetryCoreTest(3, 5, true);
-
-    SequenceFileCloseRetryCoreTest(3, 2, true);
-    SequenceFileCloseRetryCoreTest(3, 2, true);
-
-    SequenceFileCloseRetryCoreTest(0, 0, true);
-    SequenceFileCloseRetryCoreTest(1, 0, true);
-  }
-
-
-  public void SequenceFileCloseRetryCoreTest(int numberOfCloseRetriesToAttempt, int numberOfClosesRequired, boolean throwExceptionsOfFailedClose) throws Exception {
-    String file = testFile.getCanonicalPath();
-    HDFSSequenceFile stream = new HDFSSequenceFile();
-    context.put("hdfs.useRawLocalFileSystem", "true");
-    context.put("hdfs.closeTries", String.valueOf(numberOfCloseRetriesToAttempt));
-    Configuration conf = new Configuration();
-    Path dstPath = new Path(file);
-    MockFileSystemCloseRetryWrapper mockFs = new MockFileSystemCloseRetryWrapper(dstPath.getFileSystem(conf), numberOfClosesRequired, throwExceptionsOfFailedClose);
-    stream.configure(context);
-    stream.open(dstPath, null, CompressionType.NONE, conf, mockFs);
-    stream.append(event);
-    stream.sync();
-
-    stream.close();
-
-    if (throwExceptionsOfFailedClose) {
-      int expectedNumberOfCloses = 1;
-      Assert.assertTrue("Expected " + expectedNumberOfCloses + " but got " + mockFs.getLastMockOutputStream().getCurrentCloseAttempts() ,  mockFs.getLastMockOutputStream().currentCloseAttempts == expectedNumberOfCloses);
-    } else {
-      int expectedNumberOfCloses = Math.max(Math.min(numberOfClosesRequired, numberOfCloseRetriesToAttempt), 1);
-      Assert.assertTrue("Expected " + expectedNumberOfCloses + " but got " + mockFs.getLastMockOutputStream().getCurrentCloseAttempts() ,  mockFs.getLastMockOutputStream().currentCloseAttempts == expectedNumberOfCloses);
-    }
-
-
-
-
-
-  }
-
 
 }

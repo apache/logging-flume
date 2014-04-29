@@ -19,6 +19,8 @@
 package org.apache.flume.sink.hdfs;
 
 import java.io.IOException;
+
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.serialization.EventSerializer;
@@ -57,11 +59,15 @@ public class HDFSDataStream extends AbstractHDFSWriter {
         + useRawLocalFileSystem);
   }
 
-  @Override
-  public void open(String filePath) throws IOException {
-    Configuration conf = new Configuration();
-    Path dstPath = new Path(filePath);
-    FileSystem hdfs = dstPath.getFileSystem(conf);
+  @VisibleForTesting
+  protected FileSystem getDfs(Configuration conf,
+    Path dstPath) throws IOException{
+    return  dstPath.getFileSystem(conf);
+  }
+
+  protected void doOpen(Configuration conf,
+    Path dstPath, FileSystem hdfs) throws
+    IOException {
     if(useRawLocalFileSystem) {
       if(hdfs instanceof LocalFileSystem) {
         hdfs = ((LocalFileSystem)hdfs).getRaw();
@@ -100,6 +106,14 @@ public class HDFSDataStream extends AbstractHDFSWriter {
   }
 
   @Override
+  public void open(String filePath) throws IOException {
+    Configuration conf = new Configuration();
+    Path dstPath = new Path(filePath);
+    FileSystem hdfs = getDfs(conf, dstPath);
+    doOpen(conf, dstPath, hdfs);
+  }
+
+  @Override
   public void open(String filePath, CompressionCodec codec,
                    CompressionType cType) throws IOException {
     open(filePath);
@@ -123,7 +137,7 @@ public class HDFSDataStream extends AbstractHDFSWriter {
     serializer.beforeClose();
     outStream.flush();
     outStream.sync();
-    closeHDFSOutputStream(outStream);
+    outStream.close();
 
     unregisterCurrentStream();
   }
