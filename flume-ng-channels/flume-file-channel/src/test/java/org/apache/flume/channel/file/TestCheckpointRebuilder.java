@@ -74,7 +74,7 @@ public class TestCheckpointRebuilder extends TestFileChannelBase {
     FlumeEventQueue queue = new FlumeEventQueue(backingStore, inflightTakesFile,
           inflightPutsFile, queueSetDir);
     CheckpointRebuilder checkpointRebuilder =
-        new CheckpointRebuilder(getAllLogs(dataDirs), queue);
+        new CheckpointRebuilder(getAllLogs(dataDirs), queue, true);
     Assert.assertTrue(checkpointRebuilder.rebuild());
     channel = createFileChannel(overrides);
     channel.start();

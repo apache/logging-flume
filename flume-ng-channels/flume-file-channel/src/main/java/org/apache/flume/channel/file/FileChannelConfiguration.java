@@ -87,4 +87,11 @@ public class FileChannelConfiguration {
   public static final String USE_DUAL_CHECKPOINTS = "useDualCheckpoints";
   public static final boolean DEFAULT_USE_DUAL_CHECKPOINTS = false;
 
+  public static final String FSYNC_PER_TXN = "fsyncPerTransaction";
+  public static final boolean DEFAULT_FSYNC_PRE_TXN = true;
+
+  public static final String FSYNC_INTERVAL = "fsyncInterval";
+  public static final int DEFAULT_FSYNC_INTERVAL = 5; // seconds.
+
+
 }

@@ -76,7 +76,7 @@ public class TestLog {
    */
   @Test
   public void testPutGet()
-    throws IOException, InterruptedException, NoopRecordException {
+    throws IOException, InterruptedException, NoopRecordException, CorruptEventException {
     FlumeEvent eventIn = TestUtils.newPersistableEvent();
     long transactionID = ++this.transactionID;
     FlumeEventPointer eventPointer = log.put(transactionID, eventIn);
@@ -89,7 +89,7 @@ public class TestLog {
   }
   @Test
   public void testRoll()
-    throws IOException, InterruptedException, NoopRecordException {
+    throws IOException, InterruptedException, NoopRecordException, CorruptEventException  {
     log.shutdownWorker();
     Thread.sleep(1000);
     for (int i = 0; i < 1000; i++) {
@@ -119,7 +119,7 @@ public class TestLog {
    */
   @Test
   public void testPutCommit()
-    throws IOException, InterruptedException, NoopRecordException {
+    throws IOException, InterruptedException, NoopRecordException, CorruptEventException  {
     FlumeEvent eventIn = TestUtils.newPersistableEvent();
     long transactionID = ++this.transactionID;
     FlumeEventPointer eventPointerIn = log.put(transactionID, eventIn);
@@ -247,16 +247,16 @@ public class TestLog {
    */
   @Test
   public void testPutTakeRollbackLogReplayV1()
-    throws IOException, InterruptedException, NoopRecordException {
+    throws IOException, InterruptedException, NoopRecordException, CorruptEventException  {
     doPutTakeRollback(true);
   }
   @Test
   public void testPutTakeRollbackLogReplayV2()
-    throws IOException, InterruptedException, NoopRecordException {
+    throws IOException, InterruptedException, NoopRecordException, CorruptEventException  {
     doPutTakeRollback(false);
   }
   public void doPutTakeRollback(boolean useLogReplayV1)
-    throws IOException, InterruptedException, NoopRecordException {
+    throws IOException, InterruptedException, NoopRecordException, CorruptEventException  {
     FlumeEvent eventIn = TestUtils.newPersistableEvent();
     long putTransactionID = ++transactionID;
     FlumeEventPointer eventPointerIn = log.put(putTransactionID, eventIn);
@@ -396,7 +396,7 @@ public class TestLog {
   }
   @Test
   public void testReplaySucceedsWithUnusedEmptyLogMetaDataNormalReplay()
-    throws IOException, InterruptedException, NoopRecordException {
+    throws IOException, InterruptedException, NoopRecordException, CorruptEventException  {
     FlumeEvent eventIn = TestUtils.newPersistableEvent();
     long transactionID = ++this.transactionID;
     FlumeEventPointer eventPointer = log.put(transactionID, eventIn);
@@ -410,7 +410,7 @@ public class TestLog {
   }
   @Test
   public void testReplaySucceedsWithUnusedEmptyLogMetaDataFastReplay()
-    throws IOException, InterruptedException, NoopRecordException {
+    throws IOException, InterruptedException, NoopRecordException, CorruptEventException  {
     FlumeEvent eventIn = TestUtils.newPersistableEvent();
     long transactionID = ++this.transactionID;
     FlumeEventPointer eventPointer = log.put(transactionID, eventIn);
@@ -427,7 +427,7 @@ public class TestLog {
   }
   public void doTestReplaySucceedsWithUnusedEmptyLogMetaData(FlumeEvent eventIn,
       FlumeEventPointer eventPointer) throws IOException,
-    InterruptedException, NoopRecordException {
+    InterruptedException, NoopRecordException, CorruptEventException  {
     for (int i = 0; i < dataDirs.length; i++) {
       for(File logFile : LogUtils.getLogs(dataDirs[i])) {
         if(logFile.length() == 0L) {
@@ -467,7 +467,7 @@ public class TestLog {
 
   private void takeAndVerify(FlumeEventPointer eventPointerIn,
       FlumeEvent eventIn)
-    throws IOException, InterruptedException, NoopRecordException {
+    throws IOException, InterruptedException, NoopRecordException, CorruptEventException  {
     FlumeEventQueue queue = log.getFlumeEventQueue();
     FlumeEventPointer eventPointerOut = queue.removeHead(0);
     Assert.assertNotNull(eventPointerOut);

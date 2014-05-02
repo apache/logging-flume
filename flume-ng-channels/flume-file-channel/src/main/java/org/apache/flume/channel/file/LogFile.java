@@ -41,6 +41,9 @@ import java.nio.channels.FileChannel;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @InterfaceAudience.Private
@@ -169,13 +172,18 @@ public abstract class LogFile {
     private long lastCommitPosition;
     private long lastSyncPosition;
 
+    private final boolean fsyncPerTransaction;
+    private final int fsyncInterval;
+    private final ScheduledExecutorService syncExecutor;
+    private volatile boolean dirty = false;
+
     // To ensure we can count the number of fsyncs.
     private long syncCount;
 
 
     Writer(File file, int logFileID, long maxFileSize,
-        CipherProvider.Encryptor encryptor, long usableSpaceRefreshInterval)
-        throws IOException {
+        CipherProvider.Encryptor encryptor, long usableSpaceRefreshInterval,
+        boolean fsyncPerTransaction, int fsyncInterval) throws IOException {
       this.file = file;
       this.logFileID = logFileID;
       this.maxFileSize = Math.min(maxFileSize,
@@ -183,6 +191,25 @@ public abstract class LogFile {
       this.encryptor = encryptor;
       writeFileHandle = new RandomAccessFile(file, "rw");
       writeFileChannel = writeFileHandle.getChannel();
+      this.fsyncPerTransaction = fsyncPerTransaction;
+      this.fsyncInterval = fsyncInterval;
+      if(!fsyncPerTransaction) {
+        LOG.info("Sync interval = " + fsyncInterval);
+        syncExecutor = Executors.newSingleThreadScheduledExecutor();
+        syncExecutor.scheduleWithFixedDelay(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              sync();
+            } catch (Throwable ex) {
+              LOG.error("Data file, " + getFile().toString() + " could not " +
+                "be synced to disk due to an error.", ex);
+            }
+          }
+        }, fsyncInterval, fsyncInterval, TimeUnit.SECONDS);
+      } else {
+        syncExecutor = null;
+      }
       usableSpace = new CachedFSUsableSpace(file, usableSpaceRefreshInterval);
       LOG.info("Opened " + file);
       open = true;
@@ -258,6 +285,7 @@ public abstract class LogFile {
         buffer = ByteBuffer.wrap(encryptor.encrypt(buffer.array()));
       }
       write(buffer);
+      dirty = true;
       lastCommitPosition = position();
     }
 
@@ -299,6 +327,14 @@ public abstract class LogFile {
      * @throws LogFileRetryableIOException - if this log file is closed.
      */
     synchronized void sync() throws IOException {
+      if (!fsyncPerTransaction && !dirty) {
+        if(LOG.isDebugEnabled()) {
+          LOG.debug(
+            "No events written to file, " + getFile().toString() +
+              " in last " + fsyncInterval + " or since last commit.");
+        }
+        return;
+      }
       if (!isOpen()) {
         throw new LogFileRetryableIOException("File closed " + file);
       }
@@ -306,6 +342,7 @@ public abstract class LogFile {
         getFileChannel().force(false);
         lastSyncPosition = position();
         syncCount++;
+        dirty = false;
       }
     }
 
@@ -322,6 +359,13 @@ public abstract class LogFile {
     synchronized void close() {
       if(open) {
         open = false;
+        if (!fsyncPerTransaction) {
+          // Shutdown the executor before attempting to close.
+          if(syncExecutor != null) {
+            // No need to wait for it to shutdown.
+            syncExecutor.shutdown();
+          }
+        }
         if(writeFileChannel.isOpen()) {
           LOG.info("Closing " + file);
           try {
@@ -396,12 +440,15 @@ public abstract class LogFile {
     private final BlockingQueue<RandomAccessFile> readFileHandles =
         new ArrayBlockingQueue<RandomAccessFile>(50, true);
     private final KeyProvider encryptionKeyProvider;
+    private final boolean fsyncPerTransaction;
     private volatile boolean open;
-    public RandomReader(File file, @Nullable KeyProvider encryptionKeyProvider)
+    public RandomReader(File file, @Nullable KeyProvider
+      encryptionKeyProvider, boolean fsyncPerTransaction)
         throws IOException {
       this.file = file;
       this.encryptionKeyProvider = encryptionKeyProvider;
       readFileHandles.add(open());
+      this.fsyncPerTransaction = fsyncPerTransaction;
       open = true;
     }
 
@@ -430,8 +477,11 @@ public abstract class LogFile {
           throw new NoopRecordException("No op record found. Corrupt record " +
             "may have been repaired by File Channel Integrity tool");
         }
-        Preconditions.checkState(operation == OP_RECORD,
-            Integer.toHexString(operation));
+        if (operation != OP_RECORD) {
+          throw new CorruptEventException(
+            "Operation code is invalid. File " +
+              "is corrupt. Please run File Channel Integrity tool.");
+        }
         TransactionEventRecord record = doGet(fileHandle);
         if(!(record instanceof Put)) {
           Preconditions.checkState(false, "Record is " +
@@ -491,8 +541,8 @@ public abstract class LogFile {
       }
       int remaining = readFileHandles.remainingCapacity();
       if(remaining > 0) {
-        LOG.info("Opening " + file + " for read, remaining capacity is "
-            + remaining);
+        LOG.info("Opening " + file + " for read, remaining number of file " +
+          "handles available for reads of this file is " + remaining);
         return open();
       }
       return readFileHandles.take();
@@ -647,11 +697,20 @@ public abstract class LogFile {
     output.put(buffer);
   }
   protected static byte[] readDelimitedBuffer(RandomAccessFile fileHandle)
-      throws IOException {
+      throws IOException, CorruptEventException {
     int length = fileHandle.readInt();
-    Preconditions.checkState(length >= 0, Integer.toHexString(length));
+    if (length < 0) {
+      throw new CorruptEventException("Length of event is: " + String.valueOf
+        (length) + ". Event must have length >= 0. Possible corruption of " +
+        "data or partial fsync.");
+    }
     byte[] buffer = new byte[length];
-    fileHandle.readFully(buffer);
+    try {
+      fileHandle.readFully(buffer);
+    } catch (EOFException ex) {
+      throw new CorruptEventException("Remaining data in file less than " +
+        "expected size of event.", ex);
+    }
     return buffer;
   }
 
@@ -659,7 +718,7 @@ public abstract class LogFile {
     File file = new File(args[0]);
     LogFile.SequentialReader reader = null;
     try {
-      reader = LogFileFactory.getSequentialReader(file, null);
+      reader = LogFileFactory.getSequentialReader(file, null, false);
       LogRecord entry;
       FlumeEventPointer ptr;
       // for puts the fileId is the fileID of the file they exist in

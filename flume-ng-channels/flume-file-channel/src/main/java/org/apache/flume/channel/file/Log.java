@@ -125,6 +125,9 @@ public class Log {
   private final boolean useDualCheckpoints;
   private volatile boolean backupRestored = false;
 
+  private final boolean fsyncPerTransaction;
+  private final int fsyncInterval;
+
   private int readCount;
   private int putCount;
   private int takeCount;
@@ -149,6 +152,25 @@ public class Log {
     private long bUsableSpaceRefreshInterval = 15L * 1000L;
     private boolean bUseDualCheckpoints = false;
     private File bBackupCheckpointDir = null;
+
+    private boolean fsyncPerTransaction = true;
+    private int fsyncInterval;
+
+    boolean isFsyncPerTransaction() {
+      return fsyncPerTransaction;
+    }
+
+    void setFsyncPerTransaction(boolean fsyncPerTransaction) {
+      this.fsyncPerTransaction = fsyncPerTransaction;
+    }
+
+    int getFsyncInterval() {
+      return fsyncInterval;
+    }
+
+    void setFsyncInterval(int fsyncInterval) {
+      this.fsyncInterval = fsyncInterval;
+    }
 
     Builder setUsableSpaceRefreshInterval(long usableSpaceRefreshInterval) {
       bUsableSpaceRefreshInterval = usableSpaceRefreshInterval;
@@ -231,7 +253,7 @@ public class Log {
         useLogReplayV1, useFastReplay, bMinimumRequiredSpace,
         bEncryptionKeyProvider, bEncryptionKeyAlias,
         bEncryptionCipherProvider, bUsableSpaceRefreshInterval,
-        bLogDirs);
+        fsyncPerTransaction, fsyncInterval, bLogDirs);
     }
   }
 
@@ -241,7 +263,8 @@ public class Log {
     long minimumRequiredSpace, @Nullable KeyProvider encryptionKeyProvider,
     @Nullable String encryptionKeyAlias,
     @Nullable String encryptionCipherProvider,
-    long usableSpaceRefreshInterval, File... logDirs)
+    long usableSpaceRefreshInterval, boolean fsyncPerTransaction,
+    int fsyncInterval, File... logDirs)
           throws IOException {
     Preconditions.checkArgument(checkpointInterval > 0,
       "checkpointInterval <= 0");
@@ -318,6 +341,8 @@ public class Log {
     this.checkpointDir = checkpointDir;
     this.backupCheckpointDir = backupCheckpointDir;
     this.logDirs = logDirs;
+    this.fsyncPerTransaction = fsyncPerTransaction;
+    this.fsyncInterval = fsyncInterval;
     logFiles = new AtomicReferenceArray<LogFile.Writer>(this.logDirs.length);
     workerExecutor = Executors.newSingleThreadScheduledExecutor(new
       ThreadFactoryBuilder().setNameFormat("Log-BackgroundWorker-" + name)
@@ -354,7 +379,7 @@ public class Log {
           dataFiles.add(file);
           nextFileID.set(Math.max(nextFileID.get(), id));
           idLogFileMap.put(id, LogFileFactory.getRandomReader(new File(logDir,
-              PREFIX + id), encryptionKeyProvider));
+              PREFIX + id), encryptionKeyProvider, fsyncPerTransaction));
         }
       }
       LOGGER.info("Found NextFileID " + nextFileID +
@@ -468,13 +493,13 @@ public class Log {
                         KeyProvider encryptionKeyProvider,
                         boolean useFastReplay) throws Exception {
     CheckpointRebuilder rebuilder = new CheckpointRebuilder(dataFiles,
-            queue);
+            queue, fsyncPerTransaction);
     if (useFastReplay && rebuilder.rebuild()) {
       didFastReplay = true;
       LOGGER.info("Fast replay successful.");
     } else {
       ReplayHandler replayHandler = new ReplayHandler(queue,
-              encryptionKeyProvider);
+              encryptionKeyProvider, fsyncPerTransaction);
       if (useLogReplayV1) {
         LOGGER.info("Replaying logs with v1 replay logic");
         replayHandler.replayLogv1(dataFiles);
@@ -551,7 +576,7 @@ public class Log {
    * @throws InterruptedException
    */
   FlumeEvent get(FlumeEventPointer pointer) throws IOException,
-    InterruptedException, NoopRecordException {
+    InterruptedException, NoopRecordException, CorruptEventException {
     Preconditions.checkState(open, "Log is closed");
     int id = pointer.getFileID();
     LogFile.RandomReader logFile = idLogFileMap.get(id);
@@ -559,9 +584,12 @@ public class Log {
     try {
       return logFile.get(pointer.getOffset());
     } catch (CorruptEventException ex) {
-      open = false;
-      throw new IOException("Corrupt event found. Please run File Channel " +
-        "Integrity tool.", ex);
+      if (fsyncPerTransaction) {
+        open = false;
+        throw new IOException("Corrupt event found. Please run File Channel " +
+          "Integrity tool.", ex);
+      }
+      throw ex;
     }
   }
 
@@ -906,9 +934,10 @@ public class Log {
           File file = new File(logDirs[index], PREFIX + fileID);
           LogFile.Writer writer = LogFileFactory.getWriter(file, fileID,
             maxFileSize, encryptionKey, encryptionKeyAlias,
-            encryptionCipherProvider, usableSpaceRefreshInterval);
+            encryptionCipherProvider, usableSpaceRefreshInterval,
+            fsyncPerTransaction, fsyncInterval);
           idLogFileMap.put(fileID, LogFileFactory.getRandomReader(file,
-            encryptionKeyProvider));
+            encryptionKeyProvider, fsyncPerTransaction));
           // writer from this point on will get new reference
           logFiles.set(index, writer);
           // close out old log
@@ -991,7 +1020,8 @@ public class Log {
           } finally {
             writer.close();
           }
-          reader = LogFileFactory.getRandomReader(file, encryptionKeyProvider);
+          reader = LogFileFactory.getRandomReader(file,
+            encryptionKeyProvider, fsyncPerTransaction);
           idLogFileMap.put(id, reader);
           LOGGER.debug("Updated checkpoint for file: " + file
               + "logWriteOrderID " + logWriteOrderID);

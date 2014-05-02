@@ -190,9 +190,9 @@ public class TestUtils {
           result.add(new String(event.getBody(), Charsets.UTF_8));
         }
         transaction.commit();
-      } catch (Exception ex) {
+      } catch (Throwable ex) {
         transaction.rollback();
-        throw ex;
+        throw new RuntimeException(ex);
       } finally {
         transaction.close();
       }

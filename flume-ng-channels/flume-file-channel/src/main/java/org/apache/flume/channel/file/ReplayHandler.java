@@ -52,6 +52,7 @@ class ReplayHandler {
   private final Map<Integer, LogFile.SequentialReader> readers;
   private final PriorityQueue<LogRecord> logRecordBuffer;
   private final KeyProvider encryptionKeyProvider;
+  private final boolean fsyncPerTransaction;
   /**
    * This data structure stores takes for which we found a commit in the log
    * files before we found a commit for the put. This can happen if the channel
@@ -91,19 +92,22 @@ class ReplayHandler {
   public int getCommitCount() {
     return commitCount;
   }
+
   @VisibleForTesting
   public int getRollbackCount() {
     return rollbackCount;
   }
 
   ReplayHandler(FlumeEventQueue queue,
-      @Nullable KeyProvider encryptionKeyProvider) {
+    @Nullable KeyProvider encryptionKeyProvider,
+    boolean fsyncPerTransaction) {
     this.queue = queue;
     this.lastCheckpoint = queue.getLogWriteOrderID();
     pendingTakes = Lists.newArrayList();
     readers = Maps.newHashMap();
     logRecordBuffer = new PriorityQueue<LogRecord>();
     this.encryptionKeyProvider = encryptionKeyProvider;
+    this.fsyncPerTransaction = fsyncPerTransaction;
   }
   /**
    * Replay logic from Flume1.2 which can be activated if the v2 logic
@@ -129,7 +133,8 @@ class ReplayHandler {
       LOG.info("Replaying " + log);
       LogFile.SequentialReader reader = null;
       try {
-        reader = LogFileFactory.getSequentialReader(log, encryptionKeyProvider);
+        reader = LogFileFactory.getSequentialReader(log,
+          encryptionKeyProvider, fsyncPerTransaction);
         reader.skipToLastCheckpointPosition(queue.getLogWriteOrderID());
         LogRecord entry;
         FlumeEventPointer ptr;
@@ -257,7 +262,8 @@ class ReplayHandler {
         LOG.info("Replaying " + log);
         try {
           LogFile.SequentialReader reader =
-              LogFileFactory.getSequentialReader(log, encryptionKeyProvider);
+            LogFileFactory.getSequentialReader(log, encryptionKeyProvider,
+              fsyncPerTransaction);
           reader.skipToLastCheckpointPosition(queue.getLogWriteOrderID());
           Preconditions.checkState(!readers.containsKey(reader.getLogFileID()),
               "Readers " + readers + " already contains "

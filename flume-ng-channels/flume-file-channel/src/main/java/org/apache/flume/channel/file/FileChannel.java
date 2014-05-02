@@ -95,6 +95,8 @@ public class FileChannel extends BasicChannelSemantics {
   private String encryptionActiveKey;
   private String encryptionCipherProvider;
   private boolean useDualCheckpoints;
+  private boolean fsyncPerTransaction;
+  private int fsyncInterval;
 
   @Override
   public synchronized void setName(String name) {
@@ -233,6 +235,12 @@ public class FileChannel extends BasicChannelSemantics {
           "key provider name is not.");
     }
 
+    fsyncPerTransaction = context.getBoolean(FileChannelConfiguration
+      .FSYNC_PER_TXN, FileChannelConfiguration.DEFAULT_FSYNC_PRE_TXN);
+
+    fsyncInterval = context.getInteger(FileChannelConfiguration
+      .FSYNC_INTERVAL, FileChannelConfiguration.DEFAULT_FSYNC_INTERVAL);
+
     if(queueRemaining == null) {
       queueRemaining = new Semaphore(capacity, true);
     }
@@ -265,6 +273,8 @@ public class FileChannel extends BasicChannelSemantics {
       builder.setEncryptionCipherProvider(encryptionCipherProvider);
       builder.setUseDualCheckpoints(useDualCheckpoints);
       builder.setBackupCheckpointDir(backupCheckpointDir);
+      builder.setFsyncPerTransaction(fsyncPerTransaction);
+      builder.setFsyncInterval(fsyncInterval);
       log = builder.build();
       log.replay();
       open = true;
@@ -328,8 +338,8 @@ public class FileChannel extends BasicChannelSemantics {
               trans.getStateAsString()  + channelNameDescriptor);
     }
     trans = new FileBackedTransaction(log, TransactionIDOracle.next(),
-        transactionCapacity, keepAlive, queueRemaining, getName(),
-        channelCounter);
+      transactionCapacity, keepAlive, queueRemaining, getName(),
+      fsyncPerTransaction, channelCounter);
     transactions.set(trans);
     return trans;
   }
@@ -401,9 +411,11 @@ public class FileChannel extends BasicChannelSemantics {
     private final Semaphore queueRemaining;
     private final String channelNameDescriptor;
     private final ChannelCounter channelCounter;
+    private final boolean fsyncPerTransaction;
     public FileBackedTransaction(Log log, long transactionID,
         int transCapacity, int keepAlive, Semaphore queueRemaining,
-        String name, ChannelCounter counter) {
+        String name, boolean fsyncPerTransaction, ChannelCounter
+      counter) {
       this.log = log;
       queue = log.getFlumeEventQueue();
       this.transactionID = transactionID;
@@ -411,6 +423,7 @@ public class FileChannel extends BasicChannelSemantics {
       this.queueRemaining = queueRemaining;
       putList = new LinkedBlockingDeque<FlumeEventPointer>(transCapacity);
       takeList = new LinkedBlockingDeque<FlumeEventPointer>(transCapacity);
+      this.fsyncPerTransaction = fsyncPerTransaction;
       channelNameDescriptor = "[channel=" + name + "]";
       this.channelCounter = counter;
     }
@@ -499,6 +512,13 @@ public class FileChannel extends BasicChannelSemantics {
             } catch (NoopRecordException e) {
               LOG.warn("Corrupt record replaced by File Channel Integrity " +
                 "tool found. Will retrieve next event", e);
+              takeList.remove(ptr);
+            } catch (CorruptEventException ex) {
+              if (fsyncPerTransaction) {
+                throw new ChannelException(ex);
+              }
+              LOG.warn("Corrupt record found. Event will be " +
+                "skipped, and next event will be read.", ex);
               takeList.remove(ptr);
             }
           }

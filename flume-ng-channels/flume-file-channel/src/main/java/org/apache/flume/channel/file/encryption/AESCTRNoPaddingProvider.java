@@ -103,14 +103,15 @@ public class AESCTRNoPaddingProvider extends CipherProvider {
     }
   }
 
-  private static byte[] doFinal(Cipher cipher, byte[] input) {
+  private static byte[] doFinal(Cipher cipher, byte[] input)
+    throws DecryptionFailureException{
     try {
       return cipher.doFinal(input);
     } catch (Exception e) {
       String msg = "Unable to encrypt or decrypt data " + TYPE
           + " input.length " + input.length;
       LOG.error(msg, e);
-      throw Throwables.propagate(e);
+      throw new DecryptionFailureException(msg, e);
     }
   }
 

@@ -68,17 +68,19 @@ class LogFileFactory {
       long maxFileSize, @Nullable Key encryptionKey,
       @Nullable String encryptionKeyAlias,
       @Nullable String encryptionCipherProvider,
-      long usableSpaceRefreshInterval) throws IOException {
+      long usableSpaceRefreshInterval, boolean fsyncPerTransaction,
+      int fsyncInterval) throws IOException {
     Preconditions.checkState(!file.exists(), "File already exists "  +
       file.getAbsolutePath());
     Preconditions.checkState(file.createNewFile(), "File could not be created "
         + file.getAbsolutePath());
     return new LogFileV3.Writer(file, logFileID, maxFileSize, encryptionKey,
-        encryptionKeyAlias, encryptionCipherProvider, usableSpaceRefreshInterval);
+        encryptionKeyAlias, encryptionCipherProvider,
+        usableSpaceRefreshInterval, fsyncPerTransaction, fsyncInterval);
   }
 
   static LogFile.RandomReader getRandomReader(File file,
-      @Nullable KeyProvider encryptionKeyProvider)
+      @Nullable KeyProvider encryptionKeyProvider, boolean fsyncPerTransaction)
       throws IOException {
     RandomAccessFile logFile = new RandomAccessFile(file, "r");
     try {
@@ -86,7 +88,8 @@ class LogFileFactory {
       // either this is a rr for a just created file or
       // the metadata file exists and as such it's V3
       if(logFile.length() == 0L || metaDataFile.exists()) {
-        return new LogFileV3.RandomReader(file, encryptionKeyProvider);
+        return new LogFileV3.RandomReader(file, encryptionKeyProvider,
+          fsyncPerTransaction);
       }
       int version = logFile.readInt();
       if(Serialization.VERSION_2 == version) {
@@ -106,7 +109,7 @@ class LogFileFactory {
   }
 
   static LogFile.SequentialReader getSequentialReader(File file,
-      @Nullable KeyProvider encryptionKeyProvider)
+      @Nullable KeyProvider encryptionKeyProvider, boolean fsyncPerTransaction)
       throws IOException {
     RandomAccessFile logFile = null;
     try {
@@ -159,7 +162,8 @@ class LogFileFactory {
           throw new EOFException(String.format("MetaData file %s is empty",
               metaDataFile));
         }
-        return new LogFileV3.SequentialReader(file, encryptionKeyProvider);
+        return new LogFileV3.SequentialReader(file, encryptionKeyProvider,
+          fsyncPerTransaction);
       }
       logFile = new RandomAccessFile(file, "r");
       int version = logFile.readInt();

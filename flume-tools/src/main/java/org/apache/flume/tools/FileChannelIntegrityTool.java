@@ -70,7 +70,7 @@ public class FileChannelIntegrityTool implements FlumeTool {
         for (File dataFile : dataFiles) {
           LOG.info("Checking for corruption in " + dataFile.toString());
           LogFile.SequentialReader reader =
-            new LogFileV3.SequentialReader(dataFile, null);
+            new LogFileV3.SequentialReader(dataFile, null, true);
           LogFile.OperationRecordUpdater updater = new LogFile
             .OperationRecordUpdater(dataFile);
           boolean fileDone = false;
