@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -573,8 +574,25 @@ public class TestFileChannel extends TestFileChannelBase {
   }
 
   @Test (expected = IllegalStateException.class)
-  public void testChannelDiesOnCorruptEvent() throws Exception {
-    final FileChannel channel = createFileChannel();
+  public void testChannelDiesOnCorruptEventFsync() throws Exception {
+    testChannelDiesOnCorruptEvent(true);
+  }
+
+
+  @Test
+  public void testChannelDiesOnCorruptEventNoFsync() throws
+    Exception {
+    testChannelDiesOnCorruptEvent(false);
+  }
+
+
+
+  private void testChannelDiesOnCorruptEvent(boolean fsyncPerTxn)
+    throws Exception {
+    Map<String, String> overrides = new HashMap<String, String>();
+    overrides.put(FileChannelConfiguration.FSYNC_PER_TXN,
+      String.valueOf(fsyncPerTxn));
+    final FileChannel channel = createFileChannel(overrides);
     channel.start();
     putEvents(channel,"test-corrupt-event",100,100);
     for(File dataDir : dataDirs) {
@@ -596,8 +614,9 @@ public class TestFileChannel extends TestFileChannelBase {
         }
       }
     }
+    Set<String> events;
     try {
-      consumeChannel(channel, true);
+      events = consumeChannel(channel, true);
     } catch (IllegalStateException ex) {
       // The rollback call in takeEvents() in TestUtils will cause an
       // IllegalArgumentException - and this should be tested to verify the
@@ -605,9 +624,13 @@ public class TestFileChannel extends TestFileChannelBase {
       Assert.assertTrue(ex.getMessage().contains("Log is closed"));
       throw ex;
     }
-    Assert.fail();
-
-
+    if(fsyncPerTxn) {
+      Assert.fail();
+    } else {
+      // The corrupt event must be missing, the rest should be
+      // returned
+      Assert.assertEquals(99, events.size());
+    }
   }
 
 }

@@ -120,7 +120,7 @@ public class TestFileChannelIntegrityTool {
     int corrupted = 0;
     for (File dataFile : files) {
       LogFile.SequentialReader reader =
-        new LogFileV3.SequentialReader(dataFile, null);
+        new LogFileV3.SequentialReader(dataFile, null, true);
       RandomAccessFile handle = new RandomAccessFile(dataFile, "rw");
       long eventPosition1 = reader.getPosition();
       LogRecord rec = reader.next();

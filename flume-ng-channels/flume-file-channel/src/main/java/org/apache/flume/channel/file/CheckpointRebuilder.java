@@ -49,14 +49,17 @@ public class CheckpointRebuilder {
           HashMultimap.create();
   private final SetMultimap<Long, ComparableFlumeEventPointer>
           uncommittedTakes = HashMultimap.create();
+  private final boolean fsyncPerTransaction;
 
   private static Logger LOG =
           LoggerFactory.getLogger(CheckpointRebuilder.class);
 
   public CheckpointRebuilder(List<File> logFiles,
-          FlumeEventQueue queue) throws IOException {
+    FlumeEventQueue queue, boolean fsyncPerTransaction) throws
+    IOException {
     this.logFiles = logFiles;
     this.queue = queue;
+    this.fsyncPerTransaction = fsyncPerTransaction;
   }
 
   public boolean rebuild() throws IOException, Exception {
@@ -64,7 +67,8 @@ public class CheckpointRebuilder {
     List<LogFile.SequentialReader> logReaders = Lists.newArrayList();
     for (File logFile : logFiles) {
       try {
-        logReaders.add(LogFileFactory.getSequentialReader(logFile, null));
+        logReaders.add(LogFileFactory.getSequentialReader(logFile, null,
+          fsyncPerTransaction));
       } catch(EOFException e) {
         LOG.warn("Ignoring " + logFile + " due to EOF", e);
       }
@@ -252,7 +256,8 @@ public class CheckpointRebuilder {
               new File(checkpointDir, "inflighttakes"),
               new File(checkpointDir, "inflightputs"),
               new File(checkpointDir, Log.QUEUE_SET));
-      CheckpointRebuilder rebuilder = new CheckpointRebuilder(logFiles, queue);
+      CheckpointRebuilder rebuilder = new CheckpointRebuilder(logFiles,
+        queue, true);
       if(rebuilder.rebuild()) {
         rebuilder.writeCheckpoint();
       } else {
