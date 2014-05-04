@@ -49,7 +49,7 @@ limitations under the License.
     <avro.version>1.7.3</avro.version>
     <elasticsearch.version>0.90.1</elasticsearch.version>
 
-    <hadoop2.version>2.3.0</hadoop2.version>
+    <hadoop2.version>2.4.0</hadoop2.version>
 
     <kite.version>0.12.0</kite.version>
   </properties>
