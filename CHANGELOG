@@ -1,3 +1,137 @@
+
+Release Notes - Flume - Version v1.5.0
+
+** New Feature
+    * [FLUME-1227] - Introduce some sort of SpillableChannel
+    * [FLUME-2056] - Allow SpoolDir to pass just the filename that is the source of an event
+    * [FLUME-2071] - Flume Context doesn't support float or double configuration values.
+    * [FLUME-2185] - Upgrade morphlines to 0.7.0
+    * [FLUME-2188] - flume-ng-log4jappender Support user supplied headers
+    * [FLUME-2225] - Elasticsearch Sink for ES HTTP API
+    * [FLUME-2294] - Add a sink for Kite Datasets
+    * [FLUME-2309] - Spooling directory should not always consume the oldest file first.
+
+** Improvement
+    * [FLUME-1542] - Flume User Guide sample configurations need fixing
+    * [FLUME-1899] - Make SpoolDir work with Sub-Directories
+    * [FLUME-2052] - Spooling directory source should be able to replace or ignore malformed characters
+    * [FLUME-2130] - Handle larger payloads via SyslogUDPSource
+    * [FLUME-2139] - upgrade morphline library dependency to a 0.5.0 release
+    * [FLUME-2154] - Reducing duplicate events caused by reset-connection-interval
+    * [FLUME-2155] - Improve replay time
+    * [FLUME-2181] - Optionally disable File Channel fsyncs 
+    * [FLUME-2202] - AsyncHBaseSink should coalesce increments to reduce RPC roundtrips
+    * [FLUME-2206] - ElasticSearchSink ttl field modification to mimic Elasticsearch way of specifying TTL
+    * [FLUME-2207] - HDFS file suffix style index suffix in ElasticSearchSink
+    * [FLUME-2212] - upgrade to Morphlines-0.8.0
+    * [FLUME-2213] - MorphlineInterceptor should share metric registry across threads for better (aggregate) reporting
+    * [FLUME-2217] - Preserve priority, timestamp and hostname fields in MultiportSyslogTcp and Udp sources
+    * [FLUME-2231] - Add details in Flume Ganglia config in User Guide
+    * [FLUME-2243] - AvroSource to use TransceiverThreadFactory for Thread naming while initializing NioServerSocketChannelFactory
+    * [FLUME-2267] - Increase default transactionCapacity for FileChannel to 10000 from 1000
+    * [FLUME-2275] - Improve scalability of MorphlineInterceptor under contention
+    * [FLUME-2292] - Upgrade mapdb to 0.9.8
+    * [FLUME-2316] - Upgrade MorphlineSolrSink to kite-0.12.0
+    * [FLUME-2340] - Refactor to make room for Morphlines Elasticsearch Sink
+    * [FLUME-2343] - Add user impersonation to DatasetSink
+    * [FLUME-2351] - Ability to override any parameter from the configuration file
+    * [FLUME-2352] - HDFSCompressedDataStream should support appendBatch
+
+** Bug
+    * [FLUME-1666] - Syslog source strips timestamp and hostname from log message body
+    * [FLUME-1679] - Add dependency on Guava to flume-ng-elasticsearch-sink POM
+    * [FLUME-1892] - IRC Sink NPE
+    * [FLUME-1951] - Remove unused future from FlumeEventQueue
+    * [FLUME-2007] - HDFS Sink should check if file is closed and retry if it is not.
+    * [FLUME-2088] - Minor typo in Flume User Guide JSON Reporting section
+    * [FLUME-2109] - HTTPS support in HTTP Source
+    * [FLUME-2110] - Scribe Source must check if category is null before inserting the headers
+    * [FLUME-2119] - duplicate files cause flume to enter irrecoverable state
+    * [FLUME-2121] - Upgrade Flume to log4j 1.2.17 to be in sync with HDFS/HBase
+    * [FLUME-2122] - Minor cleanups of User guide
+    * [FLUME-2123] - Morphline Solr sink missing short type name
+    * [FLUME-2124] - Upgrade Morphline Solr Sink to CDK 0.4.1
+    * [FLUME-2127] - JMX shutdown command for Flume
+    * [FLUME-2134] - AsyncHbase Sink bugfix plus tests errors on Windows
+    * [FLUME-2135] - Add zip to the build distribution for Windows support
+    * [FLUME-2136] - Windows - Fix intermitent test failure in TestMonitoredCounterGroup.java
+    * [FLUME-2137] - Fix StagedInstall.java to invoke the correct startup script on Windows
+    * [FLUME-2142] - HTTPS tests for http source
+    * [FLUME-2145] - TestCheckpointRebuilder.testFastReplay  fails on Windows due to checkpoint file being memory mapped
+    * [FLUME-2151] - Windows:  Update TestExecSource to use native commands on Windows
+    * [FLUME-2152] - Flume user guide says "Ganglia support" where it should say "JSON support"
+    * [FLUME-2156] - Unregister then re-register MonitoredCounterGroup JMX MBeans on reconfigure
+    * [FLUME-2157] - Spool directory source does not shut down correctly when Flume is reconfigured
+    * [FLUME-2159] - Sporadic failures in  TestNettyAvroRpcClient.spinThreadsCrazily()
+    * [FLUME-2161] - Flume does not support spaces in -X java-opt command line args
+    * [FLUME-2172] - Update protocol buffer from 2.4.1 to 2.5.0
+    * [FLUME-2176] - SpoolDir Source, get 'File has changed' exception but actually there is no change on the file
+    * [FLUME-2182] - Spooling Directory Source will not ingest data completely when a wide character appears at the edge of a buffer
+    * [FLUME-2184] - flume-ng-morphline-solr-sink Build failing due to incorrect hadoop-common dependency declaration
+    * [FLUME-2191] - HDFS Minicluster tests failing after protobuf upgrade.
+    * [FLUME-2192] - AbstractSinkProcessor stop incorrectly calls start
+    * [FLUME-2198] - Avro Source should disable itself if ipFilterRules contains invalid rules
+    * [FLUME-2199] - Flume builds with new version require mvn install before site can be generated
+    * [FLUME-2200] - HTTP Source should be able to use "port" parameter if SSL is enabled
+    * [FLUME-2208] - Jetty's default SocketSelector leaks File descriptors
+    * [FLUME-2209] - AsyncHBaseSink will never recover if the column family does not exists for the first start 
+    * [FLUME-2210] - UnresolvedAddressException when using multiple hostNames in Elasticsearch sink configuration
+    * [FLUME-2220] - ElasticSearch sink - duplicate fields in indexed document
+    * [FLUME-2229] - Backoff period gets reset too often in OrderSelector
+    * [FLUME-2233] - MemoryChannel lock contention on every put due to bytesRemaining Semaphore
+    * [FLUME-2235] - idleFuture should be cancelled at the start of append
+    * [FLUME-2238] - Provide option to configure worker threads in NettyAvroRpcClient
+    * [FLUME-2239] - Clarify File Channel's  dataDirs setting in User Guide
+    * [FLUME-2252] - Add null check before closing table in HbaseSink
+    * [FLUME-2253] - Please delete old releases from mirroring system
+    * [FLUME-2255] - Spooling Directory Source cannot handle channel exceptions
+    * [FLUME-2259] - transaction  closure not happening for all the scenario in hbasesink
+    * [FLUME-2262] - Log4j Appender should use timeStamp field not getTimestamp
+    * [FLUME-2263] - Bump Hadoop 2 version to 2.3.0
+    * [FLUME-2264] - Log4j Appender + Avro Reflection on string results in an invalid avro schema
+    * [FLUME-2265] - Closed bucket writers should be removed from sfwriters map
+    * [FLUME-2266] - Update Morphline Sink to kite-0.10.0
+    * [FLUME-2270] - Twitter Source Documentation Does not load properly
+    * [FLUME-2272] - Getting start page returning 503 error
+    * [FLUME-2283] - Spool Dir source must check interrupt flag before writing to channel
+    * [FLUME-2289] - Disable maxUnderReplication test which is extremely flakey
+    * [FLUME-2301] - Update HBaseSink tests to reflect sink returning backoff only on empty batches
+    * [FLUME-2302] - TestHDFS Sink fails with Can't get Kerberos realm
+    * [FLUME-2303] - HBaseSink tests can fail based on order of execution
+    * [FLUME-2304] - DatasetSink test fails unexpectedly
+    * [FLUME-2305] - BucketWriter#close must cancel idleFuture
+    * [FLUME-2307] - Remove Log writetimeout
+    * [FLUME-2311] - Use standard way of finding queue/topic
+    * [FLUME-2312] - Add utility for adorning HTTP contexts in Jetty
+    * [FLUME-2314] - Upgrade to Mapdb 0.9.9
+    * [FLUME-2320] - Deadlock in DatasetSink
+    * [FLUME-2323] - Morphline sink must increment eventDrainAttemptCount when it takes event from channel
+    * [FLUME-2324] - Support writing to multiple HBase clusters using HBaseSink
+    * [FLUME-2325] - BucketWriter might throw BucketClosedException incorrectly
+    * [FLUME-2328] - FileChannel Dual Checkpoint Backup Thread not released on Application stop
+    * [FLUME-2329] - Add an alias for the Morphline Solr Sink
+    * [FLUME-2330] - Remove the MorphlineHandlerImpl configuration option from MorphlineSink
+    * [FLUME-2334] - Upgrade Asynchbase to 1.5.0 as this include hbase 0.96.x support
+    * [FLUME-2335] - TestHBaseSink#testWithoutConfigurationObject() must delete the table at the end of the test
+    * [FLUME-2336] - HBase tests that pass in ZK configs must use a new context object
+    * [FLUME-2338] - Support coalescing increments in HBaseSink
+    * [FLUME-2345] - Update to Kite 0.12.0 dependency
+    * [FLUME-2347] - Add FLUME_JAVA_OPTS which allows users to inject java properties from cmd line
+    * [FLUME-2350] - Consume Order tests need to space out file creation
+    * [FLUME-2357] - HDFS sink should retry closing files that previously had close errors
+    * [FLUME-2381] - Upgrade Hadoop version in Hadoop 2 profile to 2.4.0
+
+** Documentation
+    * [FLUME-1223] - Userguide improvement rolling file sink
+    * [FLUME-1678] - Incorrect documentation for HBase sink
+    * [FLUME-1851] - User Guide grammar mistake
+    * [FLUME-2064] - Typo/Grammar in flume main user doc under Scribe
+    * [FLUME-2065] - Regex Extractor Interceptor config agent name inconsistent with rest of docs
+    * [FLUME-2183] - Add "Other Resources" page to wiki
+    * [FLUME-2278] - Incorrect documentation for write-timeout of File Channel
+    * [FLUME-2319] - Incorrect property name of Ganglia Reporting documentation
+
+
 Release Notes - Flume - Version v1.4.0
 
 ** New Feature
