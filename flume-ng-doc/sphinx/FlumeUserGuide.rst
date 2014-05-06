@@ -15,7 +15,7 @@
 
 
 ======================================
-Flume 1.5.0-SNAPSHOT User Guide
+Flume 1.5.0 User Guide
 ======================================
 
 Introduction
@@ -2943,7 +2943,7 @@ Log4J Appender
 
 Appends Log4j events to a flume agent's avro source. A client using this
 appender must have the flume-ng-sdk in the classpath (eg,
-flume-ng-sdk-1.5.0-SNAPSHOT.jar).
+flume-ng-sdk-1.5.0.jar).
 Required properties are in **bold**.
 
 =====================  =======  ==================================================================================
@@ -3007,7 +3007,7 @@ Load Balancing Log4J Appender
 
 Appends Log4j events to a list of flume agent's avro source. A client using this
 appender must have the flume-ng-sdk in the classpath (eg,
-flume-ng-sdk-1.5.0-SNAPSHOT.jar). This appender supports a round-robin and random
+flume-ng-sdk-1.5.0.jar). This appender supports a round-robin and random
 scheme for performing the load balancing. It also supports a configurable backoff
 timeout so that down agents are removed temporarily from the set of hosts
 Required properties are in **bold**.
