@@ -120,6 +120,7 @@ Release Notes - Flume - Version v1.5.0
     * [FLUME-2350] - Consume Order tests need to space out file creation
     * [FLUME-2357] - HDFS sink should retry closing files that previously had close errors
     * [FLUME-2381] - Upgrade Hadoop version in Hadoop 2 profile to 2.4.0
+    * [FLUME-2379] - Flume's pom files are invalid and not parseable by non-maven build tools
 
 ** Documentation
     * [FLUME-1223] - Userguide improvement rolling file sink
