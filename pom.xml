@@ -50,7 +50,7 @@ limitations under the License.
     <elasticsearch.version>0.90.1</elasticsearch.version>
 
     <hadoop2.version>2.4.0</hadoop2.version>
-
+    <thrift.version>0.7.0</thrift.version>
     <kite.version>0.12.0</kite.version>
   </properties>
 
