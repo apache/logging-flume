@@ -1068,7 +1068,7 @@ limitations under the License.
       <dependency>
         <groupId>org.hbase</groupId>
         <artifactId>asynchbase</artifactId>
-        <version>1.6.0-SNAPSHOT</version>
+        <version>1.5.0</version>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
