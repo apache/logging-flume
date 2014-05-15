@@ -404,7 +404,11 @@ class BucketWriter {
   public synchronized void close(boolean callCloseCallback)
     throws IOException, InterruptedException {
     checkAndThrowInterruptedException();
-    flush();
+    try {
+      flush();
+    } catch (IOException e) {
+      LOG.warn("pre-close flush failed", e);
+    }
     boolean failedToClose = false;
     LOG.info("Closing {}", bucketPath);
     CallRunner<Void> closeCallRunner = createCloseCallRunner();
