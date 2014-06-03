@@ -26,6 +26,7 @@ import org.apache.flume.Event;
 import org.apache.flume.conf.ComponentConfiguration;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurableComponent;
+import org.apache.flume.formatter.output.BucketPath;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Client;
 
@@ -75,10 +76,14 @@ public abstract class AbstractElasticSearchIndexRequestBuilderFactory
   public IndexRequestBuilder createIndexRequest(Client client,
         String indexPrefix, String indexType, Event event) throws IOException {
     IndexRequestBuilder request = prepareIndex(client);
+    String realIndexPrefix = BucketPath.escapeString(indexPrefix, event.getHeaders());
+    String realIndexType = BucketPath.escapeString(indexType, event.getHeaders());
+
     TimestampedEvent timestampedEvent = new TimestampedEvent(event);
     long timestamp = timestampedEvent.getTimestamp();
-    String indexName = getIndexName(indexPrefix, timestamp);
-    prepareIndexRequest(request, indexName, indexType, timestampedEvent);
+
+    String indexName = getIndexName(realIndexPrefix, timestamp);
+    prepareIndexRequest(request, indexName, realIndexType, timestampedEvent);
     return request;
   }
 

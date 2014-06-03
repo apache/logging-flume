@@ -24,6 +24,7 @@ import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.conf.ComponentConfiguration;
+import org.apache.flume.formatter.output.BucketPath;
 
 import java.util.TimeZone;
 
@@ -60,13 +61,14 @@ public class TimeBasedIndexNameBuilder implements
   public String getIndexName(Event event) {
     TimestampedEvent timestampedEvent = new TimestampedEvent(event);
     long timestamp = timestampedEvent.getTimestamp();
-    return new StringBuilder(indexPrefix).append('-')
+    String realIndexPrefix = BucketPath.escapeString(indexPrefix, event.getHeaders());
+    return new StringBuilder(realIndexPrefix).append('-')
       .append(fastDateFormat.format(timestamp)).toString();
   }
   
   @Override
   public String getIndexPrefix(Event event) {
-    return indexPrefix;
+    return BucketPath.escapeString(indexPrefix, event.getHeaders());
   }
 
   @Override

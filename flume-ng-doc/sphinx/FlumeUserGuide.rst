@@ -2008,7 +2008,9 @@ Property Name     Default                                                       
 **type**          --                                                                       The component type name, needs to be ``org.apache.flume.sink.elasticsearch.ElasticSearchSink``
 **hostNames**     --                                                                       Comma separated list of hostname:port, if the port is not present the default port '9300' will be used
 indexName         flume                                                                    The name of the index which the date will be appended to. Example 'flume' -> 'flume-yyyy-MM-dd'
+                                                                                           Arbitrary header substitution is supported, eg. %{header} replaces with value of named event header
 indexType         logs                                                                     The type to index the document to, defaults to 'log'
+                                                                                           Arbitrary header substitution is supported, eg. %{header} replaces with value of named event header
 clusterName       elasticsearch                                                            Name of the ElasticSearch cluster to connect to
 batchSize         100                                                                      Number of events to be written per txn.
 ttl               --                                                                       TTL in days, when set will cause the expired documents to be deleted automatically,
@@ -2020,6 +2022,10 @@ serializer        org.apache.flume.sink.elasticsearch.ElasticSearchLogStashEvent
                                                                                            either class are accepted but ElasticSearchIndexRequestBuilderFactory is preferred.
 serializer.*      --                                                                       Properties to be passed to the serializer.
 ================  ======================================================================== =======================================================================================================
+
+.. note:: Header substitution is a handy to use the value of an event header to dynamically decide the indexName and indexType to use when storing the event.
+          Caution should be used in using this feature as the event submitter now has control of the indexName and indexType.
+          Furthermore, if the elasticsearch REST client is used then the event submitter has control of the URL path used.
 
 Example for agent named a1:
 

@@ -19,6 +19,7 @@ package org.apache.flume.sink.elasticsearch;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.conf.ComponentConfiguration;
+import org.apache.flume.formatter.output.BucketPath;
 
 public class SimpleIndexNameBuilder implements IndexNameBuilder {
 
@@ -26,12 +27,12 @@ public class SimpleIndexNameBuilder implements IndexNameBuilder {
 
   @Override
   public String getIndexName(Event event) {
-    return indexName;
+    return BucketPath.escapeString(indexName, event.getHeaders());
   }
 
   @Override
   public String getIndexPrefix(Event event) {
-    return indexName;
+    return BucketPath.escapeString(indexName, event.getHeaders());
   }
 
   @Override
