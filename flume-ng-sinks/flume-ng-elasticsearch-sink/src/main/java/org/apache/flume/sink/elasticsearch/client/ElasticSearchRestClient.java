@@ -116,8 +116,6 @@ public class  ElasticSearchRestClient implements ElasticSearchClient {
   public void execute() throws Exception {
     int statusCode = 0, triesCount = 0;
     HttpResponse response = null;
-    logger.info("Sending bulk request to elasticsearch cluster");
-
     String entity;
     synchronized (bulkBuilder) {
       entity = bulkBuilder.toString();

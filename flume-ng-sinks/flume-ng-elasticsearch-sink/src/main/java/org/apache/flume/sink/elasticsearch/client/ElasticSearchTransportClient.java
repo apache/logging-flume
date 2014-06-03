@@ -178,7 +178,6 @@ public class ElasticSearchTransportClient implements ElasticSearchClient {
   @Override
   public void execute() throws Exception {
     try {
-      logger.info("Sending bulk to elasticsearch cluster");
       BulkResponse bulkResponse = bulkRequestBuilder.execute().actionGet();
       if (bulkResponse.hasFailures()) {
         throw new EventDeliveryException(bulkResponse.buildFailureMessage());
