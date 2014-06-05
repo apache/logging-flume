@@ -161,6 +161,36 @@ limitations under the License.
       </dependencies>
     </profile>
 
+    <profile>
+      <id>hbase-98</id>
+      <activation>
+        <property>
+          <name>hadoop.profile</name>
+          <value>hbase-98</value>
+        </property>
+      </activation>
+      <dependencies>
+
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-hdfs</artifactId>
+          <optional>true</optional>
+        </dependency>
+
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-auth</artifactId>
+          <optional>true</optional>
+        </dependency>
+
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-minicluster</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+      </dependencies>
+    </profile>
   </profiles>
 
 </project>
