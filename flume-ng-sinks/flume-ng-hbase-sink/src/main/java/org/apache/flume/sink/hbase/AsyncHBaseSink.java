@@ -47,6 +47,8 @@ import org.apache.hadoop.hbase.zookeeper.ZKConfig;
 import org.hbase.async.AtomicIncrementRequest;
 import org.hbase.async.HBaseClient;
 import org.hbase.async.PutRequest;
+import org.jboss.netty.channel.socket.nio
+  .NioClientSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -409,13 +411,17 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
             + "before calling start on an old instance.");
     sinkCounter.start();
     sinkCounter.incrementConnectionCreatedCount();
-    if (!isTimeoutTest) {
       sinkCallbackPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
         .setNameFormat(this.getName() + " HBase Call Pool").build());
+    logger.info("Callback pool created");
+    if(!isTimeoutTest) {
+      client = new HBaseClient(zkQuorum, zkBaseDir, sinkCallbackPool);
     } else {
-      sinkCallbackPool = Executors.newSingleThreadExecutor();
+      client = new HBaseClient(zkQuorum, zkBaseDir,
+        new NioClientSocketChannelFactory(Executors
+          .newSingleThreadExecutor(),
+          Executors.newSingleThreadExecutor()));
     }
-    client = new HBaseClient(zkQuorum, zkBaseDir, sinkCallbackPool);
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean fail = new AtomicBoolean(false);
     client.ensureTableFamilyExists(
@@ -424,6 +430,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
               @Override
               public Object call(Object arg) throws Exception {
                 latch.countDown();
+                logger.info("table found");
                 return null;
               }
             },
@@ -437,7 +444,9 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
             });
 
     try {
+      logger.info("waiting on callback");
       latch.await();
+      logger.info("callback received");
     } catch (InterruptedException e) {
       sinkCounter.incrementConnectionFailedCount();
       throw new FlumeException(
@@ -465,15 +474,20 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
     }
     sinkCounter.incrementConnectionClosedCount();
     sinkCounter.stop();
-    sinkCallbackPool.shutdown();
+
     try {
-      if(!sinkCallbackPool.awaitTermination(5, TimeUnit.SECONDS)) {
-        sinkCallbackPool.shutdownNow();
+      if (sinkCallbackPool != null) {
+        sinkCallbackPool.shutdown();
+        if (!sinkCallbackPool.awaitTermination(5, TimeUnit.SECONDS)) {
+          sinkCallbackPool.shutdownNow();
+        }
       }
     } catch (InterruptedException e) {
       logger.error("Interrupted while waiting for asynchbase sink pool to " +
         "die", e);
-      sinkCallbackPool.shutdownNow();
+      if (sinkCallbackPool != null) {
+        sinkCallbackPool.shutdownNow();
+      }
     }
     sinkCallbackPool = null;
     client = null;

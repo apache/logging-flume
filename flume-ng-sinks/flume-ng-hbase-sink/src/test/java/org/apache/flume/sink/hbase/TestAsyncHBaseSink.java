@@ -209,6 +209,7 @@ public class TestAsyncHBaseSink {
     Channel channel = new MemoryChannel();
     Configurables.configure(channel, ctx);
     sink.setChannel(channel);
+    channel.start();
     sink.start();
     Transaction tx = channel.getTransaction();
     tx.begin();
