@@ -2365,6 +2365,7 @@ To disable the use of overflow disk and function purely as a in-memory channel:
   a1.channels = c1
   a1.channels.c1.type = SPILLABLEMEMORY
   a1.channels.c1.memoryCapacity = 100000
+  a1.channels.c1.overflowCapacity = 0
 
 
 Pseudo Transaction Channel
