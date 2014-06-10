@@ -3,7 +3,7 @@ Release Notes - Flume - Version v1.5.0.1
 ** Bug
     * [FLUME-2389] - Spillable Memory Channel Example is incorrect
     * [FLUME-2397] - HBase-98 compatibility
-
+    * [FLUME-2400] - Dataset Sink is not built in hbase-98 profile
 
 Release Notes - Flume - Version v1.5.0
 
