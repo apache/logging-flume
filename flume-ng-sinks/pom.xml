@@ -74,6 +74,22 @@ limitations under the License.
       </modules>
     </profile>
 
+    <profile>
+      <id>hbase-98</id>
+      <activation>
+        <property>
+          <name>hadoop.profile</name>
+          <value>hbase-98</value>
+        </property>
+      </activation>
+      <!-- add the flume-dataset-sink, which is only compatible with hadoop-2
+           -->
+      <modules>
+        <module>flume-dataset-sink</module>
+      </modules>
+    </profile>
+
+
   </profiles>
 
 </project>
