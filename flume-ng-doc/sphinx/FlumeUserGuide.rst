@@ -792,6 +792,7 @@ restartThrottle  10000        Amount of time (in millis) to wait before attempti
 restart          false        Whether the executed cmd should be restarted if it dies
 logStdErr        false        Whether the command's stderr should be logged
 batchSize        20           The max number of lines to read and send to the channel at a time
+batchTimeout     3000         Amount of time (in milliseconds) to wait, if the buffer size was not reached, before data is pushed downstream
 selector.type    replicating  replicating or multiplexing
 selector.*                    Depends on the selector.type value
 interceptors     --           Space-separated list of interceptors
