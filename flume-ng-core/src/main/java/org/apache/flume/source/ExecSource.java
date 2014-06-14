@@ -131,6 +131,12 @@ import java.nio.charset.Charset;
  * <td>integer</td>
  * <td>20</td>
  * </tr>
+ * <tr>
+ * <td><tt>batchTimeout</tt></td>
+ * <td>Amount of time (in milliseconds) to wait, if the buffer size was not reached, before data is pushed downstream.</td>
+ * <td>long</td>
+ * <td>3000</td>
+ * </tr>
  * </table>
  * <p>
  * <b>Metrics</b>
