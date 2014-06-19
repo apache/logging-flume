@@ -19,7 +19,6 @@ Release Notes - Flume - Version v1.5.0
 
 ** Improvement
     * [FLUME-1542] - Flume User Guide sample configurations need fixing
-    * [FLUME-1899] - Make SpoolDir work with Sub-Directories
     * [FLUME-2052] - Spooling directory source should be able to replace or ignore malformed characters
     * [FLUME-2130] - Handle larger payloads via SyslogUDPSource
     * [FLUME-2139] - upgrade morphline library dependency to a 0.5.0 release
