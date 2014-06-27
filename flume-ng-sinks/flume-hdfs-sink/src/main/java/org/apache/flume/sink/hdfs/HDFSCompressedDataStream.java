@@ -29,8 +29,10 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
+import org.apache.hadoop.io.compress.CodecPool;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionOutputStream;
+import org.apache.hadoop.io.compress.Compressor;
 import org.apache.hadoop.io.compress.DefaultCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +50,7 @@ public class HDFSCompressedDataStream extends AbstractHDFSWriter {
   private Context serializerContext;
   private EventSerializer serializer;
   private boolean useRawLocalFileSystem;
+  private Compressor compressor;
 
   @Override
   public void configure(Context context) {
@@ -83,7 +86,6 @@ public class HDFSCompressedDataStream extends AbstractHDFSWriter {
             "is not of type LocalFileSystem: " + hdfs.getClass().getName());
       }
     }
-
     boolean appending = false;
     if (conf.getBoolean("hdfs.append.support", false) == true && hdfs.isFile
     (dstPath)) {
@@ -92,7 +94,10 @@ public class HDFSCompressedDataStream extends AbstractHDFSWriter {
     } else {
       fsOut = hdfs.create(dstPath);
     }
-    cmpOut = codec.createOutputStream(fsOut);
+    if(compressor == null) {
+      compressor = CodecPool.getCompressor(codec, conf);
+    }
+    cmpOut = codec.createOutputStream(fsOut, compressor);
     serializer = EventSerializerFactory.getInstance(serializerType,
         serializerContext, cmpOut);
     if (appending && !serializer.supportsReopen()) {
@@ -148,6 +153,10 @@ public class HDFSCompressedDataStream extends AbstractHDFSWriter {
     fsOut.flush();
     fsOut.sync();
     cmpOut.close();
+    if (compressor != null) {
+      CodecPool.returnCompressor(compressor);
+      compressor = null;
+    }
     unregisterCurrentStream();
   }
 
