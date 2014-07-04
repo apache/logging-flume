@@ -59,17 +59,24 @@ public class ScribeSource extends AbstractSource implements
 
   public static final String SCRIBE_CATEGORY = "category";
 
+  private static final int DEFAULT_PORT = 1499;
   private static final int DEFAULT_WORKERS = 5;
+  private static final int DEFAULT_MAX_READ_BUFFER_BYTES = 16384000;
 
   private TServer server;
-  private int port = 1499;
+  private int port;
   private int workers;
+  private int maxReadBufferBytes;
 
   private SourceCounter sourceCounter;
 
   @Override
   public void configure(Context context) {
-    port = context.getInteger("port", port);
+    port = context.getInteger("port", DEFAULT_PORT);
+    maxReadBufferBytes = context.getInteger("maxReadBufferBytes", DEFAULT_MAX_READ_BUFFER_BYTES);
+    if(maxReadBufferBytes <= 0){
+      maxReadBufferBytes = DEFAULT_MAX_READ_BUFFER_BYTES;
+    }
 
     workers = context.getInteger("workerThreads", DEFAULT_WORKERS);
     if (workers <= 0) {
@@ -91,8 +98,9 @@ public class ScribeSource extends AbstractSource implements
 
         args.workerThreads(workers);
         args.processor(processor);
-        args.transportFactory(new TFramedTransport.Factory());
+        args.transportFactory(new TFramedTransport.Factory(maxReadBufferBytes));
         args.protocolFactory(new TBinaryProtocol.Factory(false, false));
+        args.maxReadBufferBytes = maxReadBufferBytes;
 
         server = new THsHaServer(args);
 

@@ -1484,15 +1484,16 @@ Flume should use ScribeSource based on Thrift with compatible transfering protoc
 For deployment of Scribe please follow the guide from Facebook.
 Required properties are in **bold**.
 
-==============  ===========  ==============================================
-Property Name   Default      Description
-==============  ===========  ==============================================
-**type**        --           The component type name, needs to be ``org.apache.flume.source.scribe.ScribeSource``
-port            1499         Port that Scribe should be connected
-workerThreads   5            Handing threads number in Thrift
+====================  ===========  ==============================================
+Property Name         Default      Description
+====================  ===========  ==============================================
+**type**              --           The component type name, needs to be ``org.apache.flume.source.scribe.ScribeSource``
+port                  1499         Port that Scribe should be connected
+maxReadBufferBytes    16384000     Thrift Default FrameBuffer Size
+workerThreads         5            Handing threads number in Thrift
 selector.type
 selector.*
-==============  ===========  ==============================================
+====================  ===========  ==============================================
 
 Example for agent named a1:
 
