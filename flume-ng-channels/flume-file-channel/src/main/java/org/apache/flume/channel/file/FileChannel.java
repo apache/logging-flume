@@ -95,6 +95,7 @@ public class FileChannel extends BasicChannelSemantics {
   private String encryptionActiveKey;
   private String encryptionCipherProvider;
   private boolean useDualCheckpoints;
+  private boolean compressBackupCheckpoint;
   private boolean fsyncPerTransaction;
   private int fsyncInterval;
 
@@ -110,6 +111,11 @@ public class FileChannel extends BasicChannelSemantics {
     useDualCheckpoints = context.getBoolean(
         FileChannelConfiguration.USE_DUAL_CHECKPOINTS,
         FileChannelConfiguration.DEFAULT_USE_DUAL_CHECKPOINTS);
+
+    compressBackupCheckpoint = context.getBoolean(
+        FileChannelConfiguration.COMPRESS_BACKUP_CHECKPOINT,
+        FileChannelConfiguration.DEFAULT_COMPRESS_BACKUP_CHECKPOINT);
+
     String homePath = System.getProperty("user.home").replace('\\', '/');
 
     String strCheckpointDir =
@@ -272,6 +278,7 @@ public class FileChannel extends BasicChannelSemantics {
       builder.setEncryptionKeyAlias(encryptionActiveKey);
       builder.setEncryptionCipherProvider(encryptionCipherProvider);
       builder.setUseDualCheckpoints(useDualCheckpoints);
+      builder.setCompressBackupCheckpoint(compressBackupCheckpoint);
       builder.setBackupCheckpointDir(backupCheckpointDir);
       builder.setFsyncPerTransaction(fsyncPerTransaction);
       builder.setFsyncInterval(fsyncInterval);
