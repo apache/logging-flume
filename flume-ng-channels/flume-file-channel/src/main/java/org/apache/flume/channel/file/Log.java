@@ -123,6 +123,7 @@ public class Log {
   private boolean didFastReplay = false;
   private boolean didFullReplayDueToBadCheckpointException = false;
   private final boolean useDualCheckpoints;
+  private final boolean compressBackupCheckpoint;
   private volatile boolean backupRestored = false;
 
   private final boolean fsyncPerTransaction;
@@ -151,6 +152,7 @@ public class Log {
     private String bEncryptionCipherProvider;
     private long bUsableSpaceRefreshInterval = 15L * 1000L;
     private boolean bUseDualCheckpoints = false;
+    private boolean bCompressBackupCheckpoint = false;
     private File bBackupCheckpointDir = null;
 
     private boolean fsyncPerTransaction = true;
@@ -242,6 +244,11 @@ public class Log {
       return this;
     }
 
+    Builder setCompressBackupCheckpoint(boolean compressBackupCheckpoint) {
+      this.bCompressBackupCheckpoint = compressBackupCheckpoint;
+      return this;
+    }
+
     Builder setBackupCheckpointDir(File backupCheckpointDir) {
       this.bBackupCheckpointDir = backupCheckpointDir;
       return this;
@@ -249,16 +256,17 @@ public class Log {
 
     Log build() throws IOException {
       return new Log(bCheckpointInterval, bMaxFileSize, bQueueCapacity,
-        bUseDualCheckpoints, bCheckpointDir, bBackupCheckpointDir, bName,
-        useLogReplayV1, useFastReplay, bMinimumRequiredSpace,
-        bEncryptionKeyProvider, bEncryptionKeyAlias,
+        bUseDualCheckpoints, bCompressBackupCheckpoint,bCheckpointDir,
+        bBackupCheckpointDir, bName, useLogReplayV1, useFastReplay,
+        bMinimumRequiredSpace, bEncryptionKeyProvider, bEncryptionKeyAlias,
         bEncryptionCipherProvider, bUsableSpaceRefreshInterval,
         fsyncPerTransaction, fsyncInterval, bLogDirs);
     }
   }
 
   private Log(long checkpointInterval, long maxFileSize, int queueCapacity,
-    boolean useDualCheckpoints, File checkpointDir, File backupCheckpointDir,
+    boolean useDualCheckpoints, boolean compressBackupCheckpoint,
+    File checkpointDir, File backupCheckpointDir,
     String name, boolean useLogReplayV1, boolean useFastReplay,
     long minimumRequiredSpace, @Nullable KeyProvider encryptionKeyProvider,
     @Nullable String encryptionKeyAlias,
@@ -338,6 +346,7 @@ public class Log {
     this.maxFileSize = maxFileSize;
     this.queueCapacity = queueCapacity;
     this.useDualCheckpoints = useDualCheckpoints;
+    this.compressBackupCheckpoint = compressBackupCheckpoint;
     this.checkpointDir = checkpointDir;
     this.backupCheckpointDir = backupCheckpointDir;
     this.logDirs = logDirs;
@@ -415,9 +424,10 @@ public class Log {
 
       try {
         backingStore =
-            EventQueueBackingStoreFactory.get(checkpointFile,
-                backupCheckpointDir, queueCapacity, channelNameDescriptor,
-                true, this.useDualCheckpoints);
+          EventQueueBackingStoreFactory.get(checkpointFile,
+            backupCheckpointDir, queueCapacity, channelNameDescriptor,
+            true, this.useDualCheckpoints,
+            this.compressBackupCheckpoint);
         queue = new FlumeEventQueue(backingStore, inflightTakesFile,
                 inflightPutsFile, queueSetDir);
         LOGGER.info("Last Checkpoint " + new Date(checkpointFile.lastModified())
@@ -451,9 +461,10 @@ public class Log {
                 "directory to recover from a corrupt or incomplete checkpoint");
           }
         }
-        backingStore = EventQueueBackingStoreFactory.get(checkpointFile,
-            backupCheckpointDir,
-            queueCapacity, channelNameDescriptor, true, useDualCheckpoints);
+        backingStore = EventQueueBackingStoreFactory.get(
+          checkpointFile, backupCheckpointDir, queueCapacity,
+          channelNameDescriptor, true, useDualCheckpoints,
+          compressBackupCheckpoint);
         queue = new FlumeEventQueue(backingStore, inflightTakesFile,
                 inflightPutsFile, queueSetDir);
         // If the checkpoint was deleted due to BadCheckpointException, then

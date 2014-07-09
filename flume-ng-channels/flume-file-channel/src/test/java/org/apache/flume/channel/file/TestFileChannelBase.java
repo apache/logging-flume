@@ -38,12 +38,17 @@ public class TestFileChannelBase {
   protected File[] dataDirs;
   protected String dataDir;
   protected File backupDir;
+  protected File uncompressedBackupCheckpoint;
+  protected File compressedBackupCheckpoint;
 
   @Before
   public void setup() throws Exception {
     baseDir = Files.createTempDir();
     checkpointDir = new File(baseDir, "chkpt");
     backupDir = new File(baseDir, "backup");
+    uncompressedBackupCheckpoint = new File(backupDir, "checkpoint");
+    compressedBackupCheckpoint = new File(backupDir,
+      "checkpoint.snappy");
     Assert.assertTrue(checkpointDir.mkdirs() || checkpointDir.isDirectory());
     Assert.assertTrue(backupDir.mkdirs() || backupDir.isDirectory());
     dataDirs = new File[3];

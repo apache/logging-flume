@@ -693,13 +693,27 @@ public class TestFileChannelRestart extends TestFileChannelBase {
   // Make sure the entire channel was not replayed, only the events from the
   // backup.
   @Test
-  public void testBackupUsedEnsureNoFullReplay() throws Exception {
+  public void testBackupUsedEnsureNoFullReplayWithoutCompression() throws
+    Exception {
+    testBackupUsedEnsureNoFullReplay(false);
+  }
+  @Test
+  public void testBackupUsedEnsureNoFullReplayWithCompression() throws
+    Exception {
+    testBackupUsedEnsureNoFullReplay(true);
+  }
+
+  private void testBackupUsedEnsureNoFullReplay(boolean compressedBackup)
+    throws Exception {
     File dataDir = Files.createTempDir();
     File tempBackup = Files.createTempDir();
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.DATA_DIRS,
       dataDir.getAbsolutePath());
-    overrides.put(FileChannelConfiguration.USE_DUAL_CHECKPOINTS, "true");
+    overrides.put(FileChannelConfiguration.USE_DUAL_CHECKPOINTS,
+      "true");
+    overrides.put(FileChannelConfiguration.COMPRESS_BACKUP_CHECKPOINT,
+      String.valueOf(compressedBackup));
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
@@ -829,6 +843,86 @@ public class TestFileChannelRestart extends TestFileChannelBase {
     } finally {
       channel.stop();
     }
+  }
+
+  @Test
+  public void testCompressBackup() throws Throwable {
+    Map<String, String> overrides = Maps.newHashMap();
+    overrides.put(FileChannelConfiguration.USE_DUAL_CHECKPOINTS,
+      "true");
+    overrides.put(FileChannelConfiguration.MAX_FILE_SIZE, "1000");
+    overrides.put(FileChannelConfiguration.COMPRESS_BACKUP_CHECKPOINT,
+      "true");
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    putEvents(channel, "restart", 10, 100);
+    forceCheckpoint(channel);
+
+    //Wait for the backup checkpoint
+    Thread.sleep(2000);
+
+    Assert.assertTrue(compressedBackupCheckpoint.exists());
+
+    Serialization.decompressFile(compressedBackupCheckpoint,
+      uncompressedBackupCheckpoint);
+
+    File checkpoint = new File(checkpointDir, "checkpoint");
+    Assert.assertTrue(FileUtils.contentEquals(checkpoint,
+      uncompressedBackupCheckpoint));
+
+    channel.stop();
+  }
+
+  @Test
+  public void testToggleCheckpointCompressionFromTrueToFalse()
+    throws Exception {
+    restartToggleCompression(true);
+  }
+
+  @Test
+  public void testToggleCheckpointCompressionFromFalseToTrue()
+    throws Exception {
+    restartToggleCompression(false);
+  }
+
+  public void restartToggleCompression(boolean originalCheckpointCompressed)
+    throws Exception {
+    Map<String, String> overrides = Maps.newHashMap();
+    overrides.put(FileChannelConfiguration.USE_DUAL_CHECKPOINTS,
+      "true");
+    overrides.put(FileChannelConfiguration.MAX_FILE_SIZE, "1000");
+    overrides.put(FileChannelConfiguration.COMPRESS_BACKUP_CHECKPOINT,
+      String.valueOf(originalCheckpointCompressed));
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> in = fillChannel(channel, "restart");
+    forceCheckpoint(channel);
+    Thread.sleep(2000);
+    Assert.assertEquals(compressedBackupCheckpoint.exists(),
+      originalCheckpointCompressed);
+    Assert.assertEquals(uncompressedBackupCheckpoint.exists(),
+      !originalCheckpointCompressed);
+    channel.stop();
+    File checkpoint = new File(checkpointDir, "checkpoint");
+    Assert.assertTrue(checkpoint.delete());
+    File checkpointMetaData = Serialization.getMetaDataFile(
+      checkpoint);
+    Assert.assertTrue(checkpointMetaData.delete());
+    overrides.put(FileChannelConfiguration.COMPRESS_BACKUP_CHECKPOINT,
+      String.valueOf(!originalCheckpointCompressed));
+    channel = createFileChannel(overrides);
+    channel.start();
+    Assert.assertTrue(channel.isOpen());
+    Set<String> out = consumeChannel(channel);
+    compareInputAndOut(in, out);
+    forceCheckpoint(channel);
+    Thread.sleep(2000);
+    Assert.assertEquals(compressedBackupCheckpoint.exists(),
+      !originalCheckpointCompressed);
+    Assert.assertEquals(uncompressedBackupCheckpoint.exists(),
+      originalCheckpointCompressed);
   }
 
   private static void slowdownBackup(FileChannel channel) {
