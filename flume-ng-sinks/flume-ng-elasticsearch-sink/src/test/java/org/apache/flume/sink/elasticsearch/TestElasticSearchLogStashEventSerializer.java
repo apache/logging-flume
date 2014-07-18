@@ -28,6 +28,9 @@ import org.junit.Test;
 import java.util.Date;
 import java.util.Map;
 
+import com.google.gson.JsonParser;
+import com.google.gson.JsonElement;
+
 import static org.apache.flume.sink.elasticsearch.ElasticSearchEventSerializer.charset;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.junit.Assert.assertEquals;
@@ -53,28 +56,31 @@ public class TestElasticSearchLogStashEventSerializer {
     Event event = EventBuilder.withBody(message.getBytes(charset));
     event.setHeaders(headers);
 
-    XContentBuilder expected = jsonBuilder().startObject();
-    expected.field("@message", new String(message.getBytes(), charset));
-    expected.field("@timestamp", new Date(timestamp));
-    expected.field("@source", "flume_tail_src");
-    expected.field("@type", "sometype");
-    expected.field("@source_host", "test@localhost");
-    expected.field("@source_path", "/tmp/test");
-    expected.startObject("@fields");
-    expected.field("timestamp", String.valueOf(timestamp));
-    expected.field("src_path", "/tmp/test");
-    expected.field("host", "test@localhost");
-    expected.field("headerNameTwo", "headerValueTwo");
-    expected.field("source", "flume_tail_src");
-    expected.field("headerNameOne", "headerValueOne");
-    expected.field("type", "sometype");
-    expected.endObject();
+    XContentBuilder expected = jsonBuilder()
+        .startObject();
+            expected.field("@message", new String(message.getBytes(), charset));
+            expected.field("@timestamp", new Date(timestamp));
+            expected.field("@source", "flume_tail_src");
+            expected.field("@type", "sometype");
+            expected.field("@source_host", "test@localhost");
+            expected.field("@source_path", "/tmp/test");
 
-    expected.endObject();
+            expected.startObject("@fields");
+                expected.field("timestamp", String.valueOf(timestamp));
+                expected.field("src_path", "/tmp/test");
+                expected.field("host", "test@localhost");
+                expected.field("headerNameTwo", "headerValueTwo");
+                expected.field("source", "flume_tail_src");
+                expected.field("headerNameOne", "headerValueOne");
+                expected.field("type", "sometype");
+            expected.endObject();
+
+        expected.endObject();
 
     XContentBuilder actual = fixture.getContentBuilder(event);
-    assertEquals(new String(expected.bytes().array()), new String(actual
-        .bytes().array()));
+    
+    JsonParser parser = new JsonParser();
+    assertEquals(parser.parse(expected.string()),parser.parse(actual.string()));
   }
 
   @Test
@@ -96,27 +102,30 @@ public class TestElasticSearchLogStashEventSerializer {
     Event event = EventBuilder.withBody(message.getBytes(charset));
     event.setHeaders(headers);
 
-    XContentBuilder expected = jsonBuilder().startObject();
-    expected.field("@message", new String(message.getBytes(), charset));
-    expected.field("@timestamp", new Date(timestamp));
-    expected.field("@source", "flume_tail_src");
-    expected.field("@type", "sometype");
-    expected.field("@source_host", "test@localhost");
-    expected.field("@source_path", "/tmp/test");
-    expected.startObject("@fields");
-    expected.field("timestamp", String.valueOf(timestamp));
-    expected.field("src_path", "/tmp/test");
-    expected.field("host", "test@localhost");
-    expected.field("headerNameTwo", "headerValueTwo");
-    expected.field("source", "flume_tail_src");
-    expected.field("headerNameOne", "headerValueOne");
-    expected.field("type", "sometype");
-    expected.endObject();
+    XContentBuilder expected = jsonBuilder().
+        startObject();
+            expected.field("@message", new String(message.getBytes(), charset));
+            expected.field("@timestamp", new Date(timestamp));
+            expected.field("@source", "flume_tail_src");
+            expected.field("@type", "sometype");
+            expected.field("@source_host", "test@localhost");
+            expected.field("@source_path", "/tmp/test");
 
-    expected.endObject();
+            expected.startObject("@fields");
+                expected.field("timestamp", String.valueOf(timestamp));
+                expected.field("src_path", "/tmp/test");
+                expected.field("host", "test@localhost");
+                expected.field("headerNameTwo", "headerValueTwo");
+                expected.field("source", "flume_tail_src");
+                expected.field("headerNameOne", "headerValueOne");
+                expected.field("type", "sometype");
+            expected.endObject();
+
+        expected.endObject();
 
     XContentBuilder actual = fixture.getContentBuilder(event);
-    assertEquals(new String(expected.bytes().array()), new String(actual
-        .bytes().array()));
+
+    JsonParser parser = new JsonParser();
+    assertEquals(parser.parse(expected.string()),parser.parse(actual.string()));
   }
 }
