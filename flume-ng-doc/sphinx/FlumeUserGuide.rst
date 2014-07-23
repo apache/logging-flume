@@ -2841,6 +2841,45 @@ Sample flume.conf file:
   a1.sources.avroSrc.interceptors.morphlineinterceptor.morphlineFile = /etc/flume-ng/conf/morphline.conf
   a1.sources.avroSrc.interceptors.morphlineinterceptor.morphlineId = morphline1
 
+Search and Replace Interceptor
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This interceptor provides simple string-based search-and-replace functionality
+based on Java regular expressions. Backtracking / group capture is also available.
+This interceptor uses the same rules as in the Java Matcher.replaceAll() method.
+
+================  =======  ========================================================================
+Property Name     Default  Description
+================  =======  ========================================================================
+**type**          --       The component type name has to be ``search_replace``
+searchPattern     --       The pattern to search for and replace.
+replaceString     --       The replacement string.
+charset           UTF-8    The charset of the event body. Assumed by default to be UTF-8.
+================  =======  ========================================================================
+
+Example configuration:
+
+.. code-block:: properties
+
+  a1.sources.avroSrc.interceptors = search-replace
+  a1.sources.avroSrc.interceptors.search-replace.type = search_replace
+
+  # Remove leading alphanumeric characters in an event body.
+  a1.sources.avroSrc.interceptors.search-replace.searchPattern = ^[A-Za-z0-9_]+
+  a1.sources.avroSrc.interceptors.search-replace.replaceString =
+
+Another example:
+
+.. code-block:: properties
+
+  a1.sources.avroSrc.interceptors = search-replace
+  a1.sources.avroSrc.interceptors.search-replace.type = search_replace
+
+  # Use grouping operators to reorder and munge words on a line.
+  a1.sources.avroSrc.interceptors.search-replace.searchPattern = The quick brown ([a-z]+) jumped over the lazy ([a-z]+)
+  a1.sources.avroSrc.interceptors.search-replace.replaceString = The hungry $2 ate the careless $1
+
+
 Regex Filtering Interceptor
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

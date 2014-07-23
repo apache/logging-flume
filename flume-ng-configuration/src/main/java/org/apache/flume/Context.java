@@ -112,6 +112,15 @@ public class Context {
   public void put(String key, String value) {
     parameters.put(key, value);
   }
+
+  /**
+   * Returns true if this Context contains a mapping for key.
+   * Otherwise, returns false.
+   */
+  public boolean containsKey(String key) {
+    return parameters.containsKey(key);
+  }
+
   /**
    * Gets value mapped to key, returning defaultValue if unmapped.
    * @param key to be found
