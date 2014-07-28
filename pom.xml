@@ -46,12 +46,12 @@ limitations under the License.
     <siteUrlDeployment>file://people.apache.org/www/incubator.apache.org/flume</siteUrlDeployment>
     <stagingDirectory>${project.basedir}/target/docs</stagingDirectory>
 
-    <avro.version>1.7.3</avro.version>
+    <avro.version>1.7.4</avro.version>
     <elasticsearch.version>0.90.1</elasticsearch.version>
 
     <hadoop2.version>2.4.0</hadoop2.version>
     <thrift.version>0.7.0</thrift.version>
-    <kite.version>0.12.0</kite.version>
+    <kite.version>0.15.0</kite.version>
   </properties>
 
   <modules>
