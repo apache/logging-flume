@@ -166,7 +166,7 @@ public class TestDatasetSink {
   public void testPartitionedData() throws EventDeliveryException {
     REPO.create("partitioned", new DatasetDescriptor.Builder(DESCRIPTOR)
         .partitionStrategy(new PartitionStrategy.Builder()
-            .identity("id", String.class, 10) // partition by id
+            .identity("id", 10) // partition by id
             .build())
         .build());
 
