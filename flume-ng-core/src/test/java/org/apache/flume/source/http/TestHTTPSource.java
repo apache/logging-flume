@@ -365,7 +365,13 @@ public class TestHTTPSource {
           return null;
         }
       }};
-      SSLContext sc = SSLContext.getInstance("SSL");
+
+      SSLContext sc = null;
+      if (System.getProperty("java.vendor").contains("IBM")) {
+        sc = SSLContext.getInstance("SSL_TLS");
+      } else {
+        sc = SSLContext.getInstance("SSL");
+      }
 
       HostnameVerifier hv = new HostnameVerifier() {
         public boolean verify(String arg0, SSLSession arg1) {
