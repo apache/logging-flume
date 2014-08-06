@@ -70,7 +70,6 @@ public class StagedInstall {
   private Process process;
   private ProcessShutdownHook shutdownHook;
   private ProcessInputStreamConsumer consumer;
-  private String agentClasspath;
 
   private static StagedInstall INSTANCE;
 
@@ -96,7 +95,6 @@ public class StagedInstall {
     consumer.interrupt();
     consumer = null;
     configFilePath = null;
-    agentClasspath = null;
     Runtime.getRuntime().removeShutdownHook(shutdownHook);
     shutdownHook = null;
 
@@ -141,9 +139,6 @@ public class StagedInstall {
     builder.add(launchScriptPath);
     builder.add("agent");
     builder.add("--conf", confDirPath);
-    if (agentClasspath != null) {
-        builder.add("--classpath", agentClasspath);
-    }
     builder.add("--conf-file", configFilePath);
     builder.add("--name", agentName);
     builder.add("-D" + ENV_FLUME_LOG_DIR + "=" + logDirPath);
@@ -171,10 +166,6 @@ public class StagedInstall {
     Runtime.getRuntime().addShutdownHook(shutdownHook);
 
     Thread.sleep(3000); // sleep for 3s to let system initialize
-  }
-
-  public synchronized void setAgentClasspath(String agentClasspath) {
-      this.agentClasspath = agentClasspath;
   }
 
   public synchronized void reconfigure(Properties properties) throws Exception {
