@@ -122,17 +122,9 @@ public class TestFileChannel {
    public void testInOut() throws Exception {
       LOGGER.debug("testInOut() started.");
 
-      /* Find hadoop jar and append it to the flume agent's classpath */
-
-      String hadoopJarPath = findHadoopJar();
-      Assert.assertNotNull("Hadoop jar not found in classpath.",
-              hadoopJarPath);
-      StagedInstall.getInstance().setAgentClasspath(hadoopJarPath);
       StagedInstall.getInstance().startAgent("a1", agentProps);
       TimeUnit.SECONDS.sleep(10); // Wait for source and sink to finish
                                   // TODO make this more deterministic
-
-      LOGGER.info("Started flume agent with hadoop in classpath");
 
       /* Create expected output */
 
@@ -159,39 +151,6 @@ public class TestFileChannel {
       }
 
       LOGGER.debug("testInOut() ended.");
-  }
-
-  /**
-   * Search for and return the first path element found that includes hadoop.
-   * We search the class path of the current JVM process to grab the same
-   * hadoop jar that's depended on by the file channel.
-   *
-   * TODO Add all deps of hadoop jar to classpath
-   *
-   * @return path to the first hadoop jar found, null if not found
-   */
-  private String findHadoopJar() {
-      //Grab classpath
-      String classpath = System.getProperty("java.class.path");
-      String trimmedClasspath = classpath.trim();
-
-      //parse classpath into path elements
-      Iterable<String> pathElements = Splitter.on(Pattern.compile("[;:]"))
-                .omitEmptyStrings()
-                .trimResults()
-                .split(trimmedClasspath);
-
-      //find the first path element that includes the hadoop jar
-      for (String pathElement : pathElements) {
-          if (Pattern.compile("(?i)hadoop").matcher(pathElement).find()) {
-              return pathElement;
-          }
-      }
-
-      LOGGER.error("Hadoop not found in classpath: |" + classpath
-              + "|");
-
-      return null;
   }
 
 }
