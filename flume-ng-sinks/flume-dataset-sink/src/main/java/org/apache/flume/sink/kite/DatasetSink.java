@@ -34,9 +34,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.BinaryDecoder;
+import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DecoderFactory;
-import org.apache.avro.reflect.ReflectDatumReader;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -52,6 +54,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.kitesdk.data.Dataset;
 import org.kitesdk.data.DatasetRepositories;
 import org.kitesdk.data.DatasetWriter;
+import org.kitesdk.data.Datasets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,12 +71,13 @@ public class DatasetSink extends AbstractSink implements Configurable {
 
   static Configuration conf = new Configuration();
 
+  private String datasetURI = null;
   private String repositoryURI = null;
   private String datasetName = null;
   private long batchSize = DatasetSinkConstants.DEFAULT_BATCH_SIZE;
 
-  private Dataset<Object> targetDataset = null;
-  private DatasetWriter<Object> writer = null;
+  private Dataset<GenericRecord> targetDataset = null;
+  private DatasetWriter<GenericRecord> writer = null;
   private UserGroupInformation login = null;
   private SinkCounter counter = null;
 
@@ -82,16 +86,18 @@ public class DatasetSink extends AbstractSink implements Configurable {
   private long lastRolledMs = 0l;
 
   // for working with avro serialized records
-  private Object datum = null;
+  private GenericRecord datum = null;
+  // TODO: remove this after PARQUET-62 is released
+  private boolean reuseDatum = true;
   private BinaryDecoder decoder = null;
-  private LoadingCache<Schema, ReflectDatumReader<Object>> readers =
+  private LoadingCache<Schema, DatumReader<GenericRecord>> readers =
       CacheBuilder.newBuilder()
-      .build(new CacheLoader<Schema, ReflectDatumReader<Object>>() {
+      .build(new CacheLoader<Schema, DatumReader<GenericRecord>>() {
         @Override
-        public ReflectDatumReader<Object> load(Schema schema) {
+        public DatumReader<GenericRecord> load(Schema schema) {
           // must use the target dataset's schema for reading to ensure the
           // records are able to be stored using it
-          return new ReflectDatumReader<Object>(
+          return new GenericDatumReader<GenericRecord>(
               schema, targetDataset.getDescriptor().getSchema());
         }
       });
@@ -129,7 +135,7 @@ public class DatasetSink extends AbstractSink implements Configurable {
       });
 
   protected List<String> allowedFormats() {
-    return Lists.newArrayList("avro");
+    return Lists.newArrayList("avro", "parquet");
   }
 
   @Override
@@ -144,24 +150,38 @@ public class DatasetSink extends AbstractSink implements Configurable {
       this.login = KerberosUtil.proxyAs(effectiveUser, login);
     }
 
-    this.repositoryURI = context.getString(
-        DatasetSinkConstants.CONFIG_KITE_REPO_URI);
-    Preconditions.checkNotNull(repositoryURI, "Repository URI is missing");
-    this.datasetName = context.getString(
-        DatasetSinkConstants.CONFIG_KITE_DATASET_NAME);
-    Preconditions.checkNotNull(datasetName, "Dataset name is missing");
+    this.datasetURI = context.getString(
+        DatasetSinkConstants.CONFIG_KITE_DATASET_URI);
+    if (datasetURI != null) {
+      this.targetDataset = KerberosUtil.runPrivileged(login,
+          new PrivilegedExceptionAction<Dataset<GenericRecord>>() {
+            @Override
+            public Dataset<GenericRecord> run() {
+              return Datasets.load(datasetURI);
+            }
+          });
+    } else {
+      this.repositoryURI = context.getString(
+          DatasetSinkConstants.CONFIG_KITE_REPO_URI);
+      Preconditions.checkNotNull(repositoryURI, "Repository URI is missing");
+      this.datasetName = context.getString(
+          DatasetSinkConstants.CONFIG_KITE_DATASET_NAME);
+      Preconditions.checkNotNull(datasetName, "Dataset name is missing");
 
-    this.targetDataset = KerberosUtil.runPrivileged(login,
-        new PrivilegedExceptionAction<Dataset<Object>>() {
-      @Override
-      public Dataset<Object> run() {
-        return DatasetRepositories.open(repositoryURI).load(datasetName);
-      }
-    });
+      this.targetDataset = KerberosUtil.runPrivileged(login,
+          new PrivilegedExceptionAction<Dataset<GenericRecord>>() {
+            @Override
+            public Dataset<GenericRecord> run() {
+              return DatasetRepositories.open(repositoryURI).load(datasetName);
+            }
+          });
+    }
 
     String formatName = targetDataset.getDescriptor().getFormat().getName();
     Preconditions.checkArgument(allowedFormats().contains(formatName),
         "Unsupported format: " + formatName);
+
+    this.reuseDatum = !("parquet".equals(formatName));
 
     // other configuration
     this.batchSize = context.getLong(
@@ -176,7 +196,7 @@ public class DatasetSink extends AbstractSink implements Configurable {
 
   @Override
   public synchronized void start() {
-    this.writer = openWriter(targetDataset);
+    this.writer = targetDataset.newWriter();
     this.lastRolledMs = System.currentTimeMillis();
     counter.start();
     // signal that this sink is ready to process
@@ -219,7 +239,7 @@ public class DatasetSink extends AbstractSink implements Configurable {
     if ((System.currentTimeMillis() - lastRolledMs) / 1000 > rollIntervalS) {
       // close the current writer and get a new one
       writer.close();
-      this.writer = openWriter(targetDataset);
+      this.writer = targetDataset.newWriter();
       this.lastRolledMs = System.currentTimeMillis();
       LOG.info("Rolled writer for dataset: " + datasetName);
     }
@@ -238,7 +258,7 @@ public class DatasetSink extends AbstractSink implements Configurable {
           break;
         }
 
-        this.datum = deserialize(event, datum);
+        this.datum = deserialize(event, reuseDatum ? datum : null);
 
         // writeEncoded would be an optimization in some cases, but HBase
         // will not support it and partitioned Datasets need to get partition
@@ -302,11 +322,11 @@ public class DatasetSink extends AbstractSink implements Configurable {
    * @param reuse
    * @return
    */
-  private Object deserialize(Event event, Object reuse)
+  private GenericRecord deserialize(Event event, GenericRecord reuse)
       throws EventDeliveryException {
     decoder = DecoderFactory.get().binaryDecoder(event.getBody(), decoder);
     // no checked exception is thrown in the CacheLoader
-    ReflectDatumReader<Object> reader = readers.getUnchecked(schema(event));
+    DatumReader<GenericRecord> reader = readers.getUnchecked(schema(event));
     try {
       return reader.read(reuse, decoder);
     } catch (IOException ex) {
@@ -328,12 +348,6 @@ public class DatasetSink extends AbstractSink implements Configurable {
     } catch (ExecutionException ex) {
       throw new EventDeliveryException("Cannot get schema", ex.getCause());
     }
-  }
-
-  private static DatasetWriter<Object> openWriter(Dataset<Object> target) {
-    DatasetWriter<Object> writer = target.newWriter();
-    writer.open();
-    return writer;
   }
 
 }

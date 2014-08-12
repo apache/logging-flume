@@ -2045,18 +2045,13 @@ Example for agent named a1:
   a1.sinks.k1.serializer = org.apache.flume.sink.elasticsearch.ElasticSearchDynamicSerializer
   a1.sinks.k1.channel = c1
 
-Kite Dataset Sink (experimental)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Kite Dataset Sink
+~~~~~~~~~~~~~~~~~
 
-.. warning::
-  This source is experimental and may change between minor versions of Flume.
-  Use at your own risk.
-
-Experimental sink that writes events to a `Kite Dataset <http://kitesdk.org/docs/current/kite-data/guide.html>`_.
+Experimental sink that writes events to a `Kite Dataset <http://kitesdk.org/docs/current/guide/>`_.
 This sink will deserialize the body of each incoming event and store the
-resulting record in a Kite Dataset. It determines target Dataset by opening a
-repository URI, ``kite.repo.uri``, and loading a Dataset by name,
-``kite.dataset.name``.
+resulting record in a Kite Dataset. It determines target Dataset by loading a
+dataset by URI.
 
 The only supported serialization is avro, and the record schema must be passed
 in the event headers, using either ``flume.avro.schema.literal`` with the JSON
@@ -2075,8 +2070,11 @@ Property Name            Default  Description
 =======================  =======  ===========================================================
 **channel**              --
 **type**                 --       Must be org.apache.flume.sink.kite.DatasetSink
-**kite.repo.uri**        --       URI of the repository to open
-**kite.dataset.name**    --       Name of the Dataset where records will be written
+**kite.dataset.uri**     --       URI of the dataset to open
+kite.repo.uri            --       URI of the repository to open
+                                  (deprecated; use kite.dataset.uri instead)
+kite.dataset.name        --       Name of the Dataset where records will be written
+                                  (deprecated; use kite.dataset.uri instead)
 kite.batchSize           100      Number of records to process in each batch
 kite.rollInterval        30       Maximum wait time (seconds) before data files are released
 auth.kerberosPrincipal   --       Kerberos user principal for secure authentication to HDFS
