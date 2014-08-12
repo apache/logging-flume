@@ -22,6 +22,11 @@ public class DatasetSinkConstants {
   /**
    * URI of the Kite DatasetRepository.
    */
+  public static final String CONFIG_KITE_DATASET_URI = "kite.dataset.uri";
+
+  /**
+   * URI of the Kite DatasetRepository.
+   */
   public static final String CONFIG_KITE_REPO_URI = "kite.repo.uri";
 
   /**

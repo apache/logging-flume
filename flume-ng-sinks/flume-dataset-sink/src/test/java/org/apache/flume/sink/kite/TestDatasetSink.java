@@ -36,6 +36,7 @@ import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
@@ -63,12 +64,15 @@ import org.kitesdk.data.DatasetDescriptor;
 import org.kitesdk.data.DatasetReader;
 import org.kitesdk.data.DatasetRepositories;
 import org.kitesdk.data.DatasetRepository;
+import org.kitesdk.data.Datasets;
 import org.kitesdk.data.PartitionStrategy;
 
 public class TestDatasetSink {
 
   public static final String FILE_REPO_URI = "repo:file:target/test-repo";
   public static final String DATASET_NAME = "test";
+  public static final String FILE_DATASET_URI =
+      "dataset:file:target/test-repo/" + DATASET_NAME;
   public static final DatasetRepository REPO = DatasetRepositories
       .open(FILE_REPO_URI);
   public static final File SCHEMA_FILE = new File("target/record-schema.avsc");
@@ -114,14 +118,14 @@ public class TestDatasetSink {
 
   @Before
   public void setup() throws EventDeliveryException {
+    REPO.delete(DATASET_NAME);
     REPO.create(DATASET_NAME, DESCRIPTOR);
 
     this.config = new Context();
-    config.put(DatasetSinkConstants.CONFIG_KITE_REPO_URI, FILE_REPO_URI);
-    config.put(DatasetSinkConstants.CONFIG_KITE_DATASET_NAME, DATASET_NAME);
-
     this.in = new MemoryChannel();
     Configurables.configure(in, config);
+
+    config.put(DatasetSinkConstants.CONFIG_KITE_DATASET_URI, FILE_DATASET_URI);
 
     GenericRecordBuilder builder = new GenericRecordBuilder(RECORD_SCHEMA);
     expected = Lists.newArrayList(
@@ -148,6 +152,44 @@ public class TestDatasetSink {
   }
 
   @Test
+  public void testOldConfig() throws EventDeliveryException {
+    config.put(DatasetSinkConstants.CONFIG_KITE_DATASET_URI, null);
+    config.put(DatasetSinkConstants.CONFIG_KITE_REPO_URI, FILE_REPO_URI);
+    config.put(DatasetSinkConstants.CONFIG_KITE_DATASET_NAME, DATASET_NAME);
+
+    DatasetSink sink = sink(in, config);
+
+    // run the sink
+    sink.start();
+    sink.process();
+    sink.stop();
+
+    Assert.assertEquals(
+        Sets.newHashSet(expected),
+        read(REPO.<GenericData.Record>load(DATASET_NAME)));
+    Assert.assertEquals("Should have committed", 0, remaining(in));
+  }
+
+  @Test
+  public void testDatasetUriOverridesOldConfig() throws EventDeliveryException {
+    // CONFIG_KITE_DATASET_URI is still set, otherwise this will cause an error
+    config.put(DatasetSinkConstants.CONFIG_KITE_REPO_URI, "bad uri");
+    config.put(DatasetSinkConstants.CONFIG_KITE_DATASET_NAME, "");
+
+    DatasetSink sink = sink(in, config);
+
+    // run the sink
+    sink.start();
+    sink.process();
+    sink.stop();
+
+    Assert.assertEquals(
+        Sets.newHashSet(expected),
+        read(REPO.<GenericData.Record>load(DATASET_NAME)));
+    Assert.assertEquals("Should have committed", 0, remaining(in));
+  }
+
+  @Test
   public void testFileStore() throws EventDeliveryException {
     DatasetSink sink = sink(in, config);
 
@@ -163,6 +205,26 @@ public class TestDatasetSink {
   }
 
   @Test
+  public void testParquetDataset() throws EventDeliveryException {
+    Datasets.delete(FILE_DATASET_URI);
+    Dataset<GenericData.Record> created = Datasets.create(FILE_DATASET_URI,
+        new DatasetDescriptor.Builder(DESCRIPTOR)
+            .format("parquet")
+            .build(),
+        GenericData.Record.class);
+
+    DatasetSink sink = sink(in, config);
+
+    // run the sink
+    sink.start();
+    sink.process();
+    sink.stop();
+
+    Assert.assertEquals(Sets.newHashSet(expected), read(created));
+    Assert.assertEquals("Should have committed", 0, remaining(in));
+  }
+
+  @Test
   public void testPartitionedData() throws EventDeliveryException {
     REPO.create("partitioned", new DatasetDescriptor.Builder(DESCRIPTOR)
         .partitionStrategy(new PartitionStrategy.Builder()
@@ -171,7 +233,8 @@ public class TestDatasetSink {
         .build());
 
     try {
-      config.put(DatasetSinkConstants.CONFIG_KITE_DATASET_NAME, "partitioned");
+      config.put(DatasetSinkConstants.CONFIG_KITE_DATASET_URI,
+          "dataset:file:target/test-repo/partitioned");
       DatasetSink sink = sink(in, config);
 
       // run the sink
@@ -208,7 +271,8 @@ public class TestDatasetSink {
       hdfsRepo.create(DATASET_NAME, DESCRIPTOR);
 
       // update the config to use the HDFS repository
-      config.put(DatasetSinkConstants.CONFIG_KITE_REPO_URI, repoURI);
+      config.put(DatasetSinkConstants.CONFIG_KITE_DATASET_URI,
+          "dataset:" + conf.get("fs.defaultFS") + "/tmp/repo/" + DATASET_NAME);
 
       DatasetSink sink = sink(in, config);
 
@@ -367,12 +431,14 @@ public class TestDatasetSink {
   }
 
   public static <T> HashSet<T> read(Dataset<T> dataset) {
-    DatasetReader<T> reader = dataset.newReader();
+    DatasetReader<T> reader = null;
     try {
-      reader.open();
+      reader = dataset.newReader();
       return Sets.newHashSet(reader.iterator());
     } finally {
-      reader.close();
+      if (reader != null) {
+        reader.close();
+      }
     }
   }
 
