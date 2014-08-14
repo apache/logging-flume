@@ -49,10 +49,14 @@ public class TestSyslogTcpSource {
   private final String stamp1 = time.toString();
   private final String host1 = "localhost.localdomain";
   private final String data1 = "test syslog data";
+  private final String bodyWithHostname = host1 + " " +
+      data1;
+  private final String bodyWithTimestamp = stamp1 + " " +
+      data1;
   private final String bodyWithTandH = "<10>" + stamp1 + " " + host1 + " " +
       data1 + "\n";
 
-  private void init(boolean keepFields){
+  private void init(String keepFields){
     source = new SyslogTcpSource();
     channel = new MemoryChannel();
 
@@ -67,14 +71,14 @@ public class TestSyslogTcpSource {
     source.setChannelProcessor(new ChannelProcessor(rcs));
     Context context = new Context();
     context.put("port", String.valueOf(TEST_SYSLOG_PORT));
-    context.put("keepFields", String.valueOf(keepFields));
+    context.put("keepFields", keepFields);
 
     source.configure(context);
 
   }
   /** Tests the keepFields configuration parameter (enabled or disabled)
    using SyslogTcpSource.*/
-  private void runKeepFieldsTest(boolean keepFields) throws IOException {
+  private void runKeepFieldsTest(String keepFields) throws IOException {
     init(keepFields);
     source.start();
     // Write some message to the syslog port
@@ -110,23 +114,43 @@ public class TestSyslogTcpSource {
       Assert.assertNotNull(e);
       String str = new String(e.getBody(), Charsets.UTF_8);
       logger.info(str);
-      if (keepFields) {
+      if (keepFields.equals("true") || keepFields.equals("all")) {
         Assert.assertArrayEquals(bodyWithTandH.trim().getBytes(),
           e.getBody());
-      } else if (!keepFields) {
+      } else if (keepFields.equals("false") || keepFields.equals("none")) {
         Assert.assertArrayEquals(data1.getBytes(), e.getBody());
+      } else if (keepFields.equals("hostname")) {
+        Assert.assertArrayEquals(bodyWithHostname.getBytes(), e.getBody());
+      } else if (keepFields.equals("timestamp")) {
+        Assert.assertArrayEquals(bodyWithTimestamp.getBytes(), e.getBody());
       }
     }
   }
 
   @Test
-  public void testKeepFields () throws IOException {
-    runKeepFieldsTest(true);
+  public void testKeepFields() throws IOException {
+    runKeepFieldsTest("all");
+
+    // Backwards compatibility
+    runKeepFieldsTest("true");
   }
 
   @Test
   public void testRemoveFields() throws IOException{
-      runKeepFieldsTest(false);
-    }
+    runKeepFieldsTest("none");
+
+    // Backwards compatibility
+    runKeepFieldsTest("false");
   }
+
+  @Test
+  public void testKeepHostname() throws IOException{
+    runKeepFieldsTest("hostname");
+  }
+
+  @Test
+  public void testKeepTimestamp() throws IOException{
+    runKeepFieldsTest("timestamp");
+  }
+}
 

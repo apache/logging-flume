@@ -30,6 +30,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.collect.Maps;
 import java.nio.charset.Charset;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 import org.apache.flume.Event;
@@ -79,7 +80,7 @@ public class SyslogParser {
    * @return Parsed Flume Event
    * @throws IllegalArgumentException if unable to successfully parse message
    */
-  public Event parseMessage(String msg, Charset charset, boolean keepFields) {
+  public Event parseMessage(String msg, Charset charset, Set<String> keepFields) {
     Map<String, String> headers = Maps.newHashMap();
 
     int msgLen = msg.length();
@@ -98,6 +99,9 @@ public class SyslogParser {
     int facility = pri / 8;
     int severity = pri % 8;
 
+    // Remember priority
+    headers.put(SyslogUtils.SYSLOG_PRIORITY, priority);
+
     // put fac / sev into header
     headers.put(SyslogUtils.SYSLOG_FACILITY, String.valueOf(facility));
     headers.put(SyslogUtils.SYSLOG_SEVERITY, String.valueOf(severity));
@@ -108,20 +112,25 @@ public class SyslogParser {
     // update parsing position
     curPos = endBracketPos + 1;
 
-    // ignore version string
+    // remember version string
+    String version = null;
     if (msgLen > curPos + 2 && "1 ".equals(msg.substring(curPos, curPos + 2))) {
+      version = msg.substring(curPos, curPos+1);
+      headers.put(SyslogUtils.SYSLOG_VERSION, version);
       curPos += 2;
     }
 
     // now parse timestamp (handle different varieties)
 
     long ts;
+    String tsString;
     char dateStartChar = msg.charAt(curPos);
 
     try {
 
       // no timestamp specified; use relay current time
       if (dateStartChar == '-') {
+        tsString = Character.toString(dateStartChar);
         ts = System.currentTimeMillis();
         if (msgLen <= curPos + 2) {
           throw new IllegalArgumentException(
@@ -129,22 +138,23 @@ public class SyslogParser {
         }
         curPos += 2; // assume we skip past a space to get to the hostname
 
-        // rfc3164 imestamp
+      // rfc3164 timestamp
       } else if (dateStartChar >= 'A' && dateStartChar <= 'Z') {
         if (msgLen <= curPos + RFC3164_LEN) {
           throw new IllegalArgumentException("bad timestamp format");
         }
-        ts = parseRfc3164Time(
-            msg.substring(curPos, curPos + RFC3164_LEN));
+        tsString = msg.substring(curPos, curPos + RFC3164_LEN);
+        ts = parseRfc3164Time(tsString);
         curPos += RFC3164_LEN + 1;
 
-        // rfc 5424 timestamp
+      // rfc 5424 timestamp
       } else {
         int nextSpace = msg.indexOf(' ', curPos);
         if (nextSpace == -1) {
           throw new IllegalArgumentException("bad timestamp format");
         }
-        ts = parseRfc5424Date(msg.substring(curPos, nextSpace));
+        tsString = msg.substring(curPos, nextSpace);
+        ts = parseRfc5424Date(tsString);
         curPos = nextSpace + 1;
       }
 
@@ -167,9 +177,10 @@ public class SyslogParser {
 
     // EventBuilder will do a copy of its own, so no defensive copy of the body
     String data = "";
-    if (msgLen > nextSpace + 1 && !keepFields) {
+    if (msgLen > nextSpace + 1 && !SyslogUtils.keepAllFields(keepFields)) {
       curPos = nextSpace + 1;
       data = msg.substring(curPos);
+      data = SyslogUtils.addFieldsToBody(keepFields, data, priority, version, tsString, hostname);
     } else {
       data = msg;
     }

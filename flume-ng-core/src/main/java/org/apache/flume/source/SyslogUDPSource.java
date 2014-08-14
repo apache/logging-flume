@@ -21,6 +21,7 @@ package org.apache.flume.source;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -32,7 +33,6 @@ import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.Configurables;
-import org.apache.flume.source.SyslogUtils;
 import org.jboss.netty.bootstrap.ConnectionlessBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.*;
@@ -49,7 +49,7 @@ public class SyslogUDPSource extends AbstractSource
   private String host = null;
   private Channel nettyChannel;
   private Map<String, String> formaterProp;
-  private boolean keepFields;
+  private Set<String> keepFields;
 
   private static final Logger logger = LoggerFactory
       .getLogger(SyslogUDPSource.class);
@@ -61,14 +61,13 @@ public class SyslogUDPSource extends AbstractSource
   public static final int DEFAULT_INITIAL_SIZE = DEFAULT_MIN_SIZE;
 
   public class syslogHandler extends SimpleChannelHandler {
-    private SyslogUtils syslogUtils = new SyslogUtils(DEFAULT_INITIAL_SIZE,
-      SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS, true);
+    private SyslogUtils syslogUtils = new SyslogUtils(DEFAULT_INITIAL_SIZE, null, true);
 
     public void setFormater(Map<String, String> prop) {
       syslogUtils.addFormats(prop);
     }
 
-    public void setKeepFields(boolean keepFields) {
+    public void setKeepFields(Set<String> keepFields) {
       syslogUtils.setKeepFields(keepFields);
     }
 
@@ -143,8 +142,10 @@ public class SyslogUDPSource extends AbstractSource
     host = context.getString(SyslogSourceConfigurationConstants.CONFIG_HOST);
     formaterProp = context.getSubProperties(
         SyslogSourceConfigurationConstants.CONFIG_FORMAT_PREFIX);
-    keepFields = context.getBoolean(SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS,
-      SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS);
+    keepFields = SyslogUtils.chooseFieldsToKeep(
+        context.getString(
+            SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS,
+            SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS));
   }
 
   @VisibleForTesting

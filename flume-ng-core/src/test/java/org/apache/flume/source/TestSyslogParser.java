@@ -21,7 +21,10 @@ package org.apache.flume.source;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import java.nio.charset.Charset;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
 import org.apache.flume.Event;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
@@ -77,7 +80,7 @@ public class TestSyslogParser {
 
     // test with default keepFields = false
     for (String msg : messages) {
-      boolean keepFields = false;
+      Set<String> keepFields = new HashSet<String>();
       Event event = parser.parseMessage(msg, charset, keepFields);
       Assert.assertNull("Failure to parse known-good syslog message",
         event.getHeaders().get(SyslogUtils.EVENT_STATUS));
@@ -85,9 +88,21 @@ public class TestSyslogParser {
 
     // test that priority, timestamp and hostname are preserved in event body
     for (String msg : messages) {
-      boolean keepFields = true;
+      Set<String> keepFields = new HashSet<String>();
+      keepFields.add(SyslogUtils.KEEP_FIELDS_ALL);
       Event event = parser.parseMessage(msg, charset, keepFields);
       Assert.assertArrayEquals(event.getBody(), msg.getBytes());
+      Assert.assertNull("Failure to parse known-good syslog message",
+          event.getHeaders().get(SyslogUtils.EVENT_STATUS));
+    }
+
+    // test that hostname is preserved in event body
+    for (String msg : messages) {
+      Set<String> keepFields = new HashSet<String>();
+      keepFields.add(SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_HOSTNAME);
+      Event event = parser.parseMessage(msg, charset, keepFields);
+      Assert.assertTrue("Failure to persist hostname",
+          new String(event.getBody()).contains(event.getHeaders().get("host")));
       Assert.assertNull("Failure to parse known-good syslog message",
           event.getHeaders().get(SyslogUtils.EVENT_STATUS));
     }
