@@ -21,6 +21,7 @@ package org.apache.flume.source;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -58,7 +59,7 @@ implements EventDrivenSource, Configurable {
   private Integer eventSize;
   private Map<String, String> formaterProp;
   private CounterGroup counterGroup = new CounterGroup();
-  private Boolean keepFields;
+  private Set<String> keepFields;
 
   public class syslogTcpHandler extends SimpleChannelHandler {
 
@@ -68,7 +69,7 @@ implements EventDrivenSource, Configurable {
       syslogUtils.setEventSize(eventSize);
     }
 
-    public void setKeepFields(boolean keepFields){
+    public void setKeepFields(Set<String> keepFields) {
       syslogUtils.setKeepFields(keepFields);
     }
 
@@ -154,8 +155,10 @@ implements EventDrivenSource, Configurable {
     eventSize = context.getInteger("eventSize", SyslogUtils.DEFAULT_SIZE);
     formaterProp = context.getSubProperties(
         SyslogSourceConfigurationConstants.CONFIG_FORMAT_PREFIX);
-    keepFields = context.getBoolean
-      (SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS, false);
+    keepFields = SyslogUtils.chooseFieldsToKeep(
+        context.getString(
+            SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS,
+            SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS));
   }
 
   @VisibleForTesting

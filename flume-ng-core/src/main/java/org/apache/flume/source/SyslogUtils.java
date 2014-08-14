@@ -31,9 +31,13 @@ import java.io.ByteArrayOutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,27 +52,31 @@ public class SyslogUtils {
   final public static String SYSLOG_TIMESTAMP_FORMAT_RFC3164_1 = "yyyyMMM d HH:mm:ss";
 
   final public static String SYSLOG_MSG_RFC5424_0 =
-      "(?:\\<\\d{1,3}\\>\\d?\\s?)" + // priority
+      "(?:\\<(\\d{1,3})\\>)" + // priority
+      "(?:(\\d?)\\s?)" + // version
       /* yyyy-MM-dd'T'HH:mm:ss.SZ or yyyy-MM-dd'T'HH:mm:ss.S+hh:mm or - (null stamp) */
       "(?:" +
         "(\\d{4}[-]\\d{2}[-]\\d{2}[T]\\d{2}[:]\\d{2}[:]\\d{2}" +
         "(?:\\.\\d{1,6})?(?:[+-]\\d{2}[:]\\d{2}|Z)?)|-)" + // stamp
       "\\s" + // separator
-      "(?:([\\w][\\w\\d\\.@-]*)|-)" + // host name or - (null)
+      "(?:([\\w][\\w\\d\\.@\\-]*)|-)" + // host name or - (null)
       "\\s" + // separator
       "(.*)$"; // body
 
   final public static String SYSLOG_MSG_RFC3164_0 =
-      "(?:\\<\\d{1,3}\\>\\d?\\s?)" +
+      "(?:\\<(\\d{1,3})\\>)" +
+      "(?:(\\d)?\\s?)" + // version
       // stamp MMM d HH:mm:ss, single digit date has two spaces
       "([A-Z][a-z][a-z]\\s{1,2}\\d{1,2}\\s\\d{2}[:]\\d{2}[:]\\d{2})" +
       "\\s" + // separator
       "([\\w][\\w\\d\\.@-]*)" + // host
       "\\s(.*)$";  // body
 
-  final public static int SYSLOG_TIMESTAMP_POS = 1;
-  final public static int SYSLOG_HOSTNAME_POS = 2;
-  final public static int SYSLOG_BODY_POS = 3;
+  final public static int SYSLOG_PRIORITY_POS = 1;
+  final public static int SYSLOG_VERSION_POS = 2;
+  final public static int SYSLOG_TIMESTAMP_POS = 3;
+  final public static int SYSLOG_HOSTNAME_POS = 4;
+  final public static int SYSLOG_BODY_POS = 5;
 
   private Mode m = Mode.START;
   private StringBuilder prio = new StringBuilder();
@@ -78,6 +86,8 @@ public class SyslogUtils {
 
   final public static String SYSLOG_FACILITY = "Facility";
   final public static String SYSLOG_SEVERITY = "Severity";
+  final public static String SYSLOG_PRIORITY = "Priority";
+  final public static String SYSLOG_VERSION = "Version";
   final public static String EVENT_STATUS = "flume.syslog.status";
   final public static Integer MIN_SIZE = 10;
   final public static Integer DEFAULT_SIZE = 2500;
@@ -85,7 +95,7 @@ public class SyslogUtils {
   private boolean isBadEvent;
   private boolean isIncompleteEvent;
   private Integer maxSize;
-  private boolean keepFields;
+  private Set<String> keepFields;
 
   private class SyslogFormatter {
     public Pattern regexPattern;
@@ -96,19 +106,93 @@ public class SyslogUtils {
   }
   private ArrayList<SyslogFormatter> formats = new ArrayList<SyslogFormatter>();
 
+  private String priority = null;
+  private String version = null;
   private String timeStamp = null;
   private String hostName = null;
   private String msgBody = null;
+
+  private static final String[] DEFAULT_FIELDS_TO_KEEP = {
+    SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_PRIORITY,
+    SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_VERSION,
+    SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_TIMESTAMP,
+    SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_HOSTNAME
+  };
+  public static final String KEEP_FIELDS_ALL = "--all--";
+
+  public static boolean keepAllFields(Set<String> keepFields) {
+    if (keepFields == null) {
+      return false;
+    }
+    return keepFields.contains(KEEP_FIELDS_ALL);
+  }
+
+  public static Set<String> chooseFieldsToKeep(String keepFields) {
+    if (keepFields == null) {
+      return null;
+    }
+
+    keepFields = keepFields.trim().toLowerCase();
+
+    if (keepFields.equals("false") || keepFields.equals("none")) {
+      return null;
+    }
+
+    if (keepFields.equals("true") || keepFields.equals("all")) {
+      Set<String> fieldsToKeep = new HashSet<String>(1);
+      fieldsToKeep.add(KEEP_FIELDS_ALL);
+      return fieldsToKeep;
+    }
+
+    Set<String> fieldsToKeep = new HashSet<String>(DEFAULT_FIELDS_TO_KEEP.length);
+
+    for (String field : DEFAULT_FIELDS_TO_KEEP) {
+      if (keepFields.indexOf(field) != -1) {
+        fieldsToKeep.add(field);
+      }
+    }
+
+    return fieldsToKeep;
+  }
+
+  public static String addFieldsToBody(Set<String> keepFields,
+                                       String body,
+                                       String priority,
+                                       String version,
+                                       String timestamp,
+                                       String hostname) {
+    // Prepend fields to be kept in message body.
+    if (keepFields != null) {
+      if (keepFields.contains(SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_HOSTNAME)) {
+        body = hostname + " " + body;
+      }
+      if (keepFields.contains(SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_TIMESTAMP)) {
+        body = timestamp + " " + body;
+      }
+      if (keepFields.contains(SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_VERSION)) {
+        if (version != null && !version.isEmpty()) {
+          body = version + " " + body;
+        }
+      }
+      if (keepFields.contains(SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_PRIORITY)) {
+        body = "<" + priority + ">" + body;
+      }
+    }
+
+    return body;
+  }
 
   public SyslogUtils() {
     this(false);
   }
 
   public SyslogUtils(boolean isUdp) {
-    this(DEFAULT_SIZE, SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS, isUdp);
+    this(DEFAULT_SIZE,
+        new HashSet<String>(Arrays.asList(SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS)),
+        isUdp);
   }
 
-  public SyslogUtils(Integer eventSize, boolean keepFields, boolean isUdp) {
+  public SyslogUtils(Integer eventSize, Set<String> keepFields, boolean isUdp) {
     this.isUdp = isUdp;
     isBadEvent = false;
     isIncompleteEvent = false;
@@ -212,6 +296,12 @@ public class SyslogUtils {
     Map <String, String> headers = new HashMap<String, String>();
     headers.put(SYSLOG_FACILITY, String.valueOf(facility));
     headers.put(SYSLOG_SEVERITY, String.valueOf(sev));
+    if ((priority != null) && (priority.length() > 0)) {
+      headers.put("priority", priority);
+    }
+    if ((version != null) && (version.length() > 0)) {
+      headers.put("version", version);
+    }
     if ((timeStamp != null) && timeStamp.length() > 0) {
       headers.put("timestamp", timeStamp);
     }
@@ -227,7 +317,7 @@ public class SyslogUtils {
       headers.put(EVENT_STATUS, SyslogStatus.INCOMPLETE.getSyslogStatus());
     }
 
-    if (!keepFields) {
+    if (!keepAllFields(keepFields)) {
       if ((msgBody != null) && (msgBody.length() > 0)) {
         body = msgBody.getBytes();
       } else {
@@ -245,6 +335,8 @@ public class SyslogUtils {
   // Apply each known pattern to message
   private void formatHeaders() {
     String eventStr = baos.toString();
+    String timeStampString = null;
+
     for(int p=0; p < formats.size(); p++) {
       SyslogFormatter fmt = formats.get(p);
       Pattern pattern = fmt.regexPattern;
@@ -256,6 +348,8 @@ public class SyslogUtils {
       for (int grp=1; grp <= res.groupCount(); grp++) {
         String value = res.group(grp);
         if (grp == SYSLOG_TIMESTAMP_POS) {
+          timeStampString = value;
+
           // apply available format replacements to timestamp
           if (value != null) {
             for (int sp=0; sp < fmt.searchPattern.size(); sp++) {
@@ -278,8 +372,12 @@ public class SyslogUtils {
           }
         } else if (grp == SYSLOG_HOSTNAME_POS) {
           hostName = value;
+        } else if (grp == SYSLOG_PRIORITY_POS) {
+          priority = value;
+        } else if (grp == SYSLOG_VERSION_POS) {
+          version = value;
         } else if (grp == SYSLOG_BODY_POS) {
-          msgBody = value;
+          msgBody = addFieldsToBody(keepFields, value, priority, version, timeStampString, hostName);
         }
       }
       break; // we successfully parsed the message using this pattern
@@ -388,9 +486,9 @@ public class SyslogUtils {
     this.maxSize = eventSize;
   }
 
-  public void setKeepFields(Boolean keepFields) {
-    this.keepFields= keepFields;
+  public void setKeepFields(Set<String> keepFields) {
+    this.keepFields = keepFields;
   }
-  }
+}
 
 

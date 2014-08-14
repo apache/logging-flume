@@ -1182,8 +1182,13 @@ Property Name    Default      Description
 **host**         --           Host name or IP address to bind to
 **port**         --           Port # to bind to
 eventSize        2500         Maximum size of a single event line, in bytes
-keepFields       false        Setting this to true will preserve the Priority,
+keepFields       none         Setting this to 'all' will preserve the Priority,
                               Timestamp and Hostname in the body of the event.
+                              A spaced separated list of fields to include
+                              is allowed as well. Currently, the following
+                              fields can be included: priority, version,
+                              timestamp, hostname. The values 'true' and 'false'
+                              have been deprecated in favor of 'all' and 'none'.
 selector.type                 replicating or multiplexing
 selector.*       replicating  Depends on the selector.type value
 interceptors     --           Space-separated list of interceptors
@@ -1220,8 +1225,13 @@ Property Name         Default           Description
 **host**              --                Host name or IP address to bind to.
 **ports**             --                Space-separated list (one or more) of ports to bind to.
 eventSize             2500              Maximum size of a single event line, in bytes.
-keepFields            false             Setting this to true will preserve the
+keepFields            none              Setting this to 'all' will preserve the
                                         Priority, Timestamp and Hostname in the body of the event.
+                                        A spaced separated list of fields to include
+                                        is allowed as well. Currently, the following
+                                        fields can be included: priority, version,
+                                        timestamp, hostname. The values 'true' and 'false'
+                                        have been deprecated in favor of 'all' and 'none'.
 portHeader            --                If specified, the port number will be stored in the header of each event using the header name specified here. This allows for interceptors and channel selectors to customize routing logic based on the incoming port.
 charset.default       UTF-8             Default character set used while parsing syslog events into strings.
 charset.port.<port>   --                Character set is configurable on a per-port basis.
