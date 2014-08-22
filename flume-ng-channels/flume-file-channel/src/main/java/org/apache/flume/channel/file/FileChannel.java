@@ -21,8 +21,10 @@ package org.apache.flume.channel.file;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import org.apache.flume.*;
 import org.apache.flume.annotations.Disposable;
 import org.apache.flume.annotations.InterfaceAudience;
@@ -120,13 +122,15 @@ public class FileChannel extends BasicChannelSemantics {
 
     String strCheckpointDir =
         context.getString(FileChannelConfiguration.CHECKPOINT_DIR,
-            homePath + "/.flume/file-channel/checkpoint");
+            homePath + "/.flume/file-channel/checkpoint").trim();
 
     String strBackupCheckpointDir = context.getString
       (FileChannelConfiguration.BACKUP_CHECKPOINT_DIR, "").trim();
 
-    String[] strDataDirs = context.getString(FileChannelConfiguration.DATA_DIRS,
-        homePath + "/.flume/file-channel/data").split(",");
+    String[] strDataDirs = Iterables.toArray(
+        Splitter.on(",").trimResults().omitEmptyStrings().split(
+            context.getString(FileChannelConfiguration.DATA_DIRS,
+                homePath + "/.flume/file-channel/data")), String.class);
 
     checkpointDir = new File(strCheckpointDir);
 
