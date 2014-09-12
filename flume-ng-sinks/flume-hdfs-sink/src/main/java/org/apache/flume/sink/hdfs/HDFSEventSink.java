@@ -495,16 +495,18 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   @Override
   public void stop() {
     // do not constrain close() calls with a timeout
-    for (Entry<String, BucketWriter> entry : sfWriters.entrySet()) {
-      LOG.info("Closing {}", entry.getKey());
+    synchronized (sfWritersLock) {
+      for (Entry<String, BucketWriter> entry : sfWriters.entrySet()) {
+        LOG.info("Closing {}", entry.getKey());
 
-      try {
-        entry.getValue().close();
-      } catch (Exception ex) {
-        LOG.warn("Exception while closing " + entry.getKey() + ". " +
-                "Exception follows.", ex);
-        if (ex instanceof InterruptedException) {
-          Thread.currentThread().interrupt();
+        try {
+          entry.getValue().close();
+        } catch (Exception ex) {
+          LOG.warn("Exception while closing " + entry.getKey() + ". " +
+                  "Exception follows.", ex);
+          if (ex instanceof InterruptedException) {
+            Thread.currentThread().interrupt();
+          }
         }
       }
     }
@@ -526,8 +528,10 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     callTimeoutPool = null;
     timedRollerPool = null;
 
-    sfWriters.clear();
-    sfWriters = null;
+    synchronized (sfWritersLock) {
+      sfWriters.clear();
+      sfWriters = null;
+    }
     sinkCounter.stop();
     super.stop();
   }
