@@ -174,25 +174,28 @@ display_help() {
 Usage: $0 <command> [options]...
 
 commands:
-  help                  display this help text
-  agent                 run a Flume agent
-  avro-client           run an avro Flume client
-  version               show Flume version info
+  help                      display this help text
+  agent                     run a Flume agent
+  avro-client               run an avro Flume client
+  version                   show Flume version info
 
 global options:
-  --conf,-c <conf>      use configs in <conf> directory
-  --classpath,-C <cp>   append to the classpath
-  --dryrun,-d           do not actually start Flume, just print the command
-  --plugins-path <dirs> colon-separated list of plugins.d directories. See the
-                        plugins.d section in the user guide for more details.
-                        Default: \$FLUME_HOME/plugins.d
-  -Dproperty=value      sets a Java system property value
-  -Xproperty=value      sets a Java -X option
+  --conf,-c <conf>          use configs in <conf> directory
+  --classpath,-C <cp>       append to the classpath
+  --dryrun,-d               do not actually start Flume, just print the command
+  --plugins-path <dirs>     colon-separated list of plugins.d directories. See the
+                            plugins.d section in the user guide for more details.
+                            Default: \$FLUME_HOME/plugins.d
+  -Dproperty=value          sets a Java system property value
+  -Xproperty=value          sets a Java -X option
 
 agent options:
-  --conf-file,-f <file> specify a config file (required)
-  --name,-n <name>      the name of this agent (required)
-  --help,-h             display help text
+  --name,-n <name>          the name of this agent (required)
+  --conf-file,-f <file>     specify a config file (required if -z missing)
+  --zkConnString,-z <str>   specify the ZooKeeper connection to use (required if -f missing)
+  --zkBasePath,-p <path>    specify the base path in ZooKeeper for agent configs
+  --no-reload-conf          do not reload config file if changed
+  --help,-h                 display help text
 
 avro-client options:
   --rpcProps,-P <file>   RPC client properties file with server connection params
