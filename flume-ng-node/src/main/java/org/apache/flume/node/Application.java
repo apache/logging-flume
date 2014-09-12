@@ -53,7 +53,7 @@ import com.google.common.collect.Lists;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-public class Application  {
+public class Application {
 
   private static final Logger logger = LoggerFactory
       .getLogger(Application.class);
@@ -69,6 +69,7 @@ public class Application  {
   public Application() {
     this(new ArrayList<LifecycleAware>(0));
   }
+
   public Application(List<LifecycleAware> components) {
     this.components = components;
     supervisor = new LifecycleSupervisor();
@@ -80,7 +81,6 @@ public class Application  {
           new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
     }
   }
-
 
   @Subscribe
   public synchronized void handleConfigurationEvent(MaterializedConfiguration conf) {
@@ -94,7 +94,6 @@ public class Application  {
       monitorServer.stop();
     }
   }
-
 
   private void stopAllComponents() {
     if (this.materializedConfiguration != null) {
@@ -192,7 +191,6 @@ public class Application  {
     this.loadMonitoring();
   }
 
-
   @SuppressWarnings("unchecked")
   private void loadMonitoring() {
     Properties systemProps = System.getProperties();
@@ -231,18 +229,32 @@ public class Application  {
 
     try {
 
+      boolean isZkConfigured = false;
+
       Options options = new Options();
 
       Option option = new Option("n", "name", true, "the name of this agent");
       option.setRequired(true);
       options.addOption(option);
 
-      option = new Option("f", "conf-file", true, "specify a conf file");
-      option.setRequired(true);
+      option = new Option("f", "conf-file", true,
+          "specify a config file (required if -z missing)");
+      option.setRequired(false);
       options.addOption(option);
 
-      option = new Option(null, "no-reload-conf", false, "do not reload " +
-        "conf file if changed");
+      option = new Option(null, "no-reload-conf", false,
+          "do not reload config file if changed");
+      options.addOption(option);
+
+      // Options for Zookeeper
+      option = new Option("z", "zkConnString", true,
+          "specify the ZooKeeper connection to use (required if -f missing)");
+      option.setRequired(false);
+      options.addOption(option);
+
+      option = new Option("p", "zkBasePath", true,
+          "specify the base path in ZooKeeper for agent configs");
+      option.setRequired(false);
       options.addOption(option);
 
       option = new Option("h", "help", false, "display help text");
@@ -251,47 +263,80 @@ public class Application  {
       CommandLineParser parser = new GnuParser();
       CommandLine commandLine = parser.parse(options, args);
 
-      File configurationFile = new File(commandLine.getOptionValue('f'));
-      String agentName = commandLine.getOptionValue('n');
-      boolean reload = !commandLine.hasOption("no-reload-conf");
-
       if (commandLine.hasOption('h')) {
         new HelpFormatter().printHelp("flume-ng agent", options, true);
         return;
       }
-      /*
-       * The following is to ensure that by default the agent
-       * will fail on startup if the file does not exist.
-       */
-      if (!configurationFile.exists()) {
-        // If command line invocation, then need to fail fast
-        if (System.getProperty(Constants.SYSPROP_CALLED_FROM_SERVICE) == null) {
-          String path = configurationFile.getPath();
-          try {
-            path = configurationFile.getCanonicalPath();
-          } catch (IOException ex) {
-            logger.error("Failed to read canonical path for file: " + path, ex);
-          }
-          throw new ParseException(
-              "The specified configuration file does not exist: " + path);
-        }
+
+      String agentName = commandLine.getOptionValue('n');
+      boolean reload = !commandLine.hasOption("no-reload-conf");
+
+      if (commandLine.hasOption('z') || commandLine.hasOption("zkConnString")) {
+        isZkConfigured = true;
       }
-      List<LifecycleAware> components = Lists.newArrayList();
-      Application application;
-      if(reload) {
-        EventBus eventBus = new EventBus(agentName + "-event-bus");
-        PollingPropertiesFileConfigurationProvider configurationProvider =
-            new PollingPropertiesFileConfigurationProvider(agentName,
-                configurationFile, eventBus, 30);
-        components.add(configurationProvider);
-        application = new Application(components);
-        eventBus.register(application);
+      Application application = null;
+      if (isZkConfigured) {
+        // get options
+        String zkConnectionStr = commandLine.getOptionValue('z');
+        String baseZkPath = commandLine.getOptionValue('p');
+
+        if (reload) {
+          EventBus eventBus = new EventBus(agentName + "-event-bus");
+          List<LifecycleAware> components = Lists.newArrayList();
+          PollingZooKeeperConfigurationProvider zookeeperConfigurationProvider =
+            new PollingZooKeeperConfigurationProvider(
+              agentName, zkConnectionStr, baseZkPath, eventBus);
+          components.add(zookeeperConfigurationProvider);
+          application = new Application(components);
+          eventBus.register(application);
+        } else {
+          StaticZooKeeperConfigurationProvider zookeeperConfigurationProvider =
+            new StaticZooKeeperConfigurationProvider(
+              agentName, zkConnectionStr, baseZkPath);
+          application = new Application();
+          application.handleConfigurationEvent(zookeeperConfigurationProvider
+            .getConfiguration());
+        }
       } else {
-        PropertiesFileConfigurationProvider configurationProvider =
-            new PropertiesFileConfigurationProvider(agentName,
-                configurationFile);
-        application = new Application();
-        application.handleConfigurationEvent(configurationProvider.getConfiguration());
+        File configurationFile = new File(commandLine.getOptionValue('f'));
+
+        /*
+         * The following is to ensure that by default the agent will fail on
+         * startup if the file does not exist.
+         */
+        if (!configurationFile.exists()) {
+          // If command line invocation, then need to fail fast
+          if (System.getProperty(Constants.SYSPROP_CALLED_FROM_SERVICE) ==
+            null) {
+            String path = configurationFile.getPath();
+            try {
+              path = configurationFile.getCanonicalPath();
+            } catch (IOException ex) {
+              logger.error("Failed to read canonical path for file: " + path,
+                ex);
+            }
+            throw new ParseException(
+              "The specified configuration file does not exist: " + path);
+          }
+        }
+        List<LifecycleAware> components = Lists.newArrayList();
+
+        if (reload) {
+          EventBus eventBus = new EventBus(agentName + "-event-bus");
+          PollingPropertiesFileConfigurationProvider configurationProvider =
+            new PollingPropertiesFileConfigurationProvider(
+              agentName, configurationFile, eventBus, 30);
+          components.add(configurationProvider);
+          application = new Application(components);
+          eventBus.register(application);
+        } else {
+          PropertiesFileConfigurationProvider configurationProvider =
+            new PropertiesFileConfigurationProvider(
+              agentName, configurationFile);
+          application = new Application();
+          application.handleConfigurationEvent(configurationProvider
+            .getConfiguration());
+        }
       }
       application.start();
 

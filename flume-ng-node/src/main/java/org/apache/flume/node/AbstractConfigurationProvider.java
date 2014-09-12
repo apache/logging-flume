@@ -17,13 +17,8 @@
  */
 package org.apache.flume.node;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelFactory;
@@ -505,5 +500,16 @@ public abstract class AbstractConfigurationProvider implements
       this.channel = channel;
       components = Lists.newArrayList();
     }
+  }
+
+  protected Map<String, String> toMap(Properties properties) {
+    Map<String, String> result = Maps.newHashMap();
+    Enumeration<?> propertyNames = properties.propertyNames();
+    while (propertyNames.hasMoreElements()) {
+      String name = (String) propertyNames.nextElement();
+      String value = properties.getProperty(name);
+      result.put(name, value);
+    }
+    return result;
   }
 }
