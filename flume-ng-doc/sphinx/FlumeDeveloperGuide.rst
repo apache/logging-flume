@@ -450,7 +450,7 @@ sources, sinks, and channels are allowed. Specifically the source used
 is a special embedded source and events should be send to the source
 via the put, putAll methods on the EmbeddedAgent object. Only File Channel
 and Memory Channel are allowed as channels while Avro Sink is the only
-supported sink.
+supported sink. Interceptors are also supported by the embedded agent.
 
 Note: The embedded agent has a dependency on hadoop-core.jar.
 
@@ -470,6 +470,8 @@ channel.*             --                Configuration options for the channel ty
 sink.*                --                Configuration options for the sink. See AvroSink user guide for an exhaustive list, however note AvroSink requires at least hostname and port.
 **processor.type**    --                Either ``failover`` or ``load_balance`` which correspond to FailoverSinksProcessor and LoadBalancingSinkProcessor respectively.
 processor.*           --                Configuration options for the sink processor selected. See FailoverSinksProcessor and LoadBalancingSinkProcessor user guide for an exhaustive list.
+source.interceptors   --                Space-separated list of interceptors
+source.interceptors.* --                Configuration options for individual interceptors specified in the source.interceptors property
 ====================  ================  ==============================================
 
 Below is an example of how to use the agent:
@@ -487,6 +489,10 @@ Below is an example of how to use the agent:
     properties.put("sink2.hostname", "collector2.apache.org");
     properties.put("sink2.port",  "5565");
     properties.put("processor.type", "load_balance");
+    properties.put("source.interceptors", "i1");
+    properties.put("source.interceptors.i1.type", "static");
+    properties.put("source.interceptors.i1.key", "key1");
+    properties.put("source.interceptors.i1.value", "value1");
 
     EmbeddedAgent agent = new EmbeddedAgent("myagent");
 

@@ -111,7 +111,8 @@ public class EmbeddedAgent {
       throw new IllegalStateException("Cannot be started before being " +
           "configured");
     }
-    doStart();
+    // This check needs to be done before doStart(),
+    // as doStart() accesses sourceRunner.getSource()
     Source source = Preconditions.checkNotNull(sourceRunner.getSource(),
         "Source runner returned null source");
     if(source instanceof EmbeddedSource) {
@@ -120,6 +121,7 @@ public class EmbeddedAgent {
       throw new IllegalStateException("Unknown source type: " + source.
           getClass().getName());
     }
+    doStart();
     state = State.STARTED;
   }
   /**

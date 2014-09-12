@@ -46,6 +46,8 @@ public class TestEmbeddedAgentConfiguration {
     properties.put("sink2.hostname", "sink2.host");
     properties.put("sink2.port", "2");
     properties.put("processor.type", "load_balance");
+    properties.put("source.interceptors", "i1");
+    properties.put("source.interceptors.i1.type", "timestamp");
   }
 
 
@@ -91,6 +93,8 @@ public class TestEmbeddedAgentConfiguration {
     expected.put("test1.sources.source-test1.channels", "channel-test1");
     expected.put("test1.sources.source-test1.type", EmbeddedAgentConfiguration.
         SOURCE_TYPE_EMBEDDED);
+    expected.put("test1.sources.source-test1.interceptors", "i1");
+    expected.put("test1.sources.source-test1.interceptors.i1.type", "timestamp");
     Assert.assertEquals(expected, actual);
   }
 
