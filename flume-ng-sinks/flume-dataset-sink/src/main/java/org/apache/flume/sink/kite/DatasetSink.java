@@ -52,9 +52,9 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.kitesdk.data.Dataset;
-import org.kitesdk.data.DatasetRepositories;
 import org.kitesdk.data.DatasetWriter;
 import org.kitesdk.data.Datasets;
+import org.kitesdk.data.spi.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -172,7 +172,8 @@ public class DatasetSink extends AbstractSink implements Configurable {
           new PrivilegedExceptionAction<Dataset<GenericRecord>>() {
             @Override
             public Dataset<GenericRecord> run() {
-              return DatasetRepositories.open(repositoryURI).load(datasetName);
+              return Datasets.load(
+                  new URIBuilder(repositoryURI, datasetName).build());
             }
           });
     }
