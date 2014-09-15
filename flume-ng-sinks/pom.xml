@@ -46,6 +46,7 @@ limitations under the License.
     <module>flume-ng-hbase-sink</module>
     <module>flume-ng-elasticsearch-sink</module>
     <module>flume-ng-morphline-solr-sink</module>
+    <module>flume-ng-kafka-sink</module>
   </modules>
 
   <profiles>
