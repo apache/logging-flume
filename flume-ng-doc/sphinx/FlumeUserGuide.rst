@@ -994,47 +994,6 @@ Example for an agent named agent-1:
   agent-1.sources.src-1.spoolDir = /var/log/apache/flumeSpool
   agent-1.sources.src-1.fileHeader = true
 
-Twitter 1% firehose Source (experimental)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. warning::
-  This source is hightly experimental and may change between minor versions of Flume.
-  Use at your own risk.
-
-Experimental source that connects via Streaming API to the 1% sample twitter
-firehose, continously downloads tweets, converts them to Avro format and
-sends Avro events to a downstream Flume sink. Requires the consumer and 
-access tokens and secrets of a Twitter developer account.
-Required properties are in **bold**.
-
-====================== ===========  ===================================================
-Property Name          Default      Description
-====================== ===========  ===================================================
-**channels**           --
-**type**               --           The component type name, needs to be ``org.apache.flume.source.twitter.TwitterSource``
-**consumerKey**        --           OAuth consumer key
-**consumerSecret**     --           OAuth consumer secret
-**accessToken**        --           OAuth access token
-**accessTokenSecret**  --           OAuth toekn secret 
-maxBatchSize           1000         Maximum number of twitter messages to put in a single batch
-maxBatchDurationMillis 1000         Maximum number of milliseconds to wait before closing a batch
-====================== ===========  ===================================================
-
-Example for agent named a1:
-
-.. code-block:: properties
-
-  a1.sources = r1
-  a1.channels = c1
-  a1.sources.r1.type = org.apache.flume.source.twitter.TwitterSource
-  a1.sources.r1.channels = c1
-  a1.sources.r1.consumerKey = YOUR_TWITTER_CONSUMER_KEY
-  a1.sources.r1.consumerSecret = YOUR_TWITTER_CONSUMER_SECRET
-  a1.sources.r1.accessToken = YOUR_TWITTER_ACCESS_TOKEN
-  a1.sources.r1.accessTokenSecret = YOUR_TWITTER_ACCESS_TOKEN_SECRET
-  a1.sources.r1.maxBatchSize = 10
-  a1.sources.r1.maxBatchDurationMillis = 200
-
 Event Deserializers
 '''''''''''''''''''
 
@@ -1093,6 +1052,91 @@ Property Name               Default             Description
 **deserializer**            --                  The FQCN of this class: ``org.apache.flume.sink.solr.morphline.BlobDeserializer$Builder``
 deserializer.maxBlobLength  100000000           The maximum number of bytes to read and buffer for a given request
 ==========================  ==================  =======================================================================
+
+Twitter 1% firehose Source (experimental)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. warning::
+  This source is hightly experimental and may change between minor versions of Flume.
+  Use at your own risk.
+
+Experimental source that connects via Streaming API to the 1% sample twitter
+firehose, continously downloads tweets, converts them to Avro format and
+sends Avro events to a downstream Flume sink. Requires the consumer and 
+access tokens and secrets of a Twitter developer account.
+Required properties are in **bold**.
+
+====================== ===========  ===================================================
+Property Name          Default      Description
+====================== ===========  ===================================================
+**channels**           --
+**type**               --           The component type name, needs to be ``org.apache.flume.source.twitter.TwitterSource``
+**consumerKey**        --           OAuth consumer key
+**consumerSecret**     --           OAuth consumer secret
+**accessToken**        --           OAuth access token
+**accessTokenSecret**  --           OAuth toekn secret 
+maxBatchSize           1000         Maximum number of twitter messages to put in a single batch
+maxBatchDurationMillis 1000         Maximum number of milliseconds to wait before closing a batch
+====================== ===========  ===================================================
+
+Example for agent named a1:
+
+.. code-block:: properties
+
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.type = org.apache.flume.source.twitter.TwitterSource
+  a1.sources.r1.channels = c1
+  a1.sources.r1.consumerKey = YOUR_TWITTER_CONSUMER_KEY
+  a1.sources.r1.consumerSecret = YOUR_TWITTER_CONSUMER_SECRET
+  a1.sources.r1.accessToken = YOUR_TWITTER_ACCESS_TOKEN
+  a1.sources.r1.accessTokenSecret = YOUR_TWITTER_ACCESS_TOKEN_SECRET
+  a1.sources.r1.maxBatchSize = 10
+  a1.sources.r1.maxBatchDurationMillis = 200
+
+Kafka Source
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Kafka Source is an Apache Kafka consumer that reads messages from a Kafka topic.
+If you have multiple Kafka sources running, you can configure them with the same Consumer Group
+so each will read a unique set of partitions for the topic.
+
+The properties below are required properties, but you can specify any Kafka parameter you want
+and it will be passed to the consumer. Check `Kafka documentation <https://kafka.apache.org/08/configuration.html#consumerconfigs>`_
+for details
+
+===========================     ===========  ===================================================
+Property Name                   Default      Description
+===========================     ===========  ===================================================
+**channels**                    --
+**type**                        --           The component type name, needs to be ``org.apache.flume.source.kafka,KafkaSource``
+**kafka.zookeeper.connect**     --           URI of ZooKeeper used by Kafka cluster
+**kadka.group.id**              --           Unique identified of consumer group. Setting the same id in multiple sources or agents
+                                             indicates that they are part of the same consumer group
+**topic**                       --           Kafka topic we'll read messages from. At the time, this is a single topic only.
+batchSize                       1000         Maximum number of messages written to Channel in one batch
+batchDurationMillis             1000         Maximum time (in ms) before a batch will be written to Channel
+                                             The batch will be written whenever the first of size and time will be reached.
+kafka.auto.commit.enable        false        If true, Kafka will commit events automatically - faster but less durable option.
+                                             when false, the Kafka Source will commit events before writing batch to channel
+consumer.timeout.ms             10           Polling interval for new data for batch.
+                                             Low value means more CPU usage.
+                                             High value means the maxBatchDurationMillis may be missed while waiting for
+                                             additional data.
+===========================     ===========  ===================================================
+
+Example for agent named tier1:
+
+.. code-block:: properties
+
+    tier1.sources.source1.type = org.apache.flume.source.kafka.KafkaSource
+    tier1.sources.source1.channels = channel1
+    tier1.sources.source1.kafka.zookeeper.connect = localhost:2181
+    tier1.sources.source1.topic = test1
+    tier1.sources.source1.kafka.group.id = flume
+    tier1.sources.source1.kafka.consumer.timeout.ms = 100
+
+
 
 
 NetCat Source
