@@ -25,6 +25,7 @@ import static org.mockito.Mockito.*;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Properties;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
@@ -38,6 +39,7 @@ import kafka.message.MessageAndMetadata;
 import org.apache.flume.*;
 import org.apache.flume.PollableSource.Status;
 import org.apache.flume.channel.ChannelProcessor;
+import org.apache.flume.conf.Configurables;
 import org.apache.flume.source.AbstractSource;
 import org.junit.After;
 import org.junit.Before;
@@ -74,11 +76,11 @@ public class KafkaSourceTest {
     }
 
     context = new Context();
-    context.put(KafkaSourceConstants.ZOOKEEPER_CONNECT,
+    context.put(KafkaSourceConstants.ZOOKEEPER_CONNECT_FLUME,
             kafkaServer.getZkConnectString());
-    context.put(KafkaSourceConstants.GROUP_ID,"flume");
+    context.put(KafkaSourceConstants.GROUP_ID_FLUME,"flume");
     context.put(KafkaSourceConstants.TOPIC,topicName);
-    context.put(KafkaSourceConstants.CONSUMER_TIMEOUT,"100");
+    context.put("kafka.consumer.timeout.ms","100");
 
     ChannelProcessor channelProcessor = mock(ChannelProcessor.class);
 
@@ -183,7 +185,7 @@ public class KafkaSourceTest {
   public void testNonExistingZk() throws EventDeliveryException,
           SecurityException, NoSuchFieldException, IllegalArgumentException,
           IllegalAccessException, InterruptedException {
-    context.put(KafkaSourceConstants.ZOOKEEPER_CONNECT,"blabla:666");
+    context.put(KafkaSourceConstants.ZOOKEEPER_CONNECT_FLUME,"blabla:666");
     kafkaSource.configure(context);
     kafkaSource.start();
     Thread.sleep(500L);
@@ -191,5 +193,7 @@ public class KafkaSourceTest {
     Status status = kafkaSource.process();
     assertEquals(Status.BACKOFF, status);
   }
+
+
 
 }

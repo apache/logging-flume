@@ -28,10 +28,10 @@ import org.apache.flume.sink.AbstractSink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
+import java.util.Properties;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
+import java.util.ArrayList;
 
 /**
  * A Flume Sink that can publish messages to Kafka.
@@ -43,11 +43,7 @@ import java.util.Properties;
  * partition key
  * <p/>
  * Mandatory properties are:
- * kafka.metadata.broker.list -- can be a partial list,
- * but at least 2 are recommended for HA
- * kafka.request.required.acks -- 0 (unsafe), 1 (accepted by at least one
- * broker), -1 (accepted by all brokers)
- * kafka.producer.type -- for safety, this should be sync
+ * brokerList -- can be a partial list, but at least 2 are recommended for HA
  * <p/>
  * <p/>
  * however, any property starting with "kafka." will be passed along to the
@@ -60,6 +56,8 @@ import java.util.Properties;
  * different topics
  * batchSize - how many messages to process in one batch. Larger batches
  * improve throughput while adding latency.
+ * requiredAcks -- 0 (unsafe), 1 (accepted by at least one broker, default),
+ * -1 (accepted by all brokers)
  * <p/>
  * header properties (per event):
  * topic
@@ -70,7 +68,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
   private static final Logger logger = LoggerFactory.getLogger(KafkaSink.class);
   public static final String KEY_HDR = "key";
   public static final String TOPIC_HDR = "topic";
-  private Properties producerProps;
+  private Properties kafkaProps;
   private Producer<String, byte[]> producer;
   private String topic;
   private int batchSize;
@@ -154,7 +152,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
   @Override
   public synchronized void start() {
     // instantiate the producer
-    ProducerConfig config = new ProducerConfig(producerProps);
+    ProducerConfig config = new ProducerConfig(kafkaProps);
     producer = new Producer<String, byte[]>(config);
     super.start();
   }
@@ -166,54 +164,43 @@ public class KafkaSink extends AbstractSink implements Configurable {
   }
 
 
+  /**
+   * We configure the sink and generate properties for the Kafka Producer
+   *
+   * Kafka producer properties is generated as follows:
+   * 1. We generate a properties object with some static defaults that
+   * can be overridden by Sink configuration
+   * 2. We add the configuration users added for Kafka (parameters starting
+   * with .kafka. and must be valid Kafka Producer properties
+   * 3. We add the sink's documented parameters which can override other
+   * properties
+   *
+   * @param context
+   */
   @Override
   public void configure(Context context) {
 
     batchSize = context.getInteger(KafkaSinkConstants.BATCH_SIZE,
       KafkaSinkConstants.DEFAULT_BATCH_SIZE);
-    logger.debug("Using batch size: {}", batchSize);
     messageList =
       new ArrayList<KeyedMessage<String, byte[]>>(batchSize);
-    Map<String, String> params = context.getParameters();
-    logger.debug("all params: " + params.entrySet().toString());
-    setProducerProps(params);
-    if (!producerProps.contains("serializer.class")) {
-      producerProps.put("serializer.class", "kafka.serializer.DefaultEncoder");
-    }
-    if (!producerProps.contains("key.serializer.class")) {
-      producerProps.put("key.serializer.class",
-        "kafka.serializer.StringEncoder");
-    }
+    logger.debug("Using batch size: {}", batchSize);
 
     topic = context.getString(KafkaSinkConstants.TOPIC,
       KafkaSinkConstants.DEFAULT_TOPIC);
     if (topic.equals(KafkaSinkConstants.DEFAULT_TOPIC)) {
-      logger.warn("The Properties 'preprocessor' or 'topic' is not set. " +
-        "Using the default topic name" +
+      logger.warn("The Property 'topic' is not set. " +
+        "Using the default topic name: " +
         KafkaSinkConstants.DEFAULT_TOPIC);
     } else {
       logger.info("Using the static topic: " + topic +
         " this may be over-ridden by event headers");
     }
-  }
 
+    kafkaProps = KafkaSinkUtil.getKafkaProperties(context);
 
-  private void setProducerProps(Map<String, String> params) {
-    producerProps = new Properties();
-    for (String key : params.keySet()) {
-      String value = params.get(key).trim();
-      key = key.trim();
-      if (key.startsWith(KafkaSinkConstants.PROPERTY_PREFIX)) {
-        // remove the prefix
-        key = key.substring(KafkaSinkConstants.PROPERTY_PREFIX.length() + 1,
-          key.length());
-        producerProps.put(key.trim(), value);
-        if (logger.isDebugEnabled()) {
-          logger.debug("Reading a Kafka Producer Property: key: " + key +
-            ", value: " + value);
-        }
-      }
+    if (logger.isDebugEnabled()) {
+      logger.debug("Kafka producer properties: " + kafkaProps);
     }
   }
-
 }
