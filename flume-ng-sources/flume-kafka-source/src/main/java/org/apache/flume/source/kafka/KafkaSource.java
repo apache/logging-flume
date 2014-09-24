@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.ConsumerTimeoutException;
@@ -66,6 +67,7 @@ public class KafkaSource extends AbstractSource
   private int consumerTimeout;
   private boolean kafkaAutoCommitEnabled;
   private Context context;
+  private Properties kafkaProps;
   private final List<Event> eventList = new ArrayList<Event>();
 
   public Status process() throws EventDeliveryException {
@@ -122,6 +124,19 @@ public class KafkaSource extends AbstractSource
     }
   }
 
+  /**
+   * We configure the source and generate properties for the Kafka Consumer
+   *
+   * Kafka Consumer properties are generated as follows:
+   * 1. Generate a properties object with some static defaults that
+   * can be overridden by Source configuration
+   * 2. We add the configuration users added for Kafka (parameters starting
+   * with kafka. and must be valid Kafka Consumer properties
+   * 3. We add the source documented parameters which can override other
+   * properties
+   *
+   * @param context
+   */
   public void configure(Context context) {
     this.context = context;
     batchUpperLimit = context.getInteger(KafkaSourceConstants.BATCH_SIZE,
@@ -130,21 +145,16 @@ public class KafkaSource extends AbstractSource
             KafkaSourceConstants.DEFAULT_BATCH_DURATION);
     topic = context.getString(KafkaSourceConstants.TOPIC);
 
-    //if consumer timeout and autocommit were not set by user,
-    // set them to 10ms and false
-    consumerTimeout = context.getInteger(KafkaSourceConstants.CONSUMER_TIMEOUT,
-            KafkaSourceConstants.DEFAULT_CONSUMER_TIMEOUT);
-    context.put(KafkaSourceConstants.CONSUMER_TIMEOUT,
-            Integer.toString(consumerTimeout));
-    String autoCommit = context.getString(
-            KafkaSourceConstants.AUTO_COMMIT_ENABLED,
-            String.valueOf(KafkaSourceConstants.DEFAULT_AUTO_COMMIT));
-    kafkaAutoCommitEnabled = Boolean.valueOf(autoCommit);
-    context.put(KafkaSourceConstants.AUTO_COMMIT_ENABLED,autoCommit);
-
     if(topic == null) {
       throw new ConfigurationException("Kafka topic must be specified.");
     }
+
+    kafkaProps = KafkaSourceUtil.getKafkaProperties(context);
+    consumerTimeout = Integer.parseInt(kafkaProps.getProperty(
+            KafkaSourceConstants.CONSUMER_TIMEOUT));
+    kafkaAutoCommitEnabled = Boolean.parseBoolean(kafkaProps.getProperty(
+            KafkaSourceConstants.AUTO_COMMIT_ENABLED));
+
   }
 
   @Override
@@ -153,7 +163,7 @@ public class KafkaSource extends AbstractSource
 
     try {
       //initialize a consumer. This creates the connection to ZooKeeper
-      consumer = KafkaSourceUtil.getConsumer(context);
+      consumer = KafkaSourceUtil.getConsumer(kafkaProps);
     } catch (Exception e) {
       throw new FlumeException("Unable to create consumer. " +
               "Check whether the ZooKeeper server is up and that the " +
@@ -190,6 +200,10 @@ public class KafkaSource extends AbstractSource
     }
     super.stop();
   }
+
+
+
+
 
 
   /**

@@ -39,10 +39,12 @@ public class KafkaSourceUtilTest {
 
   @Before
   public void setUp() throws Exception {
-    context.put("consumer.timeout", "10");
+    context.put("kafka.consumer.timeout", "10");
     context.put("type", "KafkaSource");
     context.put("topic", "test");
-    props = KafkaSourceUtil.getKafkaConfigProperties(context);
+    context.put("zookeeperConnect", "127.0.0.1:"+zkPort);
+    context.put("groupId","test");
+    props = KafkaSourceUtil.getKafkaProperties(context);
     zookeeper = new KafkaSourceEmbeddedZookeeper(zkPort);
 
 
@@ -53,22 +55,37 @@ public class KafkaSourceUtilTest {
     zookeeper.stopZookeeper();
   }
 
-  @Test
-  public void testGetKafkaConfigParameter() {
-    assertEquals("10",props.getProperty("consumer.timeout"));
-    assertEquals("test",props.getProperty("topic"));
-    assertNull(props.getProperty("type"));
-  }
-
 
   @Test
   public void testGetConsumer() {
-    context.put("zookeeper.connect", "127.0.0.1:"+zkPort);
-    context.put("group.id","test");
-
-    ConsumerConnector cc = KafkaSourceUtil.getConsumer(context);
+    ConsumerConnector cc = KafkaSourceUtil.getConsumer(props);
     assertNotNull(cc);
 
+  }
+
+  @Test
+  public void testKafkaConsumerProperties() {
+    Context context = new Context();
+    context.put("kafka.auto.commit.enabled", "override.default.autocommit");
+    context.put("kafka.fake.property", "kafka.property.value");
+    context.put("kafka.zookeeper.connect","bad-zookeeper-list");
+    context.put("zookeeperConnect","real-zookeeper-list");
+    Properties kafkaProps = KafkaSourceUtil.getKafkaProperties(context);
+
+    //check that we have defaults set
+    assertEquals(
+            kafkaProps.getProperty(KafkaSourceConstants.GROUP_ID),
+            KafkaSourceConstants.DEFAULT_GROUP_ID);
+    //check that kafka properties override the default and get correct name
+    assertEquals(
+            kafkaProps.getProperty(KafkaSourceConstants.AUTO_COMMIT_ENABLED),
+            "override.default.autocommit");
+    //check that any kafka property gets in
+    assertEquals(kafkaProps.getProperty("fake.property"),
+            "kafka.property.value");
+    //check that documented property overrides defaults
+    assertEquals(kafkaProps.getProperty("zookeeper.connect")
+            ,"real-zookeeper-list");
   }
 
 

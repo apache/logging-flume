@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
@@ -126,7 +127,7 @@ public class TestKafkaSink {
     kafkaSink.setChannel(memoryChannel);
     kafkaSink.start();
 
-    String msg = "my message";
+    String msg = "test-topic-and-key-from-header";
     Map<String, String> headers = new HashMap<String, String>();
     headers.put("topic", TestConstants.CUSTOM_TOPIC);
     headers.put("key", TestConstants.CUSTOM_KEY);
@@ -156,9 +157,8 @@ public class TestKafkaSink {
   }
 
   @Test
-  public void testEmptyChannel() throws UnsupportedEncodingException {
-
-
+  public void testEmptyChannel() throws UnsupportedEncodingException,
+          EventDeliveryException {
     Sink kafkaSink = new KafkaSink();
     Context context = prepareDefaultContext();
     Configurables.configure(kafkaSink, context);
@@ -167,25 +167,20 @@ public class TestKafkaSink {
     kafkaSink.setChannel(memoryChannel);
     kafkaSink.start();
 
-    try {
-      Sink.Status status = kafkaSink.process();
-      if (status == Sink.Status.BACKOFF) {
-        fail("Error Occurred");
-      }
-    } catch (EventDeliveryException ex) {
-      // ignore
+    Sink.Status status = kafkaSink.process();
+    if (status == Sink.Status.BACKOFF) {
+      fail("Error Occurred");
     }
     assertNull(
       testUtil.getNextMessageFromConsumer(KafkaSinkConstants.DEFAULT_TOPIC));
-
   }
-
 
   private Context prepareDefaultContext() {
     // Prepares a default context with Kafka Server Properties
     Context context = new Context();
-    context.put("kafka.metadata.broker.list", testUtil.getKafkaServerUrl());
+    context.put("brokerList", testUtil.getKafkaServerUrl());
     context.put("kafka.request.required.acks", "1");
+    context.put("kafka.producer.type","sync");
     context.put("batchSize", "1");
     return context;
   }
