@@ -2137,6 +2137,60 @@ auth.proxyUser           --       The effective user for HDFS actions, if differ
                                   the kerberos principal
 =======================  =======  ===========================================================
 
+
+Kafka Sink
+~~~~~~~~~~
+This is a Flume Sink implementation that can publish data to a
+`Kafka <http://kafka.apache.org/>`_ topic. One of the objective is to integrate Flume
+with Kafka so that pull based processing systems can process the data coming
+through various Flume sources. This currently supports Kafka 0.8.x series of releases.
+
+Required properties are marked in bold font.
+
+
+===============================  ===================  =============================================================================================
+Property Name                    Default              Description
+===============================  ===================  =============================================================================================
+**type**                         --                   Must be set to ``org.apache.flume.sink.kafka.KafkaSink``
+**kafka.metadata.broker.list**   --                   List of brokers Kafka-Sink will connect to, to get the list of topic partitions
+                                                      This can be a partial list of brokers, but we recommend at least two for HA.
+                                                      The format is comma separated list of hostname:port
+topic                            default-flume-topic  The topic in Kafka to which the messages will be published. If this parameter is configured,
+                                                      messages will be published to this topic.
+                                                      If the event header contains a "topic" field, the event will be published to that topic
+                                                      overriding the topic configured here.
+batchSize                        100                  How many messages to process in one batch. Larger batches improve throughput while adding latency.
+kafka.request.required.acks      0                    How many replicas must acknowledge a message before its considered successfully written.
+                                                      Accepted values are 0 (Never wait for acknowledgement), 1 (wait for leader only), -1 (wait for all replicas)
+                                                      The default is the fastest option, but we *highly recommend* setting this to -1 to avoid data loss
+kafka.producer.type              sync                 Whether messages should be sent to broker synchronously or using an asynchronous background thread.
+                                                      Accepted values are sync (safest) and async (faster but potentially unsafe)
+Other Kafka Producer Properties  --                   These properties are used to configure the Kafka Producer. Any producer property supported
+                                                      by Kafka can be used. The only requirement is to prepend the property name with the prefix ``kafka.``.
+===============================  ===================  =============================================================================================
+
+.. note::   Kafka Sink uses the ``topic`` and ``key`` properties from the FlumeEvent headers to send events to Kafka.
+            If ``topic`` exists in the headers, the event will be sent to that specific topic, overriding the topic configured for the Sink.
+            If ``key`` exists in the headers, the key will used by Kafka to partition the data between the topic partitions. Events with same key
+            will be sent to the same partition. If the key is null, events will be sent to random partitions.
+
+An example configuration of a Kafka sink is given below. Properties starting
+with the prefix ``kafka`` (the last 3 properties) are used when instantiating
+the Kafka producer. The properties that are passed when creating the Kafka
+producer are not limited to the properties given in this example.
+Also it's possible include your custom properties here and access them inside
+the preprocessor through the Flume Context object passed in as a method
+argument.
+
+.. code-block:: properties
+
+    a1.sinks.k1.type = org.apache.flume.sink.kafka.KafkaSink
+    a1.sinks.k1.topic = mytopic
+    a1.sinks.k1.kafka.metadata.broker.list = localhost:9092
+    a1.sinks.k1.kafka.request.required.acks = 1
+    a1.sinks.k1.batchSize = 20
+    a1.sinks.k1.channel = c1
+
 Custom Sink
 ~~~~~~~~~~~
 
