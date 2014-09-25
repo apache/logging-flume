@@ -52,8 +52,12 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.kitesdk.data.Dataset;
+import org.kitesdk.data.DatasetDescriptor;
+import org.kitesdk.data.DatasetException;
 import org.kitesdk.data.DatasetWriter;
 import org.kitesdk.data.Datasets;
+import org.kitesdk.data.View;
+import org.kitesdk.data.spi.Registration;
 import org.kitesdk.data.spi.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,12 +75,11 @@ public class DatasetSink extends AbstractSink implements Configurable {
 
   static Configuration conf = new Configuration();
 
-  private String datasetURI = null;
-  private String repositoryURI = null;
   private String datasetName = null;
   private long batchSize = DatasetSinkConstants.DEFAULT_BATCH_SIZE;
 
-  private Dataset<GenericRecord> targetDataset = null;
+  private URI target = null;
+  private Schema targetSchema = null;
   private DatasetWriter<GenericRecord> writer = null;
   private UserGroupInformation login = null;
   private SinkCounter counter = null;
@@ -98,7 +101,7 @@ public class DatasetSink extends AbstractSink implements Configurable {
           // must use the target dataset's schema for reading to ensure the
           // records are able to be stored using it
           return new GenericDatumReader<GenericRecord>(
-              schema, targetDataset.getDescriptor().getSchema());
+            schema, targetSchema);
         }
       });
   private static LoadingCache<String, Schema> schemasFromLiteral = CacheBuilder
@@ -150,39 +153,23 @@ public class DatasetSink extends AbstractSink implements Configurable {
       this.login = KerberosUtil.proxyAs(effectiveUser, login);
     }
 
-    this.datasetURI = context.getString(
-        DatasetSinkConstants.CONFIG_KITE_DATASET_URI);
+    String datasetURI = context.getString(
+      DatasetSinkConstants.CONFIG_KITE_DATASET_URI);
     if (datasetURI != null) {
-      this.targetDataset = KerberosUtil.runPrivileged(login,
-          new PrivilegedExceptionAction<Dataset<GenericRecord>>() {
-            @Override
-            public Dataset<GenericRecord> run() {
-              return Datasets.load(datasetURI);
-            }
-          });
+      this.target = URI.create(datasetURI);
+      this.datasetName = uriToName(target);
     } else {
-      this.repositoryURI = context.getString(
-          DatasetSinkConstants.CONFIG_KITE_REPO_URI);
+      String repositoryURI = context.getString(
+        DatasetSinkConstants.CONFIG_KITE_REPO_URI);
       Preconditions.checkNotNull(repositoryURI, "Repository URI is missing");
       this.datasetName = context.getString(
-          DatasetSinkConstants.CONFIG_KITE_DATASET_NAME);
+        DatasetSinkConstants.CONFIG_KITE_DATASET_NAME);
       Preconditions.checkNotNull(datasetName, "Dataset name is missing");
 
-      this.targetDataset = KerberosUtil.runPrivileged(login,
-          new PrivilegedExceptionAction<Dataset<GenericRecord>>() {
-            @Override
-            public Dataset<GenericRecord> run() {
-              return Datasets.load(
-                  new URIBuilder(repositoryURI, datasetName).build());
-            }
-          });
+      this.target = new URIBuilder(repositoryURI, datasetName).build();
     }
 
-    String formatName = targetDataset.getDescriptor().getFormat().getName();
-    Preconditions.checkArgument(allowedFormats().contains(formatName),
-        "Unsupported format: " + formatName);
-
-    this.reuseDatum = !("parquet".equals(formatName));
+    this.setName(target.toString());
 
     // other configuration
     this.batchSize = context.getLong(
@@ -192,12 +179,11 @@ public class DatasetSink extends AbstractSink implements Configurable {
         DatasetSinkConstants.CONFIG_KITE_ROLL_INTERVAL,
         DatasetSinkConstants.DEFAULT_ROLL_INTERVAL);
 
-    this.counter = new SinkCounter(getName());
+    this.counter = new SinkCounter(datasetName);
   }
 
   @Override
   public synchronized void start() {
-    this.writer = targetDataset.newWriter();
     this.lastRolledMs = System.currentTimeMillis();
     counter.start();
     // signal that this sink is ready to process
@@ -232,17 +218,22 @@ public class DatasetSink extends AbstractSink implements Configurable {
   @Override
   public Status process() throws EventDeliveryException {
     if (writer == null) {
-      throw new EventDeliveryException(
-          "Cannot recover after previous failure");
+      try {
+        this.writer = newWriter(login, target);
+      } catch (DatasetException e) {
+        // DatasetException includes DatasetNotFoundException
+        throw new EventDeliveryException(
+          "Cannot write to " + getName(), e);
+      }
     }
 
     // handle file rolling
     if ((System.currentTimeMillis() - lastRolledMs) / 1000 > rollIntervalS) {
       // close the current writer and get a new one
       writer.close();
-      this.writer = targetDataset.newWriter();
+      this.writer = newWriter(login, target);
       this.lastRolledMs = System.currentTimeMillis();
-      LOG.info("Rolled writer for dataset: " + datasetName);
+      LOG.info("Rolled writer for " + getName());
     }
 
     Channel channel = getChannel();
@@ -316,6 +307,34 @@ public class DatasetSink extends AbstractSink implements Configurable {
     }
   }
 
+  private DatasetWriter<GenericRecord> newWriter(
+    final UserGroupInformation login, final URI uri) {
+    View<GenericRecord> view = KerberosUtil.runPrivileged(login,
+      new PrivilegedExceptionAction<Dataset<GenericRecord>>() {
+        @Override
+        public Dataset<GenericRecord> run() {
+          return Datasets.load(uri);
+        }
+      });
+
+    DatasetDescriptor descriptor = view.getDataset().getDescriptor();
+    String formatName = descriptor.getFormat().getName();
+    Preconditions.checkArgument(allowedFormats().contains(formatName),
+      "Unsupported format: " + formatName);
+
+    Schema newSchema = descriptor.getSchema();
+    if (targetSchema == null || !newSchema.equals(targetSchema)) {
+      this.targetSchema = descriptor.getSchema();
+      // target dataset schema has changed, invalidate all readers based on it
+      readers.invalidateAll();
+    }
+
+    this.reuseDatum = !("parquet".equals(formatName));
+    this.datasetName = view.getDataset().getName();
+
+    return view.newWriter();
+  }
+
   /**
    * Not thread-safe.
    *
@@ -351,4 +370,8 @@ public class DatasetSink extends AbstractSink implements Configurable {
     }
   }
 
+  private static String uriToName(URI uri) {
+    return Registration.lookupDatasetUri(URI.create(
+      uri.getRawSchemeSpecificPart())).second().get("dataset");
+  }
 }

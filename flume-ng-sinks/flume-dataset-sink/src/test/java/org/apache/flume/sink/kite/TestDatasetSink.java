@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 import org.apache.avro.Schema;
@@ -85,6 +86,12 @@ public class TestDatasetSink {
   public static final Schema INCOMPATIBLE_SCHEMA = new Schema.Parser().parse(
       "{\"type\":\"record\",\"name\":\"user\",\"fields\":[" +
           "{\"name\":\"username\",\"type\":\"string\"}]}");
+  public static final Schema UPDATED_SCHEMA = new Schema.Parser().parse(
+      "{\"type\":\"record\",\"name\":\"rec\",\"fields\":[" +
+          "{\"name\":\"id\",\"type\":\"string\"}," +
+          "{\"name\":\"priority\",\"type\":\"int\", \"default\": 0}," +
+          "{\"name\":\"msg\",\"type\":[\"string\",\"null\"]," +
+          "\"default\":\"default\"}]}");
   public static final DatasetDescriptor DESCRIPTOR = new DatasetDescriptor
       .Builder()
       .schema(RECORD_SCHEMA)
@@ -249,6 +256,88 @@ public class TestDatasetSink {
         Datasets.delete(partitionedUri);
       }
     }
+  }
+
+  @Test
+  public void testStartBeforeDatasetCreated() throws EventDeliveryException {
+    // delete the dataset created by setup
+    Datasets.delete(FILE_DATASET_URI);
+
+    DatasetSink sink = sink(in, config);
+
+    // start the sink
+    sink.start();
+
+    // run the sink without a target dataset
+    try {
+      sink.process();
+      Assert.fail("Should have thrown an exception: no such dataset");
+    } catch (EventDeliveryException e) {
+      // expected
+    }
+
+    // create the target dataset
+    Datasets.create(FILE_DATASET_URI, DESCRIPTOR);
+
+    // run the sink
+    sink.process();
+    sink.stop();
+
+    Assert.assertEquals(
+      Sets.newHashSet(expected),
+      read(Datasets.load(FILE_DATASET_URI)));
+    Assert.assertEquals("Should have committed", 0, remaining(in));
+  }
+
+  @Test
+  public void testDatasetUpdate() throws EventDeliveryException {
+    // add an updated record that is missing the msg field
+    GenericRecordBuilder updatedBuilder = new GenericRecordBuilder(
+      UPDATED_SCHEMA);
+    GenericData.Record updatedRecord = updatedBuilder
+      .set("id", "0")
+      .set("priority", 1)
+      .set("msg", "Priority 1 message!")
+      .build();
+
+    // make a set of the expected records with the new schema
+    Set<GenericRecord> expectedAsUpdated = Sets.newHashSet();
+    for (GenericRecord record : expected) {
+      expectedAsUpdated.add(updatedBuilder
+        .clear("priority")
+        .set("id", record.get("id"))
+        .set("msg", record.get("msg"))
+        .build());
+    }
+    expectedAsUpdated.add(updatedRecord);
+
+    DatasetSink sink = sink(in, config);
+
+    // run the sink
+    sink.start();
+    sink.process();
+
+    // update the dataset's schema
+    DatasetDescriptor updated = new DatasetDescriptor
+      .Builder(Datasets.load(FILE_DATASET_URI).getDataset().getDescriptor())
+      .schema(UPDATED_SCHEMA)
+      .build();
+    Datasets.update(FILE_DATASET_URI, updated);
+
+    // trigger a roll on the next process call to refresh the writer
+    sink.roll();
+
+    // add the record to the incoming channel and the expected list
+    putToChannel(in, event(updatedRecord, UPDATED_SCHEMA, null, false));
+
+    // process events with the updated schema
+    sink.process();
+    sink.stop();
+
+    Assert.assertEquals(
+      expectedAsUpdated,
+      read(Datasets.load(FILE_DATASET_URI)));
+    Assert.assertEquals("Should have committed", 0, remaining(in));
   }
 
   @Test
