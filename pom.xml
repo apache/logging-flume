@@ -52,6 +52,7 @@ limitations under the License.
     <hadoop2.version>2.4.0</hadoop2.version>
     <thrift.version>0.7.0</thrift.version>
     <kite.version>0.15.0</kite.version>
+    <hive.version>0.10.0</hive.version>
   </properties>
 
   <modules>
@@ -1294,6 +1295,28 @@ limitations under the License.
         <groupId>org.kitesdk</groupId>
         <artifactId>kite-data-core</artifactId>
         <version>${kite.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.kitesdk</groupId>
+        <artifactId>kite-data-hcatalog</artifactId>
+        <version>${kite.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.kitesdk</groupId>
+        <artifactId>kite-data-hbase</artifactId>
+        <version>${kite.version}</version>
+      </dependency>
+
+      <!-- Dependency for kite-data-hive -->
+      <dependency>
+        <groupId>org.apache.hive</groupId>
+        <artifactId>hive-exec</artifactId>
+        <version>${hive.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hive</groupId>
+        <artifactId>hive-metastore</artifactId>
+        <version>${hive.version}</version>
       </dependency>
 
       <dependency>
