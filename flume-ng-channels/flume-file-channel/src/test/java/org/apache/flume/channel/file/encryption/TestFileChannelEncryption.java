@@ -307,8 +307,8 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
       channel = createFileChannel(overrides);
       Assert.fail();
     } catch(RuntimeException ex) {
-      Assert.assertEquals("java.io.FileNotFoundException: /path/does/not/exist " +
-          "(No such file or directory)", ex.getMessage());
+      Assert.assertTrue("Exception message is incorrect: " + ex.getMessage(),
+          ex.getMessage().startsWith("java.io.FileNotFoundException: /path/does/not/exist "));
     }
   }
   @Test
@@ -322,8 +322,8 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
       channel = createFileChannel(overrides);
       Assert.fail();
     } catch(RuntimeException ex) {
-      Assert.assertEquals("java.io.FileNotFoundException: /path/does/not/exist " +
-          "(No such file or directory)", ex.getMessage());
+      Assert.assertTrue("Exception message is incorrect: " + ex.getMessage(),
+          ex.getMessage().startsWith("java.io.FileNotFoundException: /path/does/not/exist "));
     }
   }
   @Test
