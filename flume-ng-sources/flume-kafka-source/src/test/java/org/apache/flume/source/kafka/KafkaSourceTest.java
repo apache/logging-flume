@@ -18,6 +18,7 @@
 package org.apache.flume.source.kafka;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Mockito.*;
@@ -192,6 +193,29 @@ public class KafkaSourceTest {
 
     Status status = kafkaSource.process();
     assertEquals(Status.BACKOFF, status);
+  }
+
+  @Test
+  public void testBatchTime() throws InterruptedException,
+          EventDeliveryException {
+    context.put(KafkaSourceConstants.BATCH_DURATION_MS,"250");
+    kafkaSource.configure(context);
+    kafkaSource.start();
+
+    Thread.sleep(500L);
+
+    for (int i=1; i<5000; i++) {
+      kafkaServer.produce(topicName, "", "hello, world " + i);
+    }
+    Thread.sleep(500L);
+
+    long startTime = System.currentTimeMillis();
+    Status status = kafkaSource.process();
+    long endTime = System.currentTimeMillis();
+    assertEquals(Status.READY, status);
+    assertTrue(endTime - startTime <
+            ( context.getLong(KafkaSourceConstants.BATCH_DURATION_MS) +
+            context.getLong("kafka.consumer.timeout.ms")) );
   }
 
 
