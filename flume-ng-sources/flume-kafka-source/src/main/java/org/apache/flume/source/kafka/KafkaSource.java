@@ -75,13 +75,16 @@ public class KafkaSource extends AbstractSource
     byte[] bytes;
     Event event;
     Map<String, String> headers;
+    long batchStartTime = System.currentTimeMillis();
+    long batchEndTime = System.currentTimeMillis() + timeUpperLimit;
     try {
       int eventCounter = 0;
       int timeWaited = 0;
-      IterStatus iterStatus = new IterStatus(false, -1);
-      while (eventCounter < batchUpperLimit && timeWaited < timeUpperLimit) {
-        iterStatus = timedHasNext();
-        if (iterStatus.hasData()) {
+      boolean iterStatus = false;
+      while (eventCounter < batchUpperLimit &&
+              System.currentTimeMillis() < batchEndTime) {
+        iterStatus = hasNext();
+        if (iterStatus) {
           // get next message
           bytes = it.next().message();
 
@@ -96,9 +99,8 @@ public class KafkaSource extends AbstractSource
           eventList.add(event);
           eventCounter++;
         }
-        timeWaited += iterStatus.getWaitTime();
         if (log.isDebugEnabled()) {
-          log.debug("Waited: {} ", timeWaited);
+          log.debug("Waited: {} ", System.currentTimeMillis() - batchStartTime);
           log.debug("Event #: {}", eventCounter);
         }
       }
@@ -111,7 +113,7 @@ public class KafkaSource extends AbstractSource
           consumer.commitOffsets();
         }
       }
-      if (!iterStatus.hasData()) {
+      if (!iterStatus) {
         if (log.isDebugEnabled()) {
           log.debug("Returning with backoff. No more data to read");
         }
@@ -209,37 +211,15 @@ public class KafkaSource extends AbstractSource
   /**
    * Check if there are messages waiting in Kafka,
    * waiting until timeout (10ms by default) for messages to arrive.
-   * And timing our wait.
-   * @return IterStatus object.
-   * Indicating whether a message was found and how long we waited for it
+   * and catching the timeout exception to return a boolean
    */
-  IterStatus timedHasNext() {
+  boolean hasNext() {
     try {
-      long startTime = System.currentTimeMillis();
       it.hasNext();
-      long endTime = System.currentTimeMillis();
-      return new IterStatus(true, endTime - startTime);
+      return true;
     } catch (ConsumerTimeoutException e) {
-      return new IterStatus(false, consumerTimeout);
+      return false;
     }
   }
 
-  private class IterStatus {
-    private long waitTime;
-    private boolean hasData;
-
-
-    private IterStatus(boolean hasData,long waitTime) {
-      this.waitTime = waitTime;
-      this.hasData = hasData;
-    }
-
-    public long getWaitTime() {
-      return waitTime;
-    }
-
-    public boolean hasData() {
-      return hasData;
-    }
-  }
 }
