@@ -75,19 +75,7 @@ public class TestKafkaSource {
     context.put(KafkaSourceConstants.TOPIC,topicName);
     context.put("kafka.consumer.timeout.ms","100");
 
-
-    ChannelProcessor channelProcessor = mock(ChannelProcessor.class);
-
-    events = Lists.newArrayList();
-
-    doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        events.addAll((List<Event>)invocation.getArguments()[0]);
-        return null;
-      }
-    }).when(channelProcessor).processEventBatch(any(List.class));
-    kafkaSource.setChannelProcessor(channelProcessor);
+    kafkaSource.setChannelProcessor(createGoodChannel());
   }
 
   @After
@@ -209,5 +197,138 @@ public class TestKafkaSource {
     assertTrue(endTime - startTime <
             ( context.getLong(KafkaSourceConstants.BATCH_DURATION_MS) +
             context.getLong("kafka.consumer.timeout.ms")) );
+  }
+
+  // Consume event, stop source, start again and make sure we are not
+  // consuming same event again
+  @Test
+  public void testCommit() throws InterruptedException, EventDeliveryException {
+    context.put(KafkaSourceConstants.BATCH_SIZE,"1");
+    kafkaSource.configure(context);
+    kafkaSource.start();
+
+    Thread.sleep(500L);
+
+    kafkaServer.produce(topicName, "", "hello, world");
+
+    Thread.sleep(500L);
+
+    Assert.assertEquals(Status.READY, kafkaSource.process());
+    kafkaSource.stop();
+    Thread.sleep(500L);
+    kafkaSource.start();
+    Thread.sleep(500L);
+    Assert.assertEquals(Status.BACKOFF, kafkaSource.process());
+
+  }
+
+  // Remove channel processor and test if we can consume events again
+  @Test
+  public void testNonCommit() throws EventDeliveryException,
+          InterruptedException {
+
+    context.put(KafkaSourceConstants.BATCH_SIZE,"1");
+    context.put(KafkaSourceConstants.BATCH_DURATION_MS,"30000");
+    kafkaSource.configure(context);
+    kafkaSource.start();
+    Thread.sleep(500L);
+
+    kafkaServer.produce(topicName, "", "hello, world");
+    Thread.sleep(500L);
+
+    kafkaSource.setChannelProcessor(createBadChannel());
+    log.debug("processing from kafka to bad channel");
+    Assert.assertEquals(Status.BACKOFF, kafkaSource.process());
+
+    log.debug("repairing channel");
+    kafkaSource.setChannelProcessor(createGoodChannel());
+
+    log.debug("re-process to good channel - this should work");
+    kafkaSource.process();
+    Assert.assertEquals("hello, world", new String(events.get(0).getBody(),
+            Charsets.UTF_8));
+
+
+  }
+
+  @Test
+  public void testTwoBatches() throws InterruptedException,
+          EventDeliveryException {
+    context.put(KafkaSourceConstants.BATCH_SIZE,"1");
+    context.put(KafkaSourceConstants.BATCH_DURATION_MS,"30000");
+    kafkaSource.configure(context);
+    kafkaSource.start();
+    Thread.sleep(500L);
+
+    kafkaServer.produce(topicName, "", "event 1");
+    Thread.sleep(500L);
+
+    kafkaSource.process();
+    Assert.assertEquals("event 1", new String(events.get(0).getBody(),
+            Charsets.UTF_8));
+    events.clear();
+
+    kafkaServer.produce(topicName, "", "event 2");
+    Thread.sleep(500L);
+    kafkaSource.process();
+    Assert.assertEquals("event 2", new String(events.get(0).getBody(),
+            Charsets.UTF_8));
+  }
+
+  @Test
+  public void testTwoBatchesWithAutocommit() throws InterruptedException,
+          EventDeliveryException {
+    context.put(KafkaSourceConstants.BATCH_SIZE,"1");
+    context.put(KafkaSourceConstants.BATCH_DURATION_MS,"30000");
+    context.put("kafka.auto.commit.enable","true");
+    kafkaSource.configure(context);
+    kafkaSource.start();
+    Thread.sleep(500L);
+
+    kafkaServer.produce(topicName, "", "event 1");
+    Thread.sleep(500L);
+
+    kafkaSource.process();
+    Assert.assertEquals("event 1", new String(events.get(0).getBody(),
+            Charsets.UTF_8));
+    events.clear();
+
+    kafkaServer.produce(topicName, "", "event 2");
+    Thread.sleep(500L);
+    kafkaSource.process();
+    Assert.assertEquals("event 2", new String(events.get(0).getBody(),
+            Charsets.UTF_8));
+
+  }
+
+  ChannelProcessor createGoodChannel() {
+
+    ChannelProcessor channelProcessor = mock(ChannelProcessor.class);
+
+    events = Lists.newArrayList();
+
+    doAnswer(new Answer<Void>() {
+      @Override
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        events.addAll((List<Event>)invocation.getArguments()[0]);
+        return null;
+      }
+    }).when(channelProcessor).processEventBatch(any(List.class));
+
+    return channelProcessor;
+
+  }
+
+  ChannelProcessor createBadChannel() {
+    ChannelProcessor channelProcessor = mock(ChannelProcessor.class);
+
+    doAnswer(new Answer<Void>() {
+      @Override
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        throw new ChannelException("channel intentional broken");
+      }
+    }).when(channelProcessor).processEventBatch(any(List.class));
+
+    return channelProcessor;
   }
 }

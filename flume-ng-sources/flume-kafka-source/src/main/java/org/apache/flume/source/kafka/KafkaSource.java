@@ -71,17 +71,15 @@ public class KafkaSource extends AbstractSource
   private final List<Event> eventList = new ArrayList<Event>();
 
   public Status process() throws EventDeliveryException {
-    eventList.clear();
+
     byte[] bytes;
     Event event;
     Map<String, String> headers;
     long batchStartTime = System.currentTimeMillis();
     long batchEndTime = System.currentTimeMillis() + timeUpperLimit;
     try {
-      int eventCounter = 0;
-      int timeWaited = 0;
       boolean iterStatus = false;
-      while (eventCounter < batchUpperLimit &&
+      while (eventList.size() < batchUpperLimit &&
               System.currentTimeMillis() < batchEndTime) {
         iterStatus = hasNext();
         if (iterStatus) {
@@ -97,17 +95,21 @@ public class KafkaSource extends AbstractSource
           }
           event = EventBuilder.withBody(bytes, headers);
           eventList.add(event);
-          eventCounter++;
         }
         if (log.isDebugEnabled()) {
           log.debug("Waited: {} ", System.currentTimeMillis() - batchStartTime);
-          log.debug("Event #: {}", eventCounter);
+          log.debug("Event #: {}", eventList.size());
         }
       }
       // If we have events, send events to channel
+      // clear the event list
       // and commit if Kafka doesn't auto-commit
-      if (eventCounter > 0) {
+      if (eventList.size() > 0) {
         getChannelProcessor().processEventBatch(eventList);
+        eventList.clear();
+        if (log.isDebugEnabled()) {
+          log.debug("Wrote {} events to channel", eventList.size());
+        }
         if (!kafkaAutoCommitEnabled) {
           // commit the read transactions to Kafka to avoid duplicates
           consumer.commitOffsets();
@@ -202,11 +204,6 @@ public class KafkaSource extends AbstractSource
     }
     super.stop();
   }
-
-
-
-
-
 
   /**
    * Check if there are messages waiting in Kafka,
