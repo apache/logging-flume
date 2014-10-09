@@ -206,9 +206,10 @@ public class EmbeddedAgentConfiguration {
     }
     String sinkNames = properties.remove(SINKS);
 
-    String sourceName = "source-" + name;
-    String channelName = "channel-" + name;
-    String sinkGroupName = "sink-group-" + name;
+    String strippedName = name.replaceAll("\\s+","");
+    String sourceName = "source-" + strippedName;
+    String channelName = "channel-" + strippedName;
+    String sinkGroupName = "sink-group-" + strippedName;
 
     /*
      * Now we are going to process the user supplied configuration
