@@ -1029,11 +1029,12 @@ public class Log {
           try {
             writer.markCheckpoint(logWriteOrderID);
           } finally {
+            reader = LogFileFactory.getRandomReader(file,
+                    encryptionKeyProvider, fsyncPerTransaction);
+            idLogFileMap.put(id, reader);
             writer.close();
           }
-          reader = LogFileFactory.getRandomReader(file,
-            encryptionKeyProvider, fsyncPerTransaction);
-          idLogFileMap.put(id, reader);
+
           LOGGER.debug("Updated checkpoint for file: " + file
               + "logWriteOrderID " + logWriteOrderID);
           idIterator.remove();
