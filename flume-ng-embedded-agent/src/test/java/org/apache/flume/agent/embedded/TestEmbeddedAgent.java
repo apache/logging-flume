@@ -165,6 +165,33 @@ public class TestEmbeddedAgent {
     Assert.assertEquals(newHeaders, event.getHeaders());
   }
 
+
+  @Test(timeout = 30000L)
+  public void testEmbeddedAgentName() throws Exception {
+    EmbeddedAgent embedAgent = new EmbeddedAgent("test 1 2" + serialNumber.incrementAndGet());
+    List<Event> events = Lists.newArrayList();
+    events.add(EventBuilder.withBody(body, headers));
+    embedAgent.configure(properties);
+    embedAgent.start();
+    embedAgent.putAll(events);
+
+    Event event;
+    while((event = eventCollector.poll()) == null) {
+      Thread.sleep(500L);
+    }
+    Assert.assertNotNull(event);
+    Assert.assertArrayEquals(body, event.getBody());
+    Assert.assertEquals(headers, event.getHeaders());
+    if(embedAgent != null) {
+      try {
+        embedAgent.stop();
+      } catch (Exception e) {
+        LOGGER.debug("Error shutting down agent", e);
+      }
+    }
+  }
+
+
   static class EventCollector implements AvroSourceProtocol {
     private final Queue<AvroFlumeEvent> eventQueue =
         new LinkedBlockingQueue<AvroFlumeEvent>();
