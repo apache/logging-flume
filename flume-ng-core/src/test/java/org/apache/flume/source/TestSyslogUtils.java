@@ -29,6 +29,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 
 public class TestSyslogUtils {
@@ -184,7 +185,7 @@ public class TestSyslogUtils {
     if (stamp1 == null) {
       Assert.assertFalse(headers2.containsKey("timestamp"));
     } else {
-      SimpleDateFormat formater = new SimpleDateFormat(format1);
+      SimpleDateFormat formater = new SimpleDateFormat(format1, Locale.ENGLISH);
       Assert.assertEquals(String.valueOf(formater.parse(stamp1).getTime()), headers2.get("timestamp"));
     }
     if (host1 == null) {

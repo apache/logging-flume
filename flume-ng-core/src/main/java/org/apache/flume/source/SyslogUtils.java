@@ -36,6 +36,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.MatchResult;
@@ -240,10 +241,10 @@ public class SyslogUtils {
     // timezone in RFC5424 is [+-]tt:tt, so remove the ':' for java date formatting
     fmt1.searchPattern.add("([+-])(\\d{2})[:](\\d{2})");
     fmt1.replacePattern.add("$1$2$3");
-    fmt1.dateFormat.add(new SimpleDateFormat(SYSLOG_TIMESTAMP_FORMAT_RFC5424_1));
-    fmt1.dateFormat.add(new SimpleDateFormat(SYSLOG_TIMESTAMP_FORMAT_RFC5424_2));
-    fmt1.dateFormat.add(new SimpleDateFormat(SYSLOG_TIMESTAMP_FORMAT_RFC5424_3));
-    fmt1.dateFormat.add(new SimpleDateFormat(SYSLOG_TIMESTAMP_FORMAT_RFC5424_4));
+    fmt1.dateFormat.add(new SimpleDateFormat(SYSLOG_TIMESTAMP_FORMAT_RFC5424_1, Locale.ENGLISH));
+    fmt1.dateFormat.add(new SimpleDateFormat(SYSLOG_TIMESTAMP_FORMAT_RFC5424_2, Locale.ENGLISH));
+    fmt1.dateFormat.add(new SimpleDateFormat(SYSLOG_TIMESTAMP_FORMAT_RFC5424_3, Locale.ENGLISH));
+    fmt1.dateFormat.add(new SimpleDateFormat(SYSLOG_TIMESTAMP_FORMAT_RFC5424_4, Locale.ENGLISH));
     fmt1.addYear = false;
 
     // setup RFC3164 formater
@@ -252,7 +253,7 @@ public class SyslogUtils {
     // the single digit date has two spaces, so trim it
     fmt2.searchPattern.add("  ");
     fmt2.replacePattern.add(" ");
-    fmt2.dateFormat.add(new SimpleDateFormat(SYSLOG_TIMESTAMP_FORMAT_RFC3164_1));
+    fmt2.dateFormat.add(new SimpleDateFormat(SYSLOG_TIMESTAMP_FORMAT_RFC3164_1, Locale.ENGLISH));
     fmt2.addYear = true;
 
     formats.add(fmt1);
