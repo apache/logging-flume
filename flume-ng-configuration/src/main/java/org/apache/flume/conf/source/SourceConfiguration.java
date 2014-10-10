@@ -18,6 +18,7 @@ package org.apache.flume.conf.source;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -93,7 +94,7 @@ public class SourceConfiguration extends ComponentConfiguration {
           config = "OTHER";
         }
       } else {
-        config = selectorType.toString().toUpperCase();
+        config = selectorType.toString().toUpperCase(Locale.ENGLISH);
       }
 
       this.selectorConf =

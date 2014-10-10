@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -457,7 +458,7 @@ public class FlumeConfiguration {
               configSpecified = true;
             }
           } else {
-            config = chType.toString().toUpperCase();
+            config = chType.toString().toUpperCase(Locale.ENGLISH);
             configSpecified = true;
           }
 
@@ -553,7 +554,7 @@ public class FlumeConfiguration {
               configSpecified = true;
             }
           } else {
-            config = srcType.toString().toUpperCase();
+            config = srcType.toString().toUpperCase(Locale.ENGLISH);
             configSpecified = true;
           }
           try {
@@ -667,7 +668,7 @@ public class FlumeConfiguration {
               configSpecified = true;
             }
           } else {
-            config = sinkType.toString().toUpperCase();
+            config = sinkType.toString().toUpperCase(Locale.ENGLISH);
             configSpecified = true;
           }
           try {

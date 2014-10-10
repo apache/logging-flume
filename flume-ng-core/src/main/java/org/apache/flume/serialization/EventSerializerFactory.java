@@ -20,6 +20,8 @@ package org.apache.flume.serialization;
 
 import com.google.common.base.Preconditions;
 import java.io.OutputStream;
+import java.util.Locale;
+
 import org.apache.flume.Context;
 import org.apache.flume.FlumeException;
 import org.apache.flume.annotations.InterfaceAudience;
@@ -43,7 +45,7 @@ public class EventSerializerFactory {
     // try to find builder class in enum of known output serializers
     EventSerializerType type;
     try {
-      type = EventSerializerType.valueOf(serializerType.toUpperCase());
+      type = EventSerializerType.valueOf(serializerType.toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException e) {
       logger.debug("Not in enum, loading builder class: {}", serializerType);
       type = EventSerializerType.OTHER;

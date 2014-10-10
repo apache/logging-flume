@@ -17,6 +17,8 @@
  */
 package org.apache.flume.tools;
 
+import java.util.Locale;
+
 /**
  * Utilities for platform & operating system detection
  */
@@ -28,7 +30,7 @@ public class PlatformDetect {
    */
   public static boolean isWindows() {
     String os = System.getProperty("os.name");
-    boolean isWin = (os.toLowerCase().indexOf("win") >= 0);
+    boolean isWin = (os.toLowerCase(Locale.ENGLISH).indexOf("win") >= 0);
     return isWin;
   }
 

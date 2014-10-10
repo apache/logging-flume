@@ -18,6 +18,7 @@
 package org.apache.flume.channel.jdbc;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import org.junit.Assert;
@@ -61,7 +62,7 @@ public class TestDatabaseTypeEnum {
       Assert.assertSame(type, lookupType);
       Assert.assertEquals(key, lookupTypeName);
 
-      DatabaseType lookupType2 = DatabaseType.getByName(key.toLowerCase());
+      DatabaseType lookupType2 = DatabaseType.getByName(key.toLowerCase(Locale.ENGLISH));
       Assert.assertSame(type, lookupType2);
     }
   }

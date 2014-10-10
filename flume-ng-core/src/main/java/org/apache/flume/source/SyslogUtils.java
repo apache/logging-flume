@@ -133,7 +133,7 @@ public class SyslogUtils {
       return null;
     }
 
-    keepFields = keepFields.trim().toLowerCase();
+    keepFields = keepFields.trim().toLowerCase(Locale.ENGLISH);
 
     if (keepFields.equals("false") || keepFields.equals("none")) {
       return null;

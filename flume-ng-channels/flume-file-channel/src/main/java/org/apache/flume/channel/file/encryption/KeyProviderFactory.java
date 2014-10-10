@@ -18,6 +18,8 @@
  */
 package org.apache.flume.channel.file.encryption;
 
+import java.util.Locale;
+
 import org.apache.flume.Context;
 import org.apache.flume.FlumeException;
 import org.slf4j.Logger;
@@ -37,7 +39,7 @@ public class KeyProviderFactory {
     // try to find builder class in enum of known providers
     KeyProviderType type;
     try {
-      type = KeyProviderType.valueOf(keyProviderType.toUpperCase());
+      type = KeyProviderType.valueOf(keyProviderType.toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException e) {
       logger.debug("Not in enum, loading provider class: {}", keyProviderType);
       type = KeyProviderType.OTHER;

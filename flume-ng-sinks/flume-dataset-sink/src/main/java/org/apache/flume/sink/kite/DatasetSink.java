@@ -31,6 +31,7 @@ import java.net.URI;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import org.apache.avro.Schema;
@@ -123,7 +124,7 @@ public class DatasetSink extends AbstractSink implements Configurable {
           InputStream is = null;
           try {
             FileSystem fs = FileSystem.get(URI.create(url), conf);
-            if (url.toLowerCase().startsWith("hdfs:/")) {
+            if (url.toLowerCase(Locale.ENGLISH).startsWith("hdfs:/")) {
               is = fs.open(new Path(url));
             } else {
               is = new URL(url).openStream();

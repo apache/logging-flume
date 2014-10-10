@@ -18,6 +18,8 @@
  */
 package org.apache.flume.clients.log4jappender;
 
+import java.util.Locale;
+
 public enum Log4jAvroHeaders {
   OTHER("flume.client.log4j.logger.other"),
   LOGGER_NAME("flume.client.log4j.logger.name"),
@@ -43,7 +45,7 @@ public enum Log4jAvroHeaders {
   public static Log4jAvroHeaders getByName(String headerName){
     Log4jAvroHeaders hdrs = null;
     try{
-      hdrs = Log4jAvroHeaders.valueOf(headerName.toLowerCase().trim());
+      hdrs = Log4jAvroHeaders.valueOf(headerName.toLowerCase(Locale.ENGLISH).trim());
     }
     catch(IllegalArgumentException e){
       hdrs = Log4jAvroHeaders.OTHER;

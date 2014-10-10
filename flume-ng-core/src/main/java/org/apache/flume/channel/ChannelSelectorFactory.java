@@ -19,6 +19,7 @@
 package org.apache.flume.channel;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.flume.Channel;
@@ -73,7 +74,7 @@ public class ChannelSelectorFactory {
     ChannelSelectorType  selectorType = ChannelSelectorType.OTHER;
 
     try {
-      selectorType = ChannelSelectorType.valueOf(type.toUpperCase());
+      selectorType = ChannelSelectorType.valueOf(type.toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException ex) {
       LOGGER.debug("Selector type {} is a custom type", type);
     }
