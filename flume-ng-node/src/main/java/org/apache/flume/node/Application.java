@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
@@ -202,7 +203,7 @@ public class Application {
         try {
           //Is it a known type?
           klass = MonitoringType.valueOf(
-                  monitorType.toUpperCase()).getMonitorClass();
+                  monitorType.toUpperCase(Locale.ENGLISH)).getMonitorClass();
         } catch (Exception e) {
           //Not a known type, use FQCN
           klass = (Class<? extends MonitorService>) Class.forName(monitorType);

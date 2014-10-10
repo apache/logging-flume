@@ -18,6 +18,8 @@
  */
 package org.apache.flume.source;
 
+import java.util.Locale;
+
 import org.apache.flume.FlumeException;
 import org.apache.flume.Source;
 import org.apache.flume.SourceFactory;
@@ -54,7 +56,7 @@ public class DefaultSourceFactory implements SourceFactory {
     String sourceClassName = type;
     SourceType srcType = SourceType.OTHER;
     try {
-      srcType = SourceType.valueOf(type.toUpperCase());
+      srcType = SourceType.valueOf(type.toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException ex) {
       logger.debug("Source type {} is a custom type", type);
     }

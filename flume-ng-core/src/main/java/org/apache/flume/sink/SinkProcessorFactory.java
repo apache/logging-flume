@@ -18,6 +18,7 @@
 package org.apache.flume.sink;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.flume.Context;
@@ -65,7 +66,7 @@ public class SinkProcessorFactory {
     SinkProcessorType type = SinkProcessorType.OTHER;
     String processorClassName = typeStr;
     try {
-      type = SinkProcessorType.valueOf(typeStr.toUpperCase());
+      type = SinkProcessorType.valueOf(typeStr.toUpperCase(Locale.ENGLISH));
     } catch (Exception ex) {
       logger.warn("Sink Processor type {} is a custom type", typeStr);
     }
@@ -103,7 +104,7 @@ public class SinkProcessorFactory {
     SinkProcessor processor;
     SinkProcessorType type = SinkProcessorType.DEFAULT;
     try {
-      type = SinkProcessorType.valueOf(typeStr.toUpperCase());
+      type = SinkProcessorType.valueOf(typeStr.toUpperCase(Locale.ENGLISH));
     } catch (Exception ex) {
       logger.warn("Sink type {} does not exist, using default", typeStr);
     }

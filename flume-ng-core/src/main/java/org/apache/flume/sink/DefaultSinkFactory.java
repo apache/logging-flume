@@ -19,6 +19,8 @@
 
 package org.apache.flume.sink;
 
+import java.util.Locale;
+
 import org.apache.flume.FlumeException;
 import org.apache.flume.Sink;
 import org.apache.flume.SinkFactory;
@@ -56,7 +58,7 @@ public class DefaultSinkFactory implements SinkFactory {
     String sinkClassName = type;
     SinkType sinkType = SinkType.OTHER;
     try {
-      sinkType = SinkType.valueOf(type.toUpperCase());
+      sinkType = SinkType.valueOf(type.toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException ex) {
       logger.debug("Sink type {} is a custom type", type);
     }

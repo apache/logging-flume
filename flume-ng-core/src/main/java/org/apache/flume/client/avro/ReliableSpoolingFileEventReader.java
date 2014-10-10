@@ -568,7 +568,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
         SpoolDirectorySourceConfigurationConstants.DEFAULT_INPUT_CHARSET;
     private DecodeErrorPolicy decodeErrorPolicy = DecodeErrorPolicy.valueOf(
         SpoolDirectorySourceConfigurationConstants.DEFAULT_DECODE_ERROR_POLICY
-            .toUpperCase());
+            .toUpperCase(Locale.ENGLISH));
     private ConsumeOrder consumeOrder = 
         SpoolDirectorySourceConfigurationConstants.DEFAULT_CONSUME_ORDER;    
     

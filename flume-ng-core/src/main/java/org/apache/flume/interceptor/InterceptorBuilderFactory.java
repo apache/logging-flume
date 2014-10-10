@@ -18,6 +18,8 @@
 
 package org.apache.flume.interceptor;
 
+import java.util.Locale;
+
 import org.apache.flume.interceptor.Interceptor.Builder;
 
 /**
@@ -28,7 +30,7 @@ public class InterceptorBuilderFactory {
 
   private static Class<? extends Builder> lookup(String name) {
     try {
-      return InterceptorType.valueOf(name.toUpperCase()).getBuilderClass();
+      return InterceptorType.valueOf(name.toUpperCase(Locale.ENGLISH)).getBuilderClass();
     } catch (IllegalArgumentException e) {
       return null;
     }

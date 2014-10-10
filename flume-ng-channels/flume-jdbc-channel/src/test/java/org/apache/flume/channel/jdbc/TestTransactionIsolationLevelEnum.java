@@ -18,6 +18,7 @@
 package org.apache.flume.channel.jdbc;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import org.junit.Assert;
@@ -62,7 +63,7 @@ public class TestTransactionIsolationLevelEnum {
       Assert.assertEquals(key, lookupTxIsolationName);
 
       TransactionIsolation lookupTxIsolation2 =
-          TransactionIsolation.getByName(key.toLowerCase());
+          TransactionIsolation.getByName(key.toLowerCase(Locale.ENGLISH));
       Assert.assertSame(txIsolation, lookupTxIsolation2);
     }
   }

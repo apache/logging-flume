@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -105,7 +106,7 @@ public abstract class MonitoredCounterGroup {
     if (!registered) {
       try {
         ObjectName objName = new ObjectName("org.apache.flume."
-                + type.name().toLowerCase() + ":type=" + this.name);
+                + type.name().toLowerCase(Locale.ENGLISH) + ":type=" + this.name);
 
         if (ManagementFactory.getPlatformMBeanServer().isRegistered(objName)) {
           logger.debug("Monitored counter group for type: " + type + ", name: "
@@ -149,7 +150,7 @@ public abstract class MonitoredCounterGroup {
     logger.info("Component type: " + type + ", name: " + name + " stopped");
 
     // Retrieve the type for this counter group
-    final String typePrefix = type.name().toLowerCase();
+    final String typePrefix = type.name().toLowerCase(Locale.ENGLISH);
 
     // Print out the startTime for this component
     logger.info("Shutdown Metric for type: " + type + ", "

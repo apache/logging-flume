@@ -19,6 +19,8 @@
 
 package org.apache.flume.channel;
 
+import java.util.Locale;
+
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelFactory;
 import org.apache.flume.FlumeException;
@@ -54,7 +56,7 @@ public class DefaultChannelFactory implements ChannelFactory {
     String channelClassName = type;
     ChannelType channelType = ChannelType.OTHER;
     try {
-      channelType = ChannelType.valueOf(type.toUpperCase());
+      channelType = ChannelType.valueOf(type.toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException ex) {
       logger.debug("Channel type {} is a custom type", type);
     }

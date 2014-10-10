@@ -19,6 +19,7 @@
 package org.apache.flume.channel.file.encryption;
 
 import java.security.Key;
+import java.util.Locale;
 
 import org.apache.flume.FlumeException;
 import org.slf4j.Logger;
@@ -54,7 +55,7 @@ public class CipherProviderFactory {
     // try to find builder class in enum of known providers
     CipherProviderType type;
     try {
-      type = CipherProviderType.valueOf(cipherProviderType.toUpperCase());
+      type = CipherProviderType.valueOf(cipherProviderType.toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException e) {
       logger.debug("Not in enum, loading provider class: {}", cipherProviderType);
       type = CipherProviderType.OTHER;

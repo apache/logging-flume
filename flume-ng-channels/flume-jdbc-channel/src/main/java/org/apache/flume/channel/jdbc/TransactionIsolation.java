@@ -18,6 +18,7 @@
 package org.apache.flume.channel.jdbc;
 
 import java.sql.Connection;
+import java.util.Locale;
 
 public enum TransactionIsolation {
 
@@ -47,6 +48,6 @@ public enum TransactionIsolation {
   }
 
   public static TransactionIsolation getByName(String name) {
-    return valueOf(name.trim().toUpperCase());
+    return valueOf(name.trim().toUpperCase(Locale.ENGLISH));
   }
 }

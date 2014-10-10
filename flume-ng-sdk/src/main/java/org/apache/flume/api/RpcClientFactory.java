@@ -23,6 +23,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Locale;
 import java.util.Properties;
 import org.apache.flume.FlumeException;
 
@@ -63,7 +64,7 @@ public class RpcClientFactory {
       String clientClassType = type;
       ClientType clientType = null;
       try{
-        clientType = ClientType.valueOf(type.toUpperCase());
+        clientType = ClientType.valueOf(type.toUpperCase(Locale.ENGLISH));
       } catch (IllegalArgumentException e){
         clientType = ClientType.OTHER;
       }

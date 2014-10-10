@@ -23,6 +23,7 @@ import java.lang.management.RuntimeMXBean;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -82,8 +83,8 @@ public class DirectMemoryUtils {
     long multiplier = 1; //for the byte case.
     for (String s : arguments) {
       if (s.contains(MAX_DIRECT_MEMORY_PARAM)) {
-        String memSize = s.toLowerCase()
-            .replace(MAX_DIRECT_MEMORY_PARAM.toLowerCase(), "").trim();
+        String memSize = s.toLowerCase(Locale.ENGLISH)
+            .replace(MAX_DIRECT_MEMORY_PARAM.toLowerCase(Locale.ENGLISH), "").trim();
 
         if (memSize.contains("k")) {
           multiplier = 1024;

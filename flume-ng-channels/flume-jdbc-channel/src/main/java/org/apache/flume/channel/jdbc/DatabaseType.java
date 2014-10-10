@@ -17,6 +17,8 @@
  */
 package org.apache.flume.channel.jdbc;
 
+import java.util.Locale;
+
 public enum DatabaseType {
   /** All other databases */
   OTHER("OTHER", null),
@@ -56,7 +58,7 @@ public enum DatabaseType {
   public static DatabaseType getByName(String dbName) {
     DatabaseType type = null;
     try {
-      type = DatabaseType.valueOf(dbName.trim().toUpperCase());
+      type = DatabaseType.valueOf(dbName.trim().toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException ex) {
       type = DatabaseType.OTHER;
     }
