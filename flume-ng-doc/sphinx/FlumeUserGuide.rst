@@ -841,9 +841,9 @@ invoked directly.  Common values for 'shell' :  '/bin/sh -c', '/bin/ksh -c',
 
 .. code-block:: properties
 
-  agent_foo.sources.tailsource-1.type = exec
-  agent_foo.sources.tailsource-1.shell = /bin/bash -c
-  agent_foo.sources.tailsource-1.command = for i in /path/*.txt; do cat $i; done
+  a1.sources.tailsource-1.type = exec
+  a1.sources.tailsource-1.shell = /bin/bash -c
+  a1.sources.tailsource-1.command = for i in /path/*.txt; do cat $i; done
 
 JMS Source
 ~~~~~~~~~~~
@@ -986,13 +986,13 @@ Example for an agent named agent-1:
 
 .. code-block:: properties
 
-  agent-1.channels = ch-1
-  agent-1.sources = src-1
+  a1.channels = ch-1
+  a1.sources = src-1
 
-  agent-1.sources.src-1.type = spooldir
-  agent-1.sources.src-1.channels = ch-1
-  agent-1.sources.src-1.spoolDir = /var/log/apache/flumeSpool
-  agent-1.sources.src-1.fileHeader = true
+  a1.sources.src-1.type = spooldir
+  a1.sources.src-1.channels = ch-1
+  a1.sources.src-1.spoolDir = /var/log/apache/flumeSpool
+  a1.sources.src-1.fileHeader = true
 
 Event Deserializers
 '''''''''''''''''''
