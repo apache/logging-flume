@@ -21,6 +21,7 @@ package org.apache.flume.event;
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import org.apache.flume.Event;
+import org.apache.flume.FlumeException;
 
 /**
  *
@@ -46,8 +47,7 @@ public class JSONEvent implements Event{
       try {
         return body.getBytes(charset);
       } catch (UnsupportedEncodingException ex) {
-        //Should never happen
-        return null;
+        throw new FlumeException(String.format("%s encoding not supported", charset), ex);
       }
     } else {
       return new byte[0];
