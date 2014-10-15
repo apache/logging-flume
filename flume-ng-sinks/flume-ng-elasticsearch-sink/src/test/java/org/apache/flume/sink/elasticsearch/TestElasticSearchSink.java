@@ -94,6 +94,27 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
   }
 
   @Test
+  public void shouldIndexComplexJsonEvent() throws Exception {
+    Configurables.configure(fixture, new Context(parameters));
+    Channel channel = bindAndStartChannel(fixture);
+
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+    Event event = EventBuilder.withBody("{\"event\":\"json content\"}".getBytes());
+    channel.put(event);
+    tx.commit();
+    tx.close();
+
+    fixture.process();
+    fixture.stop();
+    client.admin().indices()
+            .refresh(Requests.refreshRequest(timestampedIndexName)).actionGet();
+
+    assertMatchAllQuery(1, event);
+    assertBodyQuery(1, event);
+  }
+
+  @Test
   public void shouldIndexFiveEvents() throws Exception {
     // Make it so we only need to call process once
     parameters.put(BATCH_SIZE, "5");

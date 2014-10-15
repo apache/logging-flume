@@ -61,7 +61,7 @@ public class ContentBuilderUtil {
       parser = XContentFactory.xContent(contentType).createParser(data);
       parser.nextToken();
       tmp.copyCurrentStructure(parser);
-      builder.field(fieldName, tmp);
+      builder.field(fieldName, tmp.string());
     } catch (JsonParseException ex) {
       // If we get an exception here the most likely cause is nested JSON that
       // can't be figured out in the body. At this point just push it through
