@@ -67,6 +67,15 @@ public class TestFileChannelRestart extends TestFileChannelBase {
   public void teardown() {
     super.teardown();
   }
+
+  @Override
+  protected FileChannel createFileChannel(Map<String, String> overrides) {
+    // FLUME-2482, making sure scheduled checkpoint never gets called
+    overrides.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, "6000000");
+    return TestUtils.createFileChannel(checkpointDir.getAbsolutePath(),
+            dataDir, backupDir.getAbsolutePath(), overrides);
+  }
+
   @Test
   public void testRestartLogReplayV1() throws Exception {
     doTestRestart(true, false, false, false);
