@@ -23,6 +23,7 @@ import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import junit.framework.Assert;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.SystemUtils;
 import org.apache.flume.Event;
 import org.apache.flume.client.avro.ReliableSpoolingFileEventReader.DeletePolicy;
 import org.apache.flume.source.SpoolDirectorySourceConfigurationConstants;
@@ -38,6 +39,7 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.*;
 
 public class TestReliableSpoolingFileEventReader {
 
@@ -212,13 +214,59 @@ public class TestReliableSpoolingFileEventReader {
     FileUtils.write(fileName,
       "New file created in the end. Shoud be read randomly.\n");
     Set<String> actual = Sets.newHashSet();
-    readEventsForFilesInDir(WORK_DIR, reader, actual);      
+    readEventsForFilesInDir(WORK_DIR, reader, actual);
     Set<String> expected = Sets.newHashSet();
     createExpectedFromFilesInSetup(expected);
     expected.add("");
     expected.add(
       "New file created in the end. Shoud be read randomly.");
     Assert.assertEquals(expected, actual);    
+  }
+
+  @Test
+  public void testConsumeFileRandomlyNewFile() throws Exception {
+    // Atomic moves are not supported in Windows.
+    if (SystemUtils.IS_OS_WINDOWS) {
+      return;
+    }
+    final ReliableEventReader reader
+      = new ReliableSpoolingFileEventReader.Builder()
+      .spoolDirectory(WORK_DIR)
+      .consumeOrder(ConsumeOrder.RANDOM)
+      .build();
+    File fileName = new File(WORK_DIR, "new-file");
+    FileUtils.write(fileName,
+      "New file created in the end. Shoud be read randomly.\n");
+    Set<String> expected = Sets.newHashSet();
+    File tempDir = Files.createTempDir();
+    File tempFile = new File(tempDir, "t");
+    File finalFile = new File(WORK_DIR, "t-file");
+    FileUtils.write(tempFile, "Last file");
+    final Set<String> actual = Sets.newHashSet();
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    final Semaphore semaphore = new Semaphore(0);
+    Future<Void> wait = executor.submit(
+      new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          readEventsForFilesInDir(WORK_DIR, reader, actual, semaphore);
+          return null;
+        }
+      }
+    );
+    semaphore.acquire();
+    tempFile.renameTo(finalFile);
+    wait.get();
+    finalFile.delete();
+    FileUtils.deleteQuietly(tempDir);
+    createExpectedFromFilesInSetup(expected);
+    expected.add("");
+    expected.add(
+      "New file created in the end. Shoud be read randomly.");
+    expected.add("Last file");
+    Assert.assertEquals(2, ((ReliableSpoolingFileEventReader)reader)
+      .getListFilesCount());
+    Assert.assertEquals(expected, actual);
   }
 
 
@@ -414,17 +462,29 @@ public class TestReliableSpoolingFileEventReader {
       deleteDir(dir);
     }
   }
+
+  private void readEventsForFilesInDir(File dir, ReliableEventReader reader,
+    Collection<String> actual) throws IOException {
+    readEventsForFilesInDir(dir, reader, actual, null);
+  }
     
   /* Read events, one for each file in the given directory. */
   private void readEventsForFilesInDir(File dir, ReliableEventReader reader, 
-      Collection<String> actual) throws IOException {
+      Collection<String> actual, Semaphore semaphore) throws IOException {
     List<Event> events;
     for (int i=0; i < listFiles(dir).size(); i++) {
       events = reader.readEvents(10);
-      for (Event e: events) {
+      for (Event e : events) {
         actual.add(new String(e.getBody()));
       }
       reader.commit();
+      try {
+        if (semaphore != null) {
+          semaphore.release();
+        }
+      } catch (Exception ex) {
+        throw new IOException(ex);
+      }
     }
   }    
   /* Create expected results out of the files created in the setup method. */
