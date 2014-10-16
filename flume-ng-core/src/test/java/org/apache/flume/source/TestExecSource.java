@@ -338,28 +338,24 @@ public class TestExecSource {
       context.put("command", command);
       Configurables.configure(source, context);
       source.start();
-      File outputFile = File.createTempFile("flumeExecSourceTest_", "");
-      FileOutputStream outputStream = new FileOutputStream(outputFile);
-      if(SystemUtils.IS_OS_WINDOWS)
-           Thread.sleep(2500);
+      // Some commands might take longer to complete, specially on Windows
+      // or on slow environments (e.g. Travis CI).
+      Thread.sleep(2500);
       Transaction transaction = channel.getTransaction();
       transaction.begin();
       try {
+        List<String> output = Lists.newArrayList();
         Event event;
         while ((event = channel.take()) != null) {
-          outputStream.write(event.getBody());
-          outputStream.write('\n');
+          output.add(new String(event.getBody(), Charset.defaultCharset()));
         }
-        outputStream.close();
         transaction.commit();
-        List<String> output  = Files.readLines(outputFile, Charset.defaultCharset());
 //        System.out.println("command : " + command);
 //        System.out.println("output : ");
 //        for( String line : output )
 //          System.out.println(line);
         Assert.assertArrayEquals(expectedOutput, output.toArray(new String[]{}));
       } finally {
-        FileUtils.forceDelete(outputFile);
         transaction.close();
         source.stop();
       }
