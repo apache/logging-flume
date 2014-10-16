@@ -18,6 +18,7 @@ package org.apache.flume.source.kafka;
 
 public class KafkaSourceConstants {
   public static final String TOPIC = "topic";
+  public static final String KEY = "key";
   public static final String TIMESTAMP = "timestamp";
   public static final String BATCH_SIZE = "batchSize";
   public static final String BATCH_DURATION_MS = "batchDurationMillis";
