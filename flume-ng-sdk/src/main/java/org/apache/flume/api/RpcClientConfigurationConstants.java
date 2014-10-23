@@ -143,6 +143,7 @@ public final class RpcClientConfigurationConstants {
   public static final String CONFIG_TRUSTSTORE = "truststore";
   public static final String CONFIG_TRUSTSTORE_PASSWORD = "truststore-password";
   public static final String CONFIG_TRUSTSTORE_TYPE = "truststore-type";
+  public static final String CONFIG_EXCLUDE_PROTOCOLS = "exclude-protocols";
 
   /**
    * Configuration constants for the NettyAvroRpcClient

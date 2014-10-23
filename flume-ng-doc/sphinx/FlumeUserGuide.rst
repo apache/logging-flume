@@ -688,26 +688,27 @@ When paired with the built-in Avro Sink on another (previous hop) Flume agent,
 it can create tiered collection topologies.
 Required properties are in **bold**.
 
-==================   ===========  ===================================================
-Property Name        Default      Description
-==================   ===========  ===================================================
+==================   ================  ===================================================
+Property Name        Default           Description
+==================   ================  ===================================================
 **channels**         --
-**type**             --           The component type name, needs to be ``avro``
-**bind**             --           hostname or IP address to listen on
-**port**             --           Port # to bind to
-threads              --           Maximum number of worker threads to spawn
+**type**             --                The component type name, needs to be ``avro``
+**bind**             --                hostname or IP address to listen on
+**port**             --                Port # to bind to
+threads              --                Maximum number of worker threads to spawn
 selector.type
 selector.*
-interceptors         --           Space-separated list of interceptors
+interceptors         --                Space-separated list of interceptors
 interceptors.*
-compression-type     none         This can be "none" or "deflate".  The compression-type must match the compression-type of matching AvroSource
-ssl                  false        Set this to true to enable SSL encryption. You must also specify a "keystore" and a "keystore-password".
-keystore             --           This is the path to a Java keystore file. Required for SSL.
-keystore-password    --           The password for the Java keystore. Required for SSL.
-keystore-type        JKS          The type of the Java keystore. This can be "JKS" or "PKCS12".
-ipFilter             false        Set this to true to enable ipFiltering for netty
-ipFilter.rules       --           Define N netty ipFilter pattern rules with this config.
-==================   ===========  ===================================================
+compression-type     none              This can be "none" or "deflate".  The compression-type must match the compression-type of matching AvroSource
+ssl                  false             Set this to true to enable SSL encryption. You must also specify a "keystore" and a "keystore-password".
+keystore             --                This is the path to a Java keystore file. Required for SSL.
+keystore-password    --                The password for the Java keystore. Required for SSL.
+keystore-type        JKS               The type of the Java keystore. This can be "JKS" or "PKCS12".
+exclude-protocols    SSLv2Hello SSLv3  Space-separated list of SSL/TLS protocols to exclude
+ipFilter             false             Set this to true to enable ipFiltering for netty
+ipFilter.rules       --                Define N netty ipFilter pattern rules with this config.
+==================   ================  ===================================================
 
 Example for agent named a1:
 
@@ -1660,7 +1661,7 @@ batches of the configured batch size.
 Required properties are in **bold**.
 
 ==========================   =====================================================  ===========================================================================================
-Property Name                Default  Description
+Property Name                Default                                                Description
 ==========================   =====================================================  ===========================================================================================
 **channel**                  --
 **type**                     --                                                     The component type name, needs to be ``avro``.
@@ -1677,6 +1678,7 @@ trust-all-certs              false                                              
 truststore                   --                                                     The path to a custom Java truststore file. Flume uses the certificate authority information in this file to determine whether the remote Avro Source's SSL authentication credentials should be trusted. If not specified, the default Java JSSE certificate authority files (typically "jssecacerts" or "cacerts" in the Oracle JRE) will be used.
 truststore-password          --                                                     The password for the specified truststore.
 truststore-type              JKS                                                    The type of the Java truststore. This can be "JKS" or other supported Java truststore type.
+exclude-protocols            SSLv2Hello SSLv3                                       Space-separated list of SSL/TLS protocols to exclude
 maxIoWorkers                 2 * the number of available processors in the machine  The maximum number of I/O worker threads. This is configured on the NettyAvroRpcClient NioClientSocketChannelFactory.
 ==========================   =====================================================  ===========================================================================================
 
