@@ -24,10 +24,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.common.annotations.VisibleForTesting;
+
 import org.apache.flume.Clock;
 import org.apache.flume.SystemClock;
 import org.apache.flume.tools.TimestampRoundDownUtil;
@@ -184,6 +186,28 @@ public class BucketPath {
     return replaceShorthand(c, headers, timeZone, needRounding, unit,
         roundDown, false, ts);
   }
+  
+  protected static final ThreadLocal<HashMap<String, SimpleDateFormat>> simpleDateFormatCache = new ThreadLocal<HashMap<String, SimpleDateFormat>>() {
+	  
+	  @Override
+	  protected HashMap<String, SimpleDateFormat> initialValue() {
+		  return new HashMap<String, SimpleDateFormat>();
+	  }
+  };
+  
+  protected static SimpleDateFormat getSimpleDateFormat(String string) {
+	HashMap<String, SimpleDateFormat> localCache = simpleDateFormatCache.get();
+	
+	SimpleDateFormat simpleDateFormat = localCache.get(string);
+	if (simpleDateFormat == null) {
+		simpleDateFormat = new SimpleDateFormat(string);
+		localCache.put(string, simpleDateFormat);
+		simpleDateFormatCache.set(localCache);
+	}
+	
+	return simpleDateFormat;
+  }
+  
 
   /**
    * Not intended as a public API
@@ -287,7 +311,7 @@ public class BucketPath {
       return "";
     }
 
-    SimpleDateFormat format = new SimpleDateFormat(formatString);
+    SimpleDateFormat format = getSimpleDateFormat(formatString);
     if (timeZone != null) {
       format.setTimeZone(timeZone);
     }
