@@ -66,6 +66,7 @@ public class TestUtil {
     Properties kafkaProperties = new Properties();
     Properties zkProperties = new Properties();
 
+    logger.info("Starting kafka server.");
     try {
       //load properties
       zkProperties.load(Class.class.getResourceAsStream(
