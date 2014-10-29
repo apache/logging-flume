@@ -102,7 +102,10 @@ public class KafkaSource extends AbstractSource
           headers.put(KafkaSourceConstants.TIMESTAMP,
                   String.valueOf(System.currentTimeMillis()));
           headers.put(KafkaSourceConstants.TOPIC, topic);
-          headers.put(KafkaSourceConstants.KEY, new String(kafkaKey));
+          if (kafkaKey == null)
+            headers.put(KafkaSourceConstants.KEY, KafkaSourceConstants.KEY);
+          else
+            headers.put(KafkaSourceConstants.KEY, new String(kafkaKey));
           if (log.isDebugEnabled()) {
             log.debug("Message: {}", new String(kafkaMessage));
           }
