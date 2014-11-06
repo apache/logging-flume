@@ -405,6 +405,35 @@ public class TestReliableSpoolingFileEventReader {
   @Test public void testLargeNumberOfFilesRANDOM() throws IOException {    
     templateTestForLargeNumberOfFiles(ConsumeOrder.RANDOM, null, 1000);
   }
+
+  @Test
+  public void testZeroByteTrackerFile() throws IOException {
+    String trackerDirPath =
+            SpoolDirectorySourceConfigurationConstants.DEFAULT_TRACKER_DIR;
+    File trackerDir = new File(WORK_DIR, trackerDirPath);
+    if(!trackerDir.exists()) {
+      trackerDir.mkdir();
+    }
+    File trackerFile = new File(trackerDir, ReliableSpoolingFileEventReader.metaFileName);
+    if(trackerFile.exists()) {
+      trackerFile.delete();
+    }
+    trackerFile.createNewFile();
+
+    ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
+            .spoolDirectory(WORK_DIR).trackerDirPath(trackerDirPath).build();
+    final int expectedLines = 1;
+    int seenLines = 0;
+    List<Event> events = reader.readEvents(10);
+    int numEvents = events.size();
+    if (numEvents > 0) {
+      seenLines += numEvents;
+      reader.commit();
+    }
+    // This line will fail, if the zero-byte tracker file has not been handled
+    Assert.assertEquals(expectedLines, seenLines);
+  }
+
   private void templateTestForLargeNumberOfFiles(ConsumeOrder order, 
       Comparator<Long> comparator,
       int N) throws IOException {
