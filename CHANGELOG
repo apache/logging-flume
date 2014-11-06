@@ -1,3 +1,13 @@
+Release Notes - Flume - Version v1.5.1
+
+** Bug
+    * [FLUME-2441] - Unit test TestHTTPSource.java failed with IBM JDK 1.7
+    * [FLUME-2520] - HTTP Source should be able to block a prefixed set of protocols.
+    * [FLUME-2533] - HTTPS tests fail on Java 6
+
+** Improvement
+    * [FLUME-2511] - Allow configuration of enabled protocols in Avro source and Rpc client
+
 Release Notes - Flume - Version v1.5.0.1
 
 ** Bug
