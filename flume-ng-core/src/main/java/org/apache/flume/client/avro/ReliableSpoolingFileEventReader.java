@@ -199,6 +199,9 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     }
 
     this.metaFile = new File(trackerDirectory, metaFileName);
+    if(metaFile.exists() && metaFile.length() == 0) {
+      deleteMetaFile();
+    }
   }
 
   @VisibleForTesting
