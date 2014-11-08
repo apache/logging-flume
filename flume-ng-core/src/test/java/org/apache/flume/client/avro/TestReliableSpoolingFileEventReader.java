@@ -241,6 +241,7 @@ public class TestReliableSpoolingFileEventReader {
     File tempDir = Files.createTempDir();
     File tempFile = new File(tempDir, "t");
     File finalFile = new File(WORK_DIR, "t-file");
+    int totalFiles = WORK_DIR.listFiles().length;
     FileUtils.write(tempFile, "Last file");
     final Set<String> actual = Sets.newHashSet();
     ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -257,6 +258,8 @@ public class TestReliableSpoolingFileEventReader {
     semaphore.acquire();
     tempFile.renameTo(finalFile);
     wait.get();
+    int listFilesCount = ((ReliableSpoolingFileEventReader)reader)
+      .getListFilesCount();
     finalFile.delete();
     FileUtils.deleteQuietly(tempDir);
     createExpectedFromFilesInSetup(expected);
@@ -264,8 +267,7 @@ public class TestReliableSpoolingFileEventReader {
     expected.add(
       "New file created in the end. Shoud be read randomly.");
     expected.add("Last file");
-    Assert.assertEquals(2, ((ReliableSpoolingFileEventReader)reader)
-      .getListFilesCount());
+    Assert.assertTrue(listFilesCount < (totalFiles + 2));
     Assert.assertEquals(expected, actual);
   }
 
