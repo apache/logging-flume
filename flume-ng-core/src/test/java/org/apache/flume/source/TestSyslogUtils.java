@@ -153,6 +153,21 @@ public class TestSyslogUtils {
   }
 
   @Test
+  public void TestHeader11() throws ParseException {
+    // SyslogUtils should truncate microsecond precision to only 3 digits.
+    // This is to maintain consistency between the two syslog implementations.
+    String inputStamp  = "2014-10-03T17:20:01.123456-07:00";
+    String outputStamp = "2014-10-03T17:20:01.123-07:00";
+
+    String format1 = "yyyy-MM-dd'T'HH:mm:ss.S";
+    String host1 = "ubuntu-11.cloudera.com";
+    String data1 = "some msg";
+
+    String msg1 = "<10>" + inputStamp + " " + host1 + " " + data1 + "\n";
+    checkHeader(msg1, outputStamp, format1, host1, data1);
+  }
+
+  @Test
   public void TestRfc3164HeaderApacheLogWithNulls() throws ParseException {
     String stamp1 = "Apr  1 13:14:04";
     String format1 = "yyyyMMM d HH:mm:ss";

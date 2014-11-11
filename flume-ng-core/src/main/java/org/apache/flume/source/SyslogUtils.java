@@ -241,6 +241,9 @@ public class SyslogUtils {
     // timezone in RFC5424 is [+-]tt:tt, so remove the ':' for java date formatting
     fmt1.searchPattern.add("([+-])(\\d{2})[:](\\d{2})");
     fmt1.replacePattern.add("$1$2$3");
+    // FLUME-2497: SimpleDateFormat does not handle microseconds, Truncate after 3 digits.
+    fmt1.searchPattern.add("(T\\d{2}:\\d{2}:\\d{2}\\.\\d{3})(\\d*)");
+    fmt1.replacePattern.add("$1");
     fmt1.dateFormat.add(new SimpleDateFormat(SYSLOG_TIMESTAMP_FORMAT_RFC5424_1, Locale.ENGLISH));
     fmt1.dateFormat.add(new SimpleDateFormat(SYSLOG_TIMESTAMP_FORMAT_RFC5424_2, Locale.ENGLISH));
     fmt1.dateFormat.add(new SimpleDateFormat(SYSLOG_TIMESTAMP_FORMAT_RFC5424_3, Locale.ENGLISH));
