@@ -252,7 +252,6 @@ Configurable, EventDrivenSource {
           sourceCounter.addToEventAcceptedCount(events.size());
           sourceCounter.incrementAppendBatchAcceptedCount();
         }
-        logger.info("Spooling Directory Source runner has shutdown.");
       } catch (Throwable t) {
         logger.error("FATAL: " + SpoolDirectorySource.this.toString() + ": " +
             "Uncaught exception in SpoolDirectorySource thread. " +
