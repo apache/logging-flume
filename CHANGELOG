@@ -1,3 +1,15 @@
+Release Notes - Flume - Version v1.5.2
+
+** Bug
+    * [FLUME-2547] - Removing SSLv2Hello causes Java 6 clients to break
+
+** Sub-task
+    * [FLUME-2548] - Enable SSLv2Hello for Avro Source and NettyAvroRpcClient
+    * [FLUME-2549] - Enable SSLv2Hello for HttpSource
+
+** Improvement
+    * [FLUME-2551] - Add dev-support to src tarball
+
 Release Notes - Flume - Version v1.5.1
 
 ** Bug
