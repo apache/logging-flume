@@ -25,11 +25,7 @@ import java.io.FileInputStream;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
 import java.security.Security;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -149,7 +145,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   private String keystore;
   private String keystorePassword;
   private String keystoreType;
-  private List<String> excludeProtocols;
+  private final List<String> excludeProtocols = new LinkedList<String>();
   private boolean enableSsl = false;
   private boolean enableIpFilter;
   private String patternRuleConfigDefinition;
@@ -181,8 +177,15 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     keystore = context.getString(KEYSTORE_KEY);
     keystorePassword = context.getString(KEYSTORE_PASSWORD_KEY);
     keystoreType = context.getString(KEYSTORE_TYPE_KEY, "JKS");
-    excludeProtocols = Arrays.asList(
-        context.getString(EXCLUDE_PROTOCOLS, "SSLv2Hello SSLv3").split(" "));
+    String excludeProtocolsStr = context.getString(EXCLUDE_PROTOCOLS);
+    if (excludeProtocolsStr == null) {
+      excludeProtocols.add("SSLv3");
+    } else {
+      excludeProtocols.addAll(Arrays.asList(excludeProtocolsStr.split(" ")));
+      if (!excludeProtocols.contains("SSLv3")) {
+        excludeProtocols.add("SSLv3");
+      }
+    }
 
     if (enableSsl) {
       Preconditions.checkNotNull(keystore,
