@@ -93,6 +93,7 @@ public class HTTPSource extends AbstractSource implements
   private volatile String keyStorePath;
   private volatile String keyStorePassword;
   private volatile Boolean sslEnabled;
+  private final List<String> excludedProtocols = new LinkedList<String>();
 
 
   @Override
@@ -120,7 +121,18 @@ public class HTTPSource extends AbstractSource implements
         Preconditions.checkArgument(keyStorePath != null && !keyStorePath.isEmpty(),
                                         "Keystore is required for SSL Conifguration" );
         keyStorePassword = context.getString(HTTPSourceConfigurationConstants.SSL_KEYSTORE_PASSWORD);
-        Preconditions.checkArgument(keyStorePassword != null, "Keystore password is required for SSL Configuration");
+        Preconditions.checkArgument(keyStorePassword != null,
+          "Keystore password is required for SSL Configuration");
+        String excludeProtocolsStr = context.getString(HTTPSourceConfigurationConstants
+          .EXCLUDE_PROTOCOLS);
+        if (excludeProtocolsStr == null) {
+          excludedProtocols.add("SSLv3");
+        } else {
+          excludedProtocols.addAll(Arrays.asList(excludeProtocolsStr.split(" ")));
+          if (!excludedProtocols.contains("SSLv3")) {
+            excludedProtocols.add("SSLv3");
+          }
+        }
       }
 
 
@@ -172,7 +184,7 @@ public class HTTPSource extends AbstractSource implements
 
 
     if (sslEnabled) {
-      SslSocketConnector sslSocketConnector = new HTTPSourceSocketConnector();
+      SslSocketConnector sslSocketConnector = new HTTPSourceSocketConnector(excludedProtocols);
       sslSocketConnector.setKeystore(keyStorePath);
       sslSocketConnector.setKeyPassword(keyStorePassword);
       sslSocketConnector.setReuseAddress(true);
@@ -274,6 +286,11 @@ public class HTTPSource extends AbstractSource implements
 
   private static class HTTPSourceSocketConnector extends SslSocketConnector {
 
+    private final List<String> excludedProtocols;
+    HTTPSourceSocketConnector(List<String> excludedProtocols) {
+      this.excludedProtocols = excludedProtocols;
+    }
+
     @Override
     public ServerSocket newServerSocket(String host, int port,
       int backlog) throws IOException {
@@ -282,7 +299,7 @@ public class HTTPSource extends AbstractSource implements
       String[] protocols = socket.getEnabledProtocols();
       List<String> newProtocols = new ArrayList<String>(protocols.length);
       for(String protocol: protocols) {
-        if (!(protocol.equals("SSLv3") || protocol.equals("SSLv2Hello"))) {
+        if (!excludedProtocols.contains(protocol)) {
           newProtocols.add(protocol);
         }
       }
