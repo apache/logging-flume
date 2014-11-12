@@ -17,7 +17,7 @@
  <parent>
     <artifactId>flume-ng-sinks</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.5.1</version>
+    <version>1.5.2</version>
   </parent>
 
   <groupId>org.apache.flume.flume-ng-sinks</groupId>
