@@ -15,7 +15,7 @@
 
 
 ======================================
-Flume 1.5.1 Developer Guide
+Flume 1.5.2 Developer Guide
 ======================================
 
 Introduction

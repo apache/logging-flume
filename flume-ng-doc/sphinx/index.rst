@@ -15,7 +15,7 @@
 
 
 ================================================
-Apache Flume 1.5.1 documentation
+Apache Flume 1.5.2 documentation
 ================================================
 
 Flume is a distributed, reliable, and available system for efficiently
