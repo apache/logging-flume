@@ -96,7 +96,7 @@ implements RpcClient {
   private String truststore;
   private String truststorePassword;
   private String truststoreType;
-  private List<String> excludeProtocols;
+  private final List<String> excludeProtocols = new LinkedList<String>();
 
   private Transceiver transceiver;
   private AvroSourceProtocol.Callback avroClient;
@@ -607,9 +607,16 @@ implements RpcClient {
         RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_PASSWORD);
     truststoreType = properties.getProperty(
         RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_TYPE, "JKS");
-    excludeProtocols = Arrays.asList(properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_EXCLUDE_PROTOCOLS, "SSLv2Hello SSLv3")
-        .split(" "));
+    String excludeProtocolsStr = properties.getProperty(
+      RpcClientConfigurationConstants.CONFIG_EXCLUDE_PROTOCOLS);
+    if (excludeProtocolsStr == null) {
+      excludeProtocols.add("SSLv3");
+    } else {
+      excludeProtocols.addAll(Arrays.asList(excludeProtocolsStr.split(" ")));
+      if (!excludeProtocols.contains("SSLv3")) {
+        excludeProtocols.add("SSLv3");
+      }
+    }
 
     String maxIoWorkersStr = properties.getProperty(
       RpcClientConfigurationConstants.MAX_IO_WORKERS);

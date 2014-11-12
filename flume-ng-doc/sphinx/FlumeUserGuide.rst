@@ -705,7 +705,7 @@ ssl                  false             Set this to true to enable SSL encryption
 keystore             --                This is the path to a Java keystore file. Required for SSL.
 keystore-password    --                The password for the Java keystore. Required for SSL.
 keystore-type        JKS               The type of the Java keystore. This can be "JKS" or "PKCS12".
-exclude-protocols    SSLv2Hello SSLv3  Space-separated list of SSL/TLS protocols to exclude
+exclude-protocols    SSLv3             Space-separated list of SSL/TLS protocols to exclude. SSLv3 will always be excluded in addition to the protocols specified.
 ipFilter             false             Set this to true to enable ipFiltering for netty
 ipFilter.rules       --                Define N netty ipFilter pattern rules with this config.
 ==================   ================  ===================================================
