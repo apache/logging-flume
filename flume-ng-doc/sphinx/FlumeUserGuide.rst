@@ -1292,22 +1292,23 @@ unavailable status.
 All events sent in one post request are considered to be one batch and
 inserted into the channel in one transaction.
 
-==============  ============================================  ====================================================================
-Property Name   Default                                       Description
-==============  ============================================  ====================================================================
-**type**                                                      The component type name, needs to be ``http``
-**port**        --                                            The port the source should bind to.
-bind            0.0.0.0                                       The hostname or IP address to listen on
-handler         ``org.apache.flume.source.http.JSONHandler``  The FQCN of the handler class.
-handler.*       --                                            Config parameters for the handler
-selector.type   replicating                                   replicating or multiplexing
-selector.*                                                    Depends on the selector.type value
-interceptors    --                                            Space-separated list of interceptors
+=================  ============================================  =====================================================================================
+Property Name      Default                                       Description
+=================  ============================================  =====================================================================================
+**type**                                                         The component type name, needs to be ``http``
+**port**           --                                            The port the source should bind to.
+bind               0.0.0.0                                       The hostname or IP address to listen on
+handler            ``org.apache.flume.source.http.JSONHandler``  The FQCN of the handler class.
+handler.*          --                                            Config parameters for the handler
+selector.type      replicating                                   replicating or multiplexing
+selector.*                                                       Depends on the selector.type value
+interceptors       --                                            Space-separated list of interceptors
 interceptors.*
-enableSSL       false                                         Set the property true, to enable SSL
-keystore                                                      Location of the keystore includng keystore file name
-keystorePassword                                              Keystore password
-==================================================================================================================================
+enableSSL          false                                         Set the property true, to enable SSL. *HTTP Source does not support SSLv3.*
+excludeProtocols   SSLv3                                         Space-separated list of SSL/TLS protocols to exclude. SSLv3 is always excluded.
+keystore                                                         Location of the keystore includng keystore file name
+keystorePassword                                                 Keystore password
+======================================================================================================================================================
 
 For example, a http source for agent named a1:
 
