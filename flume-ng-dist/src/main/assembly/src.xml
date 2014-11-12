@@ -112,6 +112,7 @@
         <include>pom.xml</include>
         <include>flume-ng-doc/**</include>
         <include>flume-ng-tests/**</include>
+        <include>dev-support/**</include>
       </includes>
     </fileSet>
   </fileSets>
