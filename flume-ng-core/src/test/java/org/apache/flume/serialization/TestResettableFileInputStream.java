@@ -139,8 +139,16 @@ public class TestResettableFileInputStream {
     while ((c = in.readChar()) != -1) {
       sb.append((char)c);
     }
-    assertEquals("Latin1: (X)\nLong: (XXX)\nNonUnicode: (X)\n"
-        .replaceAll("X", "\ufffd"), sb.toString());
+    String preJdk8ExpectedStr = "Latin1: (X)\nLong: (XXX)\nNonUnicode: (X)\n";
+    String expectedStr = "Latin1: (X)\nLong: (XXX)\nNonUnicode: (XXXXX)\n";
+    String javaVersionStr = System.getProperty("java.version");
+    double javaVersion = Double.parseDouble(javaVersionStr.substring(0, 3));
+
+    if(javaVersion < 1.8) {
+      assertTrue(preJdk8ExpectedStr.replaceAll("X", "\ufffd").equals(sb.toString()));
+    } else {
+      assertTrue(expectedStr.replaceAll("X", "\ufffd").equals(sb.toString()));
+    }
   }
 
   @Test(expected = MalformedInputException.class)
