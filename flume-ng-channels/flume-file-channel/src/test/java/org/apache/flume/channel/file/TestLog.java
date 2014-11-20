@@ -168,7 +168,7 @@ public class TestLog {
       Assert.fail();
     } catch (IOException e) {
       Assert.assertTrue(e.getMessage(), e.getMessage()
-          .startsWith("Usable space exhaused"));
+          .startsWith("Usable space exhausted"));
     }
   }
   /**
@@ -214,7 +214,7 @@ public class TestLog {
       Assert.fail();
     } catch (IOException e) {
       Assert.assertTrue(e.getMessage(), e.getMessage()
-          .startsWith("Usable space exhaused"));
+          .startsWith("Usable space exhausted"));
     }
   }
   /**

@@ -624,7 +624,7 @@ public class Log {
     long usableSpace = logFiles.get(logFileIndex).getUsableSpace();
     long requiredSpace = minimumRequiredSpace + buffer.limit();
     if(usableSpace <= requiredSpace) {
-      throw new IOException("Usable space exhaused, only " + usableSpace +
+      throw new IOException("Usable space exhausted, only " + usableSpace +
           " bytes remaining, required " + requiredSpace + " bytes");
     }
     boolean error = true;
@@ -667,7 +667,7 @@ public class Log {
     long usableSpace = logFiles.get(logFileIndex).getUsableSpace();
     long requiredSpace = minimumRequiredSpace + buffer.limit();
     if(usableSpace <= requiredSpace) {
-      throw new IOException("Usable space exhaused, only " + usableSpace +
+      throw new IOException("Usable space exhausted, only " + usableSpace +
           " bytes remaining, required " + requiredSpace + " bytes");
     }
     boolean error = true;
@@ -709,7 +709,7 @@ public class Log {
     long usableSpace = logFiles.get(logFileIndex).getUsableSpace();
     long requiredSpace = minimumRequiredSpace + buffer.limit();
     if(usableSpace <= requiredSpace) {
-      throw new IOException("Usable space exhaused, only " + usableSpace +
+      throw new IOException("Usable space exhausted, only " + usableSpace +
           " bytes remaining, required " + requiredSpace + " bytes");
     }
     boolean error = true;
@@ -866,7 +866,7 @@ public class Log {
     long usableSpace = logFiles.get(logFileIndex).getUsableSpace();
     long requiredSpace = minimumRequiredSpace + buffer.limit();
     if(usableSpace <= requiredSpace) {
-      throw new IOException("Usable space exhaused, only " + usableSpace +
+      throw new IOException("Usable space exhausted, only " + usableSpace +
           " bytes remaining, required " + requiredSpace + " bytes");
     }
     boolean error = true;
@@ -982,7 +982,7 @@ public class Log {
     boolean checkpointCompleted = false;
     long usableSpace = checkpointDir.getUsableSpace();
     if(usableSpace <= minimumRequiredSpace) {
-      throw new IOException("Usable space exhaused, only " + usableSpace +
+      throw new IOException("Usable space exhausted, only " + usableSpace +
           " bytes remaining, required " + minimumRequiredSpace + " bytes");
     }
     lockExclusive();
