@@ -237,9 +237,14 @@ public class SyslogParser {
       }
 
       // if they had a valid fractional second, append it rounded to millis
-      if (endMillisPos - (curPos + 1) > 0) {
-        float frac = Float.parseFloat(msg.substring(curPos, endMillisPos));
-        long milliseconds = (long) (frac * 1000f);
+      final int fractionalPositions = endMillisPos - (curPos + 1);
+      if (fractionalPositions > 0) {
+        long milliseconds = Long.parseLong(msg.substring(curPos + 1, endMillisPos));
+        if (fractionalPositions > 3) {
+          milliseconds /= Math.pow(10, (fractionalPositions - 3));
+        } else if (fractionalPositions < 3) {
+          milliseconds *= Math.pow(10, (3 - fractionalPositions));
+        }
         ts += milliseconds;
       } else {
         throw new IllegalArgumentException(
