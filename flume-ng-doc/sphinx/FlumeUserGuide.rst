@@ -3303,6 +3303,16 @@ Monitoring in Flume is still a work in progress. Changes can happen very often.
 Several Flume components report metrics to the JMX platform MBean server. These
 metrics can be queried using Jconsole.
 
+JMX Reporting
+-------------
+
+JMX Reporting can be enabled by specifying JMX parameters in the JAVA_OPTS environment variable using
+flume-env.sh, like
+
+  export JAVA_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=5445 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
+
+NOTE: The sample above disables the security. To enable Security, please refer http://docs.oracle.com/javase/6/docs/technotes/guides/management/agent.html
+
 Ganglia Reporting
 -----------------
 Flume can also report these metrics to
