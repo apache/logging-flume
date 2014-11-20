@@ -18,18 +18,20 @@
 
 package org.apache.flume.sink;
 
+import com.google.common.base.Strings;
 import org.apache.flume.Channel;
+import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
-import org.apache.flume.Sink;
 import org.apache.flume.Transaction;
+import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * <p>
- * A {@link Sink} implementation that logs all events received at the INFO level
+ * A {@link org.apache.flume.Sink} implementation that logs all events received at the INFO level
  * to the <tt>org.apache.flume.sink.LoggerSink</tt> logger.
  * </p>
  * <p>
@@ -49,10 +51,32 @@ import org.slf4j.LoggerFactory;
  * TODO
  * </p>
  */
-public class LoggerSink extends AbstractSink {
+public class LoggerSink extends AbstractSink implements Configurable {
 
   private static final Logger logger = LoggerFactory
       .getLogger(LoggerSink.class);
+
+  // Default Max bytes to dump
+  public static final int DEFAULT_MAX_BYTE_DUMP = 16;
+
+  // Max number of bytes to be dumped
+  private int maxBytesToLog = DEFAULT_MAX_BYTE_DUMP;
+
+  public static final String MAX_BYTES_DUMP_KEY = "maxBytesToLog";
+
+  @Override
+  public void configure(Context context) {
+    String strMaxBytes = context.getString(MAX_BYTES_DUMP_KEY);
+    if (!Strings.isNullOrEmpty(strMaxBytes)) {
+      try {
+        maxBytesToLog = Integer.parseInt(strMaxBytes);
+      } catch (NumberFormatException e) {
+        logger.warn(String.format("Unable to convert %s to integer, using default value(%d) for maxByteToDump",
+                strMaxBytes, DEFAULT_MAX_BYTE_DUMP));
+        maxBytesToLog = DEFAULT_MAX_BYTE_DUMP;
+      }
+    }
+  }
 
   @Override
   public Status process() throws EventDeliveryException {
@@ -67,7 +91,7 @@ public class LoggerSink extends AbstractSink {
 
       if (event != null) {
         if (logger.isInfoEnabled()) {
-          logger.info("Event: " + EventHelper.dumpEvent(event));
+          logger.info("Event: " + EventHelper.dumpEvent(event, maxBytesToLog));
         }
       } else {
         // No event found, request back-off semantics from the sink runner
