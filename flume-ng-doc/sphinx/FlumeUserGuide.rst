@@ -2704,7 +2704,12 @@ that so long as one is available events will be processed (delivered).
 The failover mechanism works by relegating failed sinks to a pool where
 they are assigned a cool down period, increasing with sequential failures
 before they are retried. Once a sink successfully sends an event, it is
-restored to the live pool.
+restored to the live pool. The Sinks have a priority associated with them,
+larger the number, higher the priority. If a Sink fails while sending a Event
+the next Sink with highest priority shall be tried next for sending Events.
+For example, a sink with priority 100 is activated before the Sink with priority
+80. If no priority is specified, thr priority is determined based on the order in which
+the Sinks are specified in configuration.
 
 To configure, set a sink groups processor to ``failover`` and set
 priorities for all individual sinks. All specified priorities must
@@ -2718,8 +2723,9 @@ Property Name                      Default      Description
 =================================  ===========  ===================================================================================
 **sinks**                          --           Space-separated list of sinks that are participating in the group
 **processor.type**                 ``default``  The component type name, needs to be ``failover``
-**processor.priority.<sinkName>**  --             <sinkName> must be one of the sink instances associated with the current sink group
-processor.maxpenalty               30000        (in millis)
+**processor.priority.<sinkName>**  --           Priority value.  <sinkName> must be one of the sink instances associated with the current sink group
+                                                A higher priority value Sink gets activated earlier. A larger absolute value indicates higher priority
+processor.maxpenalty               30000        The maximum backoff period for the failed Sink (in millis)
 =================================  ===========  ===================================================================================
 
 Example for agent named a1:
