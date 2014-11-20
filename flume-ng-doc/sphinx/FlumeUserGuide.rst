@@ -1732,6 +1732,7 @@ Property Name   Default  Description
 ==============  =======  ===========================================
 **channel**     --
 **type**        --       The component type name, needs to be ``logger``
+maxBytesToLog   16       Maximum number of bytes of the Event body to log
 ==============  =======  ===========================================
 
 Example for agent named a1:

@@ -19,6 +19,7 @@
 
 package org.apache.flume.sink;
 
+import com.google.common.base.Strings;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -56,6 +57,28 @@ public class TestLoggerSink {
 
     for (int i = 0; i < 10; i++) {
       Event event = EventBuilder.withBody(("Test " + i).getBytes());
+      channel.put(event);
+      sink.process();
+    }
+
+    sink.stop();
+  }
+
+  @Test
+  public void testAppendWithCustomSize() throws InterruptedException, LifecycleException,
+          EventDeliveryException {
+
+    Channel channel = new PseudoTxnMemoryChannel();
+    Context context = new Context();
+    context.put(LoggerSink.MAX_BYTES_DUMP_KEY, String.valueOf(30));
+    Configurables.configure(channel, context);
+    Configurables.configure(sink, context);
+
+    sink.setChannel(channel);
+    sink.start();
+
+    for (int i = 0; i < 10; i++) {
+      Event event = EventBuilder.withBody((Strings.padStart("Test " + i, 30, 'P')).getBytes());
 
       channel.put(event);
       sink.process();
