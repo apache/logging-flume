@@ -1433,6 +1433,37 @@ Property Name          Default             Description
 handler.maxBlobLength  100000000           The maximum number of bytes to read and buffer for a given request
 =====================  ==================  ============================================================================
 
+Stress Source
+~~~~~~~~~~~~~
+
+StressSource is an internal load-generating source implementation which is very useful for
+stress tests. It allows User to configure the size of Event payload, with empty headers.
+User can configure total number of events to be sent as well maximum number of Successful
+Event to be delivered.
+
+Required properties are in **bold**.
+
+===================  ===========  ===================================================
+Property Name        Default      Description
+===================  ===========  ===================================================
+**type**             --           The component type name, needs to be ``org.apache.flume.source.StressSource``
+size                 500          Payload size of each Event. Unit:**byte**
+maxTotalEvents       -1           Maximum number of Events to be sent
+maxSuccessfulEvents  -1           Maximum number of Events successfully sent
+batchSize            1            Number of Events to be sent in one batch
+===================  ===========  ===================================================
+
+Example for agent named **a1**:
+
+.. code-block:: properties
+
+  a1.sources = stresssource-1
+  a1.channels = memoryChannel-1
+  a1.sources.stresssource-1.type = org.apache.flume.source.StressSource
+  a1.sources.stresssource-1.size = 10240
+  a1.sources.stresssource-1.maxTotalEvents = 1000000
+  a1.sources.stresssource-1.channels = memoryChannel-1
+
 Legacy Sources
 ~~~~~~~~~~~~~~
 
