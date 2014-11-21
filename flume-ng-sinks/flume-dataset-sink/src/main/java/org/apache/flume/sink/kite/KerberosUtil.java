@@ -82,6 +82,16 @@ public class KerberosUtil {
    */
   public static synchronized UserGroupInformation login(String principal,
                                                  String keytab) {
+    // If the principal or keytab isn't set, get the current (Linux) user
+    if (principal == null || keytab == null) {
+      try {
+        return UserGroupInformation.getCurrentUser();
+      } catch (IOException ex) {
+        LOG.error("Can't get current user: {}", ex.getMessage());
+        throw new RuntimeException(ex);
+      }
+    }
+
     // resolve the requested principal, if it is present
     String finalPrincipal = null;
     if (principal != null && !principal.isEmpty()) {
@@ -105,8 +115,9 @@ public class KerberosUtil {
       LOG.debug("Unable to get login user before Kerberos auth attempt", e);
     }
 
-    // if the current user is valid (matches the given principal) then use it
-    if (currentUser != null) {
+    // if the current user is valid (matches the given principal and has a TGT)
+    // then use it
+    if (currentUser != null && currentUser.hasKerberosCredentials()) {
       if (finalPrincipal == null ||
           finalPrincipal.equals(currentUser.getUserName())) {
         LOG.debug("Using existing login for {}: {}",
