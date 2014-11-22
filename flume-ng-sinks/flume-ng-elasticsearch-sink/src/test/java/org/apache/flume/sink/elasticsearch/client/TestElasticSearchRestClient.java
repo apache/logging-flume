@@ -18,6 +18,9 @@
  */
 package org.apache.flume.sink.elasticsearch.client;
 
+import com.google.common.base.Splitter;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.sink.elasticsearch.ElasticSearchEventSerializer;
@@ -30,9 +33,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -102,8 +107,8 @@ public class TestElasticSearchRestClient {
     verify(httpClient).execute(argument.capture());
 
     assertEquals("http://host1/_bulk", argument.getValue().getURI().toString());
-    assertEquals("{\"index\":{\"_type\":\"bar_type\",\"_index\":\"foo_index\"}}\n" + MESSAGE_CONTENT + "\n",
-            EntityUtils.toString(argument.getValue().getEntity()));
+    assertTrue(verifyJsonEvents("{\"index\":{\"_type\":\"bar_type\", \"_index\":\"foo_index\"}}\n",
+            MESSAGE_CONTENT, EntityUtils.toString(argument.getValue().getEntity())));
   }
 
   @Test
@@ -121,8 +126,18 @@ public class TestElasticSearchRestClient {
     verify(httpClient).execute(argument.capture());
 
     assertEquals("http://host1/_bulk", argument.getValue().getURI().toString());
-    assertEquals("{\"index\":{\"_type\":\"bar_type\",\"_index\":\"foo_index\",\"_ttl\":\"123\"}}\n" +
-            MESSAGE_CONTENT + "\n", EntityUtils.toString(argument.getValue().getEntity()));
+    assertTrue(verifyJsonEvents("{\"index\":{\"_type\":\"bar_type\",\"_index\":\"foo_index\",\"_ttl\":\"123\"}}\n",
+            MESSAGE_CONTENT, EntityUtils.toString(argument.getValue().getEntity())));
+  }
+
+  private boolean verifyJsonEvents(String expectedIndex, String expectedBody, String actual) {
+    Iterator<String> it = Splitter.on("\n").split(actual).iterator();
+    JsonParser parser = new JsonParser();
+    JsonObject[] arr = new JsonObject[2];
+    for(int i = 0; i < 2; i++) {
+      arr[i] = (JsonObject) parser.parse(it.next());
+    }
+    return arr[0].equals(parser.parse(expectedIndex)) && arr[1].equals(parser.parse(expectedBody));
   }
 
   @Test(expected = EventDeliveryException.class)
