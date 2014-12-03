@@ -616,55 +616,6 @@ limitations under the License.
     <url>http://www.apache.org</url>
   </organization>
 
-  <pluginRepositories>
-
-    <pluginRepository>
-      <id>repo1.maven.org</id>
-      <url>http://repo1.maven.org/maven2</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </pluginRepository>
-
-    <pluginRepository>
-      <id>oss.sonatype.org</id>
-      <url>https://oss.sonatype.org/content/groups/public</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </pluginRepository>
-
-  </pluginRepositories>
-
-  <repositories>
-    <repository>
-      <id>repo1.maven.org</id>
-      <url>http://repo1.maven.org/maven2</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
-      <id>repository.jboss.org</id>
-      <url>http://repository.jboss.org/nexus/content/groups/public/
-      </url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-  </repositories>
-
   <distributionManagement>
     <repository>
       <id>apache.staging.https</id>
