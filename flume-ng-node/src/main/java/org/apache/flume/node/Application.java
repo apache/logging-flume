@@ -238,6 +238,11 @@ public class Application {
       option.setRequired(true);
       options.addOption(option);
 
+      option = new Option("c", "conf", true, 
+           "directory path where agent config files are stored");
+      option.setRequired(false);
+      options.addOption(option);
+
       option = new Option("f", "conf-file", true,
           "specify a config file (required if -z missing)");
       option.setRequired(false);
@@ -299,7 +304,14 @@ public class Application {
             .getConfiguration());
         }
       } else {
-        File configurationFile = new File(commandLine.getOptionValue('f'));
+        
+        File configurationFile = null;
+        
+        if (commandLine.hasOption('c')) {
+          configurationFile = new File(commandLine.getOptionValue('c')+"/"+commandLine.getOptionValue('f'));
+        } else {
+          configurationFile = new File(commandLine.getOptionValue('f'));
+        }
 
         /*
          * The following is to ensure that by default the agent will fail on
