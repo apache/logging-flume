@@ -47,6 +47,23 @@ public class TestBucketPath {
     headers = new HashMap<String, String>();
     headers.put("timestamp", String.valueOf(cal.getTimeInMillis()));
   }
+
+  @Test
+  public void testDateFormatCache(){
+    TimeZone utcTimeZone = TimeZone.getTimeZone("UTC");
+    String test = "%c";
+    BucketPath.escapeString(
+            test, headers, utcTimeZone, false, Calendar.HOUR_OF_DAY, 12, false);
+    String escapedString = BucketPath.escapeString(
+            test, headers, false, Calendar.HOUR_OF_DAY, 12);
+    System.out.println("Escaped String: " + escapedString);
+    SimpleDateFormat format = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy");
+    Date d = new Date(cal.getTimeInMillis());
+    String expectedString = format.format(d);
+    System.out.println("Expected String: "+ expectedString);
+    Assert.assertEquals(expectedString, escapedString);
+  }
+
   @Test
   public void testDateFormatHours() {
     String test = "%c";
