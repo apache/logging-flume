@@ -18,11 +18,11 @@
  */
 package org.apache.flume.sink;
 
+import java.util.Properties;
+
 import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientConfigurationConstants;
 import org.apache.flume.api.RpcClientFactory;
-
-import java.util.Properties;
 /**
  * <p>
  * A {@link org.apache.flume.Sink} implementation that can send events to an RPC server (such as

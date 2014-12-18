@@ -56,6 +56,7 @@ public class TestThriftRpcClient {
     props.setProperty(RpcClientConfigurationConstants.CONFIG_BATCH_SIZE, "10");
     props.setProperty(RpcClientConfigurationConstants.CONFIG_REQUEST_TIMEOUT,
       "2000");
+    props.setProperty(ThriftRpcClient.CONFIG_PROTOCOL, ThriftRpcClient.COMPACT_PROTOCOL);
   }
 
   @After
@@ -103,7 +104,7 @@ public class TestThriftRpcClient {
   @Test
   public void testOK() throws Exception {
     src = new ThriftTestingSource(ThriftTestingSource.HandlerType.OK.name(),
-      port);
+      port, ThriftRpcClient.COMPACT_PROTOCOL);
     client = (ThriftRpcClient) RpcClientFactory.getInstance(props);
     insertEvents(client, 10); //10 events
     insertAsBatch(client, 10, 25); //16 events
@@ -121,7 +122,7 @@ public class TestThriftRpcClient {
   @Test
   public void testSlow() throws Exception {
     src = new ThriftTestingSource(ThriftTestingSource.HandlerType.SLOW.name(),
-      port);
+      port, ThriftRpcClient.COMPACT_PROTOCOL);
     client = (ThriftRpcClient) RpcClientFactory.getInstance(props);
     insertEvents(client, 2); //2 events
     insertAsBatch(client, 2, 25); //24 events (3 batches)
@@ -139,7 +140,7 @@ public class TestThriftRpcClient {
   @Test(expected = EventDeliveryException.class)
   public void testFail() throws Exception {
     src = new ThriftTestingSource(ThriftTestingSource.HandlerType.FAIL.name(),
-      port);
+      port, ThriftRpcClient.COMPACT_PROTOCOL);
     client = (ThriftRpcClient) RpcClientFactory.getInstance(props);
     insertEvents(client, 2); //2 events
     Assert.fail("Expected EventDeliveryException to be thrown.");
@@ -149,7 +150,7 @@ public class TestThriftRpcClient {
   public void testError() throws Throwable {
     try {
       src = new ThriftTestingSource(ThriftTestingSource.HandlerType.ERROR
-        .name(), port);
+        .name(), port, ThriftRpcClient.COMPACT_PROTOCOL);
       client = (ThriftRpcClient) RpcClientFactory.getThriftInstance("0.0.0" +
         ".0", port);
       insertEvents(client, 2); //2 events
@@ -163,7 +164,7 @@ public class TestThriftRpcClient {
   public void testTimeout() throws Throwable {
     try {
       src = new ThriftTestingSource(ThriftTestingSource.HandlerType.TIMEOUT
-        .name(), port);
+        .name(), port, ThriftRpcClient.COMPACT_PROTOCOL);
       client = (ThriftRpcClient) RpcClientFactory.getThriftInstance(props);
       insertEvents(client, 2); //2 events
     } catch (EventDeliveryException ex) {
@@ -174,7 +175,7 @@ public class TestThriftRpcClient {
   @Test
   public void testMultipleThreads() throws Throwable {
     src = new ThriftTestingSource(ThriftTestingSource.HandlerType.OK.name(),
-      port);
+      port, ThriftRpcClient.COMPACT_PROTOCOL);
     client = (ThriftRpcClient) RpcClientFactory.getThriftInstance("0.0.0" +
       ".0", port, 10);
     int threadCount = 100;

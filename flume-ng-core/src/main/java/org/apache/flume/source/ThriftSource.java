@@ -34,6 +34,7 @@ import org.apache.flume.thrift.ThriftSourceProtocol;
 import org.apache.flume.thrift.ThriftFlumeEvent;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.server.TNonblockingServer;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.transport.TFastFramedTransport;
@@ -70,6 +71,13 @@ public class ThriftSource extends AbstractSource implements Configurable,
    * Config param for the port to listen on.
    */
   public static final String CONFIG_PORT = "port";
+  /**
+   * Config param for the thrift protocol to use.
+   */
+  public static final String CONFIG_PROTOCOL = "protocol";
+  public static final String BINARY_PROTOCOL = "binary";
+  public static final String COMPACT_PROTOCOL = "compact";
+  
   private Integer port;
   private String bindAddress;
   private int maxThreads = 0;
@@ -77,6 +85,7 @@ public class ThriftSource extends AbstractSource implements Configurable,
   private TServer server;
   private TServerTransport serverTransport;
   private ExecutorService servingExecutor;
+  private String protocol;
 
   @Override
   public void configure(Context context) {
@@ -98,6 +107,17 @@ public class ThriftSource extends AbstractSource implements Configurable,
     if (sourceCounter == null) {
       sourceCounter = new SourceCounter(getName());
     }
+    
+    protocol = context.getString(CONFIG_PROTOCOL);
+    if (protocol == null) {
+      // default is to use the compact protocol.
+      protocol = COMPACT_PROTOCOL;
+    } 
+    Preconditions.checkArgument(
+        (protocol.equalsIgnoreCase(BINARY_PROTOCOL) ||
+            protocol.equalsIgnoreCase(COMPACT_PROTOCOL)),
+        "binary or compact are the only valid Thrift protocol types to " +
+        "choose from.");
   }
 
   @Override
@@ -167,8 +187,13 @@ public class ThriftSource extends AbstractSource implements Configurable,
     }
 
     try {
-
-      args.protocolFactory(new TCompactProtocol.Factory());
+      if (protocol.equals(BINARY_PROTOCOL)) {
+        logger.info("Using TBinaryProtocol");
+        args.protocolFactory(new TBinaryProtocol.Factory());
+      } else {
+        logger.info("Using TCompactProtocol");
+        args.protocolFactory(new TCompactProtocol.Factory());
+      }
       args.inputTransportFactory(new TFastFramedTransport.Factory());
       args.outputTransportFactory(new TFastFramedTransport.Factory());
       args.processor(new ThriftSourceProtocol
