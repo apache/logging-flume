@@ -19,15 +19,18 @@
 package org.apache.flume.sink;
 
 import com.google.common.base.Charsets;
+
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Sink;
 import org.apache.flume.Transaction;
+import org.apache.flume.api.ThriftRpcClient;
 import org.apache.flume.api.ThriftTestingSource;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.source.ThriftSource;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -58,7 +61,7 @@ public class TestThriftSink {
     context.put("port", String.valueOf(port));
     context.put("batch-size", String.valueOf(2));
     context.put("request-timeout", String.valueOf(2000L));
-
+    context.put(ThriftRpcClient.CONFIG_PROTOCOL, ThriftRpcClient.COMPACT_PROTOCOL);
     sink.setChannel(channel);
 
     Configurables.configure(sink, context);
@@ -77,7 +80,7 @@ public class TestThriftSink {
 
     Event event = EventBuilder.withBody("test event 1", Charsets.UTF_8);
     src = new ThriftTestingSource(ThriftTestingSource.HandlerType.OK.name(),
-      port);
+      port, ThriftRpcClient.COMPACT_PROTOCOL);
 
     channel.start();
     sink.start();
@@ -108,7 +111,7 @@ public class TestThriftSink {
   public void testTimeout() throws Exception {
     AtomicLong delay = new AtomicLong();
     src = new ThriftTestingSource(ThriftTestingSource.HandlerType.ALTERNATE
-      .name(), port);
+      .name(), port, ThriftRpcClient.COMPACT_PROTOCOL);
     src.setDelay(delay);
     delay.set(2500);
 
@@ -182,7 +185,7 @@ public class TestThriftSink {
     }
 
     src = new ThriftTestingSource(ThriftTestingSource.HandlerType.OK.name(),
-      port);
+      port, ThriftRpcClient.COMPACT_PROTOCOL);
 
     for (int i = 0; i < 5; i++) {
       Sink.Status status = sink.process();

@@ -25,7 +25,11 @@ import org.apache.flume.thrift.Status;
 import org.apache.flume.thrift.ThriftFlumeEvent;
 import org.apache.flume.thrift.ThriftSourceProtocol;
 import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TBinaryProtocol.Factory;
 import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.server.THsHaServer;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.transport.TNonblockingServerSocket;
@@ -180,7 +184,7 @@ public class ThriftTestingSource {
     }
   }
 
-  public ThriftTestingSource(String handlerName, int port) throws Exception {
+  public ThriftTestingSource(String handlerName, int port, String protocol) throws Exception {
     TNonblockingServerTransport serverTransport = new TNonblockingServerSocket(new
       InetSocketAddress("0.0.0.0", port));
     ThriftSourceProtocol.Iface handler = null;
@@ -197,11 +201,16 @@ public class ThriftTestingSource {
     } else if (handlerName.equals(HandlerType.ALTERNATE.name())) {
       handler = new ThriftAlternateHandler();
     }
-
+    TProtocolFactory transportProtocolFactory = null;
+    if (protocol != null && protocol == ThriftRpcClient.BINARY_PROTOCOL) {
+      transportProtocolFactory = new TBinaryProtocol.Factory();
+    } else {
+      transportProtocolFactory = new TCompactProtocol.Factory();
+    }
     server = new THsHaServer(new THsHaServer.Args
       (serverTransport).processor(
       new ThriftSourceProtocol.Processor(handler)).protocolFactory(
-      new TCompactProtocol.Factory()));
+          transportProtocolFactory));
     Executors.newSingleThreadExecutor().submit(new Runnable() {
       @Override
       public void run() {

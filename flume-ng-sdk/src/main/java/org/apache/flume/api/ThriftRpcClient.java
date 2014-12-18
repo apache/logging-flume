@@ -24,6 +24,7 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.thrift.Status;
 import org.apache.flume.thrift.ThriftFlumeEvent;
 import org.apache.flume.thrift.ThriftSourceProtocol;
+import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.TFastFramedTransport;
 import org.apache.thrift.transport.TSocket;
@@ -57,6 +58,13 @@ public class ThriftRpcClient extends AbstractRpcClient {
   private static final Logger LOGGER =
     LoggerFactory.getLogger(ThriftRpcClient.class);
 
+  /**
+   * Config param for the thrift protocol to use.
+   */
+  public static final String CONFIG_PROTOCOL = "protocol";
+  public static final String BINARY_PROTOCOL = "binary";
+  public static final String COMPACT_PROTOCOL = "compact";
+  
   private int batchSize;
   private long requestTimeout;
   private final Lock stateLock;
@@ -68,6 +76,7 @@ public class ThriftRpcClient extends AbstractRpcClient {
   private final AtomicLong threadCounter;
   private int connectionPoolSize;
   private final Random random = new Random();
+  private String protocol;
 
   public ThriftRpcClient() {
     stateLock = new ReentrantLock(true);
@@ -267,6 +276,18 @@ public class ThriftRpcClient extends AbstractRpcClient {
       HostInfo host = HostInfo.getHostInfoList(properties).get(0);
       hostname = host.getHostName();
       port = host.getPortNumber();
+      protocol = properties.getProperty(CONFIG_PROTOCOL);
+      if (protocol == null) {
+        // default is to use the compact protocol.
+        protocol = COMPACT_PROTOCOL;
+      }
+      // check in case that garbage was put in.
+      if (!(protocol.equalsIgnoreCase(BINARY_PROTOCOL) ||
+          protocol.equalsIgnoreCase(COMPACT_PROTOCOL))) {
+        LOGGER.warn("'binary' or 'compact' are the only valid Thrift protocol types to "
+            + "choose from. Defaulting to 'compact'.");
+        protocol = COMPACT_PROTOCOL;
+      }
       batchSize = Integer.parseInt(properties.getProperty(
         RpcClientConfigurationConstants.CONFIG_BATCH_SIZE,
         RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE.toString()));
@@ -322,8 +343,15 @@ public class ThriftRpcClient extends AbstractRpcClient {
     public ClientWrapper() throws Exception{
       transport = new TFastFramedTransport(new TSocket(hostname, port));
       transport.open();
-      client = new ThriftSourceProtocol.Client(new TCompactProtocol
-        (transport));
+      if (protocol.equals(BINARY_PROTOCOL)) {
+        LOGGER.info("Using TBinaryProtocol");
+        client = new ThriftSourceProtocol.Client(new TBinaryProtocol
+            (transport));
+      } else {
+        LOGGER.info("Using TCompactProtocol");
+        client = new ThriftSourceProtocol.Client(new TCompactProtocol
+            (transport));
+      }
       // Not a great hash code, but since this class is immutable and there
       // is at most one instance of the components of this class,
       // this works fine [If the objects are equal, hash code is the same]
