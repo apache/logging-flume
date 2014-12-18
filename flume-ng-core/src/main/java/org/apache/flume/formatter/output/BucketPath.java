@@ -314,6 +314,8 @@ public class BucketPath {
     SimpleDateFormat format = getSimpleDateFormat(formatString);
     if (timeZone != null) {
       format.setTimeZone(timeZone);
+    } else {
+      format.setTimeZone(TimeZone.getDefault());
     }
 
     Date date = new Date(ts);
