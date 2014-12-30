@@ -105,8 +105,6 @@ public class TestKafkaSource {
 
     Assert.assertEquals("hello, world", new String(events.get(0).getBody(),
             Charsets.UTF_8));
-
-
   }
 
   @SuppressWarnings("unchecked")
@@ -299,6 +297,29 @@ public class TestKafkaSource {
     Assert.assertEquals("event 2", new String(events.get(0).getBody(),
             Charsets.UTF_8));
 
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testNullKey() throws EventDeliveryException,
+      SecurityException, NoSuchFieldException, IllegalArgumentException,
+      IllegalAccessException, InterruptedException {
+    context.put(KafkaSourceConstants.BATCH_SIZE,"1");
+    kafkaSource.configure(context);
+    kafkaSource.start();
+
+    Thread.sleep(500L);
+
+    kafkaServer.produce(topicName, null , "hello, world");
+
+    Thread.sleep(500L);
+
+    Assert.assertEquals(Status.READY, kafkaSource.process());
+    Assert.assertEquals(Status.BACKOFF, kafkaSource.process());
+    Assert.assertEquals(1, events.size());
+
+    Assert.assertEquals("hello, world", new String(events.get(0).getBody(),
+        Charsets.UTF_8));
   }
 
   ChannelProcessor createGoodChannel() {
