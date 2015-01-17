@@ -18,6 +18,8 @@
  */
 package org.apache.flume.instrumentation;
 
+import org.apache.commons.lang.ArrayUtils;
+
 public class SourceCounter extends MonitoredCounterGroup implements
     SourceCounterMBean {
 
@@ -51,6 +53,11 @@ public class SourceCounter extends MonitoredCounterGroup implements
 
   public SourceCounter(String name) {
     super(MonitoredCounterGroup.Type.SOURCE, name, ATTRIBUTES);
+  }
+
+  public SourceCounter(String name, String[] attributes) {
+    super(Type.SOURCE, name,
+        (String[]) ArrayUtils.addAll(attributes,ATTRIBUTES));
   }
 
   @Override

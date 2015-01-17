@@ -32,6 +32,8 @@ import org.apache.flume.*;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.instrumentation.SourceCounter;
+import org.apache.flume.instrumentation.kafka.KafkaSourceCounter;
 import org.apache.flume.source.AbstractSource;
 
 import org.slf4j.Logger;
@@ -77,6 +79,7 @@ public class KafkaSource extends AbstractSource
   private Context context;
   private Properties kafkaProps;
   private final List<Event> eventList = new ArrayList<Event>();
+  private KafkaSourceCounter counter;
 
   public Status process() throws EventDeliveryException {
 
@@ -88,6 +91,7 @@ public class KafkaSource extends AbstractSource
     long batchEndTime = System.currentTimeMillis() + timeUpperLimit;
     try {
       boolean iterStatus = false;
+      long startTime = System.nanoTime();
       while (eventList.size() < batchUpperLimit &&
               System.currentTimeMillis() < batchEndTime) {
         iterStatus = hasNext();
@@ -116,22 +120,30 @@ public class KafkaSource extends AbstractSource
           log.debug("Event #: {}", eventList.size());
         }
       }
+      long endTime = System.nanoTime();
+      counter.addToKafkaEventGetTimer((endTime-startTime)/(1000*1000));
+      counter.addToEventReceivedCount(Long.valueOf(eventList.size()));
       // If we have events, send events to channel
       // clear the event list
       // and commit if Kafka doesn't auto-commit
       if (eventList.size() > 0) {
         getChannelProcessor().processEventBatch(eventList);
+        counter.addToEventAcceptedCount(eventList.size());
         eventList.clear();
         if (log.isDebugEnabled()) {
           log.debug("Wrote {} events to channel", eventList.size());
         }
         if (!kafkaAutoCommitEnabled) {
           // commit the read transactions to Kafka to avoid duplicates
+          long commitStartTime = System.nanoTime();
           consumer.commitOffsets();
+          long commitEndTime = System.nanoTime();
+          counter.addToKafkaCommitTimer((commitEndTime-commitStartTime)/(1000*1000));
         }
       }
       if (!iterStatus) {
         if (log.isDebugEnabled()) {
+          counter.incrementKafkaEmptyCount();
           log.debug("Returning with backoff. No more data to read");
         }
         return Status.BACKOFF;
@@ -174,6 +186,9 @@ public class KafkaSource extends AbstractSource
     kafkaAutoCommitEnabled = Boolean.parseBoolean(kafkaProps.getProperty(
             KafkaSourceConstants.AUTO_COMMIT_ENABLED));
 
+    if (counter == null) {
+      counter = new KafkaSourceCounter(getName());
+    }
   }
 
   @Override
@@ -207,6 +222,7 @@ public class KafkaSource extends AbstractSource
       throw new FlumeException("Unable to get message iterator from Kafka", e);
     }
     log.info("Kafka source {} started.", getName());
+    counter.start();
     super.start();
   }
 
@@ -217,6 +233,8 @@ public class KafkaSource extends AbstractSource
       // to avoid reading the same messages again
       consumer.shutdown();
     }
+    counter.stop();
+    log.info("Kafka Source {} stopped. Metrics: {}", getName(), counter);
     super.stop();
   }
 
