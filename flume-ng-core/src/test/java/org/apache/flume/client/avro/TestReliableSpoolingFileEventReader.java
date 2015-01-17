@@ -238,30 +238,28 @@ public class TestReliableSpoolingFileEventReader {
     FileUtils.write(fileName,
       "New file created in the end. Shoud be read randomly.\n");
     Set<String> expected = Sets.newHashSet();
-    File tempDir = Files.createTempDir();
-    File tempFile = new File(tempDir, "t");
-    File finalFile = new File(WORK_DIR, "t-file");
     int totalFiles = WORK_DIR.listFiles().length;
-    FileUtils.write(tempFile, "Last file");
     final Set<String> actual = Sets.newHashSet();
     ExecutorService executor = Executors.newSingleThreadExecutor();
-    final Semaphore semaphore = new Semaphore(0);
+    final Semaphore semaphore1 = new Semaphore(0);
+    final Semaphore semaphore2 = new Semaphore(0);
     Future<Void> wait = executor.submit(
       new Callable<Void>() {
         @Override
         public Void call() throws Exception {
-          readEventsForFilesInDir(WORK_DIR, reader, actual, semaphore);
+          readEventsForFilesInDir(WORK_DIR, reader, actual, semaphore1, semaphore2);
           return null;
         }
       }
     );
-    semaphore.acquire();
-    tempFile.renameTo(finalFile);
+    semaphore1.acquire();
+    File finalFile = new File(WORK_DIR, "t-file");
+    FileUtils.write(finalFile, "Last file");
+    semaphore2.release();
     wait.get();
     int listFilesCount = ((ReliableSpoolingFileEventReader)reader)
       .getListFilesCount();
     finalFile.delete();
-    FileUtils.deleteQuietly(tempDir);
     createExpectedFromFilesInSetup(expected);
     expected.add("");
     expected.add(
@@ -496,13 +494,14 @@ public class TestReliableSpoolingFileEventReader {
 
   private void readEventsForFilesInDir(File dir, ReliableEventReader reader,
     Collection<String> actual) throws IOException {
-    readEventsForFilesInDir(dir, reader, actual, null);
+    readEventsForFilesInDir(dir, reader, actual, null, null);
   }
     
   /* Read events, one for each file in the given directory. */
   private void readEventsForFilesInDir(File dir, ReliableEventReader reader, 
-      Collection<String> actual, Semaphore semaphore) throws IOException {
+      Collection<String> actual, Semaphore semaphore1, Semaphore semaphore2) throws IOException {
     List<Event> events;
+    boolean executed = false;
     for (int i=0; i < listFiles(dir).size(); i++) {
       events = reader.readEvents(10);
       for (Event e : events) {
@@ -510,8 +509,14 @@ public class TestReliableSpoolingFileEventReader {
       }
       reader.commit();
       try {
-        if (semaphore != null) {
-          semaphore.release();
+        if(!executed) {
+          executed = true;
+          if (semaphore1 != null) {
+            semaphore1.release();
+          }
+          if (semaphore2 != null) {
+            semaphore2.acquire();
+          }
         }
       } catch (Exception ex) {
         throw new IOException(ex);
