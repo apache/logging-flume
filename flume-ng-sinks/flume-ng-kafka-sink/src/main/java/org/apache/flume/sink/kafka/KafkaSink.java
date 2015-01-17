@@ -24,6 +24,7 @@ import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
 import org.apache.flume.*;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.instrumentation.kafka.KafkaSinkCounter;
 import org.apache.flume.sink.AbstractSink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +74,8 @@ public class KafkaSink extends AbstractSink implements Configurable {
   private String topic;
   private int batchSize;
   private List<KeyedMessage<String, byte[]>> messageList;
+  private KafkaSinkCounter counter;
+
 
   @Override
   public Status process() throws EventDeliveryException {
@@ -122,7 +125,11 @@ public class KafkaSink extends AbstractSink implements Configurable {
 
       // publish batch and commit.
       if (processedEvents > 0) {
+        long startTime = System.nanoTime();
         producer.send(messageList);
+        long endTime = System.nanoTime();
+        counter.addToKafkaEventSendTimer((endTime-startTime)/(1000*1000));
+        counter.addToEventDrainSuccessCount(Long.valueOf(messageList.size()));
       }
 
       transaction.commit();
@@ -134,6 +141,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
       if (transaction != null) {
         try {
           transaction.rollback();
+          counter.incrementRollbackCount();
         } catch (Exception e) {
           logger.error("Transaction rollback failed", e);
           throw Throwables.propagate(e);
@@ -154,12 +162,15 @@ public class KafkaSink extends AbstractSink implements Configurable {
     // instantiate the producer
     ProducerConfig config = new ProducerConfig(kafkaProps);
     producer = new Producer<String, byte[]>(config);
+    counter.start();
     super.start();
   }
 
   @Override
   public synchronized void stop() {
     producer.close();
+    counter.stop();
+    logger.info("Kafka Sink {} stopped. Metrics: {}", getName(), counter);
     super.stop();
   }
 
@@ -201,6 +212,10 @@ public class KafkaSink extends AbstractSink implements Configurable {
 
     if (logger.isDebugEnabled()) {
       logger.debug("Kafka producer properties: " + kafkaProps);
+    }
+
+    if (counter == null) {
+      counter = new KafkaSinkCounter(getName());
     }
   }
 }

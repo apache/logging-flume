@@ -18,6 +18,8 @@
  */
 package org.apache.flume.instrumentation;
 
+import org.apache.commons.lang.ArrayUtils;
+
 public class ChannelCounter extends MonitoredCounterGroup implements
     ChannelCounterMBean {
 
@@ -46,6 +48,11 @@ public class ChannelCounter extends MonitoredCounterGroup implements
 
   public ChannelCounter(String name) {
     super(MonitoredCounterGroup.Type.CHANNEL, name, ATTRIBUTES);
+  }
+
+  public ChannelCounter(String name, String[] attributes) {
+    super(MonitoredCounterGroup.Type.CHANNEL, name,
+        (String[])ArrayUtils.addAll(attributes,ATTRIBUTES));
   }
 
   @Override

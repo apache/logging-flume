@@ -36,6 +36,7 @@ import org.apache.flume.conf.ConfigurationException;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.*;
 
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.instrumentation.kafka.KafkaChannelCounter;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,6 +64,8 @@ public class KafkaChannel extends BasicChannelSemantics {
   // Track all consumers to close them eventually.
   private final List<ConsumerAndIterator> consumers =
     Collections.synchronizedList(new LinkedList<ConsumerAndIterator>());
+
+  private KafkaChannelCounter counter;
 
   /* Each ConsumerConnector commit will commit all partitions owned by it. To
    * ensure that each partition is only committed when all events are
@@ -95,6 +98,7 @@ public class KafkaChannel extends BasicChannelSemantics {
       // We always have just one topic being read by one thread
       LOGGER.info("Topic = " + topic.get());
       topicCountMap.put(topic.get(), 1);
+      counter.start();
       super.start();
     } catch (Exception e) {
       LOGGER.error("Could not start producer");
@@ -114,7 +118,10 @@ public class KafkaChannel extends BasicChannelSemantics {
       }
     }
     producer.close();
+    counter.stop();
     super.stop();
+    LOGGER.info("Kafka channel {} stopped. Metrics: {}", getName(),
+        counter);
   }
 
   @Override
@@ -190,6 +197,10 @@ public class KafkaChannel extends BasicChannelSemantics {
       // readSmallest is eval-ed only if parseAsFlumeEvent is false.
       // The default is largest, so we don't need to set it explicitly.
       kafkaConf.put("auto.offset.reset", "smallest");
+    }
+
+    if (counter == null) {
+      counter = new KafkaChannelCounter(getName());
     }
 
   }
@@ -291,7 +302,10 @@ public class KafkaChannel extends BasicChannelSemantics {
       } else {
         try {
           ConsumerIterator<byte[], byte[]> it = consumerAndIter.get().iterator;
+          long startTime = System.nanoTime();
           it.hasNext();
+          long endTime = System.nanoTime();
+          counter.addToKafkaEventGetTimer((endTime-startTime)/(1000*1000));
           if (parseAsFlumeEvent) {
             ByteArrayInputStream in =
               new ByteArrayInputStream(it.next().message());
@@ -339,7 +353,11 @@ public class KafkaChannel extends BasicChannelSemantics {
             messages.add(new KeyedMessage<String, byte[]>(topic.get(), null,
               batchUUID, event));
           }
+          long startTime = System.nanoTime();
           producer.send(messages);
+          long endTime = System.nanoTime();
+          counter.addToKafkaEventSendTimer((endTime-startTime)/(1000*1000));
+          counter.addToEventPutSuccessCount(Long.valueOf(messages.size()));
           serializedEvents.get().clear();
         } catch (Exception ex) {
           LOGGER.warn("Sending events to Kafka failed", ex);
@@ -348,8 +366,12 @@ public class KafkaChannel extends BasicChannelSemantics {
         }
       } else {
         if (consumerAndIter.get().failedEvents.isEmpty() && eventTaken) {
+          long startTime = System.nanoTime();
           consumerAndIter.get().consumer.commitOffsets();
-        }
+          long endTime = System.nanoTime();
+          counter.addToKafkaCommitTimer((endTime-startTime)/(1000*1000));
+         }
+        counter.addToEventTakeSuccessCount(Long.valueOf(events.get().size()));
         events.get().clear();
       }
     }
@@ -362,6 +384,7 @@ public class KafkaChannel extends BasicChannelSemantics {
       if (type.equals(TransactionType.PUT)) {
         serializedEvents.get().clear();
       } else {
+        counter.addToRollbackCounter(Long.valueOf(events.get().size()));
         consumerAndIter.get().failedEvents.addAll(events.get());
         events.get().clear();
       }
