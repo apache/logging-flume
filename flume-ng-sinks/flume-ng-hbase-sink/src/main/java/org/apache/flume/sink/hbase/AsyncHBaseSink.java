@@ -127,11 +127,20 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
   private boolean batchIncrements = false;
   private volatile int totalCallbacksReceived = 0;
   private Map<CellIdentifier, AtomicIncrementRequest> incrementBuffer;
+  // The HBaseClient buffers the requests until a callback is received. In the event of a
+  // timeout, there is no way to clear these buffers. If there is a major cluster issue, this
+  // buffer can become too big and cause crashes. So if we hit a fixed number of HBase write
+  // failures/timeouts, then close the HBase Client (gracefully or not) and force a GC to get rid
+  // of the buffered data.
+  private int consecutiveHBaseFailures = 0;
+  private boolean lastTxnFailed = false;
 
   // Does not need to be thread-safe. Always called only from the sink's
   // process method.
   private final Comparator<byte[]> COMPARATOR = UnsignedBytes
     .lexicographicalComparator();
+
+  private static final int MAX_CONSECUTIVE_FAILS = 10;
 
   public AsyncHBaseSink(){
     this(null);
@@ -161,6 +170,12 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
     if (!open) {
       throw new EventDeliveryException("Sink was never opened. " +
           "Please fix the configuration.");
+    }
+    if (client == null) {
+      client = initHBaseClient();
+      if (client == null) {
+        throw new EventDeliveryException("Could not establish connection to HBase!");
+      }
     }
     AtomicBoolean txnFail = new AtomicBoolean(false);
     AtomicInteger callbacksReceived = new AtomicInteger(0);
@@ -292,11 +307,19 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
      *
      */
     if (txnFail.get()) {
+      // We enter this if condition only if the failure was due to HBase failure, so we make sure
+      // we track the consecutive failures.
+      if (lastTxnFailed) {
+        consecutiveHBaseFailures++;
+      }
+      lastTxnFailed = true;
       this.handleTransactionFailure(txn);
       throw new EventDeliveryException("Could not write events to Hbase. " +
           "Transaction failed, and rolled back.");
     } else {
       try {
+        lastTxnFailed = false;
+        consecutiveHBaseFailures = 0;
         txn.commit();
         txn.close();
         sinkCounter.addToEventDrainSuccessCount(i);
@@ -414,7 +437,12 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
       sinkCallbackPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
         .setNameFormat(this.getName() + " HBase Call Pool").build());
     logger.info("Callback pool created");
-    if(!isTimeoutTest) {
+    client = initHBaseClient();
+    super.start();
+  }
+
+  private HBaseClient initHBaseClient() {
+    if (!isTimeoutTest) {
       client = new HBaseClient(zkQuorum, zkBaseDir, sinkCallbackPool);
     } else {
       client = new HBaseClient(zkQuorum, zkBaseDir,
@@ -454,8 +482,9 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
     }
     if(fail.get()){
       sinkCounter.incrementConnectionFailedCount();
-      client.shutdown();
-      client = null;
+      if (client != null) {
+        shutdownHBaseClient();
+      }
       throw new FlumeException(
           "Could not start sink. " +
           "Table or column family does not exist in Hbase.");
@@ -463,14 +492,14 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
       open = true;
     }
     client.setFlushInterval((short) 0);
-    super.start();
+    return client;
   }
 
   @Override
   public void stop(){
     serializer.cleanUp();
     if (client != null) {
-      client.shutdown();
+      shutdownHBaseClient();
     }
     sinkCounter.incrementConnectionClosedCount();
     sinkCounter.stop();
@@ -496,8 +525,43 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
     super.stop();
   }
 
+  private void shutdownHBaseClient() {
+    final CountDownLatch waiter = new CountDownLatch(1);
+    try {
+      client.shutdown().addCallback(new Callback<Object, Object>() {
+        @Override
+        public Object call(Object arg) throws Exception {
+          waiter.countDown();
+          return null;
+        }
+      }).addErrback(new Callback<Object, Object>() {
+        @Override
+        public Object call(Object arg) throws Exception {
+          logger.error("Failed to shutdown HBase client cleanly! HBase cluster might be down");
+          waiter.countDown();
+          return null;
+        }
+      });
+      if (!waiter.await(timeout, TimeUnit.NANOSECONDS)) {
+        logger.error("HBase connection could not be closed within timeout! HBase cluster might " +
+          "be down!");
+      }
+    } catch (Exception ex) {
+      logger.warn("Error while attempting to close connections to HBase");
+    } finally {
+      // Dereference the client to force GC to clear up any buffered requests.
+      client = null;
+    }
+  }
+
   private void handleTransactionFailure(Transaction txn)
       throws EventDeliveryException {
+    if (consecutiveHBaseFailures >= MAX_CONSECUTIVE_FAILS) {
+      if (client != null) {
+        shutdownHBaseClient();
+      }
+      consecutiveHBaseFailures = 0;
+    }
     try {
       txn.rollback();
     } catch (Throwable e) {
