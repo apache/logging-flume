@@ -1375,10 +1375,16 @@ public class TestHDFSEventSink {
     Assert.assertEquals(Integer.MAX_VALUE, sink.getTryCount());
   }
   @Test
-  public void testRetryClose() throws InterruptedException,
+  public void testRetryRename() throws InterruptedException,
     LifecycleException,
     EventDeliveryException, IOException {
+    testRetryRename(true);
+    testRetryRename(false);
+  }
 
+  private void testRetryRename(boolean closeSucceed) throws InterruptedException,
+          LifecycleException,
+          EventDeliveryException, IOException {
     LOG.debug("Starting...");
     String newPath = testPath + "/retryBucket";
 
@@ -1388,7 +1394,7 @@ public class TestHDFSEventSink {
     Path dirPath = new Path(newPath);
     fs.delete(dirPath, true);
     fs.mkdirs(dirPath);
-    MockFileSystem mockFs = new MockFileSystem(fs, 3);
+    MockFileSystem mockFs = new MockFileSystem(fs, 6, closeSucceed);
 
     Context context = getContextForRetryTests();
     Configurables.configure(sink, context);
@@ -1434,15 +1440,15 @@ public class TestHDFSEventSink {
 
     Collection<BucketWriter> writers = sink.getSfWriters().values();
 
-    int totalCloseAttempts = 0;
+    int totalRenameAttempts = 0;
     for(BucketWriter writer: writers) {
-      LOG.info("Close tries = "+ writer.closeTries.get());
-      totalCloseAttempts += writer.closeTries.get();
+      LOG.info("Rename tries = "+ writer.renameTries.get());
+      totalRenameAttempts += writer.renameTries.get();
     }
     // stop clears the sfWriters map, so we need to compute the
     // close tries count before stopping the sink.
     sink.stop();
-    Assert.assertEquals(6, totalCloseAttempts);
+    Assert.assertEquals(6, totalRenameAttempts);
 
   }
 }

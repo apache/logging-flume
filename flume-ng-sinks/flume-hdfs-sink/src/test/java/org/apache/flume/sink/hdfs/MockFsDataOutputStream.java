@@ -28,34 +28,24 @@ public class MockFsDataOutputStream extends FSDataOutputStream{
   private static final Logger logger =
       LoggerFactory.getLogger(MockFsDataOutputStream.class);
 
-  int currentCloseAttempts = 0;
-  int numberOfClosesRequired;
+  boolean closeSucceed;
 
   public MockFsDataOutputStream(FSDataOutputStream wrapMe,
-    int numberOfClosesRequired)
+    boolean closeSucceed)
       throws IOException {
     super(wrapMe.getWrappedStream(), null);
-
-    this.numberOfClosesRequired = numberOfClosesRequired;
-
+    this.closeSucceed = closeSucceed;
   }
 
   @Override
   public void close() throws IOException {
-    currentCloseAttempts++;
     logger.info(
-      "Attempting to Close: '" + currentCloseAttempts + "' of '" +
-        numberOfClosesRequired + "'");
-    if (currentCloseAttempts >= numberOfClosesRequired ||
-      numberOfClosesRequired == 0) {
+      "Close Succeeded - " + closeSucceed);
+    if (closeSucceed) {
       logger.info("closing file");
       super.close();
     } else {
       throw new IOException("MockIOException");
     }
-  }
-
-  public int getCurrentCloseAttempts() {
-    return currentCloseAttempts;
   }
 }

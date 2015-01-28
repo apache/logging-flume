@@ -408,15 +408,18 @@ public class TestBucketWriter {
 
 
   @Test
-  public void testSequenceFileCloseRetries() throws Exception {
-    SequenceFileCloseRetryCoreTest(1);
-    SequenceFileCloseRetryCoreTest(5);
-    SequenceFileCloseRetryCoreTest(2);
+  public void testSequenceFileRenameRetries() throws Exception {
+    SequenceFileRenameRetryCoreTest(1, true);
+    SequenceFileRenameRetryCoreTest(5, true);
+    SequenceFileRenameRetryCoreTest(2, true);
+
+    SequenceFileRenameRetryCoreTest(1, false);
+    SequenceFileRenameRetryCoreTest(5, false);
+    SequenceFileRenameRetryCoreTest(2, false);
 
   }
 
-
-  public void SequenceFileCloseRetryCoreTest(int numberOfClosesRequired) throws Exception {
+  public void SequenceFileRenameRetryCoreTest(int numberOfRetriesRequired, boolean closeSucceed) throws Exception {
     String hdfsPath = "file:///tmp/flume-test."
       + Calendar.getInstance().getTimeInMillis() + "."
       + Thread.currentThread().getId();
@@ -429,13 +432,13 @@ public class TestBucketWriter {
     fs.mkdirs(dirPath);
     context.put("hdfs.path", hdfsPath);
     context.put("hdfs.closeTries",
-      String.valueOf(numberOfClosesRequired));
+      String.valueOf(numberOfRetriesRequired));
     context.put("hdfs.rollCount", "1");
     context.put("hdfs.retryInterval", "1");
     context.put("hdfs.callTimeout", Long.toString(1000));
     MockFileSystem mockFs = new
       MockFileSystem(fs,
-      numberOfClosesRequired);
+      numberOfRetriesRequired, closeSucceed);
     BucketWriter bucketWriter = new BucketWriter(0, 0, 1, 1, ctx,
       hdfsPath, hdfsPath, "singleBucket", ".tmp", null, null,
       null, new MockDataStream(mockFs),
@@ -443,7 +446,7 @@ public class TestBucketWriter {
       new SinkCounter(
         "test-bucket-writer-" + System.currentTimeMillis()),
       0, null, null, 30000, Executors.newSingleThreadExecutor(), 1,
-      numberOfClosesRequired);
+      numberOfRetriesRequired);
 
     bucketWriter.setFileSystem(mockFs);
     // At this point, we checked if isFileClosed is available in
@@ -453,12 +456,11 @@ public class TestBucketWriter {
     // This is what triggers the close, so a 2nd append is required :/
     bucketWriter.append(event);
 
-    TimeUnit.SECONDS.sleep(numberOfClosesRequired + 2);
+    TimeUnit.SECONDS.sleep(numberOfRetriesRequired + 2);
 
-    int expectedNumberOfCloses = numberOfClosesRequired;
-    Assert.assertTrue("Expected " + expectedNumberOfCloses + " " +
-      "but got " + bucketWriter.closeTries.get(),
-      bucketWriter.closeTries.get() ==
-        expectedNumberOfCloses);
+    Assert.assertTrue("Expected " + numberOfRetriesRequired + " " +
+      "but got " + bucketWriter.renameTries.get(),
+      bucketWriter.renameTries.get() ==
+        numberOfRetriesRequired);
   }
 }
