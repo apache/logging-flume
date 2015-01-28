@@ -109,12 +109,12 @@ class BucketWriter {
 
   private Clock clock = new SystemClock();
   private final long retryInterval;
-  private final int maxCloseTries;
+  private final int maxRenameTries;
 
   // flag that the bucket writer was closed due to idling and thus shouldn't be
   // reopened. Not ideal, but avoids internals of owners
   protected boolean closed = false;
-  AtomicInteger closeTries = new AtomicInteger(0);
+  AtomicInteger renameTries = new AtomicInteger(0);
 
   BucketWriter(long rollInterval, long rollSize, long rollCount, long batchSize,
     Context context, String filePath, String fileName, String inUsePrefix,
@@ -148,7 +148,7 @@ class BucketWriter {
     fileExtensionCounter = new AtomicLong(clock.currentTimeMillis());
 
     this.retryInterval = retryInterval;
-    this.maxCloseTries = maxCloseTries;
+    this.maxRenameTries = maxCloseTries;
     isOpen = false;
     isUnderReplicated = false;
     this.writer.configure(context);
@@ -336,55 +336,32 @@ class BucketWriter {
       private final HDFSWriter localWriter = writer;
       @Override
       public Void call() throws Exception {
-        LOG.info("Close tries incremented");
-        closeTries.incrementAndGet();
         localWriter.close(); // could block
         return null;
       }
     };
   }
 
-  private Callable<Void> createScheduledCloseCallable(
-    final CallRunner<Void> closeCallRunner) {
+  private Callable<Void> createScheduledRenameCallable() {
 
     return new Callable<Void>() {
       private final String path = bucketPath;
       private final String finalPath = targetPath;
       private FileSystem fs = fileSystem;
-      private boolean closeSuccess = false;
-      private Path tmpFilePath = new Path(path);
-      private int closeTries = 1; // one attempt is already done
-      private final CallRunner<Void> closeCall = closeCallRunner;
+      private int renameTries = 1; // one attempt is already done
 
       @Override
       public Void call() throws Exception {
-        if (closeTries >= maxCloseTries) {
-          LOG.warn("Unsuccessfully attempted to close " + path + " " +
-            maxCloseTries + " times. File may be open, " +
-            "or may not have been renamed." );
+        if (renameTries >= maxRenameTries) {
+          LOG.warn("Unsuccessfully attempted to rename " + path + " " +
+            maxRenameTries + " times. File may still be open.");
           return null;
         }
-        closeTries++;
+        renameTries++;
         try {
-          if (!closeSuccess) {
-            if (isClosedMethod == null) {
-              LOG.debug("isFileClosed method is not available in " +
-                "the version of HDFS client being used. " +
-                "Not attempting to close file again");
-              return null;
-            }
-            if (!isFileClosed(fs, tmpFilePath)) {
-              callWithTimeout(closeCall);
-            }
-            // It is possible rename failing causes this thread
-            // to get rescheduled. In that case,
-            // don't check with NN if close succeeded as we know
-            // it did. This helps avoid an unnecessary RPC call.
-            closeSuccess = true;
-          }
           renameBucket(path, finalPath, fs);
         } catch (Exception e) {
-          LOG.warn("Closing file: " + path + " failed. Will " +
+          LOG.warn("Renaming file: " + path + " failed. Will " +
             "retry again in " + retryInterval + " seconds.", e);
           timedRollerPool.schedule(this, retryInterval,
             TimeUnit.SECONDS);
@@ -422,10 +399,6 @@ class BucketWriter {
             "). Exception follows.", e);
         sinkCounter.incrementConnectionFailedCount();
         failedToClose = true;
-        final Callable<Void> scheduledClose =
-          createScheduledCloseCallable(closeCallRunner);
-        timedRollerPool.schedule(scheduledClose, retryInterval,
-          TimeUnit.SECONDS);
       }
       isOpen = false;
     } else {
@@ -443,10 +416,20 @@ class BucketWriter {
       idleFuture = null;
     }
 
-    // Don't rename file if this failed to close
-    if (bucketPath != null && fileSystem != null && !failedToClose) {
+    if (bucketPath != null && fileSystem != null) {
       // could block or throw IOException
-      renameBucket(bucketPath, targetPath, fileSystem);
+      try {
+        renameBucket(bucketPath, targetPath, fileSystem);
+      } catch(Exception e) {
+        LOG.warn(
+          "failed to rename() file (" + bucketPath +
+          "). Exception follows.", e);
+        sinkCounter.incrementConnectionFailedCount();
+        final Callable<Void> scheduledRename =
+                createScheduledRenameCallable();
+        timedRollerPool.schedule(scheduledRename, retryInterval,
+                TimeUnit.SECONDS);
+      }
     }
     if (callCloseCallback) {
       runCloseAction();
@@ -671,6 +654,7 @@ class BucketWriter {
       public Void call() throws Exception {
         if (fs.exists(srcPath)) { // could block
           LOG.info("Renaming " + srcPath + " to " + dstPath);
+          renameTries.incrementAndGet();
           fs.rename(srcPath, dstPath); // could block
         }
         return null;
