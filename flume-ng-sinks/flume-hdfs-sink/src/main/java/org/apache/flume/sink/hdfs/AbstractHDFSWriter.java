@@ -19,6 +19,7 @@ package org.apache.flume.sink.hdfs;
 
 import com.google.common.base.Preconditions;
 import org.apache.flume.Context;
+import org.apache.flume.FlumeException;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -27,6 +28,7 @@ import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -43,6 +45,7 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
   private Path destPath;
   private Method refGetNumCurrentReplicas = null;
   private Method refGetDefaultReplication = null;
+  private Method refHflushOrSync = null;
   private Integer configuredMinReplicas = null;
   private Integer numberOfCloseRetries = null;
   private long timeBetweenCloseRetries = Long.MAX_VALUE;
@@ -110,6 +113,7 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
     this.destPath = destPath;
     this.refGetNumCurrentReplicas = reflectGetNumCurrentReplicas(outputStream);
     this.refGetDefaultReplication = reflectGetDefaultReplication(fs);
+    this.refHflushOrSync = reflectHflushOrSync(outputStream);
 
   }
 
@@ -224,5 +228,52 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
           "HADOOP-8014");
     }
     return m;
+  }
+
+  private Method reflectHflushOrSync(FSDataOutputStream os) {
+    Method m = null;
+    if(os != null) {
+      Class<?> fsDataOutputStreamClass = os.getClass();
+      try {
+        m = fsDataOutputStreamClass.getMethod("hflush");
+      } catch (NoSuchMethodException ex) {
+        logger.debug("HFlush not found. Will use sync() instead");
+        try {
+          m = fsDataOutputStreamClass.getMethod("sync");
+        } catch (Exception ex1) {
+          String msg = "Neither hflush not sync were found. That seems to be " +
+            "a problem!";
+          logger.error(msg);
+          throw new FlumeException(msg, ex1);
+        }
+      }
+    }
+    return m;
+  }
+
+  /**
+   * If hflush is available in this version of HDFS, then this method calls
+   * hflush, else it calls sync.
+   * @param os - The stream to flush/sync
+   * @throws IOException
+   */
+  protected void hflushOrSync(FSDataOutputStream os) throws IOException {
+    try {
+      // At this point the refHflushOrSync cannot be null,
+      // since register method would have thrown if it was.
+      this.refHflushOrSync.invoke(os);
+    } catch (InvocationTargetException e) {
+      String msg = "Error while trying to hflushOrSync!";
+      logger.error(msg);
+      Throwable cause = e.getCause();
+      if(cause != null && cause instanceof IOException) {
+        throw (IOException)cause;
+      }
+      throw new FlumeException(msg, e);
+    } catch (Exception e) {
+      String msg = "Error while trying to hflushOrSync!";
+      logger.error(msg);
+      throw new FlumeException(msg, e);
+    }
   }
 }

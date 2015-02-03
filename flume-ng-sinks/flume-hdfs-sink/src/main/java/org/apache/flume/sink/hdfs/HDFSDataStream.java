@@ -128,7 +128,7 @@ public class HDFSDataStream extends AbstractHDFSWriter {
   public void sync() throws IOException {
     serializer.flush();
     outStream.flush();
-    outStream.sync();
+    hflushOrSync(outStream);
   }
 
   @Override
@@ -136,7 +136,7 @@ public class HDFSDataStream extends AbstractHDFSWriter {
     serializer.flush();
     serializer.beforeClose();
     outStream.flush();
-    outStream.sync();
+    hflushOrSync(outStream);
     outStream.close();
 
     unregisterCurrentStream();
