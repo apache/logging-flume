@@ -139,7 +139,7 @@ public class HDFSCompressedDataStream extends AbstractHDFSWriter {
       isFinished = true;
     }
     fsOut.flush();
-    fsOut.sync();
+    hflushOrSync(this.fsOut);
   }
 
   @Override
@@ -151,7 +151,7 @@ public class HDFSCompressedDataStream extends AbstractHDFSWriter {
       isFinished = true;
     }
     fsOut.flush();
-    fsOut.sync();
+    hflushOrSync(fsOut);
     cmpOut.close();
     if (compressor != null) {
       CodecPool.returnCompressor(compressor);
