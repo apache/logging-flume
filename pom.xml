@@ -48,11 +48,12 @@ limitations under the License.
 
     <avro.version>1.7.4</avro.version>
     <elasticsearch.version>0.90.1</elasticsearch.version>
-
     <hadoop2.version>2.4.0</hadoop2.version>
     <thrift.version>0.7.0</thrift.version>
     <kite.version>0.17.1</kite.version>
-    <hive.version>0.10.0</hive.version>
+    <hive.version>0.13.1</hive.version>
+    <xalan.verion>2.7.1</xalan.verion>
+    <xerces.version>2.9.1</xerces.version>
   </properties>
 
   <modules>
@@ -81,7 +82,7 @@ limitations under the License.
         </property>
       </activation>
       <properties>
-        <hadoop.version>1.0.1</hadoop.version>
+        <hadoop.version>1.2.1</hadoop.version>
         <hbase.version>0.92.1</hbase.version>
         <hadoop.common.artifact.id>hadoop-core</hadoop.common.artifact.id>
         <thrift.version>0.7.0</thrift.version>
@@ -133,7 +134,7 @@ limitations under the License.
         <hadoop.version>${hadoop2.version}</hadoop.version>
         <hbase.version>0.94.2</hbase.version>
         <hadoop.common.artifact.id>hadoop-common</hadoop.common.artifact.id>
-        <thrift.version>0.8.0</thrift.version>
+        <thrift.version>0.9.0</thrift.version>
       </properties>
       <dependencyManagement>
         <dependencies>
@@ -145,6 +146,11 @@ limitations under the License.
           <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-hdfs</artifactId>
+            <version>${hadoop.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-mapreduce-client-core</artifactId>
             <version>${hadoop.version}</version>
           </dependency>
           <dependency>
@@ -211,7 +217,7 @@ limitations under the License.
         <hadoop.version>${hadoop2.version}</hadoop.version>
         <hbase.version>0.98.2-hadoop2</hbase.version>
         <hadoop.common.artifact.id>hadoop-common</hadoop.common.artifact.id>
-        <thrift.version>0.8.0</thrift.version>
+        <thrift.version>0.9.0</thrift.version>
       </properties>
       <dependencyManagement>
         <dependencies>
@@ -736,6 +742,8 @@ limitations under the License.
                   <exclude>**/.classpath</exclude>
                   <exclude>**/.project</exclude>
                   <exclude>**/target/**</exclude>
+                  <exclude>**/derby.log</exclude>
+                  <exclude>**/metastore_db/</exclude>
                 </excludes>
               </configuration>
             </execution>
@@ -971,6 +979,7 @@ limitations under the License.
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-common</artifactId>
         <version>${hadoop.version}</version>
+        <optional>true</optional>
       </dependency>
 
       <dependency>
@@ -1026,6 +1035,15 @@ limitations under the License.
         <artifactId>joda-time</artifactId>
         <version>2.1</version>
       </dependency>
+      <!-- Adding zookeeper as dependency, beacuse it was
+           pulling different version of zookeeper as transient
+           dependency from asynchbase. -->
+
+      <dependency>
+        <groupId>org.apache.zookeeper</groupId>
+        <artifactId>zookeeper</artifactId>
+        <version>${zookeeper.version}</version>
+       </dependency>
 
       <dependency>
         <groupId>org.apache.hadoop</groupId>
@@ -1118,6 +1136,12 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-hdfs-sink</artifactId>
+        <version>1.6.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.flume.flume-ng-sinks</groupId>
+        <artifactId>flume-hive-sink</artifactId>
         <version>1.6.0-SNAPSHOT</version>
       </dependency>
 
@@ -1329,6 +1353,18 @@ limitations under the License.
         <groupId>org.xerial.snappy</groupId>
         <artifactId>snappy-java</artifactId>
         <version>1.1.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.hive.hcatalog</groupId>
+        <artifactId>hive-hcatalog-streaming</artifactId>
+        <version>${hive.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.hive</groupId>
+        <artifactId>hive-cli</artifactId>
+        <version>${hive.version}</version>
       </dependency>
 
       <!-- Dependency for Zk provider -->

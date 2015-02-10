@@ -209,13 +209,18 @@ public class ThriftFlumeEventServer {
         super("append");
       }
 
-      protected append_args getEmptyArgsInstance() {
+      public append_args getEmptyArgsInstance() {
         return new append_args();
       }
 
-      protected org.apache.thrift.TBase getResult(I iface, append_args args) throws org.apache.thrift.TException {
+      public org.apache.thrift.TBase getResult(I iface,
+           append_args args) throws org.apache.thrift.TException {
         iface.append(args.evt);
         return null;
+      }
+
+      public boolean isOneway() {
+        return false;
       }
     }
 
@@ -224,14 +229,19 @@ public class ThriftFlumeEventServer {
         super("close");
       }
 
-      protected close_args getEmptyArgsInstance() {
+      public close_args getEmptyArgsInstance() {
         return new close_args();
       }
 
-      protected close_result getResult(I iface, close_args args) throws org.apache.thrift.TException {
+      public close_result getResult(I iface, close_args args) throws org.apache
+          .thrift.TException {
         close_result result = new close_result();
         iface.close();
         return result;
+      }
+
+      public boolean isOneway() {
+        return false;
       }
     }
 

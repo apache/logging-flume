@@ -228,14 +228,19 @@ public class ThriftSourceProtocol {
         super("append");
       }
 
-      protected append_args getEmptyArgsInstance() {
+      public append_args getEmptyArgsInstance() {
         return new append_args();
       }
 
-      protected append_result getResult(I iface, append_args args) throws org.apache.thrift.TException {
+      public append_result getResult(I iface, append_args args) throws org
+          .apache.thrift.TException {
         append_result result = new append_result();
         result.success = iface.append(args.event);
         return result;
+      }
+
+      protected boolean isOneway() {
+        return false;
       }
     }
 
@@ -244,14 +249,19 @@ public class ThriftSourceProtocol {
         super("appendBatch");
       }
 
-      protected appendBatch_args getEmptyArgsInstance() {
+      public appendBatch_args getEmptyArgsInstance() {
         return new appendBatch_args();
       }
 
-      protected appendBatch_result getResult(I iface, appendBatch_args args) throws org.apache.thrift.TException {
+      public appendBatch_result getResult(I iface, appendBatch_args args)
+          throws org.apache.thrift.TException {
         appendBatch_result result = new appendBatch_result();
         result.success = iface.appendBatch(args.events);
         return result;
+      }
+
+      protected boolean isOneway() {
+        return false;
       }
     }
 

@@ -72,6 +72,7 @@ limitations under the License.
            -->
       <modules>
         <module>flume-dataset-sink</module>
+        <module>flume-hive-sink</module>
       </modules>
     </profile>
 
@@ -87,6 +88,7 @@ limitations under the License.
            -->
       <modules>
         <module>flume-dataset-sink</module>
+        <module>flume-hive-sink</module>
       </modules>
     </profile>
 
