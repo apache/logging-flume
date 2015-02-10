@@ -161,6 +161,17 @@ add_HBASE_paths() {
   fi
 }
 
+add_hive_paths(){
+  if [ -d "${HIVE_HOME}/lib" ]; then
+    info "Including Hive libraries found via ($HIVE_HOME) for Hive access"
+    FLUME_CLASSPATH="$FLUME_CLASSPATH:$HIVE_HOME/lib/*"
+  fi
+  if [ -d "${HCAT_HOME}/share/hcatalog" ]; then
+    info "Including HCatalog libraries found via ($HCAT_HOME) for Hive access"
+    FLUME_CLASSPATH="$FLUME_CLASSPATH:${HCAT_HOME}/share/hcatalog/*"
+  fi
+}
+
 set_LD_LIBRARY_PATH(){
 #Append the FLUME_JAVA_LIBRARY_PATH to whatever the user may have specified in
 #flume-env.sh
@@ -417,6 +428,7 @@ fi
 # look for hadoop libs
 add_hadoop_paths
 add_HBASE_paths
+add_hive_paths
 
 # prepend conf dir to classpath
 if [ -n "$opt_conf" ]; then
