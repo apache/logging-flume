@@ -34,6 +34,7 @@ import org.apache.avro.generic.GenericData.Record;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumWriter;
+import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
@@ -54,6 +55,7 @@ import twitter4j.TwitterStream;
 import twitter4j.TwitterStreamFactory;
 import twitter4j.User;
 import twitter4j.auth.AccessToken;
+import twitter4j.conf.ConfigurationBuilder;
 
 /**
  * Demo Flume source that connects via Streaming API to the 1% sample twitter
@@ -106,13 +108,27 @@ public class TwitterSource
     String consumerSecret = context.getString("consumerSecret");
     String accessToken = context.getString("accessToken");
     String accessTokenSecret = context.getString("accessTokenSecret");
+    String proxyHost = context.getString("http.proxyHost");
+    String proxyPort =        context.getString("http.proxyPort");
+    String proxyUser = context.getString("http.proxyUser");
+    String proxyPassword =        context.getString("http.proxyPassword");
+    ConfigurationBuilder cb = new ConfigurationBuilder();
+    cb.setDebugEnabled(true);
+    if (StringUtils.isNotEmpty(proxyHost))
+      cb.setHttpProxyHost(proxyHost);
+    if (StringUtils.isNotEmpty(proxyPort))
+      cb.setHttpProxyPort(Integer.valueOf(proxyPort));
+    if (StringUtils.isNotEmpty(proxyUser))
+      cb.setHttpProxyUser(proxyUser);
+    if (StringUtils.isNotEmpty(proxyPassword))
+      cb.setHttpProxyPassword(proxyPassword);
 
     LOGGER.info("Consumer Key:        '" + consumerKey + "'");
     LOGGER.info("Consumer Secret:     '" + consumerSecret + "'");
     LOGGER.info("Access Token:        '" + accessToken + "'");
     LOGGER.info("Access Token Secret: '" + accessTokenSecret + "'");
 
-    twitterStream = new TwitterStreamFactory().getInstance();
+    twitterStream = new TwitterStreamFactory(cb.build()).getInstance();
     twitterStream.setOAuthConsumer(consumerKey, consumerSecret);
     twitterStream.setOAuthAccessToken(new AccessToken(accessToken,
                                                       accessTokenSecret));
