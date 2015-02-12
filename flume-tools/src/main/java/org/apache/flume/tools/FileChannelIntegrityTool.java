@@ -118,12 +118,12 @@ public class FileChannelIntegrityTool implements FlumeTool {
     CommandLineParser parser = new GnuParser();
     CommandLine commandLine = parser.parse(options, args);
     if(commandLine.hasOption("help")) {
-      new HelpFormatter().printHelp("java -jar fcintegritytool ",
+      new HelpFormatter().printHelp("bin/flume-ng tool fcintegritytool ",
         options, true);
       return false;
     }
     if(!commandLine.hasOption("dataDirs")) {
-      new HelpFormatter().printHelp("java -jar fcintegritytool ", "",
+      new HelpFormatter().printHelp("bin/flume-ng tool fcintegritytool ", "",
         options, "dataDirs is required.", true);
       return false;
     } else {
