@@ -165,6 +165,10 @@ class BucketWriter {
     this.writer = dataWriter;
   }
 
+  public String getPath() {
+    return onCloseCallbackPath;
+  }
+
   /**
    * Allow methods to act as another user (typically used for HDFS Kerberos)
    * @param <T>

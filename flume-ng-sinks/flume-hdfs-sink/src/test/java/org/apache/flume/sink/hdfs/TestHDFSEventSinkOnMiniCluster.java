@@ -27,6 +27,7 @@ import java.util.zip.GZIPInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.Context;
 import org.apache.flume.EventDeliveryException;
+import org.apache.flume.Sink;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.event.EventBuilder;
 import org.apache.hadoop.conf.Configuration;
@@ -35,7 +36,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -118,13 +118,7 @@ public class TestHDFSEventSinkOnMiniCluster {
 
     // create an event
     String EVENT_BODY = "yarg!";
-    channel.getTransaction().begin();
-    try {
-      channel.put(EventBuilder.withBody(EVENT_BODY, Charsets.UTF_8));
-      channel.getTransaction().commit();
-    } finally {
-      channel.getTransaction().close();
-    }
+    putEvent(channel, EVENT_BODY);
 
     // store event to HDFS
     sink.process();
@@ -155,6 +149,129 @@ public class TestHDFSEventSinkOnMiniCluster {
     cluster.shutdown();
     cluster = null;
   }
+
+  /**
+   * We will restart hdfs while flume is running and ensure, flume recovers once hdfs becomes available
+   */
+  @Test
+  public void testHDFSRestart() throws EventDeliveryException, IOException, InterruptedException {
+    cluster = new MiniDFSCluster(new Configuration(), 1, true, null);
+    cluster.waitActive();
+
+    String outputDir = "/flume/testHDFSRestart";
+    Path outputDirPath = new Path(outputDir);
+
+    logger.info("Running test with output dir: {}", outputDir);
+
+    FileSystem fs = cluster.getFileSystem();
+     // ensure output directory is empty
+    if (fs.exists(outputDirPath)) {
+      fs.delete(outputDirPath, true);
+    }
+
+    String nnURL = getNameNodeURL(cluster);
+    logger.info("Namenode address: {}", nnURL);
+
+    Context chanCtx = new Context();
+    MemoryChannel channel = new MemoryChannel();
+    channel.setName("testHDFSRestart-mem-chan");
+    channel.configure(chanCtx);
+    channel.start();
+
+    Context sinkCtx = new Context();
+    sinkCtx.put("hdfs.path", nnURL + outputDir);
+    sinkCtx.put("hdfs.fileType", HDFSWriterFactory.DataStreamType);
+    sinkCtx.put("hdfs.batchSize", Integer.toString(1));
+
+    HDFSEventSink sink = new HDFSEventSink();
+    sink.setName("testHDFSRestart-hdfs-sink");
+    sink.configure(sinkCtx);
+    sink.setChannel(channel);
+    sink.start();
+
+    // 1) insert and drain one event
+    putEvent(channel, "1");
+    Assert.assertEquals(Sink.Status.READY, sink.process() );
+
+    // 2) stop HDFS
+    cluster.getNameNode().stop();
+    // cluster.shutdownNameNodes();
+
+    // 3) keep writing till we see a failure form sink
+    int maxEvents = 2000000;
+    int lastWrite = pumpEvents(channel, 2, maxEvents, sink);
+    Assert.assertEquals(Sink.Status.BACKOFF, sink.process() );
+    Assert.assertTrue("Expected an error writing to HDFS, but there was no error",
+            lastWrite < 2+maxEvents);
+
+    // 4) start namenode
+    cluster.restartNameNode(true);
+
+    // 5) pump some more
+    ++lastWrite;
+    putEvent(channel, "" + lastWrite );
+    Assert.assertEquals(Sink.Status.READY, sink.process() );
+
+
+    // Verify that it's in HDFS and that its content is what we say it should be
+    FileStatus[] statuses = fs.listStatus(outputDirPath);
+    Assert.assertNotNull("No files found written to HDFS", statuses);
+
+    int expected = 1;
+    for (FileStatus status : statuses) {
+      Path filePath = status.getPath();
+      logger.info("Found file on DFS: {}", filePath);
+      FSDataInputStream stream = fs.open(filePath);
+      BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+
+      for(String line = reader.readLine(); line != null   &&  expected <= maxEvents;
+          ++expected ) {
+        logger.info("Line in file {}: {}", filePath, line);
+        Assert.assertEquals("" + expected, line);
+        line = reader.readLine();
+      }
+    }
+    Assert.assertEquals("Some data is missing", expected, lastWrite);
+
+    if (!KEEP_DATA) {
+      fs.delete(outputDirPath, true);
+    }
+
+    // shut down flume
+    sink.stop();
+    channel.stop();
+
+    // shutdown cluster
+    cluster.shutdown();
+    cluster = null;
+  }
+
+  private static int pumpEvents(MemoryChannel channel, int startingFrom, int count, HDFSEventSink sink) {
+
+    try {
+      for (int max = startingFrom + count; startingFrom < max; ++startingFrom) {
+        putEvent(channel, "" + startingFrom);
+        if( sink.process() != Sink.Status.READY ) {
+          return startingFrom;
+        }
+      }
+    } catch (EventDeliveryException e) {
+      return startingFrom;
+    }
+    return startingFrom;
+  }
+
+
+  private static void putEvent(MemoryChannel channel, String EVENT_BODY) {
+    channel.getTransaction().begin();
+    try {
+      channel.put(EventBuilder.withBody(EVENT_BODY, Charsets.UTF_8));
+      channel.getTransaction().commit();
+    } finally {
+      channel.getTransaction().close();
+    }
+  }
+
 
   /**
    * Writes two events in GZIP-compressed serialize.
