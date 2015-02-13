@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Locale;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
@@ -52,7 +53,7 @@ public class TestTwitterSource extends Assert {
       Assume.assumeTrue(false); // ignore Test if twitter is unreachable
     }
   }
-  
+
   @Test
   public void testBasic() throws Exception {
     String consumerKey = System.getProperty("twitter.consumerKey");
@@ -105,7 +106,7 @@ public class TestTwitterSource extends Assert {
 
   @Test
   public void testCarrotDateFormatBug() throws Exception {
-    SimpleDateFormat formatterFrom = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy");
+    SimpleDateFormat formatterFrom = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.US);
     formatterFrom.parse("Fri Oct 26 22:53:55 +0000 2012");
   }
 
