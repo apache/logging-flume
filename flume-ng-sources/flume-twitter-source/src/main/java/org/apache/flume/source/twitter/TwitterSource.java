@@ -71,6 +71,17 @@ import twitter4j.conf.ConfigurationBuilder;
 public class TwitterSource
     extends AbstractSource
     implements EventDrivenSource, Configurable, StatusListener {
+    
+    public static final String CONSUMER_KEY = "consumerKey";
+    public static final String CONSUMER_SECRET = "consumerSecret";
+    public static final String ACCESS_TOKEN = "accessToken";
+    public static final String ACCESS_TOKEN_SECRET = "accessTokenSecret";
+    public static final String HTTP_PROXY_HOST = "http.proxyHost";
+    public static final String HTTP_PROXY_PORT = "http.proxyPort";
+    public static final String HTTP_PROXY_USER = "http.proxyUser";
+    public static final String HTTP_PROXY_PASSWORD = "http.proxyPassword";
+    public static final String MAX_BATCH_SIZE = "maxBatchSize";
+    public static final String MAX_BATCH_DURATION_MILLIS = "maxBatchDurationMillis";
 
   private TwitterStream twitterStream;
   private Schema avroSchema;
@@ -104,24 +115,24 @@ public class TwitterSource
 
   @Override
   public void configure(Context context) {
-    String consumerKey = context.getString("consumerKey");
-    String consumerSecret = context.getString("consumerSecret");
-    String accessToken = context.getString("accessToken");
-    String accessTokenSecret = context.getString("accessTokenSecret");
-    String proxyHost = context.getString("http.proxyHost");
-    String proxyPort =        context.getString("http.proxyPort");
-    String proxyUser = context.getString("http.proxyUser");
-    String proxyPassword =        context.getString("http.proxyPassword");
+    String consumerKey = context.getString(CONSUMER_KEY);
+    String consumerSecret = context.getString(CONSUMER_SECRET);
+    String accessToken = context.getString(ACCESS_TOKEN);
+    String accessTokenSecret = context.getString(ACCESS_TOKEN_SECRET);
+    String proxyHost = context.getString(HTTP_PROXY_HOST);
+    String proxyPort =        context.getString(HTTP_PROXY_PORT);
+    String proxyUser = context.getString(HTTP_PROXY_USER);
+    String proxyPassword =        context.getString(HTTP_PROXY_PASSWORD);
     ConfigurationBuilder cb = new ConfigurationBuilder();
     cb.setDebugEnabled(true);
-    if (StringUtils.isNotEmpty(proxyHost))
-      cb.setHttpProxyHost(proxyHost);
-    if (StringUtils.isNotEmpty(proxyPort))
-      cb.setHttpProxyPort(Integer.valueOf(proxyPort));
-    if (StringUtils.isNotEmpty(proxyUser))
-      cb.setHttpProxyUser(proxyUser);
-    if (StringUtils.isNotEmpty(proxyPassword))
-      cb.setHttpProxyPassword(proxyPassword);
+    if (StringUtils.isNotEmpty(proxyHost) && StringUtils.isNotEmpty(proxyPort)) {
+        cb.setHttpProxyHost(proxyHost);
+        cb.setHttpProxyPort(Integer.valueOf(proxyPort));
+        if (StringUtils.isNotEmpty(proxyUser) && StringUtils.isNotEmpty(proxyPassword)) {
+            cb.setHttpProxyUser(proxyUser);
+            cb.setHttpProxyPassword(proxyPassword);
+        }
+    }
 
     LOGGER.info("Consumer Key:        '" + consumerKey + "'");
     LOGGER.info("Consumer Secret:     '" + consumerSecret + "'");
@@ -137,8 +148,8 @@ public class TwitterSource
     dataFileWriter = new DataFileWriter<GenericRecord>(
         new GenericDatumWriter<GenericRecord>(avroSchema));
 
-    maxBatchSize = context.getInteger("maxBatchSize", maxBatchSize);
-    maxBatchDurationMillis = context.getInteger("maxBatchDurationMillis",
+    maxBatchSize = context.getInteger(MAX_BATCH_SIZE, maxBatchSize);
+    maxBatchDurationMillis = context.getInteger(MAX_BATCH_DURATION_MILLIS,
                                                 maxBatchDurationMillis);
   }
 

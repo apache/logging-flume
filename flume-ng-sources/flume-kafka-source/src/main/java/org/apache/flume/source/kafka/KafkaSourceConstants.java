@@ -25,7 +25,7 @@ public class KafkaSourceConstants {
   public static final String AUTO_COMMIT_ENABLED = "auto.commit.enabled";
   public static final String ZOOKEEPER_CONNECT = "zookeeper.connect";
   public static final String ZOOKEEPER_CONNECT_FLUME = "zookeeperConnect";
-  public static final String GROUP_ID = "group.id";
+  public static final String GROUP_ID = "groupid";
   public static final String GROUP_ID_FLUME = "groupId";
   public static final String PROPERTY_PREFIX = "kafka.";
 
