@@ -3666,6 +3666,32 @@ metrics as long values.
 
   }
 
+Tools
+=====
+
+File Channel Integrity Tool
+---------------------------
+
+File Channel Integrity tool verifies the integrity of individual Events in the File channel
+and removes corrupted Events.
+
+The tools can be run as follows::
+
+  $bin/flume-ng tool --conf ./conf FCINTEGRITYTOOL -l ./datadir
+
+where datadir the comma separated list of data directory to ve verified.
+
+Following are the options available
+
+=======================  ====================================================================
+Option Name              Description
+=======================  ====================================================================
+h/help                   Displays help
+**l/dataDirs**           Comma-separated list of data directories which the tool must verify
+=======================  ====================================================================
+
+
+
 
 Topology Design Considerations
 ==============================
