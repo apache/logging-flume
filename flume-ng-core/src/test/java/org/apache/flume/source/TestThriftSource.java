@@ -35,11 +35,14 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.KeyManagerFactory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -87,6 +90,40 @@ public class TestThriftSource {
     source.setChannelProcessor(new ChannelProcessor(rcs));
   }
 
+  @Test
+  public void testAppendSSL() throws Exception {
+    Properties sslprops = (Properties)props.clone();
+    sslprops.put("ssl", "true");
+    sslprops.put("truststore", "src/test/resources/truststorefile.jks");
+    sslprops.put("truststore-password", "password");
+    sslprops.put("trustmanager-type", TrustManagerFactory.getDefaultAlgorithm());
+    client = RpcClientFactory.getThriftInstance(sslprops);
+
+    Context context = new Context();
+    channel.configure(context);
+    configureSource();
+    context.put(ThriftSource.CONFIG_BIND, "0.0.0.0");
+    context.put(ThriftSource.CONFIG_PORT, String.valueOf(port));
+    context.put("ssl", "true");
+    context.put("keystore", "src/test/resources/keystorefile.jks");
+    context.put("keystore-password", "password");
+    context.put("keymanager-type", KeyManagerFactory.getDefaultAlgorithm());
+    Configurables.configure(source, context);
+    source.start();
+    for(int i = 0; i < 30; i++) {
+      client.append(EventBuilder.withBody(String.valueOf(i).getBytes()));
+    }
+    Transaction transaction = channel.getTransaction();
+    transaction.begin();
+
+    for (int i = 0; i < 30; i++) {
+      Event event = channel.take();
+      Assert.assertNotNull(event);
+      Assert.assertEquals(String.valueOf(i), new String(event.getBody()));
+    }
+    transaction.commit();
+    transaction.close();
+  }
 
   @Test
   public void testAppend() throws Exception {

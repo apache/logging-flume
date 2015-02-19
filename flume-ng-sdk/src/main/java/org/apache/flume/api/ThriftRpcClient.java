@@ -31,7 +31,15 @@ import org.apache.thrift.transport.TSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+
+import java.io.FileInputStream;
 import java.nio.ByteBuffer;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -41,6 +49,7 @@ import java.util.Properties;
 import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -77,6 +86,15 @@ public class ThriftRpcClient extends AbstractRpcClient {
   private int connectionPoolSize;
   private final Random random = new Random();
   private String protocol;
+
+  private boolean enableSsl;
+  private String truststore;
+  private String truststorePassword;
+  private String truststoreType;
+  private String trustManagerType;
+  private static final String TRUSTMANAGER_TYPE = "trustmanager-type";
+  private final List<String> excludeProtocols = new LinkedList<String>();
+
 
   public ThriftRpcClient() {
     stateLock = new ReentrantLock(true);
@@ -311,6 +329,29 @@ public class ThriftRpcClient extends AbstractRpcClient {
         connectionPoolSize = RpcClientConfigurationConstants
           .DEFAULT_CONNECTION_POOL_SIZE;
       }
+
+      enableSsl = Boolean.parseBoolean(properties.getProperty(
+              RpcClientConfigurationConstants.CONFIG_SSL));
+      if(enableSsl) {
+        truststore = properties.getProperty(
+                RpcClientConfigurationConstants.CONFIG_TRUSTSTORE);
+        truststorePassword = properties.getProperty(
+                RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_PASSWORD);
+        truststoreType = properties.getProperty(
+                RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_TYPE, "JKS");
+        trustManagerType = properties.getProperty(
+                TRUSTMANAGER_TYPE, TrustManagerFactory.getDefaultAlgorithm());
+        String excludeProtocolsStr = properties.getProperty(
+                RpcClientConfigurationConstants.CONFIG_EXCLUDE_PROTOCOLS);
+        if (excludeProtocolsStr == null) {
+          excludeProtocols.add("SSLv3");
+        } else {
+          excludeProtocols.addAll(Arrays.asList(excludeProtocolsStr.split(" ")));
+          if (!excludeProtocols.contains("SSLv3")) {
+            excludeProtocols.add("SSLv3");
+          }
+        }
+      }
       connectionManager = new ConnectionPoolManager(connectionPoolSize);
       connState = State.READY;
     } catch (Throwable ex) {
@@ -341,8 +382,27 @@ public class ThriftRpcClient extends AbstractRpcClient {
     private final int hashCode;
 
     public ClientWrapper() throws Exception{
-      transport = new TFastFramedTransport(new TSocket(hostname, port));
-      transport.open();
+      TSocket tsocket;
+      if(enableSsl) {
+        // JDK6's factory doesn't appear to pass the protocol onto the Socket properly so we have
+        // to do some magic to make sure that happens. Not an issue in JDK7
+        // Lifted from thrift-0.9.1 to make the SSLContext
+        SSLContext sslContext = createSSLContext(truststore, truststorePassword, trustManagerType, truststoreType);
+
+        // Create the factory from it
+        SSLSocketFactory sslSockFactory = sslContext.getSocketFactory();
+
+        // Create the TSocket from that
+        tsocket = createSSLSocket(sslSockFactory, hostname, port, 120000, excludeProtocols);
+      } else {
+        tsocket = new TSocket(hostname, port);
+      }
+
+      transport = new TFastFramedTransport(tsocket);
+      // The transport is already open for SSL as part of TSSLTransportFactory.getClientSocket
+      if(!transport.isOpen()) {
+        transport.open();
+      }
       if (protocol.equals(BINARY_PROTOCOL)) {
         LOGGER.info("Using TBinaryProtocol");
         client = new ThriftSourceProtocol.Client(new TBinaryProtocol
@@ -454,6 +514,55 @@ public class ThriftRpcClient extends AbstractRpcClient {
       } finally {
         poolLock.unlock();
       }
+    }
+  }
+
+  /**
+   * Lifted from ACCUMULO-3318 - Lifted from TSSLTransportFactory in Thrift-0.9.1. The method to create a client socket with an SSLContextFactory object is not visibile to us. Have to use
+   * SslConnectionParams instead of TSSLTransportParameters because no getters exist on TSSLTransportParameters.
+   *
+   */
+  private static SSLContext createSSLContext(String truststore,
+          String truststorePassword, String trustManagerType,
+          String truststoreType) throws FlumeException {
+    SSLContext ctx;
+    try {
+      ctx = SSLContext.getInstance("TLS");
+      TrustManagerFactory tmf = null;
+      KeyManagerFactory kmf = null;
+      tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+      KeyStore ts = null;
+      if (truststore != null && truststoreType != null) {
+        ts = KeyStore.getInstance(truststoreType);
+        ts.load(new FileInputStream(truststore), truststorePassword.toCharArray());
+        tmf.init(ts);
+      }
+
+      tmf.init(ts);
+      ctx.init(null, tmf.getTrustManagers(), null);
+
+    } catch (Exception e) {
+      throw new FlumeException("Error creating the transport", e);
+    }
+    return ctx;
+  }
+
+  private static TSocket createSSLSocket(SSLSocketFactory factory, String host,
+          int port, int timeout, List<String> excludeProtocols) throws FlumeException {
+    try {
+      SSLSocket socket = (SSLSocket) factory.createSocket(host, port);
+      socket.setSoTimeout(timeout);
+
+      List<String> enabledProtocols = new ArrayList<String>();
+      for (String protocol : socket.getEnabledProtocols()) {
+        if (!excludeProtocols.contains(protocol)) {
+          enabledProtocols.add(protocol);
+        }
+      }
+      socket.setEnabledProtocols(enabledProtocols.toArray(new String[0]));
+      return new TSocket(socket);
+    } catch (Exception e) {
+      throw new FlumeException("Could not connect to " + host + " on port " + port, e);
     }
   }
 }
