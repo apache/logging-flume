@@ -48,3 +48,5 @@ To compile Flume, run `mvn compile`.
 To build a distribution, run `mvn install`.
 
 The final Flume distribution artifacts will be in $project/flume-ng-dist/target/.
+
+#fork by Huangxianjun
