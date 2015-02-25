@@ -30,6 +30,7 @@ import org.kitesdk.data.DatasetDescriptor;
 import org.kitesdk.data.DatasetWriter;
 import org.kitesdk.data.Datasets;
 import org.kitesdk.data.Formats;
+import org.kitesdk.data.Syncable;
 import org.kitesdk.data.View;
 
 import static org.apache.flume.sink.kite.DatasetSinkConstants.*;
@@ -87,7 +88,9 @@ public class SavePolicy implements FailurePolicy {
         // dataset
         close();
       } else {
-        writer.sync();
+        if (writer instanceof Syncable) {
+          ((Syncable) writer).sync();
+        }
       }
     }
   }

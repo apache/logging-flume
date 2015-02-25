@@ -93,7 +93,7 @@ limitations under the License.
 
     <dependency>
       <groupId>org.kitesdk</groupId>
-      <artifactId>kite-data-hcatalog</artifactId>
+      <artifactId>kite-data-hive</artifactId>
     </dependency>
 
     <dependency>

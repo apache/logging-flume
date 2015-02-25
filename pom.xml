@@ -50,7 +50,7 @@ limitations under the License.
     <elasticsearch.version>0.90.1</elasticsearch.version>
     <hadoop2.version>2.4.0</hadoop2.version>
     <thrift.version>0.7.0</thrift.version>
-    <kite.version>0.17.1</kite.version>
+    <kite.version>1.0.0</kite.version>
     <hive.version>0.13.1</hive.version>
     <xalan.verion>2.7.1</xalan.verion>
     <xerces.version>2.9.1</xerces.version>
@@ -1328,7 +1328,7 @@ limitations under the License.
       </dependency>
       <dependency>
         <groupId>org.kitesdk</groupId>
-        <artifactId>kite-data-hcatalog</artifactId>
+        <artifactId>kite-data-hive</artifactId>
         <version>${kite.version}</version>
       </dependency>
       <dependency>

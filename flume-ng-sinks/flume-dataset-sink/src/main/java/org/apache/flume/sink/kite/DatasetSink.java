@@ -46,8 +46,9 @@ import org.kitesdk.data.DatasetDescriptor;
 import org.kitesdk.data.DatasetIOException;
 import org.kitesdk.data.DatasetNotFoundException;
 import org.kitesdk.data.DatasetWriter;
-import org.kitesdk.data.DatasetWriterException;
 import org.kitesdk.data.Datasets;
+import org.kitesdk.data.Flushable;
+import org.kitesdk.data.Syncable;
 import org.kitesdk.data.View;
 import org.kitesdk.data.spi.Registration;
 import org.kitesdk.data.URIBuilder;
@@ -305,10 +306,10 @@ public class DatasetSink extends AbstractSink implements Configurable {
       if (commitOnBatch) {
         // Flush/sync before commiting. A failure here will result in rolling back
         // the transaction
-        if (syncOnBatch) {
-          writer.sync();
-        } else {
-          writer.flush();
+        if (syncOnBatch && writer instanceof Syncable) {
+          ((Syncable) writer).sync();
+        } else if (writer instanceof Flushable) {
+          ((Flushable) writer).flush();
         }
         boolean committed = commitTransaction();
         Preconditions.checkState(committed,
@@ -484,8 +485,6 @@ public class DatasetSink extends AbstractSink implements Configurable {
         throw new EventDeliveryException("Check HDFS permissions/health. IO"
             + " error trying to close the  writer for dataset " + datasetUri,
             ex);
-      } catch (DatasetWriterException ex) {
-        throw new EventDeliveryException("Failure moving temp file.", ex);
       } catch (RuntimeException ex) {
         throw new EventDeliveryException("Error trying to close the  writer for"
             + " dataset " + datasetUri, ex);

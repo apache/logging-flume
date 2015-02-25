@@ -22,7 +22,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.sink.kite.DatasetSink;
-import org.kitesdk.data.DatasetWriter;
+import org.kitesdk.data.Syncable;
 
 /**
  * A policy for dealing with non-recoverable event delivery failures.
@@ -68,7 +68,7 @@ public interface FailurePolicy {
    * This allows the policy implementation to sync any data that it may not
    * have fully handled.
    *
-   * See {@link DatasetWriter#sync()}.
+   * See {@link Syncable#sync()}.
    *
    * @throws EventDeliveryException The policy failed while syncing data.
    *                                When this is thrown, the Flume transaction
