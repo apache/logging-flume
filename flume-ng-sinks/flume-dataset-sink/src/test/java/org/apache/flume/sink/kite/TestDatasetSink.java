@@ -78,12 +78,12 @@ import static org.mockito.Mockito.*;
 
 public class TestDatasetSink {
 
-  public static final String FILE_REPO_URI = "repo:file:target/test-repo";
+  public static final String FILE_REPO_URI = "repo:file:target/test_repo";
   public static final String DATASET_NAME = "test";
   public static final String FILE_DATASET_URI =
-      "dataset:file:target/test-repo/" + DATASET_NAME;
+      "dataset:file:target/test_repo/" + DATASET_NAME;
   public static final String ERROR_DATASET_URI =
-      "dataset:file:target/test-repo/failed-events";
+      "dataset:file:target/test_repo/failed_events";
   public static final File SCHEMA_FILE = new File("target/record-schema.avsc");
   public static final Schema RECORD_SCHEMA = new Schema.Parser().parse(
       "{\"type\":\"record\",\"name\":\"rec\",\"fields\":[" +
@@ -254,7 +254,7 @@ public class TestDatasetSink {
 
   @Test
   public void testPartitionedData() throws EventDeliveryException {
-    URI partitionedUri = URI.create("dataset:file:target/test-repo/partitioned");
+    URI partitionedUri = URI.create("dataset:file:target/test_repo/partitioned");
     try {
       Datasets.create(partitionedUri, new DatasetDescriptor.Builder(DESCRIPTOR)
           .partitionStrategy(new PartitionStrategy.Builder()
