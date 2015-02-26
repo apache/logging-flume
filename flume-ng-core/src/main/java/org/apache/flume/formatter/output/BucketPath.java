@@ -74,6 +74,8 @@ public class BucketPath {
       return "datetime";
     case 'd':
       return "day_of_month_xx"; // two digit
+    case 'e':
+      return "day_of_month_x"; // 1 or 2 digit
     case 'D':
       return "date_short"; // "MM/dd/yy";
     case 'H':
@@ -88,6 +90,8 @@ public class BucketPath {
       return "hour_12"; // 1 or 2 digits
     case 'm':
       return "month_xx";
+    case 'n':
+      return "month_x"; // 1 or 2 digits
     case 'M':
       return "minute_xx";
     case 'p':
@@ -261,6 +265,9 @@ public class BucketPath {
     case 'd':
       formatString = "dd";
       break;
+    case 'e':
+      formatString = "d";
+      break;
     case 'D':
       formatString = "MM/dd/yy";
       break;
@@ -284,6 +291,9 @@ public class BucketPath {
       break;
     case 'M':
       formatString = "mm";
+      break;
+    case 'n':
+      formatString = "M";
       break;
     case 'p':
       formatString = "a";

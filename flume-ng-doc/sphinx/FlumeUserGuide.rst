@@ -1628,12 +1628,14 @@ Alias      Description
 %B         locale's long month name (January, February, ...)
 %c         locale's date and time (Thu Mar 3 23:05:25 2005)
 %d         day of month (01)
+%e         day of month without padding (1)
 %D         date; same as %m/%d/%y
 %H         hour (00..23)
 %I         hour (01..12)
 %j         day of year (001..366)
 %k         hour ( 0..23)
 %m         month (01..12)
+%n         month without padding (1..12)
 %M         minute (00..59)
 %p         locale's equivalent of am or pm
 %s         seconds since 1970-01-01 00:00:00 UTC
