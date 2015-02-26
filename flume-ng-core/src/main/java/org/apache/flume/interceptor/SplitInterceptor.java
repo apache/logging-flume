@@ -37,13 +37,13 @@ import static org.apache.flume.interceptor.SplitInterceptor.Constants.*;
  * field: the name to use in header insertion. (default is "field")
  * <p>
  * 
- * value: value for default header insertion. (default is "default")
+ * value: the default value to classified. (default is "default")
  * <p>
  * 
  * delimiter: delimiter to split event body data. (default is ",")
  * <p>
  * 
- * index: index in splits for value. (default is "0")
+ * index: the index value for split data to classified. (default is "0")
  * <p>
  * 
  * 
