@@ -18,15 +18,25 @@
 
 package org.apache.flume.interceptor;
 
+import static org.apache.flume.interceptor.SplitInterceptor.Constants.DELIMITER;
+import static org.apache.flume.interceptor.SplitInterceptor.Constants.DELIMITER_DEFAULT;
+import static org.apache.flume.interceptor.SplitInterceptor.Constants.FIELD;
+import static org.apache.flume.interceptor.SplitInterceptor.Constants.FIELD_DEFAULT;
+import static org.apache.flume.interceptor.SplitInterceptor.Constants.INDEX;
+import static org.apache.flume.interceptor.SplitInterceptor.Constants.INDEX_DEFAULT;
+import static org.apache.flume.interceptor.SplitInterceptor.Constants.PRESERVE;
+import static org.apache.flume.interceptor.SplitInterceptor.Constants.PRESERVE_DEFAULT;
+import static org.apache.flume.interceptor.SplitInterceptor.Constants.VALUE;
+import static org.apache.flume.interceptor.SplitInterceptor.Constants.VALUE_DEFAULT;
+
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.apache.flume.interceptor.SplitInterceptor.Constants.*;
 
 /**
  * Interceptor class that appends a dynamic header to all events.
@@ -37,13 +47,13 @@ import static org.apache.flume.interceptor.SplitInterceptor.Constants.*;
  * field: the name to use in header insertion. (default is "field")
  * <p>
  * 
- * value: the default value to classified. (default is "default")
+ * value: value for default header insertion. (default is "default")
  * <p>
  * 
  * delimiter: delimiter to split event body data. (default is ",")
  * <p>
  * 
- * index: the index value for split data to classified. (default is "0")
+ * index: index in splits for value. (default is "0")
  * <p>
  * 
  * 
@@ -75,12 +85,12 @@ public class SplitInterceptor implements Interceptor {
 	private final String field;
 	private final String value;
 	private final String delimiter;
-	private final String index;
+	private final int index;
 
 	/**
 	 * Only {@link SplitInterceptor.Builder} can build me
 	 */
-	private SplitInterceptor(boolean preserveExisting, String field, String value, String delimiter, String index) {
+	private SplitInterceptor(boolean preserveExisting, String field, String value, String delimiter, int index) {
 
 		this.preserveExisting = preserveExisting;
 		this.field = field;
@@ -107,12 +117,33 @@ public class SplitInterceptor implements Interceptor {
 		}
 
 		String[] splits = new String(event.getBody()).split(delimiter);
-		if (splits.length > Integer.valueOf(index)) {
-			headers.put(field, splits[Integer.valueOf(index)]);
+		if (splits.length > index && isValidPath(splits[index])) {
+			headers.put(field, splits[index]);
 		} else {
 			headers.put(field, value);
 		}
 		return event;
+	}
+
+	/**
+	 * splits[index] value is as a valid path or not
+	 * 
+	 * @param info
+	 * @return
+	 */
+	private boolean isValidPath(String info) {
+
+		String[] components = StringUtils.split(info, '/');
+		for (int i = 0; i < components.length; i++) {
+			String element = components[i];
+			if (element.equals(".") || element.equals("..") || (element.indexOf(":") >= 0) || (element.indexOf("/") >= 0)) {
+				return false;
+			}
+			if (element.isEmpty() && i != components.length - 1 && i != 0) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -143,7 +174,7 @@ public class SplitInterceptor implements Interceptor {
 		private String field;
 		private String value;
 		private String delimiter;
-		private String index;
+		private int index;
 
 		@Override
 		public void configure(Context context) {
@@ -151,7 +182,7 @@ public class SplitInterceptor implements Interceptor {
 			field = context.getString(FIELD, FIELD_DEFAULT);
 			value = context.getString(VALUE, VALUE_DEFAULT);
 			delimiter = context.getString(DELIMITER, DELIMITER_DEFAULT);
-			index = context.getString(INDEX, INDEX_DEFAULT);
+			index = context.getInteger(INDEX, INDEX_DEFAULT);
 			preserveExisting = context.getBoolean(PRESERVE, PRESERVE_DEFAULT);
 		}
 
@@ -175,7 +206,7 @@ public class SplitInterceptor implements Interceptor {
 		public static final String DELIMITER_DEFAULT = ",";
 
 		public static final String INDEX = "index";
-		public static final String INDEX_DEFAULT = "0";
+		public static final int INDEX_DEFAULT = 0;
 
 		public static final String PRESERVE = "preserveExisting";
 		public static final boolean PRESERVE_DEFAULT = true;
