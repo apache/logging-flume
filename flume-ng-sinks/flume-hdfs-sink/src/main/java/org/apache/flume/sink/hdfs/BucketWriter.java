@@ -38,6 +38,7 @@ import org.apache.flume.Clock;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.SystemClock;
+import org.apache.flume.auth.PrivilegedExecutor;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.hdfs.HDFSEventSink.WriterCallback;
 import org.apache.hadoop.conf.Configuration;
@@ -45,7 +46,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.compress.CompressionCodec;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,7 +75,7 @@ class BucketWriter {
   private final CompressionCodec codeC;
   private final CompressionType compType;
   private final ScheduledExecutorService timedRollerPool;
-  private final UserGroupInformation user;
+  private final PrivilegedExecutor proxyUser;
 
   private final AtomicLong fileExtensionCounter;
 
@@ -120,7 +120,7 @@ class BucketWriter {
     Context context, String filePath, String fileName, String inUsePrefix,
     String inUseSuffix, String fileSuffix, CompressionCodec codeC,
     CompressionType compType, HDFSWriter writer,
-    ScheduledExecutorService timedRollerPool, UserGroupInformation user,
+    ScheduledExecutorService timedRollerPool, PrivilegedExecutor proxyUser,
     SinkCounter sinkCounter, int idleTimeout, WriterCallback onCloseCallback,
     String onCloseCallbackPath, long callTimeout,
     ExecutorService callTimeoutPool, long retryInterval,
@@ -138,7 +138,7 @@ class BucketWriter {
     this.compType = compType;
     this.writer = writer;
     this.timedRollerPool = timedRollerPool;
-    this.user = user;
+    this.proxyUser = proxyUser;
     this.sinkCounter = sinkCounter;
     this.idleTimeout = idleTimeout;
     this.onCloseCallback = onCloseCallback;
@@ -165,33 +165,6 @@ class BucketWriter {
     this.writer = dataWriter;
   }
 
-  /**
-   * Allow methods to act as another user (typically used for HDFS Kerberos)
-   * @param <T>
-   * @param action
-   * @return
-   * @throws IOException
-   * @throws InterruptedException
-   */
-  private <T> T runPrivileged(final PrivilegedExceptionAction<T> action)
-      throws IOException, InterruptedException {
-
-    if (user != null) {
-      return user.doAs(action);
-    } else {
-      try {
-        return action.run();
-      } catch (IOException ex) {
-        throw ex;
-      } catch (InterruptedException ex) {
-        throw ex;
-      } catch (RuntimeException ex) {
-        throw ex;
-      } catch (Exception ex) {
-        throw new RuntimeException("Unexpected exception.", ex);
-      }
-    }
-  }
 
   /**
    * Clear the class counters
@@ -700,7 +673,7 @@ class BucketWriter {
     Future<T> future = callTimeoutPool.submit(new Callable<T>() {
       @Override
       public T call() throws Exception {
-        return runPrivileged(new PrivilegedExceptionAction<T>() {
+        return proxyUser.execute(new PrivilegedExceptionAction<T>() {
           @Override
           public T run() throws Exception {
             return callRunner.call();

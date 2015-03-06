@@ -29,6 +29,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.flume.Clock;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.auth.FlumeAuthenticationUtil;
+import org.apache.flume.auth.PrivilegedExecutor;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.hadoop.conf.Configuration;
@@ -53,10 +55,12 @@ public class TestBucketWriter {
   private Context ctx = new Context();
 
   private static ScheduledExecutorService timedRollerPool;
+  private static PrivilegedExecutor proxy;
 
   @BeforeClass
   public static void setup() {
     timedRollerPool = Executors.newSingleThreadScheduledExecutor();
+    proxy = FlumeAuthenticationUtil.getAuthenticator(null, null).proxyAs(null);
   }
 
   @AfterClass
@@ -72,7 +76,7 @@ public class TestBucketWriter {
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
     BucketWriter bucketWriter = new BucketWriter(0, 0, maxEvents, 0, ctx,
         "/tmp", "file", "", ".tmp", null, null, SequenceFile.CompressionType.NONE,
-        hdfsWriter, timedRollerPool, null,
+        hdfsWriter, timedRollerPool, proxy,
         new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()), 0,
         null, null, 30000, Executors.newSingleThreadExecutor(), 0, 0);
 
@@ -97,7 +101,7 @@ public class TestBucketWriter {
     BucketWriter bucketWriter = new BucketWriter(0, maxBytes, 0, 0,
       ctx, "/tmp", "file", "", ".tmp", null, null,
       SequenceFile.CompressionType.NONE, hdfsWriter,timedRollerPool,
-      null, new SinkCounter("test-bucket-writer-" +
+      proxy, new SinkCounter("test-bucket-writer-" +
       System.currentTimeMillis()),0, null, null, 30000,
       Executors.newSingleThreadExecutor(), 0, 0);
 
@@ -124,7 +128,7 @@ public class TestBucketWriter {
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
     BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
       "/tmp", "file", "", ".tmp", null, null, SequenceFile.CompressionType.NONE,
-      hdfsWriter, timedRollerPool, null,
+      hdfsWriter, timedRollerPool, proxy,
       new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
       0, new HDFSEventSink.WriterCallback() {
       @Override
@@ -147,7 +151,7 @@ public class TestBucketWriter {
 
     bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0, 0, ctx,
       "/tmp", "file", "", ".tmp", null, null, SequenceFile.CompressionType.NONE,
-      hdfsWriter, timedRollerPool, null,
+      hdfsWriter, timedRollerPool, proxy,
       new SinkCounter("test-bucket-writer-"
         + System.currentTimeMillis()), 0, null, null, 30000,
       Executors.newSingleThreadExecutor(), 0, 0);
@@ -230,7 +234,7 @@ public class TestBucketWriter {
     BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0,
       0, ctx, path, name, "", ".tmp", null, null,
       SequenceFile.CompressionType.NONE, hdfsWriter,
-      timedRollerPool, null, new SinkCounter("test-bucket-writer-"
+      timedRollerPool, proxy, new SinkCounter("test-bucket-writer-"
       + System.currentTimeMillis()),
       0, null, null, 30000, Executors.newSingleThreadExecutor(),
       0, 0);
@@ -255,7 +259,7 @@ public class TestBucketWriter {
       BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0,
         0, 0, ctx, "/tmp", "file", "", ".tmp", suffix, null,
         SequenceFile.CompressionType.NONE, hdfsWriter,
-        timedRollerPool, null, new SinkCounter("test-bucket-writer-"
+        timedRollerPool, proxy, new SinkCounter("test-bucket-writer-"
         + System.currentTimeMillis()), 0, null, null, 30000,
         Executors.newSingleThreadExecutor(), 0, 0);
 
@@ -283,7 +287,7 @@ public class TestBucketWriter {
       BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0,
         0, 0, ctx, "/tmp", "file", "", ".tmp", suffix, null,
         SequenceFile.CompressionType.NONE, hdfsWriter,
-        timedRollerPool, null, new SinkCounter(
+        timedRollerPool, proxy, new SinkCounter(
         "test-bucket-writer-" + System.currentTimeMillis()), 0,
         null, null, 30000, Executors.newSingleThreadExecutor(), 0, 0);
 
@@ -316,7 +320,7 @@ public class TestBucketWriter {
       0, ctx, "/tmp", "file", "", ".tmp", suffix,
       HDFSEventSink.getCodec("gzip"),
       SequenceFile.CompressionType.BLOCK, hdfsWriter,
-      timedRollerPool, null, new SinkCounter("test-bucket-writer-"
+      timedRollerPool, proxy, new SinkCounter("test-bucket-writer-"
       + System.currentTimeMillis()), 0, null, null, 30000,
       Executors.newSingleThreadExecutor(), 0, 0
     );
@@ -348,7 +352,7 @@ public class TestBucketWriter {
     BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0,
       0, ctx, "/tmp", "file", PREFIX, ".tmp", null, null,
       SequenceFile.CompressionType.NONE, hdfsWriter,
-      timedRollerPool, null, new SinkCounter(
+      timedRollerPool, proxy, new SinkCounter(
         "test-bucket-writer-" + System.currentTimeMillis()), 0,
       null, null, 30000, Executors.newSingleThreadExecutor(), 0, 0);
 
@@ -368,7 +372,7 @@ public class TestBucketWriter {
     BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0,
       0, ctx, "/tmp", "file", "", SUFFIX, null, null,
       SequenceFile.CompressionType.NONE, hdfsWriter,
-      timedRollerPool, null, new SinkCounter(
+      timedRollerPool, proxy, new SinkCounter(
         "test-bucket-writer-" + System.currentTimeMillis()), 0,
       null, null, 30000, Executors.newSingleThreadExecutor(), 0, 0);
 
@@ -388,7 +392,7 @@ public class TestBucketWriter {
     BucketWriter bucketWriter = new BucketWriter(ROLL_INTERVAL, 0, 0,
       0, ctx, "/tmp", "file", "", SUFFIX, null, null,
       SequenceFile.CompressionType.NONE,
-      hdfsWriter, timedRollerPool, null,
+      hdfsWriter, timedRollerPool, proxy,
       new SinkCounter(
         "test-bucket-writer-" + System.currentTimeMillis()), 0,
       new HDFSEventSink.WriterCallback() {
@@ -442,7 +446,7 @@ public class TestBucketWriter {
     BucketWriter bucketWriter = new BucketWriter(0, 0, 1, 1, ctx,
       hdfsPath, hdfsPath, "singleBucket", ".tmp", null, null,
       null, new MockDataStream(mockFs),
-      timedRollerPool, null,
+      timedRollerPool, proxy,
       new SinkCounter(
         "test-bucket-writer-" + System.currentTimeMillis()),
       0, null, null, 30000, Executors.newSingleThreadExecutor(), 1,

@@ -276,7 +276,7 @@ public class TestHDFSEventSink {
       Assert.fail("no exception thrown");
     } catch (IllegalArgumentException expected) {
       Assert.assertTrue(expected.getMessage().contains(
-          "is nonexistent or can't read."));
+          "Keytab is not a readable file"));
     } finally {
       //turn security off
       conf.set(CommonConfigurationKeys.HADOOP_SECURITY_AUTHENTICATION,
