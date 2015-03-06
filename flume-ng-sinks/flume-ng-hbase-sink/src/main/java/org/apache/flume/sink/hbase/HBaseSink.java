@@ -36,6 +36,8 @@ import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
 import org.apache.flume.Transaction;
 import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.auth.FlumeAuthenticationUtil;
+import org.apache.flume.auth.PrivilegedExecutor;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.AbstractSink;
@@ -54,7 +56,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import java.security.PrivilegedExceptionAction;
-import org.apache.hadoop.hbase.security.User;
 
 
 /**
@@ -103,11 +104,11 @@ public class HBaseSink extends AbstractSink implements Configurable {
   private Context serializerContext;
   private String kerberosPrincipal;
   private String kerberosKeytab;
-  private User hbaseUser;
   private boolean enableWal = true;
   private boolean batchIncrements = false;
   private Method refGetFamilyMap = null;
   private SinkCounter sinkCounter;
+  private PrivilegedExecutor privilegedExecutor;
 
   // Internal hooks used for unit testing.
   private DebugIncrementsCallback debugIncrCallback = null;
@@ -132,17 +133,14 @@ public class HBaseSink extends AbstractSink implements Configurable {
     Preconditions.checkArgument(table == null, "Please call stop " +
         "before calling start on an old instance.");
     try {
-      if (HBaseSinkSecurityManager.isSecurityEnabled(config)) {
-        hbaseUser = HBaseSinkSecurityManager.login(config, null,
-          kerberosPrincipal, kerberosKeytab);
-      }
+      privilegedExecutor = FlumeAuthenticationUtil.getAuthenticator(kerberosPrincipal, kerberosKeytab);
     } catch (Exception ex) {
       sinkCounter.incrementConnectionFailedCount();
       throw new FlumeException("Failed to login to HBase using "
         + "provided credentials.", ex);
     }
     try {
-      table = runPrivileged(new PrivilegedExceptionAction<HTable>() {
+      table = privilegedExecutor.execute(new PrivilegedExceptionAction<HTable>() {
         @Override
         public HTable run() throws Exception {
           HTable table = new HTable(config, tableName);
@@ -160,7 +158,7 @@ public class HBaseSink extends AbstractSink implements Configurable {
           " from HBase", e);
     }
     try {
-      if (!runPrivileged(new PrivilegedExceptionAction<Boolean>() {
+      if (!privilegedExecutor.execute(new PrivilegedExceptionAction<Boolean>() {
         @Override
         public Boolean run() throws IOException {
           return table.getTableDescriptor().hasFamily(columnFamily);
@@ -233,8 +231,8 @@ public class HBaseSink extends AbstractSink implements Configurable {
       logger.error("Could not instantiate event serializer." , e);
       Throwables.propagate(e);
     }
-    kerberosKeytab = context.getString(HBaseSinkConfigurationConstants.CONFIG_KEYTAB, "");
-    kerberosPrincipal = context.getString(HBaseSinkConfigurationConstants.CONFIG_PRINCIPAL, "");
+    kerberosKeytab = context.getString(HBaseSinkConfigurationConstants.CONFIG_KEYTAB);
+    kerberosPrincipal = context.getString(HBaseSinkConfigurationConstants.CONFIG_PRINCIPAL);
 
     enableWal = context.getBoolean(HBaseSinkConfigurationConstants
       .CONFIG_ENABLE_WAL, HBaseSinkConfigurationConstants.DEFAULT_ENABLE_WAL);
@@ -371,7 +369,7 @@ public class HBaseSink extends AbstractSink implements Configurable {
   private void putEventsAndCommit(final List<Row> actions,
       final List<Increment> incs, Transaction txn) throws Exception {
 
-    runPrivileged(new PrivilegedExceptionAction<Void>() {
+    privilegedExecutor.execute(new PrivilegedExceptionAction<Void>() {
       @Override
       public Void run() throws Exception {
         for (Row r : actions) {
@@ -388,7 +386,7 @@ public class HBaseSink extends AbstractSink implements Configurable {
       }
     });
 
-    runPrivileged(new PrivilegedExceptionAction<Void>() {
+    privilegedExecutor.execute(new PrivilegedExceptionAction<Void>() {
       @Override
       public Void run() throws Exception {
 
@@ -414,18 +412,6 @@ public class HBaseSink extends AbstractSink implements Configurable {
 
     txn.commit();
     sinkCounter.addToEventDrainSuccessCount(actions.size());
-  }
-
-  private <T> T runPrivileged(final PrivilegedExceptionAction<T> action)
-          throws Exception {
-    if(hbaseUser != null) {
-      if (logger.isDebugEnabled()) {
-        logger.debug("Calling runAs as hbase user: " + hbaseUser.getName());
-      }
-      return hbaseUser.runAs(action);
-    } else {
-      return action.run();
-    }
   }
 
   /**

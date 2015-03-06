@@ -26,6 +26,8 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.FlumeException;
+import org.apache.flume.auth.FlumeAuthenticationUtil;
+import org.apache.flume.auth.FlumeAuthenticator;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.SourceCounter;
@@ -45,12 +47,16 @@ import org.apache.thrift.transport.TNonblockingServerTransport;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TSSLTransportFactory;
+import org.apache.thrift.transport.TTransportFactory;
+import org.apache.thrift.transport.TSaslServerTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLServerSocket;
+import javax.security.sasl.Sasl;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -60,10 +66,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.security.PrivilegedAction;
 
 public class ThriftSource extends AbstractSource implements Configurable,
   EventDrivenSource {
@@ -97,6 +106,10 @@ public class ThriftSource extends AbstractSource implements Configurable,
   private static final String KEYMANAGER_TYPE = "keymanager-type";
   private static final String EXCLUDE_PROTOCOLS = "exclude-protocols";
 
+  private static final String KERBEROS_KEY = "kerberos";
+  private static final String AGENT_PRINCIPAL = "agent-principal";
+  private static final String AGENT_KEYTAB = "agent-keytab";
+
   private Integer port;
   private String bindAddress;
   private int maxThreads = 0;
@@ -110,6 +123,9 @@ public class ThriftSource extends AbstractSource implements Configurable,
   private String keyManagerType;
   private final List<String> excludeProtocols = new LinkedList<String>();
   private boolean enableSsl = false;
+  private boolean enableKerberos = false;
+  private String principal;
+  private FlumeAuthenticator flumeAuth;
 
   @Override
   public void configure(Context context) {
@@ -171,6 +187,18 @@ public class ThriftSource extends AbstractSource implements Configurable,
                 "Thrift source configured with invalid keystore: " + keystore, ex);
       }
     }
+
+    principal = context.getString(AGENT_PRINCIPAL);
+    String keytab = context.getString(AGENT_KEYTAB);
+    enableKerberos = context.getBoolean(KERBEROS_KEY, false);
+    this.flumeAuth = FlumeAuthenticationUtil.getAuthenticator(principal, keytab);
+    if(enableKerberos) {
+      if(!flumeAuth.isAuthenticated()) {
+        throw new FlumeException("Authentication failed in Kerberos mode for " +
+                "principal " + principal + " keytab " + keytab);
+      }
+      flumeAuth.startCredentialRefresher();
+    }
   }
 
   @Override
@@ -195,7 +223,15 @@ public class ThriftSource extends AbstractSource implements Configurable,
     servingExecutor.submit(new Runnable() {
       @Override
       public void run() {
-        server.serve();
+        flumeAuth.execute(
+          new PrivilegedAction<Object>() {
+            @Override
+            public Object run() {
+              server.serve();
+              return null;
+            }
+          }
+        );
       }
     });
 
@@ -263,7 +299,7 @@ public class ThriftSource extends AbstractSource implements Configurable,
   }
 
   private TServer getTThreadedSelectorServer() {
-    if(enableSsl) {
+    if(enableSsl || enableKerberos) {
       return null;
     }
     Class<?> serverClass;
@@ -277,6 +313,7 @@ public class ThriftSource extends AbstractSource implements Configurable,
 
       TServerTransport serverTransport = new TNonblockingServerSocket(
               new InetSocketAddress(bindAddress, port));
+
       ExecutorService sourceService;
       ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat(
               "Flume Thrift IPC Thread %d").build();
@@ -328,12 +365,33 @@ public class ThriftSource extends AbstractSource implements Configurable,
     args.protocolFactory(getProtocolFactory());
 
     //populate the transportFactory
-    args.inputTransportFactory(new TFastFramedTransport.Factory());
-    args.outputTransportFactory(new TFastFramedTransport.Factory());
+    if(enableKerberos) {
+      args.transportFactory(getSASLTransportFactory());
+    } else {
+      args.transportFactory(new TFastFramedTransport.Factory());
+    }
 
     // populate the  Processor
     args.processor(new ThriftSourceProtocol
             .Processor<ThriftSourceHandler>(new ThriftSourceHandler()));
+  }
+
+  private TTransportFactory getSASLTransportFactory() {
+    String[] names;
+    try {
+      names = FlumeAuthenticationUtil.splitKerberosName(principal);
+    } catch (IOException e) {
+      throw new FlumeException(
+              "Error while trying to resolve Principal name - " + principal, e);
+    }
+    Map<String, String> saslProperties = new HashMap<String, String>();
+    saslProperties.put(Sasl.QOP, "auth");
+    TSaslServerTransport.Factory saslTransportFactory =
+            new TSaslServerTransport.Factory();
+    saslTransportFactory.addServerDefinition(
+            "GSSAPI", names[0], names[1], saslProperties,
+            FlumeAuthenticationUtil.getSaslGssCallbackHandler());
+    return saslTransportFactory;
   }
 
   @Override
@@ -402,5 +460,4 @@ public class ThriftSource extends AbstractSource implements Configurable,
       return Status.OK;
     }
   }
-
 }

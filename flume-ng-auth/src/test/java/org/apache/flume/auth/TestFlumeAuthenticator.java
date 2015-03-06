@@ -15,21 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.sink.kite;
+package org.apache.flume.auth;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Properties;
-import org.apache.hadoop.conf.Configuration;
+
 import org.apache.hadoop.minikdc.MiniKdc;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-public class TestKerberosUtil {
+public class TestFlumeAuthenticator {
 
   private static MiniKdc kdc;
   private static File workDir;
@@ -41,12 +39,8 @@ public class TestKerberosUtil {
 
   @BeforeClass
   public static void startMiniKdc() throws Exception {
-    URL resource = Thread.currentThread()
-        .getContextClassLoader().getResource("enable-kerberos.xml");
-    Configuration.addDefaultResource("enable-kerberos.xml");
-
     workDir = new File(System.getProperty("test.dir", "target"),
-        TestKerberosUtil.class.getSimpleName());
+            TestFlumeAuthenticator.class.getSimpleName());
     flumeKeytab = new File(workDir, "flume.keytab");
     aliceKeytab = new File(workDir, "alice.keytab");
     conf = MiniKdc.createConf();
@@ -72,9 +66,10 @@ public class TestKerberosUtil {
   public void testNullLogin() throws IOException {
     String principal = null;
     String keytab = null;
-    UserGroupInformation expResult = UserGroupInformation.getCurrentUser();
-    UserGroupInformation result = KerberosUtil.login(principal, keytab);
-    assertEquals(expResult, result);
+
+    FlumeAuthenticator authenticator = FlumeAuthenticationUtil.getAuthenticator(
+            principal, keytab);
+    assertFalse(authenticator.isAuthenticated());
   }
 
   @Test
@@ -83,21 +78,29 @@ public class TestKerberosUtil {
     String keytab = flumeKeytab.getAbsolutePath();
     String expResult = principal;
 
-    String result = KerberosUtil.login(principal, keytab).getUserName();
+    FlumeAuthenticator authenticator = FlumeAuthenticationUtil.getAuthenticator(
+            principal, keytab);
+    assertTrue(authenticator.isAuthenticated());
+
+    String result = ((KerberosAuthenticator)authenticator).getUserName();
     assertEquals("Initial login failed", expResult, result);
 
-    result = KerberosUtil.login(principal, keytab).getUserName();
+    authenticator = FlumeAuthenticationUtil.getAuthenticator(
+            principal, keytab);
+    result = ((KerberosAuthenticator)authenticator).getUserName();
     assertEquals("Re-login failed", expResult, result);
 
     principal = alicePrincipal;
     keytab = aliceKeytab.getAbsolutePath();
     try {
-      result = KerberosUtil.login(principal, keytab).getUserName();
+      authenticator = FlumeAuthenticationUtil.getAuthenticator(
+              principal, keytab);
+      result = ((KerberosAuthenticator)authenticator).getUserName();
       fail("Login should have failed with a new principal: " + result);
-    } catch (KerberosUtil.SecurityException ex) {
+    } catch (Exception ex) {
       assertTrue("Login with a new principal failed, but for an unexpected "
           + "reason: " + ex.getMessage(),
-          ex.getMessage().contains("Cannot use multiple Kerberos principals: "));
+          ex.getMessage().contains("Cannot use multiple kerberos principals"));
     }
   }
 
@@ -105,16 +108,20 @@ public class TestKerberosUtil {
   public void testProxyAs() throws IOException {
     String username = "alice";
 
-    UserGroupInformation login = UserGroupInformation.getCurrentUser();
     String expResult = username;
-    String result = KerberosUtil.proxyAs(username, login).getUserName();
+    FlumeAuthenticator authenticator = FlumeAuthenticationUtil.getAuthenticator(
+            null, null);
+    String result = ((UGIExecutor)(authenticator.proxyAs(username))).getUserName();
     assertEquals("Proxy as didn't generate the expected username", expResult, result);
 
-    login = KerberosUtil.login(flumePrincipal, flumeKeytab.getAbsolutePath());
-    assertEquals("Login succeeded, but the principal doesn't match",
-        flumePrincipal, login.getUserName());
+    authenticator = FlumeAuthenticationUtil.getAuthenticator(
+            flumePrincipal, flumeKeytab.getAbsolutePath());
 
-    result = KerberosUtil.proxyAs(username, login).getUserName();
+    String login = ((KerberosAuthenticator)authenticator).getUserName();
+    assertEquals("Login succeeded, but the principal doesn't match",
+        flumePrincipal, login);
+
+    result = ((UGIExecutor)(authenticator.proxyAs(username))).getUserName();
     assertEquals("Proxy as didn't generate the expected username", expResult, result);
   }
 
