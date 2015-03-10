@@ -94,11 +94,9 @@ public class SecureThriftRpcClient extends ThriftRpcClient {
         this.privilegedExecutor.execute(
           new PrivilegedExceptionAction<Void>() {
             public Void run() throws FlumeException {
-              try {
-                UgiSaslClientTransport.super.open();
-              } catch (TTransportException e) {
-                throw new FlumeException("Failed to open SASL transport", e);
-              }
+              // this is a workaround to using UgiSaslClientTransport.super.open()
+              // which results in IllegalAccessError
+              callSuperClassOpen();
               return null;
             }
           });
@@ -106,6 +104,14 @@ public class SecureThriftRpcClient extends ThriftRpcClient {
         throw new FlumeException(
                 "Interrupted while opening underlying transport", e);
       } catch (Exception e) {
+        throw new FlumeException("Failed to open SASL transport", e);
+      }
+    }
+
+    private void callSuperClassOpen() throws FlumeException {
+      try {
+        super.open();
+      } catch (TTransportException e) {
         throw new FlumeException("Failed to open SASL transport", e);
       }
     }
