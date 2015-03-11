@@ -27,6 +27,8 @@ import java.security.PrivilegedExceptionAction;
 
 class UGIExecutor implements PrivilegedExecutor {
   private UserGroupInformation ugi;
+  private static final long MIN_TIME_BEFORE_RELOGIN = 5 * 60 * 1000L;
+  private volatile long lastReloginAttempt = 0;
 
   UGIExecutor(UserGroupInformation ugi) {
     this.ugi = ugi;
@@ -58,9 +60,22 @@ class UGIExecutor implements PrivilegedExecutor {
     }
   }
 
+  /*
+   * lastReloginAttempt is introduced to avoid making the synchronized call
+   *  ugi.checkTGTAndReloginFromKeytab() often, Hence this method is
+   *  intentionally not synchronized, so that multiple threads can execute without
+   *  the need to lock, which may result in an edge case where multiple threads
+   *  simultaneously reading the lastReloginAttempt, and finding it > 5 minutes, can
+   *  result in all of them attempting the checkTGT method, which is fine
+   */
   private void reloginUGI(UserGroupInformation ugi) {
     try {
       if(ugi.hasKerberosCredentials()) {
+        long now = System.currentTimeMillis();
+        if(now - lastReloginAttempt < MIN_TIME_BEFORE_RELOGIN) {
+          return;
+        }
+        lastReloginAttempt = now;
         ugi.checkTGTAndReloginFromKeytab();
       }
     } catch (IOException e) {
