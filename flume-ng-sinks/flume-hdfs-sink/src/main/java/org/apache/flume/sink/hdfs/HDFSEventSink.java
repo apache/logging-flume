@@ -399,7 +399,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
         WriterCallback closeCallback = new WriterCallback() {
           @Override
           public void run(String bucketPath) {
-            LOG.info("Writer callback called. " + bucketPath);
+            LOG.info("Writer callback called.");
             synchronized (sfWritersLock) {
               sfWriters.remove(bucketPath);
             }
@@ -477,13 +477,8 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   }
 
   private static void closeActiveBucketWriters(List<BucketWriter> writers, WriterLinkedHashMap sfWriters) {
-    LOG.info("attempting to close " + writers.size() + " active Bucket Writers");
     for( BucketWriter writer : writers ) {
-      try {
-        writer.close(true);
-      } catch (Exception e) {
-        LOG.warn("failed to close writer", e);
-      }
+      sfWriters.remove(writer.getPath());
     }
   }
 
