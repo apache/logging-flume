@@ -91,8 +91,6 @@ public class ThriftRpcClient extends AbstractRpcClient {
   private String truststore;
   private String truststorePassword;
   private String truststoreType;
-  private String trustManagerType;
-  private static final String TRUSTMANAGER_TYPE = "trustmanager-type";
   private final List<String> excludeProtocols = new LinkedList<String>();
 
   public ThriftRpcClient() {
@@ -338,8 +336,6 @@ public class ThriftRpcClient extends AbstractRpcClient {
                 RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_PASSWORD);
         truststoreType = properties.getProperty(
                 RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_TYPE, "JKS");
-        trustManagerType = properties.getProperty(
-                TRUSTMANAGER_TYPE, TrustManagerFactory.getDefaultAlgorithm());
         String excludeProtocolsStr = properties.getProperty(
                 RpcClientConfigurationConstants.CONFIG_EXCLUDE_PROTOCOLS);
         if (excludeProtocolsStr == null) {
@@ -392,7 +388,7 @@ public class ThriftRpcClient extends AbstractRpcClient {
         // properly so we have to do some magic to make sure that happens.
         // Not an issue in JDK7 Lifted from thrift-0.9.1 to make the SSLContext
         SSLContext sslContext = createSSLContext(truststore, truststorePassword,
-                trustManagerType, truststoreType);
+                truststoreType);
 
         // Create the factory from it
         SSLSocketFactory sslSockFactory = sslContext.getSocketFactory();
@@ -531,13 +527,11 @@ public class ThriftRpcClient extends AbstractRpcClient {
    *
    */
   private static SSLContext createSSLContext(String truststore,
-          String truststorePassword, String trustManagerType,
-          String truststoreType) throws FlumeException {
+    String truststorePassword, String truststoreType) throws FlumeException {
     SSLContext ctx;
     try {
       ctx = SSLContext.getInstance("TLS");
-      TrustManagerFactory tmf = null;
-      KeyManagerFactory kmf = null;
+      TrustManagerFactory tmf;
       tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
       KeyStore ts = null;
       if (truststore != null && truststoreType != null) {

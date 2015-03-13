@@ -62,6 +62,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.security.KeyStore;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -103,7 +104,6 @@ public class ThriftSource extends AbstractSource implements Configurable,
   private static final String KEYSTORE_KEY = "keystore";
   private static final String KEYSTORE_PASSWORD_KEY = "keystore-password";
   private static final String KEYSTORE_TYPE_KEY = "keystore-type";
-  private static final String KEYMANAGER_TYPE = "keymanager-type";
   private static final String EXCLUDE_PROTOCOLS = "exclude-protocols";
 
   private static final String KERBEROS_KEY = "kerberos";
@@ -120,7 +120,6 @@ public class ThriftSource extends AbstractSource implements Configurable,
   private String keystore;
   private String keystorePassword;
   private String keystoreType;
-  private String keyManagerType;
   private final List<String> excludeProtocols = new LinkedList<String>();
   private boolean enableSsl = false;
   private boolean enableKerberos = false;
@@ -165,7 +164,6 @@ public class ThriftSource extends AbstractSource implements Configurable,
       keystore = context.getString(KEYSTORE_KEY);
       keystorePassword = context.getString(KEYSTORE_PASSWORD_KEY);
       keystoreType = context.getString(KEYSTORE_TYPE_KEY, "JKS");
-      keyManagerType = context.getString(KEYMANAGER_TYPE, KeyManagerFactory.getDefaultAlgorithm());
       String excludeProtocolsStr = context.getString(EXCLUDE_PROTOCOLS);
       if (excludeProtocolsStr == null) {
         excludeProtocols.add("SSLv3");
@@ -253,12 +251,20 @@ public class ThriftSource extends AbstractSource implements Configurable,
     super.start();
   }
 
+  private String getkeyManagerAlgorithm() {
+    String algorithm = Security.getProperty(
+            "ssl.KeyManagerFactory.algorithm");
+    return (algorithm != null) ?
+            algorithm : KeyManagerFactory.getDefaultAlgorithm();
+  }
+
   private TServerTransport getSSLServerTransport() {
     try {
       TServerTransport transport;
       TSSLTransportFactory.TSSLTransportParameters params =
               new TSSLTransportFactory.TSSLTransportParameters();
-      params.setKeyStore(keystore, keystorePassword, keyManagerType, keystoreType);
+
+      params.setKeyStore(keystore, keystorePassword, getkeyManagerAlgorithm(), keystoreType);
       transport = TSSLTransportFactory.getServerSocket(
               port, 120000, InetAddress.getByName(bindAddress), params);
 
