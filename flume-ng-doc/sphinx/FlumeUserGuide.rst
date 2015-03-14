@@ -742,6 +742,9 @@ Thrift Source
 Listens on Thrift port and receives events from external Thrift client streams.
 When paired with the built-in ThriftSink on another (previous hop) Flume agent,
 it can create tiered collection topologies.
+Thrift source can be configured to start in secure mode by enabling kerberos authentication.
+agent-principal and agent-keytab are the properties used by the
+Thrift source to authenticate to the kerberos KDC.
 Required properties are in **bold**.
 
 ==================   ===========  ===================================================
@@ -756,6 +759,14 @@ selector.type
 selector.*
 interceptors         --           Space separated list of interceptors
 interceptors.*
+ssl                  false        Set this to true to enable SSL encryption. You must also specify a "keystore" and a "keystore-password".
+keystore             --           This is the path to a Java keystore file. Required for SSL.
+keystore-password    --           The password for the Java keystore. Required for SSL.
+keystore-type        JKS          The type of the Java keystore. This can be "JKS" or "PKCS12".
+exclude-protocols    SSLv3        Space-separated list of SSL/TLS protocols to exclude. SSLv3 will always be excluded in addition to the protocols specified.
+kerberos             false        Set to true to enable kerberos authentication. In kerberos mode, agent-principal and agent-keytab  are required for successful authentication. The Thrift source in secure mode, will accept connections only from Thrift clients that have kerberos enabled and are successfully authenticated to the kerberos KDC.
+agent-principal      --           The kerberos principal used by the Thrift Source to authenticate to the kerberos KDC.
+agent-keytab         —-           The keytab location used by the Thrift Source in combination with the agent-principal to authenticate to the kerberos KDC.
 ==================   ===========  ===================================================
 
 Example for agent named a1:
@@ -1938,6 +1949,12 @@ This sink forms one half of Flume's tiered collection support. Flume events
 sent to this sink are turned into Thrift events and sent to the configured
 hostname / port pair. The events are taken from the configured Channel in
 batches of the configured batch size.
+
+Thrift sink can be configured to start in secure mode by enabling kerberos authentication.
+To communicate with a Thrift source started in secure mode, the Thrift sink should also
+operate in secure mode. client-principal and client-keytab are the properties used by the
+Thrift sink to authenticate to the kerberos KDC. The server-principal represents the
+principal of the Thrift source this sink is configured to connect to in secure mode.
 Required properties are in **bold**.
 
 ==========================   =======  ==============================================
@@ -1951,6 +1968,15 @@ batch-size                   100      number of event to batch together for send
 connect-timeout              20000    Amount of time (ms) to allow for the first (handshake) request.
 request-timeout              20000    Amount of time (ms) to allow for requests after the first.
 connection-reset-interval    none     Amount of time (s) before the connection to the next hop is reset. This will force the Thrift Sink to reconnect to the next hop. This will allow the sink to connect to hosts behind a hardware load-balancer when news hosts are added without having to restart the agent.
+ssl                          false    Set to true to enable SSL for this ThriftSink. When configuring SSL, you can optionally set a "truststore", "truststore-password" and "truststore-type"
+truststore                   --       The path to a custom Java truststore file. Flume uses the certificate authority information in this file to determine whether the remote Thrift Source's SSL authentication credentials should be trusted. If not specified, the default Java JSSE certificate authority files (typically "jssecacerts" or "cacerts" in the Oracle JRE) will be used.
+truststore-password          --       The password for the specified truststore.
+truststore-type              JKS      The type of the Java truststore. This can be "JKS" or other supported Java truststore type.
+exclude-protocols            SSLv3    Space-separated list of SSL/TLS protocols to exclude
+kerberos                     false    Set to true to enable kerberos authentication. In kerberos mode, client-principal, client-keytab and server-principal are required for successful authentication and communication to a kerberos enabled Thrift Source.
+client-principal             —-       The kerberos principal used by the Thrift Sink to authenticate to the kerberos KDC.
+client-keytab                —-       The keytab location used by the Thrift Sink in combination with the client-principal to authenticate to the kerberos KDC.
+server-principal             --       The kerberos principal of the Thrift Source to which the Thrift Sink is configured to connect to.
 ==========================   =======  ==============================================
 
 Example for agent named a1:
@@ -3497,9 +3523,14 @@ Sample log4j.properties file configured using backoff:
 Security
 ========
 
-The HDFS sink supports Kerberos authentication if the underlying HDFS is
-running in secure mode. Please refer to the HDFS Sink section for
-configuring the HDFS sink Kerberos-related options.
+The HDFS sink, HBase sink, Thrift source, Thrift sink and Kite Dataset sink all support
+Kerberos authentication. Please refer to the corresponding sections for
+configuring the Kerberos-related options.
+
+Flume agent will authenticate to the kerberos KDC as a single principal, which will be
+used by different components that require kerberos authentication. The principal and
+keytab configured for Thrift source, Thrift sink, HDFS sink, HBase sink and DataSet sink
+should be the same, otherwise the component will fail to start.
 
 Monitoring
 ==========
