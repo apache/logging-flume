@@ -461,7 +461,6 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     } catch (IOException eIO) {
       transaction.rollback();
       LOG.warn("HDFS IO error", eIO);
-      closeActiveBucketWriters(writers, sfWriters);
       return Status.BACKOFF;
     } catch (Throwable th) {
       transaction.rollback();
@@ -473,12 +472,6 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       }
     } finally {
       transaction.close();
-    }
-  }
-
-  private static void closeActiveBucketWriters(List<BucketWriter> writers, WriterLinkedHashMap sfWriters) {
-    for( BucketWriter writer : writers ) {
-      sfWriters.remove(writer.getPath());
     }
   }
 
