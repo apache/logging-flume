@@ -341,8 +341,11 @@ public class NetcatSource extends AbstractSource implements Configurable,
 
         counterGroup.incrementAndGet("sessions.completed");
       } catch (IOException e) {
-        socketChannel.shutdownOutput();
-        socketChannel.close();
+        try {
+            socketChannel.shutdownOutput();
+            socketChannel.close();
+        } catch (IOException e1) {
+        }
         counterGroup.incrementAndGet("sessions.broken");
       }
 
