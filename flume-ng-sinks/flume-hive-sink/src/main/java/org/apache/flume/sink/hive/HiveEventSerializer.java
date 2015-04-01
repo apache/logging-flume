@@ -27,9 +27,13 @@ import org.apache.hive.hcatalog.streaming.StreamingException;
 import org.apache.hive.hcatalog.streaming.TransactionBatch;
 
 import java.io.IOException;
+import java.util.Collection;
 
 public interface HiveEventSerializer extends Configurable {
   public void write(TransactionBatch batch, Event e)
+          throws StreamingException, IOException, InterruptedException;
+
+  public void write(TransactionBatch txnBatch, Collection<byte[]> events)
           throws StreamingException, IOException, InterruptedException;
 
   RecordWriter createRecordWriter(HiveEndPoint endPoint)

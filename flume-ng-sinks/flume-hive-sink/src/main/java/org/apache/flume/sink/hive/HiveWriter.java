@@ -19,6 +19,7 @@
 package org.apache.flume.sink.hive;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -67,6 +68,9 @@ class HiveWriter {
   private boolean autoCreatePartitions;
 
   private boolean hearbeatNeeded = false;
+
+  private final int writeBatchSz = 1000;
+  private ArrayList<Event> batch = new ArrayList<Event>(writeBatchSz);
 
   HiveWriter(HiveEndPoint endPoint, int txnsPerBatch,
              boolean autoCreatePartitions, long callTimeout,
@@ -117,7 +121,7 @@ class HiveWriter {
   /**
    * Write data, update stats
    * @param event
-   * @throws StreamingException
+   * @throws WriteException - other streaming io error
    * @throws InterruptedException
    */
   public synchronized void write(final Event event)
@@ -126,28 +130,43 @@ class HiveWriter {
       throw new IllegalStateException("Writer closed. Cannot write to : " + endPoint);
     }
 
-    // write the event
+    batch.add(event);
+    if(batch.size()== writeBatchSz) {
+      // write the event
+      writeEventBatchToSerializer();
+    }
+
+    // Update Statistics
+    processSize += event.getBody().length;
+    eventCounter++;
+  }
+
+  private void writeEventBatchToSerializer()
+          throws InterruptedException, WriteException {
     try {
       timedCall(new CallRunner1<Void>() {
         @Override
         public Void call() throws InterruptedException, StreamingException {
           try {
-            serializer.write(txnBatch, event);
+            for (Event event : batch) {
+              try {
+                serializer.write(txnBatch, event);
+              } catch (SerializationError err) {
+                LOG.info("Parse failed : {}  : {}", err.getMessage(), new String(event.getBody()));
+              }
+            }
             return null;
           } catch (IOException e) {
             throw new StreamingIOFailure(e.getMessage(), e);
           }
         }
       });
+      batch.clear();
     } catch (StreamingException e) {
       throw new WriteException(endPoint, txnBatch.getCurrentTxnId(), e);
     } catch (TimeoutException e) {
       throw new WriteException(endPoint, txnBatch.getCurrentTxnId(), e);
     }
-
-    // Update Statistics
-    processSize += event.getBody().length;
-    eventCounter++;
   }
 
   /**
@@ -156,7 +175,13 @@ class HiveWriter {
    *       new TxnBatch if current Txn batch is exhausted
    */
   public void flush(boolean rollToNext)
-          throws CommitException, TxnBatchException, TxnFailure, InterruptedException {
+          throws CommitException, TxnBatchException, TxnFailure, InterruptedException,
+          WriteException {
+    if(!batch.isEmpty()) {
+      writeEventBatchToSerializer();
+      batch.clear();
+    }
+
     //0 Heart beat on TxnBatch
     if(hearbeatNeeded) {
       hearbeatNeeded = false;
@@ -190,6 +215,7 @@ class HiveWriter {
    * @throws StreamingException if could not get new Transaction Batch, or switch to next Txn
    */
   public void abort()  throws InterruptedException {
+    batch.clear();
     abortTxn();
   }
 
@@ -221,6 +247,7 @@ class HiveWriter {
    * @throws InterruptedException
    */
   public void close() throws InterruptedException {
+    batch.clear();
     closeTxnBatch();
     closeConnection();
     closed = true;
@@ -335,7 +362,7 @@ class HiveWriter {
           throws TimeoutException, InterruptedException, StreamingException {
     Future<T> future = callTimeoutPool.submit(new Callable<T>() {
       @Override
-      public T call() throws StreamingException, InterruptedException {
+      public T call() throws StreamingException, InterruptedException, Failure {
         return callRunner.call();
       }
     });
@@ -354,7 +381,7 @@ class HiveWriter {
       sinkCounter.incrementConnectionFailedCount();
       Throwable cause = e1.getCause();
       if (cause instanceof IOException ) {
-        throw new StreamingIOFailure("I/O Failure", (IOException) cause);
+        throw new StreamingException("I/O Failure", (IOException) cause);
       } else if (cause instanceof StreamingException) {
         throw (StreamingException) cause;
       } else if (cause instanceof TimeoutException) {
@@ -384,7 +411,7 @@ class HiveWriter {
 
 
   private interface CallRunner1<T> {
-    T call() throws StreamingException, InterruptedException;
+    T call() throws StreamingException, InterruptedException, Failure;
   }
 
 
