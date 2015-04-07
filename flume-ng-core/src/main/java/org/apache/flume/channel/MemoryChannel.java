@@ -120,10 +120,10 @@ public class MemoryChannel extends BasicChannelSemantics {
       if(remainingChange < 0) {
         if(!bytesRemaining.tryAcquire(putByteCounter, keepAlive,
           TimeUnit.SECONDS)) {
-          throw new ChannelException("Cannot commit transaction. Heap space " +
-            "limit of " + byteCapacity + "reached. Please increase heap space" +
-            " allocated to the channel as the sinks may not be keeping up " +
-            "with the sources");
+          throw new ChannelException("Cannot commit transaction. Byte capacity " +
+            "allocated to store event body " + byteCapacity * byteCapacitySlotSize +
+            "reached. Please increase heap space/byte capacity allocated to " +
+            "the channel as the sinks may not be keeping up with the sources");
         }
         if(!queueRemaining.tryAcquire(-remainingChange, keepAlive, TimeUnit.SECONDS)) {
           bytesRemaining.release(putByteCounter);
