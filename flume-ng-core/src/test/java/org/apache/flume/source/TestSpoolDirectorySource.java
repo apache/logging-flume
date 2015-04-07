@@ -283,4 +283,34 @@ public class TestSpoolDirectorySource {
     Assert.assertEquals(8, dataOut.size());
     source.stop();
   }
+
+  @Test
+  public void testEndWithZeroByteFiles() throws IOException, InterruptedException {
+    Context context = new Context();
+
+    File f1 = new File(tmpDir.getAbsolutePath() + "/file1");
+
+    Files.write("file1line1\n", f1, Charsets.UTF_8);
+
+    File f2 = new File(tmpDir.getAbsolutePath() + "/file2");
+    File f3 = new File(tmpDir.getAbsolutePath() + "/file3");
+    File f4 = new File(tmpDir.getAbsolutePath() + "/file4");
+
+    Files.touch(f2);
+    Files.touch(f3);
+    Files.touch(f4);
+
+    context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
+      tmpDir.getAbsolutePath());
+    Configurables.configure(source, context);
+    source.start();
+
+    // Need better way to ensure all files were processed.
+    Thread.sleep(5000);
+
+    Assert.assertFalse("Server did not error", source.hasFatalError());
+    Assert.assertEquals("One message was read", 1,
+      source.getSourceCounter().getEventAcceptedCount());
+    source.stop();
+  }
 }
