@@ -22,15 +22,21 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.flume.Context;
+import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
 import org.apache.flume.channel.file.CorruptEventException;
+import org.apache.flume.channel.file.EventUtils;
 import org.apache.flume.channel.file.Log;
 import org.apache.flume.channel.file.LogFile;
 import org.apache.flume.channel.file.LogFileV3;
 import org.apache.flume.channel.file.LogRecord;
 import org.apache.flume.channel.file.Serialization;
+import org.apache.flume.channel.file.TransactionEventRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,12 +45,23 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+import java.util.Set;
 
 public class FileChannelIntegrityTool implements FlumeTool {
   public static final Logger LOG = LoggerFactory.getLogger
     (FileChannelIntegrityTool.class);
 
   private final List<File> dataDirs = new ArrayList<File>();
+
+  private EventValidator eventValidator = EventValidator.NOOP_VALIDATOR;
+
+  private long totalPutEvents;
+  private long invalidEvents;
+  private long eventsWithException;
+  private long corruptEvents;
+  private long validEvents;
+  private long totalChannelEvents;
 
   @Override
   public void run(String[] args) throws IOException, ParseException {
@@ -85,12 +102,39 @@ public class FileChannelIntegrityTool implements FlumeTool {
               // this will throw a CorruptEventException - so the real logic
               // is in the catch block below.
               LogRecord record = reader.next();
+              totalChannelEvents++;
               if (record != null) {
-                record.getEvent();
+                TransactionEventRecord recordEvent = record.getEvent();
+                Event event = EventUtils.getEventFromTransactionEvent(recordEvent);
+                if(event != null) {
+                  totalPutEvents++;
+                  try {
+                    if (!eventValidator.validateEvent(event)) {
+                      if (!fileBackedup) {
+                        Serialization.copyFile(dataFile, new File(dataFile.getParent(),
+                                dataFile.getName() + ".bak"));
+                        fileBackedup = true;
+                      }
+                      invalidEvents++;
+                      updater.markRecordAsNoop(eventPosition);
+                    } else {
+                      validEvents++;
+                    }
+                  } catch (Exception e) {
+                    // OOPS, didn't expected an exception
+                    // considering as failure case
+                    // marking as noop
+                    System.err.println("Encountered Exception while validating event, marking as invalid");
+                    updater.markRecordAsNoop(eventPosition);
+                    eventsWithException++;
+                  }
+                }
               } else {
                 fileDone = true;
               }
             } catch (CorruptEventException e) {
+              corruptEvents++;
+              totalChannelEvents++;
               LOG.warn("Corruption found in " + dataFile.toString() + " at "
                 + eventPosition);
               if (!fileBackedup) {
@@ -106,6 +150,7 @@ public class FileChannelIntegrityTool implements FlumeTool {
         }
       }
     }
+    printSummary();
   }
 
   private boolean parseCommandLineOpts(String[] args) throws ParseException {
@@ -113,7 +158,17 @@ public class FileChannelIntegrityTool implements FlumeTool {
     options
       .addOption("l", "dataDirs", true, "Comma-separated list of data " +
         "directories which the tool must verify. This option is mandatory")
-      .addOption("h", "help", false, "Display help");
+      .addOption("h", "help", false, "Display help")
+            .addOption("e", "eventValidator", true, "Fully Qualified Name of Event Validator Implementation");;
+
+
+    Option property  = OptionBuilder.withArgName("property=value")
+            .hasArgs(2)
+            .withValueSeparator()
+            .withDescription( "custom properties" )
+            .create( "D" );
+
+    options.addOption(property);
 
     CommandLineParser parser = new GnuParser();
     CommandLine commandLine = parser.parse(options, args);
@@ -137,6 +192,46 @@ public class FileChannelIntegrityTool implements FlumeTool {
         dataDirs.add(f);
       }
     }
+
+    if(commandLine.hasOption("eventValidator")) {
+      try {
+        Class<? extends EventValidator.Builder> eventValidatorClassName =
+                (Class<? extends EventValidator.Builder>)Class.forName(
+                  commandLine.getOptionValue("eventValidator"));
+        EventValidator.Builder eventValidatorBuilder = eventValidatorClassName.newInstance();
+
+        // Pass on the configuration parameter
+        Properties systemProperties = commandLine.getOptionProperties("D");
+        Context context = new Context();
+
+        Set<String> keys = systemProperties.stringPropertyNames();
+        for (String key : keys) {
+          context.put(key, systemProperties.getProperty(key));
+        }
+        eventValidatorBuilder.configure(context);
+        eventValidator = eventValidatorBuilder.build();
+      } catch (Exception e) {
+        System.err.println(String.format("Could find class %s in lib folder",
+                commandLine.getOptionValue("eventValidator")));
+        e.printStackTrace();
+        return false;
+      }
+    }
     return true;
+  }
+
+  /**
+   * Prints the summary of run. Following information is printed
+   *
+   */
+  private void printSummary() {
+    System.out.println("---------- Summary --------------------");
+    System.out.println("Number of Events in the Channel = "+totalChannelEvents++);
+    System.out.println("Number of Put Events Processed = "+totalPutEvents);
+    System.out.println("Number of Valid Put Events = "+validEvents);
+    System.out.println("Number of Invalid Put Events = "+invalidEvents);
+    System.out.println("Number of Put Events that threw Exception during validation = "+eventsWithException);
+    System.out.println("Number of Corrupt Events = "+corruptEvents);
+    System.out.println("---------------------------------------");
   }
 }
