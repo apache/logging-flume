@@ -68,8 +68,7 @@ import twitter4j.conf.ConfigurationBuilder;
 
 @InterfaceAudience.Private
 @InterfaceStability.Unstable
-public class TwitterSource
-    extends AbstractSource
+public class TwitterSource extends AbstractSource
     implements EventDrivenSource, Configurable, StatusListener {
     
     public static final String CONSUMER_KEY = "consumerKey";
