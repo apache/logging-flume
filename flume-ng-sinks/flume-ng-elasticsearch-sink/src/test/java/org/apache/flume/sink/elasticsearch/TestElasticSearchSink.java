@@ -51,6 +51,7 @@ import org.elasticsearch.client.Requests;
 import org.elasticsearch.common.UUID;
 import org.elasticsearch.common.io.BytesStream;
 import org.elasticsearch.common.io.FastByteArrayOutputStream;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -100,7 +101,8 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
 
     Transaction tx = channel.getTransaction();
     tx.begin();
-    Event event = EventBuilder.withBody("{\"event\":\"json content\"}".getBytes());
+    Event event = EventBuilder.withBody(
+        "{\"event\":\"json content\",\"num\":1}".getBytes());
     channel.put(event);
     tx.commit();
     tx.close();
@@ -110,8 +112,15 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     client.admin().indices()
             .refresh(Requests.refreshRequest(timestampedIndexName)).actionGet();
 
-    assertMatchAllQuery(1, event);
-    assertBodyQuery(1, event);
+    Map<String, Object> expectedBody = new HashMap<String, Object>();
+    expectedBody.put("event", "json content");
+    expectedBody.put("num", 1);
+
+    assertSearch(1,
+        performSearch(QueryBuilders.matchAllQuery()), expectedBody, event);
+    assertSearch(1,
+        performSearch(QueryBuilders.fieldQuery("@message.event", "json")),
+        expectedBody, event);
   }
 
   @Test

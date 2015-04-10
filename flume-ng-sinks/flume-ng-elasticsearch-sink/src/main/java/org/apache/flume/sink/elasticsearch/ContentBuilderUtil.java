@@ -55,18 +55,20 @@ public class ContentBuilderUtil {
 
   public static void addComplexField(XContentBuilder builder, String fieldName,
       XContentType contentType, byte[] data) throws IOException {
-    XContentParser parser = null;
+    XContentParser parser =
+      XContentFactory.xContent(contentType).createParser(data);
+    parser.nextToken();
+    // Add the field name, but not the value.
+    builder.field(fieldName);
     try {
-      XContentBuilder tmp = jsonBuilder();
-      parser = XContentFactory.xContent(contentType).createParser(data);
-      parser.nextToken();
-      tmp.copyCurrentStructure(parser);
-      builder.field(fieldName, tmp.string());
+      // This will add the whole parsed content as the value of the field.
+      builder.copyCurrentStructure(parser);
     } catch (JsonParseException ex) {
       // If we get an exception here the most likely cause is nested JSON that
       // can't be figured out in the body. At this point just push it through
       // as is, we have already added the field so don't do it again
-      addSimpleField(builder, fieldName, data);
+      builder.endObject();
+      builder.field(fieldName, new String(data, charset));
     } finally {
       if (parser != null) {
         parser.close();
