@@ -234,6 +234,31 @@ The original Flume terminal will output the event in a log message.
 
 Congratulations - you've successfully configured and deployed a Flume agent! Subsequent sections cover agent configuration in much more detail.
 
+
+Zookeeper based Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Flume supports Agent configurations via Zookeeper. *This is an experimental feature.* The configuration file needs to be uploaded
+in the Zookeeper, under a configurable prefix. The configuration file is stored in Zookeeper Node data.
+Following is how the Zookeeper Node tree would look like for agents a1 and a2
+
+.. code-block:: properties
+
+  - /flume
+   |- /a1 [Agent config file]
+   |- /a2 [Agent config file]
+
+Once the configuration file is uploaded, start the agent with following options
+
+  $ bin/flume-ng agent --conf conf -z zkhost:2181,zkhost1:2181 -p /flume --name a1 -Dflume.root.logger=INFO,console
+
+==================   ================  =========================================================================
+Argument Name        Default           Description
+==================   ================  =========================================================================
+**z**                --                Zookeeper connection string. Comma separated list of hostname:port
+**p**                /flume            Base Path in Zookeeper to store Agent configurations
+==================   ================  =========================================================================
+
 Installing third-party plugins
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
