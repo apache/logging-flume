@@ -389,6 +389,13 @@ limitations under the License.
         <plugins>
 
           <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <inherited>true</inherited>
+            <extensions>true</extensions>
+          </plugin>
+
+          <plugin>
             <artifactId>maven-javadoc-plugin</artifactId>
             <executions>
               <execution>
