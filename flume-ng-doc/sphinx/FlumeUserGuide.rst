@@ -732,7 +732,7 @@ keystore-password    --                The password for the Java keystore. Requi
 keystore-type        JKS               The type of the Java keystore. This can be "JKS" or "PKCS12".
 exclude-protocols    SSLv3             Space-separated list of SSL/TLS protocols to exclude. SSLv3 will always be excluded in addition to the protocols specified.
 ipFilter             false             Set this to true to enable ipFiltering for netty
-ipFilter.rules       --                Define N netty ipFilter pattern rules with this config.
+ipFilterRules        --                Define N netty ipFilter pattern rules with this config.
 ==================   ================  ===================================================
 
 Example for agent named a1:
@@ -746,15 +746,15 @@ Example for agent named a1:
   a1.sources.r1.bind = 0.0.0.0
   a1.sources.r1.port = 4141
 
-Example of ipFilter.rules
+Example of ipFilterRules
 
-ipFilter.rules defines N netty ipFilters separated by a comma a pattern rule must be in this format.
+ipFilterRules defines N netty ipFilters separated by a comma a pattern rule must be in this format.
 
 <'allow' or deny>:<'ip' or 'name' for computer name>:<pattern>
 or
 allow/deny:ip/name:pattern
 
-example: ipFilter.rules=allow:ip:127.*,allow:name:localhost,deny:ip:*
+example: ipFilterRules=allow:ip:127.*,allow:name:localhost,deny:ip:*
 
 Note that the first rule to match will apply as the example below shows from a client on the localhost
 
