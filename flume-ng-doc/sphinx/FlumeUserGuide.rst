@@ -2638,6 +2638,7 @@ capacity                                          1000000                       
 keep-alive                                        3                                 Amount of time (in sec) to wait for a put operation
 use-log-replay-v1                                 false                             Expert: Use old replay logic
 use-fast-replay                                   false                             Expert: Replay without using queue
+checkpointOnClose                                 true                              Controls if a checkpoint is created when the channel is closed. Creating a checkpoint on close speeds up subsequent startup of the file channel by avoiding replay.
 encryption.activeKey                              --                                Key name used to encrypt new data
 encryption.cipherProvider                         --                                Cipher provider type, supported types: AESCTRNOPADDING
 encryption.keyProvider                            --                                Key provider type, supported types: JCEKSFILE
