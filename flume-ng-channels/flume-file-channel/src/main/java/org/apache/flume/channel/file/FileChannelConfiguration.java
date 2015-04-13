@@ -98,5 +98,6 @@ public class FileChannelConfiguration {
   public static final String FSYNC_INTERVAL = "fsyncInterval";
   public static final int DEFAULT_FSYNC_INTERVAL = 5; // seconds.
 
-
+  public static final String CHKPT_ONCLOSE = "checkpointOnClose";
+  public static final Boolean DEFAULT_CHKPT_ONCLOSE = true;
 }
