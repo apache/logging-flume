@@ -68,7 +68,7 @@
       <id>hadoop-2</id>
       <activation>
         <property>
-          <name>hadoop.profile</name>
+          <name>flume.hadoop.profile</name>
           <value>2</value>
         </property>
       </activation>
@@ -84,11 +84,11 @@
       </dependencies>
     </profile>
     <profile>
-      <id>hbase-98</id>
+      <id>hbase-1</id>
       <activation>
         <property>
-          <name>hadoop.profile</name>
-          <value>hbase-98</value>
+          <name>flume.hadoop.profile</name>
+          <value>hbase-1</value>
         </property>
       </activation>
       <dependencies>
