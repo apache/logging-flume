@@ -37,8 +37,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 
-import javax.ws.rs.Path;
-
 public class TestLog {
   private static final Logger LOGGER = LoggerFactory.getLogger(TestLog.class);
   private static final long MAX_FILE_SIZE = 1000;
