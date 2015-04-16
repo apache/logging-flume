@@ -644,9 +644,10 @@ Flume ``Transaction``.
    :alt: Transaction sequence diagram
 
 A ``Transaction`` is implemented within a ``Channel`` implementation. Each
-``Source`` and ``Sink`` that is connected to ``Channel`` must obtain a
-``Transaction`` object. The ``Source``\ s actually use a ``ChannelSelector``
-interface to encapsulate the ``Transaction``. The operation to stage an
+``Source`` and ``Sink`` that is connected to a ``Channel`` must obtain a
+``Transaction`` object. The ``Source``\ s use a ``ChannelProcessor``
+to manage the ``Transaction``\ s, the ``Sink``\ s manage them explicitly via
+their configured ``Channel``. The operation to stage an
 ``Event`` (put it into a ``Channel``) or extract an ``Event`` (take it out of a
 ``Channel``) is done inside an active ``Transaction``. For example:
 
@@ -759,8 +760,6 @@ processing its own configuration settings. For example:
         if (t instanceof Error) {
           throw (Error)t;
         }
-      } finally {
-        txn.close();
       }
       return status;
     }
@@ -770,13 +769,12 @@ Source
 ~~~~~~
 
 The purpose of a ``Source`` is to receive data from an external client and store
-it into the ``Channel``. A ``Source`` can get an instance of its own
-``ChannelProcessor`` to process an ``Event``. The ``ChannelProcessor`` in turn
-can get an instance of its own ``ChannelSelector`` that's used to get the
-``Channel``\ s associated with the ``Source``, as configured in the Flume
-properties file. A ``Transaction`` can then be retrieved from each associated
-``Channel`` so that the ``Source`` can place ``Event``\ s into the ``Channel``
-reliably, within a ``Transaction``.
+it into the configured ``Channel``\ s. A ``Source`` can get an instance of its own
+``ChannelProcessor`` to process an ``Event``, commited within a ``Channel``
+local transaction, in serial. In the case of an exception, required
+``Channel``\ s will propagate the exception, all ``Channel``\ s will rollback their
+transaction, but events processed previously on other ``Channel``\ s will remain
+committed.
 
 Similar to the ``SinkRunner.PollingRunner`` ``Runnable``, there’s
 a ``PollingRunner`` ``Runnable`` that executes on a thread created when the
@@ -826,24 +824,17 @@ mechanism that captures the new data and stores it into the ``Channel``. The
     public Status process() throws EventDeliveryException {
       Status status = null;
 
-      // Start transaction
-      Channel ch = getChannel();
-      Transaction txn = ch.getTransaction();
-      txn.begin();
       try {
-        // This try clause includes whatever Channel operations you want to do
+        // This try clause includes whatever Channel/Event operations you want to do
 
         // Receive new data
         Event e = getSomeData();
 
         // Store the Event into this Source's associated Channel(s)
-        getChannelProcessor().processEvent(e)
+        getChannelProcessor().processEvent(e);
 
-        txn.commit();
         status = Status.READY;
       } catch (Throwable t) {
-        txn.rollback();
-
         // Log exception, handle individual exceptions as needed
 
         status = Status.BACKOFF;
