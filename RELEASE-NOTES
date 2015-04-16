@@ -1,4 +1,4 @@
-Apache Flume 1.5.2
+Apache Flume 1.6.0
 
 CONTENTS
 1. What is Apache Flume
@@ -17,8 +17,8 @@ simple, extensible data model that allows for online analytic
 application.
 
 2. Status of this release
-Apache Flume 1.5.2 is the eighth release of Flume as an Apache top-level project
-(TLP). Apache Flume 1.5.2 is production-ready software.
+Apache Flume 1.6.0 is the ninth release of Flume as an Apache top-level project
+(TLP). Apache Flume 1.6.0 is production-ready software.
 
 3. Major changes in this Release
 For a detailed list of changes, please see the CHANGELOG file included
