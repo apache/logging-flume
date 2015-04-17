@@ -68,6 +68,6 @@ public class EventHelper {
         buffer.delete(buffer.length() - EOL.length(), buffer.length()).toString();
       }
     }
-    return "{ headers:" + event.getHeaders() + " body:" + buffer + " }";
+    return "{ headers:" + (event==null?"null":event.getHeaders()) + " body:" + buffer + " }";
   }
 }
