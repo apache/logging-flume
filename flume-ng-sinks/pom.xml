@@ -55,7 +55,8 @@ limitations under the License.
       <id>hadoop-1.0</id>
       <activation>
         <property>
-          <name>!flume.hadoop.profile</name>
+          <name>flume.hadoop.profile</name>
+          <value>1</value>
         </property>
       </activation>
     </profile>
@@ -80,8 +81,7 @@ limitations under the License.
       <id>hbase-1</id>
       <activation>
         <property>
-          <name>flume.hadoop.profile</name>
-          <value>hbase-1</value>
+          <name>!flume.hadoop.profile</name>
         </property>
       </activation>
       <!-- add the flume-dataset-sink, which is only compatible with hadoop-2
