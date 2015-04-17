@@ -114,7 +114,8 @@
       <id>hadoop-1.0</id>
       <activation>
         <property>
-          <name>!flume.hadoop.profile</name>
+          <name>flume.hadoop.profile</name>
+          <value>1</value>
         </property>
       </activation>
       <dependencies>
@@ -188,8 +189,7 @@
       <id>hbase-1</id>
       <activation>
         <property>
-          <name>flume.hadoop.profile</name>
-          <value>hbase-1</value>
+          <name>!flume.hadoop.profile</name>
         </property>
       </activation>
       <dependencies>
