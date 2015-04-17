@@ -1401,6 +1401,21 @@ limitations under the License.
         <scope>test</scope>
       </dependency>
 
+      <!-- Dependency for Hive Sink  -->
+      <dependency>
+        <groupId>xalan</groupId>
+        <artifactId>serializer</artifactId>
+        <version>2.7.2</version>
+        <scope>runtime</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>xalan</groupId>
+        <artifactId>xalan</artifactId>
+        <scope>runtime</scope>
+        <version>2.7.2</version>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
 
