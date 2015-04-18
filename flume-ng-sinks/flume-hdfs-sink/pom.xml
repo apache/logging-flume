@@ -163,7 +163,7 @@ limitations under the License.
     </profile>
 
     <profile>
-      <id>hbase-1</id>
+      <id>hbase-98</id>
       <activation>
         <property>
           <name>!flume.hadoop.profile</name>
