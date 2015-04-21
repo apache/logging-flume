@@ -55,20 +55,29 @@ public class ContentBuilderUtil {
 
   public static void addComplexField(XContentBuilder builder, String fieldName,
       XContentType contentType, byte[] data) throws IOException {
-    XContentParser parser =
-      XContentFactory.xContent(contentType).createParser(data);
-    parser.nextToken();
-    // Add the field name, but not the value.
-    builder.field(fieldName);
+    XContentParser parser = null;
     try {
+      // Elasticsearch will accept JSON directly but we need to validate that
+      // the incoming event is JSON first. Sadly, the elasticsearch JSON parser
+      // is a stream parser so we need to instantiate it, parse the event to
+      // validate it, then instantiate it again to provide the JSON to
+      // elasticsearch.
+      // If validation fails then the incoming event is submitted to
+      // elasticsearch as plain text.
+      parser = XContentFactory.xContent(contentType).createParser(data);
+      while (parser.nextToken() != null) {};
+
+      // If the JSON is valid then include it
+      parser = XContentFactory.xContent(contentType).createParser(data);
+      // Add the field name, but not the value.
+      builder.field(fieldName);
       // This will add the whole parsed content as the value of the field.
       builder.copyCurrentStructure(parser);
     } catch (JsonParseException ex) {
       // If we get an exception here the most likely cause is nested JSON that
       // can't be figured out in the body. At this point just push it through
-      // as is, we have already added the field so don't do it again
-      builder.endObject();
-      builder.field(fieldName, new String(data, charset));
+      // as is
+      addSimpleField(builder, fieldName, data);
     } finally {
       if (parser != null) {
         parser.close();
