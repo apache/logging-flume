@@ -1,3 +1,216 @@
+Release Notes - Flume - Version v1.6.0
+
+** Sub-task
+    * [FLUME-1056] - AvroSource configuration
+    * [FLUME-1057] - AvroSink configuration
+    * [FLUME-1058] - Exec source configuration
+    * [FLUME-1059] - failover sink configuration
+    * [FLUME-1060] - Hdfs sink configuration
+    * [FLUME-1061] - jdbc channel configuration
+    * [FLUME-1062] - Memory Channel configuration
+    * [FLUME-1063] - Miscellanous changes related to imports and minor changes related to config changes
+    * [FLUME-1064] - Channel selector configuration
+    * [FLUME-1066] - PseudoTxnMemoryChannel configuration
+    * [FLUME-1067] - RollingFileSink configuration
+    * [FLUME-1068] - syslog source configuration
+    * [FLUME-1069] - FileChannel configuration
+    * [FLUME-2136] - Windows - Fix intermitent test failure in TestMonitoredCounterGroup.java
+    * [FLUME-2137] - Fix StagedInstall.java to invoke the correct startup script on Windows
+    * [FLUME-2145] - TestCheckpointRebuilder.testFastReplay  fails on Windows due to checkpoint file being memory mapped
+    * [FLUME-2250] - Add support for Kafka Source
+    * [FLUME-2251] - Add support for Kafka Sink
+    * [FLUME-2548] - Enable SSLv2Hello for Avro Source and NettyAvroRpcClient
+    * [FLUME-2549] - Enable SSLv2Hello for HttpSource
+    * [FLUME-2599] - Remove usage of CounterGroup from AvroLegacySource
+    * [FLUME-2600] - Remove usage of CounterGroup class from org.apache.flume.SinkRunner
+    * [FLUME-2601] - Remove usage of CounterGroup from org.apache.flume.sink.NullSink
+    * [FLUME-2602] - Remove usage of CounterGroup from org.apache.flume.lifecycle.TestLifecycleSupervisor.CountingLifecycleAware
+    * [FLUME-2603] - Remove usage of CounterGroup from org.apache.flume.source.NetcatSource
+    * [FLUME-2604] - Remove usage of CounterGroup from org.apache.flume.source.PollableSourceRunner
+    * [FLUME-2605] - Remove usage of CounterGroup from org.apache.flume.source.StressSource
+    * [FLUME-2606] - Remove usage of CounterGroup from org.apache.flume.source.SyslogTcpSource
+    * [FLUME-2607] - Remove usage of CounterGroup from org.apache.flume.source.SyslogUDPSource
+    * [FLUME-2608] - Remove usage of CounterGroup class from org.apache.flume.sink.elasticsearch.ElasticSearchSink
+    * [FLUME-2609] - Remove usage of CounterGroup class from org.apache.flume.node.PollingPropertiesFileConfigurationProvider
+    * [FLUME-2610] - Remove usage of CounterGroup class from org.apache.flume.source.thriftLegacy.ThriftLegacySource
+    * [FLUME-2677] - Update versions in 1.6.0 branch
+    * [FLUME-2686] - Update KEYS file for 1.6 release
+
+** Bug
+    * [FLUME-1623] - Add more info about failover sink processor
+    * [FLUME-1793] - Unit test TestElasticSearchLogStashEventSerializer fails with IBM JDK
+    * [FLUME-1934] - Spoolingdir source exception when reading multiple   zero size files
+    * [FLUME-2024] - Add ExecSource flush timeout to Flume User Guide
+    * [FLUME-2119] - duplicate files cause flume to enter irrecoverable state
+    * [FLUME-2122] - Minor cleanups of User guide
+    * [FLUME-2123] - Morphline Solr sink missing short type name
+    * [FLUME-2126] - Problem in elasticsearch sink when the event body is a complex field
+    * [FLUME-2127] - JMX shutdown command for Flume
+    * [FLUME-2135] - Add zip to the build distribution for Windows support
+    * [FLUME-2148] - Windows : Add  flume-env.ps1
+    * [FLUME-2199] - Flume builds with new version require mvn install before site can be generated
+    * [FLUME-2214] - FileChannelIntegrityTool needs documentation in user guide
+    * [FLUME-2220] - ElasticSearch sink - duplicate fields in indexed document
+    * [FLUME-2227] - Move BlobDeserializer from Morphline Sink to flume-ng-core
+    * [FLUME-2245] - HDFS files with errors unable to close
+    * [FLUME-2330] - Remove the MorphlineHandlerImpl configuration option from MorphlineSink
+    * [FLUME-2337] - export JAVA_HOME in flume-env.sh.template and increase heap size
+    * [FLUME-2346] - idLogFileMap in Log can lose track of file ids
+    * [FLUME-2389] - Spillable Memory Channel Example is incorrect
+    * [FLUME-2404] - Default maxReadBufferBytes might cause OOM and cause scribe source exit
+    * [FLUME-2408] - Remove FLUME-1899 from Flume 1.5.0 change log.
+    * [FLUME-2409] - NettyAvroRpcClient performs unnecessary hostname lookups
+    * [FLUME-2416] - Use CodecPool in compressed stream to prevent leak of direct buffers
+    * [FLUME-2420] - HDFSEventSink#stop might throw ConcurrentModificationException
+    * [FLUME-2425] - FileChannel should trim data and checkpoint directories
+    * [FLUME-2432] - Update Kite dependency to 0.15.0
+    * [FLUME-2438] - Make Syslog source message body configurable
+    * [FLUME-2450] - Improve replay index insertion speed.
+    * [FLUME-2460] - Unit test TestAvroSink failed with IBM JDK 1.7
+    * [FLUME-2466] - Embedded agent name cannot contain spaces
+    * [FLUME-2470] - Kafka Sink and Source must use camel case for all configs.
+    * [FLUME-2472] - SyslogUtils fails when system locale is not English
+    * [FLUME-2474] - TestHDFSEventSinkOnMiniCluster fails if user umask is not 0022
+    * [FLUME-2475] - toLowerCase/toUpperCase used without Locale parameter to manipulate Enum
+    * [FLUME-2476] - ContentBuilderUtil.appendField incorrectly manages json-like data
+    * [FLUME-2479] - Kafka property auto.commit.enable is incorrect for KafkaSource
+    * [FLUME-2480] - Typo in file channel exception: "Usable space exhaused"
+    * [FLUME-2481] - TestFileChannelEncryption fails with System locale other than en_US
+    * [FLUME-2482] - Race condition in File Channels' Log.removeOldLogs
+    * [FLUME-2483] - TestLog.testMinimumRequiredSpaceTooSmallForPut failing
+    * [FLUME-2484] - NullPointerException in Kafka Sink test
+    * [FLUME-2485] - Thrift Source tests fail on Oracle JDK 8
+    * [FLUME-2486] - TestExecSource fails on some environments
+    * [FLUME-2487] - SyslogParser has rounding errors in timestamp parsing
+    * [FLUME-2488] - TestElasticSearchRestClient fails on Oracle JDK 8
+    * [FLUME-2489] - Upgrade Apache Curator to 2.6.0
+    * [FLUME-2490] - HBase tests hang up forever if hostname points to 127.0.1.1
+    * [FLUME-2492] - Flume's Kafka Source doesn't account time correctly
+    * [FLUME-2495] - Kafka Source may miss events when channel is not available
+    * [FLUME-2497] - TCP and UDP syslog sources parsing the timestamp incorrectly
+    * [FLUME-2500] - Add a channel that uses Kafka
+    * [FLUME-2505] - Test added in FLUME-2502 is flaky
+    * [FLUME-2510] - TestHDFSEventSink.testCloseRemovesFromSFWriters fails with Hadoop 2 profile
+    * [FLUME-2513] - testConsumeFileRandomlyNewFile fails
+    * [FLUME-2514] - Some TestFileChannelRestart tests are extremely slow
+    * [FLUME-2515] - TestExecSource.testMonitoredCounterGroup sometimes fails, on some environments
+    * [FLUME-2516] - TestElasticSearchIndexRequestBuilderFactory fails with Locale != ENGLISH
+    * [FLUME-2517] - Performance issue: SimpleDateFormat constructor takes 30% of HDFSEventSink.process()
+    * [FLUME-2525] - flume should handle a zero byte .flumespool-main.meta file for the spooldir source
+    * [FLUME-2529] - Kafka Source test fails: testBatchTime
+    * [FLUME-2538] - TestResettableFileInputStream fails on JDK 8
+    * [FLUME-2546] - HTTP Source docs should not that neither SSLv2Hello nor SSLv3 are supported
+    * [FLUME-2547] - Removing SSLv2Hello causes Java 6 clients to break
+    * [FLUME-2555] - TestKafkaChannel tests intermittently fails on JDK8
+    * [FLUME-2556] - TestBucketPath.testDateFormatHours fails intermittently
+    * [FLUME-2557] - DatasetSink doesn't work with Kerberos
+    * [FLUME-2560] - Kafka channel entries missing for output jar generation
+    * [FLUME-2567] - Remove unneeded repository declarations in pom.xml
+    * [FLUME-2568] - Additional fix for TestReliableSpoolingFileEventReader
+    * [FLUME-2578] - Kafka source throws NPE if Kafka record has null key
+    * [FLUME-2582] - TestSpillableMemoryChannel crashes intermittently
+    * [FLUME-2586] - HDFS Sink should have an option to try rename even if close fails
+    * [FLUME-2587] - Unit test TestHTTPSource failed with IBM JDK 7.1.2
+    * [FLUME-2588] - Kafka Components Need to be marked experimenal
+    * [FLUME-2592] - Specify main manifest attribute in flume tools jar
+    * [FLUME-2594] - Close Async HBase Client if there are large number of consecutive timeouts
+    * [FLUME-2595] - Add option to checkpoint on file channel shutdown
+    * [FLUME-2597] - Deprecate IRC Sink
+    * [FLUME-2624] - Improve Hive Sink performance
+    * [FLUME-2626] - Remove trustmanager-type from Thrift RPC client
+    * [FLUME-2633] - Update Kite dependency to 1.0.0
+    * [FLUME-2639] - SecureThriftRpcClient client privileged calls throw IllegalAccessError
+    * [FLUME-2645] - ipFilter.rules property name is wrong
+    * [FLUME-2654] - Memory channel error message related to byteCapacity needs refining
+    * [FLUME-2657] - Upgrade to Hive 1.0
+    * [FLUME-2658] - Upgrade to Hbase 1.0
+    * [FLUME-2660] - Add documentation for EventValidator
+    * [FLUME-2664] - Site profile fails due to dependency issues
+    * [FLUME-2665] - Update documentation for hdfs.closeTries based on FLUME-2586
+    * [FLUME-2670] - Modify dependencies to not pull hadoop/hive related jars
+    * [FLUME-2672] - NPE in KafkaSourceCounter
+    * [FLUME-2673] - Remove unused import in TestLog
+    * [FLUME-2678] - Upgrade xalan to 2.7.2 to take care of CVE-2014-0107 vulnerability
+    * [FLUME-2679] - Make hbase-1 the default profile
+
+** Dependency upgrade
+    * [FLUME-2443] - org.apache.hadoop.fs.FSDataOutputStream.sync() is deprecated in hadoop 2.4
+
+** Documentation
+    * [FLUME-1594] - Document JMX options
+    * [FLUME-2393] - [User Guide]Incorrect rendering of Twitter firehose Source header, displayed as Twitter 1% firehose Source
+    * [FLUME-2509] - Add description for properties in Failover Sink Processor
+    * [FLUME-2575] - FLUME-2548 brings SSLv2Hello back for Avro Sink, but UG says it is one of the protocols to exclude
+    * [FLUME-2630] - Update documentation for Thrift Src/Sink SSL support and Kerberos support
+    * [FLUME-2635] - Documentation for zookeeper dynamic configuration in flume
+    * [FLUME-2668] - Document SecureThriftRpcClient/SecureRpcClientFactory in Flume Developer Guide
+
+** Improvement
+    * [FLUME-199] - Unit tests should hunt for available ports if defaults are in use
+    * [FLUME-1334] - Write an startscript for flume agents on Windows
+    * [FLUME-1491] - Dynamic configuration from Zookeeper watcher
+    * [FLUME-1521] - Document the StressSource
+    * [FLUME-1710] - JSONEvent.getBody should not return null
+    * [FLUME-1899] - Make SpoolDir work with Sub-Directories
+    * [FLUME-1920] - Test case TestFileChannel fails when flume is built from paths containing the string "hadoop"
+    * [FLUME-2207] - HDFS file suffix style index suffix in ElasticSearchSink
+    * [FLUME-2237] - Example config in User Guide to use same notation for Agent name
+    * [FLUME-2246] - event body data size can make it configurable for logger sinker
+    * [FLUME-2273] - ElasticSearchSink: Add handling for header substitution in indexName
+    * [FLUME-2351] - Ability to override any parameter from the configuration file
+    * [FLUME-2352] - HDFSCompressedDataStream should support appendBatch
+    * [FLUME-2373] - Enable configuration to switch thrift source serialization protocol
+    * [FLUME-2385] - Flume spans log file with "Spooling Directory Source runner has shutdown" messages at INFO level
+    * [FLUME-2392] - Flume MorphlineSink can not work because of java.lang.NoClassDefFoundError: org/kitesdk/morphline/api/MorphlineCompilationException
+    * [FLUME-2396] - Make Spillable Memory Channel persist data on shutdown
+    * [FLUME-2401] - Optionally Compress Backup Checkpoint
+    * [FLUME-2428] - Add a SpillableMemoryChannel support to Flume Embedded Agent
+    * [FLUME-2439] - Update DatasetSink for Kite 0.15.0
+    * [FLUME-2462] - Remove use of deprecated methods in DatasetSink
+    * [FLUME-2463] - Add support for Hive and HBase datasets to DatasetSink
+    * [FLUME-2469] - DatasetSink should load dataset when needed, not at startup
+    * [FLUME-2499] - Include Kafka Message Key in Event Header, Updated Comments
+    * [FLUME-2502] - Spool source's directory listing is inefficient
+    * [FLUME-2551] - Add dev-support to src tarball
+    * [FLUME-2552] - Update flume-parent pom.xml to add Roshan Naik in developers section
+    * [FLUME-2558] - Update javadoc for StressSource
+    * [FLUME-2562] - Metrics for Flafka components
+    * [FLUME-2569] - increase default heap space
+    * [FLUME-2571] - Update Kite dependency to 0.17.0 (or 0.17.1)
+    * [FLUME-2589] - Add Related Projects Page
+    * [FLUME-2591] - Kite DatasetSink 2.0
+    * [FLUME-2613] - Tool/script for deleting individual message from queue
+    * [FLUME-2618] - Provide Proxy Support for TwitterSource
+    * [FLUME-2636] - Agent wide context for configuring shareable properties
+    * [FLUME-2642] - Limit kerberos relogin attempt
+
+** New Feature
+    * [FLUME-19] - Create RSS source
+    * [FLUME-173] - Create standard unit tests for Sinks
+    * [FLUME-1734] - Create a Hive Sink based on the new Hive Streaming support
+    * [FLUME-2071] - Flume Context doesn't support float or double configuration values.
+    * [FLUME-2188] - flume-ng-log4jappender Support user supplied headers
+    * [FLUME-2242] - Flume Sink and Source for Apache Kafka
+    * [FLUME-2394] - Command line argument to disable monitoring for config changes
+    * [FLUME-2413] - Add a new metric for the number of bytes transferred on a flume channel
+    * [FLUME-2426] - Support interceptors in the Embedded Agent
+    * [FLUME-2431] - Add simple regex search-and-replace interceptor
+    * [FLUME-2524] - Adding an HTTP Sink
+    * [FLUME-2570] - Add option to not pad date fields
+    * [FLUME-2574] - SSL Support for Thrift Rpc
+    * [FLUME-2631] - End to End authentication in Flume
+
+** Task
+    * [FLUME-967] - HTTP based monitoring for flume Agents
+    * [FLUME-2365] - Please create a DOAP file for your TLP
+    * [FLUME-2454] - Support batchSize to allow multiple events per transaction to the Kafka Sink
+    * [FLUME-2455] - Documentation update for Kafka Sink
+    * [FLUME-2523] - Document Kafka channel
+    * [FLUME-2612] - Update kite to 0.17.1
+
+** Test
+    * [FLUME-1501] - Flume Scribe Source needs unit tests.
+
 Release Notes - Flume - Version v1.5.2
 
 ** Bug
