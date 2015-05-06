@@ -608,6 +608,12 @@ limitations under the License.
       <email>will@apache.org</email>
       <organization>Cloudera</organization>
     </developer>
+    <developer>
+      <name>Roshan</name>
+      <id>roshannaik</id>
+      <email>roshannaik@apache.org</email>
+      <organization>Hortonworks</organization>
+    </developer>
   </developers>
 
   <organization>
