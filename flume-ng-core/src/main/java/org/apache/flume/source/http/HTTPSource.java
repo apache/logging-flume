@@ -171,6 +171,11 @@ public class HTTPSource extends AbstractSource implements
       + " specified");
   }
 
+  /**
+   * Jetty Context customization hook.
+   *
+   * @param context the Jetty context.
+   */
   protected void customizeServletContext(org.mortbay.jetty.servlet.Context context){
 
   }
@@ -220,6 +225,11 @@ public class HTTPSource extends AbstractSource implements
     super.start();
   }
 
+  /**
+   * Http Servlet factory method.
+   *
+   * @return an instance of {@see javax.servlet.http.HttpServlet}
+   */
   protected HttpServlet getServlet() {
     return new FlumeHTTPServlet();
   }
