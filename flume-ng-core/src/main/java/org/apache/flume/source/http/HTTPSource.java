@@ -171,6 +171,10 @@ public class HTTPSource extends AbstractSource implements
       + " specified");
   }
 
+  protected void customizeServletContext(org.mortbay.jetty.servlet.Context context){
+
+  }
+
   @Override
   public void start() {
     Preconditions.checkState(srv == null,
@@ -202,7 +206,8 @@ public class HTTPSource extends AbstractSource implements
       org.mortbay.jetty.servlet.Context root =
         new org.mortbay.jetty.servlet.Context(
           srv, "/", org.mortbay.jetty.servlet.Context.SESSIONS);
-      root.addServlet(new ServletHolder(new FlumeHTTPServlet()), "/");
+      root.addServlet(new ServletHolder(getServlet()), "/");
+      customizeServletContext(root);
       HTTPServerConstraintUtil.enforceConstraints(root);
       srv.start();
       Preconditions.checkArgument(srv.getHandler().equals(root));
@@ -213,6 +218,10 @@ public class HTTPSource extends AbstractSource implements
     Preconditions.checkArgument(srv.isRunning());
     sourceCounter.start();
     super.start();
+  }
+
+  protected HttpServlet getServlet() {
+    return new FlumeHTTPServlet();
   }
 
   @Override
@@ -228,7 +237,7 @@ public class HTTPSource extends AbstractSource implements
     LOG.info("Http source {} stopped. Metrics: {}", getName(), sourceCounter);
   }
 
-  private class FlumeHTTPServlet extends HttpServlet {
+  protected class FlumeHTTPServlet extends HttpServlet {
 
     private static final long serialVersionUID = 4891924863218790344L;
 
@@ -270,11 +279,15 @@ public class HTTPSource extends AbstractSource implements
                 + ex.getMessage());
         return;
       }
-      response.setCharacterEncoding(request.getCharacterEncoding());
+      customizeServletResponse(request, response);
       response.setStatus(HttpServletResponse.SC_OK);
       response.flushBuffer();
       sourceCounter.incrementAppendBatchAcceptedCount();
       sourceCounter.addToEventAcceptedCount(events.size());
+    }
+
+    protected void customizeServletResponse(HttpServletRequest request, HttpServletResponse response) {
+      response.setCharacterEncoding(request.getCharacterEncoding());
     }
 
     @Override
