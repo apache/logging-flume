@@ -41,10 +41,10 @@ public class TimeBasedIndexNameBuilder implements
   public static final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd";
   public static final String DEFAULT_TIME_ZONE = "Etc/UTC";
 
-  private FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd",
+  protected FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd",
       TimeZone.getTimeZone("Etc/UTC"));
 
-  private String indexPrefix;
+  protected String indexPrefix;
 
   @VisibleForTesting
   FastDateFormat getFastDateFormat() {
