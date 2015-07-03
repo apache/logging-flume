@@ -1952,7 +1952,7 @@ trust-all-certs              false                                              
 truststore                   --                                                     The path to a custom Java truststore file. Flume uses the certificate authority information in this file to determine whether the remote Avro Source's SSL authentication credentials should be trusted. If not specified, the default Java JSSE certificate authority files (typically "jssecacerts" or "cacerts" in the Oracle JRE) will be used.
 truststore-password          --                                                     The password for the specified truststore.
 truststore-type              JKS                                                    The type of the Java truststore. This can be "JKS" or other supported Java truststore type.
-exclude-protocols            SSLv2Hello SSLv3                                       Space-separated list of SSL/TLS protocols to exclude
+exclude-protocols            SSLv3                                                  Space-separated list of SSL/TLS protocols to exclude. SSLv3 will always be excluded in addition to the protocols specified.
 maxIoWorkers                 2 * the number of available processors in the machine  The maximum number of I/O worker threads. This is configured on the NettyAvroRpcClient NioClientSocketChannelFactory.
 ==========================   =====================================================  ===========================================================================================
 
