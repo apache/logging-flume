@@ -75,6 +75,7 @@ public class TestStressSource {
     Context context = new Context();
     context.put("maxTotalEvents", "35");
     source.configure(context);
+    source.start();
 
     for (int i = 0; i < 50; i++) {
       source.process();
@@ -91,6 +92,7 @@ public class TestStressSource {
     context.put("maxTotalEvents", "35");
     context.put("batchSize", "10");
     source.configure(context);
+    source.start();
 
     for (int i = 0; i < 50; i++) {
       if (source.process() == Status.BACKOFF) {
@@ -121,6 +123,7 @@ public class TestStressSource {
     Context context = new Context();
     context.put("batchSize", "10");
     source.configure(context);
+    source.start();
 
     for (int i = 0; i < 10; i++) {
       Assert.assertFalse("StressSource with no maxTotalEvents should not return " +
@@ -146,6 +149,7 @@ public class TestStressSource {
     Context context = new Context();
     context.put("maxSuccessfulEvents", "35");
     source.configure(context);
+    source.start();
 
     for (int i = 0; i < 10; i++) {
       source.process();

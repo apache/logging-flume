@@ -95,6 +95,16 @@ public class TestPollableSourceRunner {
       }
 
       @Override
+      public long getBackOffSleepIncrement() {
+        return PollableSourceConstants.DEFAULT_BACKOFF_SLEEP_INCREMENT;
+      }
+
+      @Override
+      public long getMaxBackOffSleepInterval() {
+        return PollableSourceConstants.DEFAULT_MAX_BACKOFF_SLEEP;
+      }
+
+      @Override
       public void start() {
         // Unused.
       }

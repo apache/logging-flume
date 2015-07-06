@@ -50,8 +50,6 @@ public class PollableSourceRunner extends SourceRunner {
 
   private static final Logger logger = LoggerFactory
       .getLogger(PollableSourceRunner.class);
-  private static final long backoffSleepIncrement = 1000;
-  private static final long maxBackoffSleep = 5000;
 
   private AtomicBoolean shouldStop;
 
@@ -141,7 +139,7 @@ public class PollableSourceRunner extends SourceRunner {
 
             Thread.sleep(Math.min(
                 counterGroup.incrementAndGet("runner.backoffs.consecutive")
-                * backoffSleepIncrement, maxBackoffSleep));
+                * source.getBackOffSleepIncrement(), source.getMaxBackOffSleepInterval()));
           } else {
             counterGroup.set("runner.backoffs.consecutive", 0L);
           }
@@ -154,9 +152,9 @@ public class PollableSourceRunner extends SourceRunner {
         } catch (Exception e) {
           counterGroup.incrementAndGet("runner.errors");
           logger.error("Unhandled exception, logging and sleeping for " +
-              maxBackoffSleep + "ms", e);
+              source.getMaxBackOffSleepInterval() + "ms", e);
           try {
-            Thread.sleep(maxBackoffSleep);
+            Thread.sleep(source.getMaxBackOffSleepInterval());
           } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
           }
