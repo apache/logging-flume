@@ -2241,17 +2241,20 @@ The type is the FQCN: org.apache.flume.sink.solr.morphline.MorphlineSolrSink
 
 Required properties are in **bold**.
 
-===================  =======================================================================  ========================
-Property Name        Default                                                                  Description
-===================  =======================================================================  ========================
-**channel**          --
-**type**             --                                                                       The component type name, needs to be ``org.apache.flume.sink.solr.morphline.MorphlineSolrSink``
-**morphlineFile**    --                                                                       The relative or absolute path on the local file system to the morphline configuration file. Example: ``/etc/flume-ng/conf/morphline.conf``
-morphlineId          null                                                                     Optional name used to identify a morphline if there are multiple morphlines in a morphline config file
-batchSize            1000                                                                     The maximum number of events to take per flume transaction.
-batchDurationMillis  1000                                                                     The maximum duration per flume transaction (ms). The transaction commits after this duration or when batchSize is exceeded, whichever comes first.
-handlerClass         org.apache.flume.sink.solr.morphline.MorphlineHandlerImpl                The FQCN of a class implementing org.apache.flume.sink.solr.morphline.MorphlineHandler
-===================  =======================================================================  ========================
+===============================   =======================================================================  ========================
+Property Name                     Default                                                                  Description
+===============================   =======================================================================  ========================
+**channel**                       --
+**type**                          --                                                                       The component type name, needs to be ``org.apache.flume.sink.solr.morphline.MorphlineSolrSink``
+**morphlineFile**                 --                                                                       The relative or absolute path on the local file system to the morphline configuration file. Example: ``/etc/flume-ng/conf/morphline.conf``
+morphlineId                       null                                                                     Optional name used to identify a morphline if there are multiple morphlines in a morphline config file
+batchSize                         1000                                                                     The maximum number of events to take per flume transaction.
+batchDurationMillis               1000                                                                     The maximum duration per flume transaction (ms). The transaction commits after this duration or when batchSize is exceeded, whichever comes first.
+handlerClass                      org.apache.flume.sink.solr.morphline.MorphlineHandlerImpl                The FQCN of a class implementing org.apache.flume.sink.solr.morphline.MorphlineHandler
+isProductionMode                  false                                                                    This flag should be enabled for mission critical, large-scale online production systems that need to make progress without downtime when unrecoverable exceptions occur. Corrupt or malformed parser input data, parser bugs, and errors related to unknown Solr schema fields produce unrecoverable exceptions.
+recoverableExceptionClasses       org.apache.solr.client.solrj.SolrServerException                         Comma separated list of recoverable exceptions that tend to be transient, in which case the corresponding task can be retried. Examples include network connection errors, timeouts, etc. When the production mode flag is set to true, the recoverable exceptions configured using this parameter will not be ignored and hence will lead to retries.
+isIgnoringRecoverableExceptions   false                                                                    This flag should be enabled, if an unrecoverable exception is accidentally misclassified as recoverable. This enables the sink to make progress and avoid retrying an event forever.
+===============================   =======================================================================  ========================
 
 Example for agent named a1:
 
