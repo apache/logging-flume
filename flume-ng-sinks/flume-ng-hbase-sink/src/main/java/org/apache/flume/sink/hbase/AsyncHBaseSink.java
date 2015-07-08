@@ -126,6 +126,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
   private boolean enableWal = true;
   private boolean batchIncrements = false;
   private volatile int totalCallbacksReceived = 0;
+  private int maxConsecutiveFails;
   private Map<CellIdentifier, AtomicIncrementRequest> incrementBuffer;
   // The HBaseClient buffers the requests until a callback is received. In the event of a
   // timeout, there is no way to clear these buffers. If there is a major cluster issue, this
@@ -139,8 +140,6 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
   // process method.
   private final Comparator<byte[]> COMPARATOR = UnsignedBytes
     .lexicographicalComparator();
-
-  private static final int MAX_CONSECUTIVE_FAILS = 10;
 
   public AsyncHBaseSink(){
     this(null);
@@ -417,6 +416,10 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
       logger.info("Increment coalescing is enabled. Increments will be " +
         "buffered.");
     }
+
+    maxConsecutiveFails = context.getInteger(HBaseSinkConfigurationConstants.CONFIG_MAX_CONSECUTIVE_FAILS,
+            HBaseSinkConfigurationConstants.DEFAULT_MAX_CONSECUTIVE_FAILS);
+
   }
 
   @VisibleForTesting
@@ -442,6 +445,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
   }
 
   private HBaseClient initHBaseClient() {
+    logger.info("Initializing HBase Client");
     if (!isTimeoutTest) {
       client = new HBaseClient(zkQuorum, zkBaseDir, sinkCallbackPool);
     } else {
@@ -526,6 +530,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
   }
 
   private void shutdownHBaseClient() {
+    logger.info("Shutting down HBase Client");
     final CountDownLatch waiter = new CountDownLatch(1);
     try {
       client.shutdown().addCallback(new Callback<Object, Object>() {
@@ -556,7 +561,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
 
   private void handleTransactionFailure(Transaction txn)
       throws EventDeliveryException {
-    if (consecutiveHBaseFailures >= MAX_CONSECUTIVE_FAILS) {
+    if (maxConsecutiveFails > 0 && consecutiveHBaseFailures >= maxConsecutiveFails) {
       if (client != null) {
         shutdownHBaseClient();
       }
