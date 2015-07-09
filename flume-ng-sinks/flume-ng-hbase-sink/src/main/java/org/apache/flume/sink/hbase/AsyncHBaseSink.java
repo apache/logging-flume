@@ -437,23 +437,19 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
             + "before calling start on an old instance.");
     sinkCounter.start();
     sinkCounter.incrementConnectionCreatedCount();
-      sinkCallbackPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
-        .setNameFormat(this.getName() + " HBase Call Pool").build());
-    logger.info("Callback pool created");
     client = initHBaseClient();
     super.start();
   }
 
   private HBaseClient initHBaseClient() {
     logger.info("Initializing HBase Client");
-    if (!isTimeoutTest) {
-      client = new HBaseClient(zkQuorum, zkBaseDir, sinkCallbackPool);
-    } else {
-      client = new HBaseClient(zkQuorum, zkBaseDir,
-        new NioClientSocketChannelFactory(Executors
-          .newSingleThreadExecutor(),
-          Executors.newSingleThreadExecutor()));
-    }
+
+    sinkCallbackPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
+            .setNameFormat(this.getName() + " HBase Call Pool").build());
+    logger.info("Callback pool created");
+    client = new HBaseClient(zkQuorum, zkBaseDir,
+            new NioClientSocketChannelFactory(sinkCallbackPool, sinkCallbackPool));
+
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean fail = new AtomicBoolean(false);
     client.ensureTableFamilyExists(
