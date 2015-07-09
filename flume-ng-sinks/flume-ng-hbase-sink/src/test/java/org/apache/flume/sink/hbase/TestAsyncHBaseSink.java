@@ -20,6 +20,8 @@
 package org.apache.flume.sink.hbase;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,6 +51,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.primitives.Longs;
+import com.sun.management.UnixOperatingSystemMXBean;
 
 import org.junit.After;
 
@@ -62,6 +65,7 @@ public class TestAsyncHBaseSink {
   private static Context ctx = new Context();
   private static String valBase = "testing hbase sink: jham";
   private boolean deleteTable = true;
+  private static OperatingSystemMXBean os;
 
 
   @BeforeClass
@@ -78,6 +82,8 @@ public class TestAsyncHBaseSink {
     ctxMap.put("keep-alive", "0");
     ctxMap.put("timeout", "10000");
     ctx.putAll(ctxMap);
+
+    os = ManagementFactory.getOperatingSystemMXBean();
   }
 
   @AfterClass
@@ -448,6 +454,66 @@ public class TestAsyncHBaseSink {
     sink.process();
     sink.stop();
   }
+
+  // We only have support for getting File Descriptor count for Unix from the JDK
+  private long getOpenFileDescriptorCount() {
+    if(os instanceof UnixOperatingSystemMXBean){
+      return ((UnixOperatingSystemMXBean) os).getOpenFileDescriptorCount();
+    } else {
+      return -1;
+    }
+  }
+
+  /*
+   * Before the fix for FLUME-2738, consistently File Descriptors were leaked with at least
+   * > 10 FDs being leaked for every single shutdown-reinitialize routine
+   * If there is a leak, then the increase in FDs should be way higher than
+   * 50 and if there is no leak, there should not be any substantial increase in
+   * FDs. This is over a set of 10 shutdown-reinitialize runs
+   * This test makes sure that there is no File Descriptor leak, by continuously
+   * failing transactions and shutting down and reinitializing the client every time
+   * and this test will fail if a leak is detected
+   */
+  @Test
+  public void testFDLeakOnShutdown() throws Exception {
+    if(getOpenFileDescriptorCount() < 0) {
+      return;
+    }
+    testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
+    deleteTable = true;
+    AsyncHBaseSink sink = new AsyncHBaseSink(testUtility.getConfiguration(),
+            true, false);
+    ctx.put("maxConsecutiveFails", "1");
+    Configurables.configure(sink, ctx);
+    Channel channel = new MemoryChannel();
+    Configurables.configure(channel, ctx);
+    sink.setChannel(channel);
+    channel.start();
+    sink.start();
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+    for(int i = 0; i < 3; i++){
+      Event e = EventBuilder.withBody(Bytes.toBytes(valBase + "-" + i));
+      channel.put(e);
+    }
+    tx.commit();
+    tx.close();
+    Assert.assertFalse(sink.isConfNull());
+    long initialFDCount = getOpenFileDescriptorCount();
+
+    // Since the isTimeOutTest is set to true, transaction will fail
+    // with EventDeliveryException
+    for(int i = 0; i < 10; i ++) {
+      try {
+        sink.process();
+      } catch (EventDeliveryException ex) {
+      }
+    }
+    long increaseInFD = getOpenFileDescriptorCount() - initialFDCount;
+    Assert.assertTrue("File Descriptor leak detected. FDs have increased by " +
+      increaseInFD + " from an initial FD count of " + initialFDCount,  increaseInFD < 50);
+  }
+
   /**
    * This test must run last - it shuts down the minicluster :D
    * @throws Exception
