@@ -1152,6 +1152,13 @@ Property Name                    Default      Description
 batchSize                        1000         Maximum number of messages written to Channel in one batch
 batchDurationMillis              1000         Maximum time (in ms) before a batch will be written to Channel
                                               The batch will be written whenever the first of size and time will be reached.
+backoffSleepIncrement            1000         Initial and incremental wait time that is triggered when a Kafka Topic appears to be empty.
+                                              Wait period will reduce aggressive pinging of an empty Kafka Topic.  One second is ideal for
+                                              ingestion use cases but a lower value may be required for low latency operations with
+                                              interceptors.
+maxBackoffSleep                  5000         Maximum wait time that is triggered when a Kafka Topic appears to be empty.  Five seconds is
+                                              ideal for ingestion use cases but a lower value may be required for low latency operations
+                                              with interceptors.
 Other Kafka Consumer Properties  --           These properties are used to configure the Kafka Consumer. Any producer property supported
                                               by Kafka can be used. The only requirement is to prepend the property name with the prefix ``kafka.``.
                                               For example: kafka.consumer.timeout.ms
