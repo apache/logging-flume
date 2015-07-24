@@ -3748,7 +3748,7 @@ The tools can be run as follows::
 
   $bin/flume-ng tool --conf ./conf FCINTEGRITYTOOL -l ./datadir
 
-where datadir the comma separated list of data directory to ve verified.
+where datadir is the comma separated list of data directory to be verified.
 
 Following are the options available
 
@@ -3759,7 +3759,66 @@ h/help                   Displays help
 **l/dataDirs**           Comma-separated list of data directories which the tool must verify
 =======================  ====================================================================
 
+Event Validator Tool
+--------------------
 
+Event validator tool can be used to validate the File Channel Event's in application specific way.
+The tool applies the user provider validation login on each event and drop the event which do not
+confirm to the logic.
+
+The tools can be run as follows::
+
+  $bin/flume-ng tool --conf ./conf FCINTEGRITYTOOL -l ./datadir -e org.apache.flume.MyEventValidator -DmaxSize 2000
+
+where datadir is the comma separated list of data directory to be verified.
+
+Following are the options available
+
+=======================  ====================================================================
+Option Name              Description
+=======================  ====================================================================
+h/help                   Displays help
+**l/dataDirs**           Comma-separated list of data directories which the tool must verify
+e/eventValidator         Fully Qualified Name of Event Validator Implementation. The jar must
+                         be on Flume classpath
+=======================  ====================================================================
+
+The Event validator implementation must implement EventValidator interface. It's recommended
+not to throw any exception from the implementation as they are treated as invalid events.
+Additional parameters can be passed to EventValitor implementation via -D options.
+
+Let's see an example of simple size based Event Validator, which shall reject event's larger
+than maximum size specified.
+
+.. code-block:: java
+  public static class MyEventValidator implements EventValidator {
+
+    private int value = 0;
+
+    private MyEventValidator(int val) {
+      value = val;
+    }
+
+    @Override
+    public boolean validateEvent(Event event) {
+      return event.getBody() <= value;
+    }
+
+    public static class Builder implements EventValidator.Builder {
+
+      private int sizeValidator = 0;
+
+      @Override
+      public EventValidator build() {
+        return new DummyEventVerifier(sizeValidator);
+      }
+
+      @Override
+      public void configure(Context context) {
+        binaryValidator = context.getInteger("maxSize");
+      }
+    }
+  }
 
 
 Topology Design Considerations
