@@ -78,6 +78,8 @@ public class TestFlumeAuthenticator {
     String keytab = flumeKeytab.getAbsolutePath();
     String expResult = principal;
 
+    // Clear the previous statically stored logged in credentials
+    FlumeAuthenticationUtil.clearCredentials();
     FlumeAuthenticator authenticator = FlumeAuthenticationUtil.getAuthenticator(
             principal, keytab);
     assertTrue(authenticator.isAuthenticated());
@@ -125,4 +127,39 @@ public class TestFlumeAuthenticator {
     assertEquals("Proxy as didn't generate the expected username", expResult, result);
   }
 
+  @Test
+  public void testFlumeLoginPrincipalWithoutRealm() throws Exception {
+    String principal = "flume";
+    File keytab = new File(workDir, "flume2.keytab");
+    kdc.createPrincipal(keytab, principal);
+    String expResult = principal+"@" + kdc.getRealm();
+
+    // Clear the previous statically stored logged in credentials
+    FlumeAuthenticationUtil.clearCredentials();
+
+    FlumeAuthenticator authenticator = FlumeAuthenticationUtil.getAuthenticator(
+            principal, keytab.getAbsolutePath());
+    assertTrue(authenticator.isAuthenticated());
+
+    String result = ((KerberosAuthenticator)authenticator).getUserName();
+    assertEquals("Initial login failed", expResult, result);
+
+    authenticator = FlumeAuthenticationUtil.getAuthenticator(
+            principal, keytab.getAbsolutePath());
+    result = ((KerberosAuthenticator)authenticator).getUserName();
+    assertEquals("Re-login failed", expResult, result);
+
+    principal = "alice";
+    keytab = aliceKeytab;
+    try {
+      authenticator = FlumeAuthenticationUtil.getAuthenticator(
+              principal, keytab.getAbsolutePath());
+      result = ((KerberosAuthenticator)authenticator).getUserName();
+      fail("Login should have failed with a new principal: " + result);
+    } catch (Exception ex) {
+      assertTrue("Login with a new principal failed, but for an unexpected "
+                      + "reason: " + ex.getMessage(),
+              ex.getMessage().contains("Cannot use multiple kerberos principals"));
+    }
+  }
 }
