@@ -3791,6 +3791,7 @@ Let's see an example of simple size based Event Validator, which shall reject ev
 than maximum size specified.
 
 .. code-block:: java
+
   public static class MyEventValidator implements EventValidator {
 
     private int value = 0;
