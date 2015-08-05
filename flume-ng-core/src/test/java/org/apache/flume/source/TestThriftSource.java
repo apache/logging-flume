@@ -178,7 +178,7 @@ public class TestThriftSource {
     for (int i = 0; i < 300; i++) {
       Event event = channel.take();
       Assert.assertNotNull(event);
-      Assert.assertTrue(Long.valueOf(event.getHeaders().get("time")) < after);
+      Assert.assertTrue(Long.valueOf(event.getHeaders().get("time")) <= after);
       events.add(Integer.parseInt(new String(event.getBody())));
     }
     transaction.commit();
