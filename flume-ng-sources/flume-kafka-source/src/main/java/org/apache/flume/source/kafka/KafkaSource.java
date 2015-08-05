@@ -25,6 +25,8 @@ import java.util.Properties;
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.ConsumerTimeoutException;
 import kafka.consumer.KafkaStream;
+import kafka.consumer.TopicFilter;
+import kafka.consumer.Whitelist;
 import kafka.javaapi.consumer.ConsumerConnector;
 import kafka.message.MessageAndMetadata;
 
@@ -207,18 +209,12 @@ public class KafkaSource extends AbstractPollableSource
               "Flume agent can connect to it.", e);
     }
 
-    Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
-    // We always have just one topic being read by one thread
-    topicCountMap.put(topic, 1);
-
     // Get the message iterator for our topic
     // Note that this succeeds even if the topic doesn't exist
     // in that case we simply get no messages for the topic
-    // Also note that currently we only support a single topic
     try {
-      Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap =
-              consumer.createMessageStreams(topicCountMap);
-      List<KafkaStream<byte[], byte[]>> topicList = consumerMap.get(topic);
+      TopicFilter topicFilter = new Whitelist(topic);
+      List<KafkaStream<byte[], byte[]>> topicList = consumer.createMessageStreamsByFilter(topicFilter, 1);
       KafkaStream<byte[], byte[]> stream = topicList.get(0);
       it = stream.iterator();
     } catch (Exception e) {
