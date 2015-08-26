@@ -88,6 +88,7 @@ class HiveWriter {
       this.serializer = serializer;
       this.recordWriter = serializer.createRecordWriter(endPoint);
       this.txnBatch = nextTxnBatch(recordWriter);
+      this.txnBatch.beginNextTransaction();
       this.closed = false;
       this.lastUsed = System.currentTimeMillis();
     } catch (InterruptedException e) {
@@ -115,6 +116,10 @@ class HiveWriter {
 
   void setHearbeatNeeded() {
     hearbeatNeeded = true;
+  }
+
+  public int getRemainingTxns() {
+    return txnBatch.remainingTransactions();
   }
 
 
@@ -212,7 +217,7 @@ class HiveWriter {
 
   /**
    * Aborts the current Txn and switches to next Txn.
-   * @throws StreamingException if could not get new Transaction Batch, or switch to next Txn
+   * @throws InterruptedException
    */
   public void abort()  throws InterruptedException {
     batch.clear();
@@ -332,8 +337,7 @@ class HiveWriter {
           return connection.fetchTransactionBatch(txnsPerBatch, recordWriter); // could block
         }
       });
-      LOG.info("Acquired Txn Batch {}. Switching to first txn", batch);
-      batch.beginNextTransaction();
+      LOG.info("Acquired Transaction batch {}", batch);
     } catch (Exception e) {
       throw new TxnBatchException(endPoint, e);
     }

@@ -174,6 +174,38 @@ public class TestHiveWriter {
     checkRecordCountInTable(3);
   }
 
+  @Test
+  public void testTxnBatchConsumption() throws Exception {
+    // get a small txn batch and consume it, then roll to new batch, very
+    // the number of remaining txns to ensure Txns are not accidentally skipped
+
+    HiveEndPoint endPoint = new HiveEndPoint(metaStoreURI, dbName, tblName, partVals);
+    SinkCounter sinkCounter = new SinkCounter(this.getClass().getName());
+
+    int txnPerBatch = 3;
+
+    HiveWriter writer = new HiveWriter(endPoint, txnPerBatch, true, timeout
+            , callTimeoutPool, "flumetest", serializer, sinkCounter);
+
+    Assert.assertEquals(writer.getRemainingTxns(),2);
+    writer.flush(true);
+
+    Assert.assertEquals(writer.getRemainingTxns(), 1);
+    writer.flush(true);
+
+    Assert.assertEquals(writer.getRemainingTxns(), 0);
+    writer.flush(true);
+
+    // flip over to next batch
+    Assert.assertEquals(writer.getRemainingTxns(), 2);
+    writer.flush(true);
+
+    Assert.assertEquals(writer.getRemainingTxns(), 1);
+
+    writer.close();
+
+  }
+
   private void checkRecordCountInTable(int expectedCount)
           throws CommandNeedRetryException, IOException {
     int count = TestUtil.listRecordsInTable(driver, dbName, tblName).size();
