@@ -18,13 +18,29 @@
  */
 package org.apache.flume.channel.kafka;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import kafka.admin.AdminUtils;
 import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
 import kafka.utils.ZKStringSerializer$;
+
 import org.I0Itec.zkclient.ZkClient;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.flume.Context;
@@ -33,12 +49,14 @@ import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.sink.kafka.util.TestUtil;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 public class TestKafkaChannel {
 
@@ -134,6 +152,44 @@ public class TestKafkaChannel {
     producer.send(original);
     ExecutorCompletionService<Void> submitterSvc = new
       ExecutorCompletionService<Void>(Executors.newCachedThreadPool());
+    List<Event> events = pullEvents(channel, submitterSvc,
+      50, false, false);
+    wait(submitterSvc, 5);
+    Set<Integer> finals = Sets.newHashSet();
+    for (int i = 0; i < 50; i++) {
+      finals.add(Integer.parseInt(new String(events.get(i).getBody())));
+    }
+    for (int i = 0; i < 50; i++) {
+      Assert.assertTrue(finals.contains(i));
+      finals.remove(i);
+    }
+    Assert.assertTrue(finals.isEmpty());
+    channel.stop();
+  }
+
+  /**
+   * Like the previous test but here we write to the channel like a Flume source would do
+   * to verify that the events are written as text and not as an Avro object 
+   * 
+   * @throws Exception
+   */
+@Test
+  public void testWritingToNoParsingAsFlumeAgent() throws Exception {    
+	final KafkaChannel channel = startChannel(false);
+    
+    List<String> msgs = new ArrayList<String>();
+    for (int i = 0; i < 50; i++){
+    	msgs.add(String.valueOf(i));
+    }
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+    for (int i = 0; i < msgs.size(); i++){
+    	channel.put(EventBuilder.withBody(msgs.get(i).getBytes()));
+    }
+    tx.commit();
+    
+    ExecutorCompletionService<Void> submitterSvc = new
+    	      ExecutorCompletionService<Void>(Executors.newCachedThreadPool());
     List<Event> events = pullEvents(channel, submitterSvc,
       50, false, false);
     wait(submitterSvc, 5);
