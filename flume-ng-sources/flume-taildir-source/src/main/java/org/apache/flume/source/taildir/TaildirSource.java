@@ -22,6 +22,9 @@ import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstant
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -151,6 +154,12 @@ public class TaildirSource extends AbstractSource implements
 
     String homePath = System.getProperty("user.home").replace('\\', '/');
     positionFilePath = context.getString(POSITION_FILE, homePath + DEFAULT_POSITION_FILE);
+    Path positionFile = Paths.get(positionFilePath);
+    try {
+      Files.createDirectories(positionFile.getParent());
+    } catch (IOException e) {
+      throw new FlumeException("Error creating positionFile parent directories", e);
+    }
     headerTable = getTable(context, HEADERS_PREFIX);
     batchSize = context.getInteger(BATCH_SIZE, DEFAULT_BATCH_SIZE);
     skipToEnd = context.getBoolean(SKIP_TO_END, DEFAULT_SKIP_TO_END);
