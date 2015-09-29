@@ -216,7 +216,7 @@ class HiveWriter {
   }
 
   /**
-   * Aborts the current Txn and switches to next Txn.
+   * Aborts the current Txn
    * @throws InterruptedException
    */
   public void abort()  throws InterruptedException {
@@ -253,9 +253,64 @@ class HiveWriter {
    */
   public void close() throws InterruptedException {
     batch.clear();
+    abortRemainingTxns();
     closeTxnBatch();
     closeConnection();
     closed = true;
+  }
+
+
+  private void abortRemainingTxns() throws InterruptedException {
+      try {
+        if ( !isClosed(txnBatch.getCurrentTransactionState()) ) {
+          abortCurrTxnHelper();
+        }
+
+        // recursively abort remaining txns
+        if(txnBatch.remainingTransactions()>0) {
+          timedCall(
+                  new CallRunner1<Void>() {
+                    @Override
+                    public Void call() throws StreamingException, InterruptedException {
+                      txnBatch.beginNextTransaction();
+                      return null;
+                    }
+                  });
+          abortRemainingTxns();
+        }
+      } catch (StreamingException e) {
+        LOG.warn("Error when aborting remaining transactions in batch " + txnBatch, e);
+        return;
+      } catch (TimeoutException e) {
+        LOG.warn("Timed out when aborting remaining transactions in batch " + txnBatch, e);
+        return;
+      }
+  }
+
+  private void abortCurrTxnHelper() throws TimeoutException, InterruptedException {
+    try {
+      timedCall(
+              new CallRunner1<Void>() {
+                @Override
+                public Void call() throws StreamingException, InterruptedException {
+                  txnBatch.abort();
+                  LOG.info("Aborted txn " + txnBatch.getCurrentTxnId());
+                  return null;
+                }
+              }
+      );
+    } catch (StreamingException e) {
+      LOG.warn("Unable to abort transaction " + txnBatch.getCurrentTxnId(), e);
+      // continue to attempt to abort other txns in the batch
+    }
+  }
+
+  private boolean isClosed(TransactionBatch.TxnState txnState) {
+    if(txnState == TransactionBatch.TxnState.COMMITTED)
+      return true;
+    if(txnState == TransactionBatch.TxnState.ABORTED)
+      return true;
+    return false;
   }
 
   public void closeConnection() throws InterruptedException {
@@ -346,7 +401,7 @@ class HiveWriter {
 
   private void closeTxnBatch() throws InterruptedException {
     try {
-      LOG.debug("Closing Txn Batch {}", txnBatch);
+      LOG.info("Closing Txn Batch {}.", txnBatch);
       timedCall(new CallRunner1<Void>() {
         @Override
         public Void call() throws InterruptedException, StreamingException {
