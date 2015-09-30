@@ -35,6 +35,8 @@ import org.apache.flume.event.EventBuilder;
 import org.apache.flume.sink.kafka.util.TestUtil;
 import org.junit.*;
 
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.*;
+
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -147,6 +149,22 @@ public class TestKafkaChannel {
     }
     Assert.assertTrue(finals.isEmpty());
     channel.stop();
+  }
+
+  @Test
+  public void testTimeoutConfig() throws Exception {
+    Context context = prepareDefaultContext(true);
+    KafkaChannel channel = new KafkaChannel();
+    Configurables.configure(channel, context);
+    Assert.assertTrue(channel.getKafkaConf().get(CONSUMER_TIMEOUT)
+      .equals(DEFAULT_TIMEOUT));
+
+    String timeout = "1000";
+    context.put("kafka."+CONSUMER_TIMEOUT, timeout);
+    channel = new KafkaChannel();
+    Configurables.configure(channel, context);
+    Assert.assertTrue(channel.getKafkaConf().get(CONSUMER_TIMEOUT)
+            .equals(timeout));
   }
 
   /**
