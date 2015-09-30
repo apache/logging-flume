@@ -177,13 +177,14 @@ public class KafkaChannel extends BasicChannelSemantics {
       throw new ConfigurationException(
         "Zookeeper Connection must be specified");
     }
-    Long timeout = ctx.getLong(TIMEOUT, Long.valueOf(DEFAULT_TIMEOUT));
     kafkaConf.putAll(ctx.getSubProperties(KAFKA_PREFIX));
     kafkaConf.put(GROUP_ID, groupId);
     kafkaConf.put(BROKER_LIST_KEY, brokerList);
     kafkaConf.put(ZOOKEEPER_CONNECT, zkConnect);
     kafkaConf.put(AUTO_COMMIT_ENABLED, String.valueOf(false));
-    kafkaConf.put(CONSUMER_TIMEOUT, String.valueOf(timeout));
+    if(kafkaConf.get(CONSUMER_TIMEOUT) == null) {
+      kafkaConf.put(CONSUMER_TIMEOUT, DEFAULT_TIMEOUT);
+    }
     kafkaConf.put(REQUIRED_ACKS_KEY, "-1");
     LOGGER.info(kafkaConf.toString());
     parseAsFlumeEvent =
