@@ -264,6 +264,52 @@ public class TestSyslogUtils {
   }
 
   /**
+   * Test bad event format 3: Empty priority - <>
+   */
+
+  @Test
+  public void testExtractBadEvent3() {
+    String badData1 = "<> bad bad data\n";
+    SyslogUtils util = new SyslogUtils(false);
+    ChannelBuffer buff = ChannelBuffers.buffer(100);
+    buff.writeBytes(badData1.getBytes());
+    Event e = util.extractEvent(buff);
+    if(e == null){
+      throw new NullPointerException("Event is null");
+    }
+    Map<String, String> headers = e.getHeaders();
+    Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_FACILITY));
+    Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_SEVERITY));
+    Assert.assertEquals(SyslogUtils.SyslogStatus.INVALID.getSyslogStatus(),
+        headers.get(SyslogUtils.EVENT_STATUS));
+    Assert.assertEquals(badData1.trim(), new String(e.getBody()).trim());
+
+  }
+
+  /**
+   * Test bad event format 4: Priority too long
+   */
+
+  @Test
+  public void testExtractBadEvent4() {
+    String badData1 = "<123123123123123123123123123123> bad bad data\n";
+    SyslogUtils util = new SyslogUtils(false);
+    ChannelBuffer buff = ChannelBuffers.buffer(100);
+    buff.writeBytes(badData1.getBytes());
+    Event e = util.extractEvent(buff);
+    if(e == null){
+      throw new NullPointerException("Event is null");
+    }
+    Map<String, String> headers = e.getHeaders();
+    Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_FACILITY));
+    Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_SEVERITY));
+    Assert.assertEquals(SyslogUtils.SyslogStatus.INVALID.getSyslogStatus(),
+        headers.get(SyslogUtils.EVENT_STATUS));
+    Assert.assertEquals(badData1.trim(), new String(e.getBody()).trim());
+
+  }
+
+  /**
    * Good event
    */
   @Test
