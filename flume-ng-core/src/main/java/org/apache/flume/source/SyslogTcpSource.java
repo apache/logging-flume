@@ -93,6 +93,10 @@ implements EventDrivenSource, Configurable {
         } catch (ChannelException ex) {
           counterGroup.incrementAndGet("events.dropped");
           logger.error("Error writting to channel, event dropped", ex);
+        } catch (RuntimeException ex) {
+          counterGroup.incrementAndGet("events.dropped");
+          logger.error("Error parsing event from syslog stream, event dropped", ex);
+          return;
         }
       }
 

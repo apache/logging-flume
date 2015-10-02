@@ -285,55 +285,58 @@ public class SyslogUtils {
 
   // create the event from syslog data
   Event buildEvent() {
-    byte[] body;
-    int pri = 0;
-    int sev = 0;
-    int facility = 0;
+    try {
+      byte[] body;
+      int pri = 0;
+      int sev = 0;
+      int facility = 0;
 
-    if(!isBadEvent){
-      pri = Integer.parseInt(prio.toString());
-      sev = pri % 8;
-      facility = pri / 8;
-      formatHeaders();
-    }
+      if(!isBadEvent){
+        pri = Integer.parseInt(prio.toString());
+        sev = pri % 8;
+        facility = pri / 8;
+        formatHeaders();
+      }
 
-    Map <String, String> headers = new HashMap<String, String>();
-    headers.put(SYSLOG_FACILITY, String.valueOf(facility));
-    headers.put(SYSLOG_SEVERITY, String.valueOf(sev));
-    if ((priority != null) && (priority.length() > 0)) {
-      headers.put("priority", priority);
-    }
-    if ((version != null) && (version.length() > 0)) {
-      headers.put("version", version);
-    }
-    if ((timeStamp != null) && timeStamp.length() > 0) {
-      headers.put("timestamp", timeStamp);
-    }
-    if ((hostName != null) && (hostName.length() > 0)) {
-      headers.put("host", hostName);
-    }
-    if(isBadEvent){
-      logger.warn("Event created from Invalid Syslog data.");
-      headers.put(EVENT_STATUS, SyslogStatus.INVALID.getSyslogStatus());
-    } else if(isIncompleteEvent){
-      logger.warn("Event size larger than specified event size: {}. You should " +
-          "consider increasing your event size.", maxSize);
-      headers.put(EVENT_STATUS, SyslogStatus.INCOMPLETE.getSyslogStatus());
-    }
+      Map <String, String> headers = new HashMap<String, String>();
+      headers.put(SYSLOG_FACILITY, String.valueOf(facility));
+      headers.put(SYSLOG_SEVERITY, String.valueOf(sev));
+      if ((priority != null) && (priority.length() > 0)) {
+        headers.put("priority", priority);
+      }
+      if ((version != null) && (version.length() > 0)) {
+        headers.put("version", version);
+      }
+      if ((timeStamp != null) && timeStamp.length() > 0) {
+        headers.put("timestamp", timeStamp);
+      }
+      if ((hostName != null) && (hostName.length() > 0)) {
+        headers.put("host", hostName);
+      }
+      if(isBadEvent){
+        logger.warn("Event created from Invalid Syslog data.");
+        headers.put(EVENT_STATUS, SyslogStatus.INVALID.getSyslogStatus());
+      } else if(isIncompleteEvent){
+        logger.warn("Event size larger than specified event size: {}. You should " +
+            "consider increasing your event size.", maxSize);
+        headers.put(EVENT_STATUS, SyslogStatus.INCOMPLETE.getSyslogStatus());
+      }
 
-    if (!keepAllFields(keepFields)) {
-      if ((msgBody != null) && (msgBody.length() > 0)) {
-        body = msgBody.getBytes();
+      if (!keepAllFields(keepFields)) {
+        if ((msgBody != null) && (msgBody.length() > 0)) {
+          body = msgBody.getBytes();
+        } else {
+          // Parse failed.
+          body = baos.toByteArray();
+        }
       } else {
-        // Parse failed.
         body = baos.toByteArray();
       }
-    } else {
-      body = baos.toByteArray();
+      // format the message
+      return EventBuilder.withBody(body, headers);
+    } finally {
+      reset();
     }
-    reset();
-    // format the message
-    return EventBuilder.withBody(body, headers);
   }
 
   // Apply each known pattern to message
@@ -441,11 +444,18 @@ public class SyslogUtils {
         case PRIO:
           baos.write(b);
           if (b == '>') {
+            if (prio.length() == 0) {
+              isBadEvent = true;
+            }
             m = Mode.DATA;
           } else {
             char ch = (char) b;
             prio.append(ch);
-            if (!Character.isDigit(ch)) {
+            // Priority is max 3 digits per both RFC 3164 and 5424
+            // With this check there is basically no danger of
+            // boas.size() exceeding this.maxSize before getting to the
+            // DATA state where this is actually checked
+            if (!Character.isDigit(ch) || prio.length() > 3) {
               isBadEvent = true;
               //If we hit a bad priority, just write as if everything is data.
               m = Mode.DATA;
@@ -460,7 +470,7 @@ public class SyslogUtils {
           } else {
             baos.write(b);
           }
-          if(baos.size() == this.maxSize && !doneReading){
+          if(baos.size() == this.maxSize && !doneReading) {
             isIncompleteEvent = true;
             e = buildEvent();
             doneReading = true;
