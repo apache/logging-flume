@@ -252,8 +252,10 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     List<Event> events = des.readEvents(numEvents);
 
     /* It's possible that the last read took us just up to a file boundary.
-     * If so, try to roll to the next file, if there is one. */
-    if (events.isEmpty()) {
+     * If so, try to roll to the next file, if there is one.
+     * Loop until events is not empty or there is no next file in case of 0 byte files */
+    while (events.isEmpty()) {
+      logger.info("Last read took us just up to a file boundary. Rolling to the next file, if there is one.");
       retireCurrentFile();
       currentFile = getNextFile();
       if (!currentFile.isPresent()) {

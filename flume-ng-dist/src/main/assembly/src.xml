@@ -49,6 +49,7 @@
         <include>org.apache.flume:flume-ng-clients</include>
         <include>org.apache.flume:flume-ng-embedded-agent</include>
         <include>org.apache.flume:flume-tools</include>
+        <include>org.apache.flume:flume-ng-auth</include>
       </includes>
 
       <sources>

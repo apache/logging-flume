@@ -315,6 +315,18 @@ while [ -n "$*" ] ; do
       opt_plugins_dirs=$1
       shift
       ;;
+    -agentlib*)
+      arr_java_props[arr_java_props_ct]=$arg
+      ((++arr_java_props_ct))
+      ;;
+    -agentpath*)
+      arr_java_props[arr_java_props_ct]=$arg
+      ((++arr_java_props_ct))
+      ;;
+    -javaagent*)
+      arr_java_props[arr_java_props_ct]=$arg
+      ((++arr_java_props_ct))
+      ;;
     -D*)
       arr_java_props[arr_java_props_ct]=$arg
       ((++arr_java_props_ct))

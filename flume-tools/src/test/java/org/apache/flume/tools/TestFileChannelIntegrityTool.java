@@ -58,6 +58,7 @@ public class TestFileChannelIntegrityTool {
   private File checkpointDir;
   private File dataDir;
 
+  private static int invalidEvent = 0;
 
   @BeforeClass
   public static void setUpClass() throws Exception{
@@ -97,12 +98,62 @@ public class TestFileChannelIntegrityTool {
   }
 
   @Test
+  public void testFixCorruptRecordsWithCheckpoint() throws Exception {
+    doTestFixCorruptEvents(true);
+  }
+
+  @Test
   public void testFixCorruptRecords() throws Exception {
     doTestFixCorruptEvents(false);
   }
+
   @Test
-  public void testFixCorruptRecordsWithCheckpoint() throws Exception {
-    doTestFixCorruptEvents(true);
+  public void testFixInvalidRecords() throws Exception {
+    doTestFixInvalidEvents(false, DummyEventVerifier.Builder.class.getName());
+  }
+
+  @Test
+  public void testFixInvalidRecordsWithCheckpoint() throws Exception {
+    doTestFixInvalidEvents(true, DummyEventVerifier.Builder.class.getName());
+  }
+
+  public void doTestFixInvalidEvents(boolean withCheckpoint, String eventHandler) throws Exception {
+    FileChannelIntegrityTool tool = new FileChannelIntegrityTool();
+    tool.run(new String[] {"-l", dataDir.toString(), "-e", eventHandler, "-DvalidatorValue=0"});
+    FileChannel channel = new FileChannel();
+    channel.setName("channel");
+    if (withCheckpoint) {
+      File[] cpFiles = origCheckpointDir.listFiles(new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+          if (name.contains("lock") || name.contains("queueset")) {
+            return false;
+          }
+          return true;
+        }
+      });
+      for (File cpFile : cpFiles) {
+        Serialization.copyFile(cpFile, new File(checkpointDir, cpFile.getName()));
+      }
+    } else {
+      FileUtils.deleteDirectory(checkpointDir);
+      Assert.assertTrue(checkpointDir.mkdirs());
+    }
+    ctx.put(FileChannelConfiguration.CHECKPOINT_DIR, checkpointDir.toString());
+    ctx.put(FileChannelConfiguration.DATA_DIRS, dataDir.toString());
+    channel.configure(ctx);
+    channel.start();
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+    int i = 0;
+    while(channel.take() != null) {
+      i++;
+    }
+    tx.commit();
+    tx.close();
+    channel.stop();
+    Assert.assertTrue(invalidEvent != 0);
+    Assert.assertEquals(25 - invalidEvent, i);
   }
 
   public void doTestFixCorruptEvents(boolean withCheckpoint) throws Exception {
@@ -153,18 +204,27 @@ public class TestFileChannelIntegrityTool {
 
     }
     FileChannelIntegrityTool tool = new FileChannelIntegrityTool();
-    tool.run(new String[] {"-l", dataDir.toString()});
+    tool.run(new String[]{"-l", dataDir.toString()});
     FileChannel channel = new FileChannel();
     channel.setName("channel");
-    String cp;
-    if(withCheckpoint) {
-      cp = origCheckpointDir.toString();
+    if (withCheckpoint) {
+      File[] cpFiles = origCheckpointDir.listFiles(new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+          if (name.contains("lock") || name.contains("queueset")) {
+            return false;
+          }
+          return true;
+        }
+      });
+      for (File cpFile : cpFiles) {
+        Serialization.copyFile(cpFile, new File(checkpointDir, cpFile.getName()));
+      }
     } else {
       FileUtils.deleteDirectory(checkpointDir);
       Assert.assertTrue(checkpointDir.mkdirs());
-      cp = checkpointDir.toString();
     }
-    ctx.put(FileChannelConfiguration.CHECKPOINT_DIR,cp);
+    ctx.put(FileChannelConfiguration.CHECKPOINT_DIR, checkpointDir.toString());
     ctx.put(FileChannelConfiguration.DATA_DIRS, dataDir.toString());
     channel.configure(ctx);
     channel.start();
@@ -226,6 +286,12 @@ public class TestFileChannelIntegrityTool {
       Transaction tx = channel.getTransaction();
       tx.begin();
       for (int i = 0; i < 5; i++) {
+        if(i % 3 == 0) {
+          event.getBody()[0] = 0;
+          invalidEvent++;
+        } else {
+          event.getBody()[0] = 1;
+        }
         channel.put(event);
       }
       tx.commit();
@@ -243,5 +309,34 @@ public class TestFileChannelIntegrityTool {
         .in(log)
         .invoke(true));
     channel.stop();
+  }
+
+  public static class DummyEventVerifier implements EventValidator {
+
+    private int value = 0;
+
+    private DummyEventVerifier(int val) {
+      value = val;
+    }
+
+    @Override
+    public boolean validateEvent(Event event) {
+      return event.getBody()[0] != value;
+    }
+
+    public static class Builder implements EventValidator.Builder {
+
+      private int binaryValidator = 0;
+
+      @Override
+      public EventValidator build() {
+        return new DummyEventVerifier(binaryValidator);
+      }
+
+      @Override
+      public void configure(Context context) {
+        binaryValidator = context.getInteger("validatorValue");
+      }
+    }
   }
 }

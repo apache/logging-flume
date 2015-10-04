@@ -17,6 +17,8 @@
  */
 package org.apache.flume.sink.kite;
 
+import org.apache.flume.auth.FlumeAuthenticationUtil;
+import org.apache.flume.auth.PrivilegedExecutor;
 import org.apache.flume.sink.kite.parser.EntityParserFactory;
 import org.apache.flume.sink.kite.parser.EntityParser;
 import org.apache.flume.sink.kite.policy.FailurePolicy;
@@ -25,8 +27,9 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+
 import java.net.URI;
-import java.security.PrivilegedExceptionAction;
+import java.security.PrivilegedAction;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.apache.avro.Schema;
@@ -40,7 +43,6 @@ import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.AbstractSink;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.kitesdk.data.Dataset;
 import org.kitesdk.data.DatasetDescriptor;
 import org.kitesdk.data.DatasetIOException;
@@ -72,7 +74,7 @@ public class DatasetSink extends AbstractSink implements Configurable {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetSink.class);
 
   private Context context = null;
-  private UserGroupInformation login = null;
+  private PrivilegedExecutor privilegedExecutor;
 
   private String datasetName = null;
   private URI datasetUri = null;
@@ -159,15 +161,12 @@ public class DatasetSink extends AbstractSink implements Configurable {
   public void configure(Context context) {
     this.context = context;
 
-    // initialize login credentials
-    this.login = KerberosUtil.login(
-        context.getString(AUTH_PRINCIPAL),
-        context.getString(AUTH_KEYTAB));
-    String effectiveUser
-        = context.getString(AUTH_PROXY_USER);
-    if (effectiveUser != null) {
-      this.login = KerberosUtil.proxyAs(effectiveUser, login);
-    }
+    String principal = context.getString(AUTH_PRINCIPAL);
+    String keytab = context.getString(AUTH_KEYTAB);
+    String effectiveUser = context.getString(AUTH_PROXY_USER);
+
+    this.privilegedExecutor = FlumeAuthenticationUtil.getAuthenticator(
+            principal, keytab).proxyAs(effectiveUser);
 
     // Get the dataset URI and name from the context
     String datasetURI = context.getString(CONFIG_KITE_DATASET_URI);
@@ -395,13 +394,15 @@ public class DatasetSink extends AbstractSink implements Configurable {
     // reset the commited flag whenver a new writer is created
     committedBatch = false;
     try {
-      View<GenericRecord> view = KerberosUtil.runPrivileged(login,
-          new PrivilegedExceptionAction<Dataset<GenericRecord>>() {
-            @Override
-            public Dataset<GenericRecord> run() {
-              return Datasets.load(datasetUri);
-            }
-          });
+      View<GenericRecord> view;
+
+      view = privilegedExecutor.execute(
+        new PrivilegedAction<Dataset<GenericRecord>>() {
+          @Override
+          public Dataset<GenericRecord> run() {
+            return Datasets.load(datasetUri);
+          }
+        });
 
       DatasetDescriptor descriptor = view.getDataset().getDescriptor();
       Format format = descriptor.getFormat();

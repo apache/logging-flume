@@ -94,6 +94,9 @@ public class TestIntegration {
     SequenceGeneratorSource source = new SequenceGeneratorSource();
     CountingSourceRunner sourceRunner = new CountingSourceRunner(source, channel);
 
+    source.configure(context);
+    source.start();
+
     NullSink sink = new NullSink();
     sink.setChannel(channel);
     CountingSinkRunner sinkRunner = new CountingSinkRunner(sink);

@@ -15,7 +15,7 @@
 
 
 ================================================
-Apache Flume 1.6.0-SNAPSHOT documentation
+Apache Flume 1.7.0-SNAPSHOT documentation
 ================================================
 
 Flume is a distributed, reliable, and available system for efficiently

@@ -23,7 +23,7 @@ limitations under the License.
   <parent>
     <artifactId>flume-parent</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.6.0-SNAPSHOT</version>
+    <version>1.7.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.apache.flume</groupId>
@@ -45,6 +45,7 @@ limitations under the License.
     <module>flume-jms-source</module>
     <module>flume-twitter-source</module>
     <module>flume-kafka-source</module>
+    <module>flume-taildir-source</module>
   </modules>
 
 </project>

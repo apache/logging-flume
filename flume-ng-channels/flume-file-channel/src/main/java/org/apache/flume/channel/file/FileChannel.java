@@ -100,6 +100,7 @@ public class FileChannel extends BasicChannelSemantics {
   private boolean compressBackupCheckpoint;
   private boolean fsyncPerTransaction;
   private int fsyncInterval;
+  private boolean checkpointOnClose = true;
 
   @Override
   public synchronized void setName(String name) {
@@ -251,6 +252,9 @@ public class FileChannel extends BasicChannelSemantics {
     fsyncInterval = context.getInteger(FileChannelConfiguration
       .FSYNC_INTERVAL, FileChannelConfiguration.DEFAULT_FSYNC_INTERVAL);
 
+    checkpointOnClose = context.getBoolean(FileChannelConfiguration
+            .CHKPT_ONCLOSE, FileChannelConfiguration.DEFAULT_CHKPT_ONCLOSE);
+
     if(queueRemaining == null) {
       queueRemaining = new Semaphore(capacity, true);
     }
@@ -286,6 +290,7 @@ public class FileChannel extends BasicChannelSemantics {
       builder.setBackupCheckpointDir(backupCheckpointDir);
       builder.setFsyncPerTransaction(fsyncPerTransaction);
       builder.setFsyncInterval(fsyncInterval);
+      builder.setCheckpointOnClose(checkpointOnClose);
       log = builder.build();
       log.replay();
       open = true;

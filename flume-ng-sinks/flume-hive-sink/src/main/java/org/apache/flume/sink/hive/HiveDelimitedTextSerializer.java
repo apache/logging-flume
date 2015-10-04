@@ -28,6 +28,7 @@ import org.apache.hive.hcatalog.streaming.StreamingException;
 import org.apache.hive.hcatalog.streaming.TransactionBatch;
 
 import java.io.IOException;
+import java.util.Collection;
 
 /** Forwards the incoming event body to Hive unmodified
  * Sets up the delimiter and the field to column mapping
@@ -49,6 +50,13 @@ public class HiveDelimitedTextSerializer implements HiveEventSerializer  {
           throws StreamingException, IOException, InterruptedException {
     txnBatch.write(e.getBody());
   }
+
+  @Override
+  public void write(TransactionBatch txnBatch, Collection<byte[]> events)
+          throws StreamingException, IOException, InterruptedException {
+    txnBatch.write(events);
+  }
+
 
   @Override
   public RecordWriter createRecordWriter(HiveEndPoint endPoint)

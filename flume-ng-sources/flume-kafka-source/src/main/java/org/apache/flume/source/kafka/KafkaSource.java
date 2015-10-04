@@ -26,15 +26,17 @@ import kafka.consumer.ConsumerIterator;
 import kafka.consumer.ConsumerTimeoutException;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
-
 import kafka.message.MessageAndMetadata;
+
 import org.apache.flume.*;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.instrumentation.kafka.KafkaSourceCounter;
+import org.apache.flume.source.AbstractPollableSource;
 import org.apache.flume.source.AbstractSource;
+import org.apache.flume.source.BasicSourceSemantics;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,8 +68,8 @@ import org.slf4j.LoggerFactory;
  * Any property starting with "kafka" will be passed to the kafka consumer So
  * you can use any configuration supported by Kafka 0.8.1.1
  */
-public class KafkaSource extends AbstractSource
-        implements Configurable, PollableSource {
+public class KafkaSource extends AbstractPollableSource
+        implements Configurable {
   private static final Logger log = LoggerFactory.getLogger(KafkaSource.class);
   private ConsumerConnector consumer;
   private ConsumerIterator<byte[],byte[]> it;
@@ -81,8 +83,8 @@ public class KafkaSource extends AbstractSource
   private final List<Event> eventList = new ArrayList<Event>();
   private KafkaSourceCounter counter;
 
-  public Status process() throws EventDeliveryException {
-
+  @Override
+  protected Status doProcess() throws EventDeliveryException {
     byte[] kafkaMessage;
     byte[] kafkaKey;
     Event event;
@@ -168,7 +170,8 @@ public class KafkaSource extends AbstractSource
    *
    * @param context
    */
-  public void configure(Context context) {
+  @Override
+  protected void doConfigure(Context context) throws FlumeException {
     this.context = context;
     batchUpperLimit = context.getInteger(KafkaSourceConstants.BATCH_SIZE,
             KafkaSourceConstants.DEFAULT_BATCH_SIZE);
@@ -192,7 +195,7 @@ public class KafkaSource extends AbstractSource
   }
 
   @Override
-  public synchronized void start() {
+  protected void doStart() throws FlumeException {
     log.info("Starting {}...", this);
 
     try {
@@ -221,21 +224,19 @@ public class KafkaSource extends AbstractSource
     } catch (Exception e) {
       throw new FlumeException("Unable to get message iterator from Kafka", e);
     }
-    log.info("Kafka source {} started.", getName());
+    log.info("Kafka source {} do started.", getName());
     counter.start();
-    super.start();
   }
 
   @Override
-  public synchronized void stop() {
+  protected void doStop() throws FlumeException {
     if (consumer != null) {
       // exit cleanly. This syncs offsets of messages read to ZooKeeper
       // to avoid reading the same messages again
       consumer.shutdown();
     }
     counter.stop();
-    log.info("Kafka Source {} stopped. Metrics: {}", getName(), counter);
-    super.stop();
+    log.info("Kafka Source {} do stopped. Metrics: {}", getName(), counter);
   }
 
   /**

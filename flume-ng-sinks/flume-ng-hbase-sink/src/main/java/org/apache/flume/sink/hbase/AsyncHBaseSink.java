@@ -126,6 +126,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
   private boolean enableWal = true;
   private boolean batchIncrements = false;
   private volatile int totalCallbacksReceived = 0;
+  private int maxConsecutiveFails;
   private Map<CellIdentifier, AtomicIncrementRequest> incrementBuffer;
   // The HBaseClient buffers the requests until a callback is received. In the event of a
   // timeout, there is no way to clear these buffers. If there is a major cluster issue, this
@@ -139,8 +140,6 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
   // process method.
   private final Comparator<byte[]> COMPARATOR = UnsignedBytes
     .lexicographicalComparator();
-
-  private static final int MAX_CONSECUTIVE_FAILS = 10;
 
   public AsyncHBaseSink(){
     this(null);
@@ -417,6 +416,10 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
       logger.info("Increment coalescing is enabled. Increments will be " +
         "buffered.");
     }
+
+    maxConsecutiveFails = context.getInteger(HBaseSinkConfigurationConstants.CONFIG_MAX_CONSECUTIVE_FAILS,
+            HBaseSinkConfigurationConstants.DEFAULT_MAX_CONSECUTIVE_FAILS);
+
   }
 
   @VisibleForTesting
@@ -434,22 +437,19 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
             + "before calling start on an old instance.");
     sinkCounter.start();
     sinkCounter.incrementConnectionCreatedCount();
-      sinkCallbackPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
-        .setNameFormat(this.getName() + " HBase Call Pool").build());
-    logger.info("Callback pool created");
     client = initHBaseClient();
     super.start();
   }
 
   private HBaseClient initHBaseClient() {
-    if (!isTimeoutTest) {
-      client = new HBaseClient(zkQuorum, zkBaseDir, sinkCallbackPool);
-    } else {
-      client = new HBaseClient(zkQuorum, zkBaseDir,
-        new NioClientSocketChannelFactory(Executors
-          .newSingleThreadExecutor(),
-          Executors.newSingleThreadExecutor()));
-    }
+    logger.info("Initializing HBase Client");
+
+    sinkCallbackPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
+            .setNameFormat(this.getName() + " HBase Call Pool").build());
+    logger.info("Callback pool created");
+    client = new HBaseClient(zkQuorum, zkBaseDir,
+            new NioClientSocketChannelFactory(sinkCallbackPool, sinkCallbackPool));
+
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean fail = new AtomicBoolean(false);
     client.ensureTableFamilyExists(
@@ -526,6 +526,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
   }
 
   private void shutdownHBaseClient() {
+    logger.info("Shutting down HBase Client");
     final CountDownLatch waiter = new CountDownLatch(1);
     try {
       client.shutdown().addCallback(new Callback<Object, Object>() {
@@ -556,7 +557,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
 
   private void handleTransactionFailure(Transaction txn)
       throws EventDeliveryException {
-    if (consecutiveHBaseFailures >= MAX_CONSECUTIVE_FAILS) {
+    if (maxConsecutiveFails > 0 && consecutiveHBaseFailures >= maxConsecutiveFails) {
       if (client != null) {
         shutdownHBaseClient();
       }

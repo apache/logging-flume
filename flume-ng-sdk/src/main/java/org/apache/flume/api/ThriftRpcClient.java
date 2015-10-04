@@ -28,6 +28,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.TFastFramedTransport;
 import org.apache.thrift.transport.TSocket;
+import org.apache.thrift.transport.TTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,7 +74,7 @@ public class ThriftRpcClient extends AbstractRpcClient {
   public static final String CONFIG_PROTOCOL = "protocol";
   public static final String BINARY_PROTOCOL = "binary";
   public static final String COMPACT_PROTOCOL = "compact";
-  
+
   private int batchSize;
   private long requestTimeout;
   private final Lock stateLock;
@@ -83,7 +84,6 @@ public class ThriftRpcClient extends AbstractRpcClient {
   private ConnectionPoolManager connectionManager;
   private final ExecutorService callTimeoutPool;
   private final AtomicLong threadCounter;
-  private int connectionPoolSize;
   private final Random random = new Random();
   private String protocol;
 
@@ -91,10 +91,7 @@ public class ThriftRpcClient extends AbstractRpcClient {
   private String truststore;
   private String truststorePassword;
   private String truststoreType;
-  private String trustManagerType;
-  private static final String TRUSTMANAGER_TYPE = "trustmanager-type";
   private final List<String> excludeProtocols = new LinkedList<String>();
-
 
   public ThriftRpcClient() {
     stateLock = new ReentrantLock(true);
@@ -319,7 +316,7 @@ public class ThriftRpcClient extends AbstractRpcClient {
         requestTimeout =
           RpcClientConfigurationConstants.DEFAULT_REQUEST_TIMEOUT_MILLIS;
       }
-      connectionPoolSize = Integer.parseInt(properties.getProperty(
+      int connectionPoolSize = Integer.parseInt(properties.getProperty(
         RpcClientConfigurationConstants.CONFIG_CONNECTION_POOL_SIZE,
         String.valueOf(RpcClientConfigurationConstants
           .DEFAULT_CONNECTION_POOL_SIZE)));
@@ -339,8 +336,6 @@ public class ThriftRpcClient extends AbstractRpcClient {
                 RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_PASSWORD);
         truststoreType = properties.getProperty(
                 RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_TYPE, "JKS");
-        trustManagerType = properties.getProperty(
-                TRUSTMANAGER_TYPE, TrustManagerFactory.getDefaultAlgorithm());
         String excludeProtocolsStr = properties.getProperty(
                 RpcClientConfigurationConstants.CONFIG_EXCLUDE_PROTOCOLS);
         if (excludeProtocolsStr == null) {
@@ -352,6 +347,7 @@ public class ThriftRpcClient extends AbstractRpcClient {
           }
         }
       }
+
       connectionManager = new ConnectionPoolManager(connectionPoolSize);
       connState = State.READY;
     } catch (Throwable ex) {
@@ -372,33 +368,41 @@ public class ThriftRpcClient extends AbstractRpcClient {
     INIT, READY, DEAD
   }
 
+  protected TTransport getTransport(TSocket tsocket) throws Exception {
+    return new TFastFramedTransport(tsocket);
+  }
+
   /**
    * Wrapper around a client and transport, so we can clean up when this
    * client gets closed.
    */
   private class ClientWrapper {
     public final ThriftSourceProtocol.Client client;
-    public final TFastFramedTransport transport;
+    public final TTransport transport;
     private final int hashCode;
 
     public ClientWrapper() throws Exception{
       TSocket tsocket;
       if(enableSsl) {
-        // JDK6's factory doesn't appear to pass the protocol onto the Socket properly so we have
-        // to do some magic to make sure that happens. Not an issue in JDK7
-        // Lifted from thrift-0.9.1 to make the SSLContext
-        SSLContext sslContext = createSSLContext(truststore, truststorePassword, trustManagerType, truststoreType);
+        // JDK6's factory doesn't appear to pass the protocol onto the Socket
+        // properly so we have to do some magic to make sure that happens.
+        // Not an issue in JDK7 Lifted from thrift-0.9.1 to make the SSLContext
+        SSLContext sslContext = createSSLContext(truststore, truststorePassword,
+                truststoreType);
 
         // Create the factory from it
         SSLSocketFactory sslSockFactory = sslContext.getSocketFactory();
 
         // Create the TSocket from that
-        tsocket = createSSLSocket(sslSockFactory, hostname, port, 120000, excludeProtocols);
+        tsocket = createSSLSocket(
+                sslSockFactory, hostname, port, 120000, excludeProtocols);
       } else {
         tsocket = new TSocket(hostname, port);
       }
 
-      transport = new TFastFramedTransport(tsocket);
+
+     transport = getTransport(tsocket);
+
       // The transport is already open for SSL as part of TSSLTransportFactory.getClientSocket
       if(!transport.isOpen()) {
         transport.open();
@@ -523,13 +527,11 @@ public class ThriftRpcClient extends AbstractRpcClient {
    *
    */
   private static SSLContext createSSLContext(String truststore,
-          String truststorePassword, String trustManagerType,
-          String truststoreType) throws FlumeException {
+    String truststorePassword, String truststoreType) throws FlumeException {
     SSLContext ctx;
     try {
       ctx = SSLContext.getInstance("TLS");
-      TrustManagerFactory tmf = null;
-      KeyManagerFactory kmf = null;
+      TrustManagerFactory tmf;
       tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
       KeyStore ts = null;
       if (truststore != null && truststoreType != null) {

@@ -31,7 +31,7 @@ public class KafkaSourceCounter extends SourceCounter implements  KafkaSourceCou
       "source.kafka.empty.count";
 
   private static final String[] ATTRIBUTES =
-      {TIMER_KAFKA_COMMIT, TIMER_KAFKA_EVENT_GET};
+      {TIMER_KAFKA_COMMIT, TIMER_KAFKA_EVENT_GET, COUNTER_KAFKA_EMPTY};
 
   public KafkaSourceCounter(String name) {
     super(name, ATTRIBUTES);

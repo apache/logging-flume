@@ -128,6 +128,7 @@ public class Log {
 
   private final boolean fsyncPerTransaction;
   private final int fsyncInterval;
+  private final boolean checkpointOnClose;
 
   private int readCount;
   private int putCount;
@@ -157,6 +158,8 @@ public class Log {
 
     private boolean fsyncPerTransaction = true;
     private int fsyncInterval;
+
+    private boolean checkpointOnClose = true;
 
     boolean isFsyncPerTransaction() {
       return fsyncPerTransaction;
@@ -254,13 +257,18 @@ public class Log {
       return this;
     }
 
+    Builder setCheckpointOnClose(boolean enableCheckpointOnClose) {
+      this.checkpointOnClose = enableCheckpointOnClose;
+      return this;
+    }
+
     Log build() throws IOException {
       return new Log(bCheckpointInterval, bMaxFileSize, bQueueCapacity,
         bUseDualCheckpoints, bCompressBackupCheckpoint,bCheckpointDir,
         bBackupCheckpointDir, bName, useLogReplayV1, useFastReplay,
         bMinimumRequiredSpace, bEncryptionKeyProvider, bEncryptionKeyAlias,
         bEncryptionCipherProvider, bUsableSpaceRefreshInterval,
-        fsyncPerTransaction, fsyncInterval, bLogDirs);
+        fsyncPerTransaction, fsyncInterval, checkpointOnClose, bLogDirs);
     }
   }
 
@@ -272,7 +280,7 @@ public class Log {
     @Nullable String encryptionKeyAlias,
     @Nullable String encryptionCipherProvider,
     long usableSpaceRefreshInterval, boolean fsyncPerTransaction,
-    int fsyncInterval, File... logDirs)
+    int fsyncInterval, boolean checkpointOnClose, File... logDirs)
           throws IOException {
     Preconditions.checkArgument(checkpointInterval > 0,
       "checkpointInterval <= 0");
@@ -352,6 +360,8 @@ public class Log {
     this.logDirs = logDirs;
     this.fsyncPerTransaction = fsyncPerTransaction;
     this.fsyncInterval = fsyncInterval;
+    this.checkpointOnClose = checkpointOnClose;
+
     logFiles = new AtomicReferenceArray<LogFile.Writer>(this.logDirs.length);
     workerExecutor = Executors.newSingleThreadScheduledExecutor(new
       ThreadFactoryBuilder().setNameFormat("Log-BackgroundWorker-" + name)
@@ -791,6 +801,14 @@ public class Log {
     lockExclusive();
     try {
       open = false;
+      try {
+        if(checkpointOnClose) {
+          writeCheckpoint(true); // do this before acquiring exclusive lock
+        }
+      } catch (Exception err) {
+        LOGGER.warn("Failed creating checkpoint on close of channel " + channelNameDescriptor +
+                "Replay will take longer next time channel is started.", err);
+      }
       shutdownWorker();
       if (logFiles != null) {
         for (int index = 0; index < logFiles.length(); index++) {

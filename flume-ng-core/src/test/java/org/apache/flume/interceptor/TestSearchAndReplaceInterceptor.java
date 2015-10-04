@@ -84,4 +84,15 @@ public class TestSearchAndReplaceInterceptor {
     context.put("replaceString", "REDACTED");
     testSearchReplace(context, input, output);
   }
+
+  @Test
+  public void testReplaceEmpty() throws Exception {
+    final String input = "Abc123@test.com";
+    final String output = "@test.com";
+    Context context = new Context();
+    context.put("searchPattern", "^[A-Za-z0-9_]+");
+    testSearchReplace(context, input, output);
+    context.put("replaceString", "");
+    testSearchReplace(context, input, output);
+  }
 }

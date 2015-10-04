@@ -68,6 +68,7 @@
         <exclude>flume-ng-clients/**</exclude>
         <exclude>flume-ng-embedded-agent/**</exclude>
         <exclude>flume-tools/**</exclude>
+        <exclude>flume-ng-auth/**</exclude>
         <exclude>**/target/**</exclude>
         <exclude>**/.classpath</exclude>
         <exclude>**/.project</exclude>

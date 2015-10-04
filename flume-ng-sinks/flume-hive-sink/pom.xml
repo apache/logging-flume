@@ -23,7 +23,7 @@ limitations under the License.
   <parent>
     <groupId>org.apache.flume</groupId>
     <artifactId>flume-ng-sinks</artifactId>
-    <version>1.6.0-SNAPSHOT</version>
+    <version>1.7.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.apache.flume.flume-ng-sinks</groupId>
@@ -44,7 +44,8 @@ limitations under the License.
       <id>hadoop-1.0</id>
       <activation>
         <property>
-          <name>!hadoop.profile</name>
+          <name>flume.hadoop.profile</name>
+          <value>1</value>
         </property>
       </activation>
 
@@ -61,7 +62,7 @@ limitations under the License.
       <id>hadoop-2</id>
       <activation>
         <property>
-          <name>hadoop.profile</name>
+          <name>flume.hadoop.profile</name>
           <value>2</value>
         </property>
       </activation>
@@ -84,11 +85,10 @@ limitations under the License.
     </profile>
 
     <profile>
-      <id>hbase-98</id>
+      <id>hbase-1</id>
       <activation>
         <property>
-          <name>hadoop.profile</name>
-          <value>hbase-98</value>
+          <name>!flume.hadoop.profile</name>
         </property>
       </activation>
       <dependencies>
@@ -173,14 +173,11 @@ limitations under the License.
     <dependency>
       <groupId>xalan</groupId>
       <artifactId>serializer</artifactId>
-      <version>2.7.1</version>
-      <scope>runtime</scope>
     </dependency>
+
     <dependency>
       <groupId>xalan</groupId>
       <artifactId>xalan</artifactId>
-      <scope>runtime</scope>
-      <version>2.7.1</version>
     </dependency>
     <!-- end temporary -->
 

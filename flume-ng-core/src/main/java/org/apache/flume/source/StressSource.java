@@ -28,7 +28,7 @@ import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
-import org.apache.flume.PollableSource;
+import org.apache.flume.FlumeException;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
 import org.slf4j.Logger;
@@ -53,8 +53,8 @@ import org.slf4j.LoggerFactory;
  *
  * See {@link StressSource#configure(Context)} for configuration options.
  */
-public class StressSource extends AbstractSource implements
-  Configurable, PollableSource {
+public class StressSource extends AbstractPollableSource implements
+  Configurable {
 
   private static final Logger logger = LoggerFactory
       .getLogger(StressSource.class);
@@ -81,7 +81,7 @@ public class StressSource extends AbstractSource implements
    * <li>-batchSize = type int that defines the number of Events being sent in one batch
    */
   @Override
-  public void configure(Context context) {
+  protected void doConfigure(Context context) throws FlumeException {
     /* Limit on the total number of events. */
     maxTotalEvents = context.getLong("maxTotalEvents", -1L);
     /* Limit on the total number of successful events. */
@@ -113,13 +113,13 @@ public class StressSource extends AbstractSource implements
   }
 
   @Override
-  public Status process() throws EventDeliveryException {
+  protected Status doProcess() throws EventDeliveryException {
     long totalEventSent = counterGroup.addAndGet("events.total", lastSent);
 
     if ((maxTotalEvents >= 0 &&
-        totalEventSent >= maxTotalEvents) ||
-        (maxSuccessfulEvents >= 0 &&
-        counterGroup.get("events.successful") >= maxSuccessfulEvents)) {
+            totalEventSent >= maxTotalEvents) ||
+            (maxSuccessfulEvents >= 0 &&
+                    counterGroup.get("events.successful") >= maxSuccessfulEvents)) {
       return Status.BACKOFF;
     }
     try {
@@ -148,20 +148,12 @@ public class StressSource extends AbstractSource implements
   }
 
   @Override
-  public void start() {
-    logger.info("Stress source starting");
-
-    super.start();
-
-    logger.debug("Stress source started");
+  protected void doStart() throws FlumeException {
+    logger.info("Stress source doStart finished");
   }
 
   @Override
-  public void stop() {
-    logger.info("Stress source stopping");
-
-    super.stop();
-
-    logger.info("Stress source stopped. Metrics:{}", counterGroup);
+  protected void doStop() throws FlumeException {
+    logger.info("Stress source do stop. Metrics:{}", counterGroup);
   }
 }
