@@ -261,21 +261,26 @@ public class KafkaChannel extends BasicChannelSemantics {
       }
 
       try {
-        if (!tempOutStream.isPresent()) {
-          tempOutStream = Optional.of(new ByteArrayOutputStream());
+        if (parseAsFlumeEvent) {
+          if (!tempOutStream.isPresent()) {
+            tempOutStream = Optional.of(new ByteArrayOutputStream());
+          }
+          if (!writer.isPresent()) {
+            writer = Optional.of(new
+              SpecificDatumWriter<AvroFlumeEvent>(AvroFlumeEvent.class));
+          }
+          tempOutStream.get().reset();
+          AvroFlumeEvent e = new AvroFlumeEvent(
+            toCharSeqMap(event.getHeaders()),
+            ByteBuffer.wrap(event.getBody()));
+          encoder = EncoderFactory.get()
+            .directBinaryEncoder(tempOutStream.get(), encoder);
+          writer.get().write(e, encoder);
+          // Not really possible to avoid this copy :(
+          serializedEvents.get().add(tempOutStream.get().toByteArray());
+        } else {
+          serializedEvents.get().add(event.getBody());
         }
-        if (!writer.isPresent()) {
-          writer = Optional.of(new
-            SpecificDatumWriter<AvroFlumeEvent>(AvroFlumeEvent.class));
-        }
-        tempOutStream.get().reset();
-        AvroFlumeEvent e = new AvroFlumeEvent(
-          toCharSeqMap(event.getHeaders()), ByteBuffer.wrap(event.getBody()));
-        encoder = EncoderFactory.get()
-          .directBinaryEncoder(tempOutStream.get(), encoder);
-        writer.get().write(e, encoder);
-        // Not really possible to avoid this copy :(
-        serializedEvents.get().add(tempOutStream.get().toByteArray());
       } catch (Exception e) {
         throw new ChannelException("Error while serializing event", e);
       }
