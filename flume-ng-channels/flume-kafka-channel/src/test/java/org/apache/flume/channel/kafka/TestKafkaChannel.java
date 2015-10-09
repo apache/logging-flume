@@ -168,6 +168,43 @@ public class TestKafkaChannel {
   }
 
   /**
+   * Like the previous test but here we write to the channel like a Flume source would do
+   * to verify that the events are written as text and not as an Avro object
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testWritingToNoParsingAsFlumeAgent() throws Exception {
+    final KafkaChannel channel = startChannel(false);
+
+    List<String> msgs = new ArrayList<String>();
+    for (int i = 0; i < 50; i++){
+      msgs.add(String.valueOf(i));
+    }
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+    for (int i = 0; i < msgs.size(); i++){
+      channel.put(EventBuilder.withBody(msgs.get(i).getBytes()));
+    }
+    tx.commit();
+    ExecutorCompletionService<Void> submitterSvc = new
+            ExecutorCompletionService<Void>(Executors.newCachedThreadPool());
+    List<Event> events = pullEvents(channel, submitterSvc,
+      50, false, false);
+    wait(submitterSvc, 5);
+    Set<Integer> finals = Sets.newHashSet();
+    for (int i = 0; i < 50; i++) {
+      finals.add(Integer.parseInt(new String(events.get(i).getBody())));
+    }
+    for (int i = 0; i < 50; i++) {
+      Assert.assertTrue(finals.contains(i));
+      finals.remove(i);
+    }
+    Assert.assertTrue(finals.isEmpty());
+    channel.stop();
+  }
+
+  /**
    * This method starts a channel, puts events into it. The channel is then
    * stopped and restarted. Then we check to make sure if all events we put
    * come out. Optionally, 10 events are rolled back,
