@@ -60,6 +60,17 @@ public class ElasticSearchSinkConstants {
   public static final String TTL = "ttl";
 
   /**
+   * Actions to take when a bulk index operation to ElasticSearch fails:
+   *  drop - ignore the event and move on to the next one
+   *  log - log the event to the logger
+   *  retry - keep it in queue and continually retry
+   */
+  public static final String BULK_ERROR_ACTION = "bulkErrorAction";
+  public static final String BULK_ERROR_ACTION_DROP = "drop";
+  public static final String BULK_ERROR_ACTION_LOG = "log";
+  public static final String BULK_ERROR_ACTION_RETRY = "retry";
+
+  /**
    * The fully qualified class name of the serializer the sink should use.
    */
   public static final String SERIALIZER = "serializer";
@@ -108,4 +119,5 @@ public class ElasticSearchSinkConstants {
           "sink.elasticsearch.ElasticSearchLogStashEventSerializer";
   public static final String DEFAULT_INDEX_NAME_BUILDER_CLASS =
           "org.apache.flume.sink.elasticsearch.TimeBasedIndexNameBuilder";
+  public static final String DEFAULT_BULK_ERROR_ACTION = BULK_ERROR_ACTION_RETRY;
 }
