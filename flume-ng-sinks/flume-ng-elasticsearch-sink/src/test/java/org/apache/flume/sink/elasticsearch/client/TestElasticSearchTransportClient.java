@@ -18,6 +18,7 @@
  */
 package org.apache.flume.sink.elasticsearch.client;
 
+import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.sink.elasticsearch.ElasticSearchEventSerializer;
@@ -121,6 +122,22 @@ public class TestElasticSearchTransportClient {
     when(action.actionGet()).thenReturn(response);
     when(response.hasFailures()).thenReturn(true);
 
+    fixture.addEvent(event, nameBuilder, "bar_type", 10);
+    fixture.execute();
+  }
+
+  @Test
+  public void shouldNotThrowExceptionOnExecuteFailed() throws Exception {
+    ListenableActionFuture<BulkResponse> action =
+        (ListenableActionFuture<BulkResponse>) mock(ListenableActionFuture.class);
+    BulkResponse response = mock(BulkResponse.class);
+    when(bulkRequestBuilder.execute()).thenReturn(action);
+    when(action.actionGet()).thenReturn(response);
+    when(response.hasFailures()).thenReturn(true);
+
+    Context ctx = new Context();
+    ctx.put("bulkErrorAction","drop");
+    fixture.configure(ctx);
     fixture.addEvent(event, nameBuilder, "bar_type", 10);
     fixture.execute();
   }

@@ -20,6 +20,7 @@ package org.apache.flume.sink.elasticsearch.client;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
@@ -42,6 +43,10 @@ import java.util.Arrays;
 import org.apache.flume.sink.elasticsearch.ElasticSearchIndexRequestBuilderFactory;
 
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.DEFAULT_PORT;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.BULK_ERROR_ACTION;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.BULK_ERROR_ACTION_LOG;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.BULK_ERROR_ACTION_RETRY;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.DEFAULT_BULK_ERROR_ACTION;
 
 public class ElasticSearchTransportClient implements ElasticSearchClient {
 
@@ -54,6 +59,8 @@ public class ElasticSearchTransportClient implements ElasticSearchClient {
   private BulkRequestBuilder bulkRequestBuilder;
 
   private Client client;
+
+  private String bulkErrorAction = DEFAULT_BULK_ERROR_ACTION;
 
   @VisibleForTesting
   InetSocketTransportAddress[] getServerAddresses() {
@@ -180,7 +187,12 @@ public class ElasticSearchTransportClient implements ElasticSearchClient {
     try {
       BulkResponse bulkResponse = bulkRequestBuilder.execute().actionGet();
       if (bulkResponse.hasFailures()) {
-        throw new EventDeliveryException(bulkResponse.buildFailureMessage());
+        if (bulkErrorAction.equals(BULK_ERROR_ACTION_RETRY)) {
+          throw new EventDeliveryException(bulkResponse.buildFailureMessage());
+        }
+        else if (bulkErrorAction.equals(BULK_ERROR_ACTION_LOG)) {
+          logger.info(bulkResponse.buildFailureMessage());
+        }
       }
     } finally {
       bulkRequestBuilder = client.prepareBulk();
@@ -225,6 +237,11 @@ public class ElasticSearchTransportClient implements ElasticSearchClient {
 
   @Override
   public void configure(Context context) {
-    //To change body of implemented methods use File | Settings | File Templates.
+    if (StringUtils.isNotBlank(context.getString(BULK_ERROR_ACTION))) {
+      bulkErrorAction = context.getString(BULK_ERROR_ACTION);
+    } else {
+      bulkErrorAction = DEFAULT_BULK_ERROR_ACTION;
+    }
+    logger.info("Configuring bulk error action to: " + bulkErrorAction);
   }
 }
