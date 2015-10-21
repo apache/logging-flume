@@ -168,7 +168,7 @@ public class TestKafkaSink {
     kafkaSink.start();
 
     Sink.Status status = kafkaSink.process();
-    if (status == Sink.Status.BACKOFF) {
+    if (status != Sink.Status.BACKOFF) {
       fail("Error Occurred");
     }
     assertNull(
