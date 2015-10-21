@@ -98,6 +98,12 @@ public class KafkaSink extends AbstractSink implements Configurable {
 
         if (event == null) {
           // no events available in channel
+          if(processedEvents == 0) {
+            result = Status.BACKOFF;
+            counter.incrementBatchEmptyCount();
+          } else {
+            counter.incrementBatchUnderflowCount();
+          }
           break;
         }
 
