@@ -87,6 +87,29 @@ public class TestResettableFileInputStream {
     in.close();
   }
 
+  /**
+   * Ensure that we can simply read bytes from a file using InputStream.read() method.
+   * @throws IOException
+   */
+  @Test
+  public void testReadByte() throws IOException {
+    byte[] bytes = new byte[255];
+    for (int i = 0; i < 255; i++) {
+      bytes[i] = (byte) i;
+    }
+
+    Files.write(bytes, file);
+
+    PositionTracker tracker = new DurablePositionTracker(meta, file.getPath());
+    ResettableInputStream in = new ResettableFileInputStream(file, tracker);
+
+    for (int i = 0; i < 255; i++) {
+      assertEquals(i, in.read());
+    }
+    assertEquals(-1, in.read());
+
+    in.close();
+  }
 
   /**
    * Ensure that we can process lines that contain multi byte characters in weird places

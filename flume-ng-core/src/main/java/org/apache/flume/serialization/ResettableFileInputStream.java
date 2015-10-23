@@ -224,7 +224,7 @@ public class ResettableFileInputStream extends ResettableInputStream
     } else if (len == 0) {
       return -1;
     } else {
-      return byteBuf[0];
+      return byteBuf[0] & 0xFF;
     }
   }
 
