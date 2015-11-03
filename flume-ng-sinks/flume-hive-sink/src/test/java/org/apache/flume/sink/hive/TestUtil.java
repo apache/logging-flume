@@ -76,7 +76,9 @@ public class TestUtil {
             " clustered by ( " + colNames[0] + " )" +
             " into 10 buckets " +
             " stored as orc " +
-            " location '" + tableLoc +  "'";
+            " location '" + tableLoc +  "'" +
+            " TBLPROPERTIES ('transactional'='true')";
+
     runDDL(driver, crtTbl);
     System.out.println("crtTbl = " + crtTbl);
     if (partNames!=null && partNames.length!=0) {
