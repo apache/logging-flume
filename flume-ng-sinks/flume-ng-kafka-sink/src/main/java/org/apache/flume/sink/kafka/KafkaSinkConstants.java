@@ -34,7 +34,7 @@ public class KafkaSinkConstants {
   public static final String REQUIRED_ACKS_KEY = "request.required.acks";
   public static final String BROKER_LIST_FLUME_KEY = "brokerList";
   public static final String REQUIRED_ACKS_FLUME_KEY = "requiredAcks";
-
+  public static final String MESSAGE_MAX_SIZE = "messageMaxSize";
 
 
   public static final int DEFAULT_BATCH_SIZE = 100;
@@ -44,4 +44,5 @@ public class KafkaSinkConstants {
   public static final String DEFAULT_KEY_SERIALIZER =
           "kafka.serializer.StringEncoder";
   public static final String DEFAULT_REQUIRED_ACKS = "1";
+  public static final int DEFAULT_MESSAGE_MAX_SIZE = 8388608;
 }
