@@ -320,7 +320,7 @@ if ("$pluginsPath" -eq "") {
 foreach($plugin in  $pluginsPath.Split(";") )  {
   if ( Test-path "$plugin" ) {
     $pluginTmp =
-        ( (Get-ChildItem "$plugin\*\lib")  + (Get-ChildItem "$plugin\*\libext") ) -join "\*"";"""
+        ( @(Get-ChildItem "$plugin\*\lib")  + @(Get-ChildItem "$plugin\*\libext") ) -join "\*"";"""
     if( "$pluginTmp" -ne "" ) {
       $javaClassPath="$javaClassPath;""" + $pluginTmp + "\*"";"
     }
