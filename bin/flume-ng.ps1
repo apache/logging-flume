@@ -166,7 +166,7 @@ Function GetClassPath ($cmd) {
 
 Function GetJavaPath {
     if ($env:JAVA_HOME) {
-        return "$env:JAVA_HOME\bin\java.exe" }ss
+        return "$env:JAVA_HOME\bin\java.exe" }
     Write-Host "WARN: JAVA_HOME not set"
     return '"' + (Resolve-Path "java.exe").Path + '"'
 }
