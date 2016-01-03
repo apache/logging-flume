@@ -2674,8 +2674,6 @@ Example for agent named a1:
 .. code-block:: properties
 
     a1.channels.channel1.type   = org.apache.flume.channel.kafka.KafkaChannel
-    a1.channels.channel1.capacity = 10000
-    a1.channels.channel1.transactionCapacity = 1000
     a1.channels.channel1.brokerList=kafka-2:9092,kafka-3:9092
     a1.channels.channel1.topic=channel1
     a1.channels.channel1.zookeeperConnect=kafka-1:2181
