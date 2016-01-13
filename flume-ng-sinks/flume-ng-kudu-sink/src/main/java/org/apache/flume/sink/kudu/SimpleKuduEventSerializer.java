@@ -28,7 +28,7 @@ import org.kududb.client.KuduTable;
 import org.kududb.client.Operation;
 import org.kududb.client.PartialRow;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -64,7 +64,7 @@ public class SimpleKuduEventSerializer implements KuduEventSerializer {
 
   @Override
   public List<Operation> getOperations() throws FlumeException {
-    List<Operation> operations = new LinkedList<Operation>();
+    List<Operation> operations = new ArrayList<Operation>();
     try {
       Insert insert = table.newInsert();
       PartialRow row = insert.getRow();
