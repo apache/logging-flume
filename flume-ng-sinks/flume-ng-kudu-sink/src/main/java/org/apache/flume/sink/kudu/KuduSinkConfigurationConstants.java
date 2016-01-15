@@ -38,4 +38,9 @@ public class KuduSinkConfigurationConstants {
    * Configuration to pass to the serializer.
    */
   public static final String CONFIG_SERIALIZER_PREFIX = CONFIG_SERIALIZER + ".";
+  /**
+   * Maximum number of events the sink should take from the channel per
+   * transaction, if available.
+   */
+  public static final java.lang.String CONFIG_BATCHSIZE = "batchSize";
 }

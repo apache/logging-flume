@@ -40,7 +40,6 @@ import org.kududb.client.SessionConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.LinkedList;
 import java.util.List;
 
 
@@ -52,8 +51,11 @@ import java.util.List;
  */
 public class KuduSink extends AbstractSink implements Configurable {
   private static final Logger logger = LoggerFactory.getLogger(KuduSink.class);
+  private static final Long DEFAULT_BATCH_SIZE = 100L;
+
   private String masterHost;
   private String tableName;
+  private long batchSize;
   private KuduTable table;
   private KuduSession session;
   private KuduClient client;
@@ -81,7 +83,7 @@ public class KuduSink extends AbstractSink implements Configurable {
 
     client = new KuduClient.KuduClientBuilder(masterHost).build();
     session = client.newSession();
-    session.setFlushMode(SessionConfiguration.FlushMode.AUTO_FLUSH_BACKGROUND);
+    session.setFlushMode(SessionConfiguration.FlushMode.MANUAL_FLUSH);
 
     try {
       table = client.openTable(tableName);
@@ -119,6 +121,8 @@ public class KuduSink extends AbstractSink implements Configurable {
   public void configure(Context context){
     masterHost = context.getString(KuduSinkConfigurationConstants.CONFIG_MASTER_HOST);
     tableName = context.getString(KuduSinkConfigurationConstants.CONFIG_TABLE);
+    batchSize = context.getLong(
+            KuduSinkConfigurationConstants.CONFIG_BATCHSIZE, DEFAULT_BATCH_SIZE);
     serializerContext = new Context();
     //If not specified, will use HBase defaults.
     eventSerializerType = context.getString(
@@ -157,28 +161,30 @@ public class KuduSink extends AbstractSink implements Configurable {
     Status status = Status.READY;
     Channel channel = getChannel();
     Transaction txn = channel.getTransaction();
-    List<Operation> operations = new LinkedList<Operation>();
+    long i = 0;
+
     try {
       txn.begin();
 
-      Event event = channel.take();
-      if (event == null) {
-        sinkCounter.incrementBatchEmptyCount();
-        counterGroup.incrementAndGet("channel.underflow");
-        status = Status.BACKOFF;
-      } else {
-        sinkCounter.incrementBatchCompleteCount();
-        sinkCounter.addToEventDrainAttemptCount(1);
-        serializer.initialize(event, table);
-        operations.addAll(serializer.getOperations());
-      }
-
-      for (Operation o : operations) {
-        session.apply(o);
+      for (; i < batchSize; i++) {
+        Event event = channel.take();
+        if (event == null) {
+          sinkCounter.incrementBatchEmptyCount();
+          counterGroup.incrementAndGet("channel.underflow");
+          status = Status.BACKOFF;
+        } else {
+          sinkCounter.incrementBatchCompleteCount();
+          sinkCounter.addToEventDrainAttemptCount(1);
+          serializer.initialize(event, table);
+          List<Operation> operations = serializer.getOperations();
+          for (Operation o : operations) {
+            session.apply(o);
+          }
+        }
       }
 
       txn.commit();
-      sinkCounter.addToEventDrainSuccessCount(operations.size());
+      sinkCounter.addToEventDrainSuccessCount(i);
 
     } catch (Throwable e) {
       try{
@@ -200,6 +206,13 @@ public class KuduSink extends AbstractSink implements Configurable {
             "Transaction rolled back.", e);
       }
     } finally {
+      try {
+        logger.debug("Flushing {} events", i);
+        session.flush();
+      } catch (Exception e) {
+        throw new EventDeliveryException("Failed to flush changes." +
+                "Transaction rolled back.", e);
+      }
       txn.close();
     }
     return status;
