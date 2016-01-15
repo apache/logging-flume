@@ -169,9 +169,13 @@ public class KuduSink extends AbstractSink implements Configurable {
       for (; i < batchSize; i++) {
         Event event = channel.take();
         if (event == null) {
-          sinkCounter.incrementBatchEmptyCount();
-          counterGroup.incrementAndGet("channel.underflow");
-          status = Status.BACKOFF;
+          if (i == 0) {
+            status = Status.BACKOFF;
+            sinkCounter.incrementBatchEmptyCount();
+          } else {
+            sinkCounter.incrementBatchUnderflowCount();
+          }
+          break;
         } else {
           sinkCounter.incrementBatchCompleteCount();
           sinkCounter.addToEventDrainAttemptCount(1);
