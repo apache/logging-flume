@@ -45,9 +45,6 @@ Configurable, EventDrivenSource {
   private static final Logger logger = LoggerFactory
       .getLogger(SpoolDirectorySource.class);
 
-  // Delay used when polling for new files
-  private static final int POLL_DELAY_MS = 500;
-
   /* Config options */
   private String completedSuffix;
   private String spoolDirectory;
@@ -72,6 +69,7 @@ Configurable, EventDrivenSource {
   private boolean hitChannelException = false;
   private int maxBackoff;
   private ConsumeOrder consumeOrder;
+  private int pollDelay;
 
   @Override
   public synchronized void start() {
@@ -105,7 +103,7 @@ Configurable, EventDrivenSource {
 
     Runnable runner = new SpoolDirectoryRunnable(reader, sourceCounter);
     executor.scheduleWithFixedDelay(
-        runner, 0, POLL_DELAY_MS, TimeUnit.MILLISECONDS);
+        runner, 0, pollDelay, TimeUnit.MILLISECONDS);
 
     super.start();
     logger.debug("SpoolDirectorySource source started");
@@ -167,6 +165,8 @@ Configurable, EventDrivenSource {
     
     consumeOrder = ConsumeOrder.valueOf(context.getString(CONSUME_ORDER, 
         DEFAULT_CONSUME_ORDER.toString()).toUpperCase(Locale.ENGLISH));
+
+    pollDelay = context.getInteger(POLL_DELAY, DEFAULT_POLL_DELAY);
 
     // "Hack" to support backwards compatibility with previous generation of
     // spooling directory source, which did not support deserializers
