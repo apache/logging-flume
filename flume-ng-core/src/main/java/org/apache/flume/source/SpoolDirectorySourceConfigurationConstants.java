@@ -93,4 +93,8 @@ public class SpoolDirectorySourceConfigurationConstants {
   }
   public static final String CONSUME_ORDER = "consumeOrder";
   public static final ConsumeOrder DEFAULT_CONSUME_ORDER = ConsumeOrder.OLDEST;    
+  
+  /** Delay(in milliseconds) used when polling for new files. The default is 500ms */
+  public static final String POLL_DELAY = "pollDelay";
+  public static final int DEFAULT_POLL_DELAY = 500;
 }
