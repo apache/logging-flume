@@ -118,7 +118,6 @@ limitations under the License.
             <groupId>org.apache.zookeeper</groupId>
             <artifactId>zookeeper</artifactId>
             <version>3.4.5</version>
-            <scope>test</scope>
           </dependency>
         </dependencies>
       </dependencyManagement>
@@ -194,7 +193,6 @@ limitations under the License.
             <groupId>org.apache.zookeeper</groupId>
             <artifactId>zookeeper</artifactId>
             <version>3.4.5</version>
-            <scope>test</scope>
           </dependency>
 
           <!-- only compatible with hadoop-2 -->
@@ -321,7 +319,6 @@ limitations under the License.
             <groupId>org.apache.zookeeper</groupId>
             <artifactId>zookeeper</artifactId>
             <version>3.4.5</version>
-            <scope>test</scope>
           </dependency>
 
           <!-- only compatible with hadoop-2 -->
