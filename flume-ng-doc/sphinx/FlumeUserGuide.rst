@@ -2128,6 +2128,12 @@ Property Name        Default  Description
 sink.rollInterval    30       Roll the file every 30 seconds. Specifying 0 will disable rolling and cause all events to be written to a single file.
 sink.serializer      TEXT     Other possible options include ``avro_event`` or the FQCN of an implementation of EventSerializer.Builder interface.
 batchSize            100
+**sink.fileName**    --       Name to use for the file, current file will always have this named. When rolled file name will be appended an
+                              integer indicating how many files have been rolled.
+sink.maxFileSize     -1       Max size for a file can reach before it can be rolled. Size can be specified in GB, MB, KB or
+                              even in B(appending B at the is optional) e.g. 2GB, 2000MB, 2KB etc. For a non positive value size based rolling would
+                              not kick in.
+sink.maxHistory      -1       Maximum number of old files to keep. For a non positive value old files would not be deleted.
 ===================  =======  ======================================================================================================================
 
 Example for agent named a1:

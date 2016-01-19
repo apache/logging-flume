@@ -24,33 +24,31 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class PathManager {
 
-  private long seriesTimestamp;
   private File baseDirectory;
   private AtomicInteger fileIndex;
-
+  private String fileName;
+  
   private File currentFile;
 
-  public PathManager() {
-    seriesTimestamp = System.currentTimeMillis();
-    fileIndex = new AtomicInteger();
+  public PathManager(String fileName, int maxRolledCount) {
+    this.fileName = fileName;
+    fileIndex = new AtomicInteger(maxRolledCount);
   }
 
-  public File nextFile() {
-    currentFile = new File(baseDirectory, seriesTimestamp + "-"
-        + fileIndex.incrementAndGet());
-
-    return currentFile;
+  public File nextRotatedFile() {
+    return  new File(baseDirectory, fileName + "-" + fileIndex.incrementAndGet()); 
   }
 
   public File getCurrentFile() {
     if (currentFile == null) {
-      return nextFile();
+      currentFile = new File(baseDirectory, fileName);
     }
 
     return currentFile;
   }
 
   public void rotate() {
+    currentFile.renameTo(nextRotatedFile());
     currentFile = null;
   }
 
@@ -62,8 +60,8 @@ public class PathManager {
     this.baseDirectory = baseDirectory;
   }
 
-  public long getSeriesTimestamp() {
-    return seriesTimestamp;
+  public String getFileName() {
+    return fileName;
   }
 
   public AtomicInteger getFileIndex() {
