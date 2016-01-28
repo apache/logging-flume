@@ -42,5 +42,7 @@ public class KuduSinkConfigurationConstants {
    * Maximum number of events the sink should take from the channel per
    * transaction, if available.
    */
-  public static final java.lang.String CONFIG_BATCHSIZE = "batchSize";
+  public static final java.lang.String CONFIG_BATCH_SIZE = "batchSize";
+
+  public static final java.lang.String CONFIG_TIMEOUT_MILLIES = "timeoutMillis";
 }

@@ -32,6 +32,7 @@ import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.AbstractSink;
+import org.kududb.client.AsyncKuduClient;
 import org.kududb.client.KuduClient;
 import org.kududb.client.KuduSession;
 import org.kududb.client.KuduTable;
@@ -52,10 +53,12 @@ import java.util.List;
 public class KuduSink extends AbstractSink implements Configurable {
   private static final Logger logger = LoggerFactory.getLogger(KuduSink.class);
   private static final Long DEFAULT_BATCH_SIZE = 100L;
+  private static final Long DEFAULT_TIMEOUT_MILLIES = AsyncKuduClient.DEFAULT_OPERATION_TIMEOUT_MS;
 
   private String masterHost;
   private String tableName;
   private long batchSize;
+  private long timeoutMillis;
   private KuduTable table;
   private KuduSession session;
   private KuduClient client;
@@ -84,6 +87,7 @@ public class KuduSink extends AbstractSink implements Configurable {
     client = new KuduClient.KuduClientBuilder(masterHost).build();
     session = client.newSession();
     session.setFlushMode(SessionConfiguration.FlushMode.MANUAL_FLUSH);
+    session.setTimeoutMillis(timeoutMillis);
 
     try {
       table = client.openTable(tableName);
@@ -122,7 +126,9 @@ public class KuduSink extends AbstractSink implements Configurable {
     masterHost = context.getString(KuduSinkConfigurationConstants.CONFIG_MASTER_HOST);
     tableName = context.getString(KuduSinkConfigurationConstants.CONFIG_TABLE);
     batchSize = context.getLong(
-            KuduSinkConfigurationConstants.CONFIG_BATCHSIZE, DEFAULT_BATCH_SIZE);
+            KuduSinkConfigurationConstants.CONFIG_BATCH_SIZE, DEFAULT_BATCH_SIZE);
+    timeoutMillis = context.getLong(
+            KuduSinkConfigurationConstants.CONFIG_TIMEOUT_MILLIES, DEFAULT_TIMEOUT_MILLIES);
     serializerContext = new Context();
     //If not specified, will use HBase defaults.
     eventSerializerType = context.getString(
@@ -158,6 +164,13 @@ public class KuduSink extends AbstractSink implements Configurable {
 
   @Override
   public Status process() throws EventDeliveryException {
+    if (session.hasPendingOperations()) {
+      //if for whatever reason we have pending operations then just refuse to process
+      //and tell caller to try again a bit later. We don't want to pile on the kudu
+      //session object.
+      return Status.READY;
+    }
+
     Status status = Status.READY;
     Channel channel = getChannel();
     Transaction txn = channel.getTransaction();
@@ -187,6 +200,14 @@ public class KuduSink extends AbstractSink implements Configurable {
         }
       }
 
+      try {
+        logger.debug("Flushing {} events", i);
+        session.flush();
+      } catch (Exception e) {
+        throw new EventDeliveryException("Failed to flush changes." +
+                "Transaction rolled back.", e);
+      }
+
       txn.commit();
       sinkCounter.addToEventDrainSuccessCount(i);
 
@@ -210,13 +231,6 @@ public class KuduSink extends AbstractSink implements Configurable {
             "Transaction rolled back.", e);
       }
     } finally {
-      try {
-        logger.debug("Flushing {} events", i);
-        session.flush();
-      } catch (Exception e) {
-        throw new EventDeliveryException("Failed to flush changes." +
-                "Transaction rolled back.", e);
-      }
       txn.close();
     }
     return status;
