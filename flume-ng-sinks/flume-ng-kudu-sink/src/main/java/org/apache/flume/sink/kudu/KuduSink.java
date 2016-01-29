@@ -53,7 +53,7 @@ import java.util.List;
 public class KuduSink extends AbstractSink implements Configurable {
   private static final Logger logger = LoggerFactory.getLogger(KuduSink.class);
   private static final Long DEFAULT_BATCH_SIZE = 100L;
-  private static final Long DEFAULT_TIMEOUT_MILLIES = AsyncKuduClient.DEFAULT_OPERATION_TIMEOUT_MS;
+  private static final Long DEFAULT_TIMEOUT_MILLIS = AsyncKuduClient.DEFAULT_OPERATION_TIMEOUT_MS;
 
   private String masterHost;
   private String tableName;
@@ -128,7 +128,7 @@ public class KuduSink extends AbstractSink implements Configurable {
     batchSize = context.getLong(
             KuduSinkConfigurationConstants.CONFIG_BATCH_SIZE, DEFAULT_BATCH_SIZE);
     timeoutMillis = context.getLong(
-            KuduSinkConfigurationConstants.CONFIG_TIMEOUT_MILLIES, DEFAULT_TIMEOUT_MILLIES);
+            KuduSinkConfigurationConstants.CONFIG_TIMEOUT_MILLIS, DEFAULT_TIMEOUT_MILLIS);
     serializerContext = new Context();
     //If not specified, will use HBase defaults.
     eventSerializerType = context.getString(

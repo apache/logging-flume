@@ -44,5 +44,5 @@ public class KuduSinkConfigurationConstants {
    */
   public static final java.lang.String CONFIG_BATCH_SIZE = "batchSize";
 
-  public static final java.lang.String CONFIG_TIMEOUT_MILLIES = "timeoutMillis";
+  public static final java.lang.String CONFIG_TIMEOUT_MILLIS = "timeoutMillis";
 }
