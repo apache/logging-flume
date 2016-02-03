@@ -170,7 +170,6 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
     return indexNameBuilder;
   }
 
-  @Override
   public Status process() throws EventDeliveryException {
     logger.debug("processing...");
     Status status = Status.READY;
@@ -233,7 +232,6 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
     return status;
   }
 
-  @Override
   public void configure(Context context) {
     if (!isLocal) {
       if (StringUtils.isNotBlank(context.getString(HOSTNAMES))) {
@@ -314,7 +312,7 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
 
     Context indexnameBuilderContext = new Context();
     indexnameBuilderContext.putAll(
-            context.getSubProperties(INDEX_NAME_BUILDER_PREFIX));
+            context.getSubProperties(INDEX_NAME_BUILDER_PREFIX)); 
 
     try {
       @SuppressWarnings("unchecked")
