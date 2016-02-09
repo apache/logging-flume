@@ -28,22 +28,22 @@ Apache Flume is a distributed, reliable, and available system for efficiently
 collecting, aggregating and moving large amounts of log data from many
 different sources to a centralized data store.
 
-The use of Apache Flume is not only restricted to log data aggregation. 
+The use of Apache Flume is not only restricted to log data aggregation.
 Since data sources are customizable, Flume can be used to transport massive quantities
-of event data including but not limited to network traffic data, social-media-generated data, 
+of event data including but not limited to network traffic data, social-media-generated data,
 email messages and pretty much any data source possible.
 
 Apache Flume is a top level project at the Apache Software Foundation.
 
 There are currently two release code lines available, versions 0.9.x and 1.x.
 
-Documentation for the 0.9.x track is available at 
+Documentation for the 0.9.x track is available at
 `the Flume 0.9.x User Guide <http://archive.cloudera.com/cdh/3/flume/UserGuide/>`_.
 
 This documentation applies to the 1.4.x track.
 
-New and existing users are encouraged to use the 1.x releases so as to 
-leverage the performance improvements and configuration flexibilities available 
+New and existing users are encouraged to use the 1.x releases so as to
+leverage the performance improvements and configuration flexibilities available
 in the latest architecture.
 
 
@@ -1153,7 +1153,7 @@ Twitter 1% firehose Source (experimental)
 
 Experimental source that connects via Streaming API to the 1% sample twitter
 firehose, continously downloads tweets, converts them to Avro format and
-sends Avro events to a downstream Flume sink. Requires the consumer and 
+sends Avro events to a downstream Flume sink. Requires the consumer and
 access tokens and secrets of a Twitter developer account.
 Required properties are in **bold**.
 
@@ -1165,7 +1165,7 @@ Property Name          Default      Description
 **consumerKey**        --           OAuth consumer key
 **consumerSecret**     --           OAuth consumer secret
 **accessToken**        --           OAuth access token
-**accessTokenSecret**  --           OAuth toekn secret 
+**accessTokenSecret**  --           OAuth toekn secret
 maxBatchSize           1000         Maximum number of twitter messages to put in a single batch
 maxBatchDurationMillis 1000         Maximum number of milliseconds to wait before closing a batch
 ====================== ===========  ===================================================
@@ -2119,16 +2119,19 @@ File Roll Sink
 Stores events on the local filesystem.
 Required properties are in **bold**.
 
-===================  =======  ======================================================================================================================
-Property Name        Default  Description
-===================  =======  ======================================================================================================================
-**channel**          --
-**type**             --       The component type name, needs to be ``file_roll``.
-**sink.directory**   --       The directory where files will be stored
-sink.rollInterval    30       Roll the file every 30 seconds. Specifying 0 will disable rolling and cause all events to be written to a single file.
-sink.serializer      TEXT     Other possible options include ``avro_event`` or the FQCN of an implementation of EventSerializer.Builder interface.
-batchSize            100
-===================  =======  ======================================================================================================================
+==========================  =======  ======================================================================================================================
+Property Name               Default  Description
+==========================  =======  ======================================================================================================================
+**channel**                 --
+**type**                    --       The component type name, needs to be ``file_roll``.
+**sink.directory**          --       The directory where files will be stored
+sink.pathManager            DEFAULT  The PathManager implementation to use.
+sink.pathManager.extension  --       The file extension if the default PathManager is used.
+sink.pathManager.prefix     --       A character string to add to the beginning of the file name if the default PathManager is used
+sink.rollInterval           30       Roll the file every 30 seconds. Specifying 0 will disable rolling and cause all events to be written to a single file.
+sink.serializer             TEXT     Other possible options include ``avro_event`` or the FQCN of an implementation of EventSerializer.Builder interface.
+batchSize                   100
+==========================  =======  ======================================================================================================================
 
 Example for agent named a1:
 
@@ -2284,19 +2287,19 @@ This sink extracts data from Flume events, transforms it, and loads it in near-r
 
 This sink is well suited for use cases that stream raw data into HDFS (via the HdfsSink) and simultaneously extract, transform and load the same data into Solr (via MorphlineSolrSink). In particular, this sink can process arbitrary heterogeneous raw data from disparate data sources and turn it into a data model that is useful to Search applications.
 
-The ETL functionality is customizable using a `morphline configuration file <http://cloudera.github.io/cdk/docs/current/cdk-morphlines/index.html>`_ that defines a chain of transformation commands that pipe event records from one command to another. 
+The ETL functionality is customizable using a `morphline configuration file <http://cloudera.github.io/cdk/docs/current/cdk-morphlines/index.html>`_ that defines a chain of transformation commands that pipe event records from one command to another.
 
 Morphlines can be seen as an evolution of Unix pipelines where the data model is generalized to work with streams of generic records, including arbitrary binary payloads. A morphline command is a bit like a Flume Interceptor. Morphlines can be embedded into Hadoop components such as Flume.
 
 Commands to parse and transform a set of standard data formats such as log files, Avro, CSV, Text, HTML, XML, PDF, Word, Excel, etc. are provided out of the box, and additional custom commands and parsers for additional data formats can be added as morphline plugins. Any kind of data format can be indexed and any Solr documents for any kind of Solr schema can be generated, and any custom ETL logic can be registered and executed.
 
-Morphlines manipulate continuous streams of records. The data model can be described as follows: A record is a set of named fields where each field has an ordered list of one or more values. A value can be any Java Object. That is, a record is essentially a hash table where each hash table entry contains a String key and a list of Java Objects as values. (The implementation uses Guava's ``ArrayListMultimap``, which is a ``ListMultimap``). Note that a field can have multiple values and any two records need not use common field names. 
+Morphlines manipulate continuous streams of records. The data model can be described as follows: A record is a set of named fields where each field has an ordered list of one or more values. A value can be any Java Object. That is, a record is essentially a hash table where each hash table entry contains a String key and a list of Java Objects as values. (The implementation uses Guava's ``ArrayListMultimap``, which is a ``ListMultimap``). Note that a field can have multiple values and any two records need not use common field names.
 
 This sink fills the body of the Flume event into the ``_attachment_body`` field of the morphline record, as well as copies the headers of the Flume event into record fields of the same name. The commands can then act on this data.
 
 Routing to a SolrCloud cluster is supported to improve scalability. Indexing load can be spread across a large number of MorphlineSolrSinks for improved scalability. Indexing load can be replicated across multiple MorphlineSolrSinks for high availability, for example using Flume features such as Load balancing Sink Processor. MorphlineInterceptor can also help to implement dynamic routing to multiple Solr collections (e.g. for multi-tenancy).
 
-The morphline and solr jars required for your environment must be placed in the lib directory of the Apache Flume installation. 
+The morphline and solr jars required for your environment must be placed in the lib directory of the Apache Flume installation.
 
 The type is the FQCN: org.apache.flume.sink.solr.morphline.MorphlineSolrSink
 
@@ -2334,11 +2337,11 @@ ElasticSearchSink
 ~~~~~~~~~~~~~~~~~
 
 This sink writes data to an elasticsearch cluster. By default, events will be written so that the `Kibana <http://kibana.org>`_ graphical interface
-can display them - just as if `logstash <https://logstash.net>`_ wrote them. 
+can display them - just as if `logstash <https://logstash.net>`_ wrote them.
 
-The elasticsearch and lucene-core jars required for your environment must be placed in the lib directory of the Apache Flume installation. 
+The elasticsearch and lucene-core jars required for your environment must be placed in the lib directory of the Apache Flume installation.
 Elasticsearch requires that the major version of the client JAR match that of the server and that both are running the same minor version
-of the JVM. SerializationExceptions will appear if this is incorrect. To 
+of the JVM. SerializationExceptions will appear if this is incorrect. To
 select the required version first determine the version of elasticsearch and the JVM version the target cluster is running. Then select an elasticsearch client
 library which matches the major version. A 0.19.x client can talk to a 0.19.x cluster; 0.20.x can talk to 0.20.x and 0.90.x can talk to 0.90.x. Once the
 elasticsearch version has been determined then read the pom.xml file to determine the correct lucene-core JAR version to use. The Flume agent
@@ -2588,7 +2591,7 @@ Example for agent named a1:
   a1.channels.c1.transactionCapacity = 10000
   a1.channels.c1.byteCapacityBufferPercentage = 20
   a1.channels.c1.byteCapacity = 800000
-  
+
 
 JDBC Channel
 ~~~~~~~~~~~~
@@ -2796,7 +2799,7 @@ The disk store is managed using an embedded File channel. When the in-memory que
 the file channel. This channel is ideal for flows that need high throughput of memory channel during normal operation, but at the
 same time need the larger capacity of the file channel for better tolerance of intermittent sink side outages or drop in drain rates.
 The throughput will reduce approximately to file channel speeds during such abnormal situations. In case of an agent crash or restart,
-only the events stored on disk are recovered when the agent comes online. **This channel is currently experimental and 
+only the events stored on disk are recovered when the agent comes online. **This channel is currently experimental and
 not recommended for use in production.**
 
 Required properties are in **bold**. Please refer to file channel for additional required properties.

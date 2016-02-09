@@ -18,33 +18,26 @@
  */
 package org.apache.flume.formatter.output;
 
-import java.io.File;
-import org.apache.flume.Context;
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
 
 /**
- * Creates the files used by the RollingFileSink.
+ *
  */
-public interface PathManager {
-    /**
-     * {@link Context} prefix
-     */
-    public static String CTX_PREFIX = "pathManager.";
+@InterfaceAudience.Private
+@InterfaceStability.Unstable
+public enum PathManagerType {
+    DEFAULT(DefaultPathManager.Builder.class),
+    ROLLTIME(RollTimePathManager.Builder.class),
+    OTHER(null);
 
-    File nextFile();
+    private final Class<? extends PathManager.Builder> builderClass;
 
-    File getCurrentFile();
+    PathManagerType(Class<? extends PathManager.Builder> builderClass) {
+        this.builderClass = builderClass;
+    }
 
-    void rotate();
-
-    File getBaseDirectory();
-
-    void setBaseDirectory(File baseDirectory);
-
-    /**
-     * Knows how to construct this path manager.<br/>
-     * <b>Note: Implementations MUST provide a public a no-arg constructor.</b>
-     */
-    public interface Builder {
-        public PathManager build(Context context);
+    public Class<? extends PathManager.Builder> getBuilderClass() {
+        return builderClass;
     }
 }
