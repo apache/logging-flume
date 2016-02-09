@@ -172,4 +172,110 @@ public class TestRollingFileSink {
       reader.close();
     }
   }
+
+  @Test
+  public void testAppend3() throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
+    File tmpDir = new File("target/tmpLog");
+    tmpDir.mkdirs();
+    cleanDirectory(tmpDir);
+    Context context = new Context();
+
+    context.put("sink.directory", "target/tmpLog");
+    context.put("sink.rollInterval", "0");
+    context.put("sink.batchSize", "1");
+    context.put("sink.pathManager.prefix", "test3-");
+    context.put("sink.pathManager.extension", "txt");
+
+    Configurables.configure(sink, context);
+
+    Channel channel = new PseudoTxnMemoryChannel();
+    Configurables.configure(channel, context);
+
+    sink.setChannel(channel);
+    sink.start();
+
+    for (int i = 0; i < 10; i++) {
+      Event event = new SimpleEvent();
+
+      event.setBody(("Test event " + i).getBytes());
+
+      channel.put(event);
+      sink.process();
+
+      Thread.sleep(500);
+    }
+
+    sink.stop();
+
+    for (String file : sink.getDirectory().list()) {
+      BufferedReader reader = new BufferedReader(new FileReader(new File(sink.getDirectory(), file)));
+
+      String lastLine = null;
+      String currentLine = null;
+
+      while ((currentLine = reader.readLine()) != null) {
+        lastLine = currentLine;
+        logger.debug("Produced file:{} lastLine:{}", file, lastLine);
+      }
+
+      reader.close();
+    }
+  }
+
+  @Test
+  public void testRollTime() throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
+    File tmpDir = new File("target/tempLog");
+    tmpDir.mkdirs();
+    cleanDirectory(tmpDir);
+    Context context = new Context();
+
+    context.put("sink.directory", "target/tempLog/");
+    context.put("sink.rollInterval", "1");
+    context.put("sink.batchSize", "1");
+    context.put("sink.pathManager", "rolltime");
+    context.put("sink.pathManager.prefix", "test4-");
+    context.put("sink.pathManager.extension", "txt");
+
+    Configurables.configure(sink, context);
+
+    Channel channel = new PseudoTxnMemoryChannel();
+    Configurables.configure(channel, context);
+
+    sink.setChannel(channel);
+    sink.start();
+
+    for (int i = 0; i < 10; i++) {
+      Event event = new SimpleEvent();
+
+      event.setBody(("Test event " + i).getBytes());
+
+      channel.put(event);
+      sink.process();
+
+      Thread.sleep(500);
+    }
+
+    sink.stop();
+
+    for (String file : sink.getDirectory().list()) {
+      BufferedReader reader = new BufferedReader(new FileReader(new File(sink.getDirectory(), file)));
+
+      String lastLine = null;
+      String currentLine = null;
+
+      while ((currentLine = reader.readLine()) != null) {
+        lastLine = currentLine;
+        logger.debug("Produced file:{} lastLine:{}", file, lastLine);
+      }
+
+      reader.close();
+    }
+  }
+
+  private void cleanDirectory(File dir) {
+    File[] files = dir.listFiles();
+    for (File file : files) {
+      file.delete();
+    }
+  }
 }
