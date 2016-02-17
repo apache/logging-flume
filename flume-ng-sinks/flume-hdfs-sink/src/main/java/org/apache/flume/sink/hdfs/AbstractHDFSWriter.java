@@ -237,11 +237,11 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
       try {
         m = fsDataOutputStreamClass.getMethod("hflush");
       } catch (NoSuchMethodException ex) {
-        logger.debug("HFlush not found. Will use sync() instead");
+        logger.debug("HFlush not found. Will use hsync() instead");
         try {
-          m = fsDataOutputStreamClass.getMethod("sync");
+          m = fsDataOutputStreamClass.getMethod("hsync");
         } catch (Exception ex1) {
-          String msg = "Neither hflush not sync were found. That seems to be " +
+          String msg = "Neither hflush not hsync were found. That seems to be " +
             "a problem!";
           logger.error(msg);
           throw new FlumeException(msg, ex1);
