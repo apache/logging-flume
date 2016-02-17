@@ -319,10 +319,14 @@ if ("$pluginsPath" -eq "") {
 
 foreach($plugin in  $pluginsPath.Split(";") )  {
   if ( Test-path "$plugin" ) {
-    $pluginTmp =
-        ( (Get-ChildItem "$plugin\*\lib")  + (Get-ChildItem "$plugin\*\libext") ) -join "\*"";"""
-    if( "$pluginTmp" -ne "" ) {
-      $javaClassPath="$javaClassPath;""" + $pluginTmp + "\*"";"
+    $pluginTmp1 = (@(Get-ChildItem "$plugin\*\lib") -join "\*"";""")
+    if( "$pluginTmp1" -ne "" ) {
+      $javaClassPath="$javaClassPath;""" + $pluginTmp1 + "\*"";"
+    }
+
+    $pluginTmp2 = (@(Get-ChildItem "$plugin\*\libext") -join "\*"";""")
+    if( "$pluginTmp2" -ne "" ) {
+      $javaClassPath="$javaClassPath;""" + $pluginTmp2 + "\*"";"
     }
 
     $javaLibraryPathTmp = (@(Get-ChildItem "$plugin\*\native") -join "\*"";""")
