@@ -148,4 +148,42 @@ public class TestChannelProcessor {
     }
   }
 
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testOptionalChannelQueueSize() throws InterruptedException {
+    Context context = new Context();
+    context.put("capacity", "100");
+    context.put("transactionCapacity", "3");
+    context.put("pendingTransactions", "2");
+
+    ArrayList<MemoryChannel> channels = new ArrayList<MemoryChannel>();
+    for (int i = 0; i < 2; i++) {
+      MemoryChannel ch = new MemoryChannel();
+      ch.setName("ch" + i);
+      channels.add(ch);
+    }
+    Configurables.configure(channels.get(0), context);
+    context.put("capacity", "3");
+    Configurables.configure(channels.get(1), context);
+    ChannelSelector selector = new ReplicatingChannelSelector();
+    selector.setChannels((List) channels);
+
+    context.put(ReplicatingChannelSelector.CONFIG_OPTIONAL, "ch1");
+    Configurables.configure(selector, context);
+
+    ChannelProcessor processor = new ChannelProcessor(selector);
+    Configurables.configure(processor, context);
+
+    // The idea is to put more events into the optional channel than its capacity + the size of
+    // the task queue. So the remaining events get added to the task queue, but since it is
+    // bounded, its size should not grow indefinitely either.
+    for (int i = 0; i <= 6; i++) {
+      processor.processEvent(EventBuilder.withBody("e".getBytes()));
+      // To avoid tasks from being rejected so if previous events are still not committed, wait
+      // between transactions.
+      Thread.sleep(500);
+    }
+    // 3 in channel, 1 executing, 2 in queue, 1 rejected
+    Assert.assertEquals(2, processor.taskQueue.size());
+  }
 }
