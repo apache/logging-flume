@@ -26,8 +26,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.*;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
@@ -62,6 +61,7 @@ public class ChannelProcessor implements Configurable {
   private final ChannelSelector selector;
   private final InterceptorChain interceptorChain;
   private ExecutorService execService;
+  BlockingQueue<Runnable> taskQueue;
 
   public ChannelProcessor(ChannelSelector selector) {
     this.selector = selector;
@@ -82,8 +82,13 @@ public class ChannelProcessor implements Configurable {
    */
   @Override
   public void configure(Context context) {
-    this.execService = Executors.newSingleThreadExecutor(
-      new ThreadFactoryBuilder().setNameFormat("OptionalChannelProcessorThread").build());
+    int queueSize = context.getInteger("pendingTransactions", 20);
+    taskQueue = new ArrayBlockingQueue<Runnable>(queueSize, true);
+    ThreadFactory factory = new ThreadFactoryBuilder()
+      .setNameFormat("OptionalChannelProcessorThread").build();
+    this.execService =
+      new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, taskQueue,
+        factory, new ThreadPoolExecutor.DiscardPolicy());
     configureInterceptors(context);
   }
 
