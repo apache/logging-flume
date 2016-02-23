@@ -434,6 +434,31 @@ public class TestReliableSpoolingFileEventReader {
     Assert.assertEquals(expectedLines, seenLines);
   }
 
+  @Test
+  public void testConsumeFileOlderThan()
+    throws IOException, InterruptedException {
+    ReliableEventReader reader
+      = new ReliableSpoolingFileEventReader.Builder()
+      .spoolDirectory(WORK_DIR)
+      .fileTimeMinOffsetSeconds(1)
+      .build();
+    File file1 = new File(WORK_DIR, "new-file1");
+    File file2 = new File(WORK_DIR, "new-file2");
+    Thread.sleep(1000L);
+    FileUtils.write(file1, "New file1 created that will be 2s old when read.\n");
+    Thread.sleep(2000L);
+    FileUtils.write(file2, "New file2 created.\n");
+    Set<String> actual = Sets.newHashSet();
+    readEventsForFilesInDir(WORK_DIR, reader, actual);
+    Set<String> expected = Sets.newHashSet();
+    createExpectedFromFilesInSetup(expected);
+    // Empty Line file was added in the last in Setup.
+    expected.add("");
+    expected.add("New file1 created that will be 2s old when read.");
+
+    Assert.assertEquals(expected, actual);
+  }
+
   private void templateTestForLargeNumberOfFiles(ConsumeOrder order, 
       Comparator<Long> comparator,
       int N) throws IOException {

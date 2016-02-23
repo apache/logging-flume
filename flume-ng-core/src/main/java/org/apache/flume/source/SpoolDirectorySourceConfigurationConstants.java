@@ -97,4 +97,8 @@ public class SpoolDirectorySourceConfigurationConstants {
   /** Delay(in milliseconds) used when polling for new files. The default is 500ms */
   public static final String POLL_DELAY = "pollDelay";
   public static final int DEFAULT_POLL_DELAY = 500;
+
+  /** Minimum time offset from current time before picking up a file */
+  public static final String FILE_TIME_MIN_OFFSET_SECONDS = "fileTimeMinOffsetSeconds";
+  public static final int DEFAULT_FILE_TIME_MIN_OFFSET_SECONDS = 0;
 }

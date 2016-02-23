@@ -95,6 +95,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
   private final Charset inputCharset;
   private final DecodeErrorPolicy decodeErrorPolicy;
   private final ConsumeOrder consumeOrder;    
+  private final int fileTimeMinOffsetSeconds;
   
   private Optional<FileInfo> currentFile = Optional.absent();
   /** Always contains the last file from which lines have been read. **/
@@ -115,7 +116,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       String deserializerType, Context deserializerContext,
       String deletePolicy, String inputCharset,
       DecodeErrorPolicy decodeErrorPolicy, 
-      ConsumeOrder consumeOrder) throws IOException {
+      ConsumeOrder consumeOrder, int fileTimeMinOffsetSeconds) throws IOException {
 
     // Sanity checks
     Preconditions.checkNotNull(spoolDirectory);
@@ -176,6 +177,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     this.inputCharset = Charset.forName(inputCharset);
     this.decodeErrorPolicy = Preconditions.checkNotNull(decodeErrorPolicy);
     this.consumeOrder = Preconditions.checkNotNull(consumeOrder);    
+    this.fileTimeMinOffsetSeconds = fileTimeMinOffsetSeconds;
 
     File trackerDirectory = new File(trackerDirPath);
 
@@ -430,18 +432,21 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
    */
   private Optional<FileInfo> getNextFile() {
     List<File> candidateFiles = Collections.emptyList();
+    long olderThanTime = System.currentTimeMillis() - (fileTimeMinOffsetSeconds * 1000);
+    long newerThanTime = System.currentTimeMillis() + (fileTimeMinOffsetSeconds * 1000);
 
     if (consumeOrder != ConsumeOrder.RANDOM ||
       candidateFileIter == null ||
       !candidateFileIter.hasNext()) {
-      /* Filter to exclude finished or hidden files */
+      /* Filter to exclude finished or hidden files or files not meeting the minimum time offset */
       FileFilter filter = new FileFilter() {
         public boolean accept(File candidate) {
           String fileName = candidate.getName();
           if ((candidate.isDirectory()) ||
             (fileName.endsWith(completedSuffix)) ||
             (fileName.startsWith(".")) ||
-            ignorePattern.matcher(fileName).matches()) {
+            ignorePattern.matcher(fileName).matches() ||
+            (candidate.lastModified() >= olderThanTime && candidate.lastModified() <= newerThanTime)) {
             return false;
           }
           return true;
@@ -596,6 +601,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
             .toUpperCase(Locale.ENGLISH));
     private ConsumeOrder consumeOrder = 
         SpoolDirectorySourceConfigurationConstants.DEFAULT_CONSUME_ORDER;    
+    private int fileTimeMinOffsetSeconds =
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_FILE_TIME_MIN_OFFSET_SECONDS;
     
     public Builder spoolDirectory(File directory) {
       this.spoolDirectory = directory;
@@ -666,13 +673,18 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       this.consumeOrder = consumeOrder;
       return this;
     }        
+
+    public Builder fileTimeMinOffsetSeconds(int fileTimeMinOffsetSeconds) {
+      this.fileTimeMinOffsetSeconds = fileTimeMinOffsetSeconds;
+      return this;
+    }
     
     public ReliableSpoolingFileEventReader build() throws IOException {
       return new ReliableSpoolingFileEventReader(spoolDirectory, completedSuffix,
           ignorePattern, trackerDirPath, annotateFileName, fileNameHeader,
           annotateBaseName, baseNameHeader, deserializerType,
           deserializerContext, deletePolicy, inputCharset, decodeErrorPolicy,
-          consumeOrder);
+          consumeOrder, fileTimeMinOffsetSeconds);
     }
   }
 
