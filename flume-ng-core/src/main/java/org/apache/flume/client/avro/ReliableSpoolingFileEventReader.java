@@ -429,11 +429,13 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
    * If the {@link #consumeOrder} variable is {@link ConsumeOrder#RANDOM}
    * then cache the directory listing to amortize retreival cost, and return
    * any arbitary file from the directory.
+   * If the file last modified time is less than offset, the file will not be processed.
    */
   private Optional<FileInfo> getNextFile() {
     List<File> candidateFiles = Collections.emptyList();
-    long olderThanTime = System.currentTimeMillis() - (fileTimeMinOffsetSeconds * 1000);
-    long newerThanTime = System.currentTimeMillis() + (fileTimeMinOffsetSeconds * 1000);
+    final long currentTime = System.currentTimeMillis();
+    final long olderThanTime = currentTime - (fileTimeMinOffsetSeconds * 1000);
+    final long newerThanTime = currentTime + (fileTimeMinOffsetSeconds * 1000);
 
     if (consumeOrder != ConsumeOrder.RANDOM ||
       candidateFileIter == null ||
