@@ -36,10 +36,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.*;
+import java.util.zip.GZIPOutputStream;
 
 public class TestReliableSpoolingFileEventReader {
 
@@ -359,6 +361,23 @@ public class TestReliableSpoolingFileEventReader {
     expected.add("New file3 created.");
     Assert.assertEquals(expected, actual);
   }
+  
+  @Test
+	public void testConsumeGZipFile() 
+		throws IOException, InterruptedException {
+		ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
+				.spoolDirectory(WORK_DIR).build();
+		String zipFileContents = "A Gzip file";
+		File file1 = new File(WORK_DIR,"new-file1.gz");
+		createGZipFile(file1,zipFileContents);
+		Set<String> actual = Sets.newHashSet();
+		readEventsForFilesInDir(WORK_DIR, reader, actual);
+		Set<String> expected = Sets.newHashSet();
+		createExpectedFromFilesInSetup(expected);
+		expected.add("");
+		expected.add(zipFileContents);
+		Assert.assertEquals(expected, actual);
+	}
 
   @Test
   public void testConsumeFileYoungestWithLexicographicalComparision()
@@ -542,4 +561,17 @@ public class TestReliableSpoolingFileEventReader {
     }));
     return files;
   }
+  
+  private void createGZipFile(File file,String zipFileContent) {
+		try {
+			FileOutputStream fos = new FileOutputStream(file);
+			GZIPOutputStream gzos = new GZIPOutputStream(fos);
+			gzos.write((zipFileContent).getBytes());
+			gzos.finish();
+			gzos.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 }
