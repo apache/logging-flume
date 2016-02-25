@@ -41,11 +41,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
 import java.util.ArrayList;
 
 /**
@@ -80,7 +83,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       .getLogger(ReliableSpoolingFileEventReader.class);
 
   static final String metaFileName = ".flumespool-main.meta";
-
+  private final String GZIP_FILE_EXTENSION = ".gz";
   private final File spoolDirectory;
   private final String completedSuffix;
   private final String deserializerType;
@@ -325,17 +328,9 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       String message = "File has changed size since being read: " + fileToRoll;
       throw new IllegalStateException(message);
     }
-
-    if (deletePolicy.equalsIgnoreCase(DeletePolicy.NEVER.name())) {
-      rollCurrentFile(fileToRoll);
-    } else if (deletePolicy.equalsIgnoreCase(DeletePolicy.IMMEDIATE.name())) {
-      deleteCurrentFile(fileToRoll);
-    } else {
-      // TODO: implement delay in the future
-      throw new IllegalArgumentException("Unsupported delete policy: " +
-          deletePolicy);
-    }
+    applyRetentionPolicy(fileToRoll);
   }
+  
 
   /**
    * Rename the given spooled file
@@ -457,6 +452,16 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     }
 
     File selectedFile = candidateFileIter.next();
+    if(selectedFile.getName().endsWith(GZIP_FILE_EXTENSION)){
+    	unzipfile(selectedFile);
+		
+		try {
+			// apply it for the .gz file the files after unzip will be handled by retireCurrentFile() flow
+			applyRetentionPolicy(selectedFile); 
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    }
     if (consumeOrder == ConsumeOrder.RANDOM) { // Selected file is random.
       return openFile(selectedFile);
     } else if (consumeOrder == ConsumeOrder.YOUNGEST) {
@@ -483,6 +488,77 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
 
     return openFile(selectedFile);
   }
+  
+  private void applyRetentionPolicy(File fileToRoll) throws IOException {
+	  if (deletePolicy.equalsIgnoreCase(DeletePolicy.NEVER.name())) {
+	      rollCurrentFile(fileToRoll);
+	    } else if (deletePolicy.equalsIgnoreCase(DeletePolicy.IMMEDIATE.name())) {
+	      deleteCurrentFile(fileToRoll);
+	    } else {
+	      // TODO: implement delay in the future
+	      throw new IllegalArgumentException("Unsupported delete policy: " +
+	          deletePolicy);
+	    }	
+}
+
+private String getUnzippedFileName(String zippedFileName) {
+		String unzippedFileName = zippedFileName;
+		if (!StringUtils.isBlank(zippedFileName)) {
+			String fileName = StringUtils.substringBeforeLast(zippedFileName,
+					GZIP_FILE_EXTENSION);
+			unzippedFileName = fileName;
+		}
+
+		return unzippedFileName;
+	}
+
+	private void unzipfile(File zippedFile) {
+		String unzippedFileDirPath = zippedFile.getParent();
+		byte[] buffer = new byte[1024];
+		GZIPInputStream gzis = null;
+		FileOutputStream out = null;
+		
+		if (zippedFile.exists()) {
+			try {
+				String unzippedFileName = getUnzippedFileName(zippedFile.getName());
+				gzis = new GZIPInputStream(new FileInputStream(zippedFile));
+				out = new FileOutputStream(unzippedFileDirPath + "/"+unzippedFileName);
+				logger.debug("Started unzip process ");
+				int length;
+				length = gzis.read(buffer);
+				while (length > 0) {
+					out.write(buffer, 0, length);
+					length = gzis.read(buffer);
+				}
+				gzis.close();
+				out.close();
+				logger.debug("Completed unzip process ");
+				logger.debug(" After unzipping the file is {}", unzippedFileName);
+
+
+			} catch (IOException ex) {
+				logger.error(" Error in unzip file {} ", ex.getMessage());
+			} finally {
+				if (gzis != null) {
+					try {
+						gzis.close();
+					} catch (IOException e) {
+						logger.error("Error in closing resource {} ",
+								e.getMessage());
+					}
+				}
+				if (out != null) {
+					try {
+						out.close();
+					} catch (IOException e) {
+						logger.error("Error in closing resource {} ",
+								e.getMessage());
+					}
+				}
+			}
+
+		}
+	}
 
   private File smallerLexicographical(File f1, File f2) {
     if (f1.getName().compareTo(f2.getName()) < 0) {
