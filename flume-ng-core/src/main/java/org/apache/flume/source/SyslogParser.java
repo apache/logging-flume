@@ -325,10 +325,10 @@ public class SyslogParser {
 
       // flume clock is ahead or there is some latency, and the year rolled
       if (fixed.isAfter(now) && fixed.minusMonths(1).isAfter(now)) {
-        fixed = date.withYear(year - 1);
+         fixed = date.minusYears(1);
       // flume clock is behind and the year rolled
       } else if (fixed.isBefore(now) && fixed.plusMonths(1).isBefore(now)) {
-        fixed = date.withYear(year + 1);
+        fixed = date.plusYears(1);
       }
       date = fixed;
     }
