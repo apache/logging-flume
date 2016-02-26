@@ -190,10 +190,10 @@ public class SyslogAvroEventSerializer
 
       // flume clock is ahead or there is some latency, and the year rolled
       if (corrected.isAfter(now) && corrected.minusMonths(1).isAfter(now)) {
-        corrected = date.withYear(year - 1);
+        corrected = date.minusYears(1);
       // flume clock is behind and the year rolled
       } else if (corrected.isBefore(now) && corrected.plusMonths(1).isBefore(now)) {
-        corrected = date.withYear(year + 1);
+        corrected = date.plusYears(1);
       }
       date = corrected;
     }
