@@ -20,13 +20,10 @@ package org.apache.flume.channel;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
@@ -60,8 +57,6 @@ public class ChannelProcessor implements Configurable {
 
   private final ChannelSelector selector;
   private final InterceptorChain interceptorChain;
-  private ExecutorService execService;
-  BlockingQueue<Runnable> taskQueue;
 
   public ChannelProcessor(ChannelSelector selector) {
     this.selector = selector;
@@ -82,13 +77,6 @@ public class ChannelProcessor implements Configurable {
    */
   @Override
   public void configure(Context context) {
-    int queueSize = context.getInteger("pendingTransactions", 20);
-    taskQueue = new ArrayBlockingQueue<Runnable>(queueSize, true);
-    ThreadFactory factory = new ThreadFactoryBuilder()
-      .setNameFormat("OptionalChannelProcessorThread").build();
-    this.execService =
-      new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, taskQueue,
-        factory, new ThreadPoolExecutor.DiscardPolicy());
     configureInterceptors(context);
   }
 
@@ -165,6 +153,7 @@ public class ChannelProcessor implements Configurable {
 
     for (Event event : events) {
       List<Channel> reqChannels = selector.getRequiredChannels(event);
+
       for (Channel ch : reqChannels) {
         List<Event> eventQueue = reqChannelQueue.get(ch);
         if (eventQueue == null) {
@@ -175,26 +164,74 @@ public class ChannelProcessor implements Configurable {
       }
 
       List<Channel> optChannels = selector.getOptionalChannels(event);
+
       for (Channel ch: optChannels) {
         List<Event> eventQueue = optChannelQueue.get(ch);
         if (eventQueue == null) {
           eventQueue = new ArrayList<Event>();
           optChannelQueue.put(ch, eventQueue);
         }
+
         eventQueue.add(event);
       }
     }
 
     // Process required channels
     for (Channel reqChannel : reqChannelQueue.keySet()) {
-      List<Event> batch = reqChannelQueue.get(reqChannel);
-      executeChannelTransaction(reqChannel, batch, false);
+      Transaction tx = reqChannel.getTransaction();
+      Preconditions.checkNotNull(tx, "Transaction object must not be null");
+      try {
+        tx.begin();
+
+        List<Event> batch = reqChannelQueue.get(reqChannel);
+
+        for (Event event : batch) {
+          reqChannel.put(event);
+        }
+
+        tx.commit();
+      } catch (Throwable t) {
+        tx.rollback();
+        if (t instanceof Error) {
+          LOG.error("Error while writing to required channel: " +
+              reqChannel, t);
+          throw (Error) t;
+        } else {
+          throw new ChannelException("Unable to put batch on required " +
+              "channel: " + reqChannel, t);
+        }
+      } finally {
+        if (tx != null) {
+          tx.close();
+        }
+      }
     }
 
     // Process optional channels
     for (Channel optChannel : optChannelQueue.keySet()) {
-      List<Event> batch = optChannelQueue.get(optChannel);
-      execService.submit(new OptionalChannelTransactionRunnable(optChannel, batch));
+      Transaction tx = optChannel.getTransaction();
+      Preconditions.checkNotNull(tx, "Transaction object must not be null");
+      try {
+        tx.begin();
+
+        List<Event> batch = optChannelQueue.get(optChannel);
+
+        for (Event event : batch ) {
+          optChannel.put(event);
+        }
+
+        tx.commit();
+      } catch (Throwable t) {
+        tx.rollback();
+        LOG.error("Unable to put batch on optional channel: " + optChannel, t);
+        if (t instanceof Error) {
+          throw (Error) t;
+        }
+      } finally {
+        if (tx != null) {
+          tx.close();
+        }
+      }
     }
   }
 
@@ -216,59 +253,57 @@ public class ChannelProcessor implements Configurable {
     if (event == null) {
       return;
     }
-    List<Event> events = new ArrayList<Event>(1);
-    events.add(event);
 
     // Process required channels
     List<Channel> requiredChannels = selector.getRequiredChannels(event);
     for (Channel reqChannel : requiredChannels) {
-      executeChannelTransaction(reqChannel, events, false);
+      Transaction tx = reqChannel.getTransaction();
+      Preconditions.checkNotNull(tx, "Transaction object must not be null");
+      try {
+        tx.begin();
+
+        reqChannel.put(event);
+
+        tx.commit();
+      } catch (Throwable t) {
+        tx.rollback();
+        if (t instanceof Error) {
+          LOG.error("Error while writing to required channel: " +
+              reqChannel, t);
+          throw (Error) t;
+        } else {
+          throw new ChannelException("Unable to put event on required " +
+              "channel: " + reqChannel, t);
+        }
+      } finally {
+        if (tx != null) {
+          tx.close();
+        }
+      }
     }
 
     // Process optional channels
     List<Channel> optionalChannels = selector.getOptionalChannels(event);
     for (Channel optChannel : optionalChannels) {
-      execService.submit(new OptionalChannelTransactionRunnable(optChannel, events));
-    }
-  }
+      Transaction tx = null;
+      try {
+        tx = optChannel.getTransaction();
+        tx.begin();
 
-  private static void executeChannelTransaction(Channel channel, List<Event> batch, boolean isOptional) {
-    Transaction tx = channel.getTransaction();
-    Preconditions.checkNotNull(tx, "Transaction object must not be null");
-    try {
-      tx.begin();
+        optChannel.put(event);
 
-      for (Event event : batch) {
-        channel.put(event);
+        tx.commit();
+      } catch (Throwable t) {
+        tx.rollback();
+        LOG.error("Unable to put event on optional channel: " + optChannel, t);
+        if (t instanceof Error) {
+          throw (Error) t;
+        }
+      } finally {
+        if (tx != null) {
+          tx.close();
+        }
       }
-
-      tx.commit();
-    } catch (Throwable t) {
-      tx.rollback();
-      if (t instanceof Error) {
-        LOG.error("Error while writing to channel: " +
-                channel, t);
-        throw (Error) t;
-      } else if(!isOptional) {
-          throw new ChannelException("Unable to put batch on required " +
-                  "channel: " + channel, t);
-      }
-    } finally {
-      tx.close();
-    }
-  }
-
-  private static class OptionalChannelTransactionRunnable implements Runnable {
-    private Channel channel;
-    private List<Event> events;
-
-    OptionalChannelTransactionRunnable(Channel channel, List<Event> events) {
-      this.channel = channel;
-      this.events = events;
-    }
-
-    public void run() {
-      executeChannelTransaction(channel, events, true);
     }
   }
 }
