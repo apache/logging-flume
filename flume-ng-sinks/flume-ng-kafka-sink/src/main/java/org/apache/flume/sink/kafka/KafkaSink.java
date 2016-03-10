@@ -75,6 +75,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
   private int batchSize;
   private List<KeyedMessage<String, byte[]>> messageList;
   private KafkaSinkCounter counter;
+  private int messageMaxSize;
 
 
   @Override
@@ -108,6 +109,11 @@ public class KafkaSink extends AbstractSink implements Configurable {
         }
 
         byte[] eventBody = event.getBody();
+        if (eventBody.length > messageMaxSize) {
+          logger.error("Message Size Too Large : " + eventBody.length);
+          continue;
+        }
+
         Map<String, String> headers = event.getHeaders();
 
         if ((eventTopic = headers.get(TOPIC_HDR)) == null) {
@@ -202,6 +208,10 @@ public class KafkaSink extends AbstractSink implements Configurable {
     messageList =
       new ArrayList<KeyedMessage<String, byte[]>>(batchSize);
     logger.debug("Using batch size: {}", batchSize);
+
+    messageMaxSize = context.getInteger(KafkaSinkConstants.MESSAGE_MAX_SIZE,
+      KafkaSinkConstants.DEFAULT_MESSAGE_MAX_SIZE);
+    logger.info("Message Max Size : " + messageMaxSize);
 
     topic = context.getString(KafkaSinkConstants.TOPIC,
       KafkaSinkConstants.DEFAULT_TOPIC);
