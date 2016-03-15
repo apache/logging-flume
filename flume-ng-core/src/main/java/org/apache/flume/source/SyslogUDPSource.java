@@ -46,6 +46,7 @@ public class SyslogUDPSource extends AbstractSource
 
   private int port;
   private int maxsize = 1 << 16; // 64k is max allowable in RFC 5426
+  private int datagramSize;
   private String host = null;
   private Channel nettyChannel;
   private Map<String, String> formaterProp;
@@ -102,8 +103,7 @@ public class SyslogUDPSource extends AbstractSource
     handler.setFormater(formaterProp);
     handler.setKeepFields(keepFields);
     serverBootstrap.setOption("receiveBufferSizePredictorFactory",
-      new AdaptiveReceiveBufferSizePredictorFactory(DEFAULT_MIN_SIZE,
-        DEFAULT_INITIAL_SIZE, maxsize));
+      new FixedReceiveBufferSizePredictorFactory(datagramSize));
     serverBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
       @Override
       public ChannelPipeline getPipeline() {
@@ -150,6 +150,7 @@ public class SyslogUDPSource extends AbstractSource
         context.getString(
             SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS,
             SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS));
+    datagramSize = context.getInteger(SyslogSourceConfigurationConstants.DATAGRAM_SIZE, DEFAULT_INITIAL_SIZE);
   }
 
   @VisibleForTesting

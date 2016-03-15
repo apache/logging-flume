@@ -51,6 +51,8 @@ public final class SyslogSourceConfigurationConstants {
 
   public static final String CONFIG_BATCHSIZE = "batchSize";
 
+  public static final String DATAGRAM_SIZE = "datagramSize";
+
   public static final String CONFIG_CHARSET = "charset.default";
 
   public static final String DEFAULT_CHARSET = "UTF-8";
