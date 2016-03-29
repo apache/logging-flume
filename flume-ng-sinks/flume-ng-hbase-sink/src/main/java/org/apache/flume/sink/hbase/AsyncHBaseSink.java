@@ -204,10 +204,11 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
 
     Status status = Status.READY;
     Channel channel = getChannel();
+    txn = channel.getTransaction();
+    txn.begin();
+
     int i = 0;
     try {
-      txn = channel.getTransaction();
-      txn.begin();
       for (; i < batchSize; i++) {
         Event event = channel.take();
         if (event == null) {
