@@ -19,13 +19,8 @@
 package org.apache.flume.channel.kafka;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import kafka.admin.AdminUtils;
-import kafka.javaapi.producer.Producer;
-import kafka.producer.KeyedMessage;
-import kafka.producer.ProducerConfig;
-import kafka.utils.ZKStringSerializer$;
-import org.I0Itec.zkclient.ZkClient;
+import kafka.utils.ZkUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -33,16 +28,25 @@ import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.sink.kafka.util.TestUtil;
+import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.*;
-
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.*;
+
 public class TestKafkaChannel {
+
+  private final static Logger LOGGER =
+          LoggerFactory.getLogger(TestKafkaChannel.class);
 
   private static TestUtil testUtil = TestUtil.getInstance();
   private String topic = null;
@@ -78,10 +82,51 @@ public class TestKafkaChannel {
     testUtil.tearDown();
   }
 
+  //Make sure the props are picked up correctly.
+  @Test
+  public void testProps() throws Exception {
+    Context context = new Context();
+    context.put("kafka.producer.some-parameter", "1");
+    context.put("kafka.consumer.another-parameter", "1");
+    context.put(BOOTSTRAP_SERVERS_CONFIG, testUtil.getKafkaServerUrl());
+    context.put(TOPIC_CONFIG, topic);
+
+    final KafkaChannel channel = new KafkaChannel();
+    Configurables.configure(channel, context);
+
+    Properties consumerProps = channel.getConsumerProps();
+    Properties producerProps = channel.getProducerProps();
+
+    Assert.assertEquals(producerProps.getProperty("some-parameter"), "1");
+    Assert.assertEquals(consumerProps.getProperty("another-parameter"), "1");
+  }
+
+  @Test
+  public void testOldConfig() throws Exception {
+    Context context = new Context();
+    context.put(BROKER_LIST_FLUME_KEY,testUtil.getKafkaServerUrl());
+    context.put(GROUP_ID_FLUME,"flume-something");
+    context.put(READ_SMALLEST_OFFSET,"true");
+    context.put("topic",topic);
+
+    final KafkaChannel channel = new KafkaChannel();
+    Configurables.configure(channel, context);
+
+    Properties consumerProps = channel.getConsumerProps();
+    Properties producerProps = channel.getProducerProps();
+
+    Assert.assertEquals(producerProps.getProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG),testUtil.getKafkaServerUrl());
+    Assert.assertEquals(consumerProps.getProperty(ConsumerConfig.GROUP_ID_CONFIG), "flume-something");
+    Assert.assertEquals(consumerProps.getProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG), "earliest");
+
+  }
+
+
   @Test
   public void testSuccess() throws Exception {
     doTestSuccessRollback(false, false);
   }
+
 
   @Test
   public void testSuccessInterleave() throws Exception {
@@ -99,7 +144,7 @@ public class TestKafkaChannel {
   }
 
   private void doTestSuccessRollback(final boolean rollback,
-    final boolean interleave) throws Exception {
+                                     final boolean interleave) throws Exception {
     final KafkaChannel channel = startChannel(true);
     writeAndVerify(rollback, channel, interleave);
     channel.stop();
@@ -122,49 +167,52 @@ public class TestKafkaChannel {
   }
 
   @Test
-  public void testNoParsingAsFlumeAgent() throws Exception {
+  public void testParseAsFlumeEventFalse() throws Exception {
+    doParseAsFlumeEventFalse(false);
+  }
+
+  @Test
+  public void testParseAsFlumeEventFalseCheckHeader() throws Exception {
+    doParseAsFlumeEventFalse(true);
+  }
+
+  @Test
+  public void testParseAsFlumeEventFalseAsSource() throws Exception {
+    doParseAsFlumeEventFalseAsSource(false);
+  }
+
+  @Test
+  public void testParseAsFlumeEventFalseAsSourceCheckHeader() throws Exception {
+    doParseAsFlumeEventFalseAsSource(true);
+  }
+
+  private void doParseAsFlumeEventFalse(Boolean checkHeaders) throws Exception {
     final KafkaChannel channel = startChannel(false);
-    Producer<String, byte[]> producer = new Producer<String, byte[]>(
-      new ProducerConfig(channel.getKafkaConf()));
-    List<KeyedMessage<String, byte[]>> original = Lists.newArrayList();
+    Properties props = channel.getProducerProps();
+    KafkaProducer<String, byte[]> producer = new KafkaProducer<String, byte[]>(props);
+
     for (int i = 0; i < 50; i++) {
-      KeyedMessage<String, byte[]> data = new KeyedMessage<String,
-        byte[]>(topic, null, RandomStringUtils.randomAlphabetic(6),
-        String.valueOf(i).getBytes());
-      original.add(data);
+      ProducerRecord<String, byte[]> data = new ProducerRecord<String, byte[]>(topic, String.valueOf(i) + "-header", String.valueOf(i).getBytes());
+      producer.send(data).get();
     }
-    producer.send(original);
     ExecutorCompletionService<Void> submitterSvc = new
-      ExecutorCompletionService<Void>(Executors.newCachedThreadPool());
+            ExecutorCompletionService<Void>(Executors.newCachedThreadPool());
     List<Event> events = pullEvents(channel, submitterSvc,
-      50, false, false);
+            50, false, false);
     wait(submitterSvc, 5);
-    Set<Integer> finals = Sets.newHashSet();
+    Map<Integer, String> finals = new HashMap<Integer, String>();
     for (int i = 0; i < 50; i++) {
-      finals.add(Integer.parseInt(new String(events.get(i).getBody())));
+      finals.put(Integer.parseInt(new String(events.get(i).getBody())), events.get(i).getHeaders().get(KEY_HEADER));
     }
     for (int i = 0; i < 50; i++) {
-      Assert.assertTrue(finals.contains(i));
+      Assert.assertTrue(finals.keySet().contains(i));
+      if (checkHeaders) {
+        Assert.assertTrue(finals.containsValue(String.valueOf(i) + "-header"));
+      }
       finals.remove(i);
     }
     Assert.assertTrue(finals.isEmpty());
     channel.stop();
-  }
-
-  @Test
-  public void testTimeoutConfig() throws Exception {
-    Context context = prepareDefaultContext(true);
-    KafkaChannel channel = new KafkaChannel();
-    Configurables.configure(channel, context);
-    Assert.assertTrue(channel.getKafkaConf().get(CONSUMER_TIMEOUT)
-      .equals(DEFAULT_TIMEOUT));
-
-    String timeout = "1000";
-    context.put("kafka."+CONSUMER_TIMEOUT, timeout);
-    channel = new KafkaChannel();
-    Configurables.configure(channel, context);
-    Assert.assertTrue(channel.getKafkaConf().get(CONSUMER_TIMEOUT)
-            .equals(timeout));
   }
 
   /**
@@ -173,31 +221,35 @@ public class TestKafkaChannel {
    *
    * @throws Exception
    */
-  @Test
-  public void testWritingToNoParsingAsFlumeAgent() throws Exception {
+  public void doParseAsFlumeEventFalseAsSource(Boolean checkHeaders) throws Exception {
     final KafkaChannel channel = startChannel(false);
 
     List<String> msgs = new ArrayList<String>();
-    for (int i = 0; i < 50; i++){
+    Map<String, String> headers = new HashMap<String, String>();
+    for (int i = 0; i < 50; i++) {
       msgs.add(String.valueOf(i));
     }
     Transaction tx = channel.getTransaction();
     tx.begin();
-    for (int i = 0; i < msgs.size(); i++){
-      channel.put(EventBuilder.withBody(msgs.get(i).getBytes()));
+    for (int i = 0; i < msgs.size(); i++) {
+      headers.put(KEY_HEADER, String.valueOf(i) + "-header");
+      channel.put(EventBuilder.withBody(msgs.get(i).getBytes(), headers));
     }
     tx.commit();
     ExecutorCompletionService<Void> submitterSvc = new
             ExecutorCompletionService<Void>(Executors.newCachedThreadPool());
     List<Event> events = pullEvents(channel, submitterSvc,
-      50, false, false);
+            50, false, false);
     wait(submitterSvc, 5);
-    Set<Integer> finals = Sets.newHashSet();
+    Map<Integer, String> finals = new HashMap<Integer, String>();
     for (int i = 0; i < 50; i++) {
-      finals.add(Integer.parseInt(new String(events.get(i).getBody())));
+      finals.put(Integer.parseInt(new String(events.get(i).getBody())), events.get(i).getHeaders().get(KEY_HEADER));
     }
     for (int i = 0; i < 50; i++) {
-      Assert.assertTrue(finals.contains(i));
+      Assert.assertTrue(finals.keySet().contains(i));
+      if (checkHeaders) {
+        Assert.assertTrue(finals.containsValue(String.valueOf(i) + "-header"));
+      }
       finals.remove(i);
     }
     Assert.assertTrue(finals.isEmpty());
@@ -216,12 +268,12 @@ public class TestKafkaChannel {
    * @throws Exception
    */
   private void doTestStopAndStart(boolean rollback,
-    boolean retryAfterRollback) throws Exception {
+                                  boolean retryAfterRollback) throws Exception {
     final KafkaChannel channel = startChannel(true);
     ExecutorService underlying = Executors
-      .newCachedThreadPool();
+            .newCachedThreadPool();
     ExecutorCompletionService<Void> submitterSvc =
-      new ExecutorCompletionService<Void>(underlying);
+            new ExecutorCompletionService<Void>(underlying);
     final List<List<Event>> events = createBaseList();
     putEvents(channel, events, submitterSvc);
     int completed = 0;
@@ -233,14 +285,14 @@ public class TestKafkaChannel {
       total = 40;
     }
     final List<Event> eventsPulled =
-      pullEvents(channel2, submitterSvc, total, rollback, retryAfterRollback);
+            pullEvents(channel2, submitterSvc, total, rollback, retryAfterRollback);
     wait(submitterSvc, 5);
     channel2.stop();
     if (!retryAfterRollback && rollback) {
       final KafkaChannel channel3 = startChannel(true);
       int expectedRemaining = 50 - eventsPulled.size();
       final List<Event> eventsPulled2 =
-        pullEvents(channel3, submitterSvc, expectedRemaining, false, false);
+              pullEvents(channel3, submitterSvc, expectedRemaining, false, false);
       wait(submitterSvc, 5);
       Assert.assertEquals(expectedRemaining, eventsPulled2.size());
       eventsPulled.addAll(eventsPulled2);
@@ -259,18 +311,18 @@ public class TestKafkaChannel {
   }
 
   private void writeAndVerify(final boolean testRollbacks,
-    final KafkaChannel channel) throws Exception {
+                              final KafkaChannel channel) throws Exception {
     writeAndVerify(testRollbacks, channel, false);
   }
 
   private void writeAndVerify(final boolean testRollbacks,
-    final KafkaChannel channel, final boolean interleave) throws Exception {
+                              final KafkaChannel channel, final boolean interleave) throws Exception {
 
     final List<List<Event>> events = createBaseList();
 
     ExecutorCompletionService<Void> submitterSvc =
-      new ExecutorCompletionService<Void>(Executors
-        .newCachedThreadPool());
+            new ExecutorCompletionService<Void>(Executors
+                    .newCachedThreadPool());
 
     putEvents(channel, events, submitterSvc);
 
@@ -279,11 +331,11 @@ public class TestKafkaChannel {
     }
 
     ExecutorCompletionService<Void> submitterSvc2 =
-      new ExecutorCompletionService<Void>(Executors
-        .newCachedThreadPool());
+            new ExecutorCompletionService<Void>(Executors
+                    .newCachedThreadPool());
 
     final List<Event> eventsPulled =
-      pullEvents(channel, submitterSvc2, 50, testRollbacks, true);
+            pullEvents(channel, submitterSvc2, 50, testRollbacks, true);
 
     if (!interleave) {
       wait(submitterSvc, 5);
@@ -301,7 +353,7 @@ public class TestKafkaChannel {
       for (int j = 0; j < 10; j++) {
         Map<String, String> hdrs = new HashMap<String, String>();
         String v = (String.valueOf(i) + " - " + String
-          .valueOf(j));
+                .valueOf(j));
         hdrs.put("header", v);
         eventList.add(EventBuilder.withBody(v.getBytes(), hdrs));
       }
@@ -310,7 +362,7 @@ public class TestKafkaChannel {
   }
 
   private void putEvents(final KafkaChannel channel, final List<List<Event>>
-    events, ExecutorCompletionService<Void> submitterSvc) {
+          events, ExecutorCompletionService<Void> submitterSvc) {
     for (int i = 0; i < 5; i++) {
       final int index = i;
       submitterSvc.submit(new Callable<Void>() {
@@ -334,10 +386,10 @@ public class TestKafkaChannel {
   }
 
   private List<Event> pullEvents(final KafkaChannel channel,
-    ExecutorCompletionService<Void> submitterSvc, final int total,
-    final boolean testRollbacks, final boolean retryAfterRollback) {
+                                 ExecutorCompletionService<Void> submitterSvc, final int total,
+                                 final boolean testRollbacks, final boolean retryAfterRollback) {
     final List<Event> eventsPulled = Collections.synchronizedList(new
-      ArrayList<Event>(50));
+            ArrayList<Event>(50));
     final CyclicBarrier barrier = new CyclicBarrier(5);
     final AtomicInteger counter = new AtomicInteger(0);
     final AtomicInteger rolledBackCount = new AtomicInteger(0);
@@ -366,9 +418,9 @@ public class TestKafkaChannel {
                 eventsLocal.add(e);
               } else {
                 if (testRollbacks &&
-                  index == 4 &&
-                  (!rolledBack.get()) &&
-                  startedGettingEvents.get()) {
+                        index == 4 &&
+                        (!rolledBack.get()) &&
+                        startedGettingEvents.get()) {
                   tx.rollback();
                   tx.close();
                   tx = null;
@@ -407,7 +459,7 @@ public class TestKafkaChannel {
   }
 
   private void wait(ExecutorCompletionService<Void> submitterSvc, int max)
-    throws Exception {
+          throws Exception {
     int completed = 0;
     while (completed < max) {
       submitterSvc.take();
@@ -420,8 +472,7 @@ public class TestKafkaChannel {
     Assert.assertEquals(50, eventsPulled.size());
     Set<String> eventStrings = new HashSet<String>();
     for (Event e : eventsPulled) {
-      Assert
-        .assertEquals(e.getHeaders().get("header"), new String(e.getBody()));
+      Assert.assertEquals(e.getHeaders().get("header"), new String(e.getBody()));
       eventStrings.add(e.getHeaders().get("header"));
     }
     for (int i = 0; i < 5; i++) {
@@ -437,14 +488,10 @@ public class TestKafkaChannel {
   private Context prepareDefaultContext(boolean parseAsFlume) {
     // Prepares a default context with Kafka Server Properties
     Context context = new Context();
-    context.put(KafkaChannelConfiguration.BROKER_LIST_FLUME_KEY,
-      testUtil.getKafkaServerUrl());
-    context.put(KafkaChannelConfiguration.ZOOKEEPER_CONNECT_FLUME_KEY,
-      testUtil.getZkUrl());
-    context.put(KafkaChannelConfiguration.PARSE_AS_FLUME_EVENT,
-      String.valueOf(parseAsFlume));
-    context.put(KafkaChannelConfiguration.READ_SMALLEST_OFFSET, "true");
-    context.put(KafkaChannelConfiguration.TOPIC, topic);
+    context.put(BOOTSTRAP_SERVERS_CONFIG, testUtil.getKafkaServerUrl());
+    context.put(PARSE_AS_FLUME_EVENT, String.valueOf(parseAsFlume));
+    context.put(TOPIC_CONFIG, topic);
+
     return context;
   }
 
@@ -452,22 +499,18 @@ public class TestKafkaChannel {
     int numPartitions = 5;
     int sessionTimeoutMs = 10000;
     int connectionTimeoutMs = 10000;
-    ZkClient zkClient = new ZkClient(testUtil.getZkUrl(),
-      sessionTimeoutMs, connectionTimeoutMs,
-      ZKStringSerializer$.MODULE$);
+    ZkUtils zkUtils = ZkUtils.apply(testUtil.getZkUrl(), sessionTimeoutMs, connectionTimeoutMs, false);
 
     int replicationFactor = 1;
     Properties topicConfig = new Properties();
-    AdminUtils.createTopic(zkClient, topicName, numPartitions,
-      replicationFactor, topicConfig);
+    AdminUtils.createTopic(zkUtils, topicName, numPartitions,
+            replicationFactor, topicConfig);
   }
 
   public static void deleteTopic(String topicName) {
     int sessionTimeoutMs = 10000;
     int connectionTimeoutMs = 10000;
-    ZkClient zkClient = new ZkClient(testUtil.getZkUrl(),
-      sessionTimeoutMs, connectionTimeoutMs,
-      ZKStringSerializer$.MODULE$);
-    AdminUtils.deleteTopic(zkClient, topicName);
+    ZkUtils zkUtils = ZkUtils.apply(testUtil.getZkUrl(), sessionTimeoutMs, connectionTimeoutMs, false);
+    AdminUtils.deleteTopic(zkUtils, topicName);
   }
 }
