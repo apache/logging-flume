@@ -2493,7 +2493,9 @@ Kafka Sink
 This is a Flume Sink implementation that can publish data to a
 `Kafka <http://kafka.apache.org/>`_ topic. One of the objective is to integrate Flume
 with Kafka so that pull based processing systems can process the data coming
-through various Flume sources. This currently supports Kafka 0.8.x series of releases.
+through various Flume sources. This currently supports Kafka 0.9.x series of releases.
+
+This version of Flume no longer supports Older Versions (0.8.x) of Kafka.
 
 Required properties are marked in bold font.
 
@@ -2502,20 +2504,21 @@ Required properties are marked in bold font.
 Property Name                    Default              Description
 ===============================  ===================  =============================================================================================
 **type**                         --                   Must be set to ``org.apache.flume.sink.kafka.KafkaSink``
-**brokerList**                   --                   List of brokers Kafka-Sink will connect to, to get the list of topic partitions
+**kafka.bootstrap.servers**      --                   List of brokers Kafka-Sink will connect to, to get the list of topic partitions
                                                       This can be a partial list of brokers, but we recommend at least two for HA.
                                                       The format is comma separated list of hostname:port
-topic                            default-flume-topic  The topic in Kafka to which the messages will be published. If this parameter is configured,
+kafka.topic                      default-flume-topic  The topic in Kafka to which the messages will be published. If this parameter is configured,
                                                       messages will be published to this topic.
                                                       If the event header contains a "topic" field, the event will be published to that topic
                                                       overriding the topic configured here.
-batchSize                        100                  How many messages to process in one batch. Larger batches improve throughput while adding latency.
-requiredAcks                     1                    How many replicas must acknowledge a message before its considered successfully written.
+flumeBatchSize                   100                  How many messages to process in one batch. Larger batches improve throughput while adding latency.
+kafka.producer.acks              1                    How many replicas must acknowledge a message before its considered successfully written.
                                                       Accepted values are 0 (Never wait for acknowledgement), 1 (wait for leader only), -1 (wait for all replicas)
                                                       Set this to -1 to avoid data loss in some cases of leader failure.
 Other Kafka Producer Properties  --                   These properties are used to configure the Kafka Producer. Any producer property supported
-                                                      by Kafka can be used. The only requirement is to prepend the property name with the prefix ``kafka.``.
-                                                      For example: kafka.producer.type
+                                                      by Kafka can be used. The only requirement is to prepend the property name with the prefix
+                                                      ``kafka.producer``.
+                                                      For example: kafka.producer.linger.ms
 ===============================  ===================  =============================================================================================
 
 .. note::   Kafka Sink uses the ``topic`` and ``key`` properties from the FlumeEvent headers to send events to Kafka.
@@ -2523,22 +2526,38 @@ Other Kafka Producer Properties  --                   These properties are used 
             If ``key`` exists in the headers, the key will used by Kafka to partition the data between the topic partitions. Events with same key
             will be sent to the same partition. If the key is null, events will be sent to random partitions.
 
+The Kafka sink also provides defaults for the key.serializer(org.apache.kafka.common.serialization.StringSerializer)
+and value.serializer(org.apache.kafka.common.serialization.ByteArraySerializer). Modification of these parameters is not recommended.
+
+Deprecated Properties
+
+===============================  ===================  =============================================================================================
+Property Name                    Default              Description
+===============================  ===================  =============================================================================================
+brokerList                       --                   Use kafka.bootstrap.servers
+topic                            default-flume-topic  Use kafka.topic
+batchSize                        100                  Use kafka.flumeBatchSize
+requiredAcks                     1                    Use kafka.producer.acks
+
+===============================  ===================  =============================================================================================
+
 An example configuration of a Kafka sink is given below. Properties starting
-with the prefix ``kafka`` (the last 3 properties) are used when instantiating
-the Kafka producer. The properties that are passed when creating the Kafka
+with the prefix ``kafka.producer`` the Kafka producer. The properties that are passed when creating the Kafka
 producer are not limited to the properties given in this example.
-Also it's possible include your custom properties here and access them inside
+Also it is possible to include your custom properties here and access them inside
 the preprocessor through the Flume Context object passed in as a method
 argument.
 
 .. code-block:: properties
 
-    a1.sinks.k1.type = org.apache.flume.sink.kafka.KafkaSink
-    a1.sinks.k1.topic = mytopic
-    a1.sinks.k1.brokerList = localhost:9092
-    a1.sinks.k1.requiredAcks = 1
-    a1.sinks.k1.batchSize = 20
     a1.sinks.k1.channel = c1
+    a1.sinks.k1.type = org.apache.flume.sink.kafka.KafkaSink
+    a1.sinks.k1.kafka.topic = mytopic
+    a1.sinks.k1.kafka.bootstrap.servers = localhost:9092
+    a1.sinks.k1.kafka.flumeBatchSize = 20
+    a1.sinks.k1.kafka.producer.acks = 1
+    a1.sinks.k1.kafka.producer.linger.ms = 1
+    a1.sinks.ki.kafka.producer.compression.type = snappy
 
 Custom Sink
 ~~~~~~~~~~~

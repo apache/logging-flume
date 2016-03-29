@@ -19,11 +19,18 @@
 package org.apache.flume.sink.kafka;
 
 import kafka.message.MessageAndMetadata;
-import org.apache.flume.*;
+import org.apache.flume.Channel;
+import org.apache.flume.Context;
+import org.apache.flume.Event;
+import org.apache.flume.EventDeliveryException;
+import org.apache.flume.Sink;
+import org.apache.flume.Transaction;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.sink.kafka.util.TestUtil;
+import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -33,11 +40,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
+
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.*;
 
 /**
  * Unit tests for Kafka Sink
@@ -50,7 +59,7 @@ public class TestKafkaSink {
   public static void setup() {
     testUtil.prepare();
     List<String> topics = new ArrayList<String>(3);
-    topics.add(KafkaSinkConstants.DEFAULT_TOPIC);
+    topics.add(DEFAULT_TOPIC);
     topics.add(TestConstants.STATIC_TOPIC);
     topics.add(TestConstants.CUSTOM_TOPIC);
     testUtil.initTopicList(topics);
@@ -59,6 +68,50 @@ public class TestKafkaSink {
   @AfterClass
   public static void tearDown() {
     testUtil.tearDown();
+  }
+
+  @Test
+  public void testKafkaProperties() {
+
+    KafkaSink kafkaSink = new KafkaSink();
+    Context context = new Context();
+    context.put(KAFKA_PREFIX + TOPIC_CONFIG, "");
+    context.put(KAFKA_PRODUCER_PREFIX + ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "override.default.serializer");
+    context.put("kafka.producer.fake.property", "kafka.property.value");
+    context.put("kafka.bootstrap.servers", "localhost:9092,localhost:9092");
+    context.put("brokerList","real-broker-list");
+    Configurables.configure(kafkaSink,context);
+
+    Properties kafkaProps = kafkaSink.getKafkaProps();
+
+    //check that we have defaults set
+    assertEquals(
+            kafkaProps.getProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG), DEFAULT_KEY_SERIALIZER);
+    //check that kafka properties override the default and get correct name
+    assertEquals(kafkaProps.getProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG), "override.default.serializer");
+    //check that any kafka-producer property gets in
+    assertEquals(kafkaProps.getProperty("fake.property"), "kafka.property.value");
+    //check that documented property overrides defaults
+    assertEquals(kafkaProps.getProperty("bootstrap.servers") ,"localhost:9092,localhost:9092");
+  }
+
+  @Test
+  public void testOldProperties() {
+    KafkaSink kafkaSink = new KafkaSink();
+    Context context = new Context();
+    context.put("topic","test-topic");
+    context.put(OLD_BATCH_SIZE, "300");
+    context.put(BROKER_LIST_FLUME_KEY,"localhost:9092,localhost:9092");
+    context.put(REQUIRED_ACKS_FLUME_KEY, "all");
+    Configurables.configure(kafkaSink,context);
+
+    Properties kafkaProps = kafkaSink.getKafkaProps();
+
+    assertEquals(kafkaSink.getTopic(), "test-topic");
+    assertEquals(kafkaSink.getBatchSize(),300);
+    assertEquals(kafkaProps.getProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG),"localhost:9092,localhost:9092");
+    assertEquals(kafkaProps.getProperty(ProducerConfig.ACKS_CONFIG), "all");
+
   }
 
   @Test
@@ -89,7 +142,7 @@ public class TestKafkaSink {
     }
 
     String fetchedMsg = new String((byte[])
-      testUtil.getNextMessageFromConsumer(KafkaSinkConstants.DEFAULT_TOPIC)
+      testUtil.getNextMessageFromConsumer(DEFAULT_TOPIC)
         .message());
     assertEquals(msg, fetchedMsg);
   }
@@ -98,7 +151,7 @@ public class TestKafkaSink {
   public void testStaticTopic() {
     Context context = prepareDefaultContext();
     // add the static topic
-    context.put(KafkaSinkConstants.TOPIC, TestConstants.STATIC_TOPIC);
+    context.put(TOPIC_CONFIG, TestConstants.STATIC_TOPIC);
     String msg = "static-topic-test";
 
     try {
@@ -110,8 +163,7 @@ public class TestKafkaSink {
       // ignore
     }
 
-    String fetchedMsg = new String((byte[]) testUtil.getNextMessageFromConsumer(
-      TestConstants.STATIC_TOPIC).message());
+    String fetchedMsg = new String((byte[]) testUtil.getNextMessageFromConsumer(TestConstants.STATIC_TOPIC).message());
     assertEquals(msg, fetchedMsg);
   }
 
@@ -172,16 +224,14 @@ public class TestKafkaSink {
       fail("Error Occurred");
     }
     assertNull(
-      testUtil.getNextMessageFromConsumer(KafkaSinkConstants.DEFAULT_TOPIC));
+      testUtil.getNextMessageFromConsumer(DEFAULT_TOPIC));
   }
 
   private Context prepareDefaultContext() {
     // Prepares a default context with Kafka Server Properties
     Context context = new Context();
-    context.put("brokerList", testUtil.getKafkaServerUrl());
-    context.put("kafka.request.required.acks", "1");
-    context.put("kafka.producer.type","sync");
-    context.put("batchSize", "1");
+    context.put(BOOTSTRAP_SERVERS_CONFIG, testUtil.getKafkaServerUrl());
+    context.put(BATCH_SIZE, "1");
     return context;
   }
 
