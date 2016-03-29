@@ -17,40 +17,49 @@
 package org.apache.flume.source.kafka;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
-import kafka.consumer.ConsumerIterator;
-import kafka.consumer.ConsumerTimeoutException;
-import kafka.consumer.KafkaStream;
-import kafka.javaapi.consumer.ConsumerConnector;
-import kafka.message.MessageAndMetadata;
-
-import org.apache.flume.*;
+import org.apache.flume.Context;
+import org.apache.flume.Event;
+import org.apache.flume.EventDeliveryException;
+import org.apache.flume.FlumeException;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.event.EventBuilder;
-import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.instrumentation.kafka.KafkaSourceCounter;
 import org.apache.flume.source.AbstractPollableSource;
-import org.apache.flume.source.AbstractSource;
-import org.apache.flume.source.BasicSourceSemantics;
 
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
- * A Source for Kafka which reads messages from a kafka topic.
+ * A Source for Kafka which reads messages from kafka topics.
  *
- * <tt>zookeeperConnect: </tt> Kafka's zookeeper connection string.
+ * <tt>kafka.bootstrap.servers: </tt> A comma separated list of host:port pairs
+ * to use for establishing the initial connection to the Kafka cluster.
+ * For example host1:port1,host2:port2,...
+ * <b>Required</b> for kafka.
+ * <p>
+ * <tt>kafka.consumer.group.id: </tt> the group ID of consumer group. <b>Required</b>
+ * <p>
+ * <tt>kafka.topics: </tt> the topic list separated by commas to consume messages from.
  * <b>Required</b>
- * <p>
- * <tt>groupId: </tt> the group ID of consumer group. <b>Required</b>
- * <p>
- * <tt>topic: </tt> the topic to consume messages from. <b>Required</b>
  * <p>
  * <tt>maxBatchSize: </tt> Maximum number of messages written to Channel in one
  * batch. Default: 1000
@@ -58,99 +67,167 @@ import org.slf4j.LoggerFactory;
  * <tt>maxBatchDurationMillis: </tt> Maximum number of milliseconds before a
  * batch (of any size) will be written to a channel. Default: 1000
  * <p>
- * <tt>kafka.auto.commit.enable: </tt> If true, commit automatically every time
- * period. if false, commit on each batch. Default: false
+ * <tt>kafka.consumer.*: </tt> Any property starting with "kafka.consumer" will be
+ * passed to the kafka consumer So you can use any configuration supported by Kafka 0.9.0.X
  * <p>
- * <tt>kafka.consumer.timeout.ms: </tt> Polling interval for new data for batch.
- * Low value means more CPU usage. High value means the time.upper.limit may be
- * missed. Default: 10
- *
- * Any property starting with "kafka" will be passed to the kafka consumer So
- * you can use any configuration supported by Kafka 0.8.1.1
  */
 public class KafkaSource extends AbstractPollableSource
         implements Configurable {
   private static final Logger log = LoggerFactory.getLogger(KafkaSource.class);
-  private ConsumerConnector consumer;
-  private ConsumerIterator<byte[],byte[]> it;
-  private String topic;
-  private int batchUpperLimit;
-  private int timeUpperLimit;
-  private int consumerTimeout;
-  private boolean kafkaAutoCommitEnabled;
+
   private Context context;
   private Properties kafkaProps;
-  private final List<Event> eventList = new ArrayList<Event>();
   private KafkaSourceCounter counter;
+  private KafkaConsumer<String, byte[]> consumer;
+  private Iterator<ConsumerRecord<String, byte[]>> it;
+
+  private final List<Event> eventList = new ArrayList<Event>();
+  private Map<TopicPartition, OffsetAndMetadata> tpAndOffsetMetadata;
+  private AtomicBoolean rebalanceFlag;
+
+  private Map<String, String> headers;
+
+  private int batchUpperLimit;
+  private int maxBatchDurationMillis;
+
+  private Subscriber subscriber;
+
+
+  /**
+   * This class is a helper to subscribe for topics by using
+   * different strategies
+   */
+  public abstract class Subscriber<T> {
+    public abstract void subscribe(KafkaConsumer<?, ?> consumer, SourceRebalanceListener listener);
+    public T get() {return null;}
+  }
+
+  private class TopicListSubscriber extends Subscriber<List<String>> {
+    private List<String> topicList;
+    public TopicListSubscriber(String commaSeparatedTopics) {
+      this.topicList = Arrays.asList(commaSeparatedTopics.split("^\\s+|\\s*,\\s*|\\s+$"));
+    }
+    @Override
+    public void subscribe(KafkaConsumer<?, ?> consumer, SourceRebalanceListener listener) {
+      consumer.subscribe(topicList, listener);
+    }
+    @Override
+    public List<String> get() {
+      return topicList;
+    }
+  }
+
+  private class PatternSubscriber extends Subscriber<Pattern> {
+    private Pattern pattern;
+    public PatternSubscriber(String regex) {
+      this.pattern = Pattern.compile(regex);
+    }
+    @Override
+    public void subscribe(KafkaConsumer<?, ?> consumer, SourceRebalanceListener listener) {
+      consumer.subscribe(pattern, listener);
+    }
+    @Override
+    public Pattern get() {
+      return pattern;
+    }
+  }
+
 
   @Override
   protected Status doProcess() throws EventDeliveryException {
+    final String batchUUID = UUID.randomUUID().toString();
     byte[] kafkaMessage;
-    byte[] kafkaKey;
+    String kafkaKey;
     Event event;
-    Map<String, String> headers;
-    long batchStartTime = System.currentTimeMillis();
-    long batchEndTime = System.currentTimeMillis() + timeUpperLimit;
-    try {
-      boolean iterStatus = false;
-      long startTime = System.nanoTime();
-      while (eventList.size() < batchUpperLimit &&
-              System.currentTimeMillis() < batchEndTime) {
-        iterStatus = hasNext();
-        if (iterStatus) {
-          // get next message
-          MessageAndMetadata<byte[], byte[]> messageAndMetadata = it.next();
-          kafkaMessage = messageAndMetadata.message();
-          kafkaKey = messageAndMetadata.key();
 
-          // Add headers to event (topic, timestamp, and key)
-          headers = new HashMap<String, String>();
-          headers.put(KafkaSourceConstants.TIMESTAMP,
-                  String.valueOf(System.currentTimeMillis()));
-          headers.put(KafkaSourceConstants.TOPIC, topic);
-          if (kafkaKey != null) {
-            headers.put(KafkaSourceConstants.KEY, new String(kafkaKey));
+    try {
+      // prepare time variables for new batch
+      final long nanoBatchStartTime = System.nanoTime();
+      final long batchStartTime = System.currentTimeMillis();
+      final long maxBatchEndTime = System.currentTimeMillis() + maxBatchDurationMillis;
+
+      while (eventList.size() < batchUpperLimit &&
+              System.currentTimeMillis() < maxBatchEndTime) {
+
+        if (it == null || !it.hasNext()) {
+          // Obtaining new records
+          // Poll time is remainder time for current batch.
+          ConsumerRecords<String, byte[]> records = consumer.poll(
+                  Math.max(0, maxBatchEndTime - System.currentTimeMillis()));
+          it = records.iterator();
+
+          // this flag is set to true in a callback when some partitions are revoked.
+          // If there are any records we commit them.
+          if (rebalanceFlag.get()) {
+            rebalanceFlag.set(false);
+            break;
           }
-          if (log.isDebugEnabled()) {
-            log.debug("Message: {}", new String(kafkaMessage));
+          // check records after poll
+          if (!it.hasNext()) {
+            if (log.isDebugEnabled()) {
+              counter.incrementKafkaEmptyCount();
+              log.debug("Returning with backoff. No more data to read");
+            }
+            // batch time exceeded
+            break;
           }
-          event = EventBuilder.withBody(kafkaMessage, headers);
-          eventList.add(event);
         }
+
+        // get next message
+        ConsumerRecord<String, byte[]> message = it.next();
+        kafkaKey = message.key();
+        kafkaMessage = message.value();
+
+        headers.clear();
+        // Add headers to event (timestamp, topic, partition, key)
+        headers.put(KafkaSourceConstants.TIMESTAMP_HEADER, String.valueOf(System.currentTimeMillis()));
+        headers.put(KafkaSourceConstants.TOPIC_HEADER, message.topic());
+        headers.put(KafkaSourceConstants.PARTITION_HEADER, String.valueOf(message.partition()));
+        if (kafkaKey != null) {
+          headers.put(KafkaSourceConstants.KEY_HEADER, kafkaKey);
+        }
+
+        if (log.isDebugEnabled()) {
+          log.debug("Topic: {} Partition: {} Message: {}", new String[]{
+                  message.topic(),
+                  String.valueOf(message.partition()),
+                  new String(kafkaMessage)});
+        }
+
+        event = EventBuilder.withBody(kafkaMessage, headers);
+        eventList.add(event);
+
         if (log.isDebugEnabled()) {
           log.debug("Waited: {} ", System.currentTimeMillis() - batchStartTime);
           log.debug("Event #: {}", eventList.size());
         }
+
+        // For each partition store next offset that is going to be read.
+        tpAndOffsetMetadata.put(new TopicPartition(message.topic(), message.partition()),
+                new OffsetAndMetadata(message.offset() + 1, batchUUID));
       }
-      long endTime = System.nanoTime();
-      counter.addToKafkaEventGetTimer((endTime-startTime)/(1000*1000));
-      counter.addToEventReceivedCount(Long.valueOf(eventList.size()));
-      // If we have events, send events to channel
-      // clear the event list
-      // and commit if Kafka doesn't auto-commit
+
       if (eventList.size() > 0) {
+        counter.addToKafkaEventGetTimer((System.nanoTime() - nanoBatchStartTime) / (1000 * 1000));
+        counter.addToEventReceivedCount((long) eventList.size());
         getChannelProcessor().processEventBatch(eventList);
         counter.addToEventAcceptedCount(eventList.size());
-        eventList.clear();
         if (log.isDebugEnabled()) {
           log.debug("Wrote {} events to channel", eventList.size());
         }
-        if (!kafkaAutoCommitEnabled) {
-          // commit the read transactions to Kafka to avoid duplicates
+        eventList.clear();
+
+        if (!tpAndOffsetMetadata.isEmpty()) {
           long commitStartTime = System.nanoTime();
-          consumer.commitOffsets();
+          consumer.commitSync(tpAndOffsetMetadata);
           long commitEndTime = System.nanoTime();
-          counter.addToKafkaCommitTimer((commitEndTime-commitStartTime)/(1000*1000));
+          counter.addToKafkaCommitTimer((commitEndTime - commitStartTime) / (1000 * 1000));
+          tpAndOffsetMetadata.clear();
         }
+        return Status.READY;
       }
-      if (!iterStatus) {
-        if (log.isDebugEnabled()) {
-          counter.incrementKafkaEmptyCount();
-          log.debug("Returning with backoff. No more data to read");
-        }
-        return Status.BACKOFF;
-      }
-      return Status.READY;
+
+      return Status.BACKOFF;
     } catch (Exception e) {
       log.error("KafkaSource EXCEPTION, {}", e);
       return Status.BACKOFF;
@@ -161,96 +238,153 @@ public class KafkaSource extends AbstractPollableSource
    * We configure the source and generate properties for the Kafka Consumer
    *
    * Kafka Consumer properties are generated as follows:
-   *
    * 1. Generate a properties object with some static defaults that can be
-   * overridden by Source configuration 2. We add the configuration users added
-   * for Kafka (parameters starting with kafka. and must be valid Kafka Consumer
-   * properties 3. We add the source documented parameters which can override
-   * other properties
-   *
+   * overridden if corresponding properties are specified
+   * 2. We add the configuration users added for Kafka (parameters starting
+   * with kafka.consumer and must be valid Kafka Consumer properties
+   * 3. Add source level properties (with no prefix)
    * @param context
    */
   @Override
   protected void doConfigure(Context context) throws FlumeException {
     this.context = context;
-    batchUpperLimit = context.getInteger(KafkaSourceConstants.BATCH_SIZE,
-            KafkaSourceConstants.DEFAULT_BATCH_SIZE);
-    timeUpperLimit = context.getInteger(KafkaSourceConstants.BATCH_DURATION_MS,
-            KafkaSourceConstants.DEFAULT_BATCH_DURATION);
-    topic = context.getString(KafkaSourceConstants.TOPIC);
+    headers = new HashMap<String, String>(4);
+    tpAndOffsetMetadata = new HashMap<TopicPartition, OffsetAndMetadata>();
+    rebalanceFlag = new AtomicBoolean(false);
+    kafkaProps = new Properties();
 
-    if(topic == null) {
-      throw new ConfigurationException("Kafka topic must be specified.");
+    // can be removed in the next release
+    // See https://issues.apache.org/jira/browse/FLUME-2896
+    translateOldProperties(context);
+
+    String topicProperty = context.getString(KafkaSourceConstants.TOPICS_REGEX);
+    if (topicProperty != null && !topicProperty.isEmpty()) {
+      // create subscriber that uses pattern-based subscription
+      subscriber = new PatternSubscriber(topicProperty);
+    } else
+    if((topicProperty = context.getString(KafkaSourceConstants.TOPICS)) != null && !topicProperty.isEmpty()) {
+      // create subscriber that uses topic list subscription
+      subscriber = new TopicListSubscriber(topicProperty);
+    } else
+    if (subscriber == null) {
+      throw new ConfigurationException("At least one Kafka topic must be specified.");
     }
 
-    kafkaProps = KafkaSourceUtil.getKafkaProperties(context);
-    consumerTimeout = Integer.parseInt(kafkaProps.getProperty(
-            KafkaSourceConstants.CONSUMER_TIMEOUT));
-    kafkaAutoCommitEnabled = Boolean.parseBoolean(kafkaProps.getProperty(
-            KafkaSourceConstants.AUTO_COMMIT_ENABLED));
+    batchUpperLimit = context.getInteger(KafkaSourceConstants.BATCH_SIZE,
+            KafkaSourceConstants.DEFAULT_BATCH_SIZE);
+    maxBatchDurationMillis = context.getInteger(KafkaSourceConstants.BATCH_DURATION_MS,
+            KafkaSourceConstants.DEFAULT_BATCH_DURATION);
+
+    String bootstrapServers = context.getString(KafkaSourceConstants.BOOTSTRAP_SERVERS);
+    if (bootstrapServers == null || bootstrapServers.isEmpty()) {
+      throw new ConfigurationException("Bootstrap Servers must be specified");
+    }
+
+    setConsumerProps(context, bootstrapServers);
 
     if (counter == null) {
       counter = new KafkaSourceCounter(getName());
     }
   }
 
+
+  // We can remove this once the properties are officially deprecated
+  private void translateOldProperties(Context ctx) {
+    // topic
+    String topic = context.getString(KafkaSourceConstants.TOPIC);
+    if (topic != null && !topic.isEmpty()) {
+      subscriber = new TopicListSubscriber(topic);
+      log.warn("{} is deprecated. Please use the parameter {}",
+              KafkaSourceConstants.TOPIC, KafkaSourceConstants.TOPICS);
+    }
+
+    // old groupId
+    String groupId = ctx.getString(KafkaSourceConstants.OLD_GROUP_ID);
+    if (groupId != null && !groupId.isEmpty()) {
+      kafkaProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+      log.warn("{} is deprecated. Please use the parameter {}",
+              KafkaSourceConstants.OLD_GROUP_ID,
+              KafkaSourceConstants.KAFKA_CONSUMER_PREFIX + ConsumerConfig.GROUP_ID_CONFIG);
+    }
+  }
+
+
+  private void setConsumerProps(Context ctx, String bootStrapServers) {
+    String groupId = ctx.getString(KafkaSourceConstants.KAFKA_CONSUMER_PREFIX + ConsumerConfig.GROUP_ID_CONFIG);
+    if ((groupId == null || groupId.isEmpty()) &&
+            kafkaProps.getProperty(ConsumerConfig.GROUP_ID_CONFIG) == null) {
+        groupId = KafkaSourceConstants.DEFAULT_GROUP_ID;
+        log.info("Group ID was not specified. Using " + groupId + " as the group id.");
+    }
+    kafkaProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, KafkaSourceConstants.DEFAULT_KEY_DESERIALIZER);
+    kafkaProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaSourceConstants.DEFAULT_VALUE_DESERIALIZER);
+    //Defaults overridden based on config
+    kafkaProps.putAll(ctx.getSubProperties(KafkaSourceConstants.KAFKA_CONSUMER_PREFIX));
+    //These always take precedence over config
+    kafkaProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrapServers);
+    if (groupId != null) {
+      kafkaProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+    }
+    kafkaProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, KafkaSourceConstants.DEFAULT_AUTO_COMMIT);
+
+    log.info(kafkaProps.toString());
+  }
+
+  Properties getConsumerProps() {
+    return kafkaProps;
+  }
+
+  <T> Subscriber<T> getSubscriber() {
+    return subscriber;
+  }
+
   @Override
   protected void doStart() throws FlumeException {
     log.info("Starting {}...", this);
 
-    try {
-      //initialize a consumer. This creates the connection to ZooKeeper
-      consumer = KafkaSourceUtil.getConsumer(kafkaProps);
-    } catch (Exception e) {
-      throw new FlumeException("Unable to create consumer. " +
-              "Check whether the ZooKeeper server is up and that the " +
-              "Flume agent can connect to it.", e);
-    }
+    //initialize a consumer.
+    consumer = new KafkaConsumer<String, byte[]>(kafkaProps);
 
-    Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
-    // We always have just one topic being read by one thread
-    topicCountMap.put(topic, 1);
+    // Subscribe for topics by already specified strategy
+    subscriber.subscribe(consumer, new SourceRebalanceListener(rebalanceFlag));
 
-    // Get the message iterator for our topic
-    // Note that this succeeds even if the topic doesn't exist
-    // in that case we simply get no messages for the topic
-    // Also note that currently we only support a single topic
-    try {
-      Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap =
-              consumer.createMessageStreams(topicCountMap);
-      List<KafkaStream<byte[], byte[]>> topicList = consumerMap.get(topic);
-      KafkaStream<byte[], byte[]> stream = topicList.get(0);
-      it = stream.iterator();
-    } catch (Exception e) {
-      throw new FlumeException("Unable to get message iterator from Kafka", e);
-    }
-    log.info("Kafka source {} do started.", getName());
+    // Connect to kafka. 1 second is optimal time.
+    it = consumer.poll(1000).iterator();
+    log.info("Kafka source {} started.", getName());
     counter.start();
   }
 
   @Override
   protected void doStop() throws FlumeException {
     if (consumer != null) {
-      // exit cleanly. This syncs offsets of messages read to ZooKeeper
-      // to avoid reading the same messages again
-      consumer.shutdown();
+      consumer.wakeup();
+      consumer.close();
     }
     counter.stop();
-    log.info("Kafka Source {} do stopped. Metrics: {}", getName(), counter);
+    log.info("Kafka Source {} stopped. Metrics: {}", getName(), counter);
+  }
+}
+
+
+class SourceRebalanceListener implements ConsumerRebalanceListener {
+  private static final Logger log = LoggerFactory.getLogger(SourceRebalanceListener.class);
+  private AtomicBoolean rebalanceFlag;
+
+  public SourceRebalanceListener(AtomicBoolean rebalanceFlag) {
+    this.rebalanceFlag = rebalanceFlag;
   }
 
-  /**
-   * Check if there are messages waiting in Kafka,
-   * waiting until timeout (10ms by default) for messages to arrive.
-   * and catching the timeout exception to return a boolean
-   */
-  boolean hasNext() {
-    try {
-      it.hasNext();
-      return true;
-    } catch (ConsumerTimeoutException e) {
-      return false;
+  // Set a flag that a rebalance has occurred. Then commit already read events to kafka.
+  public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
+    for (TopicPartition partition : partitions) {
+      log.info("topic {} - partition {} revoked.", partition.topic(), partition.partition());
+      rebalanceFlag.set(true);
     }
   }
 
+  public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+    for (TopicPartition partition : partitions) {
+      log.info("topic {} - partition {} assigned.", partition.topic(), partition.partition());
+    }
+  }
 }
