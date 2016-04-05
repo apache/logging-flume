@@ -23,12 +23,8 @@ import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.flume.Channel;
-import org.apache.flume.ChannelException;
-import org.apache.flume.ChannelSelector;
-import org.apache.flume.Event;
-import org.apache.flume.Transaction;
-import org.apache.flume.Context;
+
+import org.apache.flume.*;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.junit.Assert;
@@ -85,9 +81,9 @@ public class TestChannelProcessor {
   }
 
   /*
-   * Test delivery to optional and required channels
-   * Test both processEvent and processEventBatch
-   */
+ * Test delivery to optional and required channels
+ * Test both processEvent and processEventBatch
+ */
   @Test
   public void testRequiredAndOptionalChannels() {
     Context context = new Context();

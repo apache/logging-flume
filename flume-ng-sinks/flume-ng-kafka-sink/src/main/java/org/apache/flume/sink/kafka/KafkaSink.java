@@ -19,20 +19,46 @@
 package org.apache.flume.sink.kafka;
 
 import com.google.common.base.Throwables;
-import kafka.javaapi.producer.Producer;
-import kafka.producer.KeyedMessage;
-import kafka.producer.ProducerConfig;
-import org.apache.flume.*;
+import org.apache.flume.Channel;
+import org.apache.flume.Context;
+import org.apache.flume.Event;
+import org.apache.flume.EventDeliveryException;
+import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.instrumentation.kafka.KafkaSinkCounter;
 import org.apache.flume.sink.AbstractSink;
+import org.apache.kafka.clients.producer.Callback;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Properties;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
+import java.util.Properties;
+import java.util.concurrent.Future;
+
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.BOOTSTRAP_SERVERS_CONFIG;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.BATCH_SIZE;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_BATCH_SIZE;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.BROKER_LIST_FLUME_KEY;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_ACKS;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_KEY_SERIALIZER;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_TOPIC;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_VALUE_SERIAIZER;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.KAFKA_PRODUCER_PREFIX;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.KEY_HEADER;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.OLD_BATCH_SIZE;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.REQUIRED_ACKS_FLUME_KEY;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_CONFIG;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_HEADER;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.KEY_SERIALIZER_KEY;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.MESSAGE_SERIALIZER_KEY;
+
 
 /**
  * A Flume Sink that can publish messages to Kafka.
@@ -67,15 +93,24 @@ import java.util.ArrayList;
 public class KafkaSink extends AbstractSink implements Configurable {
 
   private static final Logger logger = LoggerFactory.getLogger(KafkaSink.class);
-  public static final String KEY_HDR = "key";
-  public static final String TOPIC_HDR = "topic";
-  private Properties kafkaProps;
-  private Producer<String, byte[]> producer;
+
+  private final Properties kafkaProps = new Properties();
+  private KafkaProducer<String, byte[]> producer;
+
   private String topic;
   private int batchSize;
-  private List<KeyedMessage<String, byte[]>> messageList;
+  private List<Future<RecordMetadata>> kafkaFutures;
   private KafkaSinkCounter counter;
 
+
+  //For testing
+  public String getTopic() {
+    return topic;
+  }
+
+  public int getBatchSize() {
+    return batchSize;
+  }
 
   @Override
   public Status process() throws EventDeliveryException {
@@ -92,7 +127,8 @@ public class KafkaSink extends AbstractSink implements Configurable {
       transaction = channel.getTransaction();
       transaction.begin();
 
-      messageList.clear();
+      kafkaFutures.clear();
+      long batchStartTime = System.nanoTime();
       for (; processedEvents < batchSize; processedEvents += 1) {
         event = channel.take();
 
@@ -110,11 +146,11 @@ public class KafkaSink extends AbstractSink implements Configurable {
         byte[] eventBody = event.getBody();
         Map<String, String> headers = event.getHeaders();
 
-        if ((eventTopic = headers.get(TOPIC_HDR)) == null) {
+        eventTopic = headers.get(TOPIC_HEADER);
+        if (eventTopic == null) {
           eventTopic = topic;
         }
-
-        eventKey = headers.get(KEY_HDR);
+        eventKey = headers.get(KEY_HEADER);
 
         if (logger.isDebugEnabled()) {
           logger.debug("{Event} " + eventTopic + " : " + eventKey + " : "
@@ -123,19 +159,22 @@ public class KafkaSink extends AbstractSink implements Configurable {
         }
 
         // create a message and add to buffer
-        KeyedMessage<String, byte[]> data = new KeyedMessage<String, byte[]>
-          (eventTopic, eventKey, eventBody);
-        messageList.add(data);
-
+        long startTime = System.currentTimeMillis();
+        kafkaFutures.add(producer.send(new ProducerRecord<String, byte[]> (eventTopic, eventKey, eventBody),
+                                         new SinkCallback(startTime)));
       }
+
+      //Prevent linger.ms from holding the batch
+      producer.flush();
 
       // publish batch and commit.
       if (processedEvents > 0) {
-        long startTime = System.nanoTime();
-        producer.send(messageList);
+          for (Future<RecordMetadata> future : kafkaFutures) {
+            future.get();
+          }
         long endTime = System.nanoTime();
-        counter.addToKafkaEventSendTimer((endTime-startTime)/(1000*1000));
-        counter.addToEventDrainSuccessCount(Long.valueOf(messageList.size()));
+        counter.addToKafkaEventSendTimer((endTime-batchStartTime)/(1000*1000));
+        counter.addToEventDrainSuccessCount(Long.valueOf(kafkaFutures.size()));
       }
 
       transaction.commit();
@@ -146,6 +185,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
       result = Status.BACKOFF;
       if (transaction != null) {
         try {
+          kafkaFutures.clear();
           transaction.rollback();
           counter.incrementRollbackCount();
         } catch (Exception e) {
@@ -166,8 +206,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
   @Override
   public synchronized void start() {
     // instantiate the producer
-    ProducerConfig config = new ProducerConfig(kafkaProps);
-    producer = new Producer<String, byte[]>(config);
+    producer = new KafkaProducer<String,byte[]>(kafkaProps);
     counter.start();
     super.start();
   }
@@ -197,31 +236,132 @@ public class KafkaSink extends AbstractSink implements Configurable {
   @Override
   public void configure(Context context) {
 
-    batchSize = context.getInteger(KafkaSinkConstants.BATCH_SIZE,
-      KafkaSinkConstants.DEFAULT_BATCH_SIZE);
-    messageList =
-      new ArrayList<KeyedMessage<String, byte[]>>(batchSize);
-    logger.debug("Using batch size: {}", batchSize);
+    translateOldProps(context);
 
-    topic = context.getString(KafkaSinkConstants.TOPIC,
-      KafkaSinkConstants.DEFAULT_TOPIC);
-    if (topic.equals(KafkaSinkConstants.DEFAULT_TOPIC)) {
-      logger.warn("The Property 'topic' is not set. " +
-        "Using the default topic name: " +
-        KafkaSinkConstants.DEFAULT_TOPIC);
-    } else {
-      logger.info("Using the static topic: " + topic +
-        " this may be over-ridden by event headers");
+    String topicStr = context.getString(TOPIC_CONFIG);
+    if (topicStr == null || topicStr.isEmpty()) {
+      topicStr = DEFAULT_TOPIC;
+      logger.warn("Topic was not specified. Using {} as the topic.", topicStr);
+    }
+    else {
+      logger.info("Using the static topic {}. This may be overridden by event headers", topicStr);
     }
 
-    kafkaProps = KafkaSinkUtil.getKafkaProperties(context);
+    topic = topicStr;
+
+    batchSize = context.getInteger(BATCH_SIZE, DEFAULT_BATCH_SIZE);
 
     if (logger.isDebugEnabled()) {
-      logger.debug("Kafka producer properties: " + kafkaProps);
+      logger.debug("Using batch size: {}", batchSize);
+    }
+
+    kafkaFutures = new LinkedList<Future<RecordMetadata>>();
+
+    String bootStrapServers = context.getString(BOOTSTRAP_SERVERS_CONFIG);
+    if (bootStrapServers == null || bootStrapServers.isEmpty()) {
+      throw new ConfigurationException("Bootstrap Servers must be specified");
+    }
+
+    setProducerProps(context, bootStrapServers);
+
+    if (logger.isDebugEnabled()) {
+      logger.debug("Kafka producer properties: {}" , kafkaProps);
     }
 
     if (counter == null) {
       counter = new KafkaSinkCounter(getName());
     }
   }
+
+  private void translateOldProps(Context ctx) {
+
+    if (!(ctx.containsKey(TOPIC_CONFIG))) {
+      ctx.put(TOPIC_CONFIG, ctx.getString("topic"));
+      logger.warn("{} is deprecated. Please use the parameter {}", "topic", TOPIC_CONFIG);
+    }
+
+    //Broker List
+    // If there is no value we need to check and set the old param and log a warning message
+    if (!(ctx.containsKey(BOOTSTRAP_SERVERS_CONFIG))) {
+      String brokerList = ctx.getString(BROKER_LIST_FLUME_KEY);
+      if (brokerList == null || brokerList.isEmpty()) {
+        throw new ConfigurationException("Bootstrap Servers must be specified");
+      } else {
+        ctx.put(BOOTSTRAP_SERVERS_CONFIG, brokerList);
+        logger.warn("{} is deprecated. Please use the parameter {}", BROKER_LIST_FLUME_KEY, BOOTSTRAP_SERVERS_CONFIG);
+      }
+    }
+
+    //batch Size
+    if (!(ctx.containsKey(BATCH_SIZE))) {
+      String oldBatchSize = ctx.getString(OLD_BATCH_SIZE);
+      if ( oldBatchSize != null  && !oldBatchSize.isEmpty())  {
+        ctx.put(BATCH_SIZE, oldBatchSize);
+        logger.warn("{} is deprecated. Please use the parameter {}", OLD_BATCH_SIZE, BATCH_SIZE);
+      }
+    }
+
+    // Acks
+    if (!(ctx.containsKey(KAFKA_PRODUCER_PREFIX + ProducerConfig.ACKS_CONFIG))) {
+      String requiredKey = ctx.getString(
+              KafkaSinkConstants.REQUIRED_ACKS_FLUME_KEY);
+      if (!(requiredKey == null) && !(requiredKey.isEmpty())) {
+        ctx.put(KAFKA_PRODUCER_PREFIX + ProducerConfig.ACKS_CONFIG, requiredKey);
+        logger.warn("{} is deprecated. Please use the parameter {}", REQUIRED_ACKS_FLUME_KEY,
+                KAFKA_PRODUCER_PREFIX + ProducerConfig.ACKS_CONFIG);
+      }
+    }
+
+    if (ctx.containsKey(KEY_SERIALIZER_KEY )) {
+      logger.warn("{} is deprecated. Flume now uses the latest Kafka producer which implements " +
+              "a different interface for serializers. Please use the parameter {}",
+              KEY_SERIALIZER_KEY,KAFKA_PRODUCER_PREFIX + ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG);
+    }
+
+    if (ctx.containsKey(MESSAGE_SERIALIZER_KEY)) {
+      logger.warn("{} is deprecated. Flume now uses the latest Kafka producer which implements " +
+                      "a different interface for serializers. Please use the parameter {}",
+              MESSAGE_SERIALIZER_KEY,KAFKA_PRODUCER_PREFIX + ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG);
+    }
+
+
+
+
+
+  }
+  private void setProducerProps(Context context, String bootStrapServers) {
+    kafkaProps.put(ProducerConfig.ACKS_CONFIG, DEFAULT_ACKS);
+    //Defaults overridden based on config
+    kafkaProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, DEFAULT_KEY_SERIALIZER);
+    kafkaProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, DEFAULT_VALUE_SERIAIZER);
+    kafkaProps.putAll(context.getSubProperties(KAFKA_PRODUCER_PREFIX));
+    kafkaProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrapServers);
+    logger.info("Producer properties: {}" , kafkaProps.toString());
+  }
+
+  protected Properties getKafkaProps() {
+    return kafkaProps;
+  }
 }
+
+class SinkCallback implements Callback {
+  private static final Logger logger = LoggerFactory.getLogger(SinkCallback.class);
+  private long startTime;
+
+  public SinkCallback(long startTime) {
+    this.startTime = startTime;
+  }
+
+  public void onCompletion(RecordMetadata metadata, Exception exception) {
+    if (exception != null) {
+      logger.debug("Error sending message to Kafka {} ", exception.getMessage());
+    }
+
+    if (logger.isDebugEnabled()) {
+      long eventElapsedTime = System.currentTimeMillis() - startTime;
+      logger.debug("Acked message partition:{} ofset:{}",  metadata.partition(), metadata.offset());
+      logger.debug("Elapsed time for send: {}", eventElapsedTime);
+    }
+  }
+}
+

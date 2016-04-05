@@ -1188,9 +1188,9 @@ Example for agent named a1:
 Kafka Source
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Kafka Source is an Apache Kafka consumer that reads messages from a Kafka topic.
+Kafka Source is an Apache Kafka consumer that reads messages from Kafka topics.
 If you have multiple Kafka sources running, you can configure them with the same Consumer Group
-so each will read a unique set of partitions for the topic.
+so each will read a unique set of partitions for the topics.
 
 
 
@@ -1198,11 +1198,13 @@ so each will read a unique set of partitions for the topic.
 Property Name                    Default      Description
 ===============================  ===========  ===================================================
 **channels**                     --
-**type**                         --           The component type name, needs to be ``org.apache.flume.source.kafka,KafkaSource``
-**zookeeperConnect**             --           URI of ZooKeeper used by Kafka cluster
-**groupId**                      flume        Unique identified of consumer group. Setting the same id in multiple sources or agents
+**type**                         --           The component type name, needs to be ``org.apache.flume.source.kafka.KafkaSource``
+**kafka.bootstrap.servers**      --           List of brokers in the Kafka cluster used by the source
+kafka.consumer.group.id          flume        Unique identified of consumer group. Setting the same id in multiple sources or agents
                                               indicates that they are part of the same consumer group
-**topic**                        --           Kafka topic we'll read messages from. At the time, this is a single topic only.
+**kafka.topics**                 --           Comma-separated list of topics the kafka consumer will read messages from.
+**kafka.topics.regex**           --           Regex that defines set of topics the source is subscribed on. This property has higher priority
+                                              than ``kafka.topics`` and overrides ``kafka.topics`` if exists.
 batchSize                        1000         Maximum number of messages written to Channel in one batch
 batchDurationMillis              1000         Maximum time (in ms) before a batch will be written to Channel
                                               The batch will be written whenever the first of size and time will be reached.
@@ -1214,31 +1216,49 @@ maxBackoffSleep                  5000         Maximum wait time that is triggere
                                               ideal for ingestion use cases but a lower value may be required for low latency operations
                                               with interceptors.
 Other Kafka Consumer Properties  --           These properties are used to configure the Kafka Consumer. Any producer property supported
-                                              by Kafka can be used. The only requirement is to prepend the property name with the prefix ``kafka.``.
-                                              For example: kafka.consumer.timeout.ms
-                                              Check `Kafka documentation <https://kafka.apache.org/08/configuration.html#consumerconfigs>` for details
+                                              by Kafka can be used. The only requirement is to prepend the property name with the prefix ``kafka.consumer``.
+                                              For example: kafka.consumer.auto.offset.reset
+                                              Check `Kafka documentation <http://kafka.apache.org/documentation.html#newconsumerconfigs>` for details
 ===============================  ===========  ===================================================
 
 .. note:: The Kafka Source overrides two Kafka consumer parameters:
-          auto.commit.enable is set to "false" by the source and we commit every batch. For improved performance
-          this can be set to "true", however, this can lead to loss of data
-          consumer.timeout.ms is set to 10ms, so when we check Kafka for new data we wait at most 10ms for the data to arrive
-          setting this to a higher value can reduce CPU utilization (we'll poll Kafka in less of a tight loop), but also means
-          higher latency in writing batches to channel (since we'll wait longer for data to arrive).
+          auto.commit.enable is set to "false" by the source and every batch is committed. Kafka source guarantees at least once
+          strategy of messages retrieval. The duplicates can be present when the source starts.
+          The Kafka Source also provides defaults for the key.deserializer(org.apache.kafka.common.serialization.StringSerializer)
+          and value.deserializer(org.apache.kafka.common.serialization.ByteArraySerializer). Modification of these parameters is not recommended.
 
+Deprecated Properties
 
-Example for agent named tier1:
+===============================  ===================  =============================================================================================
+Property Name                    Default              Description
+===============================  ===================  =============================================================================================
+topic                            --                   Use kafka.topics
+groupId                          flume                Use kafka.consumer.group.id
+zookeeperConnect                 --                   Is no longer supported by kafka consumer client since 0.9.x. Use kafka.bootstrap.servers
+                                                      to establish connection with kafka cluster
+===============================  ===================  =============================================================================================
+
+Example for topic subscription by comma-separated topic list.
 
 .. code-block:: properties
 
     tier1.sources.source1.type = org.apache.flume.source.kafka.KafkaSource
     tier1.sources.source1.channels = channel1
-    tier1.sources.source1.zookeeperConnect = localhost:2181
-    tier1.sources.source1.topic = test1
-    tier1.sources.source1.groupId = flume
-    tier1.sources.source1.kafka.consumer.timeout.ms = 100
+    tier1.sources.source1.batchSize = 5000
+    tier1.sources.source1.batchDurationMillis = 2000
+    tier1.sources.source1.kafka.bootstrap.servers = localhost:9092
+    tier1.sources.source1.kafka.topics = test1, test2
+    tier1.sources.source1.kafka.consumer.group.id = custom.g.id
 
+Example for topic subscription by regex
 
+.. code-block:: properties
+
+    tier1.sources.source1.type = org.apache.flume.source.kafka.KafkaSource
+    tier1.sources.source1.channels = channel1
+    tier1.sources.source1.kafka.bootstrap.servers = localhost:9092
+    tier1.sources.source1.kafka.topics.regex = ^topic[0-9]$
+    # the default kafka.consumer.group.id=flume is used
 
 
 NetCat Source
@@ -2473,7 +2493,9 @@ Kafka Sink
 This is a Flume Sink implementation that can publish data to a
 `Kafka <http://kafka.apache.org/>`_ topic. One of the objective is to integrate Flume
 with Kafka so that pull based processing systems can process the data coming
-through various Flume sources. This currently supports Kafka 0.8.x series of releases.
+through various Flume sources. This currently supports Kafka 0.9.x series of releases.
+
+This version of Flume no longer supports Older Versions (0.8.x) of Kafka.
 
 Required properties are marked in bold font.
 
@@ -2482,20 +2504,21 @@ Required properties are marked in bold font.
 Property Name                    Default              Description
 ===============================  ===================  =============================================================================================
 **type**                         --                   Must be set to ``org.apache.flume.sink.kafka.KafkaSink``
-**brokerList**                   --                   List of brokers Kafka-Sink will connect to, to get the list of topic partitions
+**kafka.bootstrap.servers**      --                   List of brokers Kafka-Sink will connect to, to get the list of topic partitions
                                                       This can be a partial list of brokers, but we recommend at least two for HA.
                                                       The format is comma separated list of hostname:port
-topic                            default-flume-topic  The topic in Kafka to which the messages will be published. If this parameter is configured,
+kafka.topic                      default-flume-topic  The topic in Kafka to which the messages will be published. If this parameter is configured,
                                                       messages will be published to this topic.
                                                       If the event header contains a "topic" field, the event will be published to that topic
                                                       overriding the topic configured here.
-batchSize                        100                  How many messages to process in one batch. Larger batches improve throughput while adding latency.
-requiredAcks                     1                    How many replicas must acknowledge a message before its considered successfully written.
+flumeBatchSize                   100                  How many messages to process in one batch. Larger batches improve throughput while adding latency.
+kafka.producer.acks              1                    How many replicas must acknowledge a message before its considered successfully written.
                                                       Accepted values are 0 (Never wait for acknowledgement), 1 (wait for leader only), -1 (wait for all replicas)
                                                       Set this to -1 to avoid data loss in some cases of leader failure.
 Other Kafka Producer Properties  --                   These properties are used to configure the Kafka Producer. Any producer property supported
-                                                      by Kafka can be used. The only requirement is to prepend the property name with the prefix ``kafka.``.
-                                                      For example: kafka.producer.type
+                                                      by Kafka can be used. The only requirement is to prepend the property name with the prefix
+                                                      ``kafka.producer``.
+                                                      For example: kafka.producer.linger.ms
 ===============================  ===================  =============================================================================================
 
 .. note::   Kafka Sink uses the ``topic`` and ``key`` properties from the FlumeEvent headers to send events to Kafka.
@@ -2503,22 +2526,38 @@ Other Kafka Producer Properties  --                   These properties are used 
             If ``key`` exists in the headers, the key will used by Kafka to partition the data between the topic partitions. Events with same key
             will be sent to the same partition. If the key is null, events will be sent to random partitions.
 
+The Kafka sink also provides defaults for the key.serializer(org.apache.kafka.common.serialization.StringSerializer)
+and value.serializer(org.apache.kafka.common.serialization.ByteArraySerializer). Modification of these parameters is not recommended.
+
+Deprecated Properties
+
+===============================  ===================  =============================================================================================
+Property Name                    Default              Description
+===============================  ===================  =============================================================================================
+brokerList                       --                   Use kafka.bootstrap.servers
+topic                            default-flume-topic  Use kafka.topic
+batchSize                        100                  Use kafka.flumeBatchSize
+requiredAcks                     1                    Use kafka.producer.acks
+
+===============================  ===================  =============================================================================================
+
 An example configuration of a Kafka sink is given below. Properties starting
-with the prefix ``kafka`` (the last 3 properties) are used when instantiating
-the Kafka producer. The properties that are passed when creating the Kafka
+with the prefix ``kafka.producer`` the Kafka producer. The properties that are passed when creating the Kafka
 producer are not limited to the properties given in this example.
-Also it's possible include your custom properties here and access them inside
+Also it is possible to include your custom properties here and access them inside
 the preprocessor through the Flume Context object passed in as a method
 argument.
 
 .. code-block:: properties
 
-    a1.sinks.k1.type = org.apache.flume.sink.kafka.KafkaSink
-    a1.sinks.k1.topic = mytopic
-    a1.sinks.k1.brokerList = localhost:9092
-    a1.sinks.k1.requiredAcks = 1
-    a1.sinks.k1.batchSize = 20
     a1.sinks.k1.channel = c1
+    a1.sinks.k1.type = org.apache.flume.sink.kafka.KafkaSink
+    a1.sinks.k1.kafka.topic = mytopic
+    a1.sinks.k1.kafka.bootstrap.servers = localhost:9092
+    a1.sinks.k1.kafka.flumeBatchSize = 20
+    a1.sinks.k1.kafka.producer.acks = 1
+    a1.sinks.k1.kafka.producer.linger.ms = 1
+    a1.sinks.ki.kafka.producer.compression.type = snappy
 
 Custom Sink
 ~~~~~~~~~~~
@@ -2640,36 +2679,60 @@ The Kafka channel can be used for multiple scenarios:
 * With Flume source and interceptor but no sink - it allows writing Flume events into a Kafka topic, for use by other apps
 * With Flume sink, but no source - it is a low-latency, fault tolerant way to send events from Kafka to Flume sources such as HDFS, HBase or Solr
 
+
+This version of Flume requires Kafka version 0.9 or greater due to the reliance on the Kafka clients shipped with that version. The configuration of
+the channel has changed compared to previous flume versions.
+
+The configuration parameters are organized as such:
+1) Configuration values related to the channel generically are applied at the channel config level, eg: a1.channel.k1.type =
+2) Configuration values related to Kafka or how the Channel operates are prefixed with "kafka.",  (this are analgous to CommonClient Configs)eg: a1.channels.k1.kafka.topica1.channels.k1.kafka.bootstrap.serversThis is not dissimilar to how the hdfs sink operates
+3) Properties specific to the producer/consumer are prefixed by kafka.producer or kafka.consumer
+4) Where possible, the Kafka paramter names are used, eg: bootstrap.servers and acks
+
+This version of flume is backwards-compatible with previous versions, however deprecated properties are indicated in the table below and a warning message
+is logged on startup when they are present in the configuration file.
+
 Required properties are in **bold**.
 
-======================  ==========================  ===============================================================================================================
-Property Name           Default                           Description
-======================  ==========================  ===============================================================================================================
-**type**                --                          The component type name, needs to be ``org.apache.flume.channel.kafka.KafkaChannel``
-**brokerList**          --                          List of brokers in the Kafka cluster used by the channel
-                                                    This can be a partial list of brokers, but we recommend at least two for HA.
-                                                    The format is comma separated list of hostname:port
-**zookeeperConnect**    --                          URI of ZooKeeper used by Kafka cluster
-                                                    The format is comma separated list of hostname:port. If chroot is used, it is added once at the end.
-                                                    For example: zookeeper-1:2181,zookeeper-2:2182,zookeeper-3:2181/kafka
-topic                   flume-channel               Kafka topic which the channel will use
-groupId                 flume                       Consumer group ID the channel uses to register with Kafka.
-                                                    Multiple channels must use the same topic and group to ensure that when one agent fails another can get the data
-                                                    Note that having non-channel consumers with the same ID can lead to data loss.
-parseAsFlumeEvent       true                        Expecting Avro datums with FlumeEvent schema in the channel.
-                                                    This should be true if Flume source is writing to the channel
-                                                    And false if other producers are writing into the topic that the channel is using
-                                                    Flume source messages to Kafka can be parsed outside of Flume by using
-                                                    org.apache.flume.source.avro.AvroFlumeEvent provided by the flume-ng-sdk artifact
-readSmallestOffset      false                       When set to true, the channel will read all data in the topic, starting from the oldest event
-                                                    when false, it will read only events written after the channel started
-                                                    When "parseAsFlumeEvent" is true, this will be false. Flume source will start prior to the sinks and this
-                                                    guarantees that events sent by source before sinks start will not be lost.
-Other Kafka Properties  --                          These properties are used to configure the Kafka Producer and Consumer used by the channel.
-                                                    Any property supported by Kafka can be used.
-                                                    The only requirement is to prepend the property name with the prefix ``kafka.``.
-                                                    For example: kafka.producer.type
-======================  ==========================  ===============================================================================================================
+================================  ==========================  ===============================================================================================================
+Property Name                     Default                     Description
+================================  ==========================  ===============================================================================================================
+**type**                          --                          The component type name, needs to be ``org.apache.flume.channel.kafka.KafkaChannel``
+**kafka.bootstrap.servers**       --                          List of brokers in the Kafka cluster used by the channel
+                                                              This can be a partial list of brokers, but we recommend at least two for HA.
+                                                              The format is comma separated list of hostname:port
+kafka.topic                       flume-channel               Kafka topic which the channel will use
+kafka.consumer.group.id           flume                       Consumer group ID the channel uses to register with Kafka.
+                                                              Multiple channels must use the same topic and group to ensure that when one agent fails another can get the data
+                                                              Note that having non-channel consumers with the same ID can lead to data loss.
+
+parseAsFlumeEvent                 true                        Expecting Avro datums with FlumeEvent schema in the channel.
+                                                              This should be true if Flume source is writing to the channel and false if other producers are
+                                                              writing into the topic that the channel is using. Flume source messages to Kafka can be parsed outside of Flume by using
+                                                              org.apache.flume.source.avro.AvroFlumeEvent provided by the flume-ng-sdk artifact
+pollTimeout                       500                         The amount of time(in milliseconds) to wait in the "poll()" call of the conumer.
+                                                              https://kafka.apache.org/090/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html#poll(long)
+kafka.consumer.auto.offset.reset  latest                      What to do when there is no initial offset in Kafka or if the current offset does not exist any more on the server
+                                                              (e.g. because that data has been deleted):
+                                                              earliest: automatically reset the offset to the earliest offset
+                                                              latest: automatically reset the offset to the latest offset
+                                                              none: throw exception to the consumer if no previous offset is found for the consumer\'s group
+                                                              anything else: throw exception to the consumer.
+================================  ==========================  ===============================================================================================================
+
+Deprecated Properties
+
+================================  ==========================  ===============================================================================================================
+Property Name                     Default                     Description
+================================  ==========================  ===============================================================================================================
+brokerList                        --                          List of brokers in the Kafka cluster used by the channel
+                                                              This can be a partial list of brokers, but we recommend at least two for HA.
+                                                              The format is comma separated list of hostname:port
+topic                             flume-channel               Use kafka.topic
+groupId                           flume                       Use kafka.consumer.group.id
+readSmallestOffset                false                       Use kafka.consumer.auto.offset.reset
+
+================================  ==========================  ===============================================================================================================
 
 .. note:: Due to the way the channel is load balanced, there may be duplicate events when the agent first starts up
 
@@ -2677,12 +2740,12 @@ Example for agent named a1:
 
 .. code-block:: properties
 
-    a1.channels.channel1.type   = org.apache.flume.channel.kafka.KafkaChannel
+    a1.channels.channel1.type = org.apache.flume.channel.kafka.KafkaChannel
     a1.channels.channel1.capacity = 10000
     a1.channels.channel1.transactionCapacity = 1000
-    a1.channels.channel1.brokerList=kafka-2:9092,kafka-3:9092
-    a1.channels.channel1.topic=channel1
-    a1.channels.channel1.zookeeperConnect=kafka-1:2181
+    a1.channels.channel1.kafka.bootstrap.servers = kafka-1:9092,kafka-2:9092,kafka-3:9092
+    a1.channels.channel1.kafka.topic = channel1
+    a1.channels.channel1.kafka.consumer.group.id = flume-consumer
 
 File Channel
 ~~~~~~~~~~~~

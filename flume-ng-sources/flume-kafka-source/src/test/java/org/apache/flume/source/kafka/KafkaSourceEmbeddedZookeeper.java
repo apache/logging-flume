@@ -23,6 +23,7 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.UUID;
 
 public class KafkaSourceEmbeddedZookeeper {
   private int zkPort;
@@ -31,19 +32,25 @@ public class KafkaSourceEmbeddedZookeeper {
   File dir;
 
 
-  public KafkaSourceEmbeddedZookeeper(int zkPort){
-    int numConnections = 5000;
+  public KafkaSourceEmbeddedZookeeper(int zkPort) {
     int tickTime = 2000;
 
     this.zkPort = zkPort;
 
     String dataDirectory = System.getProperty("java.io.tmpdir");
-    dir = new File(dataDirectory, "zookeeper").getAbsoluteFile();
+    dir = new File(dataDirectory, "zookeeper" + UUID.randomUUID()).getAbsoluteFile();
+
+    try {
+      FileUtils.deleteDirectory(dir);
+    } catch (IOException e) {
+      e.printStackTrace();
+      System.exit(1);
+    }
 
     try {
       this.zookeeper = new ZooKeeperServer(dir,dir,tickTime);
       this.factory = new NIOServerCnxnFactory();
-      factory.configure(new InetSocketAddress("127.0.0.1",zkPort),0);
+      factory.configure(new InetSocketAddress(KafkaSourceEmbeddedKafka.HOST, zkPort),0);
       factory.startup(zookeeper);
     } catch (IOException e) {
       e.printStackTrace();
@@ -59,6 +66,6 @@ public class KafkaSourceEmbeddedZookeeper {
   }
 
   public String getConnectString() {
-    return "127.0.0.1:"+zkPort;
+    return KafkaSourceEmbeddedKafka.HOST + ":" + zkPort;
   }
 }
