@@ -22,7 +22,12 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
@@ -31,9 +36,13 @@ import com.google.common.collect.Lists;
 import junit.framework.Assert;
 import kafka.common.TopicExistsException;
 
+import org.apache.avro.io.BinaryEncoder;
+import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.flume.*;
 import org.apache.flume.PollableSource.Status;
 import org.apache.flume.channel.ChannelProcessor;
+import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.junit.After;
 import org.junit.Before;
@@ -503,6 +512,80 @@ public class TestKafkaSource {
       Assert.assertTrue(subscriber.get().matcher("topic" + i).find());
     }
     Assert.assertFalse(subscriber.get().matcher("topic").find());
+  }
+
+  @Test
+  public void testAvroEvent() throws InterruptedException, EventDeliveryException, IOException {
+    SpecificDatumWriter<AvroFlumeEvent> writer;
+    ByteArrayOutputStream tempOutStream;
+    BinaryEncoder encoder;
+    byte[] bytes;
+
+    context.put(TOPICS, topic0);
+    context.put(BATCH_SIZE, "1");
+    context.put(AVRO_EVENT, "true");
+    kafkaSource.configure(context);
+    kafkaSource.start();
+
+    Thread.sleep(500L);
+
+    tempOutStream = new ByteArrayOutputStream();
+    writer = new SpecificDatumWriter<AvroFlumeEvent>(AvroFlumeEvent.class);
+
+    Map<CharSequence, CharSequence> headers = new HashMap<CharSequence,CharSequence>();
+    headers.put("header1", "value1");
+    headers.put("header2", "value2");
+
+    AvroFlumeEvent e = new AvroFlumeEvent(headers, ByteBuffer.wrap("hello, world".getBytes()));
+    encoder = EncoderFactory.get().directBinaryEncoder(tempOutStream, null);
+    writer.write(e, encoder);
+    encoder.flush();
+    bytes = tempOutStream.toByteArray();
+
+    kafkaServer.produce(topic0, "", bytes);
+
+    String currentTimestamp = Long.toString(System.currentTimeMillis());
+
+    headers.put(TIMESTAMP_HEADER, currentTimestamp);
+    headers.put(PARTITION_HEADER, "1");
+    headers.put(TOPIC_HEADER, "topic0");
+
+    e = new AvroFlumeEvent(headers, ByteBuffer.wrap("hello, world2".getBytes()));
+    tempOutStream.reset();
+    encoder = EncoderFactory.get().directBinaryEncoder(tempOutStream, null);
+    writer.write(e, encoder);
+    encoder.flush();
+    bytes = tempOutStream.toByteArray();
+
+    kafkaServer.produce(topic0, "", bytes);
+
+    Thread.sleep(500L);
+    Assert.assertEquals(Status.READY, kafkaSource.process());
+    Assert.assertEquals(Status.READY, kafkaSource.process());
+    Assert.assertEquals(Status.BACKOFF, kafkaSource.process());
+
+    Assert.assertEquals(2, events.size());
+
+    Event event = events.get(0);
+
+    Assert.assertEquals("hello, world", new String(event.getBody(),
+            Charsets.UTF_8));
+
+    Assert.assertEquals("value1", e.getHeaders().get("header1"));
+    Assert.assertEquals("value2", e.getHeaders().get("header2"));
+
+
+    event = events.get(1);
+
+    Assert.assertEquals("hello, world2", new String(event.getBody(),
+            Charsets.UTF_8));
+
+    Assert.assertEquals("value1", e.getHeaders().get("header1"));
+    Assert.assertEquals("value2", e.getHeaders().get("header2"));
+    Assert.assertEquals(currentTimestamp, e.getHeaders().get(TIMESTAMP_HEADER));
+    Assert.assertEquals(e.getHeaders().get(PARTITION_HEADER), "1");
+    Assert.assertEquals(e.getHeaders().get(TOPIC_HEADER),"topic0");
+
   }
 
   ChannelProcessor createGoodChannel() {
