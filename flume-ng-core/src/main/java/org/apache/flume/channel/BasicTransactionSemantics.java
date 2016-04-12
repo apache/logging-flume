@@ -82,6 +82,7 @@ public abstract class BasicTransactionSemantics implements Transaction {
    * </p>
    */
   protected void put(Event event) {
+  //transaction必须在同一个线程中
     Preconditions.checkState(Thread.currentThread().getId() == initialThreadId,
         "put() called from different thread than getTransaction()!");
     Preconditions.checkState(state.equals(State.OPEN),
