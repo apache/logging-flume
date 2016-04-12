@@ -51,9 +51,9 @@ public class RollTimePathManager extends DefaultPathManager {
             lastRoll = date;
         }
         sb.append(getPrefix());//.append("-");
+        sb.append(date);
         int i= getFileIndex().incrementAndGet();
         if ( i > 1) {
-            sb.append(date);
             sb.append("-"+(i-1));
         }
         if (getExtension().length() > 0) {
