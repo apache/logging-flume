@@ -1215,6 +1215,11 @@ backoffSleepIncrement            1000         Initial and incremental wait time 
 maxBackoffSleep                  5000         Maximum wait time that is triggered when a Kafka Topic appears to be empty.  Five seconds is
                                               ideal for ingestion use cases but a lower value may be required for low latency operations
                                               with interceptors.
+useFlumeEventFormat              false        By default events are taken as bytes from the Kafka topic directly into the event body. Set to
+                                              true to read events as the Flume Avro binary format. Used in conjunction with the same property
+                                              on the KafkaSink or with the parseAsFlumeEvent property on the Kafka Channel this will preserve
+                                              any Flume headers sent on the producing side.
+
 Other Kafka Consumer Properties  --           These properties are used to configure the Kafka Consumer. Any producer property supported
                                               by Kafka can be used. The only requirement is to prepend the property name with the prefix ``kafka.consumer``.
                                               For example: kafka.consumer.auto.offset.reset
@@ -2515,6 +2520,10 @@ flumeBatchSize                   100                  How many messages to proce
 kafka.producer.acks              1                    How many replicas must acknowledge a message before its considered successfully written.
                                                       Accepted values are 0 (Never wait for acknowledgement), 1 (wait for leader only), -1 (wait for all replicas)
                                                       Set this to -1 to avoid data loss in some cases of leader failure.
+useFlumeEventFormat              false                By default events are put as bytes onto the Kafka topic directly from the event body. Set to
+                                                      true to store events as the Flume Avro binary format. Used in conjunction with the same property
+                                                      on the KafkaSource or with the parseAsFlumeEvent property on the Kafka Channel this will preserve
+                                                      any Flume headers for the producing side.
 Other Kafka Producer Properties  --                   These properties are used to configure the Kafka Producer. Any producer property supported
                                                       by Kafka can be used. The only requirement is to prepend the property name with the prefix
                                                       ``kafka.producer``.

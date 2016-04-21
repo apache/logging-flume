@@ -34,6 +34,9 @@ public class KafkaSourceConstants {
   public static final int DEFAULT_BATCH_DURATION = 1000;
   public static final String DEFAULT_GROUP_ID = "flume";
 
+  public static final String AVRO_EVENT = "useFlumeEventFormat";
+  public static final boolean DEFAULT_AVRO_EVENT = false;
+
   /* Old Properties */
 
   public static final String TOPIC = "topic";
