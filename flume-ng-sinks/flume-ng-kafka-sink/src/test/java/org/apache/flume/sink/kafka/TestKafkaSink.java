@@ -19,6 +19,11 @@
 package org.apache.flume.sink.kafka;
 
 import kafka.message.MessageAndMetadata;
+
+import org.apache.avro.io.BinaryDecoder;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.util.Utf8;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -29,12 +34,17 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.sink.kafka.util.TestUtil;
+import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.google.common.base.Charsets;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -205,6 +215,64 @@ public class TestKafkaSink {
     assertEquals(msg, new String((byte[]) fetchedMsg.message(), "UTF-8"));
     assertEquals(TestConstants.CUSTOM_KEY,
       new String((byte[]) fetchedMsg.key(), "UTF-8"));
+
+  }
+
+  @SuppressWarnings("rawtypes")
+  @Test
+  public void testAvroEvent() throws IOException {
+
+
+    Sink kafkaSink = new KafkaSink();
+    Context context = prepareDefaultContext();
+    context.put(AVRO_EVENT, "true");
+    Configurables.configure(kafkaSink, context);
+    Channel memoryChannel = new MemoryChannel();
+    Configurables.configure(memoryChannel, context);
+    kafkaSink.setChannel(memoryChannel);
+    kafkaSink.start();
+
+    String msg = "test-avro-event";
+
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put("topic", TestConstants.CUSTOM_TOPIC);
+    headers.put("key", TestConstants.CUSTOM_KEY);
+    headers.put(TestConstants.HEADER_1_KEY, TestConstants.HEADER_1_VALUE);
+    Transaction tx = memoryChannel.getTransaction();
+    tx.begin();
+    Event event = EventBuilder.withBody(msg.getBytes(), headers);
+    memoryChannel.put(event);
+    tx.commit();
+    tx.close();
+
+    try {
+      Sink.Status status = kafkaSink.process();
+      if (status == Sink.Status.BACKOFF) {
+        fail("Error Occurred");
+      }
+    } catch (EventDeliveryException ex) {
+      // ignore
+    }
+
+    MessageAndMetadata fetchedMsg =
+      testUtil.getNextMessageFromConsumer(TestConstants.CUSTOM_TOPIC);
+
+    ByteArrayInputStream in =
+        new ByteArrayInputStream((byte[])fetchedMsg.message());
+    BinaryDecoder decoder = DecoderFactory.get().directBinaryDecoder(in, null);
+    SpecificDatumReader<AvroFlumeEvent> reader = new SpecificDatumReader<AvroFlumeEvent>(AvroFlumeEvent.class);
+
+    AvroFlumeEvent avroevent = reader.read(null, decoder);
+
+    String eventBody = new String(avroevent.getBody().array(), Charsets.UTF_8);
+    Map<CharSequence, CharSequence> eventHeaders = avroevent.getHeaders();
+
+    assertEquals(msg, eventBody);
+    assertEquals(TestConstants.CUSTOM_KEY,
+      new String((byte[]) fetchedMsg.key(), "UTF-8"));
+
+    assertEquals(TestConstants.HEADER_1_VALUE, eventHeaders.get(new Utf8(TestConstants.HEADER_1_KEY)).toString());
+    assertEquals(TestConstants.CUSTOM_KEY, eventHeaders.get(new Utf8("key")).toString());
 
   }
 

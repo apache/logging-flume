@@ -18,7 +18,13 @@
 
 package org.apache.flume.sink.kafka;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
+
+import org.apache.avro.io.BinaryEncoder;
+import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -28,6 +34,7 @@ import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.instrumentation.kafka.KafkaSinkCounter;
 import org.apache.flume.sink.AbstractSink;
+import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -36,6 +43,10 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -85,6 +96,7 @@ import static org.apache.flume.sink.kafka.KafkaSinkConstants.MESSAGE_SERIALIZER_
  * improve throughput while adding latency.
  * requiredAcks -- 0 (unsafe), 1 (accepted by at least one broker, default),
  * -1 (accepted by all brokers)
+ * useFlumeEventFormat - preserves event headers when serializing onto Kafka
  * <p/>
  * header properties (per event):
  * topic
@@ -101,6 +113,17 @@ public class KafkaSink extends AbstractSink implements Configurable {
   private int batchSize;
   private List<Future<RecordMetadata>> kafkaFutures;
   private KafkaSinkCounter counter;
+  private boolean useAvroEventFormat;
+  private Optional<SpecificDatumWriter<AvroFlumeEvent>> writer =
+          Optional.absent();
+  private Optional<SpecificDatumReader<AvroFlumeEvent>> reader =
+          Optional.absent();
+  private Optional<ByteArrayOutputStream> tempOutStream = Optional
+          .absent();
+
+  //Fine to use null for initial value, Avro will create new ones if this
+  // is null
+  private BinaryEncoder encoder = null;
 
 
   //For testing
@@ -160,8 +183,13 @@ public class KafkaSink extends AbstractSink implements Configurable {
 
         // create a message and add to buffer
         long startTime = System.currentTimeMillis();
-        kafkaFutures.add(producer.send(new ProducerRecord<String, byte[]> (eventTopic, eventKey, eventBody),
+
+        try {
+          kafkaFutures.add(producer.send(new ProducerRecord<String, byte[]> (eventTopic, eventKey, serializeEvent(event, useAvroEventFormat)),
                                          new SinkCallback(startTime)));
+        } catch (IOException ex) {
+          throw new EventDeliveryException("Could not serialize event", ex);
+        }
       }
 
       //Prevent linger.ms from holding the batch
@@ -255,6 +283,12 @@ public class KafkaSink extends AbstractSink implements Configurable {
       logger.debug("Using batch size: {}", batchSize);
     }
 
+    useAvroEventFormat = context.getBoolean(KafkaSinkConstants.AVRO_EVENT, KafkaSinkConstants.DEFAULT_AVRO_EVENT);
+
+    if (logger.isDebugEnabled()) {
+      logger.debug(KafkaSinkConstants.AVRO_EVENT + " set to: {}", useAvroEventFormat);
+    }
+
     kafkaFutures = new LinkedList<Future<RecordMetadata>>();
 
     String bootStrapServers = context.getString(BOOTSTRAP_SERVERS_CONFIG);
@@ -342,6 +376,36 @@ public class KafkaSink extends AbstractSink implements Configurable {
   protected Properties getKafkaProps() {
     return kafkaProps;
   }
+
+  private byte[] serializeEvent(Event event, boolean useAvroEventFormat) throws IOException {
+    byte[] bytes;
+    if (useAvroEventFormat) {
+      if (!tempOutStream.isPresent()) {
+        tempOutStream = Optional.of(new ByteArrayOutputStream());
+      }
+      if (!writer.isPresent()) {
+        writer = Optional.of(new SpecificDatumWriter<AvroFlumeEvent>(AvroFlumeEvent.class));
+      }
+      tempOutStream.get().reset();
+      AvroFlumeEvent e = new AvroFlumeEvent(toCharSeqMap(event.getHeaders()), ByteBuffer.wrap(event.getBody()));
+      encoder = EncoderFactory.get().directBinaryEncoder(tempOutStream.get(), encoder);
+      writer.get().write(e, encoder);
+      encoder.flush();
+      bytes = tempOutStream.get().toByteArray();
+    } else {
+      bytes = event.getBody();
+    }
+    return bytes;
+  }
+
+  private static Map<CharSequence, CharSequence> toCharSeqMap(Map<String, String> stringMap) {
+    Map<CharSequence, CharSequence> charSeqMap = new HashMap<CharSequence, CharSequence>();
+    for (Map.Entry<String, String> entry : stringMap.entrySet()) {
+      charSeqMap.put(entry.getKey(), entry.getValue());
+    }
+    return charSeqMap;
+  }
+
 }
 
 class SinkCallback implements Callback {

@@ -24,6 +24,7 @@ import org.I0Itec.zkclient.ZkClient;
 import org.apache.commons.io.FileUtils;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.io.File;
@@ -52,7 +53,7 @@ public class KafkaSourceEmbeddedKafka {
   int zkPort = 21818; // none-standard
   int serverPort = 18922;
 
-  KafkaProducer<String, String> producer;
+  KafkaProducer<String, byte[]> producer;
   File dir;
 
   public KafkaSourceEmbeddedKafka(Properties properties) {
@@ -95,12 +96,16 @@ public class KafkaSourceEmbeddedKafka {
     Properties props = new Properties();
     props.put("bootstrap.servers", HOST + ":" + serverPort);
     props.put("acks", "1");
-    producer = new KafkaProducer<String,String>(props,
-            new StringSerializer(), new StringSerializer());
+    producer = new KafkaProducer<String,byte[]>(props,
+            new StringSerializer(), new ByteArraySerializer());
   }
 
   public void produce(String topic, String k, String v) {
-    ProducerRecord<String, String> rec = new ProducerRecord<String, String>(topic, k, v);
+    produce(topic, k, v.getBytes());
+  }
+
+  public void produce(String topic, String k, byte[] v) {
+    ProducerRecord<String, byte[]> rec = new ProducerRecord<String, byte[]>(topic, k, v);
     try {
       producer.send(rec).get();
     } catch (InterruptedException e) {
@@ -111,7 +116,11 @@ public class KafkaSourceEmbeddedKafka {
   }
 
   public void produce(String topic, int partition, String k, String v) {
-    ProducerRecord<String, String> rec = new ProducerRecord<String, String>(topic, partition, k, v);
+    produce(topic,partition,k,v.getBytes());
+  }
+
+  public void produce(String topic, int partition, String k, byte[] v) {
+    ProducerRecord<String, byte[]> rec = new ProducerRecord<String, byte[]>(topic, partition, k, v);
     try {
       producer.send(rec).get();
     } catch (InterruptedException e) {
