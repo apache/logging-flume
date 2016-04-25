@@ -16,6 +16,7 @@
  */
 package org.apache.flume.source.kafka;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,6 +29,9 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
+import org.apache.avro.io.BinaryDecoder;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
@@ -37,7 +41,7 @@ import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.kafka.KafkaSourceCounter;
 import org.apache.flume.source.AbstractPollableSource;
-
+import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -47,6 +51,8 @@ import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Optional;
 
 /**
  * A Source for Kafka which reads messages from kafka topics.
@@ -69,6 +75,8 @@ import org.slf4j.LoggerFactory;
  * <p>
  * <tt>kafka.consumer.*: </tt> Any property starting with "kafka.consumer" will be
  * passed to the kafka consumer So you can use any configuration supported by Kafka 0.9.0.X
+ * <tt>useFlumeEventFormat: </tt> Reads events from Kafka Topic as an Avro FlumeEvent. Used
+ * in conjunction with useFlumeEventFormat (Kafka Sink) or parseAsFlumeEvent (Kafka Channel)
  * <p>
  */
 public class KafkaSource extends AbstractPollableSource
@@ -86,6 +94,11 @@ public class KafkaSource extends AbstractPollableSource
   private AtomicBoolean rebalanceFlag;
 
   private Map<String, String> headers;
+
+  private Optional<SpecificDatumReader<AvroFlumeEvent>> reader = Optional.absent();
+  private BinaryDecoder decoder = null;
+
+  private boolean useAvroEventFormat;
 
   private int batchUpperLimit;
   private int maxBatchDurationMillis;
@@ -139,6 +152,7 @@ public class KafkaSource extends AbstractPollableSource
     byte[] kafkaMessage;
     String kafkaKey;
     Event event;
+    byte[] eventBody;
 
     try {
       // prepare time variables for new batch
@@ -178,11 +192,41 @@ public class KafkaSource extends AbstractPollableSource
         kafkaKey = message.key();
         kafkaMessage = message.value();
 
-        headers.clear();
-        // Add headers to event (timestamp, topic, partition, key)
-        headers.put(KafkaSourceConstants.TIMESTAMP_HEADER, String.valueOf(System.currentTimeMillis()));
-        headers.put(KafkaSourceConstants.TOPIC_HEADER, message.topic());
-        headers.put(KafkaSourceConstants.PARTITION_HEADER, String.valueOf(message.partition()));
+        if (useAvroEventFormat) {
+          //Assume the event is in Avro format using the AvroFlumeEvent schema
+          //Will need to catch the exception if it is not
+          ByteArrayInputStream in =
+                  new ByteArrayInputStream(message.value());
+          decoder = DecoderFactory.get().directBinaryDecoder(in, decoder);
+          if (!reader.isPresent()) {
+            reader = Optional.of(
+                    new SpecificDatumReader<AvroFlumeEvent>(AvroFlumeEvent.class));
+          }
+          //This may throw an exception but it will be caught by the
+          //exception handler below and logged at error
+          AvroFlumeEvent avroevent = reader.get().read(null, decoder);
+
+          eventBody = avroevent.getBody().array();
+          headers = toStringMap(avroevent.getHeaders());
+        } else {
+          eventBody = message.value();
+          headers.clear();
+          headers = new HashMap<String, String>(4);
+        }
+
+        // Add headers to event (timestamp, topic, partition, key) only if they don't exist
+        if (!headers.containsKey(KafkaSourceConstants.TIMESTAMP_HEADER)) {
+          headers.put(KafkaSourceConstants.TIMESTAMP_HEADER,
+              String.valueOf(System.currentTimeMillis()));
+        }
+        if (!headers.containsKey(KafkaSourceConstants.TOPIC_HEADER)) {
+          headers.put(KafkaSourceConstants.TOPIC_HEADER, message.topic());
+        }
+        if (!headers.containsKey(KafkaSourceConstants.PARTITION_HEADER)) {
+          headers.put(KafkaSourceConstants.PARTITION_HEADER,
+              String.valueOf(message.partition()));
+        }
+
         if (kafkaKey != null) {
           headers.put(KafkaSourceConstants.KEY_HEADER, kafkaKey);
         }
@@ -191,10 +235,10 @@ public class KafkaSource extends AbstractPollableSource
           log.debug("Topic: {} Partition: {} Message: {}", new String[]{
                   message.topic(),
                   String.valueOf(message.partition()),
-                  new String(kafkaMessage)});
+                  new String(eventBody)});
         }
 
-        event = EventBuilder.withBody(kafkaMessage, headers);
+        event = EventBuilder.withBody(eventBody, headers);
         eventList.add(event);
 
         if (log.isDebugEnabled()) {
@@ -275,6 +319,12 @@ public class KafkaSource extends AbstractPollableSource
     maxBatchDurationMillis = context.getInteger(KafkaSourceConstants.BATCH_DURATION_MS,
             KafkaSourceConstants.DEFAULT_BATCH_DURATION);
 
+    useAvroEventFormat = context.getBoolean(KafkaSourceConstants.AVRO_EVENT, KafkaSourceConstants.DEFAULT_AVRO_EVENT);
+
+    if (log.isDebugEnabled()) {
+      log.debug(KafkaSourceConstants.AVRO_EVENT + " set to: {}", useAvroEventFormat);
+    }
+
     String bootstrapServers = context.getString(KafkaSourceConstants.BOOTSTRAP_SERVERS);
     if (bootstrapServers == null || bootstrapServers.isEmpty()) {
       throw new ConfigurationException("Bootstrap Servers must be specified");
@@ -332,6 +382,17 @@ public class KafkaSource extends AbstractPollableSource
 
   Properties getConsumerProps() {
     return kafkaProps;
+  }
+
+  /**
+   * Helper function to convert a map of CharSequence to a map of String.
+   */
+  private static Map<String, String> toStringMap(Map<CharSequence, CharSequence> charSeqMap) {
+    Map<String, String> stringMap = new HashMap<String, String>();
+    for (Map.Entry<CharSequence, CharSequence> entry : charSeqMap.entrySet()) {
+      stringMap.put(entry.getKey().toString(), entry.getValue().toString());
+    }
+    return stringMap;
   }
 
   <T> Subscriber<T> getSubscriber() {
