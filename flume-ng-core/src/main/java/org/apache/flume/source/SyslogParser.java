@@ -317,9 +317,16 @@ public class SyslogParser {
       return 0;
     }
 
-    // try to deal with boundary cases, i.e. new year's eve.
     // rfc3164 dates are really dumb.
-    // NB: cannot handle replaying of old logs or going back to the future
+    /*
+     * Some code to try and add some smarts to the year insertion as without a year in the message we
+     * need to make some educated guessing.
+     * First set the "fixed" to be the timestamp with the current year.
+     * If the "fixed" time is more than one month in the future then roll it back a year.
+     * If the "fixed" time is more than eleven months in the past then roll it forward a year.
+     * This gives us a 12 month rolling window (11 months in the past, 1 month in the future) of timestamps.
+     */
+
     if (date != null) {
       DateTime fixed = date.withYear(year);
 
