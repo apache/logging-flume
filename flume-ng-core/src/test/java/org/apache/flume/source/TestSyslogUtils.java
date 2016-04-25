@@ -28,6 +28,7 @@ import org.junit.Test;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
@@ -130,25 +131,33 @@ public class TestSyslogUtils {
 
   @Test
   public void TestHeader9() throws ParseException {
-    String stamp1 = "Apr 11 13:14:04";
+    SimpleDateFormat sdf = new SimpleDateFormat("MMM  d hh:MM:ss");
+    Calendar cal = Calendar.getInstance();
+
+    String year = String.valueOf(cal.get(Calendar.YEAR));
+    String stamp1 = sdf.format(cal.getTime());
     String format1 = "yyyyMMM d HH:mm:ss";
     String host1 = "ubuntu-11.cloudera.com";
     String data1 = "some msg";
     // timestamp with 'Z' appended, translates to UTC
     String msg1 = "<10>" + stamp1 + " " + host1 + " " + data1 + "\n";
-    checkHeader(msg1, String.valueOf(Calendar.getInstance().get(Calendar.YEAR)) + stamp1,
+    checkHeader(msg1, year + stamp1,
         format1, host1, data1);
   }
 
   @Test
   public void TestHeader10() throws ParseException {
-    String stamp1 = "Apr  1 13:14:04";
+    SimpleDateFormat sdf = new SimpleDateFormat("MMM  d hh:MM:ss");
+    Calendar cal = Calendar.getInstance();
+
+    String year = String.valueOf(cal.get(Calendar.YEAR));
+    String stamp1 = sdf.format(cal.getTime());
     String format1 = "yyyyMMM d HH:mm:ss";
     String host1 = "ubuntu-11.cloudera.com";
     String data1 = "some msg";
     // timestamp with 'Z' appended, translates to UTC
     String msg1 = "<10>" + stamp1 + " " + host1 + " " + data1 + "\n";
-    checkHeader(msg1, String.valueOf(Calendar.getInstance().get(Calendar.YEAR)) + stamp1,
+    checkHeader(msg1, year + stamp1,
         format1, host1, data1);
   }
 
@@ -169,13 +178,54 @@ public class TestSyslogUtils {
 
   @Test
   public void TestRfc3164HeaderApacheLogWithNulls() throws ParseException {
-    String stamp1 = "Apr  1 13:14:04";
+    SimpleDateFormat sdf = new SimpleDateFormat("MMM  d hh:MM:ss");
+    Calendar cal = Calendar.getInstance();
+
+    String year = String.valueOf(cal.get(Calendar.YEAR));
+    String stamp1 = sdf.format(cal.getTime());
     String format1 = "yyyyMMM d HH:mm:ss";
     String host1 = "ubuntu-11.cloudera.com";
     String data1 = "- hyphen_null_breaks_5424_pattern [07/Jun/2012:14:46:44 -0600]";
     String msg1 = "<10>" + stamp1 + " " + host1 + " " + data1 + "\n";
-    checkHeader(msg1, String.valueOf(Calendar.getInstance().get(Calendar.YEAR)) + stamp1,
+    checkHeader(msg1, year + stamp1,
             format1, host1, data1);
+  }
+
+  @Test
+  public void TestRfc3164Dates() throws ParseException {
+    /*
+     * This test creates a series of dates that range from 10 months in the past to (5 days short of)
+     * one month in the future. This tests that the year addition code is clever enough to handle scenarios
+     * where the event received was generated in a different year to what flume considers to be "current"
+     * (e.g. where there has been some lag somewhere, especially when flicking over on New Year's eve, or
+     * when you are about to flick over and the flume's system clock is slightly slower than the Syslog
+     * source's clock).
+     */
+    for (int i=-10; i<=1; i++) {
+      SimpleDateFormat sdf = new SimpleDateFormat("MMM  d hh:MM:ss");
+      Date date = new Date(System.currentTimeMillis());
+      Calendar cal = Calendar.getInstance();
+      cal.setTime(date);
+      cal.add(Calendar.MONTH, i);
+
+      //Small tweak to avoid the 1 month in the future ticking over by a few seconds between now
+      //and when the checkHeader actually runs
+      if (i==1) {
+        cal.add(Calendar.DAY_OF_MONTH, -1);
+      }
+
+      String stamp1 = sdf.format(cal.getTime());
+
+      String year = String.valueOf(cal.get(Calendar.YEAR));
+      String format1 = "yyyyMMM d HH:mm:ss";
+      String host1 = "ubuntu-11.cloudera.com";
+      String data1 = "some msg";
+
+      // timestamp with 'Z' appended, translates to UTC
+      String msg1 = "<10>" + stamp1 + " " + host1 + " " + data1 + "\n";
+      checkHeader(msg1, year + stamp1,
+          format1, host1, data1);
+    }
   }
 
   public static void checkHeader(String keepFields, String msg1, String stamp1, String format1,

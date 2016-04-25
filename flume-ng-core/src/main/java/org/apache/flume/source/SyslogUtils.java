@@ -33,6 +33,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -369,7 +370,44 @@ public class SyslogUtils {
             // try the available time formats to timestamp
             for (int dt = 0; dt < fmt.dateFormat.size(); dt++) {
               try {
-                timeStamp = String.valueOf(fmt.dateFormat.get(dt).parse(value).getTime());
+                Date parsedDate = fmt.dateFormat.get(dt).parse(value);
+                /*
+                 * Some code to try and add some smarts to the year insertion.
+                 * Original code just added the current year which was okay-ish, but around January 1st becomes
+                 * pretty naïve.
+                 * The current year is added above. This code, if the year has been added does the following:
+                 * 1. Compute what the computed time, but one month in the past would be.
+                 * 2. Compute what the computed time, but eleven months in the future would be.
+                 * If the computed time is more than one month in the future then roll it back a year.
+                 * If the computed time is more than eleven months in the past then roll it forward a year.
+                 * This gives us a 12 month rolling window (11 months in the past, 1 month in the future) of timestamps.
+                 */
+                if (fmt.addYear) {
+                  Calendar cal = Calendar.getInstance();
+                  cal.setTime(parsedDate);
+                  Calendar calMinusOneMonth = Calendar.getInstance();
+                  calMinusOneMonth.setTime(parsedDate);
+                  calMinusOneMonth.add(Calendar.MONTH, -1);
+
+                  Calendar calPlusElevenMonths = Calendar.getInstance();
+                  calPlusElevenMonths.setTime(parsedDate);
+                  calPlusElevenMonths.add(Calendar.MONTH, +11);
+
+                  if (cal.getTimeInMillis() > System.currentTimeMillis() && calMinusOneMonth.getTimeInMillis() > System.currentTimeMillis()) {
+                    //Need to roll back a year
+                    Calendar c1 = Calendar.getInstance();
+                    c1.setTime(parsedDate);
+                    c1.add(Calendar.YEAR, -1);
+                    parsedDate = c1.getTime();
+                  } else if (cal.getTimeInMillis() < System.currentTimeMillis() && calPlusElevenMonths.getTimeInMillis() < System.currentTimeMillis() ) {
+                    //Need to roll forward a year
+                    Calendar c1 = Calendar.getInstance();
+                    c1.setTime(parsedDate);
+                    c1.add(Calendar.YEAR, -1);
+                    parsedDate = c1.getTime();
+                  }
+                }
+                timeStamp = String.valueOf(parsedDate.getTime());
                 break; // done. formatted the time
               } catch (ParseException e) {
                 // Error formatting the timeStamp, try next format
