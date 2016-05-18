@@ -729,7 +729,7 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.rat</groupId>
           <artifactId>apache-rat-plugin</artifactId>
-          <version>0.7</version>
+          <version>0.11</version>
           <executions>
             <execution>
               <id>verify.rat</id>
