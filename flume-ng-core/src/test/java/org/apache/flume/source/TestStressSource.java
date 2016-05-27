@@ -164,7 +164,7 @@ public class TestStressSource {
       source.process();
     }
 
-    // 1 failed call, 50 succesful
+    // 1 failed call, 50 successful
     doThrow(new ChannelException("stub")).when(
         mockProcessor).processEvent(getEvent(source));
     source.process();

@@ -502,7 +502,7 @@ final class FlumeEventQueue {
                 + values.size()) * 8) //Event pointers
                 + 16; //Checksum
         //There is no real need of filling the channel with 0s, since we
-        //will write the exact nummber of bytes as expected file size.
+        //will write the exact number of bytes as expected file size.
         file.setLength(expectedFileSize);
         Preconditions.checkState(file.length() == expectedFileSize,
                 "Expected File size of inflight events file does not match the "

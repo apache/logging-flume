@@ -67,9 +67,9 @@ import org.apache.flume.instrumentation.SinkCounter;
 /**
 *
 * A simple sink which reads events from a channel and writes them to HBase.
-* This Sink uses an aysnchronous API internally and is likely to
+* This Sink uses an asynchronous API internally and is likely to
 * perform better.
-* The Hbase configution is picked up from the first <tt>hbase-site.xml</tt>
+* The Hbase configuration is picked up from the first <tt>hbase-site.xml</tt>
 * encountered in the classpath. This sink supports batch reading of
 * events from the channel, and writing them to Hbase, to minimize the number
 * of flushes on the hbase tables. To use this sink, it has to be configured

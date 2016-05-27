@@ -118,7 +118,7 @@ public class ResettableFileInputStream extends ResettableInputStream
   private boolean hasLowSurrogate = false;
 
   /**
-   * A low surrrgate character read from a surrogate pair.
+   * A low surrogate character read from a surrogate pair.
    * When a surrogate pair is found, the high (first) surrogate pair
    * is returned upon a call to {@link #read()},
    * while the low (second) surrogate remains stored in memory,
