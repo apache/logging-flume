@@ -2686,7 +2686,7 @@ replication, so in case an agent or a kafka broker crashes, the events are immed
 The Kafka channel can be used for multiple scenarios:
 * With Flume source and sink - it provides a reliable and highly available channel for events
 * With Flume source and interceptor but no sink - it allows writing Flume events into a Kafka topic, for use by other apps
-* With Flume sink, but no source - it is a low-latency, fault tolerant way to send events from Kafka to Flume sources such as HDFS, HBase or Solr
+* With Flume sink, but no source - it is a low-latency, fault tolerant way to send events from Kafka to Flume sinks such as HDFS, HBase or Solr
 
 
 This version of Flume requires Kafka version 0.9 or greater due to the reliance on the Kafka clients shipped with that version. The configuration of
