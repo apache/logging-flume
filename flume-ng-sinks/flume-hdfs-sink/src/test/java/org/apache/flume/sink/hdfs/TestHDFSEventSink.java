@@ -1323,6 +1323,64 @@ public class TestHDFSEventSink {
     fs.close();
   }
 
+  @Test
+  public void testBlockCompressSequenceFileWriterSync() throws IOException, EventDeliveryException, InterruptedException {
+    String hdfsPath = testPath + "/sequenceFileWriterSync";
+    String body = "test event-" + System.nanoTime();
+
+    Configuration conf = new Configuration();
+    FileSystem fs = FileSystem.get(conf);
+
+    // Since we are reading a partial file we don't want to use checksums
+    fs.setVerifyChecksum(false);
+    fs.setWriteChecksum(false);
+
+    Path dirPath = new Path(hdfsPath);
+    fs.delete(dirPath, true);
+    fs.mkdirs(dirPath);
+
+    Context context = new Context();
+    context.put("hdfs.path", hdfsPath);
+    // Ensure the file isn't closed and rolled, we are only going to send one event
+    context.put("hdfs.rollCount", "10");
+    context.put("hdfs.rollSize", "0");
+    context.put("hdfs.rollInterval", "0");
+    context.put("hdfs.batchSize", "1");
+    context.put("hdfs.fileType", "SequenceFile");
+    context.put("hdfs.codeC", "BZip2Codec"); // Compression codec that doesn't require native hadoop libraries
+    context.put("hdfs.writeFormat", "Writable");
+    Configurables.configure(sink, context);
+
+    Channel channel = new MemoryChannel();
+    Configurables.configure(channel, context);
+
+    sink.setChannel(channel);
+    sink.start();
+
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    Event event = new SimpleEvent();
+    event.setBody(body.getBytes());
+    channel.put(event);
+    txn.commit();
+    txn.close();
+
+    sink.process();
+    FileStatus[] dirStat = fs.listStatus(dirPath);
+    Path[] paths = FileUtil.stat2Paths(dirStat);
+
+    Assert.assertEquals(1, paths.length);
+
+    SequenceFile.Reader reader = new SequenceFile.Reader(conf, SequenceFile.Reader.stream(fs.open(paths[0])));
+    LongWritable key = new LongWritable();
+    BytesWritable value = new BytesWritable();
+
+    Assert.assertTrue(reader.next(key, value));
+    Assert.assertArrayEquals(body.getBytes(), value.copyBytes());
+
+    fs.close();
+  }
+
   private Context getContextForRetryTests() {
     Context context = new Context();
 
