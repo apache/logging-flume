@@ -1366,6 +1366,8 @@ public class TestHDFSEventSink {
     txn.close();
 
     sink.process();
+    // Sink is _not_ closed.  The file should remain open but
+    // the data written should be visible to readers via sync + hflush
     FileStatus[] dirStat = fs.listStatus(dirPath);
     Path[] paths = FileUtil.stat2Paths(dirStat);
 
