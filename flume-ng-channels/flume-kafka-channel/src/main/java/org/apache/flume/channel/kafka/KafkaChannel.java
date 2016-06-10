@@ -267,10 +267,6 @@ public class KafkaChannel extends BasicChannelSemantics {
   }
 
   private void decommissionConsumerAndRecords(ConsumerAndRecords c) {
-    if (c.failedEvents.isEmpty()) {
-      c.commitOffsets();
-    }
-    c.failedEvents.clear();
     c.consumer.close();
   }
 
