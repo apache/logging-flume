@@ -381,7 +381,9 @@ public class KafkaChannel extends BasicChannelSemantics {
             }
 
             //Add the key to the header
-            e.getHeaders().put(KEY_HEADER, record.key());
+            if (record.key() != null) {
+              e.getHeaders().put(KEY_HEADER, record.key());
+            }
 
             if (logger.isDebugEnabled()) {
               logger.debug("Processed output from partition {} offset {}", record.partition(), record.offset());
