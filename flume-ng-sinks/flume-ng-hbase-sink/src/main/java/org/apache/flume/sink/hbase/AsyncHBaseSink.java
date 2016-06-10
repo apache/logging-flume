@@ -191,15 +191,15 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
     Callback<Object, Object> putSuccessCallback =
             new SuccessCallback<Object, Object>(
             lock, callbacksReceived, condition);
-    Callback<Object, Object> putFailureCallback =
-            new FailureCallback<Object, Object>(
+    Callback<Object, Exception> putFailureCallback =
+            new FailureCallback<Object, Exception>(
             lock, callbacksReceived, txnFail, condition);
 
     Callback<Long, Long> incrementSuccessCallback =
             new SuccessCallback<Long, Long>(
             lock, callbacksReceived, condition);
-    Callback<Long, Long> incrementFailureCallback =
-            new FailureCallback<Long, Long>(
+    Callback<Long, Exception> incrementFailureCallback =
+            new FailureCallback<Long, Exception>(
             lock, callbacksReceived, txnFail, condition);
 
     Status status = Status.READY;
@@ -622,7 +622,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
     }
   }
 
-  private class FailureCallback<R,T> implements Callback<R,T> {
+  private class FailureCallback<R,T extends Exception> implements Callback<R,T> {
     private Lock lock;
     private AtomicInteger callbacksReceived;
     private AtomicBoolean txnFail;
@@ -639,6 +639,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
 
     @Override
     public R call(T arg) throws Exception {
+      logger.error("failure callback:", arg);
       if (isTimeoutTesting) {
         //tests set timeout to 10 seconds, so sleep for 4 seconds
         try {
