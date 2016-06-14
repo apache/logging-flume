@@ -2684,19 +2684,21 @@ The events are stored in a Kafka cluster (must be installed separately). Kafka p
 replication, so in case an agent or a kafka broker crashes, the events are immediately available to other sinks
 
 The Kafka channel can be used for multiple scenarios:
-* With Flume source and sink - it provides a reliable and highly available channel for events
-* With Flume source and interceptor but no sink - it allows writing Flume events into a Kafka topic, for use by other apps
-* With Flume sink, but no source - it is a low-latency, fault tolerant way to send events from Kafka to Flume sources such as HDFS, HBase or Solr
+
+#. With Flume source and sink - it provides a reliable and highly available channel for events
+#. With Flume source and interceptor but no sink - it allows writing Flume events into a Kafka topic, for use by other apps
+#. With Flume sink, but no source - it is a low-latency, fault tolerant way to send events from Kafka to Flume sinks such as HDFS, HBase or Solr
 
 
 This version of Flume requires Kafka version 0.9 or greater due to the reliance on the Kafka clients shipped with that version. The configuration of
 the channel has changed compared to previous flume versions.
 
 The configuration parameters are organized as such:
-1) Configuration values related to the channel generically are applied at the channel config level, eg: a1.channel.k1.type =
-2) Configuration values related to Kafka or how the Channel operates are prefixed with "kafka.",  (this are analgous to CommonClient Configs)eg: a1.channels.k1.kafka.topica1.channels.k1.kafka.bootstrap.serversThis is not dissimilar to how the hdfs sink operates
-3) Properties specific to the producer/consumer are prefixed by kafka.producer or kafka.consumer
-4) Where possible, the Kafka paramter names are used, eg: bootstrap.servers and acks
+
+#. Configuration values related to the channel generically are applied at the channel config level, eg: a1.channel.k1.type =
+#. Configuration values related to Kafka or how the Channel operates are prefixed with "kafka.", (this are analgous to CommonClient Configs) eg: a1.channels.k1.kafka.topic and a1.channels.k1.kafka.bootstrap.servers. This is not dissimilar to how the hdfs sink operates
+#. Properties specific to the producer/consumer are prefixed by kafka.producer or kafka.consumer
+#. Where possible, the Kafka paramter names are used, eg: bootstrap.servers and acks
 
 This version of flume is backwards-compatible with previous versions, however deprecated properties are indicated in the table below and a warning message
 is logged on startup when they are present in the configuration file.
