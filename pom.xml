@@ -1292,7 +1292,7 @@ limitations under the License.
       <dependency>
         <groupId>org.hbase</groupId>
         <artifactId>asynchbase</artifactId>
-        <version>1.5.0</version>
+        <version>1.7.0</version>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
@@ -1308,7 +1308,7 @@ limitations under the License.
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty</artifactId>
-        <version>3.5.12.Final</version>
+        <version>3.9.4.Final</version>
       </dependency>
 
       <dependency>
