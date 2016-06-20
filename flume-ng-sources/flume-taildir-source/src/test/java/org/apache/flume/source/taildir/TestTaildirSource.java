@@ -77,7 +77,7 @@ public class TestTaildirSource {
   }
 
   @Test
-  public void testRegexFileNameFiltering() throws IOException {
+  public void testRegexFileNameFilteringEndToEnd() throws IOException {
     File f1 = new File(tmpDir, "a.log");
     File f2 = new File(tmpDir, "a.log.1");
     File f3 = new File(tmpDir, "b.log");

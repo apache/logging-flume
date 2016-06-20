@@ -78,6 +78,7 @@ public class TaildirSource extends AbstractSource implements
   private int checkIdleInterval = 5000;
   private int writePosInitDelay = 5000;
   private int writePosInterval;
+  private boolean cachePatternMatching;
 
   private List<Long> existingInodes = new CopyOnWriteArrayList<Long>();
   private List<Long> idleInodes = new CopyOnWriteArrayList<Long>();
@@ -94,6 +95,7 @@ public class TaildirSource extends AbstractSource implements
           .positionFilePath(positionFilePath)
           .skipToEnd(skipToEnd)
           .addByteOffset(byteOffsetHeader)
+          .cachePatternMatching(cachePatternMatching)
           .build();
     } catch (IOException e) {
       throw new FlumeException("Error instantiating ReliableTaildirEventReader", e);
@@ -166,6 +168,7 @@ public class TaildirSource extends AbstractSource implements
     byteOffsetHeader = context.getBoolean(BYTE_OFFSET_HEADER, DEFAULT_BYTE_OFFSET_HEADER);
     idleTimeout = context.getInteger(IDLE_TIMEOUT, DEFAULT_IDLE_TIMEOUT);
     writePosInterval = context.getInteger(WRITE_POS_INTERVAL, DEFAULT_WRITE_POS_INTERVAL);
+    cachePatternMatching = context.getBoolean(CACHE_PATTERN_MATCHING, DEFAULT_CACHE_PATTERN_MATCHING);
 
     backoffSleepIncrement = context.getLong(PollableSourceConstants.BACKOFF_SLEEP_INCREMENT
             , PollableSourceConstants.DEFAULT_BACKOFF_SLEEP_INCREMENT);

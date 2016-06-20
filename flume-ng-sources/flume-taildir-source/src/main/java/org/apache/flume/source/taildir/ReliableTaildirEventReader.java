@@ -20,18 +20,14 @@
 package org.apache.flume.source.taildir;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.regex.Pattern;
 
 import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
@@ -43,11 +39,9 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
-import com.google.common.collect.Table.Cell;
 import com.google.gson.stream.JsonReader;
 
 @InterfaceAudience.Private
@@ -55,13 +49,14 @@ import com.google.gson.stream.JsonReader;
 public class ReliableTaildirEventReader implements ReliableEventReader {
   private static final Logger logger = LoggerFactory.getLogger(ReliableTaildirEventReader.class);
 
-  private final Table<String, File, Pattern> tailFileTable;
+  private final List<TaildirMatcher> taildirCache;
   private final Table<String, String, String> headerTable;
 
   private TailFile currentFile = null;
   private Map<Long, TailFile> tailFiles = Maps.newHashMap();
   private long updateTime;
   private boolean addByteOffset;
+  private boolean cachePatternMatching;
   private boolean committed = true;
 
   /**
@@ -69,7 +64,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
    */
   private ReliableTaildirEventReader(Map<String, String> filePaths,
       Table<String, String, String> headerTable, String positionFilePath,
-      boolean skipToEnd, boolean addByteOffset) throws IOException {
+      boolean skipToEnd, boolean addByteOffset, boolean cachePatternMatching) throws IOException {
     // Sanity checks
     Preconditions.checkNotNull(filePaths);
     Preconditions.checkNotNull(positionFilePath);
@@ -79,21 +74,17 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
           new Object[] { ReliableTaildirEventReader.class.getSimpleName(), filePaths });
     }
 
-    Table<String, File, Pattern> tailFileTable = HashBasedTable.create();
+    List<TaildirMatcher> taildirCache = Lists.newArrayList();
     for (Entry<String, String> e : filePaths.entrySet()) {
-      File f = new File(e.getValue());
-      File parentDir =  f.getParentFile();
-      Preconditions.checkState(parentDir.exists(),
-        "Directory does not exist: " + parentDir.getAbsolutePath());
-      Pattern fileNamePattern = Pattern.compile(f.getName());
-      tailFileTable.put(e.getKey(), parentDir, fileNamePattern);
+      taildirCache.add(new TaildirMatcher(e.getKey(), e.getValue(), cachePatternMatching));
     }
-    logger.info("tailFileTable: " + tailFileTable.toString());
+    logger.info("taildirCache: " + taildirCache.toString());
     logger.info("headerTable: " + headerTable.toString());
 
-    this.tailFileTable = tailFileTable;
+    this.taildirCache = taildirCache;
     this.headerTable = headerTable;
     this.addByteOffset = addByteOffset;
+    this.cachePatternMatching = cachePatternMatching;
     updateTailFiles(skipToEnd);
 
     logger.info("Updating position from position file: " + positionFilePath);
@@ -238,12 +229,10 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
     updateTime = System.currentTimeMillis();
     List<Long> updatedInodes = Lists.newArrayList();
 
-    for (Cell<String, File, Pattern> cell : tailFileTable.cellSet()) {
-      Map<String, String> headers = headerTable.row(cell.getRowKey());
-      File parentDir = cell.getColumnKey();
-      Pattern fileNamePattern = cell.getValue();
+    for (TaildirMatcher taildir : taildirCache) {
+      Map<String, String> headers = headerTable.row(taildir.getFileGroup());
 
-      for (File f : getMatchFiles(parentDir, fileNamePattern)) {
+      for (File f : taildir.getMatchingFiles()) {
         long inode = getInode(f);
         TailFile tf = tailFiles.get(inode);
         if (tf == null || !tf.getPath().equals(f.getAbsolutePath())) {
@@ -274,21 +263,6 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
     return updateTailFiles(false);
   }
 
-  private List<File> getMatchFiles(File parentDir, final Pattern fileNamePattern) {
-    FileFilter filter = new FileFilter() {
-      public boolean accept(File f) {
-        String fileName = f.getName();
-        if (f.isDirectory() || !fileNamePattern.matcher(fileName).matches()) {
-          return false;
-        }
-        return true;
-      }
-    };
-    File[] files = parentDir.listFiles(filter);
-    ArrayList<File> result = Lists.newArrayList(files);
-    Collections.sort(result, new TailFile.CompareByLastModifiedTime());
-    return result;
-  }
 
   private long getInode(File file) throws IOException {
     long inode = (long) Files.getAttribute(file.toPath(), "unix:ino");
@@ -313,6 +287,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
     private String positionFilePath;
     private boolean skipToEnd;
     private boolean addByteOffset;
+    private boolean cachePatternMatching;
 
     public Builder filePaths(Map<String, String> filePaths) {
       this.filePaths = filePaths;
@@ -339,8 +314,13 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
       return this;
     }
 
+    public Builder cachePatternMatching(boolean cachePatternMatching) {
+      this.cachePatternMatching = cachePatternMatching;
+      return this;
+    }
+
     public ReliableTaildirEventReader build() throws IOException {
-      return new ReliableTaildirEventReader(filePaths, headerTable, positionFilePath, skipToEnd, addByteOffset);
+      return new ReliableTaildirEventReader(filePaths, headerTable, positionFilePath, skipToEnd, addByteOffset, cachePatternMatching);
     }
   }
 
