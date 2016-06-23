@@ -70,6 +70,7 @@ Configurable, EventDrivenSource {
   private int maxBackoff;
   private ConsumeOrder consumeOrder;
   private int pollDelay;
+  private int fileTimeMinOffsetSeconds;
 
   @Override
   public synchronized void start() {
@@ -95,6 +96,7 @@ Configurable, EventDrivenSource {
           .inputCharset(inputCharset)
           .decodeErrorPolicy(decodeErrorPolicy)
           .consumeOrder(consumeOrder)
+          .fileTimeMinOffsetSeconds(fileTimeMinOffsetSeconds)
           .build();
     } catch (IOException ioe) {
       throw new FlumeException("Error instantiating spooling event parser",
@@ -167,6 +169,9 @@ Configurable, EventDrivenSource {
         DEFAULT_CONSUME_ORDER.toString()).toUpperCase(Locale.ENGLISH));
 
     pollDelay = context.getInteger(POLL_DELAY, DEFAULT_POLL_DELAY);
+
+    fileTimeMinOffsetSeconds = context.getInteger(FILE_TIME_MIN_OFFSET_SECONDS,
+        DEFAULT_FILE_TIME_MIN_OFFSET_SECONDS);
 
     // "Hack" to support backwards compatibility with previous generation of
     // spooling directory source, which did not support deserializers
