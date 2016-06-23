@@ -158,6 +158,11 @@ public abstract class AbstractConfigurationProvider implements
     for(Map.Entry<Class<? extends Channel>, Map<String, Channel>> entry : channelCache.entrySet()) {
       Class<? extends Channel> channelKlass = entry.getKey();
       Set<String> channelNames = entry.getValue().keySet();
+      /*
+      https://github.com/google/guava/blob/master/guava/src/com/google/common/collect/AbstractMapBasedMultimap.java
+      Multimap的get方法不会返回null
+      当此函数被调用时，缓存中的所有channels都认为是NotReused
+      */
       channelsNotReused.get(channelKlass).addAll(channelNames);
     }
 
@@ -207,6 +212,7 @@ public abstract class AbstractConfigurationProvider implements
     }
     /*
      * Any channel which was not re-used, will have it's reference removed
+     *清理没有重用的channles
      */
     for (Class<? extends Channel> channelKlass : channelsNotReused.keySet()) {
       Map<String, Channel> channelMap = channelCache.get(channelKlass);
@@ -249,6 +255,7 @@ public abstract class AbstractConfigurationProvider implements
       channel.setName(name);
       channelMap.put(name, channel);
     }
+    //这里的channelsNotResused应该指的是未被重新利用的channels
     channelsNotReused.get(channelClass).remove(name);
     return channel;
   }

@@ -46,6 +46,7 @@ import com.google.common.base.Preconditions;
  * <p>
  * Additionally, MemoryChannel should be used when a channel is required for
  * unit testing purposes.
+ *实现了一个队列，支持多线程并发访问，阻塞，消费异常时回滚(不保证顺序)的功能
  * </p>
  */
 @InterfaceAudience.Public
@@ -118,6 +119,7 @@ public class MemoryChannel extends BasicChannelSemantics {
     protected void doCommit() throws InterruptedException {
       int remainingChange = takeList.size() - putList.size();
       if(remainingChange < 0) {
+        //占用已放入的字节数 a1
         if(!bytesRemaining.tryAcquire(putByteCounter, keepAlive,
           TimeUnit.SECONDS)) {
           throw new ChannelException("Cannot commit transaction. Byte capacity " +
@@ -134,6 +136,7 @@ public class MemoryChannel extends BasicChannelSemantics {
       int puts = putList.size();
       int takes = takeList.size();
       synchronized(queueLock) {
+        //如果puts > 0 那么将putList中的数写入Channel的queue
         if(puts > 0 ) {
           while(!putList.isEmpty()) {
             if(!queue.offer(putList.removeFirst())) {
@@ -144,11 +147,14 @@ public class MemoryChannel extends BasicChannelSemantics {
         putList.clear();
         takeList.clear();
       }
+      //释放已取走的字节数 参考ai line 121
       bytesRemaining.release(takeByteCounter);
       takeByteCounter = 0;
       putByteCounter = 0;
-
+      
+      //已存储的元素个数，doTake的时候会aquire这个semaphore
       queueStored.release(puts);
+      //remainingChange > 0 代表取走的event多
       if(remainingChange > 0) {
         queueRemaining.release(remainingChange);
       }
@@ -161,7 +167,9 @@ public class MemoryChannel extends BasicChannelSemantics {
 
       channelCounter.setChannelSize(queue.size());
     }
-
+    /*
+    *rollback将takelist中的元素放回queue中去,当回滚发生的时候事件的顺序得不到保证
+    */
     @Override
     protected void doRollback() {
       int takes = takeList.size();
@@ -173,10 +181,11 @@ public class MemoryChannel extends BasicChannelSemantics {
         }
         putList.clear();
       }
+      //commit成功的时候才会将字节数实际地写如queue，所以rollback的时候只用释放remaining即可
       bytesRemaining.release(putByteCounter);
       putByteCounter = 0;
       takeByteCounter = 0;
-
+      //归还已存储的个数
       queueStored.release(takes);
       channelCounter.setChannelSize(queue.size());
     }

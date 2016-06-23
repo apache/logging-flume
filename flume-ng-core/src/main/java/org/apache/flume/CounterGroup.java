@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Used for counting events, collecting metrics, etc.
  */
+ /*所有的方法都是同步方法*/
 public class CounterGroup {
 
   private String name;

@@ -219,7 +219,7 @@ class BucketWriter {
       try {
         long counter = fileExtensionCounter.incrementAndGet();
 
-        String fullFileName = fileName + "." + counter;
+        String fullFileName = fileName;//+ "." + counter;
 
         if (fileSuffix != null && fileSuffix.length() > 0) {
           fullFileName += fileSuffix;

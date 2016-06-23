@@ -38,6 +38,10 @@ limitations under the License.
   </properties>
 
   <repositories>
+  <repository>
+          <id>maven.tempo-db.com</id>
+                <url>http://maven.oschina.net/service/local/repositories/sonatype-public-grid/content/</url>
+                </repository>
     <repository>
       <id>cdh.repo</id>
       <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
