@@ -1126,6 +1126,10 @@ writePosInterval                    3000                           Interval time
 batchSize                           100                            Max number of lines to read and send to the channel at a time. Using the default is usually fine.
 backoffSleepIncrement               1000                           The increment for time delay before reattempting to poll for new data, when the last attempt did not find any new data.
 maxBackoffSleep                     5000                           The max time delay between each reattempt to poll for new data, when the last attempt did not find any new data.
+cachePatternMatching                true                           Listing directories and applying the filename regex pattern may be time consuming for directories
+                                                                   containing thousands of files. Caching the list of matching files can improve performance.
+                                                                   The order in which files are consumed will also be cached.
+                                                                   Requires that the file system keeps track of modification times with at least a 1-second granularity.
 =================================== ============================== ===================================================
 
 Example for agent named a1:
