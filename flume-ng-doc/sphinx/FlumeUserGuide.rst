@@ -50,7 +50,7 @@ in the latest architecture.
 System Requirements
 -------------------
 
-#. Java Runtime Environment - Java 1.6 or later (Java 1.7 Recommended)
+#. Java Runtime Environment - Java 1.7 or later
 #. Memory - Sufficient memory for configurations used by sources, channels or sinks
 #. Disk Space - Sufficient disk space for configurations used by channels or sinks
 #. Directory Permissions - Read/Write permissions for directories used by agent
@@ -1093,7 +1093,7 @@ deserializer.maxBlobLength  100000000           The maximum number of bytes to r
 
 Taildir Source
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-.. note:: **This source is provided as a preview feature. It does not work on Windows.** This source requires Java version 1.7 or later.
+.. note:: **This source is provided as a preview feature. It does not work on Windows.**
 
 Watch the specified files, and tail them in nearly real-time once detected new lines appended to the each files.
 If the new lines are being written, this source will retry reading them in wait for the completion of the write.

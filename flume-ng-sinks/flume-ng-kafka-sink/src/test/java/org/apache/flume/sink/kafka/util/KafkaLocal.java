@@ -35,7 +35,7 @@ public class KafkaLocal {
 
     public KafkaLocal(Properties kafkaProperties) throws IOException,
         InterruptedException{
-        KafkaConfig kafkaConfig = new KafkaConfig(kafkaProperties);
+        KafkaConfig kafkaConfig = KafkaConfig.fromProps(kafkaProperties);
 
         //start local kafka broker
         kafka = new KafkaServerStartable(kafkaConfig);
