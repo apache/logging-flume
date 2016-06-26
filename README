@@ -44,6 +44,8 @@ We recommend you set the following Maven options:
 
 export MAVEN_OPTS="-Xms512m -Xmx1024m -XX:PermSize=256m -XX:MaxPermSize=512m"
 
+We also recommend to increase the ulimit to 8192
+
 To compile Flume, run `mvn compile`.
 To build a distribution, run `mvn install`.
 

@@ -26,6 +26,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Locale;
 
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -64,7 +65,7 @@ public class TestElasticSearchIndexRequestBuilderFactory
   @Test
   public void shouldUseUtcAsBasisForDateFormat() {
     assertEquals("Coordinated Universal Time",
-        factory.fastDateFormat.getTimeZone().getDisplayName());
+        factory.fastDateFormat.getTimeZone().getDisplayName(Locale.ENGLISH));
   }
 
   @Test
