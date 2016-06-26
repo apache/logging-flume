@@ -27,9 +27,9 @@ import org.apache.flume.conf.sink.SinkProcessorConfiguration.SinkProcessorConfig
 import org.apache.flume.conf.source.SourceConfiguration.SourceConfigurationType;
 
 public class ComponentConfigurationFactory {
+
   @SuppressWarnings("unchecked")
-  public static ComponentConfiguration
-  create(String name, String type, ComponentType component)
+  public static ComponentConfiguration create(String name, String type, ComponentType component)
       throws ConfigurationException {
     Class<? extends ComponentConfiguration> confType = null;
 
@@ -43,7 +43,7 @@ public class ComponentConfigurationFactory {
     } catch (Exception ignored) {
       try {
         type = type.toUpperCase(Locale.ENGLISH);
-        switch(component){
+        switch (component) {
           case SOURCE:
             return SourceConfigurationType.valueOf(type.toUpperCase(Locale.ENGLISH))
                 .getConfiguration(name);
@@ -63,8 +63,7 @@ public class ComponentConfigurationFactory {
             return new SinkGroupConfiguration(name);
           default:
             throw new ConfigurationException(
-                "Cannot create configuration. Unknown Type specified: " +
-                    type);
+                "Cannot create configuration. Unknown Type specified: " + type);
         }
       } catch (ConfigurationException e) {
         throw e;

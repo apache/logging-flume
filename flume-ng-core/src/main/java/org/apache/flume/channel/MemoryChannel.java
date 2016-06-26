@@ -18,12 +18,7 @@
  */
 package org.apache.flume.channel;
 
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-
-import javax.annotation.concurrent.GuardedBy;
-
+import com.google.common.base.Preconditions;
 import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelFullException;
 import org.apache.flume.Context;
@@ -35,7 +30,10 @@ import org.apache.flume.instrumentation.ChannelCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Preconditions;
+import javax.annotation.concurrent.GuardedBy;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -78,11 +76,11 @@ public class MemoryChannel extends BasicChannelSemantics {
     @Override
     protected void doPut(Event event) throws InterruptedException {
       channelCounter.incrementEventPutAttemptCount();
-      int eventByteSize = (int)Math.ceil(estimateEventSize(event)/byteCapacitySlotSize);
+      int eventByteSize = (int) Math.ceil(estimateEventSize(event) / byteCapacitySlotSize);
 
       if (!putList.offer(event)) {
         throw new ChannelException(
-          "Put queue for MemoryTransaction of capacity " +
+            "Put queue for MemoryTransaction of capacity " +
             putList.size() + " full, consider committing more frequently, " +
             "increasing capacity or increasing thread count");
       }
@@ -92,23 +90,23 @@ public class MemoryChannel extends BasicChannelSemantics {
     @Override
     protected Event doTake() throws InterruptedException {
       channelCounter.incrementEventTakeAttemptCount();
-      if(takeList.remainingCapacity() == 0) {
+      if (takeList.remainingCapacity() == 0) {
         throw new ChannelException("Take list for MemoryTransaction, capacity " +
             takeList.size() + " full, consider committing more frequently, " +
             "increasing capacity, or increasing thread count");
       }
-      if(!queueStored.tryAcquire(keepAlive, TimeUnit.SECONDS)) {
+      if (!queueStored.tryAcquire(keepAlive, TimeUnit.SECONDS)) {
         return null;
       }
       Event event;
-      synchronized(queueLock) {
+      synchronized (queueLock) {
         event = queue.poll();
       }
       Preconditions.checkNotNull(event, "Queue.poll returned NULL despite semaphore " +
           "signalling existence of entry");
       takeList.put(event);
 
-      int eventByteSize = (int)Math.ceil(estimateEventSize(event)/byteCapacitySlotSize);
+      int eventByteSize = (int) Math.ceil(estimateEventSize(event) / byteCapacitySlotSize);
       takeByteCounter += eventByteSize;
 
       return event;
@@ -117,15 +115,14 @@ public class MemoryChannel extends BasicChannelSemantics {
     @Override
     protected void doCommit() throws InterruptedException {
       int remainingChange = takeList.size() - putList.size();
-      if(remainingChange < 0) {
-        if(!bytesRemaining.tryAcquire(putByteCounter, keepAlive,
-          TimeUnit.SECONDS)) {
+      if (remainingChange < 0) {
+        if (!bytesRemaining.tryAcquire(putByteCounter, keepAlive, TimeUnit.SECONDS)) {
           throw new ChannelException("Cannot commit transaction. Byte capacity " +
-            "allocated to store event body " + byteCapacity * byteCapacitySlotSize +
-            "reached. Please increase heap space/byte capacity allocated to " +
-            "the channel as the sinks may not be keeping up with the sources");
+              "allocated to store event body " + byteCapacity * byteCapacitySlotSize +
+              "reached. Please increase heap space/byte capacity allocated to " +
+              "the channel as the sinks may not be keeping up with the sources");
         }
-        if(!queueRemaining.tryAcquire(-remainingChange, keepAlive, TimeUnit.SECONDS)) {
+        if (!queueRemaining.tryAcquire(-remainingChange, keepAlive, TimeUnit.SECONDS)) {
           bytesRemaining.release(putByteCounter);
           throw new ChannelFullException("Space for commit to queue couldn't be acquired." +
               " Sinks are likely not keeping up with sources, or the buffer size is too tight");
@@ -133,10 +130,10 @@ public class MemoryChannel extends BasicChannelSemantics {
       }
       int puts = putList.size();
       int takes = takeList.size();
-      synchronized(queueLock) {
-        if(puts > 0 ) {
-          while(!putList.isEmpty()) {
-            if(!queue.offer(putList.removeFirst())) {
+      synchronized (queueLock) {
+        if (puts > 0) {
+          while (!putList.isEmpty()) {
+            if (!queue.offer(putList.removeFirst())) {
               throw new RuntimeException("Queue add failed, this shouldn't be able to happen");
             }
           }
@@ -149,7 +146,7 @@ public class MemoryChannel extends BasicChannelSemantics {
       putByteCounter = 0;
 
       queueStored.release(puts);
-      if(remainingChange > 0) {
+      if (remainingChange > 0) {
         queueRemaining.release(remainingChange);
       }
       if (puts > 0) {
@@ -165,10 +162,11 @@ public class MemoryChannel extends BasicChannelSemantics {
     @Override
     protected void doRollback() {
       int takes = takeList.size();
-      synchronized(queueLock) {
-        Preconditions.checkState(queue.remainingCapacity() >= takeList.size(), "Not enough space in memory channel " +
+      synchronized (queueLock) {
+        Preconditions.checkState(queue.remainingCapacity() >= takeList.size(),
+            "Not enough space in memory channel " +
             "queue to rollback takes. This should never happen, please report");
-        while(!takeList.isEmpty()) {
+        while (!takeList.isEmpty()) {
           queue.addFirst(takeList.removeLast());
         }
         putList.clear();
@@ -195,10 +193,12 @@ public class MemoryChannel extends BasicChannelSemantics {
   // this allows local threads waiting for space in the queue to commit without denying access to the
   // shared lock to threads that would make more space on the queue
   private Semaphore queueRemaining;
+
   // used to make "reservations" to grab data from the queue.
   // by using this we can block for a while to get data without locking all other threads out
   // like we would if we tried to use a blocking call on queue
   private Semaphore queueStored;
+
   // maximum items in a transaction queue
   private volatile Integer transCapacity;
   private volatile int keepAlive;
@@ -207,7 +207,6 @@ public class MemoryChannel extends BasicChannelSemantics {
   private volatile int byteCapacityBufferPercentage;
   private Semaphore bytesRemaining;
   private ChannelCounter channelCounter;
-
 
   public MemoryChannel() {
     super();
@@ -226,7 +225,7 @@ public class MemoryChannel extends BasicChannelSemantics {
     Integer capacity = null;
     try {
       capacity = context.getInteger("capacity", defaultCapacity);
-    } catch(NumberFormatException e) {
+    } catch (NumberFormatException e) {
       capacity = defaultCapacity;
       LOGGER.warn("Invalid capacity specified, initializing channel to "
           + "default capacity of {}", defaultCapacity);
@@ -239,7 +238,7 @@ public class MemoryChannel extends BasicChannelSemantics {
     }
     try {
       transCapacity = context.getInteger("transactionCapacity", defaultTransCapacity);
-    } catch(NumberFormatException e) {
+    } catch (NumberFormatException e) {
       transCapacity = defaultTransCapacity;
       LOGGER.warn("Invalid transation capacity specified, initializing channel"
           + " to default capacity of {}", defaultTransCapacity);
@@ -255,34 +254,37 @@ public class MemoryChannel extends BasicChannelSemantics {
             "the capacity.");
 
     try {
-      byteCapacityBufferPercentage = context.getInteger("byteCapacityBufferPercentage", defaultByteCapacityBufferPercentage);
-    } catch(NumberFormatException e) {
+      byteCapacityBufferPercentage = context.getInteger("byteCapacityBufferPercentage",
+                                                        defaultByteCapacityBufferPercentage);
+    } catch (NumberFormatException e) {
       byteCapacityBufferPercentage = defaultByteCapacityBufferPercentage;
     }
 
     try {
-      byteCapacity = (int)((context.getLong("byteCapacity", defaultByteCapacity).longValue() * (1 - byteCapacityBufferPercentage * .01 )) /byteCapacitySlotSize);
+      byteCapacity = (int) ((context.getLong("byteCapacity", defaultByteCapacity).longValue() *
+          (1 - byteCapacityBufferPercentage * .01)) / byteCapacitySlotSize);
       if (byteCapacity < 1) {
         byteCapacity = Integer.MAX_VALUE;
       }
-    } catch(NumberFormatException e) {
-      byteCapacity = (int)((defaultByteCapacity * (1 - byteCapacityBufferPercentage * .01 )) /byteCapacitySlotSize);
+    } catch (NumberFormatException e) {
+      byteCapacity = (int) ((defaultByteCapacity * (1 - byteCapacityBufferPercentage * .01)) /
+          byteCapacitySlotSize);
     }
 
     try {
       keepAlive = context.getInteger("keep-alive", defaultKeepAlive);
-    } catch(NumberFormatException e) {
+    } catch (NumberFormatException e) {
       keepAlive = defaultKeepAlive;
     }
 
-    if(queue != null) {
+    if (queue != null) {
       try {
         resizeQueue(capacity);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }
     } else {
-      synchronized(queueLock) {
+      synchronized (queueLock) {
         queue = new LinkedBlockingDeque<Event>(capacity);
         queueRemaining = new Semaphore(capacity);
         queueStored = new Semaphore(0);
@@ -298,7 +300,8 @@ public class MemoryChannel extends BasicChannelSemantics {
         lastByteCapacity = byteCapacity;
       } else {
         try {
-          if(!bytesRemaining.tryAcquire(lastByteCapacity - byteCapacity, keepAlive, TimeUnit.SECONDS)) {
+          if (!bytesRemaining.tryAcquire(lastByteCapacity - byteCapacity, keepAlive,
+                                         TimeUnit.SECONDS)) {
             LOGGER.warn("Couldn't acquire permits to downsize the byte capacity, resizing has been aborted");
           } else {
             lastByteCapacity = byteCapacity;
@@ -316,24 +319,24 @@ public class MemoryChannel extends BasicChannelSemantics {
 
   private void resizeQueue(int capacity) throws InterruptedException {
     int oldCapacity;
-    synchronized(queueLock) {
+    synchronized (queueLock) {
       oldCapacity = queue.size() + queue.remainingCapacity();
     }
 
-    if(oldCapacity == capacity) {
+    if (oldCapacity == capacity) {
       return;
     } else if (oldCapacity > capacity) {
-      if(!queueRemaining.tryAcquire(oldCapacity - capacity, keepAlive, TimeUnit.SECONDS)) {
+      if (!queueRemaining.tryAcquire(oldCapacity - capacity, keepAlive, TimeUnit.SECONDS)) {
         LOGGER.warn("Couldn't acquire permits to downsize the queue, resizing has been aborted");
       } else {
-        synchronized(queueLock) {
+        synchronized (queueLock) {
           LinkedBlockingDeque<Event> newQueue = new LinkedBlockingDeque<Event>(capacity);
           newQueue.addAll(queue);
           queue = newQueue;
         }
       }
     } else {
-      synchronized(queueLock) {
+      synchronized (queueLock) {
         LinkedBlockingDeque<Event> newQueue = new LinkedBlockingDeque<Event>(capacity);
         newQueue.addAll(queue);
         queue = newQueue;
@@ -363,10 +366,9 @@ public class MemoryChannel extends BasicChannelSemantics {
     return new MemoryTransaction(transCapacity, channelCounter);
   }
 
-  private long estimateEventSize(Event event)
-  {
+  private long estimateEventSize(Event event) {
     byte[] body = event.getBody();
-    if(body != null && body.length != 0) {
+    if (body != null && body.length != 0) {
       return body.length;
     }
     //Each event occupies at least 1 slot, so return 1.

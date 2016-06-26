@@ -18,24 +18,23 @@
  */
 package org.apache.flume.channel.file;
 
+import com.google.common.base.Preconditions;
+import org.apache.flume.channel.file.encryption.KeyProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.security.Key;
 
-import javax.annotation.Nullable;
-
-import org.apache.flume.channel.file.encryption.KeyProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Preconditions;
-
 @SuppressWarnings("deprecation")
 class LogFileFactory {
   private static final Logger LOGGER =
       LoggerFactory.getLogger(LogFileFactory.class);
+
   private LogFileFactory() {}
 
   static LogFile.MetaDataWriter getMetaDataWriter(File file, int logFileID)
@@ -43,21 +42,21 @@ class LogFileFactory {
     RandomAccessFile logFile = null;
     try {
       File metaDataFile = Serialization.getMetaDataFile(file);
-      if(metaDataFile.exists()) {
+      if (metaDataFile.exists()) {
         return new LogFileV3.MetaDataWriter(file, logFileID);
       }
       logFile = new RandomAccessFile(file, "r");
       int version = logFile.readInt();
-      if(Serialization.VERSION_2 == version) {
+      if (Serialization.VERSION_2 == version) {
         return new LogFileV2.MetaDataWriter(file, logFileID);
       }
       throw new IOException("File " + file + " has bad version " +
           Integer.toHexString(version));
     } finally {
-      if(logFile != null) {
+      if (logFile != null) {
         try {
           logFile.close();
-        } catch(IOException e) {
+        } catch (IOException e) {
           LOGGER.warn("Unable to close " + file, e);
         }
       }
@@ -65,13 +64,13 @@ class LogFileFactory {
   }
 
   static LogFile.Writer getWriter(File file, int logFileID,
-      long maxFileSize, @Nullable Key encryptionKey,
-      @Nullable String encryptionKeyAlias,
-      @Nullable String encryptionCipherProvider,
-      long usableSpaceRefreshInterval, boolean fsyncPerTransaction,
-      int fsyncInterval) throws IOException {
-    Preconditions.checkState(!file.exists(), "File already exists "  +
-      file.getAbsolutePath());
+                                  long maxFileSize, @Nullable Key encryptionKey,
+                                  @Nullable String encryptionKeyAlias,
+                                  @Nullable String encryptionCipherProvider,
+                                  long usableSpaceRefreshInterval, boolean fsyncPerTransaction,
+                                  int fsyncInterval) throws IOException {
+    Preconditions.checkState(!file.exists(), "File already exists " +
+        file.getAbsolutePath());
     Preconditions.checkState(file.createNewFile(), "File could not be created "
         + file.getAbsolutePath());
     return new LogFileV3.Writer(file, logFileID, maxFileSize, encryptionKey,
@@ -80,28 +79,29 @@ class LogFileFactory {
   }
 
   static LogFile.RandomReader getRandomReader(File file,
-      @Nullable KeyProvider encryptionKeyProvider, boolean fsyncPerTransaction)
+                                              @Nullable KeyProvider encryptionKeyProvider,
+                                              boolean fsyncPerTransaction)
       throws IOException {
     RandomAccessFile logFile = new RandomAccessFile(file, "r");
     try {
       File metaDataFile = Serialization.getMetaDataFile(file);
       // either this is a rr for a just created file or
       // the metadata file exists and as such it's V3
-      if(logFile.length() == 0L || metaDataFile.exists()) {
+      if (logFile.length() == 0L || metaDataFile.exists()) {
         return new LogFileV3.RandomReader(file, encryptionKeyProvider,
-          fsyncPerTransaction);
+            fsyncPerTransaction);
       }
       int version = logFile.readInt();
-      if(Serialization.VERSION_2 == version) {
+      if (Serialization.VERSION_2 == version) {
         return new LogFileV2.RandomReader(file);
       }
       throw new IOException("File " + file + " has bad version " +
           Integer.toHexString(version));
     } finally {
-      if(logFile != null) {
+      if (logFile != null) {
         try {
           logFile.close();
-        } catch(IOException e) {
+        } catch (IOException e) {
           LOGGER.warn("Unable to close " + file, e);
         }
       }
@@ -109,7 +109,8 @@ class LogFileFactory {
   }
 
   static LogFile.SequentialReader getSequentialReader(File file,
-      @Nullable KeyProvider encryptionKeyProvider, boolean fsyncPerTransaction)
+                                                      @Nullable KeyProvider encryptionKeyProvider,
+                                                      boolean fsyncPerTransaction)
       throws IOException {
     RandomAccessFile logFile = null;
     try {
@@ -134,27 +135,27 @@ class LogFileFactory {
           hasMeta = true;
         } else {
           throw new IOException("Renaming of " + tempMetadataFile.getName()
-                  + " to " + metaDataFile.getName() + " failed");
+              + " to " + metaDataFile.getName() + " failed");
         }
       } else if (oldMetadataFile.exists()) {
         if (oldMetadataFile.renameTo(metaDataFile)) {
           hasMeta = true;
         } else {
           throw new IOException("Renaming of " + oldMetadataFile.getName()
-                  + " to " + metaDataFile.getName() + " failed");
+              + " to " + metaDataFile.getName() + " failed");
         }
       }
       if (hasMeta) {
         // Now the metadata file has been found, delete old or temp files
         // so it does not interfere with normal operation.
-        if(oldMetadataFile.exists()) {
+        if (oldMetadataFile.exists()) {
           oldMetadataFile.delete();
         }
-        if(tempMetadataFile.exists()) {
+        if (tempMetadataFile.exists()) {
           tempMetadataFile.delete();
         }
-        if(metaDataFile.length() == 0L) {
-          if(file.length() != 0L) {
+        if (metaDataFile.length() == 0L) {
+          if (file.length() != 0L) {
             String msg = String.format("MetaData file %s is empty, but log %s" +
                 " is of size %d", metaDataFile, file, file.length());
             throw new IllegalStateException(msg);
@@ -163,20 +164,20 @@ class LogFileFactory {
               metaDataFile));
         }
         return new LogFileV3.SequentialReader(file, encryptionKeyProvider,
-          fsyncPerTransaction);
+            fsyncPerTransaction);
       }
       logFile = new RandomAccessFile(file, "r");
       int version = logFile.readInt();
-      if(Serialization.VERSION_2 == version) {
+      if (Serialization.VERSION_2 == version) {
         return new LogFileV2.SequentialReader(file);
       }
       throw new IOException("File " + file + " has bad version " +
           Integer.toHexString(version));
     } finally {
-      if(logFile != null) {
+      if (logFile != null) {
         try {
           logFile.close();
-        } catch(IOException e) {
+        } catch (IOException e) {
           LOGGER.warn("Unable to close " + file, e);
         }
       }

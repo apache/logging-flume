@@ -104,10 +104,8 @@ public class SinkRunner implements LifecycleAware {
           logger.debug("Waiting for runner thread to exit");
           runnerThread.join(500);
         } catch (InterruptedException e) {
-          logger
-          .debug(
-              "Interrupted while waiting for runner thread to exit. Exception follows.",
-              e);
+          logger.debug("Interrupted while waiting for runner thread to exit. Exception follows.",
+                       e);
         }
       }
     }

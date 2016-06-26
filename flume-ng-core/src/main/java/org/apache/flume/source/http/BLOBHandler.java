@@ -77,7 +77,7 @@ public class BLOBHandler implements HTTPSourceHandler {
     }
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    try{
+    try {
       IOUtils.copy(inputStream, outputStream);
       LOG.debug("Building an Event with stream of size -- {}", outputStream.size());
       Event event = EventBuilder.withBody(outputStream.toByteArray(), headers);
@@ -85,8 +85,7 @@ public class BLOBHandler implements HTTPSourceHandler {
       List<Event> eventList = new ArrayList<Event>();
       eventList.add(event);
       return eventList;
-    }
-    finally {
+    } finally {
       outputStream.close();
       inputStream.close();
     }
@@ -94,7 +93,8 @@ public class BLOBHandler implements HTTPSourceHandler {
 
   @Override
   public void configure(Context context) {
-    this.commaSeparatedHeaders = context.getString(MANDATORY_PARAMETERS, DEFAULT_MANDATORY_PARAMETERS);
+    this.commaSeparatedHeaders = context.getString(MANDATORY_PARAMETERS,
+                                                   DEFAULT_MANDATORY_PARAMETERS);
     this.mandatoryHeaders = commaSeparatedHeaders.split(PARAMETER_SEPARATOR);
   }
 

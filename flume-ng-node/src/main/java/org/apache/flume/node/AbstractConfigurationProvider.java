@@ -17,8 +17,15 @@
  */
 package org.apache.flume.node;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Set;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelFactory;
@@ -58,17 +65,14 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-public abstract class AbstractConfigurationProvider implements
-    ConfigurationProvider {
+public abstract class AbstractConfigurationProvider implements ConfigurationProvider {
 
-  private static final Logger LOGGER = LoggerFactory
-      .getLogger(AbstractConfigurationProvider.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(AbstractConfigurationProvider.class);
 
   private final String agentName;
   private final SourceFactory sourceFactory;
   private final SinkFactory sinkFactory;
   private final ChannelFactory channelFactory;
-
 
   private final Map<Class<? extends Channel>, Map<String, Channel>> channelCache;
 
@@ -96,18 +100,16 @@ public abstract class AbstractConfigurationProvider implements
         loadChannels(agentConf, channelComponentMap);
         loadSources(agentConf, channelComponentMap, sourceRunnerMap);
         loadSinks(agentConf, channelComponentMap, sinkRunnerMap);
-        Set<String> channelNames =
-            new HashSet<String>(channelComponentMap.keySet());
-        for(String channelName : channelNames) {
-          ChannelComponent channelComponent = channelComponentMap.
-              get(channelName);
-          if(channelComponent.components.isEmpty()) {
+        Set<String> channelNames = new HashSet<String>(channelComponentMap.keySet());
+        for (String channelName : channelNames) {
+          ChannelComponent channelComponent = channelComponentMap.get(channelName);
+          if (channelComponent.components.isEmpty()) {
             LOGGER.warn(String.format("Channel %s has no components connected" +
                 " and has been removed.", channelName));
             channelComponentMap.remove(channelName);
-            Map<String, Channel> nameChannelMap = channelCache.
-                get(channelComponent.channel.getClass());
-            if(nameChannelMap != null) {
+            Map<String, Channel> nameChannelMap =
+                channelCache.get(channelComponent.channel.getClass());
+            if (nameChannelMap != null) {
               nameChannelMap.remove(channelName);
             }
           } else {
@@ -116,10 +118,10 @@ public abstract class AbstractConfigurationProvider implements
             conf.addChannel(channelName, channelComponent.channel);
           }
         }
-        for(Map.Entry<String, SourceRunner> entry : sourceRunnerMap.entrySet()) {
+        for (Map.Entry<String, SourceRunner> entry : sourceRunnerMap.entrySet()) {
           conf.addSourceRunner(entry.getKey(), entry.getValue());
         }
-        for(Map.Entry<String, SinkRunner> entry : sinkRunnerMap.entrySet()) {
+        for (Map.Entry<String, SinkRunner> entry : sinkRunnerMap.entrySet()) {
           conf.addSinkRunner(entry.getKey(), entry.getValue());
         }
       } catch (InstantiationException ex) {
@@ -155,21 +157,21 @@ public abstract class AbstractConfigurationProvider implements
     ListMultimap<Class<? extends Channel>, String> channelsNotReused =
         ArrayListMultimap.create();
     // assume all channels will not be re-used
-    for(Map.Entry<Class<? extends Channel>, Map<String, Channel>> entry : channelCache.entrySet()) {
+    for (Map.Entry<Class<? extends Channel>, Map<String, Channel>> entry :
+         channelCache.entrySet()) {
       Class<? extends Channel> channelKlass = entry.getKey();
       Set<String> channelNames = entry.getValue().keySet();
       channelsNotReused.get(channelKlass).addAll(channelNames);
     }
 
     Set<String> channelNames = agentConf.getChannelSet();
-    Map<String, ComponentConfiguration> compMap =
-        agentConf.getChannelConfigMap();
+    Map<String, ComponentConfiguration> compMap = agentConf.getChannelConfigMap();
     /*
      * Components which have a ComponentConfiguration object
      */
     for (String chName : channelNames) {
       ComponentConfiguration comp = compMap.get(chName);
-      if(comp != null) {
+      if (comp != null) {
         Channel channel = getOrCreateChannel(channelsNotReused,
             comp.getComponentName(), comp.getType());
         try {
@@ -190,17 +192,16 @@ public abstract class AbstractConfigurationProvider implements
      */
     for (String chName : channelNames) {
       Context context = agentConf.getChannelContext().get(chName);
-      if(context != null){
-        Channel channel =
-            getOrCreateChannel(channelsNotReused, chName, context.getString(
-                BasicConfigurationConstants.CONFIG_TYPE));
+      if (context != null) {
+        Channel channel = getOrCreateChannel(channelsNotReused, chName,
+            context.getString(BasicConfigurationConstants.CONFIG_TYPE));
         try {
           Configurables.configure(channel, context);
           channelComponentMap.put(chName, new ChannelComponent(channel));
           LOGGER.info("Created channel " + chName);
         } catch (Exception e) {
           String msg = String.format("Channel %s has been removed due to an " +
-                "error during configuration", chName);
+              "error during configuration", chName);
           LOGGER.error(msg, e);
         }
       }
@@ -212,7 +213,7 @@ public abstract class AbstractConfigurationProvider implements
       Map<String, Channel> channelMap = channelCache.get(channelKlass);
       if (channelMap != null) {
         for (String channelName : channelsNotReused.get(channelKlass)) {
-          if(channelMap.remove(channelName) != null) {
+          if (channelMap.remove(channelName) != null) {
             LOGGER.info("Removed {} of type {}", channelName, channelKlass);
           }
         }
@@ -228,12 +229,11 @@ public abstract class AbstractConfigurationProvider implements
       String name, String type)
       throws FlumeException {
 
-    Class<? extends Channel> channelClass = channelFactory.
-        getClass(type);
+    Class<? extends Channel> channelClass = channelFactory.getClass(type);
     /*
      * Channel has requested a new instance on each re-configuration
      */
-    if(channelClass.isAnnotationPresent(Disposable.class)) {
+    if (channelClass.isAnnotationPresent(Disposable.class)) {
       Channel channel = channelFactory.create(name, type);
       channel.setName(name);
       return channel;
@@ -244,7 +244,7 @@ public abstract class AbstractConfigurationProvider implements
       channelCache.put(channelClass, channelMap);
     }
     Channel channel = channelMap.get(name);
-    if(channel == null) {
+    if (channel == null) {
       channel = channelFactory.create(name, type);
       channel.setName(name);
       channelMap.put(name, channel);
@@ -266,7 +266,7 @@ public abstract class AbstractConfigurationProvider implements
      */
     for (String sourceName : sourceNames) {
       ComponentConfiguration comp = compMap.get(sourceName);
-      if(comp != null) {
+      if (comp != null) {
         SourceConfiguration config = (SourceConfiguration) comp;
 
         Source source = sourceFactory.create(comp.getComponentName(),
@@ -277,11 +277,11 @@ public abstract class AbstractConfigurationProvider implements
           List<Channel> sourceChannels = new ArrayList<Channel>();
           for (String chName : channelNames) {
             ChannelComponent channelComponent = channelComponentMap.get(chName);
-            if(channelComponent != null) {
+            if (channelComponent != null) {
               sourceChannels.add(channelComponent.channel);
             }
           }
-          if(sourceChannels.isEmpty()) {
+          if (sourceChannels.isEmpty()) {
             String msg = String.format("Source %s is not connected to a " +
                 "channel",  sourceName);
             throw new IllegalStateException(msg);
@@ -298,10 +298,10 @@ public abstract class AbstractConfigurationProvider implements
           source.setChannelProcessor(channelProcessor);
           sourceRunnerMap.put(comp.getComponentName(),
               SourceRunner.forSource(source));
-          for(Channel channel : sourceChannels) {
-            ChannelComponent channelComponent = Preconditions.
-                checkNotNull(channelComponentMap.get(channel.getName()),
-                    String.format("Channel %s", channel.getName()));
+          for (Channel channel : sourceChannels) {
+            ChannelComponent channelComponent =
+                Preconditions.checkNotNull(channelComponentMap.get(channel.getName()),
+                                           String.format("Channel %s", channel.getName()));
             channelComponent.components.add(sourceName);
           }
         } catch (Exception e) {
@@ -318,10 +318,10 @@ public abstract class AbstractConfigurationProvider implements
     Map<String, Context> sourceContexts = agentConf.getSourceContext();
     for (String sourceName : sourceNames) {
       Context context = sourceContexts.get(sourceName);
-      if(context != null){
+      if (context != null) {
         Source source =
             sourceFactory.create(sourceName,
-                context.getString(BasicConfigurationConstants.CONFIG_TYPE));
+                                 context.getString(BasicConfigurationConstants.CONFIG_TYPE));
         try {
           Configurables.configure(source, context);
           List<Channel> sourceChannels = new ArrayList<Channel>();
@@ -329,11 +329,11 @@ public abstract class AbstractConfigurationProvider implements
               BasicConfigurationConstants.CONFIG_CHANNELS).split("\\s+");
           for (String chName : channelNames) {
             ChannelComponent channelComponent = channelComponentMap.get(chName);
-            if(channelComponent != null) {
+            if (channelComponent != null) {
               sourceChannels.add(channelComponent.channel);
             }
           }
-          if(sourceChannels.isEmpty()) {
+          if (sourceChannels.isEmpty()) {
             String msg = String.format("Source %s is not connected to a " +
                 "channel",  sourceName);
             throw new IllegalStateException(msg);
@@ -349,10 +349,10 @@ public abstract class AbstractConfigurationProvider implements
           source.setChannelProcessor(channelProcessor);
           sourceRunnerMap.put(sourceName,
               SourceRunner.forSource(source));
-          for(Channel channel : sourceChannels) {
-            ChannelComponent channelComponent = Preconditions.
-                checkNotNull(channelComponentMap.get(channel.getName()),
-                    String.format("Channel %s", channel.getName()));
+          for (Channel channel : sourceChannels) {
+            ChannelComponent channelComponent =
+                Preconditions.checkNotNull(channelComponentMap.get(channel.getName()),
+                                           String.format("Channel %s", channel.getName()));
             channelComponent.components.add(sourceName);
           }
         } catch (Exception e) {
@@ -376,15 +376,13 @@ public abstract class AbstractConfigurationProvider implements
      */
     for (String sinkName : sinkNames) {
       ComponentConfiguration comp = compMap.get(sinkName);
-      if(comp != null) {
+      if (comp != null) {
         SinkConfiguration config = (SinkConfiguration) comp;
-        Sink sink = sinkFactory.create(comp.getComponentName(),
-            comp.getType());
+        Sink sink = sinkFactory.create(comp.getComponentName(), comp.getType());
         try {
           Configurables.configure(sink, config);
-          ChannelComponent channelComponent = channelComponentMap.
-              get(config.getChannel());
-          if(channelComponent == null) {
+          ChannelComponent channelComponent = channelComponentMap.get(config.getChannel());
+          if (channelComponent == null) {
             String msg = String.format("Sink %s is not connected to a " +
                 "channel",  sinkName);
             throw new IllegalStateException(msg);
@@ -406,14 +404,15 @@ public abstract class AbstractConfigurationProvider implements
     Map<String, Context> sinkContexts = agentConf.getSinkContext();
     for (String sinkName : sinkNames) {
       Context context = sinkContexts.get(sinkName);
-      if(context != null) {
+      if (context != null) {
         Sink sink = sinkFactory.create(sinkName, context.getString(
             BasicConfigurationConstants.CONFIG_TYPE));
         try {
           Configurables.configure(sink, context);
-          ChannelComponent channelComponent = channelComponentMap.
-              get(context.getString(BasicConfigurationConstants.CONFIG_CHANNEL));
-          if(channelComponent == null) {
+          ChannelComponent channelComponent =
+              channelComponentMap.get(
+                  context.getString(BasicConfigurationConstants.CONFIG_CHANNEL));
+          if (channelComponent == null) {
             String msg = String.format("Sink %s is not connected to a " +
                 "channel",  sinkName);
             throw new IllegalStateException(msg);
@@ -441,7 +440,7 @@ public abstract class AbstractConfigurationProvider implements
     Map<String, String> usedSinks = new HashMap<String, String>();
     for (String groupName: sinkGroupNames) {
       ComponentConfiguration comp = compMap.get(groupName);
-      if(comp != null) {
+      if (comp != null) {
         SinkGroupConfiguration groupConf = (SinkGroupConfiguration) comp;
         List<Sink> groupSinks = new ArrayList<Sink>();
         for (String sink : groupConf.getSinks()) {
@@ -475,7 +474,7 @@ public abstract class AbstractConfigurationProvider implements
       }
     }
     // add any unassigned sinks to solo collectors
-    for(Entry<String, Sink> entry : sinks.entrySet()) {
+    for (Entry<String, Sink> entry : sinks.entrySet()) {
       if (!usedSinks.containsValue(entry.getKey())) {
         try {
           SinkProcessor pr = new DefaultSinkProcessor();
@@ -483,9 +482,8 @@ public abstract class AbstractConfigurationProvider implements
           sinkMap.add(entry.getValue());
           pr.setSinks(sinkMap);
           Configurables.configure(pr, new Context());
-          sinkRunnerMap.put(entry.getKey(),
-              new SinkRunner(pr));
-        } catch(Exception e) {
+          sinkRunnerMap.put(entry.getKey(), new SinkRunner(pr));
+        } catch (Exception e) {
           String msg = String.format("SinkGroup %s has been removed due to " +
               "an error during configuration", entry.getKey());
           LOGGER.error(msg, e);
@@ -496,6 +494,7 @@ public abstract class AbstractConfigurationProvider implements
   private static class ChannelComponent {
     final Channel channel;
     final List<String> components;
+
     ChannelComponent(Channel channel) {
       this.channel = channel;
       components = Lists.newArrayList();

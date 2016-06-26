@@ -48,11 +48,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SyslogTcpSource extends AbstractSource
-implements EventDrivenSource, Configurable {
+                             implements EventDrivenSource, Configurable {
+  private static final Logger logger = LoggerFactory.getLogger(SyslogTcpSource.class);
 
-
-  private static final Logger logger = LoggerFactory
-      .getLogger(SyslogTcpSource.class);
   private int port;
   private String host = null;
   private Channel nettyChannel;
@@ -65,7 +63,7 @@ implements EventDrivenSource, Configurable {
 
     private SyslogUtils syslogUtils = new SyslogUtils();
 
-    public void setEventSize(int eventSize){
+    public void setEventSize(int eventSize) {
       syslogUtils.setEventSize(eventSize);
     }
 

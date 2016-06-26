@@ -40,9 +40,8 @@ import java.util.concurrent.TimeUnit;
 public abstract class OrderSelector<T> {
 
   private static final int EXP_BACKOFF_COUNTER_LIMIT = 16;
-  private static final long CONSIDER_SEQUENTIAL_RANGE = TimeUnit.HOURS
-    .toMillis(1);
-  private static final long MAX_TIMEOUT = 30000l;
+  private static final long CONSIDER_SEQUENTIAL_RANGE = TimeUnit.HOURS.toMillis(1);
+  private static final long MAX_TIMEOUT = 30000L;
   private final Map<T, FailureState> stateMap =
           new LinkedHashMap<T, FailureState>();
   private long maxTimeout = MAX_TIMEOUT;

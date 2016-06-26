@@ -49,8 +49,7 @@ public abstract class AbstractElasticSearchIndexRequestBuilderFactory
    * Constructor for subclasses
    * @param fastDateFormat {@link FastDateFormat} to use for index names
    */
-  protected AbstractElasticSearchIndexRequestBuilderFactory(
-    FastDateFormat fastDateFormat) {
+  protected AbstractElasticSearchIndexRequestBuilderFactory(FastDateFormat fastDateFormat) {
     this.fastDateFormat = fastDateFormat;
   }
 
@@ -94,11 +93,11 @@ public abstract class AbstractElasticSearchIndexRequestBuilderFactory
 
   /**
    * Gets the name of the index to use for an index request
-   * @return index name of the form 'indexPrefix-formattedTimestamp'
    * @param indexPrefix
    *          Prefix of index name to use -- as configured on the sink
    * @param timestamp
    *          timestamp (millis) to format / use
+   * @return index name of the form 'indexPrefix-formattedTimestamp'
    */
   protected String getIndexName(String indexPrefix, long timestamp) {
     return new StringBuilder(indexPrefix).append('-')

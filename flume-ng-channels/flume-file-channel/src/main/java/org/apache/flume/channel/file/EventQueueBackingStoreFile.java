@@ -18,6 +18,15 @@
  */
 package org.apache.flume.channel.file;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Maps;
+import com.google.common.collect.SetMultimap;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -34,21 +43,9 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Maps;
-import com.google.common.collect.SetMultimap;
-
-
 abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
-  private static final Logger LOG = LoggerFactory
-      .getLogger(EventQueueBackingStoreFile.class);
-  private static final int MAX_ALLOC_BUFFER_SIZE = 2*1024*1024; // 2MB
+  private static final Logger LOG = LoggerFactory.getLogger(EventQueueBackingStoreFile.class);
+  private static final int MAX_ALLOC_BUFFER_SIZE = 2 * 1024 * 1024; // 2MB
   protected static final int HEADER_SIZE = 1029;
   protected static final int INDEX_VERSION = 0;
   protected static final int INDEX_WRITE_ORDER_ID = 1;
@@ -71,15 +68,15 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
   private final ExecutorService checkpointBackUpExecutor;
 
   protected EventQueueBackingStoreFile(int capacity, String name,
-      File checkpointFile) throws IOException,
+                                       File checkpointFile) throws IOException,
       BadCheckpointException {
     this(capacity, name, checkpointFile, null, false, false);
   }
 
   protected EventQueueBackingStoreFile(int capacity, String name,
-      File checkpointFile, File checkpointBackupDir,
-      boolean backupCheckpoint, boolean compressBackup)
-    throws IOException, BadCheckpointException {
+                                       File checkpointFile, File checkpointBackupDir,
+                                       boolean backupCheckpoint, boolean compressBackup)
+      throws IOException, BadCheckpointException {
     super(capacity, name);
     this.checkpointFile = checkpointFile;
     this.shouldBackup = backupCheckpoint;
@@ -87,7 +84,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     this.backupDir = checkpointBackupDir;
     checkpointFileHandle = new RandomAccessFile(checkpointFile, "rw");
     long totalBytes = (capacity + HEADER_SIZE) * Serialization.SIZE_OF_LONG;
-    if(checkpointFileHandle.length() == 0) {
+    if (checkpointFileHandle.length() == 0) {
       allocate(checkpointFile, totalBytes);
       checkpointFileHandle.seek(INDEX_VERSION * Serialization.SIZE_OF_LONG);
       checkpointFileHandle.writeLong(getVersion());
@@ -95,7 +92,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
       LOG.info("Preallocated " + checkpointFile + " to " + checkpointFileHandle.length()
           + " for capacity " + capacity);
     }
-    if(checkpointFile.length() != totalBytes) {
+    if (checkpointFile.length() != totalBytes) {
       String msg = "Configured capacity is " + capacity + " but the "
           + " checkpoint file capacity is " +
           ((checkpointFile.length() / Serialization.SIZE_OF_LONG) - HEADER_SIZE)
@@ -108,20 +105,20 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     elementsBuffer = mappedBuffer.asLongBuffer();
 
     long version = elementsBuffer.get(INDEX_VERSION);
-    if(version != (long) getVersion()) {
+    if (version != (long) getVersion()) {
       throw new BadCheckpointException("Invalid version: " + version + " " +
-              name + ", expected " + getVersion());
+          name + ", expected " + getVersion());
     }
     long checkpointComplete = elementsBuffer.get(INDEX_CHECKPOINT_MARKER);
-    if(checkpointComplete != (long) CHECKPOINT_COMPLETE) {
+    if (checkpointComplete != (long) CHECKPOINT_COMPLETE) {
       throw new BadCheckpointException("Checkpoint was not completed correctly,"
-              + " probably because the agent stopped while the channel was"
-              + " checkpointing.");
+          + " probably because the agent stopped while the channel was"
+          + " checkpointing.");
     }
     if (shouldBackup) {
       checkpointBackUpExecutor = Executors.newSingleThreadExecutor(
-        new ThreadFactoryBuilder().setNameFormat(
-          getName() + " - CheckpointBackUpThread").build());
+          new ThreadFactoryBuilder().setNameFormat(
+              getName() + " - CheckpointBackUpThread").build());
     } else {
       checkpointBackUpExecutor = null;
     }
@@ -142,13 +139,13 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
    * @param backupDirectory - the directory to which the backup files should be
    *                        copied.
    * @throws IOException - if the copy failed, or if there is not enough disk
-   * space to copy the checkpoint files over.
+   *                     space to copy the checkpoint files over.
    */
   protected void backupCheckpoint(File backupDirectory) throws IOException {
     int availablePermits = backupCompletedSema.drainPermits();
     Preconditions.checkState(availablePermits == 0,
-      "Expected no permits to be available in the backup semaphore, " +
-        "but " + availablePermits + " permits were available.");
+        "Expected no permits to be available in the backup semaphore, " +
+            "but " + availablePermits + " permits were available.");
     if (slowdownBackup) {
       try {
         TimeUnit.SECONDS.sleep(10);
@@ -160,45 +157,45 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     if (backupExists(backupDirectory)) {
       if (!backupFile.delete()) {
         throw new IOException("Error while doing backup of checkpoint. Could " +
-          "not remove" + backupFile.toString() + ".");
+            "not remove" + backupFile.toString() + ".");
       }
     }
     Serialization.deleteAllFiles(backupDirectory, Log.EXCLUDES);
     File checkpointDir = checkpointFile.getParentFile();
     File[] checkpointFiles = checkpointDir.listFiles();
     Preconditions.checkNotNull(checkpointFiles, "Could not retrieve files " +
-      "from the checkpoint directory. Cannot complete backup of the " +
-      "checkpoint.");
+        "from the checkpoint directory. Cannot complete backup of the " +
+        "checkpoint.");
     for (File origFile : checkpointFiles) {
-      if(Log.EXCLUDES.contains(origFile.getName())) {
+      if (Log.EXCLUDES.contains(origFile.getName())) {
         continue;
       }
       if (compressBackup && origFile.equals(checkpointFile)) {
         Serialization.compressFile(origFile, new File(backupDirectory,
-          origFile.getName() + COMPRESSED_FILE_EXTENSION));
+            origFile.getName() + COMPRESSED_FILE_EXTENSION));
       } else {
         Serialization.copyFile(origFile, new File(backupDirectory,
-          origFile.getName()));
+            origFile.getName()));
       }
     }
     Preconditions.checkState(!backupFile.exists(), "The backup file exists " +
-      "while it is not supposed to. Are multiple channels configured to use " +
-      "this directory: " + backupDirectory.toString() + " as backup?");
+        "while it is not supposed to. Are multiple channels configured to use " +
+        "this directory: " + backupDirectory.toString() + " as backup?");
     if (!backupFile.createNewFile()) {
       LOG.error("Could not create backup file. Backup of checkpoint will " +
-        "not be used during replay even if checkpoint is bad.");
+          "not be used during replay even if checkpoint is bad.");
     }
   }
 
   /**
    * Restore the checkpoint, if it is found to be bad.
+   *
    * @return true - if the previous backup was successfully completed and
    * restore was successfully completed.
    * @throws IOException - If restore failed due to IOException
-   *
    */
   public static boolean restoreBackup(File checkpointDir, File backupDir)
-    throws IOException {
+      throws IOException {
     if (!backupExists(backupDir)) {
       return false;
     }
@@ -210,14 +207,14 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
       for (File backupFile : backupFiles) {
         String fileName = backupFile.getName();
         if (!fileName.equals(BACKUP_COMPLETE_FILENAME) &&
-          !fileName.equals(Log.FILE_LOCK)) {
-          if (fileName.endsWith(COMPRESSED_FILE_EXTENSION)){
+            !fileName.equals(Log.FILE_LOCK)) {
+          if (fileName.endsWith(COMPRESSED_FILE_EXTENSION)) {
             Serialization.decompressFile(
-              backupFile, new File(checkpointDir,
-              fileName.substring(0, fileName.lastIndexOf("."))));
+                backupFile, new File(checkpointDir,
+                    fileName.substring(0, fileName.lastIndexOf("."))));
           } else {
             Serialization.copyFile(backupFile, new File(checkpointDir,
-              fileName));
+                fileName));
           }
         }
       }
@@ -233,14 +230,14 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     if (shouldBackup) {
       int permits = backupCompletedSema.drainPermits();
       Preconditions.checkState(permits <= 1, "Expected only one or less " +
-        "permits to checkpoint, but got " + String.valueOf(permits) +
-        " permits");
-      if(permits < 1) {
+          "permits to checkpoint, but got " + String.valueOf(permits) +
+          " permits");
+      if (permits < 1) {
         // Force the checkpoint to not happen by throwing an exception.
         throw new IOException("Previous backup of checkpoint files is still " +
-          "in progress. Will attempt to checkpoint only at the end of the " +
-          "next checkpoint interval. Try increasing the checkpoint interval " +
-          "if this error happens often.");
+            "in progress. Will attempt to checkpoint only at the end of the " +
+            "next checkpoint interval. Try increasing the checkpoint interval " +
+            "if this error happens often.");
       }
     }
     // Start checkpoint
@@ -249,12 +246,12 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
   }
 
   @Override
-  void checkpoint()  throws IOException {
+  void checkpoint() throws IOException {
 
     setLogWriteOrderID(WriteOrderOracle.next());
     LOG.info("Updating checkpoint metadata: logWriteOrderID: "
         + getLogWriteOrderID() + ", queueSize: " + getSize() + ", queueHead: "
-          + getHead());
+        + getHead());
     elementsBuffer.put(INDEX_WRITE_ORDER_ID, getLogWriteOrderID());
     try {
       writeCheckpointMetaData();
@@ -286,8 +283,8 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
    */
   private void startBackupThread() {
     Preconditions.checkNotNull(checkpointBackUpExecutor,
-      "Expected the checkpoint backup exector to be non-null, " +
-        "but it is null. Checkpoint will not be backed up.");
+        "Expected the checkpoint backup exector to be non-null, " +
+            "but it is null. Checkpoint will not be backed up.");
     LOG.info("Attempting to back up checkpoint.");
     checkpointBackUpExecutor.submit(new Runnable() {
 
@@ -317,16 +314,14 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     } catch (IOException e) {
       LOG.info("Error closing " + checkpointFile, e);
     }
-    if(checkpointBackUpExecutor != null && !checkpointBackUpExecutor
-      .isShutdown()) {
+    if (checkpointBackUpExecutor != null && !checkpointBackUpExecutor.isShutdown()) {
       checkpointBackUpExecutor.shutdown();
       try {
         // Wait till the executor dies.
-        while (!checkpointBackUpExecutor.awaitTermination(1,
-          TimeUnit.SECONDS));
+        while (!checkpointBackUpExecutor.awaitTermination(1, TimeUnit.SECONDS)) {}
       } catch (InterruptedException ex) {
         LOG.warn("Interrupted while waiting for checkpoint backup to " +
-          "complete");
+                 "complete");
       }
     }
   }
@@ -362,18 +357,19 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
   @Override
   protected void incrementFileID(int fileID) {
     AtomicInteger counter = logFileIDReferenceCounts.get(fileID);
-    if(counter == null) {
+    if (counter == null) {
       counter = new AtomicInteger(0);
       logFileIDReferenceCounts.put(fileID, counter);
     }
     counter.incrementAndGet();
   }
+
   @Override
   protected void decrementFileID(int fileID) {
     AtomicInteger counter = logFileIDReferenceCounts.get(fileID);
     Preconditions.checkState(counter != null, "null counter ");
     int count = counter.decrementAndGet();
-    if(count == 0) {
+    if (count == 0) {
       logFileIDReferenceCounts.remove(fileID);
     }
   }
@@ -391,7 +387,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
          * totalBytes <= MAX_ALLOC_BUFFER_SIZE, so this can be cast to int
          * without a problem.
          */
-        checkpointFile.write(new byte[(int)totalBytes]);
+        checkpointFile.write(new byte[(int) totalBytes]);
       } else {
         byte[] initBuffer = new byte[MAX_ALLOC_BUFFER_SIZE];
         long remainingBytes = totalBytes;
@@ -404,7 +400,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
          * so casting to int is fine.
          */
         if (remainingBytes > 0) {
-          checkpointFile.write(initBuffer, 0, (int)remainingBytes);
+          checkpointFile.write(initBuffer, 0, (int) remainingBytes);
         }
       }
       success = true;
@@ -412,7 +408,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
       try {
         checkpointFile.close();
       } catch (IOException e) {
-        if(success) {
+        if (success) {
           throw e;
         }
       }
@@ -436,9 +432,9 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     }
     int capacity = (int) ((file.length() - (HEADER_SIZE * 8L)) / 8L);
     EventQueueBackingStoreFile backingStore = (EventQueueBackingStoreFile)
-        EventQueueBackingStoreFactory.get(file,capacity, "debug", false);
+        EventQueueBackingStoreFactory.get(file, capacity, "debug", false);
     System.out.println("File Reference Counts"
-            + backingStore.logFileIDReferenceCounts);
+        + backingStore.logFileIDReferenceCounts);
     System.out.println("Queue Capacity " + backingStore.getCapacity());
     System.out.println("Queue Size " + backingStore.getSize());
     System.out.println("Queue Head " + backingStore.getHead());
@@ -447,7 +443,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
       int fileID = (int) (value >>> 32);
       int offset = (int) value;
       System.out.println(index + ":" + Long.toHexString(value) + " fileID = "
-              + fileID + ", offset = " + offset);
+          + fileID + ", offset = " + offset);
     }
     FlumeEventQueue queue =
         new FlumeEventQueue(backingStore, inflightTakesFile, inflightPutsFile,
@@ -462,7 +458,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
         int fileID = (int) (value >>> 32);
         int offset = (int) value;
         System.out.println(Long.toHexString(value) + " fileID = "
-                + fileID + ", offset = " + offset);
+            + fileID + ", offset = " + offset);
       }
     }
     SetMultimap<Long, Long> takeMap = queue.deserializeInflightTakes();
@@ -474,7 +470,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
         int fileID = (int) (value >>> 32);
         int offset = (int) value;
         System.out.println(Long.toHexString(value) + " fileID = "
-                + fileID + ", offset = " + offset);
+            + fileID + ", offset = " + offset);
       }
     }
   }

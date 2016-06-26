@@ -54,9 +54,9 @@ public class VersionInfo {
    * @return the revision number, eg. "100755"
    */
   public static String getRevision() {
-    if(version != null
-            && version.revision() != null
-            && !version.revision().isEmpty()){
+    if (version != null
+        && version.revision() != null
+        && !version.revision().isEmpty()) {
       return version.revision();
     }
     return "Unknown";
@@ -105,12 +105,12 @@ public class VersionInfo {
    * Returns the build version info which includes version,
    * revision, user, date and source checksum
    */
-  public static String getBuildVersion(){
+  public static String getBuildVersion() {
     return VersionInfo.getVersion() +
-    " from " + VersionInfo.getRevision() +
-    " by " + VersionInfo.getUser() +
-    " on " + VersionInfo.getDate() +
-    " source checksum " + VersionInfo.getSrcChecksum();
+        " from " + VersionInfo.getRevision() +
+        " by " + VersionInfo.getUser() +
+        " on " + VersionInfo.getDate() +
+        " source checksum " + VersionInfo.getSrcChecksum();
   }
 
   public static void main(String[] args) {

@@ -56,7 +56,7 @@ public class SimpleMaterializedConfiguration implements MaterializedConfiguratio
   }
 
   @Override
-  public void addChannel(String name, Channel channel){
+  public void addChannel(String name, Channel channel) {
     channels.put(name, channel);
   }
 

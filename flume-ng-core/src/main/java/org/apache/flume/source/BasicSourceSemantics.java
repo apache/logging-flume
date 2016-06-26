@@ -44,8 +44,7 @@ import com.google.common.base.Throwables;
 @InterfaceAudience.Public
 @InterfaceStability.Evolving
 public abstract class BasicSourceSemantics implements Source, Configurable {
-  private static final Logger logger = LoggerFactory
-      .getLogger(BasicSourceSemantics.class);
+  private static final Logger logger = LoggerFactory.getLogger(BasicSourceSemantics.class);
   private Exception exception;
   private ChannelProcessor channelProcessor;
   private String name;
@@ -54,9 +53,10 @@ public abstract class BasicSourceSemantics implements Source, Configurable {
   public BasicSourceSemantics() {
     lifecycleState = LifecycleState.IDLE;
   }
+
   @Override
   public synchronized void configure(Context context) {
-    if(isStarted()) {
+    if (isStarted()) {
       throw new IllegalStateException("Configure called when started");
     } else {
       try {
@@ -126,8 +126,7 @@ public abstract class BasicSourceSemantics implements Source, Configurable {
   }
 
   public String toString() {
-    return this.getClass().getName() + "{name:" + name + ",state:"
-        + lifecycleState +"}";
+    return this.getClass().getName() + "{name:" + name + ",state:" + lifecycleState + "}";
   }
 
   protected boolean isStarted() {

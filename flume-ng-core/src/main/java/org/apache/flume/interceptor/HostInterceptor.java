@@ -88,7 +88,6 @@ public class HostInterceptor implements Interceptor {
       logger.warn("Could not get local host address. Exception follows.", e);
     }
 
-
   }
 
   @Override
@@ -106,7 +105,7 @@ public class HostInterceptor implements Interceptor {
     if (preserveExisting && headers.containsKey(header)) {
       return event;
     }
-    if(host != null) {
+    if (host != null) {
       headers.put(header, host);
     }
 

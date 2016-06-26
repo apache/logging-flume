@@ -122,12 +122,10 @@ public class ElasticSearchTransportClient implements ElasticSearchClient {
 
   /**
    * Used for testing
-   *
-   * @param client ElasticSearch Client
-   * @param serializer Event Serializer
    */
   public ElasticSearchTransportClient(Client client,
-            ElasticSearchIndexRequestBuilderFactory requestBuilderFactory) throws IOException {
+                                      ElasticSearchIndexRequestBuilderFactory requestBuilderFactory)
+      throws IOException {
     this.client = client;
     requestBuilderFactory.createIndexRequest(client, null, null, null);
   }

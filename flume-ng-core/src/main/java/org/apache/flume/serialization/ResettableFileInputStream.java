@@ -64,12 +64,13 @@ import java.nio.charset.CodingErrorAction;
  * <p>Thus the behaviour of mark and reset is as follows:</p>
  *
  * <ol>
- *   <li>If {@link #mark()} is called after a high surrogate pair has been returned by {@link #readChar()},
- *   the marked position will be that of the character <em>following</em> the low surrogate,
- *   <em>not</em> that of the low surrogate itself.</li>
- *   <li>If {@link #reset()} is called after a high surrogate pair has been returned by {@link #readChar()},
- *   the low surrogate is always returned by the next call to {@link #readChar()},
- *   <em>before</em> the stream is actually reset to the last marked position.</li>
+ *   <li>If {@link #mark()} is called after a high surrogate pair has been returned by
+ *   {@link #readChar()}, the marked position will be that of the character <em>following</em>
+ *   the low surrogate, <em>not</em> that of the low surrogate itself.</li>
+ *   <li>If {@link #reset()} is called after a high surrogate pair has been returned by
+ *   {@link #readChar()}, the low surrogate is always returned by the next call to
+ *   {@link #readChar()}, <em>before</em> the stream is actually reset to the last marked
+ *   position.</li>
  * </ol>
  *
  * <p>This ensures that no dangling high surrogate could ever be read as long as
@@ -181,13 +182,13 @@ public class ResettableFileInputStream extends ResettableInputStream
     this.decoder = charset.newDecoder();
     this.position = 0;
     this.syncPosition = 0;
-    if(charset.name().startsWith("UTF-8")) {
+    if (charset.name().startsWith("UTF-8")) {
       // some JDKs wrongly report 3 bytes max
       this.maxCharWidth = 4;
-    } else if(charset.name().startsWith("UTF-16")) {
+    } else if (charset.name().startsWith("UTF-16")) {
       // UTF_16BE and UTF_16LE wrongly report 2 bytes max
       this.maxCharWidth = 4;
-    } else if(charset.name().startsWith("UTF-32")) {
+    } else if (charset.name().startsWith("UTF-32")) {
       // UTF_32BE and UTF_32LE wrongly report 4 bytes max
       this.maxCharWidth = 8;
     } else {
@@ -254,7 +255,7 @@ public class ResettableFileInputStream extends ResettableInputStream
 
     // Check whether we are in the middle of a surrogate pair,
     // in which case, return the last (low surrogate) char of the pair.
-    if(hasLowSurrogate) {
+    if (hasLowSurrogate) {
       hasLowSurrogate = false;
       return lowSurrogate;
     }
@@ -296,7 +297,7 @@ public class ResettableFileInputStream extends ResettableInputStream
     // Found nothing, but the byte buffer has not been entirely consumed.
     // This situation denotes the presence of a surrogate pair
     // that can only be decoded if we have a 2-char buffer.
-    if(buf.hasRemaining()) {
+    if (buf.hasRemaining()) {
       charBuf.clear();
       // increase the limit to 2
       charBuf.limit(2);
@@ -312,9 +313,10 @@ public class ResettableFileInputStream extends ResettableInputStream
         // save second (low surrogate) char for later consumption
         lowSurrogate = charBuf.get();
         // Check if we really have a surrogate pair
-        if( ! Character.isHighSurrogate(highSurrogate) || ! Character.isLowSurrogate(lowSurrogate)) {
+        if (!Character.isHighSurrogate(highSurrogate) || !Character.isLowSurrogate(lowSurrogate)) {
           // This should only happen in case of bad sequences (dangling surrogate, etc.)
-          logger.warn("Decoded a pair of chars, but it does not seem to be a surrogate pair: {} {}", (int)highSurrogate, (int)lowSurrogate);
+          logger.warn("Decoded a pair of chars, but it does not seem to be a surrogate pair: {} {}",
+                      (int)highSurrogate, (int)lowSurrogate);
         }
         hasLowSurrogate = true;
         // consider the pair as a single unit and increment position normally

@@ -70,12 +70,14 @@ public class FailoverSinkProcessor extends AbstractSinkProcessor {
     private Integer priority;
     private Sink sink;
     private Integer sequentialFailures;
+
     public FailedSink(Integer priority, Sink sink, int seqFailures) {
       this.sink = sink;
       this.priority = priority;
       this.sequentialFailures = seqFailures;
       adjustRefresh();
     }
+
     @Override
     public int compareTo(FailedSink arg0) {
       return refresh.compareTo(arg0.refresh);
@@ -88,24 +90,25 @@ public class FailoverSinkProcessor extends AbstractSinkProcessor {
     public Sink getSink() {
       return sink;
     }
+
     public Integer getPriority() {
       return priority;
     }
+
     public void incFails() {
       sequentialFailures++;
       adjustRefresh();
-      logger.debug("Sink {} failed again, new refresh is at {}, " +
-            "current time {}", new Object[] {
-              sink.getName(), refresh, System.currentTimeMillis()});
+      logger.debug("Sink {} failed again, new refresh is at {}, current time {}",
+                   new Object[] { sink.getName(), refresh, System.currentTimeMillis() });
     }
+
     private void adjustRefresh() {
       refresh = System.currentTimeMillis()
-              + Math.min(maxPenalty, (1 << sequentialFailures) * FAILURE_PENALTY);
+          + Math.min(maxPenalty, (1 << sequentialFailures) * FAILURE_PENALTY);
     }
   }
 
-  private static final Logger logger = LoggerFactory
-      .getLogger(FailoverSinkProcessor.class);
+  private static final Logger logger = LoggerFactory.getLogger(FailoverSinkProcessor.class);
 
   private static final String PRIORITY_PREFIX = "priority.";
   private static final String MAX_PENALTY_PREFIX = "maxpenalty";
@@ -121,15 +124,15 @@ public class FailoverSinkProcessor extends AbstractSinkProcessor {
     failedSinks = new PriorityQueue<FailedSink>();
     Integer nextPrio = 0;
     String maxPenaltyStr = context.getString(MAX_PENALTY_PREFIX);
-    if(maxPenaltyStr == null) {
+    if (maxPenaltyStr == null) {
       maxPenalty = DEFAULT_MAX_PENALTY;
     } else {
       try {
         maxPenalty = Integer.parseInt(maxPenaltyStr);
       } catch (NumberFormatException e) {
         logger.warn("{} is not a valid value for {}",
-                new Object[] { maxPenaltyStr, MAX_PENALTY_PREFIX });
-        maxPenalty  = DEFAULT_MAX_PENALTY;
+                    new Object[] { maxPenaltyStr, MAX_PENALTY_PREFIX });
+        maxPenalty = DEFAULT_MAX_PENALTY;
       }
     }
     for (Entry<String, Sink> entry : sinks.entrySet()) {
@@ -140,7 +143,7 @@ public class FailoverSinkProcessor extends AbstractSinkProcessor {
       } catch (Exception e) {
         priority = --nextPrio;
       }
-      if(!liveSinks.containsKey(priority)) {
+      if (!liveSinks.containsKey(priority)) {
         liveSinks.put(priority, sinks.get(entry.getKey()));
       } else {
         logger.warn("Sink {} not added to FailverSinkProcessor as priority" +
@@ -155,7 +158,7 @@ public class FailoverSinkProcessor extends AbstractSinkProcessor {
   public Status process() throws EventDeliveryException {
     // Retry any failed sinks that have gone through their "cooldown" period
     Long now = System.currentTimeMillis();
-    while(!failedSinks.isEmpty() && failedSinks.peek().getRefresh() < now) {
+    while (!failedSinks.isEmpty() && failedSinks.peek().getRefresh() < now) {
       FailedSink cur = failedSinks.poll();
       Status s;
       try {
@@ -177,7 +180,7 @@ public class FailoverSinkProcessor extends AbstractSinkProcessor {
     }
 
     Status ret = null;
-    while(activeSink != null) {
+    while (activeSink != null) {
       try {
         ret = activeSink.process();
         return ret;
@@ -196,8 +199,8 @@ public class FailoverSinkProcessor extends AbstractSinkProcessor {
     Integer key = liveSinks.lastKey();
     failedSinks.add(new FailedSink(key, activeSink, 1));
     liveSinks.remove(key);
-    if(liveSinks.isEmpty()) return null;
-    if(liveSinks.lastKey() != null) {
+    if (liveSinks.isEmpty()) return null;
+    if (liveSinks.lastKey() != null) {
       return liveSinks.get(liveSinks.lastKey());
     } else {
       return null;

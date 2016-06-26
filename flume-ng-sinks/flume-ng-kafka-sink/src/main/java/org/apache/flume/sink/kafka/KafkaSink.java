@@ -157,7 +157,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
 
         if (event == null) {
           // no events available in channel
-          if(processedEvents == 0) {
+          if (processedEvents == 0) {
             result = Status.BACKOFF;
             counter.incrementBatchEmptyCount();
           } else {
@@ -177,7 +177,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
 
         if (logger.isDebugEnabled()) {
           logger.debug("{Event} " + eventTopic + " : " + eventKey + " : "
-            + new String(eventBody, "UTF-8"));
+              + new String(eventBody, "UTF-8"));
           logger.debug("event #{}", processedEvents);
         }
 
@@ -185,8 +185,10 @@ public class KafkaSink extends AbstractSink implements Configurable {
         long startTime = System.currentTimeMillis();
 
         try {
-          kafkaFutures.add(producer.send(new ProducerRecord<String, byte[]> (eventTopic, eventKey, serializeEvent(event, useAvroEventFormat)),
-                                         new SinkCallback(startTime)));
+          kafkaFutures.add(producer.send(
+              new ProducerRecord<String, byte[]>(eventTopic, eventKey,
+                                                 serializeEvent(event, useAvroEventFormat)),
+              new SinkCallback(startTime)));
         } catch (IOException ex) {
           throw new EventDeliveryException("Could not serialize event", ex);
         }
@@ -197,11 +199,11 @@ public class KafkaSink extends AbstractSink implements Configurable {
 
       // publish batch and commit.
       if (processedEvents > 0) {
-          for (Future<RecordMetadata> future : kafkaFutures) {
-            future.get();
-          }
+        for (Future<RecordMetadata> future : kafkaFutures) {
+          future.get();
+        }
         long endTime = System.nanoTime();
-        counter.addToKafkaEventSendTimer((endTime-batchStartTime)/(1000*1000));
+        counter.addToKafkaEventSendTimer((endTime - batchStartTime) / (1000 * 1000));
         counter.addToEventDrainSuccessCount(Long.valueOf(kafkaFutures.size()));
       }
 
@@ -270,8 +272,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
     if (topicStr == null || topicStr.isEmpty()) {
       topicStr = DEFAULT_TOPIC;
       logger.warn("Topic was not specified. Using {} as the topic.", topicStr);
-    }
-    else {
+    } else {
       logger.info("Using the static topic {}. This may be overridden by event headers", topicStr);
     }
 
@@ -283,7 +284,8 @@ public class KafkaSink extends AbstractSink implements Configurable {
       logger.debug("Using batch size: {}", batchSize);
     }
 
-    useAvroEventFormat = context.getBoolean(KafkaSinkConstants.AVRO_EVENT, KafkaSinkConstants.DEFAULT_AVRO_EVENT);
+    useAvroEventFormat = context.getBoolean(KafkaSinkConstants.AVRO_EVENT,
+                                            KafkaSinkConstants.DEFAULT_AVRO_EVENT);
 
     if (logger.isDebugEnabled()) {
       logger.debug(KafkaSinkConstants.AVRO_EVENT + " set to: {}", useAvroEventFormat);
@@ -322,7 +324,8 @@ public class KafkaSink extends AbstractSink implements Configurable {
         throw new ConfigurationException("Bootstrap Servers must be specified");
       } else {
         ctx.put(BOOTSTRAP_SERVERS_CONFIG, brokerList);
-        logger.warn("{} is deprecated. Please use the parameter {}", BROKER_LIST_FLUME_KEY, BOOTSTRAP_SERVERS_CONFIG);
+        logger.warn("{} is deprecated. Please use the parameter {}",
+                    BROKER_LIST_FLUME_KEY, BOOTSTRAP_SERVERS_CONFIG);
       }
     }
 
@@ -348,21 +351,18 @@ public class KafkaSink extends AbstractSink implements Configurable {
 
     if (ctx.containsKey(KEY_SERIALIZER_KEY )) {
       logger.warn("{} is deprecated. Flume now uses the latest Kafka producer which implements " +
-              "a different interface for serializers. Please use the parameter {}",
-              KEY_SERIALIZER_KEY,KAFKA_PRODUCER_PREFIX + ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG);
+          "a different interface for serializers. Please use the parameter {}",
+          KEY_SERIALIZER_KEY,KAFKA_PRODUCER_PREFIX + ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG);
     }
 
     if (ctx.containsKey(MESSAGE_SERIALIZER_KEY)) {
       logger.warn("{} is deprecated. Flume now uses the latest Kafka producer which implements " +
-                      "a different interface for serializers. Please use the parameter {}",
-              MESSAGE_SERIALIZER_KEY,KAFKA_PRODUCER_PREFIX + ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG);
+                  "a different interface for serializers. Please use the parameter {}",
+                  MESSAGE_SERIALIZER_KEY,
+                  KAFKA_PRODUCER_PREFIX + ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG);
     }
-
-
-
-
-
   }
+
   private void setProducerProps(Context context, String bootStrapServers) {
     kafkaProps.put(ProducerConfig.ACKS_CONFIG, DEFAULT_ACKS);
     //Defaults overridden based on config
@@ -387,7 +387,8 @@ public class KafkaSink extends AbstractSink implements Configurable {
         writer = Optional.of(new SpecificDatumWriter<AvroFlumeEvent>(AvroFlumeEvent.class));
       }
       tempOutStream.get().reset();
-      AvroFlumeEvent e = new AvroFlumeEvent(toCharSeqMap(event.getHeaders()), ByteBuffer.wrap(event.getBody()));
+      AvroFlumeEvent e = new AvroFlumeEvent(toCharSeqMap(event.getHeaders()),
+                                            ByteBuffer.wrap(event.getBody()));
       encoder = EncoderFactory.get().directBinaryEncoder(tempOutStream.get(), encoder);
       writer.get().write(e, encoder);
       encoder.flush();

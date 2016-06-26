@@ -46,13 +46,12 @@ public class DefaultSourceFactory implements SourceFactory {
       return source;
     } catch (Exception ex) {
       throw new FlumeException("Unable to create source: " + name
-          +", type: " + type + ", class: " + sourceClass.getName(), ex);
+          + ", type: " + type + ", class: " + sourceClass.getName(), ex);
     }
   }
   @SuppressWarnings("unchecked")
   @Override
-  public Class<? extends Source> getClass(String type)
-  throws FlumeException {
+  public Class<? extends Source> getClass(String type) throws FlumeException {
     String sourceClassName = type;
     SourceType srcType = SourceType.OTHER;
     try {

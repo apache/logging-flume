@@ -20,7 +20,11 @@ package org.apache.flume.source;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import org.apache.flume.*;
+import org.apache.flume.ChannelException;
+import org.apache.flume.Context;
+import org.apache.flume.Event;
+import org.apache.flume.EventDrivenSource;
+import org.apache.flume.FlumeException;
 import org.apache.flume.client.avro.ReliableSpoolingFileEventReader;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.instrumentation.SourceCounter;
@@ -39,11 +43,10 @@ import java.util.concurrent.TimeUnit;
 
 import static org.apache.flume.source.SpoolDirectorySourceConfigurationConstants.*;
 
-public class SpoolDirectorySource extends AbstractSource implements
-Configurable, EventDrivenSource {
+public class SpoolDirectorySource extends AbstractSource
+                                  implements Configurable, EventDrivenSource {
 
-  private static final Logger logger = LoggerFactory
-      .getLogger(SpoolDirectorySource.class);
+  private static final Logger logger = LoggerFactory.getLogger(SpoolDirectorySource.class);
 
   /* Config options */
   private String completedSuffix;
@@ -124,8 +127,7 @@ Configurable, EventDrivenSource {
 
     super.stop();
     sourceCounter.stop();
-    logger.info("SpoolDir source {} stopped. Metrics: {}", getName(),
-      sourceCounter);
+    logger.info("SpoolDir source {} stopped. Metrics: {}", getName(), sourceCounter);
   }
 
   @Override
@@ -247,8 +249,8 @@ Configurable, EventDrivenSource {
             reader.commit();
           } catch (ChannelException ex) {
             logger.warn("The channel is full, and cannot write data now. The " +
-              "source will try again after " + String.valueOf(backoffInterval) +
-              " milliseconds");
+                "source will try again after " + String.valueOf(backoffInterval) +
+                " milliseconds");
             hitChannelException = true;
             if (backoff) {
               TimeUnit.MILLISECONDS.sleep(backoffInterval);

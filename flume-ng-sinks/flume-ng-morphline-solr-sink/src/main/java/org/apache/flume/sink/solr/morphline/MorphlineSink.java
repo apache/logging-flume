@@ -160,15 +160,15 @@ public class MorphlineSink extends AbstractSink implements Configurable {
       return numEventsTaken == 0 ? Status.BACKOFF : Status.READY;
     } catch (Throwable t) {
       // Ooops - need to rollback and back off
-      LOGGER.error("Morphline Sink " + getName() + ": Unable to process event from channel " + myChannel.getName()
-            + ". Exception follows.", t);
+      LOGGER.error("Morphline Sink " + getName() + ": Unable to process event from channel " +
+          myChannel.getName() + ". Exception follows.", t);
       try {
         if (!isMorphlineTransactionCommitted) {
           handler.rollbackTransaction();
         }
       } catch (Throwable t2) {
-        LOGGER.error("Morphline Sink " + getName() + ": Unable to rollback morphline transaction. " +
-        		"Exception follows.", t2);
+        LOGGER.error("Morphline Sink " + getName() +
+            ": Unable to rollback morphline transaction. Exception follows.", t2);
       } finally {
         try {
           txn.rollback();

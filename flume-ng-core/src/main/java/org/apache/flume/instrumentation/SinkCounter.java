@@ -53,7 +53,6 @@ public class SinkCounter extends MonitoredCounterGroup implements
     COUNTER_EVENT_DRAIN_ATTEMPT, COUNTER_EVENT_DRAIN_SUCCESS
   };
 
-
   public SinkCounter(String name) {
     super(MonitoredCounterGroup.Type.SINK, name, ATTRIBUTES);
   }
@@ -62,7 +61,6 @@ public class SinkCounter extends MonitoredCounterGroup implements
     super(MonitoredCounterGroup.Type.SINK, name,
         (String[]) ArrayUtils.addAll(attributes,ATTRIBUTES));
   }
-
 
   @Override
   public long getConnectionCreatedCount() {

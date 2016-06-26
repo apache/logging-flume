@@ -22,15 +22,15 @@ import javax.naming.InitialContext;
 
 import com.google.common.base.Optional;
 
-
 public class JMSMessageConsumerFactory {
 
   JMSMessageConsumer create(InitialContext initialContext, ConnectionFactory connectionFactory,
-    String destinationName, JMSDestinationType destinationType, JMSDestinationLocator destinationLocator,
-    String messageSelector, int batchSize, long pollTimeout, JMSMessageConverter messageConverter,
-    Optional<String> userName, Optional<String> password) {
+      String destinationName, JMSDestinationType destinationType,
+      JMSDestinationLocator destinationLocator, String messageSelector, int batchSize,
+      long pollTimeout, JMSMessageConverter messageConverter,
+      Optional<String> userName, Optional<String> password) {
     return new JMSMessageConsumer(initialContext, connectionFactory, destinationName,
-      destinationLocator, destinationType, messageSelector, batchSize, pollTimeout,
+        destinationLocator, destinationType, messageSelector, batchSize, pollTimeout,
         messageConverter, userName, password);
   }
 }

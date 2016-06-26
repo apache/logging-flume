@@ -91,6 +91,7 @@ public class SpoolDirectorySourceConfigurationConstants {
   public enum ConsumeOrder {
     OLDEST, YOUNGEST, RANDOM
   }
+
   public static final String CONSUME_ORDER = "consumeOrder";
   public static final ConsumeOrder DEFAULT_CONSUME_ORDER = ConsumeOrder.OLDEST;
 

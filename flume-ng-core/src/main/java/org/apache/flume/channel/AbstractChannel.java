@@ -67,12 +67,10 @@ public abstract class AbstractChannel
   }
 
   @Override
-  public void configure(Context context) {
-
-  }
+  public void configure(Context context) {}
 
   public String toString() {
-	  return this.getClass().getName() + "{name: " + name + "}";
+    return this.getClass().getName() + "{name: " + name + "}";
   }
 
 }

@@ -38,8 +38,7 @@ import java.util.List;
 @InterfaceStability.Evolving
 public class LineDeserializer implements EventDeserializer {
 
-  private static final Logger logger = LoggerFactory.getLogger
-      (LineDeserializer.class);
+  private static final Logger logger = LoggerFactory.getLogger(LineDeserializer.class);
 
   private final ResettableInputStream in;
   private final Charset outputCharset;

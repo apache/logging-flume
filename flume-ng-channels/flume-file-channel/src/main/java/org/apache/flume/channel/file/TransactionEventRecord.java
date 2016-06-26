@@ -91,13 +91,16 @@ public abstract class TransactionEventRecord implements Writable {
     COMMIT((short)4);
 
     private short id;
+
     Type(short id) {
       this.id = id;
     }
+
     public short get() {
       return id;
     }
   }
+
   private static final ImmutableMap<Short, Constructor<? extends TransactionEventRecord>> TYPES;
 
   static {
@@ -131,11 +134,11 @@ public abstract class TransactionEventRecord implements Writable {
       dataOutput.flush();
       // TODO toByteArray does an unneeded copy
       return ByteBuffer.wrap(byteOutput.toByteArray());
-    } catch(IOException e) {
+    } catch (IOException e) {
       // near impossible
       throw Throwables.propagate(e);
     } finally {
-      if(dataOutput != null) {
+      if (dataOutput != null) {
         try {
           dataOutput.close();
         } catch (IOException e) {
@@ -149,7 +152,7 @@ public abstract class TransactionEventRecord implements Writable {
   static TransactionEventRecord fromDataInputV2(DataInput in)
       throws IOException {
     int header = in.readInt();
-    if(header != MAGIC_HEADER) {
+    if (header != MAGIC_HEADER) {
       throw new IOException("Header " + Integer.toHexString(header) +
           " is not the required value: " + Integer.toHexString(MAGIC_HEADER));
     }
@@ -176,10 +179,10 @@ public abstract class TransactionEventRecord implements Writable {
           ProtosFactory.TransactionEventFooter.newBuilder().build();
       footer.writeDelimitedTo(byteOutput);
       return ByteBuffer.wrap(byteOutput.toByteArray());
-    } catch(IOException e) {
+    } catch (IOException e) {
       throw Throwables.propagate(e);
     } finally {
-      if(byteOutput != null) {
+      if (byteOutput != null) {
         try {
           byteOutput.close();
         } catch (IOException e) {
@@ -194,23 +197,19 @@ public abstract class TransactionEventRecord implements Writable {
       throws IOException, CorruptEventException {
     ByteArrayInputStream in = new ByteArrayInputStream(buffer);
     try {
-      ProtosFactory.TransactionEventHeader header = Preconditions.
-          checkNotNull(ProtosFactory.TransactionEventHeader.
-              parseDelimitedFrom(in), "Header cannot be null");
+      ProtosFactory.TransactionEventHeader header = Preconditions.checkNotNull(
+          ProtosFactory.TransactionEventHeader.parseDelimitedFrom(in), "Header cannot be null");
       short type = (short)header.getType();
       long transactionID = header.getTransactionID();
       long writeOrderID = header.getWriteOrderID();
-      TransactionEventRecord transactionEvent =
-          newRecordForType(type, transactionID, writeOrderID);
+      TransactionEventRecord transactionEvent = newRecordForType(type, transactionID, writeOrderID);
       transactionEvent.readProtos(in);
       @SuppressWarnings("unused")
       ProtosFactory.TransactionEventFooter footer = Preconditions.checkNotNull(
-          ProtosFactory.TransactionEventFooter.
-          parseDelimitedFrom(in), "Footer cannot be null");
+          ProtosFactory.TransactionEventFooter.parseDelimitedFrom(in), "Footer cannot be null");
       return transactionEvent;
     } catch (InvalidProtocolBufferException ex) {
-      throw new CorruptEventException(
-        "Could not parse event from data file.", ex);
+      throw new CorruptEventException("Could not parse event from data file.", ex);
     } finally {
       try {
         in.close();

@@ -55,7 +55,7 @@ class UGIExecutor implements PrivilegedExecutor {
 
   private void ensureValidAuth() {
     reloginUGI(ugi);
-    if(ugi.getAuthenticationMethod().equals(AuthenticationMethod.PROXY)) {
+    if (ugi.getAuthenticationMethod().equals(AuthenticationMethod.PROXY)) {
       reloginUGI(ugi.getRealUser());
     }
   }
@@ -70,9 +70,9 @@ class UGIExecutor implements PrivilegedExecutor {
    */
   private void reloginUGI(UserGroupInformation ugi) {
     try {
-      if(ugi.hasKerberosCredentials()) {
+      if (ugi.hasKerberosCredentials()) {
         long now = System.currentTimeMillis();
-        if(now - lastReloginAttempt < MIN_TIME_BEFORE_RELOGIN) {
+        if (now - lastReloginAttempt < MIN_TIME_BEFORE_RELOGIN) {
           return;
         }
         lastReloginAttempt = now;
@@ -86,7 +86,7 @@ class UGIExecutor implements PrivilegedExecutor {
 
   @VisibleForTesting
   String getUserName() {
-    if(ugi != null) {
+    if (ugi != null) {
       return ugi.getUserName();
     } else {
       return null;

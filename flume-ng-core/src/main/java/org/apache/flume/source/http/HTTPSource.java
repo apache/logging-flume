@@ -41,7 +41,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A source which accepts Flume Events by HTTP POST and GET. GET should be used
@@ -104,27 +109,28 @@ public class HTTPSource extends AbstractSource implements
 
       port = context.getInteger(HTTPSourceConfigurationConstants.CONFIG_PORT);
       host = context.getString(HTTPSourceConfigurationConstants.CONFIG_BIND,
-        HTTPSourceConfigurationConstants.DEFAULT_BIND);
+          HTTPSourceConfigurationConstants.DEFAULT_BIND);
 
       Preconditions.checkState(host != null && !host.isEmpty(),
                 "HTTPSource hostname specified is empty");
       Preconditions.checkNotNull(port, "HTTPSource requires a port number to be"
-        + " specified");
+          + " specified");
 
       String handlerClassName = context.getString(
               HTTPSourceConfigurationConstants.CONFIG_HANDLER,
               HTTPSourceConfigurationConstants.DEFAULT_HANDLER).trim();
 
-      if(sslEnabled) {
+      if (sslEnabled) {
         LOG.debug("SSL configuration enabled");
         keyStorePath = context.getString(HTTPSourceConfigurationConstants.SSL_KEYSTORE);
         Preconditions.checkArgument(keyStorePath != null && !keyStorePath.isEmpty(),
-                                        "Keystore is required for SSL Conifguration" );
-        keyStorePassword = context.getString(HTTPSourceConfigurationConstants.SSL_KEYSTORE_PASSWORD);
+                                    "Keystore is required for SSL Conifguration" );
+        keyStorePassword =
+            context.getString(HTTPSourceConfigurationConstants.SSL_KEYSTORE_PASSWORD);
         Preconditions.checkArgument(keyStorePassword != null,
-          "Keystore password is required for SSL Configuration");
-        String excludeProtocolsStr = context.getString(HTTPSourceConfigurationConstants
-          .EXCLUDE_PROTOCOLS);
+            "Keystore password is required for SSL Configuration");
+        String excludeProtocolsStr =
+            context.getString(HTTPSourceConfigurationConstants.EXCLUDE_PROTOCOLS);
         if (excludeProtocolsStr == null) {
           excludedProtocols.add("SSLv3");
         } else {
@@ -166,9 +172,9 @@ public class HTTPSource extends AbstractSource implements
 
   private void checkHostAndPort() {
     Preconditions.checkState(host != null && !host.isEmpty(),
-      "HTTPSource hostname specified is empty");
+        "HTTPSource hostname specified is empty");
     Preconditions.checkNotNull(port, "HTTPSource requires a port number to be"
-      + " specified");
+        + " specified");
   }
 
   @Override
@@ -199,8 +205,7 @@ public class HTTPSource extends AbstractSource implements
     connectors[0].setPort(port);
     srv.setConnectors(connectors);
     try {
-      org.mortbay.jetty.servlet.Context root =
-        new org.mortbay.jetty.servlet.Context(
+      org.mortbay.jetty.servlet.Context root = new org.mortbay.jetty.servlet.Context(
           srv, "/", org.mortbay.jetty.servlet.Context.SESSIONS);
       root.addServlet(new ServletHolder(new FlumeHTTPServlet()), "/");
       HTTPServerConstraintUtil.enforceConstraints(root);
@@ -285,26 +290,23 @@ public class HTTPSource extends AbstractSource implements
   }
 
   private static class HTTPSourceSocketConnector extends SslSocketConnector {
-
     private final List<String> excludedProtocols;
+
     HTTPSourceSocketConnector(List<String> excludedProtocols) {
       this.excludedProtocols = excludedProtocols;
     }
 
     @Override
-    public ServerSocket newServerSocket(String host, int port,
-      int backlog) throws IOException {
-      SSLServerSocket socket = (SSLServerSocket)super.newServerSocket(host,
-        port, backlog);
+    public ServerSocket newServerSocket(String host, int port, int backlog) throws IOException {
+      SSLServerSocket socket = (SSLServerSocket)super.newServerSocket(host, port, backlog);
       String[] protocols = socket.getEnabledProtocols();
       List<String> newProtocols = new ArrayList<String>(protocols.length);
-      for(String protocol: protocols) {
+      for (String protocol: protocols) {
         if (!excludedProtocols.contains(protocol)) {
           newProtocols.add(protocol);
         }
       }
-      socket.setEnabledProtocols(
-        newProtocols.toArray(new String[newProtocols.size()]));
+      socket.setEnabledProtocols(newProtocols.toArray(new String[newProtocols.size()]));
       return socket;
     }
   }

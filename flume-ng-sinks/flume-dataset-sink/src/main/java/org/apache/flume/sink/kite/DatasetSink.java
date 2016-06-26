@@ -104,12 +104,12 @@ public class DatasetSink extends AbstractSink implements Configurable {
   /**
    * The last time the writer rolled.
    */
-  private long lastRolledMillis = 0l;
+  private long lastRolledMillis = 0L;
 
   /**
    * The raw number of bytes parsed.
    */
-  private long bytesParsed = 0l;
+  private long bytesParsed = 0L;
 
   /**
    * A class for parsing Kite entities from Flume Events.
@@ -225,7 +225,7 @@ public class DatasetSink extends AbstractSink implements Configurable {
    */
   @VisibleForTesting
   void roll() {
-    this.lastRolledMillis = 0l;
+    this.lastRolledMillis = 0L;
   }
 
   @VisibleForTesting
@@ -434,7 +434,7 @@ public class DatasetSink extends AbstractSink implements Configurable {
 
       // Reset the last rolled time and the metrics
       this.lastRolledMillis = System.currentTimeMillis();
-      this.bytesParsed = 0l;
+      this.bytesParsed = 0L;
     } catch (DatasetNotFoundException ex) {
       throw new EventDeliveryException("Dataset " + datasetUri + " not found."
           + " The dataset must be created before Flume can write to it.", ex);
@@ -558,7 +558,7 @@ public class DatasetSink extends AbstractSink implements Configurable {
       try {
         // If the transaction wasn't committed before we got the exception, we
         // need to rollback.
-          transaction.rollback();
+        transaction.rollback();
       } catch (RuntimeException ex) {
         LOG.error("Transaction rollback failed: " + ex.getLocalizedMessage());
         LOG.debug("Exception follows.", ex);
@@ -567,7 +567,7 @@ public class DatasetSink extends AbstractSink implements Configurable {
         this.transaction = null;
       }
     }
-}
+  }
 
   /**
    * Get the name of the dataset from the URI

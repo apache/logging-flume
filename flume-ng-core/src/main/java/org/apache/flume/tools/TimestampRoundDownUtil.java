@@ -35,7 +35,7 @@ public class TimestampRoundDownUtil {
    */
   public static long roundDownTimeStampSeconds(long timestamp,
       int roundDownSec) throws IllegalStateException {
-    Preconditions.checkArgument(roundDownSec > 0 && roundDownSec <=60,
+    Preconditions.checkArgument(roundDownSec > 0 && roundDownSec <= 60,
         "RoundDownSec must be > 0 and <=60");
     Calendar cal = roundDownField(timestamp, Calendar.SECOND, roundDownSec);
     cal.set(Calendar.MILLISECOND, 0);
@@ -53,7 +53,7 @@ public class TimestampRoundDownUtil {
    */
   public static long roundDownTimeStampMinutes(long timestamp,
       int roundDownMins) throws IllegalStateException {
-    Preconditions.checkArgument(roundDownMins > 0 && roundDownMins <=60,
+    Preconditions.checkArgument(roundDownMins > 0 && roundDownMins <= 60,
         "RoundDown must be > 0 and <=60");
     Calendar cal = roundDownField(timestamp, Calendar.MINUTE, roundDownMins);
     cal.set(Calendar.SECOND, 0);
@@ -73,7 +73,7 @@ public class TimestampRoundDownUtil {
    */
   public static long roundDownTimeStampHours(long timestamp,
       int roundDownHours) throws IllegalStateException {
-    Preconditions.checkArgument(roundDownHours > 0 && roundDownHours <=24,
+    Preconditions.checkArgument(roundDownHours > 0 && roundDownHours <= 24,
         "RoundDown must be > 0 and <=24");
     Calendar cal = roundDownField(timestamp,
         Calendar.HOUR_OF_DAY, roundDownHours);
@@ -83,8 +83,7 @@ public class TimestampRoundDownUtil {
     return cal.getTimeInMillis();
   }
 
-  private static Calendar roundDownField(
-      long timestamp, int field, int roundDown){
+  private static Calendar roundDownField(long timestamp, int field, int roundDown) {
     Preconditions.checkArgument(timestamp > 0, "Timestamp must be positive");
     Calendar cal = Calendar.getInstance();
     cal.setTimeInMillis(timestamp);

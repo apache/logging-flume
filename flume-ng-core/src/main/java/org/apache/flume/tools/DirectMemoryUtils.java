@@ -54,7 +54,7 @@ public class DirectMemoryUtils {
       ByteBuffer result = ByteBuffer.allocateDirect(size);
       allocated.addAndGet(size);
       return result;
-    } catch(OutOfMemoryError error) {
+    } catch (OutOfMemoryError error) {
       LOG.error("Error allocating " + size + ", you likely want" +
           " to increase " + MAX_DIRECT_MEMORY_PARAM, error);
       throw error;
@@ -88,11 +88,9 @@ public class DirectMemoryUtils {
 
         if (memSize.contains("k")) {
           multiplier = 1024;
-        }
-        else if (memSize.contains("m")) {
+        } else if (memSize.contains("m")) {
           multiplier = 1048576;
-        }
-        else if (memSize.contains("g")) {
+        } else if (memSize.contains("g")) {
           multiplier = 1073741824;
         }
         memSize = memSize.replaceAll("[^\\d]", "");
@@ -107,7 +105,7 @@ public class DirectMemoryUtils {
       Class<?> VM = Class.forName("sun.misc.VM");
       Method maxDirectMemory = VM.getDeclaredMethod("maxDirectMemory", (Class<?>)null);
       Object result = maxDirectMemory.invoke(null, (Object[])null);
-      if(result != null && result instanceof Long) {
+      if (result != null && result instanceof Long) {
         return (Long)result;
       }
     } catch (Exception e) {

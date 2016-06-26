@@ -18,6 +18,8 @@
  */
 package org.apache.flume.api;
 
+import org.apache.flume.FlumeException;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -25,7 +27,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.Locale;
 import java.util.Properties;
-import org.apache.flume.FlumeException;
 
 /**
  * Factory class to construct Flume {@link RPCClient} implementations.
@@ -63,12 +64,12 @@ public class RpcClientFactory {
     try {
       String clientClassType = type;
       ClientType clientType = null;
-      try{
+      try {
         clientType = ClientType.valueOf(type.toUpperCase(Locale.ENGLISH));
-      } catch (IllegalArgumentException e){
+      } catch (IllegalArgumentException e) {
         clientType = ClientType.OTHER;
       }
-      if (!clientType.equals(ClientType.OTHER)){
+      if (!clientType.equals(ClientType.OTHER)) {
         clientClassType = clientType.getClientClassName();
       }
       clazz =
@@ -181,8 +182,7 @@ public class RpcClientFactory {
    * @return an {@linkplain RpcClient} which uses thrift configured with the
    * given parameters.
    */
-  public static RpcClient getThriftInstance(String hostname, Integer port,
-    Integer batchSize) {
+  public static RpcClient getThriftInstance(String hostname, Integer port, Integer batchSize) {
     if (hostname == null) {
       throw new NullPointerException("hostname must not be null");
     }
@@ -196,7 +196,7 @@ public class RpcClientFactory {
     Properties props = new Properties();
     props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS, "h1");
     props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX + "h1",
-      hostname + ":" + port.intValue());
+        hostname + ":" + port.intValue());
     props.setProperty(RpcClientConfigurationConstants.CONFIG_BATCH_SIZE, batchSize.toString());
     ThriftRpcClient client = new ThriftRpcClient();
     client.configure(props);
@@ -227,7 +227,7 @@ public class RpcClientFactory {
    */
   public static RpcClient getThriftInstance(Properties props) {
     props.setProperty(RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE,
-      ClientType.THRIFT.clientClassName);
+                      ClientType.THRIFT.clientClassName);
     return getInstance(props);
   }
 

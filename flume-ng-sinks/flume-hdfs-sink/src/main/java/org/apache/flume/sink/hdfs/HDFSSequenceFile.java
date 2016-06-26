@@ -81,16 +81,15 @@ public class HDFSSequenceFile extends AbstractHDFSWriter {
   protected void open(Path dstPath, CompressionCodec codeC,
       CompressionType compType, Configuration conf, FileSystem hdfs)
           throws IOException {
-    if(useRawLocalFileSystem) {
-      if(hdfs instanceof LocalFileSystem) {
+    if (useRawLocalFileSystem) {
+      if (hdfs instanceof LocalFileSystem) {
         hdfs = ((LocalFileSystem)hdfs).getRaw();
       } else {
         logger.warn("useRawLocalFileSystem is set to true but file system " +
             "is not of type LocalFileSystem: " + hdfs.getClass().getName());
       }
     }
-    if (conf.getBoolean("hdfs.append.support", false) == true && hdfs.isFile
-            (dstPath)) {
+    if (conf.getBoolean("hdfs.append.support", false) == true && hdfs.isFile(dstPath)) {
       outStream = hdfs.append(dstPath);
     } else {
       outStream = hdfs.create(dstPath);

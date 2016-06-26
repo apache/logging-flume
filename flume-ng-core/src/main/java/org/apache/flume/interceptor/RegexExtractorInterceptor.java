@@ -61,10 +61,10 @@ import com.google.common.collect.Lists;
  * agent.sources.r1.interceptors.i1.serializers = s1 s2
  * agent.sources.r1.interceptors.i1.serializers.s1.type = com.blah.SomeSerializer
  * agent.sources.r1.interceptors.i1.serializers.s1.name = warning
- * agent.sources.r1.interceptors.i1.serializers.s2.type = org.apache.flume.interceptor.RegexExtractorInterceptorTimestampSerializer
+ * agent.sources.r1.interceptors.i1.serializers.s2.type =
+ *     org.apache.flume.interceptor.RegexExtractorInterceptorTimestampSerializer
  * agent.sources.r1.interceptors.i1.serializers.s2.name = error
  * agent.sources.r1.interceptors.i1.serializers.s2.dateFormat = yyyy-MM-dd
- * </code>
  * </p>
  * <pre>
  * Example 1:
@@ -167,7 +167,8 @@ public class RegexExtractorInterceptor implements Interceptor {
 
     private Pattern regex;
     private List<NameAndSerializer> serializerList;
-    private final RegexExtractorInterceptorSerializer defaultSerializer = new RegexExtractorInterceptorPassThroughSerializer();
+    private final RegexExtractorInterceptorSerializer defaultSerializer =
+        new RegexExtractorInterceptorPassThroughSerializer();
 
     @Override
     public void configure(Context context) {
@@ -191,7 +192,7 @@ public class RegexExtractorInterceptor implements Interceptor {
           new Context(context.getSubProperties(SERIALIZERS + "."));
 
       serializerList = Lists.newArrayListWithCapacity(serializerNames.length);
-      for(String serializerName : serializerNames) {
+      for (String serializerName : serializerNames) {
         Context serializerContext = new Context(
             serializerContexts.getSubProperties(serializerName + "."));
         String type = serializerContext.getString("type", "DEFAULT");
@@ -199,7 +200,7 @@ public class RegexExtractorInterceptor implements Interceptor {
         Preconditions.checkArgument(!StringUtils.isEmpty(name),
             "Supplied name cannot be empty.");
 
-        if("DEFAULT".equals(type)) {
+        if ("DEFAULT".equals(type)) {
           serializerList.add(new NameAndSerializer(name, defaultSerializer));
         } else {
           serializerList.add(new NameAndSerializer(name, getCustomSerializer(

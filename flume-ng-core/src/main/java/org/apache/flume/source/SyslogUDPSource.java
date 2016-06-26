@@ -35,14 +35,21 @@ import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.Configurables;
 import org.jboss.netty.bootstrap.ConnectionlessBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.AdaptiveReceiveBufferSizePredictorFactory;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.socket.oio.OioDatagramChannelFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SyslogUDPSource extends AbstractSource
-      implements EventDrivenSource, Configurable {
+                             implements EventDrivenSource, Configurable {
 
   private int port;
   private int maxsize = 1 << 16; // 64k is max allowable in RFC 5426
@@ -51,8 +58,7 @@ public class SyslogUDPSource extends AbstractSource
   private Map<String, String> formaterProp;
   private Set<String> keepFields;
 
-  private static final Logger logger = LoggerFactory
-      .getLogger(SyslogUDPSource.class);
+  private static final Logger logger = LoggerFactory.getLogger(SyslogUDPSource.class);
 
   private CounterGroup counterGroup = new CounterGroup();
 
@@ -96,20 +102,20 @@ public class SyslogUDPSource extends AbstractSource
   @Override
   public void start() {
     // setup Netty server
-    ConnectionlessBootstrap serverBootstrap = new ConnectionlessBootstrap
-        (new OioDatagramChannelFactory(Executors.newCachedThreadPool()));
+    ConnectionlessBootstrap serverBootstrap = new ConnectionlessBootstrap(
+        new OioDatagramChannelFactory(Executors.newCachedThreadPool()));
     final syslogHandler handler = new syslogHandler();
     handler.setFormater(formaterProp);
     handler.setKeepFields(keepFields);
     serverBootstrap.setOption("receiveBufferSizePredictorFactory",
-      new AdaptiveReceiveBufferSizePredictorFactory(DEFAULT_MIN_SIZE,
-        DEFAULT_INITIAL_SIZE, maxsize));
+        new AdaptiveReceiveBufferSizePredictorFactory(DEFAULT_MIN_SIZE,
+            DEFAULT_INITIAL_SIZE, maxsize));
     serverBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
       @Override
       public ChannelPipeline getPipeline() {
-       return Channels.pipeline(handler);
+        return Channels.pipeline(handler);
       }
-     });
+    });
 
     if (host == null) {
       nettyChannel = serverBootstrap.bind(new InetSocketAddress(port));

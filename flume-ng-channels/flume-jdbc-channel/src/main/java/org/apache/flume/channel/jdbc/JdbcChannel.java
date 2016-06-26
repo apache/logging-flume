@@ -27,6 +27,7 @@ import org.apache.flume.annotations.Disposable;
 import org.apache.flume.channel.AbstractChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 /**
  * <p>
  * A JDBC based channel implementation.

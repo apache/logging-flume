@@ -19,15 +19,10 @@
 
 package org.apache.flume.node;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Set;
-
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -49,10 +44,14 @@ import org.apache.flume.lifecycle.LifecycleSupervisor.SupervisorPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Set;
 
 public class Application {
 
@@ -77,7 +76,7 @@ public class Application {
   }
 
   public synchronized void start() {
-    for(LifecycleAware component : components) {
+    for (LifecycleAware component : components) {
       supervisor.supervise(component,
           new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
     }
@@ -91,7 +90,7 @@ public class Application {
 
   public synchronized void stop() {
     supervisor.stop();
-    if(monitorServer != null) {
+    if (monitorServer != null) {
       monitorServer.stop();
     }
   }
@@ -99,37 +98,37 @@ public class Application {
   private void stopAllComponents() {
     if (this.materializedConfiguration != null) {
       logger.info("Shutting down configuration: {}", this.materializedConfiguration);
-      for (Entry<String, SourceRunner> entry : this.materializedConfiguration
-          .getSourceRunners().entrySet()) {
-        try{
+      for (Entry<String, SourceRunner> entry :
+           this.materializedConfiguration.getSourceRunners().entrySet()) {
+        try {
           logger.info("Stopping Source " + entry.getKey());
           supervisor.unsupervise(entry.getValue());
-        } catch (Exception e){
+        } catch (Exception e) {
           logger.error("Error while stopping {}", entry.getValue(), e);
         }
       }
 
       for (Entry<String, SinkRunner> entry :
-        this.materializedConfiguration.getSinkRunners().entrySet()) {
-        try{
+           this.materializedConfiguration.getSinkRunners().entrySet()) {
+        try {
           logger.info("Stopping Sink " + entry.getKey());
           supervisor.unsupervise(entry.getValue());
-        } catch (Exception e){
+        } catch (Exception e) {
           logger.error("Error while stopping {}", entry.getValue(), e);
         }
       }
 
       for (Entry<String, Channel> entry :
-        this.materializedConfiguration.getChannels().entrySet()) {
-        try{
+           this.materializedConfiguration.getChannels().entrySet()) {
+        try {
           logger.info("Stopping Channel " + entry.getKey());
           supervisor.unsupervise(entry.getValue());
-        } catch (Exception e){
+        } catch (Exception e) {
           logger.error("Error while stopping {}", entry.getValue(), e);
         }
       }
     }
-    if(monitorServer != null) {
+    if (monitorServer != null) {
       monitorServer.stop();
     }
   }
@@ -140,12 +139,12 @@ public class Application {
     this.materializedConfiguration = materializedConfiguration;
 
     for (Entry<String, Channel> entry :
-      materializedConfiguration.getChannels().entrySet()) {
-      try{
+        materializedConfiguration.getChannels().entrySet()) {
+      try {
         logger.info("Starting Channel " + entry.getKey());
         supervisor.supervise(entry.getValue(),
             new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
-      } catch (Exception e){
+      } catch (Exception e) {
         logger.error("Error while starting {}", entry.getValue(), e);
       }
     }
@@ -153,9 +152,9 @@ public class Application {
     /*
      * Wait for all channels to start.
      */
-    for(Channel ch: materializedConfiguration.getChannels().values()){
-      while(ch.getLifecycleState() != LifecycleState.START
-          && !supervisor.isComponentInErrorState(ch)){
+    for (Channel ch : materializedConfiguration.getChannels().values()) {
+      while (ch.getLifecycleState() != LifecycleState.START
+          && !supervisor.isComponentInErrorState(ch)) {
         try {
           logger.info("Waiting for channel: " + ch.getName() +
               " to start. Sleeping for 500 ms");
@@ -167,23 +166,22 @@ public class Application {
       }
     }
 
-    for (Entry<String, SinkRunner> entry : materializedConfiguration.getSinkRunners()
-        .entrySet()) {
-      try{
+    for (Entry<String, SinkRunner> entry : materializedConfiguration.getSinkRunners().entrySet()) {
+      try {
         logger.info("Starting Sink " + entry.getKey());
         supervisor.supervise(entry.getValue(),
-          new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
+            new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
       } catch (Exception e) {
         logger.error("Error while starting {}", entry.getValue(), e);
       }
     }
 
-    for (Entry<String, SourceRunner> entry : materializedConfiguration
-        .getSourceRunners().entrySet()) {
-      try{
+    for (Entry<String, SourceRunner> entry :
+         materializedConfiguration.getSourceRunners().entrySet()) {
+      try {
         logger.info("Starting Source " + entry.getKey());
         supervisor.supervise(entry.getValue(),
-          new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
+            new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
       } catch (Exception e) {
         logger.error("Error while starting {}", entry.getValue(), e);
       }
@@ -203,7 +201,7 @@ public class Application {
         try {
           //Is it a known type?
           klass = MonitoringType.valueOf(
-                  monitorType.toUpperCase(Locale.ENGLISH)).getMonitorClass();
+              monitorType.toUpperCase(Locale.ENGLISH)).getMonitorClass();
         } catch (Exception e) {
           //Not a known type, use FQCN
           klass = (Class<? extends MonitorService>) Class.forName(monitorType);
@@ -213,7 +211,7 @@ public class Application {
         for (String key : keys) {
           if (key.startsWith(CONF_MONITOR_PREFIX)) {
             context.put(key.substring(CONF_MONITOR_PREFIX.length()),
-                    systemProps.getProperty(key));
+                systemProps.getProperty(key));
           }
         }
         monitorServer.configure(context);
@@ -221,7 +219,7 @@ public class Application {
       }
     } catch (Exception e) {
       logger.warn("Error starting monitoring. "
-              + "Monitoring might not be available.", e);
+          + "Monitoring might not be available.", e);
     }
 
   }
@@ -285,18 +283,17 @@ public class Application {
           EventBus eventBus = new EventBus(agentName + "-event-bus");
           List<LifecycleAware> components = Lists.newArrayList();
           PollingZooKeeperConfigurationProvider zookeeperConfigurationProvider =
-            new PollingZooKeeperConfigurationProvider(
-              agentName, zkConnectionStr, baseZkPath, eventBus);
+              new PollingZooKeeperConfigurationProvider(
+                  agentName, zkConnectionStr, baseZkPath, eventBus);
           components.add(zookeeperConfigurationProvider);
           application = new Application(components);
           eventBus.register(application);
         } else {
           StaticZooKeeperConfigurationProvider zookeeperConfigurationProvider =
-            new StaticZooKeeperConfigurationProvider(
-              agentName, zkConnectionStr, baseZkPath);
+              new StaticZooKeeperConfigurationProvider(
+                  agentName, zkConnectionStr, baseZkPath);
           application = new Application();
-          application.handleConfigurationEvent(zookeeperConfigurationProvider
-            .getConfiguration());
+          application.handleConfigurationEvent(zookeeperConfigurationProvider.getConfiguration());
         }
       } else {
         File configurationFile = new File(commandLine.getOptionValue('f'));
@@ -308,16 +305,16 @@ public class Application {
         if (!configurationFile.exists()) {
           // If command line invocation, then need to fail fast
           if (System.getProperty(Constants.SYSPROP_CALLED_FROM_SERVICE) ==
-            null) {
+              null) {
             String path = configurationFile.getPath();
             try {
               path = configurationFile.getCanonicalPath();
             } catch (IOException ex) {
               logger.error("Failed to read canonical path for file: " + path,
-                ex);
+                  ex);
             }
             throw new ParseException(
-              "The specified configuration file does not exist: " + path);
+                "The specified configuration file does not exist: " + path);
           }
         }
         List<LifecycleAware> components = Lists.newArrayList();
@@ -325,18 +322,16 @@ public class Application {
         if (reload) {
           EventBus eventBus = new EventBus(agentName + "-event-bus");
           PollingPropertiesFileConfigurationProvider configurationProvider =
-            new PollingPropertiesFileConfigurationProvider(
-              agentName, configurationFile, eventBus, 30);
+              new PollingPropertiesFileConfigurationProvider(
+                  agentName, configurationFile, eventBus, 30);
           components.add(configurationProvider);
           application = new Application(components);
           eventBus.register(application);
         } else {
           PropertiesFileConfigurationProvider configurationProvider =
-            new PropertiesFileConfigurationProvider(
-              agentName, configurationFile);
+              new PropertiesFileConfigurationProvider(agentName, configurationFile);
           application = new Application();
-          application.handleConfigurationEvent(configurationProvider
-            .getConfiguration());
+          application.handleConfigurationEvent(configurationProvider.getConfiguration());
         }
       }
       application.start();
@@ -350,8 +345,7 @@ public class Application {
       });
 
     } catch (Exception e) {
-      logger.error("A fatal error occurred while running. Exception follows.",
-          e);
+      logger.error("A fatal error occurred while running. Exception follows.", e);
     }
   }
 }

@@ -25,12 +25,6 @@ import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.sink.elasticsearch.ElasticSearchEventSerializer;
 import org.apache.flume.sink.elasticsearch.IndexNameBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -39,6 +33,12 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Rest ElasticSearch client which is responsible for sending bulks of events to
@@ -92,7 +92,8 @@ public class  ElasticSearchRestClient implements ElasticSearchClient {
   }
 
   @Override
-  public void addEvent(Event event, IndexNameBuilder indexNameBuilder, String indexType, long ttlMs) throws Exception {
+  public void addEvent(Event event, IndexNameBuilder indexNameBuilder, String indexType,
+                       long ttlMs) throws Exception {
     BytesReference content = serializer.getContentBuilder(event).bytes();
     Map<String, Map<String, String>> parameters = new HashMap<String, Map<String, String>>();
     Map<String, String> indexParameters = new HashMap<String, String>();
@@ -104,7 +105,7 @@ public class  ElasticSearchRestClient implements ElasticSearchClient {
     parameters.put(INDEX_OPERATION_NAME, indexParameters);
 
     Gson gson = new Gson();
-    synchronized(bulkBuilder) {
+    synchronized (bulkBuilder) {
       bulkBuilder.append(gson.toJson(parameters));
       bulkBuilder.append("\n");
       bulkBuilder.append(content.toBytesArray().toUtf8());
@@ -131,8 +132,10 @@ public class  ElasticSearchRestClient implements ElasticSearchClient {
       response = httpClient.execute(httpRequest);
       statusCode = response.getStatusLine().getStatusCode();
       logger.info("Status code from elasticsearch: " + statusCode);
-      if (response.getEntity() != null)
-        logger.debug("Status message from elasticsearch: " + EntityUtils.toString(response.getEntity(), "UTF-8"));
+      if (response.getEntity() != null) {
+        logger.debug("Status message from elasticsearch: " +
+                     EntityUtils.toString(response.getEntity(), "UTF-8"));
+      }
     }
 
     if (statusCode != HttpStatus.SC_OK) {

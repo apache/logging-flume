@@ -56,8 +56,8 @@ public class SearchAndReplaceInterceptor implements Interceptor {
   private final Charset charset;
 
   private SearchAndReplaceInterceptor(Pattern searchPattern,
-    String replaceString,
-    Charset charset) {
+                                      String replaceString,
+                                      Charset charset) {
     this.searchPattern = searchPattern;
     this.replaceString = replaceString;
     this.charset = charset;
@@ -107,7 +107,7 @@ public class SearchAndReplaceInterceptor implements Interceptor {
       replaceString = context.getString(REPLACE_STRING_KEY);
       // Empty replacement String value or if the property itself is not present
       // assign empty string as replacement
-      if(replaceString == null) {
+      if (replaceString == null) {
         replaceString = "";
       }
 

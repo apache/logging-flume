@@ -37,8 +37,7 @@ import org.slf4j.LoggerFactory;
 public class JMXPollUtil {
 
   private static Logger LOG = LoggerFactory.getLogger(JMXPollUtil.class);
-  private static MBeanServer mbeanServer = ManagementFactory.
-          getPlatformMBeanServer();
+  private static MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
 
   public static Map<String, Map<String, String>> getAllMBeans() {
     Map<String, Map<String, String>> mbeanMap = Maps.newHashMap();
@@ -54,23 +53,20 @@ public class JMXPollUtil {
         if (!obj.getObjectName().toString().startsWith("org.apache.flume")) {
           continue;
         }
-        MBeanAttributeInfo[] attrs = mbeanServer.
-                getMBeanInfo(obj.getObjectName()).getAttributes();
-        String strAtts[] = new String[attrs.length];
+        MBeanAttributeInfo[] attrs = mbeanServer.getMBeanInfo(obj.getObjectName()).getAttributes();
+        String[] strAtts = new String[attrs.length];
         for (int i = 0; i < strAtts.length; i++) {
           strAtts[i] = attrs[i].getName();
         }
-        AttributeList attrList = mbeanServer.getAttributes(
-                obj.getObjectName(), strAtts);
+        AttributeList attrList = mbeanServer.getAttributes(obj.getObjectName(), strAtts);
         String component = obj.getObjectName().toString().substring(
-                obj.getObjectName().toString().indexOf('=') + 1);
+            obj.getObjectName().toString().indexOf('=') + 1);
         Map<String, String> attrMap = Maps.newHashMap();
-
 
         for (Object attr : attrList) {
           Attribute localAttr = (Attribute) attr;
-          if(localAttr.getName().equalsIgnoreCase("type")){
-            component = localAttr.getValue()+ "." + component;
+          if (localAttr.getName().equalsIgnoreCase("type")) {
+            component = localAttr.getValue() + "." + component;
           }
           attrMap.put(localAttr.getName(), localAttr.getValue().toString());
         }

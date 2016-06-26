@@ -18,23 +18,20 @@
 
 package org.apache.flume.formatter.output;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import org.apache.flume.Clock;
+import org.apache.flume.SystemClock;
+import org.apache.flume.tools.TimestampRoundDownUtil;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import com.google.common.annotations.VisibleForTesting;
-
-import org.apache.flume.Clock;
-import org.apache.flume.SystemClock;
-import org.apache.flume.tools.TimestampRoundDownUtil;
-
-import com.google.common.base.Preconditions;
 
 public class BucketPath {
 
@@ -42,8 +39,8 @@ public class BucketPath {
    * These are useful to other classes which might want to search for tags in
    * strings.
    */
-  final public static String TAG_REGEX = "\\%(\\w|\\%)|\\%\\{([\\w\\.-]+)\\}";
-  final public static Pattern tagPattern = Pattern.compile(TAG_REGEX);
+  public static final String TAG_REGEX = "\\%(\\w|\\%)|\\%\\{([\\w\\.-]+)\\}";
+  public static final Pattern tagPattern = Pattern.compile(TAG_REGEX);
 
   private static Clock clock = new SystemClock();
 
@@ -62,57 +59,57 @@ public class BucketPath {
   public static String expandShorthand(char c) {
     // It's a date
     switch (c) {
-    case 'a':
-      return "weekday_short";
-    case 'A':
-      return "weekday_full";
-    case 'b':
-      return "monthname_short";
-    case 'B':
-      return "monthname_full";
-    case 'c':
-      return "datetime";
-    case 'd':
-      return "day_of_month_xx"; // two digit
-    case 'e':
-      return "day_of_month_x"; // 1 or 2 digit
-    case 'D':
-      return "date_short"; // "MM/dd/yy";
-    case 'H':
-      return "hour_24_xx";
-    case 'I':
-      return "hour_12_xx";
-    case 'j':
-      return "day_of_year_xxx"; // three digits
-    case 'k':
-      return "hour_24"; // 1 or 2 digits
-    case 'l':
-      return "hour_12"; // 1 or 2 digits
-    case 'm':
-      return "month_xx";
-    case 'n':
-      return "month_x"; // 1 or 2 digits
-    case 'M':
-      return "minute_xx";
-    case 'p':
-      return "am_pm";
-    case 's':
-      return "unix_seconds";
-    case 'S':
-      return "seconds_xx";
-    case 't':
-      // This is different from unix date (which would insert a tab character
-      // here)
-      return "unix_millis";
-    case 'y':
-      return "year_xx";
-    case 'Y':
-      return "year_xxxx";
-    case 'z':
-      return "timezone_delta";
-    default:
-//      LOG.warn("Unrecognized escape in event format string: %" + c);
-      return "" + c;
+      case 'a':
+        return "weekday_short";
+      case 'A':
+        return "weekday_full";
+      case 'b':
+        return "monthname_short";
+      case 'B':
+        return "monthname_full";
+      case 'c':
+        return "datetime";
+      case 'd':
+        return "day_of_month_xx"; // two digit
+      case 'e':
+        return "day_of_month_x"; // 1 or 2 digit
+      case 'D':
+        return "date_short"; // "MM/dd/yy";
+      case 'H':
+        return "hour_24_xx";
+      case 'I':
+        return "hour_12_xx";
+      case 'j':
+        return "day_of_year_xxx"; // three digits
+      case 'k':
+        return "hour_24"; // 1 or 2 digits
+      case 'l':
+        return "hour_12"; // 1 or 2 digits
+      case 'm':
+        return "month_xx";
+      case 'n':
+        return "month_x"; // 1 or 2 digits
+      case 'M':
+        return "minute_xx";
+      case 'p':
+        return "am_pm";
+      case 's':
+        return "unix_seconds";
+      case 'S':
+        return "seconds_xx";
+      case 't':
+        // This is different from unix date (which would insert a tab character
+        // here)
+        return "unix_millis";
+      case 'y':
+        return "year_xx";
+      case 'Y':
+        return "year_xxxx";
+      case 'z':
+        return "timezone_delta";
+      default:
+        // LOG.warn("Unrecognized escape in event format string: %" + c);
+        return "" + c;
     }
 
   }
@@ -181,8 +178,8 @@ public class BucketPath {
   @VisibleForTesting
   @Deprecated
   public static String replaceShorthand(char c, Map<String, String> headers,
-    TimeZone timeZone, boolean needRounding, int unit, int roundDown,
-    boolean useLocalTimestamp) {
+      TimeZone timeZone, boolean needRounding, int unit, int roundDown,
+      boolean useLocalTimestamp) {
     long ts = 0;
     if (useLocalTimestamp) {
       ts = clock.currentTimeMillis();
@@ -191,27 +188,27 @@ public class BucketPath {
         roundDown, false, ts);
   }
   
-  protected static final ThreadLocal<HashMap<String, SimpleDateFormat>> simpleDateFormatCache = new ThreadLocal<HashMap<String, SimpleDateFormat>>() {
-	  
-	  @Override
-	  protected HashMap<String, SimpleDateFormat> initialValue() {
-		  return new HashMap<String, SimpleDateFormat>();
-	  }
-  };
-  
+  protected static final ThreadLocal<HashMap<String, SimpleDateFormat>> simpleDateFormatCache =
+      new ThreadLocal<HashMap<String, SimpleDateFormat>>() {
+
+        @Override
+        protected HashMap<String, SimpleDateFormat> initialValue() {
+          return new HashMap<String, SimpleDateFormat>();
+        }
+      };
+
   protected static SimpleDateFormat getSimpleDateFormat(String string) {
-	HashMap<String, SimpleDateFormat> localCache = simpleDateFormatCache.get();
-	
-	SimpleDateFormat simpleDateFormat = localCache.get(string);
-	if (simpleDateFormat == null) {
-		simpleDateFormat = new SimpleDateFormat(string);
-		localCache.put(string, simpleDateFormat);
-		simpleDateFormatCache.set(localCache);
-	}
-	
-	return simpleDateFormat;
+    HashMap<String, SimpleDateFormat> localCache = simpleDateFormatCache.get();
+
+    SimpleDateFormat simpleDateFormat = localCache.get(string);
+    if (simpleDateFormat == null) {
+      simpleDateFormat = new SimpleDateFormat(string);
+      localCache.put(string, simpleDateFormat);
+      simpleDateFormatCache.set(localCache);
+    }
+
+    return simpleDateFormat;
   }
-  
 
   /**
    * Not intended as a public API
@@ -223,10 +220,10 @@ public class BucketPath {
 
     String timestampHeader = null;
     try {
-      if(!useLocalTimestamp) {
+      if (!useLocalTimestamp) {
         timestampHeader = headers.get("timestamp");
         Preconditions.checkNotNull(timestampHeader, "Expected timestamp in " +
-          "the Flume event headers, but it was null");
+            "the Flume event headers, but it was null");
         ts = Long.valueOf(timestampHeader);
       } else {
         timestampHeader = String.valueOf(ts);
@@ -238,87 +235,87 @@ public class BucketPath {
         + " TimestampInterceptor source interceptor).", e);
     }
 
-    if(needRounding){
+    if (needRounding) {
       ts = roundDown(roundDown, unit, ts);
     }
 
     // It's a date
     String formatString = "";
     switch (c) {
-    case '%':
-      return "%";
-    case 'a':
-      formatString = "EEE";
-      break;
-    case 'A':
-      formatString = "EEEE";
-      break;
-    case 'b':
-      formatString = "MMM";
-      break;
-    case 'B':
-      formatString = "MMMM";
-      break;
-    case 'c':
-      formatString = "EEE MMM d HH:mm:ss yyyy";
-      break;
-    case 'd':
-      formatString = "dd";
-      break;
-    case 'e':
-      formatString = "d";
-      break;
-    case 'D':
-      formatString = "MM/dd/yy";
-      break;
-    case 'H':
-      formatString = "HH";
-      break;
-    case 'I':
-      formatString = "hh";
-      break;
-    case 'j':
-      formatString = "DDD";
-      break;
-    case 'k':
-      formatString = "H";
-      break;
-    case 'l':
-      formatString = "h";
-      break;
-    case 'm':
-      formatString = "MM";
-      break;
-    case 'M':
-      formatString = "mm";
-      break;
-    case 'n':
-      formatString = "M";
-      break;
-    case 'p':
-      formatString = "a";
-      break;
-    case 's':
-      return "" + (ts/1000);
-    case 'S':
-      formatString = "ss";
-      break;
-    case 't':
-      // This is different from unix date (which would insert a tab character
-      // here)
-      return timestampHeader;
-    case 'y':
-      formatString = "yy";
-      break;
-    case 'Y':
-      formatString = "yyyy";
-      break;
-    case 'z':
-      formatString = "ZZZ";
-      break;
-    default:
-//      LOG.warn("Unrecognized escape in event format string: %" + c);
-      return "";
+      case '%':
+        return "%";
+      case 'a':
+        formatString = "EEE";
+        break;
+      case 'A':
+        formatString = "EEEE";
+        break;
+      case 'b':
+        formatString = "MMM";
+        break;
+      case 'B':
+        formatString = "MMMM";
+        break;
+      case 'c':
+        formatString = "EEE MMM d HH:mm:ss yyyy";
+        break;
+      case 'd':
+        formatString = "dd";
+        break;
+      case 'e':
+        formatString = "d";
+        break;
+      case 'D':
+        formatString = "MM/dd/yy";
+        break;
+      case 'H':
+        formatString = "HH";
+        break;
+      case 'I':
+        formatString = "hh";
+        break;
+      case 'j':
+        formatString = "DDD";
+        break;
+      case 'k':
+        formatString = "H";
+        break;
+      case 'l':
+        formatString = "h";
+        break;
+      case 'm':
+        formatString = "MM";
+        break;
+      case 'M':
+        formatString = "mm";
+        break;
+      case 'n':
+        formatString = "M";
+        break;
+      case 'p':
+        formatString = "a";
+        break;
+      case 's':
+        return "" + (ts / 1000);
+      case 'S':
+        formatString = "ss";
+        break;
+      case 't':
+        // This is different from unix date (which would insert a tab character
+        // here)
+        return timestampHeader;
+      case 'y':
+        formatString = "yy";
+        break;
+      case 'Y':
+        formatString = "yyyy";
+        break;
+      case 'z':
+        formatString = "ZZZ";
+        break;
+      default:
+        // LOG.warn("Unrecognized escape in event format string: %" + c);
+        return "";
     }
 
     SimpleDateFormat format = getSimpleDateFormat(formatString);
@@ -332,9 +329,9 @@ public class BucketPath {
     return format.format(date);
   }
 
-  private static long roundDown(int roundDown, int unit, long ts){
+  private static long roundDown(int roundDown, int unit, long ts) {
     long timestamp = ts;
-    if(roundDown <= 0){
+    if (roundDown <= 0) {
       roundDown = 1;
     }
     switch (unit) {
@@ -366,7 +363,7 @@ public class BucketPath {
    * TODO(henry): we may want to consider taking this out of Event and into a
    * more general class when we get more use cases for this pattern.
    */
-  public static String escapeString(String in, Map<String, String> headers){
+  public static String escapeString(String in, Map<String, String> headers) {
     return escapeString(in, headers, false, 0, 0);
   }
 
@@ -404,8 +401,8 @@ public class BucketPath {
    * @return Escaped string.
    */
   public static String escapeString(String in, Map<String, String> headers,
-    TimeZone timeZone, boolean needRounding, int unit, int roundDown,
-    boolean useLocalTimeStamp) {
+      TimeZone timeZone, boolean needRounding, int unit, int roundDown,
+      boolean useLocalTimeStamp) {
 
     long ts = clock.currentTimeMillis();
 

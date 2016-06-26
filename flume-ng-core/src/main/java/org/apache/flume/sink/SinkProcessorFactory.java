@@ -55,8 +55,7 @@ public class SinkProcessorFactory {
    * processor configuration
    */
   @SuppressWarnings("unchecked")
-  public static SinkProcessor getProcessor(Context context,
- List<Sink> sinks) {
+  public static SinkProcessor getProcessor(Context context, List<Sink> sinks) {
     Preconditions.checkNotNull(context);
     Preconditions.checkNotNull(sinks);
     Preconditions.checkArgument(!sinks.isEmpty());
@@ -71,7 +70,7 @@ public class SinkProcessorFactory {
       logger.warn("Sink Processor type {} is a custom type", typeStr);
     }
 
-    if(!type.equals(SinkProcessorType.OTHER)) {
+    if (!type.equals(SinkProcessorType.OTHER)) {
       processorClassName = type.getSinkProcessorClassName();
     }
 

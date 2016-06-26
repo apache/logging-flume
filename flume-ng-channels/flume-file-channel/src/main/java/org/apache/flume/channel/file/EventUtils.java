@@ -33,7 +33,7 @@ public class EventUtils {
    * @return Event if Put instance is present, null otherwise
    */
   public static Event getEventFromTransactionEvent(TransactionEventRecord transactionEventRecord) {
-    if(transactionEventRecord instanceof Put) {
+    if (transactionEventRecord instanceof Put) {
       return ((Put)transactionEventRecord).getEvent();
     }
     return null;

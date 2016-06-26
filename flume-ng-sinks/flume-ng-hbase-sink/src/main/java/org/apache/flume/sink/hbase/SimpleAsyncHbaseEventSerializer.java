@@ -18,18 +18,17 @@
  */
 package org.apache.flume.sink.hbase;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.google.common.base.Charsets;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
-import org.hbase.async.AtomicIncrementRequest;
-import org.hbase.async.PutRequest;
 import org.apache.flume.conf.ComponentConfiguration;
 import org.apache.flume.sink.hbase.SimpleHbaseEventSerializer.KeyType;
+import org.hbase.async.AtomicIncrementRequest;
+import org.hbase.async.PutRequest;
 
-import com.google.common.base.Charsets;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A simple serializer to be used with the AsyncHBaseSink
@@ -69,7 +68,7 @@ public class SimpleAsyncHbaseEventSerializer implements AsyncHbaseEventSerialize
   @Override
   public List<PutRequest> getActions() {
     List<PutRequest> actions = new ArrayList<PutRequest>();
-    if(payloadColumn != null){
+    if (payloadColumn != null) {
       byte[] rowKey;
       try {
         switch (keyType) {
@@ -89,17 +88,16 @@ public class SimpleAsyncHbaseEventSerializer implements AsyncHbaseEventSerialize
         PutRequest putRequest =  new PutRequest(table, rowKey, cf,
             payloadColumn, payload);
         actions.add(putRequest);
-      } catch (Exception e){
+      } catch (Exception e) {
         throw new FlumeException("Could not get row key!", e);
       }
     }
     return actions;
   }
 
-  public List<AtomicIncrementRequest> getIncrements(){
-    List<AtomicIncrementRequest> actions = new
-        ArrayList<AtomicIncrementRequest>();
-    if(incrementColumn != null) {
+  public List<AtomicIncrementRequest> getIncrements() {
+    List<AtomicIncrementRequest> actions = new ArrayList<AtomicIncrementRequest>();
+    if (incrementColumn != null) {
       AtomicIncrementRequest inc = new AtomicIncrementRequest(table,
           incrementRow, cf, incrementColumn);
       actions.add(inc);
@@ -119,23 +117,22 @@ public class SimpleAsyncHbaseEventSerializer implements AsyncHbaseEventSerialize
     String iCol = context.getString("incrementColumn", "iCol");
     rowPrefix = context.getString("rowPrefix", "default");
     String suffix = context.getString("suffix", "uuid");
-    if(pCol != null && !pCol.isEmpty()) {
-      if(suffix.equals("timestamp")){
+    if (pCol != null && !pCol.isEmpty()) {
+      if (suffix.equals("timestamp")) {
         keyType = KeyType.TS;
       } else if (suffix.equals("random")) {
         keyType = KeyType.RANDOM;
-      } else if(suffix.equals("nano")){
+      } else if (suffix.equals("nano")) {
         keyType = KeyType.TSNANO;
       } else {
         keyType = KeyType.UUID;
       }
       payloadColumn = pCol.getBytes(Charsets.UTF_8);
     }
-    if(iCol != null && !iCol.isEmpty()) {
+    if (iCol != null && !iCol.isEmpty()) {
       incrementColumn = iCol.getBytes(Charsets.UTF_8);
     }
-    incrementRow =
-        context.getString("incrementRow", "incRow").getBytes(Charsets.UTF_8);
+    incrementRow = context.getString("incrementRow", "incRow").getBytes(Charsets.UTF_8);
   }
 
   @Override

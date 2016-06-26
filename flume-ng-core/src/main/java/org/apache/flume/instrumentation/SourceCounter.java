@@ -41,15 +41,12 @@ public class SourceCounter extends MonitoredCounterGroup implements
   private static final String COUNTER_OPEN_CONNECTION_COUNT =
           "src.open-connection.count";
 
-
-  private static final String[] ATTRIBUTES =
-    {
-      COUNTER_EVENTS_RECEIVED, COUNTER_EVENTS_ACCEPTED,
-      COUNTER_APPEND_RECEIVED, COUNTER_APPEND_ACCEPTED,
-      COUNTER_APPEND_BATCH_RECEIVED, COUNTER_APPEND_BATCH_ACCEPTED,
-      COUNTER_OPEN_CONNECTION_COUNT
-    };
-
+  private static final String[] ATTRIBUTES = {
+    COUNTER_EVENTS_RECEIVED, COUNTER_EVENTS_ACCEPTED,
+    COUNTER_APPEND_RECEIVED, COUNTER_APPEND_ACCEPTED,
+    COUNTER_APPEND_BATCH_RECEIVED, COUNTER_APPEND_BATCH_ACCEPTED,
+    COUNTER_OPEN_CONNECTION_COUNT
+  };
 
   public SourceCounter(String name) {
     super(MonitoredCounterGroup.Type.SOURCE, name, ATTRIBUTES);
@@ -126,7 +123,7 @@ public class SourceCounter extends MonitoredCounterGroup implements
     return get(COUNTER_OPEN_CONNECTION_COUNT);
   }
 
-  public void setOpenConnectionCount(long openConnectionCount){
+  public void setOpenConnectionCount(long openConnectionCount) {
     set(COUNTER_OPEN_CONNECTION_COUNT, openConnectionCount);
   }
 }

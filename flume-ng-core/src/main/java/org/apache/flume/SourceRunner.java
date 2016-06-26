@@ -28,7 +28,7 @@ import org.apache.flume.source.PollableSourceRunner;
  *
  * This is an abstract class used for instantiating derived classes.
  */
-abstract public class SourceRunner implements LifecycleAware {
+public abstract class SourceRunner implements LifecycleAware {
 
   private Source source;
 

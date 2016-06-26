@@ -64,7 +64,7 @@ public abstract class ComponentConfiguration {
     failIfConfigured();
     String confType = context.getString(
         BasicConfigurationConstants.CONFIG_TYPE);
-    if (confType != null && !confType.isEmpty()){
+    if (confType != null && !confType.isEmpty()) {
       this.type = confType;
     }
     // Type can be set by child class constructors, so check if it was.
@@ -74,12 +74,12 @@ public abstract class ComponentConfiguration {
           FlumeConfigurationErrorType.ATTRS_MISSING, ErrorOrWarning.ERROR));
 
       throw new ConfigurationException(
-          "Component has no type. Cannot configure. "+ componentName);
+          "Component has no type. Cannot configure. " + componentName);
     }
   }
 
   protected void failIfConfigured() throws ConfigurationException {
-    if (configured){
+    if (configured) {
       throw new ConfigurationException("Already configured component."
           + componentName);
     }
@@ -134,12 +134,13 @@ public abstract class ComponentConfiguration {
     CHANNELSELECTOR("ChannelSelector");
 
     private final String componentType;
-    private ComponentType(String type){
+
+    private ComponentType(String type) {
       componentType = type;
     }
+
     public String getComponentType() {
       return componentType;
     }
-
   }
 }

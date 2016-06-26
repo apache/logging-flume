@@ -22,9 +22,12 @@ public class KafkaSourceConstants {
 
   public static final String KAFKA_PREFIX = "kafka.";
   public static final String KAFKA_CONSUMER_PREFIX = KAFKA_PREFIX + "consumer.";
-  public static final String DEFAULT_KEY_DESERIALIZER = "org.apache.kafka.common.serialization.StringDeserializer";
-  public static final String DEFAULT_VALUE_DESERIALIZER = "org.apache.kafka.common.serialization.ByteArrayDeserializer";
-  public static final String BOOTSTRAP_SERVERS = KAFKA_PREFIX + CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG;
+  public static final String DEFAULT_KEY_DESERIALIZER =
+      "org.apache.kafka.common.serialization.StringDeserializer";
+  public static final String DEFAULT_VALUE_DESERIALIZER =
+      "org.apache.kafka.common.serialization.ByteArrayDeserializer";
+  public static final String BOOTSTRAP_SERVERS =
+      KAFKA_PREFIX + CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG;
   public static final String TOPICS = KAFKA_PREFIX + "topics";
   public static final String TOPICS_REGEX = TOPICS + "." + "regex";
   public static final String DEFAULT_AUTO_COMMIT =  "false";

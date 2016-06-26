@@ -65,7 +65,7 @@ class LogFileV2 extends LogFile {
             + ", logWriteOrderID: " + getLastCheckpointWriteOrderID());
         error = false;
       } finally {
-        if(error) {
+        if (error) {
           close();
         }
       }
@@ -108,6 +108,7 @@ class LogFileV2 extends LogFile {
       getFileChannel().force(true);
 
     }
+
     @Override
     int getVersion() {
       return Serialization.VERSION_2;
@@ -115,29 +116,27 @@ class LogFileV2 extends LogFile {
   }
 
   static class RandomReader extends LogFile.RandomReader {
-    RandomReader(File file)
-        throws IOException {
+    RandomReader(File file) throws IOException {
       super(file, null, true);
     }
+
     @Override
     int getVersion() {
       return Serialization.VERSION_2;
     }
+
     @Override
-    protected TransactionEventRecord doGet(RandomAccessFile fileHandle)
-        throws IOException {
+    protected TransactionEventRecord doGet(RandomAccessFile fileHandle) throws IOException {
       return TransactionEventRecord.fromDataInputV2(fileHandle);
     }
   }
 
   static class SequentialReader extends LogFile.SequentialReader {
-
-    SequentialReader(File file)
-        throws EOFException, IOException {
+    SequentialReader(File file) throws EOFException, IOException {
       super(file, null);
       RandomAccessFile fileHandle = getFileHandle();
       int version = fileHandle.readInt();
-      if(version != getVersion()) {
+      if (version != getVersion()) {
         throw new IOException("Version is " + Integer.toHexString(version) +
             " expected " + Integer.toHexString(getVersion())
             + " file: " + file.getCanonicalPath());
@@ -146,10 +145,12 @@ class LogFileV2 extends LogFile {
       setLastCheckpointPosition(fileHandle.readLong());
       setLastCheckpointWriteOrderID(fileHandle.readLong());
     }
+
     @Override
     public int getVersion() {
       return Serialization.VERSION_2;
     }
+
     @Override
     LogRecord doNext(int offset) throws IOException {
       TransactionEventRecord event =

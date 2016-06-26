@@ -50,7 +50,9 @@ public class TaildirSourceConfigurationConstants {
   public static final String BYTE_OFFSET_HEADER_KEY = "byteoffset";
   public static final boolean DEFAULT_BYTE_OFFSET_HEADER = false;
 
-  /** Whether to cache the list of files matching the specified file patterns till parent directory is modified. */
+  /** Whether to cache the list of files matching the specified file patterns till parent directory
+   * is modified.
+   */
   public static final String CACHE_PATTERN_MATCHING = "cachePatternMatching";
   public static final boolean DEFAULT_CACHE_PATTERN_MATCHING = true;
 }

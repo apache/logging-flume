@@ -55,7 +55,7 @@ public class JCEFileKeyProvider extends KeyProvider {
       keyStorePassword = Files.toString(keyStorePasswordFile, Charsets.UTF_8)
           .trim().toCharArray();
       ks.load(new FileInputStream(keyStoreFile), keyStorePassword);
-    } catch(Exception ex) {
+    } catch (Exception ex) {
       throw Throwables.propagate(ex);
     }
   }
@@ -65,14 +65,14 @@ public class JCEFileKeyProvider extends KeyProvider {
     String passwordFile = keyStorePasswordFile.getAbsolutePath();
     try {
       char[] keyPassword = keyStorePassword;
-      if(aliasPasswordFileMap.containsKey(alias)) {
+      if (aliasPasswordFileMap.containsKey(alias)) {
         File keyPasswordFile = aliasPasswordFileMap.get(alias);
         keyPassword = Files.toString(keyPasswordFile,
             Charsets.UTF_8).trim().toCharArray();
         passwordFile = keyPasswordFile.getAbsolutePath();
       }
       Key key = ks.getKey(alias, keyPassword);
-      if(key == null) {
+      if (key == null) {
         throw new IllegalStateException("KeyStore returned null for " + alias);
       }
       return key;
@@ -99,13 +99,13 @@ public class JCEFileKeyProvider extends KeyProvider {
           EncryptionConfiguration.JCE_FILE_KEYS);
       Preconditions.checkState(!Strings.isNullOrEmpty(passwordProtectedKeys),
           "Keys available to KeyStore was not specified or empty");
-      for(String passwordName : passwordProtectedKeys.trim().split("\\s+")) {
+      for (String passwordName : passwordProtectedKeys.trim().split("\\s+")) {
         String propertyName = Joiner.on(".").join(EncryptionConfiguration.JCE_FILE_KEYS,
             passwordName, EncryptionConfiguration.JCE_FILE_KEY_PASSWORD_FILE);
         String passwordFileName = context.getString(propertyName,
             keyStorePasswordFileName);
         File passwordFile = new File(passwordFileName.trim());
-        if(passwordFile.isFile()) {
+        if (passwordFile.isFile()) {
           aliasPasswordFileMap.put(passwordName, passwordFile);
         } else {
           logger.warn("Password file for alias " + passwordName +

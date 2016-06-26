@@ -75,7 +75,7 @@ class WritableUtils {
     long tmp = i;
     while (tmp != 0) {
       tmp = tmp >> 8;
-    len--;
+      len--;
     }
 
     stream.writeByte((byte)len);
@@ -92,8 +92,8 @@ class WritableUtils {
   /**
    * Reads a zero-compressed encoded long from input stream and returns it.
    * @param stream Binary input stream
-   * @throws java.io.IOException
    * @return deserialized long from stream.
+   * @throws java.io.IOException
    */
   public static long readVLong(DataInput stream) throws IOException {
     byte firstByte = stream.readByte();
@@ -102,7 +102,7 @@ class WritableUtils {
       return firstByte;
     }
     long i = 0;
-    for (int idx = 0; idx < len-1; idx++) {
+    for (int idx = 0; idx < len - 1; idx++) {
       byte b = stream.readByte();
       i = i << 8;
       i = i | (b & 0xFF);
@@ -113,8 +113,8 @@ class WritableUtils {
   /**
    * Reads a zero-compressed encoded integer from input stream and returns it.
    * @param stream Binary input stream
-   * @throws java.io.IOException
    * @return deserialized integer from stream.
+   * @throws java.io.IOException
    */
   public static int readVInt(DataInput stream) throws IOException {
     long n = readVLong(stream);

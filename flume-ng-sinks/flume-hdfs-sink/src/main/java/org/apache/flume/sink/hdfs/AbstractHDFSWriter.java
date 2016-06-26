@@ -50,7 +50,7 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
   private Integer numberOfCloseRetries = null;
   private long timeBetweenCloseRetries = Long.MAX_VALUE;
 
-  final static Object [] NO_ARGS = new Object []{};
+  static final Object[] NO_ARGS = new Object[]{};
 
   @Override
   public void configure(Context context) {
@@ -63,11 +63,12 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
 
     if (numberOfCloseRetries > 1) {
       try {
-        timeBetweenCloseRetries = context.getLong("hdfs.callTimeout", 10000l);
+        timeBetweenCloseRetries = context.getLong("hdfs.callTimeout", 10000L);
       } catch (NumberFormatException e) {
-        logger.warn("hdfs.callTimeout can not be parsed to a long: " + context.getLong("hdfs.callTimeout"));
+        logger.warn("hdfs.callTimeout can not be parsed to a long: " +
+                    context.getLong("hdfs.callTimeout"));
       }
-      timeBetweenCloseRetries = Math.max(timeBetweenCloseRetries/numberOfCloseRetries, 1000);
+      timeBetweenCloseRetries = Math.max(timeBetweenCloseRetries / numberOfCloseRetries, 1000);
     }
 
   }
@@ -232,7 +233,7 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
 
   private Method reflectHflushOrSync(FSDataOutputStream os) {
     Method m = null;
-    if(os != null) {
+    if (os != null) {
       Class<?> fsDataOutputStreamClass = os.getClass();
       try {
         m = fsDataOutputStreamClass.getMethod("hflush");
@@ -242,7 +243,7 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
           m = fsDataOutputStreamClass.getMethod("sync");
         } catch (Exception ex1) {
           String msg = "Neither hflush not sync were found. That seems to be " +
-            "a problem!";
+              "a problem!";
           logger.error(msg);
           throw new FlumeException(msg, ex1);
         }
@@ -266,7 +267,7 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
       String msg = "Error while trying to hflushOrSync!";
       logger.error(msg);
       Throwable cause = e.getCause();
-      if(cause != null && cause instanceof IOException) {
+      if (cause != null && cause instanceof IOException) {
         throw (IOException)cause;
       }
       throw new FlumeException(msg, e);

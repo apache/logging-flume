@@ -33,7 +33,7 @@ public class CipherProviderFactory {
 
   public static CipherProvider.Encryptor getEncrypter(String cipherProviderType,
       Key key) {
-    if(cipherProviderType == null) {
+    if (cipherProviderType == null) {
       return null;
     }
     CipherProvider provider = getProvider(cipherProviderType);
@@ -41,7 +41,7 @@ public class CipherProviderFactory {
   }
   public static CipherProvider.Decryptor getDecrypter(String cipherProviderType,
       Key key, byte[] parameters) {
-    if(cipherProviderType == null) {
+    if (cipherProviderType == null) {
       return null;
     }
     CipherProvider provider = getProvider(cipherProviderType);

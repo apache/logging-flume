@@ -94,9 +94,7 @@ public class HTTPMetricsServer implements MonitorService {
 
   private class HTTPMetricsHandler extends AbstractHandler {
 
-    Type mapType =
-            new TypeToken<Map<String, Map<String, String>>>() {
-            }.getType();
+    Type mapType = new TypeToken<Map<String, Map<String, String>>>() {}.getType();
     Gson gson = new Gson();
 
     @Override
@@ -108,8 +106,8 @@ public class HTTPMetricsServer implements MonitorService {
       //If we want to use any other url for something else, we should make sure
       //that for metrics only /metrics is used to prevent backward
       //compatibility issues.
-      if(request.getMethod().equalsIgnoreCase("TRACE") || request.getMethod()
-        .equalsIgnoreCase("OPTIONS")) {
+      if (request.getMethod().equalsIgnoreCase("TRACE") ||
+          request.getMethod().equalsIgnoreCase("OPTIONS")) {
         response.sendError(HttpServletResponse.SC_FORBIDDEN);
         response.flushBuffer();
         ((Request) request).setHandled(true);

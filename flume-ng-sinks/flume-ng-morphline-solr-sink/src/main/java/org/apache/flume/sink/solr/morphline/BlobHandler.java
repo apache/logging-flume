@@ -87,7 +87,8 @@ public class BlobHandler implements HTTPSourceHandler {
         blob.write(buf, 0, n);
         blobLength += n;
         if (blobLength >= maxBlobLength) {
-          LOGGER.warn("Request length exceeds maxBlobLength ({}), truncating BLOB event!", maxBlobLength);
+          LOGGER.warn("Request length exceeds maxBlobLength ({}), truncating BLOB event!",
+                      maxBlobLength);
           break;
         }
       }

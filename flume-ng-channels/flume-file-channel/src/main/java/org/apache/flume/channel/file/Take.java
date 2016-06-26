@@ -34,14 +34,17 @@ import com.google.common.base.Preconditions;
 class Take extends TransactionEventRecord {
   private int offset;
   private int fileID;
+
   Take(Long transactionID, Long logWriteOrderID) {
     super(transactionID, logWriteOrderID);
   }
+
   Take(Long transactionID, Long logWriteOrderID, int offset, int fileID) {
     this(transactionID, logWriteOrderID);
     this.offset = offset;
     this.fileID = fileID;
   }
+
   int getOffset() {
     return offset;
   }
@@ -70,17 +73,20 @@ class Take extends TransactionEventRecord {
     takeBuilder.setOffset(offset);
     takeBuilder.build().writeDelimitedTo(out);
   }
+
   @Override
   void readProtos(InputStream in) throws IOException {
-    ProtosFactory.Take take = Preconditions.checkNotNull(ProtosFactory.
-        Take.parseDelimitedFrom(in), "Take cannot be null");
+    ProtosFactory.Take take = Preconditions.checkNotNull(
+        ProtosFactory.Take.parseDelimitedFrom(in), "Take cannot be null");
     fileID = take.getFileID();
     offset = take.getOffset();
   }
+
   @Override
   short getRecordType() {
     return Type.TAKE.get();
   }
+
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();

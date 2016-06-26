@@ -18,15 +18,10 @@
  */
 package org.apache.flume.sink.hbase;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.flume.Channel;
@@ -52,14 +47,16 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.security.PrivilegedExceptionAction;
-
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
 
 /**
- *
  * A simple sink which reads events from a channel and writes them to HBase.
  * The Hbase configuration is picked up from the first <tt>hbase-site.xml</tt>
  * encountered in the classpath. This sink supports batch reading of
@@ -73,7 +70,7 @@ import java.security.PrivilegedExceptionAction;
  * batch size, whichever comes first.<p>
  * Other optional parameters are:<p>
  * <tt>serializer:</tt> A class implementing {@link HbaseEventSerializer}.
- *  An instance of
+ * An instance of
  * this class will be used to write out events to hbase.<p>
  * <tt>serializer.*:</tt> Passed in the configure() method to serializer
  * as an object of {@link org.apache.flume.Context}.<p>
@@ -81,7 +78,7 @@ import java.security.PrivilegedExceptionAction;
  * maximum number of events the sink will commit per transaction. The default
  * batch size is 100 events.
  * <p>
- *
+ * <p>
  * <strong>Note: </strong> While this sink flushes all events in a transaction
  * to HBase in one shot, Hbase does not guarantee atomic commits on multiple
  * rows. So if a subset of events in a batch are written to disk by Hbase and
@@ -113,11 +110,11 @@ public class HBaseSink extends AbstractSink implements Configurable {
   // Internal hooks used for unit testing.
   private DebugIncrementsCallback debugIncrCallback = null;
 
-  public HBaseSink(){
+  public HBaseSink() {
     this(HBaseConfiguration.create());
   }
 
-  public HBaseSink(Configuration conf){
+  public HBaseSink(Configuration conf) {
     this.config = conf;
   }
 
@@ -129,15 +126,16 @@ public class HBaseSink extends AbstractSink implements Configurable {
   }
 
   @Override
-  public void start(){
+  public void start() {
     Preconditions.checkArgument(table == null, "Please call stop " +
         "before calling start on an old instance.");
     try {
-      privilegedExecutor = FlumeAuthenticationUtil.getAuthenticator(kerberosPrincipal, kerberosKeytab);
+      privilegedExecutor =
+          FlumeAuthenticationUtil.getAuthenticator(kerberosPrincipal, kerberosKeytab);
     } catch (Exception ex) {
       sinkCounter.incrementConnectionFailedCount();
       throw new FlumeException("Failed to login to HBase using "
-        + "provided credentials.", ex);
+          + "provided credentials.", ex);
     }
     try {
       table = privilegedExecutor.execute(new PrivilegedExceptionAction<HTable>() {
@@ -165,16 +163,16 @@ public class HBaseSink extends AbstractSink implements Configurable {
         }
       })) {
         throw new IOException("Table " + tableName
-                + " has no such column family " + Bytes.toString(columnFamily));
+            + " has no such column family " + Bytes.toString(columnFamily));
       }
     } catch (Exception e) {
       //Get getTableDescriptor also throws IOException, so catch the IOException
       //thrown above or by the getTableDescriptor() call.
       sinkCounter.incrementConnectionFailedCount();
       throw new FlumeException("Error getting column family from HBase."
-              + "Please verify that the table " + tableName + " and Column Family, "
-              + Bytes.toString(columnFamily) + " exists in HBase, and the"
-              + " current user has permissions to access that table.", e);
+          + "Please verify that the table " + tableName + " and Column Family, "
+          + Bytes.toString(columnFamily) + " exists in HBase, and the"
+          + " current user has permissions to access that table.", e);
     }
 
     super.start();
@@ -183,7 +181,7 @@ public class HBaseSink extends AbstractSink implements Configurable {
   }
 
   @Override
-  public void stop(){
+  public void stop() {
     try {
       if (table != null) {
         table.close();
@@ -198,7 +196,7 @@ public class HBaseSink extends AbstractSink implements Configurable {
 
   @SuppressWarnings("unchecked")
   @Override
-  public void configure(Context context){
+  public void configure(Context context) {
     tableName = context.getString(HBaseSinkConfigurationConstants.CONFIG_TABLE);
     String cf = context.getString(
         HBaseSinkConfigurationConstants.CONFIG_COLUMN_FAMILY);
@@ -213,48 +211,48 @@ public class HBaseSink extends AbstractSink implements Configurable {
     Preconditions.checkNotNull(cf,
         "Column family cannot be empty, please specify in configuration file");
     //Check foe event serializer, if null set event serializer type
-    if(eventSerializerType == null || eventSerializerType.isEmpty()) {
+    if (eventSerializerType == null || eventSerializerType.isEmpty()) {
       eventSerializerType =
           "org.apache.flume.sink.hbase.SimpleHbaseEventSerializer";
       logger.info("No serializer defined, Will use default");
     }
     serializerContext.putAll(context.getSubProperties(
-            HBaseSinkConfigurationConstants.CONFIG_SERIALIZER_PREFIX));
+        HBaseSinkConfigurationConstants.CONFIG_SERIALIZER_PREFIX));
     columnFamily = cf.getBytes(Charsets.UTF_8);
     try {
       Class<? extends HbaseEventSerializer> clazz =
           (Class<? extends HbaseEventSerializer>)
-          Class.forName(eventSerializerType);
+              Class.forName(eventSerializerType);
       serializer = clazz.newInstance();
       serializer.configure(serializerContext);
     } catch (Exception e) {
-      logger.error("Could not instantiate event serializer." , e);
+      logger.error("Could not instantiate event serializer.", e);
       Throwables.propagate(e);
     }
     kerberosKeytab = context.getString(HBaseSinkConfigurationConstants.CONFIG_KEYTAB);
     kerberosPrincipal = context.getString(HBaseSinkConfigurationConstants.CONFIG_PRINCIPAL);
 
     enableWal = context.getBoolean(HBaseSinkConfigurationConstants
-      .CONFIG_ENABLE_WAL, HBaseSinkConfigurationConstants.DEFAULT_ENABLE_WAL);
+        .CONFIG_ENABLE_WAL, HBaseSinkConfigurationConstants.DEFAULT_ENABLE_WAL);
     logger.info("The write to WAL option is set to: " + String.valueOf(enableWal));
-    if(!enableWal) {
+    if (!enableWal) {
       logger.warn("HBase Sink's enableWal configuration is set to false. All " +
-        "writes to HBase will have WAL disabled, and any data in the " +
-        "memstore of this region in the Region Server could be lost!");
+          "writes to HBase will have WAL disabled, and any data in the " +
+          "memstore of this region in the Region Server could be lost!");
     }
 
     batchIncrements = context.getBoolean(
-      HBaseSinkConfigurationConstants.CONFIG_COALESCE_INCREMENTS,
-      HBaseSinkConfigurationConstants.DEFAULT_COALESCE_INCREMENTS);
+        HBaseSinkConfigurationConstants.CONFIG_COALESCE_INCREMENTS,
+        HBaseSinkConfigurationConstants.DEFAULT_COALESCE_INCREMENTS);
 
     if (batchIncrements) {
       logger.info("Increment coalescing is enabled. Increments will be " +
-        "buffered.");
+          "buffered.");
       refGetFamilyMap = reflectLookupGetFamilyMap();
     }
 
     String zkQuorum = context.getString(HBaseSinkConfigurationConstants
-      .ZK_QUORUM);
+        .ZK_QUORUM);
     Integer port = null;
     /**
      * HBase allows multiple nodes in the quorum, but all need to use the
@@ -267,10 +265,10 @@ public class HBaseSink extends AbstractSink implements Configurable {
       logger.info("Using ZK Quorum: " + zkQuorum);
       String[] zkHosts = zkQuorum.split(",");
       int length = zkHosts.length;
-      for(int i = 0; i < length; i++) {
+      for (int i = 0; i < length; i++) {
         String[] zkHostAndPort = zkHosts[i].split(":");
         zkBuilder.append(zkHostAndPort[0].trim());
-        if(i != length-1) {
+        if (i != length - 1) {
           zkBuilder.append(",");
         } else {
           zkQuorum = zkBuilder.toString();
@@ -282,18 +280,18 @@ public class HBaseSink extends AbstractSink implements Configurable {
           port = Integer.parseInt(zkHostAndPort[1].trim());
         } else if (!port.equals(Integer.parseInt(zkHostAndPort[1].trim()))) {
           throw new FlumeException("All Zookeeper nodes in the quorum must " +
-            "use the same client port.");
+              "use the same client port.");
         }
       }
-      if(port == null) {
+      if (port == null) {
         port = HConstants.DEFAULT_ZOOKEPER_CLIENT_PORT;
       }
       this.config.set(HConstants.ZOOKEEPER_QUORUM, zkQuorum);
       this.config.setInt(HConstants.ZOOKEEPER_CLIENT_PORT, port);
     }
     String hbaseZnode = context.getString(
-      HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT);
-    if(hbaseZnode != null && !hbaseZnode.isEmpty()) {
+        HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT);
+    if (hbaseZnode != null && !hbaseZnode.isEmpty()) {
       this.config.set(HConstants.ZOOKEEPER_ZNODE_PARENT, hbaseZnode);
     }
     sinkCounter = new SinkCounter(this.getName());
@@ -314,7 +312,7 @@ public class HBaseSink extends AbstractSink implements Configurable {
       txn.begin();
 
       if (serializer instanceof BatchAware) {
-        ((BatchAware)serializer).onBatchStart();
+        ((BatchAware) serializer).onBatchStart();
       }
 
       long i = 0;
@@ -342,15 +340,15 @@ public class HBaseSink extends AbstractSink implements Configurable {
       putEventsAndCommit(actions, incs, txn);
 
     } catch (Throwable e) {
-      try{
+      try {
         txn.rollback();
       } catch (Exception e2) {
         logger.error("Exception in rollback. Rollback might not have been " +
-            "successful." , e2);
+            "successful.", e2);
       }
       logger.error("Failed to commit transaction." +
           "Transaction rolled back.", e);
-      if(e instanceof Error || e instanceof RuntimeException){
+      if (e instanceof Error || e instanceof RuntimeException) {
         logger.error("Failed to commit transaction." +
             "Transaction rolled back.", e);
         Throwables.propagate(e);
@@ -367,7 +365,7 @@ public class HBaseSink extends AbstractSink implements Configurable {
   }
 
   private void putEventsAndCommit(final List<Row> actions,
-      final List<Increment> incs, Transaction txn) throws Exception {
+                                  final List<Increment> incs, Transaction txn) throws Exception {
 
     privilegedExecutor.execute(new PrivilegedExceptionAction<Void>() {
       @Override
@@ -421,7 +419,7 @@ public class HBaseSink extends AbstractSink implements Configurable {
   @VisibleForTesting
   static Method reflectLookupGetFamilyMap() {
     Method m = null;
-    String[] methodNames = { "getFamilyMapOfLongs", "getFamilyMap" };
+    String[] methodNames = {"getFamilyMapOfLongs", "getFamilyMap"};
     for (String methodName : methodNames) {
       try {
         m = Increment.class.getMethod(methodName);
@@ -447,7 +445,7 @@ public class HBaseSink extends AbstractSink implements Configurable {
   @SuppressWarnings("unchecked")
   private Map<byte[], NavigableMap<byte[], Long>> getFamilyMap(Increment inc) {
     Preconditions.checkNotNull(refGetFamilyMap,
-                               "Increment.getFamilymap() not found");
+        "Increment.getFamilymap() not found");
     Preconditions.checkNotNull(inc, "Increment required");
     Map<byte[], NavigableMap<byte[], Long>> familyMap = null;
     try {
@@ -466,6 +464,7 @@ public class HBaseSink extends AbstractSink implements Configurable {
   /**
    * Perform "compression" on the given set of increments so that Flume sends
    * the minimum possible number of RPC operations to HBase per batch.
+   *
    * @param incs Input: Increment objects to coalesce.
    * @return List of new Increment objects after coalescing the unique counts.
    */
@@ -478,7 +477,7 @@ public class HBaseSink extends AbstractSink implements Configurable {
     for (Increment inc : incs) {
       byte[] row = inc.getRow();
       Map<byte[], NavigableMap<byte[], Long>> families = getFamilyMap(inc);
-      for (Map.Entry<byte[], NavigableMap<byte[],Long>> familyEntry : families.entrySet()) {
+      for (Map.Entry<byte[], NavigableMap<byte[], Long>> familyEntry : families.entrySet()) {
         byte[] family = familyEntry.getKey();
         NavigableMap<byte[], Long> qualifiers = familyEntry.getValue();
         for (Map.Entry<byte[], Long> qualifierEntry : qualifiers.entrySet()) {
@@ -491,9 +490,10 @@ public class HBaseSink extends AbstractSink implements Configurable {
 
     // Reconstruct list of Increments per unique row/family/qualifier.
     List<Increment> coalesced = Lists.newLinkedList();
-    for (Map.Entry<byte[], Map<byte[],NavigableMap<byte[], Long>>> rowEntry : counters.entrySet()) {
+    for (Map.Entry<byte[], Map<byte[], NavigableMap<byte[], Long>>> rowEntry :
+         counters.entrySet()) {
       byte[] row = rowEntry.getKey();
-      Map <byte[], NavigableMap<byte[], Long>> families = rowEntry.getValue();
+      Map<byte[], NavigableMap<byte[], Long>> families = rowEntry.getValue();
       Increment inc = new Increment(row);
       for (Map.Entry<byte[], NavigableMap<byte[], Long>> familyEntry : families.entrySet()) {
         byte[] family = familyEntry.getKey();
@@ -513,11 +513,12 @@ public class HBaseSink extends AbstractSink implements Configurable {
   /**
    * Helper function for {@link #coalesceIncrements} to increment a counter
    * value in the passed data structure.
-   * @param counters Nested data structure containing the counters.
-   * @param row Row key to increment.
-   * @param family Column family to increment.
+   *
+   * @param counters  Nested data structure containing the counters.
+   * @param row       Row key to increment.
+   * @param family    Column family to increment.
    * @param qualifier Column qualifier to increment.
-   * @param count Amount to increment by.
+   * @param count     Amount to increment by.
    */
   private void incrementCounter(
       Map<byte[], Map<byte[], NavigableMap<byte[], Long>>> counters,

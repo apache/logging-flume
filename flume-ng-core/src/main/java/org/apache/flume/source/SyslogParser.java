@@ -115,7 +115,7 @@ public class SyslogParser {
     // remember version string
     String version = null;
     if (msgLen > curPos + 2 && "1 ".equals(msg.substring(curPos, curPos + 2))) {
-      version = msg.substring(curPos, curPos+1);
+      version = msg.substring(curPos, curPos + 1);
       headers.put(SyslogUtils.SYSLOG_VERSION, version);
       curPos += 2;
     }
@@ -313,18 +313,19 @@ public class SyslogParser {
     try {
       date = rfc3164Format.parseDateTime(ts);
     } catch (IllegalArgumentException e) {
-      logger.debug("rfc3164 date parse failed on ("+ts+"): invalid format", e);
+      logger.debug("rfc3164 date parse failed on (" + ts + "): invalid format", e);
       return 0;
     }
 
     // rfc3164 dates are really dumb.
     /*
-     * Some code to try and add some smarts to the year insertion as without a year in the message we
-     * need to make some educated guessing.
+     * Some code to try and add some smarts to the year insertion as without a year in the message
+     * we need to make some educated guessing.
      * First set the "fixed" to be the timestamp with the current year.
      * If the "fixed" time is more than one month in the future then roll it back a year.
      * If the "fixed" time is more than eleven months in the past then roll it forward a year.
-     * This gives us a 12 month rolling window (11 months in the past, 1 month in the future) of timestamps.
+     * This gives us a 12 month rolling window (11 months in the past, 1 month in the future) of
+     * timestamps.
      */
 
     if (date != null) {
@@ -332,7 +333,7 @@ public class SyslogParser {
 
       // flume clock is ahead or there is some latency, and the year rolled
       if (fixed.isAfter(now) && fixed.minusMonths(1).isAfter(now)) {
-         fixed = date.minusYears(1);
+        fixed = date.minusYears(1);
       // flume clock is behind and the year rolled
       } else if (fixed.isBefore(now) && fixed.plusMonths(1).isBefore(now)) {
         fixed = date.plusYears(1);

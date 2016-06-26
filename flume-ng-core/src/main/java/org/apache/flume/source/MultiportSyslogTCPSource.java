@@ -113,7 +113,7 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
     portCharsets.clear();
     {
       ImmutableMap<String, String> portCharsetCfg = context.getSubProperties(
-        SyslogSourceConfigurationConstants.CONFIG_PORT_CHARSET_PREFIX);
+          SyslogSourceConfigurationConstants.CONFIG_PORT_CHARSET_PREFIX);
       for (Map.Entry<String, String> entry : portCharsetCfg.entrySet()) {
         String portStr = entry.getKey();
         String charsetStr = entry.getValue();
@@ -386,7 +386,7 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
    */
   static class LineSplitter {
 
-    private final static byte NEWLINE = '\n';
+    private static final byte NEWLINE = '\n';
     private final int maxLineLength;
 
     public LineSplitter(int maxLineLength) {

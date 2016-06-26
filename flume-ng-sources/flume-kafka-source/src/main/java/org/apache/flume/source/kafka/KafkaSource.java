@@ -112,18 +112,24 @@ public class KafkaSource extends AbstractPollableSource
    */
   public abstract class Subscriber<T> {
     public abstract void subscribe(KafkaConsumer<?, ?> consumer, SourceRebalanceListener listener);
-    public T get() {return null;}
+
+    public T get() {
+      return null;
+    }
   }
 
   private class TopicListSubscriber extends Subscriber<List<String>> {
     private List<String> topicList;
+
     public TopicListSubscriber(String commaSeparatedTopics) {
       this.topicList = Arrays.asList(commaSeparatedTopics.split("^\\s+|\\s*,\\s*|\\s+$"));
     }
+
     @Override
     public void subscribe(KafkaConsumer<?, ?> consumer, SourceRebalanceListener listener) {
       consumer.subscribe(topicList, listener);
     }
+
     @Override
     public List<String> get() {
       return topicList;
@@ -132,13 +138,16 @@ public class KafkaSource extends AbstractPollableSource
 
   private class PatternSubscriber extends Subscriber<Pattern> {
     private Pattern pattern;
+
     public PatternSubscriber(String regex) {
       this.pattern = Pattern.compile(regex);
     }
+
     @Override
     public void subscribe(KafkaConsumer<?, ?> consumer, SourceRebalanceListener listener) {
       consumer.subscribe(pattern, listener);
     }
+
     @Override
     public Pattern get() {
       return pattern;
@@ -232,10 +241,11 @@ public class KafkaSource extends AbstractPollableSource
         }
 
         if (log.isDebugEnabled()) {
-          log.debug("Topic: {} Partition: {} Message: {}", new String[]{
-                  message.topic(),
-                  String.valueOf(message.partition()),
-                  new String(eventBody)});
+          log.debug("Topic: {} Partition: {} Message: {}", new String[] {
+              message.topic(),
+              String.valueOf(message.partition()),
+              new String(eventBody)
+          });
         }
 
         event = EventBuilder.withBody(eventBody, headers);
@@ -305,21 +315,21 @@ public class KafkaSource extends AbstractPollableSource
     if (topicProperty != null && !topicProperty.isEmpty()) {
       // create subscriber that uses pattern-based subscription
       subscriber = new PatternSubscriber(topicProperty);
-    } else
-    if((topicProperty = context.getString(KafkaSourceConstants.TOPICS)) != null && !topicProperty.isEmpty()) {
+    } else if ((topicProperty = context.getString(KafkaSourceConstants.TOPICS)) != null &&
+               !topicProperty.isEmpty()) {
       // create subscriber that uses topic list subscription
       subscriber = new TopicListSubscriber(topicProperty);
-    } else
-    if (subscriber == null) {
+    } else if (subscriber == null) {
       throw new ConfigurationException("At least one Kafka topic must be specified.");
     }
 
     batchUpperLimit = context.getInteger(KafkaSourceConstants.BATCH_SIZE,
-            KafkaSourceConstants.DEFAULT_BATCH_SIZE);
+                                         KafkaSourceConstants.DEFAULT_BATCH_SIZE);
     maxBatchDurationMillis = context.getInteger(KafkaSourceConstants.BATCH_DURATION_MS,
-            KafkaSourceConstants.DEFAULT_BATCH_DURATION);
+                                                KafkaSourceConstants.DEFAULT_BATCH_DURATION);
 
-    useAvroEventFormat = context.getBoolean(KafkaSourceConstants.AVRO_EVENT, KafkaSourceConstants.DEFAULT_AVRO_EVENT);
+    useAvroEventFormat = context.getBoolean(KafkaSourceConstants.AVRO_EVENT,
+                                            KafkaSourceConstants.DEFAULT_AVRO_EVENT);
 
     if (log.isDebugEnabled()) {
       log.debug(KafkaSourceConstants.AVRO_EVENT + " set to: {}", useAvroEventFormat);
@@ -336,7 +346,6 @@ public class KafkaSource extends AbstractPollableSource
       counter = new KafkaSourceCounter(getName());
     }
   }
-
 
   // We can remove this once the properties are officially deprecated
   private void translateOldProperties(Context ctx) {
@@ -358,16 +367,18 @@ public class KafkaSource extends AbstractPollableSource
     }
   }
 
-
   private void setConsumerProps(Context ctx, String bootStrapServers) {
-    String groupId = ctx.getString(KafkaSourceConstants.KAFKA_CONSUMER_PREFIX + ConsumerConfig.GROUP_ID_CONFIG);
+    String groupId = ctx.getString(
+        KafkaSourceConstants.KAFKA_CONSUMER_PREFIX + ConsumerConfig.GROUP_ID_CONFIG);
     if ((groupId == null || groupId.isEmpty()) &&
-            kafkaProps.getProperty(ConsumerConfig.GROUP_ID_CONFIG) == null) {
-        groupId = KafkaSourceConstants.DEFAULT_GROUP_ID;
-        log.info("Group ID was not specified. Using " + groupId + " as the group id.");
+        kafkaProps.getProperty(ConsumerConfig.GROUP_ID_CONFIG) == null) {
+      groupId = KafkaSourceConstants.DEFAULT_GROUP_ID;
+      log.info("Group ID was not specified. Using " + groupId + " as the group id.");
     }
-    kafkaProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, KafkaSourceConstants.DEFAULT_KEY_DESERIALIZER);
-    kafkaProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaSourceConstants.DEFAULT_VALUE_DESERIALIZER);
+    kafkaProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+                   KafkaSourceConstants.DEFAULT_KEY_DESERIALIZER);
+    kafkaProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+                   KafkaSourceConstants.DEFAULT_VALUE_DESERIALIZER);
     //Defaults overridden based on config
     kafkaProps.putAll(ctx.getSubProperties(KafkaSourceConstants.KAFKA_CONSUMER_PREFIX));
     //These always take precedence over config
@@ -375,7 +386,8 @@ public class KafkaSource extends AbstractPollableSource
     if (groupId != null) {
       kafkaProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
     }
-    kafkaProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, KafkaSourceConstants.DEFAULT_AUTO_COMMIT);
+    kafkaProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG,
+                   KafkaSourceConstants.DEFAULT_AUTO_COMMIT);
 
     log.info(kafkaProps.toString());
   }
@@ -425,7 +437,6 @@ public class KafkaSource extends AbstractPollableSource
     log.info("Kafka Source {} stopped. Metrics: {}", getName(), counter);
   }
 }
-
 
 class SourceRebalanceListener implements ConsumerRebalanceListener {
   private static final Logger log = LoggerFactory.getLogger(SourceRebalanceListener.class);

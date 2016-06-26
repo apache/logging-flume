@@ -84,7 +84,8 @@ public class BlobDeserializer implements EventDeserializer {
       blob.write(buf, 0, n);
       blobLength += n;
       if (blobLength >= maxBlobLength) {
-        LOGGER.warn("File length exceeds maxBlobLength ({}), truncating BLOB event!", maxBlobLength);
+        LOGGER.warn("File length exceeds maxBlobLength ({}), truncating BLOB event!",
+                    maxBlobLength);
         break;
       }
     }

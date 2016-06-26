@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Puppy Crawl//DTD Suppressions 1.0//EN"
+    "http://www.puppycrawl.com/dtds/suppressions_1_0.dtd">
+<suppressions>
+
+    <!-- Suppress all style checks for generated code -->
+    <suppress checks=".*"
+              files="generated-sources|com/cloudera/flume/handlers/thrift|org/apache/flume/thrift/|org/apache/flume/source/scribe|ProtosFactory.java"/>
+
+    <!-- The "legacy" sources have a weird camelCaps package name -->
+    <suppress checks="PackageName"
+              files="org/apache/flume/source/avroLegacy|org/apache/flume/source/thriftLegacy"/>
+
+    <!-- TODO: Rearrange methods in below classes to keep overloaded methods adjacent -->
+    <suppress checks="OverloadMethodsDeclarationOrder"
+              files="channel/file|RpcClientFactory\.java|BucketPath\.java|SinkGroup\.java|DefaultSinkProcessor\.java|RegexExtractorInterceptorMillisSerializer\.java|SimpleAsyncHbaseEventSerializer\.java|hdfs/BucketWriter\.java"/>
+
+    <!-- TODO: Fix inner class names to follow standard convention -->
+    <suppress checks="TypeName"
+              files="SyslogUDPSource\.java|SyslogTcpSource\.java|TaildirSource\.java"/>
+
+    <!-- TODO: Add default cases to switch statements -->
+    <suppress checks="MissingSwitchDefault"
+              files="SyslogUtils\.java|ReliableTaildirEventReader\.java"/>
+
+    <!-- TODO: Avoid empty catch blocks -->
+    <suppress checks="EmptyCatchBlock"
+              files="channel/file/LogFile\.java"/>
+
+    <!-- TODO: Avoid empty if blocks -->
+    <suppress checks="EmptyBlockCheck"
+              files="ElasticSearchClientFactory\.java"/>
+
+    <!-- TODO: Fix line length issues -->
+    <suppress checks="LineLengthCheck"
+              files="channel/MemoryChannel\.java|ReliableSpoolingFileEventReader\.java"/>
+
+    <!-- TODO: Move helper classes to their own files -->
+    <suppress checks="OneTopLevelClass"
+              files="KafkaSource\.java|KafkaChannel\.java|KafkaSink\.java"/>
+
+</suppressions>

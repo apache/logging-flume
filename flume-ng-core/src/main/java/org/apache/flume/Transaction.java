@@ -52,7 +52,8 @@ import org.apache.flume.channel.BasicTransactionSemantics;
  */
 public interface Transaction {
 
-public enum TransactionState {Started, Committed, RolledBack, Closed };
+  enum TransactionState { Started, Committed, RolledBack, Closed }
+
   /**
    * <p>Starts a transaction boundary for the current channel operation. If a
    * transaction is already in progress, this method will join that transaction
@@ -62,19 +63,19 @@ public enum TransactionState {Started, Committed, RolledBack, Closed };
    * to ensure this can lead to dangling transactions and unpredictable results.
    * </p>
    */
-  public void begin();
+  void begin();
 
   /**
    * Indicates that the transaction can be successfully committed. It is
    * required that a transaction be in progress when this method is invoked.
    */
-  public void commit();
+  void commit();
 
   /**
    * Indicates that the transaction can must be aborted. It is
    * required that a transaction be in progress when this method is invoked.
    */
-  public void rollback();
+  void rollback();
 
   /**
    * <p>Ends a transaction boundary for the current channel operation. If a
@@ -86,5 +87,5 @@ public enum TransactionState {Started, Committed, RolledBack, Closed };
    * to ensure this can lead to dangling transactions and unpredictable results.
    * </p>
    */
-  public void close();
+  void close();
 }

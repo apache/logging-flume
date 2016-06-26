@@ -136,8 +136,8 @@ public class EmbeddedAgentConfiguration {
    * Load balancing sink processor. See Flume User Guide for configuration
    * information.
    */
-  public static final String SINK_PROCESSOR_TYPE_LOAD_BALANCE = SinkProcessorType.LOAD_BALANCE.name();
-
+  public static final String SINK_PROCESSOR_TYPE_LOAD_BALANCE =
+      SinkProcessorType.LOAD_BALANCE.name();
 
   private static final String[] ALLOWED_SOURCES = {
     SOURCE_TYPE_EMBEDDED_ALIAS,
@@ -165,22 +165,21 @@ public class EmbeddedAgentConfiguration {
   private static void validate(String name,
       Map<String, String> properties) throws FlumeException {
 
-    if(properties.containsKey(SOURCE_TYPE)) {
+    if (properties.containsKey(SOURCE_TYPE)) {
       checkAllowed(ALLOWED_SOURCES, properties.get(SOURCE_TYPE));
     }
     checkRequired(properties, CHANNEL_TYPE);
     checkAllowed(ALLOWED_CHANNELS, properties.get(CHANNEL_TYPE));
     checkRequired(properties, SINKS);
     String sinkNames = properties.get(SINKS);
-    for(String sink : sinkNames.split("\\s+")) {
-      if(DISALLOWED_SINK_NAMES.contains(sink.toLowerCase(Locale.ENGLISH))) {
+    for (String sink : sinkNames.split("\\s+")) {
+      if (DISALLOWED_SINK_NAMES.contains(sink.toLowerCase(Locale.ENGLISH))) {
         throw new FlumeException("Sink name " + sink + " is one of the" +
             " disallowed sink names: " + DISALLOWED_SINK_NAMES);
       }
       String key = join(sink, TYPE);
       checkRequired(properties, key);
       checkAllowed(ALLOWED_SINKS, properties.get(key));
-
     }
     checkRequired(properties, SINK_PROCESSOR_TYPE);
     checkAllowed(ALLOWED_SINK_PROCESSORS, properties.get(SINK_PROCESSOR_TYPE));
@@ -201,8 +200,8 @@ public class EmbeddedAgentConfiguration {
     // we are going to modify the properties as we parse the config
     properties = new HashMap<String, String>(properties);
 
-    if(!properties.containsKey(SOURCE_TYPE) || SOURCE_TYPE_EMBEDDED_ALIAS.
-        equalsIgnoreCase(properties.get(SOURCE_TYPE))) {
+    if (!properties.containsKey(SOURCE_TYPE) ||
+        SOURCE_TYPE_EMBEDDED_ALIAS.equalsIgnoreCase(properties.get(SOURCE_TYPE))) {
       properties.put(SOURCE_TYPE, SOURCE_TYPE_EMBEDDED);
     }
     String sinkNames = properties.remove(SINKS);
@@ -220,9 +219,6 @@ public class EmbeddedAgentConfiguration {
     // user supplied config -> agent configuration
     Map<String, String> result = Maps.newHashMap();
 
-    // properties will be modified during iteration so we need a
-    // copy of the keys
-    Set<String> userProvidedKeys;
     /*
      * First we are going to setup all the root level pointers. I.E
      * point the agent at the components, sink group at sinks, and
@@ -247,15 +243,19 @@ public class EmbeddedAgentConfiguration {
     result.put(join(name,
         BasicConfigurationConstants.CONFIG_SOURCES, sourceName,
         BasicConfigurationConstants.CONFIG_CHANNELS), channelName);
+
+    // Properties will be modified during iteration so we need a
+    // copy of the keys.
+    Set<String> userProvidedKeys = new HashSet<String>(properties.keySet());
+
     /*
      * Second process the sink configuration and point the sinks
      * at the channel.
      */
-    userProvidedKeys = new HashSet<String>(properties.keySet());
-    for(String sink :  sinkNames.split("\\s+")) {
-      for(String key : userProvidedKeys) {
+    for (String sink :  sinkNames.split("\\s+")) {
+      for (String key : userProvidedKeys) {
         String value = properties.get(key);
-        if(key.startsWith(sink + SEPERATOR)) {
+        if (key.startsWith(sink + SEPERATOR)) {
           properties.remove(key);
           result.put(join(name,
               BasicConfigurationConstants.CONFIG_SINKS, key), value);
@@ -271,19 +271,19 @@ public class EmbeddedAgentConfiguration {
      * correctly and then passing them on to the agent.
      */
     userProvidedKeys = new HashSet<String>(properties.keySet());
-    for(String key : userProvidedKeys) {
+    for (String key : userProvidedKeys) {
       String value = properties.get(key);
-      if(key.startsWith(SOURCE_PREFIX)) {
+      if (key.startsWith(SOURCE_PREFIX)) {
         // users use `source' but agent needs the actual source name
         key = key.replaceFirst(SOURCE, sourceName);
         result.put(join(name,
             BasicConfigurationConstants.CONFIG_SOURCES, key), value);
-      } else if(key.startsWith(CHANNEL_PREFIX)) {
+      } else if (key.startsWith(CHANNEL_PREFIX)) {
         // users use `channel' but agent needs the actual channel name
         key = key.replaceFirst(CHANNEL, channelName);
         result.put(join(name,
             BasicConfigurationConstants.CONFIG_CHANNELS, key), value);
-      } else if(key.startsWith(SINK_PROCESSOR_PREFIX)) {
+      } else if (key.startsWith(SINK_PROCESSOR_PREFIX)) {
         // agent.sinkgroups.sinkgroup.processor.*
         result.put(join(name, BasicConfigurationConstants.CONFIG_SINKGROUPS,
                 sinkGroupName, key), value);
@@ -297,20 +297,19 @@ public class EmbeddedAgentConfiguration {
   private static void checkAllowed(String[] allowedTypes, String type) {
     boolean isAllowed = false;
     type = type.trim();
-    for(String allowedType : allowedTypes) {
-      if(allowedType.equalsIgnoreCase(type)) {
+    for (String allowedType : allowedTypes) {
+      if (allowedType.equalsIgnoreCase(type)) {
         isAllowed = true;
         break;
       }
     }
-    if(!isAllowed) {
+    if (!isAllowed) {
       throw new FlumeException("Component type of " + type + " is not in " +
           "allowed types of " + Arrays.toString(allowedTypes));
     }
   }
-  private static void checkRequired(Map<String, String> properties,
-      String name) {
-    if(!properties.containsKey(name)) {
+  private static void checkRequired(Map<String, String> properties, String name) {
+    if (!properties.containsKey(name)) {
       throw new FlumeException("Required parameter not found " + name);
     }
   }
@@ -319,7 +318,5 @@ public class EmbeddedAgentConfiguration {
     return JOINER.join(parts);
   }
 
-  private EmbeddedAgentConfiguration() {
-
-  }
+  private EmbeddedAgentConfiguration() {}
 }

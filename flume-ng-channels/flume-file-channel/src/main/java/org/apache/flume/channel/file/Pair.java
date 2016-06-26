@@ -19,19 +19,21 @@
 package org.apache.flume.channel.file;
 
 class Pair<L,R> {
-
   private final L left;
   private final R right;
+
   Pair(L l, R r) {
     left = l;
     right = r;
   }
+
   L getLeft() {
     return left;
   }
   R getRight() {
     return right;
   }
+
   static <L, R> Pair<L, R> of(L left, R right) {
     return new Pair<L, R>(left, right);
   }

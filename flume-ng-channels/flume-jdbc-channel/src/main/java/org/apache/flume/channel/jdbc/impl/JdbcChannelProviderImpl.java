@@ -54,12 +54,10 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
   private static final Logger LOGGER =
       LoggerFactory.getLogger(JdbcChannelProviderImpl.class);
 
-
   private static final String EMBEDDED_DERBY_DRIVER_CLASSNAME
-        = "org.apache.derby.jdbc.EmbeddedDriver";
+      = "org.apache.derby.jdbc.EmbeddedDriver";
 
-  private static final String DEFAULT_DRIVER_CLASSNAME
-         = EMBEDDED_DERBY_DRIVER_CLASSNAME;
+  private static final String DEFAULT_DRIVER_CLASSNAME = EMBEDDED_DERBY_DRIVER_CLASSNAME;
   private static final String DEFAULT_USERNAME = "sa";
   private static final String DEFAULT_PASSWORD = "";
   private static final String DEFAULT_DBTYPE = "DERBY";
@@ -133,7 +131,7 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
 
     for (String key: sysProps.keySet()) {
       String value = sysProps.get(key);
-      if(key != null && value != null) {
+      if (key != null && value != null) {
         System.setProperty(key, value);
       }
     }
@@ -254,7 +252,7 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
         int index = connectUrl.indexOf(";");
         String baseUrl = null;
         if (index != -1) {
-          baseUrl = connectUrl.substring(0, index+1);
+          baseUrl = connectUrl.substring(0, index + 1);
         } else {
           baseUrl = connectUrl + ";";
         }
@@ -440,12 +438,12 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
     databaseType = DatabaseType.getByName(dbTypeName);
 
     switch (databaseType) {
-    case DERBY:
-    case MYSQL:
-      break;
-    default:
-      throw new JdbcChannelException("Database " + databaseType
-          + " not supported at this time");
+      case DERBY:
+      case MYSQL:
+        break;
+      default:
+        throw new JdbcChannelException("Database " + databaseType
+            + " not supported at this time");
     }
 
     // Register driver

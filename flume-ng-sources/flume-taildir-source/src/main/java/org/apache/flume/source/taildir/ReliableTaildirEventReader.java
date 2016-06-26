@@ -19,6 +19,20 @@
 
 package org.apache.flume.source.taildir;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Table;
+import com.google.gson.stream.JsonReader;
+import org.apache.flume.Event;
+import org.apache.flume.FlumeException;
+import org.apache.flume.annotations.InterfaceAudience;
+import org.apache.flume.annotations.InterfaceStability;
+import org.apache.flume.client.avro.ReliableEventReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -28,21 +42,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import org.apache.flume.Event;
-import org.apache.flume.FlumeException;
-import org.apache.flume.annotations.InterfaceAudience;
-import org.apache.flume.annotations.InterfaceStability;
-import org.apache.flume.client.avro.ReliableEventReader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Table;
-import com.google.gson.stream.JsonReader;
 
 @InterfaceAudience.Private
 @InterfaceStability.Evolving
@@ -111,15 +110,15 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
         jr.beginObject();
         while (jr.hasNext()) {
           switch (jr.nextName()) {
-          case "inode":
-            inode = jr.nextLong();
-            break;
-          case "pos":
-            pos = jr.nextLong();
-            break;
-          case "file":
-            path = jr.nextString();
-            break;
+            case "inode":
+              inode = jr.nextLong();
+              break;
+            case "pos":
+              pos = jr.nextLong();
+              break;
+            case "file":
+              path = jr.nextString();
+              break;
           }
         }
         jr.endObject();
@@ -238,7 +237,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
         if (tf == null || !tf.getPath().equals(f.getAbsolutePath())) {
           long startPos = skipToEnd ? f.length() : 0;
           tf = openFile(f, headers, inode, startPos);
-        } else{
+        } else {
           boolean updated = tf.getLastUpdated() < f.lastModified();
           if (updated) {
             if (tf.getRaf() == null) {
@@ -320,7 +319,8 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
     }
 
     public ReliableTaildirEventReader build() throws IOException {
-      return new ReliableTaildirEventReader(filePaths, headerTable, positionFilePath, skipToEnd, addByteOffset, cachePatternMatching);
+      return new ReliableTaildirEventReader(filePaths, headerTable, positionFilePath, skipToEnd,
+                                            addByteOffset, cachePatternMatching);
     }
   }
 

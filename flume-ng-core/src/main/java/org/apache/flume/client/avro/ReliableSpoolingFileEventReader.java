@@ -24,15 +24,18 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
-import org.apache.flume.serialization.*;
+import org.apache.flume.serialization.DecodeErrorPolicy;
+import org.apache.flume.serialization.DurablePositionTracker;
+import org.apache.flume.serialization.EventDeserializer;
+import org.apache.flume.serialization.EventDeserializerFactory;
+import org.apache.flume.serialization.PositionTracker;
+import org.apache.flume.serialization.ResettableFileInputStream;
+import org.apache.flume.serialization.ResettableInputStream;
 import org.apache.flume.source.SpoolDirectorySourceConfigurationConstants;
 import org.apache.flume.source.SpoolDirectorySourceConfigurationConstants.ConsumeOrder;
 import org.apache.flume.tools.PlatformDetect;
@@ -44,9 +47,12 @@ import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.*;
-import java.util.regex.Pattern;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 /**
  * <p/>A {@link ReliableEventReader} which reads log data from files stored
@@ -137,9 +143,11 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
 
     if (logger.isDebugEnabled()) {
       logger.debug("Initializing {} with directory={}, metaDir={}, " +
-          "deserializer={}",
-          new Object[] { ReliableSpoolingFileEventReader.class.getSimpleName(),
-          spoolDirectory, trackerDirPath, deserializerType });
+                   "deserializer={}",
+                   new Object[] {
+                     ReliableSpoolingFileEventReader.class.getSimpleName(),
+                     spoolDirectory, trackerDirPath, deserializerType
+                   });
     }
 
     // Verify directory exists and is readable/writable
@@ -202,7 +210,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
 
     this.metaFile = new File(trackerDirectory, metaFileName);
 
-    if(metaFile.exists() && metaFile.length() == 0) {
+    if (metaFile.exists() && metaFile.length() == 0) {
       deleteMetaFile();
     }
   }
@@ -214,7 +222,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     public boolean accept(File candidate) {
       if (candidate.isDirectory()) {
         String directoryName = candidate.getName();
-        if (!recursiveDirectorySearch || directoryName.startsWith(".") ||
+        if (!recursiveDirectorySearch ||
+            directoryName.startsWith(".") ||
             ignorePattern.matcher(directoryName).matches()) {
 
           return false;
@@ -222,7 +231,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
         return true;
       }
       String fileName = candidate.getName();
-      if (fileName.endsWith(completedSuffix) || fileName.startsWith(".") ||
+      if (fileName.endsWith(completedSuffix) ||
+          fileName.startsWith(".") ||
           ignorePattern.matcher(fileName).matches()) {
         return false;
       }
@@ -243,11 +253,10 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       return candidateFiles;
     }
 
-    for(File file : directory.listFiles(filter)){
+    for (File file : directory.listFiles(filter)) {
       if (file.isDirectory()) {
         candidateFiles.addAll(getCandidateFiles(file));
-      }
-      else {
+      } else {
         candidateFiles.add(file);
       }
     }
@@ -555,8 +564,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
           new ResettableFileInputStream(file, tracker,
               ResettableFileInputStream.DEFAULT_BUF_SIZE, inputCharset,
               decodeErrorPolicy);
-      EventDeserializer deserializer = EventDeserializerFactory.getInstance
-          (deserializerType, deserializerContext, in);
+      EventDeserializer deserializer =
+          EventDeserializerFactory.getInstance(deserializerType, deserializerContext, in);
 
       return Optional.of(new FileInfo(file, deserializer));
     } catch (FileNotFoundException e) {
@@ -589,10 +598,21 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       this.deserializer = deserializer;
     }
 
-    public long getLength() { return length; }
-    public long getLastModified() { return lastModified; }
-    public EventDeserializer getDeserializer() { return deserializer; }
-    public File getFile() { return file; }
+    public long getLength() {
+      return length;
+    }
+
+    public long getLastModified() {
+      return lastModified;
+    }
+
+    public EventDeserializer getDeserializer() {
+      return deserializer;
+    }
+
+    public File getFile() {
+      return file;
+    }
   }
 
   @InterfaceAudience.Private

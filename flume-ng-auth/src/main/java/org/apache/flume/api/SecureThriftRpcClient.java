@@ -22,7 +22,10 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.auth.FlumeAuthenticationUtil;
 import org.apache.flume.auth.FlumeAuthenticator;
 import org.apache.flume.auth.PrivilegedExecutor;
-import org.apache.thrift.transport.*;
+import org.apache.thrift.transport.TSaslClientTransport;
+import org.apache.thrift.transport.TSocket;
+import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.Sasl;
@@ -52,9 +55,9 @@ public class SecureThriftRpcClient extends ThriftRpcClient {
     String clientPrincipal = properties.getProperty(CLIENT_PRINCIPAL);
     String keytab = properties.getProperty(CLIENT_KEYTAB);
     this.privilegedExecutor = FlumeAuthenticationUtil.getAuthenticator(clientPrincipal, keytab);
-    if(!privilegedExecutor.isAuthenticated()) {
+    if (!privilegedExecutor.isAuthenticated()) {
       throw new FlumeException("Authentication failed in Kerberos mode for " +
-              "principal " + clientPrincipal + " keytab " + keytab);
+                               "principal " + clientPrincipal + " keytab " + keytab);
     }
   }
 
@@ -78,31 +81,33 @@ public class SecureThriftRpcClient extends ThriftRpcClient {
    */
   public static class UgiSaslClientTransport extends TSaslClientTransport {
     PrivilegedExecutor privilegedExecutor;
+
     public UgiSaslClientTransport(String mechanism, String authorizationId,
                 String protocol, String serverName, Map<String, String> props,
-                CallbackHandler cbh, TTransport transport, PrivilegedExecutor privilegedExecutor) throws IOException {
-      super(mechanism, authorizationId, protocol, serverName, props, cbh,
-              transport);
+                CallbackHandler cbh, TTransport transport, PrivilegedExecutor privilegedExecutor)
+        throws IOException {
+      super(mechanism, authorizationId, protocol, serverName, props, cbh, transport);
       this.privilegedExecutor = privilegedExecutor;
     }
 
-    // open the SASL transport with using the current UserGroupInformation
-    // This is needed to get the current login context stored
+    /**
+     * Open the SASL transport with using the current UserGroupInformation.
+     * This is needed to get the current login context stored
+     */
     @Override
     public void open() throws FlumeException {
       try {
         this.privilegedExecutor.execute(
-          new PrivilegedExceptionAction<Void>() {
-            public Void run() throws FlumeException {
-              // this is a workaround to using UgiSaslClientTransport.super.open()
-              // which results in IllegalAccessError
-              callSuperClassOpen();
-              return null;
-            }
-          });
+            new PrivilegedExceptionAction<Void>() {
+              public Void run() throws FlumeException {
+                // this is a workaround to using UgiSaslClientTransport.super.open()
+                // which results in IllegalAccessError
+                callSuperClassOpen();
+                return null;
+              }
+            });
       } catch (InterruptedException e) {
-        throw new FlumeException(
-                "Interrupted while opening underlying transport", e);
+        throw new FlumeException("Interrupted while opening underlying transport", e);
       } catch (Exception e) {
         throw new FlumeException("Failed to open SASL transport", e);
       }

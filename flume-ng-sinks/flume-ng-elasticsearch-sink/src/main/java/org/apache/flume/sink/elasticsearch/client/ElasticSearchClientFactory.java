@@ -63,8 +63,10 @@ public class ElasticSearchClientFactory {
    *
    * @return Local elastic search instance client
    */
-  public ElasticSearchClient getLocalClient(String clientType, ElasticSearchEventSerializer serializer,
-          ElasticSearchIndexRequestBuilderFactory indexBuilder) throws NoSuchClientTypeException {
+  public ElasticSearchClient getLocalClient(String clientType,
+                                            ElasticSearchEventSerializer serializer,
+                                            ElasticSearchIndexRequestBuilderFactory indexBuilder)
+      throws NoSuchClientTypeException {
     if (clientType.equalsIgnoreCase(TransportClient) && serializer != null) {
       return new ElasticSearchTransportClient(serializer);
     } else if (clientType.equalsIgnoreCase(TransportClient) && indexBuilder != null)  {

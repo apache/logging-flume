@@ -47,6 +47,8 @@ limitations under the License.
     <stagingDirectory>${project.basedir}/target/docs</stagingDirectory>
 
     <avro.version>1.7.4</avro.version>
+    <checkstyle.plugin.version>2.17</checkstyle.plugin.version>
+    <checkstyle.tool.version>6.19</checkstyle.tool.version>
     <elasticsearch.version>0.90.1</elasticsearch.version>
     <hadoop2.version>2.4.0</hadoop2.version>
     <thrift.version>0.7.0</thrift.version>
@@ -58,6 +60,7 @@ limitations under the License.
   </properties>
 
   <modules>
+    <module>flume-checkstyle</module>
     <module>flume-ng-core</module>
     <module>flume-ng-configuration</module>
     <module>flume-ng-embedded-agent</module>
@@ -638,6 +641,49 @@ limitations under the License.
         <artifactId>apache-rat-plugin</artifactId>
       </plugin>
 
+      <!-- Run checkstyle as part of the "verify" phase. See
+           https://maven.apache.org/plugins/maven-checkstyle-plugin/examples/multi-module-config.html
+           for how to configure plugin for a multi-module project. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>${checkstyle.plugin.version}</version>
+        <dependencies>
+          <!-- The flume-checkstyle module adds the checkstyle config files to the classpath. -->
+          <dependency>
+            <groupId>org.apache.flume</groupId>
+            <artifactId>flume-checkstyle</artifactId>
+            <version>${project.version}</version>
+          </dependency>
+          <!-- Newer versions of puppycrawl checkstyle have more features. Pull in a more recent
+               version than is specified in the maven-checkstyle-plugin pom file. -->
+          <dependency>
+            <groupId>com.puppycrawl.tools</groupId>
+            <artifactId>checkstyle</artifactId>
+            <version>${checkstyle.tool.version}</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <id>verify</id>
+            <phase>verify</phase>
+            <configuration>
+              <configLocation>flume/checkstyle.xml</configLocation>
+              <suppressionsLocation>flume/checkstyle-suppressions.xml</suppressionsLocation>
+              <suppressionsFileExpression>checkstyle.suppressions.file</suppressionsFileExpression>
+              <encoding>UTF-8</encoding>
+              <consoleOutput>true</consoleOutput>
+              <failsOnError>true</failsOnError>
+              <includeTestSourceDirectory>false</includeTestSourceDirectory>
+              <linkXRef>false</linkXRef>
+            </configuration>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
 
     <pluginManagement>
@@ -776,6 +822,7 @@ limitations under the License.
   <dependencyManagement>
     <dependencies>
 
+      <!-- Dependencies: build -->
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
@@ -1051,6 +1098,11 @@ limitations under the License.
         <version>1.7.0-SNAPSHOT</version>
       </dependency>
 
+      <dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-checkstyle</artifactId>
+        <version>1.7.0-SNAPSHOT</version>
+      </dependency>
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-tools</artifactId>
@@ -1410,6 +1462,20 @@ limitations under the License.
         <inherited>false</inherited>
         <configuration>
           <sourceDirectory>${project.basedir}/flume-ng-doc/sphinx</sourceDirectory>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>${checkstyle.plugin.version}</version>
+        <configuration>
+          <configLocation>flume/checkstyle.xml</configLocation>
+          <suppressionsLocation>flume/checkstyle-suppressions.xml</suppressionsLocation>
+          <suppressionsFileExpression>checkstyle.suppressions.file</suppressionsFileExpression>
+          <encoding>UTF-8</encoding>
+          <includeTestSourceDirectory>false</includeTestSourceDirectory>
+          <linkXRef>false</linkXRef>
         </configuration>
       </plugin>
 

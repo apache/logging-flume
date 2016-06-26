@@ -21,7 +21,6 @@ package org.apache.flume.channel.file;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessage;
-import org.apache.flume.Transaction;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.channel.file.encryption.CipherProvider;
@@ -58,13 +57,14 @@ public class LogFileV3 extends LogFile {
   static class MetaDataWriter extends LogFile.MetaDataWriter {
     private ProtosFactory.LogFileMetaData logFileMetaData;
     private final File metaDataFile;
+
     protected MetaDataWriter(File logFile, int logFileID) throws IOException {
       super(logFile, logFileID);
       metaDataFile = Serialization.getMetaDataFile(logFile);
       MetaDataReader metaDataReader = new MetaDataReader(logFile, logFileID);
       logFileMetaData = metaDataReader.read();
       int version = logFileMetaData.getVersion();
-      if(version != getVersion()) {
+      if (version != getVersion()) {
         throw new IOException("Version is " + Integer.toHexString(version) +
             " expected " + Integer.toHexString(getVersion())
             + " file: " + logFile);
@@ -90,9 +90,9 @@ public class LogFileV3 extends LogFile {
        * would be possible to recover from a backup.
        */
       metaDataBuilder.setBackupCheckpointPosition(logFileMetaData
-        .getCheckpointPosition());
+          .getCheckpointPosition());
       metaDataBuilder.setBackupCheckpointWriteOrderID(logFileMetaData
-        .getCheckpointWriteOrderID());
+          .getCheckpointWriteOrderID());
       logFileMetaData = metaDataBuilder.build();
       writeDelimitedTo(logFileMetaData, metaDataFile);
     }
@@ -102,17 +102,19 @@ public class LogFileV3 extends LogFile {
     private final File logFile;
     private final File metaDataFile;
     private final int logFileID;
+
     protected MetaDataReader(File logFile, int logFileID) throws IOException {
       this.logFile = logFile;
       metaDataFile = Serialization.getMetaDataFile(logFile);
       this.logFileID = logFileID;
     }
+
     ProtosFactory.LogFileMetaData read() throws IOException {
       FileInputStream inputStream = new FileInputStream(metaDataFile);
       try {
         ProtosFactory.LogFileMetaData metaData = Preconditions.checkNotNull(
-          ProtosFactory.LogFileMetaData.
-            parseDelimitedFrom(inputStream), "Metadata cannot be null");
+            ProtosFactory.LogFileMetaData.parseDelimitedFrom(inputStream),
+            "Metadata cannot be null");
         if (metaData.getLogFileID() != logFileID) {
           throw new IOException("The file id of log file: "
               + logFile + " is different from expected "
@@ -123,7 +125,7 @@ public class LogFileV3 extends LogFile {
       } finally {
         try {
           inputStream.close();
-        } catch(IOException e) {
+        } catch (IOException e) {
           LOGGER.warn("Unable to close " + metaDataFile, e);
         }
       }
@@ -133,13 +135,14 @@ public class LogFileV3 extends LogFile {
   /**
    * Writes a GeneratedMessage to a temp file, synchronizes it to disk
    * and then renames the file over file.
-   * @param msg GeneratedMessage to write to the file
+   *
+   * @param msg  GeneratedMessage to write to the file
    * @param file destination file
    * @throws IOException if a write error occurs or the File.renameTo
-   * method returns false meaning the file could not be overwritten.
+   *                     method returns false meaning the file could not be overwritten.
    */
   public static void writeDelimitedTo(GeneratedMessage msg, File file)
-  throws IOException {
+      throws IOException {
     File tmp = Serialization.getMetaDataTempFile(file);
     FileOutputStream outputStream = new FileOutputStream(tmp);
     boolean closed = false;
@@ -148,26 +151,26 @@ public class LogFileV3 extends LogFile {
       outputStream.getChannel().force(true);
       outputStream.close();
       closed = true;
-      if(!tmp.renameTo(file)) {
+      if (!tmp.renameTo(file)) {
         //Some platforms don't support moving over an existing file.
         //So:
         //log.meta -> log.meta.old
         //log.meta.tmp -> log.meta
         //delete log.meta.old
         File oldFile = Serialization.getOldMetaDataFile(file);
-        if(!file.renameTo(oldFile)){
+        if (!file.renameTo(oldFile)) {
           throw new IOException("Unable to rename " + file + " to " + oldFile);
         }
-        if(!tmp.renameTo(file)) {
+        if (!tmp.renameTo(file)) {
           throw new IOException("Unable to rename " + tmp + " over " + file);
         }
         oldFile.delete();
       }
     } finally {
-      if(!closed) {
+      if (!closed) {
         try {
           outputStream.close();
-        } catch(IOException e) {
+        } catch (IOException e) {
           LOGGER.warn("Unable to close " + tmp, e);
         }
       }
@@ -177,17 +180,17 @@ public class LogFileV3 extends LogFile {
 
   static class Writer extends LogFile.Writer {
     Writer(File file, int logFileID, long maxFileSize,
-        @Nullable Key encryptionKey,
-        @Nullable String encryptionKeyAlias,
-        @Nullable String encryptionCipherProvider,
-        long usableSpaceRefreshInterval, boolean fsyncPerTransaction,
-        int fsyncInterval) throws IOException {
-      super(file, logFileID, maxFileSize, CipherProviderFactory.
-          getEncrypter(encryptionCipherProvider, encryptionKey),
-          usableSpaceRefreshInterval, fsyncPerTransaction, fsyncInterval);
+           @Nullable Key encryptionKey,
+           @Nullable String encryptionKeyAlias,
+           @Nullable String encryptionCipherProvider,
+           long usableSpaceRefreshInterval, boolean fsyncPerTransaction,
+           int fsyncInterval) throws IOException {
+      super(file, logFileID, maxFileSize,
+            CipherProviderFactory.getEncrypter(encryptionCipherProvider, encryptionKey),
+            usableSpaceRefreshInterval, fsyncPerTransaction, fsyncInterval);
       ProtosFactory.LogFileMetaData.Builder metaDataBuilder =
           ProtosFactory.LogFileMetaData.newBuilder();
-      if(encryptionKey != null) {
+      if (encryptionKey != null) {
         Preconditions.checkNotNull(encryptionKeyAlias, "encryptionKeyAlias");
         Preconditions.checkNotNull(encryptionCipherProvider,
             "encryptionCipherProvider");
@@ -208,6 +211,7 @@ public class LogFileV3 extends LogFile {
       File metaDataFile = Serialization.getMetaDataFile(file);
       writeDelimitedTo(metaDataBuilder.build(), metaDataFile);
     }
+
     @Override
     int getVersion() {
       return Serialization.VERSION_3;
@@ -221,28 +225,29 @@ public class LogFileV3 extends LogFile {
     private volatile String cipherProvider;
     private volatile byte[] parameters;
     private BlockingQueue<CipherProvider.Decryptor> decryptors =
-      new LinkedBlockingDeque<CipherProvider.Decryptor>();
+        new LinkedBlockingDeque<CipherProvider.Decryptor>();
 
     RandomReader(File file, @Nullable KeyProvider encryptionKeyProvider,
-      boolean fsyncPerTransaction) throws IOException {
+                 boolean fsyncPerTransaction) throws IOException {
       super(file, encryptionKeyProvider, fsyncPerTransaction);
     }
+
     private void initialize() throws IOException {
       File metaDataFile = Serialization.getMetaDataFile(getFile());
       FileInputStream inputStream = new FileInputStream(metaDataFile);
       try {
-        ProtosFactory.LogFileMetaData metaData =
-            Preconditions.checkNotNull(ProtosFactory.LogFileMetaData.
-                parseDelimitedFrom(inputStream), "MetaData cannot be null");
+        ProtosFactory.LogFileMetaData metaData = Preconditions.checkNotNull(
+            ProtosFactory.LogFileMetaData.parseDelimitedFrom(inputStream),
+            "MetaData cannot be null");
         int version = metaData.getVersion();
-        if(version != getVersion()) {
+        if (version != getVersion()) {
           throw new IOException("Version is " + Integer.toHexString(version) +
               " expected " + Integer.toHexString(getVersion())
               + " file: " + getFile().getCanonicalPath());
         }
         encryptionEnabled = false;
-        if(metaData.hasEncryption()) {
-          if(getKeyProvider() == null) {
+        if (metaData.hasEncryption()) {
+          if (getKeyProvider() == null) {
             throw new IllegalStateException("Data file is encrypted but no " +
                 " provider was specified");
           }
@@ -255,23 +260,26 @@ public class LogFileV3 extends LogFile {
       } finally {
         try {
           inputStream.close();
-        } catch(IOException e) {
+        } catch (IOException e) {
           LOGGER.warn("Unable to close " + metaDataFile, e);
         }
       }
     }
+
     private CipherProvider.Decryptor getDecryptor() {
       CipherProvider.Decryptor decryptor = decryptors.poll();
-      if(decryptor == null) {
+      if (decryptor == null) {
         decryptor = CipherProviderFactory.getDecrypter(cipherProvider, key,
             parameters);
       }
       return decryptor;
     }
+
     @Override
     int getVersion() {
       return Serialization.VERSION_3;
     }
+
     @Override
     protected TransactionEventRecord doGet(RandomAccessFile fileHandle)
         throws IOException, CorruptEventException {
@@ -279,7 +287,7 @@ public class LogFileV3 extends LogFile {
       // empty. As such we wait to initialize until there is some
       // data before we we initialize
       synchronized (this) {
-        if(!initialized) {
+        if (!initialized) {
           initialized = true;
           initialize();
         }
@@ -288,18 +296,17 @@ public class LogFileV3 extends LogFile {
       CipherProvider.Decryptor decryptor = null;
       try {
         byte[] buffer = readDelimitedBuffer(fileHandle);
-        if(encryptionEnabled) {
+        if (encryptionEnabled) {
           decryptor = getDecryptor();
           buffer = decryptor.decrypt(buffer);
         }
-        TransactionEventRecord event = TransactionEventRecord.
-            fromByteArray(buffer);
+        TransactionEventRecord event = TransactionEventRecord.fromByteArray(buffer);
         success = true;
         return event;
-      } catch(DecryptionFailureException ex) {
+      } catch (DecryptionFailureException ex) {
         throw new CorruptEventException("Error decrypting event", ex);
       } finally {
-        if(success && encryptionEnabled && decryptor != null) {
+        if (success && encryptionEnabled && decryptor != null) {
           decryptors.offer(decryptor);
         }
       }
@@ -309,9 +316,10 @@ public class LogFileV3 extends LogFile {
   public static class SequentialReader extends LogFile.SequentialReader {
     private CipherProvider.Decryptor decryptor;
     private final boolean fsyncPerTransaction;
+
     public SequentialReader(File file, @Nullable KeyProvider
-      encryptionKeyProvider, boolean fsyncPerTransaction) throws EOFException,
-      IOException {
+        encryptionKeyProvider, boolean fsyncPerTransaction) throws EOFException,
+        IOException {
       super(file, encryptionKeyProvider);
       this.fsyncPerTransaction = fsyncPerTransaction;
       File metaDataFile = Serialization.getMetaDataFile(file);
@@ -321,32 +329,31 @@ public class LogFileV3 extends LogFile {
             ProtosFactory.LogFileMetaData.parseDelimitedFrom(inputStream),
             "MetaData cannot be null");
         int version = metaData.getVersion();
-        if(version != getVersion()) {
+        if (version != getVersion()) {
           throw new IOException("Version is " + Integer.toHexString(version) +
               " expected " + Integer.toHexString(getVersion())
               + " file: " + file.getCanonicalPath());
         }
-        if(metaData.hasEncryption()) {
-          if(getKeyProvider() == null) {
+        if (metaData.hasEncryption()) {
+          if (getKeyProvider() == null) {
             throw new IllegalStateException("Data file is encrypted but no " +
                 " provider was specified");
           }
           ProtosFactory.LogFileEncryption encryption = metaData.getEncryption();
           Key key = getKeyProvider().getKey(encryption.getKeyAlias());
-          decryptor = CipherProviderFactory.
-              getDecrypter(encryption.getCipherProvider(), key,
-                  encryption.getParameters().toByteArray());
+          decryptor = CipherProviderFactory.getDecrypter(
+              encryption.getCipherProvider(), key, encryption.getParameters().toByteArray());
         }
         setLogFileID(metaData.getLogFileID());
         setLastCheckpointPosition(metaData.getCheckpointPosition());
         setLastCheckpointWriteOrderID(metaData.getCheckpointWriteOrderID());
         setPreviousCheckpointPosition(metaData.getBackupCheckpointPosition());
         setPreviousCheckpointWriteOrderID(
-          metaData.getBackupCheckpointWriteOrderID());
+            metaData.getBackupCheckpointWriteOrderID());
       } finally {
         try {
           inputStream.close();
-        } catch(IOException e) {
+        } catch (IOException e) {
           LOGGER.warn("Unable to close " + metaDataFile, e);
         }
       }
@@ -359,7 +366,7 @@ public class LogFileV3 extends LogFile {
 
     @Override
     LogRecord doNext(int offset) throws IOException, CorruptEventException,
-      DecryptionFailureException {
+        DecryptionFailureException {
       byte[] buffer = null;
       TransactionEventRecord event = null;
       try {
@@ -370,7 +377,7 @@ public class LogFileV3 extends LogFile {
         event = TransactionEventRecord.fromByteArray(buffer);
       } catch (CorruptEventException ex) {
         LOGGER.warn("Corrupt file found. File id: log-" + this.getLogFileID(),
-          ex);
+            ex);
         // Return null so that replay handler thinks all events in this file
         // have been taken.
         if (!fsyncPerTransaction) {
@@ -380,7 +387,7 @@ public class LogFileV3 extends LogFile {
       } catch (DecryptionFailureException ex) {
         if (!fsyncPerTransaction) {
           LOGGER.warn("Could not decrypt even read from channel. Skipping " +
-            "event.", ex);
+              "event.", ex);
           return null;
         }
         throw ex;

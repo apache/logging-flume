@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.cloudera.flume.handlers.thrift.ThriftFlumeEvent;
+import com.cloudera.flume.handlers.thrift.ThriftFlumeEventServer;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
@@ -44,8 +46,6 @@ import org.apache.thrift.transport.TServerSocket;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.cloudera.flume.handlers.thrift.*;
 
 public class ThriftLegacySource  extends AbstractSource implements
     EventDrivenSource, Configurable  {
@@ -86,7 +86,7 @@ public class ThriftLegacySource  extends AbstractSource implements
       headers.put(NANOS, Long.toString(evt.getNanos()));
       for (Entry<String, ByteBuffer> entry: evt.getFields().entrySet()) {
         headers.put(entry.getKey().toString(),
-          UTF_8.decode(entry.getValue()).toString());
+                    UTF_8.decode(entry.getValue()).toString());
       }
       headers.put(OG_EVENT, "yes");
 
@@ -139,8 +139,8 @@ public class ThriftLegacySource  extends AbstractSource implements
       serverTransport = new TServerSocket(bindAddr);
       ThriftFlumeEventServer.Processor processor =
           new ThriftFlumeEventServer.Processor(new ThriftFlumeEventServerImpl());
-      server = new TThreadPoolServer(new TThreadPoolServer.
-          Args(serverTransport).processor(processor));
+      server = new TThreadPoolServer(
+          new TThreadPoolServer.Args(serverTransport).processor(processor));
     } catch (TTransportException e) {
       throw new FlumeException("Failed starting source", e);
     }

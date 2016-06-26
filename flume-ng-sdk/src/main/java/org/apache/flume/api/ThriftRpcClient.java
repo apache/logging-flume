@@ -32,16 +32,15 @@ import org.apache.thrift.transport.TTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-
+import javax.net.ssl.TrustManagerFactory;
 import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 import java.security.KeyStore;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -50,7 +49,6 @@ import java.util.Properties;
 import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
-import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -65,8 +63,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ThriftRpcClient extends AbstractRpcClient {
-  private static final Logger LOGGER =
-    LoggerFactory.getLogger(ThriftRpcClient.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ThriftRpcClient.class);
 
   /**
    * Config param for the thrift protocol to use.
@@ -104,8 +101,7 @@ public class ThriftRpcClient extends AbstractRpcClient {
       @Override
       public Thread newThread(Runnable r) {
         Thread t = new Thread(r);
-        t.setName("Flume Thrift RPC thread - " + String.valueOf(
-          threadCounter.incrementAndGet()));
+        t.setName("Flume Thrift RPC thread - " + String.valueOf(threadCounter.incrementAndGet()));
         return t;
       }
     });
@@ -126,11 +122,11 @@ public class ThriftRpcClient extends AbstractRpcClient {
     try {
       if (!isActive()) {
         throw new EventDeliveryException("Client was closed due to error. " +
-          "Please create a new client");
+            "Please create a new client");
       }
       client = connectionManager.checkout();
       final ThriftFlumeEvent thriftEvent = new ThriftFlumeEvent(event
-        .getHeaders(), ByteBuffer.wrap(event.getBody()));
+          .getHeaders(), ByteBuffer.wrap(event.getBody()));
       doAppend(client, thriftEvent).get(requestTimeout, TimeUnit.MILLISECONDS);
     } catch (Throwable e) {
       if (e instanceof ExecutionException) {
@@ -169,22 +165,22 @@ public class ThriftRpcClient extends AbstractRpcClient {
     try {
       if (!isActive()) {
         throw new EventDeliveryException("Client was closed " +
-          "due to error or is not yet configured.");
+            "due to error or is not yet configured.");
       }
       client = connectionManager.checkout();
       final List<ThriftFlumeEvent> thriftFlumeEvents = new ArrayList
-        <ThriftFlumeEvent>();
+          <ThriftFlumeEvent>();
       Iterator<Event> eventsIter = events.iterator();
       while (eventsIter.hasNext()) {
         thriftFlumeEvents.clear();
         for (int i = 0; i < batchSize && eventsIter.hasNext(); i++) {
           Event event = eventsIter.next();
           thriftFlumeEvents.add(new ThriftFlumeEvent(event.getHeaders(),
-            ByteBuffer.wrap(event.getBody())));
+              ByteBuffer.wrap(event.getBody())));
         }
         if (!thriftFlumeEvents.isEmpty()) {
           doAppendBatch(client, thriftFlumeEvents).get(requestTimeout,
-            TimeUnit.MILLISECONDS);
+              TimeUnit.MILLISECONDS);
         }
       }
     } catch (Throwable e) {
@@ -216,7 +212,7 @@ public class ThriftRpcClient extends AbstractRpcClient {
   }
 
   private Future<Void> doAppend(final ClientWrapper client,
-    final ThriftFlumeEvent e) throws Exception {
+                                final ThriftFlumeEvent e) throws Exception {
 
     return callTimeoutPool.submit(new Callable<Void>() {
       @Override
@@ -224,7 +220,7 @@ public class ThriftRpcClient extends AbstractRpcClient {
         Status status = client.client.append(e);
         if (status != Status.OK) {
           throw new EventDeliveryException("Failed to deliver events. Server " +
-            "returned status : " + status.name());
+              "returned status : " + status.name());
         }
         return null;
       }
@@ -232,7 +228,7 @@ public class ThriftRpcClient extends AbstractRpcClient {
   }
 
   private Future<Void> doAppendBatch(final ClientWrapper client,
-    final List<ThriftFlumeEvent> e) throws Exception {
+                                     final List<ThriftFlumeEvent> e) throws Exception {
 
     return callTimeoutPool.submit(new Callable<Void>() {
       @Override
@@ -240,7 +236,7 @@ public class ThriftRpcClient extends AbstractRpcClient {
         Status status = client.client.appendBatch(e);
         if (status != Status.OK) {
           throw new EventDeliveryException("Failed to deliver events. Server " +
-            "returned status : " + status.name());
+              "returned status : " + status.name());
         }
         return null;
       }
@@ -265,11 +261,11 @@ public class ThriftRpcClient extends AbstractRpcClient {
       connState = State.DEAD;
       connectionManager.closeAll();
       callTimeoutPool.shutdown();
-      if(!callTimeoutPool.awaitTermination(5, TimeUnit.SECONDS)) {
+      if (!callTimeoutPool.awaitTermination(5, TimeUnit.SECONDS)) {
         callTimeoutPool.shutdownNow();
       }
     } catch (Throwable ex) {
-      if(ex instanceof Error) {
+      if (ex instanceof Error) {
         throw (Error) ex;
       } else if (ex instanceof RuntimeException) {
         throw (RuntimeException) ex;
@@ -284,7 +280,7 @@ public class ThriftRpcClient extends AbstractRpcClient {
   protected void configure(Properties properties) throws FlumeException {
     if (isActive()) {
       throw new FlumeException("Attempting to re-configured an already " +
-        "configured client!");
+          "configured client!");
     }
     stateLock.lock();
     try {
@@ -304,40 +300,40 @@ public class ThriftRpcClient extends AbstractRpcClient {
         protocol = COMPACT_PROTOCOL;
       }
       batchSize = Integer.parseInt(properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_BATCH_SIZE,
-        RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE.toString()));
+          RpcClientConfigurationConstants.CONFIG_BATCH_SIZE,
+          RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE.toString()));
       requestTimeout = Long.parseLong(properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_REQUEST_TIMEOUT,
-        String.valueOf(
-          RpcClientConfigurationConstants.DEFAULT_REQUEST_TIMEOUT_MILLIS)));
+          RpcClientConfigurationConstants.CONFIG_REQUEST_TIMEOUT,
+          String.valueOf(
+              RpcClientConfigurationConstants.DEFAULT_REQUEST_TIMEOUT_MILLIS)));
       if (requestTimeout < 1000) {
         LOGGER.warn("Request timeout specified less than 1s. " +
-          "Using default value instead.");
+            "Using default value instead.");
         requestTimeout =
-          RpcClientConfigurationConstants.DEFAULT_REQUEST_TIMEOUT_MILLIS;
+            RpcClientConfigurationConstants.DEFAULT_REQUEST_TIMEOUT_MILLIS;
       }
       int connectionPoolSize = Integer.parseInt(properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_CONNECTION_POOL_SIZE,
-        String.valueOf(RpcClientConfigurationConstants
-          .DEFAULT_CONNECTION_POOL_SIZE)));
-      if(connectionPoolSize < 1) {
+          RpcClientConfigurationConstants.CONFIG_CONNECTION_POOL_SIZE,
+          String.valueOf(RpcClientConfigurationConstants
+              .DEFAULT_CONNECTION_POOL_SIZE)));
+      if (connectionPoolSize < 1) {
         LOGGER.warn("Connection Pool Size specified is less than 1. " +
-          "Using default value instead.");
+            "Using default value instead.");
         connectionPoolSize = RpcClientConfigurationConstants
-          .DEFAULT_CONNECTION_POOL_SIZE;
+            .DEFAULT_CONNECTION_POOL_SIZE;
       }
 
       enableSsl = Boolean.parseBoolean(properties.getProperty(
-              RpcClientConfigurationConstants.CONFIG_SSL));
-      if(enableSsl) {
+          RpcClientConfigurationConstants.CONFIG_SSL));
+      if (enableSsl) {
         truststore = properties.getProperty(
-                RpcClientConfigurationConstants.CONFIG_TRUSTSTORE);
+            RpcClientConfigurationConstants.CONFIG_TRUSTSTORE);
         truststorePassword = properties.getProperty(
-                RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_PASSWORD);
+            RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_PASSWORD);
         truststoreType = properties.getProperty(
-                RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_TYPE, "JKS");
+            RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_TYPE, "JKS");
         String excludeProtocolsStr = properties.getProperty(
-                RpcClientConfigurationConstants.CONFIG_EXCLUDE_PROTOCOLS);
+            RpcClientConfigurationConstants.CONFIG_EXCLUDE_PROTOCOLS);
         if (excludeProtocolsStr == null) {
           excludeProtocols.add("SSLv3");
         } else {
@@ -353,7 +349,7 @@ public class ThriftRpcClient extends AbstractRpcClient {
     } catch (Throwable ex) {
       //Failed to configure, kill the client.
       connState = State.DEAD;
-      if(ex instanceof Error) {
+      if (ex instanceof Error) {
         throw (Error) ex;
       } else if (ex instanceof RuntimeException) {
         throw (RuntimeException) ex;
@@ -381,40 +377,37 @@ public class ThriftRpcClient extends AbstractRpcClient {
     public final TTransport transport;
     private final int hashCode;
 
-    public ClientWrapper() throws Exception{
+    public ClientWrapper() throws Exception {
       TSocket tsocket;
-      if(enableSsl) {
+      if (enableSsl) {
         // JDK6's factory doesn't appear to pass the protocol onto the Socket
         // properly so we have to do some magic to make sure that happens.
         // Not an issue in JDK7 Lifted from thrift-0.9.1 to make the SSLContext
         SSLContext sslContext = createSSLContext(truststore, truststorePassword,
-                truststoreType);
+            truststoreType);
 
         // Create the factory from it
         SSLSocketFactory sslSockFactory = sslContext.getSocketFactory();
 
         // Create the TSocket from that
         tsocket = createSSLSocket(
-                sslSockFactory, hostname, port, 120000, excludeProtocols);
+            sslSockFactory, hostname, port, 120000, excludeProtocols);
       } else {
         tsocket = new TSocket(hostname, port);
       }
 
-
-     transport = getTransport(tsocket);
+      transport = getTransport(tsocket);
 
       // The transport is already open for SSL as part of TSSLTransportFactory.getClientSocket
-      if(!transport.isOpen()) {
+      if (!transport.isOpen()) {
         transport.open();
       }
       if (protocol.equals(BINARY_PROTOCOL)) {
         LOGGER.info("Using TBinaryProtocol");
-        client = new ThriftSourceProtocol.Client(new TBinaryProtocol
-            (transport));
+        client = new ThriftSourceProtocol.Client(new TBinaryProtocol(transport));
       } else {
         LOGGER.info("Using TCompactProtocol");
-        client = new ThriftSourceProtocol.Client(new TCompactProtocol
-            (transport));
+        client = new ThriftSourceProtocol.Client(new TCompactProtocol(transport));
       }
       // Not a great hash code, but since this class is immutable and there
       // is at most one instance of the components of this class,
@@ -423,12 +416,12 @@ public class ThriftRpcClient extends AbstractRpcClient {
     }
 
     public boolean equals(Object o) {
-      if(o == null) {
+      if (o == null) {
         return false;
       }
       // Since there is only one wrapper with any given client,
       // direct comparison is good enough.
-      if(this == o) {
+      if (this == o) {
         return true;
       }
       return false;
@@ -507,10 +500,8 @@ public class ThriftRpcClient extends AbstractRpcClient {
           c.transport.close();
           currentPoolSize--;
         }
-      /*
-       * Be cruel and close even the checked out clients. The threads writing
-       * using these will now get an exception.
-       */
+        // Be cruel and close even the checked out clients. The threads writing
+        // using these will now get an exception.
         for (ClientWrapper c : checkedOutClients) {
           c.transport.close();
           currentPoolSize--;
@@ -522,12 +513,14 @@ public class ThriftRpcClient extends AbstractRpcClient {
   }
 
   /**
-   * Lifted from ACCUMULO-3318 - Lifted from TSSLTransportFactory in Thrift-0.9.1. The method to create a client socket with an SSLContextFactory object is not visibile to us. Have to use
-   * SslConnectionParams instead of TSSLTransportParameters because no getters exist on TSSLTransportParameters.
-   *
+   * Lifted from ACCUMULO-3318 - Lifted from TSSLTransportFactory in Thrift-0.9.1.
+   * The method to create a client socket with an SSLContextFactory object is not visible to us.
+   * Have to use * SslConnectionParams instead of TSSLTransportParameters because no getters exist
+   * on TSSLTransportParameters.
    */
   private static SSLContext createSSLContext(String truststore,
-    String truststorePassword, String truststoreType) throws FlumeException {
+                                             String truststorePassword,
+                                             String truststoreType) throws FlumeException {
     SSLContext ctx;
     try {
       ctx = SSLContext.getInstance("TLS");
@@ -550,7 +543,8 @@ public class ThriftRpcClient extends AbstractRpcClient {
   }
 
   private static TSocket createSSLSocket(SSLSocketFactory factory, String host,
-          int port, int timeout, List<String> excludeProtocols) throws FlumeException {
+                                         int port, int timeout, List<String> excludeProtocols)
+      throws FlumeException {
     try {
       SSLSocket socket = (SSLSocket) factory.createSocket(host, port);
       socket.setSoTimeout(timeout);
