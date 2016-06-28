@@ -80,7 +80,6 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       .getLogger(ReliableSpoolingFileEventReader.class);
 
   static final String metaFileName = ".flumespool-main.meta";
-
   private final File spoolDirectory;
   private final String completedSuffix;
   private final String deserializerType;
@@ -94,8 +93,9 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
   private final String deletePolicy;
   private final Charset inputCharset;
   private final DecodeErrorPolicy decodeErrorPolicy;
-  private final ConsumeOrder consumeOrder;    
-  
+  private final ConsumeOrder consumeOrder;
+  private final boolean recursiveDirectorySearch;
+
   private Optional<FileInfo> currentFile = Optional.absent();
   /** Always contains the last file from which lines have been read. **/
   private Optional<FileInfo> lastFileRead = Optional.absent();
@@ -114,8 +114,9 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       boolean annotateBaseName, String baseNameHeader,
       String deserializerType, Context deserializerContext,
       String deletePolicy, String inputCharset,
-      DecodeErrorPolicy decodeErrorPolicy, 
-      ConsumeOrder consumeOrder) throws IOException {
+      DecodeErrorPolicy decodeErrorPolicy,
+      ConsumeOrder consumeOrder,
+      boolean recursiveDirectorySearch) throws IOException {
 
     // Sanity checks
     Preconditions.checkNotNull(spoolDirectory);
@@ -175,7 +176,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     this.deletePolicy = deletePolicy;
     this.inputCharset = Charset.forName(inputCharset);
     this.decodeErrorPolicy = Preconditions.checkNotNull(decodeErrorPolicy);
-    this.consumeOrder = Preconditions.checkNotNull(consumeOrder);    
+    this.consumeOrder = Preconditions.checkNotNull(consumeOrder);
+    this.recursiveDirectorySearch = recursiveDirectorySearch;
 
     File trackerDirectory = new File(trackerDirPath);
 
@@ -199,9 +201,58 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     }
 
     this.metaFile = new File(trackerDirectory, metaFileName);
+
     if(metaFile.exists() && metaFile.length() == 0) {
       deleteMetaFile();
     }
+  }
+
+  /**
+   * Filter to exclude files/directories either hidden, finished, or names matching the ignore pattern
+   */
+  final FileFilter filter = new FileFilter() {
+    public boolean accept(File candidate) {
+      if (candidate.isDirectory()) {
+        String directoryName = candidate.getName();
+        if (!recursiveDirectorySearch || directoryName.startsWith(".") ||
+            ignorePattern.matcher(directoryName).matches()) {
+
+          return false;
+        }
+        return true;
+      }
+      String fileName = candidate.getName();
+      if (fileName.endsWith(completedSuffix) || fileName.startsWith(".") ||
+          ignorePattern.matcher(fileName).matches()) {
+        return false;
+      }
+
+      return true;
+    }
+  };
+
+  /**
+   * Recursively gather candidate files
+   * @param directory the directory to gather files from
+   * @return list of files within the passed in directory
+   */
+  private List<File> getCandidateFiles(File directory) {
+    Preconditions.checkNotNull(directory);
+    List<File> candidateFiles = new ArrayList<File>();
+    if (!directory.isDirectory()) {
+      return candidateFiles;
+    }
+
+    for(File file : directory.listFiles(filter)){
+      if (file.isDirectory()) {
+        candidateFiles.addAll(getCandidateFiles(file));
+      }
+      else {
+        candidateFiles.add(file);
+      }
+    }
+
+    return candidateFiles;
   }
 
   @VisibleForTesting
@@ -432,22 +483,9 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     List<File> candidateFiles = Collections.emptyList();
 
     if (consumeOrder != ConsumeOrder.RANDOM ||
-      candidateFileIter == null ||
-      !candidateFileIter.hasNext()) {
-      /* Filter to exclude finished or hidden files */
-      FileFilter filter = new FileFilter() {
-        public boolean accept(File candidate) {
-          String fileName = candidate.getName();
-          if ((candidate.isDirectory()) ||
-            (fileName.endsWith(completedSuffix)) ||
-            (fileName.startsWith(".")) ||
-            ignorePattern.matcher(fileName).matches()) {
-            return false;
-          }
-          return true;
-        }
-      };
-      candidateFiles = Arrays.asList(spoolDirectory.listFiles(filter));
+        candidateFileIter == null ||
+        !candidateFileIter.hasNext()) {
+      candidateFiles = getCandidateFiles(spoolDirectory);
       listFilesCount++;
       candidateFileIter = candidateFiles.iterator();
     }
@@ -594,9 +632,11 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     private DecodeErrorPolicy decodeErrorPolicy = DecodeErrorPolicy.valueOf(
         SpoolDirectorySourceConfigurationConstants.DEFAULT_DECODE_ERROR_POLICY
             .toUpperCase(Locale.ENGLISH));
-    private ConsumeOrder consumeOrder = 
-        SpoolDirectorySourceConfigurationConstants.DEFAULT_CONSUME_ORDER;    
-    
+    private ConsumeOrder consumeOrder =
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_CONSUME_ORDER;
+    private boolean recursiveDirectorySearch =
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_RECURSIVE_DIRECTORY_SEARCH;
+
     public Builder spoolDirectory(File directory) {
       this.spoolDirectory = directory;
       return this;
@@ -657,22 +697,27 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       return this;
     }
 
+    public Builder recursiveDirectorySearch(boolean recursiveDirectorySearch) {
+      this.recursiveDirectorySearch = recursiveDirectorySearch;
+      return this;
+    }
+
     public Builder decodeErrorPolicy(DecodeErrorPolicy decodeErrorPolicy) {
       this.decodeErrorPolicy = decodeErrorPolicy;
       return this;
     }
-    
+
     public Builder consumeOrder(ConsumeOrder consumeOrder) {
       this.consumeOrder = consumeOrder;
       return this;
-    }        
-    
+    }
+
     public ReliableSpoolingFileEventReader build() throws IOException {
       return new ReliableSpoolingFileEventReader(spoolDirectory, completedSuffix,
           ignorePattern, trackerDirPath, annotateFileName, fileNameHeader,
           annotateBaseName, baseNameHeader, deserializerType,
           deserializerContext, deletePolicy, inputCharset, decodeErrorPolicy,
-          consumeOrder);
+          consumeOrder, recursiveDirectorySearch);
     }
   }
 

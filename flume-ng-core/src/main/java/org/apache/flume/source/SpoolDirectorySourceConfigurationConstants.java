@@ -92,8 +92,16 @@ public class SpoolDirectorySourceConfigurationConstants {
     OLDEST, YOUNGEST, RANDOM
   }
   public static final String CONSUME_ORDER = "consumeOrder";
-  public static final ConsumeOrder DEFAULT_CONSUME_ORDER = ConsumeOrder.OLDEST;    
-  
+  public static final ConsumeOrder DEFAULT_CONSUME_ORDER = ConsumeOrder.OLDEST;
+
+  /**
+   * Flag to indicate if we should recursively checking for new files. The
+   * default is false, so a configuration file entry would be needed to enable
+   * this setting
+   */
+  public static final String RECURSIVE_DIRECTORY_SEARCH = "recursiveDirectorySearch";
+  public static final boolean DEFAULT_RECURSIVE_DIRECTORY_SEARCH = false;
+
   /** Delay(in milliseconds) used when polling for new files. The default is 500ms */
   public static final String POLL_DELAY = "pollDelay";
   public static final int DEFAULT_POLL_DELAY = 500;

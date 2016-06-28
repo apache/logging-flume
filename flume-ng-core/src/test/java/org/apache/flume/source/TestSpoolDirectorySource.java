@@ -17,15 +17,16 @@
 
 package org.apache.flume.source;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Lists;
 import org.apache.flume.Channel;
-import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -34,7 +35,6 @@ import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
-import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.junit.After;
@@ -69,34 +69,47 @@ public class TestSpoolDirectorySource {
 
   @After
   public void tearDown() {
-    for (File f : tmpDir.listFiles()) {
-      f.delete();
-    }
+    deleteFiles(tmpDir);
     tmpDir.delete();
+  }
+
+  /**
+   * Helper method to recursively clean up testing directory
+   * @param directory the directory to clean up
+   */
+  private void deleteFiles(File directory) {
+    for (File f : directory.listFiles()) {
+      if (f.isDirectory()) {
+        deleteFiles(f);
+        f.delete();
+      } else {
+        f.delete();
+      }
+    }
   }
 
   @Test (expected = IllegalArgumentException.class)
   public void testInvalidSortOrder() {
     Context context = new Context();
-    context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY, 
+    context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
         tmpDir.getAbsolutePath());
-    context.put(SpoolDirectorySourceConfigurationConstants.CONSUME_ORDER, 
+    context.put(SpoolDirectorySourceConfigurationConstants.CONSUME_ORDER,
         "undefined");
-    Configurables.configure(source, context);    
+    Configurables.configure(source, context);
   }
-  
+
   @Test
   public void testValidSortOrder() {
     Context context = new Context();
-    context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY, 
+    context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
         tmpDir.getAbsolutePath());
     context.put(SpoolDirectorySourceConfigurationConstants.CONSUME_ORDER, 
         "oLdESt");
     Configurables.configure(source, context);
-    context.put(SpoolDirectorySourceConfigurationConstants.CONSUME_ORDER, 
+    context.put(SpoolDirectorySourceConfigurationConstants.CONSUME_ORDER,
         "yoUnGest");
     Configurables.configure(source, context);
-    context.put(SpoolDirectorySourceConfigurationConstants.CONSUME_ORDER, 
+    context.put(SpoolDirectorySourceConfigurationConstants.CONSUME_ORDER,
         "rAnDom");
     Configurables.configure(source, context);    
   }
@@ -134,6 +147,9 @@ public class TestSpoolDirectorySource {
     txn.close();
   }
 
+  /**
+   * Tests if SpoolDirectorySource sets basename headers on events correctly
+   */
   @Test
   public void testPutBasenameHeader() throws IOException,
     InterruptedException {
@@ -168,14 +184,121 @@ public class TestSpoolDirectorySource {
     txn.close();
   }
 
+  /**
+   * Tests SpoolDirectorySource with parameter recursion set to true
+   */
+  @Test
+  public void testRecursion_SetToTrue() throws IOException, InterruptedException {
+    File subDir = new File(tmpDir, "directorya/directoryb/directoryc");
+    boolean directoriesCreated = subDir.mkdirs();
+    Assert.assertTrue("source directories must be created", directoriesCreated);
+
+    final String FILE_NAME = "recursion_file.txt";
+    File f1 = new File(subDir,  FILE_NAME);
+    String origBody = "file1line1\nfile1line2\nfile1line3\nfile1line4\n" +
+        "file1line5\nfile1line6\nfile1line7\nfile1line8\n";
+    Files.write(origBody, f1, Charsets.UTF_8);
+
+    Context context = new Context();
+    context.put(SpoolDirectorySourceConfigurationConstants.RECURSIVE_DIRECTORY_SEARCH,
+            "true"); // enable recursion, so we should find the file we created above
+    context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
+            tmpDir.getAbsolutePath()); // spool set to root dir
+    context.put(SpoolDirectorySourceConfigurationConstants.FILENAME_HEADER,
+            "true"); // put the file name in the "file" header
+
+    Configurables.configure(source, context);
+    source.start();
+    Assert.assertTrue("Recursion setting in source is correct",
+        source.getRecursiveDirectorySearch());
+
+
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    long startTime = System.currentTimeMillis();
+    Event e = null;
+    while (System.currentTimeMillis() - startTime < 300 && e == null) {
+      e = channel.take();
+      Thread.sleep(10);
+    }
+
+    Assert.assertNotNull("Event must not be null", e);
+
+    Assert.assertNotNull("Event headers must not be null", e.getHeaders());
+    Assert.assertTrue("File header value did not end with expected filename",
+            e.getHeaders().get("file").endsWith(FILE_NAME));
+
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    do { // collecting the whole body
+      baos.write(e.getBody());
+      baos.write('\n'); // newline characters are consumed in the process
+      e = channel.take();
+    } while(e != null);
+
+    Assert.assertEquals("Event body is correct",
+        Arrays.toString(origBody.getBytes()),
+        Arrays.toString(baos.toByteArray()));
+    txn.commit();
+    txn.close();
+  }
+
+
+  /**
+   * This test will place a file into a sub-directory of the spool directory
+   * since the recursion setting is false there should not be any transactions
+   * to take from the channel.  The 500 ms is arbitrary and simply follows
+   * what the other tests use to "assume" that since there is no data then this worked.
+   */
+  @Test
+  public void testRecursion_SetToFalse() throws IOException, InterruptedException {
+    Context context = new Context();
+
+    File subDir = new File(tmpDir, "directory");
+    boolean directoriesCreated = subDir.mkdirs();
+    Assert.assertTrue("source directories must be created", directoriesCreated);
+
+
+
+    File f1 = new File(subDir.getAbsolutePath() + "/file1.txt");
+
+    Files.write("file1line1\nfile1line2\nfile1line3\nfile1line4\n" +
+        "file1line5\nfile1line6\nfile1line7\nfile1line8\n", f1, Charsets.UTF_8);
+
+    context.put(SpoolDirectorySourceConfigurationConstants.RECURSIVE_DIRECTORY_SEARCH,
+        "false");
+    context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
+        tmpDir.getAbsolutePath());
+    context.put(SpoolDirectorySourceConfigurationConstants.FILENAME_HEADER,
+        "true");
+    context.put(SpoolDirectorySourceConfigurationConstants.FILENAME_HEADER_KEY,
+        "fileHeaderKeyTest");
+
+    Configurables.configure(source, context);
+    source.start();
+    // check the source to ensure the setting has been set via the context object
+    Assert.assertFalse("Recursion setting in source is not set to false (this" +
+        "test does not want recursion enabled)", source.getRecursiveDirectorySearch());
+
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    long startTime = System.currentTimeMillis();
+    Event e = null;
+    while (System.currentTimeMillis() - startTime < 300 && e == null) {
+      e = channel.take();
+      Thread.sleep(10);
+    }
+    Assert.assertNull("Event must be null", e);
+    txn.commit();
+    txn.close();
+  }
+
   @Test
   public void testLifecycle() throws IOException, InterruptedException {
     Context context = new Context();
     File f1 = new File(tmpDir.getAbsolutePath() + "/file1");
 
     Files.write("file1line1\nfile1line2\nfile1line3\nfile1line4\n" +
-                "file1line5\nfile1line6\nfile1line7\nfile1line8\n",
-                f1, Charsets.UTF_8);
+        "file1line5\nfile1line6\nfile1line7\nfile1line8\n", f1, Charsets.UTF_8);
 
     context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
         tmpDir.getAbsolutePath());
@@ -243,8 +366,8 @@ public class TestSpoolDirectorySource {
     File f1 = new File(tmpDir.getAbsolutePath() + "/file1");
 
     Files.write("file1line1\nfile1line2\nfile1line3\nfile1line4\n" +
-      "file1line5\nfile1line6\nfile1line7\nfile1line8\n",
-      f1, Charsets.UTF_8);
+        "file1line5\nfile1line6\nfile1line7\nfile1line8\n",
+        f1, Charsets.UTF_8);
 
 
     context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
