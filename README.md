@@ -63,7 +63,5 @@ We recommend you set the following Maven options:
 
 export MAVEN_OPTS="-Xms512m -Xmx1024m -XX:PermSize=256m -XX:MaxPermSize=512m"
 
-To compile Flume, run `mvn compile`.
-To build a distribution, run `mvn install`.
-
-The final Flume distribution artifacts will be in $project/flume-ng-dist/target/.
+To compile Flume and build a distribution tarball, run `mvn install` from the
+top level directory. The artifacts will be placed under `flume-ng-dist/target/`.
