@@ -1122,7 +1122,7 @@ public class Log {
    * <p> Locking is not supported by all file systems.
    * E.g., NFS does not consistently support exclusive locks.
    *
-   * <p> If locking is supported we guarantee exculsive access to the
+   * <p> If locking is supported we guarantee exclusive access to the
    * storage directory. Otherwise, no guarantee is given.
    *
    * @throws IOException if locking fails

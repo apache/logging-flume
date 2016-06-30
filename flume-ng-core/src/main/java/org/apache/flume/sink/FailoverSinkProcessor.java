@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  *
  * The failover mechanism works by relegating failed sinks to a pool
  * where they are assigned a cooldown period, increasing with sequential
- * failures before they are retried. Once a sink succesfully sends an
+ * failures before they are retried. Once a sink successfully sends an
  * event it is restored to the live pool.
  *
  * FailoverSinkProcessor is in no way thread safe and expects to be run via

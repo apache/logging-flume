@@ -613,7 +613,7 @@ public class TestLoadBalancingRpcClient {
 
     }
     Assert.assertEquals(0, hosts.get(1).getAppendCount());
-    // after this s2 should be receiving events agains
+    // after this s2 should be receiving events again
     Thread.sleep(2500);
     int numEvents = 60;
     for (int i = 0; i < numEvents; i++) {

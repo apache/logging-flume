@@ -153,7 +153,7 @@ public class SourceConfiguration extends ComponentConfiguration {
     EXEC("org.apache.flume.conf.source.ExecSourceConfiguration"),
 
     /**
-     * Avro soruce.
+     * Avro source.
      *
      * @see AvroSource
      */

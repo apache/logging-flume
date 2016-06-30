@@ -46,7 +46,7 @@ public class SinkProcessorConfiguration extends ComponentConfiguration {
 
   public enum SinkProcessorConfigurationType {
     /**
-     * Load balacing channel selector
+     * Load balancing channel selector
      */
     LOAD_BALANCE("org.apache.flume.conf.sink.LoadBalancingSinkProcessorConfiguration"),
     /**
