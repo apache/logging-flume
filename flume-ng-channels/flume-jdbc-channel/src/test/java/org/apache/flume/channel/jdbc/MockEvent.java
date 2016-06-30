@@ -27,8 +27,7 @@ public class MockEvent implements Event {
   private final Map<String, String> headers;
   private final String channel;
 
-  public MockEvent(byte[] payload, Map<String, String> headers, String channel)
-  {
+  public MockEvent(byte[] payload, Map<String, String> headers, String channel) {
     this.payload = payload;
     this.headers = headers;
     this.channel = channel;

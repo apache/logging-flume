@@ -17,6 +17,17 @@
  */
 package org.apache.flume.channel.jdbc;
 
+import org.apache.flume.Context;
+import org.apache.flume.Event;
+import org.apache.flume.Transaction;
+import org.apache.flume.channel.jdbc.impl.JdbcChannelProviderImpl;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,17 +42,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
-import org.apache.flume.Context;
-import org.apache.flume.Event;
-import org.apache.flume.Transaction;
-import org.apache.flume.channel.jdbc.impl.JdbcChannelProviderImpl;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public abstract class BaseJdbcChannelProviderTest {
   private static final Logger LOGGER =
@@ -103,7 +103,7 @@ public abstract class BaseJdbcChannelProviderTest {
 
     Set<MockEvent> events = new HashSet<MockEvent>();
     for (int i = 1; i < 12; i++) {
-      events.add(MockEventUtils.generateMockEvent(i, i, i, 61%i, 1));
+      events.add(MockEventUtils.generateMockEvent(i, i, i, 61 % i, 1));
     }
 
     Iterator<MockEvent> meIt = events.iterator();
@@ -170,7 +170,7 @@ public abstract class BaseJdbcChannelProviderTest {
         new HashMap<String, List<MockEvent>>();
 
     for (int i = 1; i < 121; i++) {
-      MockEvent me = MockEventUtils.generateMockEvent(i, i, i, 61%i, 10);
+      MockEvent me = MockEventUtils.generateMockEvent(i, i, i, 61 % i, 10);
       List<MockEvent> meList = eventMap.get(me.getChannel());
       if (meList == null) {
         meList = new ArrayList<MockEvent>();
@@ -227,7 +227,7 @@ public abstract class BaseJdbcChannelProviderTest {
 
     Set<MockEvent> events = new HashSet<MockEvent>();
     for (int i = 1; i < 81; i++) {
-      events.add(MockEventUtils.generateMockEvent(i, i, i, 61%i, 5));
+      events.add(MockEventUtils.generateMockEvent(i, i, i, 61 % i, 5));
     }
 
     Iterator<MockEvent> meIt = events.iterator();

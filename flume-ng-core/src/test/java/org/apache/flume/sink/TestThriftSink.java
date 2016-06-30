@@ -161,8 +161,7 @@ public class TestThriftSink {
   @Test
   public void testFailedConnect() throws Exception {
 
-    Event event = EventBuilder.withBody("test event 1",
-      Charset.forName("UTF8"));
+    Event event = EventBuilder.withBody("test event 1", Charset.forName("UTF8"));
 
     sink.start();
 
@@ -185,7 +184,7 @@ public class TestThriftSink {
         threwException = true;
       }
       Assert.assertTrue("Must throw EventDeliveryException if disconnected",
-        threwException);
+          threwException);
     }
 
     src = new ThriftTestingSource(ThriftTestingSource.HandlerType.OK.name(),
@@ -283,7 +282,8 @@ public class TestThriftSink {
     Assert.assertTrue(LifecycleController.waitForOneOf(sink,
             LifecycleState.STOP_OR_ERROR, 5000));
     if (failed) {
-      Assert.fail("SSL-enabled sink successfully connected to a non-SSL-enabled server, that's wrong.");
+      Assert.fail("SSL-enabled sink successfully connected to a non-SSL-enabled server, " +
+                  "that's wrong.");
     }
   }
 
@@ -329,7 +329,8 @@ public class TestThriftSink {
     Assert.assertTrue(LifecycleController.waitForOneOf(sink,
             LifecycleState.STOP_OR_ERROR, 5000));
     if (failed) {
-      Assert.fail("SSL-enabled sink successfully connected to a server with an untrusted certificate when it should have failed");
+      Assert.fail("SSL-enabled sink successfully connected to a server with an " +
+                  "untrusted certificate when it should have failed");
     }
   }
 }

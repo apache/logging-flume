@@ -73,7 +73,7 @@ public class TestDefaultJMSMessageConverter {
       @Override
       public Integer answer(InvocationOnMock invocation) throws Throwable {
         byte[] buffer = (byte[])invocation.getArguments()[0];
-        if(buffer != null) {
+        if (buffer != null) {
           assertEquals(buffer.length, BYTES.length);
           System.arraycopy(BYTES, 0, buffer, 0, BYTES.length);
         }

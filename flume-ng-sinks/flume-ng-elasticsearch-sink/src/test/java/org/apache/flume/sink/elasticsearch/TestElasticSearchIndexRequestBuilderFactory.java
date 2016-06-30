@@ -18,15 +18,7 @@
  */
 package org.apache.flume.sink.elasticsearch;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.io.IOException;
-import java.util.Map;
-
+import com.google.common.collect.Maps;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.conf.ComponentConfiguration;
@@ -39,7 +31,14 @@ import org.elasticsearch.common.io.FastByteArrayOutputStream;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.Maps;
+import java.io.IOException;
+import java.util.Map;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class TestElasticSearchIndexRequestBuilderFactory
     extends AbstractElasticSearchSinkTest {
@@ -70,7 +69,7 @@ public class TestElasticSearchIndexRequestBuilderFactory
   @Test
   public void indexNameShouldBePrefixDashFormattedTimestamp() {
     long millis = 987654321L;
-    assertEquals("prefix-"+factory.fastDateFormat.format(millis),
+    assertEquals("prefix-" + factory.fastDateFormat.format(millis),
         factory.getIndexName("prefix", millis));
   }
 
@@ -135,7 +134,7 @@ public class TestElasticSearchIndexRequestBuilderFactory
 
     assertEquals(indexPrefix + '-'
         + ElasticSearchIndexRequestBuilderFactory.df.format(FIXED_TIME_MILLIS),
-      indexRequestBuilder.request().index());
+        indexRequestBuilder.request().index());
     assertEquals(indexType, indexRequestBuilder.request().type());
     assertArrayEquals(FakeEventSerializer.FAKE_BYTES,
         indexRequestBuilder.request().source().array());
@@ -154,7 +153,7 @@ public class TestElasticSearchIndexRequestBuilderFactory
 
     assertEquals(indexPrefix + '-'
         + ElasticSearchIndexRequestBuilderFactory.df.format(1213141516L),
-      indexRequestBuilder.request().index());
+        indexRequestBuilder.request().index());
   }
 
   @Test
@@ -174,7 +173,7 @@ public class TestElasticSearchIndexRequestBuilderFactory
 
     assertEquals(indexValue + '-'
         + ElasticSearchIndexRequestBuilderFactory.df.format(FIXED_TIME_MILLIS),
-      indexRequestBuilder.request().index());
+        indexRequestBuilder.request().index());
     assertEquals(typeValue, indexRequestBuilder.request().type());
   }
 
@@ -192,7 +191,8 @@ public class TestElasticSearchIndexRequestBuilderFactory
   static class FakeEventSerializer implements ElasticSearchEventSerializer {
 
     static final byte[] FAKE_BYTES = new byte[]{9, 8, 7, 6};
-    boolean configuredWithContext, configuredWithComponentConfiguration;
+    boolean configuredWithContext;
+    boolean configuredWithComponentConfiguration;
 
     @Override
     public BytesStream getContentBuilder(Event event) throws IOException {

@@ -17,15 +17,9 @@
 
 package org.apache.flume.source;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
+import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
@@ -42,8 +36,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class TestSpoolDirectorySource {
   static SpoolDirectorySource source;
@@ -151,14 +150,13 @@ public class TestSpoolDirectorySource {
    * Tests if SpoolDirectorySource sets basename headers on events correctly
    */
   @Test
-  public void testPutBasenameHeader() throws IOException,
-    InterruptedException {
+  public void testPutBasenameHeader() throws IOException, InterruptedException {
     Context context = new Context();
     File f1 = new File(tmpDir.getAbsolutePath() + "/file1");
 
     Files.write("file1line1\nfile1line2\nfile1line3\nfile1line4\n" +
-      "file1line5\nfile1line6\nfile1line7\nfile1line8\n",
-      f1, Charsets.UTF_8);
+        "file1line5\nfile1line6\nfile1line7\nfile1line8\n",
+        f1, Charsets.UTF_8);
 
     context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
         tmpDir.getAbsolutePath());
@@ -179,7 +177,7 @@ public class TestSpoolDirectorySource {
     Assert.assertNotNull("Event headers must not be null", e.getHeaders());
     Assert.assertNotNull(e.getHeaders().get("basenameHeaderKeyTest"));
     Assert.assertEquals(f1.getName(),
-      e.getHeaders().get("basenameHeaderKeyTest"));
+        e.getHeaders().get("basenameHeaderKeyTest"));
     txn.commit();
     txn.close();
   }
@@ -233,7 +231,7 @@ public class TestSpoolDirectorySource {
       baos.write(e.getBody());
       baos.write('\n'); // newline characters are consumed in the process
       e = channel.take();
-    } while(e != null);
+    } while (e != null);
 
     Assert.assertEquals("Event body is correct",
         Arrays.toString(origBody.getBytes()),
@@ -371,7 +369,7 @@ public class TestSpoolDirectorySource {
 
 
     context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
-      tmpDir.getAbsolutePath());
+                tmpDir.getAbsolutePath());
 
     context.put(SpoolDirectorySourceConfigurationConstants.BATCH_SIZE, "2");
     Configurables.configure(source, context);
@@ -379,7 +377,7 @@ public class TestSpoolDirectorySource {
     source.start();
 
     // Wait for the source to read enough events to fill up the channel.
-    while(!source.hitChannelException()) {
+    while (!source.hitChannelException()) {
       Thread.sleep(50);
     }
 
@@ -402,7 +400,7 @@ public class TestSpoolDirectorySource {
       tx.close();
     }
     Assert.assertTrue("Expected to hit ChannelException, but did not!",
-      source.hitChannelException());
+                      source.hitChannelException());
     Assert.assertEquals(8, dataOut.size());
     source.stop();
   }
@@ -424,7 +422,7 @@ public class TestSpoolDirectorySource {
     Files.touch(f4);
 
     context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
-      tmpDir.getAbsolutePath());
+                tmpDir.getAbsolutePath());
     Configurables.configure(source, context);
     source.start();
 
@@ -432,8 +430,8 @@ public class TestSpoolDirectorySource {
     Thread.sleep(5000);
 
     Assert.assertFalse("Server did not error", source.hasFatalError());
-    Assert.assertEquals("One message was read", 1,
-      source.getSourceCounter().getEventAcceptedCount());
+    Assert.assertEquals("One message was read",
+                        1, source.getSourceCounter().getEventAcceptedCount());
     source.stop();
   }
 }

@@ -67,10 +67,9 @@ public class TestThriftSource {
     port = random.nextInt(50000) + 1024;
     props.clear();
     props.setProperty("hosts", "h1");
-    props.setProperty("hosts.h1", "0.0.0.0:"+ String.valueOf(port));
+    props.setProperty("hosts.h1", "0.0.0.0:" + String.valueOf(port));
     props.setProperty(RpcClientConfigurationConstants.CONFIG_BATCH_SIZE, "10");
-    props.setProperty(RpcClientConfigurationConstants.CONFIG_REQUEST_TIMEOUT,
-      "2000");
+    props.setProperty(RpcClientConfigurationConstants.CONFIG_REQUEST_TIMEOUT, "2000");
     channel = new MemoryChannel();
     source = new ThriftSource();
   }
@@ -110,7 +109,7 @@ public class TestThriftSource {
     context.put("keymanager-type", KeyManagerFactory.getDefaultAlgorithm());
     Configurables.configure(source, context);
     source.start();
-    for(int i = 0; i < 30; i++) {
+    for (int i = 0; i < 30; i++) {
       client.append(EventBuilder.withBody(String.valueOf(i).getBytes()));
     }
     Transaction transaction = channel.getTransaction();
@@ -135,7 +134,7 @@ public class TestThriftSource {
     context.put(ThriftSource.CONFIG_PORT, String.valueOf(port));
     Configurables.configure(source, context);
     source.start();
-    for(int i = 0; i < 30; i++) {
+    for (int i = 0; i < 30; i++) {
       client.append(EventBuilder.withBody(String.valueOf(i).getBytes()));
     }
     Transaction transaction = channel.getTransaction();
@@ -188,8 +187,8 @@ public class TestThriftSource {
 
     int index = 0;
     //30 batches of 10
-    for(int i = 0; i < 30; i++) {
-      for(int j = 0; j < 10; j++) {
+    for (int i = 0; i < 30; i++) {
+      for (int j = 0; j < 10; j++) {
         Assert.assertEquals(i, events.get(index++).intValue());
       }
     }
@@ -233,8 +232,8 @@ public class TestThriftSource {
 
     int index = 0;
     //10 batches of 500
-    for(int i = 0; i < 5; i++) {
-      for(int j = 0; j < 500; j++) {
+    for (int i = 0; i < 5; i++) {
+      for (int j = 0; j < 500; j++) {
         Assert.assertEquals(i, events.get(index++).intValue());
       }
     }
@@ -253,15 +252,14 @@ public class TestThriftSource {
     context.put(ThriftSource.CONFIG_PORT, String.valueOf(port));
     Configurables.configure(source, context);
     source.start();
-    ExecutorCompletionService<Void> completionService = new
-      ExecutorCompletionService(submitter);
+    ExecutorCompletionService<Void> completionService = new ExecutorCompletionService(submitter);
     for (int i = 0; i < 30; i++) {
       completionService.submit(new SubmitHelper(i), null);
     }
     //wait for all threads to be done
 
 
-    for(int i = 0; i < 30; i++) {
+    for (int i = 0; i < 30; i++) {
       completionService.take();
     }
 
@@ -282,19 +280,20 @@ public class TestThriftSource {
 
     int index = 0;
     //30 batches of 10
-    for(int i = 0; i < 30; i++) {
-      for(int j = 0; j < 10; j++) {
+    for (int i = 0; i < 30; i++) {
+      for (int j = 0; j < 10; j++) {
         Assert.assertEquals(i, events.get(index++).intValue());
       }
     }
   }
 
   private class SubmitHelper implements Runnable {
-
     private final int i;
+
     public SubmitHelper(int i) {
       this.i = i;
     }
+
     @Override
     public void run() {
       List<Event> events = Lists.newArrayList();

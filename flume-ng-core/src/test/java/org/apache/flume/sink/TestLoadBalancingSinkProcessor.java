@@ -17,16 +17,7 @@
  */
 package org.apache.flume.sink;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import junit.framework.Assert;
-
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
@@ -37,6 +28,14 @@ import org.apache.flume.Sink.Status;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.AbstractChannel;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class TestLoadBalancingSinkProcessor {
 
@@ -62,8 +61,7 @@ public class TestLoadBalancingSinkProcessor {
     return getProcessor(sinks, getContext(selectorType, backoff));
   }
 
-  private LoadBalancingSinkProcessor getProcessor(List<Sink> sinks, Context ctx)
-  {
+  private LoadBalancingSinkProcessor getProcessor(List<Sink> sinks, Context ctx) {
     LoadBalancingSinkProcessor lbsp = new LoadBalancingSinkProcessor();
     lbsp.setSinks(sinks);
     lbsp.configure(ctx);
@@ -77,7 +75,7 @@ public class TestLoadBalancingSinkProcessor {
     // If no selector is specified, the round-robin selector should be used
     Channel ch = new MockChannel();
     int n = 100;
-    int numEvents = 3*n;
+    int numEvents = 3 * n;
     for (int i = 0; i < numEvents; i++) {
       ch.put(new MockEvent("test" + i));
     }
@@ -185,7 +183,7 @@ public class TestLoadBalancingSinkProcessor {
     // TODO: there is a remote possibility that s0 or s2
     // never get hit by the random assignment
     // and thus not backoffed, causing the test to fail
-    for(int i=0; i < 50; i++) {
+    for (int i = 0; i < 50; i++) {
       // a well behaved runner would always check the return.
       lbsp.process();
     }
@@ -214,7 +212,7 @@ public class TestLoadBalancingSinkProcessor {
   public void testRandomPersistentFailure() throws Exception {
     Channel ch = new MockChannel();
     int n = 100;
-    int numEvents = 3*n;
+    int numEvents = 3 * n;
     for (int i = 0; i < numEvents; i++) {
       ch.put(new MockEvent("test" + i));
     }
@@ -244,7 +242,7 @@ public class TestLoadBalancingSinkProcessor {
     }
 
     Assert.assertTrue(s2.getEvents().size() == 0);
-    Assert.assertTrue(s1.getEvents().size() + s3.getEvents().size() == 3*n);
+    Assert.assertTrue(s1.getEvents().size() + s3.getEvents().size() == 3 * n);
   }
 
   @Test
@@ -325,8 +323,6 @@ public class TestLoadBalancingSinkProcessor {
     Assert.assertTrue("Miraculous distribution", sizeSet.size() > 1);
   }
 
-
-
   @Test
   public void testRoundRobinOneActiveSink() throws Exception {
     Channel ch = new MockChannel();
@@ -373,7 +369,7 @@ public class TestLoadBalancingSinkProcessor {
   public void testRoundRobinPersistentFailure() throws Exception {
     Channel ch = new MockChannel();
     int n = 100;
-    int numEvents = 3*n;
+    int numEvents = 3 * n;
     for (int i = 0; i < numEvents; i++) {
       ch.put(new MockEvent("test" + i));
     }
@@ -404,7 +400,7 @@ public class TestLoadBalancingSinkProcessor {
 
     Assert.assertTrue(s1.getEvents().size() == n);
     Assert.assertTrue(s2.getEvents().size() == 0);
-    Assert.assertTrue(s3.getEvents().size() == 2*n);
+    Assert.assertTrue(s3.getEvents().size() == 2 * n);
   }
 
   // test that even if the sink recovers immediately that it is kept out of commission briefly
@@ -413,7 +409,7 @@ public class TestLoadBalancingSinkProcessor {
   public void testRoundRobinBackoffInitialFailure() throws EventDeliveryException {
     Channel ch = new MockChannel();
     int n = 100;
-    int numEvents = 3*n;
+    int numEvents = 3 * n;
     for (int i = 0; i < numEvents; i++) {
       ch.put(new MockEvent("test" + i));
     }
@@ -424,7 +420,7 @@ public class TestLoadBalancingSinkProcessor {
     MockSink s2 = new MockSink(2);
     s2.setChannel(ch);
 
-      MockSink s3 = new MockSink(3);
+    MockSink s3 = new MockSink(3);
     s3.setChannel(ch);
 
     List<Sink> sinks = new ArrayList<Sink>();
@@ -449,14 +445,15 @@ public class TestLoadBalancingSinkProcessor {
 
     Assert.assertEquals((3 * n) / 2, s1.getEvents().size());
     Assert.assertEquals(1, s2.getEvents().size());
-    Assert.assertEquals((3 * n) /2 - 1, s3.getEvents().size());
+    Assert.assertEquals((3 * n) / 2 - 1, s3.getEvents().size());
   }
 
   @Test
-  public void testRoundRobinBackoffIncreasingBackoffs() throws EventDeliveryException, InterruptedException {
+  public void testRoundRobinBackoffIncreasingBackoffs()
+      throws EventDeliveryException, InterruptedException {
     Channel ch = new MockChannel();
     int n = 100;
-    int numEvents = 3*n;
+    int numEvents = 3 * n;
     for (int i = 0; i < numEvents; i++) {
       ch.put(new MockEvent("test" + i));
     }
@@ -468,7 +465,7 @@ public class TestLoadBalancingSinkProcessor {
     s2.setChannel(ch);
     s2.setFail(true);
 
-      MockSink s3 = new MockSink(3);
+    MockSink s3 = new MockSink(3);
     s3.setChannel(ch);
 
     List<Sink> sinks = new ArrayList<Sink>();
@@ -508,10 +505,11 @@ public class TestLoadBalancingSinkProcessor {
   }
 
   @Test
-  public void testRoundRobinBackoffFailureRecovery() throws EventDeliveryException, InterruptedException {
+  public void testRoundRobinBackoffFailureRecovery()
+      throws EventDeliveryException, InterruptedException {
     Channel ch = new MockChannel();
     int n = 100;
-    int numEvents = 3*n;
+    int numEvents = 3 * n;
     for (int i = 0; i < numEvents; i++) {
       ch.put(new MockEvent("test" + i));
     }
@@ -523,7 +521,7 @@ public class TestLoadBalancingSinkProcessor {
     s2.setChannel(ch);
     s2.setFail(true);
 
-      MockSink s3 = new MockSink(3);
+    MockSink s3 = new MockSink(3);
     s3.setChannel(ch);
 
     List<Sink> sinks = new ArrayList<Sink>();
@@ -548,13 +546,12 @@ public class TestLoadBalancingSinkProcessor {
     Assert.assertEquals(n, s3.getEvents().size());
   }
 
-
   @Test
   public void testRoundRobinNoFailure() throws Exception {
 
     Channel ch = new MockChannel();
     int n = 100;
-    int numEvents = 3*n;
+    int numEvents = 3 * n;
     for (int i = 0; i < numEvents; i++) {
       ch.put(new MockEvent("test" + i));
     }
@@ -656,8 +653,9 @@ public class TestLoadBalancingSinkProcessor {
         throw new EventDeliveryException("failed");
       }
       Event e = this.getChannel().take();
-      if (e == null)
+      if (e == null) {
         return Status.BACKOFF;
+      }
 
       events.add(e);
       return Status.READY;

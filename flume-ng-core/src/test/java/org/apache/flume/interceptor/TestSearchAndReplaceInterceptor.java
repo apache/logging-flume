@@ -35,7 +35,7 @@ public class TestSearchAndReplaceInterceptor {
 
   private void testSearchReplace(Context context, String input, String output)
       throws Exception {
-   Interceptor.Builder builder = InterceptorBuilderFactory.newInstance(
+    Interceptor.Builder builder = InterceptorBuilderFactory.newInstance(
         InterceptorType.SEARCH_REPLACE.toString());
     builder.configure(context);
     Interceptor interceptor = builder.build();

@@ -672,9 +672,7 @@ limitations under the License.
               <suppressionsLocation>flume/checkstyle-suppressions.xml</suppressionsLocation>
               <suppressionsFileExpression>checkstyle.suppressions.file</suppressionsFileExpression>
               <encoding>UTF-8</encoding>
-              <consoleOutput>true</consoleOutput>
-              <failsOnError>true</failsOnError>
-              <includeTestSourceDirectory>false</includeTestSourceDirectory>
+              <includeTestSourceDirectory>true</includeTestSourceDirectory>
               <linkXRef>false</linkXRef>
             </configuration>
             <goals>
@@ -1474,7 +1472,7 @@ limitations under the License.
           <suppressionsLocation>flume/checkstyle-suppressions.xml</suppressionsLocation>
           <suppressionsFileExpression>checkstyle.suppressions.file</suppressionsFileExpression>
           <encoding>UTF-8</encoding>
-          <includeTestSourceDirectory>false</includeTestSourceDirectory>
+          <includeTestSourceDirectory>true</includeTestSourceDirectory>
           <linkXRef>false</linkXRef>
         </configuration>
       </plugin>

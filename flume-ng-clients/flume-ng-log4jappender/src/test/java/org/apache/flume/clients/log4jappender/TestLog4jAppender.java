@@ -21,7 +21,10 @@ package org.apache.flume.clients.log4jappender;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import junit.framework.Assert;
@@ -46,13 +49,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TestLog4jAppender{
+public class TestLog4jAppender {
   private AvroSource source;
   private Channel ch;
   private Properties props;
 
   @Before
-  public void initiate() throws Exception{
+  public void initiate() throws Exception {
     int port = 25430;
     source = new AvroSource();
     ch = new MemoryChannel();
@@ -88,13 +91,13 @@ public class TestLog4jAppender{
     configureSource();
     PropertyConfigurator.configure(props);
     Logger logger = LogManager.getLogger(TestLog4jAppender.class);
-    for(int count = 0; count <= 1000; count++){
+    for (int count = 0; count <= 1000; count++) {
       /*
        * Log4j internally defines levels as multiples of 10000. So if we
        * create levels directly using count, the level will be set as the
        * default.
        */
-      int level = ((count % 5)+1)*10000;
+      int level = ((count % 5) + 1) * 10000;
       String msg = "This is log message number" + String.valueOf(count);
 
       logger.log(Level.toLevel(level), msg);
@@ -146,11 +149,11 @@ public class TestLog4jAppender{
   }
 
   private void sendAndAssertFail(Logger logger) throws Throwable {
-      /*
-       * Log4j internally defines levels as multiples of 10000. So if we
-       * create levels directly using count, the level will be set as the
-       * default.
-       */
+    /*
+     * Log4j internally defines levels as multiples of 10000. So if we
+     * create levels directly using count, the level will be set as the
+     * default.
+     */
     int level = 20000;
     try {
       logger.log(Level.toLevel(level), "Test Msg");
@@ -177,13 +180,13 @@ public class TestLog4jAppender{
     PropertyConfigurator.configure(props);
     Logger logger = LogManager.getLogger(TestLog4jAppender.class);
     Thread.currentThread().setName("Log4jAppenderTest");
-    for(int count = 0; count <= 100; count++){
+    for (int count = 0; count <= 100; count++) {
       /*
        * Log4j internally defines levels as multiples of 10000. So if we
        * create levels directly using count, the level will be set as the
        * default.
        */
-      int level = ((count % 5)+1)*10000;
+      int level = ((count % 5) + 1) * 10000;
       String msg = "This is log message number" + String.valueOf(count);
 
       logger.log(Level.toLevel(level), msg);
@@ -230,7 +233,7 @@ public class TestLog4jAppender{
     props.put("log4j.appender.out2.Timeout", "1000");
     props.put("log4j.appender.out2.layout", "org.apache.log4j.PatternLayout");
     props.put("log4j.appender.out2.layout.ConversionPattern",
-      "%-5p [%t]: %m%n");
+        "%-5p [%t]: %m%n");
     PropertyConfigurator.configure(props);
     Logger logger = LogManager.getLogger(TestLog4jAppender.class);
     Thread.currentThread().setName("Log4jAppenderTest");
@@ -251,12 +254,11 @@ public class TestLog4jAppender{
 
 
   @After
-  public void cleanUp(){
+  public void cleanUp() {
     source.stop();
     ch.stop();
     props.clear();
   }
-
 
   static class SlowMemoryChannel extends MemoryChannel {
     private final int slowTime;

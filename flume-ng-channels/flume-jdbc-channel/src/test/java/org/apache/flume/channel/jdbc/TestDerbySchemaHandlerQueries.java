@@ -107,7 +107,6 @@ public class TestDerbySchemaHandlerQueries {
       = "INSERT INTO FLUME.FL_HEADER (FLH_EVENT, FLH_NAME, FLH_VALUE, "
           + "FLH_NMSPILL, FLH_VLSPILL) VALUES ( ?, ?, ?, ?, ?)";
 
-
   public static final String EXPECTED_STMT_INSERT_HEADER_NAME_SPILL
       = "INSERT INTO FLUME.FL_NMSPILL (FLN_HEADER, FLN_SPILL) VALUES ( ?, ?)";
 
@@ -118,7 +117,6 @@ public class TestDerbySchemaHandlerQueries {
       = "SELECT FLE_ID, FLE_PAYLOAD, FLE_SPILL FROM FLUME.FL_EVENT WHERE "
           + "FLE_ID = (SELECT MIN(FLE_ID) FROM FLUME.FL_EVENT WHERE "
           + "FLE_CHANNEL = ?)";
-
 
   public static final String EXPECTED_STMT_FETCH_PAYLOAD_SPILL
       = "SELECT FLP_SPILL FROM FLUME.FL_PLSPILL WHERE FLP_EVENT = ?";

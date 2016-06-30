@@ -18,12 +18,10 @@
  */
 package org.apache.flume.channel.file.encryption;
 
-import java.io.File;
-import java.security.Key;
-import java.util.Map;
-
+import com.google.common.base.Charsets;
+import com.google.common.collect.Maps;
+import com.google.common.io.Files;
 import junit.framework.Assert;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.Context;
 import org.apache.flume.channel.file.TestUtils;
@@ -31,9 +29,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Maps;
-import com.google.common.io.Files;
+import java.io.File;
+import java.security.Key;
+import java.util.Map;
 
 public class TestJCEFileKeyProvider {
   private CipherProvider.Encryptor encryptor;
@@ -53,62 +51,69 @@ public class TestJCEFileKeyProvider {
     Assert.assertTrue(keyStoreFile.createNewFile());
 
   }
+
   @After
   public void cleanup() {
     FileUtils.deleteQuietly(baseDir);
   }
+
   private void initializeForKey(Key key) {
-    encryptor =
-        new AESCTRNoPaddingProvider.EncryptorBuilder().setKey(key).build();
-    decryptor =
-        new AESCTRNoPaddingProvider.DecryptorBuilder()
-        .setKey(key).setParameters(encryptor.getParameters()).build();
+    encryptor = new AESCTRNoPaddingProvider.EncryptorBuilder()
+                                           .setKey(key)
+                                           .build();
+    decryptor = new AESCTRNoPaddingProvider.DecryptorBuilder()
+                                           .setKey(key)
+                                           .setParameters(encryptor.getParameters())
+                                           .build();
   }
+
   @Test
   public void testWithNewKeyStore() throws Exception {
     createNewKeyStore();
     EncryptionTestUtils.createKeyStore(keyStoreFile, keyStorePasswordFile,
         keyAliasPassword);
-    Context context = new Context(EncryptionTestUtils.
-        configureForKeyStore(keyStoreFile,
-            keyStorePasswordFile, keyAliasPassword));
+    Context context = new Context(
+        EncryptionTestUtils.configureForKeyStore(keyStoreFile,
+                                                 keyStorePasswordFile,
+                                                 keyAliasPassword));
     Context keyProviderContext = new Context(
         context.getSubProperties(EncryptionConfiguration.KEY_PROVIDER + "."));
-    KeyProvider keyProvider = KeyProviderFactory.
-        getInstance(KeyProviderType.JCEKSFILE.name(), keyProviderContext);
+    KeyProvider keyProvider =
+        KeyProviderFactory.getInstance(KeyProviderType.JCEKSFILE.name(), keyProviderContext);
     testKeyProvider(keyProvider);
   }
+
   @Test
   public void testWithExistingKeyStore() throws Exception {
-    keyAliasPassword.putAll(EncryptionTestUtils.
-        configureTestKeyStore(baseDir, keyStoreFile));
-    Context context = new Context(EncryptionTestUtils.
-        configureForKeyStore(keyStoreFile,
-            keyStorePasswordFile, keyAliasPassword));
+    keyAliasPassword.putAll(EncryptionTestUtils.configureTestKeyStore(baseDir, keyStoreFile));
+    Context context = new Context(
+        EncryptionTestUtils.configureForKeyStore(keyStoreFile,
+                                                 keyStorePasswordFile,
+                                                 keyAliasPassword));
     Context keyProviderContext = new Context(
         context.getSubProperties(EncryptionConfiguration.KEY_PROVIDER + "."));
-    KeyProvider keyProvider = KeyProviderFactory.
-        getInstance(KeyProviderType.JCEKSFILE.name(), keyProviderContext);
+    KeyProvider keyProvider =
+        KeyProviderFactory.getInstance(KeyProviderType.JCEKSFILE.name(), keyProviderContext);
     testKeyProvider(keyProvider);
   }
+
   private void createNewKeyStore() throws Exception {
-    for(int i = 0; i < 10; i++) {
+    for (int i = 0; i < 10; i++) {
       // create some with passwords, some without
-      if(i % 2 == 0) {
+      if (i % 2 == 0) {
         String alias = "test-" + i;
         String password = String.valueOf(i);
-        keyAliasPassword.put(alias,
-            TestUtils.writeStringToFile(baseDir, alias, password));
+        keyAliasPassword.put(alias, TestUtils.writeStringToFile(baseDir, alias, password));
       }
     }
   }
+
   private void testKeyProvider(KeyProvider keyProvider) {
-    for(String alias : keyAliasPassword.keySet()) {
+    for (String alias : keyAliasPassword.keySet()) {
       Key key = keyProvider.getKey(alias);
       initializeForKey(key);
       String expected = "some text here " + alias;
-      byte[] cipherText = encryptor.
-          encrypt(expected.getBytes(Charsets.UTF_8));
+      byte[] cipherText = encryptor.encrypt(expected.getBytes(Charsets.UTF_8));
       byte[] clearText = decryptor.decrypt(cipherText);
       Assert.assertEquals(expected, new String(clearText, Charsets.UTF_8));
     }

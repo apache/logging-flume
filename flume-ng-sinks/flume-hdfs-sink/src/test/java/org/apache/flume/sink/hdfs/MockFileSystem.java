@@ -42,8 +42,7 @@ public class MockFileSystem extends FileSystem {
   int currentRenameAttempts;
   boolean closeSucceed = true;
 
-  public MockFileSystem(FileSystem fs,
-    int numberOfRetriesRequired) {
+  public MockFileSystem(FileSystem fs, int numberOfRetriesRequired) {
     this.fs = fs;
     this.numberOfRetriesRequired = numberOfRetriesRequired;
   }
@@ -67,17 +66,14 @@ public class MockFileSystem extends FileSystem {
 
   @Override
   public FSDataOutputStream create(Path arg0) throws IOException {
-    //throw new IOException ("HI there2");
-    latestOutputStream = new MockFsDataOutputStream(
-      fs.create(arg0), closeSucceed);
-
+    latestOutputStream = new MockFsDataOutputStream(fs.create(arg0), closeSucceed);
     return latestOutputStream;
   }
 
   @Override
-  public FSDataOutputStream create(Path arg0, FsPermission arg1,
-    boolean arg2, int arg3, short arg4, long arg5, Progressable arg6)
-    throws IOException {
+  public FSDataOutputStream create(Path arg0, FsPermission arg1, boolean arg2, int arg3,
+                                   short arg4, long arg5, Progressable arg6)
+      throws IOException {
     throw new IOException("Not a real file system");
   }
 
@@ -126,11 +122,9 @@ public class MockFileSystem extends FileSystem {
   @Override
   public boolean rename(Path arg0, Path arg1) throws IOException {
     currentRenameAttempts++;
-    logger.info(
-      "Attempting to Rename: '" + currentRenameAttempts + "' of '" +
-      numberOfRetriesRequired + "'");
-    if (currentRenameAttempts >= numberOfRetriesRequired ||
-      numberOfRetriesRequired == 0) {
+    logger.info("Attempting to Rename: '" + currentRenameAttempts + "' of '" +
+                numberOfRetriesRequired + "'");
+    if (currentRenameAttempts >= numberOfRetriesRequired || numberOfRetriesRequired == 0) {
       logger.info("Renaming file");
       return fs.rename(arg0, arg1);
     } else {
@@ -141,6 +135,5 @@ public class MockFileSystem extends FileSystem {
   @Override
   public void setWorkingDirectory(Path arg0) {
     fs.setWorkingDirectory(arg0);
-
   }
 }

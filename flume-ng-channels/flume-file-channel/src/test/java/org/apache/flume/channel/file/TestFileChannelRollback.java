@@ -18,11 +18,7 @@
  */
 package org.apache.flume.channel.file;
 
-import static org.apache.flume.channel.file.TestUtils.*;
-
-import java.util.Collections;
-import java.util.Set;
-
+import com.google.common.base.Charsets;
 import org.apache.flume.Transaction;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.sink.LoggerSink;
@@ -33,8 +29,12 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Charsets;
+import java.util.Collections;
+import java.util.Set;
 
+import static org.apache.flume.channel.file.TestUtils.compareInputAndOut;
+import static org.apache.flume.channel.file.TestUtils.putEvents;
+import static org.apache.flume.channel.file.TestUtils.takeEvents;
 
 public class TestFileChannelRollback extends TestFileChannelBase {
   protected static final Logger LOG = LoggerFactory
@@ -117,11 +117,11 @@ public class TestFileChannelRollback extends TestFileChannelBase {
     transaction.rollback();
     transaction.close();
 
-    while(runner.isAlive()) {
+    while (runner.isAlive()) {
       Thread.sleep(10L);
     }
     Assert.assertEquals(numEvents - 1, runner.getCount());
-    for(Exception ex : runner.getErrors()) {
+    for (Exception ex : runner.getErrors()) {
       LOG.warn("Sink had error", ex);
     }
     Assert.assertEquals(Collections.EMPTY_LIST, runner.getErrors());

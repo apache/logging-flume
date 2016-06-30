@@ -18,7 +18,8 @@
  */
 package org.apache.flume.channel.file;
 
-import static org.mockito.Mockito.*;
+import junit.framework.Assert;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -30,9 +31,8 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import junit.framework.Assert;
-
-import org.junit.Test;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @SuppressWarnings("deprecation")
 public class TestTransactionEventRecordV2 {
@@ -127,7 +127,7 @@ public class TestTransactionEventRecordV2 {
     try {
       TransactionEventRecord.fromDataInputV2(toDataInput(in));
       Assert.fail();
-    } catch(NullPointerException e) {
+    } catch (NullPointerException e) {
       Assert.assertEquals("Unknown action ffff8000", e.getMessage());
     }
   }

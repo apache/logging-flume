@@ -19,28 +19,10 @@
 
 package org.apache.flume.sink;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.google.common.base.Charsets;
-import java.io.FileInputStream;
-import java.security.KeyStore;
-import java.security.Security;
-import java.util.concurrent.Executors;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.NettyServer;
-import org.apache.avro.ipc.NettyTransceiver;
 import org.apache.avro.ipc.Server;
-import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.apache.avro.ipc.specific.SpecificResponder;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
@@ -49,8 +31,8 @@ import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Sink;
 import org.apache.flume.Transaction;
-import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.api.RpcClient;
+import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
@@ -61,18 +43,29 @@ import org.apache.flume.source.AvroSource;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
-import org.jboss.netty.channel.ChannelException;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
+import java.security.KeyStore;
+import java.security.Security;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class TestAvroSink {
 
@@ -90,7 +83,9 @@ public class TestAvroSink {
   }
 
   public void setUp(String compressionType, int compressionLevel) {
-    if (sink != null) { throw new RuntimeException("double setup");}
+    if (sink != null) {
+      throw new RuntimeException("double setup");
+    }
     sink = new AvroSink();
     channel = new MemoryChannel();
 
@@ -607,8 +602,9 @@ public class TestAvroSink {
   }
 
   @Test
-  public void testSslSinkWithNonTrustedCert() throws InterruptedException,
-      EventDeliveryException, InstantiationException, IllegalAccessException {
+  public void testSslSinkWithNonTrustedCert()
+      throws InterruptedException, EventDeliveryException, InstantiationException,
+             IllegalAccessException {
     setUp();
     Event event = EventBuilder.withBody("test event 1", Charsets.UTF_8);
     Server server = createSslServer(new MockAvroServer());
@@ -662,37 +658,38 @@ public class TestAvroSink {
   }
 
   @Test
-  public void testRequestWithNoCompression() throws InterruptedException, IOException, EventDeliveryException {
-
+  public void testRequestWithNoCompression()
+      throws InterruptedException, IOException, EventDeliveryException {
     doRequest(false, false, 6);
   }
 
   @Test
-  public void testRequestWithCompressionOnClientAndServerOnLevel0() throws InterruptedException, IOException, EventDeliveryException {
-
+  public void testRequestWithCompressionOnClientAndServerOnLevel0()
+      throws InterruptedException, IOException, EventDeliveryException {
     doRequest(true, true, 0);
   }
 
   @Test
-  public void testRequestWithCompressionOnClientAndServerOnLevel1() throws InterruptedException, IOException, EventDeliveryException {
-
+  public void testRequestWithCompressionOnClientAndServerOnLevel1()
+      throws InterruptedException, IOException, EventDeliveryException {
     doRequest(true, true, 1);
   }
 
   @Test
-  public void testRequestWithCompressionOnClientAndServerOnLevel6() throws InterruptedException, IOException, EventDeliveryException {
-
+  public void testRequestWithCompressionOnClientAndServerOnLevel6()
+      throws InterruptedException, IOException, EventDeliveryException {
     doRequest(true, true, 6);
   }
 
   @Test
-  public void testRequestWithCompressionOnClientAndServerOnLevel9() throws InterruptedException, IOException, EventDeliveryException {
-
+  public void testRequestWithCompressionOnClientAndServerOnLevel9()
+      throws InterruptedException, IOException, EventDeliveryException {
     doRequest(true, true, 9);
   }
 
-  private void doRequest(boolean serverEnableCompression, boolean clientEnableCompression, int compressionLevel) throws InterruptedException, IOException, EventDeliveryException {
-
+  private void doRequest(boolean serverEnableCompression, boolean clientEnableCompression,
+                         int compressionLevel)
+      throws InterruptedException, IOException, EventDeliveryException {
     if (clientEnableCompression) {
       setUp("deflate", compressionLevel);
     } else {
@@ -732,15 +729,12 @@ public class TestAvroSink {
 
     source.start();
 
-    Assert
-        .assertTrue("Reached start or error", LifecycleController.waitForOneOf(
-            source, LifecycleState.START_OR_ERROR));
-    Assert.assertEquals("Server is started", LifecycleState.START,
-        source.getLifecycleState());
+    Assert.assertTrue("Reached start or error",
+                      LifecycleController.waitForOneOf(source, LifecycleState.START_OR_ERROR));
+    Assert.assertEquals("Server is started",
+                        LifecycleState.START, source.getLifecycleState());
 
-
-    Event event = EventBuilder.withBody("Hello avro",
-        Charset.forName("UTF8"));
+    Event event = EventBuilder.withBody("Hello avro", Charset.forName("UTF8"));
 
     sink.start();
 
@@ -858,7 +852,8 @@ public class TestAvroSink {
     public SSLChannelPipelineFactory() {
     }
 
-    public SSLChannelPipelineFactory(String keystore, String keystorePassword, String keystoreType) {
+    public SSLChannelPipelineFactory(String keystore, String keystorePassword,
+                                     String keystoreType) {
       this.keystore = keystore;
       this.keystorePassword = keystorePassword;
       this.keystoreType = keystoreType;

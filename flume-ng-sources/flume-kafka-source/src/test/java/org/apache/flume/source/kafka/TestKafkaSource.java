@@ -17,29 +17,18 @@
 
 package org.apache.flume.source.kafka;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.regex.Pattern;
-
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import junit.framework.Assert;
 import kafka.common.TopicExistsException;
-
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumWriter;
-import org.apache.flume.*;
+import org.apache.flume.ChannelException;
+import org.apache.flume.Context;
+import org.apache.flume.Event;
+import org.apache.flume.EventDeliveryException;
+import org.apache.flume.FlumeException;
 import org.apache.flume.PollableSource.Status;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.source.avro.AvroFlumeEvent;
@@ -52,11 +41,36 @@ import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.apache.flume.source.kafka.KafkaSourceConstants.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.regex.Pattern;
+
+import static org.apache.flume.source.kafka.KafkaSourceConstants.AVRO_EVENT;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.BATCH_DURATION_MS;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.BATCH_SIZE;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.BOOTSTRAP_SERVERS;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_AUTO_COMMIT;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.KAFKA_CONSUMER_PREFIX;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.OLD_GROUP_ID;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.PARTITION_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.TIMESTAMP_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPIC;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPICS;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPICS_REGEX;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPIC_HEADER;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 
 public class TestKafkaSource {
-  private static final Logger log =
-          LoggerFactory.getLogger(TestKafkaSource.class);
+  private static final Logger log = LoggerFactory.getLogger(TestKafkaSource.class);
 
   private KafkaSource kafkaSource;
   private KafkaSourceEmbeddedKafka kafkaServer;
@@ -243,10 +257,10 @@ public class TestKafkaSource {
   }
 
   @SuppressWarnings("unchecked")
-  @Test(expected= FlumeException.class)
-  public void testNonExistingKafkaServer() throws EventDeliveryException,
-          SecurityException, NoSuchFieldException, IllegalArgumentException,
-          IllegalAccessException, InterruptedException {
+  @Test(expected = FlumeException.class)
+  public void testNonExistingKafkaServer() throws EventDeliveryException, SecurityException,
+                                                  NoSuchFieldException, IllegalArgumentException,
+                                                  IllegalAccessException, InterruptedException {
     context.put(TOPICS, topic0);
     context.put(BOOTSTRAP_SERVERS,"blabla:666");
     kafkaSource.configure(context);
@@ -258,8 +272,7 @@ public class TestKafkaSource {
   }
 
   @Test
-  public void testBatchTime() throws InterruptedException,
-          EventDeliveryException {
+  public void testBatchTime() throws InterruptedException, EventDeliveryException {
     context.put(TOPICS, topic0);
     context.put(BATCH_DURATION_MS, "250");
     kafkaSource.configure(context);
@@ -267,7 +280,7 @@ public class TestKafkaSource {
 
     Thread.sleep(500L);
 
-    for (int i=1; i<5000; i++) {
+    for (int i = 1; i < 5000; i++) {
       kafkaServer.produce(topic0, "", "hello, world " + i);
     }
     Thread.sleep(500L);
@@ -277,8 +290,7 @@ public class TestKafkaSource {
     Status status = kafkaSource.process();
     long endTime = System.currentTimeMillis();
     assertEquals(Status.READY, status);
-    assertTrue(endTime - startTime <
-            (context.getLong(BATCH_DURATION_MS) + error));
+    assertTrue(endTime - startTime < (context.getLong(BATCH_DURATION_MS) + error));
   }
 
   // Consume event, stop source, start again and make sure we are not
@@ -302,13 +314,11 @@ public class TestKafkaSource {
     kafkaSource.start();
     Thread.sleep(500L);
     Assert.assertEquals(Status.BACKOFF, kafkaSource.process());
-
   }
 
   // Remove channel processor and test if we can consume events again
   @Test
-  public void testNonCommit() throws EventDeliveryException,
-          InterruptedException {
+  public void testNonCommit() throws EventDeliveryException, InterruptedException {
     context.put(TOPICS, topic0);
     context.put(BATCH_SIZE,"1");
     context.put(BATCH_DURATION_MS,"30000");
@@ -328,15 +338,11 @@ public class TestKafkaSource {
 
     log.debug("re-process to good channel - this should work");
     kafkaSource.process();
-    Assert.assertEquals("hello, world", new String(events.get(0).getBody(),
-            Charsets.UTF_8));
-
-
+    Assert.assertEquals("hello, world", new String(events.get(0).getBody(), Charsets.UTF_8));
   }
 
   @Test
-  public void testTwoBatches() throws InterruptedException,
-          EventDeliveryException {
+  public void testTwoBatches() throws InterruptedException, EventDeliveryException {
     context.put(TOPICS, topic0);
     context.put(BATCH_SIZE,"1");
     context.put(BATCH_DURATION_MS, "30000");
@@ -348,20 +354,17 @@ public class TestKafkaSource {
     Thread.sleep(500L);
 
     kafkaSource.process();
-    Assert.assertEquals("event 1", new String(events.get(0).getBody(),
-            Charsets.UTF_8));
+    Assert.assertEquals("event 1", new String(events.get(0).getBody(), Charsets.UTF_8));
     events.clear();
 
     kafkaServer.produce(topic0, "", "event 2");
     Thread.sleep(500L);
     kafkaSource.process();
-    Assert.assertEquals("event 2", new String(events.get(0).getBody(),
-            Charsets.UTF_8));
+    Assert.assertEquals("event 2", new String(events.get(0).getBody(), Charsets.UTF_8));
   }
 
   @Test
-  public void testTwoBatchesWithAutocommit() throws InterruptedException,
-          EventDeliveryException {
+  public void testTwoBatchesWithAutocommit() throws InterruptedException, EventDeliveryException {
     context.put(TOPICS, topic0);
     context.put(BATCH_SIZE,"1");
     context.put(BATCH_DURATION_MS,"30000");
@@ -374,23 +377,20 @@ public class TestKafkaSource {
     Thread.sleep(500L);
 
     kafkaSource.process();
-    Assert.assertEquals("event 1", new String(events.get(0).getBody(),
-            Charsets.UTF_8));
+    Assert.assertEquals("event 1", new String(events.get(0).getBody(), Charsets.UTF_8));
     events.clear();
 
     kafkaServer.produce(topic0, "", "event 2");
     Thread.sleep(500L);
     kafkaSource.process();
-    Assert.assertEquals("event 2", new String(events.get(0).getBody(),
-            Charsets.UTF_8));
-
+    Assert.assertEquals("event 2", new String(events.get(0).getBody(), Charsets.UTF_8));
   }
 
   @SuppressWarnings("unchecked")
   @Test
-  public void testNullKey() throws EventDeliveryException,
-      SecurityException, NoSuchFieldException, IllegalArgumentException,
-      IllegalAccessException, InterruptedException {
+  public void testNullKey() throws EventDeliveryException, SecurityException, NoSuchFieldException,
+                                   IllegalArgumentException, IllegalAccessException,
+                                   InterruptedException {
     context.put(TOPICS, topic0);
     context.put(BATCH_SIZE, "1");
     kafkaSource.configure(context);
@@ -406,8 +406,7 @@ public class TestKafkaSource {
     Assert.assertEquals(Status.BACKOFF, kafkaSource.process());
     Assert.assertEquals(1, events.size());
 
-    Assert.assertEquals("hello, world", new String(events.get(0).getBody(),
-        Charsets.UTF_8));
+    Assert.assertEquals("hello, world", new String(events.get(0).getBody(), Charsets.UTF_8));
   }
 
   @Test
@@ -430,7 +429,8 @@ public class TestKafkaSource {
   public void testKafkaProperties() {
     Context context = new Context();
     context.put(TOPICS, "test1, test2");
-    context.put(KAFKA_CONSUMER_PREFIX + ConsumerConfig.GROUP_ID_CONFIG, "override.default.group.id");
+    context.put(KAFKA_CONSUMER_PREFIX + ConsumerConfig.GROUP_ID_CONFIG,
+                "override.default.group.id");
     context.put(KAFKA_CONSUMER_PREFIX + "fake.property", "kafka.property.value");
     context.put(BOOTSTRAP_SERVERS, "real-bootstrap-servers-list");
     context.put(KAFKA_CONSUMER_PREFIX + "bootstrap.servers", "bad-bootstrap-servers-list");
@@ -439,21 +439,17 @@ public class TestKafkaSource {
     Properties kafkaProps = source.getConsumerProps();
 
     //check that we have defaults set
-    assertEquals(
-            String.valueOf(DEFAULT_AUTO_COMMIT),
-            kafkaProps.getProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG));
+    assertEquals(String.valueOf(DEFAULT_AUTO_COMMIT),
+                 kafkaProps.getProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG));
     //check that kafka properties override the default and get correct name
-    assertEquals(
-            "override.default.group.id",
-            kafkaProps.getProperty(ConsumerConfig.GROUP_ID_CONFIG));
+    assertEquals("override.default.group.id",
+                 kafkaProps.getProperty(ConsumerConfig.GROUP_ID_CONFIG));
     //check that any kafka property gets in
-    assertEquals(
-            "kafka.property.value",
-            kafkaProps.getProperty("fake.property"));
+    assertEquals("kafka.property.value",
+                 kafkaProps.getProperty("fake.property"));
     //check that documented property overrides defaults
-    assertEquals(
-            "real-bootstrap-servers-list",
-            kafkaProps.getProperty("bootstrap.servers"));
+    assertEquals("real-bootstrap-servers-list",
+                 kafkaProps.getProperty("bootstrap.servers"));
   }
 
   @Test
@@ -469,22 +465,16 @@ public class TestKafkaSource {
 
     KafkaSource.Subscriber<List<String>> subscriber = source.getSubscriber();
     //check topic was set
-    assertEquals(
-            "old.topic",
-            subscriber.get().get(0));
+    assertEquals("old.topic", subscriber.get().get(0));
     //check that kafka old properties override the default and get correct name
-    assertEquals(
-            "old.groupId",
-            kafkaProps.getProperty(ConsumerConfig.GROUP_ID_CONFIG));
+    assertEquals("old.groupId", kafkaProps.getProperty(ConsumerConfig.GROUP_ID_CONFIG));
 
     source = new KafkaSource();
     context.put(KAFKA_CONSUMER_PREFIX + ConsumerConfig.GROUP_ID_CONFIG, "override.old.group.id");
     source.doConfigure(context);
     kafkaProps = source.getConsumerProps();
     //check that kafka new properties override old
-    assertEquals(
-            "override.old.group.id",
-            kafkaProps.getProperty(ConsumerConfig.GROUP_ID_CONFIG));
+    assertEquals("override.old.group.id", kafkaProps.getProperty(ConsumerConfig.GROUP_ID_CONFIG));
 
     context.clear();
     context.put(BOOTSTRAP_SERVERS, "real-bootstrap-servers-list");
@@ -493,9 +483,8 @@ public class TestKafkaSource {
     source.doConfigure(context);
     kafkaProps = source.getConsumerProps();
     //check defaults set
-    assertEquals(
-            KafkaSourceConstants.DEFAULT_GROUP_ID,
-            kafkaProps.getProperty(ConsumerConfig.GROUP_ID_CONFIG));
+    assertEquals(KafkaSourceConstants.DEFAULT_GROUP_ID,
+                 kafkaProps.getProperty(ConsumerConfig.GROUP_ID_CONFIG));
   }
 
   @Test
@@ -568,8 +557,7 @@ public class TestKafkaSource {
 
     Event event = events.get(0);
 
-    Assert.assertEquals("hello, world", new String(event.getBody(),
-            Charsets.UTF_8));
+    Assert.assertEquals("hello, world", new String(event.getBody(), Charsets.UTF_8));
 
     Assert.assertEquals("value1", e.getHeaders().get("header1"));
     Assert.assertEquals("value2", e.getHeaders().get("header2"));
@@ -577,8 +565,7 @@ public class TestKafkaSource {
 
     event = events.get(1);
 
-    Assert.assertEquals("hello, world2", new String(event.getBody(),
-            Charsets.UTF_8));
+    Assert.assertEquals("hello, world2", new String(event.getBody(), Charsets.UTF_8));
 
     Assert.assertEquals("value1", e.getHeaders().get("header1"));
     Assert.assertEquals("value2", e.getHeaders().get("header2"));
@@ -603,7 +590,6 @@ public class TestKafkaSource {
     }).when(channelProcessor).processEventBatch(any(List.class));
 
     return channelProcessor;
-
   }
 
   ChannelProcessor createBadChannel() {

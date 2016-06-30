@@ -12,21 +12,29 @@
     <suppress checks="PackageName"
               files="org/apache/flume/source/avroLegacy|org/apache/flume/source/thriftLegacy"/>
 
+    <!-- Allow unicode escapes in tests -->
+    <suppress checks="AvoidEscapedUnicodeCharacters"
+              files="Test.*\.java"/>
+
     <!-- TODO: Rearrange methods in below classes to keep overloaded methods adjacent -->
     <suppress checks="OverloadMethodsDeclarationOrder"
-              files="channel/file|RpcClientFactory\.java|BucketPath\.java|SinkGroup\.java|DefaultSinkProcessor\.java|RegexExtractorInterceptorMillisSerializer\.java|SimpleAsyncHbaseEventSerializer\.java|hdfs/BucketWriter\.java"/>
+              files="channel/file|RpcClientFactory\.java|BucketPath\.java|SinkGroup\.java|DefaultSinkProcessor\.java|RegexExtractorInterceptorMillisSerializer\.java|SimpleAsyncHbaseEventSerializer\.java|hdfs/BucketWriter\.java|AbstractBasicChannelSemanticsTest\.java"/>
 
     <!-- TODO: Fix inner class names to follow standard convention -->
     <suppress checks="TypeName"
               files="SyslogUDPSource\.java|SyslogTcpSource\.java|TaildirSource\.java"/>
 
+    <!-- TODO: Method names must follow standard Java naming conventions -->
+    <suppress checks="MethodNameCheck"
+              files="TestBucketWriter\.java|TestSyslogUtils\.java"/>
+
     <!-- TODO: Add default cases to switch statements -->
     <suppress checks="MissingSwitchDefault"
-              files="SyslogUtils\.java|ReliableTaildirEventReader\.java"/>
+              files="SyslogUtils\.java|ReliableTaildirEventReader\.java|AbstractBasicChannelSemanticsTest\.java"/>
 
     <!-- TODO: Avoid empty catch blocks -->
     <suppress checks="EmptyCatchBlock"
-              files="channel/file/LogFile\.java"/>
+              files="channel/file/LogFile\.java|TestDatasetSink\.java|CountingSourceRunner\.java|CountingSinkRunner\.java|TestKafkaChannel\.java|TestTaildirSource\.java|TestChannelProcessor\.java|TestHiveSink\.java|AbstractBasicChannelSemanticsTest\.java|TestJMSSource\.java|TestEmbeddedAgent\.java|TestAsyncHBaseSink\.java"/>
 
     <!-- TODO: Avoid empty if blocks -->
     <suppress checks="EmptyBlockCheck"
@@ -34,10 +42,10 @@
 
     <!-- TODO: Fix line length issues -->
     <suppress checks="LineLengthCheck"
-              files="channel/MemoryChannel\.java|ReliableSpoolingFileEventReader\.java"/>
+              files="channel/MemoryChannel\.java|ReliableSpoolingFileEventReader\.java|TestAvroSink\.java"/>
 
     <!-- TODO: Move helper classes to their own files -->
     <suppress checks="OneTopLevelClass"
-              files="KafkaSource\.java|KafkaChannel\.java|KafkaSink\.java"/>
+              files="KafkaSource\.java|KafkaChannel\.java|KafkaSink\.java|TestElasticSearchSink\.java"/>
 
 </suppressions>

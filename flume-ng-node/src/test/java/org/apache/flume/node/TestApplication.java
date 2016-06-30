@@ -44,13 +44,13 @@ import com.google.common.io.Files;
 
 public class TestApplication {
 
-
   private File baseDir;
 
   @Before
   public void setup() throws Exception {
     baseDir = Files.createTempDir();
   }
+
   @After
   public void tearDown() throws Exception {
     FileUtils.deleteDirectory(baseDir);

@@ -60,7 +60,7 @@ public class SyslogAgent {
     public String toString() {
       return syslogSourceType;
     }
-  };
+  }
 
   private Properties agentProps;
   private File sinkOutputDir;
@@ -73,7 +73,6 @@ public class SyslogAgent {
 
   public SyslogAgent() throws IOException {
     hostname = "localhost";
-
     setRandomPort();
   }
 
@@ -141,7 +140,7 @@ public class SyslogAgent {
     while (client == null) {
       try {
         client = new BufferedOutputStream(new Socket(hostname, port).getOutputStream());
-      } catch(IOException e) {
+      } catch (IOException e) {
         if (++numberOfAttempts >= DEFAULT_ATTEMPTS) {
           throw new AssertionError("Could not connect to source after "
               + DEFAULT_ATTEMPTS + " attempts with " + DEFAULT_TIMEOUT + " ms timeout.");
@@ -206,8 +205,8 @@ public class SyslogAgent {
     // Only 1 file should be in FILE_ROLL sink's dir (rolling is disabled)
     File[] sinkOutputDirChildren = sinkOutputDir.listFiles();
     Assert.assertEquals("Expected FILE_ROLL sink's dir to have only 1 child," +
-        " but found " + sinkOutputDirChildren.length + " children.",
-    1, sinkOutputDirChildren.length);
+                        " but found " + sinkOutputDirChildren.length + " children.",
+                        1, sinkOutputDirChildren.length);
 
     /* Wait for output file stats to be as expected. */
     File outputDirChild = sinkOutputDirChildren[0];

@@ -65,7 +65,7 @@ public class TestLoadBalancingLog4jAppender {
   private boolean slowDown = false;
 
   @Before
-  public void initiate() throws InterruptedException{
+  public void initiate() throws InterruptedException {
     ch = new MemoryChannel();
     configureChannel();
 
@@ -164,9 +164,9 @@ public class TestLoadBalancingLog4jAppender {
   @Test
   public void testRandomBackoffUnsafeMode() throws Exception {
     File TESTFILE = new File(TestLoadBalancingLog4jAppender.class
-      .getClassLoader()
-      .getResource("flume-loadbalancing-backoff-log4jtest.properties")
-      .getFile());
+        .getClassLoader()
+        .getResource("flume-loadbalancing-backoff-log4jtest.properties")
+        .getFile());
     startSources(TESTFILE, true, new int[]{25430, 25431, 25432});
 
     sources.get(0).setFail();
@@ -179,9 +179,9 @@ public class TestLoadBalancingLog4jAppender {
   @Test (expected = EventDeliveryException.class)
   public void testTimeout() throws Throwable {
     File TESTFILE = new File(TestLoadBalancingLog4jAppender.class
-      .getClassLoader()
-      .getResource("flume-loadbalancinglog4jtest.properties")
-      .getFile());
+        .getClassLoader()
+        .getResource("flume-loadbalancinglog4jtest.properties")
+        .getFile());
 
     ch = new TestLog4jAppender.SlowMemoryChannel(2000);
     configureChannel();
@@ -200,9 +200,9 @@ public class TestLoadBalancingLog4jAppender {
   @Test(expected = EventDeliveryException.class)
   public void testRandomBackoffNotUnsafeMode() throws Throwable {
     File TESTFILE = new File(TestLoadBalancingLog4jAppender.class
-      .getClassLoader()
-      .getResource("flume-loadbalancing-backoff-log4jtest.properties")
-      .getFile());
+        .getClassLoader()
+        .getResource("flume-loadbalancing-backoff-log4jtest.properties")
+        .getFile());
     startSources(TESTFILE, false, new int[]{25430, 25431, 25432});
 
     sources.get(0).setFail();
@@ -224,17 +224,17 @@ public class TestLoadBalancingLog4jAppender {
   }
 
   private void sendAndAssertFail() throws IOException {
-      int level = 20000;
-      String msg = "This is log message number" + String.valueOf(level);
-      fixture.log(Level.toLevel(level), msg);
+    int level = 20000;
+    String msg = "This is log message number" + String.valueOf(level);
+    fixture.log(Level.toLevel(level), msg);
 
-      Transaction transaction = ch.getTransaction();
-      transaction.begin();
-      Event event = ch.take();
-      Assert.assertNull(event);
+    Transaction transaction = ch.getTransaction();
+    transaction.begin();
+    Event event = ch.take();
+    Assert.assertNull(event);
 
-      transaction.commit();
-      transaction.close();
+    transaction.commit();
+    transaction.close();
 
   }
 
@@ -271,8 +271,7 @@ public class TestLoadBalancingLog4jAppender {
   }
 
   private void startSources(File log4jProps, boolean unsafeMode, int... ports)
-    throws
-    IOException {
+      throws IOException {
     for (int port : ports) {
       CountingAvroSource source = new CountingAvroSource(port);
       Context context = new Context();
@@ -297,8 +296,8 @@ public class TestLoadBalancingLog4jAppender {
     Properties props = new Properties();
     props.load(reader);
     props.setProperty("log4j.appender.out2.UnsafeMode",
-      String.valueOf(unsafeMode));
-    if(slowDown) {
+        String.valueOf(unsafeMode));
+    if (slowDown) {
       props.setProperty("log4j.appender.out2.Timeout", String.valueOf(1000));
     }
     PropertyConfigurator.configure(props);
@@ -308,13 +307,13 @@ public class TestLoadBalancingLog4jAppender {
   static class CountingAvroSource extends AvroSource {
     AtomicInteger appendCount = new AtomicInteger();
     volatile boolean isFail = false;
-	private final int port2;
+    private final int port2;
 
     public CountingAvroSource(int port) {
-		port2 = port;
+      port2 = port;
     }
 
-	public void setOk() {
+    public void setOk() {
       this.isFail = false;
     }
 

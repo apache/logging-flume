@@ -17,15 +17,6 @@
  */
 package org.apache.flume.channel;
 
-import java.util.Map.Entry;
-import java.util.Random;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
@@ -36,6 +27,15 @@ import org.apache.flume.event.EventBuilder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.Map.Entry;
+import java.util.Random;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TestMemoryChannelConcurrency {
 
@@ -120,10 +120,10 @@ public class TestMemoryChannelConcurrency {
   }
 
   /**
-   * Works with a startgate/endgate latches to make sure all threads run at the same time. Threads randomly
-   * choose to commit or rollback random numbers of actions, tagging them with the thread no.
-   * The correctness check is made by recording committed entries into a map, and verifying the count
-   * after the endgate
+   * Works with a startgate/endgate latches to make sure all threads run at the same time.
+   * Threads randomly choose to commit or rollback random numbers of actions, tagging them with the
+   * thread no. The correctness check is made by recording committed entries into a map, and
+   * verifying the count after the endgate.
    * Since nothing is taking the puts out, allow for a big capacity
    *
    * @throws InterruptedException
@@ -135,7 +135,8 @@ public class TestMemoryChannelConcurrency {
     context.put("keep-alive", "1");
     context.put("capacity", "5000"); // theoretical maximum of 100 threads * 10 * 5
     // because we're just grabbing the whole lot in one commit
-    // normally a transactionCapacity significantly lower than the channel capacity would be recommended
+    // normally a transactionCapacity significantly lower than the channel capacity would be
+    // recommended
     context.put("transactionCapacity", "5000");
     Configurables.configure(channel, context);
     final ConcurrentHashMap<String, AtomicInteger> committedPuts =
@@ -158,17 +159,17 @@ public class TestMemoryChannelConcurrency {
           } catch (InterruptedException e1) {
             Thread.currentThread().interrupt();
           }
-          for(int j = 0; j < 10; j++) {
+          for (int j = 0; j < 10; j++) {
             int events = rng.nextInt(5) + 1;
             Transaction tx = channel.getTransaction();
             tx.begin();
-            for(int k = 0; k < events; k++) {
+            for (int k = 0; k < events; k++) {
               channel.put(EventBuilder.withBody(strtid.getBytes()));
             }
-            if(rng.nextBoolean()) {
+            if (rng.nextBoolean()) {
               tx.commit();
               AtomicInteger tcount = committedPuts.get(strtid);
-              if(tcount == null) {
+              if (tcount == null) {
                 committedPuts.put(strtid, new AtomicInteger(events));
               } else {
                 tcount.addAndGet(events);
@@ -186,7 +187,7 @@ public class TestMemoryChannelConcurrency {
     startGate.countDown();
     endGate.await();
 
-    if(committedPuts.isEmpty()) {
+    if (committedPuts.isEmpty()) {
       Assert.fail();
     }
 
@@ -194,17 +195,17 @@ public class TestMemoryChannelConcurrency {
     Transaction tx = channel.getTransaction();
     tx.begin();
     Event e;
-    while((e = channel.take()) != null) {
+    while ((e = channel.take()) != null) {
       String index = new String(e.getBody());
       AtomicInteger remain = committedPuts.get(index);
       int post = remain.decrementAndGet();
-      if(post == 0) {
+      if (post == 0) {
         committedPuts.remove(index);
       }
     }
     tx.commit();
     tx.close();
-    if(!committedPuts.isEmpty()) {
+    if (!committedPuts.isEmpty()) {
       Assert.fail();
     }
   }
@@ -216,10 +217,12 @@ public class TestMemoryChannelConcurrency {
     context.put("keep-alive", "1");
     context.put("capacity", "100"); // theoretical maximum of 100 threads * 10 * 5
     // because we're just grabbing the whole lot in one commit
-    // normally a transactionCapacity significantly lower than the channel capacity would be recommended
+    // normally a transactionCapacity significantly lower than the channel capacity would be
+    // recommended
     context.put("transactionCapacity", "100");
     Configurables.configure(channel, context);
-    final ConcurrentHashMap<String, AtomicInteger> committedPuts = new ConcurrentHashMap<String, AtomicInteger>();
+    final ConcurrentHashMap<String, AtomicInteger> committedPuts =
+        new ConcurrentHashMap<String, AtomicInteger>();
     final ConcurrentHashMap<String, AtomicInteger> committedTakes =
         new ConcurrentHashMap<String, AtomicInteger>();
 
@@ -228,7 +231,7 @@ public class TestMemoryChannelConcurrency {
     final CountDownLatch endGate = new CountDownLatch(threadCount);
 
     // start a sink and source for each
-    for (int i = 0; i < threadCount/2; i++) {
+    for (int i = 0; i < threadCount / 2; i++) {
       Thread t = new Thread() {
         @Override
         public void run() {
@@ -241,23 +244,23 @@ public class TestMemoryChannelConcurrency {
           } catch (InterruptedException e1) {
             Thread.currentThread().interrupt();
           }
-          for(int j = 0; j < 10; j++) {
+          for (int j = 0; j < 10; j++) {
             int events = rng.nextInt(5) + 1;
             Transaction tx = channel.getTransaction();
             tx.begin();
-            for(int k = 0; k < events; k++) {
+            for (int k = 0; k < events; k++) {
               channel.put(EventBuilder.withBody(strtid.getBytes()));
             }
-            if(rng.nextBoolean()) {
+            if (rng.nextBoolean()) {
               try {
                 tx.commit();
                 AtomicInteger tcount = committedPuts.get(strtid);
-                if(tcount == null) {
+                if (tcount == null) {
                   committedPuts.put(strtid, new AtomicInteger(events));
                 } else {
                   tcount.addAndGet(events);
                 }
-              } catch(ChannelException e) {
+              } catch (ChannelException e) {
                 System.out.print("puts commit failed");
                 tx.rollback();
               }
@@ -282,25 +285,25 @@ public class TestMemoryChannelConcurrency {
           } catch (InterruptedException e1) {
             Thread.currentThread().interrupt();
           }
-          for(int j = 0; j < 10; j++) {
+          for (int j = 0; j < 10; j++) {
             int events = rng.nextInt(5) + 1;
             Transaction tx = channel.getTransaction();
             tx.begin();
             Event[] taken = new Event[events];
             int k;
-            for(k = 0; k < events; k++) {
+            for (k = 0; k < events; k++) {
               taken[k] = channel.take();
-              if(taken[k] == null) break;
+              if (taken[k] == null) break;
             }
-            if(rng.nextBoolean()) {
+            if (rng.nextBoolean()) {
               try {
                 tx.commit();
-                for(Event e : taken) {
-                  if(e == null) break;
+                for (Event e : taken) {
+                  if (e == null) break;
                   String index = new String(e.getBody());
-                  synchronized(takeMapLock) {
+                  synchronized (takeMapLock) {
                     AtomicInteger remain = committedTakes.get(index);
-                    if(remain == null) {
+                    if (remain == null) {
                       committedTakes.put(index, new AtomicInteger(1));
                     } else {
                       remain.incrementAndGet();
@@ -323,7 +326,7 @@ public class TestMemoryChannelConcurrency {
       t.start();
     }
     startGate.countDown();
-    if(!endGate.await(20, TimeUnit.SECONDS)) {
+    if (!endGate.await(20, TimeUnit.SECONDS)) {
       Assert.fail("Not all threads ended succesfully");
     }
 
@@ -333,11 +336,11 @@ public class TestMemoryChannelConcurrency {
     Event e;
     // first pull out what's left in the channel and remove it from the
     // committed map
-    while((e = channel.take()) != null) {
+    while ((e = channel.take()) != null) {
       String index = new String(e.getBody());
       AtomicInteger remain = committedPuts.get(index);
       int post = remain.decrementAndGet();
-      if(post == 0) {
+      if (post == 0) {
         committedPuts.remove(index);
       }
     }
@@ -345,14 +348,19 @@ public class TestMemoryChannelConcurrency {
     tx.close();
 
     // now just check the committed puts match the committed takes
-    for(Entry<String, AtomicInteger> takes : committedTakes.entrySet()) {
+    for (Entry<String, AtomicInteger> takes : committedTakes.entrySet()) {
       AtomicInteger count = committedPuts.get(takes.getKey());
-      if(count == null)
+      if (count == null) {
         Assert.fail("Putted data doesn't exist");
-      if(count.get() != takes.getValue().get())
-        Assert.fail(String.format("Mismatched put and take counts expected %d had %d", count.get(), takes.getValue().get()));
+      }
+      if (count.get() != takes.getValue().get()) {
+        Assert.fail(String.format("Mismatched put and take counts expected %d had %d",
+                                  count.get(), takes.getValue().get()));
+      }
       committedPuts.remove(takes.getKey());
     }
-    if(!committedPuts.isEmpty()) Assert.fail("Puts still has entries remaining");
+    if (!committedPuts.isEmpty()) {
+      Assert.fail("Puts still has entries remaining");
+    }
   }
 }

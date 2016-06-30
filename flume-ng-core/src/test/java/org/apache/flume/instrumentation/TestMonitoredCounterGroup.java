@@ -18,21 +18,14 @@
  */
 package org.apache.flume.instrumentation;
 
-import java.lang.management.ManagementFactory;
-import java.util.Random;
-
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanException;
-import javax.management.MBeanInfo;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import javax.management.ReflectionException;
-
 import junit.framework.Assert;
-
 import org.junit.Before;
 import org.junit.Test;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import java.lang.management.ManagementFactory;
+import java.util.Random;
 
 public class TestMonitoredCounterGroup {
 
@@ -60,7 +53,6 @@ public class TestMonitoredCounterGroup {
       "AppendBatchReceivedCount";
   private static final String SRC_ATTR_APPEND_BATCH_ACCEPTED_COUNT =
       "AppendBatchAcceptedCount";
-
 
   private static final String CH_ATTR_CHANNEL_SIZE = "ChannelSize";
   private static final String CH_ATTR_EVENT_PUT_ATTEMPT =
@@ -122,28 +114,28 @@ public class TestMonitoredCounterGroup {
     int eventDrainAttempt = random.nextInt(MAX_BOUNDS);
     int eventDrainSuccess = random.nextInt(MAX_BOUNDS);
 
-    for (int i = 0; i<connCreated; i++) {
+    for (int i = 0; i < connCreated; i++) {
       skc.incrementConnectionCreatedCount();
     }
-    for (int i = 0; i<connClosed; i++) {
+    for (int i = 0; i < connClosed; i++) {
       skc.incrementConnectionClosedCount();
     }
-    for (int i = 0; i<connFailed; i++) {
+    for (int i = 0; i < connFailed; i++) {
       skc.incrementConnectionFailedCount();
     }
-    for (int i = 0; i<batchEmpty; i++) {
+    for (int i = 0; i < batchEmpty; i++) {
       skc.incrementBatchEmptyCount();
     }
-    for (int i = 0; i<batchUnderflow; i++) {
+    for (int i = 0; i < batchUnderflow; i++) {
       skc.incrementBatchUnderflowCount();
     }
-    for (int i = 0; i<batchComplete; i++) {
+    for (int i = 0; i < batchComplete; i++) {
       skc.incrementBatchCompleteCount();
     }
-    for (int i = 0; i<eventDrainAttempt; i++) {
+    for (int i = 0; i < eventDrainAttempt; i++) {
       skc.incrementEventDrainAttemptCount();
     }
-    for (int i = 0; i<eventDrainSuccess; i++) {
+    for (int i = 0; i < eventDrainSuccess; i++) {
       skc.incrementEventDrainSuccessCount();
     }
 
@@ -204,10 +196,10 @@ public class TestMonitoredCounterGroup {
     int numEventTakeSuccess = random.nextInt(MAX_BOUNDS);
 
     chc.setChannelSize(numChannelSize);
-    for (int i = 0; i<numEventPutAttempt; i++) {
+    for (int i = 0; i < numEventPutAttempt; i++) {
       chc.incrementEventPutAttemptCount();
     }
-    for (int i = 0; i<numEventTakeAttempt; i++) {
+    for (int i = 0; i < numEventTakeAttempt; i++) {
       chc.incrementEventTakeAttemptCount();
     }
     chc.addToEventPutSuccessCount(numEventPutSuccess);
@@ -264,16 +256,16 @@ public class TestMonitoredCounterGroup {
 
     srcc.addToEventReceivedCount(numEventReceived);
     srcc.addToEventAcceptedCount(numEventAccepted);
-    for (int i = 0; i<numAppendReceived; i++) {
+    for (int i = 0; i < numAppendReceived; i++) {
       srcc.incrementAppendReceivedCount();
     }
-    for (int i = 0; i<numAppendAccepted; i++) {
+    for (int i = 0; i < numAppendAccepted; i++) {
       srcc.incrementAppendAcceptedCount();
     }
-    for (int i = 0; i<numAppendBatchReceived; i++) {
+    for (int i = 0; i < numAppendBatchReceived; i++) {
       srcc.incrementAppendBatchReceivedCount();
     }
-    for (int i = 0; i<numAppendBatchAccepted; i++) {
+    for (int i = 0; i < numAppendBatchAccepted; i++) {
       srcc.incrementAppendBatchAcceptedCount();
     }
 
@@ -302,11 +294,11 @@ public class TestMonitoredCounterGroup {
     int numEventReceived2 = random.nextInt(MAX_BOUNDS);
     int numEventAccepted2 = random.nextInt(MAX_BOUNDS);
 
-    for (int i = 0; i<numEventReceived2; i++) {
+    for (int i = 0; i < numEventReceived2; i++) {
       srcc.incrementEventReceivedCount();
     }
 
-    for (int i = 0; i<numEventAccepted2; i++) {
+    for (int i = 0; i < numEventAccepted2; i++) {
       srcc.incrementEventAcceptedCount();
     }
 

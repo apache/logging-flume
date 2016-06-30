@@ -19,20 +19,8 @@
 
 package org.apache.flume.source;
 
-
-import static org.junit.Assert.*;
-
-import java.io.*;
-import java.lang.management.ManagementFactory;
-import java.nio.charset.Charset;
-import java.util.*;
-import java.util.regex.Pattern;
-
-import javax.management.Attribute;
-import javax.management.AttributeList;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-
+import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.SystemUtils;
@@ -47,21 +35,36 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.lifecycle.LifecycleException;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
-import com.google.common.io.Files;
+import javax.management.Attribute;
+import javax.management.AttributeList;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.management.ManagementFactory;
+import java.nio.charset.Charset;
+import java.util.List;
+import java.util.regex.Pattern;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class TestExecSource {
 
   private AbstractSource source;
   private Channel channel = new MemoryChannel();
-
   private Context context = new Context();
-
   private ChannelSelector rcs = new ReplicatingChannelSelector();
-
 
   @Before
   public void setUp() {
@@ -82,19 +85,19 @@ public class TestExecSource {
     // Remove the MBean registered for Monitoring
     ObjectName objName = null;
     try {
-        objName = new ObjectName("org.apache.flume.source"
-          + ":type=" + source.getName());
+      objName = new ObjectName("org.apache.flume.source"
+                               + ":type=" + source.getName());
 
-        ManagementFactory.getPlatformMBeanServer().unregisterMBean(objName);
+      ManagementFactory.getPlatformMBeanServer().unregisterMBean(objName);
     } catch (Exception ex) {
       System.out.println("Failed to unregister the monitored counter: "
-          + objName + ex.getMessage());
+                         + objName + ex.getMessage());
     }
   }
 
   @Test
   public void testProcess() throws InterruptedException, LifecycleException,
-  EventDeliveryException, IOException {
+                                   EventDeliveryException, IOException {
 
     // Generates a random files for input\output
     File inputFile = File.createTempFile("input", null);
@@ -104,16 +107,15 @@ public class TestExecSource {
 
     // Generates input file with a random data set (10 lines, 200 characters each)
     FileOutputStream outputStream1 = new FileOutputStream(inputFile);
-    for (int i=0; i<10; i++) {
-        outputStream1.write(
-          RandomStringUtils.randomAlphanumeric(200).getBytes());
-        outputStream1.write('\n');
+    for (int i = 0; i < 10; i++) {
+      outputStream1.write(RandomStringUtils.randomAlphanumeric(200).getBytes());
+      outputStream1.write('\n');
     }
     outputStream1.close();
 
     String command = SystemUtils.IS_OS_WINDOWS ?
-        String.format("cmd /c type %s", inputFile.getAbsolutePath()) :
-        String.format("cat %s", inputFile.getAbsolutePath());
+                         String.format("cmd /c type %s", inputFile.getAbsolutePath()) :
+                         String.format("cat %s", inputFile.getAbsolutePath());
     context.put("command", command);
     context.put("keep-alive", "1");
     context.put("capacity", "1000");
@@ -139,155 +141,150 @@ public class TestExecSource {
     transaction.close();
 
     Assert.assertEquals(FileUtils.checksumCRC32(inputFile),
-      FileUtils.checksumCRC32(ouputFile));
+                        FileUtils.checksumCRC32(ouputFile));
   }
 
   @Test
   public void testShellCommandSimple() throws InterruptedException, LifecycleException,
-    EventDeliveryException, IOException {
+                                              EventDeliveryException, IOException {
     if (SystemUtils.IS_OS_WINDOWS) {
       runTestShellCmdHelper("powershell -ExecutionPolicy Unrestricted -command",
-        "1..5", new String[]{"1", "2", "3", "4", "5"});
+                            "1..5", new String[] { "1", "2", "3", "4", "5" });
     } else {
       runTestShellCmdHelper("/bin/bash -c", "seq 5",
-        new String[]{"1", "2", "3", "4", "5"});
+                            new String[] { "1", "2", "3", "4", "5" });
     }
   }
 
   @Test
-  public void testShellCommandBackTicks()
-    throws InterruptedException, LifecycleException, EventDeliveryException,
-    IOException {
+  public void testShellCommandBackTicks() throws InterruptedException, LifecycleException,
+                                                 EventDeliveryException, IOException {
     // command with backticks
     if (SystemUtils.IS_OS_WINDOWS) {
-      runTestShellCmdHelper(
-        "powershell -ExecutionPolicy Unrestricted -command", "$(1..5)",
-        new String[]{"1", "2", "3", "4", "5"});
+      runTestShellCmdHelper("powershell -ExecutionPolicy Unrestricted -command", "$(1..5)",
+                            new String[] { "1", "2", "3", "4", "5" });
     } else {
       runTestShellCmdHelper("/bin/bash -c", "echo `seq 5`",
-        new String[]{"1 2 3 4 5"});
+                            new String[] { "1 2 3 4 5" });
       runTestShellCmdHelper("/bin/bash -c", "echo $(seq 5)",
-        new String[]{"1 2 3 4 5"});
+                            new String[] { "1 2 3 4 5" });
     }
   }
 
   @Test
   public void testShellCommandComplex()
-    throws InterruptedException, LifecycleException, EventDeliveryException,
-    IOException {
+      throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
     // command with wildcards & pipes
     String[] expected = {"1234", "abcd", "ijk", "xyz", "zzz"};
     // pipes
     if (SystemUtils.IS_OS_WINDOWS) {
-      runTestShellCmdHelper(
-        "powershell -ExecutionPolicy Unrestricted -command",
-        "'zzz','1234','xyz','abcd','ijk' | sort", expected);
+      runTestShellCmdHelper("powershell -ExecutionPolicy Unrestricted -command",
+                            "'zzz','1234','xyz','abcd','ijk' | sort", expected);
     } else {
       runTestShellCmdHelper("/bin/bash -c",
-        "echo zzz 1234 xyz abcd ijk | xargs -n1 echo | sort -f", expected);
+                            "echo zzz 1234 xyz abcd ijk | xargs -n1 echo | sort -f", expected);
     }
   }
 
   @Test
-  public void testShellCommandScript()
-    throws InterruptedException, LifecycleException, EventDeliveryException,
-    IOException {
+  public void testShellCommandScript() throws InterruptedException, LifecycleException,
+                                              EventDeliveryException, IOException {
     // mini script
     if (SystemUtils.IS_OS_WINDOWS) {
       runTestShellCmdHelper("powershell -ExecutionPolicy Unrestricted -command",
-        "foreach ($i in 1..5) { $i }", new String[]{"1", "2", "3", "4", "5"});
+                            "foreach ($i in 1..5) { $i }",
+                            new String[] { "1", "2", "3", "4", "5" });
       // shell arithmetic
       runTestShellCmdHelper("powershell -ExecutionPolicy Unrestricted -command",
-        "if(2+2 -gt 3) { 'good' } else { 'not good' } ", new String[]{"good"});
+                            "if(2+2 -gt 3) { 'good' } else { 'not good' } ",
+                            new String[] { "good" });
     } else {
-      runTestShellCmdHelper("/bin/bash -c", "for i in {1..5}; do echo $i;done"
-        , new String[]{"1", "2", "3", "4", "5"});
+      runTestShellCmdHelper("/bin/bash -c", "for i in {1..5}; do echo $i;done",
+                            new String[] { "1", "2", "3", "4", "5" });
       // shell arithmetic
-      runTestShellCmdHelper("/bin/bash -c", "if ((2+2>3)); " +
-        "then  echo good; else echo not good; fi", new String[]{"good"});
+      runTestShellCmdHelper("/bin/bash -c",
+                            "if ((2+2>3)); " + "then  echo good; else echo not good; fi",
+                            new String[] { "good" });
     }
   }
 
   @Test
   public void testShellCommandEmbeddingAndEscaping()
-    throws InterruptedException, LifecycleException, EventDeliveryException,
-    IOException {
+      throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
     // mini script
     String fileName = SystemUtils.IS_OS_WINDOWS ?
-                      "src\\test\\resources\\test_command.ps1" :
-                      "src/test/resources/test_command.txt";
+                          "src\\test\\resources\\test_command.ps1" :
+                          "src/test/resources/test_command.txt";
     BufferedReader reader = new BufferedReader(new FileReader(fileName));
-      try {
-        String shell = SystemUtils.IS_OS_WINDOWS ?
-                       "powershell -ExecutionPolicy Unrestricted -command" :
-                       "/bin/bash -c";
-        String command1 = reader.readLine();
-        Assert.assertNotNull(command1);
-        String[] output1 = new String[] {"'1'", "\"2\"", "\\3", "\\4"};
-        runTestShellCmdHelper( shell, command1 , output1);
-        String command2 = reader.readLine();
-        Assert.assertNotNull(command2);
-        String[] output2 = new String[]{"1","2","3","4","5" };
-        runTestShellCmdHelper(shell, command2 , output2);
-        String command3 = reader.readLine();
-        Assert.assertNotNull(command3);
-        String[] output3 = new String[]{"2","3","4","5","6" };
-        runTestShellCmdHelper(shell, command3 , output3);
-      } finally {
-        reader.close();
-      }
+    try {
+      String shell = SystemUtils.IS_OS_WINDOWS ?
+                         "powershell -ExecutionPolicy Unrestricted -command" :
+                         "/bin/bash -c";
+      String command1 = reader.readLine();
+      Assert.assertNotNull(command1);
+      String[] output1 = new String[] { "'1'", "\"2\"", "\\3", "\\4" };
+      runTestShellCmdHelper(shell, command1, output1);
+      String command2 = reader.readLine();
+      Assert.assertNotNull(command2);
+      String[] output2 = new String[] { "1", "2", "3", "4", "5" };
+      runTestShellCmdHelper(shell, command2, output2);
+      String command3 = reader.readLine();
+      Assert.assertNotNull(command3);
+      String[] output3 = new String[] { "2", "3", "4", "5", "6" };
+      runTestShellCmdHelper(shell, command3, output3);
+    } finally {
+      reader.close();
     }
+  }
 
   @Test
-  public void testMonitoredCounterGroup() throws InterruptedException, LifecycleException,
-  EventDeliveryException, IOException {
+  public void testMonitoredCounterGroup()
+      throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
     // mini script
     if (SystemUtils.IS_OS_WINDOWS) {
       runTestShellCmdHelper("powershell -ExecutionPolicy Unrestricted -command",
-        "foreach ($i in 1..5) { $i }"
-        , new String[]{"1", "2", "3", "4", "5"});
+                            "foreach ($i in 1..5) { $i }",
+                            new String[] { "1", "2", "3", "4", "5" });
     } else {
-      runTestShellCmdHelper("/bin/bash -c", "for i in {1..5}; do echo $i;done"
-        , new String[]{"1", "2", "3", "4", "5"});
+      runTestShellCmdHelper("/bin/bash -c", "for i in {1..5}; do echo $i;done",
+                            new String[] { "1", "2", "3", "4", "5" });
     }
 
     ObjectName objName = null;
 
     try {
-        objName = new ObjectName("org.apache.flume.source"
-          + ":type=" + source.getName());
+      objName = new ObjectName("org.apache.flume.source" + ":type=" + source.getName());
 
-        MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
-        String strAtts[] = {"Type", "EventReceivedCount", "EventAcceptedCount"};
-        AttributeList attrList = mbeanServer.getAttributes(objName, strAtts);
+      MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+      String[] strAtts = { "Type", "EventReceivedCount", "EventAcceptedCount" };
+      AttributeList attrList = mbeanServer.getAttributes(objName, strAtts);
 
-        Assert.assertNotNull(attrList.get(0));
-        Assert.assertEquals("Expected Value: Type", "Type",
-                ((Attribute) attrList.get(0)).getName());
-        Assert.assertEquals("Expected Value: SOURCE", "SOURCE",
-                ((Attribute) attrList.get(0)).getValue());
+      Assert.assertNotNull(attrList.get(0));
+      Assert.assertEquals("Expected Value: Type", "Type",
+                          ((Attribute) attrList.get(0)).getName());
+      Assert.assertEquals("Expected Value: SOURCE", "SOURCE",
+                          ((Attribute) attrList.get(0)).getValue());
 
-        Assert.assertNotNull(attrList.get(1));
-        Assert.assertEquals("Expected Value: EventReceivedCount", "EventReceivedCount",
-                ((Attribute) attrList.get(1)).getName());
-        Assert.assertEquals("Expected Value: 5", "5",
-                ((Attribute) attrList.get(1)).getValue().toString());
+      Assert.assertNotNull(attrList.get(1));
+      Assert.assertEquals("Expected Value: EventReceivedCount", "EventReceivedCount",
+                          ((Attribute) attrList.get(1)).getName());
+      Assert.assertEquals("Expected Value: 5", "5",
+                          ((Attribute) attrList.get(1)).getValue().toString());
 
-        Assert.assertNotNull(attrList.get(2));
-        Assert.assertEquals("Expected Value: EventAcceptedCount", "EventAcceptedCount",
-                ((Attribute) attrList.get(2)).getName());
-        Assert.assertEquals("Expected Value: 5", "5",
-                ((Attribute) attrList.get(2)).getValue().toString());
+      Assert.assertNotNull(attrList.get(2));
+      Assert.assertEquals("Expected Value: EventAcceptedCount", "EventAcceptedCount",
+                          ((Attribute) attrList.get(2)).getName());
+      Assert.assertEquals("Expected Value: 5", "5",
+                          ((Attribute) attrList.get(2)).getValue().toString());
 
     } catch (Exception ex) {
-      System.out.println("Unable to retreive the monitored counter: "
-          + objName + ex.getMessage());
+      System.out.println("Unable to retreive the monitored counter: " + objName + ex.getMessage());
     }
   }
 
   @Test
-  public void testBatchTimeout() throws InterruptedException, LifecycleException,
-  EventDeliveryException, IOException {
+  public void testBatchTimeout()
+      throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
 
     String filePath = "/tmp/flume-execsource." + Thread.currentThread().getId();
     String eventBody = "TestMessage";
@@ -296,12 +293,12 @@ public class TestExecSource {
     context.put(ExecSourceConfigurationConstants.CONFIG_BATCH_SIZE, "50000");
     context.put(ExecSourceConfigurationConstants.CONFIG_BATCH_TIME_OUT, "750");
     context.put("shell", SystemUtils.IS_OS_WINDOWS ?
-                         "powershell -ExecutionPolicy Unrestricted -command" :
-                         "/bin/bash -c");
+                             "powershell -ExecutionPolicy Unrestricted -command" :
+                             "/bin/bash -c");
     context.put("command", SystemUtils.IS_OS_WINDOWS ?
-                           "Get-Content " + filePath +
-                             " | Select-Object -Last 10" :
-                           ("tail -f " + filePath));
+                               "Get-Content " + filePath +
+                                   " | Select-Object -Last 10" :
+                               ("tail -f " + filePath));
 
     Configurables.configure(source, context);
     source.start();
@@ -310,15 +307,15 @@ public class TestExecSource {
     transaction.begin();
 
     for (int lineNumber = 0; lineNumber < 3; lineNumber++) {
-        outputStream.write((eventBody).getBytes());
-        outputStream.write(String.valueOf(lineNumber).getBytes());
-        outputStream.write('\n');
-        outputStream.flush();
+      outputStream.write((eventBody).getBytes());
+      outputStream.write(String.valueOf(lineNumber).getBytes());
+      outputStream.write('\n');
+      outputStream.flush();
     }
     outputStream.close();
     Thread.sleep(1500);
 
-    for(int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
       Event event = channel.take();
       assertNotNull(event);
       assertNotNull(event.getBody());
@@ -332,45 +329,37 @@ public class TestExecSource {
     FileUtils.forceDelete(file);
   }
 
-    private void runTestShellCmdHelper(String shell, String command, String[] expectedOutput)
-             throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
-      context.put("shell", shell);
-      context.put("command", command);
-      Configurables.configure(source, context);
-      source.start();
-      // Some commands might take longer to complete, specially on Windows
-      // or on slow environments (e.g. Travis CI).
-      Thread.sleep(2500);
-      Transaction transaction = channel.getTransaction();
-      transaction.begin();
-      try {
-        List<String> output = Lists.newArrayList();
-        Event event;
-        while ((event = channel.take()) != null) {
-          output.add(new String(event.getBody(), Charset.defaultCharset()));
-        }
-        transaction.commit();
-//        System.out.println("command : " + command);
-//        System.out.println("output : ");
-//        for( String line : output )
-//          System.out.println(line);
-        Assert.assertArrayEquals(expectedOutput, output.toArray(new String[]{}));
-      } finally {
-        transaction.close();
-        source.stop();
+  private void runTestShellCmdHelper(String shell, String command, String[] expectedOutput)
+      throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
+    context.put("shell", shell);
+    context.put("command", command);
+    Configurables.configure(source, context);
+    source.start();
+    // Some commands might take longer to complete, specially on Windows
+    // or on slow environments (e.g. Travis CI).
+    Thread.sleep(2500);
+    Transaction transaction = channel.getTransaction();
+    transaction.begin();
+    try {
+      List<String> output = Lists.newArrayList();
+      Event event;
+      while ((event = channel.take()) != null) {
+        output.add(new String(event.getBody(), Charset.defaultCharset()));
       }
+      transaction.commit();
+      Assert.assertArrayEquals(expectedOutput, output.toArray(new String[] {}));
+    } finally {
+      transaction.close();
+      source.stop();
     }
-
+  }
 
   @Test
   public void testRestart() throws InterruptedException, LifecycleException,
-  EventDeliveryException, IOException {
-
+                                   EventDeliveryException, IOException {
     context.put(ExecSourceConfigurationConstants.CONFIG_RESTART_THROTTLE, "10");
     context.put(ExecSourceConfigurationConstants.CONFIG_RESTART, "true");
-
-    context.put("command",
-      SystemUtils.IS_OS_WINDOWS ? "cmd /c echo flume" : "echo flume");
+    context.put("command", SystemUtils.IS_OS_WINDOWS ? "cmd /c echo flume" : "echo flume");
     Configurables.configure(source, context);
 
     source.start();
@@ -380,7 +369,7 @@ public class TestExecSource {
 
     long start = System.currentTimeMillis();
 
-    for(int i = 0; i < 5; i++) {
+    for (int i = 0; i < 5; i++) {
       Event event = channel.take();
       assertNotNull(event);
       assertNotNull(event.getBody());
@@ -395,7 +384,6 @@ public class TestExecSource {
 
     source.stop();
   }
-
 
   /**
    * Tests to make sure that the shutdown mechanism works. There are races
@@ -412,14 +400,12 @@ public class TestExecSource {
     boolean searchForCommand = true;
     while (searchForCommand) {
       searchForCommand = false;
-      String command = SystemUtils.IS_OS_WINDOWS ? ("cmd /c sleep " + seconds) :
-                       ("sleep " + seconds);
-      String searchTxt = SystemUtils.IS_OS_WINDOWS ? ("sleep.exe") :
-                         ("\b" + command + "\b");
+      String command = SystemUtils.IS_OS_WINDOWS ? "cmd /c sleep " + seconds : "sleep " + seconds;
+      String searchTxt = SystemUtils.IS_OS_WINDOWS ? "sleep.exe" : "\b" + command + "\b";
       Pattern pattern = Pattern.compile(searchTxt);
       for (String line : exec(SystemUtils.IS_OS_WINDOWS ?
-                              "cmd /c tasklist /FI \"SESSIONNAME eq Console\"" :
-                              "ps -ef")) {
+                                  "cmd /c tasklist /FI \"SESSIONNAME eq Console\"" :
+                                  "ps -ef")) {
         if (pattern.matcher(line).find()) {
           seconds++;
           searchForCommand = true;
@@ -444,9 +430,9 @@ public class TestExecSource {
     source.stop();
     Thread.sleep(1000L);
     for (String line : exec(SystemUtils.IS_OS_WINDOWS ?
-                            "cmd /c tasklist /FI \"SESSIONNAME eq Console\"" :
-                            "ps -ef")) {
-      if(pattern.matcher(line).find()) {
+                                "cmd /c tasklist /FI \"SESSIONNAME eq Console\"" :
+                                "ps -ef")) {
+      if (pattern.matcher(line).find()) {
         Assert.fail("Found [" + line + "]");
       }
     }
@@ -457,23 +443,21 @@ public class TestExecSource {
     Process process = new ProcessBuilder(commandArgs).start();
     BufferedReader reader = null;
     try {
-      reader = new BufferedReader(
-          new InputStreamReader(process.getInputStream()));
+      reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
       List<String> result = Lists.newArrayList();
       String line;
-      while((line = reader.readLine()) != null) {
+      while ((line = reader.readLine()) != null) {
         result.add(line);
       }
       return result;
     } finally {
       process.destroy();
-      if(reader != null) {
+      if (reader != null) {
         reader.close();
       }
       int exit = process.waitFor();
-      if(exit != 0) {
-        throw new IllegalStateException("Command [" + command + "] exited with "
-            + exit);
+      if (exit != 0) {
+        throw new IllegalStateException("Command [" + command + "] exited with " + exit);
       }
     }
   }

@@ -16,9 +16,9 @@
  */
 package org.apache.flume.source.kafka;
 
+import kafka.admin.AdminUtils;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServerStartable;
-import kafka.admin.AdminUtils;
 import kafka.utils.ZkUtils;
 import org.I0Itec.zkclient.ZkClient;
 import org.apache.commons.io.FileUtils;
@@ -70,8 +70,9 @@ public class KafkaSourceEmbeddedKafka {
     props.put("host.name", "localhost");
     props.put("port", String.valueOf(serverPort));
     props.put("log.dir", dir.getAbsolutePath());
-    if (properties != null)
+    if (properties != null) {
       props.putAll(props);
+    }
     KafkaConfig config = new KafkaConfig(props);
     kafkaServer = new KafkaServerStartable(config);
     kafkaServer.startup();
@@ -134,12 +135,12 @@ public class KafkaSourceEmbeddedKafka {
     // Create a ZooKeeper client
     int sessionTimeoutMs = 10000;
     int connectionTimeoutMs = 10000;
-    ZkClient zkClient = ZkUtils.createZkClient(HOST + ":" + zkPort, sessionTimeoutMs, connectionTimeoutMs);
+    ZkClient zkClient =
+        ZkUtils.createZkClient(HOST + ":" + zkPort, sessionTimeoutMs, connectionTimeoutMs);
     ZkUtils zkUtils = ZkUtils.apply(zkClient, false);
     int replicationFactor = 1;
     Properties topicConfig = new Properties();
-    AdminUtils.createTopic(zkUtils, topicName, numPartitions,
-            replicationFactor, topicConfig);
+    AdminUtils.createTopic(zkUtils, topicName, numPartitions, replicationFactor, topicConfig);
   }
 
 }

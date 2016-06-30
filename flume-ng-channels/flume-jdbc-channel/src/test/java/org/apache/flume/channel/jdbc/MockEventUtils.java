@@ -17,12 +17,12 @@
  */
 package org.apache.flume.channel.jdbc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public final class MockEventUtils {
 
@@ -70,20 +70,20 @@ public final class MockEventUtils {
    * @param numChannels
    * @return
    */
-  public static MockEvent generateMockEvent(int payloadMargin,
-      int headerNameMargin,	int headerValueMargin, int numHeaders,
-      int numChannels) {
+  public static MockEvent generateMockEvent(int payloadMargin, int headerNameMargin,
+                                            int headerValueMargin, int numHeaders,
+                                            int numChannels) {
 
     int chIndex = 0;
     if (numChannels > 1) {
-      chIndex = Math.abs(RANDOM.nextInt())%numChannels;
+      chIndex = Math.abs(RANDOM.nextInt()) % numChannels;
     }
-    String channel = "test-"+chIndex;
+    String channel = "test-" + chIndex;
 
     StringBuilder sb = new StringBuilder("New Event[payload size:");
 
     int plTh = ConfigurationConstants.PAYLOAD_LENGTH_THRESHOLD;
-    int plSize = Math.abs(RANDOM.nextInt())%plTh + payloadMargin;
+    int plSize = Math.abs(RANDOM.nextInt()) % plTh + payloadMargin;
     sb.append(plSize).append(", numHeaders:").append(numHeaders);
     sb.append(", channel:").append(channel);
 
@@ -93,8 +93,8 @@ public final class MockEventUtils {
 
     Map<String, String> headers = new HashMap<String, String>();
     for (int i = 0; i < numHeaders; i++) {
-      int nmSize = Math.abs(RANDOM.nextInt())%nmTh + headerNameMargin;
-      int vlSize = Math.abs(RANDOM.nextInt())%vlTh + headerValueMargin;
+      int nmSize = Math.abs(RANDOM.nextInt()) % nmTh + headerNameMargin;
+      int vlSize = Math.abs(RANDOM.nextInt()) % vlTh + headerValueMargin;
 
       String name = generateHeaderString(nmSize);
       String value = generateHeaderString(vlSize);

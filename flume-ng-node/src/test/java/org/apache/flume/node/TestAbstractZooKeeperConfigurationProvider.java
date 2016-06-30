@@ -18,15 +18,10 @@
 
 package org.apache.flume.node;
 
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
 import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import junit.framework.Assert;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -38,8 +33,11 @@ import org.apache.flume.conf.FlumeConfigurationError;
 import org.junit.After;
 import org.junit.Before;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public abstract class TestAbstractZooKeeperConfigurationProvider {
 
@@ -48,8 +46,7 @@ public abstract class TestAbstractZooKeeperConfigurationProvider {
   protected static final String AGENT_NAME = "a1";
 
   protected static final String AGENT_PATH =
-    AbstractZooKeeperConfigurationProvider.DEFAULT_ZK_BASE_PATH
-      + "/" + AGENT_NAME;
+      AbstractZooKeeperConfigurationProvider.DEFAULT_ZK_BASE_PATH + "/" + AGENT_NAME;
 
   protected TestingServer zkServer;
   protected CuratorFramework client;
@@ -112,10 +109,8 @@ public abstract class TestAbstractZooKeeperConfigurationProvider {
     expected.add("host2 PROPERTY_VALUE_NULL");
     expected.add("host2 AGENT_CONFIGURATION_INVALID");
     List<String> actual = Lists.newArrayList();
-    for (FlumeConfigurationError error : configuration
-      .getConfigurationErrors()) {
-      actual.add(error.getComponentName() + " "
-          + error.getErrorType().toString());
+    for (FlumeConfigurationError error : configuration.getConfigurationErrors()) {
+      actual.add(error.getComponentName() + " " + error.getErrorType().toString());
     }
     Collections.sort(expected);
     Collections.sort(actual);

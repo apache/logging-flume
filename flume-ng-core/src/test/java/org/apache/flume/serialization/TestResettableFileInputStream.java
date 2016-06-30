@@ -27,8 +27,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.junit.Assert.*;
-
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -39,15 +37,21 @@ import java.nio.charset.Charset;
 import java.nio.charset.MalformedInputException;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 public class TestResettableFileInputStream {
 
   private static final boolean CLEANUP = true;
   private static final File WORK_DIR =
       new File("target/test/work").getAbsoluteFile();
-  private static final Logger logger = LoggerFactory.getLogger
-      (TestResettableFileInputStream.class);
+  private static final Logger logger =
+      LoggerFactory.getLogger(TestResettableFileInputStream.class);
 
-  private File file, meta;
+  private File file;
+  private File meta;
 
   @Before
   public void setup() throws Exception {
@@ -156,7 +160,8 @@ public class TestResettableFileInputStream {
   public void testUtf16BOMAndSurrogatePairRead() throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     generateUtf16SurrogatePairSequence(out);
-    // buffer now contains 1 BOM and 2 chars (1 surrogate pair) and 6 bytes total (including 2-byte BOM)
+    // buffer now contains 1 BOM and 2 chars (1 surrogate pair) and 6 bytes total
+    // (including 2-byte BOM)
     Files.write(out.toByteArray(), file);
     ResettableInputStream in = initInputStream(8, Charsets.UTF_16, DecodeErrorPolicy.FAIL);
     String result = readLine(in, 2);
@@ -176,7 +181,8 @@ public class TestResettableFileInputStream {
     generateShiftJis2ByteSequence(out);
     // buffer now contains 8 chars and 10 bytes total
     Files.write(out.toByteArray(), file);
-    ResettableInputStream in = initInputStream(8, Charset.forName("Shift_JIS"), DecodeErrorPolicy.FAIL);
+    ResettableInputStream in = initInputStream(8, Charset.forName("Shift_JIS"),
+                                               DecodeErrorPolicy.FAIL);
     String result = readLine(in, 8);
     assertEquals("1234567\u4E9C\n", result);
   }
@@ -215,7 +221,7 @@ public class TestResettableFileInputStream {
     String javaVersionStr = System.getProperty("java.version");
     double javaVersion = Double.parseDouble(javaVersionStr.substring(0, 3));
 
-    if(javaVersion < 1.8) {
+    if (javaVersion < 1.8) {
       assertTrue(preJdk8ExpectedStr.replaceAll("X", "\ufffd").equals(sb.toString()));
     } else {
       assertTrue(expectedStr.replaceAll("X", "\ufffd").equals(sb.toString()));
@@ -508,8 +514,8 @@ public class TestResettableFileInputStream {
     return initInputStream(2048, Charsets.UTF_8, policy);
   }
 
-  private ResettableInputStream initInputStream(int bufferSize, Charset charset, DecodeErrorPolicy policy)
-      throws IOException {
+  private ResettableInputStream initInputStream(int bufferSize, Charset charset,
+                                                DecodeErrorPolicy policy) throws IOException {
     PositionTracker tracker = new DurablePositionTracker(meta, file.getPath());
     ResettableInputStream in = new ResettableFileInputStream(file, tracker,
         bufferSize, charset, policy);

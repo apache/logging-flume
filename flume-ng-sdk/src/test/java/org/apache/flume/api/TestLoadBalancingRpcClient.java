@@ -18,14 +18,7 @@
  */
 package org.apache.flume.api;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
-
 import junit.framework.Assert;
-
 import org.apache.avro.ipc.Server;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
@@ -37,12 +30,16 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+
 public class TestLoadBalancingRpcClient {
-  private static final Logger LOGGER = LoggerFactory
-      .getLogger(TestLoadBalancingRpcClient.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TestLoadBalancingRpcClient.class);
 
-
-  @Test(expected=FlumeException.class)
+  @Test(expected = FlumeException.class)
   public void testCreatingLbClientSingleHost() {
     Server server1 = null;
     RpcClient c = null;
@@ -61,9 +58,10 @@ public class TestLoadBalancingRpcClient {
 
   @Test
   public void testTwoHostFailover() throws Exception {
-    Server s1 = null, s2 = null;
+    Server s1 = null;
+    Server s2 = null;
     RpcClient c = null;
-    try{
+    try {
       LoadBalancedAvroHandler h1 = new LoadBalancedAvroHandler();
       LoadBalancedAvroHandler h2 = new LoadBalancedAvroHandler();
 
@@ -100,9 +98,10 @@ public class TestLoadBalancingRpcClient {
   // This will fail without FLUME-1823
   @Test(expected = EventDeliveryException.class)
   public void testTwoHostFailoverThrowAfterClose() throws Exception {
-    Server s1 = null, s2 = null;
+    Server s1 = null;
+    Server s2 = null;
     RpcClient c = null;
-    try{
+    try {
       LoadBalancedAvroHandler h1 = new LoadBalancedAvroHandler();
       LoadBalancedAvroHandler h2 = new LoadBalancedAvroHandler();
 
@@ -140,13 +139,15 @@ public class TestLoadBalancingRpcClient {
 
   /**
    * Ensure that we can tolerate a host that is completely down.
+   *
    * @throws Exception
    */
   @Test
   public void testTwoHostsOneDead() throws Exception {
     LOGGER.info("Running testTwoHostsOneDead...");
     Server s1 = null;
-    RpcClient c1 = null, c2 = null;
+    RpcClient c1 = null;
+    RpcClient c2 = null;
     try {
       LoadBalancedAvroHandler h1 = new LoadBalancedAvroHandler();
       s1 = RpcTestUtils.startServer(h1);
@@ -186,9 +187,10 @@ public class TestLoadBalancingRpcClient {
 
   @Test
   public void testTwoHostFailoverBatch() throws Exception {
-    Server s1 = null, s2 = null;
+    Server s1 = null;
+    Server s2 = null;
     RpcClient c = null;
-    try{
+    try {
       LoadBalancedAvroHandler h1 = new LoadBalancedAvroHandler();
       LoadBalancedAvroHandler h2 = new LoadBalancedAvroHandler();
 
@@ -225,9 +227,10 @@ public class TestLoadBalancingRpcClient {
 
   @Test
   public void testLbDefaultClientTwoHosts() throws Exception {
-    Server s1 = null, s2 = null;
+    Server s1 = null;
+    Server s2 = null;
     RpcClient c = null;
-    try{
+    try {
       LoadBalancedAvroHandler h1 = new LoadBalancedAvroHandler();
       LoadBalancedAvroHandler h2 = new LoadBalancedAvroHandler();
 
@@ -258,9 +261,10 @@ public class TestLoadBalancingRpcClient {
 
   @Test
   public void testLbDefaultClientTwoHostsBatch() throws Exception {
-    Server s1 = null, s2 = null;
+    Server s1 = null;
+    Server s2 = null;
     RpcClient c = null;
-    try{
+    try {
       LoadBalancedAvroHandler h1 = new LoadBalancedAvroHandler();
       LoadBalancedAvroHandler h2 = new LoadBalancedAvroHandler();
 
@@ -296,10 +300,10 @@ public class TestLoadBalancingRpcClient {
     Server[] s = new Server[NUM_HOSTS];
     LoadBalancedAvroHandler[] h = new LoadBalancedAvroHandler[NUM_HOSTS];
     RpcClient c = null;
-    try{
+    try {
       Properties p = new Properties();
       StringBuilder hostList = new StringBuilder("");
-      for (int i = 0; i<NUM_HOSTS; i++) {
+      for (int i = 0; i < NUM_HOSTS; i++) {
         h[i] = new LoadBalancedAvroHandler();
         s[i] = RpcTestUtils.startServer(h[i]);
         String name = "h" + i;
@@ -328,7 +332,7 @@ public class TestLoadBalancingRpcClient {
       Assert.assertTrue("Very unusual distribution", counts.size() > 2);
       Assert.assertTrue("Missing events", total == NUM_EVENTS);
     } finally {
-      for (int i = 0; i<NUM_HOSTS; i++) {
+      for (int i = 0; i < NUM_HOSTS; i++) {
         if (s[i] != null) s[i].close();
       }
     }
@@ -341,10 +345,10 @@ public class TestLoadBalancingRpcClient {
     Server[] s = new Server[NUM_HOSTS];
     LoadBalancedAvroHandler[] h = new LoadBalancedAvroHandler[NUM_HOSTS];
     RpcClient c = null;
-    try{
+    try {
       Properties p = new Properties();
       StringBuilder hostList = new StringBuilder("");
-      for (int i = 0; i<NUM_HOSTS; i++) {
+      for (int i = 0; i < NUM_HOSTS; i++) {
         h[i] = new LoadBalancedAvroHandler();
         s[i] = RpcTestUtils.startServer(h[i]);
         String name = "h" + i;
@@ -373,7 +377,7 @@ public class TestLoadBalancingRpcClient {
       Assert.assertTrue("Very unusual distribution", counts.size() > 2);
       Assert.assertTrue("Missing events", total == NUM_EVENTS);
     } finally {
-      for (int i = 0; i<NUM_HOSTS; i++) {
+      for (int i = 0; i < NUM_HOSTS; i++) {
         if (s[i] != null) s[i].close();
       }
     }
@@ -386,10 +390,10 @@ public class TestLoadBalancingRpcClient {
     Server[] s = new Server[NUM_HOSTS];
     LoadBalancedAvroHandler[] h = new LoadBalancedAvroHandler[NUM_HOSTS];
     RpcClient c = null;
-    try{
+    try {
       Properties p = new Properties();
       StringBuilder hostList = new StringBuilder("");
-      for (int i = 0; i<NUM_HOSTS; i++) {
+      for (int i = 0; i < NUM_HOSTS; i++) {
         h[i] = new LoadBalancedAvroHandler();
         s[i] = RpcTestUtils.startServer(h[i]);
         String name = "h" + i;
@@ -418,24 +422,23 @@ public class TestLoadBalancingRpcClient {
       Assert.assertTrue("Very unusual distribution", counts.size() == 1);
       Assert.assertTrue("Missing events", total == NUM_EVENTS);
     } finally {
-      for (int i = 0; i<NUM_HOSTS; i++) {
+      for (int i = 0; i < NUM_HOSTS; i++) {
         if (s[i] != null) s[i].close();
       }
     }
   }
 
   @Test
-  public void testLbClientTenHostRoundRobinDistributionBatch() throws Exception
-  {
+  public void testLbClientTenHostRoundRobinDistributionBatch() throws Exception {
     final int NUM_HOSTS = 10;
     final int NUM_EVENTS = 1000;
     Server[] s = new Server[NUM_HOSTS];
     LoadBalancedAvroHandler[] h = new LoadBalancedAvroHandler[NUM_HOSTS];
     RpcClient c = null;
-    try{
+    try {
       Properties p = new Properties();
       StringBuilder hostList = new StringBuilder("");
-      for (int i = 0; i<NUM_HOSTS; i++) {
+      for (int i = 0; i < NUM_HOSTS; i++) {
         h[i] = new LoadBalancedAvroHandler();
         s[i] = RpcTestUtils.startServer(h[i]);
         String name = "h" + i;
@@ -464,7 +467,7 @@ public class TestLoadBalancingRpcClient {
       Assert.assertTrue("Very unusual distribution", counts.size() == 1);
       Assert.assertTrue("Missing events", total == NUM_EVENTS);
     } finally {
-      for (int i = 0; i<NUM_HOSTS; i++) {
+      for (int i = 0; i < NUM_HOSTS; i++) {
         if (s[i] != null) s[i].close();
       }
     }
@@ -474,10 +477,10 @@ public class TestLoadBalancingRpcClient {
   public void testRandomBackoff() throws Exception {
     Properties p = new Properties();
     List<LoadBalancedAvroHandler> hosts =
-            new ArrayList<LoadBalancedAvroHandler>();
+        new ArrayList<LoadBalancedAvroHandler>();
     List<Server> servers = new ArrayList<Server>();
     StringBuilder hostList = new StringBuilder("");
-    for(int i = 0; i < 3;i++){
+    for (int i = 0; i < 3; i++) {
       LoadBalancedAvroHandler s = new LoadBalancedAvroHandler();
       hosts.add(s);
       Server srv = RpcTestUtils.startServer(s);
@@ -499,7 +502,7 @@ public class TestLoadBalancingRpcClient {
     // TODO: there is a remote possibility that s0 or s2
     // never get hit by the random assignment
     // and thus not backoffed, causing the test to fail
-    for(int i=0; i < 50; i++) {
+    for (int i = 0; i < 50; i++) {
       // a well behaved runner would always check the return.
       c.append(EventBuilder.withBody(("test" + String.valueOf(i)).getBytes()));
     }
@@ -525,11 +528,12 @@ public class TestLoadBalancingRpcClient {
     Assert.assertEquals(50, hosts.get(1).getAppendCount());
     Assert.assertEquals(0, hosts.get(2).getAppendCount());
   }
+
   @Test
   public void testRoundRobinBackoffInitialFailure() throws EventDeliveryException {
     Properties p = new Properties();
     List<LoadBalancedAvroHandler> hosts =
-            new ArrayList<LoadBalancedAvroHandler>();
+        new ArrayList<LoadBalancedAvroHandler>();
     List<Server> servers = new ArrayList<Server>();
     StringBuilder hostList = new StringBuilder("");
     for (int i = 0; i < 3; i++) {
@@ -572,13 +576,13 @@ public class TestLoadBalancingRpcClient {
   public void testRoundRobinBackoffIncreasingBackoffs() throws Exception {
     Properties p = new Properties();
     List<LoadBalancedAvroHandler> hosts =
-            new ArrayList<LoadBalancedAvroHandler>();
+        new ArrayList<LoadBalancedAvroHandler>();
     List<Server> servers = new ArrayList<Server>();
     StringBuilder hostList = new StringBuilder("");
     for (int i = 0; i < 3; i++) {
       LoadBalancedAvroHandler s = new LoadBalancedAvroHandler();
       hosts.add(s);
-      if(i == 1) {
+      if (i == 1) {
         s.setFailed();
       }
       Server srv = RpcTestUtils.startServer(s);
@@ -620,16 +624,17 @@ public class TestLoadBalancingRpcClient {
       c.append(EventBuilder.withBody("testing".getBytes()));
     }
 
-    Assert.assertEquals( 2 + 2 + 1 + (numEvents/3), hosts.get(0).getAppendCount());
-    Assert.assertEquals((numEvents/3), hosts.get(1).getAppendCount());
-    Assert.assertEquals(1 + 1 + 2 + (numEvents/3), hosts.get(2).getAppendCount());
+    Assert.assertEquals(2 + 2 + 1 + (numEvents / 3), hosts.get(0).getAppendCount());
+    Assert.assertEquals((numEvents / 3), hosts.get(1).getAppendCount());
+    Assert.assertEquals(1 + 1 + 2 + (numEvents / 3), hosts.get(2).getAppendCount());
   }
 
   @Test
-  public void testRoundRobinBackoffFailureRecovery() throws EventDeliveryException, InterruptedException {
+  public void testRoundRobinBackoffFailureRecovery()
+      throws EventDeliveryException, InterruptedException {
     Properties p = new Properties();
     List<LoadBalancedAvroHandler> hosts =
-            new ArrayList<LoadBalancedAvroHandler>();
+        new ArrayList<LoadBalancedAvroHandler>();
     List<Server> servers = new ArrayList<Server>();
     StringBuilder hostList = new StringBuilder("");
     for (int i = 0; i < 3; i++) {
@@ -660,13 +665,13 @@ public class TestLoadBalancingRpcClient {
     Thread.sleep(3000);
     int numEvents = 60;
 
-    for(int i = 0; i < numEvents; i++){
+    for (int i = 0; i < numEvents; i++) {
       c.append(EventBuilder.withBody("testing".getBytes()));
     }
 
-    Assert.assertEquals(2 + (numEvents/3) , hosts.get(0).getAppendCount());
-    Assert.assertEquals(0 + (numEvents/3), hosts.get(1).getAppendCount());
-    Assert.assertEquals(1 + (numEvents/3), hosts.get(2).getAppendCount());
+    Assert.assertEquals(2 + (numEvents / 3), hosts.get(0).getAppendCount());
+    Assert.assertEquals(0 + (numEvents / 3), hosts.get(1).getAppendCount());
+    Assert.assertEquals(1 + (numEvents / 3), hosts.get(2).getAppendCount());
   }
 
   private List<Event> getBatchedEvent(int index) {

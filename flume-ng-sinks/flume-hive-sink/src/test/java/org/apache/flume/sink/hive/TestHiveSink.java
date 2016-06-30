@@ -55,8 +55,8 @@ import java.util.UUID;
 
 public class TestHiveSink {
   // 1)  partitioned table
-  final static String dbName = "testing";
-  final static String tblName = "alerts";
+  static final String dbName = "testing";
+  static final String tblName = "alerts";
 
   public static final String PART1_NAME = "continent";
   public static final String PART2_NAME = "country";
@@ -72,8 +72,8 @@ public class TestHiveSink {
   private final ArrayList<String> partitionVals;
 
   // 2) un-partitioned table
-  final static String dbName2 = "testing2";
-  final static String tblName2 = "alerts2";
+  static final String dbName2 = "testing2";
+  static final String tblName2 = "alerts2";
   final String[] colNames2 = {COL1,COL2};
   private String[] colTypes2 = { "int", "string" };
 
@@ -87,7 +87,6 @@ public class TestHiveSink {
 
   @Rule
   public TemporaryFolder dbFolder = new TemporaryFolder();
-
 
   private static final Logger LOG = LoggerFactory.getLogger(HiveSink.class);
 
@@ -182,8 +181,8 @@ public class TestHiveSink {
     TestUtil.dropDB(conf, dbName2);
     String dbLocation = dbFolder.newFolder(dbName2).getCanonicalPath() + ".db";
     dbLocation = dbLocation.replaceAll("\\\\","/"); // for windows paths
-    TestUtil.createDbAndTable(driver, dbName2, tblName2, null, colNames2, colTypes2
-            , null, dbLocation);
+    TestUtil.createDbAndTable(driver, dbName2, tblName2, null, colNames2, colTypes2,
+                              null, dbLocation);
 
     try {
       int totalRecords = 4;
@@ -282,7 +281,7 @@ public class TestHiveSink {
       String body = j + ",blah,This is a log message,other stuff";
       event.setBody(body.getBytes());
       eventDate.clear();
-      eventDate.set(2014, 03, 03, j%batchCount, 1); // yy mm dd hh mm
+      eventDate.set(2014, 03, 03, j % batchCount, 1); // yy mm dd hh mm
       event.getHeaders().put( "timestamp",
               String.valueOf(eventDate.getTimeInMillis()) );
       event.getHeaders().put( PART1_NAME, "Asia" );
@@ -317,7 +316,7 @@ public class TestHiveSink {
           throws EventDeliveryException, IOException, CommandNeedRetryException {
     int batchSize = 2;
     int batchCount = 3;
-    int totalRecords = batchCount*batchSize;
+    int totalRecords = batchCount * batchSize;
     Context context = new Context();
     context.put("hive.metastore", metaStoreURI);
     context.put("hive.database", dbName);
@@ -340,7 +339,7 @@ public class TestHiveSink {
       txn.begin();
       for (int j = 1; j <= batchSize; j++) {
         Event event = new SimpleEvent();
-        String body = i*j + ",blah,This is a log message,other stuff";
+        String body = i * j + ",blah,This is a log message,other stuff";
         event.setBody(body.getBytes());
         bodies.add(body);
         channel.put(event);
@@ -361,7 +360,7 @@ public class TestHiveSink {
   public void testJsonSerializer() throws Exception {
     int batchSize = 2;
     int batchCount = 2;
-    int totalRecords = batchCount*batchSize;
+    int totalRecords = batchCount * batchSize;
     Context context = new Context();
     context.put("hive.metastore",metaStoreURI);
     context.put("hive.database",dbName);

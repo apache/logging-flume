@@ -17,14 +17,9 @@
 
 package org.apache.flume.source.taildir;
 
-import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.*;
-import static org.junit.Assert.*;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
@@ -40,9 +35,21 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
-import com.google.common.io.Files;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILE_GROUPS;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants
+                  .FILE_GROUPS_PREFIX;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.HEADERS_PREFIX;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.POSITION_FILE;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class TestTaildirSource {
   static TaildirSource source;
@@ -274,10 +281,11 @@ public class TestTaildirSource {
                                                     line1b, line2b, line3b, // file2
                                                     line1d, line2d, line3d, // file4
                                                     line1c, line2c, line3c  // file3
-                                                     );
-    for(int i =0; i!=expected.size(); ++i) {
-      expected.set(i, expected.get(i).trim() );
+                                                   );
+    for (int i = 0; i != expected.size(); ++i) {
+      expected.set(i, expected.get(i).trim());
     }
-    assertArrayEquals("Files not consumed in expected order", expected.toArray(), consumedOrder.toArray());
+    assertArrayEquals("Files not consumed in expected order", expected.toArray(),
+                      consumedOrder.toArray());
   }
 }

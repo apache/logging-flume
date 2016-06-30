@@ -18,9 +18,6 @@
  */
 package org.apache.flume.source;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
@@ -35,6 +32,9 @@ import org.apache.flume.lifecycle.LifecycleException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestSequenceGeneratorSource {
 
@@ -105,7 +105,7 @@ public class TestSequenceGeneratorSource {
 
       for (long j = batchSize; j > 0; j--) {
         Event event = channel.take();
-        String expectedVal = String.valueOf(((i+1)*batchSize)-j);
+        String expectedVal = String.valueOf(((i + 1) * batchSize) - j);
         String resultedVal = new String(event.getBody());
         Assert.assertTrue("Expected " + expectedVal + " is not equals to " +
             resultedVal, expectedVal.equals(resultedVal));

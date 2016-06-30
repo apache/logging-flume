@@ -18,7 +18,6 @@
  */
 package org.apache.flume.source;
 
-
 import org.apache.flume.Event;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -41,7 +40,7 @@ public class TestSyslogUtils {
     String host1 = "ubuntu-11.cloudera.com";
     String data1 = "some msg";
     // timestamp with hh:mm format timezone with no version
-    String msg1 = "<10>" + stamp1+ "+08:00" + " " + host1 + " " + data1 + "\n";
+    String msg1 = "<10>" + stamp1 + "+08:00" + " " + host1 + " " + data1 + "\n";
     checkHeader(msg1, stamp1 + "+0800", format1, host1, data1);
   }
 
@@ -62,7 +61,7 @@ public class TestSyslogUtils {
     String host1 = "ubuntu-11.cloudera.com";
     String data1 = "some msg";
     // timestamp with 'Z' appended, translates to UTC
-    String msg1 = "<10>1 " + stamp1+ "Z" + " " + host1 + " " + data1 + "\n";
+    String msg1 = "<10>1 " + stamp1 + "Z" + " " + host1 + " " + data1 + "\n";
     checkHeader(msg1, stamp1 + "+0000", format1, host1, data1);
   }
 
@@ -73,13 +72,13 @@ public class TestSyslogUtils {
     String host1 = "ubuntu-11.cloudera.com";
     String data1 = "some msg";
     // timestamp with hh:mm format timezone
-    String msg1 = "<10>1 " + stamp1+ "+08:00" + " " + host1 + " " + data1 + "\n";
+    String msg1 = "<10>1 " + stamp1 + "+08:00" + " " + host1 + " " + data1 + "\n";
     checkHeader(msg1, stamp1 + "+0800", format1, host1, data1);
   }
 
   @Test
   public void TestHeader4() throws ParseException {
-     String host1 = "ubuntu-11.cloudera.com";
+    String host1 = "ubuntu-11.cloudera.com";
     String data1 = "some msg";
     // null format timestamp (-)
     String msg1 = "<10>1 " + "-" + " " + host1 + " " + data1 + "\n";
@@ -104,7 +103,7 @@ public class TestSyslogUtils {
     String host1 = "-";
     String data1 = "some msg";
     // null host
-    String msg1 = "<10>1 " + stamp1+ "Z" + " " + host1 + " " + data1 + "\n";
+    String msg1 = "<10>1 " + stamp1 + "Z" + " " + host1 + " " + data1 + "\n";
     checkHeader(msg1, stamp1 + "+0000", format1, null, data1);
   }
 
@@ -115,7 +114,7 @@ public class TestSyslogUtils {
     String host1 = "-";
     String data1 = "some msg";
     // null host
-    String msg1 = "<10>1 " + stamp1+ "+08:00" + " " + host1 + " " + data1 + "\n";
+    String msg1 = "<10>1 " + stamp1 + "+08:00" + " " + host1 + " " + data1 + "\n";
     checkHeader(msg1, stamp1 + "+0800", format1, null, data1);
   }
 
@@ -141,8 +140,7 @@ public class TestSyslogUtils {
     String data1 = "some msg";
     // timestamp with 'Z' appended, translates to UTC
     String msg1 = "<10>" + stamp1 + " " + host1 + " " + data1 + "\n";
-    checkHeader(msg1, year + stamp1,
-        format1, host1, data1);
+    checkHeader(msg1, year + stamp1, format1, host1, data1);
   }
 
   @Test
@@ -157,8 +155,7 @@ public class TestSyslogUtils {
     String data1 = "some msg";
     // timestamp with 'Z' appended, translates to UTC
     String msg1 = "<10>" + stamp1 + " " + host1 + " " + data1 + "\n";
-    checkHeader(msg1, year + stamp1,
-        format1, host1, data1);
+    checkHeader(msg1, year + stamp1, format1, host1, data1);
   }
 
   @Test
@@ -187,21 +184,19 @@ public class TestSyslogUtils {
     String host1 = "ubuntu-11.cloudera.com";
     String data1 = "- hyphen_null_breaks_5424_pattern [07/Jun/2012:14:46:44 -0600]";
     String msg1 = "<10>" + stamp1 + " " + host1 + " " + data1 + "\n";
-    checkHeader(msg1, year + stamp1,
-            format1, host1, data1);
+    checkHeader(msg1, year + stamp1, format1, host1, data1);
   }
 
+  /* This test creates a series of dates that range from 10 months in the past to (5 days short
+   * of) one month in the future. This tests that the year addition code is clever enough to
+   * handle scenarios where the event received was generated in a different year to what flume
+   * considers to be "current" (e.g. where there has been some lag somewhere, especially when
+   * flicking over on New Year's eve, or when you are about to flick over and the flume's
+   * system clock is slightly slower than the Syslog source's clock).
+   */
   @Test
   public void TestRfc3164Dates() throws ParseException {
-    /*
-     * This test creates a series of dates that range from 10 months in the past to (5 days short of)
-     * one month in the future. This tests that the year addition code is clever enough to handle scenarios
-     * where the event received was generated in a different year to what flume considers to be "current"
-     * (e.g. where there has been some lag somewhere, especially when flicking over on New Year's eve, or
-     * when you are about to flick over and the flume's system clock is slightly slower than the Syslog
-     * source's clock).
-     */
-    for (int i=-10; i<=1; i++) {
+    for (int i = -10; i <= 1; i++) {
       SimpleDateFormat sdf = new SimpleDateFormat("MMM  d hh:MM:ss");
       Date date = new Date(System.currentTimeMillis());
       Calendar cal = Calendar.getInstance();
@@ -210,7 +205,7 @@ public class TestSyslogUtils {
 
       //Small tweak to avoid the 1 month in the future ticking over by a few seconds between now
       //and when the checkHeader actually runs
-      if (i==1) {
+      if (i == 1) {
         cal.add(Calendar.DAY_OF_MONTH, -1);
       }
 
@@ -223,8 +218,7 @@ public class TestSyslogUtils {
 
       // timestamp with 'Z' appended, translates to UTC
       String msg1 = "<10>" + stamp1 + " " + host1 + " " + data1 + "\n";
-      checkHeader(msg1, year + stamp1,
-          format1, host1, data1);
+      checkHeader(msg1, year + stamp1, format1, host1, data1);
     }
   }
 
@@ -234,16 +228,15 @@ public class TestSyslogUtils {
     if (keepFields == null || keepFields.isEmpty()) {
       util = new SyslogUtils(SyslogUtils.DEFAULT_SIZE, new HashSet<String>(), false);
     } else {
-      util = new SyslogUtils(
-          SyslogUtils.DEFAULT_SIZE,
-          SyslogUtils.chooseFieldsToKeep(keepFields),
-          false);
+      util = new SyslogUtils(SyslogUtils.DEFAULT_SIZE,
+                             SyslogUtils.chooseFieldsToKeep(keepFields),
+                             false);
     }
     ChannelBuffer buff = ChannelBuffers.buffer(200);
 
     buff.writeBytes(msg1.getBytes());
     Event e = util.extractEvent(buff);
-    if(e == null){
+    if (e == null) {
       throw new NullPointerException("Event is null");
     }
     Map<String, String> headers2 = e.getHeaders();
@@ -251,13 +244,14 @@ public class TestSyslogUtils {
       Assert.assertFalse(headers2.containsKey("timestamp"));
     } else {
       SimpleDateFormat formater = new SimpleDateFormat(format1, Locale.ENGLISH);
-      Assert.assertEquals(String.valueOf(formater.parse(stamp1).getTime()), headers2.get("timestamp"));
+      Assert.assertEquals(String.valueOf(formater.parse(stamp1).getTime()),
+                          headers2.get("timestamp"));
     }
     if (host1 == null) {
       Assert.assertFalse(headers2.containsKey("host"));
     } else {
       String host2 = headers2.get("host");
-      Assert.assertEquals(host2,host1);
+      Assert.assertEquals(host2, host1);
     }
     Assert.assertEquals(data1, new String(e.getBody()));
   }
@@ -278,22 +272,20 @@ public class TestSyslogUtils {
     ChannelBuffer buff = ChannelBuffers.buffer(100);
     buff.writeBytes(badData1.getBytes());
     Event e = util.extractEvent(buff);
-    if(e == null){
+    if (e == null) {
       throw new NullPointerException("Event is null");
     }
     Map<String, String> headers = e.getHeaders();
     Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_FACILITY));
     Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(SyslogUtils.SyslogStatus.INVALID.getSyslogStatus(),
-        headers.get(SyslogUtils.EVENT_STATUS));
+                        headers.get(SyslogUtils.EVENT_STATUS));
     Assert.assertEquals(badData1.trim(), new String(e.getBody()).trim());
-
   }
 
   /**
    * Test bad event format 2: The first char is not <
    */
-
   @Test
   public void testExtractBadEvent2() {
     String badData1 = "hi guys! <10> bad bad data\n";
@@ -301,22 +293,20 @@ public class TestSyslogUtils {
     ChannelBuffer buff = ChannelBuffers.buffer(100);
     buff.writeBytes(badData1.getBytes());
     Event e = util.extractEvent(buff);
-    if(e == null){
+    if (e == null) {
       throw new NullPointerException("Event is null");
     }
     Map<String, String> headers = e.getHeaders();
     Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_FACILITY));
     Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(SyslogUtils.SyslogStatus.INVALID.getSyslogStatus(),
-        headers.get(SyslogUtils.EVENT_STATUS));
+                        headers.get(SyslogUtils.EVENT_STATUS));
     Assert.assertEquals(badData1.trim(), new String(e.getBody()).trim());
-
   }
 
   /**
    * Test bad event format 3: Empty priority - <>
    */
-
   @Test
   public void testExtractBadEvent3() {
     String badData1 = "<> bad bad data\n";
@@ -324,22 +314,20 @@ public class TestSyslogUtils {
     ChannelBuffer buff = ChannelBuffers.buffer(100);
     buff.writeBytes(badData1.getBytes());
     Event e = util.extractEvent(buff);
-    if(e == null){
+    if (e == null) {
       throw new NullPointerException("Event is null");
     }
     Map<String, String> headers = e.getHeaders();
     Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_FACILITY));
     Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(SyslogUtils.SyslogStatus.INVALID.getSyslogStatus(),
-        headers.get(SyslogUtils.EVENT_STATUS));
+                        headers.get(SyslogUtils.EVENT_STATUS));
     Assert.assertEquals(badData1.trim(), new String(e.getBody()).trim());
-
   }
 
   /**
    * Test bad event format 4: Priority too long
    */
-
   @Test
   public void testExtractBadEvent4() {
     String badData1 = "<123123123123123123123123123123> bad bad data\n";
@@ -347,16 +335,15 @@ public class TestSyslogUtils {
     ChannelBuffer buff = ChannelBuffers.buffer(100);
     buff.writeBytes(badData1.getBytes());
     Event e = util.extractEvent(buff);
-    if(e == null){
+    if (e == null) {
       throw new NullPointerException("Event is null");
     }
     Map<String, String> headers = e.getHeaders();
     Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_FACILITY));
     Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(SyslogUtils.SyslogStatus.INVALID.getSyslogStatus(),
-        headers.get(SyslogUtils.EVENT_STATUS));
+                        headers.get(SyslogUtils.EVENT_STATUS));
     Assert.assertEquals(badData1.trim(), new String(e.getBody()).trim());
-
   }
 
   /**
@@ -368,9 +355,9 @@ public class TestSyslogUtils {
     String goodData1 = "Good good good data\n";
     SyslogUtils util = new SyslogUtils(false);
     ChannelBuffer buff = ChannelBuffers.buffer(100);
-    buff.writeBytes((priority+goodData1).getBytes());
+    buff.writeBytes((priority + goodData1).getBytes());
     Event e = util.extractEvent(buff);
-    if(e == null){
+    if (e == null) {
       throw new NullPointerException("Event is null");
     }
     Map<String, String> headers = e.getHeaders();
@@ -378,86 +365,81 @@ public class TestSyslogUtils {
     Assert.assertEquals("2", headers.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(null, headers.get(SyslogUtils.EVENT_STATUS));
     Assert.assertEquals(priority + goodData1.trim(),
-        new String(e.getBody()).trim());
-
+                        new String(e.getBody()).trim());
   }
 
   /**
    * Bad event immediately followed by a good event
    */
   @Test
-  public void testBadEventGoodEvent(){
+  public void testBadEventGoodEvent() {
     String badData1 = "hi guys! <10F> bad bad data\n";
     SyslogUtils util = new SyslogUtils(false);
     ChannelBuffer buff = ChannelBuffers.buffer(100);
     buff.writeBytes(badData1.getBytes());
     String priority = "<10>";
     String goodData1 = "Good good good data\n";
-    buff.writeBytes((priority+goodData1).getBytes());
+    buff.writeBytes((priority + goodData1).getBytes());
     Event e = util.extractEvent(buff);
 
-    if(e == null){
+    if (e == null) {
       throw new NullPointerException("Event is null");
     }
     Map<String, String> headers = e.getHeaders();
     Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_FACILITY));
     Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(SyslogUtils.SyslogStatus.INVALID.getSyslogStatus(),
-        headers.get(SyslogUtils.EVENT_STATUS));
-    Assert.assertEquals(badData1.trim(), new String(e.getBody())
-      .trim());
-
-    Event e2 = util.extractEvent(buff);
-    if(e2 == null){
-      throw new NullPointerException("Event is null");
-    }
-    Map<String, String> headers2 = e2.getHeaders();
-    Assert.assertEquals("1", headers2.get(SyslogUtils.SYSLOG_FACILITY));
-    Assert.assertEquals("2", headers2.get(SyslogUtils.SYSLOG_SEVERITY));
-    Assert.assertEquals(null,
-        headers2.get(SyslogUtils.EVENT_STATUS));
-    Assert.assertEquals(priority + goodData1.trim(),
-        new String(e2.getBody()).trim());
-  }
-
-  @Test
-  public void testGoodEventBadEvent(){
-    String badData1 = "hi guys! <10F> bad bad data\n";
-    String priority = "<10>";
-    String goodData1 = "Good good good data\n";
-    SyslogUtils util = new SyslogUtils(false);
-    ChannelBuffer buff = ChannelBuffers.buffer(100);
-    buff.writeBytes((priority+goodData1).getBytes());
-    buff.writeBytes(badData1.getBytes());
-
-    Event e2 = util.extractEvent(buff);
-    if(e2 == null){
-      throw new NullPointerException("Event is null");
-    }
-    Map<String, String> headers2 = e2.getHeaders();
-    Assert.assertEquals("1", headers2.get(SyslogUtils.SYSLOG_FACILITY));
-    Assert.assertEquals("2", headers2.get(SyslogUtils.SYSLOG_SEVERITY));
-    Assert.assertEquals(null,
-        headers2.get(SyslogUtils.EVENT_STATUS));
-    Assert.assertEquals(priority + goodData1.trim(),
-        new String(e2.getBody()).trim());
-
-    Event e = util.extractEvent(buff);
-
-    if(e == null){
-      throw new NullPointerException("Event is null");
-    }
-    Map<String, String> headers = e.getHeaders();
-    Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_FACILITY));
-    Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_SEVERITY));
-    Assert.assertEquals(SyslogUtils.SyslogStatus.INVALID.getSyslogStatus(),
-        headers.get(SyslogUtils.EVENT_STATUS));
+                        headers.get(SyslogUtils.EVENT_STATUS));
     Assert.assertEquals(badData1.trim(), new String(e.getBody()).trim());
 
+    Event e2 = util.extractEvent(buff);
+    if (e2 == null) {
+      throw new NullPointerException("Event is null");
+    }
+    Map<String, String> headers2 = e2.getHeaders();
+    Assert.assertEquals("1", headers2.get(SyslogUtils.SYSLOG_FACILITY));
+    Assert.assertEquals("2", headers2.get(SyslogUtils.SYSLOG_SEVERITY));
+    Assert.assertEquals(null, headers2.get(SyslogUtils.EVENT_STATUS));
+    Assert.assertEquals(priority + goodData1.trim(), new String(e2.getBody()).trim());
   }
 
   @Test
-  public void testBadEventBadEvent(){
+  public void testGoodEventBadEvent() {
+    String badData1 = "hi guys! <10F> bad bad data\n";
+    String priority = "<10>";
+    String goodData1 = "Good good good data\n";
+    SyslogUtils util = new SyslogUtils(false);
+    ChannelBuffer buff = ChannelBuffers.buffer(100);
+    buff.writeBytes((priority + goodData1).getBytes());
+    buff.writeBytes(badData1.getBytes());
+
+    Event e2 = util.extractEvent(buff);
+    if (e2 == null) {
+      throw new NullPointerException("Event is null");
+    }
+    Map<String, String> headers2 = e2.getHeaders();
+    Assert.assertEquals("1", headers2.get(SyslogUtils.SYSLOG_FACILITY));
+    Assert.assertEquals("2", headers2.get(SyslogUtils.SYSLOG_SEVERITY));
+    Assert.assertEquals(null,
+                        headers2.get(SyslogUtils.EVENT_STATUS));
+    Assert.assertEquals(priority + goodData1.trim(),
+                        new String(e2.getBody()).trim());
+
+    Event e = util.extractEvent(buff);
+
+    if (e == null) {
+      throw new NullPointerException("Event is null");
+    }
+    Map<String, String> headers = e.getHeaders();
+    Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_FACILITY));
+    Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_SEVERITY));
+    Assert.assertEquals(SyslogUtils.SyslogStatus.INVALID.getSyslogStatus(),
+                        headers.get(SyslogUtils.EVENT_STATUS));
+    Assert.assertEquals(badData1.trim(), new String(e.getBody()).trim());
+  }
+
+  @Test
+  public void testBadEventBadEvent() {
     String badData1 = "hi guys! <10F> bad bad data\n";
     SyslogUtils util = new SyslogUtils(false);
     ChannelBuffer buff = ChannelBuffers.buffer(100);
@@ -466,65 +448,63 @@ public class TestSyslogUtils {
     buff.writeBytes((badData2).getBytes());
     Event e = util.extractEvent(buff);
 
-    if(e == null){
+    if (e == null) {
       throw new NullPointerException("Event is null");
     }
     Map<String, String> headers = e.getHeaders();
     Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_FACILITY));
     Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(SyslogUtils.SyslogStatus.INVALID.getSyslogStatus(),
-        headers.get(SyslogUtils.EVENT_STATUS));
+                        headers.get(SyslogUtils.EVENT_STATUS));
     Assert.assertEquals(badData1.trim(), new String(e.getBody()).trim());
 
     Event e2 = util.extractEvent(buff);
 
-    if(e2 == null){
+    if (e2 == null) {
       throw new NullPointerException("Event is null");
     }
     Map<String, String> headers2 = e2.getHeaders();
     Assert.assertEquals("0", headers2.get(SyslogUtils.SYSLOG_FACILITY));
     Assert.assertEquals("0", headers2.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(SyslogUtils.SyslogStatus.INVALID.getSyslogStatus(),
-        headers2.get(SyslogUtils.EVENT_STATUS));
+                        headers2.get(SyslogUtils.EVENT_STATUS));
     Assert.assertEquals(badData2.trim(), new String(e2.getBody()).trim());
   }
 
   @Test
   public void testGoodEventGoodEvent() {
-
     String priority = "<10>";
     String goodData1 = "Good good good data\n";
     SyslogUtils util = new SyslogUtils(false);
     ChannelBuffer buff = ChannelBuffers.buffer(100);
-    buff.writeBytes((priority+goodData1).getBytes());
+    buff.writeBytes((priority + goodData1).getBytes());
     String priority2 = "<20>";
     String goodData2 = "Good really good data\n";
-    buff.writeBytes((priority2+goodData2).getBytes());
+    buff.writeBytes((priority2 + goodData2).getBytes());
     Event e = util.extractEvent(buff);
-    if(e == null){
+    if (e == null) {
       throw new NullPointerException("Event is null");
     }
     Map<String, String> headers = e.getHeaders();
     Assert.assertEquals("1", headers.get(SyslogUtils.SYSLOG_FACILITY));
     Assert.assertEquals("2", headers.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(null,
-        headers.get(SyslogUtils.EVENT_STATUS));
+                        headers.get(SyslogUtils.EVENT_STATUS));
     Assert.assertEquals(priority + goodData1.trim(),
-        new String(e.getBody()).trim());
+                        new String(e.getBody()).trim());
 
 
     Event e2 = util.extractEvent(buff);
-    if(e2 == null){
+    if (e2 == null) {
       throw new NullPointerException("Event is null");
     }
     Map<String, String> headers2 = e2.getHeaders();
     Assert.assertEquals("2", headers2.get(SyslogUtils.SYSLOG_FACILITY));
     Assert.assertEquals("4", headers2.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(null,
-        headers.get(SyslogUtils.EVENT_STATUS));
+                        headers.get(SyslogUtils.EVENT_STATUS));
     Assert.assertEquals(priority2 + goodData2.trim(),
-        new String(e2.getBody()).trim());
-
+                        new String(e2.getBody()).trim());
   }
 
   @Test
@@ -535,28 +515,27 @@ public class TestSyslogUtils {
     ChannelBuffer buff = ChannelBuffers.buffer(100);
     buff.writeBytes(badData1.getBytes());
     Event e = util.extractEvent(buff);
-    if(e == null){
+    if (e == null) {
       throw new NullPointerException("Event is null");
     }
     Map<String, String> headers = e.getHeaders();
     Assert.assertEquals("1", headers.get(SyslogUtils.SYSLOG_FACILITY));
     Assert.assertEquals("2", headers.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(SyslogUtils.SyslogStatus.INCOMPLETE.getSyslogStatus(),
-        headers.get(SyslogUtils.EVENT_STATUS));
+                        headers.get(SyslogUtils.EVENT_STATUS));
     Assert.assertEquals("<10> bad b".trim(), new String(e.getBody()).trim());
 
     Event e2 = util.extractEvent(buff);
 
-    if(e2 == null){
+    if (e2 == null) {
       throw new NullPointerException("Event is null");
     }
     Map<String, String> headers2 = e2.getHeaders();
     Assert.assertEquals("0", headers2.get(SyslogUtils.SYSLOG_FACILITY));
     Assert.assertEquals("0", headers2.get(SyslogUtils.SYSLOG_SEVERITY));
     Assert.assertEquals(SyslogUtils.SyslogStatus.INVALID.getSyslogStatus(),
-        headers2.get(SyslogUtils.EVENT_STATUS));
+                        headers2.get(SyslogUtils.EVENT_STATUS));
     Assert.assertEquals("ad data ba".trim(), new String(e2.getBody()).trim());
-
   }
 
   @Test
@@ -580,7 +559,8 @@ public class TestSyslogUtils {
     checkHeader("priority timestamp hostname", msg1, stamp1 + "+0800", format1, host1, data4);
 
     String data5 = "<10>1 2012-04-13T11:11:11+08:00 ubuntu-11.cloudera.com some msg";
-    checkHeader("priority version timestamp hostname", msg1, stamp1 + "+0800", format1, host1, data5);
+    checkHeader("priority version timestamp hostname", msg1, stamp1 + "+0800",
+                format1, host1, data5);
     checkHeader("all", msg1, stamp1 + "+0800", format1, host1, data5);
     checkHeader("true", msg1, stamp1 + "+0800", format1, host1, data5);
   }

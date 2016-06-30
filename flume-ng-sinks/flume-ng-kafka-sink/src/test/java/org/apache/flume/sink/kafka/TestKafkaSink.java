@@ -18,8 +18,8 @@
 
 package org.apache.flume.sink.kafka;
 
+import com.google.common.base.Charsets;
 import kafka.message.MessageAndMetadata;
-
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
@@ -41,8 +41,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.google.common.base.Charsets;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -52,11 +50,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.AVRO_EVENT;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.BATCH_SIZE;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.BOOTSTRAP_SERVERS_CONFIG;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.BROKER_LIST_FLUME_KEY;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_KEY_SERIALIZER;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_TOPIC;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.KAFKA_PREFIX;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.KAFKA_PRODUCER_PREFIX;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.OLD_BATCH_SIZE;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.REQUIRED_ACKS_FLUME_KEY;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_CONFIG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
-
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.*;
 
 /**
  * Unit tests for Kafka Sink
@@ -86,40 +93,45 @@ public class TestKafkaSink {
     KafkaSink kafkaSink = new KafkaSink();
     Context context = new Context();
     context.put(KAFKA_PREFIX + TOPIC_CONFIG, "");
-    context.put(KAFKA_PRODUCER_PREFIX + ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "override.default.serializer");
+    context.put(KAFKA_PRODUCER_PREFIX + ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+                "override.default.serializer");
     context.put("kafka.producer.fake.property", "kafka.property.value");
     context.put("kafka.bootstrap.servers", "localhost:9092,localhost:9092");
-    context.put("brokerList","real-broker-list");
-    Configurables.configure(kafkaSink,context);
+    context.put("brokerList", "real-broker-list");
+    Configurables.configure(kafkaSink, context);
 
     Properties kafkaProps = kafkaSink.getKafkaProps();
 
     //check that we have defaults set
-    assertEquals(
-            kafkaProps.getProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG), DEFAULT_KEY_SERIALIZER);
+    assertEquals(kafkaProps.getProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG),
+                 DEFAULT_KEY_SERIALIZER);
     //check that kafka properties override the default and get correct name
-    assertEquals(kafkaProps.getProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG), "override.default.serializer");
+    assertEquals(kafkaProps.getProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG),
+                 "override.default.serializer");
     //check that any kafka-producer property gets in
-    assertEquals(kafkaProps.getProperty("fake.property"), "kafka.property.value");
+    assertEquals(kafkaProps.getProperty("fake.property"),
+                 "kafka.property.value");
     //check that documented property overrides defaults
-    assertEquals(kafkaProps.getProperty("bootstrap.servers") ,"localhost:9092,localhost:9092");
+    assertEquals(kafkaProps.getProperty("bootstrap.servers"),
+                 "localhost:9092,localhost:9092");
   }
 
   @Test
   public void testOldProperties() {
     KafkaSink kafkaSink = new KafkaSink();
     Context context = new Context();
-    context.put("topic","test-topic");
+    context.put("topic", "test-topic");
     context.put(OLD_BATCH_SIZE, "300");
-    context.put(BROKER_LIST_FLUME_KEY,"localhost:9092,localhost:9092");
+    context.put(BROKER_LIST_FLUME_KEY, "localhost:9092,localhost:9092");
     context.put(REQUIRED_ACKS_FLUME_KEY, "all");
-    Configurables.configure(kafkaSink,context);
+    Configurables.configure(kafkaSink, context);
 
     Properties kafkaProps = kafkaSink.getKafkaProps();
 
     assertEquals(kafkaSink.getTopic(), "test-topic");
-    assertEquals(kafkaSink.getBatchSize(),300);
-    assertEquals(kafkaProps.getProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG),"localhost:9092,localhost:9092");
+    assertEquals(kafkaSink.getBatchSize(), 300);
+    assertEquals(kafkaProps.getProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG),
+                 "localhost:9092,localhost:9092");
     assertEquals(kafkaProps.getProperty(ProducerConfig.ACKS_CONFIG), "all");
 
   }
@@ -151,9 +163,8 @@ public class TestKafkaSink {
       // ignore
     }
 
-    String fetchedMsg = new String((byte[])
-      testUtil.getNextMessageFromConsumer(DEFAULT_TOPIC)
-        .message());
+    String fetchedMsg = new String((byte[]) testUtil.getNextMessageFromConsumer(DEFAULT_TOPIC)
+                                                    .message());
     assertEquals(msg, fetchedMsg);
   }
 
@@ -173,14 +184,13 @@ public class TestKafkaSink {
       // ignore
     }
 
-    String fetchedMsg = new String((byte[]) testUtil.getNextMessageFromConsumer(TestConstants.STATIC_TOPIC).message());
+    String fetchedMsg = new String((byte[]) testUtil.getNextMessageFromConsumer(
+        TestConstants.STATIC_TOPIC).message());
     assertEquals(msg, fetchedMsg);
   }
 
   @Test
   public void testTopicAndKeyFromHeader() throws UnsupportedEncodingException {
-
-
     Sink kafkaSink = new KafkaSink();
     Context context = prepareDefaultContext();
     Configurables.configure(kafkaSink, context);
@@ -210,19 +220,16 @@ public class TestKafkaSink {
     }
 
     MessageAndMetadata fetchedMsg =
-      testUtil.getNextMessageFromConsumer(TestConstants.CUSTOM_TOPIC);
+        testUtil.getNextMessageFromConsumer(TestConstants.CUSTOM_TOPIC);
 
     assertEquals(msg, new String((byte[]) fetchedMsg.message(), "UTF-8"));
     assertEquals(TestConstants.CUSTOM_KEY,
-      new String((byte[]) fetchedMsg.key(), "UTF-8"));
-
+                 new String((byte[]) fetchedMsg.key(), "UTF-8"));
   }
 
   @SuppressWarnings("rawtypes")
   @Test
   public void testAvroEvent() throws IOException {
-
-
     Sink kafkaSink = new KafkaSink();
     Context context = prepareDefaultContext();
     context.put(AVRO_EVENT, "true");
@@ -254,13 +261,12 @@ public class TestKafkaSink {
       // ignore
     }
 
-    MessageAndMetadata fetchedMsg =
-      testUtil.getNextMessageFromConsumer(TestConstants.CUSTOM_TOPIC);
+    MessageAndMetadata fetchedMsg = testUtil.getNextMessageFromConsumer(TestConstants.CUSTOM_TOPIC);
 
-    ByteArrayInputStream in =
-        new ByteArrayInputStream((byte[])fetchedMsg.message());
+    ByteArrayInputStream in = new ByteArrayInputStream((byte[]) fetchedMsg.message());
     BinaryDecoder decoder = DecoderFactory.get().directBinaryDecoder(in, null);
-    SpecificDatumReader<AvroFlumeEvent> reader = new SpecificDatumReader<AvroFlumeEvent>(AvroFlumeEvent.class);
+    SpecificDatumReader<AvroFlumeEvent> reader =
+        new SpecificDatumReader<AvroFlumeEvent>(AvroFlumeEvent.class);
 
     AvroFlumeEvent avroevent = reader.read(null, decoder);
 
@@ -268,17 +274,15 @@ public class TestKafkaSink {
     Map<CharSequence, CharSequence> eventHeaders = avroevent.getHeaders();
 
     assertEquals(msg, eventBody);
-    assertEquals(TestConstants.CUSTOM_KEY,
-      new String((byte[]) fetchedMsg.key(), "UTF-8"));
+    assertEquals(TestConstants.CUSTOM_KEY, new String((byte[]) fetchedMsg.key(), "UTF-8"));
 
-    assertEquals(TestConstants.HEADER_1_VALUE, eventHeaders.get(new Utf8(TestConstants.HEADER_1_KEY)).toString());
+    assertEquals(TestConstants.HEADER_1_VALUE,
+                 eventHeaders.get(new Utf8(TestConstants.HEADER_1_KEY)).toString());
     assertEquals(TestConstants.CUSTOM_KEY, eventHeaders.get(new Utf8("key")).toString());
-
   }
 
   @Test
-  public void testEmptyChannel() throws UnsupportedEncodingException,
-          EventDeliveryException {
+  public void testEmptyChannel() throws UnsupportedEncodingException, EventDeliveryException {
     Sink kafkaSink = new KafkaSink();
     Context context = prepareDefaultContext();
     Configurables.configure(kafkaSink, context);
@@ -291,8 +295,7 @@ public class TestKafkaSink {
     if (status != Sink.Status.BACKOFF) {
       fail("Error Occurred");
     }
-    assertNull(
-      testUtil.getNextMessageFromConsumer(DEFAULT_TOPIC));
+    assertNull(testUtil.getNextMessageFromConsumer(DEFAULT_TOPIC));
   }
 
   private Context prepareDefaultContext() {
@@ -304,7 +307,7 @@ public class TestKafkaSink {
   }
 
   private Sink.Status prepareAndSend(Context context, String msg)
-    throws EventDeliveryException {
+      throws EventDeliveryException {
     Sink kafkaSink = new KafkaSink();
     Configurables.configure(kafkaSink, context);
     Channel memoryChannel = new MemoryChannel();

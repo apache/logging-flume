@@ -176,7 +176,7 @@ public class TestAsyncHBaseSink {
     sink.start();
     Transaction tx = channel.getTransaction();
     tx.begin();
-    for(int i = 0; i < 3; i++){
+    for (int i = 0; i < 3; i++) {
       Event e = EventBuilder.withBody(Bytes.toBytes(valBase + "-" + i));
       channel.put(e);
     }
@@ -189,9 +189,9 @@ public class TestAsyncHBaseSink {
     byte[][] results = getResults(table, 3);
     byte[] out;
     int found = 0;
-    for(int i = 0; i < 3; i++){
-      for(int j = 0; j < 3; j++){
-        if(Arrays.equals(results[j],Bytes.toBytes(valBase + "-" + i))){
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        if (Arrays.equals(results[j], Bytes.toBytes(valBase + "-" + i))) {
           found++;
           break;
         }
@@ -209,8 +209,7 @@ public class TestAsyncHBaseSink {
   public void testTimeOut() throws Exception {
     testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
     deleteTable = true;
-    AsyncHBaseSink sink = new AsyncHBaseSink(testUtility.getConfiguration(),
-      true, false);
+    AsyncHBaseSink sink = new AsyncHBaseSink(testUtility.getConfiguration(), true, false);
     Configurables.configure(sink, ctx);
     Channel channel = new MemoryChannel();
     Configurables.configure(channel, ctx);
@@ -219,7 +218,7 @@ public class TestAsyncHBaseSink {
     sink.start();
     Transaction tx = channel.getTransaction();
     tx.begin();
-    for(int i = 0; i < 3; i++){
+    for (int i = 0; i < 3; i++) {
       Event e = EventBuilder.withBody(Bytes.toBytes(valBase + "-" + i));
       channel.put(e);
     }
@@ -245,7 +244,7 @@ public class TestAsyncHBaseSink {
     sink.start();
     Transaction tx = channel.getTransaction();
     tx.begin();
-    for(int i = 0; i < 3; i++){
+    for (int i = 0; i < 3; i++) {
       Event e = EventBuilder.withBody(Bytes.toBytes(valBase + "-" + i));
       channel.put(e);
     }
@@ -253,7 +252,7 @@ public class TestAsyncHBaseSink {
     tx.close();
     int count = 0;
     Status status = Status.READY;
-    while(status != Status.BACKOFF){
+    while (status != Status.BACKOFF) {
       count++;
       status = sink.process();
     }
@@ -264,9 +263,9 @@ public class TestAsyncHBaseSink {
     byte[][] results = getResults(table, 3);
     byte[] out;
     int found = 0;
-    for(int i = 0; i < 3; i++){
-      for(int j = 0; j < 3; j++){
-        if(Arrays.equals(results[j],Bytes.toBytes(valBase + "-" + i))){
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        if (Arrays.equals(results[j], Bytes.toBytes(valBase + "-" + i))) {
           found++;
           break;
         }
@@ -278,26 +277,21 @@ public class TestAsyncHBaseSink {
   }
 
   @Test
-  public void testMultipleBatchesBatchIncrementsWithCoalescing()
-    throws Exception {
+  public void testMultipleBatchesBatchIncrementsWithCoalescing() throws Exception {
     doTestMultipleBatchesBatchIncrements(true);
   }
 
   @Test
-  public void testMultipleBatchesBatchIncrementsNoCoalescing()
-    throws Exception {
+  public void testMultipleBatchesBatchIncrementsNoCoalescing() throws Exception {
     doTestMultipleBatchesBatchIncrements(false);
   }
 
-  public void doTestMultipleBatchesBatchIncrements(boolean coalesce) throws
-    Exception {
+  public void doTestMultipleBatchesBatchIncrements(boolean coalesce) throws Exception {
     testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
     deleteTable = true;
-    AsyncHBaseSink sink = new AsyncHBaseSink(testUtility.getConfiguration(),
-      false, true);
+    AsyncHBaseSink sink = new AsyncHBaseSink(testUtility.getConfiguration(), false, true);
     if (coalesce) {
-      ctx.put(HBaseSinkConfigurationConstants.CONFIG_COALESCE_INCREMENTS,
-        "true");
+      ctx.put(HBaseSinkConfigurationConstants.CONFIG_COALESCE_INCREMENTS, "true");
     }
     ctx.put("batchSize", "2");
     ctx.put("serializer", IncrementAsyncHBaseSerializer.class.getName());
@@ -309,7 +303,7 @@ public class TestAsyncHBaseSink {
     ctx.put("serializer", SimpleAsyncHbaseEventSerializer.class.getName());
     //Restore the no coalescing behavior
     ctx.put(HBaseSinkConfigurationConstants.CONFIG_COALESCE_INCREMENTS,
-      "false");
+            "false");
     Channel channel = new MemoryChannel();
     Configurables.configure(channel, ctx);
     sink.setChannel(channel);
@@ -335,7 +329,7 @@ public class TestAsyncHBaseSink {
     Assert.assertEquals(7, count);
     HTable table = new HTable(testUtility.getConfiguration(), tableName);
     Scan scan = new Scan();
-    scan.addColumn(columnFamily.getBytes(),"test".getBytes());
+    scan.addColumn(columnFamily.getBytes(), "test".getBytes());
     scan.setStartRow(Bytes.toBytes(valBase));
     ResultScanner rs = table.getScanner(scan);
     int i = 0;
@@ -358,19 +352,19 @@ public class TestAsyncHBaseSink {
   }
 
   @Test
-  public void testWithoutConfigurationObject() throws Exception{
+  public void testWithoutConfigurationObject() throws Exception {
     testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
     deleteTable = true;
     ctx.put("batchSize", "2");
     ctx.put(HBaseSinkConfigurationConstants.ZK_QUORUM,
-            ZKConfig.getZKQuorumServersString(testUtility.getConfiguration()) );
+            ZKConfig.getZKQuorumServersString(testUtility.getConfiguration()));
     ctx.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,
-      testUtility.getConfiguration().get(HConstants.ZOOKEEPER_ZNODE_PARENT));
+            testUtility.getConfiguration().get(HConstants.ZOOKEEPER_ZNODE_PARENT));
     AsyncHBaseSink sink = new AsyncHBaseSink();
     Configurables.configure(sink, ctx);
     // Reset context to values usable by other tests.
     ctx.put(HBaseSinkConfigurationConstants.ZK_QUORUM, null);
-    ctx.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,null);
+    ctx.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT, null);
     ctx.put("batchSize", "100");
     Channel channel = new MemoryChannel();
     Configurables.configure(channel, ctx);
@@ -378,7 +372,7 @@ public class TestAsyncHBaseSink {
     sink.start();
     Transaction tx = channel.getTransaction();
     tx.begin();
-    for(int i = 0; i < 3; i++){
+    for (int i = 0; i < 3; i++) {
       Event e = EventBuilder.withBody(Bytes.toBytes(valBase + "-" + i));
       channel.put(e);
     }
@@ -386,7 +380,7 @@ public class TestAsyncHBaseSink {
     tx.close();
     int count = 0;
     Status status = Status.READY;
-    while(status != Status.BACKOFF){
+    while (status != Status.BACKOFF) {
       count++;
       status = sink.process();
     }
@@ -401,9 +395,9 @@ public class TestAsyncHBaseSink {
     byte[][] results = getResults(table, 3);
     byte[] out;
     int found = 0;
-    for(int i = 0; i < 3; i++){
-      for(int j = 0; j < 3; j++){
-        if(Arrays.equals(results[j],Bytes.toBytes(valBase + "-" + i))){
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        if (Arrays.equals(results[j], Bytes.toBytes(valBase + "-" + i))) {
           found++;
           break;
         }
@@ -428,7 +422,7 @@ public class TestAsyncHBaseSink {
     sink.start();
     Transaction tx = channel.getTransaction();
     tx.begin();
-    for(int i = 0; i < 3; i++){
+    for (int i = 0; i < 3; i++) {
       Event e = EventBuilder.withBody(Bytes.toBytes(valBase + "-" + i));
       channel.put(e);
     }
@@ -440,9 +434,9 @@ public class TestAsyncHBaseSink {
     byte[][] results = getResults(table, 2);
     byte[] out;
     int found = 0;
-    for(int i = 0; i < 2; i++){
-      for(int j = 0; j < 2; j++){
-        if(Arrays.equals(results[j],Bytes.toBytes(valBase + "-" + i))){
+    for (int i = 0; i < 2; i++) {
+      for (int j = 0; j < 2; j++) {
+        if (Arrays.equals(results[j], Bytes.toBytes(valBase + "-" + i))) {
           found++;
           break;
         }
@@ -457,7 +451,7 @@ public class TestAsyncHBaseSink {
 
   // We only have support for getting File Descriptor count for Unix from the JDK
   private long getOpenFileDescriptorCount() {
-    if(os instanceof UnixOperatingSystemMXBean){
+    if (os instanceof UnixOperatingSystemMXBean) {
       return ((UnixOperatingSystemMXBean) os).getOpenFileDescriptorCount();
     } else {
       return -1;
@@ -476,13 +470,13 @@ public class TestAsyncHBaseSink {
    */
   @Test
   public void testFDLeakOnShutdown() throws Exception {
-    if(getOpenFileDescriptorCount() < 0) {
+    if (getOpenFileDescriptorCount() < 0) {
       return;
     }
     testUtility.createTable(tableName.getBytes(), columnFamily.getBytes());
     deleteTable = true;
     AsyncHBaseSink sink = new AsyncHBaseSink(testUtility.getConfiguration(),
-            true, false);
+                                             true, false);
     ctx.put("maxConsecutiveFails", "1");
     Configurables.configure(sink, ctx);
     Channel channel = new MemoryChannel();
@@ -492,7 +486,7 @@ public class TestAsyncHBaseSink {
     sink.start();
     Transaction tx = channel.getTransaction();
     tx.begin();
-    for(int i = 0; i < 3; i++){
+    for (int i = 0; i < 3; i++) {
       Event e = EventBuilder.withBody(Bytes.toBytes(valBase + "-" + i));
       channel.put(e);
     }
@@ -503,7 +497,7 @@ public class TestAsyncHBaseSink {
 
     // Since the isTimeOutTest is set to true, transaction will fail
     // with EventDeliveryException
-    for(int i = 0; i < 10; i ++) {
+    for (int i = 0; i < 10; i++) {
       try {
         sink.process();
       } catch (EventDeliveryException ex) {
@@ -511,18 +505,20 @@ public class TestAsyncHBaseSink {
     }
     long increaseInFD = getOpenFileDescriptorCount() - initialFDCount;
     Assert.assertTrue("File Descriptor leak detected. FDs have increased by " +
-      increaseInFD + " from an initial FD count of " + initialFDCount,  increaseInFD < 50);
+                      increaseInFD + " from an initial FD count of " + initialFDCount,
+                      increaseInFD < 50);
   }
 
   /**
    * This test must run last - it shuts down the minicluster :D
+   *
    * @throws Exception
    */
   @Ignore("For dev builds only:" +
-      "This test takes too long, and this has to be run after all other" +
-      "tests, since it shuts down the minicluster. " +
-      "Comment out all other tests" +
-      "and uncomment this annotation to run this test.")
+          "This test takes too long, and this has to be run after all other" +
+          "tests, since it shuts down the minicluster. " +
+          "Comment out all other tests" +
+          "and uncomment this annotation to run this test.")
   @Test(expected = EventDeliveryException.class)
   public void testHBaseFailure() throws Exception {
     ctx.put("batchSize", "2");
@@ -538,7 +534,7 @@ public class TestAsyncHBaseSink {
     sink.start();
     Transaction tx = channel.getTransaction();
     tx.begin();
-    for(int i = 0; i < 3; i++){
+    for (int i = 0; i < 3; i++) {
       Event e = EventBuilder.withBody(Bytes.toBytes(valBase + "-" + i));
       channel.put(e);
     }
@@ -550,9 +546,9 @@ public class TestAsyncHBaseSink {
     byte[][] results = getResults(table, 2);
     byte[] out;
     int found = 0;
-    for(int i = 0; i < 2; i++){
-      for(int j = 0; j < 2; j++){
-        if(Arrays.equals(results[j],Bytes.toBytes(valBase + "-" + i))){
+    for (int i = 0; i < 2; i++) {
+      for (int j = 0; j < 2; j++) {
+        if (Arrays.equals(results[j], Bytes.toBytes(valBase + "-" + i))) {
           found++;
           break;
         }
@@ -565,21 +561,23 @@ public class TestAsyncHBaseSink {
     sink.process();
     sink.stop();
   }
+
   /**
    * Makes Hbase scans to get rows in the payload column and increment column
    * in the table given. Expensive, so tread lightly.
    * Calling this function multiple times for the same result set is a bad
    * idea. Cache the result set once it is returned by this function.
+   *
    * @param table
    * @param numEvents Number of events inserted into the table
    * @return
    * @throws IOException
    */
-  private byte[][] getResults(HTable table, int numEvents) throws IOException{
-    byte[][] results = new byte[numEvents+1][];
+  private byte[][] getResults(HTable table, int numEvents) throws IOException {
+    byte[][] results = new byte[numEvents + 1][];
     Scan scan = new Scan();
-    scan.addColumn(columnFamily.getBytes(),plCol.getBytes());
-    scan.setStartRow( Bytes.toBytes("default"));
+    scan.addColumn(columnFamily.getBytes(), plCol.getBytes());
+    scan.setStartRow(Bytes.toBytes("default"));
     ResultScanner rs = table.getScanner(scan);
     byte[] out = null;
     int i = 0;
@@ -587,10 +585,10 @@ public class TestAsyncHBaseSink {
       for (Result r = rs.next(); r != null; r = rs.next()) {
         out = r.getValue(columnFamily.getBytes(), plCol.getBytes());
 
-        if(i >= results.length - 1){
+        if (i >= results.length - 1) {
           rs.close();
           throw new FlumeException("More results than expected in the table." +
-              "Expected = " + numEvents +". Found = " + i);
+                                   "Expected = " + numEvents + ". Found = " + i);
         }
         results[i++] = out;
         System.out.println(out);
@@ -601,7 +599,7 @@ public class TestAsyncHBaseSink {
 
     Assert.assertEquals(i, results.length - 1);
     scan = new Scan();
-    scan.addColumn(columnFamily.getBytes(),inColumn.getBytes());
+    scan.addColumn(columnFamily.getBytes(), inColumn.getBytes());
     scan.setStartRow(Bytes.toBytes("incRow"));
     rs = table.getScanner(scan);
     out = null;
