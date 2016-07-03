@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
-
+import java.net.*;
 import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
 import org.apache.flume.annotations.InterfaceAudience;
@@ -62,6 +62,8 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
   private Map<Long, TailFile> tailFiles = Maps.newHashMap();
   private long updateTime;
   private boolean addByteOffset;
+  private String lineStartRegex;
+  private int bufferSize;
   private boolean committed = true;
 
   /**
@@ -69,7 +71,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
    */
   private ReliableTaildirEventReader(Map<String, String> filePaths,
       Table<String, String, String> headerTable, String positionFilePath,
-      boolean skipToEnd, boolean addByteOffset) throws IOException {
+      boolean skipToEnd, boolean addByteOffset, String lineStartRegex, int bufferSize) throws IOException {
     // Sanity checks
     Preconditions.checkNotNull(filePaths);
     Preconditions.checkNotNull(positionFilePath);
@@ -83,8 +85,10 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
     for (Entry<String, String> e : filePaths.entrySet()) {
       File f = new File(e.getValue());
       File parentDir =  f.getParentFile();
-      Preconditions.checkState(parentDir.exists(),
-        "Directory does not exist: " + parentDir.getAbsolutePath());
+      if (!parentDir.getAbsolutePath().contains("*")) {
+        Preconditions.checkState(parentDir.exists(),
+                "Directory does not exist: " + parentDir.getAbsolutePath());
+      }
       Pattern fileNamePattern = Pattern.compile(f.getName());
       tailFileTable.put(e.getKey(), parentDir, fileNamePattern);
     }
@@ -94,6 +98,8 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
     this.tailFileTable = tailFileTable;
     this.headerTable = headerTable;
     this.addByteOffset = addByteOffset;
+    this.lineStartRegex = lineStartRegex;
+    this.bufferSize = bufferSize;
     updateTailFiles(skipToEnd);
 
     logger.info("Updating position from position file: " + positionFilePath);
@@ -197,16 +203,24 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
       long lastPos = currentFile.getPos();
       currentFile.updateFilePos(lastPos);
     }
+    currentFile.setLineStartRegex(this.lineStartRegex);
+    currentFile.setBufferSize(this.bufferSize);
     List<Event> events = currentFile.readEvents(numEvents, backoffWithoutNL, addByteOffset);
     if (events.isEmpty()) {
       return events;
     }
 
     Map<String, String> headers = currentFile.getHeaders();
-    if (headers != null && !headers.isEmpty()) {
-      for (Event event : events) {
+    for (Event event : events) {
+      if ((headers != null && !headers.isEmpty())) {
         event.getHeaders().putAll(headers);
       }
+      /**
+       * Put the filePath, hostname, IP into the headers of a flume event.
+       */
+      if(!event.getHeaders().containsKey("path")) event.getHeaders().put("path", currentFile.getPath());
+      if(!event.getHeaders().containsKey("hostname")) event.getHeaders().put("hostname", InetAddress.getLocalHost().getHostName());
+      if(!event.getHeaders().containsKey("ip")) event.getHeaders().put("ip", InetAddress.getLocalHost().getHostAddress());
     }
     committed = false;
     return events;
@@ -274,20 +288,44 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
     return updateTailFiles(false);
   }
 
-  private List<File> getMatchFiles(File parentDir, final Pattern fileNamePattern) {
+  private void listDirFiles(List<File> files, File dir, FileFilter filter) {
+    File[] childs = dir.listFiles(filter);
+    if(childs == null) return;
+    for (int i = 0; i < childs.length; i++) {
+      if (childs[i].isFile()) {
+        files.add(childs[i]);
+      } else {
+        if (childs[i].isDirectory()) {
+          listDirFiles(files, childs[i], filter);
+        }
+      }
+    }
+  }
+
+  private List<File> getMatchFiles(final File parentDir, final Pattern fileNamePattern) {
     FileFilter filter = new FileFilter() {
       public boolean accept(File f) {
         String fileName = f.getName();
-        if (f.isDirectory() || !fileNamePattern.matcher(fileName).matches()) {
+        Pattern dirPattern = Pattern.compile(parentDir.getAbsolutePath().replace("*", ".*"));
+        if (f.isFile() && (!fileNamePattern.matcher(fileName).matches() || !dirPattern.matcher(f.getParent()).matches())) {
           return false;
         }
         return true;
       }
     };
-    File[] files = parentDir.listFiles(filter);
-    ArrayList<File> result = Lists.newArrayList(files);
-    Collections.sort(result, new TailFile.CompareByLastModifiedTime());
-    return result;
+    ArrayList<File> files = new ArrayList();
+    if(parentDir.getAbsolutePath().contains("*")) {
+      int index = parentDir.getAbsolutePath().indexOf("*");
+      String path = parentDir.getAbsolutePath().substring(0, index);
+      File pparentDir = new File(path);
+      Preconditions.checkState(pparentDir.exists(),
+              "Directory does not exist: " + pparentDir.getAbsolutePath());
+      listDirFiles(files, pparentDir, filter);
+    } else {
+      listDirFiles(files, parentDir, filter);
+    }
+    Collections.sort(files, new TailFile.CompareByLastModifiedTime());
+    return files;
   }
 
   private long getInode(File file) throws IOException {
@@ -313,6 +351,8 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
     private String positionFilePath;
     private boolean skipToEnd;
     private boolean addByteOffset;
+    private String lineStartRegex;
+    private int bufferSize;
 
     public Builder filePaths(Map<String, String> filePaths) {
       this.filePaths = filePaths;
@@ -339,8 +379,18 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
       return this;
     }
 
+    public Builder lineStartRegex(String lineStartRegex) {
+      this.lineStartRegex = lineStartRegex;
+      return this;
+    }
+
+    public Builder bufferSize(int bufferSize) {
+      this.bufferSize = bufferSize;
+      return this;
+    }
+
     public ReliableTaildirEventReader build() throws IOException {
-      return new ReliableTaildirEventReader(filePaths, headerTable, positionFilePath, skipToEnd, addByteOffset);
+      return new ReliableTaildirEventReader(filePaths, headerTable, positionFilePath, skipToEnd, addByteOffset, lineStartRegex, bufferSize);
     }
   }
 

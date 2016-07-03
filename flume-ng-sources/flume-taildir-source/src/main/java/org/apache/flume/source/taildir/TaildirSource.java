@@ -80,6 +80,8 @@ public class TaildirSource extends AbstractSource implements
   private List<Long> idleInodes = new CopyOnWriteArrayList<Long>();
   private Long backoffSleepIncrement;
   private Long maxBackOffSleepInterval;
+  private String lineStartRegex;
+  private int bufferSize;
 
   @Override
   public synchronized void start() {
@@ -91,6 +93,8 @@ public class TaildirSource extends AbstractSource implements
           .positionFilePath(positionFilePath)
           .skipToEnd(skipToEnd)
           .addByteOffset(byteOffsetHeader)
+          .lineStartRegex(lineStartRegex)
+          .bufferSize(bufferSize)
           .build();
     } catch (IOException e) {
       throw new FlumeException("Error instantiating ReliableTaildirEventReader", e);
@@ -162,6 +166,8 @@ public class TaildirSource extends AbstractSource implements
             , PollableSourceConstants.DEFAULT_BACKOFF_SLEEP_INCREMENT);
     maxBackOffSleepInterval = context.getLong(PollableSourceConstants.MAX_BACKOFF_SLEEP
             , PollableSourceConstants.DEFAULT_MAX_BACKOFF_SLEEP);
+    lineStartRegex = context.getString(REGEX_START, DEFAULT_REGEX_START);
+    bufferSize = context.getInteger(BUFFER_SIZE, DEFAULT_BUFFER_SIZE);
 
     if (sourceCounter == null) {
       sourceCounter = new SourceCounter(getName());

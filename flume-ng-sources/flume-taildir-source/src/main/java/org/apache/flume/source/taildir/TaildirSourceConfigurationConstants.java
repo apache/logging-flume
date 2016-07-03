@@ -49,4 +49,13 @@ public class TaildirSourceConfigurationConstants {
   public static final String BYTE_OFFSET_HEADER = "byteOffsetHeader";
   public static final String BYTE_OFFSET_HEADER_KEY = "byteoffset";
   public static final boolean DEFAULT_BYTE_OFFSET_HEADER = false;
+
+  /** Lines starts with regex matched string is considered as a flume event. */
+  public static final String REGEX_START = "lineStartRegex";
+  public static final String DEFAULT_REGEX_START = "";
+
+  /** Max Number of bytes for a flume event body's content. */
+  public static final String BUFFER_SIZE = "bufferSize";
+  public static final int DEFAULT_BUFFER_SIZE = 8192;
+
 }
