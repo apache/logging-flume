@@ -2,15 +2,19 @@
 <!DOCTYPE suppressions PUBLIC
     "-//Puppy Crawl//DTD Suppressions 1.0//EN"
     "http://www.puppycrawl.com/dtds/suppressions_1_0.dtd">
+
+<!-- NOTE: All path separators must be specified as [/\\] in order to maintain
+     build compatibility with both UNIX and Windows. -->
+
 <suppressions>
 
     <!-- Suppress all style checks for generated code -->
     <suppress checks=".*"
-              files="generated-sources|com/cloudera/flume/handlers/thrift|org/apache/flume/thrift/|org/apache/flume/source/scribe|ProtosFactory.java"/>
+              files="generated-sources|com[/\\]cloudera[/\\]flume[/\\]handlers[/\\]thrift|org[/\\]apache[/\\]flume[/\\]thrift[/\\]|org[/\\]apache[/\\]flume[/\\]source[/\\]scribe|ProtosFactory.java"/>
 
     <!-- The "legacy" sources have a weird camelCaps package name -->
     <suppress checks="PackageName"
-              files="org/apache/flume/source/avroLegacy|org/apache/flume/source/thriftLegacy"/>
+              files="org[/\\]apache[/\\]flume[/\\]source[/\\]avroLegacy|org[/\\]apache[/\\]flume[/\\]source[/\\]thriftLegacy"/>
 
     <!-- Allow unicode escapes in tests -->
     <suppress checks="AvoidEscapedUnicodeCharacters"
@@ -18,7 +22,7 @@
 
     <!-- TODO: Rearrange methods in below classes to keep overloaded methods adjacent -->
     <suppress checks="OverloadMethodsDeclarationOrder"
-              files="channel/file|RpcClientFactory\.java|BucketPath\.java|SinkGroup\.java|DefaultSinkProcessor\.java|RegexExtractorInterceptorMillisSerializer\.java|SimpleAsyncHbaseEventSerializer\.java|hdfs/BucketWriter\.java|AbstractBasicChannelSemanticsTest\.java"/>
+              files="channel[/\\]file|RpcClientFactory\.java|BucketPath\.java|SinkGroup\.java|DefaultSinkProcessor\.java|RegexExtractorInterceptorMillisSerializer\.java|SimpleAsyncHbaseEventSerializer\.java|hdfs[/\\]BucketWriter\.java|AbstractBasicChannelSemanticsTest\.java"/>
 
     <!-- TODO: Fix inner class names to follow standard convention -->
     <suppress checks="TypeName"
@@ -34,7 +38,7 @@
 
     <!-- TODO: Avoid empty catch blocks -->
     <suppress checks="EmptyCatchBlock"
-              files="channel/file/LogFile\.java|TestDatasetSink\.java|CountingSourceRunner\.java|CountingSinkRunner\.java|TestKafkaChannel\.java|TestTaildirSource\.java|TestChannelProcessor\.java|TestHiveSink\.java|AbstractBasicChannelSemanticsTest\.java|TestJMSSource\.java|TestEmbeddedAgent\.java|TestAsyncHBaseSink\.java"/>
+              files="channel[/\\]file[/\\]LogFile\.java|TestDatasetSink\.java|CountingSourceRunner\.java|CountingSinkRunner\.java|TestKafkaChannel\.java|TestTaildirSource\.java|TestChannelProcessor\.java|TestHiveSink\.java|AbstractBasicChannelSemanticsTest\.java|TestJMSSource\.java|TestEmbeddedAgent\.java|TestAsyncHBaseSink\.java"/>
 
     <!-- TODO: Avoid empty if blocks -->
     <suppress checks="EmptyBlockCheck"
@@ -42,7 +46,7 @@
 
     <!-- TODO: Fix line length issues -->
     <suppress checks="LineLengthCheck"
-              files="channel/MemoryChannel\.java|ReliableSpoolingFileEventReader\.java|TestAvroSink\.java"/>
+              files="channel[/\\]MemoryChannel\.java|ReliableSpoolingFileEventReader\.java|TestAvroSink\.java"/>
 
     <!-- TODO: Move helper classes to their own files -->
     <suppress checks="OneTopLevelClass"
