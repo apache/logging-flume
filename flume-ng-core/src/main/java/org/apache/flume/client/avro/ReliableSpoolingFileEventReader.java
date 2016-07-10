@@ -418,7 +418,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
        * file was already rolled but the rename was not atomic. If that seems
        * likely, we let it pass with only a warning.
        */
-      if (Files.isSameFile(currentFile.get().getFile().toPath(), dest.toPath())) {
+      if (com.google.common.io.Files.equal(currentFile.get().getFile(), dest)) {
         logger.warn("Completed file " + dest +
             " already exists, but files match, so continuing.");
         boolean deleted = fileToRoll.delete();
