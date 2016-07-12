@@ -156,7 +156,9 @@ public class SyslogAgent {
   }
 
   public void stop() throws Exception {
-    client.close();
+    if (client != null) {
+      client.close();
+    }
     client = null;
 
     StagedInstall.getInstance().stopAgent();
