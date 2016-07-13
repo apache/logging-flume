@@ -16,9 +16,7 @@
  */
 package org.apache.flume.sink.solr.morphline;
 
-import java.io.IOException;
-import java.util.List;
-
+import com.google.common.base.Charsets;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.serialization.EventDeserializer;
@@ -28,7 +26,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.base.Charsets;
+import java.io.IOException;
+import java.util.List;
 
 public class TestBlobDeserializer extends Assert {
 
@@ -61,7 +60,8 @@ public class TestBlobDeserializer extends Assert {
   public void testSimpleViaFactory() throws IOException {
     ResettableInputStream in = new ResettableTestStringInputStream(mini);
     EventDeserializer des;
-    des = EventDeserializerFactory.getInstance(BlobDeserializer.Builder.class.getName(), new Context(), in);
+    des = EventDeserializerFactory.getInstance(BlobDeserializer.Builder.class.getName(),
+                                               new Context(), in);
     validateMiniParse(des);
   }
 

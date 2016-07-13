@@ -17,15 +17,19 @@
  */
 package org.apache.flume.auth;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Properties;
-
 import org.apache.hadoop.minikdc.MiniKdc;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Properties;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class TestFlumeAuthenticator {
 
@@ -132,7 +136,7 @@ public class TestFlumeAuthenticator {
     String principal = "flume";
     File keytab = new File(workDir, "flume2.keytab");
     kdc.createPrincipal(keytab, principal);
-    String expResult = principal+"@" + kdc.getRealm();
+    String expResult = principal + "@" + kdc.getRealm();
 
     // Clear the previous statically stored logged in credentials
     FlumeAuthenticationUtil.clearCredentials();

@@ -20,16 +20,16 @@ package org.apache.flume.source;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
-import java.nio.charset.Charset;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.flume.Event;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.nio.charset.Charset;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class TestSyslogParser {
   @Test
@@ -84,7 +84,7 @@ public class TestSyslogParser {
       Set<String> keepFields = new HashSet<String>();
       Event event = parser.parseMessage(msg, charset, keepFields);
       Assert.assertNull("Failure to parse known-good syslog message",
-        event.getHeaders().get(SyslogUtils.EVENT_STATUS));
+                        event.getHeaders().get(SyslogUtils.EVENT_STATUS));
     }
 
     // test that priority, timestamp and hostname are preserved in event body

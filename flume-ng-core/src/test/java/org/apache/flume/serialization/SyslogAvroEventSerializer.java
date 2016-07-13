@@ -231,20 +231,45 @@ public class SyslogAvroEventSerializer
     private String hostname = "";
     private String message = "";
 
-    public void setFacility(int f) { facility = f; }
-    public int getFacility() { return facility; }
+    public void setFacility(int f) {
+      facility = f;
+    }
 
-    public void setSeverity(int s) { severity = s; }
-    public int getSeverity() { return severity; }
+    public int getFacility() {
+      return facility;
+    }
 
-    public void setTimestamp(long t) { timestamp = t; }
-    public long getTimestamp() { return timestamp; }
+    public void setSeverity(int s) {
+      severity = s;
+    }
 
-    public void setHostname(String h) { hostname = h; }
-    public String getHostname() { return hostname; }
+    public int getSeverity() {
+      return severity;
+    }
 
-    public void setMessage(String m) { message = m; }
-    public String getMessage() { return message; }
+    public void setTimestamp(long t) {
+      timestamp = t;
+    }
+
+    public long getTimestamp() {
+      return timestamp;
+    }
+
+    public void setHostname(String h) {
+      hostname = h;
+    }
+
+    public String getHostname() {
+      return hostname;
+    }
+
+    public void setMessage(String m) {
+      message = m;
+    }
+
+    public String getMessage() {
+      return message;
+    }
 
     @Override
     public String toString() {

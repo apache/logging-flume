@@ -40,6 +40,7 @@ import com.google.common.base.Preconditions;
 public abstract class AbstractBasicChannelSemanticsTest {
 
   protected static List<Event> events;
+
   static {
     Event[] array = new Event[7];
     for (int i = 0; i < array.length; ++i) {
@@ -61,7 +62,7 @@ public abstract class AbstractBasicChannelSemanticsTest {
       THROW_RUNTIME,
       THROW_CHANNEL,
       SLEEP
-    };
+    }
 
     private Mode mode = Mode.NORMAL;
     private boolean lastTransactionCommitted = false;
@@ -158,11 +159,11 @@ public abstract class AbstractBasicChannelSemanticsTest {
 
   protected static class TestError extends Error {
     static final long serialVersionUID = -1;
-  };
+  }
 
   protected static class TestRuntimeException extends RuntimeException {
     static final long serialVersionUID = -1;
-  };
+  }
 
   protected void testException(Class<? extends Throwable> exceptionClass,
       Runnable test) {

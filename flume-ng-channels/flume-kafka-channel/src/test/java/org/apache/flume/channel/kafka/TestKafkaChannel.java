@@ -130,18 +130,18 @@ public class TestKafkaChannel {
     Properties consumerProps = channel.getConsumerProps();
     Properties producerProps = channel.getProducerProps();
 
-    Assert.assertEquals(producerProps.getProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG),testUtil.getKafkaServerUrl());
-    Assert.assertEquals(consumerProps.getProperty(ConsumerConfig.GROUP_ID_CONFIG), "flume-something");
-    Assert.assertEquals(consumerProps.getProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG), "earliest");
-
+    Assert.assertEquals(producerProps.getProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG),
+                        testUtil.getKafkaServerUrl());
+    Assert.assertEquals(consumerProps.getProperty(ConsumerConfig.GROUP_ID_CONFIG),
+                        "flume-something");
+    Assert.assertEquals(consumerProps.getProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG),
+                        "earliest");
   }
-
 
   @Test
   public void testSuccess() throws Exception {
     doTestSuccessRollback(false, false);
   }
-
 
   @Test
   public void testSuccessInterleave() throws Exception {
@@ -212,8 +212,10 @@ public class TestKafkaChannel {
 
     KafkaChannel channel = startChannel(false);
 
-    KafkaProducer<String, byte[]> producer = new KafkaProducer<String, byte[]>(channel.getProducerProps());
-    ProducerRecord<String, byte[]> data = new ProducerRecord<String, byte[]>(topic, "header-" + message, message.getBytes());
+    KafkaProducer<String, byte[]> producer =
+        new KafkaProducer<String, byte[]>(channel.getProducerProps());
+    ProducerRecord<String, byte[]> data =
+        new ProducerRecord<String, byte[]>(topic, "header-" + message, message.getBytes());
     producer.send(data).get();
     producer.flush();
     producer.close();
@@ -234,7 +236,7 @@ public class TestKafkaChannel {
   }
 
   private Event takeEventWithoutCommittingTxn(KafkaChannel channel) {
-    for (int i=0; i < 5; i++) {
+    for (int i = 0; i < 5; i++) {
       Transaction txn = channel.getTransaction();
       txn.begin();
 
@@ -255,17 +257,19 @@ public class TestKafkaChannel {
     KafkaProducer<String, byte[]> producer = new KafkaProducer<String, byte[]>(props);
 
     for (int i = 0; i < 50; i++) {
-      ProducerRecord<String, byte[]> data = new ProducerRecord<String, byte[]>(topic, String.valueOf(i) + "-header", String.valueOf(i).getBytes());
+      ProducerRecord<String, byte[]> data =
+          new ProducerRecord<String, byte[]>(topic, String.valueOf(i) + "-header",
+                                             String.valueOf(i).getBytes());
       producer.send(data).get();
     }
     ExecutorCompletionService<Void> submitterSvc = new
-            ExecutorCompletionService<Void>(Executors.newCachedThreadPool());
-    List<Event> events = pullEvents(channel, submitterSvc,
-            50, false, false);
+        ExecutorCompletionService<Void>(Executors.newCachedThreadPool());
+    List<Event> events = pullEvents(channel, submitterSvc, 50, false, false);
     wait(submitterSvc, 5);
     Map<Integer, String> finals = new HashMap<Integer, String>();
     for (int i = 0; i < 50; i++) {
-      finals.put(Integer.parseInt(new String(events.get(i).getBody())), events.get(i).getHeaders().get(KEY_HEADER));
+      finals.put(Integer.parseInt(new String(events.get(i).getBody())),
+                 events.get(i).getHeaders().get(KEY_HEADER));
     }
     for (int i = 0; i < 50; i++) {
       Assert.assertTrue(finals.keySet().contains(i));
@@ -284,7 +288,8 @@ public class TestKafkaChannel {
     KafkaProducer<String, byte[]> producer = new KafkaProducer<String, byte[]>(props);
 
     for (int i = 0; i < 50; i++) {
-      ProducerRecord<String, byte[]> data = new ProducerRecord<String, byte[]>(topic, null, String.valueOf(i).getBytes());
+      ProducerRecord<String, byte[]> data =
+          new ProducerRecord<String, byte[]>(topic, null, String.valueOf(i).getBytes());
       producer.send(data).get();
     }
     ExecutorCompletionService<Void> submitterSvc = new
@@ -323,14 +328,14 @@ public class TestKafkaChannel {
       channel.put(EventBuilder.withBody(msgs.get(i).getBytes(), headers));
     }
     tx.commit();
-    ExecutorCompletionService<Void> submitterSvc = new
-            ExecutorCompletionService<Void>(Executors.newCachedThreadPool());
-    List<Event> events = pullEvents(channel, submitterSvc,
-            50, false, false);
+    ExecutorCompletionService<Void> submitterSvc =
+        new ExecutorCompletionService<Void>(Executors.newCachedThreadPool());
+    List<Event> events = pullEvents(channel, submitterSvc, 50, false, false);
     wait(submitterSvc, 5);
     Map<Integer, String> finals = new HashMap<Integer, String>();
     for (int i = 0; i < 50; i++) {
-      finals.put(Integer.parseInt(new String(events.get(i).getBody())), events.get(i).getHeaders().get(KEY_HEADER));
+      finals.put(Integer.parseInt(new String(events.get(i).getBody())),
+                 events.get(i).getHeaders().get(KEY_HEADER));
     }
     for (int i = 0; i < 50; i++) {
       Assert.assertTrue(finals.keySet().contains(i));
@@ -403,13 +408,13 @@ public class TestKafkaChannel {
   }
 
   private void writeAndVerify(final boolean testRollbacks,
-                              final KafkaChannel channel, final boolean interleave) throws Exception {
+                              final KafkaChannel channel, final boolean interleave)
+      throws Exception {
 
     final List<List<Event>> events = createBaseList();
 
     ExecutorCompletionService<Void> submitterSvc =
-            new ExecutorCompletionService<Void>(Executors
-                    .newCachedThreadPool());
+        new ExecutorCompletionService<Void>(Executors.newCachedThreadPool());
 
     putEvents(channel, events, submitterSvc);
 
@@ -418,11 +423,9 @@ public class TestKafkaChannel {
     }
 
     ExecutorCompletionService<Void> submitterSvc2 =
-            new ExecutorCompletionService<Void>(Executors
-                    .newCachedThreadPool());
+        new ExecutorCompletionService<Void>(Executors.newCachedThreadPool());
 
-    final List<Event> eventsPulled =
-            pullEvents(channel, submitterSvc2, 50, testRollbacks, true);
+    final List<Event> eventsPulled = pullEvents(channel, submitterSvc2, 50, testRollbacks, true);
 
     if (!interleave) {
       wait(submitterSvc, 5);
@@ -586,18 +589,18 @@ public class TestKafkaChannel {
     int numPartitions = 5;
     int sessionTimeoutMs = 10000;
     int connectionTimeoutMs = 10000;
-    ZkUtils zkUtils = ZkUtils.apply(testUtil.getZkUrl(), sessionTimeoutMs, connectionTimeoutMs, false);
-
+    ZkUtils zkUtils =
+        ZkUtils.apply(testUtil.getZkUrl(), sessionTimeoutMs, connectionTimeoutMs, false);
     int replicationFactor = 1;
     Properties topicConfig = new Properties();
-    AdminUtils.createTopic(zkUtils, topicName, numPartitions,
-            replicationFactor, topicConfig);
+    AdminUtils.createTopic(zkUtils, topicName, numPartitions, replicationFactor, topicConfig);
   }
 
   public static void deleteTopic(String topicName) {
     int sessionTimeoutMs = 10000;
     int connectionTimeoutMs = 10000;
-    ZkUtils zkUtils = ZkUtils.apply(testUtil.getZkUrl(), sessionTimeoutMs, connectionTimeoutMs, false);
+    ZkUtils zkUtils =
+        ZkUtils.apply(testUtil.getZkUrl(), sessionTimeoutMs, connectionTimeoutMs, false);
     AdminUtils.deleteTopic(zkUtils, topicName);
   }
 }

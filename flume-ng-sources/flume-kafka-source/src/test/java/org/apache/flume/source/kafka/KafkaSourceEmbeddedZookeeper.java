@@ -31,7 +31,6 @@ public class KafkaSourceEmbeddedZookeeper {
   private NIOServerCnxnFactory factory;
   File dir;
 
-
   public KafkaSourceEmbeddedZookeeper(int zkPort) {
     int tickTime = 2000;
 

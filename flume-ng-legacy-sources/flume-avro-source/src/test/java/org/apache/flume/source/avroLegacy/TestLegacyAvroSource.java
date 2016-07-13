@@ -19,13 +19,9 @@
 
 package org.apache.flume.source.avroLegacy;
 
-import java.io.IOException;
-import java.net.URL;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
+import com.cloudera.flume.handlers.avro.AvroFlumeOGEvent;
+import com.cloudera.flume.handlers.avro.FlumeOGEventAvroServer;
+import com.cloudera.flume.handlers.avro.Priority;
 import org.apache.avro.ipc.HttpTransceiver;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
@@ -40,9 +36,6 @@ import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleState;
-import com.cloudera.flume.handlers.avro.AvroFlumeOGEvent;
-import com.cloudera.flume.handlers.avro.FlumeOGEventAvroServer;
-import com.cloudera.flume.handlers.avro.Priority;
 import org.jboss.netty.channel.ChannelException;
 import org.junit.Assert;
 import org.junit.Before;
@@ -50,6 +43,12 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.net.URL;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class TestLegacyAvroSource {
 
@@ -143,10 +142,10 @@ public class TestLegacyAvroSource {
     FlumeOGEventAvroServer client = SpecificRequestor.getClient(
         FlumeOGEventAvroServer.class, http);
 
-    AvroFlumeOGEvent avroEvent =  AvroFlumeOGEvent.newBuilder().setHost("foo").
-        setPriority(Priority.INFO).setNanos(0).setTimestamp(1).
-        setFields(new HashMap<CharSequence, ByteBuffer> ()).
-        setBody(ByteBuffer.wrap("foo".getBytes())).build();
+    AvroFlumeOGEvent avroEvent = AvroFlumeOGEvent.newBuilder().setHost("foo")
+        .setPriority(Priority.INFO).setNanos(0).setTimestamp(1)
+        .setFields(new HashMap<CharSequence, ByteBuffer>())
+        .setBody(ByteBuffer.wrap("foo".getBytes())).build();
 
     client.append(avroEvent);
 

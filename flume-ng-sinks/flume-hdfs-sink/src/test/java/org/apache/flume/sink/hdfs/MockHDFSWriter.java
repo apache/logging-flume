@@ -68,7 +68,8 @@ public class MockHDFSWriter implements HDFSWriter {
     filesOpened++;
   }
 
-  public void open(String filePath, CompressionCodec codec, CompressionType cType) throws IOException {
+  public void open(String filePath, CompressionCodec codec, CompressionType cType)
+      throws IOException {
     this.filePath = filePath;
     filesOpened++;
   }

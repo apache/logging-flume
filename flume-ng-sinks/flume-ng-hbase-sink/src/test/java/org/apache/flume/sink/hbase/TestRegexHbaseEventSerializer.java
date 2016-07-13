@@ -18,17 +18,7 @@
  */
 package org.apache.flume.sink.hbase;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.nio.charset.Charset;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Map;
-
+import com.google.common.collect.Maps;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
@@ -39,7 +29,16 @@ import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 
-import com.google.common.collect.Maps;
+import java.nio.charset.Charset;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class TestRegexHbaseEventSerializer {
 
@@ -76,8 +75,7 @@ public class TestRegexHbaseEventSerializer {
   public void testRowIndexKey() throws Exception {
     RegexHbaseEventSerializer s = new RegexHbaseEventSerializer();
     Context context = new Context();
-    context.put(RegexHbaseEventSerializer.REGEX_CONFIG,"^([^\t]+)\t([^\t]+)\t" +
-      "([^\t]+)$");
+    context.put(RegexHbaseEventSerializer.REGEX_CONFIG,"^([^\t]+)\t([^\t]+)\t" + "([^\t]+)$");
     context.put(RegexHbaseEventSerializer.COL_NAME_CONFIG, "col1,col2,ROW_KEY");
     context.put("rowKeyIndex", "2");
     s.configure(context);
@@ -115,9 +113,9 @@ public class TestRegexHbaseEventSerializer {
         "referer,agent");
     s.configure(context);
     String logMsg = "33.22.11.00 - - [20/May/2011:07:01:19 +0000] " +
-      "\"GET /wp-admin/css/install.css HTTP/1.0\" 200 813 " + 
-      "\"http://www.cloudera.com/wp-admin/install.php\" \"Mozilla/5.0 (comp" +
-      "atible; Yahoo! Slurp; http://help.yahoo.com/help/us/ysearch/slurp)\"";
+        "\"GET /wp-admin/css/install.css HTTP/1.0\" 200 813 " +
+        "\"http://www.cloudera.com/wp-admin/install.php\" \"Mozilla/5.0 (comp" +
+        "atible; Yahoo! Slurp; http://help.yahoo.com/help/us/ysearch/slurp)\"";
     
     Event e = EventBuilder.withBody(Bytes.toBytes(logMsg));
     s.initialize(e, "CF".getBytes());
@@ -189,7 +187,7 @@ public class TestRegexHbaseEventSerializer {
     
   }
 
-   @Test
+  @Test
   /** Test depositing of the header information. */
   public void testDepositHeaders() throws Exception {
     Charset charset = Charset.forName("KOI8-R");
@@ -222,7 +220,8 @@ public class TestRegexHbaseEventSerializer {
       resultMap.put(new String(kv.getQualifier(), charset), kv.getValue());
     }
 
-    assertEquals(body, new String(resultMap.get(RegexHbaseEventSerializer.COLUMN_NAME_DEFAULT), charset));
+    assertEquals(body,
+                 new String(resultMap.get(RegexHbaseEventSerializer.COLUMN_NAME_DEFAULT), charset));
     assertEquals("value1", new String(resultMap.get("header1"), charset));
     assertArrayEquals("значение2".getBytes(charset), resultMap.get("заголовок2"));
     assertEquals("значение2".length(), resultMap.get("заголовок2").length);

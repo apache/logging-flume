@@ -101,7 +101,7 @@ public class TestStressSource {
       }
       if (i < 3) {
         verify(mockProcessor,
-            times(i+1)).processEventBatch(getLastProcessedEventList(source));
+            times(i + 1)).processEventBatch(getLastProcessedEventList(source));
       } else {
         verify(mockProcessor,
             times(1)).processEventBatch(getLastProcessedEventList(source));

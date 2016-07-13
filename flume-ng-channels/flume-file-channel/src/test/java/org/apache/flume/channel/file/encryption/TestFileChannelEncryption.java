@@ -18,18 +18,10 @@
  */
 package org.apache.flume.channel.file.encryption;
 
-import static org.apache.flume.channel.file.TestUtils.*;
-
-import java.io.File;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
-
+import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Maps;
+import com.google.common.io.Files;
 import org.apache.flume.ChannelException;
 import org.apache.flume.FlumeException;
 import org.apache.flume.channel.file.FileChannelConfiguration;
@@ -42,10 +34,21 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Maps;
-import com.google.common.io.Files;
+import java.io.File;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.apache.flume.channel.file.TestUtils.compareInputAndOut;
+import static org.apache.flume.channel.file.TestUtils.consumeChannel;
+import static org.apache.flume.channel.file.TestUtils.fillChannel;
+import static org.apache.flume.channel.file.TestUtils.putEvents;
+import static org.apache.flume.channel.file.TestUtils.takeEvents;
 
 public class TestFileChannelEncryption extends TestFileChannelBase {
   protected static final Logger LOGGER =
@@ -62,36 +65,39 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
     keyStoreFile = new File(baseDir, "keyStoreFile");
     Assert.assertTrue(keyStoreFile.createNewFile());
     keyAliasPassword = Maps.newHashMap();
-    keyAliasPassword.putAll(EncryptionTestUtils.
-        configureTestKeyStore(baseDir, keyStoreFile));
+    keyAliasPassword.putAll(EncryptionTestUtils.configureTestKeyStore(baseDir, keyStoreFile));
   }
+
   @After
   public void teardown() {
     super.teardown();
   }
+
   private Map<String, String> getOverrides() throws Exception {
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(100));
-    overrides.put(FileChannelConfiguration.TRANSACTION_CAPACITY,
-        String.valueOf(100));
+    overrides.put(FileChannelConfiguration.TRANSACTION_CAPACITY, String.valueOf(100));
     return overrides;
   }
+
   private Map<String, String> getOverridesForEncryption() throws Exception {
     Map<String, String> overrides = getOverrides();
-    Map<String, String> encryptionProps = EncryptionTestUtils.
-        configureForKeyStore(keyStoreFile,
-            keyStorePasswordFile, keyAliasPassword);
+    Map<String, String> encryptionProps =
+        EncryptionTestUtils.configureForKeyStore(keyStoreFile,
+                                                 keyStorePasswordFile,
+                                                 keyAliasPassword);
     encryptionProps.put(EncryptionConfiguration.KEY_PROVIDER,
-        KeyProviderType.JCEKSFILE.name());
+                        KeyProviderType.JCEKSFILE.name());
     encryptionProps.put(EncryptionConfiguration.CIPHER_PROVIDER,
-        CipherProviderType.AESCTRNOPADDING.name());
+                        CipherProviderType.AESCTRNOPADDING.name());
     encryptionProps.put(EncryptionConfiguration.ACTIVE_KEY, "key-1");
-    for(String key : encryptionProps.keySet()) {
+    for (String key : encryptionProps.keySet()) {
       overrides.put(EncryptionConfiguration.ENCRYPTION_PREFIX + "." + key,
-          encryptionProps.get(key));
+                    encryptionProps.get(key));
     }
     return overrides;
   }
+
   /**
    * Test fails without FLUME-1565
    */
@@ -222,15 +228,16 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
     channel = createFileChannel(noEncryptionOverrides);
     channel.start();
 
-    if(channel.isOpen()) {
+    if (channel.isOpen()) {
       try {
         takeEvents(channel, 1, 1);
         Assert.fail("Channel was opened and take did not throw exception");
-      } catch(ChannelException ex) {
+      } catch (ChannelException ex) {
         // expected
       }
     }
   }
+
   @Test
   public void testUnencyrptedAndEncryptedLogs() throws Exception {
     Map<String, String> noEncryptionOverrides = getOverrides();
@@ -252,41 +259,46 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
     Set<String> out = consumeChannel(channel);
     compareInputAndOut(in, out);
   }
+
   @Test
   public void testBadKeyProviderInvalidValue() throws Exception {
     Map<String, String> overrides = getOverridesForEncryption();
     overrides.put(Joiner.on(".").join(EncryptionConfiguration.ENCRYPTION_PREFIX,
-        EncryptionConfiguration.KEY_PROVIDER), "invalid");
+                                      EncryptionConfiguration.KEY_PROVIDER),
+                  "invalid");
     try {
       channel = createFileChannel(overrides);
       Assert.fail();
-    } catch(FlumeException ex) {
-      Assert.assertEquals("java.lang.ClassNotFoundException: invalid",
-          ex.getMessage());
+    } catch (FlumeException ex) {
+      Assert.assertEquals("java.lang.ClassNotFoundException: invalid", ex.getMessage());
     }
   }
+
   @Test
   public void testBadKeyProviderInvalidClass() throws Exception {
     Map<String, String> overrides = getOverridesForEncryption();
     overrides.put(Joiner.on(".").join(EncryptionConfiguration.ENCRYPTION_PREFIX,
-        EncryptionConfiguration.KEY_PROVIDER), String.class.getName());
+                                      EncryptionConfiguration.KEY_PROVIDER),
+                  String.class.getName());
     try {
       channel = createFileChannel(overrides);
       Assert.fail();
-    } catch(FlumeException ex) {
-      Assert.assertEquals("Unable to instantiate Builder from java.lang.String",
-          ex.getMessage());
+    } catch (FlumeException ex) {
+      Assert.assertEquals("Unable to instantiate Builder from java.lang.String", ex.getMessage());
     }
   }
+
   @Test
   public void testBadCipherProviderInvalidValue() throws Exception {
     Map<String, String> overrides = getOverridesForEncryption();
     overrides.put(Joiner.on(".").join(EncryptionConfiguration.ENCRYPTION_PREFIX,
-        EncryptionConfiguration.CIPHER_PROVIDER), "invalid");
+                                      EncryptionConfiguration.CIPHER_PROVIDER),
+                  "invalid");
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertFalse(channel.isOpen());
   }
+
   @Test
   public void testBadCipherProviderInvalidClass() throws Exception {
     Map<String, String> overrides = getOverridesForEncryption();
@@ -296,6 +308,7 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
     channel.start();
     Assert.assertFalse(channel.isOpen());
   }
+
   @Test
   public void testMissingKeyStoreFile() throws Exception {
     Map<String, String> overrides = getOverridesForEncryption();
@@ -306,11 +319,12 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
     try {
       channel = createFileChannel(overrides);
       Assert.fail();
-    } catch(RuntimeException ex) {
+    } catch (RuntimeException ex) {
       Assert.assertTrue("Exception message is incorrect: " + ex.getMessage(),
           ex.getMessage().startsWith("java.io.FileNotFoundException: /path/does/not/exist "));
     }
   }
+
   @Test
   public void testMissingKeyStorePasswordFile() throws Exception {
     Map<String, String> overrides = getOverridesForEncryption();
@@ -321,11 +335,12 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
     try {
       channel = createFileChannel(overrides);
       Assert.fail();
-    } catch(RuntimeException ex) {
+    } catch (RuntimeException ex) {
       Assert.assertTrue("Exception message is incorrect: " + ex.getMessage(),
           ex.getMessage().startsWith("java.io.FileNotFoundException: /path/does/not/exist "));
     }
   }
+
   @Test
   public void testBadKeyStorePassword() throws Exception {
     Files.write("invalid", keyStorePasswordFile, Charsets.UTF_8);
@@ -334,11 +349,12 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
       channel = TestUtils.createFileChannel(checkpointDir.getAbsolutePath(),
           dataDir, overrides);
       Assert.fail();
-    } catch(RuntimeException ex) {
+    } catch (RuntimeException ex) {
       Assert.assertEquals("java.io.IOException: Keystore was tampered with, or " +
           "password was incorrect", ex.getMessage());
     }
   }
+
   @Test
   public void testBadKeyAlias() throws Exception {
     Map<String, String> overrides = getOverridesForEncryption();

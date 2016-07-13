@@ -71,7 +71,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 
-
 public class TestHDFSEventSink {
 
   private HDFSEventSink sink;
@@ -118,8 +117,7 @@ public class TestHDFSEventSink {
 
   @After
   public void tearDown() {
-    if (System.getenv("hdfs_keepFiles") == null)
-      dirCleanup();
+    if (System.getenv("hdfs_keepFiles") == null) dirCleanup();
   }
 
   @Test
@@ -176,7 +174,7 @@ public class TestHDFSEventSink {
     List<String> bodies = Lists.newArrayList();
 
     // push the event batches into channel to roll twice
-    for (i = 1; i <= (rollCount*10)/batchSize; i++) {
+    for (i = 1; i <= (rollCount * 10) / batchSize; i++) {
       Transaction txn = channel.getTransaction();
       txn.begin();
       for (j = 1; j <= batchSize; j++) {
@@ -200,7 +198,7 @@ public class TestHDFSEventSink {
 
     // loop through all the files generated and check their contains
     FileStatus[] dirStat = fs.listStatus(dirPath);
-    Path fList[] = FileUtil.stat2Paths(dirStat);
+    Path[] fList = FileUtil.stat2Paths(dirStat);
 
     // check that the roll happened correctly for the given data
     long expectedFiles = totalEvents / rollCount;
@@ -353,7 +351,7 @@ public class TestHDFSEventSink {
 
     // loop through all the files generated and check their contains
     FileStatus[] dirStat = fs.listStatus(dirPath);
-    Path fList[] = FileUtil.stat2Paths(dirStat);
+    Path[] fList = FileUtil.stat2Paths(dirStat);
 
     // check that the roll happened correctly for the given data
     long expectedFiles = totalEvents / rollCount;
@@ -432,7 +430,7 @@ public class TestHDFSEventSink {
 
     // loop through all the files generated and check their contains
     FileStatus[] dirStat = fs.listStatus(dirPath);
-    Path fList[] = FileUtil.stat2Paths(dirStat);
+    Path[] fList = FileUtil.stat2Paths(dirStat);
 
     // check that the roll happened correctly for the given data
     long expectedFiles = totalEvents / rollCount;
@@ -508,7 +506,7 @@ public class TestHDFSEventSink {
 
     // loop through all the files generated and check their contains
     FileStatus[] dirStat = fs.listStatus(dirPath);
-    Path fList[] = FileUtil.stat2Paths(dirStat);
+    Path[] fList = FileUtil.stat2Paths(dirStat);
 
     // check that the roll happened correctly for the given data
     long expectedFiles = totalEvents / rollCount;
@@ -519,8 +517,8 @@ public class TestHDFSEventSink {
   }
 
   @Test
-  public void testSimpleAppendLocalTime() throws InterruptedException,
-    LifecycleException, EventDeliveryException, IOException {
+  public void testSimpleAppendLocalTime()
+      throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
     final long currentTime = System.currentTimeMillis();
     Clock clk = new Clock() {
       @Override
@@ -536,7 +534,7 @@ public class TestHDFSEventSink {
     final int numBatches = 4;
     String newPath = testPath + "/singleBucket/%s" ;
     String expectedPath = testPath + "/singleBucket/" +
-      String.valueOf(currentTime/1000);
+        String.valueOf(currentTime / 1000);
     int totalEvents = 0;
     int i = 1, j = 1;
 
@@ -576,7 +574,7 @@ public class TestHDFSEventSink {
         eventDate.clear();
         eventDate.set(2011, i, i, i, 0); // yy mm dd
         event.getHeaders().put("timestamp",
-          String.valueOf(eventDate.getTimeInMillis()));
+            String.valueOf(eventDate.getTimeInMillis()));
         event.getHeaders().put("hostname", "Host" + i);
         String body = "Test." + i + "." + j;
         event.setBody(body.getBytes());
@@ -595,13 +593,13 @@ public class TestHDFSEventSink {
 
     // loop through all the files generated and check their contains
     FileStatus[] dirStat = fs.listStatus(dirPath);
-    Path fList[] = FileUtil.stat2Paths(dirStat);
+    Path[] fList = FileUtil.stat2Paths(dirStat);
 
     // check that the roll happened correctly for the given data
     long expectedFiles = totalEvents / rollCount;
     if (totalEvents % rollCount > 0) expectedFiles++;
     Assert.assertEquals("num files wrong, found: " +
-      Lists.newArrayList(fList), expectedFiles, fList.length);
+        Lists.newArrayList(fList), expectedFiles, fList.length);
     verifyOutputSequenceFiles(fs, conf, dirPath.toUri().getPath(), fileName, bodies);
     // The clock in bucketpath is static, so restore the real clock
     sink.setBucketClock(new SystemClock());
@@ -750,10 +748,10 @@ public class TestHDFSEventSink {
   private List<String> getAllFiles(String input) {
     List<String> output = Lists.newArrayList();
     File dir = new File(input);
-    if(dir.isFile()) {
+    if (dir.isFile()) {
       output.add(dir.getAbsolutePath());
-    } else if(dir.isDirectory()) {
-      for(String file : dir.list()) {
+    } else if (dir.isDirectory()) {
+      for (String file : dir.list()) {
         File subDir = new File(dir, file);
         output.addAll(getAllFiles(subDir.getAbsolutePath()));
       }
@@ -761,16 +759,17 @@ public class TestHDFSEventSink {
     return output;
   }
 
-  private void verifyOutputSequenceFiles(FileSystem fs, Configuration conf, String dir, String prefix, List<String> bodies) throws IOException {
+  private void verifyOutputSequenceFiles(FileSystem fs, Configuration conf, String dir,
+                                         String prefix, List<String> bodies) throws IOException {
     int found = 0;
     int expected = bodies.size();
-    for(String outputFile : getAllFiles(dir)) {
+    for (String outputFile : getAllFiles(dir)) {
       String name = (new File(outputFile)).getName();
-      if(name.startsWith(prefix)) {
+      if (name.startsWith(prefix)) {
         SequenceFile.Reader reader = new SequenceFile.Reader(fs, new Path(outputFile), conf);
         LongWritable key = new LongWritable();
         BytesWritable value = new BytesWritable();
-        while(reader.next(key, value)) {
+        while (reader.next(key, value)) {
           String body = new String(value.getBytes(), 0, value.getLength());
           if (bodies.contains(body)) {
             LOG.debug("Found event body: {}", body);
@@ -792,16 +791,17 @@ public class TestHDFSEventSink {
 
   }
 
-  private void verifyOutputTextFiles(FileSystem fs, Configuration conf, String dir, String prefix, List<String> bodies) throws IOException {
+  private void verifyOutputTextFiles(FileSystem fs, Configuration conf, String dir, String prefix,
+                                     List<String> bodies) throws IOException {
     int found = 0;
     int expected = bodies.size();
-    for(String outputFile : getAllFiles(dir)) {
+    for (String outputFile : getAllFiles(dir)) {
       String name = (new File(outputFile)).getName();
-      if(name.startsWith(prefix)) {
+      if (name.startsWith(prefix)) {
         FSDataInputStream input = fs.open(new Path(outputFile));
         BufferedReader reader = new BufferedReader(new InputStreamReader(input));
         String body = null;
-        while((body = reader.readLine()) != null) {
+        while ((body = reader.readLine()) != null) {
           bodies.remove(body);
           found++;
         }
@@ -814,12 +814,13 @@ public class TestHDFSEventSink {
 
   }
 
-  private void verifyOutputAvroFiles(FileSystem fs, Configuration conf, String dir, String prefix, List<String> bodies) throws IOException {
+  private void verifyOutputAvroFiles(FileSystem fs, Configuration conf, String dir, String prefix,
+                                     List<String> bodies) throws IOException {
     int found = 0;
     int expected = bodies.size();
-    for(String outputFile : getAllFiles(dir)) {
+    for (String outputFile : getAllFiles(dir)) {
       String name = (new File(outputFile)).getName();
-      if(name.startsWith(prefix)) {
+      if (name.startsWith(prefix)) {
         FSDataInputStream input = fs.open(new Path(outputFile));
         DatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>();
         DataFileStream<GenericRecord> avroStream =
@@ -840,7 +841,7 @@ public class TestHDFSEventSink {
     }
     Assert.assertTrue("Found = " + found + ", Expected = "  +
         expected + ", Left = " + bodies.size() + " " + bodies,
-          bodies.size() == 0);
+            bodies.size() == 0);
   }
 
   /**
@@ -849,9 +850,9 @@ public class TestHDFSEventSink {
    * This relies on Transactional rollback semantics for durability and
    * the behavior of the BucketWriter class of close()ing upon IOException.
    */
- @Test
-  public void testCloseReopen() throws InterruptedException,
-      LifecycleException, EventDeliveryException, IOException {
+  @Test
+  public void testCloseReopen()
+      throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
 
     LOG.debug("Starting...");
     final int numBatches = 4;
@@ -924,8 +925,8 @@ public class TestHDFSEventSink {
    * a new one is used for the next set of events.
    */
   @Test
-  public void testCloseReopenOnRollTime() throws InterruptedException,
-    LifecycleException, EventDeliveryException, IOException {
+  public void testCloseReopenOnRollTime()
+      throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
 
     LOG.debug("Starting...");
     final int numBatches = 4;
@@ -973,7 +974,7 @@ public class TestHDFSEventSink {
           eventDate.clear();
           eventDate.set(2011, i, i, i, 0); // yy mm dd
           event.getHeaders().put("timestamp",
-            String.valueOf(eventDate.getTimeInMillis()));
+              String.valueOf(eventDate.getTimeInMillis()));
           event.getHeaders().put("hostname", "Host" + i);
           String body = "Test." + i + "." + j;
           event.setBody(body.getBytes());
@@ -997,9 +998,9 @@ public class TestHDFSEventSink {
 
     Assert.assertTrue(badWriterFactory.openCount.get() >= 2);
     LOG.info("Total number of bucket writers opened: {}",
-      badWriterFactory.openCount.get());
+        badWriterFactory.openCount.get());
     verifyOutputSequenceFiles(fs, conf, dirPath.toUri().getPath(), fileName,
-      bodies);
+        bodies);
   }
 
   /**
@@ -1007,8 +1008,8 @@ public class TestHDFSEventSink {
    * sfWriters map.
    */
   @Test
-  public void testCloseRemovesFromSFWriters() throws InterruptedException,
-    LifecycleException, EventDeliveryException, IOException {
+  public void testCloseRemovesFromSFWriters()
+      throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
 
     LOG.debug("Starting...");
     final String fileName = "FlumeData";
@@ -1055,7 +1056,7 @@ public class TestHDFSEventSink {
         eventDate.clear();
         eventDate.set(2011, i, i, i, 0); // yy mm dd
         event.getHeaders().put("timestamp",
-          String.valueOf(eventDate.getTimeInMillis()));
+            String.valueOf(eventDate.getTimeInMillis()));
         event.getHeaders().put("hostname", "Host" + i);
         String body = "Test." + i + "." + j;
         event.setBody(body.getBytes());
@@ -1080,9 +1081,9 @@ public class TestHDFSEventSink {
     sink.stop();
 
     LOG.info("Total number of bucket writers opened: {}",
-      badWriterFactory.openCount.get());
+        badWriterFactory.openCount.get());
     verifyOutputSequenceFiles(fs, conf, dirPath.toUri().getPath(), fileName,
-      bodies);
+        bodies);
   }
 
 
@@ -1163,8 +1164,9 @@ public class TestHDFSEventSink {
    * append using slow sink writer with specified append timeout
    * verify that the data is written correctly to files
    */
-  private void slowAppendTestHelper (long appendTimeout)  throws InterruptedException, IOException,
-  LifecycleException, EventDeliveryException, IOException {
+  private void slowAppendTestHelper(long appendTimeout)
+      throws InterruptedException, IOException, LifecycleException, EventDeliveryException,
+             IOException {
     final String fileName = "FlumeData";
     final long rollCount = 5;
     final long batchSize = 2;
@@ -1230,7 +1232,7 @@ public class TestHDFSEventSink {
 
     // loop through all the files generated and check their contains
     FileStatus[] dirStat = fs.listStatus(dirPath);
-    Path fList[] = FileUtil.stat2Paths(dirStat);
+    Path[] fList = FileUtil.stat2Paths(dirStat);
 
     // check that the roll happened correctly for the given data
     // Note that we'll end up with two files with only a head
@@ -1292,7 +1294,7 @@ public class TestHDFSEventSink {
 
     Transaction txn = channel.getTransaction();
     txn.begin();
-    for(int i=0; i < 10; i++) {
+    for (int i = 0; i < 10; i++) {
       Event event = new SimpleEvent();
       event.setBody(("test event " + i).getBytes());
       channel.put(event);
@@ -1317,9 +1319,9 @@ public class TestHDFSEventSink {
     FileStatus[] dirStat = fs.listStatus(dirPath);
     Path[] fList = FileUtil.stat2Paths(dirStat);
     Assert.assertEquals("Incorrect content of the directory " + StringUtils.join(fList, ","),
-      2, fList.length);
+                        2, fList.length);
     Assert.assertTrue(!fList[0].getName().endsWith(".tmp") &&
-      !fList[1].getName().endsWith(".tmp"));
+                      !fList[1].getName().endsWith(".tmp"));
     fs.close();
   }
 
@@ -1338,8 +1340,7 @@ public class TestHDFSEventSink {
   }
 
   @Test
-  public void testBadConfigurationForRetryIntervalZero() throws
-    Exception {
+  public void testBadConfigurationForRetryIntervalZero() throws Exception {
     Context context = getContextForRetryTests();
     context.put("hdfs.retryInterval", "0");
 
@@ -1348,43 +1349,41 @@ public class TestHDFSEventSink {
   }
 
   @Test
-  public void testBadConfigurationForRetryIntervalNegative() throws
-    Exception {
+  public void testBadConfigurationForRetryIntervalNegative() throws Exception {
     Context context = getContextForRetryTests();
     context.put("hdfs.retryInterval", "-1");
 
     Configurables.configure(sink, context);
     Assert.assertEquals(1, sink.getTryCount());
   }
+
   @Test
-  public void testBadConfigurationForRetryCountZero() throws
-    Exception {
+  public void testBadConfigurationForRetryCountZero() throws Exception {
     Context context = getContextForRetryTests();
     context.put("hdfs.closeTries" ,"0");
 
     Configurables.configure(sink, context);
     Assert.assertEquals(Integer.MAX_VALUE, sink.getTryCount());
   }
+
   @Test
-  public void testBadConfigurationForRetryCountNegative() throws
-    Exception {
+  public void testBadConfigurationForRetryCountNegative() throws Exception {
     Context context = getContextForRetryTests();
     context.put("hdfs.closeTries" ,"-4");
 
     Configurables.configure(sink, context);
     Assert.assertEquals(Integer.MAX_VALUE, sink.getTryCount());
   }
+
   @Test
-  public void testRetryRename() throws InterruptedException,
-    LifecycleException,
-    EventDeliveryException, IOException {
+  public void testRetryRename()
+      throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
     testRetryRename(true);
     testRetryRename(false);
   }
 
-  private void testRetryRename(boolean closeSucceed) throws InterruptedException,
-          LifecycleException,
-          EventDeliveryException, IOException {
+  private void testRetryRename(boolean closeSucceed)
+      throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
     LOG.debug("Starting...");
     String newPath = testPath + "/retryBucket";
 
@@ -1441,8 +1440,8 @@ public class TestHDFSEventSink {
     Collection<BucketWriter> writers = sink.getSfWriters().values();
 
     int totalRenameAttempts = 0;
-    for(BucketWriter writer: writers) {
-      LOG.info("Rename tries = "+ writer.renameTries.get());
+    for (BucketWriter writer : writers) {
+      LOG.info("Rename tries = " + writer.renameTries.get());
       totalRenameAttempts += writer.renameTries.get();
     }
     // stop clears the sfWriters map, so we need to compute the

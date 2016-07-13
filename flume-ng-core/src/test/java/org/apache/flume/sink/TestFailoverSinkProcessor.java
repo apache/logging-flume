@@ -94,7 +94,7 @@ public class TestFailoverSinkProcessor {
 
     @Override
     public Status process() throws EventDeliveryException {
-      synchronized(this) {
+      synchronized (this) {
         if (remaining <= 0) {
           throw new EventDeliveryException("can't consume more");
         }
@@ -107,7 +107,7 @@ public class TestFailoverSinkProcessor {
       tx.close();
 
       if (e != null) {
-        synchronized(this) {
+        synchronized (this) {
           remaining--;
         }
         written++;
@@ -167,7 +167,7 @@ public class TestFailoverSinkProcessor {
     Assert.assertEquals(LifecycleState.START, s1.getLifecycleState());
     Assert.assertEquals(LifecycleState.START, s2.getLifecycleState());
     Assert.assertEquals(LifecycleState.START, s3.getLifecycleState());
-    for(int i = 0; i < 15; i++) {
+    for (int i = 0; i < 15; i++) {
       Transaction tx = ch.getTransaction();
       tx.begin();
       ch.put(EventBuilder.withBody("test".getBytes()));
@@ -178,7 +178,7 @@ public class TestFailoverSinkProcessor {
 
     Assert.assertEquals(new Integer(10), s1.getWritten());
     Assert.assertEquals(new Integer(5), s2.getWritten());
-    for(int i = 0; i < 50; i++) {
+    for (int i = 0; i < 50; i++) {
       Transaction tx = ch.getTransaction();
       tx.begin();
       ch.put(EventBuilder.withBody("test".getBytes()));
@@ -195,7 +195,7 @@ public class TestFailoverSinkProcessor {
     // get us past the retry time for the failed sink
     Thread.sleep(5000);
 
-    for(int i = 0; i < 100; i++) {
+    for (int i = 0; i < 100; i++) {
       Transaction tx = ch.getTransaction();
       tx.begin();
       ch.put(EventBuilder.withBody("test".getBytes()));

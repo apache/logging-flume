@@ -87,7 +87,7 @@ public class TestNettyAvroRpcClient {
    * @throws FlumeException
    * @throws EventDeliveryException
    */
-  @Test(expected=org.apache.flume.EventDeliveryException.class)
+  @Test(expected = org.apache.flume.EventDeliveryException.class)
   public void testOKServerSimpleCompressionClientOnly() throws FlumeException,
       EventDeliveryException {
     RpcTestUtils.handlerSimpleAppendTest(new OKAvroHandler(), false, true, 6);
@@ -98,7 +98,7 @@ public class TestNettyAvroRpcClient {
    * @throws FlumeException
    * @throws EventDeliveryException
    */
-  @Test(expected=org.apache.flume.EventDeliveryException.class)
+  @Test(expected = org.apache.flume.EventDeliveryException.class)
   public void testOKServerSimpleCompressionServerOnly() throws FlumeException,
       EventDeliveryException {
     RpcTestUtils.handlerSimpleAppendTest(new OKAvroHandler(), true, false, 6);
@@ -142,7 +142,7 @@ public class TestNettyAvroRpcClient {
    * @throws FlumeException
    * @throws EventDeliveryException
    */
-  @Test(expected=org.apache.flume.EventDeliveryException.class)
+  @Test(expected = org.apache.flume.EventDeliveryException.class)
   public void testOKServerBatchCompressionServerOnly() throws FlumeException,
       EventDeliveryException {
     RpcTestUtils.handlerBatchAppendTest(new OKAvroHandler(), true, false, 6);
@@ -153,7 +153,7 @@ public class TestNettyAvroRpcClient {
    * @throws FlumeException
    * @throws EventDeliveryException
    */
-  @Test(expected=org.apache.flume.EventDeliveryException.class)
+  @Test(expected = org.apache.flume.EventDeliveryException.class)
   public void testOKServerBatchCompressionClientOnly() throws FlumeException,
       EventDeliveryException {
     RpcTestUtils.handlerBatchAppendTest(new OKAvroHandler(), false, true, 6);
@@ -164,7 +164,7 @@ public class TestNettyAvroRpcClient {
    * Note: this test tries to connect to port 1 on localhost.
    * @throws FlumeException
    */
-  @Test(expected=FlumeException.class)
+  @Test(expected = FlumeException.class)
   public void testUnableToConnect() throws FlumeException {
     @SuppressWarnings("unused")
     NettyAvroRpcClient client = new NettyAvroRpcClient();
@@ -214,7 +214,7 @@ public class TestNettyAvroRpcClient {
    * @throws EventDeliveryException
    * @throws InterruptedException
    */
-  @Test(expected=EventDeliveryException.class)
+  @Test(expected = EventDeliveryException.class)
   public void testServerDisconnect() throws FlumeException,
       EventDeliveryException, InterruptedException {
     NettyAvroRpcClient client = null;
@@ -245,7 +245,7 @@ public class TestNettyAvroRpcClient {
    * @throws FlumeException
    * @throws EventDeliveryException
    */
-  @Test(expected=EventDeliveryException.class)
+  @Test(expected = EventDeliveryException.class)
   public void testClientClosedRequest() throws FlumeException,
       EventDeliveryException {
     NettyAvroRpcClient client = null;
@@ -265,7 +265,7 @@ public class TestNettyAvroRpcClient {
   /**
    * Send an event to an online server that returns FAILED.
    */
-  @Test(expected=EventDeliveryException.class)
+  @Test(expected = EventDeliveryException.class)
   public void testFailedServerSimple() throws FlumeException,
       EventDeliveryException {
 
@@ -276,7 +276,7 @@ public class TestNettyAvroRpcClient {
   /**
    * Send an event to an online server that returns UNKNOWN.
    */
-  @Test(expected=EventDeliveryException.class)
+  @Test(expected = EventDeliveryException.class)
   public void testUnknownServerSimple() throws FlumeException,
       EventDeliveryException {
 
@@ -287,7 +287,7 @@ public class TestNettyAvroRpcClient {
   /**
    * Send an event to an online server that throws an exception.
    */
-  @Test(expected=EventDeliveryException.class)
+  @Test(expected = EventDeliveryException.class)
   public void testThrowingServerSimple() throws FlumeException,
       EventDeliveryException {
 
@@ -298,7 +298,7 @@ public class TestNettyAvroRpcClient {
   /**
    * Send a batch of events to a server that returns FAILED.
    */
-  @Test(expected=EventDeliveryException.class)
+  @Test(expected = EventDeliveryException.class)
   public void testFailedServerBatch() throws FlumeException,
       EventDeliveryException {
 
@@ -309,7 +309,7 @@ public class TestNettyAvroRpcClient {
   /**
    * Send a batch of events to a server that returns UNKNOWN.
    */
-  @Test(expected=EventDeliveryException.class)
+  @Test(expected = EventDeliveryException.class)
   public void testUnknownServerBatch() throws FlumeException,
       EventDeliveryException {
 
@@ -320,7 +320,7 @@ public class TestNettyAvroRpcClient {
   /**
    * Send a batch of events to a server that always throws exceptions.
    */
-  @Test(expected=EventDeliveryException.class)
+  @Test(expected = EventDeliveryException.class)
   public void testThrowingServerBatch() throws FlumeException,
       EventDeliveryException {
 

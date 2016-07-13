@@ -36,7 +36,6 @@ import com.google.common.io.Files;
 
 public class TestPollingPropertiesFileConfigurationProvider  {
 
-
   private static final File TESTFILE = new File(
       TestPollingPropertiesFileConfigurationProvider.class.getClassLoader()
           .getResource("flume-conf.properties").getFile());

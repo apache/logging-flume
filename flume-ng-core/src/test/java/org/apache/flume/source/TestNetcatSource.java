@@ -21,7 +21,11 @@ package org.apache.flume.source;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
-import org.apache.flume.*;
+import org.apache.flume.Channel;
+import org.apache.flume.ChannelSelector;
+import org.apache.flume.Context;
+import org.apache.flume.Event;
+import org.apache.flume.Transaction;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
@@ -45,26 +49,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TestNetcatSource {
-  private static final Logger logger = LoggerFactory
-          .getLogger(TestAvroSource.class);
+  private static final Logger logger =
+      LoggerFactory.getLogger(TestAvroSource.class);
 
   /**
    * Five first sentences of the Fables "The Crow and the Fox"
    * written by Jean de La Fontaine, French poet.
    *
-   * @see <a href="http://en.wikipedia.org/wiki/Jean_de_La_Fontaine">Jean de La Fontaine on wikipedia</a>
+   * @see <a href="http://en.wikipedia.org/wiki/Jean_de_La_Fontaine">Jean de La Fontaine on
+   * wikipedia</a>
    */
   private final String french = "Maître Corbeau, sur un arbre perché, " +
-          "Tenait en son bec un fromage. " +
-          "Maître Renard, par l'odeur alléché, " +
-          "Lui tint à peu près ce langage : " +
-          "Et bonjour, Monsieur du Corbeau,";
+      "Tenait en son bec un fromage. " +
+      "Maître Renard, par l'odeur alléché, " +
+      "Lui tint à peu près ce langage : " +
+      "Et bonjour, Monsieur du Corbeau,";
 
   private final String english = "At the top of a tree perched Master Crow; " +
-          "In his beak he was holding a cheese. " +
-          "Drawn by the smell, Master Fox spoke, below. " +
-          "The words, more or less, were these: " +
-          "\"Hey, now, Sir Crow! Good day, good day!";
+      "In his beak he was holding a cheese. " +
+      "Drawn by the smell, Master Fox spoke, below. " +
+      "The words, more or less, were these: " +
+      "\"Hey, now, Sir Crow! Good day, good day!";
 
   private int selectedPort;
   private NetcatSource source;
@@ -109,12 +114,14 @@ public class TestNetcatSource {
       // Test on english text snippet
       for (int i = 0; i < 20; i++) {
         sendEvent(netcatSocket, english, encoding);
-        Assert.assertArrayEquals("Channel contained our event", english.getBytes(defaultCharset), getFlumeEvent());
+        Assert.assertArrayEquals("Channel contained our event", english.getBytes(defaultCharset),
+            getFlumeEvent());
       }
       // Test on french text snippet
       for (int i = 0; i < 20; i++) {
         sendEvent(netcatSocket, french, encoding);
-        Assert.assertArrayEquals("Channel contained our event", french.getBytes(defaultCharset), getFlumeEvent());
+        Assert.assertArrayEquals("Channel contained our event", french.getBytes(defaultCharset),
+            getFlumeEvent());
       }
     } finally {
       netcatSocket.close();
@@ -137,12 +144,14 @@ public class TestNetcatSource {
       // Test on english text snippet
       for (int i = 0; i < 20; i++) {
         sendEvent(netcatSocket, english, encoding);
-        Assert.assertArrayEquals("Channel contained our event", english.getBytes(defaultCharset), getFlumeEvent());
+        Assert.assertArrayEquals("Channel contained our event", english.getBytes(defaultCharset),
+            getFlumeEvent());
       }
       // Test on french text snippet
       for (int i = 0; i < 20; i++) {
         sendEvent(netcatSocket, french, encoding);
-        Assert.assertArrayEquals("Channel contained our event", french.getBytes(defaultCharset), getFlumeEvent());
+        Assert.assertArrayEquals("Channel contained our event", french.getBytes(defaultCharset),
+            getFlumeEvent());
       }
     } finally {
       netcatSocket.close();
@@ -165,12 +174,14 @@ public class TestNetcatSource {
       // Test on english text snippet
       for (int i = 0; i < 20; i++) {
         sendEvent(netcatSocket, english, encoding);
-        Assert.assertArrayEquals("Channel contained our event", english.getBytes(defaultCharset), getFlumeEvent());
+        Assert.assertArrayEquals("Channel contained our event", english.getBytes(defaultCharset),
+            getFlumeEvent());
       }
       // Test on french text snippet
       for (int i = 0; i < 20; i++) {
         sendEvent(netcatSocket, french, encoding);
-        Assert.assertArrayEquals("Channel contained our event", french.getBytes(defaultCharset), getFlumeEvent());
+        Assert.assertArrayEquals("Channel contained our event", french.getBytes(defaultCharset),
+            getFlumeEvent());
       }
     } finally {
       netcatSocket.close();
@@ -193,12 +204,14 @@ public class TestNetcatSource {
       // Test on english text snippet
       for (int i = 0; i < 20; i++) {
         sendEvent(netcatSocket, english, encoding);
-        Assert.assertArrayEquals("Channel contained our event", english.getBytes(defaultCharset), getFlumeEvent());
+        Assert.assertArrayEquals("Channel contained our event", english.getBytes(defaultCharset),
+            getFlumeEvent());
       }
       // Test on french text snippet
       for (int i = 0; i < 20; i++) {
         sendEvent(netcatSocket, french, encoding);
-        Assert.assertArrayEquals("Channel contained our event", french.getBytes(defaultCharset), getFlumeEvent());
+        Assert.assertArrayEquals("Channel contained our event", french.getBytes(defaultCharset),
+            getFlumeEvent());
       }
     } finally {
       netcatSocket.close();
@@ -223,13 +236,15 @@ public class TestNetcatSource {
       // Test on english text snippet
       for (int i = 0; i < 20; i++) {
         sendEvent(netcatSocket, english, encoding);
-        Assert.assertArrayEquals("Channel contained our event", english.getBytes(defaultCharset), getFlumeEvent());
+        Assert.assertArrayEquals("Channel contained our event", english.getBytes(defaultCharset),
+            getFlumeEvent());
         Assert.assertEquals("Socket contained the Ack", ackEvent, inputLineIterator.nextLine());
       }
       // Test on french text snippet
       for (int i = 0; i < 20; i++) {
         sendEvent(netcatSocket, french, encoding);
-        Assert.assertArrayEquals("Channel contained our event", french.getBytes(defaultCharset), getFlumeEvent());
+        Assert.assertArrayEquals("Channel contained our event", french.getBytes(defaultCharset),
+            getFlumeEvent());
         Assert.assertEquals("Socket contained the Ack", ackEvent, inputLineIterator.nextLine());
       }
     } finally {
@@ -251,7 +266,8 @@ public class TestNetcatSource {
     Socket netcatSocket = new Socket(localhost, selectedPort);
     try {
       sendEvent(netcatSocket, "123456789", encoding);
-      Assert.assertArrayEquals("Channel contained our event", "123456789".getBytes(defaultCharset), getFlumeEvent());
+      Assert.assertArrayEquals("Channel contained our event",
+                               "123456789".getBytes(defaultCharset), getFlumeEvent());
       sendEvent(netcatSocket, english, encoding);
       Assert.assertEquals("Channel does not contain an event", null, getRawFlumeEvent());
     } finally {
@@ -276,18 +292,21 @@ public class TestNetcatSource {
     LineIterator inputLineIterator = IOUtils.lineIterator(netcatSocket.getInputStream(), encoding);
     try {
       sendEvent(netcatSocket, "123456789", encoding);
-      Assert.assertArrayEquals("Channel contained our event", "123456789".getBytes(defaultCharset), getFlumeEvent());
+      Assert.assertArrayEquals("Channel contained our event",
+                               "123456789".getBytes(defaultCharset), getFlumeEvent());
       Assert.assertEquals("Socket contained the Ack", ackEvent, inputLineIterator.nextLine());
       sendEvent(netcatSocket, english, encoding);
       Assert.assertEquals("Channel does not contain an event", null, getRawFlumeEvent());
-      Assert.assertEquals("Socket contained the Error Ack", ackErrorEvent, inputLineIterator.nextLine());
+      Assert.assertEquals("Socket contained the Error Ack", ackErrorEvent, inputLineIterator
+          .nextLine());
     } finally {
       netcatSocket.close();
       stopSource();
     }
   }
 
-  private void startSource(String encoding, String ack, String batchSize, String maxLineLength) throws InterruptedException {
+  private void startSource(String encoding, String ack, String batchSize, String maxLineLength)
+      throws InterruptedException {
     boolean bound = false;
 
     for (int i = 0; i < 100 && !bound; i++) {
@@ -313,9 +332,9 @@ public class TestNetcatSource {
     }
 
     Assert.assertTrue("Reached start or error",
-            LifecycleController.waitForOneOf(source, LifecycleState.START_OR_ERROR));
+        LifecycleController.waitForOneOf(source, LifecycleState.START_OR_ERROR));
     Assert.assertEquals("Server is started", LifecycleState.START,
-            source.getLifecycleState());
+        source.getLifecycleState());
   }
 
   private void sendEvent(Socket socket, String content, String encoding) throws IOException {
@@ -366,9 +385,9 @@ public class TestNetcatSource {
   private void stopSource() throws InterruptedException {
     source.stop();
     Assert.assertTrue("Reached stop or error",
-            LifecycleController.waitForOneOf(source, LifecycleState.STOP_OR_ERROR));
+        LifecycleController.waitForOneOf(source, LifecycleState.STOP_OR_ERROR));
     Assert.assertEquals("Server is stopped", LifecycleState.STOP,
-            source.getLifecycleState());
+        source.getLifecycleState());
     logger.info("Source stopped");
   }
 }

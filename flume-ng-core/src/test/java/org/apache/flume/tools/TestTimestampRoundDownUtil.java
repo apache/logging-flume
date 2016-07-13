@@ -18,7 +18,6 @@
 
 package org.apache.flume.tools;
 
-
 import java.util.Calendar;
 
 import junit.framework.Assert;
@@ -38,8 +37,7 @@ public class TestTimestampRoundDownUtil {
     cal2.set(2012, 5, 15, 15, 12, 0);
     cal2.set(Calendar.MILLISECOND, 0);
     long timeToVerify = cal2.getTimeInMillis();
-    long ret = TimestampRoundDownUtil.
-        roundDownTimeStampSeconds(cal.getTimeInMillis(), 60);
+    long ret = TimestampRoundDownUtil.roundDownTimeStampSeconds(cal.getTimeInMillis(), 60);
     System.out.println("Cal 1: " + cal.toString());
     System.out.println("Cal 2: " + cal2.toString());
     Assert.assertEquals(timeToVerify, ret);
@@ -56,8 +54,7 @@ public class TestTimestampRoundDownUtil {
     cal2.set(2012, 5, 15, 15, 10, 0);
     cal2.set(Calendar.MILLISECOND, 0);
     long timeToVerify = cal2.getTimeInMillis();
-    long ret = TimestampRoundDownUtil.
-        roundDownTimeStampMinutes(cal.getTimeInMillis(), 5);
+    long ret = TimestampRoundDownUtil.roundDownTimeStampMinutes(cal.getTimeInMillis(), 5);
     System.out.println("Cal 1: " + cal.toString());
     System.out.println("Cal 2: " + cal2.toString());
     Assert.assertEquals(timeToVerify, ret);
@@ -74,8 +71,7 @@ public class TestTimestampRoundDownUtil {
     cal2.set(2012, 5, 15, 14, 0, 0);
     cal2.set(Calendar.MILLISECOND, 0);
     long timeToVerify = cal2.getTimeInMillis();
-    long ret = TimestampRoundDownUtil.
-        roundDownTimeStampHours(cal.getTimeInMillis(), 2);
+    long ret = TimestampRoundDownUtil.roundDownTimeStampHours(cal.getTimeInMillis(), 2);
     System.out.println("Cal 1: " + ret);
     System.out.println("Cal 2: " + cal2.toString());
     Assert.assertEquals(timeToVerify, ret);

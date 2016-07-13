@@ -18,14 +18,6 @@
  */
 package org.apache.flume.sink.hbase;
 
-import static org.mockito.Mockito.*;
-
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -54,13 +46,24 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.zookeeper.ZKConfig;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
 
 public class TestHBaseSink {
   private static final Logger logger =
@@ -140,8 +143,7 @@ public class TestHBaseSink {
     sink.start();
     Transaction tx = channel.getTransaction();
     tx.begin();
-    Event e = EventBuilder.withBody(
-            Bytes.toBytes(valBase));
+    Event e = EventBuilder.withBody(Bytes.toBytes(valBase));
     channel.put(e);
     tx.commit();
     tx.close();
@@ -195,7 +197,7 @@ public class TestHBaseSink {
     sink.start();
     Transaction tx = channel.getTransaction();
     tx.begin();
-    for(int i = 0; i < 3; i++){
+    for (int i = 0; i < 3; i++) {
       Event e = EventBuilder.withBody(Bytes.toBytes(valBase + "-" + i));
       channel.put(e);
     }
@@ -207,9 +209,9 @@ public class TestHBaseSink {
     byte[][] results = getResults(table, 3);
     byte[] out;
     int found = 0;
-    for(int i = 0; i < 3; i++){
-      for(int j = 0; j < 3; j++){
-        if(Arrays.equals(results[j],Bytes.toBytes(valBase + "-" + i))){
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        if (Arrays.equals(results[j], Bytes.toBytes(valBase + "-" + i))) {
           found++;
           break;
         }
@@ -234,14 +236,14 @@ public class TestHBaseSink {
     sink.start();
     Transaction tx = channel.getTransaction();
     tx.begin();
-    for(int i = 0; i < 3; i++){
+    for (int i = 0; i < 3; i++) {
       Event e = EventBuilder.withBody(Bytes.toBytes(valBase + "-" + i));
       channel.put(e);
     }
     tx.commit();
     tx.close();
     int count = 0;
-    while(sink.process() != Status.BACKOFF){
+    while (sink.process() != Status.BACKOFF) {
       count++;
     }
     sink.stop();
@@ -250,9 +252,9 @@ public class TestHBaseSink {
     byte[][] results = getResults(table, 3);
     byte[] out;
     int found = 0;
-    for(int i = 0; i < 3; i++){
-      for(int j = 0; j < 3; j++){
-        if(Arrays.equals(results[j],Bytes.toBytes(valBase + "-" + i))){
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        if (Arrays.equals(results[j], Bytes.toBytes(valBase + "-" + i))) {
           found++;
           break;
         }
@@ -284,7 +286,7 @@ public class TestHBaseSink {
     logger.info("Writing data into channel");
     Transaction tx = channel.getTransaction();
     tx.begin();
-    for(int i = 0; i < 3; i++){
+    for (int i = 0; i < 3; i++) {
       Event e = EventBuilder.withBody(Bytes.toBytes(valBase + "-" + i));
       channel.put(e);
     }
@@ -313,9 +315,9 @@ public class TestHBaseSink {
     byte[][] results = getResults(table, 2);
     byte[] out;
     int found = 0;
-    for(int i = 0; i < 2; i++){
-      for(int j = 0; j < 2; j++){
-        if(Arrays.equals(results[j],Bytes.toBytes(valBase + "-" + i))){
+    for (int i = 0; i < 2; i++) {
+      for (int j = 0; j < 2; j++) {
+        if (Arrays.equals(results[j], Bytes.toBytes(valBase + "-" + i))) {
           found++;
           break;
         }
@@ -328,15 +330,17 @@ public class TestHBaseSink {
   }
 
   // TODO: Move this test to a different class and run it stand-alone.
+
   /**
    * This test must run last - it shuts down the minicluster :D
+   *
    * @throws Exception
    */
   @Ignore("For dev builds only:" +
-      "This test takes too long, and this has to be run after all other" +
-      "tests, since it shuts down the minicluster. " +
-      "Comment out all other tests" +
-      "and uncomment this annotation to run this test.")
+          "This test takes too long, and this has to be run after all other" +
+          "tests, since it shuts down the minicluster. " +
+          "Comment out all other tests" +
+          "and uncomment this annotation to run this test.")
   @Test(expected = EventDeliveryException.class)
   public void testHBaseFailure() throws Exception {
     initContextForSimpleHbaseEventSerializer();
@@ -351,7 +355,7 @@ public class TestHBaseSink {
     sink.start();
     Transaction tx = channel.getTransaction();
     tx.begin();
-    for(int i = 0; i < 3; i++){
+    for (int i = 0; i < 3; i++) {
       Event e = EventBuilder.withBody(Bytes.toBytes(valBase + "-" + i));
       channel.put(e);
     }
@@ -362,9 +366,9 @@ public class TestHBaseSink {
     byte[][] results = getResults(table, 2);
     byte[] out;
     int found = 0;
-    for(int i = 0; i < 2; i++){
-      for(int j = 0; j < 2; j++){
-        if(Arrays.equals(results[j],Bytes.toBytes(valBase + "-" + i))){
+    for (int i = 0; i < 2; i++) {
+      for (int j = 0; j < 2; j++) {
+        if (Arrays.equals(results[j], Bytes.toBytes(valBase + "-" + i))) {
           found++;
           break;
         }
@@ -378,22 +382,22 @@ public class TestHBaseSink {
     sink.stop();
   }
 
-
   /**
    * Makes Hbase scans to get rows in the payload column and increment column
    * in the table given. Expensive, so tread lightly.
    * Calling this function multiple times for the same result set is a bad
    * idea. Cache the result set once it is returned by this function.
+   *
    * @param table
    * @param numEvents Number of events inserted into the table
    * @return
    * @throws IOException
    */
-  private byte[][] getResults(HTable table, int numEvents) throws IOException{
-    byte[][] results = new byte[numEvents+1][];
+  private byte[][] getResults(HTable table, int numEvents) throws IOException {
+    byte[][] results = new byte[numEvents + 1][];
     Scan scan = new Scan();
-    scan.addColumn(columnFamily.getBytes(),plCol.getBytes());
-    scan.setStartRow( Bytes.toBytes("default"));
+    scan.addColumn(columnFamily.getBytes(), plCol.getBytes());
+    scan.setStartRow(Bytes.toBytes("default"));
     ResultScanner rs = table.getScanner(scan);
     byte[] out = null;
     int i = 0;
@@ -401,10 +405,10 @@ public class TestHBaseSink {
       for (Result r = rs.next(); r != null; r = rs.next()) {
         out = r.getValue(columnFamily.getBytes(), plCol.getBytes());
 
-        if(i >= results.length - 1){
+        if (i >= results.length - 1) {
           rs.close();
           throw new FlumeException("More results than expected in the table." +
-              "Expected = " + numEvents +". Found = " + i);
+                                   "Expected = " + numEvents + ". Found = " + i);
         }
         results[i++] = out;
         System.out.println(out);
@@ -415,7 +419,7 @@ public class TestHBaseSink {
 
     Assert.assertEquals(i, results.length - 1);
     scan = new Scan();
-    scan.addColumn(columnFamily.getBytes(),inColumn.getBytes());
+    scan.addColumn(columnFamily.getBytes(), inColumn.getBytes());
     scan.setStartRow(Bytes.toBytes("incRow"));
     rs = table.getScanner(scan);
     out = null;
@@ -472,7 +476,7 @@ public class TestHBaseSink {
     initContextForSimpleHbaseEventSerializer();
     ctx.put("batchSize", "1");
     ctx.put(HBaseSinkConfigurationConstants.CONFIG_SERIALIZER,
-        "org.apache.flume.sink.hbase.MockSimpleHbaseEventSerializer");
+            "org.apache.flume.sink.hbase.MockSimpleHbaseEventSerializer");
 
     HBaseSink sink = new HBaseSink(conf);
     Configurables.configure(sink, ctx);
@@ -507,16 +511,16 @@ public class TestHBaseSink {
   }
 
   @Test
-  public void testWithoutConfigurationObject() throws Exception{
+  public void testWithoutConfigurationObject() throws Exception {
     initContextForSimpleHbaseEventSerializer();
     Context tmpContext = new Context(ctx.getParameters());
     tmpContext.put("batchSize", "2");
     tmpContext.put(HBaseSinkConfigurationConstants.ZK_QUORUM,
-      ZKConfig.getZKQuorumServersString(conf) );
+                   ZKConfig.getZKQuorumServersString(conf));
     System.out.print(ctx.getString(HBaseSinkConfigurationConstants.ZK_QUORUM));
     tmpContext.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,
-      conf.get(HConstants.ZOOKEEPER_ZNODE_PARENT,
-        HConstants.DEFAULT_ZOOKEEPER_ZNODE_PARENT));
+                   conf.get(HConstants.ZOOKEEPER_ZNODE_PARENT,
+                            HConstants.DEFAULT_ZOOKEEPER_ZNODE_PARENT));
 
     HBaseSink sink = new HBaseSink();
     Configurables.configure(sink, tmpContext);
@@ -526,14 +530,14 @@ public class TestHBaseSink {
     sink.start();
     Transaction tx = channel.getTransaction();
     tx.begin();
-    for(int i = 0; i < 3; i++){
+    for (int i = 0; i < 3; i++) {
       Event e = EventBuilder.withBody(Bytes.toBytes(valBase + "-" + i));
       channel.put(e);
     }
     tx.commit();
     tx.close();
     Status status = Status.READY;
-    while(status != Status.BACKOFF){
+    while (status != Status.BACKOFF) {
       status = sink.process();
     }
     sink.stop();
@@ -541,9 +545,9 @@ public class TestHBaseSink {
     byte[][] results = getResults(table, 3);
     byte[] out;
     int found = 0;
-    for(int i = 0; i < 3; i++){
-      for(int j = 0; j < 3; j++){
-        if(Arrays.equals(results[j],Bytes.toBytes(valBase + "-" + i))){
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        if (Arrays.equals(results[j], Bytes.toBytes(valBase + "-" + i))) {
           found++;
           break;
         }
@@ -555,37 +559,36 @@ public class TestHBaseSink {
   }
 
   @Test
-  public void testZKQuorum() throws Exception{
+  public void testZKQuorum() throws Exception {
     initContextForSimpleHbaseEventSerializer();
     Context tmpContext = new Context(ctx.getParameters());
     String zkQuorum = "zk1.flume.apache.org:3342, zk2.flume.apache.org:3342, " +
-      "zk3.flume.apache.org:3342";
+                      "zk3.flume.apache.org:3342";
     tmpContext.put("batchSize", "2");
     tmpContext.put(HBaseSinkConfigurationConstants.ZK_QUORUM, zkQuorum);
     tmpContext.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,
-      conf.get(HConstants.ZOOKEEPER_ZNODE_PARENT,
-        HConstants.DEFAULT_ZOOKEEPER_ZNODE_PARENT));
+                   conf.get(HConstants.ZOOKEEPER_ZNODE_PARENT,
+                            HConstants.DEFAULT_ZOOKEEPER_ZNODE_PARENT));
     HBaseSink sink = new HBaseSink();
     Configurables.configure(sink, tmpContext);
     Assert.assertEquals("zk1.flume.apache.org,zk2.flume.apache.org," +
-      "zk3.flume.apache.org", sink.getConfig().get(HConstants
-      .ZOOKEEPER_QUORUM));
-    Assert.assertEquals(String.valueOf(3342), sink.getConfig().get(HConstants
-      .ZOOKEEPER_CLIENT_PORT));
+                        "zk3.flume.apache.org", sink.getConfig().get(HConstants.ZOOKEEPER_QUORUM));
+    Assert.assertEquals(String.valueOf(3342),
+                        sink.getConfig().get(HConstants.ZOOKEEPER_CLIENT_PORT));
   }
 
-  @Test (expected = FlumeException.class)
-  public void testZKQuorumIncorrectPorts() throws Exception{
+  @Test(expected = FlumeException.class)
+  public void testZKQuorumIncorrectPorts() throws Exception {
     initContextForSimpleHbaseEventSerializer();
     Context tmpContext = new Context(ctx.getParameters());
 
     String zkQuorum = "zk1.flume.apache.org:3345, zk2.flume.apache.org:3342, " +
-      "zk3.flume.apache.org:3342";
+                      "zk3.flume.apache.org:3342";
     tmpContext.put("batchSize", "2");
     tmpContext.put(HBaseSinkConfigurationConstants.ZK_QUORUM, zkQuorum);
     tmpContext.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,
-      conf.get(HConstants.ZOOKEEPER_ZNODE_PARENT,
-        HConstants.DEFAULT_ZOOKEEPER_ZNODE_PARENT));
+                   conf.get(HConstants.ZOOKEEPER_ZNODE_PARENT,
+                            HConstants.DEFAULT_ZOOKEEPER_ZNODE_PARENT));
     HBaseSink sink = new HBaseSink();
     Configurables.configure(sink, tmpContext);
     Assert.fail();

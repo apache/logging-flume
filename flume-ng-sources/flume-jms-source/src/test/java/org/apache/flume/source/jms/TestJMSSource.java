@@ -61,6 +61,7 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
   private InitialContextFactory contextFactory;
   private File baseDir;
   private File passwordFile;
+
   @SuppressWarnings("unchecked")
   @Override
   void afterSetup() throws Exception {
@@ -79,10 +80,11 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
     }).when(channelProcessor).processEventBatch(any(List.class));
     consumerFactory = mock(JMSMessageConsumerFactory.class);
     consumer = spy(create());
-    when(consumerFactory.create(any(InitialContext.class), any(ConnectionFactory.class), anyString(),
-        any(JMSDestinationType.class), any(JMSDestinationLocator.class), anyString(), anyInt(), anyLong(),
-        any(JMSMessageConverter.class), any(Optional.class),
-        any(Optional.class))).thenReturn(consumer);
+    when(consumerFactory.create(any(InitialContext.class), any(ConnectionFactory.class),
+                                anyString(), any(JMSDestinationType.class),
+                                any(JMSDestinationLocator.class), anyString(), anyInt(), anyLong(),
+                                any(JMSMessageConverter.class), any(Optional.class),
+                                any(Optional.class))).thenReturn(consumer);
     when(initialContext.lookup(anyString())).thenReturn(connectionFactory);
     contextFactory = mock(InitialContextFactory.class);
     when(contextFactory.create(any(Properties.class))).thenReturn(initialContext);
@@ -97,10 +99,12 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
     context.put(JMSSourceConfiguration.PROVIDER_URL, "dummy:1414");
     context.put(JMSSourceConfiguration.INITIAL_CONTEXT_FACTORY, "ldap://dummy:389");
   }
+
   @Override
   void afterTearDown() throws Exception {
     FileUtils.deleteDirectory(baseDir);
   }
+
   @Test
   public void testStop() throws Exception {
     source.configure(context);
@@ -108,38 +112,45 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
     source.stop();
     verify(consumer).close();
   }
+
   @Test(expected = IllegalArgumentException.class)
   public void testConfigureWithoutInitialContextFactory() throws Exception {
     context.put(JMSSourceConfiguration.INITIAL_CONTEXT_FACTORY, "");
     source.configure(context);
   }
+
   @Test(expected = IllegalArgumentException.class)
   public void testConfigureWithoutProviderURL() throws Exception {
     context.put(JMSSourceConfiguration.PROVIDER_URL, "");
     source.configure(context);
   }
+
   @Test(expected = IllegalArgumentException.class)
   public void testConfigureWithoutDestinationName() throws Exception {
     context.put(JMSSourceConfiguration.DESTINATION_NAME, "");
     source.configure(context);
   }
+
   @Test(expected = FlumeException.class)
   public void testConfigureWithBadDestinationType() throws Exception {
     context.put(JMSSourceConfiguration.DESTINATION_TYPE, "DUMMY");
     source.configure(context);
   }
+
   @Test(expected = IllegalArgumentException.class)
   public void testConfigureWithEmptyDestinationType() throws Exception {
     context.put(JMSSourceConfiguration.DESTINATION_TYPE, "");
     source.configure(context);
   }
+
   @SuppressWarnings("unchecked")
   @Test
   public void testStartConsumerCreateThrowsException() throws Exception {
-    when(consumerFactory.create(any(InitialContext.class), any(ConnectionFactory.class), anyString(),
-        any(JMSDestinationType.class), any(JMSDestinationLocator.class), anyString(), anyInt(), anyLong(),
-        any(JMSMessageConverter.class), any(Optional.class),
-        any(Optional.class))).thenThrow(new RuntimeException());
+    when(consumerFactory.create(any(InitialContext.class), any(ConnectionFactory.class),
+                                anyString(), any(JMSDestinationType.class),
+                                any(JMSDestinationLocator.class), anyString(), anyInt(), anyLong(),
+                                any(JMSMessageConverter.class), any(Optional.class),
+                                any(Optional.class))).thenThrow(new RuntimeException());
     source.configure(context);
     source.start();
     try {
@@ -149,28 +160,33 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
 
     }
   }
+
   @Test(expected = FlumeException.class)
   public void testConfigureWithContextLookupThrowsException() throws Exception {
     when(initialContext.lookup(anyString())).thenThrow(new NamingException());
     source.configure(context);
   }
+
   @Test(expected = FlumeException.class)
   public void testConfigureWithContextCreateThrowsException() throws Exception {
     when(contextFactory.create(any(Properties.class)))
       .thenThrow(new NamingException());
     source.configure(context);
   }
+
   @Test(expected = IllegalArgumentException.class)
   public void testConfigureWithInvalidBatchSize() throws Exception {
     context.put(JMSSourceConfiguration.BATCH_SIZE, "0");
     source.configure(context);
   }
+
   @Test(expected = FlumeException.class)
   public void testConfigureWithInvalidPasswordFile() throws Exception {
     context.put(JMSSourceConfiguration.PASSWORD_FILE,
         "/dev/does/not/exist/nor/will/ever/exist");
     source.configure(context);
   }
+
   @Test
   public void testConfigureWithUserNameButNoPasswordFile() throws Exception {
     context.put(JMSSourceConfiguration.USERNAME, "dummy");
@@ -180,6 +196,7 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
     Assert.assertEquals(batchSize, events.size());
     assertBodyIsExpected(events);
   }
+
   @Test
   public void testConfigureWithUserNameAndPasswordFile() throws Exception {
     context.put(JMSSourceConfiguration.USERNAME, "dummy");
@@ -191,11 +208,13 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
     Assert.assertEquals(batchSize, events.size());
     assertBodyIsExpected(events);
   }
+
   @Test(expected = FlumeException.class)
   public void testConfigureWithInvalidConverterClass() throws Exception {
     context.put(JMSSourceConfiguration.CONVERTER_TYPE, "not a valid classname");
     source.configure(context);
   }
+
   @Test
   public void testProcessNoStart() throws Exception {
     try {
@@ -205,6 +224,7 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
 
     }
   }
+
   @Test
   public void testNonDefaultConverter() throws Exception {
     // tests that a classname can be specified
@@ -217,24 +237,26 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
     assertBodyIsExpected(events);
     verify(consumer).commit();
   }
-  public static class NonBuilderNonConfigurableConverter
-  implements JMSMessageConverter {
+
+  public static class NonBuilderNonConfigurableConverter implements JMSMessageConverter {
     @Override
     public List<Event> convert(Message message) throws JMSException {
       throw new UnsupportedOperationException();
     }
   }
-  public static class NonBuilderConfigurableConverter
-  implements JMSMessageConverter, Configurable {
+
+  public static class NonBuilderConfigurableConverter implements JMSMessageConverter, Configurable {
     @Override
     public List<Event> convert(Message message) throws JMSException {
       throw new UnsupportedOperationException();
     }
+
     @Override
     public void configure(Context context) {
 
     }
   }
+
   @Test
   public void testNonBuilderConfigurableConverter() throws Exception {
     // tests that a non builder by configurable converter works
@@ -247,6 +269,7 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
     assertBodyIsExpected(events);
     verify(consumer).commit();
   }
+
   @Test
   public void testNonBuilderNonConfigurableConverter() throws Exception {
     // tests that a non builder non configurable converter
@@ -259,6 +282,7 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
     assertBodyIsExpected(events);
     verify(consumer).commit();
   }
+
   @Test
   public void testProcessFullBatch() throws Exception {
     source.configure(context);
@@ -268,6 +292,7 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
     assertBodyIsExpected(events);
     verify(consumer).commit();
   }
+
   @Test
   public void testProcessNoEvents() throws Exception {
     when(messageConsumer.receive(anyLong())).thenReturn(null);
@@ -277,6 +302,7 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
     Assert.assertEquals(0, events.size());
     verify(consumer).commit();
   }
+
   @Test
   public void testProcessPartialBatch() throws Exception {
     when(messageConsumer.receiveNoWait()).thenReturn(message, (Message)null);
@@ -287,6 +313,7 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
     assertBodyIsExpected(events);
     verify(consumer).commit();
   }
+
   @SuppressWarnings("unchecked")
   @Test
   public void testProcessChannelProcessorThrowsChannelException() throws Exception {
@@ -297,6 +324,7 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
     Assert.assertEquals(Status.BACKOFF, source.process());
     verify(consumer).rollback();
   }
+
   @SuppressWarnings("unchecked")
   @Test
   public void testProcessChannelProcessorThrowsError() throws Exception {
@@ -312,6 +340,7 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
     }
     verify(consumer).rollback();
   }
+
   @Test
   public void testProcessReconnect() throws Exception {
     source.configure(context);

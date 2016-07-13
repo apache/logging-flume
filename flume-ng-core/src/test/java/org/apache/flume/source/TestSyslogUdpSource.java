@@ -18,14 +18,7 @@
  */
 package org.apache.flume.source;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.DatagramSocket;
 import com.google.common.base.Charsets;
-import com.google.common.base.Strings;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
@@ -40,10 +33,16 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestSyslogUdpSource {
   private static final org.slf4j.Logger logger =
-    LoggerFactory.getLogger(TestSyslogUdpSource.class);
+      LoggerFactory.getLogger(TestSyslogUdpSource.class);
   private SyslogUDPSource source;
   private Channel channel;
   private static final int TEST_SYSLOG_PORT = 0;
@@ -192,12 +191,12 @@ public class TestSyslogUdpSource {
   }
 
   @Test
-  public void testKeepHostname() throws IOException{
+  public void testKeepHostname() throws IOException {
     runKeepFieldsTest("hostname");
   }
 
   @Test
-  public void testKeepTimestamp() throws IOException{
+  public void testKeepTimestamp() throws IOException {
     runKeepFieldsTest("timestamp");
   }
 

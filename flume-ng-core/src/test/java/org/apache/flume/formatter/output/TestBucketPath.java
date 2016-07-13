@@ -18,6 +18,12 @@
 
 package org.apache.flume.formatter.output;
 
+import org.apache.flume.Clock;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -26,21 +32,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 
-import org.apache.flume.Clock;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class TestBucketPath {
   Calendar cal;
   Map<String, String> headers;
+
   @Before
-  public void setUp(){
+  public void setUp() {
     cal = Calendar.getInstance();
     cal.set(2012, 5, 23, 13, 46, 33);
     cal.set(Calendar.MILLISECOND, 234);
@@ -49,7 +49,7 @@ public class TestBucketPath {
   }
 
   @Test
-  public void testDateFormatCache(){
+  public void testDateFormatCache() {
     TimeZone utcTimeZone = TimeZone.getTimeZone("UTC");
     String test = "%c";
     BucketPath.escapeString(
@@ -60,7 +60,7 @@ public class TestBucketPath {
     SimpleDateFormat format = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy");
     Date d = new Date(cal.getTimeInMillis());
     String expectedString = format.format(d);
-    System.out.println("Expected String: "+ expectedString);
+    System.out.println("Expected String: " + expectedString);
     Assert.assertEquals(expectedString, escapedString);
   }
 
@@ -76,7 +76,7 @@ public class TestBucketPath {
     SimpleDateFormat format = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy");
     Date d = new Date(cal2.getTimeInMillis());
     String expectedString = format.format(d);
-    System.out.println("Expected String: "+ expectedString);
+    System.out.println("Expected String: " + expectedString);
     Assert.assertEquals(expectedString, escapedString);
   }
 
@@ -89,8 +89,8 @@ public class TestBucketPath {
     Calendar cal2 = Calendar.getInstance();
     cal2.set(2012, 5, 23, 13, 45, 0);
     cal2.set(Calendar.MILLISECOND, 0);
-    String expectedString = String.valueOf(cal2.getTimeInMillis()/1000);
-    System.out.println("Expected String: "+ expectedString);
+    String expectedString = String.valueOf(cal2.getTimeInMillis() / 1000);
+    System.out.println("Expected String: " + expectedString);
     Assert.assertEquals(expectedString, escapedString);
   }
 
@@ -103,13 +103,13 @@ public class TestBucketPath {
     Calendar cal2 = Calendar.getInstance();
     cal2.set(2012, 5, 23, 13, 46, 30);
     cal2.set(Calendar.MILLISECOND, 0);
-    String expectedString = String.valueOf(cal2.getTimeInMillis()/1000);
-    System.out.println("Expected String: "+ expectedString);
+    String expectedString = String.valueOf(cal2.getTimeInMillis() / 1000);
+    System.out.println("Expected String: " + expectedString);
     Assert.assertEquals(expectedString, escapedString);
   }
 
   @Test
-  public void testNoRounding(){
+  public void testNoRounding() {
     String test = "%c";
     String escapedString = BucketPath.escapeString(
         test, headers, false, Calendar.HOUR_OF_DAY, 12);
@@ -117,19 +117,19 @@ public class TestBucketPath {
     SimpleDateFormat format = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy");
     Date d = new Date(cal.getTimeInMillis());
     String expectedString = format.format(d);
-    System.out.println("Expected String: "+ expectedString);
+    System.out.println("Expected String: " + expectedString);
     Assert.assertEquals(expectedString, escapedString);
   }
 
 
   @Test
-  public void testNoPadding(){
+  public void testNoPadding() {
     Calendar calender;
     Map<String, String> calender_timestamp;
     calender = Calendar.getInstance();
-    
+
     //Check single digit dates
-    calender.set(2014, (5-1), 3, 13, 46, 33);
+    calender.set(2014, (5 - 1), 3, 13, 46, 33);
     calender_timestamp = new HashMap<String, String>();
     calender_timestamp.put("timestamp", String.valueOf(calender.getTimeInMillis()));
     SimpleDateFormat format = new SimpleDateFormat("M-d");
@@ -141,19 +141,19 @@ public class TestBucketPath {
     String expectedString = format.format(d);
     
     //Check two digit dates
-    calender.set(2014, (11-1), 13, 13, 46, 33);
+    calender.set(2014, (11 - 1), 13, 13, 46, 33);
     calender_timestamp.put("timestamp", String.valueOf(calender.getTimeInMillis()));
-    escapedString +=  " " +  BucketPath.escapeString(
+    escapedString += " " + BucketPath.escapeString(
         test, calender_timestamp, false, Calendar.HOUR_OF_DAY, 12);
     System.out.println("Escaped String: " + escapedString);
     d = new Date(calender.getTimeInMillis());
-    expectedString +=  " " + format.format(d);
-    System.out.println("Expected String: "+ expectedString);
+    expectedString += " " + format.format(d);
+    System.out.println("Expected String: " + expectedString);
     Assert.assertEquals(expectedString, escapedString);
   }
 
   @Test
-  public void testDateFormatTimeZone(){
+  public void testDateFormatTimeZone() {
     TimeZone utcTimeZone = TimeZone.getTimeZone("UTC");
     String test = "%c";
     String escapedString = BucketPath.escapeString(
@@ -163,7 +163,7 @@ public class TestBucketPath {
     format.setTimeZone(utcTimeZone);
     Date d = new Date(cal.getTimeInMillis());
     String expectedString = format.format(d);
-    System.out.println("Expected String: "+ expectedString);
+    System.out.println("Expected String: " + expectedString);
     Assert.assertEquals(expectedString, escapedString);
   }
 

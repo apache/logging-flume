@@ -34,7 +34,6 @@ import org.apache.flume.channel.file.WriteOrderOracle;
 import org.apache.flume.event.EventBuilder;
 import org.junit.After;
 import org.junit.AfterClass;
-import static org.fest.reflect.core.Reflection.*;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -47,6 +46,8 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
+import static org.fest.reflect.core.Reflection.field;
+import static org.fest.reflect.core.Reflection.method;
 
 public class TestFileChannelIntegrityTool {
   private static File baseDir;
@@ -61,7 +62,7 @@ public class TestFileChannelIntegrityTool {
   private static int invalidEvent = 0;
 
   @BeforeClass
-  public static void setUpClass() throws Exception{
+  public static void setUpClass() throws Exception {
     createDataFiles();
   }
 
@@ -74,13 +75,13 @@ public class TestFileChannelIntegrityTool {
     File[] dataFiles = origDataDir.listFiles(new FilenameFilter() {
       @Override
       public boolean accept(File dir, String name) {
-        if(name.contains("lock")) {
+        if (name.contains("lock")) {
           return false;
         }
         return true;
       }
     });
-    for(File dataFile : dataFiles) {
+    for (File dataFile : dataFiles) {
       Serialization.copyFile(dataFile, new File(dataDir, dataFile.getName()));
     }
   }
@@ -146,7 +147,7 @@ public class TestFileChannelIntegrityTool {
     Transaction tx = channel.getTransaction();
     tx.begin();
     int i = 0;
-    while(channel.take() != null) {
+    while (channel.take() != null) {
       i++;
     }
     tx.commit();
@@ -161,7 +162,7 @@ public class TestFileChannelIntegrityTool {
     File[] files = dataDir.listFiles(new FilenameFilter() {
       @Override
       public boolean accept(File dir, String name) {
-        if(name.contains("lock") || name.contains("meta")) {
+        if (name.contains("lock") || name.contains("meta")) {
           return false;
         }
         return true;
@@ -170,15 +171,13 @@ public class TestFileChannelIntegrityTool {
     Random random = new Random();
     int corrupted = 0;
     for (File dataFile : files) {
-      LogFile.SequentialReader reader =
-        new LogFileV3.SequentialReader(dataFile, null, true);
+      LogFile.SequentialReader reader = new LogFileV3.SequentialReader(dataFile, null, true);
       RandomAccessFile handle = new RandomAccessFile(dataFile, "rw");
       long eventPosition1 = reader.getPosition();
       LogRecord rec = reader.next();
       //No point corrupting commits, so ignore them
-      if(rec == null ||
-        rec.getEvent().getClass().getName().
-          equals("org.apache.flume.channel.file.Commit")) {
+      if (rec == null ||
+          rec.getEvent().getClass().getName().equals("org.apache.flume.channel.file.Commit")) {
         handle.close();
         reader.close();
         continue;
@@ -190,8 +189,7 @@ public class TestFileChannelIntegrityTool {
       corrupted++;
       corruptFiles.add(dataFile.getName());
       if (rec == null ||
-        rec.getEvent().getClass().getName().
-          equals("org.apache.flume.channel.file.Commit")) {
+          rec.getEvent().getClass().getName().equals("org.apache.flume.channel.file.Commit")) {
         handle.close();
         reader.close();
         continue;
@@ -231,7 +229,7 @@ public class TestFileChannelIntegrityTool {
     Transaction tx = channel.getTransaction();
     tx.begin();
     int i = 0;
-    while(channel.take() != null) {
+    while (channel.take() != null) {
       i++;
     }
     tx.commit();
@@ -241,14 +239,14 @@ public class TestFileChannelIntegrityTool {
     files = dataDir.listFiles(new FilenameFilter() {
       @Override
       public boolean accept(File dir, String name) {
-        if(name.contains(".bak")) {
+        if (name.contains(".bak")) {
           return true;
         }
         return false;
       }
     });
     Assert.assertEquals(corruptFiles.size(), files.length);
-    for(File file : files) {
+    for (File file : files) {
       String name = file.getName();
       name = name.replaceAll(".bak", "");
       Assert.assertTrue(corruptFiles.remove(name));
@@ -258,13 +256,13 @@ public class TestFileChannelIntegrityTool {
 
   private static void createDataFiles() throws Exception {
     final byte[] eventData = new byte[2000];
-    for(int i = 0; i < 2000; i++) {
+    for (int i = 0; i < 2000; i++) {
       eventData[i] = 1;
     }
     WriteOrderOracle.setSeed(System.currentTimeMillis());
     event = EventBuilder.withBody(eventData);
     baseDir = Files.createTempDir();
-    if(baseDir.exists()) {
+    if (baseDir.exists()) {
       FileUtils.deleteDirectory(baseDir);
     }
     baseDir = Files.createTempDir();
@@ -286,7 +284,7 @@ public class TestFileChannelIntegrityTool {
       Transaction tx = channel.getTransaction();
       tx.begin();
       for (int i = 0; i < 5; i++) {
-        if(i % 3 == 0) {
+        if (i % 3 == 0) {
           event.getBody()[0] = 0;
           invalidEvent++;
         } else {
@@ -297,22 +295,19 @@ public class TestFileChannelIntegrityTool {
       tx.commit();
       tx.close();
     }
-    Log log = field("log")
-      .ofType(Log.class)
-      .in(channel)
-      .get();
+    Log log = field("log").ofType(Log.class)
+                          .in(channel)
+                          .get();
 
     Assert.assertTrue("writeCheckpoint returned false",
-      method("writeCheckpoint")
-        .withReturnType(Boolean.class)
-        .withParameterTypes(Boolean.class)
-        .in(log)
-        .invoke(true));
+                      method("writeCheckpoint").withReturnType(Boolean.class)
+                                               .withParameterTypes(Boolean.class)
+                                               .in(log)
+                                               .invoke(true));
     channel.stop();
   }
 
   public static class DummyEventVerifier implements EventValidator {
-
     private int value = 0;
 
     private DummyEventVerifier(int val) {
@@ -325,7 +320,6 @@ public class TestFileChannelIntegrityTool {
     }
 
     public static class Builder implements EventValidator.Builder {
-
       private int binaryValidator = 0;
 
       @Override

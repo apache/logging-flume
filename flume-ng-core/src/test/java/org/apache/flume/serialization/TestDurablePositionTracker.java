@@ -31,8 +31,7 @@ import java.net.URL;
 
 public class TestDurablePositionTracker {
 
-  private static final Logger logger = LoggerFactory.getLogger
-      (TestDurablePositionTracker.class);
+  private static final Logger logger = LoggerFactory.getLogger(TestDurablePositionTracker.class);
 
   @Test
   public void testBasicTracker() throws IOException {

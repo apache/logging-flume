@@ -18,14 +18,7 @@
  */
 package org.apache.flume.serialization;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.charset.CharsetDecoder;
-
+import com.google.common.base.Charsets;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
@@ -38,7 +31,13 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 
-import com.google.common.base.Charsets;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharsetDecoder;
 
 public class TestFlumeEventAvroEventSerializer {
 
@@ -77,17 +76,16 @@ public class TestFlumeEventAvroEventSerializer {
       throws FileNotFoundException, IOException {
     // Snappy currently broken on Mac in OpenJDK 7 per FLUME-2012
     Assume.assumeTrue(!"Mac OS X".equals(System.getProperty("os.name")) ||
-      !System.getProperty("java.version").startsWith("1.7."));
+                      !System.getProperty("java.version").startsWith("1.7."));
 
     createAvroFile(TESTFILE, "snappy");
     validateAvroFile(TESTFILE);
     FileUtils.forceDelete(TESTFILE);
   }
 
-  public void createAvroFile(File file, String codec)
-      throws FileNotFoundException, IOException {
+  public void createAvroFile(File file, String codec) throws FileNotFoundException, IOException {
 
-    if(file.exists()){
+    if (file.exists()) {
       FileUtils.forceDelete(file);
     }
 

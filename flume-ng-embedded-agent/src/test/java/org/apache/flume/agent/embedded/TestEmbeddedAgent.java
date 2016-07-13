@@ -95,14 +95,14 @@ public class TestEmbeddedAgent {
 
   @After
   public void tearDown() throws Exception {
-    if(agent != null) {
+    if (agent != null) {
       try {
         agent.stop();
       } catch (Exception e) {
         LOGGER.debug("Error shutting down agent", e);
       }
     }
-    if(nettyServer != null) {
+    if (nettyServer != null) {
       try {
         nettyServer.close();
       } catch (Exception e) {
@@ -118,7 +118,7 @@ public class TestEmbeddedAgent {
     agent.put(EventBuilder.withBody(body, headers));
 
     Event event;
-    while((event = eventCollector.poll()) == null) {
+    while ((event = eventCollector.poll()) == null) {
       Thread.sleep(500L);
     }
     Assert.assertNotNull(event);
@@ -135,7 +135,7 @@ public class TestEmbeddedAgent {
     agent.putAll(events);
 
     Event event;
-    while((event = eventCollector.poll()) == null) {
+    while ((event = eventCollector.poll()) == null) {
       Thread.sleep(500L);
     }
     Assert.assertNotNull(event);
@@ -155,7 +155,7 @@ public class TestEmbeddedAgent {
     agent.put(EventBuilder.withBody(body, headers));
 
     Event event;
-    while((event = eventCollector.poll()) == null) {
+    while ((event = eventCollector.poll()) == null) {
       Thread.sleep(500L);
     }
     Assert.assertNotNull(event);
@@ -176,13 +176,13 @@ public class TestEmbeddedAgent {
     embedAgent.putAll(events);
 
     Event event;
-    while((event = eventCollector.poll()) == null) {
+    while ((event = eventCollector.poll()) == null) {
       Thread.sleep(500L);
     }
     Assert.assertNotNull(event);
     Assert.assertArrayEquals(body, event.getBody());
     Assert.assertEquals(headers, event.getHeaders());
-    if(embedAgent != null) {
+    if (embedAgent != null) {
       try {
         embedAgent.stop();
       } catch (Exception e) {
@@ -191,14 +191,13 @@ public class TestEmbeddedAgent {
     }
   }
 
-
   static class EventCollector implements AvroSourceProtocol {
     private final Queue<AvroFlumeEvent> eventQueue =
         new LinkedBlockingQueue<AvroFlumeEvent>();
 
     public Event poll() {
       AvroFlumeEvent avroEvent = eventQueue.poll();
-      if(avroEvent != null) {
+      if (avroEvent != null) {
         return EventBuilder.withBody(avroEvent.getBody().array(),
             toStringMap(avroEvent.getHeaders()));
       }
@@ -216,10 +215,9 @@ public class TestEmbeddedAgent {
       return Status.OK;
     }
   }
-  private static Map<String, String> toStringMap(
-      Map<CharSequence, CharSequence> charSeqMap) {
-    Map<String, String> stringMap =
-        new HashMap<String, String>();
+
+  private static Map<String, String> toStringMap(Map<CharSequence, CharSequence> charSeqMap) {
+    Map<String, String> stringMap = new HashMap<String, String>();
     for (Map.Entry<CharSequence, CharSequence> entry : charSeqMap.entrySet()) {
       stringMap.put(entry.getKey().toString(), entry.getValue().toString());
     }

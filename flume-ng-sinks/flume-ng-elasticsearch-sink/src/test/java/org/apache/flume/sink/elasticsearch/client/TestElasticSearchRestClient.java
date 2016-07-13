@@ -25,6 +25,15 @@ import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.sink.elasticsearch.ElasticSearchEventSerializer;
 import org.apache.flume.sink.elasticsearch.IndexNameBuilder;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.util.EntityUtils;
+import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.BytesStream;
 import org.junit.Before;
@@ -38,16 +47,12 @@ import java.util.List;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.util.EntityUtils;
-import org.elasticsearch.common.bytes.BytesArray;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.isA;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class TestElasticSearchRestClient {
@@ -126,15 +131,16 @@ public class TestElasticSearchRestClient {
     verify(httpClient).execute(argument.capture());
 
     assertEquals("http://host1/_bulk", argument.getValue().getURI().toString());
-    assertTrue(verifyJsonEvents("{\"index\":{\"_type\":\"bar_type\",\"_index\":\"foo_index\",\"_ttl\":\"123\"}}\n",
-            MESSAGE_CONTENT, EntityUtils.toString(argument.getValue().getEntity())));
+    assertTrue(verifyJsonEvents(
+        "{\"index\":{\"_type\":\"bar_type\",\"_index\":\"foo_index\",\"_ttl\":\"123\"}}\n",
+        MESSAGE_CONTENT, EntityUtils.toString(argument.getValue().getEntity())));
   }
 
   private boolean verifyJsonEvents(String expectedIndex, String expectedBody, String actual) {
     Iterator<String> it = Splitter.on("\n").split(actual).iterator();
     JsonParser parser = new JsonParser();
     JsonObject[] arr = new JsonObject[2];
-    for(int i = 0; i < 2; i++) {
+    for (int i = 0; i < 2; i++) {
       arr[i] = (JsonObject) parser.parse(it.next());
     }
     return arr[0].equals(parser.parse(expectedIndex)) && arr[1].equals(parser.parse(expectedBody));
@@ -156,7 +162,8 @@ public class TestElasticSearchRestClient {
   public void shouldRetryBulkOperation() throws Exception {
     ArgumentCaptor<HttpPost> argument = ArgumentCaptor.forClass(HttpPost.class);
 
-    when(httpStatus.getStatusCode()).thenReturn(HttpStatus.SC_INTERNAL_SERVER_ERROR, HttpStatus.SC_OK);
+    when(httpStatus.getStatusCode()).thenReturn(HttpStatus.SC_INTERNAL_SERVER_ERROR,
+                                                HttpStatus.SC_OK);
     when(httpResponse.getStatusLine()).thenReturn(httpStatus);
     when(httpClient.execute(any(HttpUriRequest.class))).thenReturn(httpResponse);
 

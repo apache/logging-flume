@@ -20,16 +20,22 @@ package org.apache.flume.channel;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.flume.*;
+import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
+import org.apache.flume.ChannelSelector;
+import org.apache.flume.Context;
+import org.apache.flume.Event;
+import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.junit.Assert;
 import org.junit.Test;
-import static org.mockito.Mockito.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class TestChannelProcessor {
 
@@ -88,9 +94,9 @@ public class TestChannelProcessor {
   public void testRequiredAndOptionalChannels() {
     Context context = new Context();
     ArrayList<Channel> channels = new ArrayList<Channel>();
-    for(int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++) {
       Channel ch = new MemoryChannel();
-      ch.setName("ch"+i);
+      ch.setName("ch" + i);
       Configurables.configure(ch, context);
       channels.add(ch);
     }
@@ -114,7 +120,7 @@ public class TestChannelProcessor {
     } catch (InterruptedException e) {
     }
 
-    for(Channel channel : channels) {
+    for (Channel channel : channels) {
       Transaction transaction = channel.getTransaction();
       transaction.begin();
       Event event_ch = channel.take();
@@ -124,18 +130,18 @@ public class TestChannelProcessor {
     }
 
     List<Event> events = Lists.newArrayList();
-    for(int i = 0; i < 100; i ++) {
-      events.add(EventBuilder.withBody("event "+i, Charsets.UTF_8));
+    for (int i = 0; i < 100; i++) {
+      events.add(EventBuilder.withBody("event " + i, Charsets.UTF_8));
     }
     processor.processEventBatch(events);
     try {
       Thread.sleep(3000);
     } catch (InterruptedException e) {
     }
-    for(Channel channel : channels) {
+    for (Channel channel : channels) {
       Transaction transaction = channel.getTransaction();
       transaction.begin();
-      for(int i = 0; i < 100; i ++) {
+      for (int i = 0; i < 100; i++) {
         Event event_ch = channel.take();
         Assert.assertNotNull(event_ch);
       }

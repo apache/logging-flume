@@ -28,11 +28,11 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class TestCheckpoint {
-
   File file;
   File inflightPuts;
   File inflightTakes;
   File queueSet;
+
   @Before
   public void setup() throws IOException {
     file = File.createTempFile("Checkpoint", "");
@@ -42,10 +42,12 @@ public class TestCheckpoint {
     Assert.assertTrue(file.isFile());
     Assert.assertTrue(file.canWrite());
   }
+
   @After
   public void cleanup() {
     file.delete();
   }
+
   @Test
   public void testSerialization() throws Exception {
     EventQueueBackingStore backingStore =

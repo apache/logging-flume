@@ -105,8 +105,7 @@ public class TestJMSMessageConsumer extends JMSMessageConsumerTestBase {
   @Test
   public void testNoUserPass() throws Exception {
     userName = Optional.absent();
-    when(connectionFactory.createConnection(USERNAME, PASSWORD)).
-      thenThrow(new AssertionError());
+    when(connectionFactory.createConnection(USERNAME, PASSWORD)).thenThrow(new AssertionError());
     when(connectionFactory.createConnection()).thenReturn(connection);
     consumer = create();
     List<Event> events = consumer.take();

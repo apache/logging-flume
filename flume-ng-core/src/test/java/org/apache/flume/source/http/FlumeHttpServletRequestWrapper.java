@@ -40,7 +40,9 @@ class FlumeHttpServletRequestWrapper implements HttpServletRequest {
   private BufferedReader reader;
 
   String charset;
-  public FlumeHttpServletRequestWrapper(String data, String charset) throws UnsupportedEncodingException {
+
+  public FlumeHttpServletRequestWrapper(String data, String charset)
+      throws UnsupportedEncodingException {
     reader = new BufferedReader(new InputStreamReader(
             new ByteArrayInputStream(data.getBytes(charset)), charset));
     this.charset = charset;
