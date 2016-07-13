@@ -25,29 +25,40 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.annotation.Nullable;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class TestBucketPath {
-  Calendar cal;
-  Map<String, String> headers;
+  private static final TimeZone CUSTOM_TIMEZONE = new SimpleTimeZone(1, "custom-timezone");
+
+  private Calendar cal;
+  private Map<String, String> headers;
+  private Map<String, String> headersWithTimeZone;
 
   @Before
   public void setUp() {
-    cal = Calendar.getInstance();
-    cal.set(2012, 5, 23, 13, 46, 33);
-    cal.set(Calendar.MILLISECOND, 234);
-    headers = new HashMap<String, String>();
+    cal = createCalendar(2012, 5, 23, 13, 46, 33, 234, null);
+    headers = new HashMap<>();
     headers.put("timestamp", String.valueOf(cal.getTimeInMillis()));
+
+    Calendar calWithTimeZone = createCalendar(2012, 5, 23, 13, 46, 33, 234, CUSTOM_TIMEZONE);
+    headersWithTimeZone = new HashMap<>();
+    headersWithTimeZone.put("timestamp", String.valueOf(calWithTimeZone.getTimeInMillis()));
   }
 
+  /**
+   * Tests if the internally cached SimpleDateFormat instances can be reused with different
+   * TimeZone without interference.
+   */
   @Test
   public void testDateFormatCache() {
     TimeZone utcTimeZone = TimeZone.getTimeZone("UTC");
@@ -64,15 +75,19 @@ public class TestBucketPath {
     Assert.assertEquals(expectedString, escapedString);
   }
 
+  /**
+   * Tests if the timestamp with the default timezone is properly rounded down
+   * to 12 hours using "%c" ("EEE MMM d HH:mm:ss yyyy") formatting.
+   */
   @Test
   public void testDateFormatHours() {
     String test = "%c";
     String escapedString = BucketPath.escapeString(
         test, headers, true, Calendar.HOUR_OF_DAY, 12);
     System.out.println("Escaped String: " + escapedString);
-    Calendar cal2 = Calendar.getInstance();
-    cal2.set(2012, 5, 23, 12, 0, 0);
-    cal2.set(Calendar.MILLISECOND, 0);
+
+    Calendar cal2 = createCalendar(2012, 5, 23, 12, 0, 0, 0, null);
+
     SimpleDateFormat format = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy");
     Date d = new Date(cal2.getTimeInMillis());
     String expectedString = format.format(d);
@@ -80,34 +95,99 @@ public class TestBucketPath {
     Assert.assertEquals(expectedString, escapedString);
   }
 
+  /**
+   * Tests if the timestamp with the custom timezone is properly rounded down
+   * to 12 hours using "%c" ("EEE MMM d HH:mm:ss yyyy") formatting.
+   */
+  @Test
+  public void testDateFormatHoursTimeZone() {
+    String test = "%c";
+    String escapedString = BucketPath.escapeString(
+        test, headersWithTimeZone, CUSTOM_TIMEZONE, true, Calendar.HOUR_OF_DAY, 12, false);
+    System.out.println("Escaped String: " + escapedString);
+
+    Calendar cal2 = createCalendar(2012, 5, 23, 12, 0, 0, 0, CUSTOM_TIMEZONE);
+
+    SimpleDateFormat format = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy");
+    format.setTimeZone(CUSTOM_TIMEZONE);
+
+    Date d = new Date(cal2.getTimeInMillis());
+    String expectedString = format.format(d);
+    System.out.println("Expected String: " + expectedString);
+    Assert.assertEquals(expectedString, escapedString);
+  }
+
+  /**
+   * Tests if the timestamp with the default timezone is properly rounded down
+   * to 5 minutes using "%s" (seconds) formatting
+   */
   @Test
   public void testDateFormatMinutes() {
     String test = "%s";
     String escapedString = BucketPath.escapeString(
         test, headers, true, Calendar.MINUTE, 5);
     System.out.println("Escaped String: " + escapedString);
-    Calendar cal2 = Calendar.getInstance();
-    cal2.set(2012, 5, 23, 13, 45, 0);
-    cal2.set(Calendar.MILLISECOND, 0);
+
+    Calendar cal2 = createCalendar(2012, 5, 23, 13, 45, 0, 0, null);
     String expectedString = String.valueOf(cal2.getTimeInMillis() / 1000);
     System.out.println("Expected String: " + expectedString);
     Assert.assertEquals(expectedString, escapedString);
   }
 
+  /**
+   * Tests if the timestamp with the custom timezone is properly rounded down
+   * to 5 minutes using "%s" (seconds) formatting
+   */
+  @Test
+  public void testDateFormatMinutesTimeZone() {
+    String test = "%s";
+    String escapedString = BucketPath.escapeString(
+        test, headersWithTimeZone, CUSTOM_TIMEZONE, true, Calendar.MINUTE, 5, false);
+    System.out.println("Escaped String: " + escapedString);
+
+    Calendar cal2 = createCalendar(2012, 5, 23, 13, 45, 0, 0, CUSTOM_TIMEZONE);
+    String expectedString = String.valueOf(cal2.getTimeInMillis() / 1000);
+    System.out.println("Expected String: " + expectedString);
+    Assert.assertEquals(expectedString, escapedString);
+  }
+
+  /**
+   * Tests if the timestamp with the default timezone is properly rounded down
+   * to 5 seconds using "%s" (seconds) formatting
+   */
   @Test
   public void testDateFormatSeconds() {
     String test = "%s";
     String escapedString = BucketPath.escapeString(
         test, headers, true, Calendar.SECOND, 5);
     System.out.println("Escaped String: " + escapedString);
-    Calendar cal2 = Calendar.getInstance();
-    cal2.set(2012, 5, 23, 13, 46, 30);
-    cal2.set(Calendar.MILLISECOND, 0);
+
+    Calendar cal2 = createCalendar(2012, 5, 23, 13, 46, 30, 0, null);
     String expectedString = String.valueOf(cal2.getTimeInMillis() / 1000);
     System.out.println("Expected String: " + expectedString);
     Assert.assertEquals(expectedString, escapedString);
   }
 
+  /**
+   * Tests if the timestamp with the custom timezone is properly rounded down
+   * to 5 seconds using "%s" (seconds) formatting
+   */
+  @Test
+  public void testDateFormatSecondsTimeZone() {
+    String test = "%s";
+    String escapedString = BucketPath.escapeString(
+        test, headersWithTimeZone, CUSTOM_TIMEZONE, true, Calendar.SECOND, 5, false);
+    System.out.println("Escaped String: " + escapedString);
+
+    Calendar cal2 = createCalendar(2012, 5, 23, 13, 46, 30, 0, CUSTOM_TIMEZONE);
+    String expectedString = String.valueOf(cal2.getTimeInMillis() / 1000);
+    System.out.println("Expected String: " + expectedString);
+    Assert.assertEquals(expectedString, escapedString);
+  }
+
+  /**
+   * Tests if the timestamp is properly formatted without rounding it down.
+   */
   @Test
   public void testNoRounding() {
     String test = "%c";
@@ -188,5 +268,14 @@ public class TestBucketPath {
     BucketPath.setClock(origClock);
 
     Assert.assertEquals("Race condition detected", "02:50", escaped);
+  }
+
+  private static Calendar createCalendar(int year, int month, int day,
+                                         int hour, int minute, int second, int ms,
+                                         @Nullable TimeZone timeZone) {
+    Calendar cal = (timeZone == null) ? Calendar.getInstance() : Calendar.getInstance(timeZone);
+    cal.set(year, month, day, hour, minute, second);
+    cal.set(Calendar.MILLISECOND, ms);
+    return cal;
   }
 }

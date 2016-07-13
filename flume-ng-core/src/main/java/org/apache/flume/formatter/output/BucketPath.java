@@ -236,7 +236,7 @@ public class BucketPath {
     }
 
     if (needRounding) {
-      ts = roundDown(roundDown, unit, ts);
+      ts = roundDown(roundDown, unit, ts, timeZone);
     }
 
     // It's a date
@@ -329,7 +329,7 @@ public class BucketPath {
     return format.format(date);
   }
 
-  private static long roundDown(int roundDown, int unit, long ts) {
+  private static long roundDown(int roundDown, int unit, long ts, TimeZone timeZone) {
     long timestamp = ts;
     if (roundDown <= 0) {
       roundDown = 1;
@@ -337,15 +337,15 @@ public class BucketPath {
     switch (unit) {
       case Calendar.SECOND:
         timestamp = TimestampRoundDownUtil.roundDownTimeStampSeconds(
-            ts, roundDown);
+            ts, roundDown, timeZone);
         break;
       case Calendar.MINUTE:
         timestamp = TimestampRoundDownUtil.roundDownTimeStampMinutes(
-            ts, roundDown);
+            ts, roundDown, timeZone);
         break;
       case Calendar.HOUR_OF_DAY:
         timestamp = TimestampRoundDownUtil.roundDownTimeStampHours(
-            ts, roundDown);
+            ts, roundDown, timeZone);
         break;
       default:
         timestamp = ts;
