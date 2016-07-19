@@ -35,4 +35,9 @@ public class AvroEventSerializerConfigurationConstants {
   public static final String COMPRESSION_CODEC = "compressionCodec";
   public static final String DEFAULT_COMPRESSION_CODEC = "null"; // no codec
 
+  /**
+   * Avro static Schema URL
+   */
+  public static final String STATIC_SCHEMA_URL = "schemaURL";
+  public static final String DEFAULT_STATIC_SCHEMA_URL = null;
 }

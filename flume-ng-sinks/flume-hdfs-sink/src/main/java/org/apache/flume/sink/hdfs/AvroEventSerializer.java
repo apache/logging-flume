@@ -18,14 +18,6 @@
  */
 package org.apache.flume.sink.hdfs;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
-import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
 import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
@@ -44,7 +36,21 @@ import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.apache.flume.serialization.AvroEventSerializerConfigurationConstants.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+
+import static org.apache.flume.serialization.AvroEventSerializerConfigurationConstants.COMPRESSION_CODEC;
+import static org.apache.flume.serialization.AvroEventSerializerConfigurationConstants.DEFAULT_COMPRESSION_CODEC;
+import static org.apache.flume.serialization.AvroEventSerializerConfigurationConstants.DEFAULT_STATIC_SCHEMA_URL;
+import static org.apache.flume.serialization.AvroEventSerializerConfigurationConstants.DEFAULT_SYNC_INTERVAL_BYTES;
+import static org.apache.flume.serialization.AvroEventSerializerConfigurationConstants.STATIC_SCHEMA_URL;
+import static org.apache.flume.serialization.AvroEventSerializerConfigurationConstants.SYNC_INTERVAL_BYTES;
 
 /**
  * <p>
@@ -76,6 +82,7 @@ public class AvroEventSerializer implements EventSerializer, Configurable {
   private int syncIntervalBytes;
   private String compressionCodec;
   private Map<String, Schema> schemaCache = new HashMap<String, Schema>();
+  private String staticSchemaURL;
 
   private AvroEventSerializer(OutputStream out) {
     this.out = out;
@@ -87,6 +94,7 @@ public class AvroEventSerializer implements EventSerializer, Configurable {
         context.getInteger(SYNC_INTERVAL_BYTES, DEFAULT_SYNC_INTERVAL_BYTES);
     compressionCodec =
         context.getString(COMPRESSION_CODEC, DEFAULT_COMPRESSION_CODEC);
+    staticSchemaURL = context.getString(STATIC_SCHEMA_URL, DEFAULT_STATIC_SCHEMA_URL);
   }
 
   @Override
@@ -111,19 +119,24 @@ public class AvroEventSerializer implements EventSerializer, Configurable {
   private void initialize(Event event) throws IOException {
     Schema schema = null;
     String schemaUrl = event.getHeaders().get(AVRO_SCHEMA_URL_HEADER);
-    if (schemaUrl != null) {
+    String schemaString = event.getHeaders().get(AVRO_SCHEMA_LITERAL_HEADER);
+
+    if (schemaUrl != null) { // if URL_HEADER is there then use it
       schema = schemaCache.get(schemaUrl);
       if (schema == null) {
         schema = loadFromUrl(schemaUrl);
         schemaCache.put(schemaUrl, schema);
       }
-    }
-    if (schema == null) {
-      String schemaString = event.getHeaders().get(AVRO_SCHEMA_LITERAL_HEADER);
-      if (schemaString == null) {
-        throw new FlumeException("Could not find schema for event " + event);
-      }
+    } else if (schemaString != null) { // fallback to LITERAL_HEADER if it was there
       schema = new Schema.Parser().parse(schemaString);
+    } else if (staticSchemaURL != null) {   // fallback to static url if it was there
+      schema = schemaCache.get(staticSchemaURL);
+      if (schema == null) {
+        schema = loadFromUrl(staticSchemaURL);
+        schemaCache.put(staticSchemaURL, schema);
+      }
+    } else { // no other options so giving up
+      throw new FlumeException("Could not find schema for event " + event);
     }
 
     writer = new GenericDatumWriter<Object>(schema);

@@ -3235,13 +3235,17 @@ Example for agent named a1:
   a1.sinks.k1.sink.serializer = text
   a1.sinks.k1.sink.serializer.appendNewline = false
 
-Avro Event Serializer
-~~~~~~~~~~~~~~~~~~~~~
+"Flume Event" Avro Event Serializer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Alias: ``avro_event``. This interceptor serializes Flume events into an Avro
-container file. The schema used is the same schema used for Flume events
-in the Avro RPC mechanism. This serializers inherits from the
-``AbstractAvroEventSerializer`` class. Configuration options are as follows:
+Alias: ``avro_event``.
+
+This interceptor serializes Flume events into an Avro container file. The schema used is the same schema used for
+Flume events in the Avro RPC mechanism.
+
+This serializer inherits from the ``AbstractAvroEventSerializer`` class.
+
+Configuration options are as follows:
 
 ==========================  ================  ===========================================================================
 Property Name               Default           Description
@@ -3259,6 +3263,43 @@ Example for agent named a1:
   a1.sinks.k1.hdfs.path = /flume/events/%y-%m-%d/%H%M/%S
   a1.sinks.k1.serializer = avro_event
   a1.sinks.k1.serializer.compressionCodec = snappy
+
+Avro Event Serializer
+~~~~~~~~~~~~~~~~~~~~~
+
+Alias: This serializer does not have an alias, and must be specified using the fully-qualified class name class name.
+
+This serializes Flume events into an Avro container file like the "Flume Event" Avro Event Serializer, however the
+record schema is configurable. The record schema may be specified either as a Flume configuration property or passed in an event header.
+
+To pass the record schema as part of the Flume configuration, use the property ``schemaURL`` as listed below.
+
+To pass the record schema in an event header, specify either the event header ``flume.avro.schema.literal``
+containing a JSON-format representation of the schema or ``flume.avro.schema.url`` with a URL where
+the schema may be found (``hdfs:/...`` URIs are supported).
+
+This serializer inherits from the ``AbstractAvroEventSerializer`` class.
+
+Configuration options are as follows:
+
+==========================  ================  ===========================================================================
+Property Name               Default           Description
+==========================  ================  ===========================================================================
+syncIntervalBytes           2048000           Avro sync interval, in approximate bytes.
+compressionCodec            null              Avro compression codec. For supported codecs, see Avro's CodecFactory docs.
+schemaURL                   null              Avro schema URL. Schemas specified in the header ovverride this option.
+==========================  ================  ===========================================================================
+
+Example for agent named a1:
+
+.. code-block:: properties
+
+  a1.sinks.k1.type = hdfs
+  a1.sinks.k1.channel = c1
+  a1.sinks.k1.hdfs.path = /flume/events/%y-%m-%d/%H%M/%S
+  a1.sinks.k1.serializer = org.apache.flume.sink.hdfs.AvroEventSerializer$Builder
+  a1.sinks.k1.serializer.compressionCodec = snappy
+  a1.sinks.k1.serializer.schemaURL = hdfs://namenode/path/to/schema.avsc
 
 
 Flume Interceptors
