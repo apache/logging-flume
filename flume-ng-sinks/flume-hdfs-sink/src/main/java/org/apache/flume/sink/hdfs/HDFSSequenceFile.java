@@ -109,6 +109,7 @@ public class HDFSSequenceFile extends AbstractHDFSWriter {
 
   @Override
   public void sync() throws IOException {
+    writer.sync();
     hflushOrSync(outStream);
   }
 
