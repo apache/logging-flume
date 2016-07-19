@@ -39,7 +39,7 @@ In source form, it can be found in the flume-ng-doc directory.
 
 The Flume 1.x guide and FAQ are available here:
 
-* https://cwiki.apache.org/FLUME/flume-ng.html
+* https://cwiki.apache.org/FLUME
 * https://cwiki.apache.org/confluence/display/FLUME/Getting+Started
 
 ## Contact us!
