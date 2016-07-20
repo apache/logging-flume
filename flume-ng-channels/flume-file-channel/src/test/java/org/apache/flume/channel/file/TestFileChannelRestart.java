@@ -881,6 +881,8 @@ public class TestFileChannelRestart extends TestFileChannelBase {
     overrides.put(FileChannelConfiguration.USE_DUAL_CHECKPOINTS,
                   "true");
     overrides.put(FileChannelConfiguration.MAX_FILE_SIZE, "1000");
+    overrides.put(FileChannelConfiguration.TRANSACTION_CAPACITY, "1000");
+    overrides.put(FileChannelConfiguration.CAPACITY, "1000");
     overrides.put(FileChannelConfiguration.COMPRESS_BACKUP_CHECKPOINT,
                   String.valueOf(originalCheckpointCompressed));
     channel = createFileChannel(overrides);
