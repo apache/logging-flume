@@ -41,13 +41,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILE_GROUPS;
-import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants
-                  .FILE_GROUPS_PREFIX;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILE_GROUPS_PREFIX;
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.HEADERS_PREFIX;
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.POSITION_FILE;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILENAME_HEADER;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILENAME_HEADER_KEY;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -287,5 +289,31 @@ public class TestTaildirSource {
     }
     assertArrayEquals("Files not consumed in expected order", expected.toArray(),
                       consumedOrder.toArray());
+  }
+
+  @Test
+  public void testPutFilenameHeader() throws IOException {
+    File f1 = new File(tmpDir, "file1");
+    Files.write("f1\n", f1, Charsets.UTF_8);
+
+    Context context = new Context();
+    context.put(POSITION_FILE, posFilePath);
+    context.put(FILE_GROUPS, "fg");
+    context.put(FILE_GROUPS_PREFIX + "fg", tmpDir.getAbsolutePath() + "/file.*");
+    context.put(FILENAME_HEADER, "true");
+    context.put(FILENAME_HEADER_KEY, "path");
+
+    Configurables.configure(source, context);
+    source.start();
+    source.process();
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    Event e = channel.take();
+    txn.commit();
+    txn.close();
+
+    assertNotNull(e.getHeaders().get("path"));
+    assertEquals(f1.getAbsolutePath(),
+            e.getHeaders().get("path"));
   }
 }

@@ -55,4 +55,12 @@ public class TaildirSourceConfigurationConstants {
    */
   public static final String CACHE_PATTERN_MATCHING = "cachePatternMatching";
   public static final boolean DEFAULT_CACHE_PATTERN_MATCHING = true;
+
+  /** Header in which to put absolute path filename. */
+  public static final String FILENAME_HEADER_KEY = "fileHeaderKey";
+  public static final String DEFAULT_FILENAME_HEADER_KEY = "file";
+
+  /** Whether to include absolute path filename in a header. */
+  public static final String FILENAME_HEADER = "fileHeader";
+  public static final boolean DEFAULT_FILE_HEADER = false;
 }
