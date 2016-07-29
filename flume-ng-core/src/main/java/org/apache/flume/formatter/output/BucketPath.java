@@ -433,10 +433,10 @@ public class BucketPath {
       // The replacement string must have '$' and '\' chars escaped. This
       // replacement string is pretty arcane.
       //
-      // replacee : '$' -> for java '\$' -> for regex "\\$"
+      // replace : '$' -> for java '\$' -> for regex "\\$"
       // replacement: '\$' -> for regex '\\\$' -> for java "\\\\\\$"
       //
-      // replacee : '\' -> for java "\\" -> for regex "\\\\"
+      // replace : '\' -> for java "\\" -> for regex "\\\\"
       // replacement: '\\' -> for regex "\\\\" -> for java "\\\\\\\\"
 
       // note: order matters

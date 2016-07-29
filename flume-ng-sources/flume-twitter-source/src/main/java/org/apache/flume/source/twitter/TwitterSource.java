@@ -57,7 +57,7 @@ import twitter4j.auth.AccessToken;
 
 /**
  * Demo Flume source that connects via Streaming API to the 1% sample twitter
- * firehose, continously downloads tweets, converts them to Avro format and
+ * firehose, continuously downloads tweets, converts them to Avro format and
  * sends Avro events to a downstream Flume sink.
  *
  * Requires the consumer and access tokens and secrets of a Twitter developer

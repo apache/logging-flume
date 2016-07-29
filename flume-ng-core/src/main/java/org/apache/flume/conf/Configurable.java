@@ -41,7 +41,7 @@ public interface Configurable {
    * reflected by the component asap.
    * </p>
    * <p>
-   * There are no thread safety guarrantees on when configure might be called.
+   * There are no thread safety guarantees on when configure might be called.
    * </p>
    * @param context
    */

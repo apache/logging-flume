@@ -415,7 +415,7 @@ public class TestExecSource {
     }
 
     // yes in the mean time someone could use our sleep time
-    // but this should be a fairly rare scenerio
+    // but this should be a fairly rare scenario
 
     String command = "sleep " + seconds;
     Pattern pattern = Pattern.compile("\b" + command + "\b");

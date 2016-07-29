@@ -96,7 +96,7 @@ import org.slf4j.LoggerFactory;
  * belonging to it. These cannot be shared by multiple groups.
  * Further, one can set a processor and behavioral parameters to determine
  * how sink selection is made via <tt>&lt;agent name&gt;.sinkgroups.&lt;
- * group name&lt.processor</tt>. For further detail refer to inividual processor
+ * group name&lt.processor</tt>. For further detail refer to individual processor
  * documentation</li>
  * <li>Sinks not assigned to a group will be assigned to default single sink
  * groups.</li>

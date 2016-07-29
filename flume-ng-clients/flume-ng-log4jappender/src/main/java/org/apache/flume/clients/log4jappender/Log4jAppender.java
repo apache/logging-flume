@@ -47,7 +47,7 @@ import org.apache.log4j.spi.LoggingEvent;
 
 /**
  *
- * Appends Log4j Events to an external Flume client which is decribed by
+ * Appends Log4j Events to an external Flume client which is described by
  * the Log4j configuration file. The appender takes two required parameters:
  *<p>
  *<strong>Hostname</strong> : This is the hostname of the first hop

@@ -900,7 +900,7 @@ Property Name               Default      Description
 **channels**                --
 **type**                    --           The component type name, needs to be ``jms``
 **initialContextFactory**   --           Inital Context Factory, e.g: org.apache.activemq.jndi.ActiveMQInitialContextFactory
-**connectionFactory**       --           The JNDI name the connection factory shoulld appear as
+**connectionFactory**       --           The JNDI name the connection factory should appear as
 **providerURL**             --           The JMS provider URL
 **destinationName**         --           Destination name
 **destinationType**         --           Destination type (queue or topic)
@@ -1176,7 +1176,7 @@ Property Name          Default      Description
 **consumerKey**        --           OAuth consumer key
 **consumerSecret**     --           OAuth consumer secret
 **accessToken**        --           OAuth access token
-**accessTokenSecret**  --           OAuth toekn secret
+**accessTokenSecret**  --           OAuth token secret
 maxBatchSize           1000         Maximum number of twitter messages to put in a single batch
 maxBatchDurationMillis 1000         Maximum number of milliseconds to wait before closing a batch
 ====================== ===========  ===================================================

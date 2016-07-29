@@ -391,7 +391,7 @@ public class DatasetSink extends AbstractSink implements Configurable {
    */
   @VisibleForTesting
   void createWriter() throws EventDeliveryException {
-    // reset the commited flag whenver a new writer is created
+    // reset the commited flag whenever a new writer is created
     committedBatch = false;
     try {
       View<GenericRecord> view;

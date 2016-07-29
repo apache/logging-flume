@@ -34,7 +34,7 @@ public class ElasticSearchClientFactory {
    * @param clientType
    *    String representation of client type
    * @param hostNames
-   *    Array of strings that represents hosntames with ports (hostname:port)
+   *    Array of strings that represents hostnames with ports (hostname:port)
    * @param clusterName
    *    Elasticsearch cluster name used only by Transport Client
    * @param serializer
