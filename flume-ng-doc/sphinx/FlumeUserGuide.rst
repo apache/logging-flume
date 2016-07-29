@@ -1230,11 +1230,11 @@ useFlumeEventFormat              false        By default events are taken as byt
                                               true to read events as the Flume Avro binary format. Used in conjunction with the same property
                                               on the KafkaSink or with the parseAsFlumeEvent property on the Kafka Channel this will preserve
                                               any Flume headers sent on the producing side.
-
 Other Kafka Consumer Properties  --           These properties are used to configure the Kafka Consumer. Any producer property supported
-                                              by Kafka can be used. The only requirement is to prepend the property name with the prefix ``kafka.consumer``.
-                                              For example: kafka.consumer.auto.offset.reset
-                                              Check `Kafka documentation <http://kafka.apache.org/documentation.html#newconsumerconfigs>` for details
+                                              by Kafka can be used. The only requirement is to prepend the property name with the prefix 
+                                              ``kafka.consumer``.
+                                              For example: ``kafka.consumer.auto.offset.reset``
+                                              Check `Kafka documentation <http://kafka.apache.org/documentation.html#newconsumerconfigs>`_ for details
 ===============================  ===========  ===================================================
 
 .. note:: The Kafka Source overrides two Kafka consumer parameters:
