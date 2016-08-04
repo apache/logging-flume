@@ -17,11 +17,26 @@
  */
 package org.apache.flume.client.avro;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.google.common.io.Files;
-import junit.framework.Assert;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.flume.Event;
@@ -34,31 +49,22 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.Semaphore;
+import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.google.common.io.Files;
+
+import junit.framework.Assert;
 
 public class TestReliableSpoolingFileEventReader {
 
-  private static final Logger logger =
-      LoggerFactory.getLogger(TestReliableSpoolingFileEventReader.class);
+  private static final Logger logger = LoggerFactory.getLogger(TestReliableSpoolingFileEventReader.class);
 
-  private static final File WORK_DIR = new File("target/test/work/" +
-      TestReliableSpoolingFileEventReader.class.getSimpleName());
+  private static final File WORK_DIR = new File(
+      "target/test/work/" + TestReliableSpoolingFileEventReader.class.getSimpleName());
+
+  private static final File TRACKER_DIR = new File(WORK_DIR,
+      SpoolDirectorySourceConfigurationConstants.DEFAULT_TRACKER_DIR);
 
   @Before
   public void setup() throws IOException, InterruptedException {
@@ -111,6 +117,62 @@ public class TestReliableSpoolingFileEventReader {
     }
   }
 
+  private void processEventsWithReader(ReliableEventReader reader, int nEvents) throws IOException {
+    List<Event> events;
+    do {
+      events = reader.readEvents(nEvents);
+      reader.commit();
+    } while (!events.isEmpty());
+  }
+
+  /**
+   * Verify if the give dir contains only the given files
+   * 
+   * @param dir
+   *          the directory to check
+   * @param files
+   *          the files that should be contained in dir
+   * @return true only if the dir contains exactly the same files given, false
+   *         otherwise
+   */
+  private boolean checkLeftFilesInDir(File dir, String[] files) {
+
+    List<File> actualFiles = listFiles(dir);
+    Set<String> expectedFiles = new HashSet<String>(Arrays.asList(files));
+    
+    // Verify if the number of files in the dir is the expected
+    if (actualFiles.size() != expectedFiles.size()) {
+      return false;
+    }
+    
+    // Then check files by name
+    for (File f : actualFiles) {
+      expectedFiles.remove(f.getName());
+    }
+
+    return expectedFiles.isEmpty();
+  }
+
+  @Test
+  public void testIncludePattern() throws IOException {
+    ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
+        .spoolDirectory(WORK_DIR)
+        .includePattern("^file2$")
+        .deletePolicy(DeletePolicy.IMMEDIATE.toString())
+        .build();
+    
+    String[] beforeFiles = { "file0", "file1", "file2", "file3", "emptylineFile" };
+    Assert.assertTrue("Expected " + beforeFiles.length + " files in working dir",
+        checkLeftFilesInDir(WORK_DIR, beforeFiles));
+
+    processEventsWithReader(reader, 10);
+
+    String[] afterFiles = { "file0", "file1", "file3", "emptylineFile" };
+    Assert.assertTrue("Expected " + afterFiles.length + " files left in working dir",
+        checkLeftFilesInDir(WORK_DIR, afterFiles));
+    Assert.assertTrue("Expected no files left in tracker dir", checkLeftFilesInDir(TRACKER_DIR, new String[0]));
+  }
+
   @Test
   public void testIgnorePattern() throws IOException {
     ReliableEventReader reader =
@@ -120,22 +182,71 @@ public class TestReliableSpoolingFileEventReader {
             .deletePolicy(DeletePolicy.IMMEDIATE.toString())
             .build();
 
-    List<File> before = listFiles(WORK_DIR);
-    Assert.assertEquals("Expected 5, not: " + before, 5, before.size());
+    String[] beforeFiles = { "file0", "file1", "file2", "file3", "emptylineFile" };
+    Assert.assertTrue("Expected " + beforeFiles.length + " files in working dir",
+        checkLeftFilesInDir(WORK_DIR, beforeFiles));
 
-    List<Event> events;
-    do {
-      events = reader.readEvents(10);
-      reader.commit();
-    } while (!events.isEmpty());
+    processEventsWithReader(reader, 10);
 
-    List<File> after = listFiles(WORK_DIR);
-    Assert.assertEquals("Expected 1, not: " + after, 1, after.size());
-    Assert.assertEquals("file2", after.get(0).getName());
-    List<File> trackerFiles = listFiles(new File(WORK_DIR,
-        SpoolDirectorySourceConfigurationConstants.DEFAULT_TRACKER_DIR));
-    Assert.assertEquals("Expected 0, not: " + trackerFiles, 0,
-        trackerFiles.size());
+    String[] files = { "file2" };
+    Assert.assertTrue("Expected " + files.length + " files left in working dir", checkLeftFilesInDir(WORK_DIR, files));
+    Assert.assertTrue("Expected no files left in tracker dir", checkLeftFilesInDir(TRACKER_DIR, new String[0]));
+  }
+
+  @Test
+  public void testIncludeExcludePatternNoConflict() throws IOException {
+
+    // Expected behavior mixing include/exclude conditions:
+    // - file0, file1, file3: not deleted as matching ignore pattern and not
+    // matching include pattern
+    // - file2: deleted as not matching ignore pattern and matching include
+    // pattern
+    // - emptylineFile: not deleted as not matching ignore pattern but not
+    // matching include pattern as well
+    
+    ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
+        .spoolDirectory(WORK_DIR)
+        .ignorePattern("^file[013]$")
+        .includePattern("^file2$")
+        .deletePolicy(DeletePolicy.IMMEDIATE.toString())
+        .build(); 
+
+    String[] beforeFiles = { "file0", "file1", "file2", "file3", "emptylineFile" };
+    Assert.assertTrue("Expected " + beforeFiles.length + " files in working dir",
+        checkLeftFilesInDir(WORK_DIR, beforeFiles));
+
+    processEventsWithReader(reader, 10);
+
+    String[] files = { "file0", "file1", "file3", "emptylineFile" };
+    Assert.assertTrue("Expected " + files.length + " files left in working dir", checkLeftFilesInDir(WORK_DIR, files));
+    Assert.assertTrue("Expected no files left in tracker dir", checkLeftFilesInDir(TRACKER_DIR, new String[0]));
+  }
+
+  @Test
+  public void testIncludeExcludePatternConflict() throws IOException {
+
+    // This test will stress what happens when both ignore and include options
+    // are specified and the two patterns match at the same time.
+    // Expected behavior:
+    // - file2: not deleted as both include and ignore patterns match (safety
+    // measure: ignore always wins on conflict)
+    
+    ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
+        .spoolDirectory(WORK_DIR)
+        .ignorePattern("^file2$")
+        .includePattern("^file2$")
+        .deletePolicy(DeletePolicy.IMMEDIATE.toString())
+        .build();
+    
+    String[] beforeFiles = { "file0", "file1", "file2", "file3", "emptylineFile" };
+    Assert.assertTrue("Expected " + beforeFiles.length + " files in working dir",
+        checkLeftFilesInDir(WORK_DIR, beforeFiles));
+
+    processEventsWithReader(reader, 10);
+
+    String[] files = { "file0", "file1", "file2", "file3", "emptylineFile" };
+    Assert.assertTrue("Expected " + files.length + " files left in working dir", checkLeftFilesInDir(WORK_DIR, files));
+    Assert.assertTrue("Expected no files left in tracker dir", checkLeftFilesInDir(TRACKER_DIR, new String[0]));
   }
 
   @Test
@@ -522,17 +633,17 @@ public class TestReliableSpoolingFileEventReader {
         throw new IOException(ex);
       }
     }
-  }    
+  }
   /* Create expected results out of the files created in the setup method. */
   private void createExpectedFromFilesInSetup(Collection<String> expected) {
     expected.add("");
-    for (int i = 0; i < 4; i++) {      
-      for (int j = 0; j < i; j++) {        
+    for (int i = 0; i < 4; i++) {
+      for (int j = 0; j < i; j++) {
         expected.add("file" + i + "line" + j);
-      }      
+      }
     }
   }
-  
+
   private static List<File> listFiles(File dir) {
     List<File> files = Lists.newArrayList(dir.listFiles(new FileFilter() {
       @Override
