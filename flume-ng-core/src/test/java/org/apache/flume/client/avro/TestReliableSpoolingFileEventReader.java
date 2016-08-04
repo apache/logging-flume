@@ -37,10 +37,12 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -109,6 +111,41 @@ public class TestReliableSpoolingFileEventReader {
     if (!dir.delete()) {
       logger.warn("Cannot delete work directory {}", dir.getAbsolutePath());
     }
+  }
+
+  
+  @Test
+  public void testIncludePattern() throws IOException {
+    ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
+        .spoolDirectory(WORK_DIR)
+        .includePattern("^file2$")
+        .deletePolicy(DeletePolicy.IMMEDIATE.toString())
+        .build();
+ 
+    List<File> before = listFiles(WORK_DIR);
+    Assert.assertEquals("Expected 5, not: " + before, 5, before.size());
+
+    List<Event> events;
+    do {
+      events = reader.readEvents(10);
+      reader.commit();
+    } while (!events.isEmpty());
+
+    List<File> after = listFiles(WORK_DIR);
+    Assert.assertEquals("Expected 4, not: " + after, 4, after.size());
+    
+    // Check if the expected file was sent
+    Set<String> expectedLeftFiles = new HashSet<String>(Arrays.asList("file0", "file1", "file3", "emptylineFile"));
+    for (File f: after) {
+      expectedLeftFiles.remove(f.getName());
+    }
+
+    Assert.assertTrue("Unexpected files were sent", expectedLeftFiles.isEmpty());
+    
+    List<File> trackerFiles = listFiles(new File(WORK_DIR,
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_TRACKER_DIR));
+    Assert.assertEquals("Expected 0, not: " + trackerFiles, 0,
+        trackerFiles.size());
   }
 
   @Test

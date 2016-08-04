@@ -56,6 +56,7 @@ public class SpoolDirectorySource extends AbstractSource
   private boolean basenameHeader;
   private String basenameHeaderKey;
   private int batchSize;
+  private String includePattern;
   private String ignorePattern;
   private String trackerDirPath;
   private String deserializerType;
@@ -87,6 +88,7 @@ public class SpoolDirectorySource extends AbstractSource
       reader = new ReliableSpoolingFileEventReader.Builder()
           .spoolDirectory(directory)
           .completedSuffix(completedSuffix)
+          .includePattern(includePattern)
           .ignorePattern(ignorePattern)
           .trackerDirPath(trackerDirPath)
           .annotateFileName(fileHeader)
@@ -160,6 +162,7 @@ public class SpoolDirectorySource extends AbstractSource
         context.getString(DECODE_ERROR_POLICY, DEFAULT_DECODE_ERROR_POLICY)
         .toUpperCase(Locale.ENGLISH));
 
+    includePattern = context.getString(INCLUDE_PAT, DEFAULT_INCLUDE_PAT);
     ignorePattern = context.getString(IGNORE_PAT, DEFAULT_IGNORE_PAT);
     trackerDirPath = context.getString(TRACKER_DIR, DEFAULT_TRACKER_DIR);
 

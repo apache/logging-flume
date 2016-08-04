@@ -988,7 +988,8 @@ fileHeader                false           Whether to add a header storing the ab
 fileHeaderKey             file            Header key to use when appending absolute path filename to event header.
 basenameHeader            false           Whether to add a header storing the basename of the file.
 basenameHeaderKey         basename        Header Key to use when appending  basename of file to event header.
-ignorePattern             ^$              Regular expression specifying which files to ignore (skip)
+includePattern            ^.*$            Regular expression specifying which files to include.
+ignorePattern             ^$              Regular expression specifying which files to ignore (skip).
 trackerDir                .flumespool     Directory to store metadata related to processing of files.
                                           If this path is not an absolute path, then it is interpreted as relative to the spoolDir.
 consumeOrder              oldest          In which order files in the spooling directory will be consumed ``oldest``,
