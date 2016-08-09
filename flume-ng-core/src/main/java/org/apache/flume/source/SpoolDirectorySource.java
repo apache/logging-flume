@@ -21,6 +21,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.apache.flume.ChannelException;
+import org.apache.flume.ChannelFullException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
@@ -44,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 import static org.apache.flume.source.SpoolDirectorySourceConfigurationConstants.*;
 
 public class SpoolDirectorySource extends AbstractSource
-                                  implements Configurable, EventDrivenSource {
+    implements Configurable, EventDrivenSource {
 
   private static final Logger logger = LoggerFactory.getLogger(SpoolDirectorySource.class);
 
@@ -70,6 +71,7 @@ public class SpoolDirectorySource extends AbstractSource
   private ScheduledExecutorService executor;
   private boolean backoff = true;
   private boolean hitChannelException = false;
+  private boolean hitChannelFullException = false;
   private int maxBackoff;
   private ConsumeOrder consumeOrder;
   private int pollDelay;
@@ -158,7 +160,7 @@ public class SpoolDirectorySource extends AbstractSource
     inputCharset = context.getString(INPUT_CHARSET, DEFAULT_INPUT_CHARSET);
     decodeErrorPolicy = DecodeErrorPolicy.valueOf(
         context.getString(DECODE_ERROR_POLICY, DEFAULT_DECODE_ERROR_POLICY)
-        .toUpperCase(Locale.ENGLISH));
+            .toUpperCase(Locale.ENGLISH));
 
     ignorePattern = context.getString(IGNORE_PAT, DEFAULT_IGNORE_PAT);
     trackerDirPath = context.getString(TRACKER_DIR, DEFAULT_TRACKER_DIR);
@@ -196,10 +198,10 @@ public class SpoolDirectorySource extends AbstractSource
   }
 
 
-
   /**
    * The class always backs off, this exists only so that we can test without
    * taking a really long time.
+   *
    * @param backoff - whether the source should backoff if the channel is full
    */
   @VisibleForTesting
@@ -208,8 +210,13 @@ public class SpoolDirectorySource extends AbstractSource
   }
 
   @VisibleForTesting
-  protected boolean hitChannelException() {
+  protected boolean didHitChannelException() {
     return hitChannelException;
+  }
+
+  @VisibleForTesting
+  protected boolean didHitChannelFullException() {
+    return hitChannelFullException;
   }
 
   @VisibleForTesting
@@ -227,7 +234,7 @@ public class SpoolDirectorySource extends AbstractSource
     private SourceCounter sourceCounter;
 
     public SpoolDirectoryRunnable(ReliableSpoolingFileEventReader reader,
-        SourceCounter sourceCounter) {
+                                  SourceCounter sourceCounter) {
       this.reader = reader;
       this.sourceCounter = sourceCounter;
     }
@@ -247,17 +254,19 @@ public class SpoolDirectorySource extends AbstractSource
           try {
             getChannelProcessor().processEventBatch(events);
             reader.commit();
-          } catch (ChannelException ex) {
+          } catch (ChannelFullException ex) {
             logger.warn("The channel is full, and cannot write data now. The " +
-                "source will try again after " + String.valueOf(backoffInterval) +
+                "source will try again after " + backoffInterval +
+                " milliseconds");
+            hitChannelFullException = true;
+            backoffInterval = waitAndGetNewBackoffInterval(backoffInterval);
+            continue;
+          } catch (ChannelException ex) {
+            logger.warn("The channel threw an exception, and cannot write data now. The " +
+                "source will try again after " + backoffInterval +
                 " milliseconds");
             hitChannelException = true;
-            if (backoff) {
-              TimeUnit.MILLISECONDS.sleep(backoffInterval);
-              backoffInterval = backoffInterval << 1;
-              backoffInterval = backoffInterval >= maxBackoff ? maxBackoff :
-                                backoffInterval;
-            }
+            backoffInterval = waitAndGetNewBackoffInterval(backoffInterval);
             continue;
           }
           backoffInterval = 250;
@@ -271,6 +280,16 @@ public class SpoolDirectorySource extends AbstractSource
         hasFatalError = true;
         Throwables.propagate(t);
       }
+    }
+
+    private int waitAndGetNewBackoffInterval(int backoffInterval) throws InterruptedException {
+      if (backoff) {
+        TimeUnit.MILLISECONDS.sleep(backoffInterval);
+        backoffInterval = backoffInterval << 1;
+        backoffInterval = backoffInterval >= maxBackoff ? maxBackoff :
+            backoffInterval;
+      }
+      return backoffInterval;
     }
   }
 }

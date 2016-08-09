@@ -74,6 +74,7 @@ public class TestSpoolDirectorySource {
 
   /**
    * Helper method to recursively clean up testing directory
+   *
    * @param directory the directory to clean up
    */
   private void deleteFiles(File directory) {
@@ -87,7 +88,7 @@ public class TestSpoolDirectorySource {
     }
   }
 
-  @Test (expected = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testInvalidSortOrder() {
     Context context = new Context();
     context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
@@ -102,7 +103,7 @@ public class TestSpoolDirectorySource {
     Context context = new Context();
     context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
         tmpDir.getAbsolutePath());
-    context.put(SpoolDirectorySourceConfigurationConstants.CONSUME_ORDER, 
+    context.put(SpoolDirectorySourceConfigurationConstants.CONSUME_ORDER,
         "oLdESt");
     Configurables.configure(source, context);
     context.put(SpoolDirectorySourceConfigurationConstants.CONSUME_ORDER,
@@ -110,17 +111,17 @@ public class TestSpoolDirectorySource {
     Configurables.configure(source, context);
     context.put(SpoolDirectorySourceConfigurationConstants.CONSUME_ORDER,
         "rAnDom");
-    Configurables.configure(source, context);    
+    Configurables.configure(source, context);
   }
-  
+
   @Test
   public void testPutFilenameHeader() throws IOException, InterruptedException {
     Context context = new Context();
     File f1 = new File(tmpDir.getAbsolutePath() + "/file1");
 
     Files.write("file1line1\nfile1line2\nfile1line3\nfile1line4\n" +
-                "file1line5\nfile1line6\nfile1line7\nfile1line8\n",
-                f1, Charsets.UTF_8);
+            "file1line5\nfile1line6\nfile1line7\nfile1line8\n",
+        f1, Charsets.UTF_8);
 
     context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
         tmpDir.getAbsolutePath());
@@ -155,7 +156,7 @@ public class TestSpoolDirectorySource {
     File f1 = new File(tmpDir.getAbsolutePath() + "/file1");
 
     Files.write("file1line1\nfile1line2\nfile1line3\nfile1line4\n" +
-        "file1line5\nfile1line6\nfile1line7\nfile1line8\n",
+            "file1line5\nfile1line6\nfile1line7\nfile1line8\n",
         f1, Charsets.UTF_8);
 
     context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
@@ -192,18 +193,18 @@ public class TestSpoolDirectorySource {
     Assert.assertTrue("source directories must be created", directoriesCreated);
 
     final String FILE_NAME = "recursion_file.txt";
-    File f1 = new File(subDir,  FILE_NAME);
+    File f1 = new File(subDir, FILE_NAME);
     String origBody = "file1line1\nfile1line2\nfile1line3\nfile1line4\n" +
         "file1line5\nfile1line6\nfile1line7\nfile1line8\n";
     Files.write(origBody, f1, Charsets.UTF_8);
 
     Context context = new Context();
     context.put(SpoolDirectorySourceConfigurationConstants.RECURSIVE_DIRECTORY_SEARCH,
-            "true"); // enable recursion, so we should find the file we created above
+        "true"); // enable recursion, so we should find the file we created above
     context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
-            tmpDir.getAbsolutePath()); // spool set to root dir
+        tmpDir.getAbsolutePath()); // spool set to root dir
     context.put(SpoolDirectorySourceConfigurationConstants.FILENAME_HEADER,
-            "true"); // put the file name in the "file" header
+        "true"); // put the file name in the "file" header
 
     Configurables.configure(source, context);
     source.start();
@@ -224,7 +225,7 @@ public class TestSpoolDirectorySource {
 
     Assert.assertNotNull("Event headers must not be null", e.getHeaders());
     Assert.assertTrue("File header value did not end with expected filename",
-            e.getHeaders().get("file").endsWith(FILE_NAME));
+        e.getHeaders().get("file").endsWith(FILE_NAME));
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     do { // collecting the whole body
@@ -254,7 +255,6 @@ public class TestSpoolDirectorySource {
     File subDir = new File(tmpDir, "directory");
     boolean directoriesCreated = subDir.mkdirs();
     Assert.assertTrue("source directories must be created", directoriesCreated);
-
 
 
     File f1 = new File(subDir.getAbsolutePath() + "/file1.txt");
@@ -364,12 +364,12 @@ public class TestSpoolDirectorySource {
     File f1 = new File(tmpDir.getAbsolutePath() + "/file1");
 
     Files.write("file1line1\nfile1line2\nfile1line3\nfile1line4\n" +
-        "file1line5\nfile1line6\nfile1line7\nfile1line8\n",
+            "file1line5\nfile1line6\nfile1line7\nfile1line8\n",
         f1, Charsets.UTF_8);
 
 
     context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
-                tmpDir.getAbsolutePath());
+        tmpDir.getAbsolutePath());
 
     context.put(SpoolDirectorySourceConfigurationConstants.BATCH_SIZE, "2");
     Configurables.configure(source, context);
@@ -377,9 +377,15 @@ public class TestSpoolDirectorySource {
     source.start();
 
     // Wait for the source to read enough events to fill up the channel.
-    while (!source.hitChannelException()) {
-      Thread.sleep(50);
+
+    long startTime = System.currentTimeMillis();
+    while (System.currentTimeMillis() - startTime < 5000 && !source.didHitChannelFullException()) {
+      Thread.sleep(10);
     }
+
+    Assert.assertTrue("Expected to hit ChannelFullException, but did not!",
+        source.didHitChannelFullException());
+
 
     List<String> dataOut = Lists.newArrayList();
 
@@ -399,8 +405,6 @@ public class TestSpoolDirectorySource {
       tx.commit();
       tx.close();
     }
-    Assert.assertTrue("Expected to hit ChannelException, but did not!",
-                      source.hitChannelException());
     Assert.assertEquals(8, dataOut.size());
     source.stop();
   }
@@ -422,7 +426,7 @@ public class TestSpoolDirectorySource {
     Files.touch(f4);
 
     context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
-                tmpDir.getAbsolutePath());
+        tmpDir.getAbsolutePath());
     Configurables.configure(source, context);
     source.start();
 
@@ -431,7 +435,7 @@ public class TestSpoolDirectorySource {
 
     Assert.assertFalse("Server did not error", source.hasFatalError());
     Assert.assertEquals("One message was read",
-                        1, source.getSourceCounter().getEventAcceptedCount());
+        1, source.getSourceCounter().getEventAcceptedCount());
     source.stop();
   }
 }
