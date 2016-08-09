@@ -2715,31 +2715,35 @@ is logged on startup when they are present in the configuration file.
 
 Required properties are in **bold**.
 
-================================  ==========================  ===============================================================================================================
-Property Name                     Default                     Description
-================================  ==========================  ===============================================================================================================
-**type**                          --                          The component type name, needs to be ``org.apache.flume.channel.kafka.KafkaChannel``
-**kafka.bootstrap.servers**       --                          List of brokers in the Kafka cluster used by the channel
-                                                              This can be a partial list of brokers, but we recommend at least two for HA.
-                                                              The format is comma separated list of hostname:port
-kafka.topic                       flume-channel               Kafka topic which the channel will use
-kafka.consumer.group.id           flume                       Consumer group ID the channel uses to register with Kafka.
-                                                              Multiple channels must use the same topic and group to ensure that when one agent fails another can get the data
-                                                              Note that having non-channel consumers with the same ID can lead to data loss.
+=======================================  ==========================  ===============================================================================================================
+Property Name                            Default                     Description
+=======================================  ==========================  ===============================================================================================================
+**type**                                 --                          The component type name, needs to be ``org.apache.flume.channel.kafka.KafkaChannel``
+**kafka.bootstrap.servers**              --                          List of brokers in the Kafka cluster used by the channel
+                                                                     This can be a partial list of brokers, but we recommend at least two for HA.
+                                                                     The format is comma separated list of hostname:port
+kafka.topic                              flume-channel               Kafka topic which the channel will use
+kafka.consumer.group.id                  flume                       Consumer group ID the channel uses to register with Kafka.
+                                                                     Multiple channels must use the same topic and group to ensure that when one agent fails another can get the data
+                                                                     Note that having non-channel consumers with the same ID can lead to data loss.
 
-parseAsFlumeEvent                 true                        Expecting Avro datums with FlumeEvent schema in the channel.
-                                                              This should be true if Flume source is writing to the channel and false if other producers are
-                                                              writing into the topic that the channel is using. Flume source messages to Kafka can be parsed outside of Flume by using
-                                                              org.apache.flume.source.avro.AvroFlumeEvent provided by the flume-ng-sdk artifact
-pollTimeout                       500                         The amount of time(in milliseconds) to wait in the "poll()" call of the conumer.
-                                                              https://kafka.apache.org/090/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html#poll(long)
-kafka.consumer.auto.offset.reset  latest                      What to do when there is no initial offset in Kafka or if the current offset does not exist any more on the server
-                                                              (e.g. because that data has been deleted):
-                                                              earliest: automatically reset the offset to the earliest offset
-                                                              latest: automatically reset the offset to the latest offset
-                                                              none: throw exception to the consumer if no previous offset is found for the consumer\'s group
-                                                              anything else: throw exception to the consumer.
-================================  ==========================  ===============================================================================================================
+parseAsFlumeEvent                        true                        Expecting Avro datums with FlumeEvent schema in the channel.
+                                                                     This should be true if Flume source is writing to the channel and false if other producers are
+                                                                     writing into the topic that the channel is using. Flume source messages to Kafka can be parsed outside of Flume by using
+                                                                     org.apache.flume.source.avro.AvroFlumeEvent provided by the flume-ng-sdk artifact
+pollTimeout                              500                         The amount of time(in milliseconds) to wait in the "poll()" call of the conumer.
+                                                                     https://kafka.apache.org/090/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html#poll(long)
+kafka.consumer.auto.offset.reset         latest                      What to do when there is no initial offset in Kafka or if the current offset does not exist any more on the server
+                                                                     (e.g. because that data has been deleted):
+                                                                     earliest: automatically reset the offset to the earliest offset
+                                                                     latest: automatically reset the offset to the latest offset
+                                                                     none: throw exception to the consumer if no previous offset is found for the consumer\'s group
+                                                                     anything else: throw exception to the consumer.
+kafka.producer.security.protocol         PLAINTEXT                   Set to SASL_PLAINTEXT, SASL_SSL or SSL if writing to Kafka using Kerberos. See below for additional info on Kerberos setup.
+kafka.consumer.security.protocol         PLAINTEXT                   Same as kafka.producer.security.protocol but for reading/consuming from Kafka.
+*more producer/consumer security props*                              If using SASL_SSL or SSL, refer to `Kafka security <http://kafka.apache.org/documentation.html#security>`_ for additional
+                                                                     properties that need to be set on producer/consumer.
+=======================================  ==========================  ===============================================================================================================
 
 Deprecated Properties
 
@@ -2762,11 +2766,48 @@ Example for agent named a1:
 .. code-block:: properties
 
     a1.channels.channel1.type = org.apache.flume.channel.kafka.KafkaChannel
-    a1.channels.channel1.capacity = 10000
-    a1.channels.channel1.transactionCapacity = 1000
     a1.channels.channel1.kafka.bootstrap.servers = kafka-1:9092,kafka-2:9092,kafka-3:9092
     a1.channels.channel1.kafka.topic = channel1
     a1.channels.channel1.kafka.consumer.group.id = flume-consumer
+
+**Kerberos and Kafka Channel:**
+
+To use Kafka channel with a Kafka cluster secured with Kerberos, set the producer/consumer.security.protocol properties noted above for producer and/or consumer.
+The Kerberos keytab and principal to be used is specified in a JAAS file's "KafkaClient" section. See `Kafka doc <http://kafka.apache.org/documentation.html#security_sasl_clientconfig>`_
+for info on the JAAS file contents. The location of this JAAS file is specified via JAVA_OPTS using -Djava.security.auth.login.config=/path/to/kafka_jaas.conf (in flume-env.sh)
+
+
+Sample secure configuration using SASL_PLAINTEXT.
+
+.. code-block:: properties
+
+    a1.channels.channel1.type = org.apache.flume.channel.kafka.KafkaChannel
+    a1.channels.channel1.kafka.bootstrap.servers = kafka-1:9092,kafka-2:9092,kafka-3:9092
+    a1.channels.channel1.kafka.topic = channel1
+    a1.channels.channel1.kafka.consumer.group.id = flume-consumer
+    a1.channels.channel1.kafka.producer.security.protocol = SASL_PLAINTEXT
+    a1.channels.channel1.kafka.consumer.security.protocol = SASL_PLAINTEXT
+
+Sample JAAS file
+
+.. code-block:: javascript
+
+    KafkaClient {
+        com.sun.security.auth.module.Krb5LoginModule required
+        useKeyTab=true
+        storeKey=true
+        serviceName="kafka"
+        keyTab="/path/to/keytabs/testuser1.keytab"
+        principal="testuser1/kafka1.example.com";
+    };
+
+Sample flume-env.sh
+
+.. code-block:: properties
+
+    export JAVA_HOME=/path/java-home/
+    export JAVA_OPTS="-Djava.security.auth.login.config=/path/to/kafka_jaas.conf"
+
 
 File Channel
 ~~~~~~~~~~~~
