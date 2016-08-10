@@ -19,6 +19,7 @@
 
 package org.apache.flume.source.taildir;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
@@ -73,6 +74,18 @@ public class TailFile {
 
   public RandomAccessFile getRaf() {
     return raf;
+  }
+
+  @VisibleForTesting
+  public void setRaf(RandomAccessFile raf) {
+    if (this.raf != null) {
+      try {
+        this.raf.close();
+      } catch (IOException e) {
+        logger.error("Failed closing file: " + path + ", inode: " + inode, e);
+      }
+    }
+    this.raf = raf;
   }
 
   public String getPath() {

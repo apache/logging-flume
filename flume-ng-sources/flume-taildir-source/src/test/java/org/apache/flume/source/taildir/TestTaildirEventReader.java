@@ -34,6 +34,8 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.channels.OverlappingFileLockException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -492,5 +494,38 @@ public class TestTaildirEventReader {
     //Should treat \r\n as line boundary
     assertTrue(out.contains("file1line3"));
     assertTrue(out.contains("file1line4"));
+  }
+
+  @Test
+  public void testFileRenamed() throws IOException {
+    File f1 = new File(tmpDir, "file1");
+    Files.write("file1line1\nfile1line2\n",
+            f1, Charsets.UTF_8);
+    ReliableTaildirEventReader reader = getReader();
+
+    // Lock the file, guaranteed not to be opened multiple times
+    for (TailFile tf : reader.getTailFiles().values()) {
+      tf.setRaf(new RandomAccessFile(tf.getPath(), "rw"));
+      assertTrue(lockFile(tf.getRaf()));
+    }
+
+    f1.renameTo(new File(tmpDir, "file2"));
+    reader.updateTailFiles();
+
+    // Check whether the file is opened multiple times
+    for (TailFile tf : reader.getTailFiles().values()) {
+      tf.setRaf(new RandomAccessFile(tf.getPath(), "rw"));
+      assertTrue(lockFile(tf.getRaf()));
+    }
+  }
+
+  private boolean lockFile(RandomAccessFile file) {
+    try {
+      return file.getChannel().lock() != null;
+    } catch (IOException e) {
+      return false;
+    } catch (OverlappingFileLockException e) {
+      return false;
+    }
   }
 }
