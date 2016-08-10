@@ -989,7 +989,13 @@ fileHeaderKey             file            Header key to use when appending absol
 basenameHeader            false           Whether to add a header storing the basename of the file.
 basenameHeaderKey         basename        Header Key to use when appending  basename of file to event header.
 includePattern            ^.*$            Regular expression specifying which files to include.
+                                          It can used together with ``ignorePattern``.
+                                          If a file matches both ``ignorePattern`` and ``includePattern`` regex,
+                                          the file is ignored.
 ignorePattern             ^$              Regular expression specifying which files to ignore (skip).
+                                          It can used together with ``includePattern``.
+                                          If a file matches both ``ignorePattern`` and ``includePattern`` regex,
+                                          the file is ignored.
 trackerDir                .flumespool     Directory to store metadata related to processing of files.
                                           If this path is not an absolute path, then it is interpreted as relative to the spoolDir.
 consumeOrder              oldest          In which order files in the spooling directory will be consumed ``oldest``,
@@ -1232,7 +1238,7 @@ useFlumeEventFormat              false        By default events are taken as byt
                                               on the KafkaSink or with the parseAsFlumeEvent property on the Kafka Channel this will preserve
                                               any Flume headers sent on the producing side.
 Other Kafka Consumer Properties  --           These properties are used to configure the Kafka Consumer. Any producer property supported
-                                              by Kafka can be used. The only requirement is to prepend the property name with the prefix 
+                                              by Kafka can be used. The only requirement is to prepend the property name with the prefix
                                               ``kafka.consumer``.
                                               For example: ``kafka.consumer.auto.offset.reset``
                                               Check `Kafka documentation <http://kafka.apache.org/documentation.html#newconsumerconfigs>`_ for details
