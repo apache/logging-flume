@@ -120,8 +120,8 @@ public class TestSpoolDirectorySource {
     File f1 = new File(tmpDir.getAbsolutePath() + "/file1");
 
     Files.write("file1line1\nfile1line2\nfile1line3\nfile1line4\n" +
-            "file1line5\nfile1line6\nfile1line7\nfile1line8\n",
-        f1, Charsets.UTF_8);
+                "file1line5\nfile1line6\nfile1line7\nfile1line8\n",
+                f1, Charsets.UTF_8);
 
     context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
         tmpDir.getAbsolutePath());
@@ -156,8 +156,8 @@ public class TestSpoolDirectorySource {
     File f1 = new File(tmpDir.getAbsolutePath() + "/file1");
 
     Files.write("file1line1\nfile1line2\nfile1line3\nfile1line4\n" +
-            "file1line5\nfile1line6\nfile1line7\nfile1line8\n",
-        f1, Charsets.UTF_8);
+                "file1line5\nfile1line6\nfile1line7\nfile1line8\n",
+                f1, Charsets.UTF_8);
 
     context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
         tmpDir.getAbsolutePath());
@@ -255,7 +255,6 @@ public class TestSpoolDirectorySource {
     File subDir = new File(tmpDir, "directory");
     boolean directoriesCreated = subDir.mkdirs();
     Assert.assertTrue("source directories must be created", directoriesCreated);
-
 
     File f1 = new File(subDir.getAbsolutePath() + "/file1.txt");
 
@@ -364,9 +363,8 @@ public class TestSpoolDirectorySource {
     File f1 = new File(tmpDir.getAbsolutePath() + "/file1");
 
     Files.write("file1line1\nfile1line2\nfile1line3\nfile1line4\n" +
-            "file1line5\nfile1line6\nfile1line7\nfile1line8\n",
-        f1, Charsets.UTF_8);
-
+                "file1line5\nfile1line6\nfile1line7\nfile1line8\n",
+                 f1, Charsets.UTF_8);
 
     context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
         tmpDir.getAbsolutePath());
@@ -384,8 +382,7 @@ public class TestSpoolDirectorySource {
     }
 
     Assert.assertTrue("Expected to hit ChannelFullException, but did not!",
-        source.didHitChannelFullException());
-
+                      source.didHitChannelFullException());
 
     List<String> dataOut = Lists.newArrayList();
 
@@ -434,8 +431,70 @@ public class TestSpoolDirectorySource {
     Thread.sleep(5000);
 
     Assert.assertFalse("Server did not error", source.hasFatalError());
-    Assert.assertEquals("One message was read",
-        1, source.getSourceCounter().getEventAcceptedCount());
+    Assert.assertEquals("Four messages were read",
+        4, source.getSourceCounter().getEventAcceptedCount());
+    source.stop();
+  }
+
+  @Test
+  public void testWithAllEmptyFiles()
+      throws InterruptedException, IOException {
+    Context context = new Context();
+    File[] f = new File[10];
+    for (int i = 0; i < 10; i++) {
+      f[i] = new File(tmpDir.getAbsolutePath() + "/file" + i);
+      Files.write(new byte[0], f[i]);
+    }
+    context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
+        tmpDir.getAbsolutePath());
+    context.put(SpoolDirectorySourceConfigurationConstants.FILENAME_HEADER,
+        "true");
+    context.put(SpoolDirectorySourceConfigurationConstants.FILENAME_HEADER_KEY,
+        "fileHeaderKeyTest");
+    Configurables.configure(source, context);
+    source.start();
+    Thread.sleep(10);
+    for (int i = 0; i < 10; i++) {
+      Transaction txn = channel.getTransaction();
+      txn.begin();
+      Event e = channel.take();
+      Assert.assertNotNull("Event must not be null", e);
+      Assert.assertNotNull("Event headers must not be null", e.getHeaders());
+      Assert.assertNotNull(e.getHeaders().get("fileHeaderKeyTest"));
+      Assert.assertEquals(f[i].getAbsolutePath(),
+          e.getHeaders().get("fileHeaderKeyTest"));
+      Assert.assertArrayEquals(new byte[0], e.getBody());
+      txn.commit();
+      txn.close();
+    }
+    source.stop();
+  }
+
+  @Test
+  public void testWithEmptyAndDataFiles()
+      throws InterruptedException, IOException {
+    Context context = new Context();
+    File f1 = new File(tmpDir.getAbsolutePath() + "/file1");
+    Files.write("some data".getBytes(), f1);
+    File f2 = new File(tmpDir.getAbsolutePath() + "/file2");
+    Files.write(new byte[0], f2);
+    context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
+        tmpDir.getAbsolutePath());
+    Configurables.configure(source, context);
+    source.start();
+    Thread.sleep(10);
+    for (int i = 0; i < 2; i++) {
+      Transaction txn = channel.getTransaction();
+      txn.begin();
+      Event e = channel.take();
+      txn.commit();
+      txn.close();
+    }
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    Assert.assertNull(channel.take());
+    txn.commit();
+    txn.close();
     source.stop();
   }
 }
