@@ -21,7 +21,9 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
+
 import junit.framework.Assert;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.flume.Event;
@@ -113,7 +115,6 @@ public class TestReliableSpoolingFileEventReader {
     }
   }
 
-  
   @Test
   public void testIncludePattern() throws IOException {
     ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
@@ -174,7 +175,90 @@ public class TestReliableSpoolingFileEventReader {
     Assert.assertEquals("Expected 0, not: " + trackerFiles, 0,
         trackerFiles.size());
   }
+  
+  @Test
+  public void testIncludeExcludePatternNoConflict() throws IOException {
+	// Expected behavior mixing include/exclude conditions:
+	// - file0, file1, file3: not deleted as matching ignore pattern and not
+	// matching include pattern
+	// - file2: deleted as not matching ignore pattern and matching include
+	// pattern
+	// - emptylineFile: not deleted as not matching ignore pattern but not
+	// matching include pattern as well
+    ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
+        .spoolDirectory(WORK_DIR)
+        .ignorePattern("^file[013]$")
+        .includePattern("^file2$")
+        .deletePolicy(DeletePolicy.IMMEDIATE.toString())
+        .build();
+ 
+    List<File> before = listFiles(WORK_DIR);
+    Assert.assertEquals("Expected 5, not: " + before, 5, before.size());
 
+    List<Event> events;
+    do {
+      events = reader.readEvents(10);
+      reader.commit();
+    } while (!events.isEmpty());
+
+
+    List<File> after = listFiles(WORK_DIR);
+    Assert.assertEquals("Expected 4, not: " + after, 4, after.size());
+        Set<String> expectedLeftFiles = new HashSet<String>(
+        		Arrays.asList("file0", "file1", "file3", "emptylineFile"));
+    for (File f: after) {
+      expectedLeftFiles.remove(f.getName());
+    }
+
+    Assert.assertTrue("Unexpected files were sent", expectedLeftFiles.isEmpty());
+    
+    List<File> trackerFiles = listFiles(new File(WORK_DIR,
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_TRACKER_DIR));
+    Assert.assertEquals("Expected 0, not: " + trackerFiles, 0,
+        trackerFiles.size());
+  }
+
+  @Test
+  public void testIncludeExcludePatternConflict() throws IOException {
+	// This test will stress what happens when both ignore and include options 
+	// are specified and the two patterns match at the same time.
+	// Expected behavior:
+	// - file2: not deleted as both include and ignore patterns match (safety 
+	// measure: ignore always wins on conflict)
+    ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
+        .spoolDirectory(WORK_DIR)
+        .ignorePattern("^file2$")
+        .includePattern("^file2$")
+        .deletePolicy(DeletePolicy.IMMEDIATE.toString())
+        .build();
+ 
+    List<File> before = listFiles(WORK_DIR);
+    Assert.assertEquals("Expected 5, not: " + before, 5, before.size());
+
+    List<Event> events;
+    do {
+      events = reader.readEvents(10);
+      reader.commit();
+    } while (!events.isEmpty());
+
+	// If both ignore and include conditions match for a file, then the file
+	// should be ignored
+    List<File> after = listFiles(WORK_DIR);
+    Assert.assertEquals("Expected 5, not: " + after, 5, after.size());
+        Set<String> expectedLeftFiles = new HashSet<String>(
+        		Arrays.asList("file0", "file1", "file2", "file3", "emptylineFile"));
+    for (File f: after) {
+      expectedLeftFiles.remove(f.getName());
+    }
+
+    Assert.assertTrue("Unexpected files were sent", expectedLeftFiles.isEmpty());
+    
+    List<File> trackerFiles = listFiles(new File(WORK_DIR,
+        SpoolDirectorySourceConfigurationConstants.DEFAULT_TRACKER_DIR));
+    Assert.assertEquals("Expected 0, not: " + trackerFiles, 0,
+        trackerFiles.size());
+  }
+  
   @Test
   public void testRepeatedCallsWithCommitAlways() throws IOException {
     ReliableEventReader reader =
