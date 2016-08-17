@@ -682,6 +682,9 @@ public class TestSpillableMemoryChannel {
     params.put("overflowTimeout", "0");
     startChannel(params);
 
+    Assert.assertTrue("channel.channelCounter should have started",
+        channel.channelCounter.getStartTime() > 0);
+
     //1. fill up mem queue
     Thread sourceThd = makePutThread("src", 1, 5000, 2500, channel);
     sourceThd.start();
