@@ -220,11 +220,11 @@ public class TestReliableSpoolingFileEventReader {
   @Test
   public void testIncludeExcludePatternConflict() throws IOException {
 	  
-    // This test will stress what happens when both ignore and include options 
-	  // are specified and the two patterns match at the same time.
-	  // Expected behavior:
-	  // - file2: not deleted as both include and ignore patterns match (safety 
-	  // measure: ignore always wins on conflict)
+    // This test will stress what happens when both ignore and include options
+    // are specified and the two patterns match at the same time.
+    // Expected behavior:
+    // - file2: not deleted as both include and ignore patterns match (safety 
+    // measure: ignore always wins on conflict)
     ReliableEventReader reader = new ReliableSpoolingFileEventReader.Builder()
         .spoolDirectory(WORK_DIR)
         .ignorePattern("^file2$")
@@ -240,9 +240,9 @@ public class TestReliableSpoolingFileEventReader {
       events = reader.readEvents(10);
       reader.commit();
     } while (!events.isEmpty());
-    
-	  // If both ignore and include conditions match for a file, then the file
-	  // should be ignored
+
+    // If both ignore and include conditions match for a file, then the file
+    // should be ignored
     List<File> after = listFiles(WORK_DIR);
     Assert.assertEquals("Expected 5, not: " + after, 5, after.size());
         Set<String> expectedLeftFiles = new HashSet<String>(
