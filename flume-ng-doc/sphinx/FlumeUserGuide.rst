@@ -1311,7 +1311,7 @@ Example for agent named a1:
   a1.channels = c1
   a1.sources.r1.type = netcat
   a1.sources.r1.bind = 0.0.0.0
-  a1.sources.r1.bind = 6666
+  a1.sources.r1.port = 6666
   a1.sources.r1.channels = c1
 
 Sequence Generator Source
