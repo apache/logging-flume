@@ -144,7 +144,7 @@ public class TestReliableSpoolingFileEventReader {
         new ReliableSpoolingFileEventReader.Builder().spoolDirectory(WORK_DIR)
                                                      .build();
 
-    final int expectedLines = 0 + 1 + 2 + 3 + 1;
+    final int expectedLines = 1 + 1 + 2 + 3 + 1;
     int seenLines = 0;
     for (int i = 0; i < 10; i++) {
       List<Event> events = reader.readEvents(10);
@@ -166,7 +166,7 @@ public class TestReliableSpoolingFileEventReader {
                                                      .trackerDirPath(trackerDirPath)
                                                      .build();
 
-    final int expectedLines = 0 + 1 + 2 + 3 + 1;
+    final int expectedLines = 1 + 1 + 2 + 3 + 1;
     int seenLines = 0;
     for (int i = 0; i < 10; i++) {
       List<Event> events = reader.readEvents(10);
@@ -525,6 +525,7 @@ public class TestReliableSpoolingFileEventReader {
   }    
   /* Create expected results out of the files created in the setup method. */
   private void createExpectedFromFilesInSetup(Collection<String> expected) {
+    expected.add("");
     for (int i = 0; i < 4; i++) {      
       for (int j = 0; j < i; j++) {        
         expected.add("file" + i + "line" + j);
