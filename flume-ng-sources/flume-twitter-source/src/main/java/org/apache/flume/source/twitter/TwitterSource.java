@@ -107,11 +107,6 @@ public class TwitterSource
     String accessToken = context.getString("accessToken");
     String accessTokenSecret = context.getString("accessTokenSecret");
 
-    LOGGER.info("Consumer Key:        '" + consumerKey + "'");
-    LOGGER.info("Consumer Secret:     '" + consumerSecret + "'");
-    LOGGER.info("Access Token:        '" + accessToken + "'");
-    LOGGER.info("Access Token Secret: '" + accessTokenSecret + "'");
-
     twitterStream = new TwitterStreamFactory().getInstance();
     twitterStream.setOAuthConsumer(consumerKey, consumerSecret);
     twitterStream.setOAuthAccessToken(new AccessToken(accessToken,

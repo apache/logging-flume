@@ -38,6 +38,7 @@ import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
+import org.apache.flume.conf.LogPrivacyUtil;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.kafka.KafkaSourceCounter;
 import org.apache.flume.source.AbstractPollableSource;
@@ -240,12 +241,18 @@ public class KafkaSource extends AbstractPollableSource
           headers.put(KafkaSourceConstants.KEY_HEADER, kafkaKey);
         }
 
-        if (log.isDebugEnabled()) {
-          log.debug("Topic: {} Partition: {} Message: {}", new String[] {
-              message.topic(),
-              String.valueOf(message.partition()),
-              new String(eventBody)
-          });
+        if (log.isTraceEnabled()) {
+          if (LogPrivacyUtil.allowLogRawData()) {
+            log.trace("Topic: {} Partition: {} Message: {}", new String[]{
+                message.topic(),
+                String.valueOf(message.partition()),
+                new String(eventBody)
+            });
+          } else {
+            log.trace("Topic: {} Partition: {} Message arrived.",
+                message.topic(),
+                String.valueOf(message.partition()));
+          }
         }
 
         event = EventBuilder.withBody(eventBody, headers);
@@ -342,6 +349,10 @@ public class KafkaSource extends AbstractPollableSource
 
     setConsumerProps(context, bootstrapServers);
 
+    if (log.isDebugEnabled() && LogPrivacyUtil.allowLogPrintConfig()) {
+      log.debug("Kafka consumer properties: {}", kafkaProps);
+    }
+
     if (counter == null) {
       counter = new KafkaSourceCounter(getName());
     }
@@ -388,8 +399,6 @@ public class KafkaSource extends AbstractPollableSource
     }
     kafkaProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG,
                    KafkaSourceConstants.DEFAULT_AUTO_COMMIT);
-
-    log.info(kafkaProps.toString());
   }
 
   Properties getConsumerProps() {

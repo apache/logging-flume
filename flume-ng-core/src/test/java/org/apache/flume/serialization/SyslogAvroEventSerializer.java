@@ -26,6 +26,7 @@ import java.util.Map;
 import org.apache.avro.Schema;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.conf.LogPrivacyUtil;
 import org.apache.flume.serialization.SyslogAvroEventSerializer.SyslogEvent;
 import org.apache.flume.source.SyslogUtils;
 import org.joda.time.DateTime;
@@ -147,7 +148,9 @@ public class SyslogAvroEventSerializer
     String actualMessage = msg.substring(seek);
     sle.setMessage(actualMessage);
 
-    logger.debug("Serialized event as: {}", sle);
+    if (logger.isDebugEnabled() && LogPrivacyUtil.allowLogRawData()) {
+      logger.debug("Serialized event as: {}", sle);
+    }
 
     return sle;
   }

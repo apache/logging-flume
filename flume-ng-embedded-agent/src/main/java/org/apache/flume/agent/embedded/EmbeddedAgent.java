@@ -32,6 +32,7 @@ import org.apache.flume.Source;
 import org.apache.flume.SourceRunner;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
+import org.apache.flume.conf.LogPrivacyUtil;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.lifecycle.LifecycleSupervisor;
@@ -149,7 +150,7 @@ public class EmbeddedAgent {
 
     properties = EmbeddedAgentConfiguration.configure(name, properties);
 
-    if (LOGGER.isDebugEnabled()) {
+    if (LOGGER.isDebugEnabled() && LogPrivacyUtil.allowLogPrintConfig()) {
       LOGGER.debug("Agent configuration values");
       for (String key : new TreeSet<String>(properties.keySet())) {
         LOGGER.debug(key + " = " + properties.get(key));

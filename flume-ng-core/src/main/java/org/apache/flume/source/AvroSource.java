@@ -36,6 +36,7 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.Source;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.Configurables;
+import org.apache.flume.conf.LogPrivacyUtil;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.avro.AvroFlumeEvent;
@@ -344,8 +345,14 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
 
   @Override
   public Status append(AvroFlumeEvent avroEvent) {
-    logger.debug("Avro source {}: Received avro event: {}", getName(),
-        avroEvent);
+    if (logger.isDebugEnabled()) {
+      if (LogPrivacyUtil.allowLogRawData()) {
+        logger.debug("Avro source {}: Received avro event: {}", getName(), avroEvent);
+      } else {
+        logger.debug("Avro source {}: Received avro event", getName());
+      }
+    }
+
     sourceCounter.incrementAppendReceivedCount();
     sourceCounter.incrementEventReceivedCount();
 

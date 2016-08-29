@@ -234,6 +234,36 @@ The original Flume terminal will output the event in a log message.
 
 Congratulations - you've successfully configured and deployed a Flume agent! Subsequent sections cover agent configuration in much more detail.
 
+Logging raw data
+~~~~~~~~~~~~~~~~
+
+
+Logging the raw stream of data flowing through the ingest pipeline is not desired behaviour in
+many production environments because this may result in leaking sensitive data or security related
+configurations, such as secret keys, to Flume log files.
+By default, Flume will not log such information. On the other hand, if the data pipeline is broken,
+Flume will attempt to provide clues for debugging the problem.
+
+One way to debug problems with event pipelines is to set up an additional `Memory Channel`_
+connected to a `Logger Sink`_, which will output all event data to the Flume logs.
+In some situations, however, this approach is insufficient.
+
+In order to enable logging of event- and configuration-related data, some Java system properties
+must be set in addition to log4j properties.
+
+To enable configuration-related logging, set the Java system property
+``-Dorg.apache.flume.log.printconfig=true``. This can either be passed on the command line or by
+setting this in the ``JAVA_OPTS`` variable in *flume-env.sh*.
+
+To enable data logging, set the Java system property ``-Dorg.apache.flume.log.rawdata=true``
+in the same way described above. For most components, the log4j logging level must also be set to
+DEBUG or TRACE to make event-specific logging appear in the Flume logs.
+
+Here is an example of enabling both configuration logging and raw data logging while also
+setting the Log4j loglevel to DEBUG for console output::
+
+  $ bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger=DEBUG,console -Dorg.apache.flume.log.printconfig=true -Dorg.apache.flume.log.rawdata=true
+
 
 Zookeeper based Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2001,8 +2031,9 @@ accept tab separated input containing three fields and to skip the second field.
 Logger Sink
 ~~~~~~~~~~~
 
-Logs event at INFO level. Typically useful for testing/debugging purpose.
-Required properties are in **bold**.
+Logs event at INFO level. Typically useful for testing/debugging purpose. Required properties are
+in **bold**. This sink is the only exception which doesn't require the extra configuration
+explained in the `Logging raw data`_ section.
 
 ==============  =======  ===========================================
 Property Name   Default  Description

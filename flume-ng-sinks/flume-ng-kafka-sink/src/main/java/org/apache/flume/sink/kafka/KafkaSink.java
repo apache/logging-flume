@@ -20,7 +20,6 @@ package org.apache.flume.sink.kafka;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
-
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
@@ -32,6 +31,7 @@ import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
+import org.apache.flume.conf.LogPrivacyUtil;
 import org.apache.flume.instrumentation.kafka.KafkaSinkCounter;
 import org.apache.flume.sink.AbstractSink;
 import org.apache.flume.source.avro.AvroFlumeEvent;
@@ -174,12 +174,15 @@ public class KafkaSink extends AbstractSink implements Configurable {
           eventTopic = topic;
         }
         eventKey = headers.get(KEY_HEADER);
-
-        if (logger.isDebugEnabled()) {
-          logger.debug("{Event} " + eventTopic + " : " + eventKey + " : "
-              + new String(eventBody, "UTF-8"));
-          logger.debug("event #{}", processedEvents);
+        if (logger.isTraceEnabled()) {
+          if (LogPrivacyUtil.allowLogRawData()) {
+            logger.trace("{Event} " + eventTopic + " : " + eventKey + " : "
+                + new String(eventBody, "UTF-8"));
+          } else {
+            logger.trace("{Event} " + eventTopic + " : " + eventKey);
+          }
         }
+        logger.debug("event #{}", processedEvents);
 
         // create a message and add to buffer
         long startTime = System.currentTimeMillis();
@@ -300,8 +303,8 @@ public class KafkaSink extends AbstractSink implements Configurable {
 
     setProducerProps(context, bootStrapServers);
 
-    if (logger.isDebugEnabled()) {
-      logger.debug("Kafka producer properties: {}" , kafkaProps);
+    if (logger.isDebugEnabled() && LogPrivacyUtil.allowLogPrintConfig()) {
+      logger.debug("Kafka producer properties: {}", kafkaProps);
     }
 
     if (counter == null) {
@@ -370,7 +373,6 @@ public class KafkaSink extends AbstractSink implements Configurable {
     kafkaProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, DEFAULT_VALUE_SERIAIZER);
     kafkaProps.putAll(context.getSubProperties(KAFKA_PRODUCER_PREFIX));
     kafkaProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrapServers);
-    logger.info("Producer properties: {}" , kafkaProps.toString());
   }
 
   protected Properties getKafkaProps() {

@@ -310,9 +310,10 @@ public class FlumeConfiguration {
      * @return true if the configuration is valid, false otherwise
      */
     private boolean isValid() {
-      logger.debug("Starting validation of configuration for agent: "
-          + agentName + ", initial-configuration: " +
-          this.getPrevalidationConfig());
+      logger.debug("Starting validation of configuration for agent: {}", agentName);
+      if (logger.isDebugEnabled() && LogPrivacyUtil.allowLogPrintConfig()) {
+        logger.debug("Initial configuration: {}", this.getPrevalidationConfig());
+      }
 
       // Make sure that at least one channel is specified
       if (channels == null || channels.trim().length() == 0) {
@@ -368,8 +369,10 @@ public class FlumeConfiguration {
       this.sinks = getSpaceDelimitedList(sinkSet);
       this.sinkgroups = getSpaceDelimitedList(sinkgroupSet);
 
-      logger.debug("Post validation configuration for " + agentName + NEWLINE
-          + this.getPostvalidationConfig());
+      if (logger.isDebugEnabled() && LogPrivacyUtil.allowLogPrintConfig()) {
+        logger.debug("Post validation configuration for {}", agentName);
+        logger.debug(this.getPostvalidationConfig());
+      }
 
       return true;
     }

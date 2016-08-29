@@ -29,6 +29,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.conf.LogPrivacyUtil;
 import org.apache.flume.event.EventBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,7 +68,9 @@ public class BLOBHandler implements HTTPSourceHandler {
     Map<String, String[]> parameters = request.getParameterMap();
     for (String parameter : parameters.keySet()) {
       String value = parameters.get(parameter)[0];
-      LOG.debug("Setting Header [Key, Value] as [{},{}] ",parameter, value);
+      if (LOG.isDebugEnabled() && LogPrivacyUtil.allowLogRawData()) {
+        LOG.debug("Setting Header [Key, Value] as [{},{}] ", parameter, value);
+      }
       headers.put(parameter, value);
     }
 

@@ -94,10 +94,7 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
 
   @Override
   public void initialize(Context context) {
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Initializing JDBC Channel provider with props: "
-          + context);
-    }
+    LOGGER.debug("Initializing JDBC Channel provider");
 
     initializeSystemProperties(context);
     initializeDataSource(context);
@@ -363,7 +360,7 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
   /**
 
    * Initializes the datasource and the underlying connection pool.
-   * @param properties
+   * @param context
    */
   private void initializeDataSource(Context context) {
     driverClassName = getConfigurationString(context,
@@ -592,7 +589,7 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
    * @param context
    * @param key the expected configuration key
    * @param oldKey the deprecated configuration key
-   * @param  default value, null if no default
+   * @param defaultValue default value, null if no default
    * @return the value associated with the key
    */
   private String getConfigurationString(Context context, String key,
