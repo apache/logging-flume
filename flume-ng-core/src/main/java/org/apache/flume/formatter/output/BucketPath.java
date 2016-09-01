@@ -24,6 +24,8 @@ import org.apache.flume.Clock;
 import org.apache.flume.SystemClock;
 import org.apache.flume.tools.TimestampRoundDownUtil;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -39,7 +41,7 @@ public class BucketPath {
    * These are useful to other classes which might want to search for tags in
    * strings.
    */
-  public static final String TAG_REGEX = "\\%(\\w|\\%)|\\%\\{([\\w\\.-]+)\\}";
+  public static final String TAG_REGEX = "%(\\w|%)|%\\{([\\w\\.-]+)\\}|%\\[(\\w+)\\]";
   public static final Pattern tagPattern = Pattern.compile(TAG_REGEX);
 
   private static Clock clock = new SystemClock();
@@ -208,6 +210,35 @@ public class BucketPath {
     }
 
     return simpleDateFormat;
+  }
+
+  /**
+   * Not intended as a public API
+   */
+  @VisibleForTesting
+  protected static String replaceStaticString(String key) {
+    String replacementString = "";
+    try {
+      InetAddress addr = InetAddress.getLocalHost();
+      switch (key.toLowerCase()) {
+        case "localhost":
+          replacementString = addr.getHostName();
+          break;
+        case "ip":
+          replacementString = addr.getHostAddress();
+          break;
+        case "fqdn":
+          replacementString = addr.getCanonicalHostName();
+          break;
+        default:
+          throw new RuntimeException("The static escape string '" + key + "'"
+                  + " was provided but does not match any of (localhost,IP,FQDN)");
+      }
+    } catch (UnknownHostException e) {
+      throw new RuntimeException("Flume wasn't able to parse the static escape "
+              + " sequence '" + key + "' due to UnkownHostException.", e);
+    }
+    return replacementString;
   }
 
   /**
@@ -418,6 +449,11 @@ public class BucketPath {
           replacement = "";
 //          LOG.warn("Tag " + matcher.group(2) + " not found");
         }
+
+      // Group 3 is the %[...] pattern.
+      } else if (matcher.group(3) != null) {
+        replacement = replaceStaticString(matcher.group(3));
+
       } else {
         // The %x pattern.
         // Since we know the match is a single character, we can

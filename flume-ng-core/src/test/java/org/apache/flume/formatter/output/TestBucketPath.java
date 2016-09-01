@@ -26,6 +26,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.annotation.Nullable;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -278,4 +280,49 @@ public class TestBucketPath {
     cal.set(Calendar.MILLISECOND, ms);
     return cal;
   }
+
+  @Test
+  public void testStaticEscapeStrings() {
+    Map<String, String> staticStrings;
+    staticStrings = new HashMap<>();
+
+    try {
+      InetAddress addr = InetAddress.getLocalHost();
+      staticStrings.put("localhost", addr.getHostName());
+      staticStrings.put("IP", addr.getHostAddress());
+      staticStrings.put("FQDN", addr.getCanonicalHostName());
+    } catch (UnknownHostException e) {
+      Assert.fail("Test failed due to UnkownHostException");
+    }
+
+    TimeZone utcTimeZone = TimeZone.getTimeZone("UTC");
+    String filePath = "%[localhost]/%[IP]/%[FQDN]";
+    String realPath = BucketPath.escapeString(filePath, headers,
+            utcTimeZone, false, Calendar.HOUR_OF_DAY, 12, false);
+    String[] args = realPath.split("\\/");
+
+    Assert.assertEquals(args[0],staticStrings.get("localhost"));
+    Assert.assertEquals(args[1],staticStrings.get("IP"));
+    Assert.assertEquals(args[2],staticStrings.get("FQDN"));
+
+    StringBuilder s = new StringBuilder();
+    s.append("Expected String: ").append(staticStrings.get("localhost"));
+    s.append("/").append(staticStrings.get("IP")).append("/");
+    s.append(staticStrings.get("FQDN"));
+
+    System.out.println(s);
+    System.out.println("Escaped String: " + realPath );
+  }
+
+  @Test (expected = RuntimeException.class)
+  public void testStaticEscapeStringsNoKey() {
+    Map<String, String> staticStrings;
+    staticStrings = new HashMap<>();
+
+    TimeZone utcTimeZone = TimeZone.getTimeZone("UTC");
+    String filePath = "%[abcdefg]/%[IP]/%[FQDN]";
+    String realPath = BucketPath.escapeString(filePath, headers,
+            utcTimeZone, false, Calendar.HOUR_OF_DAY, 12, false);
+  }
+
 }

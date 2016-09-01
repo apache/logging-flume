@@ -1785,34 +1785,39 @@ required.
 
 The following are the escape sequences supported:
 
-=========  =================================================
-Alias      Description
-=========  =================================================
-%{host}    Substitute value of event header named "host". Arbitrary header names are supported.
-%t         Unix time in milliseconds
-%a         locale's short weekday name (Mon, Tue, ...)
-%A         locale's full weekday name (Monday, Tuesday, ...)
-%b         locale's short month name (Jan, Feb, ...)
-%B         locale's long month name (January, February, ...)
-%c         locale's date and time (Thu Mar 3 23:05:25 2005)
-%d         day of month (01)
-%e         day of month without padding (1)
-%D         date; same as %m/%d/%y
-%H         hour (00..23)
-%I         hour (01..12)
-%j         day of year (001..366)
-%k         hour ( 0..23)
-%m         month (01..12)
-%n         month without padding (1..12)
-%M         minute (00..59)
-%p         locale's equivalent of am or pm
-%s         seconds since 1970-01-01 00:00:00 UTC
-%S         second (00..59)
-%y         last two digits of year (00..99)
-%Y         year (2010)
-%z         +hhmm numeric timezone (for example, -0400)
-=========  =================================================
+===============  =================================================
+Alias            Description
+===============  =================================================
+%{host}          Substitute value of event header named "host". Arbitrary header names are supported.
+%t               Unix time in milliseconds
+%a               locale's short weekday name (Mon, Tue, ...)
+%A               locale's full weekday name (Monday, Tuesday, ...)
+%b               locale's short month name (Jan, Feb, ...)
+%B               locale's long month name (January, February, ...)
+%c               locale's date and time (Thu Mar 3 23:05:25 2005)
+%d               day of month (01)
+%e               day of month without padding (1)
+%D               date; same as %m/%d/%y
+%H               hour (00..23)
+%I               hour (01..12)
+%j               day of year (001..366)
+%k               hour ( 0..23)
+%m               month (01..12)
+%n               month without padding (1..12)
+%M               minute (00..59)
+%p               locale's equivalent of am or pm
+%s               seconds since 1970-01-01 00:00:00 UTC
+%S               second (00..59)
+%y               last two digits of year (00..99)
+%Y               year (2010)
+%z               +hhmm numeric timezone (for example, -0400)
+%[localhost]     Substitute the hostname of the host where the agent is running
+%[IP]            Substitute the IP address of the host where the agent is running
+%[FQDN]          Substitute the canonical hostname of the host where the agent is running
+===============  =================================================
 
+Note: The escape strings %[localhost], %[IP] and %[FQDN] all rely on Java's ability to obtain the
+hostname, which may fail in some networking environments.
 
 The file in use will have the name mangled to include ".tmp" at the end. Once
 the file is closed, this extension is removed. This allows excluding partially
