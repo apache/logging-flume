@@ -29,9 +29,14 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
+import com.google.common.annotations.VisibleForTesting;
+import kafka.cluster.BrokerEndPoint;
+import kafka.utils.ZKGroupTopicDirs;
+import kafka.utils.ZkUtils;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
@@ -43,17 +48,25 @@ import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.kafka.KafkaSourceCounter;
 import org.apache.flume.source.AbstractPollableSource;
 import org.apache.flume.source.avro.AvroFlumeEvent;
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.protocol.SecurityProtocol;
+import org.apache.kafka.common.security.JaasUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
+import scala.Option;
+
+import static org.apache.flume.source.kafka.KafkaSourceConstants.*;
+import static scala.collection.JavaConverters.asJavaListConverter;
 
 /**
  * A Source for Kafka which reads messages from kafka topics.
@@ -84,6 +97,10 @@ public class KafkaSource extends AbstractPollableSource
         implements Configurable {
   private static final Logger log = LoggerFactory.getLogger(KafkaSource.class);
 
+  // Constants used only for offset migration zookeeper connections
+  private static final int ZK_SESSION_TIMEOUT = 30000;
+  private static final int ZK_CONNECTION_TIMEOUT = 30000;
+
   private Context context;
   private Properties kafkaProps;
   private KafkaSourceCounter counter;
@@ -106,6 +123,10 @@ public class KafkaSource extends AbstractPollableSource
 
   private Subscriber subscriber;
 
+  private String zookeeperConnect;
+  private String bootstrapServers;
+  private String groupId = DEFAULT_GROUP_ID;
+  private boolean migrateZookeeperOffsets = DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS;
 
   /**
    * This class is a helper to subscribe for topics by using
@@ -342,12 +363,44 @@ public class KafkaSource extends AbstractPollableSource
       log.debug(KafkaSourceConstants.AVRO_EVENT + " set to: {}", useAvroEventFormat);
     }
 
-    String bootstrapServers = context.getString(KafkaSourceConstants.BOOTSTRAP_SERVERS);
+    zookeeperConnect = context.getString(ZOOKEEPER_CONNECT_FLUME_KEY);
+    migrateZookeeperOffsets = context.getBoolean(MIGRATE_ZOOKEEPER_OFFSETS,
+        DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS);
+
+    bootstrapServers = context.getString(KafkaSourceConstants.BOOTSTRAP_SERVERS);
     if (bootstrapServers == null || bootstrapServers.isEmpty()) {
-      throw new ConfigurationException("Bootstrap Servers must be specified");
+      if (zookeeperConnect == null || zookeeperConnect.isEmpty()) {
+        throw new ConfigurationException("Bootstrap Servers must be specified");
+      } else {
+        // For backwards compatibility look up the bootstrap from zookeeper
+        log.warn("{} is deprecated. Please use the parameter {}",
+            KafkaSourceConstants.ZOOKEEPER_CONNECT_FLUME_KEY,
+            KafkaSourceConstants.BOOTSTRAP_SERVERS);
+
+        // Lookup configured security protocol, just in case its not default
+        String securityProtocolStr =
+            context.getSubProperties(KafkaSourceConstants.KAFKA_CONSUMER_PREFIX)
+                .get(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG);
+        if (securityProtocolStr == null || securityProtocolStr.isEmpty()) {
+          securityProtocolStr = CommonClientConfigs.DEFAULT_SECURITY_PROTOCOL;
+        }
+        bootstrapServers =
+            lookupBootstrap(zookeeperConnect, SecurityProtocol.valueOf(securityProtocolStr));
+      }
     }
 
-    setConsumerProps(context, bootstrapServers);
+    String groupIdProperty =
+        context.getString(KAFKA_CONSUMER_PREFIX + ConsumerConfig.GROUP_ID_CONFIG);
+    if (groupIdProperty != null && !groupIdProperty.isEmpty()) {
+      groupId = groupIdProperty; // Use the new group id property
+    }
+
+    if (groupId == null || groupId.isEmpty()) {
+      groupId = DEFAULT_GROUP_ID;
+      log.info("Group ID was not specified. Using {} as the group id.", groupId);
+    }
+
+    setConsumerProps(context);
 
     if (log.isDebugEnabled() && LogPrivacyUtil.allowLogPrintConfig()) {
       log.debug("Kafka consumer properties: {}", kafkaProps);
@@ -369,23 +422,15 @@ public class KafkaSource extends AbstractPollableSource
     }
 
     // old groupId
-    String groupId = ctx.getString(KafkaSourceConstants.OLD_GROUP_ID);
+    groupId = ctx.getString(KafkaSourceConstants.OLD_GROUP_ID);
     if (groupId != null && !groupId.isEmpty()) {
-      kafkaProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
       log.warn("{} is deprecated. Please use the parameter {}",
               KafkaSourceConstants.OLD_GROUP_ID,
               KafkaSourceConstants.KAFKA_CONSUMER_PREFIX + ConsumerConfig.GROUP_ID_CONFIG);
     }
   }
 
-  private void setConsumerProps(Context ctx, String bootStrapServers) {
-    String groupId = ctx.getString(
-        KafkaSourceConstants.KAFKA_CONSUMER_PREFIX + ConsumerConfig.GROUP_ID_CONFIG);
-    if ((groupId == null || groupId.isEmpty()) &&
-        kafkaProps.getProperty(ConsumerConfig.GROUP_ID_CONFIG) == null) {
-      groupId = KafkaSourceConstants.DEFAULT_GROUP_ID;
-      log.info("Group ID was not specified. Using " + groupId + " as the group id.");
-    }
+  private void setConsumerProps(Context ctx) {
     kafkaProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
                    KafkaSourceConstants.DEFAULT_KEY_DESERIALIZER);
     kafkaProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
@@ -393,12 +438,37 @@ public class KafkaSource extends AbstractPollableSource
     //Defaults overridden based on config
     kafkaProps.putAll(ctx.getSubProperties(KafkaSourceConstants.KAFKA_CONSUMER_PREFIX));
     //These always take precedence over config
-    kafkaProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrapServers);
+    kafkaProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     if (groupId != null) {
       kafkaProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
     }
     kafkaProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG,
                    KafkaSourceConstants.DEFAULT_AUTO_COMMIT);
+  }
+
+  /**
+   * Generates the Kafka bootstrap connection string from the metadata stored in Zookeeper.
+   * Allows for backwards compatibility of the zookeeperConnect configuration.
+   */
+  private String lookupBootstrap(String zookeeperConnect, SecurityProtocol securityProtocol) {
+    ZkUtils zkUtils = ZkUtils.apply(zookeeperConnect, ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT,
+        JaasUtils.isZkSecurityEnabled());
+    try {
+      List<BrokerEndPoint> endPoints =
+          asJavaListConverter(zkUtils.getAllBrokerEndPointsForChannel(securityProtocol)).asJava();
+      List<String> connections = new ArrayList<>();
+      for (BrokerEndPoint endPoint : endPoints) {
+        connections.add(endPoint.connectionString());
+      }
+      return StringUtils.join(connections, ',');
+    } finally {
+      zkUtils.close();
+    }
+  }
+
+  @VisibleForTesting
+  String getBootstrapServers() {
+    return bootstrapServers;
   }
 
   Properties getConsumerProps() {
@@ -424,6 +494,21 @@ public class KafkaSource extends AbstractPollableSource
   protected void doStart() throws FlumeException {
     log.info("Starting {}...", this);
 
+    // As a migration step check if there are any offsets from the group stored in kafka
+    // If not read them from Zookeeper and commit them to Kafka
+    if (migrateZookeeperOffsets && zookeeperConnect != null && !zookeeperConnect.isEmpty()) {
+      // For simplicity we only support migration of a single topic via the TopicListSubscriber.
+      // There was no way to define a list of topics or a pattern in the previous Flume version.
+      if (subscriber instanceof TopicListSubscriber &&
+          ((TopicListSubscriber) subscriber).get().size() == 1) {
+        String topicStr = ((TopicListSubscriber) subscriber).get().get(0);
+        migrateOffsets(topicStr);
+      } else {
+        log.info("Will not attempt to migrate offsets " +
+            "because multiple topics or a pattern are defined");
+      }
+    }
+
     //initialize a consumer.
     consumer = new KafkaConsumer<String, byte[]>(kafkaProps);
 
@@ -444,6 +529,76 @@ public class KafkaSource extends AbstractPollableSource
     }
     counter.stop();
     log.info("Kafka Source {} stopped. Metrics: {}", getName(), counter);
+  }
+
+  private void migrateOffsets(String topicStr) {
+    ZkUtils zkUtils = ZkUtils.apply(zookeeperConnect, ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT,
+        JaasUtils.isZkSecurityEnabled());
+    KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(kafkaProps);
+    try {
+      Map<TopicPartition, OffsetAndMetadata> kafkaOffsets =
+          getKafkaOffsets(consumer, topicStr);
+      if (!kafkaOffsets.isEmpty()) {
+        log.info("Found Kafka offsets for topic " + topicStr +
+            ". Will not migrate from zookeeper");
+        log.debug("Offsets found: {}", kafkaOffsets);
+        return;
+      }
+
+      log.info("No Kafka offsets found. Migrating zookeeper offsets");
+      Map<TopicPartition, OffsetAndMetadata> zookeeperOffsets =
+          getZookeeperOffsets(zkUtils, topicStr);
+      if (zookeeperOffsets.isEmpty()) {
+        log.warn("No offsets to migrate found in Zookeeper");
+        return;
+      }
+
+      log.info("Committing Zookeeper offsets to Kafka");
+      log.debug("Offsets to commit: {}", zookeeperOffsets);
+      consumer.commitSync(zookeeperOffsets);
+      // Read the offsets to verify they were committed
+      Map<TopicPartition, OffsetAndMetadata> newKafkaOffsets =
+          getKafkaOffsets(consumer, topicStr);
+      log.debug("Offsets committed: {}", newKafkaOffsets);
+      if (!newKafkaOffsets.keySet().containsAll(zookeeperOffsets.keySet())) {
+        throw new FlumeException("Offsets could not be committed");
+      }
+    } finally {
+      zkUtils.close();
+      consumer.close();
+    }
+  }
+
+  private Map<TopicPartition, OffsetAndMetadata> getKafkaOffsets(
+      KafkaConsumer<String, byte[]> client, String topicStr) {
+    Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
+    List<PartitionInfo> partitions = client.partitionsFor(topicStr);
+    for (PartitionInfo partition : partitions) {
+      TopicPartition key = new TopicPartition(topicStr, partition.partition());
+      OffsetAndMetadata offsetAndMetadata = client.committed(key);
+      if (offsetAndMetadata != null) {
+        offsets.put(key, offsetAndMetadata);
+      }
+    }
+    return offsets;
+  }
+
+  private Map<TopicPartition, OffsetAndMetadata> getZookeeperOffsets(ZkUtils client,
+                                                                     String topicStr) {
+    Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
+    ZKGroupTopicDirs topicDirs = new ZKGroupTopicDirs(groupId, topicStr);
+    List<String> partitions = asJavaListConverter(
+        client.getChildrenParentMayNotExist(topicDirs.consumerOffsetDir())).asJava();
+    for (String partition : partitions) {
+      TopicPartition key = new TopicPartition(topicStr, Integer.valueOf(partition));
+      Option<String> data = client.readDataMaybeNull(
+          topicDirs.consumerOffsetDir() + "/" + partition)._1();
+      if (data.isDefined()) {
+        Long offset = Long.valueOf(data.get());
+        offsets.put(key, new OffsetAndMetadata(offset));
+      }
+    }
+    return offsets;
   }
 }
 

@@ -21,9 +21,12 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import junit.framework.Assert;
 import kafka.common.TopicExistsException;
+import kafka.utils.ZKGroupTopicDirs;
+import kafka.utils.ZkUtils;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -33,6 +36,14 @@ import org.apache.flume.PollableSource.Status;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.security.JaasUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,10 +55,13 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import static org.apache.flume.source.kafka.KafkaSourceConstants.AVRO_EVENT;
@@ -63,6 +77,7 @@ import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPIC;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPICS;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPICS_REGEX;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPIC_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.ZOOKEEPER_CONNECT_FLUME_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -76,6 +91,8 @@ public class TestKafkaSource {
   private KafkaSourceEmbeddedKafka kafkaServer;
   private Context context;
   private List<Event> events;
+
+  private final Set<String> usedTopics = new HashSet<String>();
   private String topic0 = "test1";
   private String topic1 = "topic1";
 
@@ -86,19 +103,21 @@ public class TestKafkaSource {
     kafkaServer = new KafkaSourceEmbeddedKafka(null);
     try {
       kafkaServer.createTopic(topic0, 1);
+      usedTopics.add(topic0);
       kafkaServer.createTopic(topic1, 3);
+      usedTopics.add(topic1);
     } catch (TopicExistsException e) {
       //do nothing
       e.printStackTrace();
     }
-    context = prepareDefaultContext();
+    context = prepareDefaultContext("flume-group");
     kafkaSource.setChannelProcessor(createGoodChannel());
   }
 
-  private Context prepareDefaultContext() {
+  private Context prepareDefaultContext(String groupId) {
     Context context = new Context();
-    context.put(BOOTSTRAP_SERVERS, kafkaServer.getBrockers());
-    context.put(KAFKA_CONSUMER_PREFIX + "group.id", "flume-group");
+    context.put(BOOTSTRAP_SERVERS, kafkaServer.getBootstrapServers());
+    context.put(KAFKA_CONSUMER_PREFIX + "group.id", groupId);
     return context;
   }
 
@@ -575,6 +594,118 @@ public class TestKafkaSource {
 
   }
 
+  @Test
+  public void testBootstrapLookup() {
+    Context context = new Context();
+
+    context.put(ZOOKEEPER_CONNECT_FLUME_KEY, kafkaServer.getZkConnectString());
+    context.put(TOPIC, "old.topic");
+    context.put(OLD_GROUP_ID, "old.groupId");
+    KafkaSource source = new KafkaSource();
+    source.doConfigure(context);
+    String bootstrapServers = source.getBootstrapServers();
+    Assert.assertEquals(kafkaServer.getBootstrapServers(), bootstrapServers);
+  }
+
+  @Test
+  public void testMigrateOffsetsNone() throws Exception {
+    doTestMigrateZookeeperOffsets(false, false, "testMigrateOffsets-none");
+  }
+
+  @Test
+  public void testMigrateOffsetsZookeeper() throws Exception {
+    doTestMigrateZookeeperOffsets(true, false, "testMigrateOffsets-zookeeper");
+  }
+
+  @Test
+  public void testMigrateOffsetsKafka() throws Exception {
+    doTestMigrateZookeeperOffsets(false, true, "testMigrateOffsets-kafka");
+  }
+
+  @Test
+  public void testMigrateOffsetsBoth() throws Exception {
+    doTestMigrateZookeeperOffsets(true, true, "testMigrateOffsets-both");
+  }
+
+  public void doTestMigrateZookeeperOffsets(boolean hasZookeeperOffsets, boolean hasKafkaOffsets,
+                                            String group) throws Exception {
+    // create a topic with 1 partition for simplicity
+    String topic = findUnusedTopic();
+    kafkaServer.createTopic(topic, 1);
+
+    Context context = prepareDefaultContext(group);
+    context.put(ZOOKEEPER_CONNECT_FLUME_KEY, kafkaServer.getZkConnectString());
+    context.put(TOPIC, topic);
+    KafkaSource source = new KafkaSource();
+    source.doConfigure(context);
+
+    // Produce some data and save an offset
+    Long fifthOffset = 0L;
+    Long tenthOffset = 0L;
+    Properties props = createProducerProps(kafkaServer.getBootstrapServers());
+    KafkaProducer<String, byte[]> producer = new KafkaProducer<>(props);
+    for (int i = 1; i <= 50; i++) {
+      ProducerRecord<String, byte[]> data =
+          new ProducerRecord<>(topic, null, String.valueOf(i).getBytes());
+      RecordMetadata recordMetadata = producer.send(data).get();
+      if (i == 5) {
+        fifthOffset = recordMetadata.offset();
+      }
+      if (i == 10) {
+        tenthOffset = recordMetadata.offset();
+      }
+    }
+
+    // Commit 10th offset to zookeeper
+    if (hasZookeeperOffsets) {
+      ZkUtils zkUtils = ZkUtils.apply(kafkaServer.getZkConnectString(), 30000, 30000,
+          JaasUtils.isZkSecurityEnabled());
+      ZKGroupTopicDirs topicDirs = new ZKGroupTopicDirs(group, topic);
+      // we commit the tenth offset to ensure some data is missed.
+      Long offset = tenthOffset + 1;
+      zkUtils.updatePersistentPath(topicDirs.consumerOffsetDir() + "/0", offset.toString(),
+          zkUtils.updatePersistentPath$default$3());
+      zkUtils.close();
+    }
+
+    // Commit 5th offset to kafka
+    if (hasKafkaOffsets) {
+      Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
+      offsets.put(new TopicPartition(topic, 0), new OffsetAndMetadata(fifthOffset + 1));
+      KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(source.getConsumerProps());
+      consumer.commitSync(offsets);
+      consumer.close();
+    }
+
+    // Start the source and read some data
+    source.setChannelProcessor(createGoodChannel());
+    source.start();
+    Thread.sleep(500L);
+    source.process();
+    List<Integer> finals = new ArrayList<Integer>(40);
+    for (Event event: events) {
+      finals.add(Integer.parseInt(new String(event.getBody())));
+    }
+    source.stop();
+
+    if (!hasKafkaOffsets && !hasZookeeperOffsets) {
+      // The default behavior is to start at the latest message in the log
+      org.junit.Assert.assertTrue("Source should read no messages", finals.isEmpty());
+    } else if (hasKafkaOffsets && hasZookeeperOffsets) {
+      // Respect Kafka offsets if they exist
+      org.junit.Assert.assertFalse("Source should not read the 5th message", finals.contains(5));
+      org.junit.Assert.assertTrue("Source should read the 6th message", finals.contains(6));
+    } else if (hasKafkaOffsets) {
+      // Respect Kafka offsets if they exist (don't fail if zookeeper offsets are missing)
+      org.junit.Assert.assertFalse("Source should not read the 5th message", finals.contains(5));
+      org.junit.Assert.assertTrue("Source should read the 6th message", finals.contains(6));
+    } else {
+      // Otherwise migrate the ZooKeeper offsets if they exist
+      org.junit.Assert.assertFalse("Source should not read the 10th message", finals.contains(10));
+      org.junit.Assert.assertTrue("Source should read the 11th message", finals.contains(11));
+    }
+  }
+
   ChannelProcessor createGoodChannel() {
 
     ChannelProcessor channelProcessor = mock(ChannelProcessor.class);
@@ -603,5 +734,29 @@ public class TestKafkaSource {
     }).when(channelProcessor).processEventBatch(any(List.class));
 
     return channelProcessor;
+  }
+
+  public String findUnusedTopic() {
+    String newTopic = null;
+    boolean topicFound = false;
+    while (!topicFound) {
+      newTopic = RandomStringUtils.randomAlphabetic(8);
+      if (!usedTopics.contains(newTopic)) {
+        usedTopics.add(newTopic);
+        topicFound = true;
+      }
+    }
+    return newTopic;
+  }
+
+  private Properties createProducerProps(String bootStrapServers) {
+    Properties props = new Properties();
+    props.put(ProducerConfig.ACKS_CONFIG, "-1");
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+        "org.apache.kafka.common.serialization.StringSerializer");
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+        "org.apache.kafka.common.serialization.ByteArraySerializer");
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrapServers);
+    return props;
   }
 }

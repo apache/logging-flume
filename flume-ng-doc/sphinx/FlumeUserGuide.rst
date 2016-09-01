@@ -1260,8 +1260,13 @@ useFlumeEventFormat              false        By default events are taken as byt
                                               true to read events as the Flume Avro binary format. Used in conjunction with the same property
                                               on the KafkaSink or with the parseAsFlumeEvent property on the Kafka Channel this will preserve
                                               any Flume headers sent on the producing side.
+migrateZookeeperOffsets          true         When no Kafka stored offset is found, look up the offsets in Zookeeper and commit them to Kafka.
+                                              This should be true to support seamless Kafka client migration from older versions of Flume.
+                                              Once migrated this can be set to false, though that should generally not be required.
+                                              If no Zookeeper offset is found, the Kafka configuration kafka.consumer.auto.offset.reset
+                                              defines how offsets are handled.
 Other Kafka Consumer Properties  --           These properties are used to configure the Kafka Consumer. Any producer property supported
-                                              by Kafka can be used. The only requirement is to prepend the property name with the prefix 
+                                              by Kafka can be used. The only requirement is to prepend the property name with the prefix
                                               ``kafka.consumer``.
                                               For example: ``kafka.consumer.auto.offset.reset``
                                               Check `Kafka documentation <http://kafka.apache.org/documentation.html#newconsumerconfigs>`_ for details

@@ -255,7 +255,7 @@ public class TestKafkaChannel {
     createTopic(topic, 1);
 
     Context context = prepareDefaultContext(false);
-    context.put(ZOOKEEPER_CONNECT, testUtil.getZkUrl());
+    context.put(ZOOKEEPER_CONNECT_FLUME_KEY, testUtil.getZkUrl());
     context.put(GROUP_ID_FLUME, group);
     final KafkaChannel channel = createChannel(context);
 

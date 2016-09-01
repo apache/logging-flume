@@ -193,7 +193,7 @@ public class KafkaChannel extends BasicChannelSemantics {
 
     migrateZookeeperOffsets = ctx.getBoolean(MIGRATE_ZOOKEEPER_OFFSETS,
       DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS);
-    zookeeperConnect = ctx.getString(ZOOKEEPER_CONNECT);
+    zookeeperConnect = ctx.getString(ZOOKEEPER_CONNECT_FLUME_KEY);
 
     if (logger.isDebugEnabled() && LogPrivacyUtil.allowLogPrintConfig()) {
       logger.debug("Kafka properties: {}", ctx);

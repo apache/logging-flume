@@ -36,7 +36,7 @@ import java.util.concurrent.ExecutionException;
 
 public class KafkaSourceEmbeddedKafka {
 
-  public static String HOST = InetAddress.getLoopbackAddress().getHostAddress();
+  public static String HOST = InetAddress.getLoopbackAddress().getCanonicalHostName();
 
   KafkaServerStartable kafkaServer;
   KafkaSourceEmbeddedZookeeper zookeeper;
@@ -80,7 +80,7 @@ public class KafkaSourceEmbeddedKafka {
     return zookeeper.getConnectString();
   }
 
-  public String getBrockers() {
+  public String getBootstrapServers() {
     return HOST + ":" + serverPort;
   }
 
