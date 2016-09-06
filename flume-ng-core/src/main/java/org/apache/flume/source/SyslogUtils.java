@@ -314,8 +314,8 @@ public class SyslogUtils {
         headers.put("host", hostName);
       }
       if (isBadEvent) {
-        logger.warn("Event created from Invalid Syslog data.");
-        headers.put(EVENT_STATUS, SyslogStatus.INVALID.getSyslogStatus());
+        //logger.warn("Event created from Invalid Syslog data.");
+        //headers.put(EVENT_STATUS, SyslogStatus.INVALID.getSyslogStatus());
       } else if (isIncompleteEvent) {
         logger.warn("Event size larger than specified event size: {}. You should " +
             "consider increasing your event size.", maxSize);
