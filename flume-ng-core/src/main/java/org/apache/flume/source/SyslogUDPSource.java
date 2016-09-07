@@ -63,7 +63,7 @@ public class SyslogUDPSource extends AbstractSource
   private CounterGroup counterGroup = new CounterGroup();
 
   // Default Min size
-  public static final int DEFAULT_MIN_SIZE = 4096;
+  public static final int DEFAULT_MIN_SIZE = 2048;
   public static final int DEFAULT_INITIAL_SIZE = DEFAULT_MIN_SIZE;
 
   public class syslogHandler extends SimpleChannelHandler {

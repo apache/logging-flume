@@ -81,7 +81,7 @@ public class UDPSource extends AbstractSource
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent mEvent) {
       try {
-        byte[] dst = new byte[DEFAULT_MIN_SIZE];;
+        byte[] dst = new byte[DEFAULT_MIN_SIZE];
         ChannelBuffer buffer = (ChannelBuffer)mEvent.getMessage();
         buffer.getBytes(0, dst);
         Event e = EventBuilder.withBody(dst);
