@@ -67,7 +67,7 @@ public class UDPSource extends AbstractSource
   public static final int DEFAULT_MIN_SIZE = 4096;
   public static final int DEFAULT_INITIAL_SIZE = DEFAULT_MIN_SIZE;
 
-  public class udpHandler extends SimpleChannelHandler {
+  public class UdpHandler extends SimpleChannelHandler {
     //private SyslogUtils syslogUtils = new SyslogUtils(DEFAULT_INITIAL_SIZE, null, true);
 
     public void setFormater(Map<String, String> prop) {
@@ -107,7 +107,7 @@ public class UDPSource extends AbstractSource
     // setup Netty server
     ConnectionlessBootstrap serverBootstrap = new ConnectionlessBootstrap(
         new OioDatagramChannelFactory(Executors.newCachedThreadPool()));
-    final udpHandler handler = new udpHandler();
+    final UdpHandler handler = new UdpHandler();
     handler.setFormater(formaterProp);
     handler.setKeepFields(keepFields);
     serverBootstrap.setOption("receiveBufferSizePredictorFactory",
