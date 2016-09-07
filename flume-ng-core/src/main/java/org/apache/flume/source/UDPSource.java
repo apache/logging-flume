@@ -67,21 +67,21 @@ public class UDPSource extends AbstractSource
   public static final int DEFAULT_MIN_SIZE = 4096;
   public static final int DEFAULT_INITIAL_SIZE = DEFAULT_MIN_SIZE;
 
-  public class syslogHandler extends SimpleChannelHandler {
-    private SyslogUtils syslogUtils = new SyslogUtils(DEFAULT_INITIAL_SIZE, null, true);
+  public class udpHandler extends SimpleChannelHandler {
+    //private SyslogUtils syslogUtils = new SyslogUtils(DEFAULT_INITIAL_SIZE, null, true);
 
     public void setFormater(Map<String, String> prop) {
-      syslogUtils.addFormats(prop);
+      //syslogUtils.addFormats(prop);
     }
 
     public void setKeepFields(Set<String> keepFields) {
-      syslogUtils.setKeepFields(keepFields);
+      //syslogUtils.setKeepFields(keepFields);
     }
 
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent mEvent) {
       try {
-        byte[] dst = new byte[DEFAULT_MIN_SIZE];
+        byte[] dst = new byte[DEFAULT_INITIAL_SIZE];
         ChannelBuffer buffer = (ChannelBuffer)mEvent.getMessage();
         buffer.getBytes(0, dst);
         Event e = EventBuilder.withBody(dst);
@@ -107,7 +107,7 @@ public class UDPSource extends AbstractSource
     // setup Netty server
     ConnectionlessBootstrap serverBootstrap = new ConnectionlessBootstrap(
         new OioDatagramChannelFactory(Executors.newCachedThreadPool()));
-    final syslogHandler handler = new syslogHandler();
+    final udpHandler handler = new udpHandler();
     handler.setFormater(formaterProp);
     handler.setKeepFields(keepFields);
     serverBootstrap.setOption("receiveBufferSizePredictorFactory",
@@ -155,10 +155,12 @@ public class UDPSource extends AbstractSource
     host = context.getString(SyslogSourceConfigurationConstants.CONFIG_HOST);
     formaterProp = context.getSubProperties(
         SyslogSourceConfigurationConstants.CONFIG_FORMAT_PREFIX);
+    /*
     keepFields = SyslogUtils.chooseFieldsToKeep(
         context.getString(
             SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS,
             SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS));
+            */
   }
 
   @VisibleForTesting
