@@ -36,7 +36,6 @@ import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.SourceCounter;
-import org.apache.avro.ipc.NettyServer;
 import org.jboss.netty.bootstrap.ConnectionlessBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.AdaptiveReceiveBufferSizePredictorFactory;
@@ -62,7 +61,6 @@ public class UDPSource extends AbstractSource
   private Map<String, String> formaterProp;
   private Set<String> keepFields;
   private SourceCounter sourceCounter;
-  private ScheduledExecutorService connectionCountUpdater;
 
   private static final Logger logger = LoggerFactory.getLogger(SyslogUDPSource.class);
 
@@ -138,18 +136,8 @@ public class UDPSource extends AbstractSource
     } else {
       nettyChannel = serverBootstrap.bind(new InetSocketAddress(host, port));
     }
-    connectionCountUpdater = Executors.newSingleThreadScheduledExecutor();
     sourceCounter.start();
     super.start();
-    final NettyServer srv = (NettyServer)server;
-    connectionCountUpdater.scheduleWithFixedDelay(new Runnable() {
-
-      @Override
-      public void run() {
-        sourceCounter.setOpenConnectionCount(
-                Long.valueOf(srv.getNumActiveConnections()));
-      }
-    }, 0, 60, TimeUnit.SECONDS);
   }
 
   @Override
@@ -168,20 +156,8 @@ public class UDPSource extends AbstractSource
     }
 
     sourceCounter.stop();
-    connectionCountUpdater.shutdown();
-    while (!connectionCountUpdater.isTerminated()) {
-      try {
-        Thread.sleep(100);
-      } catch (InterruptedException ex) {
-        logger.error("Interrupted while waiting for connection count executor "
-                + "to terminate", ex);
-        Throwables.propagate(ex);
-      }
-    }
 
     super.stop();
-    logger.info("UDP source {} stopped. Metrics: {}", getName(),
-            sourceCounter);
   }
 
   @Override
