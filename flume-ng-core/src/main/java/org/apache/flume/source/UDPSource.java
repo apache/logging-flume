@@ -83,6 +83,7 @@ public class UDPSource extends AbstractSource
       try {
         byte[] dst = new byte[DEFAULT_INITIAL_SIZE];
         ChannelBuffer buffer = (ChannelBuffer)mEvent.getMessage();
+        logger.warn("writting data: ", buffer.toString());
         buffer.getBytes(0, dst);
         Event e = EventBuilder.withBody(dst);
         if (e == null) {
