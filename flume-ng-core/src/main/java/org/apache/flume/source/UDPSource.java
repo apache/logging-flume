@@ -23,6 +23,7 @@ import java.net.SocketAddress;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -34,6 +35,7 @@ import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.jboss.netty.bootstrap.ConnectionlessBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.AdaptiveReceiveBufferSizePredictorFactory;
@@ -58,6 +60,8 @@ public class UDPSource extends AbstractSource
   private Channel nettyChannel;
   private Map<String, String> formaterProp;
   private Set<String> keepFields;
+  private SourceCounter sourceCounter;
+  private ScheduledExecutorService connectionCountUpdater;
 
   private static final Logger logger = LoggerFactory.getLogger(SyslogUDPSource.class);
 
@@ -80,7 +84,11 @@ public class UDPSource extends AbstractSource
 
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent mEvent) {
+      sourceCounter.incrementAppendReceivedCount();
+      sourceCounter.incrementEventReceivedCount();
       try {
+
+
         ChannelBuffer buffer = (ChannelBuffer)mEvent.getMessage();
         byte[] dst =  new byte[buffer.capacity()];
         buffer.getBytes(0, dst);
@@ -99,6 +107,10 @@ public class UDPSource extends AbstractSource
         logger.error("Error parsing event from syslog stream, event dropped", ex);
         return;
       }
+
+
+      sourceCounter.incrementAppendAcceptedCount();
+      sourceCounter.incrementEventAcceptedCount();
     }
   }
 
@@ -125,13 +137,22 @@ public class UDPSource extends AbstractSource
     } else {
       nettyChannel = serverBootstrap.bind(new InetSocketAddress(host, port));
     }
-
+    connectionCountUpdater = Executors.newSingleThreadScheduledExecutor();
+    sourceCounter.start();
     super.start();
+    connectionCountUpdater.scheduleWithFixedDelay(new Runnable() {
+
+      @Override
+      public void run() {
+        sourceCounter.setOpenConnectionCount(
+                Long.valueOf(srv.getNumActiveConnections()));
+      }
+    }, 0, 60, TimeUnit.SECONDS);
   }
 
   @Override
   public void stop() {
-    logger.info("Syslog UDP Source stopping...");
+    logger.info("UDP Source stopping...");
     logger.info("Metrics:{}", counterGroup);
     if (nettyChannel != null) {
       nettyChannel.close();
@@ -144,7 +165,21 @@ public class UDPSource extends AbstractSource
       }
     }
 
+    sourceCounter.stop();
+    connectionCountUpdater.shutdown();
+    while (!connectionCountUpdater.isTerminated()) {
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException ex) {
+        logger.error("Interrupted while waiting for connection count executor "
+                + "to terminate", ex);
+        Throwables.propagate(ex);
+      }
+    }
+
     super.stop();
+    logger.info("UDP source {} stopped. Metrics: {}", getName(),
+            sourceCounter);
   }
 
   @Override
@@ -161,6 +196,9 @@ public class UDPSource extends AbstractSource
             SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS,
             SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS));
             */
+    if (sourceCounter == null) {
+      sourceCounter = new SourceCounter(getName());
+    }
   }
 
   @VisibleForTesting
