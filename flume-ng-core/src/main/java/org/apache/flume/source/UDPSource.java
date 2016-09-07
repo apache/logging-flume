@@ -36,6 +36,7 @@ import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.SourceCounter;
+import org.apache.avro.ipc.NettyServer;
 import org.jboss.netty.bootstrap.ConnectionlessBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.AdaptiveReceiveBufferSizePredictorFactory;
@@ -140,6 +141,7 @@ public class UDPSource extends AbstractSource
     connectionCountUpdater = Executors.newSingleThreadScheduledExecutor();
     sourceCounter.start();
     super.start();
+    final NettyServer srv = (NettyServer)server;
     connectionCountUpdater.scheduleWithFixedDelay(new Runnable() {
 
       @Override
