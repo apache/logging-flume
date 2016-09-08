@@ -37,6 +37,9 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,6 +74,7 @@ public class TestSyslogUdpSource {
 
     source.setChannelProcessor(new ChannelProcessor(rcs));
     Context context = new Context();
+    context.put("host", InetAddress.getLoopbackAddress().getHostAddress());
     context.put("port", String.valueOf(TEST_SYSLOG_PORT));
     context.put("keepFields", keepFields);
 
@@ -85,18 +89,12 @@ public class TestSyslogUdpSource {
     init(keepFields);
     source.start();
     // Write some message to the syslog port
-    DatagramSocket syslogSocket;
-    DatagramPacket datagramPacket;
-    datagramPacket = new DatagramPacket(bodyWithTandH.getBytes(),
-      bodyWithTandH.getBytes().length,
-      InetAddress.getLocalHost(), source.getSourcePort());
+    DatagramPacket datagramPacket = createDatagramPacket(bodyWithTandH.getBytes());
     for (int i = 0; i < 10 ; i++) {
-      syslogSocket = new DatagramSocket();
-      syslogSocket.send(datagramPacket);
-      syslogSocket.close();
+      sendDatagramPacket(datagramPacket);
     }
 
-    List<Event> channelEvents = new ArrayList<Event>();
+    List<Event> channelEvents = new ArrayList<>();
     Transaction txn = channel.getTransaction();
     txn.begin();
     for (int i = 0; i < 10; i++) {
@@ -105,13 +103,7 @@ public class TestSyslogUdpSource {
       channelEvents.add(e);
     }
 
-    try {
-      txn.commit();
-    } catch (Throwable t) {
-      txn.rollback();
-    } finally {
-      txn.close();
-    }
+    commitAndCloseTransaction(txn);
 
     source.stop();
     for (Event e : channelEvents) {
@@ -139,18 +131,13 @@ public class TestSyslogUdpSource {
 
     byte[] largePayload = getPayload(1000).getBytes();
 
-    DatagramSocket syslogSocket;
-    DatagramPacket datagramPacket;
-    datagramPacket = new DatagramPacket(largePayload,
-            1000,
-            InetAddress.getLocalHost(), source.getSourcePort());
+    DatagramPacket datagramPacket = createDatagramPacket(largePayload);
+
     for (int i = 0; i < 10 ; i++) {
-      syslogSocket = new DatagramSocket();
-      syslogSocket.send(datagramPacket);
-      syslogSocket.close();
+      sendDatagramPacket(datagramPacket);
     }
 
-    List<Event> channelEvents = new ArrayList<Event>();
+    List<Event> channelEvents = new ArrayList<>();
     Transaction txn = channel.getTransaction();
     txn.begin();
     for (int i = 0; i < 10; i++) {
@@ -159,13 +146,7 @@ public class TestSyslogUdpSource {
       channelEvents.add(e);
     }
 
-    try {
-      txn.commit();
-    } catch (Throwable t) {
-      txn.rollback();
-    } finally {
-      txn.close();
-    }
+    commitAndCloseTransaction(txn);
 
     source.stop();
     for (Event e : channelEvents) {
@@ -198,6 +179,46 @@ public class TestSyslogUdpSource {
   @Test
   public void testKeepTimestamp() throws IOException {
     runKeepFieldsTest("timestamp");
+  }
+
+  @Test
+  public void testSourceCounter() throws Exception {
+    init("true");
+
+    source.start();
+    DatagramPacket datagramPacket = createDatagramPacket("test".getBytes());
+    sendDatagramPacket(datagramPacket);
+
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+
+    channel.take();
+    commitAndCloseTransaction(txn);
+
+    Assert.assertEquals(1, source.getSourceCounter().getEventAcceptedCount());
+    Assert.assertEquals(1, source.getSourceCounter().getEventReceivedCount());
+  }
+
+  private DatagramPacket createDatagramPacket(byte[] payload) {
+    InetSocketAddress addr = source.getBoundAddress();
+    return new DatagramPacket(payload, payload.length, addr.getAddress(), addr.getPort());
+  }
+
+  private void sendDatagramPacket(DatagramPacket datagramPacket) throws IOException {
+    try (DatagramSocket syslogSocket = new DatagramSocket()) {
+      syslogSocket.send(datagramPacket);
+    }
+  }
+
+  private void commitAndCloseTransaction(Transaction txn) {
+    try {
+      txn.commit();
+    } catch (Throwable t) {
+      logger.error("Transaction commit failed, rolling back", t);
+      txn.rollback();
+    } finally {
+      txn.close();
+    }
   }
 
   private String getPayload(int length) {

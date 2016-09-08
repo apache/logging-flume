@@ -28,11 +28,11 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
-import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.Configurables;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
@@ -47,6 +47,10 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @deprecated use {@link MultiportSyslogTCPSource} instead.
+ */
+@Deprecated
 public class SyslogTcpSource extends AbstractSource
                              implements EventDrivenSource, Configurable {
   private static final Logger logger = LoggerFactory.getLogger(SyslogTcpSource.class);
@@ -56,7 +60,7 @@ public class SyslogTcpSource extends AbstractSource
   private Channel nettyChannel;
   private Integer eventSize;
   private Map<String, String> formaterProp;
-  private CounterGroup counterGroup = new CounterGroup();
+  private SourceCounter sourceCounter;
   private Set<String> keepFields;
 
   public class syslogTcpHandler extends SimpleChannelHandler {
@@ -85,14 +89,14 @@ public class SyslogTcpSource extends AbstractSource
               "rest of the event is received.");
           continue;
         }
+        sourceCounter.incrementEventReceivedCount();
+
         try {
           getChannelProcessor().processEvent(e);
-          counterGroup.incrementAndGet("events.success");
+          sourceCounter.incrementEventAcceptedCount();
         } catch (ChannelException ex) {
-          counterGroup.incrementAndGet("events.dropped");
           logger.error("Error writting to channel, event dropped", ex);
         } catch (RuntimeException ex) {
-          counterGroup.incrementAndGet("events.dropped");
           logger.error("Error parsing event from syslog stream, event dropped", ex);
           return;
         }
@@ -126,13 +130,14 @@ public class SyslogTcpSource extends AbstractSource
       nettyChannel = serverBootstrap.bind(new InetSocketAddress(host, port));
     }
 
+    sourceCounter.start();
     super.start();
   }
 
   @Override
   public void stop() {
     logger.info("Syslog TCP Source stopping...");
-    logger.info("Metrics:{}", counterGroup);
+    logger.info("Metrics: {}", sourceCounter);
 
     if (nettyChannel != null) {
       nettyChannel.close();
@@ -145,6 +150,7 @@ public class SyslogTcpSource extends AbstractSource
       }
     }
 
+    sourceCounter.stop();
     super.stop();
   }
 
@@ -161,16 +167,24 @@ public class SyslogTcpSource extends AbstractSource
         context.getString(
             SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS,
             SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS));
+
+    if (sourceCounter == null) {
+      sourceCounter = new SourceCounter(getName());
+    }
   }
 
   @VisibleForTesting
-  public int getSourcePort() {
+  InetSocketAddress getBoundAddress() {
     SocketAddress localAddress = nettyChannel.getLocalAddress();
-    if (localAddress instanceof InetSocketAddress) {
-      InetSocketAddress addr = (InetSocketAddress) localAddress;
-      return addr.getPort();
+    if (!(localAddress instanceof InetSocketAddress)) {
+      throw new IllegalArgumentException("Not bound to an internet address");
     }
-    return 0;
+    return (InetSocketAddress) localAddress;
   }
 
+
+  @VisibleForTesting
+  SourceCounter getSourceCounter() {
+    return sourceCounter;
+  }
 }
