@@ -68,7 +68,7 @@ public class UDPSource extends AbstractSource
 
   // Default Min size
   public static final int DEFAULT_MIN_SIZE = 4096;
-  public static final int DEFAULT_INITIAL_SIZE = DEFAULT_MIN_SIZE;
+  public static final int DEFAULT_INITIAL_SIZE = maxsize;
 
   public class UdpHandler extends SimpleChannelHandler {
     //private SyslogUtils syslogUtils = new SyslogUtils(DEFAULT_INITIAL_SIZE, null, true);
