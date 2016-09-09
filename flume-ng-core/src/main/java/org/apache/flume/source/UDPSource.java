@@ -55,7 +55,7 @@ public class UDPSource extends AbstractSource
                              implements EventDrivenSource, Configurable {
 
   private int port;
-  private int maxsize = 1 << 16; // 64k is max allowable in RFC 5426
+  private int maxsize = 1 << 100; // 64k is max allowable in RFC 5426
   private String host = null;
   private Channel nettyChannel;
   private Map<String, String> formaterProp;
