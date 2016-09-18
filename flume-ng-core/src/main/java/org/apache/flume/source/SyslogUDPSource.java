@@ -28,11 +28,11 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
-import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.Configurables;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.jboss.netty.bootstrap.ConnectionlessBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.AdaptiveReceiveBufferSizePredictorFactory;
@@ -60,7 +60,7 @@ public class SyslogUDPSource extends AbstractSource
 
   private static final Logger logger = LoggerFactory.getLogger(SyslogUDPSource.class);
 
-  private CounterGroup counterGroup = new CounterGroup();
+  private SourceCounter sourceCounter;
 
   // Default Min size
   public static final int DEFAULT_MIN_SIZE = 2048;
@@ -85,14 +85,14 @@ public class SyslogUDPSource extends AbstractSource
         if (e == null) {
           return;
         }
+        sourceCounter.incrementEventReceivedCount();
+
         getChannelProcessor().processEvent(e);
-        counterGroup.incrementAndGet("events.success");
+        sourceCounter.incrementEventAcceptedCount();
       } catch (ChannelException ex) {
-        counterGroup.incrementAndGet("events.dropped");
         logger.error("Error writting to channel", ex);
         return;
       } catch (RuntimeException ex) {
-        counterGroup.incrementAndGet("events.dropped");
         logger.error("Error parsing event from syslog stream, event dropped", ex);
         return;
       }
@@ -123,13 +123,14 @@ public class SyslogUDPSource extends AbstractSource
       nettyChannel = serverBootstrap.bind(new InetSocketAddress(host, port));
     }
 
+    sourceCounter.start();
     super.start();
   }
 
   @Override
   public void stop() {
     logger.info("Syslog UDP Source stopping...");
-    logger.info("Metrics:{}", counterGroup);
+    logger.info("Metrics: {}", sourceCounter);
     if (nettyChannel != null) {
       nettyChannel.close();
       try {
@@ -141,6 +142,7 @@ public class SyslogUDPSource extends AbstractSource
       }
     }
 
+    sourceCounter.stop();
     super.stop();
   }
 
@@ -156,15 +158,23 @@ public class SyslogUDPSource extends AbstractSource
         context.getString(
             SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS,
             SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS));
+
+    if (sourceCounter == null) {
+      sourceCounter = new SourceCounter(getName());
+    }
   }
 
   @VisibleForTesting
-  public int getSourcePort() {
+  InetSocketAddress getBoundAddress() {
     SocketAddress localAddress = nettyChannel.getLocalAddress();
-    if (localAddress instanceof InetSocketAddress) {
-      InetSocketAddress addr = (InetSocketAddress) localAddress;
-      return addr.getPort();
+    if (!(localAddress instanceof InetSocketAddress)) {
+      throw new IllegalArgumentException("Not bound to an internet address");
     }
-    return 0;
+    return (InetSocketAddress) localAddress;
+  }
+
+  @VisibleForTesting
+  SourceCounter getSourceCounter() {
+    return sourceCounter;
   }
 }
