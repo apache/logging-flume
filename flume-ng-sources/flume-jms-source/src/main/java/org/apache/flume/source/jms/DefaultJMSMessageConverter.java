@@ -100,7 +100,10 @@ public class DefaultJMSMessageConverter implements JMSMessageConverter {
       }
     } else if (message instanceof TextMessage) {
       TextMessage textMessage = (TextMessage)message;
-      event.setBody(textMessage.getText().getBytes(charset));
+      String text = textMessage.getText();
+      if (text != null) {
+        event.setBody(text.getBytes(charset));
+      }
     } else if (message instanceof ObjectMessage) {
       ObjectMessage objectMessage = (ObjectMessage)message;
       Object object = objectMessage.getObject();
