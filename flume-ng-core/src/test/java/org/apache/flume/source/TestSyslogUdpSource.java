@@ -195,6 +195,13 @@ public class TestSyslogUdpSource {
     channel.take();
     commitAndCloseTransaction(txn);
 
+    // Retrying up to 10 times while the acceptedCount == 0 because the event processing in
+    // SyslogUDPSource is handled on a separate thread by Netty so message delivery,
+    // thus the sourceCounter's increment can be delayed resulting in a flaky test
+    for (int i = 0; i < 10 && source.getSourceCounter().getEventAcceptedCount() == 0; i++) {
+      Thread.sleep(100);
+    }
+
     Assert.assertEquals(1, source.getSourceCounter().getEventAcceptedCount());
     Assert.assertEquals(1, source.getSourceCounter().getEventReceivedCount());
   }
