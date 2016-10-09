@@ -59,6 +59,10 @@ public class SpoolDirectorySourceConfigurationConstants {
   @Deprecated
   public static final int DEFAULT_BUFFER_MAX_LINE_LENGTH = 5000;
 
+  /** Pattern of files to include */
+  public static final String INCLUDE_PAT = "includePattern";
+  public static final String DEFAULT_INCLUDE_PAT = "^.*$"; // any file
+
   /** Pattern of files to ignore */
   public static final String IGNORE_PAT = "ignorePattern";
   public static final String DEFAULT_IGNORE_PAT = "^$"; // no effect
