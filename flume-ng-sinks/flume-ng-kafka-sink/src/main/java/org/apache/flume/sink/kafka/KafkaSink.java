@@ -114,6 +114,8 @@ public class KafkaSink extends AbstractSink implements Configurable {
   private List<Future<RecordMetadata>> kafkaFutures;
   private KafkaSinkCounter counter;
   private boolean useAvroEventFormat;
+  private String partitionHeader = null;
+  private Integer staticPartitionId = null;
   private Optional<SpecificDatumWriter<AvroFlumeEvent>> writer =
           Optional.absent();
   private Optional<SpecificDatumReader<AvroFlumeEvent>> reader =
@@ -187,13 +189,34 @@ public class KafkaSink extends AbstractSink implements Configurable {
         // create a message and add to buffer
         long startTime = System.currentTimeMillis();
 
+        Integer partitionId = null;
         try {
-          kafkaFutures.add(producer.send(
-              new ProducerRecord<String, byte[]>(eventTopic, eventKey,
-                                                 serializeEvent(event, useAvroEventFormat)),
-              new SinkCallback(startTime)));
-        } catch (IOException ex) {
-          throw new EventDeliveryException("Could not serialize event", ex);
+          ProducerRecord<String, byte[]> record;
+          if (staticPartitionId != null) {
+            partitionId = staticPartitionId;
+          }
+          //Allow a specified header to override a static ID
+          if (partitionHeader != null) {
+            String headerVal = event.getHeaders().get(partitionHeader);
+            if (headerVal != null) {
+              partitionId = Integer.parseInt(headerVal);
+            }
+          }
+          if (partitionId != null) {
+            record = new ProducerRecord<String, byte[]>(eventTopic, partitionId, eventKey,
+                serializeEvent(event, useAvroEventFormat));
+          } else {
+            record = new ProducerRecord<String, byte[]>(eventTopic, eventKey,
+                serializeEvent(event, useAvroEventFormat));
+          }
+          kafkaFutures.add(producer.send(record, new SinkCallback(startTime)));
+        } catch (NumberFormatException ex) {
+          throw new EventDeliveryException("Non integer partition id specified", ex);
+        } catch (Exception ex) {
+          // N.B. The producer.send() method throws all sorts of RuntimeExceptions
+          // Catching Exception here to wrap them neatly in an EventDeliveryException
+          // which is what our consumers will expect
+          throw new EventDeliveryException("Could not send event", ex);
         }
       }
 
@@ -289,6 +312,9 @@ public class KafkaSink extends AbstractSink implements Configurable {
 
     useAvroEventFormat = context.getBoolean(KafkaSinkConstants.AVRO_EVENT,
                                             KafkaSinkConstants.DEFAULT_AVRO_EVENT);
+
+    partitionHeader = context.getString(KafkaSinkConstants.PARTITION_HEADER_NAME);
+    staticPartitionId = context.getInteger(KafkaSinkConstants.STATIC_PARTITION_CONF);
 
     if (logger.isDebugEnabled()) {
       logger.debug(KafkaSinkConstants.AVRO_EVENT + " set to: {}", useAvroEventFormat);

@@ -2583,6 +2583,14 @@ useFlumeEventFormat              false                By default events are put 
                                                       true to store events as the Flume Avro binary format. Used in conjunction with the same property
                                                       on the KafkaSource or with the parseAsFlumeEvent property on the Kafka Channel this will preserve
                                                       any Flume headers for the producing side.
+defaultPartitionId               --                   Specifies a Kafka partition ID (integer) for all events in this channel to be sent to, unless
+                                                      overriden by ``partitionIdHeader``. By default, if this property is not set, events will be
+                                                      distributed by the Kafka Producer's partitioner - including by ``key`` if specified (or by a
+                                                      partitioner specified by ``kafka.partitioner.class``).
+partitionIdHeader                --                   When set, the sink will take the value of the field named using the value of this property
+                                                      from the event header and send the message to the specified partition of the topic. If the
+                                                      value represents an invalid partition, an EventDeliveryException will be thrown. If the header value
+                                                      is present then this setting overrides ``defaultPartitionId``.
 Other Kafka Producer Properties  --                   These properties are used to configure the Kafka Producer. Any producer property supported
                                                       by Kafka can be used. The only requirement is to prepend the property name with the prefix
                                                       ``kafka.producer``.
@@ -2786,6 +2794,14 @@ migrateZookeeperOffsets                  true                        When no Kaf
                                                                      configuration defines how offsets are handled.
 pollTimeout                              500                         The amount of time(in milliseconds) to wait in the "poll()" call of the conumer.
                                                                      https://kafka.apache.org/090/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html#poll(long)
+defaultPartitionId                       --                          Specifies a Kafka partition ID (integer) for all events in this channel to be sent to, unless
+                                                                     overriden by ``partitionIdHeader``. By default, if this property is not set, events will be
+                                                                     distributed by the Kafka Producer's partitioner - including by ``key`` if specified (or by a 
+                                                                     partitioner specified by ``kafka.partitioner.class``).
+partitionIdHeader                        --                          When set, the producer will take the value of the field named using the value of this property
+                                                                     from the event header and send the message to the specified partition of the topic. If the
+                                                                     value represents an invalid partition the event will not be accepted into the channel. If the header value
+                                                                     is present then this setting overrides ``defaultPartitionId``.
 kafka.consumer.auto.offset.reset         latest                      What to do when there is no initial offset in Kafka or if the current offset does not exist any more on the server
                                                                      (e.g. because that data has been deleted):
                                                                      earliest: automatically reset the offset to the earliest offset

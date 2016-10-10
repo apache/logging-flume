@@ -98,6 +98,8 @@ public class KafkaChannel extends BasicChannelSemantics {
   private String zookeeperConnect = null;
   private String topicStr = DEFAULT_TOPIC;
   private String groupId = DEFAULT_GROUP_ID;
+  private String partitionHeader = null;
+  private Integer staticPartitionId;
   private boolean migrateZookeeperOffsets = DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS;
 
   //used to indicate if a rebalance has occurred during the current transaction
@@ -190,6 +192,9 @@ public class KafkaChannel extends BasicChannelSemantics {
 
     parseAsFlumeEvent = ctx.getBoolean(PARSE_AS_FLUME_EVENT, DEFAULT_PARSE_AS_FLUME_EVENT);
     pollTimeout = ctx.getLong(POLL_TIMEOUT, DEFAULT_POLL_TIMEOUT);
+
+    staticPartitionId = ctx.getInteger(STATIC_PARTITION_CONF);
+    partitionHeader = ctx.getString(PARTITION_HEADER_NAME);
 
     migrateZookeeperOffsets = ctx.getBoolean(MIGRATE_ZOOKEEPER_OFFSETS,
       DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS);
@@ -421,10 +426,30 @@ public class KafkaChannel extends BasicChannelSemantics {
         producerRecords = Optional.of(new LinkedList<ProducerRecord<String, byte[]>>());
       }
       String key = event.getHeaders().get(KEY_HEADER);
+
+      Integer partitionId = null;
       try {
-        producerRecords.get().add(
-            new ProducerRecord<String, byte[]>(topic.get(), key,
-                                               serializeValue(event, parseAsFlumeEvent)));
+        if (staticPartitionId != null) {
+          partitionId = staticPartitionId;
+        }
+        //Allow a specified header to override a static ID
+        if (partitionHeader != null) {
+          String headerVal = event.getHeaders().get(partitionHeader);
+          if (headerVal != null) {
+            partitionId = Integer.parseInt(headerVal);
+          }
+        }
+        if (partitionId != null) {
+          producerRecords.get().add(
+              new ProducerRecord<String, byte[]>(topic.get(), partitionId, key,
+                                                 serializeValue(event, parseAsFlumeEvent)));
+        } else {
+          producerRecords.get().add(
+              new ProducerRecord<String, byte[]>(topic.get(), key,
+                                                 serializeValue(event, parseAsFlumeEvent)));
+        }
+      } catch (NumberFormatException e) {
+        throw new ChannelException("Non integer partition id specified", e);
       } catch (Exception e) {
         throw new ChannelException("Error while serializing event", e);
       }

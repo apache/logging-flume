@@ -14,13 +14,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <artifactId>flume-ng-sinks</artifactId>
+    <artifactId>flume-shared</artifactId>
     <groupId>org.apache.flume</groupId>
     <version>1.7.0-SNAPSHOT</version>
   </parent>
-  <groupId>org.apache.flume.flume-ng-sinks</groupId>
-  <artifactId>flume-ng-kafka-sink</artifactId>
-  <name>Flume Kafka Sink</name>
+  <groupId>org.apache.flume.flume-shared</groupId>
+  <artifactId>flume-shared-kafka-test</artifactId>
+  <name>Flume Shared Kafka Test Utils</name>
 
   <build>
     <plugins>
@@ -59,12 +59,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.apache.flume.flume-shared</groupId>
-      <artifactId>flume-shared-kafka-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
@@ -72,18 +66,18 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka_2.10</artifactId>
-      <scope>test</scope>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
       <version>${kafka.version}</version>
+      <scope>provided</scope>
     </dependency>
 
   </dependencies>

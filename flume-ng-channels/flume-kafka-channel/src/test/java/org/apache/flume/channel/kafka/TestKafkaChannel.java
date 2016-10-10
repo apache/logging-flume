@@ -28,6 +28,9 @@ import org.apache.flume.Event;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.shared.kafka.test.KafkaPartitionTestUtil;
+import org.apache.flume.shared.kafka.test.PartitionOption;
+import org.apache.flume.shared.kafka.test.PartitionTestScenario;
 import org.apache.flume.sink.kafka.util.TestUtil;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -69,6 +72,8 @@ public class TestKafkaChannel {
   private String topic = null;
   private final Set<String> usedTopics = new HashSet<String>();
 
+  private static final int DEFAULT_TOPIC_PARTITIONS = 5;
+
   @BeforeClass
   public static void setupClass() throws Exception {
     testUtil.prepare();
@@ -79,7 +84,7 @@ public class TestKafkaChannel {
   public void setup() throws Exception {
     topic = findUnusedTopic();
     try {
-      createTopic(topic, 5);
+      createTopic(topic, DEFAULT_TOPIC_PARTITIONS);
     } catch (Exception e) {
     }
     Thread.sleep(2500);
@@ -248,6 +253,41 @@ public class TestKafkaChannel {
     doTestMigrateZookeeperOffsets(true, true, "testMigrateOffsets-both");
   }
 
+  @Test
+  public void testPartitionHeaderSet() throws Exception {
+    doPartitionHeader(PartitionTestScenario.PARTITION_ID_HEADER_ONLY);
+  }
+
+  @Test
+  public void testPartitionHeaderNotSet() throws Exception {
+    doPartitionHeader(PartitionTestScenario.NO_PARTITION_HEADERS);
+  }
+
+  @Test
+  public void testStaticPartitionAndHeaderSet() throws Exception {
+    doPartitionHeader(PartitionTestScenario.STATIC_HEADER_AND_PARTITION_ID);
+  }
+
+  @Test
+  public void testStaticPartitionHeaderNotSet() throws Exception {
+    doPartitionHeader(PartitionTestScenario.STATIC_HEADER_ONLY);
+  }
+
+  @Test
+  public void testPartitionHeaderMissing() throws Exception {
+    doPartitionErrors(PartitionOption.NOTSET);
+  }
+
+  @Test(expected = org.apache.flume.ChannelException.class)
+  public void testPartitionHeaderOutOfRange() throws Exception {
+    doPartitionErrors(PartitionOption.VALIDBUTOUTOFRANGE);
+  }
+
+  @Test(expected = org.apache.flume.ChannelException.class)
+  public void testPartitionHeaderInvalid() throws Exception {
+    doPartitionErrors(PartitionOption.NOTANUMBER);
+  }
+
   public void doTestMigrateZookeeperOffsets(boolean hasZookeeperOffsets, boolean hasKafkaOffsets,
                                             String group) throws Exception {
     // create a topic with 1 partition for simplicity
@@ -326,6 +366,112 @@ public class TestKafkaChannel {
       Assert.assertFalse("Channel should not read the 10th message", finals.contains(10));
       Assert.assertTrue("Channel should read the 11th message", finals.contains(11));
     }
+  }
+
+  /**
+   * This function tests three scenarios:
+   * 1. PartitionOption.VALIDBUTOUTOFRANGE: An integer partition is provided,
+   *    however it exceeds the number of partitions available on the topic.
+   *    Expected behaviour: ChannelException thrown.
+   *
+   * 2. PartitionOption.NOTSET: The partition header is not actually set.
+   *    Expected behaviour: Exception is not thrown because the code avoids an NPE.
+   *
+   * 3. PartitionOption.NOTANUMBER: The partition header is set, but is not an Integer.
+   *    Expected behaviour: ChannelExeption thrown.
+   *
+   * @param option
+   * @throws Exception
+   */
+  private void doPartitionErrors(PartitionOption option) throws Exception {
+    Context context = prepareDefaultContext(false);
+    context.put(PARTITION_HEADER_NAME, KafkaPartitionTestUtil.PARTITION_HEADER);
+    String tempTopic = findUnusedTopic();
+    createTopic(tempTopic, 5);
+    final KafkaChannel channel = createChannel(context);
+    channel.start();
+
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+
+    Map<String, String> headers = new HashMap<String, String>();
+    switch (option) {
+      case VALIDBUTOUTOFRANGE:
+        headers.put(KafkaPartitionTestUtil.PARTITION_HEADER,
+            String.valueOf(DEFAULT_TOPIC_PARTITIONS + 2));
+        break;
+      case NOTSET:
+        headers.put("wrong-header", "2");
+        break;
+      case NOTANUMBER:
+        headers.put(KafkaPartitionTestUtil.PARTITION_HEADER, "not-a-number");
+        break;
+      default:
+        break;
+    }
+
+    Event event = EventBuilder.withBody(String.valueOf(9).getBytes(), headers);
+
+    channel.put(event);
+
+    tx.commit();
+
+    deleteTopic(tempTopic);
+  }
+
+  /**
+   * This method tests both the default behavior (usePartitionHeader=false)
+   * and the behaviour when the partitionId setting is used.
+   * Under the default behaviour, one would expect an even distribution of
+   * messages to partitions, however when partitionId is used we manually create
+   * a large skew to some partitions and then verify that this actually happened
+   * by reading messages directly using a Kafka Consumer.
+   *
+   * @param usePartitionHeader
+   * @param staticPtn
+   * @throws Exception
+   */
+  private void doPartitionHeader(PartitionTestScenario scenario) throws Exception {
+    final int numPtns = DEFAULT_TOPIC_PARTITIONS;
+    final int numMsgs = numPtns * 10;
+    final Integer staticPtn = DEFAULT_TOPIC_PARTITIONS - 2 ;
+    Context context = prepareDefaultContext(false);
+    if (scenario == PartitionTestScenario.PARTITION_ID_HEADER_ONLY ||
+        scenario == PartitionTestScenario.STATIC_HEADER_AND_PARTITION_ID) {
+      context.put(PARTITION_HEADER_NAME, "partition-header");
+    }
+    if (scenario == PartitionTestScenario.STATIC_HEADER_AND_PARTITION_ID ||
+        scenario == PartitionTestScenario.STATIC_HEADER_ONLY) {
+      context.put(STATIC_PARTITION_CONF, staticPtn.toString());
+    }
+    final KafkaChannel channel = createChannel(context);
+    channel.start();
+
+    // Create a map of PartitionId:List<Messages> according to the desired distribution
+    // Initialise with empty ArrayLists
+    Map<Integer, List<Event>> partitionMap = new HashMap<Integer, List<Event>>(numPtns);
+    for (int i = 0; i < numPtns; i++) {
+      partitionMap.put(i, new ArrayList<Event>());
+    }
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+
+    List<Event> orderedEvents = KafkaPartitionTestUtil.generateSkewedMessageList(scenario, numMsgs,
+                                                                 partitionMap, numPtns, staticPtn);
+
+    for (Event event : orderedEvents) {
+      channel.put(event);
+    }
+
+    tx.commit();
+
+    Map<Integer, List<byte[]>> resultsMap = KafkaPartitionTestUtil.retrieveRecordsFromPartitions(
+                                                       topic, numPtns, channel.getConsumerProps());
+
+    KafkaPartitionTestUtil.checkResultsAgainstSkew(scenario, partitionMap, resultsMap, staticPtn,
+                                                   numMsgs);
+
+    channel.stop();
   }
 
   private Event takeEventWithoutCommittingTxn(KafkaChannel channel) {
@@ -713,4 +859,5 @@ public class TestKafkaChannel {
         ZkUtils.apply(testUtil.getZkUrl(), sessionTimeoutMs, connectionTimeoutMs, false);
     AdminUtils.deleteTopic(zkUtils, topicName);
   }
+
 }
