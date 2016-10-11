@@ -1286,6 +1286,10 @@ Other Kafka Consumer Properties     --           These properties are used to co
           The Kafka Source also provides defaults for the key.deserializer(org.apache.kafka.common.serialization.StringSerializer)
           and value.deserializer(org.apache.kafka.common.serialization.ByteArraySerializer). Modification of these parameters is not recommended.
 
+.. note:: The Kafka Source sets several event headers if they don't exist already: "timestamp", "topic", "partition" and "key" (if it's a keyed kafka message).
+          Especially the header field "topic" can lead to unexpected behaviour when used in combination with the Kafka Sink.
+          This header field overwrites the destination topic of the sinks configuration and leads to an indefinite loop producing the messages to into the topic where they has been read from.
+
 Deprecated Properties
 
 ===============================  ===================  =============================================================================================
