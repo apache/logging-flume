@@ -50,6 +50,7 @@
         <include>org.apache.flume:flume-ng-embedded-agent</include>
         <include>org.apache.flume:flume-tools</include>
         <include>org.apache.flume:flume-ng-auth</include>
+        <include>org.apache.flume:flume-shared</include>
       </includes>
 
       <sources>
