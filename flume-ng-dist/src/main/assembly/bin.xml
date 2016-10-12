@@ -80,17 +80,19 @@
         <exclude>**/.project</exclude>
         <exclude>**/.settings/**</exclude>
         <exclude>lib/**</exclude>
+        <exclude>**/*.iml</exclude>
       </excludes>
 
       <includes>
         <include>DEVNOTES</include>
-        <include>README</include>
+        <include>README.md</include>
         <include>LICENSE</include>
         <include>NOTICE</include>
         <include>CHANGELOG</include>
         <include>RELEASE-NOTES</include>
         <include>bin/**</include>
         <include>conf/**</include>
+        <include>doap_Flume.rdf</include>
       </includes>
     </fileSet>
 
