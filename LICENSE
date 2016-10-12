@@ -531,8 +531,6 @@ For
 For
   xz-<version>.jar:
 
-    http://git.tukaani.org/?p=xz-java.git;a=blob_plain;f=COPYING
-
     Licensing of XZ for Java
     ========================
 
